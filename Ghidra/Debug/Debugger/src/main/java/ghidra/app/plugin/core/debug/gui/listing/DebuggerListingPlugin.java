@@ -352,33 +352,6 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 		return goTo(loc, centerOnScreen);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * <p>
-	 * This is only used by the ProgramManager. I don't need state per program. It would be nice to
-	 * have state per Trace, but this facility is usurped only for the ProgramManager. Here, it gets
-	 * in my way, since it restores previous, now incorrect, state on program switch. It tends to
-	 * override the static sync.
-	 */
-	@Override
-	public Object getTransientState() {
-		// ProgramManager does all this for programs. I don't need that here.
-		return new Object[] {};
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @see #getTransientState()
-	 */
-	@Override
-	public void restoreTransientState(Object objectState) {
-		/*try (Suppression supp = cbGoTo.suppress(null)) {
-			super.restoreTransientState(objectState);
-		}*/
-	}
-
 	@Override
 	public void writeDataState(SaveState saveState) {
 		SaveState connectedProviderState = new SaveState();

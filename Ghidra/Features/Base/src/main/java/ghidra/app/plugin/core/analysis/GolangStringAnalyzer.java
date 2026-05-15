@@ -302,10 +302,14 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 			throws IOException, CancelledException {
 		// test to see if its a slice first because strings can kinda look like slices (a pointer
 		// then a length field).
-		boolean isUndefined3x =
-			DataUtilities.isUndefinedRange(program, addr, addr.add(sliceStructLen));
+		boolean isDefPtr = isDefaultPointer(addr);
+		boolean isUndefined3x = (isDefPtr && DataUtilities.isUndefinedRange(program,
+			addr.add(goBinary.getPtrSize()), addr.add(sliceStructLen - 1))) ||
+			DataUtilities.isUndefinedRange(program, addr, addr.add(sliceStructLen - 1));
 		boolean isUndefined2x = isUndefined3x ||
-			DataUtilities.isUndefinedRange(program, addr, addr.add(stringStructLen));
+			(isDefPtr && DataUtilities.isUndefinedRange(program,
+				addr.add(goBinary.getPtrSize()), addr.add(stringStructLen - 1))) ||
+			DataUtilities.isUndefinedRange(program, addr, addr.add(stringStructLen - 1));
 
 		Object newObj = isUndefined3x ? tryReadSliceStruct(addr) : null;
 		if (newObj == null && isUndefined2x) {
@@ -321,6 +325,12 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 			}
 		}
 		return newObj;
+	}
+
+	private boolean isDefaultPointer(Address addr) {
+		Data data = program.getListing().getDataAt(addr);
+		return data != null && data.getDataType() instanceof DataType dt &&
+			((dt instanceof Pointer ptr && ptr.getDataType() == null) || Undefined.isUndefined(dt));
 	}
 
 	private GoString tryReadStringStruct(AddressSetView stringDataRange, Address addr) {

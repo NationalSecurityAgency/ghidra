@@ -21,6 +21,7 @@ import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.AbstractProgramLoader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -85,42 +86,34 @@ public class ImageRuntimeFunctionEntries_X86 implements ImageRuntimeFunctionEntr
 	 */
 	ImageRuntimeFunctionEntries_X86(BinaryReader reader, int size, NTHeader ntHeader)
 			throws IOException {
-
-		int numEntries = size / ENTRY_SIZE;
-		for (int i = 0; i < numEntries; i++) {
+		for (int i = 0; i < size / ENTRY_SIZE; i++) {
 			long beginAddress = reader.readNextUnsignedInt();
 			long endAddress = reader.readNextUnsignedInt();
 			long unwindInfoAddressOrData = reader.readNextUnsignedInt();
+			PEx64UnwindInfo unwindInfo = null;
 
-			if (beginAddress == 0 && endAddress == 0 && unwindInfoAddressOrData == 0) {
-				break;
+			if (unwindInfoAddressOrData != 0) {
+				unwindInfo =
+					PEx64UnwindInfo.readUnwindInfo(reader, unwindInfoAddressOrData, ntHeader);
 			}
 
-			PEx64UnwindInfo unwindInfo =
-				PEx64UnwindInfo.readUnwindInfo(reader, unwindInfoAddressOrData, ntHeader);
-
-			ImageRuntimeFunctionEntry_X86 entry = new ImageRuntimeFunctionEntry_X86(beginAddress,
-				endAddress, unwindInfoAddressOrData, unwindInfo);
-			functionEntries.add(entry);
+			functionEntries.add(new ImageRuntimeFunctionEntry_X86(beginAddress, endAddress,
+				unwindInfoAddressOrData, unwindInfo));
 		}
 	}
 
 	@Override
-	public void markup(Program program, Address headerStart) throws CodeUnitInsertionException,
-			IOException, DuplicateNameException {
-		StructureDataType struct = new StructureDataType("_IMAGE_RUNTIME_FUNCTION_ENTRY", 0);
-		struct.add(StructConverter.IBO32, "BeginAddress", null);
-		struct.add(StructConverter.DWORD, "EndAddress",
-			"Apply ImageBaseOffset32 to see reference");
-		struct.add(StructConverter.IBO32, "UnwindInfoAddressOrData", null);
-
-		ArrayDataType arr = new ArrayDataType(struct, functionEntries.size(), struct.getLength());
-
-		DataUtilities.createData(program, headerStart, arr, arr.getLength(), true,
-			DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-
+	public void markup(Program program, Address headerStart, MessageLog log)
+			throws CodeUnitInsertionException, IOException, DuplicateNameException {
+		Address addr = headerStart;
+		DataType dt = null;
 		for (ImageRuntimeFunctionEntry_X86 entry : functionEntries) {
-			entry.markup(program);
+			if (dt == null) {
+				dt = entry.toDataType();
+			}
+			PeUtils.createData(program, addr, dt, log);
+			entry.markup(program, log);
+			addr = addr.add(ENTRY_SIZE);
 		}
 	}
 
@@ -133,34 +126,39 @@ public class ImageRuntimeFunctionEntries_X86 implements ImageRuntimeFunctionEntr
 	 * @param unwindInfo The parsed {@link PEx64UnwindInfo unwind information}
 	 */
 	record ImageRuntimeFunctionEntry_X86(long beginAddress, long endAddress,
-			long unwindInfoAddressOrData, PEx64UnwindInfo unwindInfo) {
+			long unwindInfoAddressOrData, PEx64UnwindInfo unwindInfo) implements StructConverter {
 
 		/**
 		 * Marks up this entry
 		 * 
 		 * @param program The {@link Program}
+		 * @param log The log
 		 * @throws IOException If there was an IO-related error creating the data
 		 * @throws DuplicateNameException If a data type of the same name already exists
 		 */
-		public void markup(Program program) throws DuplicateNameException, IOException {
+		public void markup(Program program, MessageLog log)
+				throws DuplicateNameException, IOException {
 			
 			if (beginAddress != 0 && !unwindInfo.hasChainedUnwindInfo()) {
 				AbstractProgramLoader.markAsFunction(program, null,
 					program.getImageBase().add(beginAddress));
 			}
 			
-			if (unwindInfoAddressOrData > 0) {
-				DataType dt = unwindInfo.toDataType();
+			if (unwindInfo != null) {
 				Address start = program.getImageBase().add(unwindInfoAddressOrData);
-
-				try {
-					DataUtilities.createData(program, start, dt, dt.getLength(), true,
-						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-				}
-				catch (CodeUnitInsertionException e) {
-					// expected...ignore
-				}
+				PeUtils.createData(program, start,  unwindInfo.toDataType(), log);
 			}
+		}
+
+		@Override
+		public DataType toDataType() throws DuplicateNameException, IOException {
+			StructureDataType struct = new StructureDataType("_IMAGE_RUNTIME_FUNCTION_ENTRY", 0);
+			struct.add(StructConverter.IBO32, "BeginAddress", null);
+			struct.add(StructConverter.DWORD, "EndAddress",
+				"Apply ImageBaseOffset32 to see reference");
+			struct.add(StructConverter.IBO32, "UnwindInfoAddressOrData", null);
+			struct.setCategoryPath(new CategoryPath("/PE"));
+			return struct;
 		}
 	}
 }

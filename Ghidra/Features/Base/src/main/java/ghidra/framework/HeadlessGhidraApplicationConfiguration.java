@@ -21,6 +21,7 @@ import java.util.List;
 import generic.jar.ResourceFile;
 import ghidra.GhidraClassLoader;
 import ghidra.framework.preferences.Preferences;
+import ghidra.framework.remote.GhidraObjectInputFilter;
 import ghidra.net.DefaultTrustManagerFactory;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
@@ -31,19 +32,28 @@ public class HeadlessGhidraApplicationConfiguration extends ApplicationConfigura
 	@Override
 	protected void initializeApplication() {
 		super.initializeApplication();
+		
+		try {
+			// Install client-side deserialization filters (data/*.serial.filter)
+			GhidraObjectInputFilter.configureClientSerialFilter();
 
-		// Now that preferences are accessible, finalize classpath by adding user plugin paths.
-		// This must be done before class searching.
-		addUserJarAndPluginPathsToClasspath();
+			// Now that preferences are accessible, finalize classpath by adding user plugin paths.
+			// This must be done before class searching.
+			addUserJarAndPluginPathsToClasspath();
 
-		monitor.setMessage("Performing class searching...");
-		performClassSearching();
+			monitor.setMessage("Performing class searching...");
+			performClassSearching();
 
-		// Locate certs if found (must be done before module initialization)
-		locateCACertsFile();
+			// Locate certs if found (must be done before module initialization)
+			locateCACertsFile();
 
-		monitor.setMessage("Performing module initialization...");
-		performModuleInitialization();
+			monitor.setMessage("Performing module initialization...");
+			performModuleInitialization();
+		}
+		catch (Throwable t) {
+			Msg.error(this, "Ghidra encountered a severe error during initialization", t);
+			System.exit(-1);
+		}
 
 		monitor.setMessage("Done initializing");
 	}

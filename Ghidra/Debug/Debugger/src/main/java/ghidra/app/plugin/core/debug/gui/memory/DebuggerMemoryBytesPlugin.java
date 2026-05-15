@@ -166,13 +166,13 @@ public class DebuggerMemoryBytesPlugin
 	}
 
 	@Override
-	public Object getTransientState() {
+	public ByteViewerTransientState getTransientState() {
 		// Not needed, since I'm not coordinated with ProgramManager
-		return new Object[] {};
+		return null;
 	}
 
 	@Override
-	public void restoreTransientState(Object objectState) {
+	public void restoreTransientState(ByteViewerTransientState objectState) {
 		// Not needed, since I'm not coordinated with ProgramManager
 	}
 

@@ -15,6 +15,12 @@
  */
 package ghidra.pcode.exec;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import generic.ULongSpan;
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 
@@ -44,5 +50,25 @@ public class BytesPcodeExecutorStatePiece
 	@Override
 	protected BytesPcodeExecutorStateSpace newSpace(AddressSpace space) {
 		return new BytesPcodeExecutorStateSpace(language, space, this);
+	}
+
+	@Override
+	public Entry<Long, byte[]> getNextEntryInternal(AddressSpace space, long offset) {
+		BytesPcodeExecutorStateSpace s = getForSpace(space, false);
+		if (s == null) {
+			return null;
+		}
+		ULongSpanSet initialized = s.bytes.getInitialized(0, -1);
+		ULongSpan span = initialized.spanContaining(offset);
+		if (span == null) {
+			var it = initialized.intersecting(ULongSpan.span(offset, -1)).iterator();
+			if (!it.hasNext()) {
+				return null;
+			}
+			span = it.next();
+		}
+		byte[] data = new byte[(int) span.length()];
+		s.bytes.getData(span.min(), data);
+		return Map.entry(span.min(), data);
 	}
 }

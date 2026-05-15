@@ -20,11 +20,11 @@ import java.util.*;
 
 import db.DBRecord;
 import db.Field;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.*;
 
 /**
@@ -33,7 +33,7 @@ import ghidra.util.exception.*;
  *  
  * 
  */
-class ModuleDB extends DatabaseObject implements ProgramModule {
+class ModuleDB extends DbObject implements ProgramModule {
 
 	private DBRecord record;
 	private ModuleManager moduleMgr;
@@ -49,13 +49,10 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 	 * 
 	 * Constructor
 	 * @param moduleMgr module manager
-	 * @param cache ModuleDB cache
 	 * @param record database record for this module
-	 * @throws IOException if database IO error occurs
 	 */
-	ModuleDB(ModuleManager moduleMgr, DBObjectCache<ModuleDB> cache, DBRecord record)
-			throws IOException {
-		super(cache, record.getKey());
+	ModuleDB(ModuleManager moduleMgr, DBRecord record) {
+		super(record.getKey());
 		this.moduleMgr = moduleMgr;
 		this.record = record;
 		childCount = record.getIntValue(ModuleDBAdapter.MODULE_CHILD_COUNT_COL);
@@ -83,8 +80,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 
 	@Override
 	public void add(ProgramFragment fragment) throws DuplicateGroupException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			FragmentDB frag = (FragmentDB) fragment;
 			long fragID = frag.getKey();
@@ -103,17 +99,13 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		catch (IOException e) {
 			moduleMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public void add(ProgramModule module)
 			throws CircularDependencyException, DuplicateGroupException {
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			ModuleDB moduleDB = (ModuleDB) module;
 			long moduleID = moduleDB.getKey();
@@ -135,9 +127,6 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 		catch (IOException e) {
 			moduleMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -167,9 +156,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 
 	@Override
 	public ProgramFragment createFragment(String fragmentName) throws DuplicateNameException {
-
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (moduleAdapter.getModuleRecord(fragmentName) != null ||
 				fragmentAdapter.getFragmentRecord(fragmentName) != null) {
@@ -187,17 +174,12 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		catch (IOException e) {
 			moduleMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return null;
 	}
 
 	@Override
 	public ProgramModule createModule(String moduleName) throws DuplicateNameException {
-
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (moduleAdapter.getModuleRecord(moduleName) != null ||
 				fragmentAdapter.getFragmentRecord(moduleName) != null) {
@@ -216,17 +198,13 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		catch (IOException e) {
 			moduleMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return null;
 	}
 
 	@Override
 	public Group[] getChildren() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			List<DBRecord> list = getParentChildRecords();
 			Group[] kids = new Group[list.size()];
 			if (kids.length != childCount) {
@@ -249,45 +227,33 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		catch (IOException e) {
 			moduleMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return new Group[0];
 	}
 
 	@Override
 	public String getComment() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return record.getString(ModuleDBAdapter.MODULE_COMMENTS_COL);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public Address getFirstAddress() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return findFirstAddress(this);
 		}
 		catch (IOException e) {
 			moduleMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return null;
 	}
 
 	@Override
 	public int getIndex(String name) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			DBRecord fragmentRecord = fragmentAdapter.getFragmentRecord(name);
 			DBRecord pcRec = null;
 			if (fragmentRecord != null) {
@@ -306,56 +272,41 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		catch (IOException e) {
 			moduleMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return -1;
 	}
 
 	@Override
 	public Address getLastAddress() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return findLastAddress(this);
 		}
 		catch (IOException e) {
 			moduleMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return null;
 	}
 
 	@Override
 	public Address getMaxAddress() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return findMaxAddress(this, null);
 		}
 		catch (IOException e) {
 			moduleMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return null;
 	}
 
 	@Override
 	public Address getMinAddress() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return findMinAddress(this, null);
 		}
 		catch (IOException e) {
 			moduleMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return null;
 	}
@@ -378,13 +329,9 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 
 	@Override
 	public int getNumChildren() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return childCount;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -393,17 +340,13 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		if (!(fragment instanceof FragmentDB)) {
 			return false;
 		}
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			FragmentDB frag = (FragmentDB) fragment;
 			return moduleMgr.isDescendant(-frag.getKey(), key);
 		}
 		catch (IOException e) {
 			moduleMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return false;
 	}
@@ -425,8 +368,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 
 	@Override
 	public void moveChild(String name, int index) throws NotFoundException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			int currentIndex = 0;
 			boolean foundName = false;
@@ -470,16 +412,11 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		catch (IOException e) {
 			moduleMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public boolean removeChild(String name) throws NotEmptyException {
-
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			DBRecord rec = fragmentAdapter.getFragmentRecord(name);
 			boolean deleteChild = false;
@@ -507,9 +444,6 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 		catch (IOException e) {
 			moduleMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return false;
 	}
@@ -546,8 +480,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		Group group = null;
 		ProgramFragment f = null;
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			long childID;
 			ProgramModule m = moduleMgr.getModule(name);
@@ -581,9 +514,6 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 			moduleMgr.dbError(e);
 
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
@@ -597,30 +527,22 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 
 	@Override
 	public String getName() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return record.getString(ModuleDBAdapter.MODULE_NAME_COL);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public int getNumParents() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			Field[] keys =
 				parentChildAdapter.getParentChildKeys(key, ParentChildDBAdapter.CHILD_ID_COL);
 			return keys.length;
 		}
 		catch (IOException e) {
 			moduleMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return 0;
 	}
@@ -642,8 +564,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 
 	@Override
 	public void setComment(String comment) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			String oldComments = record.getString(ModuleDBAdapter.MODULE_COMMENTS_COL);
 			if (oldComments == null || !oldComments.equals(comment)) {
@@ -657,15 +578,11 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 				}
 			}
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public void setName(String name) throws DuplicateNameException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (key == ModuleManager.ROOT_MODULE_ID) {
 				moduleMgr.getProgram().setName(name);
@@ -688,9 +605,6 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 		catch (IOException e) {
 			moduleMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 

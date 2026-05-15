@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public abstract class DBTraceCacheForSequenceQueries<T> {
 			this.max = range.getMaxAddress();
 		}
 
-		public T getFloor(Address address) {
+		public synchronized T getFloor(Address address) {
 			Entry<Address, T> floor = nav.floorEntry(address);
 			if (floor != null) {
 				return floor.getValue();
@@ -60,7 +60,7 @@ public abstract class DBTraceCacheForSequenceQueries<T> {
 			return ent.getValue();
 		}
 
-		public T getCeiling(Address address) {
+		public synchronized T getCeiling(Address address) {
 			Entry<Address, T> ceiling = nav.ceilingEntry(address);
 			if (ceiling != null) {
 				return ceiling.getValue();
@@ -79,19 +79,20 @@ public abstract class DBTraceCacheForSequenceQueries<T> {
 			return ent.getValue();
 		}
 
-		public void load(
+		public synchronized void load(
 				ArrayList<? extends Entry<? extends TraceAddressSnapRange, ? extends T>> entries) {
 			for (Entry<? extends TraceAddressSnapRange, ? extends T> ent : entries) {
 				nav.put(ent.getKey().getX1(), ent.getValue());
 			}
 		}
 
-		protected boolean contains(Address address) {
+		protected synchronized boolean contains(Address address) {
 			return min.hasSameAddressSpace(address) && min.compareTo(address) <= 0 &&
 				max.compareTo(address) >= 0;
 		}
 
-		protected void reInit(@SuppressWarnings("hiding") long snap, AddressRange range) {
+		protected synchronized void reInit(@SuppressWarnings("hiding") long snap,
+				AddressRange range) {
 			this.snap = snap;
 			this.min = range.getMinAddress();
 			this.max = range.getMaxAddress();
@@ -101,7 +102,7 @@ public abstract class DBTraceCacheForSequenceQueries<T> {
 	protected final int maxRegions;
 	protected final int addressBreadth;
 	// TODO: Depending on the number of regions, LinkedList may perform better
-	protected final List<CachedRegion> cache = new ArrayList<>();
+	protected final List<CachedRegion> cache = Collections.synchronizedList(new ArrayList<>());
 
 	public DBTraceCacheForSequenceQueries(int maxRegions, int addressBreadth) {
 		this.maxRegions = maxRegions;

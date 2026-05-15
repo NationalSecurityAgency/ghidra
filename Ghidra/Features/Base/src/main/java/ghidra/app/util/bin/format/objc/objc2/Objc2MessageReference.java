@@ -82,6 +82,7 @@ public class Objc2MessageReference extends ObjcTypeMetadataStructure {
 		Structure struct = new StructureDataType(NAME, 0);
 		struct.add(new PointerDataType(VOID), pointerSize, "imp", null);
 		struct.add(new PointerDataType(ASCII), pointerSize, "sel", null);
+		struct.setCategoryPath(Objc2Constants.CATEGORY_PATH);
 		return struct;
 	}
 }

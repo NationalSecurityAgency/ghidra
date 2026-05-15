@@ -44,6 +44,7 @@ import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.Msg;
 import ghidra.util.NotOwnerException;
+import ghidra.util.exception.NotFoundException;
 
 public class DebuggerCoordinates {
 
@@ -68,8 +69,7 @@ public class DebuggerCoordinates {
 	private static final String KEY_FRAME = "Frame";
 	private static final String KEY_OBJ_PATH = "ObjectPath";
 
-	public static boolean equalsIgnoreTargetAndView(DebuggerCoordinates a,
-			DebuggerCoordinates b) {
+	public static boolean equalsIgnoreTargetAndView(DebuggerCoordinates a, DebuggerCoordinates b) {
 		if (!Objects.equals(a.trace, b.trace)) {
 			return false;
 		}
@@ -124,8 +124,8 @@ public class DebuggerCoordinates {
 	@Override
 	public String toString() {
 		return String.format(
-			"Coords(trace=%s,target=%s,thread=%s,view=%s,time=%s,frame=%d,path=%s)",
-			trace, target, thread, view, time, frame, path);
+			"Coords(trace=%s,target=%s,thread=%s,view=%s,time=%s,frame=%d,path=%s)", trace, target,
+			thread, view, time, frame, path);
 	}
 
 	@Override
@@ -244,15 +244,14 @@ public class DebuggerCoordinates {
 	}
 
 	private static Integer resolveFrame(Target target, TraceThread thread, TraceSchedule time) {
-		if (target == null || target.getSnap() != time.getSnap() ||
-			!target.isSupportsFocus()) {
+		if (target == null || target.getSnap() != time.getSnap() || !target.isSupportsFocus()) {
 			return resolveFrame(thread, time);
 		}
 		return resolveFrame(target, target.getFocus());
 	}
 
-	private static KeyPath resolvePath(Target target, TraceThread thread,
-			Integer frame, TraceSchedule time) {
+	private static KeyPath resolvePath(Target target, TraceThread thread, Integer frame,
+			TraceSchedule time) {
 		if (target.getSnap() != time.getSnap() || !target.isSupportsFocus()) {
 			return resolvePath(target.getTrace(), thread, frame, time);
 		}
@@ -424,8 +423,8 @@ public class DebuggerCoordinates {
 		Integer newFrame = resolveFrame(newThread, newTime);
 		KeyPath threadOrFramePath = resolvePath(newThread, newFrame, newTime);
 		KeyPath newPath = choose(path, threadOrFramePath);
-		return new DebuggerCoordinates(trace, platform, target, newThread, view, newTime,
-			newFrame, newPath);
+		return new DebuggerCoordinates(trace, platform, target, newThread, view, newTime, newFrame,
+			newPath);
 	}
 
 	/**
@@ -478,8 +477,7 @@ public class DebuggerCoordinates {
 	}
 
 	private DebuggerCoordinates replaceView(TraceProgramView newView) {
-		return new DebuggerCoordinates(trace, platform, target, thread, newView, time, frame,
-			path);
+		return new DebuggerCoordinates(trace, platform, target, thread, newView, time, frame, path);
 	}
 
 	private static TraceSchedule resolveTime(TraceProgramView view) {
@@ -532,9 +530,8 @@ public class DebuggerCoordinates {
 		if (object == null) {
 			return null;
 		}
-		TraceStackFrame frame = object.queryCanonicalAncestorsInterface(TraceStackFrame.class)
-				.findFirst()
-				.orElse(null);
+		TraceStackFrame frame =
+			object.queryCanonicalAncestorsInterface(TraceStackFrame.class).findFirst().orElse(null);
 		return frame == null ? null : frame.getLevel();
 	}
 
@@ -549,15 +546,13 @@ public class DebuggerCoordinates {
 			return new DebuggerCoordinates(trace, platform, target, thread, view, time, frame,
 				newPath);
 		}
-		TraceThread newThread = target != null
-				? resolveThread(target, newPath)
-				: resolveThread(trace, newPath);
-		Integer newFrame = target != null
-				? resolveFrame(target, newPath)
-				: resolveFrame(trace, newPath);
+		TraceThread newThread =
+			target != null ? resolveThread(target, newPath) : resolveThread(trace, newPath);
+		Integer newFrame =
+			target != null ? resolveFrame(target, newPath) : resolveFrame(trace, newPath);
 
-		return new DebuggerCoordinates(trace, platform, target, newThread, view, time,
-			newFrame, newPath);
+		return new DebuggerCoordinates(trace, platform, target, newThread, view, time, newFrame,
+			newPath);
 	}
 
 	public DebuggerCoordinates pathNonCanonical(KeyPath newPath) {
@@ -747,7 +742,7 @@ public class DebuggerCoordinates {
 					"Not project owner: " + projLoc + "(" + pathname + ")");
 				return null;
 			}
-			catch (IOException | LockException e) {
+			catch (NotFoundException | IOException | LockException e) {
 				Msg.error(DebuggerCoordinates.class, "Project error: " + e.getMessage());
 				return null;
 			}

@@ -426,7 +426,8 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		//
 		DockingAction copyAction = getCopyAction();
 		ComponentProvider provider = getProvider();
-		assertTrue(copyAction.isEnabledForContext(provider.getActionContext(null)));
+		ActionContext context = createActionContext(provider);
+		assertTrue(copyAction.isEnabledForContext(context));
 
 		performAction(copyAction, provider, false);
 
@@ -478,11 +479,11 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		// Validate and execute the action
 		//		
 		ComponentProvider provider = getProvider();
-		ActionContext actionContext = provider.getActionContext(null);
-		boolean isEnabled = copyAction.isEnabledForContext(actionContext);
-		debugAction(copyAction, actionContext);
+		ActionContext context = createActionContext(provider);
+		boolean isEnabled = copyAction.isEnabledForContext(context);
+		debugAction(copyAction, context);
 		assertTrue(isEnabled);
-		performAction(copyAction, actionContext, true);
+		performAction(copyAction, context, true);
 
 		Transferable contents = systemClipboard.getContents(systemClipboard);
 		assertNotNull(contents);

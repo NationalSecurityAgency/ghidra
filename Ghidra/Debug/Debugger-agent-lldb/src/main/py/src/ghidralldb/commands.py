@@ -30,7 +30,7 @@ from ghidratrace import sch
 from ghidratrace.client import (Client, Address, AddressRange, Trace, Schedule,
                                 TraceObject, Transaction)
 from ghidratrace.display import print_tabular_values, wait
-import lldb
+import lldb #  type: ignore  # no stubs available from upstream/SWIG
 
 from . import arch, hooks, methods, util
 
@@ -302,23 +302,23 @@ def ghidra_trace_listen(debugger: lldb.SBDebugger, command: str,
     Usage: ghidra trace listen [ADDRESS]
         ADDRESS must be PORT or HOST:PORT
 
-    Takes an optional address for the host and port on which to listen. Either
-    the form 'host:port' or just 'port'. If omitted, it will bind to an
-    ephemeral port on all interfaces. If only the port is given, it will bind to
-    that port on all interfaces. This command will block until the connection is
-    established.
+    Takes an optional address for the host and port on which to listen.
+    Either the form 'host:port' or just 'port'. If omitted, it will bind
+    to an ephemeral port on localhost. If only the port is given, it will
+    bind to that port on localhost. This command will block until the
+    connection is established.
     """
 
     args = shlex.split(command)
     host: str
     port: Union[str, int]
     if len(args) == 0:
-        host, port = '0.0.0.0', 0
+        host, port = '127.0.0.1', 0
     elif len(args) == 1:
         address = args[0]
         parts = address.split(':')
         if len(parts) == 1:
-            host, port = '0.0.0.0', parts[0]
+            host, port = '127.0.0.1', parts[0]
         elif len(parts) == 2:
             host, port = parts
         else:
@@ -675,7 +675,7 @@ def put_bytes(start: int, end: int, result: lldb.SBCommandReturnObject,
         raise RuntimeError(f"Cannot read memory at {start:x}")
 
 
-def eval_address(address: str) -> int:
+def eval_address(address: str) -> Optional[int]:
     try:
         return util.parse_and_eval(address)
     except BaseException as e:
@@ -684,7 +684,7 @@ def eval_address(address: str) -> int:
         return None
 
 
-def eval_range(address: str, length: str) -> Tuple[int, int]:
+def eval_range(address: str, length: str) -> Tuple[Optional[int], Optional[int]]:
     start = eval_address(address)
     if start is None:
         return None, None
@@ -698,7 +698,7 @@ def eval_range(address: str, length: str) -> Tuple[int, int]:
 def putmem(address: str, length: str, result: lldb.SBCommandReturnObject,
            pages: bool = True) -> None:
     start, end = eval_range(address, length)
-    if start is not None:
+    if start is not None and end is not None:
         put_bytes(start, end, result, pages)
 
 
@@ -783,7 +783,7 @@ def putmem_state(address: str, length: str, state: str,
     trace = STATE.require_trace()
     trace.validate_state(state)
     start, end = eval_range(address, length)
-    if start is None:
+    if start is None or end is None:
         return
     if pages:
         start, end = quantize_pages(start, end)
@@ -853,7 +853,7 @@ def ghidra_trace_delmem(debugger: lldb.SBDebugger, command: str,
 
     STATE.require_tx()
     start, end = eval_range(address, length)
-    if start is None:
+    if start is None or end is None:
         return
     proc = util.get_process()
     base, addr = trace.extra.require_mm().map(proc, start)
@@ -1363,7 +1363,7 @@ def ghidra_trace_get_values_rng(debugger: lldb.SBDebugger, command: str,
 
     trace = STATE.require_trace()
     start, end = eval_range(address, length)
-    if start is None:
+    if start is None or end is None:
         return
     proc = util.get_process()
     base, addr = trace.extra.require_mm().map(proc, start)
@@ -1491,7 +1491,7 @@ def ghidra_trace_put_processes(debugger: lldb.SBDebugger, command: str,
         put_processes()
 
 
-def put_available() -> List[util.Available]:
+def put_available() -> None:
     trace = STATE.require_trace()
     availables = util.AVAILABLE_INFO_READER.get_availables()
     keys = []
@@ -1536,10 +1536,10 @@ def put_single_breakpoint(b: lldb.SBBreakpoint, proc: lldb.SBProcess) -> None:
     bpt_obj = trace.create_object(bpt_path)
     if b.IsHardware():
         bpt_obj.set_value('Expression', util.get_description(b))
-        bpt_obj.set_value('Kinds', 'HW_EXECUTE')
+        bpt_obj.set_value('Kinds', 'X')
     else:
         bpt_obj.set_value('Expression', util.get_description(b))
-        bpt_obj.set_value('Kinds', 'SW_EXECUTE')
+        bpt_obj.set_value('Kinds', 'x')
     cmdList = lldb.SBStringList()
     if b.GetCommandLineCommands(cmdList):
         list = []
@@ -1580,11 +1580,11 @@ def put_single_watchpoint(w: lldb.SBWatchpoint, proc: lldb.SBProcess) -> None:
     wpt_obj = trace.create_object(wpt_path)
     desc = util.get_description(w, level=0)
     wpt_obj.set_value('Expression', desc)
-    wpt_obj.set_value('Kinds', 'WRITE')
+    wpt_obj.set_value('Kinds', 'W')
     if "type = r" in desc:
-        wpt_obj.set_value('Kinds', 'READ')
+        wpt_obj.set_value('Kinds', 'R')
     if "type = rw" in desc:
-        wpt_obj.set_value('Kinds', 'READ,WRITE')
+        wpt_obj.set_value('Kinds', 'RW')
     base, addr = mapper.map(proc, w.GetWatchAddress())
     if base != addr.space:
         trace.create_overlay_space(base, addr.space)

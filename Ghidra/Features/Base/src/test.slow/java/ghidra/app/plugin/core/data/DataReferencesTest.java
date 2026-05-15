@@ -48,10 +48,6 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestEnv env;
 	private PluginTool tool;
 
-	/**
-	 * Sets up the fixture, for example, open a network connection.
-	 * This method is called before a test is executed.
-	 */
 	@Before
 	public void setUp() throws Exception {
 		env = new TestEnv();
@@ -81,7 +77,6 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@After
 	public void tearDown() {
-		env.release(program);
 		env.dispose();
 	}
 

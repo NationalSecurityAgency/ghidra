@@ -83,7 +83,7 @@ public class GoBaseType implements StructureVerifier {
 	 * {@return the {@link GoTypeFlag}s assigned to this type definition}
 	 */
 	public Set<GoTypeFlag> getFlags() {
-		return GoTypeFlag.parseFlags(tflag);
+		return GoTypeFlag.parseFlags(tflag, programContext.getGoVer());
 	}
 
 	/**
@@ -98,7 +98,7 @@ public class GoBaseType implements StructureVerifier {
 	 * structure}
 	 */
 	public boolean hasUncommonType() {
-		return GoTypeFlag.Uncommon.isSet(tflag);
+		return GoTypeFlag.Uncommon.isSet(tflag, programContext.getGoVer());
 	}
 
 	/**
@@ -115,7 +115,9 @@ public class GoBaseType implements StructureVerifier {
 	 */
 	public String getName() {
 		String s = programContext.getSafeName(this::getGoName, this, "").getName();
-		return GoTypeFlag.ExtraStar.isSet(tflag) && s.startsWith("*") ? s.substring(1) : s;
+		return GoTypeFlag.ExtraStar.isSet(tflag, programContext.getGoVer()) && s.startsWith("*")
+				? s.substring(1)
+				: s;
 	}
 
 	/**

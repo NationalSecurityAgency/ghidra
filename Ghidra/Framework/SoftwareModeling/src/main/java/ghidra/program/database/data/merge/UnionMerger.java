@@ -16,7 +16,6 @@
 package ghidra.program.database.data.merge;
 
 import ghidra.program.model.data.*;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Datatype merger for Unions
@@ -77,13 +76,8 @@ public class UnionMerger extends DataTypeMerger<Union> {
 	}
 
 	private void appySameTypeComponent(DataTypeComponent resultComp, DataTypeComponent component) {
-		try {
-			resultComp.setFieldName(component.getFieldName());
-			resultComp.setComment(join(resultComp.getComment(), component.getComment()));
-		}
-		catch (DuplicateNameException e) {
-			// can't happen, we already looked for a component with the same name
-		}
+		resultComp.setFieldName(component.getFieldName());
+		resultComp.setComment(join(resultComp.getComment(), component.getComment()));
 	}
 
 	private void applySameNamedComponent(DataTypeComponent comp1, DataTypeComponent comp2)

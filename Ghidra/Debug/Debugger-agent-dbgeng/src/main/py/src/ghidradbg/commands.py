@@ -185,20 +185,20 @@ def ghidra_trace_connect(address: Optional[str] = None) -> None:
         raise RuntimeError("port must be numeric")
 
 
-def ghidra_trace_listen(address: str = '0.0.0.0:0') -> None:
+def ghidra_trace_listen(address: str = '127.0.0.1:0') -> None:
     """Listen for Ghidra to connect for tracing.
 
     Takes an optional address for the host and port on which to listen.
     Either the form 'host:port' or just 'port'. If omitted, it will bind
-    to an ephemeral port on all interfaces. If only the port is given,
-    it will bind to that port on all interfaces. This command will block
-    until the connection is established.
+    to an ephemeral port on localhost. If only the port is given, it will
+    bind to that port on localhost. This command will block until the
+    connection is established.
     """
 
     STATE.require_no_client()
     parts = address.split(':')
     if len(parts) == 1:
-        host, port = '0.0.0.0', parts[0]
+        host, port = '127.0.0.1', parts[0]
     elif len(parts) == 2:
         host, port = parts
     else:
@@ -245,10 +245,8 @@ def start_trace(name: str) -> None:
     if frame is None:
         raise AssertionError("cannot locate schema.xml")
     parent = os.path.dirname(inspect.getfile(frame))
-    if util.is_exdi():
-        schema_fn = os.path.join(parent, 'schema_exdi.xml')
-    else:
-        schema_fn = os.path.join(parent, 'schema.xml')
+    schema_fn = os.path.join(parent, 'schema_exdi.xml' if util.is_exdi() else 'schema.xml')
+
     with open(schema_fn, 'r') as schema_file:
         schema_xml = schema_file.read()
     using_dbgmodel = os.getenv('OPT_USE_DBGMODEL') == "true"
@@ -1076,10 +1074,10 @@ def put_single_breakpoint(bp, ibobj, nproc: int, ikeys: List[str]) -> None:
     if bp.GetType()[0] == DbgEng.DEBUG_BREAKPOINT_DATA:
         width, prot = bp.GetDataParameters()
         width = str(width)
-        prot = {4: 'HW_EXECUTE', 2: 'READ', 1: 'WRITE'}[prot]
+        prot = {4: 'X', 2: 'R', 1: 'W'}[prot]
     else:
         width = ' '
-        prot = 'SW_EXECUTE'
+        prot = 'x'
 
     if address is not None:  # Implies execution break
         base, addr = mapper.map(nproc, address)
@@ -1526,8 +1524,8 @@ def put_exceptions() -> None:
 
 
 @util.dbg.eng_thread
-def put_single_exception(obj: TraceObject, objpath: str, 
-                         p: DbgEng._DEBUG_EXCEPTION_FILTER_PARAMETERS, 
+def put_single_exception(obj: TraceObject, objpath: str,
+                         p: DbgEng._DEBUG_EXCEPTION_FILTER_PARAMETERS,
                          offset: int, index: int, specific: bool) -> None:
     exc_name = "None"
     if specific is True:

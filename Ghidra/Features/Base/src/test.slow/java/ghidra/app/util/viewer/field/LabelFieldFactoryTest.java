@@ -44,10 +44,6 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 	private CodeBrowserPlugin cb;
 	private Program program;
 
-	public LabelFieldFactoryTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 
@@ -60,7 +56,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private ProgramDB buildProgram() throws Exception {
-		ToyProgramBuilder builder = new ToyProgramBuilder("notepad", true);
+		ToyProgramBuilder builder = new ToyProgramBuilder();
 
 		builder.createMemory(".text", "1001000", 0x4000);
 		builder.addBytesNOP("1002000", 6);
@@ -169,8 +165,9 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		ListingTextField tf = (ListingTextField) cb.getCurrentField();
 
 		// 4 offcut labels and one dynamic label
+		String actual = tf.getText();
 		assertEquals("LAB_01002000+1 LAB_01002000+2 LAB_01002000+3 LAB_01002000+4 LAB_01002000",
-			tf.getText()); // bad offcut put on instruction
+			actual); // bad offcut put on instruction
 
 		assertEquals(5, tf.getNumRows());
 	}

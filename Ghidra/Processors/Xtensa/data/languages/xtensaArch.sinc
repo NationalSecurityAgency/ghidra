@@ -108,6 +108,8 @@ define token insn(24)
     ar     = (8,11)
     fr     = (8,11)
     br     = (8,11)
+    mw     = (8,9)
+    mx     = (10,10)
     as     = (12,15)
     fs     = (12,15)
     bs     = (12,15)
@@ -115,45 +117,42 @@ define token insn(24)
     at     = (16,19)
     ft     = (16,19)
     bt     = (16,19)
+    my     = (18,18)
     op0    = (20,23)
 
-    # Signed and unsigned immediates. Named [us]N_L.M, where u and s denote signedness, L and M the
-    # least and most significant bit of the immediate in the instruction word, and N the length
-    # (i.e. M-L+1).
-    u3_21_23    = (1,3)
-    u4_20_23    = (0,3)
-    s8_16_23    = (0,7) signed
-    u8_16_23    = (0,7)
-    u12_12_23   = (0,11)
-    s12_12_23   = (0,11) signed
-    u16_8_23    = (0,15)
-    s8_6_23     = (0,17) signed
-    u1_20       = (0,0)
-    u2_18_19    = (4,5)
-    u3_17_19    = (5,7)
-    u2_16_17    = (6,7)
-    u1_16       = (4,4)
-    u1_15_15    = (11,11)
-    u2_14_15    = (10,11)
-    u3_13_15    = (9,11)
-    u4_12_15    = (8,11)
-    m0m1_14_14  = (10,10)
-    u2_12_13    = (8,9)
-    mw_12_13    = (8,9)
-    u1_12       = (8,8)
-    u4_8_11     = (12,15)
-    u8_4_11     = (12,19)
-    s4_8_11     = (12,15)  signed
-    u1_7_7      = (19,19)
-    u2_6_7      = (16,17)
-    u3_5_7      = (17,19)
-    u4_4_7      = (16,19)
-    s4_4_7      = (16,19)
-    m2m3_6_6    = (18,18)
-    u_4_23      = (0,19)
-    t2_4_5      = (16,17)
-    u2_4_5      = (18,19)
-    u1_4        = (16,16)
+    op2_1_3     = (1,3)
+    op2_0       = (0,0)
+    ri8_i8      = (0,7)
+    ri8_si8     = (0,7) signed
+    bri12_i12   = (0,11)
+    bri12_si12  = (0,11) signed
+    ri16_i16    = (0,15)
+    call_o18    = (0,17) signed
+    op1_1_3     = (5,7)
+    op1_0       = (4,4)
+    op_r_3      = (11,11)
+    op_r_2_2    = (10,11)
+    op_r_1_3    = (9,11)
+    op_r_0_2    = (8,9)
+    op_r_0      = (8,8)
+    op_r        = (8,11)
+    op_s        = (12,15)
+    op_st       = (12,19)
+    op_st_i8    = (12,15) signed
+    op_t_3      = (19,19)
+    op_t_1_3    = (17,19)
+    op_t_0_2    = (16,17)
+    op_t        = (16,19)
+    op_t_0      = (16,16)
+    op_t_si4    = (16,19) signed
+    
+    # If flix instructions are defined for a BE processor
+    # this will possibly need to be split for the operands
+    flix_i20    = (0,19)
+    
+    # Care needs to be taken with these for BE
+    bri8_n      = (18,19)
+    bri8_m      = (16,17)
 ;
 
 # little-endian -> big-endian 16-bit conversion chart
@@ -167,14 +166,14 @@ define token narrowinsn(16)
     n_at   = (8,11)
     n_op0  = (12,15)
 
-    n_u4_12_15  = (0,3)
-    n_s4_12_15  = (0,3) signed
-    n_u4_8_11   =  (4,7)
-    n_u1_7      =  (11,11)
-    n_u2_6_7    =  (10,11)
-    n_u4_4_7    =  (8,11)
-    n_s3_4_6    =  (8,10)
-    n_u2_4_5    =  (8,9)
+    ri6_i6_0_4  = (0,3)
+    ri6_si6_0_4 = (0,3) signed
+    n_op_t      = (4,7)
+    n_op_s_3    = (11,11)
+    n_op_s_2_2  = (10,11)
+    n_op_s      = (8,11)
+    n_op_s_0_3  = (8,10)
+    ri6_i6_4_2  = (8,9)
 ;
 
 @else
@@ -182,9 +181,12 @@ define token narrowinsn(16)
 define token insn(24)
     # Named opcode/register fields.
     op2    = (20,23)
+    op1    = (16,19)
     ar     = (12,15)
     fr     = (12,15)
     br     = (12,15)
+    mw     = (12,13)
+    mx     = (14,14)
     as     = (8,11)
     fs     = (8,11)
     bs     = (8,11)
@@ -192,46 +194,40 @@ define token insn(24)
     at     = (4,7)
     ft     = (4,7)
     bt     = (4,7)
-    op1    = (16,19)
+    my     = (6,6)
     op0    = (0,3)
 
     # Signed and unsigned immediates. Named [us]N_L_M, where u and s denote signedness, L and M the
     # least and most significant bit of the immediate in the instruction word, and N the length
     # (i.e. M-L+1).
-    u3_21_23    = (21,23)
-    u4_20_23    = (20,23)
-    s8_16_23    = (16,23) signed
-    u8_16_23    = (16,23)
-    u12_12_23   = (12,23)
-    s12_12_23   = (12,23) signed
-    u16_8_23    = (8,23)
-    s8_6_23     = (6,23) signed
-    u1_20       = (20,20)
-    u2_18_19    = (18,19)
-    u3_17_19    = (17,19)
-    u2_16_17    = (16,17)
-    u1_16       = (16,16)
-    u1_15_15    = (15,15)
-    u2_14_15    = (14,15)
-    u3_13_15    = (13,15)
-    u4_12_15    = (12,15)
-    m0m1_14_14  = (14,14)
-    u2_12_13    = (12,13)
-    mw_12_13    = (12,13)
-    u1_12       = (12,12)
-    u4_8_11     = (8,11)
-    u8_4_11     = (4,11)
-    s4_8_11     = (8,11)  signed
-    u1_7_7      = (7,7)
-    u2_6_7      = (6,7)
-    u3_5_7      = (5,7)
-    u4_4_7      = (4,7)
-    s4_4_7      = (4,7)
-    m2m3_6_6    = (6,6)
-    u_4_23      = (4,23)
-    t2_4_5      = (4,5)
-    u2_4_5      = (4,5)
-    u1_4        = (4,4)
+    op2_1_3     = (21,23)
+    op2_0       = (20,20)
+    ri8_i8      = (16,23)
+    ri8_si8     = (16,23) signed
+    bri12_i12   = (12,23)
+    bri12_si12  = (12,23) signed
+    ri16_i16    = (8,23)
+    call_o18    = (6,23) signed
+    op1_1_3     = (17,19)
+    op1_0       = (16,16)
+    op_r_3      = (15,15)
+    op_r_2_2    = (14,15)
+    op_r_1_3    = (13,15)
+    op_r_0_2    = (12,13)
+    op_r_0      = (12,12)
+    op_r        = (12,15)
+    op_s        = (8,11)
+    op_st       = (4,11)
+    op_st_i8    = (8,11) signed
+    op_t_3      = (7,7)
+    op_t_1_3    = (5,7)
+    op_t_0_2    = (4,5)
+    op_t_0      = (4,4)
+    op_t        = (4,7)
+    op_t_si4    = (4,7) signed
+    flix_i20    = (4,23)
+    bri8_n      = (4,5)
+    bri8_m      = (6,7)
 ;
 
 # Narrow 16-bit instructions; fields are always prefixed with n_.
@@ -241,14 +237,14 @@ define token narrowinsn(16)
     n_at   = (4,7)
     n_op0  = (0, 3)
 
-    n_u4_12_15  = (12,15)
-    n_s4_12_15  = (12,15) signed
-    n_u4_8_11   =  (8,11)
-    n_u1_7      =  (7,7)
-    n_u2_6_7    =  (6,7)
-    n_u4_4_7    =  (4,7)
-    n_s3_4_6    =  (4,6)
-    n_u2_4_5    =  (4,5)
+    ri6_i6_0_4   = (12,15)
+    ri6_si6_0_4  = (12,15) signed
+    n_op_t       = (8,11)
+    n_op_s_3     = (7,7)
+    n_op_s_2_2   = (6,7)
+    n_op_s       = (4,7)
+    n_op_s_0_3   = (4,6)
+    ri6_i6_4_2   = (4,5)
 ;
 
 @endif

@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
 
 import ghidra.app.util.bin.format.dwarf.DWARFDataTypeImporter.DWARFDataType;
 import ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionException;
+import ghidra.program.database.DbObject;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.Program;
@@ -130,25 +131,28 @@ public class DWARFDataTypeManager {
 		DataType post =
 			dataTypeManager.resolve(pre.dataType, DWARFDataTypeConflictHandler.INSTANCE);
 
-		// While walking the pre and post DataType graph in lockstep, use the mapping of
-		// pre_impl->offset to cache offset->post_datatype for later re-use.
-		DataTypeGraphComparator.compare(pre.dataType, post, (dt1, dt2) -> {
+		// If the data type was already in the database, we don't need to correlate pre&post
+		if (!(pre.dataType instanceof DbObject)) {
+			// While walking the pre and post DataType graph in lockstep, use the mapping of
+			// pre_impl->offset to cache offset->post_datatype for later re-use.
+			DataTypeGraphComparator.compare(pre.dataType, post, (dt1, dt2) -> {
 
-			DWARFDataType currentDDT = ddtImporter.getDDTByInstance(dt1);
+				DWARFDataType currentDDT = ddtImporter.getDDTByInstance(dt1);
 
-			// if we find the pre_datatype metadata, add permanent mapping
-			// of offset->db_datatype
-			if (currentDDT != null) {
-				if (currentDDT.dataType == dt1) {
-					for (Long offset : currentDDT.offsets) {
-						cacheOffsetToDataTypeMapping(offset, dt2);
+				// if we find the pre_datatype metadata, add permanent mapping
+				// of offset->db_datatype
+				if (currentDDT != null) {
+					if (currentDDT.dataType == dt1) {
+						for (Long offset : currentDDT.offsets) {
+							cacheOffsetToDataTypeMapping(offset, dt2);
+						}
 					}
+					saveDWARFSourceInfo(dt2, currentDDT.dsi);
 				}
-				saveDWARFSourceInfo(dt2, currentDDT.dsi);
-			}
 
-			return true;
-		});
+				return true;
+			});
+		}
 
 		cacheOffsetToDataTypeMapping(diea.getOffset(), post);
 		saveDWARFSourceInfo(post, pre.dsi);

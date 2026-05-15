@@ -393,6 +393,9 @@ public class JavadocConverter extends DocConverter {
 			if (el instanceof ExecutableElement method) {
 				type = (TypeElement) method.getEnclosingElement();
 			}
+			else if (el instanceof VariableElement variable) {
+				type = (TypeElement) variable.getEnclosingElement();
+			}
 			else {
 				type = (TypeElement) el;
 			}

@@ -38,6 +38,7 @@ public class SparcV9_64_O3_EmulatorTest extends ProcessorEmulatorTestAdapter {
 
 	@Override
 	protected void initializeState(EmulatorTestRunner testRunner, Program program) throws Exception {
+		super.initializeState(testRunner, program);
 		testRunner.setRegister("DECOMPILE_MODE", 0x0);  // turn decompile mode off
 	}
 	

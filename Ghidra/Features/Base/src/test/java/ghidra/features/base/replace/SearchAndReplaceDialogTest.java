@@ -22,6 +22,7 @@ import java.util.List;
 import org.junit.*;
 
 import docking.ActionContext;
+import docking.ComponentProvider;
 import docking.action.DockingActionIf;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.features.base.quickfix.*;
@@ -48,15 +49,16 @@ public class SearchAndReplaceDialogTest extends AbstractGhidraHeadedIntegrationT
 
 		SearchAndReplacePlugin plugin = getPlugin(tool, SearchAndReplacePlugin.class);
 
-		ToyProgramBuilder builder = new ToyProgramBuilder("Test", true);
+		ToyProgramBuilder builder = new ToyProgramBuilder();
 		builder.createLabel("0x100", "myFooLabel");
 		builder.createLabel("0x200", "myBarLabel");
 		program = builder.getProgram();
 		env.open(program);
 		env.showTool();
 		searchAndReplaceAction = getAction(plugin, "Search And Replace");
-		ActionContext actionContext = tool.getActiveComponentProvider().getActionContext(null);
-		performAction(searchAndReplaceAction, actionContext, false);
+		ComponentProvider provider = tool.getActiveComponentProvider();
+		ActionContext context = createActionContext(provider);
+		performAction(searchAndReplaceAction, context, false);
 		dialog = waitForDialogComponent(SearchAndReplaceDialog.class);
 		assertNotNull(dialog);
 	}

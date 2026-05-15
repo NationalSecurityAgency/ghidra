@@ -124,7 +124,7 @@ public class LaunchSupport {
 			}
 		}
 		catch (Exception e) {
-			System.err.println(e.getMessage());
+			e.printStackTrace(System.err);
 		}
 
 		System.exit(exitCode);

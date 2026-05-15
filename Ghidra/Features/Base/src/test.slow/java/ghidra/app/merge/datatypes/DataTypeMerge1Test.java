@@ -932,13 +932,8 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 						"IntStruct");
 
-				try {
-					DataTypeComponent dtc = s.getComponent(0);
-					dtc.setFieldName("Field One");
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got duplicate name exception!");
-				}
+				DataTypeComponent dtc = s.getComponent(0);
+				dtc.setFieldName("Field One");
 			}
 
 			@Override
@@ -950,14 +945,9 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 						"IntStruct");
 
-				try {
-					DataTypeComponent dtc = s.getComponent(2);
-					dtc.setFieldName("My Field Three");
-					dtc.setComment("my comments for Field 3");
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got duplicate name exception!");
-				}
+				DataTypeComponent dtc = s.getComponent(2);
+				dtc.setFieldName("My Field Three");
+				dtc.setComment("my comments for Field 3");
 			}
 		});
 		executeMerge(DataTypeMergeManager.OPTION_MY);

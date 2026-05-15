@@ -27,7 +27,6 @@ import ghidra.framework.store.*;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.framework.store.local.LocalFolderItem;
 import ghidra.server.Repository;
-import ghidra.server.RepositoryManager;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateFileException;
 import ghidra.util.exception.FileInUseException;
@@ -257,7 +256,7 @@ public class RepositoryFolder {
 			// Folder created notification causes RepositoryFolder instance to be added
 
 			RepositoryFolder rf = getFolder(folderName);
-			RepositoryManager.log(repository.getName(), rf.getPathname(), "folder created", user);
+			repository.log(rf.getPathname(), "folder created", user);
 			return rf;
 		}
 	}
@@ -289,7 +288,7 @@ public class RepositoryFolder {
 			RepositoryFile rf = new RepositoryFile(repository, fileSystem, this, itemName);
 			fileMap.put(itemName, rf);
 
-			RepositoryManager.log(repository.getName(), makePathname(getPathname(), itemName),
+			repository.log(makePathname(getPathname(), itemName),
 				"file created", user);
 		}
 	}
@@ -320,7 +319,7 @@ public class RepositoryFolder {
 			// Buffer file does not yet exist - too early to get folder item needed for RepositoryFile
 			LocalManagedBufferFile bf = fileSystem.createDatabase(getPathname(), itemName, fileID,
 				contentType, bufferSize, user, projectPath);
-			RepositoryManager.log(repository.getName(), makePathname(getPathname(), itemName),
+			repository.log(makePathname(getPathname(), itemName),
 				"file created", user);
 			return bf;
 		}
@@ -434,8 +433,7 @@ public class RepositoryFolder {
 					throw new IOException("Folder can not be renamed and moved");
 				}
 				pathChanged();
-				RepositoryManager.log(repository.getName(), oldPath,
-					"folder moved to " + getPathname(), user);
+				repository.log(oldPath, "folder moved to " + getPathname(), user);
 			}
 			finally {
 				repository.flushChangeEvents();

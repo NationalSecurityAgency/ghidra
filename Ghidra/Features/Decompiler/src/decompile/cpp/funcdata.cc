@@ -907,44 +907,87 @@ void PcodeEmitFd::dump(const Address &addr,OpCode opc,VarnodeData *outvar,Varnod
   }
 }
 
-/// \brief Get the resolved union field associated with the given edge
+/// \brief Get the resolution (union field) associated with an unresolved data-type and the given edge
 ///
-/// If there is no field associated with the edge, null is returned
-/// \param parent is the data-type being resolved
+/// If there is no field associated with the edge, or the resolved data-type is not
+/// the same size as the given data-type, null is returned.
+/// \param unresType is the given data-type being resolved
 /// \param op is the PcodeOp component of the given edge
 /// \param slot is the slot component of the given edge
 /// \return the associated field as a ResolvedUnion or null
-const ResolvedUnion *Funcdata::getUnionField(const Datatype *parent,const PcodeOp *op,int4 slot) const
+const ResolvedUnion *Funcdata::getUnionField(const Datatype *unresType,const PcodeOp *op,int4 slot) const
 
 {
   map<ResolveEdge,ResolvedUnion>::const_iterator iter;
-  ResolveEdge edge(parent,op,slot);
+  ResolveEdge edge(unresType,op,slot);
+  iter = unionMap.find(edge);
+  if (iter != unionMap.end()) {
+    const ResolvedUnion *res = &(*iter).second;
+    Datatype *dt = res->getDatatype();
+    // Check that the Varnode size matches the data-type
+    if (unresType->getSize() == dt->getSize())
+      return res;
+  }
+  return (const ResolvedUnion *)0;
+}
+
+/// \brief Get the resolution (union field) associated with an unresolved data-type and the given edge
+///
+/// The size of the resolved data-type does not have to match the given data-type.
+/// If there is no field associated with the edge, null is returned.
+/// \param unresType is the unresolved data-type
+/// \param op is the PcodeOp component of the given edge
+/// \param slot is the slot component of the given edge
+/// \return the associated field as a ResolvedUnion or null
+const ResolvedUnion *Funcdata::getUnionResolution(const Datatype *unresType,const PcodeOp *op,int4 slot) const
+
+{
+  map<ResolveEdge,ResolvedUnion>::const_iterator iter;
+  ResolveEdge edge(unresType,op,slot);
+  iter = unionMap.find(edge);
+  if (iter != unionMap.end()) {
+    const ResolvedUnion *res = &(*iter).second;
+    return res;
+  }
+  return (const ResolvedUnion *)0;
+}
+
+/// \brief Get any resolution (union field) associated with an unresolved data-type and the given address
+///
+/// If there is no associated field, null is returned
+/// \param unresType is the unresolved data-type
+/// \param addr is the given address
+/// \param slot is the slot component the resolution matches
+/// \return the associated field as a ResolvedUnion or null
+const ResolvedUnion *Funcdata::getAddressBasedUnionField(const Datatype *unresType,const Address &addr,int4 slot) const
+
+{
+  map<ResolveEdge,ResolvedUnion>::const_iterator iter;
+  ResolveEdge edge(unresType,addr,slot);
   iter = unionMap.find(edge);
   if (iter != unionMap.end())
     return &(*iter).second;
   return (const ResolvedUnion *)0;
 }
 
-/// \brief Associate a union field with the given edge
+/// \brief Associate a resolution (union field) with an unresolved data-type and the given edge
 ///
 /// If there was a previous association, it is overwritten unless it was \e locked.
 /// The method returns \b true except in this case where a previous locked association exists.
-/// \param parent is the parent union data-type
+/// \param unresType is the unresolved data-type
 /// \param op is the PcodeOp component of the given edge
 /// \param slot is the slot component of the given edge
 /// \param resolve is the resolved union
-/// \return \b true unless there was a locked association
-bool Funcdata::setUnionField(const Datatype *parent,const PcodeOp *op,int4 slot,const ResolvedUnion &resolve)
+/// \return \b true unless the resolution was locked
+bool Funcdata::setUnionField(const Datatype *unresType,const PcodeOp *op,int4 slot,const ResolvedUnion &resolve)
 
 {
-  ResolveEdge edge(parent,op,slot);
+  ResolveEdge edge(unresType,op,slot);
   pair<map<ResolveEdge,ResolvedUnion>::iterator,bool> res;
   res = unionMap.emplace(edge,resolve);
   if (!res.second) {
-    if ((*res.first).second.isLocked()) {
-      return false;
-    }
-    (*res.first).second = resolve;
+    if (!(*res.first).second.update(resolve))
+      return !(*res.first).second.isLocked();
   }
   if (op->code() == CPUI_MULTIEQUAL && slot >= 0) {
     // Data-type propagation doesn't happen between MULTIEQUAL input slots holding the same Varnode
@@ -953,54 +996,124 @@ bool Funcdata::setUnionField(const Datatype *parent,const PcodeOp *op,int4 slot,
     for(int4 i=0;i<op->numInput();++i) {
       if (i == slot) continue;
       if (op->getIn(i) != vn) continue;		// Check that different input slot holds same Varnode
-      ResolveEdge dupedge(parent,op,i);
+      ResolveEdge dupedge(unresType,op,i);
       res = unionMap.emplace(dupedge,resolve);
       if (!res.second) {
-	if (!(*res.first).second.isLocked())
-	  (*res.first).second = resolve;
+	(*res.first).second.update(resolve);
       }
     }
   }
   return true;
 }
 
-/// \brief Force a specific union field resolution for the given edge
+/// \brief Associate a resolution (union field) with an unresolved data-type and the given address
 ///
-/// The \b parent data-type is taken directly from the given Varnode.
-/// \param parent is the parent data-type
+/// If there was a previous association, it is overwritten unless it was \e locked.
+/// The method returns \b true except in this case where a previous locked association exists.
+/// \param unresType is the unresolved data-type
+/// \param addr is the given address
+/// \param slot is the slot component the resolution matches
+/// \param resolve is the resolved union
+/// \return \b true unless there was a locked association
+bool Funcdata::setAddressBasedUnionField(const Datatype *unresType,const Address &addr,int4 slot,const ResolvedUnion &resolve)
+
+{
+  ResolveEdge edge(unresType,addr,slot);
+  pair<map<ResolveEdge,ResolvedUnion>::iterator,bool> res;
+  res = unionMap.emplace(edge,resolve);
+  if (!res.second) {
+    if ((*res.first).second.isLocked()) {
+      return false;
+    }
+    (*res.first).second = resolve;
+  }
+  return true;
+}
+
+/// \brief Update the resolution data-type associated with an unresolved data-type for a given edge
+///
+/// If further resolution of the cached data-type has happened, update the cache with the new data-type.
+/// \param unresType is the unresolved data-type
+/// \param op is the PcodeOp component of the given edge
+/// \param slot is the slot component of the given edge
+/// \param resType is the new resolution data-type
+/// \return \b true unless there was a locked association
+bool Funcdata::updateUnionField(const Datatype *unresType,const PcodeOp *op,int4 slot,Datatype *resType)
+
+{
+  map<ResolveEdge,ResolvedUnion>::iterator iter;
+  ResolveEdge edge(unresType,op,slot);
+  iter = unionMap.find(edge);
+  if (iter != unionMap.end()) {
+    (*iter).second.setResolve(resType);
+    return true;
+  }
+  return false;
+}
+
+/// \brief Force a specific resolution (union field) resolution for an unresolved data-type and the given edge
+///
+/// \param unresType is the unresolved data-type
 /// \param fieldNum is the index of the field to force
 /// \param op is PcodeOp of the edge
 /// \param slot is -1 for the write edge or >=0 indicating the particular read edge
-void Funcdata::forceFacingType(Datatype *parent,int4 fieldNum,PcodeOp *op,int4 slot)
+void Funcdata::forceFacingType(Datatype *unresType,int4 fieldNum,PcodeOp *op,int4 slot)
 
 {
-  Datatype *baseType = parent;
+  Datatype *baseType = unresType;
   if (baseType->getMetatype() == TYPE_PTR)
     baseType = ((TypePointer *)baseType)->getPtrTo();
-  if (parent->isPointerRel()) {
+  if (unresType->isPointerRel()) {
     // Don't associate a relative pointer with the resolution, but convert to a standard pointer
-    parent = glb->types->getTypePointer(parent->getSize(), baseType, ((TypePointer *)parent)->getWordSize());
+    unresType = glb->types->getTypePointer(unresType->getSize(), baseType, ((TypePointer *)unresType)->getWordSize());
   }
-  ResolvedUnion resolve(parent,fieldNum,*glb->types);
-  setUnionField(parent, op, slot, resolve);
+  ResolvedUnion resolve(unresType,fieldNum,*glb->types);
+  setUnionField(unresType, op, slot, resolve);
 }
 
-/// \brief Copy a read/write facing resolution for a specific data-type from one PcodeOp to another
+/// \brief Copy a read/write facing resolution for an unresolved data-type from one PcodeOp to another
 ///
-/// \param parent is the data-type that needs resolution
+/// \param unresType is the unresolved data-type
 /// \param op is the new reading PcodeOp
 /// \param slot is the new slot (-1 for write, >=0 for read)
 /// \param oldOp is the PcodeOp to inherit the resolution from
 /// \param oldSlot is the old slot (-1 for write, >=0 for read)
-int4 Funcdata::inheritResolution(Datatype *parent,const PcodeOp *op,int4 slot,PcodeOp *oldOp,int4 oldSlot)
+/// \return the field number that was inherited
+int4 Funcdata::inheritUnionField(Datatype *unresType,const PcodeOp *op,int4 slot,PcodeOp *oldOp,int4 oldSlot)
 
 {
+  map<ResolveEdge,ResolvedUnion>::const_iterator iter;
+  if (slot < 0 && oldOp->isMarker())
+    slot = 0;
+  ResolveEdge edge(unresType,oldOp,oldSlot);
+  iter = unionMap.find(edge);
+  if (iter == unionMap.end())
+    return -1;
+  setUnionField(unresType,op,slot,(*iter).second);
+  return (*iter).second.getFieldNum();
+}
+
+/// \brief Create a resolution for an unresolved pointer data-type based on earlier non-pointer resolution
+///
+/// \param unresPtr is the unresolved pointer data-type
+/// \param op is the new reading PcodeOp
+/// \param slot is the new slot (-1 for write, >=0 for read)
+/// \param oldOp is the PcodeOp to inherit the resolution from
+/// \param oldSlot is the old slot (-1 for write, >=0 for read)
+/// \return the field number that was inherited
+int4 Funcdata::inheritUnionFieldPtr(Datatype *unresPtr,const PcodeOp *op,int4 slot,PcodeOp *oldOp,int4 oldSlot)
+
+{
+  Datatype *parent = unresPtr->getDepend(0);
+  if (slot < 0 && oldOp->isMarker())
+    slot = 0;
   map<ResolveEdge,ResolvedUnion>::const_iterator iter;
   ResolveEdge edge(parent,oldOp,oldSlot);
   iter = unionMap.find(edge);
   if (iter == unionMap.end())
     return -1;
-  setUnionField(parent,op,slot,(*iter).second);
+  ResolvedUnion ptrres(unresPtr,(*iter).second.getFieldNum(),*glb->types);
+  setUnionField(unresPtr,op,slot,ptrres);
   return (*iter).second.getFieldNum();
 }
 

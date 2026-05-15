@@ -688,11 +688,13 @@ void EquateSymbol::decode(Decoder &decoder)
 /// \param nm is the name of the symbol
 /// \param unionDt is the union data-type being forced
 /// \param fldNum is the particular field to force (-1 indicates the whole union)
-UnionFacetSymbol::UnionFacetSymbol(Scope *sc,const string &nm,Datatype *unionDt,int4 fldNum)
+/// \param isAddr is \b true for facets that apply to all ops at the address
+UnionFacetSymbol::UnionFacetSymbol(Scope *sc,const string &nm,Datatype *unionDt,int4 fldNum,bool isAddr)
   : Symbol(sc, nm, unionDt)
 {
   fieldNum = fldNum;
   category = union_facet;
+  addrBased = isAddr;
 }
 
 void UnionFacetSymbol::encode(Encoder &encoder) const
@@ -701,6 +703,7 @@ void UnionFacetSymbol::encode(Encoder &encoder) const
   encoder.openElement(ELEM_FACETSYMBOL);
   encodeHeader(encoder);
   encoder.writeSignedInteger(ATTRIB_FIELD, fieldNum);
+  encoder.writeBool(ATTRIB_ADDRTIED, true);
   encodeBody(encoder);
   encoder.closeElement(ELEM_FACETSYMBOL);
 }
@@ -711,6 +714,7 @@ void UnionFacetSymbol::decode(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_FACETSYMBOL);
   decodeHeader(decoder);
   fieldNum = decoder.readSignedInteger(ATTRIB_FIELD);
+  addrBased = decoder.readBool(ATTRIB_ADDRTIED);
 
   decodeBody(decoder);
   decoder.closeElement(elemId);

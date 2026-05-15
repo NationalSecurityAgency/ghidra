@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.Iterator;
 
 import db.DBRecord;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
@@ -50,39 +49,56 @@ class RefListV0 extends RefList {
 	private DBRecord record;
 
 	/**
-	 * Construct new temporary empty reference list
-	 * @param key address key corresponding to the address parameter
-	 * @param adapter entry record storage adapter (may be null to prevent database update)
+	 * Create new temporary empty reference list and put it in the cache
+	 * @param addrKey address key corresponding to the address parameter
 	 * @param addrMap address map for encoding/decoding addresses
 	 * @param program may be null for upgrade in which 
 	 * 		case resulting reference objects are not suitable for general use.
-	 * @param cache RefList object cache
 	 * @param isFrom true for from-adapter use, false for to-adapter use
+	 * @return a new empty temporary (no adapter) reference list that has been added to the cache
 	 */
-	RefListV0(long addrKey, AddressMap addrMap, ProgramDB program, DBObjectCache<RefList> cache,
+	static RefListV0 createTemporary(long addrKey, AddressMap addrMap, ProgramDB program,
 			boolean isFrom) {
-		super(addrKey, addrMap.decodeAddress(addrKey), null, addrMap, program, cache, isFrom);
-		this.refData = EMPTY_DATA;
-		numRefs = 0;
-		if (adapter != null) {
-			record = ToAdapter.TO_REFS_SCHEMA.createRecord(key);
-			record.setByteValue(ToAdapter.REF_LEVEL_COL, (byte) -1);
-		}
+
+		Address address = addrMap.decodeAddress(addrKey);
+		return new RefListV0(addrKey, address, null, addrMap, program, isFrom);
 	}
 
 	/**
-	 * Construct new empty reference list
+	 * create new empty reference list and add it to the cache
 	 * @param address address associated with this list (a new key will be generated if required)
 	 * @param adapter entry record storage adapter (may be null to prevent database update)
 	 * @param addrMap address map for encoding/decoding addresses
 	 * @param program may be null for upgrade in which 
 	 * 		case resulting reference objects are not suitable for general use.
-	 * @param cache RefList object cache
 	 * @param isFrom true for from-adapter use, false for to-adapter use
+	 * @return a new empty reference list that has been added to the cache
 	 */
-	RefListV0(Address address, RecordAdapter adapter, AddressMap addrMap, ProgramDB program,
-			DBObjectCache<RefList> cache, boolean isFrom) {
-		super(addrMap.getKey(address, true), address, adapter, addrMap, program, cache, isFrom);
+	static RefListV0 createNew(Address address, RecordAdapter adapter, AddressMap addrMap,
+			ProgramDB program, boolean isFrom) {
+
+		long addrKey = addrMap.getKey(address, true);
+		return new RefListV0(addrKey, address, adapter, addrMap, program, isFrom);
+	}
+
+	/**
+	 * Create reference list for existing record and add it to the cache
+	 * @param record existing refList record
+	 * @param adapter entry record storage adapter
+	 * @param addrMap address map for encoding/decoding addresses
+	 * @param program may be null for upgrade in which 
+	 * 		case resulting reference objects are not suitable for general use.
+	 * @param isFrom true for from-adapter use, false for to-adapter use
+	 * @return a new reference list that has been added to the cache
+	 */
+	static RefListV0 instantiateExisting(DBRecord record, RecordAdapter adapter, AddressMap addrMap,
+			ProgramDB program, boolean isFrom) {
+		return new RefListV0(record, adapter, addrMap, program, isFrom);
+	}
+
+	private RefListV0(long addrKey, Address address, RecordAdapter adapter, AddressMap addrMap,
+			ProgramDB program, boolean isFrom) {
+		super(addrKey, address, adapter, addrMap, program, isFrom);
 		this.refData = EMPTY_DATA;
 		numRefs = 0;
 		if (adapter != null) {
@@ -91,20 +107,9 @@ class RefListV0 extends RefList {
 		}
 	}
 
-	/**
-	 * Construct reference list for existing record
-	 * @param rec existing refList record
-	 * @param adapter entry record storage adapter
-	 * @param addrMap address map for encoding/decoding addresses
-	 * @param program may be null for upgrade in which 
-	 * 		case resulting reference objects are not suitable for general use.
-	 * @param cache RefList object cache
-	 * @param isFrom true for from-adapter use, false for to-adapter use
-	 */
-	RefListV0(DBRecord rec, RecordAdapter adapter, AddressMap addrMap, ProgramDB program,
-			DBObjectCache<RefList> cache, boolean isFrom) {
-		super(rec.getKey(), addrMap.decodeAddress(rec.getKey()), adapter, addrMap, program, cache,
-			isFrom);
+	private RefListV0(DBRecord rec, RecordAdapter adapter, AddressMap addrMap, ProgramDB program,
+			boolean isFrom) {
+		super(rec.getKey(), addrMap.decodeAddress(rec.getKey()), adapter, addrMap, program, isFrom);
 		refData = rec.getBinaryData(ToAdapter.REF_DATA_COL);
 		numRefs = rec.getIntValue(ToAdapter.REF_COUNT_COL);
 		if (!isFrom) {

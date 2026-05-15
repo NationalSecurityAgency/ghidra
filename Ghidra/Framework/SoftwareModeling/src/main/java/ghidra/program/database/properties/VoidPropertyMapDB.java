@@ -25,6 +25,7 @@ import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.util.VoidPropertyMap;
 import ghidra.program.util.ChangeManager;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -62,8 +63,7 @@ public class VoidPropertyMapDB extends PropertyMapDB<Boolean> implements VoidPro
 
 	@Override
 	public void add(Address addr) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 
 			long addrKey = addrMap.getKey(addr, true);
@@ -79,9 +79,6 @@ public class VoidPropertyMapDB extends PropertyMapDB<Boolean> implements VoidPro
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 

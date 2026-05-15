@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@title lldb via ssh (remote=cmd shell)
+#@title lldb via ssh (cmd shell)
 #@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>lldb</tt> via <tt>ssh</tt> to a remote Windows machine</h3>
@@ -43,7 +43,7 @@
 
 $Env:OPT_OS_WINDOWS = $true
 $arglist = @("")
-$arglist += ("cat >  .\.lldbinit")
+$arglist += ("cat >  .\ghidra.lldbinit")
 $sshargs = Compute-Ssh-Args $arglist True
 
 $tgtargs = $Env:OPT_TARGET_ARGS
@@ -62,6 +62,7 @@ Replace('$OPT_EXTRA_CMDS', $Env:OPT_EXTRA_CMDS)`
  
 $arglist = @("")
 $arglist += ("$Env:OPT_LLDB_PATH")
+$arglist += ("-s", ".\ghidra.lldbinit")
 $arglist += ("$Env:OPT_LLDB_ARGS")
 $sshargs = Compute-Ssh-Args $arglist True
 

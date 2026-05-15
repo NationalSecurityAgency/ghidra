@@ -41,7 +41,6 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 	static final int ACCESS_COL = 3;
 	static final int PREVIEW_COL = 4;
 
-	static final String ADDR_COL_NAME = "Address";
 	static final String LABEL_COL_NAME = "Label";
 	static final String SUBROUTINE_COL_NAME = "Subroutine";
 	static final String ACCESS_COL_NAME = "Access";

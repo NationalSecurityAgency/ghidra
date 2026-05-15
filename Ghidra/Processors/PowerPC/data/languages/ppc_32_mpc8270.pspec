@@ -5,6 +5,7 @@
   <properties>
     <property key="addressesDoNotAppearDirectlyInCode" value="true"/>
     <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.PPCEmulateInstructionStateModifier"/>
+    <property key="useropLibs" value="ppc"/>
   </properties>
   
   <programcounter register="pc"/>

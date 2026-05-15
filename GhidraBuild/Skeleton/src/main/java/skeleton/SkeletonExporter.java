@@ -64,7 +64,9 @@ public class SkeletonExporter extends Exporter {
 		List<Option> list = new ArrayList<>();
 
 		// If this exporter has custom options, add them to 'list'
-		list.add(new Option("Option name goes here", "Default option value goes here"));
+		list.add(Option.newString("Option name goes here")
+				.value("Default option value goes here")
+				.build());
 
 		return list;
 	}

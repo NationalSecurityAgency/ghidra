@@ -21,7 +21,7 @@ import javax.help.UnsupportedOperationException;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.*;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.InsufficientBytesException;
@@ -802,13 +802,9 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 		DataTypeComponent dtc = getComponent(startRowIndex);
 
 		// Set the field name and comment the same as before
-		try {
-			dtc.setFieldName(oldDtc.getFieldName());
-		}
-		catch (DuplicateNameException e) {
-			Msg.showError(this, null, "Unexcected Exception", "Exception applying field name", e);
-		}
+		dtc.setFieldName(oldDtc.getFieldName());
 		dtc.setComment(oldDtc.getComment());
+
 		fixSelection();
 		selectionChanged();
 		return dtc;
@@ -1166,31 +1162,31 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 	}
 
 	@Override
-	public void validateComponentName(int rowIndex, String name) throws UsrException {
-		if (nameExistsElsewhere(name, rowIndex)) {
-			throw new InvalidNameException("Name \"" + name + "\" already exists.");
-		}
-	}
-
-	@Override
 	public boolean setComponentName(int rowIndex, String name) throws InvalidNameException {
 
-		String oldName = getComponent(rowIndex).getFieldName();
-		if (Objects.equals(oldName, name)) {
+		name = InternalDataTypeComponent.cleanupFieldName(name); // will trim name if needed
+		DataTypeComponent component = getComponent(rowIndex);
+		if (Objects.equals(name, component.getDefaultFieldName())) {
+			name = null;
+		}
+		if (Objects.equals(name, component.getFieldName())) {
 			return false;
 		}
 
-		if (nameExistsElsewhere(name, rowIndex)) {
-			throw new InvalidNameException("Name \"" + name + "\" already exists.");
+		if (viewComposite.findComponent(name) != null) {
+			// Warn user and confirm rename when duplicate name is used
+			if (OptionDialog.OPTION_ONE != OptionDialog.showOptionDialog(null,
+				"Duplicate Field Name",
+				"Duplicate field name. Proceed with rename?",
+				"Rename!", OptionDialog.WARNING_MESSAGE)) {
+				return false;
+			}
 		}
-		return viewDTM.withTransaction("Set Component Name", () -> {
-			try {
-				getComponent(rowIndex).setFieldName(name); // setFieldName handles trimming
-				return true;
-			}
-			catch (DuplicateNameException exc) {
-				throw new InvalidNameException(exc.getMessage());
-			}
+
+		String newName = name;
+		return viewDTM.withTransaction("Set Field Name", () -> {
+			getComponent(rowIndex).setFieldName(newName);
+			return true;
 		});
 	}
 
@@ -1447,7 +1443,7 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 		else {
 			// Check for managed datatype changing
 			DataType originalDt = originalDTM.getDataType(newPath);
-			if (!(originalDt instanceof DatabaseObject)) {
+			if (!(originalDt instanceof DbObject)) {
 				return;
 			}
 			DataType dt = viewDTM.findMyDataTypeFromOriginalID(originalDTM.getID(originalDt));
@@ -1536,7 +1532,7 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 				// undo transactions for the viewDTM.  An editor save could generate quite a few with
 				// potentially many types getting changed by one change.
 				DataType changedDt = originalDTM.getDataType(path);
-				if (!(changedDt instanceof DatabaseObject)) {
+				if (!(changedDt instanceof DbObject)) {
 					return;
 				}
 				DataType viewDt =

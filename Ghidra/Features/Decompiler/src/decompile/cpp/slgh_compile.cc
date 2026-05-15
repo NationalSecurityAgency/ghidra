@@ -180,30 +180,35 @@ SubtableSymbol *WithBlock::getCurrentSubtable(const list<WithBlock> &stack)
   return (SubtableSymbol *)0;
 }
 
-void ConsistencyChecker::OptimizeRecord::copyFromExcludingSize(ConsistencyChecker::OptimizeRecord &that)
+/// \param records is the list of records to merge
+ConsistencyChecker::OptimizeRecord::OptimizeRecord(vector<ConsistencyChecker::OptimizeRecord*> &records)
 
 {
-  this->writeop = that.writeop;
-  this->readop = that.readop;
-  this->inslot = that.inslot;
-  this->writecount = that.writecount;
-  this->readcount = that.readcount;
-  this->writesection = that.writesection;
-  this->readsection = that.readsection;
-  this->opttype = that.opttype;
+  uintb minOff = -1;
+  uintb maxOff = -1;
+  vector<OptimizeRecord*>::iterator iter;
+
+  for (iter = records.begin(); iter != records.end(); ++iter) {
+    if (minOff == -1 || (*iter)->offset < minOff) {
+      minOff = (*iter)->offset;
+    }
+    if (maxOff == -1 || (*iter)->offset + (*iter)->size > maxOff) {
+      maxOff = (*iter)->offset + (*iter)->size;
+    }
+  }
+
+  offset = minOff;
+  size = maxOff - minOff;
+  writeop = -1; readop = -1; inslot=-1; writecount=0; readcount=0; writesection=-2; readsection=-2; opttype=-1;
+
+  for (iter = records.begin(); iter != records.end(); ++iter) {
+    updateCombine(**iter);
+  }
 }
 
-void ConsistencyChecker::OptimizeRecord::update(int4 opIdx, int4 slotIdx, int4 secNum)
-
-{
-  if (slotIdx >= 0) {
-    updateRead(opIdx, slotIdx, secNum);
-  }
-  else {
-    updateWrite(opIdx, secNum);
-  }
-}
-
+/// \param i is the index of the op reading the range
+/// \param inslot is the input slot of the op reading the range
+/// \param secNum is the constructor section number of the op
 void ConsistencyChecker::OptimizeRecord::updateRead(int4 i, int4 inslot, int4 secNum)
 
 {
@@ -213,6 +218,8 @@ void ConsistencyChecker::OptimizeRecord::updateRead(int4 i, int4 inslot, int4 se
   this->readsection = secNum;
 }
 
+/// \param i is the index of the op writing to the range
+/// \param secNum is the constructor section number of the op
 void ConsistencyChecker::OptimizeRecord::updateWrite(int4 i, int4 secNum)
 
 {
@@ -221,17 +228,18 @@ void ConsistencyChecker::OptimizeRecord::updateWrite(int4 i, int4 secNum)
   this->writesection = secNum;
 }
 
-void ConsistencyChecker::OptimizeRecord::updateExport()
+void ConsistencyChecker::OptimizeRecord::updateExport(void)
 
 {
   this->writeop = 0;
   this->readop = 0;
-  this->writecount = 2;
+  this->writecount = 2;		// Simulate a high count so the register cannot be optimized away
   this->readcount = 2;
   this->readsection = -2;
   this->writesection = -2;
 }
 
+/// \param that is the other record to pull read/write info from
 void ConsistencyChecker::OptimizeRecord::updateCombine(ConsistencyChecker::OptimizeRecord &that)
 
 {
@@ -1195,6 +1203,8 @@ void ConsistencyChecker::setPostOrder(SubtableSymbol *root)
   }
 }
 
+/// \param offset is the given offset
+/// \return an iterator to the last record before \b offset or end() if no records come before
 map<uintb,ConsistencyChecker::OptimizeRecord>::iterator ConsistencyChecker::UniqueState::lesserIter(uintb offset)
 
 {
@@ -1209,42 +1219,22 @@ map<uintb,ConsistencyChecker::OptimizeRecord>::iterator ConsistencyChecker::Uniq
   return std::prev(iter);
 }
 
-ConsistencyChecker::OptimizeRecord ConsistencyChecker::UniqueState::coalesce(vector<ConsistencyChecker::OptimizeRecord*> &records)
-
-{
-  uintb minOff = -1;
-  uintb maxOff = -1;
-  vector<OptimizeRecord*>::iterator iter;
-
-  for (iter = records.begin(); iter != records.end(); ++iter) {
-    if (minOff == -1 || (*iter)->offset < minOff) {
-      minOff = (*iter)->offset;
-    }
-    if (maxOff == -1 || (*iter)->offset + (*iter)->size > maxOff) {
-      maxOff = (*iter)->offset + (*iter)->size;
-    }
-  }
-
-  OptimizeRecord result(minOff, maxOff - minOff);
-
-  for (iter = records.begin(); iter != records.end(); ++iter) {
-    result.updateCombine(**iter);
-  }
-
-  return result;
-}
-
-void ConsistencyChecker::UniqueState::set(uintb offset, int4 size, OptimizeRecord &rec)
+/// Any overlaps with the new record are merged, maintaining a disjoint collection of records
+/// \param rec is the record to add
+void ConsistencyChecker::UniqueState::set(OptimizeRecord &rec)
 
 {
   vector<OptimizeRecord*> records;
-  getDefinitions(records, offset, size);
+  getDefinitions(records, rec.offset, rec.size);
   records.push_back(&rec);
-  OptimizeRecord coalesced = coalesce(records);
+  OptimizeRecord coalesced(records);
   recs.erase(recs.lower_bound(coalesced.offset), recs.lower_bound(coalesced.offset+coalesced.size));
   recs.insert(pair<uint4,OptimizeRecord>(coalesced.offset, coalesced));
 }
 
+/// \param result holds all the overlapping records
+/// \param offset is the start of the given range
+/// \param size is the number of bytes in the range
 void ConsistencyChecker::UniqueState::getDefinitions(vector<ConsistencyChecker::OptimizeRecord*> &result, uintb offset, int4 size)
 
 {
@@ -1396,7 +1386,7 @@ void ConsistencyChecker::examineVn(UniqueState &state,
   else {
     OptimizeRecord rec(offset,size);
     rec.updateWrite(i,secnum);
-    state.set(offset,size,rec);
+    state.set(rec);
   }
 }
 
@@ -1748,13 +1738,6 @@ void ConsistencyChecker::optimizeAll(void)
       optimize(ct);
     }
   }
-}
-
-ostream& operator<<(ostream &os, const ConsistencyChecker::OptimizeRecord &rec) {
-  os << "{writeop=" << rec.writeop << " readop=" << rec.readop << " inslot=" << rec.inslot <<
-        " writecount=" << rec.writecount << " readcount=" << rec.readcount <<
-	" opttype=" << rec.opttype << "}";
-  return os;
 }
 
 /// Sort based on the containing Varnode, then on the bit boundary

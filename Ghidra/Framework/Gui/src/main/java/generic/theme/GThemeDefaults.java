@@ -135,6 +135,8 @@ public class GThemeDefaults {
 		 */
 		public static class Palette {
 
+			private static final String PALETTE_PREFIX = "color.palette.";
+
 			/** Transparent color */
 			public static final Color NO_COLOR = getColor("nocolor");
 
@@ -174,7 +176,10 @@ public class GThemeDefaults {
 			 * @return the GColor
 			 */
 			public static GColor getColor(String name) {
-				return new GColor("color.palette." + name);
+				if (name.startsWith(PALETTE_PREFIX)) {
+					return new GColor(name);
+				}
+				return new GColor(PALETTE_PREFIX + name);
 			}
 		}
 	}

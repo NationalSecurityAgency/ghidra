@@ -21,7 +21,7 @@ import java.util.NoSuchElementException;
 import db.*;
 import db.util.ErrorHandler;
 import ghidra.framework.data.OpenMode;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.database.map.*;
 import ghidra.program.database.util.DatabaseTableUtils;
 import ghidra.program.model.address.*;
@@ -29,6 +29,7 @@ import ghidra.program.model.util.PropertyMap;
 import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ChangeManagerAdapter;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.datastruct.ObjectCache;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -38,7 +39,7 @@ import ghidra.util.task.TaskMonitor;
  * The map is stored within a database table.
  * @param <T> property value type
  */
-public abstract class PropertyMapDB<T> extends DatabaseObject implements PropertyMap<T> {
+public abstract class PropertyMapDB<T> extends DbObject implements PropertyMap<T> {
 
 	private static final String PROPERTY_TABLE_PREFIX = "Property Map - ";
 
@@ -77,8 +78,7 @@ public abstract class PropertyMapDB<T> extends DatabaseObject implements Propert
 	 */
 	PropertyMapDB(DBHandle dbHandle, ErrorHandler errHandler, ChangeManager changeMgr,
 			AddressMap addrMap, String name) {
-		super(null, 0); // DatabaseObject cache is not used
-
+		super(0);
 		this.dbHandle = dbHandle;
 		this.errHandler = errHandler;
 		this.changeMgr = changeMgr;
@@ -215,11 +215,12 @@ public abstract class PropertyMapDB<T> extends DatabaseObject implements Propert
 
 	@Override
 	public void clear() {
-		if (propertyTable == null) {
-			return;
-		}
-		cache = new ObjectCache<>(DEFAULT_CACHE_SIZE);
-		try {
+		try (Closeable c = lock.write()) {
+			checkDeleted();
+			if (propertyTable == null) {
+				return;
+			}
+			cache = new ObjectCache<>(DEFAULT_CACHE_SIZE);
 			propertyTable.deleteAll();
 		}
 		catch (IOException e) {
@@ -232,12 +233,9 @@ public abstract class PropertyMapDB<T> extends DatabaseObject implements Propert
 	 * @param size the size of the cache.
 	 */
 	public void setCacheSize(int size) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
+			checkDeleted();
 			cache.setHardCacheSize(size);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -248,8 +246,7 @@ public abstract class PropertyMapDB<T> extends DatabaseObject implements Propert
 	 * @throws IOException if IO error occurs
 	 */
 	public void delete() throws IOException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			setDeleted();
 			if (propertyTable != null) {
@@ -257,9 +254,6 @@ public abstract class PropertyMapDB<T> extends DatabaseObject implements Propert
 				dbHandle.deleteTable(getTableName());
 				propertyTable = null;
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -301,8 +295,7 @@ public abstract class PropertyMapDB<T> extends DatabaseObject implements Propert
 
 	@Override
 	public boolean removeRange(Address startAddr, Address endAddr) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (propertyTable == null) {
 				return false;
@@ -315,17 +308,13 @@ public abstract class PropertyMapDB<T> extends DatabaseObject implements Propert
 		catch (IOException e) {
 			errHandler.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return false;
 	}
 
 	@Override
 	public boolean remove(Address addr) {
-		lock.acquire();
 		boolean result = false;
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (propertyTable == null) {
 				return false;
@@ -337,9 +326,6 @@ public abstract class PropertyMapDB<T> extends DatabaseObject implements Propert
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return result;
 	}
@@ -612,12 +598,8 @@ public abstract class PropertyMapDB<T> extends DatabaseObject implements Propert
 	 * Invalidates the cache.
 	 */
 	public void invalidate() {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			setInvalid();
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -637,8 +619,7 @@ public abstract class PropertyMapDB<T> extends DatabaseObject implements Propert
 
 	@Override
 	public void moveRange(Address start, Address end, Address newStart) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			cache = new ObjectCache<>(DEFAULT_CACHE_SIZE);
 			if (propertyTable != null) {
@@ -654,9 +635,6 @@ public abstract class PropertyMapDB<T> extends DatabaseObject implements Propert
 				}
 			}
 
-		}
-		finally {
-			lock.release();
 		}
 	}
 }

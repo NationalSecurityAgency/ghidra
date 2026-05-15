@@ -8366,4 +8366,211 @@ is b_1231=0b11010101000000000100 & b_0007=0b00111111
 	OV = tmpOV;
 }
 
+# FEAT_CSSC
+:abs Rd_GPR32, Rn_GPR32
+is sf=0 & b_30=1 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1620=0x0 & b_1015=0x8 & Rd_GPR32 & Rn_GPR32
+{
+	local tmp = Rn_GPR32;
+	local test = tmp s< 0;
+	Rd_GPR32 = (zext(!test)*tmp) + (zext(test)*(-tmp));
+}
 
+:abs Rd_GPR64, Rn_GPR64
+is sf=1 & b_30=1 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1620=0x0 & b_1015=0x8 & Rd_GPR64 & Rn_GPR64
+{
+	local tmp = Rn_GPR64;
+	local test = tmp s< 0;
+	Rd_GPR64 = (zext(!test)*tmp) + (zext(test)*(-tmp));
+}
+
+:cnt Rd_GPR32, Rn_GPR32
+is sf=0 & b_30=1 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1620=0x0 & b_1015=0x7 & Rd_GPR32 & Rn_GPR32
+{
+	local tmp = Rn_GPR32;
+	Rd_GPR32 = popcount(tmp);
+}
+
+:cnt Rd_GPR64, Rn_GPR64
+is sf=1 & b_30=1 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1620=0x0 & b_1015=0x7 & Rd_GPR64 & Rn_GPR64
+{
+	local tmp = Rn_GPR64;
+	Rd_GPR64 = popcount(tmp);
+}
+
+:ctz Rd_GPR32, Rn_GPR32
+is sf=0 & b_3030=1 & S=0 & b_2428=0x1a & b_2123=6 & dp1.opcode2=0x0 & b_1015=0x6 & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
+{
+	# equivalent to RBIT; CLZ
+	local tmp = Rn_GPR32;
+	tmp = (((tmp & 0xaaaaaaaa) >> 1) | ((tmp & 0x55555555) << 1));
+	tmp = (((tmp & 0xcccccccc) >> 2) | ((tmp & 0x33333333) << 2));
+	tmp = (((tmp & 0xf0f0f0f0) >> 4) | ((tmp & 0x0f0f0f0f) << 4));
+	tmp = (((tmp & 0xff00ff00) >> 8) | ((tmp & 0x00ff00ff) << 8));
+	tmp = ((tmp >> 16) | (tmp << 16));
+	Rd_GPR64 = lzcount(tmp);
+}
+
+:ctz Rd_GPR64, Rn_GPR64
+is sf=1 & b_3030=1 & S=0 & b_2428=0x1a & b_2123=6 & dp1.opcode2=0x0 & b_1015=0x6 & Rn_GPR64 & Rd_GPR64
+{
+	# equivalent to RBIT; CLZ
+	local tmp = Rn_GPR64;
+	tmp = (((tmp & 0xaaaaaaaaaaaaaaaa) >> 1) | ((tmp & 0x5555555555555555) << 1));
+	tmp = (((tmp & 0xcccccccccccccccc) >> 2) | ((tmp & 0x3333333333333333) << 2));
+	tmp = (((tmp & 0xf0f0f0f0f0f0f0f0) >> 4) | ((tmp & 0x0f0f0f0f0f0f0f0f) << 4));
+	tmp = (((tmp & 0xff00ff00ff00ff00) >> 8) | ((tmp & 0x00ff00ff00ff00ff) << 8));
+	tmp = (((tmp & 0xffff0000ffff0000) >> 16) | ((tmp & 0x0000ffff0000ffff) << 16));
+	tmp = ((tmp >> 32) | (tmp << 32));
+	Rd_GPR64 = lzcount(tmp);
+}
+
+cssc_simm32: "#"^val is simm8 [ val = simm8 * 1; ] { export *[const]:4 val; }
+cssc_simm64: "#"^val is simm8 [ val = simm8 * 1; ] { export *[const]:8 val; }
+
+cssc_imm32: "#"^val is imm8 [ val = imm8 * 1; ] { export *[const]:4 val; }
+cssc_imm64: "#"^val is imm8 [ val = imm8 * 1; ] { export *[const]:8 val; }
+
+
+:smax Rd_GPR32, Rn_GPR32, cssc_simm32
+is sf=0 & b_30=0 & S=0 & b_2428=0x11 & b_2123=0x6 & b_1820=0x0 & Rd_GPR32 & Rn_GPR32 & cssc_simm32
+{
+	local tmp = Rn_GPR32;
+	local tmp2 = cssc_simm32;
+	local test:1 = tmp s>= tmp2;
+	Rd_GPR32 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+:smax Rd_GPR64, Rn_GPR64, cssc_simm64
+is sf=1 & b_30=0 & S=0 & b_2428=0x11 & b_2123=0x6 & b_1820=0x0 & Rd_GPR64 & Rn_GPR64 & cssc_simm64
+{
+	local tmp = Rn_GPR64;
+	local tmp2 = cssc_simm64;
+	local test = tmp s>= tmp2;
+	Rd_GPR64 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+:smax Rd_GPR32, Rn_GPR32, Rm_GPR32
+is sf=0 & b_30=0 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1015=0x18 & Rd_GPR32 & Rn_GPR32 & Rm_GPR32
+{
+	local tmp = Rn_GPR32;
+	local tmp2 = Rm_GPR32;
+	local test = tmp s>= tmp2;
+	Rd_GPR32 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+:smax Rd_GPR64, Rn_GPR64, Rm_GPR64
+is sf=1 & b_30=0 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1015=0x18 & Rd_GPR64 & Rn_GPR64 & Rm_GPR64
+{
+	local tmp = Rn_GPR64;
+	local tmp2 = Rm_GPR64;
+	local test = tmp s>= tmp2;
+	Rd_GPR64 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+:smin Rd_GPR32, Rn_GPR32, cssc_simm32
+is sf=0 & b_30=0 & S=0 & b_2428=0x11 & b_2123=0x6 & b_1820=0x2 & Rd_GPR32 & Rn_GPR32 & cssc_simm32
+{
+	local tmp = Rn_GPR32;
+	local tmp2 = cssc_simm32;
+	local test:1 = tmp s<= tmp2;
+	Rd_GPR32 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+:smin Rd_GPR64, Rn_GPR64, cssc_simm64
+is sf=1 & b_30=0 & S=0 & b_2428=0x11 & b_2123=0x6 & b_1820=0x2 & Rd_GPR64 & Rn_GPR64 & cssc_simm64
+{
+	local tmp = Rn_GPR64;
+	local tmp2 = cssc_simm64;
+	local test = tmp s<= tmp2;
+	Rd_GPR64 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+:smin Rd_GPR32, Rn_GPR32, Rm_GPR32
+is sf=0 & b_30=0 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1015=0x1a & Rd_GPR32 & Rn_GPR32 & Rm_GPR32
+{
+	local tmp = Rn_GPR32;
+	local tmp2 = Rm_GPR32;
+	local test = tmp s<= tmp2;
+	Rd_GPR32 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+:smin Rd_GPR64, Rn_GPR64, Rm_GPR64
+is sf=1 & b_30=0 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1015=0x1a & Rd_GPR64 & Rn_GPR64 & Rm_GPR64
+{
+	local tmp = Rn_GPR64;
+	local tmp2 = Rm_GPR64;
+	local test = tmp s<= tmp2;
+	Rd_GPR64 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+:umax Rd_GPR32, Rn_GPR32, cssc_imm32
+is sf=0 & b_30=0 & S=0 & b_2428=0x11 & b_2123=0x6 & b_1820=0x1 & Rd_GPR32 & Rn_GPR32 & cssc_imm32
+{
+	local tmp = Rn_GPR32;
+	local tmp2 = cssc_imm32;
+	local test:1 = tmp >= tmp2;
+	Rd_GPR32 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+:umax Rd_GPR64, Rn_GPR64, cssc_imm64
+is sf=1 & b_30=0 & S=0 & b_2428=0x11 & b_2123=0x6 & b_1820=0x1 & Rd_GPR64 & Rn_GPR64 & cssc_imm64
+{
+	local tmp = Rn_GPR64;
+	local tmp2 = cssc_imm64;
+	local test = tmp >= tmp2;
+	Rd_GPR64 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+:umax Rd_GPR32, Rn_GPR32, Rm_GPR32
+is sf=0 & b_30=0 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1015=0x19 & Rd_GPR32 & Rn_GPR32 & Rm_GPR32
+{
+	local tmp = Rn_GPR32;
+	local tmp2 = Rm_GPR32;
+	local test = tmp >= tmp2;
+	Rd_GPR32 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+:umax Rd_GPR64, Rn_GPR64, Rm_GPR64
+is sf=1 & b_30=0 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1015=0x19 & Rd_GPR64 & Rn_GPR64 & Rm_GPR64
+{
+	local tmp = Rn_GPR64;
+	local tmp2 = Rm_GPR64;
+	local test = tmp >= tmp2;
+	Rd_GPR64 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+:umin Rd_GPR32, Rn_GPR32, cssc_imm32
+is sf=0 & b_30=0 & S=0 & b_2428=0x11 & b_2123=0x6 & b_1820=0x3 & Rd_GPR32 & Rn_GPR32 & cssc_imm32
+{
+	local tmp = Rn_GPR32;
+	local tmp2 = cssc_imm32;
+	local test:1 = tmp <= tmp2;
+	Rd_GPR32 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+:umin Rd_GPR64, Rn_GPR64, cssc_imm64
+is sf=1 & b_30=0 & S=0 & b_2428=0x11 & b_2123=0x6 & b_1820=0x3 & Rd_GPR64 & Rn_GPR64 & cssc_imm64
+{
+	local tmp = Rn_GPR64;
+	local tmp2 = cssc_imm64;
+	local test = tmp <= tmp2;
+	Rd_GPR64 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+:umin Rd_GPR32, Rn_GPR32, Rm_GPR32
+is sf=0 & b_30=0 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1015=0x1b & Rd_GPR32 & Rn_GPR32 & Rm_GPR32
+{
+	local tmp = Rn_GPR32;
+	local tmp2 = Rm_GPR32;
+	local test = tmp <= tmp2;
+	Rd_GPR32 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+:umin Rd_GPR64, Rn_GPR64, Rm_GPR64
+is sf=1 & b_30=0 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1015=0x1b & Rd_GPR64 & Rn_GPR64 & Rm_GPR64
+{
+	local tmp = Rn_GPR64;
+	local tmp2 = Rm_GPR64;
+	local test = tmp <= tmp2;
+	Rd_GPR64 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}

@@ -818,7 +818,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 					!gotoProgram.getMemory().contains(location.getAddress())) {
 					return false;
 				}
-				if (super.goTo(gotoProgram, location)) {
+				if (super.goTo(gotoProgram, location) &&
+					!isEffectivelyDifferent(getLocation(), location)) {
 					return true;
 				}
 				return false;
@@ -938,6 +939,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 		else {
 			trackingLabel.setForeground(Colors.ERROR);
+			trackingTrait.clearTrackedLocation();
 		}
 	}
 

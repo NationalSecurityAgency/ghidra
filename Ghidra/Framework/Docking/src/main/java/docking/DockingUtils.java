@@ -126,6 +126,8 @@ public class DockingUtils {
 
 	private static boolean globalTooltipsEnabled = true;
 
+	private static boolean useCombinedAltKeysEnabled;
+
 	public static JSeparator createToolbarSeparator() {
 		Dimension sepDim = new Dimension(2, ICON_SIZE + 2);
 		JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
@@ -366,6 +368,16 @@ public class DockingUtils {
 		Swing.runLater(() -> ToolTipManager.sharedInstance().setEnabled(enabled));
 	}
 
+	/**
+	 * Not meant for public consumption.   This is for application code to control how key bindings
+	 * that use the Alt key get mapped.  When true, a key binding that uses the Alt key will get 
+	 * mapped to the left and right alt keys. 
+	 * @param enabled true if enabled
+	 */
+	public static void setCombinedAltKeysEnabled(boolean enabled) {
+		useCombinedAltKeysEnabled = enabled;
+	}
+
 	/** 
 	 * Note: calling this method has no effect
 	 * @param enabled true if enabled; false prevents all Java tooltips
@@ -387,6 +399,15 @@ public class DockingUtils {
 		// return Swing.runNow(() -> ToolTipManager.sharedInstance().isEnabled());
 
 		return globalTooltipsEnabled;
+	}
+
+	/**
+	 * True if the application should map Alt key binding usage to the left and right key. 
+	 * @return true if the application should map Alt key binding usage to the left and right key.
+	 * @see #setCombinedAltKeysEnabled(boolean)
+	 */
+	public static boolean isCombineAltKeysEnabled() {
+		return useCombinedAltKeysEnabled;
 	}
 
 	/** Hides any open tooltip window */

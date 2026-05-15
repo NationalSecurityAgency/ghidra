@@ -20,6 +20,8 @@ import java.io.File;
 
 import javax.swing.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.ReusableDialogComponentProvider;
 import docking.widgets.OptionDialog;
 import docking.widgets.button.BrowseButton;
@@ -234,17 +236,23 @@ public class ArchiveDialog extends ReusableDialogComponentProvider {
 	 */
 	private boolean checkInput() {
 		String pathname = getArchivePathName();
-		if ((pathname == null) || (pathname.equals(""))) {
+		if (StringUtils.isBlank(pathname)) {
 			setStatusText("Specify an archive file.");
 			return false;
 		}
 
 		File file = new File(pathname);
 		String name = file.getName();
-		if (!NamingUtilities.isValidProjectName(name)) {
-			setStatusText("Archive name contains invalid characters.");
+
+		// Impose same naming restrictions as Project name uses
+		try {
+			NamingUtilities.checkName(name, "Archive name");
+		}
+		catch (IllegalArgumentException e) {
+			setStatusText(e.getMessage());
 			return false;
 		}
+
 		return true;
 	}
 
@@ -322,7 +330,7 @@ public class ArchiveDialog extends ReusableDialogComponentProvider {
 			jarFile = new File(archivePathName);
 		}
 		else if (projectLocator != null) {
-			jarFile = new File(projectLocator.toString() + ArchivePlugin.ARCHIVE_EXTENSION);
+			jarFile = new File(projectLocator.getName() + ArchivePlugin.ARCHIVE_EXTENSION);
 		}
 		jarFileChooser.setSelectedFile(jarFile);
 		jarFileChooser.setApproveButtonText(approveButtonText);
@@ -341,15 +349,7 @@ public class ArchiveDialog extends ReusableDialogComponentProvider {
 			String name = file.getName();
 			if (!NamingUtilities.isValidProjectName(name)) {
 				Msg.showError(getClass(), null, "Invalid Archive Name",
-					name + " is not a valid archive name");
-				continue;
-			}
-
-			File f = projectLocator.getProjectDir();
-			String filename = f.getAbsolutePath();
-			if (chosenPathname.indexOf(filename) >= 0) {
-				Msg.showError(getClass(), null, "Invalid Archive Name",
-					"Output file cannot be inside of Project");
+					"Archive name contains invalid characters or is too long");
 				continue;
 			}
 

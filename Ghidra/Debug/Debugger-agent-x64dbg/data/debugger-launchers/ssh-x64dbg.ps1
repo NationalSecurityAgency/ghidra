@@ -57,6 +57,9 @@ function Compute-Python-Args {
 	if ("$Env:OPT_TARGET_IMG" -ne "") {
 		$arglist+=($Env:OPT_TARGET_IMG)
 	}
+	if ("$Env:OPT_X64DBG_EXE" -ne "") {
+		$arglist+=($Env:OPT_X64DBG_EXE)
+	}
 	if ("$Env:OPT_TARGET_DIR" -ne "") {
 		$arglist+=($Env:OPT_TARGET_DIR)
 	}
@@ -78,10 +81,10 @@ $sshproc = Start-Process -FilePath $sshargs[0] -ArgumentList $sshargs[1..$ssharg
 
 $version = Get-Ghidra-Version
 $answer = Check-Result-And-Prompt-Mitigation $sshproc @"
-It appears ghidradbg is missing from the remote system. This can happen if you
+It appears ghidraxdbg is missing from the remote system. This can happen if you
 forgot to install the required package. This can also happen if you installed
 the packages to a different Python environment than is being used by the
-remote's gdb.
+remote's x64dbg.
 
 This script is about to offer automatic resolution. If you'd like to resolve
 this manually, answer no to the next question and then see Ghidra's help by
@@ -102,14 +105,14 @@ are copied and installed.
 
 NOTE: Automatic resolution will cause this session to terminate. When it has
 finished, try launching again.
-"@ "Would you like to install 'ghidradbg>=$version'?"
+"@ "Would you like to install 'ghidraxdbg>=$version'?"
 
 if ($answer) {
 	Write-Host "Copying Wheels to $Env:OPT_HOST"
 	Mitigate-Scp-PyModules "Debugger-rmi-trace" "<SELF>"
 
 	Write-Host "Installing Wheels into python"
-	$arglist = Compute-Dbg-PipInstall-Args "'-f'" "os.environ['HOME']" "'ghidradbg>=$version'"
+	$arglist = Compute-X64dbg-PipInstall-Args "'-f'" "os.environ['HOME']" "'ghidraxdbg>=$version'"
 	$sshargs = Compute-Ssh-Args $arglist False
 	Start-Process -FilePath $sshargs[0] -ArgumentList $sshargs[1..$sshargs.Count] -NoNewWindow -Wait
 }

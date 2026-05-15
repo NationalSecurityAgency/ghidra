@@ -60,7 +60,7 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 	private JTextField projectNameField;
 
 	private String archivePathName;
-	private ProjectLocator restoreURL;
+	private ProjectLocator restoreLocator;
 
 	public RestoreDialog(ArchivePlugin plugin) {
 		super("Restore Project Archive");
@@ -246,14 +246,14 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 	/**
 	 * Display this dialog.
 	 * @param pathName The pathname of the archive file containing the data to restore.
-	 * @param projectLocator The project URL of the location to which the restore archive will be
+	 * @param projectLocator The project locator of the location to which the restore archive will be
 	 *        extracted.
 	 *
 	 * @return true if the user submitted a valid value, false if user cancelled.
 	 */
 	public boolean showDialog(String pathName, ProjectLocator projectLocator) {
 		this.archivePathName = pathName;
-		this.restoreURL = projectLocator;
+		this.restoreLocator = projectLocator;
 		String projectName = projectNameField.getText();
 		if (projectName == null || projectName.equals("")) {
 			projectName = ArchivePlugin.getProjectName(pathName);
@@ -287,11 +287,11 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 	}
 
 	/**
-	 * Get the URL for the restore directory.
-	 * @return the URL for the restore directory.
+	 * Get the project locator for the restore directory.
+	 * @return the project locator for the restore directory.
 	 */
 	ProjectLocator getRestoreURL() {
-		return restoreURL;
+		return restoreLocator;
 	}
 
 	/////////////////////////////////////////////
@@ -316,17 +316,24 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 			return false;
 		}
 		String restoreProjectName = projectNameField.getText().trim();
-		if (restoreProjectName == null || restoreProjectName.equals("") ||
-			!NamingUtilities.isValidName(restoreProjectName)) {
+		if (restoreProjectName == null || restoreProjectName.equals("")) {
 			setStatusText("Specify a valid project name.");
 			return false;
 		}
 
-		archivePathName = archiveName;
-		restoreURL = new ProjectLocator(restoreDir, restoreProjectName);
+		try {
+			NamingUtilities.checkProjectName(restoreProjectName);
+		}
+		catch (IllegalArgumentException e) {
+			setStatusText(e.getMessage());
+			return false;
+		}
 
-		File projFile = restoreURL.getMarkerFile();
-		File projDir = restoreURL.getProjectDir();
+		archivePathName = archiveName;
+		restoreLocator = new ProjectLocator(restoreDir, restoreProjectName);
+
+		File projFile = restoreLocator.getMarkerFile();
+		File projDir = restoreLocator.getProjectDir();
 		setStatusText("");
 		if (projFile.exists() || projDir.exists()) {
 			Msg.showInfo(getClass(), getComponent(), "Project Exists",
@@ -426,12 +433,6 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 			}
 
 			File file = selectedFile;
-			String chosenName = file.getName();
-			if (!NamingUtilities.isValidProjectName(chosenName)) {
-				Msg.showError(getClass(), null, "Invalid Archive Name",
-					chosenName + " is not a valid archive name");
-				continue;
-			}
 
 			Preferences.setProperty(ArchivePlugin.LAST_ARCHIVE_DIR, file.getParent());
 			pathname = file.getAbsolutePath();
@@ -452,8 +453,8 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 	String chooseDirectory(String approveButtonText, String approveToolTip) {
 		GhidraFileChooser dirChooser = createDirectoryChooser();
 		dirChooser.setTitle("Restore a Ghidra Project - Directory");
-		if (restoreURL != null) {
-			dirChooser.setSelectedFile(new File(restoreURL.getLocation()));
+		if (restoreLocator != null) {
+			dirChooser.setSelectedFile(new File(restoreLocator.getLocation()));
 		}
 		dirChooser.setApproveButtonText(approveButtonText);
 		dirChooser.setApproveButtonToolTipText(approveToolTip);

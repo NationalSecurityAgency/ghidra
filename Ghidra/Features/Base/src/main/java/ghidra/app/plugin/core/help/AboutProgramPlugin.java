@@ -27,6 +27,7 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.context.ProgramContextAction;
 import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.app.plugin.processors.sleigh.SleighLanguageDescription;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.main.ApplicationLevelPlugin;
@@ -169,7 +170,7 @@ public class AboutProgramPlugin extends Plugin implements ApplicationLevelPlugin
 			metadata.put("Language Spec",
 				lDesc.getDefsFile() + (lav.isMismatch() ? lav.getVersionDisplay() : ""));
 			metadata.put("Processor Spec", lDesc.getSpecFile().getAbsolutePath());
-			metadata.put("Sleigh Spec", lDesc.getSlaFile().getAbsolutePath() + "spec");
+			metadata.put("Sleigh Spec", lDesc.getLanguageFile().getSlaSpecFile().getAbsolutePath());
 		}
 		if (lav.compilerSpec != null) {
 			metadata.put("Compiler Spec",

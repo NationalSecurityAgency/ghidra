@@ -37,6 +37,7 @@ import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -72,9 +73,10 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 		dataMgr = program.getDataTypeManager();
 		startTransaction();
 
-		program.getMemory()
+		MemoryBlock memblk = program.getMemory()
 				.createInitializedBlock("test", addr(BaseAddress), 500, (byte) 0, TaskMonitor.DUMMY,
 					false);
+		memblk.setExecute(true);
 
 		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 		DataTypeManagerService dtms = mgr.getDataTypeManagerService();

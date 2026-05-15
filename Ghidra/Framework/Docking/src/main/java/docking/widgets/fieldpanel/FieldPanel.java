@@ -1924,7 +1924,7 @@ public class FieldPanel extends JPanel
 						// if the mouse is to the right of the last field, make the selection 
 						// include the last field
 						Layout layout = getLayoutModel().getLayout(selectionEnd.getIndex());
-						int width = layout.getCompressableWidth();
+						int width = layout.getWidth();
 						if (x > width) {
 							selectionEnd =
 								new FieldLocation(selectionEnd.getIndex().add(BigInteger.ONE));

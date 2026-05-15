@@ -111,7 +111,7 @@ public class CodeUnitFormat {
 	 */
 	public String getRepresentationString(CodeUnit cu, boolean includeEOLcomment) {
 
-		StringBuffer stringBuffer = new StringBuffer(getMnemonicRepresentation(cu));
+		StringBuilder stringBuffer = new StringBuilder(getMnemonicRepresentation(cu));
 		if (cu instanceof Instruction) {
 			Instruction instr = (Instruction) cu;
 			int n = instr.getNumOperands();
@@ -128,9 +128,11 @@ public class CodeUnitFormat {
 				stringBuffer.append(getOperandRepresentationString(cu, i));
 			}
 		}
-		else { // data always has one operand
-			stringBuffer.append(" ");
-			stringBuffer.append(getOperandRepresentationString(cu, 0));
+		else {
+			String dataRepString = getOperandRepresentationString(cu, 0);
+			if (!dataRepString.isBlank()) {
+				stringBuffer.append(" ").append(dataRepString);
+			}
 		}
 		if (includeEOLcomment) {
 			String eolComment = cu.getComment(CommentType.EOL);
@@ -1365,7 +1367,7 @@ public class CodeUnitFormat {
 		if (symbolAddress.isMemoryAddress()) {
 			CodeUnit cu = program.getListing().getCodeUnitContaining(symbolAddress);
 			if (isOffcut(symbolAddress, cu)) {
-				return getOffcutLabelString(symbolAddress, cu, markupAddress);
+				return getOffcutLabelString(symbolAddress, cu, markupAddress, symbol);
 			}
 			else if (isStringData(cu)) {
 				return getLabelStringForStringData((Data) cu, symbol);
@@ -1406,10 +1408,11 @@ public class CodeUnitFormat {
 		return prefix + UNDERSCORE + SymbolUtilities.getAddressString(symbol.getAddress());
 	}
 
-	public String getOffcutLabelString(Address offcutAddress, CodeUnit cu, Address markupAddress) {
+	public String getOffcutLabelString(Address offcutAddress, CodeUnit cu, Address markupAddress,
+			Symbol symbol) {
 		if (cu instanceof Instruction) {
 			return getOffcutLabelStringForInstruction(offcutAddress, (Instruction) cu,
-				markupAddress);
+				markupAddress, symbol);
 		}
 		return getOffcutDataString(offcutAddress, (Data) cu);
 	}
@@ -1458,17 +1461,22 @@ public class CodeUnitFormat {
 	 * @param offcutAddress address for which generated label represents
 	 * @param instruction instruction containing offcut address
 	 * @param markupAddress address where a label will be referenced from (may be null)
+	 * @param symbol an optional symbol that is used to generate the symbol name
 	 * @return generated offcut label
 	 */
 	protected String getOffcutLabelStringForInstruction(Address offcutAddress,
-			Instruction instruction, Address markupAddress) {
+			Instruction instruction, Address markupAddress, Symbol symbol) {
 		Program program = instruction.getProgram();
-		Symbol offsym = program.getSymbolTable().getPrimarySymbol(offcutAddress);
+
+		if (symbol == null) {
+			symbol = program.getSymbolTable().getPrimarySymbol(offcutAddress);
+		}
+
 		Address instructionAddress = instruction.getMinAddress();
 		long diff = offcutAddress.subtract(instructionAddress);
 		boolean decorate = false;		// we never decorate in the operand field
 		boolean simplify = true;		// we always simplify names of instruction labels
-		if (offsym.isDynamic()) {
+		if (symbol.isDynamic()) {
 			Symbol containingSymbol = program.getSymbolTable().getPrimarySymbol(instructionAddress);
 			if (containingSymbol != null) {
 				String displayName = containingSymbol.getName();
@@ -1479,7 +1487,7 @@ public class CodeUnitFormat {
 				return simplifyTemplate(displayName) + PLUS + SymbolUtilities.getDiffString(diff);
 			}
 		}
-		return getDefaultOffcutString(offsym, instruction, diff, decorate, simplify);
+		return getDefaultOffcutString(symbol, instruction, diff, decorate, simplify);
 	}
 
 	protected String addOffcutInformation(String prefix, String addressString, int diff,

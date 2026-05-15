@@ -246,7 +246,6 @@ public class BSimH2FileDBConnectionManager {
 				// Remove leading '/' before drive letter
 				dbName = dbName.substring(1);
 			}
-
 			return "jdbc:h2:" + dbName;
 		}
 
@@ -257,6 +256,7 @@ public class BSimH2FileDBConnectionManager {
 
 			// Set database URL
 			// NOTE: keywords 'key' and 'value' are used by KeyValueTable as column names
+
 			bds.setUrl(getH2FileUrl() +
 				";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;NON_KEYWORDS=key,value");
 
@@ -276,7 +276,7 @@ public class BSimH2FileDBConnectionManager {
 
 		/**
 		 * Get a connection to the H2 file database.
-		 * It is important to note that if the database does not exist and empty one will
+		 * It is important to note that if the database does not exist an empty one will
 		 * be created.  The {@link #exists()} method should be used to check for the database
 		 * existence prior to connecting the first time.
 		 * @return database connection

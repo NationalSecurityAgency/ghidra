@@ -17,6 +17,7 @@ package mdemangler.naming;
 
 import ghidra.util.Msg;
 import mdemangler.*;
+import mdemangler.datatype.MDDataType;
 import mdemangler.object.MDObjectCPP;
 import mdemangler.template.MDTemplateNameAndArguments;
 
@@ -131,6 +132,20 @@ public class MDBasicName extends MDParsableItem {
 		}
 	}
 
+	public void setXtorQual(MDQualifier qual) {
+		// We should only get a call for setName() due to a contructor or destructor,
+		// which come from MDSpecialName or from MDTemplateNameAndArguments.
+		if (specialName != null) {
+			specialName.setXtorQual(qual);
+		}
+		else if (templateNameAndArguments != null) {
+			templateNameAndArguments.setXtorQual(qual);
+		}
+		else {
+			Msg.warn(this, "name cannot be set");
+		}
+	}
+
 	// This needs to be separate from nameModifier.  The contrived example that follows
 	//  shows that both a nameModifier as well as a castTypeString should be considered
 	//  separately, as both can exist.  Trying to manage multiple calls to
@@ -147,6 +162,18 @@ public class MDBasicName extends MDParsableItem {
 		}
 		else {
 			Msg.warn(this, "castTypeString cannot be set");
+		}
+	}
+
+	public void setCastType(MDDataType castType) {
+		if (specialName != null) {
+			specialName.setCastType(castType);
+		}
+		else if (templateNameAndArguments != null) {
+			templateNameAndArguments.setCastType(castType);
+		}
+		else {
+			Msg.warn(this, "castType cannot be set");
 		}
 	}
 

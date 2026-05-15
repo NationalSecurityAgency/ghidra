@@ -182,20 +182,20 @@ def ghidra_trace_connect(address: Optional[str] = None) -> None:
         raise RuntimeError("port must be numeric")
 
 
-def ghidra_trace_listen(address: str = '0.0.0.0:0') -> None:
+def ghidra_trace_listen(address: str = '127.0.0.1:0') -> None:
     """Listen for Ghidra to connect for tracing.
 
     Takes an optional address for the host and port on which to listen.
     Either the form 'host:port' or just 'port'. If omitted, it will bind
-    to an ephemeral port on all interfaces. If only the port is given,
-    it will bind to that port on all interfaces. This command will block
-    until the connection is established.
+    to an ephemeral port on localhost. If only the port is given, it will
+    bind to that port on localhost. This command will block until the
+    connection is established.
     """
 
     STATE.require_no_client()
     parts = address.split(':')
     if len(parts) == 1:
-        host, port = '0.0.0.0', parts[0]
+        host, port = '127.0.0.1', parts[0]
     elif len(parts) == 2:
         host, port = parts
     else:
@@ -967,12 +967,12 @@ def put_single_breakpoint(bp, bpath, nproc: int, ikeys: List[int]) -> None:
         brkobj.set_value('Range', addr.extend(bp.hwSize))
     brkobj.set_value('HitCount', bp.hitCount)
     if bp.type == BreakpointType.BpNormal:
-        brkobj.set_value('Kinds', 'SW_EXECUTE')
+        brkobj.set_value('Kinds', 'x')
     if bp.type == BreakpointType.BpHardware:
-        prot = {0: 'READ', 1: 'WRITE', 2: 'HW_EXECUTE'}[bp.typeEx]
+        prot = {0: 'R', 1: 'W', 2: 'X'}[bp.typeEx]
         brkobj.set_value('Kinds', prot)
     if bp.type == BreakpointType.BpMemory:
-        prot = {0: 'READ', 1: 'WRITE', 2: 'HW_EXECUTE', 3: 'ACCESS'}[bp.typeEx]
+        prot = {0: 'R', 1: 'W', 2: 'X', 3: 'RW'}[bp.typeEx]
         brkobj.set_value('Kinds', prot)
     brkobj.insert()
 

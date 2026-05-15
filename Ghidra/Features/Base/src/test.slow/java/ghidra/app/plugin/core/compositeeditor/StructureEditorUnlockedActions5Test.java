@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 import javax.swing.JTextField;
 
@@ -710,7 +711,26 @@ public class StructureEditorUnlockedActions5Test extends AbstractStructureEditor
 
 	@Test
 	public void testUnpackageComponentArray() throws Exception {
+
+		program.withTransaction("Modify structures", () -> {
+
+			// Add zero-length component after component to be unpacked
+			complexStructure.insertAtOffset(92, new ArrayDataType(CharDataType.dataType, 0), 0,
+				"z1", null);
+			complexStructure.insertAtOffset(92, new ArrayDataType(CharDataType.dataType, 0), 0,
+				"z2", null);
+		});
+
 		init(complexStructure, pgmTestCat);
+
+		Structure viewStruct =
+			(Structure) model.getViewDataTypeManager().getResolvedViewComposite();
+
+		List<DataTypeComponent> componentsAt92 = viewStruct.getComponentsContaining(92);
+		assertEquals(3, componentsAt92.size());
+		assertEquals("z1", componentsAt92.get(0).getFieldName());
+		assertEquals("z2", componentsAt92.get(1).getFieldName());
+		assertEquals("simpleStructure[3]", componentsAt92.get(2).getDataType().getName());
 
 		int num = model.getNumComponents();
 		int len = model.getLength();
@@ -721,6 +741,9 @@ public class StructureEditorUnlockedActions5Test extends AbstractStructureEditor
 		setSelection(new int[] { 15 });
 		assertEquals("string[5]", getDataType(15).getDisplayName());
 		invoke(unpackageAction);
+
+		waitForSwing();
+
 		assertEquals(len, model.getLength());
 		assertEquals(num + 4, model.getNumComponents());
 		assertTrue(!getDataType(15).isEquivalent(simpleStructure));
@@ -731,11 +754,46 @@ public class StructureEditorUnlockedActions5Test extends AbstractStructureEditor
 			assertEquals("string", sdt.getDisplayName());
 			assertEquals(elementLen, dtc.getLength());
 		}
+
+		componentsAt92 = viewStruct.getComponentsContaining(92);
+		assertEquals(3, componentsAt92.size());
+		assertEquals("z1", componentsAt92.get(0).getFieldName());
+		assertEquals("z2", componentsAt92.get(1).getFieldName());
+		assertEquals("simpleStructure[3]", componentsAt92.get(2).getDataType().getName());
 	}
 
 	@Test
 	public void testUnpackageComponentStructure() throws Exception {
+
+		program.withTransaction("Modify structures", () -> {
+			simpleStructure.setPackingEnabled(true); // simplifies adding bitfields
+			simpleStructure.delete(1); // remove word component where bitfields will be inserted
+			simpleStructure.insertBitField(1, 2, 0, WordDataType.dataType, 3, "bf012", null);
+			simpleStructure.insertBitField(1, 2, 3, WordDataType.dataType, 2, "bf34", null);
+			simpleStructure.insertBitField(1, 2, 7, WordDataType.dataType, 1, "bf7", null);
+			simpleStructure.setPackingEnabled(false);
+			simpleStructure.setLength(29); // prune aligned length
+
+			// Add zero-length component after component to be unpacked
+			complexStructure.insertAtOffset(321, new ArrayDataType(CharDataType.dataType, 0), 0,
+				"z1", null);
+			complexStructure.insertAtOffset(321, new ArrayDataType(CharDataType.dataType, 0), 0,
+				"z2", null);
+
+		});
+
+		waitForSwing();
+
 		init(complexStructure, pgmTestCat);
+
+		Structure viewStruct =
+			(Structure) model.getViewDataTypeManager().getResolvedViewComposite();
+
+		List<DataTypeComponent> componentsAt321 = viewStruct.getComponentsContaining(321);
+		assertEquals(3, componentsAt321.size());
+		assertEquals("z1", componentsAt321.get(0).getFieldName());
+		assertEquals("z2", componentsAt321.get(1).getFieldName());
+		assertEquals("refStructure *32", componentsAt321.get(2).getDataType().getName());
 
 		int num = model.getNumComponents();
 		int len = model.getLength();
@@ -743,13 +801,24 @@ public class StructureEditorUnlockedActions5Test extends AbstractStructureEditor
 		setSelection(new int[] { 21 });
 		assertEquals("simpleStructure", getDataType(21).getDisplayName());
 		invoke(unpackageAction);
+
 		assertEquals(len, model.getLength());
 		assertEquals(num + numComps - 1, model.getNumComponents());
 		assertTrue(!getDataType(21).isEquivalent(simpleStructure));
 		for (int i = 0; i < numComps; i++) {
+			DataTypeComponent dtc = getComponent(21 + i);
 			DataType sdt = simpleStructure.getComponent(i).getDataType();
-			assertTrue(getDataType(21 + i).isEquivalent(sdt));
-			assertEquals(sdt.getDisplayName(), getDataType(21 + i).getDisplayName());
+			assertTrue("type mismatch: " + sdt.getDisplayName() + " at " + dtc.getOffset(),
+				dtc.getDataType().isEquivalent(sdt));
+			assertEquals("name mismatch: " + sdt.getDisplayName() + " at " + dtc.getOffset(),
+				sdt.getDisplayName(), dtc.getDataType().getDisplayName());
 		}
+
+		componentsAt321 = viewStruct.getComponentsContaining(321);
+		assertEquals(3, componentsAt321.size());
+		assertEquals("z1", componentsAt321.get(0).getFieldName());
+		assertEquals("z2", componentsAt321.get(1).getFieldName());
+		assertEquals("refStructure *32", componentsAt321.get(2).getDataType().getName());
+
 	}
 }

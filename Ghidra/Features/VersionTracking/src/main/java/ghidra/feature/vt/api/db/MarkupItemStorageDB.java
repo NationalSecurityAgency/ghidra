@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,22 +25,21 @@ import ghidra.feature.vt.api.main.VTMarkupItemStatus;
 import ghidra.feature.vt.api.markuptype.VTMarkupType;
 import ghidra.feature.vt.api.markuptype.VTMarkupTypeFactory;
 import ghidra.feature.vt.api.util.Stringable;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Lock.Closeable;
 
-public class MarkupItemStorageDB extends DatabaseObject implements MarkupItemStorage {
+public class MarkupItemStorageDB extends DbObject implements MarkupItemStorage {
 	private final AssociationDatabaseManager associationManager;
 	private final VTAssociation association;
 	private final VTSessionDB session;
 
 	private DBRecord record;
 
-	MarkupItemStorageDB(DBRecord record, DBObjectCache<MarkupItemStorageDB> cache,
-			AssociationDatabaseManager associationManager) {
-		super(cache, record.getKey());
+	MarkupItemStorageDB(DBRecord record, AssociationDatabaseManager associationManager) {
+		super(record.getKey());
 		this.record = record;
 		this.associationManager = associationManager;
 		this.session = associationManager.getSession();
@@ -60,47 +59,67 @@ public class MarkupItemStorageDB extends DatabaseObject implements MarkupItemSto
 
 	@Override
 	public Address getSourceAddress() {
-		long addressLong = record.getLongValue(SOURCE_ADDRESS_COL.column());
-		Program program = session.getSourceProgram();
-		AddressMap addressMap = program.getAddressMap();
-		return addressMap.decodeAddress(addressLong);
+		try (Closeable c = associationManager.lock.read()) {
+			refreshIfNeeded();
+			long addressLong = record.getLongValue(SOURCE_ADDRESS_COL.column());
+			Program program = session.getSourceProgram();
+			AddressMap addressMap = program.getAddressMap();
+			return addressMap.decodeAddress(addressLong);
+		}
 	}
 
 	@Override
 	public Address getDestinationAddress() {
-		long addressLong = record.getLongValue(DESTINATION_ADDRESS_COL.column());
-		Program program = session.getDestinationProgram();
-		AddressMap addressMap = program.getAddressMap();
-		return addressMap.decodeAddress(addressLong);
+		try (Closeable c = associationManager.lock.read()) {
+			refreshIfNeeded();
+			long addressLong = record.getLongValue(DESTINATION_ADDRESS_COL.column());
+			Program program = session.getDestinationProgram();
+			AddressMap addressMap = program.getAddressMap();
+			return addressMap.decodeAddress(addressLong);
+		}
 	}
 
 	@Override
 	public String getDestinationAddressSource() {
-		return record.getString(ADDRESS_SOURCE_COL.column());
+		try (Closeable c = associationManager.lock.read()) {
+			refreshIfNeeded();
+			return record.getString(ADDRESS_SOURCE_COL.column());
+		}
 	}
 
 	@Override
 	public VTMarkupItemStatus getStatus() {
-		checkIsValid();
-		byte ordinal = record.getByteValue(STATUS_COL.column());
-		return VTMarkupItemStatus.values()[ordinal];
+		try (Closeable c = associationManager.lock.read()) {
+			refreshIfNeeded();
+			byte ordinal = record.getByteValue(STATUS_COL.column());
+			return VTMarkupItemStatus.values()[ordinal];
+		}
 	}
 
 	@Override
 	public String getStatusDescription() {
-		return record.getString(STATUS_DESCRIPTION_COL.column());
+		try (Closeable c = associationManager.lock.read()) {
+			refreshIfNeeded();
+			return record.getString(STATUS_DESCRIPTION_COL.column());
+		}
 	}
 
 	@Override
 	public Stringable getSourceValue() {
-		String string = record.getString(SOURCE_VALUE_COL.column());
-		return Stringable.getStringable(string, session.getSourceProgram());
+		try (Closeable c = associationManager.lock.read()) {
+			refreshIfNeeded();
+			String string = record.getString(SOURCE_VALUE_COL.column());
+			return Stringable.getStringable(string, session.getSourceProgram());
+		}
 	}
 
 	@Override
 	public Stringable getDestinationValue() {
-		String string = record.getString(ORIGINAL_DESTINATION_VALUE_COL.column());
-		return Stringable.getStringable(string, session.getDestinationProgram());
+		try (Closeable c = associationManager.lock.read()) {
+			refreshIfNeeded();
+			String string = record.getString(ORIGINAL_DESTINATION_VALUE_COL.column());
+			return Stringable.getStringable(string, session.getDestinationProgram());
+		}
 	}
 
 	@Override
@@ -131,15 +150,12 @@ public class MarkupItemStorageDB extends DatabaseObject implements MarkupItemSto
 
 	@Override
 	public MarkupItemStorage reset() {
-		associationManager.lock.acquire();
-		try {
+		try (Closeable c = associationManager.lock.write()) {
+			checkDeleted();
 			MarkupItemStorage storage = new MarkupItemStorageImpl(getAssociation(), getMarkupType(),
 				getSourceAddress(), getDestinationAddress(), getDestinationAddressSource());
 			associationManager.removeMarkupRecord(record.getKey());
 			return storage;
-		}
-		finally {
-			associationManager.lock.release();
 		}
 	}
 

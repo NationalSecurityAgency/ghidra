@@ -83,6 +83,9 @@ model {
 				b.cCompiler.args "-std=c99"
 				b.cCompiler.args "-Wall"
 				b.cCompiler.args "-O2"
+				if (b.targetPlatform.operatingSystem.name == "freebsd") {
+					b.cCompiler.define "_XOPEN_SOURCE", "600"
+				}
 			}
 		}
 	}

@@ -486,12 +486,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		protected void forgetAllBreakpoints(RemoveCollector r) {
-			Collection<TraceBreakpointLocation> toForget = new ArrayList<>();
-			for (AddressRange range : trace.getBaseAddressFactory().getAddressSet()) {
-				toForget.addAll(
-					trace.getBreakpointManager().getBreakpointsIntersecting(Lifespan.ALL, range));
-			}
-			for (TraceBreakpointLocation tb : toForget) {
+			for (TraceBreakpointLocation tb : List.copyOf(logicalByBreakpoint.keySet())) {
 				forgetTraceBreakpoint(r, tb);
 			}
 		}

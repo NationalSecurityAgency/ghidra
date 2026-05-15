@@ -29,6 +29,7 @@ def parse_parameters():
     if argc >= 3:
         cxn = sys.argv[1]
         target = sys.argv[2]
+        os.environ['OPT_X64DBG_EXE'] = sys.argv[3]
         return True
     print("Error: expected (cxn, target, initdir, ...)")
     return False
@@ -48,6 +49,11 @@ def append_paths():
 def main():
     append_paths()
     # Delay these imports until sys.path is patched
+    try:
+        import ghidraxdbg
+    except:
+        print(e)
+        exit(253)
     from ghidraxdbg import commands as cmd
     from ghidraxdbg.hooks import on_state_changed
     from ghidraxdbg.util import dbg
@@ -77,5 +83,7 @@ if __name__ == '__main__':
     try:
         main()
     except SystemExit as x:
+        if x.code == 253:
+            exit(253)
         if x.code != 0:
             print(f"Exited with code {x.code}")

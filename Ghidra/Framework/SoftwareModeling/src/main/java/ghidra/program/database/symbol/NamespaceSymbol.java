@@ -16,9 +16,9 @@
 package ghidra.program.database.symbol;
 
 import db.DBRecord;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.*;
+import ghidra.util.Lock.Closeable;
 
 /**
  * Symbol class for namespaces.
@@ -30,11 +30,10 @@ public class NamespaceSymbol extends SymbolDB {
 	/**
 	 * Construct a new namespace symbol
 	 * @param mgr the symbol manager.
-	 * @param cache symbol object cache
 	 * @param record the record for this symbol.
 	 */
-	NamespaceSymbol(SymbolManager mgr, DBObjectCache<SymbolDB> cache, DBRecord record) {
-		super(mgr, cache, Address.NO_ADDRESS, record);
+	NamespaceSymbol(SymbolManager mgr, DBRecord record) {
+		super(mgr, Address.NO_ADDRESS, record, record.getKey());
 	}
 
 	@Override
@@ -55,18 +54,14 @@ public class NamespaceSymbol extends SymbolDB {
 
 	@Override
 	public Namespace getObject() {
-		lock.acquire();
-		try {
-			if (!checkIsValid()) {
+		try (Closeable c = lock.read()) {
+			if (!refreshIfNeeded()) {
 				return null;
 			}
 			if (namespace == null) {
 				namespace = new NamespaceDB(this, symbolMgr.getProgram().getNamespaceManager());
 			}
 			return namespace;
-		}
-		finally {
-			lock.release();
 		}
 	}
 

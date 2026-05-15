@@ -162,7 +162,8 @@ public interface Structure extends Composite {
 	 * @param baseDataType the bitfield base datatype (certain restrictions apply).
 	 * @param bitSize the declared bitfield size in bits. The effective bit size may be adjusted
 	 *            based upon the specified baseDataType.
-	 * @param componentName the field name to associate with this component.
+	 * @param componentName the field name to associate with this component. (may be null)
+	 * 			The name may be sanitized to convert all whitespace characters to an underscore.  
 	 * @param comment the comment to associate with this component.
 	 * @return the bitfield component created whose associated data type will be BitFieldDataType.
 	 * @throws InvalidDataTypeException if the specified baseDataType is not a valid base type for
@@ -206,7 +207,8 @@ public interface Structure extends Composite {
 	 *            viewed as big-endian. The final offset may be reduced based upon the minimal
 	 *            storage size determined during insertion.
 	 * @param baseDataType the bitfield base datatype (certain restrictions apply).
-	 * @param componentName the field name to associate with this component.
+	 * @param componentName the field name to associate with this component. (may be null)
+	 * 			The name may be sanitized to convert all whitespace characters to an underscore.  
 	 * @param bitSize the bitfield size in bits. A bitSize of 0 may be specified although its name
 	 *            will be ignored.
 	 * @param comment the comment to associate with this component.
@@ -257,7 +259,8 @@ public interface Structure extends Composite {
 	 * 				structure an {@link Undefined1DataType} will be used in its place.
 	 * @param length the length to associate with the dataType. For fixed length types a length
 	 *            &lt;= 0 will use the length of the resolved dataType.
-	 * @param name the field name to associate with this component.
+	 * @param componentName the field name to associate with this component. (may be null)
+	 * 			The name may be sanitized to convert all whitespace characters to an underscore.  
 	 * @param comment the comment to associate with this component.
 	 * @return the componentDataType created.
 	 * @throws IllegalArgumentException if the specified data type is not allowed to be inserted
@@ -265,7 +268,8 @@ public interface Structure extends Composite {
 	 *             suppose dt1 contains dt2. Therefore it is not valid to insert dt1 to dt2 since
 	 *             this would cause a cyclic dependency.
 	 */
-	public DataTypeComponent insertAtOffset(int offset, DataType dataType, int length, String name,
+	public DataTypeComponent insertAtOffset(int offset, DataType dataType, int length,
+			String componentName,
 			String comment) throws IllegalArgumentException;
 
 	/**
@@ -383,14 +387,16 @@ public interface Structure extends Composite {
 	 * @param length component length for containing the specified dataType. A positive length is required 
 	 *             for sizable {@link Dynamic} datatypes and should be specified as -1 for fixed-length
 	 *             datatypes to rely on their resolved size.
-	 * @param name the field name to associate with this component or null.
+	 * @param componentName the field name to associate with this component. (may be null)
+	 * 			The name may be sanitized to convert all whitespace characters to an underscore.  
 	 * @param comment the comment to associate with this component or null.
 	 * @return the new component.
 	 * @throws IllegalArgumentException may be caused by: 1) invalid offset specified, 2) invalid datatype or 
 	 *             associated length specified, or 3) insufficient space for replacement.
 	 * @throws IndexOutOfBoundsException if component ordinal is out of bounds
 	 */
-	public DataTypeComponent replace(int ordinal, DataType dataType, int length, String name,
+	public DataTypeComponent replace(int ordinal, DataType dataType, int length,
+			String componentName,
 			String comment) throws IndexOutOfBoundsException, IllegalArgumentException;
 
 	/**
@@ -428,13 +434,15 @@ public interface Structure extends Composite {
 	 * @param length component length for containing the specified dataType. A positive length is required 
 	 *             for sizable {@link Dynamic} datatypes and should be specified as -1 for fixed-length
 	 *             datatypes to rely on their resolved size.
-	 * @param name the field name to associate with this component or null.
+	 * @param componentName the field name to associate with this component. (may be null)
+	 * 			The name may be sanitized to convert all whitespace characters to an underscore.  
 	 * @param comment the comment to associate with this component or null.
 	 * @return the new component.
 	 * @throws IllegalArgumentException may be caused by: 1) invalid offset specified, 2) invalid datatype or 
 	 *             associated length specified, or 3) insufficient space for replacement.
 	 */
-	public DataTypeComponent replaceAtOffset(int offset, DataType dataType, int length, String name,
+	public DataTypeComponent replaceAtOffset(int offset, DataType dataType, int length,
+			String componentName,
 			String comment) throws IllegalArgumentException;
 
 	/**

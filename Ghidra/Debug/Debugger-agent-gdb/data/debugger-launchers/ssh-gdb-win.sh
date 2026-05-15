@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@title gdb via ssh (to cmd)
+#@title gdb via ssh (cmd shell)
 #@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>gdb</tt> via <tt>ssh</tt></h3>
@@ -64,7 +64,7 @@ function rewrite-gdbinit() {
 
 function launch-gdb-ssh-init() {
 	local -a sshargs
-	compute-ssh-args true "cat > .\.gdbinit"
+	compute-ssh-args true "cat > .\ghidra.gdbinit"
 
 	"${sshargs[@]}"
 }
@@ -73,7 +73,7 @@ rewrite-gdbinit | launch-gdb-ssh-init
 
 function launch-gdb-ssh() {
 	local -a sshargs
-	compute-ssh-args true "gdb -q"
+	compute-ssh-args true "gdb -q -x .\ghidra.gdbinit"
 
 	"${sshargs[@]}"
 }

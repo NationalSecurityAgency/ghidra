@@ -71,7 +71,8 @@ function Compute-Ssh-Args {
 	$cmdline = $arglist -join " " -replace "`"", "\`""
 
 	$sshargs = @("`"$Env:OPT_SSH_PATH`"")
-	$sshargs+=("-t")
+# NB: Is this needed?  It break target==Windows.
+#	$sshargs+=("-t")
 	if ($forward) {
 		$sshargs+=("-R$Env:OPT_REMOTE_PORT`:$Env:GHIDRA_TRACE_RMI_ADDR")
 	}

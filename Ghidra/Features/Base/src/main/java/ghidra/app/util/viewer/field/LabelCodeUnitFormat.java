@@ -34,17 +34,20 @@ public class LabelCodeUnitFormat extends BrowserCodeUnitFormat {
 
 	@Override
 	protected String getOffcutLabelStringForInstruction(Address offcutAddress,
-			Instruction instruction, Address markupAddress) {
+			Instruction instruction, Address markupAddress, Symbol symbol) {
 		if (markupAddress != null) {
 			throw new UnsupportedOperationException();
 		}
 		Program program = instruction.getProgram();
-		Symbol offsym = program.getSymbolTable().getPrimarySymbol(offcutAddress);
+
+		if (symbol == null) {
+			symbol = program.getSymbolTable().getPrimarySymbol(offcutAddress);
+		}
 		Address instructionAddress = instruction.getMinAddress();
 		long diff = offcutAddress.subtract(instructionAddress);
-		boolean decorate = !offsym.isDynamic();
+		boolean decorate = !symbol.isDynamic();
 		boolean simplify = true;
-		return getDefaultOffcutString(offsym, instruction, diff, decorate, simplify);
+		return getDefaultOffcutString(symbol, instruction, diff, decorate, simplify);
 	}
 
 	@Override

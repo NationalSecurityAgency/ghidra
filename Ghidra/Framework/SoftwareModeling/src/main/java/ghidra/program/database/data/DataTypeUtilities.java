@@ -1105,7 +1105,17 @@ public class DataTypeUtilities {
 	public static boolean equalsIgnoreConflict(String name1, String name2) {
 		return getNameWithoutConflict(name1).equals(getNameWithoutConflict(name2));
 	}
+	
 
+	/**
+	 * Returns true if there is a {@link DataTypeMerger} that can handle the given datatype. Currently, only structures
+	 * unions, and enums are supported.
+	 * @param dataType the dataType to check
+	 * @return true if there is support for merging that dataType
+	 */
+	public static boolean supportsMerge(DataType dataType) {
+		return dataType instanceof Composite || dataType instanceof Enum;
+	}
 	/**
 	 * Convenience method for getting the appropriate datatype merger or throwing an exception
 	 * if the two datatypes are not eligible to be merged.

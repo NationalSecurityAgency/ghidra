@@ -236,9 +236,9 @@ def ghidra_trace_listen(address: Optional[str] = None, *, is_mi: bool,
 
     Takes an optional address for the host and port on which to listen.
     Either the form 'host:port' or just 'port'. If omitted, it will bind
-    to an ephemeral port on all interfaces. If only the port is given,
-    it will bind to that port on all interfaces. This command will block
-    until the connection is established.
+    to an ephemeral port on localhost. If only the port is given, it will
+    bind to that port on localhost. This command will block until the
+    connection is established.
     """
 
     STATE.require_no_client()
@@ -247,13 +247,13 @@ def ghidra_trace_listen(address: Optional[str] = None, *, is_mi: bool,
     if address is not None:
         parts = address.split(':')
         if len(parts) == 1:
-            host, port = '0.0.0.0', parts[0]
+            host, port = '127.0.0.1', parts[0]
         elif len(parts) == 2:
             host, port = parts
         else:
             raise gdb.GdbError("address must be 'port' or 'host:port'")
     else:
-        host, port = '0.0.0.0', 0
+        host, port = '127.0.0.1', 0
     try:
         s = socket.socket()
         s.bind((host, int(port)))
@@ -296,10 +296,12 @@ def start_trace(name: str) -> None:
     frame = inspect.currentframe()
     if frame is None:
         raise AssertionError("cannot locate schema.xml")
+
     parent = os.path.dirname(inspect.getfile(frame))
     schema_fn = os.path.join(parent, 'schema.xml')
     with open(schema_fn, 'r') as schema_file:
         schema_xml = schema_file.read()
+
     with STATE.trace.open_tx("Create Root Object"):
         root = STATE.trace.create_root_object(schema_xml, 'GdbSession')
         root.set_value('_display', 'GNU gdb ' + util.GDB_VERSION.full)
@@ -562,6 +564,8 @@ def ghidra_trace_putval(value: str, pages: bool = True, *, is_mi: bool,
 
     STATE.require_tx()
     val = gdb.parse_and_eval(value)
+    if val.address is None:
+        raise gdb.GdbError(f"Value '{value}' has no address")
     try:
         start = int(val.address)
     except gdb.error as e:
@@ -1066,7 +1070,7 @@ def ghidra_trace_put_inferiors(*, is_mi: bool, **kwargs) -> None:
         put_inferiors()
 
 
-def put_available() -> List[util.Available]:
+def put_available() -> None:
     trace = STATE.require_trace()
     availables = util.AVAILABLE_INFO_READER.get_availables()
     keys = []
@@ -1099,22 +1103,22 @@ def put_single_breakpoint(b: gdb.Breakpoint, ibobj: TraceObject,
     brkobj.set_value('Enabled', b.enabled)
     if b.type == gdb.BP_BREAKPOINT:
         brkobj.set_value('Expression', b.location)
-        brkobj.set_value('Kinds', 'SW_EXECUTE')
+        brkobj.set_value('Kinds', 'x')
     elif b.type == gdb.BP_HARDWARE_BREAKPOINT:
         brkobj.set_value('Expression', b.location)
-        brkobj.set_value('Kinds', 'HW_EXECUTE')
+        brkobj.set_value('Kinds', 'X')
     elif b.type == gdb.BP_WATCHPOINT:
         brkobj.set_value('Expression', b.expression)
-        brkobj.set_value('Kinds', 'WRITE')
+        brkobj.set_value('Kinds', 'W')
     elif b.type == gdb.BP_HARDWARE_WATCHPOINT:
         brkobj.set_value('Expression', b.expression)
-        brkobj.set_value('Kinds', 'WRITE')
+        brkobj.set_value('Kinds', 'W')
     elif b.type == gdb.BP_READ_WATCHPOINT:
         brkobj.set_value('Expression', b.expression)
-        brkobj.set_value('Kinds', 'READ')
+        brkobj.set_value('Kinds', 'R')
     elif b.type == gdb.BP_ACCESS_WATCHPOINT:
         brkobj.set_value('Expression', b.expression)
-        brkobj.set_value('Kinds', 'READ,WRITE')
+        brkobj.set_value('Kinds', 'RW')
     else:
         brkobj.set_value('Expression', '(unknown)')
         brkobj.set_value('Kinds', '')

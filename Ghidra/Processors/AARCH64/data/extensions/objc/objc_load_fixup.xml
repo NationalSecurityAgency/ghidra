@@ -1,0 +1,9 @@
+<callfixup name="_objc_load_fixup">
+    <target name="_objc_loadWeak"/>
+    <target name="_objc_loadWeakRetained"/>
+    <pcode>
+        <body><![CDATA[
+            x0 = *x0;
+        ]]></body>
+    </pcode>
+</callfixup>

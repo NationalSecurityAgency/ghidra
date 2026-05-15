@@ -25,6 +25,8 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.*;
 import ghidra.util.Msg;
+import utilities.util.FileUtilities;
+import utility.application.ApplicationLayout;
 
 /**
  * Class to hold meta information about a plugin, derived from meta-data attached to
@@ -124,11 +126,11 @@ public class PluginDescription implements Comparable<PluginDescription> {
 			if (path.startsWith(fileProtoPrefix)) {
 				path = path.substring(fileProtoPrefix.length() + 1);
 			}
-			return path;
+			return '/' + path;
 		}
 		String classpath = pluginClass.getName();
 		path = path.substring(0, path.length() - classpath.length() - DOTCLASS_EXT.length() - 1);
-		return path;
+		return '/' + path;
 	}
 
 	/**
@@ -149,7 +151,7 @@ public class PluginDescription implements Comparable<PluginDescription> {
 	}
 
 	/**
-	 * Return the name of the module that contains the plugin.
+	 * Returns the name of the module that contains the plugin.
 	 * @return the module name
 	 */
 	public String getModuleName() {
@@ -159,6 +161,16 @@ public class PluginDescription implements Comparable<PluginDescription> {
 		}
 
 		return moduleName;
+	}
+
+	/**
+	 * {@return true if this plugin is provided by an extension}
+	 */
+	public boolean isInExtension() {
+		String myPath = getSourceLocation();
+		ApplicationLayout layout = Application.getApplicationLayout();
+		List<ResourceFile> extDirs = layout.getExtensionInstallationDirs();
+		return FileUtilities.startsWith(extDirs, myPath);
 	}
 
 	/**

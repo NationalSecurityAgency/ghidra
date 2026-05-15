@@ -15,22 +15,22 @@
  */
 package ghidra.app.util;
 
+import static docking.widgets.textfield.integer.IntegerFormat.*;
+
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.table.FocusableEditor;
-import docking.widgets.textfield.HexDecimalModeTextField;
+import docking.widgets.textfield.integer.MultiFormatTextField;
+import docking.widgets.textfield.integer.IntegerFormat;
 import generic.expressions.ExpressionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -45,7 +45,7 @@ public class AddressInput extends JPanel implements FocusableEditor {
 	public final static Predicate<AddressSpace> ALL_MEMORY_SPACES = s -> s.isMemorySpace();
 	public final static Predicate<AddressSpace> LOADED_MEMORY_SPACES = s -> s.isLoadedMemorySpace();
 
-	private HexDecimalModeTextField textField;
+	private MultiFormatTextField textField;
 	private AddressSpaceField addressSpaceField;
 	AddressEvaluator addressEvaluator;
 	private Predicate<AddressSpace> addressSpaceFilter = LOADED_MEMORY_SPACES;
@@ -170,8 +170,9 @@ public class AddressInput extends JPanel implements FocusableEditor {
 	 * @param hexMode true to assume numbers are hexadecimal.
 	 */
 	public void setAssumeHex(boolean hexMode) {
-		textField.setHexMode(hexMode);
-		hexModeChanged(hexMode);
+		IntegerFormat format = hexMode ? IntegerFormat.HEX : IntegerFormat.DEC;
+		textField.setFormat(format);
+		hexModeChanged(format);
 	}
 
 	/**
@@ -418,35 +419,17 @@ public class AddressInput extends JPanel implements FocusableEditor {
 
 	private void buildComponent() {
 		setLayout(new BorderLayout());
-		textField = new HexDecimalModeTextField(10, b -> hexModeChanged(b));
-		textField.setHexMode(true);
+		textField = new MultiFormatTextField(10, List.of(HEX, DEC), b -> hexModeChanged(b));
 		textField.setName("JTextField");//for JUnits...
 		addressSpaceField = new AddressSpaceField();
 		add(textField, BorderLayout.CENTER);
 		comboAdded = false;
-
-		textField.getDocument().addDocumentListener(new DocumentListener() {
-			@Override
-			public void insertUpdate(DocumentEvent e) {
-				notifyAddressChanged();
-			}
-
-			@Override
-			public void removeUpdate(DocumentEvent e) {
-				notifyAddressChanged();
-			}
-
-			@Override
-			public void changedUpdate(DocumentEvent e) {
-				notifyAddressChanged();
-			}
-		});
-
+		textField.addTextChangedCallback(this::notifyAddressChanged);
 	}
 
-	private void hexModeChanged(boolean hexMode) {
-		this.assumeHex = hexMode;
-		addressEvaluator.setAssumeHex(hexMode);
+	private void hexModeChanged(IntegerFormat format) {
+		this.assumeHex = format == HEX;
+		addressEvaluator.setAssumeHex(assumeHex);
 		notifyAddressChanged();
 	}
 

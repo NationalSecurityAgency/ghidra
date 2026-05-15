@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.program.model.lang.GhidraLanguagePropertyKeys;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
@@ -33,7 +34,7 @@ import ghidra.util.classfinder.ExtensionPoint;
  */
 public interface PcodeUseropLibraryFactory extends ExtensionPoint {
 	/** The property key for useropLib ids in pspec files */
-	public static final String KEY_USEROP_LIBS = "useropLibs";
+	public static final String KEY_USEROP_LIBS = GhidraLanguagePropertyKeys.USEROP_LIBS;
 
 	/**
 	 * A required annotation for identifying the library in pspec files

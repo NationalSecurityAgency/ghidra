@@ -255,7 +255,7 @@ class ToolServicesImpl implements ToolServices {
 	@Override
 	public PluginTool launchToolWithURL(String toolName, URL ghidraUrl)
 			throws IllegalArgumentException {
-		if (!GhidraURL.isLocalProjectURL(ghidraUrl) &&
+		if (!GhidraURL.isLocalURL(ghidraUrl) &&
 			!GhidraURL.isServerRepositoryURL(ghidraUrl)) {
 			throw new IllegalArgumentException("unsupported URL");
 		}

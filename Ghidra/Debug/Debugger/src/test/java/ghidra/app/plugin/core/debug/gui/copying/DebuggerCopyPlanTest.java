@@ -45,7 +45,7 @@ import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.program.DBTraceVariableSnapProgramView;
 import ghidra.trace.database.symbol.*;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.util.task.TaskMonitor;
@@ -559,9 +559,9 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 
 			DBTraceBreakpointManager breakpoints = tb.trace.getBreakpointManager();
 			breakpoints.placeBreakpoint("Breakpoints[1]", 0, tb.addr(0x55550123), List.of(),
-				Set.of(TraceBreakpointKind.SW_EXECUTE), true, "Test-1");
+				CommonSet.SWX.kinds(), true, "Test-1");
 			breakpoints.placeBreakpoint("Breakpoints[2]", 0, tb.addr(0x55550321), List.of(),
-				Set.of(TraceBreakpointKind.SW_EXECUTE), false, "Test-2");
+				CommonSet.SWX.kinds(), false, "Test-2");
 		}
 
 		Address paddr = tb.addr(stSpace, 0x55550000);
@@ -571,8 +571,7 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 						false);
 			// Set up a collision. This is normal with relocations
 			program.getBookmarkManager()
-					.setBookmark(tb.addr(stSpace, 0x55550123), "BreakpointDisabled", "SW_EXECUTE;1",
-						"");
+					.setBookmark(tb.addr(stSpace, 0x55550123), "BreakpointDisabled", "x;1", "");
 
 			AllCopiers.BREAKPOINTS.copy(view, tb.range(0x55550000, 0x5555ffff), program, paddr,
 				TaskMonitor.DUMMY);
@@ -588,12 +587,12 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		bm = bookmarks.get(0);
 		assertEquals(tb.addr(stSpace, 0x55550123), bm.getAddress());
 		assertEquals("BreakpointEnabled", bm.getTypeString());
-		assertEquals("SW_EXECUTE;1", bm.getCategory());
+		assertEquals("x;1", bm.getCategory());
 
 		bm = bookmarks.get(1);
 		assertEquals(tb.addr(stSpace, 0x55550321), bm.getAddress());
 		assertEquals("BreakpointDisabled", bm.getTypeString());
-		assertEquals("SW_EXECUTE;1", bm.getCategory());
+		assertEquals("x;1", bm.getCategory());
 	}
 
 	@Test

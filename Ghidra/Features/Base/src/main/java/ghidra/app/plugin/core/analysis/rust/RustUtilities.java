@@ -23,6 +23,8 @@ import org.xml.sax.SAXException;
 
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.processors.sleigh.SleighException;
+import ghidra.app.util.bin.format.elf.info.ElfComment;
+import ghidra.app.util.opinion.ElfLoader;
 import ghidra.framework.Application;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.SpecExtension;
@@ -43,8 +45,12 @@ import ghidra.xml.XmlParseException;
  */
 public class RustUtilities {
 
+	private static final java.util.regex.Pattern ELF_COMMENT_REGEX =
+		java.util.regex.Pattern.compile("^rustc version .*$");
+
 	/**
-	 * Checks if a given {@link MemoryBlock} contains a Rust signature
+	 * Checks if the specified program contains Rust stuff, either by metadata or by searching
+	 * the specified {@link MemoryBlock} for byte pattern signatures. 
 	 * <p>
 	 * This may be used by loaders to determine if a program was compiled with rust.
 	 * If the program is determined to be rust, then the compiler property is set to
@@ -60,6 +66,20 @@ public class RustUtilities {
 	 */
 	public static boolean isRust(Program program, MemoryBlock block, TaskMonitor monitor)
 			throws IOException, CancelledException {
+
+		if ( ElfLoader.isElf(program)) {
+			// ELF binaries can contain a ".comment" section that records the toolchains that
+			// produced the binary.  Search this first as its quick and easy. 
+			ElfComment elfComments = ElfComment.fromProgram(program);
+			if ( elfComments != null ) {
+				for(String s : elfComments.getCommentStrings() ) {
+					if (ELF_COMMENT_REGEX.matcher(s).matches()) {
+						return true;
+					}
+				}
+			}
+		}
+
 		if (block == null) {
 			return false;
 		}

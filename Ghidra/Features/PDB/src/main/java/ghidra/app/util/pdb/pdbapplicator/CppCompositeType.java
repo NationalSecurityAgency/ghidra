@@ -27,6 +27,7 @@ import ghidra.app.util.pdb.classtype.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.gclass.ClassID;
 import ghidra.program.model.gclass.ClassUtils;
+import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -42,6 +43,11 @@ public class CppCompositeType {
 	private static final String VIRTUAL_BASE_COMMENT = "Virtual Base";
 	private static final String VIRTUAL_BASE_SPECULATIVE_COMMENT =
 		"Virtual Base - Speculative Placement";
+
+	private static final boolean CREATE_BASE_NAMES =
+		Boolean.getBoolean("ghidra.pdb.createBaseNames");
+
+	private static final boolean CREATE_MY_DATA = Boolean.getBoolean("ghidra.pdb.createMyData");
 
 	private boolean isFinal;
 	private ClassKey classKey;
@@ -1230,7 +1236,7 @@ public class CppCompositeType {
 	 */
 	private void createClassLayout(MsVxtManager vxtManager, ObjectOrientedClassLayout layoutOptions,
 			TaskMonitor monitor) throws CancelledException, PdbException {
-		List<ClassPdbMember> selfBaseMembers = getSelfBaseClassMembers();
+		List<ClassPdbMember> selfBaseMembers = getSelfBaseClassMembers(monitor);
 		mainVft = getMainVft(vxtManager);
 		if (mainVft != null) {
 			updateMainVft();
@@ -1249,8 +1255,8 @@ public class CppCompositeType {
 				selfBaseMembers, msg -> Msg.warn(this, msg), monitor)) {
 				clearComponents(composite);
 			}
-			ClassPdbMember directClassPdbMember =
-				new ClassPdbMember("", selfBaseType, false, 0, SELF_BASE_COMMENT);
+			ClassPdbMember directClassPdbMember = new ClassPdbMember(getBaseClassName(selfBaseType),
+				selfBaseType, false, 0, SELF_BASE_COMMENT);
 
 			mainVbt = getMainVbt(vxtManager);
 			if (mainVbt != null) {
@@ -1286,7 +1292,34 @@ public class CppCompositeType {
 
 		sourceHierarchy = determineBaseSourceOrder();
 		composite.setDescription(sourceHierarchy);
+	}
 
+	/**
+	 * Temporary debug method
+	 * @param applicator the applicator
+	 * @param structure the input structure
+	 * @return the flattened structure or null if could not or didn't need to be flattened
+	 */
+	public static Structure createFlattenedTemp(DefaultPdbApplicator applicator,
+			Structure structure) {
+		Structure f = ClassUtils.getReplacementType(structure);
+		if (f == null) {
+			return null;
+		}
+//		CategoryPath p = ClassUtils.getClassInternalsPath(f);
+		CategoryPath p = f.getCategoryPath();
+		if (f instanceof StructureDataType s) {
+			String n = structure.getName() + "_TEMP_Flattened";
+			try {
+				s.setName(n);
+				s.setCategoryPath(p);
+				return s;
+			}
+			catch (InvalidNameException e) {
+				//
+			}
+		}
+		return null;
 	}
 
 	// Taken from PdbUtil without change.  Would have had to change access on class PdbUtil and
@@ -1316,7 +1349,8 @@ public class CppCompositeType {
 	 * regular members
 	 * @return the members
 	 */
-	private List<ClassPdbMember> getSelfBaseClassMembers() {
+	private List<ClassPdbMember> getSelfBaseClassMembers(TaskMonitor monitor)
+			throws CancelledException {
 		// Using TreeMap to get base classes and vxtptrs in the correct order.  None of these
 		//  should have the same offset unless there are zero-sized base classes in play.  Found
 		//  examples, however where some "empty" base classes were given unique offsets (e.g., 12,
@@ -1370,8 +1404,8 @@ public class CppCompositeType {
 			String comment = BASE_COMMENT;
 			Composite baseDataType = base.getSelfBaseDataType();
 			// This does not have attributes like "Member" does (consider changes?)
-			ClassPdbMember classPdbMember =
-				new ClassPdbMember("", baseDataType, false, offset, comment);
+			ClassPdbMember classPdbMember = new ClassPdbMember(getBaseClassName(baseDataType),
+				baseDataType, false, offset, comment);
 			map.put(new OffsetOrdinal(offset, ordinal++), classPdbMember);
 		}
 		hasZeroBaseSize = hasZeroParentBaseSize;
@@ -1402,14 +1436,7 @@ public class CppCompositeType {
 		List<ClassPdbMember> members = new ArrayList<>(map.values());
 		int lastOffset = members.isEmpty() ? -1 : members.getLast().getOffset();
 
-		List<ClassPdbMember> standardMembers = new ArrayList<>();
-		for (Member member : layoutMembers) {
-			ClassPdbMember classPdbMember =
-				new ClassPdbMember(member.getName(), member.getDataType(),
-					member.isFlexibleArray(), member.getOffset(), member.getComment());
-			standardMembers.add(classPdbMember);
-			//members.add(classPdbMember);
-		}
+		List<ClassPdbMember> standardMembers = getStandardMembers(monitor);
 
 		int firstStandardOffset =
 			standardMembers.isEmpty() ? lastOffset + 1 : standardMembers.getFirst().getOffset();
@@ -1456,7 +1483,8 @@ public class CppCompositeType {
 						Composite baseDataType = base.getSelfBaseDataType();
 						// This does not have attributes
 						ClassPdbMember classPdbMember =
-							new ClassPdbMember("", baseDataType, false, offset.intValue(), comment);
+							new ClassPdbMember(getBaseClassName(baseDataType), baseDataType, false,
+								offset.intValue(), comment);
 						map.put(offset, classPdbMember);
 						accumulatedComment = "";
 					}
@@ -1470,6 +1498,56 @@ public class CppCompositeType {
 			}
 		}
 		return map;
+	}
+
+	private String getBaseClassName(Composite baseDataType) {
+		if (!CREATE_BASE_NAMES) {
+			return "";
+		}
+		return baseDataType.getName() + "_base";
+	}
+
+	private List<ClassPdbMember> getStandardMembers(TaskMonitor monitor)
+			throws CancelledException {
+		List<ClassPdbMember> members = new ArrayList<>();
+		if (layoutMembers.isEmpty()) {
+			return members;
+		}
+		if (CREATE_MY_DATA) {
+			int minOffset = Integer.MAX_VALUE;
+			for (Member member : layoutMembers) {
+				minOffset = Integer.min(minOffset, member.getOffset());
+			}
+			for (Member member : layoutMembers) {
+				// subtracts minOffset
+				ClassPdbMember classPdbMember =
+					new ClassPdbMember(member.getName(), member.getDataType(),
+						member.isFlexibleArray(), member.getOffset() - minOffset,
+						member.getComment());
+				members.add(classPdbMember);
+			}
+			DataTypePath selfBasePath = createSelfBaseCategoryPath(this); // use same path as self
+			String dataName = composite.getName() + "_data";
+			Composite data = new StructureDataType(selfBasePath.getCategoryPath(), dataName, 0,
+				composite.getDataTypeManager());
+			data.setDescription("Data of " + selfBasePath.getDataTypeName());
+			if (!DefaultCompositeMember.applyDataTypeMembers(data, false, false, 0,
+				members, msg -> Msg.warn(this, msg), monitor)) {
+				clearComponents(composite);
+			}
+			members.clear();
+			members.add(new ClassPdbMember(dataName, data, false, minOffset, ""));
+		}
+		else {
+			// does not subtract minOffset
+			for (Member member : layoutMembers) {
+				ClassPdbMember classPdbMember =
+					new ClassPdbMember(member.getName(), member.getDataType(),
+						member.isFlexibleArray(), member.getOffset(), member.getComment());
+				members.add(classPdbMember);
+			}
+		}
+		return members;
 	}
 
 	/**

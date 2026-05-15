@@ -60,7 +60,7 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.schema.SchemaContext;
@@ -125,11 +125,11 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x10000, (byte) 0,
 						TaskMonitor.DUMMY, false);
 			FunctionManager fMan = program.getFunctionManager();
-			fMan.createFunction("FUN_00401000", addr(0x00401000),
+			fMan.createFunction("FUN_00401000", addr(program, 0x00401000),
 				set(program, 0x00401000, 0x00401100), SourceType.USER_DEFINED);
-			fMan.createFunction("FUN_00401200", addr(0x00401200),
+			fMan.createFunction("FUN_00401200", addr(program, 0x00401200),
 				set(program, 0x00401200, 0x00401300), SourceType.USER_DEFINED);
-			fMan.createFunction("FUN_00404300", addr(0x00404300),
+			fMan.createFunction("FUN_00404300", addr(program, 0x00404300),
 				set(program, 0x00404300, 0x00404400), SourceType.USER_DEFINED);
 		}
 
@@ -328,8 +328,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
-						Set.of(),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
+						Set.of(), CommonSet.SWX.kinds(), true, "unwind stack");
 		}
 
 		EmulationResult result = emuService.run(atSetup.getPlatform(), atSetup.getTime(), monitor,

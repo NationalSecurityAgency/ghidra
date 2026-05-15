@@ -36,11 +36,10 @@ import ghidra.app.plugin.core.stackeditor.StackFrameDataType.StackComponentWrapp
 import ghidra.app.util.datatype.EmptyCompositeException;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -707,10 +706,7 @@ public class StackEditorModel extends CompositeEditorModel<StackFrameDataType> {
 
 	@Override
 	public void validateComponentName(int currentIndex, String name) throws UsrException {
-		if (SymbolUtilities.containsInvalidChars(name)) {
-			throw new InvalidInputException(
-				"Symbol name \"" + name + "\"contains invalid characters.");
-		}
+		viewComposite.checkNameChange(currentIndex, name);
 	}
 
 	@Override
@@ -1129,7 +1125,7 @@ public class StackEditorModel extends CompositeEditorModel<StackFrameDataType> {
 
 		// Check for managed datatype changing
 		DataType originalDt = originalDTM.getDataType(newPath);
-		if (!(originalDt instanceof DatabaseObject)) {
+		if (!(originalDt instanceof DbObject)) {
 			return;
 		}
 		DataType dt = viewDTM.findMyDataTypeFromOriginalID(originalDTM.getID(originalDt));
@@ -1165,7 +1161,7 @@ public class StackEditorModel extends CompositeEditorModel<StackFrameDataType> {
 		}
 
 		DataType changedDt = originalDTM.getDataType(path);
-		if (!(changedDt instanceof DatabaseObject)) {
+		if (!(changedDt instanceof DbObject)) {
 			return;
 		}
 		DataType viewDt = viewDTM.findMyDataTypeFromOriginalID(originalDTM.getID(changedDt));
@@ -1254,7 +1250,7 @@ public class StackEditorModel extends CompositeEditorModel<StackFrameDataType> {
 		for (int i = comps.length - 1; i >= 0; i--) {
 			DataTypeComponent component = comps[i];
 			DataType compDt = component.getDataType();
-			if (compDt instanceof DatabaseObject) {
+			if (compDt instanceof DbObject) {
 				// NOTE: viewDTM only maps view-to-original IDs for DataTypeDB
 				long myId = viewDTM.getID(compDt);
 				if (viewDTM.findOriginalDataTypeFromMyID(myId) == null) {

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.DataTypeNamingUtil;
+import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
@@ -79,8 +80,9 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 	/**
 	 * Processes containing class if one exists
 	 * @param type the PDB type being inspected
+	 * @return symbol path of containing type; {@code null} if does not exist
 	 */
-	protected abstract void processContainingType(AbstractMsType type);
+	protected abstract SymbolPath processContainingType(AbstractMsType type);
 
 	/**
 	 * Returns if known to be a constructor.
@@ -220,10 +222,12 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 			return false;
 		}
 
-		FunctionDefinitionDataType functionDefinition = new FunctionDefinitionDataType(
-			applicator.getAnonymousFunctionsCategory(), "_func", applicator.getDataTypeManager());
+		SymbolPath spContainer = processContainingType(type);
 
-		processContainingType(type);
+		CategoryPath cpFunction = getFunctionCategoryPath(spContainer);
+		FunctionDefinitionDataType functionDefinition = new FunctionDefinitionDataType(
+			cpFunction, "_func", applicator.getDataTypeManager());
+
 		setReturnType(functionDefinition, type);
 		setArguments(functionDefinition, type);
 		Pointer thisPointer = getThisPointer(type);
@@ -236,6 +240,16 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 
 		applicator.putDataType(type, dataType);
 		return true;
+	}
+
+	private CategoryPath getFunctionCategoryPath(SymbolPath spContainer) {
+		CategoryPath cpStandard = applicator.getAnonymousFunctionsCategory();
+		if (spContainer == null) {
+			return cpStandard;
+		}
+		CategoryPath cpContainer = applicator.getCategory(spContainer);
+		// Add the "standard" name to the container path
+		return cpContainer.extend(cpStandard.getName());
 	}
 
 	/**

@@ -16,19 +16,19 @@
 package ghidra.program.database.bookmark;
 
 import db.DBRecord;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.BookmarkType;
+import ghidra.util.Lock.Closeable;
 
-public class BookmarkDB extends DatabaseObject implements Bookmark {
+public class BookmarkDB extends DbObject implements Bookmark {
 
 	private BookmarkDBManager mgr;
 	private DBRecord record;
 
-	BookmarkDB(BookmarkDBManager mgr, DBObjectCache<BookmarkDB> cache, DBRecord record) {
-		super(cache, record.getKey());
+	BookmarkDB(BookmarkDBManager mgr, DBRecord record) {
+		super(record.getKey());
 		this.mgr = mgr;
 		this.record = record;
 	}
@@ -57,13 +57,10 @@ public class BookmarkDB extends DatabaseObject implements Bookmark {
 
 	@Override
 	public Address getAddress() {
-		checkIsValid();
+		validate(mgr.lock);
 		return mgr.getAddress(record.getLongValue(BookmarkDBAdapter.ADDRESS_COL));
 	}
 
-	/**
-	 * Returns bookmark type or null if type has been removed.
-	 */
 	@Override
 	public BookmarkType getType() {
 		return mgr.getBookmarkType((int) (key >> BookmarkDBAdapterV3.TYPE_ID_OFFSET));
@@ -76,41 +73,51 @@ public class BookmarkDB extends DatabaseObject implements Bookmark {
 
 	@Override
 	public String getCategory() {
+		validate(mgr.lock);
 		String category = record.getString(BookmarkDBAdapter.CATEGORY_COL);
 		return category != null ? category : ""; // NOTE: Old data may have stored null
 	}
 
 	public void setComment(String comment) {
-		checkDeleted();
-		if (comment == null)
-			comment = "";
+		try (Closeable c = mgr.lock.write()) {
+			checkDeleted();
+			if (comment == null) {
+				comment = "";
+			}
 
-		if (!comment.equals(record.getString(BookmarkDBAdapter.COMMENT_COL))) {
-			record.setString(BookmarkDBAdapter.COMMENT_COL, comment);
-			mgr.bookmarkChanged(this);
+			if (!comment.equals(record.getString(BookmarkDBAdapter.COMMENT_COL))) {
+				record.setString(BookmarkDBAdapter.COMMENT_COL, comment);
+				mgr.bookmarkChanged(this);
+			}
 		}
 	}
 
 	@Override
 	public String getComment() {
+		validate(mgr.lock);
 		String comment = record.getString(BookmarkDBAdapter.COMMENT_COL);
 		return comment != null ? comment : ""; // NOTE: Old data may have stored null
+
 	}
 
 	@Override
 	public void set(String category, String comment) {
-		checkDeleted();
+		try (Closeable c = mgr.lock.write()) {
+			checkDeleted();
 
-		if (category == null)
-			category = "";
-		if (comment == null)
-			comment = "";
-		if (!comment.equals(record.getString(BookmarkDBAdapter.COMMENT_COL)) ||
-			!category.equals(record.getString(BookmarkDBAdapter.CATEGORY_COL))) {
+			if (category == null) {
+				category = "";
+			}
+			if (comment == null) {
+				comment = "";
+			}
+			if (!comment.equals(record.getString(BookmarkDBAdapter.COMMENT_COL)) ||
+				!category.equals(record.getString(BookmarkDBAdapter.CATEGORY_COL))) {
 
-			record.setString(BookmarkDBAdapter.CATEGORY_COL, category);
-			record.setString(BookmarkDBAdapter.COMMENT_COL, comment);
-			mgr.bookmarkChanged(this);
+				record.setString(BookmarkDBAdapter.CATEGORY_COL, category);
+				record.setString(BookmarkDBAdapter.COMMENT_COL, comment);
+				mgr.bookmarkChanged(this);
+			}
 		}
 	}
 
@@ -134,9 +141,10 @@ public class BookmarkDB extends DatabaseObject implements Bookmark {
 	/**
 	 * Returns record associated with this bookmark or
 	 * null if bookmark has been deleted.
+	 * @return record associated with this bookmark
 	 */
 	DBRecord getRecord() {
-		return checkIsValid() ? record : null;
+		return refreshIfNeeded() ? record : null;
 	}
 
 	/*
@@ -147,9 +155,6 @@ public class BookmarkDB extends DatabaseObject implements Bookmark {
 		return (int) key;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
 	@Override
 	public int compareTo(Bookmark otherBm) {
 		int rc = getAddress().compareTo(otherBm.getAddress());
@@ -165,6 +170,15 @@ public class BookmarkDB extends DatabaseObject implements Bookmark {
 			return rc;
 		}
 		return getComment().compareTo(otherBm.getComment());
+	}
+
+	public boolean isOwnedBy(BookmarkDBManager bookmarkDBManager) {
+		return bookmarkDBManager == this.mgr;
+	}
+
+	@Override
+	public void checkDeleted() {
+		super.checkDeleted();
 	}
 
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,4 +38,21 @@ public interface DynamicColumnTableModel<ROW_TYPE>
 	 * @return the model index
 	 */
 	public int getColumnIndex(DynamicTableColumn<ROW_TYPE, ?, ?> column);
+
+	/**
+	 * Allows table models to create their own preference key.  
+	 * <p>
+	 * The preference key is used to save the column state of this configurable model.  All models
+	 * that share a preference key will share the same visible column state.  
+	 * The {@link GTableColumnModel} manages this state for the framework.  The column model will 
+	 * ask the table for its preference key, which will ask the model when not key has been set on
+	 * the table.  In the case that no key is set in the table or the model, a key will be created
+	 * based on the classname and default columns.
+	 * 
+	 * @return the preference key; the default value is null
+	 */
+	public default String getPreferenceKey() {
+		return null;
+	}
+
 }

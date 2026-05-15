@@ -48,7 +48,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.*;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.stack.TraceStack;
@@ -765,6 +765,10 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	record WriteRegMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
+		static final WriteRegMatcher HAS_CONTAINER_NAME_VALUE = new WriteRegMatcher(4, List.of(
+			new TypeParamSpec("container", TraceRegisterContainer.class),
+			new TypeParamSpec("name", String.class),
+			new TypeParamSpec("value", byte[].class)));
 		static final WriteRegMatcher HAS_FRAME_NAME_VALUE = new WriteRegMatcher(3, List.of(
 			new TypeParamSpec("frame", TraceStackFrame.class),
 			new TypeParamSpec("name", String.class),
@@ -776,7 +780,8 @@ public class TraceRmiTarget extends AbstractTarget {
 		static final WriteRegMatcher HAS_REG_VALUE = new WriteRegMatcher(1, List.of(
 			new TypeParamSpec("register", TraceRegister.class),
 			new TypeParamSpec("value", byte[].class)));
-		static final List<WriteRegMatcher> ALL = matchers(HAS_FRAME_NAME_VALUE, HAS_REG_VALUE);
+		static final List<WriteRegMatcher> ALL = matchers(HAS_CONTAINER_NAME_VALUE,
+			HAS_FRAME_NAME_VALUE, HAS_THREAD_NAME_VALUE, HAS_REG_VALUE);
 	}
 
 	record BreakExecMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
@@ -1357,6 +1362,16 @@ public class TraceRmiTarget extends AbstractTarget {
 					.toCompletableFuture()
 					.thenApply(__ -> null);
 		}
+
+		RemoteParameter paramContainer = writeReg.params.get("container");
+		if (paramContainer != null) {
+			return writeReg.method.invokeAsync(Map.ofEntries(
+				Map.entry(paramContainer.name(), thread.getObject().findRegisterContainer(0)),
+				Map.entry(writeReg.params.get("name").name(), found.name()),
+				Map.entry(writeReg.params.get("value").name(), getBytes(value))))
+					.toCompletableFuture()
+					.thenApply(__ -> null);
+		}
 		if (found == null || !found.value.isObject()) {
 			return AsyncUtils.nil();
 		}
@@ -1527,21 +1542,21 @@ public class TraceRmiTarget extends AbstractTarget {
 	public CompletableFuture<Void> placeBreakpointAsync(AddressRange range,
 			Set<TraceBreakpointKind> kinds, String condition, String commands) {
 		Set<TraceBreakpointKind> copyKinds = Set.copyOf(kinds);
-		if (copyKinds.equals(TraceBreakpointKindSet.HW_EXECUTE)) {
+		if (copyKinds.equals(CommonSet.HWX.kinds())) {
 			return placeHwExecBreakAsync(expectSingleAddr(range, TraceBreakpointKind.HW_EXECUTE),
 				condition, commands);
 		}
-		if (copyKinds.equals(TraceBreakpointKindSet.SW_EXECUTE)) {
+		if (copyKinds.equals(CommonSet.SWX.kinds())) {
 			return placeSwExecBreakAsync(expectSingleAddr(range, TraceBreakpointKind.SW_EXECUTE),
 				condition, commands);
 		}
-		if (copyKinds.equals(TraceBreakpointKindSet.READ)) {
+		if (copyKinds.equals(CommonSet.READ.kinds())) {
 			return placeReadBreakAsync(range, condition, commands);
 		}
-		if (copyKinds.equals(TraceBreakpointKindSet.WRITE)) {
+		if (copyKinds.equals(CommonSet.WRITE.kinds())) {
 			return placeWriteBreakAsync(range, condition, commands);
 		}
-		if (copyKinds.equals(TraceBreakpointKindSet.ACCESS)) {
+		if (copyKinds.equals(CommonSet.ACCESS.kinds())) {
 			return placeAccessBreakAsync(range, condition, commands);
 		}
 		Msg.error(this, "Invalid kinds in combination: " + kinds);

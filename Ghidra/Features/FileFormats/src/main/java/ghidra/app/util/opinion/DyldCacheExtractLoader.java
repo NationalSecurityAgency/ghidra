@@ -142,24 +142,38 @@ public class DyldCacheExtractLoader extends MachoLoader {
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
 			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		List<Option> list = new ArrayList<>();
-		list.add(new Option(LIBOBJC_OPTION_NAME, !loadIntoProgram && LIBOBJC_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-libobjc"));
-		list.add(new Option(AUTH_DATA_OPTION_NAME, !loadIntoProgram && AUTH_DATA_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-authData"));
-		list.add(new Option(DIRTY_DATA_OPTION_NAME, !loadIntoProgram && DIRTY_DATA_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-dirtyData"));
-		list.add(new Option(CONST_DATA_OPTION_NAME, !loadIntoProgram && CONST_DATA_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-constData"));
-		list.add(new Option(TEXT_STUBS_OPTION_NAME, !loadIntoProgram && TEXT_STUBS_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-textStubs"));
-		list.add(new Option(CONFIG_DATA_OPTION_NAME, !loadIntoProgram && CONFIG_DATA_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-configData"));
-		list.add(new Option(READ_ONLY_DATA_OPTION_NAME,
-			!loadIntoProgram && READ_ONLY_DATA_OPTION_DEFAULT, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-readOnlyData"));
-		list.add(new Option(CONST_TPRO_DATA_OPTION_NAME,
-			!loadIntoProgram && CONST_TPRO_DATA_OPTION_DEFAULT, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-constTproData"));
+		list.add(Option.newBoolean(LIBOBJC_OPTION_NAME)
+				.value(!loadIntoProgram && LIBOBJC_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-libobjc"))
+				.build());
+		list.add(Option.newBoolean(AUTH_DATA_OPTION_NAME)
+				.value(!loadIntoProgram && AUTH_DATA_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-authData"))
+				.build());
+		list.add(Option.newBoolean(DIRTY_DATA_OPTION_NAME)
+				.value(!loadIntoProgram && DIRTY_DATA_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-dirtyData"))
+				.build());
+		list.add(Option.newBoolean(CONST_DATA_OPTION_NAME)
+				.value(!loadIntoProgram && CONST_DATA_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-constData"))
+				.build());
+		list.add(Option.newBoolean(TEXT_STUBS_OPTION_NAME)
+				.value(!loadIntoProgram && TEXT_STUBS_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-textStubs"))
+				.build());
+		list.add(Option.newBoolean(CONFIG_DATA_OPTION_NAME)
+				.value(!loadIntoProgram && CONFIG_DATA_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-configData"))
+				.build());
+		list.add(Option.newBoolean(READ_ONLY_DATA_OPTION_NAME)
+				.value(!loadIntoProgram && READ_ONLY_DATA_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-readOnlyData"))
+				.build());
+		list.add(Option.newBoolean(CONST_TPRO_DATA_OPTION_NAME)
+				.value(!loadIntoProgram && CONST_TPRO_DATA_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-constTproData"))
+				.build());
 		return list;
 	}
 

@@ -17,15 +17,16 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Consumer;
 
 import db.DBRecord;
 import db.Field;
 import ghidra.docking.settings.Settings;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.AlignedStructurePacker.StructurePackResult;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.TaskMonitor;
@@ -42,10 +43,16 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	private int numComponents; // If packed, this does not include the undefined components.
 	private List<DataTypeComponentDB> components;
 
-	public StructureDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
-			CompositeDBAdapter compositeAdapter, ComponentDBAdapter componentAdapter,
-			DBRecord record) {
-		super(dataMgr, cache, compositeAdapter, componentAdapter, record);
+	/**
+	 * Constructor
+	 * @param dataMgr the datatypes manager
+	 * @param compositeAdapter the composites database adapter
+	 * @param componentAdapter the components database adapter
+	 * @param record the record for the structure
+	 */
+	StructureDB(DataTypeManagerDB dataMgr, CompositeDBAdapter compositeAdapter,
+			ComponentDBAdapter componentAdapter, DBRecord record) {
+		super(dataMgr, compositeAdapter, componentAdapter, record);
 	}
 
 	@Override
@@ -182,12 +189,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		}
 	}
 
-	private DataTypeComponent doAdd(DataType dataType, int length, String name, String comment,
-			boolean validatePackAndNotify)
+	private DataTypeComponent doAdd(DataType dataType, int length, String name,
+			String comment, boolean validatePackAndNotify)
 			throws DataTypeDependencyException, IllegalArgumentException {
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 
 			if (validatePackAndNotify) {
@@ -204,9 +210,10 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				}
 				else {
 					int componentLength = getPreferredComponentLength(dataType, length);
-					DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(dataType),
-						key, componentLength, numComponents, structLength, name, comment);
-					dtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
+
+					dtc = createComponent(dataMgr.getResolvedID(dataType), componentLength,
+						numComponents, structLength, name, comment);
+
 					dataType.addParent(this);
 					components.add(dtc);
 				}
@@ -235,9 +242,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			}
 			return dtc;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
@@ -248,8 +252,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		if (len == structLength || isPackingEnabled()) {
 			return;
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (len < structLength) {
 				// identify index of first defined-component to be removed
@@ -261,6 +264,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				}
 				else {
 					index = backupToFirstComponentContainingOffset(index, len);
+					index = afterNonZeroComponentsAtOffset(index, len);
 				}
 				int definedComponentCount = components.size();
 				if (index >= 0 && index < definedComponentCount) {
@@ -280,9 +284,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		catch (IOException e) {
 			dataMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
@@ -293,15 +294,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		if (amount == 0 || isPackingEnabled()) {
 			return;
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			doGrowStructure(amount);
 			repack(false, false);
 			notifySizeChanged(false);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -323,8 +320,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	@Override
 	public DataTypeComponent insert(int ordinal, DataType dataType, int length, String name,
 			String comment) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (ordinal < 0 || ordinal > numComponents) {
 				throw new IndexOutOfBoundsException(ordinal);
@@ -370,9 +366,10 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			length = getPreferredComponentLength(dataType, length);
 
 			int offset = getComponent(ordinal).getOffset();
-			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(dataType), key,
-				length, ordinal, offset, name, comment);
-			DataTypeComponentDB dtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
+
+			DataTypeComponentDB dtc = createComponent(dataMgr.getResolvedID(dataType), length,
+				ordinal, offset, name, comment);
+
 			dataType.addParent(this);
 			shiftOffsets(idx, 1, dtc.getLength());
 			components.add(idx, dtc);
@@ -383,13 +380,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		catch (DataTypeDependencyException e) {
 			throw new IllegalArgumentException(e.getMessage(), e);
 		}
-		catch (IOException e) {
-			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
-		}
-		return null;
 	}
 
 	@Override
@@ -408,8 +398,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			DataType baseDataType, int bitSize, String componentName, String comment)
 			throws InvalidDataTypeException, IndexOutOfBoundsException {
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (ordinal < 0 || ordinal > numComponents) {
 				throw new IndexOutOfBoundsException(ordinal);
@@ -428,17 +417,13 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			BitFieldDataType bitFieldDt = new BitFieldDBDataType(baseDataType, bitSize, 0);
 			return insert(ordinal, bitFieldDt, bitFieldDt.getStorageSize(), componentName, comment);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public DataTypeComponent insertBitFieldAt(int byteOffset, int byteWidth, int bitOffset,
 			DataType baseDataType, int bitSize, String componentName, String comment)
 			throws InvalidDataTypeException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			BitFieldDataType.checkBaseDataType(baseDataType);
 			baseDataType = baseDataType.clone(dataMgr);
@@ -544,9 +529,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			BitFieldDataType bitfieldDt =
 				new BitFieldDBDataType(baseDataType, bitSize, storageBitOffset);
 
-			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(bitfieldDt), key,
+			DataTypeComponentDB dtc = createComponent(dataMgr.getResolvedID(bitfieldDt),
 				bitfieldDt.getStorageSize(), ordinal, revisedOffset, componentName, comment);
-			DataTypeComponentDB dtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
+
 			bitfieldDt.addParent(this); // has no affect
 			components.add(startIndex, dtc);
 
@@ -554,19 +539,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			notifySizeChanged(false);
 			return dtc;
 		}
-		catch (IOException e) {
-			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
-		}
-		return null;
 	}
 
 	@Override
 	public void delete(int ordinal) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (ordinal < 0 || ordinal >= numComponents) {
 				throw new IndexOutOfBoundsException(ordinal);
@@ -590,14 +567,12 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			repack(false, false);
 			notifySizeChanged(false);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	/**
 	 * Removes a defined component at the specified index from the components list without any 
-	 * alteration to other components and removes parent association for component datatype.
+	 * alteration to other components, removes parent association for component datatype and
+	 * remove name-map entry.
 	 * @param index defined component index
 	 * @return the defined component which was removed.
 	 * @throws IOException if an IO error occurs
@@ -606,17 +581,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		DataTypeComponentDB dtc = components.remove(index);
 		doDelete(dtc);
 		return dtc;
-	}
-
-	/**
-	 * Removes a defined component without any alteration to other components or the components 
-	 * list and removes parent association for component datatype.
-	 * @param dtc datatype component
-	 * @throws IOException if an IO error occurs
-	 */
-	private void doDelete(DataTypeComponentDB dtc) throws IOException {
-		dtc.getDataType().removeParent(this);
-		removeComponentRecord(dtc.getKey());
 	}
 
 	/**
@@ -658,8 +622,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			return;
 		}
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 
 			TreeSet<Integer> sortedOrdinals = new TreeSet<>(ordinals);
@@ -748,16 +711,12 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		catch (IOException e) {
 			dataMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public boolean isPartOf(DataType dataType) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (equals(dataType)) {
 				return true;
 			}
@@ -774,39 +733,27 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			}
 			return false;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public int getNumComponents() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return numComponents;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public int getNumDefinedComponents() {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return components.size();
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public DataTypeComponentDB getComponent(int ordinal) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (ordinal < 0 || ordinal >= numComponents) {
 				throw new IndexOutOfBoundsException(ordinal);
 			}
@@ -833,24 +780,17 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			// return undefined component
 			return new DataTypeComponentDB(dataMgr, this, ordinal, offset);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public DataTypeComponent[] getComponents() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			DataTypeComponent[] comps = new DataTypeComponent[numComponents];
 			for (int i = 0; i < comps.length; i++) {
 				comps[i] = getComponent(i);
 			}
 			return comps;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -932,16 +872,12 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	@Override
 	public int getLength() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (structLength == 0) {
 				return 1; // positive length required
 			}
 			return structLength;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -952,8 +888,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	@Override
 	public void clearComponent(int ordinal) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (isPackingEnabled()) {
 				delete(ordinal);
@@ -979,9 +914,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -1070,8 +1002,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	@Override
 	public void deleteAtOffset(int offset) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (offset < 0) {
 				throw new IllegalArgumentException("Offset cannot be negative.");
@@ -1105,15 +1036,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			repack(false, false);
 			notifySizeChanged(false);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public void clearAtOffset(int offset) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (offset < 0) {
 				throw new IllegalArgumentException("Offset cannot be negative.");
@@ -1142,16 +1069,12 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			repack(false, false);
 			notifySizeChanged(false);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public DataTypeComponent getDefinedComponentAtOrAfterOffset(int offset) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (offset > structLength || offset < 0) {
 				return null;
 			}
@@ -1169,16 +1092,12 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			}
 			return null;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public DataTypeComponent getComponentContaining(int offset) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (offset > structLength || offset < 0) {
 				return null;
 			}
@@ -1201,16 +1120,12 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			}
 			return null;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public List<DataTypeComponent> getComponentsContaining(int offset) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			ArrayList<DataTypeComponent> list = new ArrayList<>();
 			if (offset > structLength || offset < 0) {
 				return list;
@@ -1242,9 +1157,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			}
 			return list;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	/**
@@ -1273,8 +1185,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	@Override
 	public DataTypeComponent getDataTypeAt(int offset) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			DataTypeComponent dtc = getComponentContaining(offset);
 			if (dtc != null) {
 				DataType dt = dtc.getDataType();
@@ -1284,21 +1195,19 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			}
 			return dtc;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public DataTypeComponentDB[] getDefinedComponents() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return components.toArray(new DataTypeComponentDB[components.size()]);
 		}
-		finally {
-			lock.release();
-		}
+	}
+
+	@Override
+	void forEachDefinedComponent(Consumer<DataTypeComponentDB> dtcConsumer) {
+		components.forEach(dtcConsumer);
 	}
 
 	@Override
@@ -1329,13 +1238,14 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			}
 		}
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			dataType = validateDataType(dataType);
 
 			dataType = resolve(dataType);
 			DataTypeUtilities.checkAncestry(this, dataType);
+
+			length = getPreferredComponentLength(dataType, length);
 
 			if ((offset > structLength) && !isPackingEnabled()) {
 				numComponents += offset - structLength;
@@ -1352,7 +1262,8 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			if (index >= 0) {
 				index = backupToFirstComponentContainingOffset(index, offset);
 				index = afterNonZeroComponentsAtOffset(index, offset);
-				if (index < components.size()) {
+				if (length != 0 && index < components.size()) {
+					// NOTE: zero-length component insert does not trigger offset shift
 					DataTypeComponentDB dtc = components.get(index);
 					additionalShift = offset - dtc.getOffset();
 				}
@@ -1364,7 +1275,13 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			int ordinal = offset;
 			if (index > 0) {
 				DataTypeComponentDB dtc = components.get(index - 1);
-				ordinal = dtc.getOrdinal() + offset - dtc.getEndOffset();
+				ordinal = dtc.getOrdinal();
+				if (dtc.getOffset() == offset) {
+					ordinal += 1;
+				}
+				else {
+					ordinal += offset - dtc.getEndOffset(); // account for undefined components
+				}
 			}
 
 			if (dataType == DataType.DEFAULT) {
@@ -1377,10 +1294,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 			length = getPreferredComponentLength(dataType, length);
 
-			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(dataType), key,
-				length, ordinal, offset, name, comment);
+			DataTypeComponentDB dtc = createComponent(dataMgr.getResolvedID(dataType), length,
+				ordinal, offset, name, comment);
 			dataType.addParent(this);
-			DataTypeComponentDB dtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
 			shiftOffsets(index, 1 + additionalShift, length + additionalShift);
 			components.add(index, dtc);
 			repack(false, false);
@@ -1390,13 +1306,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		catch (DataTypeDependencyException e) {
 			throw new IllegalArgumentException(e.getMessage(), e);
 		}
-		catch (IOException e) {
-			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
-		}
-		return null;
 	}
 
 	/**
@@ -1435,6 +1344,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			return oldComponent;
 		}
 
+		// Note: a unique componentName will be imposed if not null
 		DataTypeComponent replaceComponent =
 			replaceComponents(replacedComponents, dataType, offset, length, componentName, comment);
 
@@ -1456,8 +1366,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	public DataTypeComponent replace(int ordinal, DataType dataType, int length,
 			String componentName, String comment)
 			throws IllegalArgumentException, IndexOutOfBoundsException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 
 			if (ordinal < 0 || ordinal >= numComponents) {
@@ -1556,9 +1465,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			dataMgr.dbError(e);
 			return null;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
@@ -1568,8 +1474,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			throw new IllegalArgumentException("Offset cannot be negative.");
 		}
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 
 			if (offset >= structLength) {
@@ -1661,9 +1566,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			dataMgr.dbError(e);
 			return null;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	/**
@@ -1681,9 +1583,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		if (!(dataType instanceof StructureInternal)) {
 			throw new IllegalArgumentException();
 		}
-		lock.acquire();
-		boolean isResolveCacheOwner = dataMgr.activateResolveCache();
-		try {
+		boolean isResolveCacheOwner = false;
+		try (Closeable c = lock.write()) {
+			isResolveCacheOwner = dataMgr.activateResolveCache();
 			checkDeleted();
 			doReplaceWith((StructureInternal) dataType, true);
 		}
@@ -1697,7 +1599,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			if (isResolveCacheOwner) {
 				dataMgr.processResolveQueue(true);
 			}
-			lock.release();
 		}
 	}
 
@@ -1722,13 +1623,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		for (int i = 0; i < otherComponents.length; i++) {
 			resolvedDts[i] = doCheckedResolve(otherComponents[i].getDataType());
 		}
-		for (DataTypeComponentDB dtc : components) {
-			dtc.getDataType().removeParent(this);
-			long compKey = dtc.getKey();
-			componentAdapter.removeRecord(compKey);
-			dataMgr.getSettingsAdapter().removeAllSettingsRecords(compKey);
-		}
 
+		// Remove all existing components
+		for (DataTypeComponentDB dtc : components) {
+			doDelete(dtc);
+		}
 		components.clear();
 		numComponents = 0;
 		structLength = 0;
@@ -1792,8 +1691,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		}
 	}
 
-	private void doReplaceWithNonPacked(Structure struct, DataType[] resolvedDts)
-			throws IOException {
+	private void doReplaceWithNonPacked(Structure struct, DataType[] resolvedDts) {
 
 		// caller responsible for record updates
 
@@ -1829,17 +1727,16 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				length = getPreferredComponentLength(dt, -1, maxLength);
 			}
 
-			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(dt), key, length,
+			DataTypeComponentDB newDtc = createComponent(dataMgr.getResolvedID(dt), length,
 				dtc.getOrdinal(), dtc.getOffset(), dtc.getFieldName(), dtc.getComment());
+
 			dt.addParent(this);
-			DataTypeComponentDB newDtc =
-				new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
 			components.add(newDtc);
 		}
 	}
 
 	private void doCopy(Structure struct, DataTypeComponent[] definedComponents,
-			DataType[] resolvedDts) throws IOException {
+			DataType[] resolvedDts) {
 
 		// simple replication of struct - caller must perform record updates
 		structLength = struct.isZeroLength() ? 0 : struct.getLength();
@@ -1850,12 +1747,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		for (int i = 0; i < otherComponents.length; i++) {
 			DataTypeComponent dtc = otherComponents[i];
 			DataType dt = resolvedDts[i]; // ancestry check already performed by caller
-			DBRecord rec =
-				componentAdapter.createRecord(dataMgr.getResolvedID(dt), key, dtc.getLength(),
-					dtc.getOrdinal(), dtc.getOffset(), dtc.getFieldName(), dtc.getComment());
+
+			DataTypeComponentDB newDtc = createComponent(dataMgr.getResolvedID(dt), dtc.getLength(),
+				dtc.getOrdinal(), dtc.getOffset(), dtc.getFieldName(), dtc.getComment());
+
 			dt.addParent(this);
-			DataTypeComponentDB newDtc =
-				new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
 			components.add(newDtc);
 		}
 	}
@@ -1865,8 +1761,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		if (deleting) {
 			return;
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			boolean changed = false;
 			int n = components.size();
@@ -1902,9 +1797,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		catch (IOException e) {
 			dataMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	/**
@@ -1939,8 +1831,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		if (dt instanceof BitFieldDataType) {
 			return; // unsupported
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (isPackingEnabled()) {
 				if (!repack(true, true)) {
@@ -1991,9 +1882,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 					dataMgr.dataTypeChanged(this, false);
 				}
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -2061,15 +1949,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		if (deleting) {
 			return;
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (isPackingEnabled()) {
 				repack(true, true);
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -2338,10 +2222,10 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		DataTypeComponentDB newDtc = null;
 		if (!clearOnly) {
 			// insert new component
-			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(resolvedDataType),
-				key, length, newOrdinal, newOffset, name, comment);
+			newDtc = createComponent(dataMgr.getResolvedID(resolvedDataType), length, newOrdinal,
+				newOffset, name, comment);
+
 			resolvedDataType.addParent(this);
-			newDtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
 			components.add(index, newDtc);
 		}
 
@@ -2392,8 +2276,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			return;
 		}
 		DataTypeUtilities.checkValidReplacement(oldDt, newDt);
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			DataType replacementDt = newDt;
 			try {
@@ -2425,9 +2308,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -2466,19 +2346,10 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	@Override
 	public void deleteAll() {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			for (DataTypeComponentDB dtc : components) {
-				dtc.getDataType().removeParent(this);
-				try {
-					long compKey = dtc.getKey();
-					componentAdapter.removeRecord(compKey);
-					dataMgr.getSettingsAdapter().removeAllSettingsRecords(compKey);
-				}
-				catch (IOException e) {
-					dataMgr.dbError(e);
-				}
+				doDelete(dtc);
 			}
 			components.clear();
 			structLength = 0;
@@ -2491,9 +2362,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		catch (IOException e) {
 			dataMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	/**
@@ -2503,8 +2371,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	@Override
 	protected boolean repack(boolean isAutoChange, boolean notify) {
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 
 			int oldLength = structLength;
@@ -2534,9 +2401,6 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				dataMgr.dataTypeChanged(this, isAutoChange);
 			}
 			return changed;
-		}
-		finally {
-			lock.release();
 		}
 	}
 

@@ -65,7 +65,7 @@ public class TenetLoaderTest extends AbstractGhidraHeadedDebuggerTest {
 
 	private Trace createTraceWithLoader(final String testFile) throws Exception {
 		this.createProgram();
-		this.intoProject(this.program);
+		intoProject(program);
 
 		final TenetLoader loader = new TenetLoader();
 		final ByteProvider provider =
@@ -76,11 +76,11 @@ public class TenetLoaderTest extends AbstractGhidraHeadedDebuggerTest {
 			loader.getDefaultOptions(provider, loadSpec, null, false, false);
 		final Option programOption = Unique.assertOne(
 			options.stream().filter(o -> o.getName().equals(TenetLoader.DOMAIN_FILE_OPTION_NAME)));
-		programOption.setValue(this.program.getDomainFile().getPathname());
+		programOption.setValue(program.getDomainFile().getPathname());
 
 		final MessageLog log = new MessageLog();
-		final ImporterSettings settings = new ImporterSettings(provider, "test",
-			this.env.getProject(), "/", false, loadSpec, options, this, log, this.monitor);
+		final ImporterSettings settings = new ImporterSettings(provider, "test", env.getProject(),
+			"/", false, loadSpec, options, this, log, monitor);
 
 		final LoadResults<? extends DomainObject> results = loader.load(settings);
 		if (!(results.getPrimary().domainObject instanceof final Trace trace)) {
@@ -99,9 +99,52 @@ public class TenetLoaderTest extends AbstractGhidraHeadedDebuggerTest {
 	public void testBadRegisterNames() throws Exception {
 		final String testFile = """
 				pc=0x1,rax=0x1234
+				pc=0x2,rax=0x1234
+				pc=0x3,rax=0x1234
+				pc=0x4,rax=0x1234
+				pc=0x5,rax=0x1234
+				pc=0x6,rax=0x1234
+				pc=0x7,rax=0x1234
+				pc=0x8,rax=0x1234
+				pc=0x9,rax=0x1234
+				pc=0xa,rax=0x1234
 				""";
-		final Trace trace = this.createTraceWithLoader(testFile);
+		final Trace trace = createTraceWithLoader(testFile);
 		assertNotNull(trace);
+	}
+
+	/*
+	 * Test the file content check for the loader
+	 */
+	@Test
+	public void testFileContent() throws Exception {
+		final String junk_line = "asdf\n";
+		final String slide_line = "slide=0x0\n";
+		final String reg_line = "pc=0x1,r0=0x1234\n";
+
+		this.createProgram();
+		intoProject(program);
+
+		final TenetLoader loader = new TenetLoader();
+
+		ByteProvider provider = new ByteArrayProvider("test.tenet", (junk_line).getBytes("utf-8"));
+		assertEquals(0, loader.findSupportedLoadSpecs(provider).size());
+
+		provider = new ByteArrayProvider("test.tenet", (slide_line + junk_line).getBytes("utf-8"));
+		assertEquals(0, loader.findSupportedLoadSpecs(provider).size());
+
+		provider = new ByteArrayProvider("test.tenet", (reg_line + junk_line).getBytes("utf-8"));
+		assertEquals(0, loader.findSupportedLoadSpecs(provider).size());
+
+		provider = new ByteArrayProvider("test.tenet",
+			(reg_line + slide_line + reg_line.repeat(TenetLoader.ERROR_THRESHOLD))
+					.getBytes("utf-8"));
+		assertEquals(0, loader.findSupportedLoadSpecs(provider).size());
+
+		provider = new ByteArrayProvider("test.tenet",
+			(slide_line + reg_line.repeat(TenetLoader.ERROR_THRESHOLD - 2) + junk_line)
+					.getBytes("utf-8"));
+		assertEquals(0, loader.findSupportedLoadSpecs(provider).size());
 	}
 
 	/*
@@ -113,10 +156,18 @@ public class TenetLoaderTest extends AbstractGhidraHeadedDebuggerTest {
 				slide=0x0
 				pc=0x1,r0=0x1234
 				pc=0x2,r1=0x4321
+				pc=0x3,r1=0x4321
+				pc=0x4,r1=0x4321
+				pc=0x5,r1=0x4321
+				pc=0x6,r1=0x4321
+				pc=0x7,r1=0x4321
+				pc=0x8,r1=0x4321
+				pc=0x9,r1=0x4321
+				pc=0xa,r1=0x4321
 				""";
 
 		this.createProgram();
-		this.intoProject(this.program);
+		intoProject(program);
 
 		final TenetLoader loader = new TenetLoader();
 
@@ -139,18 +190,26 @@ public class TenetLoaderTest extends AbstractGhidraHeadedDebuggerTest {
 				slide=0x0
 				pc=0x1,r0=0x1234
 				pc=0x2,r1=0x4321
+				pc=0x3,r1=0x4321
+				pc=0x4,r1=0x4321
+				pc=0x5,r1=0x4321
+				pc=0x6,r1=0x4321
+				pc=0x7,r1=0x4321
+				pc=0x8,r1=0x4321
+				pc=0x9,r1=0x4321
+				pc=0xa,r1=0x4321
 				""";
 
-		addPlugin(this.tool, DebuggerRegistersPlugin.class);
-		addPlugin(this.tool, DebuggerModelPlugin.class);
-		addPlugin(this.tool, DebuggerThreadsPlugin.class);
-		addPlugin(this.tool, DebuggerListingPlugin.class);
-		addPlugin(this.tool, DebuggerTimePlugin.class);
+		addPlugin(tool, DebuggerRegistersPlugin.class);
+		addPlugin(tool, DebuggerModelPlugin.class);
+		addPlugin(tool, DebuggerThreadsPlugin.class);
+		addPlugin(tool, DebuggerListingPlugin.class);
+		addPlugin(tool, DebuggerTimePlugin.class);
 
-		final Trace trace = this.createTraceWithLoader(testFile);
+		final Trace trace = createTraceWithLoader(testFile);
 
-		this.traceManager.openTrace(trace);
-		this.traceManager.activateTrace(trace);
+		traceManager.openTrace(trace);
+		traceManager.activateTrace(trace);
 
 		Thread.sleep(1000);
 	}
@@ -163,7 +222,7 @@ public class TenetLoaderTest extends AbstractGhidraHeadedDebuggerTest {
 	public void testManyLinesBadRegisterNames() throws Exception {
 		// Should fail after 10 lines with bad registers
 		final String badTestFile = "pc=0x1,rax=0x1234\n".repeat(TenetLoader.ERROR_THRESHOLD + 1);
-		assertThrows(LoadException.class, () -> this.createTraceWithLoader(badTestFile));
+		assertThrows(LoadException.class, () -> createTraceWithLoader(badTestFile));
 	}
 
 	/*
@@ -174,7 +233,7 @@ public class TenetLoaderTest extends AbstractGhidraHeadedDebuggerTest {
 	public void testManyLinesNoPc() throws Exception {
 		// Should fail after {@TenetLoader.ERROR_THRESHOLD} lines with no PC
 		final String badTestFile = "r1=0x1234\n".repeat(TenetLoader.ERROR_THRESHOLD + 1);
-		assertThrows(LoadException.class, () -> this.createTraceWithLoader(badTestFile));
+		assertThrows(LoadException.class, () -> createTraceWithLoader(badTestFile));
 	}
 
 	/*
@@ -186,9 +245,16 @@ public class TenetLoaderTest extends AbstractGhidraHeadedDebuggerTest {
 				pc=0x1,r0=0x1234,mr=0x1000:0000000000001337
 				pc=0x2,r1=0x4321,mw=0x2000:deadbeefdeadbeef
 				pc=0x3,mw=0x1000:87654321,mr=0x2000:c0ffee
+				pc=0x4,r1=0x4321
+				pc=0x5,r1=0x4321
+				pc=0x6,r1=0x4321
+				pc=0x7,r1=0x4321
+				pc=0x8,r1=0x4321
+				pc=0x9,r1=0x4321
+				pc=0xa,r1=0x4321
 				""";
 
-		final Trace trace = this.createTraceWithLoader(testFile);
+		final Trace trace = createTraceWithLoader(testFile);
 
 		final AddressSpace addrSpace =
 			trace.getBaseLanguage().getAddressFactory().getDefaultAddressSpace();
@@ -219,8 +285,16 @@ public class TenetLoaderTest extends AbstractGhidraHeadedDebuggerTest {
 		final String testFile = """
 				pc=0x1,r1=0x1234
 				r2=0x1234
+				pc=0x3,r1=0x4321
+				pc=0x4,r1=0x4321
+				pc=0x5,r1=0x4321
+				pc=0x6,r1=0x4321
+				pc=0x7,r1=0x4321
+				pc=0x8,r1=0x4321
+				pc=0x9,r1=0x4321
+				pc=0xa,r1=0x4321
 				""";
-		final Trace trace = this.createTraceWithLoader(testFile);
+		final Trace trace = createTraceWithLoader(testFile);
 		assertNotNull(trace);
 	}
 
@@ -232,13 +306,21 @@ public class TenetLoaderTest extends AbstractGhidraHeadedDebuggerTest {
 		final String testFile = """
 				pc=0x1,r0=0x1234
 				pc=0x2,r1=0x4321
+				pc=0x3,r1=0x4321
+				pc=0x4,r1=0x4321
+				pc=0x5,r1=0x4321
+				pc=0x6,r1=0x4321
+				pc=0x7,r1=0x4321
+				pc=0x8,r1=0x4321
+				pc=0x9,r1=0x4321
+				pc=0xa,r1=0x4321
 				""";
 
-		final Trace trace = this.createTraceWithLoader(testFile);
+		final Trace trace = createTraceWithLoader(testFile);
 
 		final TraceStaticMapping staticMapping =
 			Unique.assertOne(trace.getStaticMappingManager().getAllEntries());
-		assertEquals(this.program.getImageBase().getUnsignedOffset(),
+		assertEquals(program.getImageBase().getUnsignedOffset(),
 			staticMapping.getMinTraceAddress().getUnsignedOffset());
 	}
 
@@ -251,9 +333,17 @@ public class TenetLoaderTest extends AbstractGhidraHeadedDebuggerTest {
 				slide=0x0
 				pc=0x1,r0=0x1234
 				pc=0x2,r1=0x4321
+				pc=0x3,r1=0x4321
+				pc=0x4,r1=0x4321
+				pc=0x5,r1=0x4321
+				pc=0x6,r1=0x4321
+				pc=0x7,r1=0x4321
+				pc=0x8,r1=0x4321
+				pc=0x9,r1=0x4321
+				pc=0xa,r1=0x4321
 				""";
 
-		final Trace trace = this.createTraceWithLoader(testFile);
+		final Trace trace = createTraceWithLoader(testFile);
 
 		final TraceThread thread = Unique.assertOne(trace.getThreadManager().getAllThreads());
 		final TraceMemorySpace regs =
@@ -261,12 +351,12 @@ public class TenetLoaderTest extends AbstractGhidraHeadedDebuggerTest {
 
 		assertNotNull(regs);
 		assertEquals("1",
-			regs.getValue(0, this.program.getLanguage().getProgramCounter())
+			regs.getValue(0, program.getLanguage().getProgramCounter())
 					.getUnsignedValue()
 					.toString(16));
 
 		assertEquals("2",
-			regs.getValue(1, this.program.getLanguage().getProgramCounter())
+			regs.getValue(1, program.getLanguage().getProgramCounter())
 					.getUnsignedValue()
 					.toString(16));
 
@@ -281,13 +371,21 @@ public class TenetLoaderTest extends AbstractGhidraHeadedDebuggerTest {
 				slide=0x10000
 				pc=0x1,r0=0x1234
 				pc=0x2,r1=0x4321
+				pc=0x3,r1=0x4321
+				pc=0x4,r1=0x4321
+				pc=0x5,r1=0x4321
+				pc=0x6,r1=0x4321
+				pc=0x7,r1=0x4321
+				pc=0x8,r1=0x4321
+				pc=0x9,r1=0x4321
+				pc=0xa,r1=0x4321
 				""";
 
-		final Trace trace = this.createTraceWithLoader(testFile);
+		final Trace trace = createTraceWithLoader(testFile);
 
 		final TraceStaticMapping staticMapping =
 			Unique.assertOne(trace.getStaticMappingManager().getAllEntries());
-		assertEquals(this.program.getImageBase().getUnsignedOffset() + 0x10000,
+		assertEquals(program.getImageBase().getUnsignedOffset() + 0x10000,
 			staticMapping.getMinTraceAddress().getUnsignedOffset());
 	}
 }

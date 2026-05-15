@@ -140,10 +140,10 @@ public class SSHAuthenticationModule {
 	 * @param subject unauthenticated user ID (must be used if name callback not provided/allowed)
 	 * @param callbacks authentication callbacks
 	 * @return authenticated user ID (may come from callbacks)
-	 * @throws LoginException if authentication failure occurs
+	 * @throws FailedLoginException if authentication failure occurs
 	 */
 	public String authenticate(UserManager userMgr, Subject subject, Callback[] callbacks)
-			throws LoginException {
+			throws FailedLoginException {
 
 		GhidraPrincipal user = GhidraPrincipal.getGhidraPrincipal(subject);
 		if (user == null) {

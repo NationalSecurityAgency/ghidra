@@ -37,10 +37,14 @@ import ghidra.util.Msg;
  * <p>
  * Similar to {@link NoteGoBuildId}, but re-implemented here because of the different
  * serialization used.
+ * 
+ * TODO: stop using 83 byte fixed len for buildid string, use leading / trailing quotes
  */
 public class GoBuildId {
 	private static final byte[] GO_BUILDID_MAGIC =
 		"\u00ff Go build ID: \"".getBytes(StandardCharsets.ISO_8859_1);
+	private static final byte[] GO_BUIlDID_TRAILING_MAGIC =
+		"\"\n \u00ff".getBytes(StandardCharsets.ISO_8859_1);
 	private static final int BUILDID_STR_LEN = 83;
 
 	public static ItemWithAddress<GoBuildId> findBuildId(Program program) {
@@ -64,7 +68,14 @@ public class GoBuildId {
 			if (!Arrays.equals(magic, GO_BUILDID_MAGIC)) {
 				return null;
 			}
+
 			String buildIdStr = br.readNextAsciiString(BUILDID_STR_LEN);
+
+			byte[] trailingMagic = br.readNextByteArray(GO_BUIlDID_TRAILING_MAGIC.length);
+			if (!Arrays.equals(trailingMagic, GO_BUIlDID_TRAILING_MAGIC)) {
+				return null;
+			}
+
 			return new GoBuildId(buildIdStr);
 		}
 		catch (IOException e) {
@@ -81,7 +92,8 @@ public class GoBuildId {
 	 * @return GoBuildId instance, or null if not present
 	 */
 	public static GoBuildId read(InputStream is) {
-		byte[] buffer = new byte[GO_BUILDID_MAGIC.length + BUILDID_STR_LEN];
+		byte[] buffer =
+			new byte[GO_BUILDID_MAGIC.length + BUILDID_STR_LEN + GO_BUIlDID_TRAILING_MAGIC.length];
 		try {
 			int bytesRead = is.read(buffer);
 			if (bytesRead == buffer.length) {
@@ -127,6 +139,8 @@ public class GoBuildId {
 			new StructureDataType(GoConstants.GOLANG_CATEGORYPATH, "GoBuildId", 0, dtm);
 		result.add(StringDataType.dataType, GO_BUILDID_MAGIC.length, "magic", null);
 		result.add(StringDataType.dataType, BUILDID_STR_LEN, "buildId", null);
+		result.add(StringDataType.dataType, GO_BUIlDID_TRAILING_MAGIC.length, "trailing_magic",
+			null);
 
 		return result;
 	}

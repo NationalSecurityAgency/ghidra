@@ -16,6 +16,7 @@
 package ghidra.program.model.data;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.data.DataTypeUtilities;
@@ -24,7 +25,8 @@ import ghidra.util.UniversalID;
 
 /**
  * Basic implementation of the union data type.
- * NOTE: Implementation is not thread safe when being modified.
+ * <p>
+ * NOTE: Implementation is not thread safe.
  */
 public class UnionDataType extends CompositeDataTypeImpl implements UnionInternal {
 
@@ -117,6 +119,11 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 	}
 
 	@Override
+	void forEachDefinedComponent(Consumer<DataTypeComponentImpl> dtcConsumer) {
+		components.forEach(dtcConsumer);
+	}
+
+	@Override
 	public int getNumComponents() {
 		return components.size();
 	}
@@ -134,6 +141,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 			int oldAlignment = getAlignment();
 
 			DataTypeComponent dtc = doAdd(dataType, length, componentName, comment);
+
 			if (!repack(true) && isPackingEnabled() && oldAlignment != getAlignment()) {
 				notifyAlignmentChanged();
 			}
@@ -163,8 +171,8 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 		return length;
 	}
 
-	DataTypeComponentImpl doAdd(DataType dataType, int length, String componentName, String comment)
-			throws DataTypeDependencyException {
+	DataTypeComponentImpl doAdd(DataType dataType, int length, String componentName,
+			String comment) throws DataTypeDependencyException {
 
 		dataType = validateDataType(dataType);
 
@@ -175,8 +183,9 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 
 		length = getPreferredComponentLength(dataType, length);
 
-		DataTypeComponentImpl dtc = new DataTypeComponentImpl(dataType, this, length,
+		DataTypeComponentImpl dtc = createComponent(dataType, length,
 			components.size(), 0, componentName, comment);
+
 		dataType.addParent(this);
 		components.add(dtc);
 
@@ -198,7 +207,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 
 			length = getPreferredComponentLength(dataType, length);
 
-			DataTypeComponentImpl dtc = new DataTypeComponentImpl(dataType, this, length, ordinal,
+			DataTypeComponentImpl dtc = createComponent(dataType, length, ordinal,
 				0, componentName, comment);
 			dataType.addParent(this);
 			shiftOrdinals(ordinal, 1);
@@ -311,6 +320,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 			if (ordinals.contains(ordinal)) {
 				// component removed
 				--ordinalAdjustment;
+				dtc.getDataType().removeParent(this);
 			}
 			else {
 				if (ordinalAdjustment != 0) {

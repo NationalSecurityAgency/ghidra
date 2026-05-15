@@ -464,6 +464,67 @@ public class ProgramLoader {
 		@Deprecated(since = "12.0", forRemoval = true)
 		LoadResults<Program> load(Object consumer) throws IOException, LanguageNotFoundException,
 				CancelledException, VersionException, LoadException {
+
+			LoadResults<? extends DomainObject> loadResults = loadAll(consumer);
+
+			// Filter out and release non-Programs
+			List<Loaded<Program>> loadedPrograms = new ArrayList<>();
+			for (Loaded<? extends DomainObject> loaded : loadResults) {
+				if (Program.class.isAssignableFrom(loaded.getDomainObjectType())) {
+					loadedPrograms.add((Loaded<Program>) loaded);
+				}
+				else {
+					try {
+						loaded.close();
+					}
+					catch (Exception e) {
+						throw new IOException(e);
+					}
+				}
+			}
+			if (loadedPrograms.isEmpty()) {
+				throw new LoadException("Domain objects were loaded, but none were Programs");
+			}
+			return new LoadResults<>(loadedPrograms);
+		}
+
+		/**
+		 * Loads the specified {@link #source(ByteProvider) source} with this {@link Builder}'s 
+		 * current configuration
+		 * 
+		 * @return The {@link LoadResults} which contains one or more {@link Loaded} 
+		 *   {@link DomainObject}s (created but not saved)
+		 * @throws IOException if there was an IO-related problem loading
+		 * @throws LanguageNotFoundException if there was a problem getting the language		
+		 * @throws CancelledException if the operation was cancelled 
+		 * @throws VersionException if there was an issue with database versions, probably due to a 
+		 *   failed language upgrade
+		 * @throws LoadException if there was a problem loading
+		 */
+		public LoadResults<? extends DomainObject> loadAll() throws IOException,
+				LanguageNotFoundException, CancelledException, VersionException, LoadException {
+			return loadAll(this);
+		}
+
+		/**
+		 * Loads the specified {@link #source(ByteProvider) source} with this {@link Builder}'s 
+		 * current configuration
+		 * 
+		 * @param consumer A reference to the object "consuming" the returned {@link LoadResults}, 
+		 *   used to ensure the underlying {@link DomainObject}s are only closed when every consumer
+		 *   is done with it (see {@link LoadResults#close()}).
+		 * @return The {@link LoadResults} which contains one or more {@link Loaded} 
+		 *   {@link DomainObject}s (created but not saved)
+		 * @throws IOException if there was an IO-related problem loading
+		 * @throws LanguageNotFoundException if there was a problem getting the language		
+		 * @throws CancelledException if the operation was cancelled 
+		 * @throws VersionException if there was an issue with database versions, probably due to a 
+		 *   failed language upgrade
+		 * @throws LoadException if there was a problem loading
+		 */
+		@Deprecated(since = "12.1", forRemoval = true)
+		public LoadResults<? extends DomainObject> loadAll(Object consumer) throws IOException,
+				LanguageNotFoundException, CancelledException, VersionException, LoadException {
 			try (ByteProvider p = getSourceAsProvider()) {
 
 				LoadSpec loadSpec = getLoadSpec(p);
@@ -501,25 +562,7 @@ public class ProgramLoader {
 					Msg.info(ProgramLoader.class, "Additional info:\n" + log);
 				}
 
-				// Filter out and release non-Programs
-				List<Loaded<Program>> loadedPrograms = new ArrayList<>();
-				for (Loaded<? extends DomainObject> loaded : loadResults) {
-					if (Program.class.isAssignableFrom(loaded.getDomainObjectType())) {
-						loadedPrograms.add((Loaded<Program>) loaded);
-					}
-					else {
-						try {
-							loaded.close();
-						}
-						catch (Exception e) {
-							throw new IOException(e);
-						}
-					}
-				}
-				if (loadedPrograms.isEmpty()) {
-					throw new LoadException("Domain objects were loaded, but none were Programs");
-				}
-				return new LoadResults<>(loadedPrograms);
+				return loadResults;
 			}
 		}
 

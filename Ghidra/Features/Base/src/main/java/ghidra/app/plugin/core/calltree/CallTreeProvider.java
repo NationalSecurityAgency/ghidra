@@ -46,6 +46,7 @@ import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.ExternalLocation;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
@@ -757,7 +758,22 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		isFiringNavigationEvent = true;
 		GoToService goToService = tool.getService(GoToService.class);
 		if (goToService != null) {
-			goToService.goTo(location);
+			Address locAddr = location.getAddress();
+			if (locAddr.isExternalAddress()) {
+				// NOTE: The simple form of GoTo(ProgramLocation) will always goto the linkage 
+				// point and not the actual external program.  We use the special form for
+				// external location to ensure it respects the navigation options.
+				Symbol symbol = currentProgram.getSymbolTable().getPrimarySymbol(locAddr);
+				if (symbol != null) {
+					ExternalLocation externalLocation =
+						currentProgram.getExternalManager().getExternalLocation(symbol);
+					goToService.goToExternalLocation(goToService.getDefaultNavigatable(),
+						externalLocation, true);
+				}
+			}
+			else {
+				goToService.goTo(location);
+			}
 			isFiringNavigationEvent = false;
 			return;
 		}

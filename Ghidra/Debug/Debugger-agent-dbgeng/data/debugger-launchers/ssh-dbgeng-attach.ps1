@@ -69,7 +69,7 @@ $answer = Check-Result-And-Prompt-Mitigation $sshproc @"
 It appears ghidradbg is missing from the remote system. This can happen if you
 forgot to install the required package. This can also happen if you installed
 the packages to a different Python environment than is being used by the
-remote's gdb.
+remote's dbgeng.
 
 This script is about to offer automatic resolution. If you'd like to resolve
 this manually, answer no to the next question and then see Ghidra's help by

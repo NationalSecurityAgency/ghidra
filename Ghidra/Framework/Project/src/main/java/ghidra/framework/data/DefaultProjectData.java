@@ -33,8 +33,7 @@ import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.framework.store.local.LocalFolderItem;
 import ghidra.framework.store.remote.RemoteFileSystem;
 import ghidra.util.*;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateFileException;
+import ghidra.util.exception.*;
 import ghidra.util.task.*;
 import utilities.util.FileUtilities;
 
@@ -105,14 +104,16 @@ public class DefaultProjectData implements ProjectData {
 	 * @param isInWritableProject true if project content is writable, false if project is read-only
 	 * @param resetOwner true to reset the project owner
 	 * @throws IOException if an i/o error occurs
+	 * @throws NotFoundException if project does not exist
 	 * @throws NotOwnerException if inProject is true and user is not owner
 	 * @throws LockException if {@code isInWritableProject} is true and unable to establish project 
 	 * write lock (i.e., project in-use)
 	 * @throws FileNotFoundException if project directory not found
 	 */
 	public DefaultProjectData(ProjectLocator localStorageLocator, boolean isInWritableProject,
-			boolean resetOwner) throws NotOwnerException, IOException, LockException {
-
+			boolean resetOwner)
+			throws NotFoundException, NotOwnerException, IOException, LockException {
+		localStorageLocator.checkProjectExistence();
 		this.localStorageLocator = localStorageLocator;
 		boolean success = false;
 		try {
@@ -158,6 +159,7 @@ public class DefaultProjectData implements ProjectData {
 	 */
 	public DefaultProjectData(ProjectLocator localStorageLocator, RepositoryAdapter repository,
 			boolean isInWritableProject) throws IOException, LockException {
+		localStorageLocator.checkLocationExistence();
 		this.localStorageLocator = localStorageLocator;
 		this.repository = repository;
 		boolean success = false;
@@ -248,7 +250,7 @@ public class DefaultProjectData implements ProjectData {
 	}
 
 	/**
-	 * Read the contents of the project properties file to include the following values if relavent:
+	 * Read the contents of the project properties file to include the following values if relevant:
 	 * {@value #OWNER}, {@value #SERVER_NAME}, {@value #REPOSITORY_NAME}, {@value #PORT_NUMBER}
 	 * @param projectDir project directory (*.rep)
 	 * @return project properties or null if invalid project directory specified
@@ -297,9 +299,6 @@ public class DefaultProjectData implements ProjectData {
 			localStorageLocator.getMarkerFile().createNewFile();
 		}
 		else {
-			if (!projectDir.isDirectory()) {
-				throw new FileNotFoundException("Project directory not found: " + projectDir);
-			}
 			if (properties.exists()) {
 				if (isInWritableProject && properties.isReadOnly()) {
 					throw new ReadOnlyException(

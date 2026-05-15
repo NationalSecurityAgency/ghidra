@@ -24,7 +24,6 @@ import ghidra.framework.remote.User;
 import ghidra.framework.store.*;
 import ghidra.framework.store.local.*;
 import ghidra.server.Repository;
-import ghidra.server.RepositoryManager;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.UserAccessException;
 
@@ -79,8 +78,7 @@ public class RepositoryFile {
 						pathname += "/";
 					}
 					pathname += name;
-					RepositoryManager.log(repository.getName(), pathname,
-						"file is corrupt or unsupported", null);
+					repository.log(pathname, "file is corrupt or unsupported", null);
 					throw new FileNotFoundException(pathname + " is corrupt or unsupported");
 				}
 			}
@@ -177,8 +175,7 @@ public class RepositoryFile {
 					"Unsupported operation for " + folderItem.getClass().getSimpleName());
 			}
 			LocalManagedBufferFile bf = databaseItem.open(version, minChangeDataVer);
-			repository.log(
-				getPathname(), "version " +
+			repository.log(getPathname(), "version " +
 					(version < 0 ? folderItem.getCurrentVersion() : version) + " opened read-only",
 				user);
 			return bf;
@@ -316,7 +313,7 @@ public class RepositoryFile {
 			parent.fileMoved(this, oldName, newParent);
 			parent = newParent;
 			pathChanged();
-			RepositoryManager.log(repository.getName(), oldPath, "file moved to " + getPathname(),
+			repository.log(oldPath, "file moved to " + getPathname(),
 				user);
 		}
 	}

@@ -259,7 +259,7 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 		S s = getForSpace(space, false);
 		if (s == null) {
 			AddressSet set = PcodeStateCallbacks.rngSet(space, offset, size);
-			if (set.equals(cb.readUninitialized(this, set))) {
+			if (set.equals(cb.readUninitialized(this, set, reason))) {
 				return getFromNullSpace(size, reason, cb);
 			}
 			s = getForSpace(space, false);

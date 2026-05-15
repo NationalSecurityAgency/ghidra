@@ -16,6 +16,7 @@
 package ghidra.trace.database.target;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeFalse;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -40,6 +41,8 @@ import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.thread.TraceThreadManager;
+import ghidra.util.SystemUtilities;
 import ghidra.util.database.DBAnnotatedObject;
 import ghidra.util.database.DBCachedObjectStore;
 
@@ -1161,5 +1164,34 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertEquals(b.range(0x00400000, 0x00402000),
 			regionText.getAttribute(0, "Range").getValue());
 		assertEquals("Range", regionText.getAttribute(0, "_range").getEntryKey());
+	}
+
+	@Test
+	public void testReplicateClassCastExceptionScenario() throws Exception {
+		final int TICKS = 100_000;
+
+		assumeFalse(SystemUtilities.isInTestingBatchMode());
+		TraceThreadManager threads = b.trace.getThreadManager();
+
+		try (Transaction tx = b.startTransaction()) {
+			b.createRootObject();
+			TraceThread th = threads.addThread("Targets[0].Threads[0]", Lifespan.nowOn(1));
+			DBTraceObject objThread = (DBTraceObject) th.getObject();
+
+			long start = System.currentTimeMillis();
+			// For each tick, write PC with a dummy value
+			for (int tick = 0; tick < TICKS; tick++) {
+				/**
+				 * NOTE: This puts the manager out of sync, since it won't have the corresponding
+				 * wrapper objects, but that shouldn't be any matter, as the point of this is to
+				 * test the underlying R*-Tree.
+				 */
+				b.trace.getObjectManager()
+						.doCreateValueData(Lifespan.nowOn(tick), objThread, "_pc", b.addr(tick));
+			}
+			long current = System.currentTimeMillis();
+			double ticksPerSecond = 1000.0 * TICKS / (current - start);
+			System.err.println("%f/s".formatted(ticksPerSecond));
+		}
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.service.breakpoint;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.google.gson.*;
 
@@ -27,6 +28,7 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -69,8 +71,8 @@ public class ProgramBreakpoint {
 		Set<TraceBreakpointKind> result = TraceBreakpointKindSet.decode(parts[0], false);
 		if (result.isEmpty()) {
 			Msg.warn(TraceBreakpointKind.class,
-				"Decoded empty set of kinds from bookmark. Assuming SW_EXECUTE");
-			return Set.of(TraceBreakpointKind.SW_EXECUTE);
+				"Decoded empty set of kinds from bookmark. Assuming %s".formatted(CommonSet.SWX));
+			return CommonSet.SWX.kinds();
 		}
 		return result;
 	}
@@ -436,6 +438,21 @@ public class ProgramBreakpoint {
 	}
 
 	/**
+	 * In case a program database with pre-Ghidra-12.2 breakpoint bookmarks comes along (this will
+	 * happen for a while), we want to ensure the old encodings are deleted when the breakpoint is
+	 * toggled. While we'd normally strive for perfect backward compatibility, it's not as important
+	 * for breakpoints here. If this function is to be removed later (it probably should be), we can
+	 * either: 1) ensure there's some upgrade process, on import or via a script; or 2) just
+	 * instruct users on a case-by-case basis to delete the old breakpoints.
+	 * 
+	 * @return the bookmark category for encoding the breakpoint kinds in versions prior to 12.2.
+	 */
+	protected String computeCategory_Pre12Dot2() {
+		return kinds.stream().map(k -> k.name()).collect(Collectors.joining(",")) + ";" +
+			Long.toUnsignedString(length);
+	}
+
+	/**
 	 * Change the state of this breakpoint by manipulating bookmarks
 	 * 
 	 * <p>
@@ -458,8 +475,11 @@ public class ProgramBreakpoint {
 		try (Transaction tx = program.openTransaction("Toggle breakpoint")) {
 			BookmarkManager manager = program.getBookmarkManager();
 			String catStr = computeCategory();
+			String catStr_Pre12Dot2 = computeCategory_Pre12Dot2();
 			manager.setBookmark(address, addType, catStr, comment);
 			manager.removeBookmarks(new AddressSet(address), delType, catStr,
+				TaskMonitor.DUMMY);
+			manager.removeBookmarks(new AddressSet(address), delType, catStr_Pre12Dot2,
 				TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {

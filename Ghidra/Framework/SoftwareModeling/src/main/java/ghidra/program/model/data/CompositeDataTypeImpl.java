@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.data;
 
+import java.util.function.Consumer;
+
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.mem.MemBuffer;
@@ -60,6 +62,13 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	CompositeDataTypeImpl(CategoryPath path, String name, DataTypeManager dtm) {
 		super(path != null ? path : CategoryPath.ROOT, name, dtm);
 		description = "";
+	}
+
+	protected DataTypeComponentImpl createComponent(DataType dataType, int length, int ordinal,
+			int offset, String fieldName, String comment) {
+
+		return new DataTypeComponentImpl(dataType, this, length, ordinal,
+			offset, fieldName, comment);
 	}
 
 	@Override
@@ -440,6 +449,8 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 
 	@Override
 	public abstract int getAlignment();
+
+	abstract void forEachDefinedComponent(Consumer<DataTypeComponentImpl> dtcConsumer);
 
 	@Override
 	public String toString() {

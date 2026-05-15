@@ -268,6 +268,21 @@ public class DIEAggregate {
 	}
 
 	/**
+	 * Returns the first ancestor (parent, grandparent, etc) that matches the specified DIE
+	 * tag type.
+	 * 
+	 * @param ancestorType {@link DWARFTag} DIE type
+	 * @return {@link DIEAggregate} containing requested ancestor, or null if not found
+	 */
+	public DIEAggregate findAncestor(DWARFTag ancestorType) {
+		DIEAggregate parent = getParent();
+		while (parent != null && parent.getTag() != ancestorType) {
+			parent = parent.getParent();
+		}
+		return parent;
+	}
+
+	/**
 	 * Returns the depth of the head fragment, where depth is defined as
 	 * the distance between the DIE and the root DIE of the owning compilation
 	 * unit.

@@ -43,7 +43,7 @@ import ghidra.program.util.ProgramMemoryUtil;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.bytesearch.*;
-import ghidra.util.datastruct.ListAccumulator;
+import ghidra.util.datastruct.SetAccumulator;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -465,9 +465,11 @@ public class RecoveredClassHelper {
 					continue;
 				}
 
-				if (calledFunction.isExternal()) {
-					continue;
-				}
+				// TODO: might redo to have separate call maps that do/don't include external
+				// keeping this here for reminder
+//				if (calledFunction.isExternal()) {
+//					continue;
+//				}
 
 				// include the null functions in map so things using map can get accurate count
 				// of number of CALL instructions even if the call reg type
@@ -4287,14 +4289,13 @@ public class RecoveredClassHelper {
 
 			monitor.checkCancelled();
 
-			ListAccumulator<LocationReference> accumulator = new ListAccumulator<>();
-
 			boolean discoverTypes = true;
-			ReferenceUtils.findDataTypeReferences(accumulator, badStructure, program, discoverTypes,
-				monitor);
 
-			List<LocationReference> referenceList = accumulator.asList();
-			if (referenceList.isEmpty()) {
+			SetAccumulator<LocationReference> accumulator = new SetAccumulator<>();
+			ReferenceUtils.findDataTypeReferences(accumulator, badStructure, program,
+				discoverTypes, monitor);
+
+			if (accumulator.size() == 0) {
 				// delete empty class data type and empty parent folders
 				removeEmptyStructure(badStructure.getDataTypePath().getCategoryPath(),
 					badStructure.getName());
@@ -4470,6 +4471,7 @@ public class RecoveredClassHelper {
 			if (vftablePointerDataType == null) {
 				Msg.debug(this,
 					"vftablePointerDataType is null for vftableAddress: " + vftableAddress);
+				continue;
 			}
 
 			DataType vftableDataType = vftablePointerDataType.getDataType();

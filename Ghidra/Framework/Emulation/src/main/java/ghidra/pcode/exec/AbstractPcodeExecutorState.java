@@ -16,6 +16,7 @@
 package ghidra.pcode.exec;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
@@ -102,5 +103,10 @@ public abstract class AbstractPcodeExecutorState<A, T> implements PcodeExecutorS
 	@Override
 	public void clear() {
 		piece.clear();
+	}
+
+	@Override
+	public Entry<Long, T> getNextEntryInternal(AddressSpace space, long offset) {
+		return piece.getNextEntryInternal(space, offset);
 	}
 }

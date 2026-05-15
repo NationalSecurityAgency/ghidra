@@ -35,6 +35,7 @@ public class DtFilterDialog extends DialogComponentProvider {
 	private TypeComponent arraysComponent = new TypeComponent("Arrays");
 	private TypeComponent enumsComponent = new TypeComponent("Enums");
 	private TypeComponent functionsComponent = new TypeComponent("Functions");
+	private TypeComponent otherComponent = new TypeComponent("Other");
 	private TypeComponent pointersComponent = new TypeComponent("Pointers");
 	private TypeComponent structuresComponent = new TypeComponent("Structures");
 	private TypeComponent unionsComponent = new TypeComponent("Unions");
@@ -77,6 +78,7 @@ public class DtFilterDialog extends DialogComponentProvider {
 		newState.setArraysFilter(arraysComponent.getFilter());
 		newState.setEnumsFilter(enumsComponent.getFilter());
 		newState.setFunctionsFilter(functionsComponent.getFilter());
+		newState.setOtherFilter(otherComponent.getFilter());
 		newState.setPointersFilter(pointersComponent.getFilter());
 		newState.setStructuresFilter(structuresComponent.getFilter());
 		newState.setUnionsFilter(unionsComponent.getFilter());
@@ -108,6 +110,8 @@ public class DtFilterDialog extends DialogComponentProvider {
 		panel.add(structuresComponent.getRight());
 		panel.add(unionsComponent.getLeft());
 		panel.add(unionsComponent.getRight());
+		panel.add(otherComponent.getLeft());
+		panel.add(otherComponent.getRight());
 
 		GButton selectAll = new GButton("Select All");
 		GButton deselectAll = new GButton("Deselect All");
@@ -145,6 +149,8 @@ public class DtFilterDialog extends DialogComponentProvider {
 		return List.of(
 			arraysComponent.typeCb,
 			arraysComponent.typeDefCb,
+			otherComponent.typeCb,
+			otherComponent.typeDefCb,
 			enumsComponent.typeCb,
 			enumsComponent.typeDefCb,
 			functionsComponent.typeCb,
@@ -161,6 +167,7 @@ public class DtFilterDialog extends DialogComponentProvider {
 
 	private void initCheckBoxes() {
 		arraysComponent.init(filterState.getArraysFilter());
+		otherComponent.init(filterState.getOtherFilter());
 		enumsComponent.init(filterState.getEnumsFilter());
 		functionsComponent.init(filterState.getFunctionsFilter());
 		pointersComponent.init(filterState.getPointersFilter());

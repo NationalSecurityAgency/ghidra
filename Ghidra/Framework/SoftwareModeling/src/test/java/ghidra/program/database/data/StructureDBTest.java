@@ -134,6 +134,7 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals("field1", dtc.getFieldName());
 		assertEquals("Comment1", dtc.getComment());
 		assertEquals(ByteDataType.class, dtc.getDataType().getClass());
+		assertEquals(dtc, struct.findComponent("field1"));
 
 		dtc = struct.getComponent(1);
 		assertEquals(1, dtc.getOffset());
@@ -148,6 +149,7 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals("field3", dtc.getFieldName());
 		assertEquals(null, dtc.getComment());
 		assertEquals(DWordDataType.class, dtc.getDataType().getClass());
+		assertEquals(dtc, struct.findComponent("field3"));
 
 		dtc = struct.getComponent(3);
 		assertEquals(7, dtc.getOffset());
@@ -155,7 +157,23 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals("field4", dtc.getFieldName());
 		assertEquals("Comment4", dtc.getComment());
 		assertEquals(ByteDataType.class, dtc.getDataType().getClass());
+		assertEquals(dtc, struct.findComponent("field4"));
 
+		dtc = struct.add(ByteDataType.dataType, "field3", "new comment");
+		assertEquals(8, dtc.getOffset());
+		assertEquals(4, dtc.getOrdinal());
+		assertEquals("field3", dtc.getFieldName());
+		assertEquals("new comment", dtc.getComment());
+		assertEquals(ByteDataType.class, dtc.getDataType().getClass());
+		assertNotNull(struct.findComponent("field3")); // which one is returned is arbitrary
+
+		dtc = struct.add(ByteDataType.dataType, "field3 1", "new comment"); // cleanup required
+		assertEquals(9, dtc.getOffset());
+		assertEquals(5, dtc.getOrdinal());
+		assertEquals("field3_1", dtc.getFieldName());
+		assertEquals("new comment", dtc.getComment());
+		assertEquals(ByteDataType.class, dtc.getDataType().getClass());
+		assertEquals(dtc, struct.findComponent("field3_1")); // name gets modified
 	}
 
 	@Test
@@ -565,6 +583,42 @@ public class StructureDBTest extends AbstractGenericTest {
 			"   12   byte   1   field4   \"Comment4\"\n" +
 			"}\n" +
 			"Length: 13 Alignment: 1\n", struct.toString());
+	}
+
+	@Test
+	public void testInsertWithZeroArrayAtOffset3() {
+		Array zeroArray = new ArrayDataType(FloatDataType.dataType, 0, -1);
+
+		// Clear structure and set length to 8 with only zero-length components
+		struct.setLength(0);
+		struct.setLength(8);
+		
+		struct.insertAtOffset(2, zeroArray, -1, "z4", null);
+		struct.insertAtOffset(0, zeroArray, -1, "z1", null);
+		struct.insertAtOffset(0, zeroArray, -1, "z2", null);
+
+		assertEquals("/Test\n" +
+			"pack(disabled)\n" +
+			"Structure Test {\n" +
+			"   0   float[0]   0   z1   \"\"\n" +
+			"   0   float[0]   0   z2   \"\"\n" +
+			"   2   float[0]   0   z4   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 1\n" +
+			"", struct.toString());
+
+		struct.insertAtOffset(0, zeroArray, -1, "z3", null);
+
+		assertEquals("/Test\n" +
+			"pack(disabled)\n" +
+			"Structure Test {\n" +
+			"   0   float[0]   0   z1   \"\"\n" +
+			"   0   float[0]   0   z2   \"\"\n" +
+			"   0   float[0]   0   z3   \"\"\n" +
+			"   2   float[0]   0   z4   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 1\n" +
+			"", struct.toString());
 	}
 
 	@Test
@@ -1015,6 +1069,44 @@ public class StructureDBTest extends AbstractGenericTest {
 				"}\n" + 
 				"Length: 14 Alignment: 1", struct);	
 		//@formatter:on
+	}
+
+	@Test
+	public void testInsertZeroLengthBitfieldAtOffset() {
+		Array zeroArray = new ArrayDataType(FloatDataType.dataType, 0, -1);
+
+		// Clear structure and set length to 8 with only zero-length components
+		struct.setLength(0);
+		struct.setLength(8);
+		struct.insertAtOffset(0, zeroArray, -1, "z1", null);
+		struct.insertAtOffset(0, zeroArray, -1, "z2", null);
+		struct.insertAtOffset(2, zeroArray, -1, "z4", null);
+
+		assertEquals("/Test\n" +
+			"pack(disabled)\n" +
+			"Structure Test {\n" +
+			"   0   float[0]   0   z1   \"\"\n" +
+			"   0   float[0]   0   z2   \"\"\n" +
+			"   2   float[0]   0   z4   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 1\n", struct.toString());
+
+		try {
+			struct.insertBitFieldAt(0, 1, 0, CharDataType.dataType, 0, null, null);
+		}
+		catch (InvalidDataTypeException e) {
+			failWithException("Unexpected", e);
+		}
+
+		assertEquals("/Test\n" +
+			"pack(disabled)\n" +
+			"Structure Test {\n" +
+			"   0   float[0]   0   z1   \"\"\n" +
+			"   0   float[0]   0   z2   \"\"\n" +
+			"   0   char:0(0)   0      \"\"\n" +
+			"   2   float[0]   0   z4   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 1\n", struct.toString());
 	}
 
 	@Test
@@ -1795,7 +1887,7 @@ public class StructureDBTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDelete() throws InvalidDataTypeException {
+	public void testDeleteBF() throws InvalidDataTypeException {
 
 		struct.insertBitFieldAt(2, 4, 0, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
 		struct.insertBitFieldAt(2, 4, 3, IntegerDataType.dataType, 3, "bf2", "bf2Comment");
@@ -1837,7 +1929,11 @@ public class StructureDBTest extends AbstractGenericTest {
 			"Length: 11 Alignment: 1", struct);
 		//@formatter:on
 
+		assertNotNull(struct.findComponent("bf2"));
+
 		struct.delete(3);
+
+		assertNull(struct.findComponent("bf2"));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
@@ -1854,7 +1950,11 @@ public class StructureDBTest extends AbstractGenericTest {
 			"Length: 11 Alignment: 1", struct);
 		//@formatter:on
 
+		assertNotNull(struct.findComponent("bf3"));
+
 		struct.delete(3);
+
+		assertNull(struct.findComponent("bf3"));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
@@ -1871,7 +1971,11 @@ public class StructureDBTest extends AbstractGenericTest {
 			"Length: 11 Alignment: 1", struct);
 		//@formatter:on
 
+		assertNotNull(struct.findComponent("bf4"));
+
 		struct.delete(4);
+
+		assertNull(struct.findComponent("bf4"));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
@@ -1889,7 +1993,11 @@ public class StructureDBTest extends AbstractGenericTest {
 			"Length: 11 Alignment: 1", struct);
 		//@formatter:on
 
+		assertNotNull(struct.findComponent("bf1"));
+
 		struct.delete(2);
+
+		assertNull(struct.findComponent("bf1"));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
@@ -2018,7 +2126,7 @@ public class StructureDBTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDeleteComponent() {
+	public void testDataTypeDeleted() {
 		Structure s = new StructureDataType("test1", 0);
 		s.add(new ByteDataType());
 		s.add(new FloatDataType());
@@ -2073,6 +2181,21 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertTrue(s.isNotYetDefined());
 		assertTrue(s.isZeroLength());
 		assertEquals(0, s.getNumComponents());
+	}
+
+	@Test
+	public void testGetComponentByName() {
+		DataTypeComponent dtc = struct.findComponent("field1");
+		assertNotNull(dtc);
+		assertEquals("field1", dtc.getFieldName());
+
+		dtc = struct.findComponent("field3");
+		assertNotNull(dtc);
+		assertEquals("field3", dtc.getFieldName());
+
+		dtc = struct.findComponent("field4");
+		assertNotNull(dtc);
+		assertEquals("field4", dtc.getFieldName());
 	}
 
 	@Test
@@ -2486,6 +2609,41 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals(7, comps[4].getOffset());
 		assertEquals(8, comps[4].getOrdinal());
 		assertTrue(ByteDataType.dataType.isEquivalent(comps[4].getDataType()));
+	}
+
+	@Test
+	public void testReplaceAtWithZeroLength1() {
+		Array zeroArray = new ArrayDataType(FloatDataType.dataType, 0, -1);
+
+		// Clear structure and set length to 8 with only zero-length components
+		struct.setLength(0);
+		struct.setLength(8);
+		struct.replaceAtOffset(0, zeroArray, -1, "z1", null);
+		struct.replaceAtOffset(0, zeroArray, -1, "z2", null);
+		struct.replaceAtOffset(2, zeroArray, -1, "z4", null);
+
+		assertEquals("/Test\n" +
+			"pack(disabled)\n" +
+			"Structure Test {\n" +
+			"   0   float[0]   0   z1   \"\"\n" +
+			"   0   float[0]   0   z2   \"\"\n" +
+			"   2   float[0]   0   z4   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 1\n" +
+			"", struct.toString());
+
+		struct.replaceAtOffset(0, zeroArray, -1, "z3", null);
+
+		assertEquals("/Test\n" +
+			"pack(disabled)\n" +
+			"Structure Test {\n" +
+			"   0   float[0]   0   z1   \"\"\n" +
+			"   0   float[0]   0   z2   \"\"\n" +
+			"   0   float[0]   0   z3   \"\"\n" +
+			"   2   float[0]   0   z4   \"\"\n" +
+			"}\n" +
+			"Length: 8 Alignment: 1\n" +
+			"", struct.toString());
 	}
 
 	@Test

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@title gdb via ssh ((remote=cmd shell)
+#@title gdb via ssh (cmd shell)
 #@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>gdb</tt> via <tt>ssh</tt> to a remote Windows machine</h3>
@@ -30,7 +30,7 @@
 #@enum Endian:str auto big little
 #@arg :str "Image" "The target binary executable image on the remote system"
 #@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
-##@env OPT_SSH_PATH:file="ssh" "ssh command" "The path to ssh on the local system. Omit the full path to resolve using the system PATH."
+#@env OPT_SSH_PATH:file="ssh" "ssh command" "The path to ssh on the local system. Omit the full path to resolve using the system PATH."
 #@env OPT_HOST:str="localhost" "[User@]Host" "The hostname or user@host"
 #@env OPT_REMOTE_PORT:int=12345 "Remote Trace RMI Port" "A free port on the remote end to receive and forward the Trace RMI connection."
 #@env OPT_EXTRA_SSH_ARGS:str="" "Extra ssh arguments" "Extra arguments to pass to ssh. Use with care."
@@ -44,7 +44,7 @@
 
 $Env:OPT_OS_WINDOWS = $true
 $arglist = @("")
-$arglist += ("cat >  .\.gdbinit")
+$arglist += ("cat >  .\ghidra.gdbinit")
 $sshargs = Compute-Ssh-Args $arglist True
 
 $image = ($args[0]).Replace("\", "\\")
@@ -60,7 +60,7 @@ Replace('$OPT_START_CMD', $Env:OPT_START_CMD)`
  
 $arglist = @("")
 $arglist += ("$Env:OPT_GDB_PATH")
-$arglist += ("-q")
+$arglist += ("-q", "-x", ".\ghidra.gdbinit")
 $sshargs = Compute-Ssh-Args $arglist True
 
 $sshproc = Start-Process -FilePath ssh -ArgumentList $sshargs[1..$sshargs.Count] -NoNewWindow -Wait -PassThru

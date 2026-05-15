@@ -22,6 +22,7 @@ package ghidra.app.util;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.OptionalInt;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -113,27 +114,31 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 		// NOTE: in certain cases this may not cache enough if slot size was
 		// specified as a minimum and not actual
 		int length = prototype.getLength();
-		int extraByteCount = prototype.getDelaySlotByteCount();
-		if (prototype.hasNext2Dependency()) {
-			/**
-			 * NOTE: The notes about problems below apply here, too. We're assuming that the next
-			 * instruction is at most 3 bytes longer than this instruction. Maybe that suffices, but
-			 * be prepared to 1) Add more slack bytes, or 2) Actually parse the next instruction(s).
-			 * The difficulty with option 2 (and why I don't just do it now) is that I need the
-			 * initial context register value for that next instruction.
-			 */
-			extraByteCount = Math.max(length, extraByteCount);
-		}
-		if (extraByteCount == 1) {
-			// Assume this is a minimum size and cache enough for one 
+
+		int delaySlotByteCount = prototype.getDelaySlotByteCount();
+		if (delaySlotByteCount == 1) {
+			// Assume this is a minimum delay slot size and cache enough for one 
 			// more instruction of the same size.
-			length += length;
+			delaySlotByteCount = length;
 		}
-		else {
-			// NOTE: This may have a problem if delaySlotByteCount is a
-			// minimum byte count and more bytes are needed for delay slots.
-			length += extraByteCount;
+		length += delaySlotByteCount;
+
+		// Factor in optional inst_next2 use
+		int next2Length = 0;
+		if (prototype.hasNext2Dependency()) {
+			Language language = prototype.getLanguage();
+			OptionalInt maxNextInstructionLength = language.getMaximumInstructionLength();
+			if (maxNextInstructionLength.isPresent()) {
+				// next instruction length based upon language specified property
+				next2Length = maxNextInstructionLength.getAsInt();
+			}
+			else {
+				// next instruction length assumed to be the same as the current instruction 
+				next2Length = length;
+			}
 		}
+		length += next2Length;
+
 		// Sleigh utilizes 4-byte (int) chunks when evaluating patterns
 		// make sure we have enough bytes to give out for any valid offset
 		// within the instruction

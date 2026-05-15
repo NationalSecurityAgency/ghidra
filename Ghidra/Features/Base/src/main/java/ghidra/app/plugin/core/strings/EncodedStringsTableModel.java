@@ -124,7 +124,8 @@ class EncodedStringsTableModel extends AddressBasedTableModel<EncodedStringsRow>
 				filteredAddresses.intersect(localProgram.getMemory().getAllInitializedAddressSet());
 
 			monitor.setIndeterminate(true);
-			monitor.initialize(0, "Finding undefined address ranges");
+			monitor.initialize(filteredAddresses.getNumAddresses(),
+				"Finding undefined address ranges");
 			// Note: this can be slow for large programs 
 			filteredAddresses = listing.getUndefinedRanges(filteredAddresses, false, monitor);
 			monitor.setIndeterminate(false);

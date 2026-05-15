@@ -16,16 +16,20 @@
 package ghidra.pcode.emu;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 import ghidra.pcode.exec.PcodeArithmetic;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.mem.*;
 import ghidra.util.DifferenceAddressSetView;
 import ghidra.util.Msg;
 
@@ -233,6 +237,51 @@ public enum EmulatorUtilities {
 	}
 
 	/**
+	 * Initialize the given thread's registers with the given program counter and (optionall)
+	 * program register context.
+	 * 
+	 * @param <T> the type of values in the emulator
+	 * @param thread the thread to initialize
+	 * @param program optionally, the program whose context to read
+	 * @param pc the program counter, also used for register context
+	 */
+	public static <T> void initializeRegisters(PcodeThread<T> thread, Program program, Address pc) {
+		if (program != null) {
+			ThreadPcodeExecutorState<T> state = thread.getState();
+			ProgramProcessorContext ctx =
+				new ProgramProcessorContext(program.getProgramContext(), pc);
+			for (Register reg : ctx.getRegisters()) {
+				if (!reg.isBaseRegister() || reg.isProcessorContext()) {
+					continue;
+				}
+				RegisterValue rv = ctx.getRegisterValue(reg);
+				if (rv == null || !rv.hasAnyValue()) {
+					continue;
+				}
+				if (!rv.hasValue()) {
+					rv = new RegisterValue(reg, BigInteger.ZERO).combineValues(rv);
+				}
+				/**
+				 * NOTE: In theory, there's no need to combine masked values, if this is a fresh
+				 * emulator. If I had to guess, the client would want their values to take
+				 * precedence, so they should overwrite the values after calling this method.
+				 * Combining can be problematic, because the emulator could return some abstraction
+				 * for the current value.
+				 */
+				state.setRegisterValue(rv);
+			}
+		}
+
+		thread.overrideCounter(pc);
+		if (program != null) {
+			thread.overrideContext(program.getProgramContext().getDisassemblyContext(pc));
+		}
+		else {
+			thread.overrideContextWithDefault();
+		}
+	}
+
+	/**
 	 * Prepare a thread to emulate a given function
 	 * 
 	 * @param <T> the type of values in the emulator
@@ -250,31 +299,88 @@ public enum EmulatorUtilities {
 		Register sp = cSpec.getStackPointer();
 		ThreadPcodeExecutorState<T> state = thread.getState();
 
-		ProgramProcessorContext ctx =
-			new ProgramProcessorContext(program.getProgramContext(), entry);
-		for (Register reg : ctx.getRegisters()) {
-			if (!reg.isBaseRegister()) {
-				continue;
-			}
-			RegisterValue rv = ctx.getRegisterValue(reg);
-			if (rv == null || !rv.hasAnyValue()) {
-				continue;
-			}
-			/**
-			 * NOTE: In theory, there's no need to combine masked values, if this is a fresh
-			 * emulator. If I had to guess, the client would want their values to take precedence,
-			 * so they should overwrite the values after calling this method. Combining can be
-			 * problematic, because the emulator could return some abstraction for the current
-			 * value.
-			 */
-			state.setRegisterValue(rv);
-		}
+		initializeRegisters(thread, program, entry);
 
-		AddressRange stack = chooseStackRange(program, entry);
+		AddressRange stack = chooseStackRange(program, entry, stackSize);
 		long stackOffset = cSpec.stackGrowsNegative() ? stack.getMaxAddress().getOffset() + 1
 				: stack.getMinAddress().getOffset();
 		state.setVar(sp, arithmetic.fromConst(stackOffset, sp.getMinimumByteSize()));
+	}
 
-		thread.overrideCounter(entry);
+	/**
+	 * Prepare a thread to emulate a given function, using the default stack size
+	 * 
+	 * @param <T> the type of values in the emulator
+	 * @param thread the thread whose state to initialize
+	 * @param function the function to prepare to enter
+	 */
+	public static <T> void initializeForFunction(PcodeThread<T> thread, Function function) {
+		initializeForFunction(thread, function, DEFAULT_STACK_SIZE);
+	}
+
+	/**
+	 * Inspect the value of the stack pointer, and return it as an address
+	 * 
+	 * @param <T> the type of values in the emulator
+	 * @param thread the thread whose stack pointer to inspect
+	 * @param cSpec the compiler spec defining the stack register and base space
+	 * @return the address pointed to by the stack pointer
+	 */
+	public static <T> Address inspectStackPointer(PcodeThread<T> thread, CompilerSpec cSpec) {
+		Register sp = cSpec.getStackPointer();
+		long stackOffset =
+			thread.getState().inspectRegisterValue(sp).getUnsignedValue().longValueExact();
+		return cSpec.getStackBaseSpace().getAddress(stackOffset);
+	}
+
+	/**
+	 * Decode a null-terminated string of the given charset from memory
+	 * <p>
+	 * This retrieves bytes one at a time from the given state and feeds them to a decoder until
+	 * that decoder emits a null character.
+	 * 
+	 * @param state the memory
+	 * @param ptr the starting address
+	 * @param cs the character set
+	 * @param maxBytes the maximum number of bytes to read
+	 * @return the decoded string
+	 */
+	public static String decodeNullTerminatedString(PcodeExecutorState<?> state, Address ptr,
+			Charset cs, int maxBytes) {
+		CharsetDecoder decoder = cs.newDecoder();
+		ByteBuffer in = ByteBuffer.allocate(1);
+		CharBuffer out = CharBuffer.allocate(maxBytes); // should never be more chars than bytes
+		MemBuffer buf = state.getConcreteBuffer(ptr, Purpose.INSPECT);
+		for (int i = 0; i < maxBytes; i++) {
+			in.position(0);
+			int len = buf.getBytes(in.array(), i);
+			in.limit(len);
+			if (len == 0) {
+				// Flush out any partials and be done
+				decoder.decode(in, out, true);
+				return out.flip().toString();
+			}
+			decoder.decode(in, out, false);
+			int nullPos = out.position() - 1;
+			if (nullPos >= 0 && out.get(nullPos) == 0) {
+				return out.position(nullPos).flip().toString();
+			}
+		}
+		in.position(0);
+		in.limit(0);
+		// Flush out any partials and be done
+		decoder.decode(in, out, true);
+		return out.flip().toString();
+	}
+
+	/**
+	 * Decode an ASCII null-terminated string of at most 128 bytes from memory
+	 * 
+	 * @param state the memory
+	 * @param ptr the starting address
+	 * @return the decoded string
+	 */
+	public static String decodeNullTerminatedString(PcodeExecutorState<?> state, Address ptr) {
+		return decodeNullTerminatedString(state, ptr, Charset.forName("ASCII"), 128);
 	}
 }

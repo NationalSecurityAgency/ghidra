@@ -22,9 +22,7 @@ import java.util.List;
 
 import com.google.gson.JsonArray;
 
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolType;
+import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import sarif.export.AbstractExtWriter;
@@ -49,6 +47,7 @@ public class SarifSymbolWriter extends AbstractExtWriter {
 	private void genSymbols(TaskMonitor monitor) throws CancelledException, IOException{
 		monitor.initialize(symbols.size());
 		for (Symbol s : symbols) {
+			monitor.checkCancelled();
 			SymbolType symbolType = s.getSymbolType();
 			if (s.getSource() == SourceType.DEFAULT) {
 				continue;

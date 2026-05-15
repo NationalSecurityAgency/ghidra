@@ -70,6 +70,9 @@ public class VdexHeader_006 extends VdexHeader {
 			dexHeaderList.add(DexHeaderFactory.getDexHeader(tmpReader));
 			tmpReader.setPointerIndex(0);
 			int length = DexHeaderQuickMethods.getDexLength(tmpReader);
+			if (length <= 0) {
+				throw new IOException("Bad Dex length: " + length);
+			}
 			dexHeaderStartsList.add(index);
 			reader.setPointerIndex(index + length);
 		}

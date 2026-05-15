@@ -175,6 +175,13 @@ export DISPLAY=:99
 ```
 This is required to make AWT happy.
 
+In a clean user environment, GUI startup may also block on the first-run User Agreement dialog
+before the FrontEnd becomes available. For non-interactive GUI startup in CI, set:
+```
+export JAVA_TOOL_OPTIONS="-DUSER_AGREEMENT=ACCEPT"
+```
+This allows GUI-based automation to avoid blocking on the initial agreement prompt.
+
 ## Building Supporting Data
 
 Some features of Ghidra require the curation of rather extensive databases. These include the Data 

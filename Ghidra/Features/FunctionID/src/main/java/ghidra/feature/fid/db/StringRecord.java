@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,12 @@
  */
 package ghidra.feature.fid.db;
 
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 
 /**
  * A string record in the FID database.
  */
-public class StringRecord extends DatabaseObject {
+public class StringRecord extends DbObject {
 	/**
 	 * The value of the string.
 	 */
@@ -29,12 +28,11 @@ public class StringRecord extends DatabaseObject {
 
 	/**
 	 * Constructor with the primary key and the string value.
-	 * @param cache StringRecord object cache
 	 * @param key primary key
 	 * @param value the string value
 	 */
-	public StringRecord(DBObjectCache<StringRecord> cache, long key, String value) {
-		super(cache, key);
+	public StringRecord(long key, String value) {
+		super(key);
 		this.value = value;
 	}
 

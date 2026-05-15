@@ -125,6 +125,8 @@ After exec'ing into the container, administration and management of the Ghidra s
 
 To stop the container, execute the command `docker stop <container-id>`.
 
+NOTE: ports you map from the host to the docker container must match. You can change the default base server port (i.e. `13100`) in the `server.conf` file using the `-p<port>` option.
+
 ## Example of BSIM Server Mode
 
 ```

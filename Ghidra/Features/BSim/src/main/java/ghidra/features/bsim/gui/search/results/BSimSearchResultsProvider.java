@@ -20,8 +20,7 @@ import static ghidra.program.util.ProgramEvent.*;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.IntSupplier;
@@ -462,10 +461,10 @@ public class BSimSearchResultsProvider extends ComponentProviderAdapter {
 		ProgramManager service = tool.getService(ProgramManager.class);
 
 		try {
-			URL url = new URL(urlString);
+			URL url = new URI(urlString).toURL();
 			return service.openProgram(url, ProgramManager.OPEN_CURRENT);
 		}
-		catch (MalformedURLException exc) {
+		catch (MalformedURLException | URISyntaxException exc) {
 			return null;
 		}
 	}
@@ -474,7 +473,7 @@ public class BSimSearchResultsProvider extends ComponentProviderAdapter {
 		ProgramManager service = tool.getService(ProgramManager.class);
 
 		try {
-			URL url = new URL(urlString);
+			URL url = new URI(urlString).toURL();
 			Program remote = service.openCachedProgram(url, this);
 			if (remote == null) {
 				return null;
@@ -486,7 +485,7 @@ public class BSimSearchResultsProvider extends ComponentProviderAdapter {
 			}
 			return remote;
 		}
-		catch (MalformedURLException exc) {
+		catch (MalformedURLException | URISyntaxException exc) {
 			return null;
 		}
 	}

@@ -53,8 +53,7 @@ public class ProcessConsumer {
 	 * @param lineConsumer the line consumer; may be null
 	 * @return the future that will be complete when all lines are read
 	 */
-	public static Future<IOResult> consume(InputStream is,
-			Consumer<String> lineConsumer) {
+	public static Future<IOResult> consume(InputStream is, Consumer<String> lineConsumer) {
 
 		lineConsumer = Dummy.ifNull(lineConsumer);
 
@@ -62,9 +61,38 @@ public class ProcessConsumer {
 			ReflectionUtilities.createThrowableWithStackOlderThan(ProcessConsumer.class));
 
 		GThreadPool pool = GThreadPool.getSharedThreadPool(IOResult.THREAD_POOL_NAME);
-		IOResult runnable = new IOResult(inception, is);
-		runnable.setConsumer(lineConsumer);
+		IOResult runnable = new IOResult(is, lineConsumer, true, inception);
 		Future<IOResult> future = pool.submit(runnable, runnable);
 		return future;
+	}
+
+	/**
+	 * Reads the given input stream line-by-line, calling the given consumer.  When the
+	 * InputStream reaches EOF, a final {@code null} will be sent to the line consumer.
+	 * <p>
+	 * The Inputstream is consumed via a Thread created just for this setup.
+	 * 
+	 * @param is the input stream
+	 * @param lineConsumer the line consumer; may be null
+	 * @param processName descriptive name of process being monitored
+	 */
+	public static void monitorAndSignalEof(InputStream is, Consumer<String> lineConsumer,
+			String processName) {
+
+		Throwable inception = ReflectionUtilities.filterJavaThrowable(
+			ReflectionUtilities.createThrowableWithStackOlderThan(ProcessConsumer.class));
+
+		IOResult stdoutReader = new IOResult(is, lineConsumer, false, inception);
+
+		Runnable threadRunnable = lineConsumer != null // change mode if null 
+				? () -> {
+					stdoutReader.run();
+					lineConsumer.accept(null); // signal that eof was reached
+				}
+				: stdoutReader;
+
+		Thread t = new Thread(threadRunnable, "IO Thread for " + processName);
+		t.setDaemon(true);
+		t.start();
 	}
 }

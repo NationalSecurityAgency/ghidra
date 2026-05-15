@@ -326,7 +326,7 @@ public class VerticalLayoutTextField implements TextField {
 				for (Highlight highlight : highlights) {
 					highlight.setOffset(-columns);
 				}
-				subField.paintSelection(g, colorManager, i, rowHeight);
+				subField.paintSelection(g, colorManager, i, subFieldHeight);
 				subField.paintHighlights(g, highlights);
 				subField.paintText(c, g, context);
 				if (cursorRow == i) {

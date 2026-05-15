@@ -102,15 +102,14 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 
 		setHorizontalAlignment(
 			value instanceof Number ? SwingConstants.RIGHT : SwingConstants.LEFT);
-		ListModel<? extends E> model = list.getModel();
-		configureFont(list, model, index);
+		setFont(defaultFont);
 
 		if (isSelected) {
 			setForeground(list.getSelectionForeground());
 			setBackground(list.getSelectionBackground());
 		}
 		else {
-			setForegroundColor(list, model, value);
+			setForeground(list.getForeground());
 
 			JList.DropLocation dropLocation = list.getDropLocation();
 			// @formatter:off
@@ -129,14 +128,5 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 		setBorder(hasFocus ? focusBorder : noFocusBorder);
 
 		return this;
-	}
-
-	protected void setForegroundColor(JList<? extends E> list, ListModel<? extends E> model,
-			Object value) {
-		setForeground(list.getForeground());
-	}
-
-	protected void configureFont(JList<? extends E> list, ListModel<? extends E> model, int index) {
-		setFont(defaultFont);
 	}
 }

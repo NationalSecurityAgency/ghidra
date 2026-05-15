@@ -20,11 +20,11 @@ import java.io.IOException;
 import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.InvalidNameException;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -49,15 +49,12 @@ class PointerDB extends DataTypeDB implements Pointer {
 
 	/**
 	 * Constructor
-	 * 
-	 * @param dataMgr
-	 * @param cache
-	 * @param adapter
-	 * @param record
+	 * @param dataMgr the DataTypeManager
+	 * @param adapter the pointer database adapter
+	 * @param record the pointer record
 	 */
-	public PointerDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
-			PointerDBAdapter adapter, DBRecord record) {
-		super(dataMgr, cache, record);
+	PointerDB(DataTypeManagerDB dataMgr, PointerDBAdapter adapter, DBRecord record) {
+		super(dataMgr, record);
 		this.adapter = adapter;
 	}
 
@@ -85,13 +82,9 @@ class PointerDB extends DataTypeDB implements Pointer {
 
 	@Override
 	public DataType getDataType() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return dataMgr.getDataType(record.getLongValue(PointerDBAdapter.PTR_DT_ID_COL));
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -139,12 +132,11 @@ class PointerDB extends DataTypeDB implements Pointer {
 	@Override
 	public String getDisplayName() {
 		String localDisplayName = displayName;
-		if (localDisplayName != null && !isInvalid()) {
+		if (localDisplayName != null && !needsRefreshing()) {
 			return localDisplayName;
 		}
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (displayName == null) {
 				// NOTE: Pointer display name only specifies length if null base type
 				DataType dt = getDataType();
@@ -160,52 +152,37 @@ class PointerDB extends DataTypeDB implements Pointer {
 			}
 			return displayName;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public String getMnemonic(Settings settings) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			DataType dataType = getDataType();
 			if (dataType == null || dataType == DataType.DEFAULT) {
 				return "addr";
 			}
 			return dataType.getMnemonic(settings) + " *";
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public boolean hasLanguageDependantLength() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return record.getByteValue(PointerDBAdapter.PTR_LENGTH_COL) <= 0;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public int getLength() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			int len = record.getByteValue(PointerDBAdapter.PTR_LENGTH_COL);
 			if (len <= 0) {
 				len = dataMgr.getDataOrganization().getPointerSize();
 			}
 			return len;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -217,9 +194,8 @@ class PointerDB extends DataTypeDB implements Pointer {
 
 	@Override
 	public String getDescription() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			StringBuffer sbuf = new StringBuffer();
 			if (!hasLanguageDependantLength()) {
 				sbuf.append(Integer.toString(getLength() * 8));
@@ -238,23 +214,16 @@ class PointerDB extends DataTypeDB implements Pointer {
 			}
 			return sbuf.toString();
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return PointerDataType.getAddressValue(buf, getLength(), settings);
 		}
 		catch (IllegalArgumentException exc) {
 			return null;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -270,18 +239,14 @@ class PointerDB extends DataTypeDB implements Pointer {
 
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 
 			Address addr = (Address) getValue(buf, settings, length);
 			if (addr == null) { // could not create address, so return "Not a pointer (NaP)"
 				return NaP;
 			}
 			return addr.toString();
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -360,10 +325,9 @@ class PointerDB extends DataTypeDB implements Pointer {
 			return;
 		}
 		DataTypeUtilities.checkValidReplacement(oldDt, newDt);
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
-			if (oldDt == getDataType()) {
+			if (getDataType() == oldDt) {
 				if (newDt == this) {
 					newDt = DataType.DEFAULT;
 				}
@@ -407,9 +371,6 @@ class PointerDB extends DataTypeDB implements Pointer {
 				}
 			}
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
@@ -417,16 +378,12 @@ class PointerDB extends DataTypeDB implements Pointer {
 		if (deleting) {
 			return;
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (dt == getDataType()) {
 				dataMgr.addDataTypeToDelete(this, key);
 				deleting = true;
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -457,8 +414,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 		if (deleting) {
 			return;
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (dt == getDataType()) {
 				String myOldName = getOldName();
@@ -467,9 +423,6 @@ class PointerDB extends DataTypeDB implements Pointer {
 					notifyNameChanged(myOldName);
 				}
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 

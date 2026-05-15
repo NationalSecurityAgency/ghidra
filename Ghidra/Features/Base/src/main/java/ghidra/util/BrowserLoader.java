@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -159,16 +159,30 @@ public class BrowserLoader {
 		}
 
 		String urlString = option.getUrlReplacementString();
+		String urlArg;
 		if (urlString.equals(ManualViewerCommandWrappedOption.HTTP_URL_REPLACEMENT_STRING) ||
 			fileURL == null) {
-			argumentList.add(url.toExternalForm());
+			urlArg = url.toExternalForm();
 		}
 		else if (urlString.equals(ManualViewerCommandWrappedOption.FILE_URL_REPLACEMENT_STRING)) {
-			argumentList.add(fileURL.toExternalForm());
+			urlArg = fileURL.toExternalForm();
 		}
 		else {
-			argumentList.add(new File(fileURL.getFile()).getAbsolutePath());
+			urlArg = new File(fileURL.getFile()).getAbsolutePath();
 		}
+
+		// If launching "cmd.exe /c start URL", surround the URL with double quotes to protect 
+		// against special characters being misinterpreted by the shell.
+		// NOTE: If not already present, a double-quoted title must be inserted since the URL 
+		// argument that follows will start with a double quote.
+		if (commandArguments.length >= 2 && commandArguments[0].equalsIgnoreCase("/c") &&
+			commandArguments[1].equalsIgnoreCase("start")) {
+			if (commandArguments.length == 2) {
+				argumentList.add("\"Title\"");
+			}
+			urlArg = '"' + urlArg + '"';
+		}
+		argumentList.add(urlArg);
 
 		return argumentList.toArray(new String[argumentList.size()]);
 	}

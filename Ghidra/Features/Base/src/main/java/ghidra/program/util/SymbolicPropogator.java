@@ -450,7 +450,7 @@ public class SymbolicPropogator {
 			this.destination = destination;
 			this.pcodeIndex = pcodeIndex;
 			this.continueAfterHittingFlow = continueAfterHittingFlow;
-			vContext.pushMemState();
+			vContext.pushMemState(pcodeIndex != 0);
 		}
 		
 		public boolean isContinueAfterHittingFlow() {
@@ -484,6 +484,9 @@ public class SymbolicPropogator {
 			throws CancelledException {
 		visitedBody = new AddressSet();
 		AddressSet conflicts = new AddressSet();
+		
+		// Locations that were jump and are now call targets and might be on saved future flows
+		HashSet<Address> doNotFlowTo = new HashSet<>();
 
 		// prime the context stack with the entry point address
 		Stack<SavedFlowState> contextStack = new Stack<>();
@@ -535,6 +538,11 @@ public class SymbolicPropogator {
 						continue;
 					}
 				}
+			}
+			
+			// don't follow flow if on list of jump targets that were turned into calls
+			if (doNotFlowTo.contains(nextAddr)) {
+				continue;
 			}
 
 			HashSet<Address> visitSet = visitedMap.get(nextAddr);
@@ -636,6 +644,9 @@ public class SymbolicPropogator {
 					Address targets[] = getInstructionFlows(instr);
 					for (Address target : targets) {
 						handleFunctionSideEffects(instr, target, monitor);
+						// a jump target has already been pushed as a future flow trace
+						// need to make sure values aren't propagated into the call targets
+						doNotFlowTo.add(target);
 					}
 				}
 				

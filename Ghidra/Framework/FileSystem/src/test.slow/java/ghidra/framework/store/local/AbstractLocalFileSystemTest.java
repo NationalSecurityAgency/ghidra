@@ -47,14 +47,18 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		this.useIndexedFileSystem = useIndexedFileSystem;
 	}
 
+	protected File createEmptyProjectDir() {
+		File tempDir = new File(AbstractGTest.getTestDirectoryPath());
+		File dir = new File(tempDir, "testproject");
+		FileUtilities.deleteDir(dir);
+		dir.mkdir();
+		return dir;
+	}
+
 	@Before
 	public void setUp() throws Exception {
 
-		File tempDir = new File(AbstractGTest.getTestDirectoryPath());
-		projectDir = new File(tempDir, "testproject");
-		FileUtilities.deleteDir(projectDir);
-		projectDir.mkdir();
-
+		projectDir = createEmptyProjectDir();
 		System.out.println(projectDir.getAbsolutePath());
 
 		fs = LocalFileSystem.getLocalFileSystem(projectDir.getAbsolutePath(), useIndexedFileSystem,
@@ -297,6 +301,20 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		assertEquals(2, events.size());
 		checkEvent("Item Created", "/abc", "fred", null, null, events.get(1));
 
+	}
+
+	@Test
+	public void testCreateTextData() throws Exception {
+		fs.createFolder("/", "abc");
+
+		String data = "This is a test";
+		LocalTextDataItem textItem =
+			fs.createTextDataItem("/abc", "fred", "MyID", "Text", data, null, null);
+		assertEquals(data, textItem.getTextData());
+
+		flushFileSystemEvents();
+		assertEquals(2, events.size());
+		checkEvent("Item Created", "/abc", "fred", null, null, events.get(1));
 	}
 
 	@Test
@@ -615,17 +633,23 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 
 		DataFileItem df = fs.createDataFile("/abc", "fred", new ByteArrayInputStream(dataBytes),
 			null, "Data", null);
+		LocalTextDataItem textItem =
+			fs.createTextDataItem("/abc", "ted", "MyID", "Text", data, null, null);
+		assertEquals(data, textItem.getTextData());
+
 		createDatabase("/abc", "greg", "123");
 
 		String[] items = fs.getItemNames("/abc");
-		assertEquals(3, items.length);
+		assertEquals(4, items.length);
 		assertEquals("bob", items[0]);
 		assertEquals("fred", items[1]);
 		assertEquals("greg", items[2]);
+		assertEquals("ted", items[3]);
 
 		assertEquals(LocalDataFileItem.class, fs.getItem("/abc", items[0]).getClass());
 		assertEquals(LocalDataFileItem.class, fs.getItem("/abc", items[1]).getClass());
 		assertEquals(LocalDatabaseItem.class, fs.getItem("/abc", items[2]).getClass());
+		assertEquals(LocalTextDataItem.class, fs.getItem("/abc", items[3]).getClass());
 
 		df = (DataFileItem) fs.getItem("/abc", items[0]);
 		InputStream is = df.getInputStream();
@@ -641,6 +665,9 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		DBHandle dbh = new DBHandle(bf);
 		assertNotNull(dbh.getTable("test"));
 		dbh.close();
+
+		textItem = (LocalTextDataItem) fs.getItem("/abc", items[3]);
+		assertEquals(data, textItem.getTextData());
 
 	}
 
@@ -666,6 +693,32 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		catch (IOException e) {
 			fail("failed to open data file");
 		}
+
+		flushFileSystemEvents();
+		assertEquals(2, events.size());
+		checkEvent("Folder Created", "/", "xyz", null, null, events.get(0));
+		checkEvent("Item Moved", "/abc", "fred", "/xyz", "bob", events.get(1));
+	}
+
+	@Test
+	public void testMoveTextDataFile() throws Exception {
+		fs.createFolder("/", "abc");
+		String data = "This is a test";
+		LocalTextDataItem textItem =
+			fs.createTextDataItem("/abc", "fred", "MyID", "Text", data, null, null);
+		assertEquals(data, textItem.getTextData());
+		flushFileSystemEvents();
+		events.clear();
+
+		FolderItem item = fs.getItem("/abc", "fred");
+		assertNotNull(item);
+
+		fs.moveItem("/abc", "fred", "/xyz", "bob");
+
+		assertNull(fs.getItem("/abc", "fred"));
+		LocalTextDataItem df = (LocalTextDataItem) fs.getItem("/xyz", "bob");
+		assertNotNull(df);
+		assertEquals(data, df.getTextData());
 
 		flushFileSystemEvents();
 		assertEquals(2, events.size());

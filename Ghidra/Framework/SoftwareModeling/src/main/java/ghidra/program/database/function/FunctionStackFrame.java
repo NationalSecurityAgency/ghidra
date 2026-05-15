@@ -21,6 +21,8 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -32,6 +34,7 @@ class FunctionStackFrame implements StackFrame {
 	private FunctionDB function;
 	private boolean stackGrowsNegative;
 	private boolean invalid;
+	private Lock lock;
 
 	/**
 	 * Construct a function stack frame.
@@ -42,6 +45,7 @@ class FunctionStackFrame implements StackFrame {
 		this.function = function;
 		stackGrowsNegative = function.getProgram().getCompilerSpec().stackGrowsNegative();
 		invalid = true;
+		lock = function.getFunctionManager().lock;
 	}
 
 	boolean checkIsValid() {
@@ -80,8 +84,7 @@ class FunctionStackFrame implements StackFrame {
 		// WARNING! Stack parameters will be created even if calling convention
 		// does not specify stack inputs
 
-		function.manager.lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (dataType != null) {
 				dataType = dataType.clone(function.getProgram().getDataTypeManager());
@@ -125,37 +128,21 @@ class FunctionStackFrame implements StackFrame {
 
 			return var;
 		}
-		finally {
-			function.manager.lock.release();
-		}
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.program.model.listing.StackFrame#getStackVariables()
-	 */
 	@Override
 	public Variable[] getStackVariables() {
-		function.manager.lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			checkIsValid();
 			Variable[] temp = new Variable[variables.length];
 			System.arraycopy(variables, 0, temp, 0, variables.length);
 			return temp;
 		}
-		finally {
-			function.manager.lock.release();
-		}
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.program.model.listing.StackFrame#getLocals()
-	 */
 	@Override
 	public Variable[] getLocals() {
-		function.manager.lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			checkIsValid();
 			ArrayList<Variable> list = new ArrayList<Variable>();
 			for (Variable variable : variables) {
@@ -166,19 +153,11 @@ class FunctionStackFrame implements StackFrame {
 			Variable[] vars = new Variable[list.size()];
 			return list.toArray(vars);
 		}
-		finally {
-			function.manager.lock.release();
-		}
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.program.model.listing.StackFrame#getParameters()
-	 */
 	@Override
 	public Parameter[] getParameters() {
-		function.manager.lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			checkIsValid();
 			ArrayList<Parameter> list = new ArrayList<Parameter>();
 			for (Variable variable : variables) {
@@ -189,34 +168,18 @@ class FunctionStackFrame implements StackFrame {
 			Parameter[] vars = new Parameter[list.size()];
 			return list.toArray(vars);
 		}
-		finally {
-			function.manager.lock.release();
-		}
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.program.model.listing.StackFrame#getFrameSize()
-	 */
 	@Override
 	public int getFrameSize() {
-		function.manager.lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return getParameterSize() + getLocalSize();
-		}
-		finally {
-			function.manager.lock.release();
 		}
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.program.model.listing.StackFrame#getLocalSize()
-	 */
 	@Override
 	public int getLocalSize() {
-		function.manager.lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			checkIsValid();
 
 			int baseOffset = 0;
@@ -253,24 +216,13 @@ class FunctionStackFrame implements StackFrame {
 			}
 			return -baseOffset;
 		}
-		finally {
-			function.manager.lock.release();
-		}
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.program.model.listing.StackFrame#growsNegative()
-	 */
 	@Override
 	public boolean growsNegative() {
 		return stackGrowsNegative;
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.program.model.listing.StackFrame#setLocalSize(int)
-	 */
 	@Override
 	public void setLocalSize(int size) {
 		// TODO: Has no real affect
@@ -279,8 +231,7 @@ class FunctionStackFrame implements StackFrame {
 
 	@Override
 	public int getParameterSize() {
-		function.manager.lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			checkIsValid();
 
 			// NOTE: This logic is sensitive to the existance of Local variables at the incorrect
@@ -317,17 +268,13 @@ class FunctionStackFrame implements StackFrame {
 			}
 			return 0;
 		}
-		finally {
-			function.manager.lock.release();
-		}
 	}
 
 	/**
 	 * @return the number of parameters which occupy stack storage
 	 */
 	int getParameterCount() {
-		function.manager.lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			checkIsValid();
 			int cnt = 0;
 			for (Variable variable : variables) {
@@ -337,23 +284,14 @@ class FunctionStackFrame implements StackFrame {
 			}
 			return cnt;
 		}
-		finally {
-			function.manager.lock.release();
-		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see ghidra.program.model.listing.StackFrame#clearVariable(int)
-	 */
 	@Override
 	public void clearVariable(int offset) {
 
 		// WARNING! removing Stack parameters from the stack frame will enable custom storage
 
-		function.manager.lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			Variable var = getVariableContaining(offset);
 			if (var != null) {
@@ -363,15 +301,8 @@ class FunctionStackFrame implements StackFrame {
 				function.removeVariable(var);
 			}
 		}
-		finally {
-			function.manager.lock.release();
-		}
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.program.model.listing.StackFrame#getParameterOffset()
-	 */
 	@Override
 	public int getParameterOffset() {
 		Integer baseOffset = VariableUtilities.getBaseStackParamOffset(function);
@@ -414,8 +345,7 @@ class FunctionStackFrame implements StackFrame {
 	 */
 	@Override
 	public Variable getVariableContaining(int offset) {
-		function.manager.lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			checkIsValid();
 			Object key = Integer.valueOf(offset);
 			int index = Arrays.binarySearch(variables, key, StackVariableComparator.get());
@@ -434,9 +364,6 @@ class FunctionStackFrame implements StackFrame {
 				return var;
 			}
 			return null;
-		}
-		finally {
-			function.manager.lock.release();
 		}
 	}
 

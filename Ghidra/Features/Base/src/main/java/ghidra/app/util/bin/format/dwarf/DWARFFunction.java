@@ -40,7 +40,7 @@ import ghidra.util.exception.*;
  * Represents a function that was read from DWARF information.
  */
 public class DWARFFunction {
-	public enum CommitMode { SKIP, FORMAL, STORAGE, }
+	public enum CommitMode { SKIP, FORMAL, STORAGE, NO_PARAMS }
 
 	public DIEAggregate diea;
 	public DWARFName name;
@@ -366,6 +366,14 @@ public class DWARFFunction {
 	public boolean syncWithExistingGhidraFunction(boolean createIfMissing) {
 		try {
 			Program currentProgram = getProgram().getGhidraProgram();
+			if (!currentProgram.getMemory().getExecuteSet().contains(address)) {
+				// NOTE: if func's DIE specifies a lowpc == 0, the calculated address will be
+				// the program's imagebase.  This typically can only be valid in .o files.
+				// If this binary is not a .o, and doesn't have executable segment at '0'
+				// (or where ever the binary was imported at), then the addr = 0 is probably
+				// just bad data that the toolchain put into the dwarf info.
+				return false; // dwarf function address info is probably bogus   
+			}
 			function = currentProgram.getListing().getFunctionAt(address);
 			if (function != null) {
 				if (function.hasNoReturn() && !noReturn) {
@@ -448,27 +456,33 @@ public class DWARFFunction {
 
 	public void updateFunctionSignature() {
 		try {
-			boolean includeStorageDetail = signatureCommitMode == CommitMode.STORAGE;
-			FunctionUpdateType functionUpdateType = includeStorageDetail
-					? FunctionUpdateType.CUSTOM_STORAGE
-					: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
+			if (signatureCommitMode != CommitMode.NO_PARAMS) {
+				boolean includeStorageDetail = signatureCommitMode == CommitMode.STORAGE;
+				FunctionUpdateType functionUpdateType = includeStorageDetail
+						? FunctionUpdateType.CUSTOM_STORAGE
+						: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
 
-			Parameter returnVar = retval.asReturnParameter(includeStorageDetail);
-			List<Parameter> parameters = getParameters(includeStorageDetail);
+				Parameter returnVar = retval.asReturnParameter(includeStorageDetail);
+				List<Parameter> parameters = getParameters(includeStorageDetail);
 
-			if (includeStorageDetail && !retval.isZeroByte() && retval.isMissingStorage()) {
-				// TODO: this logic is faulty and borks the auto _return_storage_ptr_ when present
-				// Update return value in a separate step as its storage isn't typically specified
-				// in dwarf info.
-				// This will allow automagical storage assignment for return value by ghidra.
-				function.updateFunction(callingConventionName, returnVar, List.of(),
-					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.IMPORTED);
-				returnVar = null; // don't update it in the second call to updateFunction()
+				if (includeStorageDetail && !retval.isZeroByte() && retval.isMissingStorage()) {
+					// TODO: this logic is faulty and borks the auto _return_storage_ptr_ when present
+					// Update return value in a separate step as its storage isn't typically specified
+					// in dwarf info.
+					// This will allow automagical storage assignment for return value by ghidra.
+					function.updateFunction(callingConventionName, returnVar, List.of(),
+						FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.IMPORTED);
+					returnVar = null; // don't update it in the second call to updateFunction()
+				}
+
+				function.updateFunction(callingConventionName, returnVar, parameters,
+					functionUpdateType, true, SourceType.IMPORTED);
+				function.setVarArgs(varArg);
 			}
-
-			function.updateFunction(callingConventionName, returnVar, parameters,
-				functionUpdateType, true, SourceType.IMPORTED);
-			function.setVarArgs(varArg);
+			else {
+				// omit setting SourceType to allow other analyzers to provide param info
+				function.setCallingConvention(callingConventionName);
+			}
 			function.setNoReturn(noReturn);
 		}
 		catch (InvalidInputException | IllegalArgumentException | DuplicateNameException e) {

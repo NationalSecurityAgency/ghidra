@@ -16,31 +16,25 @@
 package ghidra.program.database.symbol;
 
 import db.DBRecord;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.EquateReference;
+import ghidra.util.Lock.Closeable;
 
 /**
  * Database object for the equate references.
  * 
  * 
  */
-class EquateRefDB extends DatabaseObject implements EquateReference {
+class EquateRefDB extends DbObject implements EquateReference {
 
 	private DBRecord record;
 	private EquateManager equateMgr;
 	private AddressMap addrMap;
 
-	/**
-	 * Constructor
-	 * @param equateMgr
-	 * @param cache
-	 * @param record
-	 */
-	EquateRefDB(EquateManager equateMgr, DBObjectCache<EquateRefDB> cache, DBRecord record) {
-		super(cache, record.getKey());
+	EquateRefDB(EquateManager equateMgr, DBRecord record) {
+		super(record.getKey());
 		addrMap = equateMgr.getAddressMap();
 		this.equateMgr = equateMgr;
 		this.record = record;
@@ -62,21 +56,27 @@ class EquateRefDB extends DatabaseObject implements EquateReference {
 
 	@Override
 	public Address getAddress() {
-		checkIsValid();
-		long addr = record.getLongValue(EquateRefDBAdapter.ADDR_COL);
-		return addrMap.decodeAddress(addr);
+		try (Closeable c = equateMgr.getLock().read()) {
+			refreshIfNeeded();
+			long addr = record.getLongValue(EquateRefDBAdapter.ADDR_COL);
+			return addrMap.decodeAddress(addr);
+		}
 	}
 
 	@Override
 	public short getOpIndex() {
-		checkIsValid();
-		return record.getShortValue(EquateRefDBAdapter.OP_INDEX_COL);
+		try (Closeable c = equateMgr.getLock().read()) {
+			refreshIfNeeded();
+			return record.getShortValue(EquateRefDBAdapter.OP_INDEX_COL);
+		}
 	}
 
 	@Override
 	public long getDynamicHashValue() {
-		checkIsValid();
-		return record.getLongValue(EquateRefDBAdapter.HASH_COL);
+		try (Closeable c = equateMgr.getLock().read()) {
+			refreshIfNeeded();
+			return record.getLongValue(EquateRefDBAdapter.HASH_COL);
+		}
 	}
 
 	DBRecord getRecord() {

@@ -54,7 +54,6 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.program.util.ExternalSymbolResolver;
 import ghidra.util.*;
 import ghidra.util.datastruct.*;
 import ghidra.util.exception.*;
@@ -458,7 +457,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			String[] neededLibs = elf.getDynamicLibraryNames();
 			for (String neededLib : neededLibs) {
 				monitor.checkCancelled();
-				props.setString(ExternalSymbolResolver.getRequiredLibraryProperty(libraryIndex++),
+				props.setString(
+					AbstractLibrarySupportLoader.getRequiredLibraryProperty(libraryIndex++),
 					neededLib);
 			}
 		}

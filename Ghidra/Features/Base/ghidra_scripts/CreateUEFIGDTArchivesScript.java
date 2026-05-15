@@ -128,6 +128,7 @@ public class CreateUEFIGDTArchivesScript extends GhidraScript {
 		};
 		
 		String args[] = {
+			"-DSTATIC_ASSERT=static_assert"
 		};
 		
 		parseHeaderFilesToGDT(outputDirectory, "uefi_"+name, languageID, compiler, filenames, includePaths, args);

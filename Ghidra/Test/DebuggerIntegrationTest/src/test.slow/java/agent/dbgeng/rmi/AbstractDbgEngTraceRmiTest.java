@@ -16,7 +16,7 @@
 package agent.dbgeng.rmi;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.*;
 
 import java.io.*;
 import java.net.*;
@@ -60,9 +60,9 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 			from ghidratrace.client import Schedule
 			""";
 	// Connecting should be the first thing the script does, so use a tight timeout.
-	protected static final int CONNECT_TIMEOUT_MS = 3000;
-	protected static final int TIMEOUT_SECONDS = SystemUtilities.isInTestingBatchMode() ? 10 : 300;
-	protected static final int QUIT_TIMEOUT_MS = 1000;
+	protected static final int CONNECT_TIMEOUT_MS = 6000;
+	protected static final int TIMEOUT_SECONDS = SystemUtilities.isInTestingBatchMode() ? 20 : 300;
+	protected static final int QUIT_TIMEOUT_MS = 2000;
 
 	/** Some snapshot likely to exceed the latest */
 	protected static final long SNAP = 100;
@@ -150,16 +150,23 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 	public void setupTraceRmi() throws Throwable {
 		traceRmi = addPlugin(tool, TraceRmiPlugin.class);
 
-		try {
-			pythonPath = Paths.get(DummyProc.which("python3"));
-		}
-		catch (RuntimeException e) {
-			pythonPath = Paths.get(DummyProc.which("python"));
-		}
+		pythonPath = getPathToPython();
 
 		assertTrue(pythonPath.toFile().exists());
 		outFile = Files.createTempFile("pydbgout", null);
 		errFile = Files.createTempFile("pydbgerr", null);
+	}
+
+	protected Path getPathToPython() {
+		try {
+			String py3path = DummyProc.which("python3");
+			if (py3path != null && !py3path.contains("msys")) {
+				return Paths.get(py3path);
+			}
+		}
+		catch (RuntimeException e) {
+		}
+		return Paths.get(DummyProc.which("python"));
 	}
 
 	protected void addAllDebuggerPlugins() throws PluginException {

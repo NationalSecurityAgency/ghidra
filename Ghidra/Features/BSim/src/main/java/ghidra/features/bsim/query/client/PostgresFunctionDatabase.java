@@ -22,6 +22,8 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.postgresql.core.Utils;
+
 import generic.lsh.vector.LSHVector;
 import generic.lsh.vector.WeightedLSHCosineVectorFactory;
 import ghidra.features.bsim.query.*;
@@ -104,15 +106,10 @@ public final class PostgresFunctionDatabase
 	private void changePassword(Connection c, String username, char[] newPassword)
 			throws SQLException {
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("ALTER ROLE \"");
-		buffer.append(username);
-		buffer.append("\" WITH PASSWORD '");
-		for (char ch : newPassword) {
-			if (ch == '\'') {
-				buffer.append(ch);		// Escape single quote by appending it twice
-			}
-			buffer.append(ch);
-		}
+		buffer.append("ALTER ROLE ");
+		Utils.escapeIdentifier(buffer, username);
+		buffer.append(" WITH PASSWORD '");
+		Utils.escapeLiteral(buffer, new String(newPassword), true);
 		buffer.append('\'');
 		// Don't think jdbc does anything to this statement to encrypt password before sending it.
 		// The connection with the server SHOULD be under SSL at this point
@@ -194,11 +191,12 @@ public final class PostgresFunctionDatabase
 		BSimServerInfo defaultServerInfo =
 			new BSimServerInfo(DBType.postgres, serverInfo.getUserInfo(),
 				serverInfo.getServerName(), serverInfo.getPort(), DEFAULT_DATABASE_NAME);
-		String createdbstring = "CREATE DATABASE \"" + serverInfo.getDBName() + '"';
+		StringBuilder sb = new StringBuilder("CREATE DATABASE ");
+		Utils.escapeIdentifier(sb, serverInfo.getDBName());
 		BSimPostgresDataSource defaultDs =
 			BSimPostgresDBConnectionManager.getDataSource(defaultServerInfo);
 		try (Connection db = defaultDs.getConnection(); Statement st = db.createStatement()) {
-			st.executeUpdate(createdbstring);
+			st.executeUpdate(sb.toString());
 			postgresDs.initializeFrom(defaultDs);
 		}
 	}
@@ -264,8 +262,9 @@ public final class PostgresFunctionDatabase
 
 		try (Connection defaultDb = defaultDs.getConnection();
 				Statement defaultSt = defaultDb.createStatement()) {
-			try (ResultSet rs = defaultSt.executeQuery(
-				"SELECT 1 FROM pg_database WHERE datname='" + serverInfo.getDBName() + "'")) {
+			StringBuilder sb = new StringBuilder("SELECT 1 FROM pg_database WHERE datname= ");
+			Utils.escapeIdentifier(sb, serverInfo.getDBName());
+			try (ResultSet rs = defaultSt.executeQuery(sb.toString())) {
 				if (!rs.next()) {
 					return; // database does not exist
 				}
@@ -292,7 +291,9 @@ public final class PostgresFunctionDatabase
 			postgresDs.dispose(); // disconnect before dropping database
 
 			Msg.info(this, "Dropping BSim postgresql database: " + serverInfo);
-			defaultSt.executeUpdate("DROP DATABASE \"" + serverInfo.getDBName() + '"');
+			sb = new StringBuilder("DROP DATABASE ");
+			Utils.escapeIdentifier(sb, serverInfo.getDBName());
+			defaultSt.executeUpdate(sb.toString());
 		}
 		finally {
 			// ensure 

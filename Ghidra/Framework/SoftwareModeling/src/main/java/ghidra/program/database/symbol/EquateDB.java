@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import db.DBRecord;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.Enum;
@@ -31,6 +30,7 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Equate;
 import ghidra.program.model.symbol.EquateReference;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.*;
 
@@ -39,7 +39,7 @@ import ghidra.util.exception.*;
  * 
  * 
  */
-public class EquateDB extends DatabaseObject implements Equate {
+public class EquateDB extends DbObject implements Equate {
 
 	private DBRecord record;
 	private EquateManager equateMgr;
@@ -47,11 +47,10 @@ public class EquateDB extends DatabaseObject implements Equate {
 	/**
 	 * Constructor
 	 * @param equateMgr the equate manager
-	 * @param cache EquateDB cache
 	 * @param record the record for this equate.
 	 */
-	public EquateDB(EquateManager equateMgr, DBObjectCache<EquateDB> cache, DBRecord record) {
-		super(cache, record.getKey());
+	EquateDB(EquateManager equateMgr, DBRecord record) {
+		super(record.getKey());
 		this.equateMgr = equateMgr;
 		this.record = record;
 	}
@@ -68,8 +67,8 @@ public class EquateDB extends DatabaseObject implements Equate {
 
 	@Override
 	public void addReference(Address refAddr, int opIndex) {
-		checkDeleted();
-		try {
+		try (Closeable c = equateMgr.getLock().write()) {
+			checkDeleted();
 			Instruction instr = equateMgr.getProgram().getCodeManager().getInstructionAt(refAddr);
 			long dynamicHash;
 			if (instr == null) {
@@ -90,12 +89,13 @@ public class EquateDB extends DatabaseObject implements Equate {
 		catch (IOException e) {
 			equateMgr.dbError(e);
 		}
+
 	}
 
 	@Override
 	public void addReference(long dynamicHash, Address refAddr) {
-		checkDeleted();
-		try {
+		try (Closeable c = equateMgr.getLock().write()) {
+			checkDeleted();
 			short opIndex = findOpIndex(refAddr, dynamicHash);
 			equateMgr.addReference(key, refAddr, opIndex, dynamicHash);
 		}
@@ -141,7 +141,7 @@ public class EquateDB extends DatabaseObject implements Equate {
 
 	@Override
 	public String getName() {
-		checkIsValid();
+		validate(equateMgr.getLock());
 		return record.getString(EquateDBAdapter.NAME_COL);
 	}
 
@@ -171,20 +171,20 @@ public class EquateDB extends DatabaseObject implements Equate {
 
 	@Override
 	public int getReferenceCount() {
-		checkIsValid();
-		try {
-			return equateMgr.getReferenceCount(key);
-		}
-		catch (IOException e) {
-			equateMgr.dbError(e);
+		try (Closeable c = equateMgr.getLock().read()) {
+			try {
+				return equateMgr.getReferenceCount(key);
+			}
+			catch (IOException e) {
+				equateMgr.dbError(e);
+			}
 		}
 		return 0;
 	}
 
 	@Override
 	public EquateReference[] getReferences() {
-		checkIsValid();
-		try {
+		try (Closeable c = equateMgr.getLock().read()) {
 			return equateMgr.getReferences(key);
 		}
 		catch (IOException e) {
@@ -196,24 +196,20 @@ public class EquateDB extends DatabaseObject implements Equate {
 	@Override
 	public List<EquateReference> getReferences(Address refAddr) {
 		Lock lock = equateMgr.getLock();
-		lock.acquire();
-		try {
-			if (checkIsValid()) {
+		try (Closeable c = lock.read()) {
+			if (refreshIfNeeded()) {
 				return equateMgr.getReferences(key, refAddr);
 			}
 		}
 		catch (IOException e) {
 			equateMgr.getProgram().dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return new ArrayList<>();
 	}
 
 	@Override
 	public long getValue() {
-		checkIsValid();
+		validate(equateMgr.getLock());
 		return record.getLongValue(EquateDBAdapter.VALUE_COL);
 	}
 
@@ -248,8 +244,7 @@ public class EquateDB extends DatabaseObject implements Equate {
 	@Override
 	public void renameEquate(String newName) throws DuplicateNameException, InvalidInputException {
 		Lock lock = equateMgr.getLock();
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 
 			String oldName = getName();
@@ -272,9 +267,6 @@ public class EquateDB extends DatabaseObject implements Equate {
 			record.setString(EquateDBAdapter.NAME_COL, newName);
 			updateRecord();
 			equateMgr.equateNameChanged(oldName, newName);
-		}
-		finally {
-			lock.release();
 		}
 	}
 

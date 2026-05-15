@@ -141,7 +141,12 @@ public abstract class ModuleInformation {
 	}
 
 	/**
-	 * Returns {@link SectionContribution} of the module
+	 * Returns {@link SectionContribution} of the module.  This seems to be just one of possibly
+	 * many SectionContributions for the module (at least of ModuleInformation600; need to check
+	 * for older PDBs/ModuleInformation500).  User should consult the debugInfo
+	 * SectionContributionList for full list of SectionContributions, which also (at least for
+	 * newer PDBs) has many contributions that all refer to the same module (contributions are
+	 * relatively small)
 	 * @return {@link SectionContribution} of the module
 	 */
 	public SectionContribution getSectionContribution() {

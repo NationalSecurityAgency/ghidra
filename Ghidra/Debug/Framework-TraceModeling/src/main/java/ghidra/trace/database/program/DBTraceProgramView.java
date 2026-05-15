@@ -58,6 +58,7 @@ import ghidra.trace.model.data.TraceBasedDataTypeManager;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.util.TraceEvents;
@@ -598,7 +599,8 @@ public class DBTraceProgramView implements TraceProgramView {
 	}
 
 	protected static class OverlappingAddressRangeKeyIteratorMerger<T> extends
-			PairingIteratorMerger<Entry<AddressRange, T>, Entry<AddressRange, T>, Entry<AddressRange, T>> {
+			PairingIteratorMerger<Entry<AddressRange, T>, Entry<AddressRange, T>,
+				Entry<AddressRange, T>> {
 
 		protected static <T> Iterable<Pair<Entry<AddressRange, T>, Entry<AddressRange, T>>> iter(
 				Iterable<Entry<AddressRange, T>> left, Iterable<Entry<AddressRange, T>> right) {
@@ -1452,7 +1454,7 @@ public class DBTraceProgramView implements TraceProgramView {
 					return RangeQueryOcclusion.super.occluded(cu, range, span);
 				}
 				AddressSetView known =
-					memSpace.getAddressesWithState(span, s -> s == TraceMemoryState.KNOWN);
+					memSpace.getAddressesWithState(span, StatePredicate.IS_KNOWN);
 				if (!known.intersects(range.getMinAddress(), range.getMaxAddress())) {
 					return RangeQueryOcclusion.super.occluded(cu, range, span);
 				}

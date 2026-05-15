@@ -179,30 +179,33 @@ Datatype *Datatype::getSubType(int8 off,int8 *newoff) const
   return (Datatype *)0;
 }
 
-/// Find the first component data-type that is (or contains) an array starting after the given
-/// offset, and pass back the difference between the component's start and the given offset.
-/// Return the component data-type or null if no array is found.
+/// If \b this data-type is (or contains) an array starting after the given
+/// offset, return the distance in bytes to the start of the array,
+/// and pass back the difference between the component's start and the given offset.
 /// \param off is the given offset into \b this data-type
+/// \param max is the maximum distance, in bytes, to search
 /// \param newoff is used to pass back the offset difference
 /// \param elSize is used to pass back the array element size
-/// \return the component data-type or null
-Datatype *Datatype::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 *elSize) const
+/// \return the distance to the array or -1 otherwise
+int8 Datatype::nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
 
 {
-  return (TypeArray *)0;
+  return -1;
 }
 
-/// Find the last component data-type that is (or contains) an array starting before the given
-/// offset, and pass back the difference between the component's start and the given offset.
+/// If \b this data-type is (or contains) an array starting before the given
+/// offset, return the distance in bytes to the end of the array,
+/// and pass back the difference between the component's start and the given offset.
 /// Return the component data-type or null if no array is found.
 /// \param off is the given offset into \b this data-type
+/// \param max is the maximum distance, in bytes, to search
 /// \param newoff is used to pass back the offset difference
 /// \param elSize is used to pass back the array element size
-/// \return the component data-type or null
-Datatype *Datatype::nearestArrayedComponentBackward(int8 off,int8 *newoff,int8 *elSize) const
+/// \return the distance to the array or -1 otherwise
+int8 Datatype::nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
 
 {
-  return (TypeArray *)0;
+  return -1;
 }
 
 /// Order \b this with another data-type, in a way suitable for the type propagation algorithm.
@@ -1132,14 +1135,10 @@ bool TypePointer::testForArraySlack(Datatype *dt,int8 off)
   int8 elSize;
   if (dt->getMetatype() == TYPE_ARRAY)
     return true;
-  Datatype *compType;
   if (off < 0) {
-    compType = dt->nearestArrayedComponentForward(off, &newoff, &elSize);
+    return (dt->nearestArrayedComponentForward(off, 128, &newoff, &elSize) >= 0);
   }
-  else {
-    compType = dt->nearestArrayedComponentBackward(off, &newoff, &elSize);
-  }
-  return (compType != (Datatype *)0);
+  return (dt->nearestArrayedComponentBackward(off, 128, &newoff, &elSize) >= 0);
 }
 
 /// Parse a \<type> element with a child describing the data-type being pointed to
@@ -1175,10 +1174,10 @@ void TypePointer::calcSubmeta(void)
 {
   type_metatype ptrtoMeta = ptrto->getMetatype();
   if (ptrtoMeta == TYPE_STRUCT) {
-    if (ptrto->numDepend() > 1 || ptrto->isIncomplete())
-      submeta = SUB_PTR_STRUCT;
+    if (ptrto->needsResolution())
+      submeta = SUB_PTR;	// Treat as a more generic pointer, allowing pointer to the component to take precedence
     else
-      submeta = SUB_PTR;
+      submeta = SUB_PTR_STRUCT;
   }
   else if (ptrtoMeta == TYPE_UNION) {
     submeta = SUB_PTR_STRUCT;
@@ -1318,9 +1317,15 @@ Datatype *TypePointer::resolveInFlow(PcodeOp *op,int4 slot)
   if (ptrto->getMetatype() == TYPE_UNION) {
     Funcdata *fd = op->getParent()->getFuncdata();
     const ResolvedUnion *res = fd->getUnionField(this,op,slot);
-    if (res != (ResolvedUnion*)0)
+    if (res != (ResolvedUnion *)0)
       return res->getDatatype();
-    ScoreUnionFields scoreFields(*fd->getArch()->types,this,op,slot);
+    res = fd->getAddressBasedUnionField(this, op->getAddr(), slot);
+    if (res != (ResolvedUnion *)0) {
+      ResolvedUnion resolve(this,res->getFieldNum(),*fd->getArch()->types);
+      fd->setUnionField(this,op,slot,resolve);
+      return resolve.getDatatype();
+    }
+    ScoreUnionFields scoreFields(*fd,this,op,slot);
     fd->setUnionField(this,op,slot,scoreFields.getResult());
     return scoreFields.getResult().getDatatype();
   }
@@ -1337,6 +1342,15 @@ Datatype* TypePointer::findResolve(const PcodeOp *op,int4 slot)
       return res->getDatatype();
   }
   return this;
+}
+
+int4 TypePointer::findCompatibleResolve(Datatype *ct) const
+
+{
+  if (ct->getMetatype() == TYPE_PTR) {
+    return ptrto->findCompatibleResolve(((TypePointer *)ct)->ptrto);
+  }
+  return -1;
 }
 
 void TypeArray::printRaw(ostream &s) const
@@ -1376,6 +1390,26 @@ Datatype *TypeArray::getSubType(int8 off,int8 *newoff) const
     return Datatype::getSubType(off, newoff);
   *newoff = off % arrayof->getAlignSize();
   return arrayof;
+}
+
+int8 TypeArray::nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
+
+{
+  if (off > 0) return -1;	// Skip if we are in the middle of array
+  *newoff = off;
+  *elSize = arrayof->getAlignSize();
+  return -off;
+}
+
+int8 TypeArray::nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
+
+{
+  if (off < 0) return -1;	// Skip if we are before array
+  *newoff = off;
+  *elSize = arrayof->getAlignSize();
+  if (off <= size)
+    return (size - off);
+  return (off - size);
 }
 
 int4 TypeArray::getHoleSize(int4 off) const
@@ -1886,7 +1920,7 @@ int4 TypeStruct::getHoleSize(int4 off) const
   return getSize() - off;		// Distance to end of structure
 }
 
-Datatype *TypeStruct::nearestArrayedComponentBackward(int8 off,int8 *newoff,int8 *elSize) const
+int8 TypeStruct::nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
 
 {
   int4 firstIndex = getLowerBoundField(off);
@@ -1894,28 +1928,23 @@ Datatype *TypeStruct::nearestArrayedComponentBackward(int8 off,int8 *newoff,int8
   while(i >= 0) {
     const TypeField &subfield( field[i] );
     int8 diff = off - subfield.offset;
-    if (diff > 128) break;
     Datatype *subtype = subfield.type;
-    if (subtype->getMetatype() == TYPE_ARRAY) {
+    int8 suboff;
+    int8 remain = (i == firstIndex) ? diff : subtype->getSize();
+    if (diff - remain > max) break;
+    int8 distance = subtype->nearestArrayedComponentBackward(remain, max, &suboff, elSize);
+    if (distance >= 0) {
+      distance = (diff - remain) + distance;
+      if (distance > max) break;
       *newoff = diff;
-      *elSize = ((TypeArray *)subtype)->getBase()->getAlignSize();
-      return subtype;
-    }
-    else {
-      int8 suboff;
-      int8 remain = (i == firstIndex) ? diff : subtype->getSize() - 1;
-      Datatype *res = subtype->nearestArrayedComponentBackward(remain, &suboff, elSize);
-      if (res != (Datatype *)0) {
-	*newoff = diff;
-	return subtype;
-      }
+      return distance;
     }
     i -= 1;
   }
-  return (Datatype *)0;
+  return -1;
 }
 
-Datatype *TypeStruct::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 *elSize) const
+int8 TypeStruct::nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
 
 {
   int4 i = getLowerBoundField(off);
@@ -1924,39 +1953,26 @@ Datatype *TypeStruct::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 
     i += 1;		// First component starting after
     remain = 0;
   }
-  else {
-    const TypeField &subfield( field[i] );
-    remain = off - subfield.offset;
-    if (remain != 0 && (subfield.type->getMetatype() != TYPE_STRUCT || remain >= subfield.type->getSize())) {
-      i += 1;		// Middle of non-structure that we must go forward from, skip over it
-      remain = 0;
-    }
-  }
+  else
+    remain = off - field[i].offset;
   while(i<field.size()) {
     const TypeField &subfield( field[i] );
     int8 diff = subfield.offset - off;		// The first struct field examined may have a negative diff
-    if (diff > 128) break;
+    if (diff + remain > max) break;
     Datatype *subtype = subfield.type;
-    if (subtype->getMetatype() == TYPE_ARRAY) {
+    int8 suboff;
+    int8 distance = subtype->nearestArrayedComponentForward(remain, max, &suboff, elSize);
+    if (distance >= 0) {
+      distance = diff + remain + distance;
+      if (distance > max)
+	break;
       *newoff = -diff;
-      *elSize = ((TypeArray *)subtype)->getBase()->getAlignSize();
-      return subtype;
-    }
-    else {
-      int8 suboff;
-      Datatype *res = subtype->nearestArrayedComponentForward(remain, &suboff, elSize);
-      if (res != (Datatype *)0) {
-	int8 subdiff = diff + remain - suboff;
-	if (subdiff > 128)
-	  break;
-	*newoff = -diff;
-	return subtype;
-      }
+      return distance;
     }
     i += 1;
     remain = 0;
   }
-  return (Datatype *)0;
+  return -1;
 }
 
 int4 TypeStruct::compare(const Datatype &op,int4 level) const
@@ -2529,7 +2545,13 @@ Datatype *TypeUnion::resolveInFlow(PcodeOp *op,int4 slot)
   const ResolvedUnion *res = fd->getUnionField(this, op, slot);
   if (res != (ResolvedUnion *)0)
     return res->getDatatype();
-  ScoreUnionFields scoreFields(*fd->getArch()->types,this,op,slot);
+  res = fd->getAddressBasedUnionField(this, op->getAddr(), slot);
+  if (res != (ResolvedUnion *)0) {
+    ResolvedUnion resolve(this,res->getFieldNum(),*fd->getArch()->types);
+    fd->setUnionField(this, op, slot, *res);
+    return resolve.getDatatype();
+  }
+  ScoreUnionFields scoreFields(*fd,this,op,slot);
   fd->setUnionField(this, op, slot, scoreFields.getResult());
   return scoreFields.getResult().getDatatype();
 }
@@ -2548,7 +2570,13 @@ const TypeField *TypeUnion::resolveTruncation(int8 offset,PcodeOp *op,int4 slot,
 
 {
   Funcdata *fd = op->getParent()->getFuncdata();
-  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  const ResolvedUnion *res = fd->getUnionResolution(this, op, slot);
+  if (res == (ResolvedUnion *)0) {
+    res = fd->getAddressBasedUnionField(this, op->getAddr(), slot);
+    if (res != (ResolvedUnion *)0) {
+      fd->setUnionField(this, op, slot, *res);
+    }
+  }
   if (res != (ResolvedUnion *)0) {
     if (res->getFieldNum() >= 0) {
       const TypeField *field = getField(res->getFieldNum());
@@ -2557,7 +2585,7 @@ const TypeField *TypeUnion::resolveTruncation(int8 offset,PcodeOp *op,int4 slot,
     }
   }
   else if (op->code() == CPUI_SUBPIECE && slot == 1) {	// The slot is artificial in this case
-    ScoreUnionFields scoreFields(*fd->getArch()->types,this,offset,op);
+    ScoreUnionFields scoreFields(*fd,this,offset,op);
     fd->setUnionField(this, op, slot, scoreFields.getResult());
     if (scoreFields.getResult().getFieldNum() >= 0) {
       newoff = 0;
@@ -2565,7 +2593,7 @@ const TypeField *TypeUnion::resolveTruncation(int8 offset,PcodeOp *op,int4 slot,
     }
   }
   else {
-    ScoreUnionFields scoreFields(*fd->getArch()->types,this,offset,op,slot);
+    ScoreUnionFields scoreFields(*fd,this,offset,op,slot);
     fd->setUnionField(this, op, slot, scoreFields.getResult());
     if (scoreFields.getResult().getFieldNum() >= 0) {
       const TypeField *field = getField(scoreFields.getResult().getFieldNum());
@@ -2587,7 +2615,7 @@ const TypeField *TypeUnion::findTruncation(int8 offset,int4 sz,const PcodeOp *op
 {
   // No new scoring is done, but if a cached result is available, return it.
   const Funcdata *fd = op->getParent()->getFuncdata();
-  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  const ResolvedUnion *res = fd->getUnionResolution(this, op, slot);
   if (res != (ResolvedUnion *)0 && res->getFieldNum() >= 0) {
     const TypeField *field = getField(res->getFieldNum());
     newoff = offset - field->offset;
@@ -2907,38 +2935,50 @@ void TypePartialUnion::encode(Encoder &encoder) const
 Datatype *TypePartialUnion::resolveInFlow(PcodeOp *op,int4 slot)
 
 {
+  Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0)
+    return res->getDatatype();
   Datatype *curType = container;
   int8 curOff = offset;
   while(curType != (Datatype *)0 && curType->getSize() > size) {
-    if (curType->getMetatype() == TYPE_UNION) {
-      const TypeField *field = curType->resolveTruncation(curOff, op, slot, curOff);
-      curType = (field == (const TypeField *)0) ? (Datatype *)0 : field->type;
+    if (curType->getMetatype() == TYPE_PARTIALUNION) {
+      TypePartialUnion *curPartial = (TypePartialUnion *)curType;
+      curOff += curPartial->getOffset();
+      int8 newOff;
+      const TypeField *field = curPartial->getParentUnion()->resolveTruncation(curOff, op, slot, newOff);
+      Architecture *glb = op->getParent()->getFuncdata()->getArch();
+      curType = (Datatype *)0;
+      if (field != (const TypeField *)0)
+	curType = glb->types->getExactPiece(field->type, curOff, size);
+      curOff = 0;
     }
-    else {
-      curType = curType->getSubType(curOff, &curOff);
+    else if (curType->getMetatype() == TYPE_UNION) {
+      const TypeField *field = curType->resolveTruncation(curOff, op, slot, curOff);
+      Architecture *glb = op->getParent()->getFuncdata()->getArch();
+      curType = (Datatype *)0;
+      if (field != (const TypeField *)0)
+	curType = glb->types->getExactPiece(field->type, curOff, size);
+      curOff = 0;
+    }
+    else {		// Should never reach here
+      curType = (Datatype *)0;
+      break;
     }
   }
-  if (curType != (Datatype *)0 && curType->getSize() == size)
-    return curType;
-  return stripped;
+  if (curType == (Datatype *)0 || curType->getSize() != size)
+    curType = stripped;
+  fd->updateUnionField(this, op, slot, curType);
+  return curType;
 }
 
 Datatype* TypePartialUnion::findResolve(const PcodeOp *op,int4 slot)
 
 {
-  Datatype *curType = container;
-  int8 curOff = offset;
-  while(curType != (Datatype *)0 && curType->getSize() > size) {
-    if (curType->getMetatype() == TYPE_UNION) {
-      Datatype *newType = curType->findResolve(op, slot);
-      curType = (newType == curType) ? (Datatype *)0 : newType;
-    }
-    else {
-      curType = curType->getSubType(curOff, &curOff);
-    }
-  }
-  if (curType != (Datatype *)0 && curType->getSize() == size)
-    return curType;
+  const Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0)
+    return res->getDatatype();
   return stripped;
 }
 
@@ -3389,7 +3429,7 @@ Datatype *TypeSpacebase::getSubType(int8 off,int8 *newoff) const
   return smallest->getSymbol()->getType();
 }
 
-Datatype *TypeSpacebase::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 *elSize) const
+int8 TypeSpacebase::nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
 
 {
   Scope *scope = getMap();
@@ -3406,55 +3446,50 @@ Datatype *TypeSpacebase::nearestArrayedComponentForward(int8 off,int8 *newoff,in
     nextAddr = addr + 32;
   else {
     symbolType = smallest->getSymbol()->getType();
-    if (symbolType->getMetatype() == TYPE_STRUCT) {
-      int8 structOff = addr.getOffset() - smallest->getAddr().getOffset();
-      int8 dummyOff;
-      Datatype *res = symbolType->nearestArrayedComponentForward(structOff, &dummyOff, elSize);
-      if (res != (Datatype *)0) {
-	*newoff = structOff;
-	return symbolType;
-      }
+    int8 structOff = addr.getOffset() - smallest->getAddr().getOffset();
+    int8 dummyOff;
+    int8 distance = symbolType->nearestArrayedComponentForward(structOff, max, &dummyOff, elSize);
+    if (distance >= 0) {
+      if (distance > max)
+	return -1;
+      *newoff = structOff;
+      return distance;
     }
     int8 sz = AddrSpace::byteToAddressInt(smallest->getSize(), spaceid->getWordSize());
     nextAddr = smallest->getAddr() + sz;
   }
   if (nextAddr < addr)
-    return (Datatype *)0;		// Don't let the address wrap
+    return -1;		// Don't let the address wrap
   smallest = scope->queryContainer(nextAddr,1,nullPoint);
   if (smallest == (SymbolEntry *)0 || smallest->getOffset() != 0)
-    return (Datatype *)0;
+    return -1;
   symbolType = smallest->getSymbol()->getType();
   *newoff = addr.getOffset() - smallest->getAddr().getOffset();
-  if (symbolType->getMetatype() == TYPE_ARRAY) {
-    *elSize = ((TypeArray *)symbolType)->getBase()->getAlignSize();
-    return symbolType;
+  int8 dummyOff;
+  int8 distance = symbolType->nearestArrayedComponentForward(0, max, &dummyOff, elSize);
+  if (distance >= 0) {
+    distance = distance - *newoff;
+    if (distance > max)
+      return -1;
+    return distance;
   }
-  if (symbolType->getMetatype() == TYPE_STRUCT) {
-    int8 dummyOff;
-    Datatype *res = symbolType->nearestArrayedComponentForward(0, &dummyOff, elSize);
-    if (res != (Datatype *)0)
-      return symbolType;
-  }
-  return (Datatype *)0;
+  return -1;
 }
 
-Datatype *TypeSpacebase::nearestArrayedComponentBackward(int8 off,int8 *newoff,int8 *elSize) const
+int8 TypeSpacebase::nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
 
 {
   Datatype *subType = getSubType(off, newoff);
   if (subType == (Datatype *)0)
-    return (Datatype *)0;
-  if (subType->getMetatype() == TYPE_ARRAY) {
-    *elSize = ((TypeArray *)subType)->getBase()->getAlignSize();
-    return subType;
+    return -1;
+  int8 dummyOff;
+  int8 distance = subType->nearestArrayedComponentBackward(*newoff,max,&dummyOff,elSize);
+  if (distance >= 0) {
+    if (distance > max)
+      return -1;
+    return distance;
   }
-  if (subType->getMetatype() == TYPE_STRUCT) {
-    int8 dummyOff;
-    Datatype *res = subType->nearestArrayedComponentBackward(*newoff,&dummyOff,elSize);
-    if (res != (Datatype *)0)
-      return subType;
-  }
-  return (Datatype *)0;
+  return -1;
 }
 
 int4 TypeSpacebase::compare(const Datatype &op,int4 level) const
@@ -4539,9 +4574,6 @@ Datatype *TypeFactory::getExactPiece(Datatype *ct,int4 offset,int4 size)
     }
     if (ct->getSize() == size)
 	return ct;				// Perfect size match
-    if (ct->getMetatype() == TYPE_UNION) {
-      return getTypePartialUnion((TypeUnion *)ct, curOff, size);
-    }
     lastType = ct;
     lastOff = curOff;
     ct = ct->getSubType(curOff,&curOff);
@@ -4551,6 +4583,12 @@ Datatype *TypeFactory::getExactPiece(Datatype *ct,int4 offset,int4 size)
     type_metatype meta = lastType->getMetatype();
     if (meta == TYPE_STRUCT || meta == TYPE_ARRAY || meta == TYPE_PARTIALSTRUCT)
       return getTypePartialStruct(lastType, lastOff, size);
+    else if (meta == TYPE_UNION)
+      return getTypePartialUnion((TypeUnion *)lastType, lastOff, size);
+    else if (meta == TYPE_PARTIALUNION) {	// Truncate to smaller partial union
+      TypePartialUnion *partial = (TypePartialUnion *)lastType;
+      return getTypePartialUnion(partial->getParentUnion(),lastOff + partial->getOffset(), size);
+    }
     else if (lastType->isEnumType() && !lastType->hasStripped())
       return getTypePartialEnum((TypeEnum *)lastType, lastOff, size);
   }

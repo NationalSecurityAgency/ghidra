@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.Namespace;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -40,19 +41,18 @@ class FunctionData extends FunctionDataView {
 
 		boolean checkStorage = false;
 		if (canCustomizeStorage()) {
-//			if (!originalFunctionData.canCustomizeStorage()) {
-//				// switched to using custom storage
-//				return true;
-//			}
 			checkStorage = true;
 		}
 
-		if (!returnInfo.getFormalDataType()
-				.equals(originalFunctionData.returnInfo.getFormalDataType())) {
+		DataType returnType = returnInfo.getFormalDataType();
+		DataType originalReturnType = originalFunctionData.returnInfo.getFormalDataType();
+		if (!returnType.equals(originalReturnType)) {
 			return true;
 		}
-		if (checkStorage &&
-			!returnInfo.getStorage().equals(originalFunctionData.returnInfo.getStorage())) {
+
+		VariableStorage returnStorage = returnInfo.getStorage();
+		VariableStorage originalReturnStorage = originalFunctionData.returnInfo.getStorage();
+		if (checkStorage && !returnStorage.equals(originalReturnStorage)) {
 			return true;
 		}
 
@@ -160,6 +160,10 @@ class FunctionData extends FunctionDataView {
 
 	void setName(String n) {
 		this.name = n;
+	}
+
+	void setNamespace(Namespace ns) {
+		this.namespace = ns;
 	}
 
 	void setInline(boolean enable) {

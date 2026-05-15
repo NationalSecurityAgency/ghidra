@@ -1,0 +1,888 @@
+# Qualcomm Hexagon (V73) and HVX (V69)
+
+## KNOWN ISSUES
+# 1. Shift amounts may be positive or negative, however in some cases no special handling 
+#    is provided for negative shift amounts.
+# 2. There are many complex instructions with unimplemented pcode or simple custom pcodeops
+#
+## NOTES
+# 1. Implementation includes V73 system registers, instruction set may be incomplete
+# 2. HVX vector register size is 128-bytes (see defines below), paired size is 256-bytes
+#
+## VERSIONS
+# 1.x - preliminary versions (pre-release)
+# 2.0 - initial release
+# 2.1 - added support for conditional commit of modifying operands, e.g. (r0++#4) (r0=#4)
+# 2.2 - TBD (research change history)
+# 2.3 - Added missing instructions and corrected invalid DF instructions.  The disabled 
+#       ADD_DP_OPS property has been used to contain these although they may be removed
+#       in the future.
+# 2.4 - Added EXEC_COND crossbuild (12.0.1) and added HVX support (12.0.2)
+#
+
+@define HVX_VECTOR_SIZE "128"
+@define HVX_VECTOR_PAIR_SIZE "256"
+@define HVX_VECTOR_BASE "0x2000"
+@define HVX_VECTOR_TMP_BASE "0x3000"
+
+@define HVX_PREDICATE_SIZE "16"
+
+define endian=little;
+define alignment=4;
+
+define space ram type=ram_space size=4 default;
+define space register type=register_space size=4;
+
+# General purpose registers
+#  Register aliases have been used for R29(SP), R30(FP) and R31(LR)
+
+define register offset=0 size=8	[ R1R0   R3R2    R5R4   R7R6  	R9R8   R11R10  R13R12 R15R14
+								  R17R16 R19R18  R21R20 R23R22  R25R24 R27R26  R29R28 R31R30 ];
+								  
+define register offset=0 size=4	[ R0  R1  R2  R3  R4  R5  R6  R7  
+								  R8  R9  R10 R11 R12 R13 R14 R15
+								  R16 R17 R18 R19 R20 R21 R22 R23 
+								  R24 R25 R26 R27 R28 SP  FP  LR ];
+								  	
+define register offset=0 size=2	[ R0.L  R0.H  R1.L  R1.H  R2.L  R2.H  R3.L  R3.H  
+								  R4.L  R4.H  R5.L  R5.H  R6.L  R6.H  R7.L  R7.H    
+								  R8.L  R8.H  R9.L  R9.H  R10.L R10.H R11.L R11.H 
+								  R12.L R12.H R13.L R13.H R14.L R14.H R15.L R15.H
+								  R16.L R16.H R17.L R17.H R18.L R18.H R19.L R19.H 
+								  R20.L R20.H R21.L R21.H R22.L R22.H R23.L R23.H 
+								  R24.L R24.H R25.L R25.H R26.L R26.H R27.L R27.H
+								  R28.L R28.H R29.L R29.H R30.L R30.H R31.L R31.H ];
+
+# General purpose shadow registers (used to delay register writes until end of instruction packet)
+							  
+define register offset=0x100 size=8	[ R1R0_   R3R2_    R5R4_   R7R6_  	R9R8_   R11R10_  R13R12_ R15R14_
+								  	  R17R16_ R19R18_  R21R20_ R23R22_  R25R24_ R27R26_  R29R28_ R31R30_ ];
+								  
+define register offset=0x100 size=4	[ R0.new  R1.new  R2.new  R3.new  R4.new  R5.new  R6.new  R7.new  
+									  R8.new  R9.new  R10.new R11.new R12.new R13.new R14.new R15.new
+								 	  R16.new R17.new R18.new R19.new R20.new R21.new R22.new R23.new 
+								 	  R24.new R25.new R26.new R27.new R28.new SP.new  FP.new  LR.new ];
+
+define register offset=0x100 size=2	[ R0.L_  R0.H_  R1.L_  R1.H_  R2.L_  R2.H_  R3.L_  R3.H_  
+								  	  R4.L_  R4.H_  R5.L_  R5.H_  R6.L_  R6.H_  R7.L_  R7.H_    
+								  	  R8.L_  R8.H_  R9.L_  R9.H_  R10.L_ R10.H_ R11.L_ R11.H_ 
+								  	  R12.L_ R12.H_ R13.L_ R13.H_ R14.L_ R14.H_ R15.L_ R15.H_
+								  	  R16.L_ R16.H_ R17.L_ R17.H_ R18.L_ R18.H_ R19.L_ R19.H_ 
+								  	  R20.L_ R20.H_ R21.L_ R21.H_ R22.L_ R22.H_ R23.L_ R23.H_ 
+								  	  R24.L_ R24.H_ R25.L_ R25.H_ R26.L_ R26.H_ R27.L_ R27.H_
+								  	  R28.L_ R28.H_ R29.L_ R29.H_ R30.L_ R30.H_ R31.L_ R31.H_ ];
+
+# Control registers (range C16-C31 not defined by V5/V55)
+# TODO: Check Control register naming across versions - with only one variant not sure how we handle this
+define register offset=0x200 size=8 [ C1C0 C3C2 C5C4 C7C6 C9C8 C11C10 C13C12 UPCYCLE 
+                                      C17C16 PKTCOUNT C21C20 C23C22 C25C24 C27C26 C29C28 UTIMER ];
+                                      
+define register offset=0x200 size=4 [ SA0 LC0 SA1 LC1 P3P0 C5 M0 M1 
+                                      USR PC UGP GP CS0 CS1 UPCYCLELO UPCYCLEHI 
+                                      FRAMELIMIT FRAMEKEY PKTCOUNTLO PKTCOUNTHI C20 C21 C22 C23 
+                                      C24 C25 C26 C27 C28 C29 UTIMERLO UTIMERHI ];
+                                      
+define register offset=0x210 size=1	[ P3 P2 P1 P0 ]; # corresponds to P3P0
+
+# TODO: Do ALL of the control registers need shadows for writing/flushing ??
+define register offset=0x300 size=8 [ C1C0_ C3C2_ C5C4_ C7C6_ C9C8_ C11C10_ C13C12_ UPCYCLE_ 
+                                      C17C16_ PKTCOUNT_ C21C20_ C23C22_ C25C24_ C27C26_ C29C28_ UTIMER_ ];
+                                      
+define register offset=0x300 size=4 [ SA0_ LC0_ SA1_ LC1_ P3P0_ C5_ M0_ M1_ 
+                                      USR_ PC_ UGP_ GP_ CS0_ CS1_ UPCYCLELO_ UPCYCLEHI_ 
+                                      FRAMELIMIT_ FRAMEKEY_ PKTCOUNTLO_ PKTCOUNTHI_ C20_ C21_ C22_ C23_ 
+                                      C24_ C25_ C26_ C27_ C28_ C29_ UTIMERLO_ UTIMERHI_ ]; # shadow versions
+                                      
+define register offset=0x310 size=1 [ P3.new P2.new P1.new P0.new ]; # new/shadow versions, corresponds to P3P0_
+
+# Guest Registers (see pspec for renaming)
+# TODO: Do all guest registers need shadows for writing/flushing ??
+define register offset=0x400 size=8 [ G1G0   G3G2   G5G4   G7G6	  G9G8   G11G10 G13G12 G15G14
+									  G17G16 G19G18 G21G20 G23G22 G25G24 G27G26 G29G28 G31G30 ];
+									  
+define register offset=0x400 size=4 [ G0  G1  G2  G3  G4  G5  G6  G7  G8  G9  G10 G11 G12 G13 G14 G15
+									  G16 G17 G18 G19 G20 G21 G22 G23 G24 G25 G26 G27 G28 G29 G30 G31 ];
+
+# System Registers (see pspec for renaming)
+# TODO: Do all system registers need shadows for writing/flushing ??
+define register offset=0x800 size=8 [ S1S0   S3S2   S5S4   S7S6	  S9S8   S11S10 S13S12 S15S14
+									  S17S16 S19S18 S21S20 S23S22 S25S24 S27S26 S29S28 S31S30
+									  S33S32 S35S34 S37S36 S39S38 S41S40 S43S42 S45S44 S47S46
+									  S49S48 S51S50 S53S52 S55S54 S57S56 S59S58 S61S60 S63S62 ];
+									  
+define register offset=0x800 size=4 [ S0  S1  S2  S3  S4  S5  S6  S7  S8  S9  S10 S11 S12 S13 S14 S15
+									  S16 S17 S18 S19 S20 S21 S22 S23 S24 S25 S26 S27 S28 S29 S30 S31
+									  S32 S33 S34 S35 S36 S37 S38 S39 S40 S41 S42 S43 S44 S45 S46 S47
+									  S48 S49 S50 S51 S52 S53 S54 S55 S56 S57 S58 S59 S60 S61 S62 S63 ];
+
+# System register mappings (may differ with version)
+@define ELR	   "S3"
+@define SSR    "S6"
+@define CAUSE  "S6[0,8]"  # SSR bits 0..7, Exception/Trap Cause
+
+# Hidden language registers
+
+# ConditionReg: The condition register set by various 
+# conditional subconstructors which should be built within the 
+# appropriate <<COMMIT_COND>> or <<FLOW>> pcode section for an instruction
+# immediately before using the ConditionReg value.
+#
+# WARNING! This may present a limitation if multiple condition/predicate 
+# registers are utilized within a single execute packet.
+#
+# <<COMMIT_COND>>
+#   build PuCondXYZ;
+#   if (ConditionReg == 0) goto <nocommit>;
+#   rd5 = rd5_;
+#  <nocommit>
+
+define register offset=0x1000 size=1 [ ConditionReg ];
+
+# ReturnAddr: This register is updated with inst_next for use within the <<FLOW>> section 
+# to facilitate LR assignment prior to a CALL flow.
+
+define register offset=0x1004 size=4 [ ReturnAddr ];
+
+define register offset=$(HVX_VECTOR_BASE) size=$(HVX_VECTOR_PAIR_SIZE) 
+	[	V1V0	V3V2	V5V4	V7V6	V9V8	V11V10	V13V12	V15V14
+		V17V16	V19V18	V21V20	V23V22	V25V24	V27V26	V29V28	V31V30 ];
+
+define register offset=$(HVX_VECTOR_BASE) size=$(HVX_VECTOR_SIZE) 
+	[	V0		V1		V2		V3		V4		V5		V6		V7
+		V8		V9		V10		V11		V12		V13		V14		V15
+		V16		V17		V18		V19		V20		V21		V22		V23
+		V24		V25		V26		V27		V28		V29		V30		V31 ];
+
+#
+# HVX vector temporary / shadow registers
+#
+
+define register offset=$(HVX_VECTOR_TMP_BASE) size=$(HVX_VECTOR_PAIR_SIZE) 
+	[	V1V0_	V3V2_	V5V4_	V7V6_	V9V8_	V11V10_	V13V12_	V15V14_
+		V17V16_	V19V18_	V21V20_	V23V22_	V25V24_	V27V26_	V29V28_	V31V30_ ];
+
+
+define register offset=$(HVX_VECTOR_TMP_BASE) size=$(HVX_VECTOR_SIZE) 
+	[	V0.new	V1.new	V2.new	V3.new	V4.new	V5.new	V6.new	V7.new
+		V8.new	V9.new	V10.new	V11.new	V12.new	V13.new	V14.new	V15.new
+		V16.new	V17.new	V18.new	V19.new	V20.new	V21.new	V22.new	V23.new
+		V24.new	V25.new	V26.new	V27.new	V28.new	V29.new	V30.new	V31.new ];
+
+#
+# HVX Predicate Registers (four predicate registers, each having 1-bit per byte of a vector register)
+#
+define register offset=0x4000 size=$(HVX_PREDICATE_SIZE) [	Q0	Q1	Q2	Q3	];
+
+#
+# Define context bits
+#
+
+define register offset=0x5000 size=12   contextreg;
+
+define context contextreg
+
+  # Stored context bits 
+  immext       = (0,25) noflow # unshifted extended immediate value (26-bits << 6)
+  simmext       = (0,25) signed noflow # unshifted extended immediate value (26-bits << 6)
+  immexted     = (26,26) noflow # flag indicating previous instr was immext
+  
+  packetOffset = (27,28) noflow # instruction number within packet (distance from start of packet)
+  								# The packetOffset is set prior to the actual instruction decode phase 
+  packetOffset0 = (28,28) noflow # packetOffset bit-0 (lsb)
+  packetOffset1 = (27,27) noflow # packetOffset bit-1 (msb)
+  
+  useLoopCfg   = (29,29) noflow # indicates body of h/w loop where LPCFG!=0
+  
+  unused1      = (30,31) # Required to prevent field split across 32-bit integer boundary
+  
+  # NOTE: bulk packetBits used to simplify context propogation
+  packetBits   = (32,63) noflow # allows bulk propagation (part 1 of 2)
+  
+  #--- start of auto-propogated packetBits (all sub-fields must be noflow) ---
+  
+    parse1       = (32,33) noflow #(keep) parse value for first instruction in packet (used for end of loop detection)
+    parse2       = (34,35) noflow #(keep) parse value for second instruction in packet (used for end of loop detection)
+
+    # Ns8 / Os8 new register operand tracking
+    nreg0        = (36,40) noflow #(keep) slot-0 assigned reg (raw reg-number)
+    nreg1        = (41,45) noflow #(keep) slot-1 assigned reg (raw reg-number)
+    nreg2        = (46,50) noflow #(keep) slot-2 assigned reg (raw reg-number)
+    
+    removed1     = (51,55) noflow # no longer used - available for reuse
+    
+    # xreg - tracks immext use required for Ns8 and Os8 new register tracking
+    xreg         = (56,60) noflow #(keep) slot reduction count when identifying nreg assignment slot
+
+	unused2 	 = (61,63) noflow # Required to prevent field split across 32-bit integer boundary
+
+  #--- end of auto-propogated packetBits ---
+  
+  # Transient context bits
+  phase          = (64,66)	 #(keep) 3-bit instruction parse phase (used by :^instruction)
+   
+  # (keep) Localized transient context bits which may utilize overlapping regions in some controlled cases
+  tmpCtx3        = (67,69) # Temporary 3-bit context storage
+  tmpCtx2        = (67,68) # Temporary 2-bit context storage
+  nregSlot		 = (67,68) # computed nreg/vnreg slot derived from upper 2-bits of 3-bit Ns8 or Os8 encoding
+  shift			 = (67,68) # memory address shift factor (0-3)
+  
+  # Ns8 and Os8 .new register decode assist
+  nregr			 = (69,73) # computed new register 5-bit index (raw reg-number)
+  nreg			 = (69,73) # computed new scalar register (attached) - R0..R31
+  nreg_			 = (69,73) # computed new scalar shadow register (attached) - R0_..R31_
+  vnreg			 = (69,73) # computed new vector register (attached) - V0..V31
+  vnreg_		 = (69,73) # computed new vector shadow register (attached) - V0_..V31_
+  
+  cond           = (74,74) # set if instruction is conditional with complex operand and ConditionReg will be set
+                           # (not used by packed instructions)
+                           
+  unused3        = (75,95)
+;
+
+# USR Register Fields
+@define LPCFG		"USR[8,2]"
+@define LPCFG_		"USR_[8,2]"
+@define OVF			"USR[0,1]"
+@define OVF_		    "USR_[0,1]"
+
+# Tokens
+
+define token instr (32)
+  iclass		= (28,31)  # instruction class (see page 118)
+  iclass3031	= (30,31)
+  iclass2931	= (29,31)
+  iclass2829	= (28,29)
+  iclass31		= (31,31)
+  iclass30		= (30,30)
+  iclass29		= (29,29)
+  iclass28		= (28,28)
+  
+  parse			= (14,15)  # packet/loop bits (01/10-not end of packet, 11-end of packet, 00-EE instruction)
+  parse_0       = (14,14)
+  parse_1       = (15,15)
+  
+  op2627		= (26,27)
+  op2527		= (25,27)
+  op2427		= (24,27)
+  op2426		= (24,26)
+  op2327		= (23,27)
+  op2326		= (23,26)
+  op2324		= (23,24)
+  op2227		= (22,27)
+  op2224		= (22,24)
+  op2223		= (22,23)
+  op2127		= (21,27)
+  op2125		= (21,25)
+  op2124		= (21,24)
+  op2123		= (21,23)
+  op2122		= (21,22)
+  op1920		= (19,20)
+  op1820		= (18,20)
+  op1827		= (18,27)
+  op1720		= (17,20)
+  op1620		= (16,20)
+  op1617		= (16,17)
+  op1213		= (12,13)
+  op1113		= (11,13)
+  op1112		= (11,12)
+  op1013		= (10,13)
+  op1012		= (10,12)
+  op1011		= (10,11)
+  op0913		= (9,13)
+  op0912		= (9,12)
+  op0911		= (9,11)
+  op0910		= (9,10)
+  op0813		= (8,13)
+  op0812		= (8,12)
+  op0810		= (8,10)
+  op0809		= (8,9)
+  op0613		= (6,13)
+  op0612		= (6,12)
+  op0607		= (6,7)
+  op0513		= (5,13)
+  op0512		= (5,12)
+  op0508		= (5,8)
+  op0507		= (5,7)
+  op0506		= (5,6)
+  op0412		= (4,12)
+  op0306		= (3,6)
+  op0304		= (3,4)
+  op0213		= (2,13)
+  op0207		= (2,7)
+  op0205		= (2,5)
+  op0204		= (2,4)
+  op0013		= (0,13)
+  op0007		= (0,7)
+  op0004		= (0,4)
+  op0002		= (0,2)
+  op0001		= (0,1)
+  
+  op27			= (27,27)
+  op26			= (26,26)
+  op25			= (25,25)
+  op24			= (24,24)
+  op23			= (23,23)
+  op22			= (22,22)
+  op21			= (21,21)
+  op20			= (20,20)
+  op19			= (19,19)
+  op18			= (18,18)
+  op16			= (16,16)
+  op13			= (13,13)
+  op12			= (12,12)
+  op11			= (11,11)
+  op10			= (10,10)
+  op8			= (8,8)
+  op7			= (7,7)
+  op6			= (6,6)
+  op5			= (5,5)
+  op4			= (4,4)
+  op3			= (3,3)
+  op2			= (2,2)
+  op1			= (1,1)
+  op0			= (0,0)
+  
+  s2526			= (25,26) signed
+  s2223 		= (22,23) signed
+  s22			= (22,22) signed
+  s2127			= (21,27) signed
+  s2122			= (21,22) signed
+  s21			= (21,21) signed
+  s2026			= (20,26) signed
+  s2021			= (20,21) signed
+  s1924			= (19,24) signed
+  s1624			= (16,24) signed
+  s1622			= (16,22) signed
+  s1620			= (16,20) signed
+  s1619			= (16,19) signed
+  s13			= (13,13) signed
+  s0813			= (8,13) signed
+  s0812			= (8,12) signed
+  s0810			= (8,10) signed
+  s0712			= (7,12) signed
+  s0513			= (5,13) signed
+  s0512			= (5,12) signed
+  s0508			= (5,8) signed
+  s0410			= (4,10) signed
+  s0308			= (3,8) signed
+  s0306			= (3,6) signed
+  
+  i2526			= (25,26)
+  i2427			= (24,27)
+  i2426			= (24,26)
+  i24           = (24,24)
+  i2223			= (22,23)
+  i2127			= (21,27)
+  i2123			= (21,23)
+  i2122			= (21,22)
+  i2025			= (20,25)
+  i2024			= (20,24)
+  i1923			= (19,23)
+  i1627			= (16,27)
+  i1620			= (16,20)
+  i1619			= (16,19)
+  i1617			= (16,17)
+  i13			= (13,13)
+  i1213			= (12,13)
+  i9			= (9,9)
+  i0813			= (8,13)
+  i0812			= (8,12)
+  i0811			= (8,11)
+  i0810			= (8,10)
+  i8			= (8,8)
+  i0712			= (7,12)
+  i0513			= (5,13)
+  i0512			= (5,12)
+  i0511			= (5,11)
+  i0510			= (5,10)
+  i0509			= (5,9)
+  i0507			= (5,7)
+  i0506			= (5,6)
+  i5			= (5,5)
+  i0409			= (4,9)
+  i0408			= (4,8)
+  i0307			= (3,7)
+  i0306			= (3,6)
+  i0304			= (3,4)
+  i3			= (3,3)
+  i0204			= (2,4)
+  i0113			= (1,13)
+  i0111			= (1,11)
+  i0107			= (1,7)
+  i1			= (1,1)
+  i0013			= (0,13)
+  i0010			= (0,10)
+  i0007			= (0,7)
+  i0006			= (0,6)
+  i0005			= (0,5)
+  i0004			= (0,4)
+  i0003			= (0,3)
+  i0001			= (0,1)
+  
+  pu2324		= (23,24)  # 8-bit predicate reg
+  pu2122		= (21,22)  # 8-bit predicate reg
+  pu2122_		= (21,22)  # 8-bit predicate reg (shadow)
+  pu2122name	= (21,22)  # 8-bit predicate reg (name)
+  pu1617		= (16,17)  # 8-bit predicate reg
+  pu1112		= (11,12)  # 8-bit predicate reg
+  pu1112_		= (11,12)  # 8-bit predicate reg (shadow)
+  pu1112name	= (11,12)  # 8-bit predicate reg (name)
+  pu0910		= (9,10)   # 8-bit predicate reg
+  pu0910_		= (9,10)   # 8-bit predicate reg (shadow)
+  pu0910name	= (9,10)   # 8-bit predicate reg (name)
+  pu0809		= (8,9)    # 8-bit predicate reg
+  pu0809_		= (8,9)    # 8-bit predicate reg (shadow)
+  pu0809name	= (8,9)    # 8-bit predicate reg (name)
+  pu0607		= (6,7)    # 8-bit predicate reg
+  pu0506		= (5,6)    # 8-bit predicate reg
+  pu0506_		= (5,6)    # 8-bit predicate reg (shadow)
+  pu0506name	= (5,6)    # 8-bit predicate reg (name)
+  pu0001		= (0,1)    # 8-bit predicate reg
+  pu0001_		= (0,1)    # 8-bit predicate reg (shadow)
+  pu0001name	= (0,1)    # 8-bit predicate reg (name)
+  
+  pu25			= (25,25)  # P0/P1
+  pu25_			= (25,25)  # P0.new/P1.new
+  pu25name		= (25,25)  # P0/P1 (name)
+  pu12			= (12,12)  # P0/P1
+  pu12_			= (12,12)  # P0.new/P1.new
+  pu12name		= (12,12)  # P0/P1 (name)
+
+  qv0001		= (0,1)    # HVX Vector predicate reg (Q0..Q3)
+  qv0506		= (5,6)    # HVX Vector predicate reg (Q0..Q3)
+  qv0809		= (8,9)    # HVX Vector predicate reg (Q0..Q3)
+  qv1112		= (11,12)  # HVX Vector predicate reg (Q0..Q3)
+  qv2223		= (22,23)  # HVX Vector predicate reg (Q0..Q3)
+  
+  mu			= (13,13)  # M0/M1 reg
+  
+  cs5			= (16,20)  # 32-bit control reg
+  css5			= (16,20)  # dual 32-bit control reg
+  
+  gs5			= (16,20)  # 32-bit guest reg
+  gss5			= (16,20)  # dual 32-bit guest reg
+  
+  rs5			= (16,20)  # 32-bit general reg
+  rs5H			= (16,20)  # 16-bit general reg (high halfword)
+  rs5L			= (16,20)  # 16-bit general reg (low halfword)
+  rss5			= (16,20)  # 64-bit general reg
+  rss5h			= (16,20)  # 32-bit high reg for rss5
+  
+  rxx5			= (16,20)  # 64-bit general reg
+  rxx5_			= (16,20)  # 64-bit general reg (shadow)
+  rx5			= (16,20)  # 32-bit general reg
+  rx5_			= (16,20)  # 32-bit general reg (shadow)
+  rf5			= (16,20)  # 32-bit general reg
+  rf5_			= (16,20)  # 32-bit general reg (shadow)
+  rx5H			= (16,20)  # 16-bit general reg (high halfword)
+  rx5H_			= (16,20)  # 16-bit general reg (high halfword, shadow)
+  rx5L			= (16,20)  # 16-bit general reg (low halfword)
+  rx5L_			= (16,20)  # 16-bit general reg (low halfword, shadow)
+  
+  
+  rtt5			= (8,12)   # 64-bit general reg
+  rtt5h			= (8,12)   # 32-bit high reg for rtt5
+  rt5			= (8,12)   # 32-bit general reg
+  rt5H			= (8,12)   # 16-bit general reg (high halfword)
+  rt5L			= (8,12)   # 16-bit general reg (low halfword)
+  
+  rd0812		= (8,12)   # 32-bit general reg
+  rd0812_		= (8,12)   # 32-bit general reg (shadow) 
+  rdd0812		= (8,12)   # 64-bit general reg
+  rdd0812_		= (8,12)   # 64-bit general reg (shadow) 
+  
+  rd5			= (0,4)    # 32-bit general reg
+  rd5_			= (0,4)    # 32-bit general reg (shadow)   
+  rdd5			= (0,4)	   # 64-bit general reg
+  rdd5_			= (0,4)	   # 64-bit general reg (shadow)
+  rdd5h			= (0,4)	   # hi (odd) 32-bit reg of a 64-bit general reg (use rd5 for lo/even)
+  rdd5h_		= (0,4)	   # hi (odd) 32-bit reg of a 64-bit general reg (use rd5 for lo/even) (shadow)
+  
+  rt1618		= (16,18)  # 32-bit general reg (r0..r7) 
+  
+  cd5			= (0,4)    # 32-bit control reg
+  cd5_			= (0,4)    # 32-bit control reg (shadow) 
+  cdd5			= (0,4)    # dual 32-bit control reg  
+  cdd5_			= (0,4)    # dual 32-bit control reg (shadow)
+
+  gd5			= (0,4)    # 32-bit guest reg  
+  gdd5			= (0,4)	   # dual 32-bit guest regs
+
+  ru5			= (0,4)	   # 32-bit control reg
+  ruu5			= (0,4)	   # 64-bit general reg
+  ru5H			= (0,4)    # 16-bit general reg (high halfword)
+  ru5L			= (0,4)    # 16-bit general reg (low halfword)
+ 
+  vdd5			= (0,4)    # HVX vector register pair
+  vdd5_			= (0,4)    # HVX vector register pair (shadow)
+    
+  vss5			= (0,4)    # HVX vector register pair
+    
+  vuu5			= (8,12)   # HVX vector register pair
+#  vuu5_			= (8,12)   # HVX vector register pair (shadow)
+ 
+  vvv5			= (16,20)   # HVX vector register pair
+#  vvv5_			= (16,20)   # HVX vector register pair (shadow) 
+  
+  vd5			= (0,4)    # HVX vector register
+  vd5_			= (0,4)    # HVX vector register (shadow)
+  
+  vs5			= (0,4)   # HVX vector register
+#  vs5_			= (0,4)   # HVX vector register (shadow)
+  
+  vu5			= (8,12)   # HVX vector register
+#  vu5_			= (8,12)   # HVX vector register (shadow)
+ 
+  vv5			= (16,20)   # HVX vector register
+#  vv5_			= (16,20)   # HVX vector register (shadow)
+  
+  vz5			= (19,23)   # HVX vector register
+#  vz5_			= (19,23)   # HVX vector register (shadow)
+ 
+  nreg_1618		= (16,18)  # Ns8 32-bit general register .new (3-bit encoded)
+  nreg_0810		= (8,10)   # Ns8 32-bit general register .new (3-bit encoded)
+  nreg_0002		= (0,2)    # Ns8 32-bit general register or Os8 vector .new (3-bit encoded)
+  nreg_0002lsb  = (0,0)    # lsb of 3-bit encoding for alternate .new register use
+   
+  sd6			= (0,5)    # supervisory register (assumed to be 32-bits each)
+  sdd6			= (0,5)    # supervisory register (assumed to be 64-bits each)
+  ss6			= (16,21)  # supervisory register (assumed to be 32-bits each)
+  sss6			= (16,21)  # supervisory register (assumed to be 64-bits each)
+  
+  # duplex/packed fields - PP mode
+
+  rs4p			= (16,19)   # 16-bit general reg
+  rt4p			= (8,11)    # 16-bit general reg
+  rd0811		= (8,11)    # 16-bit general reg
+  rd0811_		= (8,11)    # 16-bit general reg (shadow)
+  rd1619		= (16,19)   # 16-bit general reg
+  rd1619_		= (16,19)   # 16-bit general reg (shadow)
+   
+  # duplex/packed fields - left side (register attachments are somewhat assumed)
+  
+  rdd3l			= (16,18)  # 64-bit general reg
+  rdd3l_		= (16,18)  # 64-bit general reg (shadow)
+  rtt3l			= (16,18)  # 64-bit general reg
+  rd4l			= (16,19)  # 32-bit general reg
+  rd4l_			= (16,19)  # 32-bit general reg (shadow)
+  rt4l			= (16,19)  # 32-bit general reg
+  rs4l			= (20,23)  # 32-bit general reg 
+ 
+ # duplex/packed fields - right side (register attachments are somewhat assumed)
+  
+  rdd3r			= (0,2)  # 64-bit general reg
+  rdd3r_		= (0,2)  # 64-bit general reg
+  rtt3r			= (0,2)  # 64-bit general reg
+  rd4r			= (0,3)  # 32-bit general reg
+  rd4r_			= (0,3)  # 32-bit general reg (shadow)
+  rs4r			= (4,7)  # 32-bit general reg
+  rt4r			= (0,3)  # 32-bit general reg
+;
+
+#
+# Attach statements
+# 
+
+# 64-bit reg selector is 5-bits - the LS bit must always be 0 (even reg)
+
+attach variables [ rdd5 rxx5 rss5 rtt5 ruu5 rdd0812 ]
+	[ R1R0   _ R3R2   _ R5R4   _ R7R6   _ R9R8   _ R11R10 _ R13R12 _ R15R14 _
+	  R17R16 _ R19R18 _ R21R20 _ R23R22 _ R25R24 _ R27R26 _ R29R28 _ R31R30 _ ]; 
+
+attach variables [ rdd5_ rxx5_ rdd0812_ ]
+	[ R1R0_   _ R3R2_   _ R5R4_   _ R7R6_   _ R9R8_   _ R11R10_ _ R13R12_ _ R15R14_ _
+	  R17R16_ _ R19R18_ _ R21R20_ _ R23R22_ _ R25R24_ _ R27R26_ _ R29R28_ _ R31R30_ _]; 
+
+# Access to high word reg of specified long word rtt5, rt5 can be used for low word reg
+attach variables [ rtt5h rss5h ]
+	[ R1 _ R3 _ R5 _ R7 _ R9 _ R11 _ R13 _ R15 _ R17 _ R19 _ R21 _ R23 _ R25 _ R27 _ SP _ LR _ ];
+
+# Access to high word reg of specified long word rdd5, rd5 can be used for low word reg
+attach variables [ rdd5h ]
+	[ R1  _ R3  _ R5  _ R7  _ 
+	  R9  _ R11 _ R13 _ R15 _ 
+	  R17 _ R19 _ R21 _ R23 _ 
+	  R25 _ R27 _ SP  _ LR  _ ];
+attach variables [ rdd5h_ ]
+	[ R1.new  _ R3.new  _ R5.new  _ R7.new  _ 
+	  R9.new  _ R11.new _ R13.new _ R15.new _ 
+	  R17.new _ R19.new _ R21.new _ R23.new _ 
+	  R25.new _ R27.new _ SP.new  _ LR.new  _ ];
+ 
+attach variables [ rdd3l rtt3l rdd3r rtt3r ]
+	[ R1R0   R3R2   R5R4   R7R6   R17R16  R19R18  R21R20  R23R22 ]; 
+attach variables [ rdd3l_ rdd3r_ ]
+	[ R1R0_   R3R2_   R5R4_   R7R6_   R17R16_  R19R18_  R21R20_  R23R22_ ]; 
+
+attach variables [ rd5 rd0812 rs5 rt5 ru5 rx5 rf5 nreg ]
+	[ R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10 R11 R12 R13 R14 R15 
+	  R16 R17 R18 R19 R20 R21 R22 R23 R24 R25 R26 R27 R28 SP  FP  LR ];
+	  
+attach variables [ rt1618 ]
+	[ R0 R1 R2 R3 R4 R5 R6 R7 ];
+	
+attach variables [ rd5_ rd0812_ rx5_ rf5_ nreg_ ]
+	[ R0.new  R1.new  R2.new  R3.new  R4.new  R5.new  R6.new  R7.new  
+	  R8.new  R9.new  R10.new R11.new R12.new R13.new R14.new R15.new 
+	  R16.new R17.new R18.new R19.new R20.new R21.new R22.new R23.new 
+	  R24.new R25.new R26.new R27.new R28.new SP.new  FP.new  LR.new ];
+		
+attach variables [ rx5H rs5H rt5H ru5H ]
+	[ R0.H  R1.H  R2.H  R3.H  R4.H  R5.H  R6.H  R7.H  
+	  R8.H  R9.H  R10.H R11.H R12.H R13.H R14.H R15.H 
+	  R16.H R17.H R18.H R19.H R20.H R21.H R22.H R23.H 
+	  R24.H R25.H R26.H R27.H R28.H R29.H R30.H R31.H ];
+
+attach variables [ rx5H_ ]
+	[ R0.H_  R1.H_  R2.H_  R3.H_  R4.H_  R5.H_  R6.H_  R7.H_  
+	  R8.H_  R9.H_  R10.H_ R11.H_ R12.H_ R13.H_ R14.H_ R15.H_ 
+	  R16.H_ R17.H_ R18.H_ R19.H_ R20.H_ R21.H_ R22.H_ R23.H_ 
+	  R24.H_ R25.H_ R26.H_ R27.H_ R28.H_ R29.H_ R30.H_ R31.H_ ];
+	  
+attach variables [ rx5L rs5L rt5L ru5L ]
+	[ R0.L  R1.L  R2.L  R3.L  R4.L  R5.L  R6.L  R7.L  
+	  R8.L  R9.L  R10.L R11.L R12.L R13.L R14.L R15.L 
+	  R16.L R17.L R18.L R19.L R20.L R21.L R22.L R23.L 
+	  R24.L R25.L R26.L R27.L R28.L R29.L R30.L R31.L ];
+	  
+attach variables [ rx5L_ ]
+	[ R0.L_  R1.L_  R2.L_  R3.L_  R4.L_  R5.L_  R6.L_  R7.L_  
+	  R8.L_  R9.L_  R10.L_ R11.L_ R12.L_ R13.L_ R14.L_ R15.L_ 
+	  R16.L_ R17.L_ R18.L_ R19.L_ R20.L_ R21.L_ R22.L_ R23.L_ 
+	  R24.L_ R25.L_ R26.L_ R27.L_ R28.L_ R29.L_ R30.L_ R31.L_ ];
+  
+attach variables [ rs4p rt4p rs4l rt4l rs4r rd4l rd4r rt4r rd0811 rd1619 ]
+	[ R0  R1  R2  R3  R4  R5  R6  R7  R16 R17 R18 R19 R20 R21 R22 R23];
+attach variables [ rd4l_ rd4r_ rd0811_ rd1619_ ]
+	[ R0.new  R1.new  R2.new  R3.new  R4.new  R5.new  R6.new  R7.new  
+	  R16.new R17.new R18.new R19.new R20.new R21.new R22.new R23.new];
+	  
+attach variables [ cd5 cs5 ] 
+	[ SA0 LC0 SA1 LC1 P3P0 C5 M0 M1 
+	  USR PC UGP GP CS0 CS1 UPCYCLELO UPCYCLEHI 
+	  FRAMELIMIT FRAMEKEY PKTCOUNTLO PKTCOUNTHI C20 C21 C22 C23 
+	  C24 C25 C26 C27 C28 C29 UTIMERLO UTIMERHI ];
+
+attach variables [ cd5_ ] 
+	[ SA0_ LC0_ SA1_ LC1_ P3P0_ C5_ M0_ M1_ 
+	  USR_ PC UGP_ GP_ CS0_ CS1_ UPCYCLELO_ UPCYCLEHI_ 
+	  FRAMELIMIT_ FRAMEKEY_ PKTCOUNTLO_ PKTCOUNTHI_ C20_ C21_ C22_ C23_ 
+	  C24_ C25_ C26_ C27_ C28_ C29_ UTIMERLO_ UTIMERHI_ ];
+
+attach variables [ css5 cdd5 ] 
+	[ C1C0 _ C3C2 _ C5C4 _ C7C6 _ 
+	  C9C8 _ C11C10 _ C13C12 _ UPCYCLE _ 
+	  C17C16 _ PKTCOUNT _ C21C20 _ C23C22 _ 
+	  C25C24 _ C27C26 _ C29C28 _ UTIMER _ ];
+	  
+attach variables [ cdd5_ ] 
+	[ C1C0_ _ C3C2_ _ C5C4_ _ C7C6_ _ 
+	  C9C8_ _ C11C10_ _ C13C12_ _ UPCYCLE_ _ 
+	  C17C16_ _ PKTCOUNT_ _ C21C20_ _ C23C22_ _ 
+	  C25C24_ _ C27C26_ _ C29C28_ _ UTIMER_ _ ];
+  
+attach variables [ mu ] [ M0 M1 ];
+
+attach variables [ pu12 pu25 ] [ P0 P1 ];
+attach variables [ pu12_ pu25_ ] [ P0.new P1.new ];
+attach names [ pu12name pu25name ] [ "P0" "P1" ];
+
+attach variables [ pu0001 pu0506 pu0607 pu0809 pu1112 pu0910 pu1617 pu2122  pu2324 ] [ P0 P1 P2 P3 ];
+attach variables [ pu0001_ pu0506_ pu0809_ pu0910_ pu1112_ pu2122_ ] [ P0.new P1.new P2.new P3.new ];
+attach names [ pu0001name pu0506name pu0809name pu1112name pu0910name pu2122name ] [ "P0" "P1" "P2" "P3" ];
+
+attach variables [ qv0001 qv0506 qv0809 qv1112 qv2223 ] [ Q0	Q1	Q2	Q3 ];
+
+attach variables [ ss6 sd6 ]  # TODO: Shadow reg's not implemented for system regs
+	  [ S0  S1  S2  S3  S4  S5  S6  S7
+		S8  S9  S10 S11 S12 S13 S14 S15
+		S16 S17 S18 S19 S20 S21 S22 S23
+		S24 S25 S26 S27 S28 S29 S30 S31
+		S32 S33 S34 S35 S36 S37 S38 S39
+		S40 S41 S42 S43 S44 S45 S46 S47
+		S48 S49 S50 S51 S52 S53 S54 S55
+		S56 S57 S58 S59 S60 S61 S62 S63 ];
+
+attach variables [ sss6 sdd6 ] # TODO: Shadow reg's not implemented for system regs
+      [ S1S0   _ S3S2   _ S5S4   _ S7S6   _ 
+	    S9S8   _ S11S10 _ S13S12 _ S15S14 _ 
+	    S17S16 _ S19S18 _ S21S20 _ S23S22 _ 
+	    S25S24 _ S27S26 _ S29S28 _ S31S30 _ 
+	    S33S32 _ S35S34 _ S37S36 _ S39S38 _ 
+	    S41S40 _ S43S42 _ S45S44 _ S47S46 _ 
+	    S49S48 _ S51S50 _ S53S52 _ S55S54 _ 
+	    S57S56 _ S59S58 _ S61S60 _ S63S62 _ ];
+
+attach variables [ gss5 gdd5 ] [ # TODO: Shadow reg's not implemented for guest regs
+		G1G0   _ G3G2   _ G5G4   _ G7G6   _ 
+		G9G8   _ G11G10 _ G13G12 _ G15G14 _
+		G17G16 _ G19G18 _ G21G20 _ G23G22 _ 
+		G25G24 _ G27G26 _ G29G28 _ G31G30 _ ]; 
+		
+attach variables [ gs5 gd5 ] [ # TODO: Shadow reg's not implemented for guest regs
+		G0  G1  G2  G3  G4  G5  G6  G7
+		G8  G9  G10 G11 G12 G13 G14 G15
+		G16 G17 G18 G19 G20 G21 G22 G23
+		G24 G25 G26 G27 G28 G29 G30 G31 ];
+
+#
+# HVX vector registers
+#
+
+# NOTE: HVX Vector register access size and signedness are generally indicated by a 
+# suffix in assembly source, e.g., .b .ub .h .uh .w.uw
+# We currently do not name lane-access registers and rely on lane access sizes as 
+# defined by the pspec.
+
+# double-vector reg selector is 5-bits - the LS bit must always be 0 (even reg)
+
+attach variables [ vdd5 vss5 vuu5 vvv5 ]	
+	[	V1V0	_	V3V2	_	V5V4	_	V7V6	_	V9V8	_	V11V10	_	V13V12	_	V15V14	_
+		V17V16	_	V19V18	_	V21V20	_	V23V22	_	V25V24	_	V27V26	_	V29V28	_	V31V30	_ ];
+		
+attach variables [ vd5 vs5 vu5 vv5 vz5 vnreg ]	
+	[	V0		V1		V2		V3		V4		V5		V6		V7
+		V8		V9		V10		V11		V12		V13		V14		V15
+		V16		V17		V18		V19		V20		V21		V22		V23
+		V24		V25		V26		V27		V28		V29		V30		V31 ];
+		
+attach variables [ vdd5_ ] # TODO: Removed vuu5_ vvv5_	
+	[	V1V0_	_	V3V2_	_	V5V4_	_	V7V6_	_	V9V8_	_	V11V10_	_	V13V12_	_	V15V14_	_
+		V17V16_	_	V19V18_	_	V21V20_	_	V23V22_	_	V25V24_	_	V27V26_	_	V29V28_	_	V31V30_	_ ];
+		
+attach variables [ vd5_ vnreg_ ]	# TODO: Removed vs5_ vu5_ vv5_ vz5_
+	[	V0.new	V1.new	V2.new	V3.new	V4.new	V5.new	V6.new	V7.new
+		V8.new	V9.new	V10.new	V11.new	V12.new	V13.new	V14.new	V15.new
+		V16.new	V17.new	V18.new	V19.new	V20.new	V21.new	V22.new	V23.new
+		V24.new	V25.new	V26.new	V27.new	V28.new	V29.new	V30.new	V31.new ];
+
+#
+# Ns8 .new scalar register support
+#
+
+#  The assigned register must be written to the nreg slot which corresponds to
+#  the packet slot minus the xreg value.  The xreg value is incremented
+#  anytime an immext instruction is encountered within the packet.
+#  Assumptions:
+#    1. Packet contains 4 instruction slots
+#    2. Use of Rx.new will always be the last instruction within a packet
+#    3. At most 2 immext instructions may exist in packet
+#    4. Two adjacent immext instructions not allowed
+#	 5. left/right EE instructions are of no concern (they are always last in packet)
+#    6. 64-bit scalar register destination is not allowed but we do not prevent it
+#    7. New value store context may be shared for scalar and vector register use since
+#       only one or the other will be forwarded by any one instruction.
+
+# Set appropriate nreg based upon packetOffset less number of preceeding immext ops
+# Cases have been optimized based upon valid placement of immext within packet 
+
+# Set appropriate new value store index 'nreg#' using default destination register field rd5_ 
+# This new value store subconstructor can be shared with vd5_ and vdd5_, which all use the 
+# same token bit range (00,04).
+SetNRegRd5:	is packetOffset=0 & rd5_ 			[ nreg0=rd5_; ] { }
+SetNRegRd5: is packetOffset=1 & rd5_			[ nreg1=rd5_; ] { }
+SetNRegRd5: is packetOffset=1 & xreg=1 & rd5_  	[ nreg0=rd5_; ] { }
+SetNRegRd5: is packetOffset=2 & rd5_  			[ nreg2=rd5_; ] { }
+SetNRegRd5: is packetOffset=2 & xreg=1 & rd5_  	[ nreg1=rd5_; ] { }
+SetNRegRd5: is packetOffset=3 { } # no need to retain new value register for last instruction
+
+# Set appropriate nreg using rx5_
+SetNRegRx5:	is packetOffset=0 & rx5_ 			[ nreg0=rx5_; ] { }
+SetNRegRx5: is packetOffset=1 & rx5_			[ nreg1=rx5_; ] { }
+SetNRegRx5: is packetOffset=1 & xreg=1 & rx5_  	[ nreg0=rx5_; ] { }
+SetNRegRx5: is packetOffset=2 & rx5_  			[ nreg2=rx5_; ] { }
+SetNRegRx5: is packetOffset=2 & xreg=1 & rx5_  	[ nreg1=rx5_; ] { }
+SetNRegRx5: is packetOffset=3 { } # no need to retain new value register for last instruction
+
+# Set appropriate nreg using rd0812_
+SetNRegRd0812: is packetOffset=0 & rd0812_ 			[ nreg0=rd0812_; ] { }
+SetNRegRd0812: is packetOffset=1 & rd0812_			[ nreg1=rd0812_; ] { }
+SetNRegRd0812: is packetOffset=1 & xreg=1 & rd0812_ [ nreg0=rd0812_; ] { }
+SetNRegRd0812: is packetOffset=2 & rd0812_  		[ nreg2=rd0812_; ] { }
+SetNRegRd0812: is packetOffset=2 & xreg=1 & rd0812_ [ nreg1=rd0812_; ] { }
+SetNRegRd0812: is packetOffset=3 { } # no need to retain new value register for last instruction
+
+# TODO: If needed, add SetNReg for:  Re32 Rx32 Rd16 Re16 Rx16 Ry16 Rd8
+
+# Compute new value store index context 'nregr' based upon 'nregSlot' and appropriate 'nreg#' context.
+# This subcontructor may be shared by both Ns8 (new scalar reg) and Os8 (new vector reg) decode since
+# they share the underlying new value index 'nreg#' context storage.
+# NOTE: The nregSlot must preceed the current packetOffset
+GetNReg: is nregSlot=0 & (packetOffset0=1 | packetOffset1=1) & nreg0	[ nregr = nreg0; ] { }
+GetNReg: is nregSlot=1 & packetOffset1=1 & nreg1	                    [ nregr = nreg1; ] { }
+GetNReg: is nregSlot=2 & packetOffset=3 & nreg2	                        [ nregr = nreg2; ] { }
+
+# Decode 3-bit encoded Ns8 .new register, setting nregSlot (lsb of 3-bit nreg field ignored) 
+# and return appropriate nreg (R0.new - R31.new).  The nregSlot must refer to a previous 
+# instruction slot within the same execute packet.
+#
+# NOTE: Since the non-shadow register location is returned (while .new is displayed) is is assumed
+# that the location will not be read until the <<COMMIT>> phase or later
+
+Nreg1618: nreg_	is GetNReg & nreg_ & nreg & nreg_1618 [ nregSlot = packetOffset - xreg - (nreg_1618 >> 1); ] { export nreg; }	
+Nreg0810: nreg_	is GetNReg & nreg_ & nreg & nreg_0810 [ nregSlot = packetOffset - xreg - (nreg_0810 >> 1); ] { export nreg; }	
+Nreg0002: nreg_	is GetNReg & nreg_ & nreg & nreg_0002 [ nregSlot = packetOffset - xreg - (nreg_0002 >> 1); ] { export nreg; }	
+
+#
+# HVX Os8 .new vector register support
+# Employs the same strategy as the Ns8 above with some context fields sharing use for both Os8 and Ns8
+#
+
+# NOTE: More investigation is needed for the correct 3-bit Os8 encoding.  Some information suggests
+# that bits identify the specific pipeline which produced the vector result and is not based on 
+# packetOffset as originally believed.  
+
+# Set appropriate new value index 'nregr' using vd5_ or vdd5_ (same as rd5_ field)
+SetVNRegVd5: is SetNRegRd5 { }
+
+# Compute Os8 new value store index 'nregr' based upon 'nregSlot' when Os8 lsb is '0'.
+# NOTE: We can share GetNReg use with Ns8 decode for this case.
+GetVNReg: is GetNReg { }
+
+# Compute alternate Os8 new value store index 'nregr' based upon 'nregSlot' when Os8 lsb is '1'.
+# This will produce a new value store index that corresponds to the other vector register within 
+# the same pair (e.g., if vnreg# indicates V0 index, V1 index will be use by inverting lsb for 'nregr')
+# NOTE: The nregSlot must preceed the current packetOffset
+GetVNAltReg: is nregSlot=0 & (packetOffset0=1 | packetOffset1=1) & nreg0	[ nregr = nreg0 ^ 1; ] { }
+GetVNAltReg: is nregSlot=1 & packetOffset1=1 & nreg1	                    [ nregr = nreg1 ^ 1; ] { }
+GetVNAltReg: is nregSlot=2 & packetOffset=3 & nreg2	                        [ nregr = nreg2 ^ 1; ] { }
+
+# Decode 3-bit encoded Os8 .new vector register, setting nregSlot (lsb of 3-bit nreg field ignored) 
+# and return appropriate vnreg (V0.new - V31.new).  The nregSlot must refer to a previous 
+# instruction slot within the same execute packet.
+#
+# NOTE: Since the non-shadow register location is returned (while .new is displayed) is is assumed
+# that the location will not be read until the <<COMMIT>> phase or later
+
+# The lsb of 3-bit Os8 field indicates an alternate register.  It appears to have two cases:
+# 1) register pair: if '1' .new corresponds to the other register in the aligned pair (GetVNAltReg)
+# 2) dual independent registers: Vx(0), Vy(1) use case (not yet supported)
+
+VNreg0002: vnreg_	is GetVNReg & vnreg_ & vnreg & nreg_0002lsb=0 & nreg_0002 [ nregSlot = packetOffset - xreg - (nreg_0002 >> 1); ] { export vnreg; }	
+VNreg0002: vnreg_	is GetVNAltReg & vnreg_ & vnreg & nreg_0002lsb=1 & nreg_0002 [ nregSlot = packetOffset - xreg - (nreg_0002 >> 1); ] { export vnreg; }	
+
+#
+# General Instruction Set parse and execute packet and crossbuild constructors
+#
+@include "hexagon.sinc"
+
+#
+# Packed/Duplex 'EE' Instruction Set
+#	29..31 Instruction Class
+#   14..15 PP parse bits
+#   00..12 Right sub-instruction (Slot-0)
+#	16..28 Left sub-instruction (Slot-1)
+#
+@include "hexagon_left.sinc"
+@include "hexagon_right.sinc"
+
+#
+# Floating Point Instruction Set
+#   
+@include "hexagon_float.sinc"
+
+#
+# Vector Instruction Set (HVX extension)
+#       
+@include "hexagon_hvx.sinc"
+

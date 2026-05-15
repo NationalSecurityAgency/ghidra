@@ -61,6 +61,18 @@ public class GoParamStorageAllocator {
 				lang.getLanguageDescription().getSize());
 	}
 
+	public GoParamStorageAllocator(GoRegisterInfo callspecInfo, Program program) {
+		Language lang = program.getLanguage();
+
+		this.callspecInfo = callspecInfo;
+		this.stackOffset = callspecInfo.getStackInitialOffset();
+		this.regs = List.of(callspecInfo.getIntRegisters(), callspecInfo.getFloatRegisters());
+		this.isBigEndian = lang.isBigEndian();
+		this.archDescription =
+			"%s_%d".formatted(lang.getLanguageDescription().getProcessor().toString(),
+				lang.getLanguageDescription().getSize());
+	}
+
 	private GoParamStorageAllocator(List<List<Register>> regs, int[] nextReg,
 			GoRegisterInfo callspecInfo, long stackOffset, boolean isBigEndian,
 			String archDescription) {

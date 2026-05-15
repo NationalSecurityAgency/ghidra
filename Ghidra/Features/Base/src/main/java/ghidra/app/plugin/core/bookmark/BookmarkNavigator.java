@@ -43,7 +43,6 @@ public class BookmarkNavigator {
 	final static Icon WARNING_ICON = new GIcon("icon.plugin.bookmark.type.warning");
 	final static Icon ERROR_ICON = new GIcon("icon.plugin.bookmark.type.error");
 	final static Icon ANALYSIS_ICON = new GIcon("icon.plugin.bookmark.type.analysis");
-	final static Icon DEFAULT_ICON = new GIcon("icon.plugin.bookmark.type.default");
 
 	final static int NOTE_PRIORITY = MarkerService.BOOKMARK_PRIORITY;
 	final static int ERROR_PRIORITY = MarkerService.BOOKMARK_PRIORITY + BIG_CHANGE;
@@ -81,14 +80,6 @@ public class BookmarkNavigator {
 		}
 
 		Icon icon = bmt.getIcon();
-		if (icon == null) {
-			if (bookmarkManager.isDefinedType(type)) {
-				// This implies the client defined a type, but did not pass a valid icon.  In this
-				// case we will show a special icon.
-				icon = DEFAULT_ICON;
-			}
-		}
-
 		Color color = bmt.getMarkerColor();
 		if (color == null) {
 			color = DEFAULT_COLOR;

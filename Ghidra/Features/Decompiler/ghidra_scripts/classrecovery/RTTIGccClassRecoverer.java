@@ -1623,8 +1623,14 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			internalString = "internal_";
 		}
 
-		symbolTable.createLabel(vtable.getVfunctionTop(),
-			internalString + constructionString + VFTABLE_LABEL, classNamespace,
+		// check for non-ideal primary symbol that another analyzer may have created and remove it 
+		// so it can be replaced with a better one
+		Symbol primaryVftableSymbol = symbolTable.getPrimarySymbol(vtable.getVfunctionTop());
+		if (primaryVftableSymbol != null && primaryVftableSymbol.getName().startsWith("vfTable_")) {
+			primaryVftableSymbol.delete();
+		}
+		String vftableName = internalString + constructionString + VFTABLE_LABEL;
+		symbolTable.createLabel(vtable.getVfunctionTop(), vftableName, classNamespace,
 			SourceType.ANALYSIS);
 
 	}
@@ -3283,7 +3289,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		assignConstructorsAndDestructorsUsingExistingNameNew(recoveredClasses);
 
 		// find gcc destructors in top of vftables
-		findVftableDestructors(recoveredClasses);
+		findVftableDestructors();
 
 		// figure out which are inlined and put on separate list to be processed later
 		separateInlinedConstructorDestructors(recoveredClasses);
@@ -3365,8 +3371,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 	}
 
-	private void findVftableDestructors(List<RecoveredClass> recoveredClasses)
-			throws CancelledException {
+	private void findVftableDestructors() throws CancelledException {
 
 		for (RecoveredClass recoveredClass : recoveredClasses) {
 
@@ -3384,82 +3389,129 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 					continue;
 				}
 
-				Function firstVfunction = virtualFunctions.get(0);
-				Function secondVfunction = virtualFunctions.get(1);
-
-				Address callingAddressOfFirstVfunction =
-					getCallingAddress(secondVfunction, firstVfunction);
-				if (callingAddressOfFirstVfunction == null) {
+				Function deletingDestructor = getDeletingDestructor(virtualFunctions);
+				if (deletingDestructor == null) {
 					continue;
 				}
 
-				// TODO: eventually work into new op delete discovery
-				Address callingAddrOfOpDelete =
-					getCallingAddress(secondVfunction, "operator.delete");
-				if (callingAddrOfOpDelete == null) {
+				// find case where deleting destructor only calls operator.delete and the 
+				// destructor is just a RET instruction
+				if (getFunctionCallMap(deletingDestructor, true).keySet().size() == 1) {
+					for (Function vfunction : virtualFunctions) {
+						monitor.checkCancelled();
+
+						if (hasOnlyReturnInstruction(vfunction)) {
+							recoveredClass.addDestructor(vfunction);
+							recoveredClass.addDeletingDestructor(deletingDestructor);
+							break;
+						}
+					}
 					continue;
 				}
 
-				// if firsrVfunction is called before op delete then valid set of
-				// destructor/deleting destructor
-				if (callingAddrOfOpDelete.getOffset() > callingAddressOfFirstVfunction
-						.getOffset()) {
-					recoveredClass.addDestructor(firstVfunction);
-					recoveredClass.addDeletingDestructor(secondVfunction);
+				// find case where deleting destructor calls destructor then operator.delete
+				for (Function vfunction : virtualFunctions) {
+					monitor.checkCancelled();
+
+					// skip deleting destructor - won't call itself
+					if (vfunction.equals(deletingDestructor)) {
+						continue;
+					}
+
+					Address callingAddessOfDestructor =
+						getCallingAddress(deletingDestructor, vfunction);
+					if (callingAddessOfDestructor != null) {
+						Address callingAddrOfOpDelete =
+							getCallingAddress(deletingDestructor, "operator.delete");
+
+						if (callingAddrOfOpDelete.compareTo(callingAddessOfDestructor) > 0) {
+							recoveredClass.addDestructor(vfunction);
+							recoveredClass.addDeletingDestructor(deletingDestructor);
+						}
+
+					}
 				}
 
 			}
 		}
+	}
+
+	private boolean hasOnlyReturnInstruction(Function function) {
+
+		InstructionIterator instructions =
+			program.getListing().getInstructions(function.getBody(), true);
+
+		// get the first instruction
+		if (instructions.hasNext()) {
+			Instruction instruction = instructions.next();
+			if (instruction.getFlowType().isTerminal() && !instructions.hasNext()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private Function getDeletingDestructor(List<Function> functions) throws CancelledException {
+
+		for (Function function : functions) {
+			monitor.checkCancelled();
+
+			Map<Address, Function> map = getFunctionCallMap(function, true);
+
+			for (Address address : map.keySet()) {
+				monitor.checkCancelled();
+
+				Function calledFunction = map.get(address);
+				if (calledFunction == null) {
+					continue;
+				}
+
+				if (calledFunction.getName().equals("operator.delete")) {
+					return function;
+				}
+			}
+		}
+
+		return null;
 	}
 
 	private Address getCallingAddress(Function function, Function expectedCalledFunction)
 			throws CancelledException {
 
-		InstructionIterator instructions =
-			function.getProgram().getListing().getInstructions(function.getBody(), true);
+		Map<Address, Function> map = getFunctionCallMap(function, true);//should this be false?
 
-		while (instructions.hasNext()) {
+		for (Address address : map.keySet()) {
 			monitor.checkCancelled();
-			Instruction instruction = instructions.next();
-			if (instruction.getFlowType().isCall()) {
 
-				Function calledFunction =
-					extendedFlatAPI.getReferencedFunction(instruction.getMinAddress(), false);
+			Function calledFunction = map.get(address);
+			if (calledFunction == null) {
+				continue;
+			}
 
-				if (calledFunction == null) {
-					continue;
-				}
-				if (calledFunction.equals(expectedCalledFunction)) {
-					return instruction.getAddress();
-				}
+			if (calledFunction.equals(expectedCalledFunction)) {
+				return address;
 			}
 		}
 		return null;
-
 	}
 
-	private Address getCallingAddress(Function function, String expectedCalledFunctionName)
-			throws CancelledException {
+	private Address getCallingAddress(Function function, String name) throws CancelledException {
 
-		InstructionIterator instructions =
-			function.getProgram().getListing().getInstructions(function.getBody(), true);
+		Map<Address, Function> map = getFunctionCallMap(function, false);
 
-		while (instructions.hasNext()) {
+		for (Address address : map.keySet()) {
 			monitor.checkCancelled();
-			Instruction instruction = instructions.next();
-			if (instruction.getFlowType().isCall()) {
 
-				Function calledFunction =
-					extendedFlatAPI.getReferencedFunction(instruction.getMinAddress(), false);
+			Function calledFunction = map.get(address);
+			if (calledFunction == null) {
+				continue;
+			}
 
-				if (calledFunction != null &&
-					calledFunction.getName().equals(expectedCalledFunctionName)) {
-					return instruction.getAddress();
-				}
+			if (calledFunction.getName().equals(name)) {
+				return address;
 			}
 		}
 		return null;
-
 	}
 
 	private void removeFromIndeterminateLists(List<RecoveredClass> recoveredClasses,

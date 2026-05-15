@@ -328,10 +328,11 @@ public class MenuData {
 	}
 
 	/**
-	 * Removes any single '&' characters used to set the mnemonic from the menu item name.  The
-	 * '&' character can be included in the name by escaping with another '&' character.
+	 * Removes any single {@code '&'} characters used to set the mnemonic from the menu item name.  
+	 * The {@code '&'} character can be included in the name by escaping with another {@code '&'} 
+	 * character.
 	 * @param menuItemName the name that may include mnemonic information
-	 * @return the menu item name with single '&' characters removed.
+	 * @return the menu item name with single {@code '&'} characters removed.
 	 */
 	public static String stripMnemonicAmp(String menuItemName) {
 		if (menuItemName.indexOf('&') < 0) {

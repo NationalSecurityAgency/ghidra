@@ -17,6 +17,8 @@ package ghidra.features.bsim.gui.filters;
 
 import java.sql.SQLException;
 
+import org.postgresql.core.Utils;
+
 import ghidra.features.bsim.query.client.IDSQLResolution;
 import ghidra.features.bsim.query.client.SQLEffects;
 import ghidra.features.bsim.query.description.ExecutableRecord;
@@ -38,7 +40,9 @@ public class NotExecutableNameBSimFilterType extends BSimFilterType {
 			throws SQLException {
 		effect.setExeTable();
 		StringBuilder buf = new StringBuilder();
-		buf.append("exetable.name_exec != '").append(atom.value).append('\'');
+		buf.append("exetable.name_exec != '");
+		Utils.escapeLiteral(buf, atom.value, true);
+		buf.append('\'');
 		effect.addWhere(this, buf.toString());
 	}
 

@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.debug.gui.breakpoint;
 
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import db.Transaction;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
@@ -93,15 +92,6 @@ public class BreakpointLocationRow {
 
 	public String getTraceName() {
 		return loc.getTrace().getName();
-	}
-
-	public String getThreads() {
-		long snap = getSnap();
-		return loc.getThreads(snap)
-				.stream()
-				.map(t -> t.getName(snap))
-				.collect(Collectors.toSet())
-				.toString();
 	}
 
 	public String getComment() {

@@ -1853,6 +1853,10 @@ public class GTree extends JPanel implements BusyListener {
 				}
 
 				GTree gTree = getTree(context);
+				if (gTree.isFiltered()) {
+					return false;
+				}
+
 				List<GTreeNode> nodes = gTree.getSelectedNodes();
 				return !nodes.isEmpty();
 			}
@@ -1886,6 +1890,10 @@ public class GTree extends JPanel implements BusyListener {
 				}
 
 				GTree gTree = getTree(context);
+				if (gTree.isFiltered()) {
+					return false;
+				}
+
 				List<GTreeNode> nodes = gTree.getSelectedNodes();
 				return !nodes.isEmpty();
 			}
@@ -1908,6 +1916,17 @@ public class GTree extends JPanel implements BusyListener {
 				GTreeNode root = gTree.getViewRoot();
 				gTree.collapseAll(root);
 			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+
+				if (!super.isEnabledForContext(context)) {
+					return false;
+				}
+
+				GTree gTree = getTree(context);
+				return !gTree.isFiltered();
+			}
 		};
 		//@formatter:off
 		collapseTreeAction.setPopupMenuData(new MenuData(
@@ -1924,6 +1943,17 @@ public class GTree extends JPanel implements BusyListener {
 			public void actionPerformed(ActionContext context) {
 				GTree gTree = getTree(context);
 				gTree.expandAll();
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+
+				if (!super.isEnabledForContext(context)) {
+					return false;
+				}
+
+				GTree gTree = getTree(context);
+				return !gTree.isFiltered();
 			}
 		};
 		//@formatter:off
@@ -1978,22 +2008,43 @@ public class GTree extends JPanel implements BusyListener {
 			)
 		);
 		activateFilterAction.setKeyBindingData(new KeyBindingData("Control F"));
-		activateFilterAction.setHelpLocation(new HelpLocation("Trees", "Toggle_Filter"));
-		
-		GTreeAction toggleFilterAction = new GTreeAction("Table/Tree Toggle Filter", owner) {
+		activateFilterAction.setHelpLocation(new HelpLocation("Trees", "Activate_Filter"));
+		//@formatter:on
+
+		GTreeAction hideFilterAction = new GTreeAction("Table/Tree Hide Filter", owner) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				GTree gTree = getTree(context);
-				gTree.filterProvider.toggleVisibility();				
+				gTree.filterProvider.close();
+			}
+
+			@Override
+			public boolean isValidComponentContext(ActionContext context) {
+				/*
+				 			Subtle Code Alert!
+				 	We use this method to signal that this action is only to be included in the key
+				 	binding processing when the filter is showing.  This is different than normal
+				 	docking actions in that normal actions are always valid, just enabled/disabled.
+				 	Returning false here prevents this action from interfering with key bindings 
+				 	further up the processing chain when the filter is not showing.
+				 */
+				if (!super.isValidComponentContext(context)) {
+					return false;
+				}
+
+				GTree gTree = getTree(context);
+				return gTree.filterProvider.isShowing();
 			}
 		};
-		//@formatter:on
-		toggleFilterAction.setPopupMenuData(new MenuData(
-			new String[] { "Toggle Filter" },
+
+		//@formatter:off
+		hideFilterAction.setPopupMenuData(new MenuData(
+			new String[] { "Hide Filter" },
 			null,
 			actionMenuGroup, NO_MNEMONIC,
 			Integer.toString(subGroupIndex++)));
-		toggleFilterAction.setHelpLocation(new HelpLocation("Trees", "Toggle_Filter"));
+		hideFilterAction.setHelpLocation(new HelpLocation("Trees", "Hide_Filter"));
+		//@formatter:on
 
 		// these actions are self-explanatory and do need help
 		collapseAction.markHelpUnnecessary();
@@ -2007,7 +2058,7 @@ public class GTree extends JPanel implements BusyListener {
 		toolActions.addGlobalAction(expandTreeAction);
 		toolActions.addGlobalAction(copyFormattedAction);
 		toolActions.addGlobalAction(activateFilterAction);
-		toolActions.addGlobalAction(toggleFilterAction);
+		toolActions.addGlobalAction(hideFilterAction);
 	}
 
 	private static String generateFilterPreferenceKey() {

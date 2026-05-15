@@ -168,8 +168,10 @@ public class ClassSearcher {
 				"Cannot call the getClasses() while the ClassSearcher is searching!");
 		}
 
-		String suffix = getExtensionPointSuffix(ancestorClass.getName());
+		String className = ancestorClass.getName();
+		String suffix = getExtensionPointSuffix(className);
 		if (suffix == null) {
+			Msg.error(ClassSearcher.class, "Class is not a known extension point: " + className);
 			return List.of();
 		}
 
@@ -414,8 +416,11 @@ public class ClassSearcher {
 		for (String searchPath : gatherSearchPaths()) {
 			String lcSearchPath = searchPath.toLowerCase();
 			File searchFile = new File(searchPath);
-			if ((lcSearchPath.endsWith(".jar") || lcSearchPath.endsWith(".zip")) &&
-				searchFile.exists()) {
+			if (!searchFile.exists()) {
+				continue;
+			}
+
+			if (lcSearchPath.endsWith(".jar") || lcSearchPath.endsWith(".zip")) {
 
 				if (ClassJar.ignoreJar(searchPath)) {
 					log.trace("Ignoring jar file: {}", searchPath);
@@ -423,11 +428,11 @@ public class ClassSearcher {
 				}
 
 				log.trace("Searching jar file: {}", searchPath);
-				classJars.add(new ClassJar(searchPath, monitor));
+				classJars.add(new ClassJar(searchFile, monitor));
 			}
 			else if (searchFile.isDirectory()) {
 				log.trace("Searching classpath directory: {}", searchPath);
-				classDirs.add(new ClassDir(searchPath, monitor));
+				classDirs.add(new ClassDir(searchFile, monitor));
 			}
 		}
 
@@ -533,8 +538,8 @@ public class ClassSearcher {
 			for (String className : classNames) {
 				String epName = getExtensionPointSuffix(className);
 				if (epName != null) {
-					extensionClasses
-							.add(new ClassFileInfo(appRoot.getAbsolutePath(), className, epName));
+					String path = appRoot.getAbsolutePath();
+					extensionClasses.add(new ClassFileInfo(path, className, epName, ""));
 				}
 			}
 			return extensionClasses.stream()

@@ -15,24 +15,32 @@
  */
 package ghidra.app.util.bin.format.objc;
 
-import java.io.IOException;
+import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
 
+import org.xml.sax.SAXException;
+
+import generic.jar.ResourceFile;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.cmd.register.SetRegisterCmd;
+import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.objc.objc2.Objc2Constants;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.framework.Application;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.cmd.Command;
+import ghidra.framework.store.LockException;
+import ghidra.program.database.SpecExtension;
+import ghidra.program.database.SpecExtension.DocInfo;
 import ghidra.program.database.symbol.ClassSymbol;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
-import ghidra.program.model.lang.Processor;
-import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
@@ -43,8 +51,33 @@ import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
+import ghidra.xml.XmlParseException;
 
+/**
+ * Objective-C utilities
+ */
 public final class ObjcUtils {
+
+	/**
+	 * The Objective-C compiler name, used by {@link Program#setCompiler(String)}
+	 */
+	public static final String OBJC_COMPILER = "objc";
+
+	/**
+	 * The Objective-C {@code _objc_msgSend} stub calling convention name (added with processor
+	 * extension)
+	 */
+	public static final String OBJC_MSGSEND_STUBS_CC = "__objc_msgSend_stub";
+
+	/**
+	 * String that prefixes Objective-C class symbols
+	 */
+	public static final String OBJC_CLASS_SYMBOL_PREFIX = "_OBJC_CLASS_$_";
+
+	/**
+	 * String that prefixes Objective-C meta-class symbols
+	 */
+	public static final String OBJC_META_CLASS_SYMBOL_PREFIX = "_OBJC_METACLASS_$_";
 
 	/**
 	 * {@return the next read index value}
@@ -369,5 +402,100 @@ public final class ObjcUtils {
 		return Arrays.stream(program.getMemory().getBlocks())
 				.filter(b -> b.getName().equals(section))
 				.toList();
+	}
+
+	/**
+	 * {@return true if the given {@link Program} is an Objective-C program; otherwise, false}
+	 * <p>
+	 * NOTE: This method only identifies Mach-O Objective-C programs. ELF Objective-C programs
+	 * produced with GCC use different section names.
+	 * 
+	 * @param program The {@link Program} to check
+	 */
+	public static boolean isObjc(Program program) {
+		return isObjc(
+			Arrays.stream(program.getMemory().getBlocks()).map(MemoryBlock::getName).toList());
+	}
+
+	/**
+	 * {@return true if the given {@link List} of section names contains an Objective-C section 
+	 * name; otherwise, false}
+	 * <p>
+	 * NOTE: This method only identifies Mach-O Objective-C programs. ELF Objective-C programs
+	 * produced with GCC use different section names.
+	 * 
+	 * @param sectionNames The {@link List} of section names to check
+	 */
+	public static boolean isObjc(List<String> sectionNames) {
+		return sectionNames.stream().anyMatch(n -> n.startsWith(Objc2Constants.OBJC2_PREFIX));
+	}
+
+	/**
+	 * {@return the given name with any Objective-C class prefixes stripped off}
+	 * 
+	 * @param name The name to strip
+	 * @see #OBJC_CLASS_SYMBOL_PREFIX
+	 * @see #OBJC_META_CLASS_SYMBOL_PREFIX
+	 */
+	public static String stripClassPrefix(String name) {
+		if (name.startsWith(ObjcUtils.OBJC_CLASS_SYMBOL_PREFIX)) {
+			return name.substring(ObjcUtils.OBJC_CLASS_SYMBOL_PREFIX.length());
+		}
+		if (name.startsWith(ObjcUtils.OBJC_META_CLASS_SYMBOL_PREFIX)) {
+			return name.substring(ObjcUtils.OBJC_META_CLASS_SYMBOL_PREFIX.length());
+		}
+		return name;
+	}
+
+	/**
+	 * Adds Objective-C processor extensions to the {@link Program}, which include:
+	 * <ul>
+	 * <li>A special calling convention used by objc_msgSend stubs</li>
+	 * <li>Call fixups to clear out a lot of Objective-C Automatic Reference Counting (ARC) clutter</li>
+	 * </ul>
+	 * 
+	 * @param program The {@link Program} to add the extensions to
+	 * @param monitor A cancelable task monitor
+	 * @return The number of extensions successfully added
+	 * @throws IOException if an IO-related error occurred
+	 * @see <a href="https://doi.org/10.1109/STATIC66697.2025.00005">Heros in Action: Analyzing Objective-C Binaries through Decompilation and IFDS</a>
+	 * @see <a href="https://youtu.be/ojXI7Gio8Pg?si=zcAaZ2KGeBFcAabn">RE//verse 2025: Langs Beyond The C</a>
+	 */
+	public static int addExtensions(Program program, TaskMonitor monitor) throws IOException {
+		Language language = program.getLanguageCompilerSpecPair().getLanguage();
+		Processor processor = language.getProcessor();
+		String spath = "extensions/" + OBJC_COMPILER;
+
+		int extensionCount = 0;
+
+		try {
+			ResourceFile module =
+				Application.getModuleDataSubDirectory(processor.toString(), spath);
+			ResourceFile[] files = module.listFiles();
+			if (files != null) {
+				for (ResourceFile file : files) {
+					InputStream stream = file.getInputStream();
+					byte[] bytes = stream.readAllBytes();
+					String xml = new String(bytes);
+					try {
+						SpecExtension extension = new SpecExtension(program);
+						DocInfo docInfo = extension.testExtensionDocument(xml);
+						if (SpecExtension.getCompilerSpecExtension(program, docInfo) == null) {
+							extension.addReplaceCompilerSpecExtension(xml, monitor);
+							extensionCount++;
+						}
+					}
+					catch (SleighException | SAXException | XmlParseException | LockException e) {
+						Msg.error(ObjcUtils.class,
+							"Failed to load Objective-C cspec extension: " + file, e);
+					}
+				}
+			}
+		}
+		catch (FileNotFoundException e) {
+			// fall thru
+		}
+
+		return extensionCount;
 	}
 }

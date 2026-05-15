@@ -467,15 +467,15 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	/**
-	 * Create an address-span box in the trace's default space with a singleton snap
+	 * Create an address-span box in the trace's default space with a span
 	 * 
-	 * @param snap the snap
+	 * @param span the span
 	 * @param start the start address offset
 	 * @param end the end address offset
 	 * @return the box
 	 */
-	public TraceAddressSnapRange srange(long snap, long start, long end) {
-		return new ImmutableTraceAddressSnapRange(addr(start), addr(end), snap, snap);
+	public TraceAddressSnapRange srange(Lifespan span, long start, long end) {
+		return new ImmutableTraceAddressSnapRange(addr(start), addr(end), span);
 	}
 
 	/**

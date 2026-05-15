@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@title lldb via ssh (to cmd)
+#@title lldb via ssh (cmd shell)
 #@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>lldb</tt> via <tt>ssh</tt></h3>
@@ -62,7 +62,7 @@ function rewrite-lldbinit() {
 
 function launch-lldb-ssh-init() {
 	local -a sshargs
-	compute-ssh-args true "cat > .\.lldbinit"
+	compute-ssh-args true "cat > .\ghidra.lldbinit"
 
 	"${sshargs[@]}"
 }
@@ -71,7 +71,7 @@ rewrite-lldbinit | launch-lldb-ssh-init
 
 function launch-lldb-ssh() {
 	local -a sshargs
-	compute-ssh-args true "lldb"
+	compute-ssh-args true "lldb -s .\ghidra.lldbinit"
 
 	"${sshargs[@]}"
 }

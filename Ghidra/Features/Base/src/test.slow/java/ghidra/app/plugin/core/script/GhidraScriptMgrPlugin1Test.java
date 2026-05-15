@@ -29,8 +29,6 @@ import docking.DockingUtils;
 import docking.action.DockingActionIf;
 import docking.actions.KeyBindingUtils;
 import docking.actions.ToolActions;
-import docking.widgets.DropDownTextField;
-import docking.widgets.DropDownTextFieldDataModel.SearchMode;
 import ghidra.util.TaskUtilities;
 
 public class GhidraScriptMgrPlugin1Test extends AbstractGhidraScriptMgrPluginTest {
@@ -185,10 +183,7 @@ public class GhidraScriptMgrPlugin1Test extends AbstractGhidraScriptMgrPluginTes
 //==================================================================================================	
 
 	private void pickScript(ScriptSelectionDialog dialog, String userText, String scriptName) {
-		DropDownTextField<?> textField =
-			(DropDownTextField<?>) findComponent(dialog.getComponent(), JTextField.class);
-
-		runSwing(() -> textField.setSearchMode(SearchMode.WILDCARD));
+		JTextField textField = findComponent(dialog.getComponent(), JTextField.class);
 
 		triggerText(textField, userText);
 

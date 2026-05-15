@@ -394,7 +394,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	}
 
 	/*
-	 * An odd method that really shoulnd't be on the interface.  This is a call that allows the 
+	 * An odd method that really shouldn't be on the interface.  This is a call that allows the 
 	 * framework to signal that the ToolOptions have been rebuilt, such as when restoring from xml.
 	 * During a rebuild, ToolOptions does not send out events, so this class does not get any of the
 	 * values from the new options.  This method tells us to get the new version of the options from

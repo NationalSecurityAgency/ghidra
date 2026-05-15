@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@title x64dbg (.ps1)
+#@title x64dbg
 #@image-opt env:OPT_TARGET_IMG
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>x64dbg</tt></h3>
@@ -47,6 +47,9 @@ function Compute-Python-Args {
 	$arglist+=($Env:GHIDRA_TRACE_RMI_ADDR)
 	if ("$Env:OPT_TARGET_IMG" -ne "") {
 		$arglist+=($Env:OPT_TARGET_IMG)
+	}
+	if ("$Env:OPT_X64DBG_EXE" -ne "") {
+		$arglist+=($Env:OPT_X64DBG_EXE)
 	}
 	if ("$Env:OPT_TARGET_DIR" -ne "") {
 		$arglist+=($Env:OPT_TARGET_DIR)

@@ -1,7 +1,12 @@
 MODULE FILE LICENSE: pypkg/dist/capstone-5.0.6-py3-none-win_amd64.whl BSD-3-CAPSTONE
 MODULE FILE LICENSE: pypkg/dist/comtypes-1.4.13-py3-none-any.whl MIT
 MODULE FILE LICENSE: pypkg/dist/pybag-2.2.16-py3-none-any.whl MIT
+MODULE FILE LICENSE: pypkg/dist/pywin32-311-cp39-cp39-win_amd64.whl Python Software Foundation License
+MODULE FILE LICENSE: pypkg/dist/pywin32-311-cp310-cp310-win_amd64.whl Python Software Foundation License
+MODULE FILE LICENSE: pypkg/dist/pywin32-311-cp311-cp311-win_amd64.whl Python Software Foundation License
+MODULE FILE LICENSE: pypkg/dist/pywin32-311-cp312-cp312-win_amd64.whl Python Software Foundation License
 MODULE FILE LICENSE: pypkg/dist/pywin32-311-cp313-cp313-win_amd64.whl Python Software Foundation License
+MODULE FILE LICENSE: pypkg/dist/pywin32-311-cp314-cp314-win_amd64.whl Python Software Foundation License
 MODULE FILE LICENSE: pypkg/dist/win32more-0.7.0-py3-none-any.whl MIT
 MODULE FILE LICENSE: pypkg/dist/win32more_appsdk-0.7.3-py2.py3-none-any.whl MIT
 MODULE FILE LICENSE: pypkg/dist/win32more_core-0.7.0-py2.py3-none-any.whl MIT

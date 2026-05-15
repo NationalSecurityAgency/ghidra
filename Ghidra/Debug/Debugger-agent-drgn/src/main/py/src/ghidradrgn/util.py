@@ -26,9 +26,9 @@ import drgn.cli
 
 DrgnVersion = namedtuple('DrgnVersion', ['display', 'full'])
 
-selected_pid = 0
-selected_tid = 0
-selected_level = 0
+selected_pid = -1
+selected_tid = -1
+selected_level = -1
 
 
 def _compute_drgn_ver() -> DrgnVersion:

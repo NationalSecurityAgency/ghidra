@@ -32,12 +32,14 @@ import ghidra.framework.model.*;
 import ghidra.framework.model.TransactionInfo.Status;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
-import ghidra.program.database.DBObjectCache;
+import ghidra.program.database.DbCache;
+import ghidra.program.database.DbFactory;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
@@ -88,7 +90,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 	private VTMatchSetTableDBAdapter matchSetTableAdapter;
 	private AssociationDatabaseManager associationManager;
 	private VTMatchTagDBAdapter matchTagAdapter;
-	private DBObjectCache<VTMatchTagDB> tagCache = new DBObjectCache<>(10);
+	private DbCache<VTMatchTagDB> tagCache;
 
 	private Program sourceProgram;
 	private Program destinationProgram;
@@ -127,7 +129,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 	public VTSessionDB(String name, Program sourceProgram, Program destinationProgram,
 			Object consumer) throws IOException {
 		super(new DBHandle(), UNUSED_DEFAULT_NAME, EVENT_NOTIFICATION_DELAY, consumer);
-
+		tagCache = new DbCache<>(new TagFactory(), lock, 10);
 		propertyTable = dbh.getTable(PROPERTY_TABLE_NAME);
 
 		int ID = startTransaction("Constructing New Version Tracking Match Set");
@@ -435,15 +437,11 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 
 	@Override
 	protected void clearCache(boolean all) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			super.clearCache(all);
 			associationManager.invalidateCache();
 			tagCache.invalidate();
 			reconcileCachedMatchSets();
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -512,13 +510,9 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 
 	@Override
 	public VTMatchSet createMatchSet(VTProgramCorrelator correlator) {
-		try {
-			lock.acquire();
+		try (Closeable c = lock.write()) {
 			long id = matchSetTableAdapter.getNextMatchSetID();
 			return createMatchSet(correlator, id);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -588,7 +582,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 
 	@Override
 	public List<VTMatchSet> getMatchSets() {
-		return new ArrayList<>(matchSetMap.values());
+		return lock.withRead(() -> new ArrayList<>(matchSetMap.values()));
 	}
 
 	AddressSet getSourceAddressSet(DBRecord record) throws IOException {
@@ -649,16 +643,12 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 
 	@Override
 	public List<VTMatch> getMatches(VTAssociation association) {
-		try {
-			lock.acquire();
+		try (Closeable c = lock.read()) {
 			List<VTMatch> matches = new ArrayList<>();
 			for (VTMatchSet matchSet : matchSetMap.values()) {
 				matches.addAll(matchSet.getMatches(association));
 			}
 			return matches;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -679,29 +669,21 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 
 	@Override
 	public VTMatchSet getManualMatchSet() {
-		try {
-			lock.acquire();
+		try (Closeable c = lock.read()) {
 			if (manualMatchSet == null) {
 				manualMatchSet = findMatchSet(ManualMatchProgramCorrelator.class.getName());
 			}
 			return manualMatchSet;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public VTMatchSet getImpliedMatchSet() {
-		try {
-			lock.acquire();
+		try (Closeable c = lock.read()) {
 			if (impliedMatchSet == null) {
 				impliedMatchSet = findMatchSet(ImpliedMatchProgramCorrelator.class.getName());
 			}
 			return impliedMatchSet;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -719,8 +701,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 	@Override
 	public void deleteMatchTag(VTMatchTag tag) {
 		String tagName = tag.getName();
-		try {
-			lock.acquire();
+		try (Closeable c = lock.write()) {
 			VTMatchTagDB tagDB = getMatchTagDB(tagName);
 			if (tagDB == null) {
 				return; // not sure if this can happen
@@ -734,29 +715,23 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 		catch (IOException e) {
 			dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		setObjectChanged(VTEvent.TAG_REMOVED, this, tagName, null);
 	}
 
 	@Override
 	public VTMatchTagDB createMatchTag(String tagName) {
 		VTMatchTagDB matchTag = null;
-		try {
-			lock.acquire();
+		try (Closeable c = lock.write()) {
 			matchTag = getMatchTagDB(tagName);
 			if (matchTag != null) {
 				return matchTag;
 			}
 			DBRecord record = matchTagAdapter.insertRecord(tagName);
-			matchTag = new VTMatchTagDB(this, tagCache, record);
+			matchTag = new VTMatchTagDB(this, record);
+			tagCache.add(matchTag);
 		}
 		catch (IOException e) {
 			dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		setObjectChanged(VTEvent.TAG_ADDED, matchTag, null, matchTag);
 		return matchTag;
@@ -773,64 +748,26 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 		return null;
 	}
 
+	public VTMatchTag getMatchTag(long tagKey) {
+		VTMatchTagDB tag = tagCache.getCachedInstance(tagKey);
+		return tag != null ? tag : VTMatchTag.UNTAGGED;
+	}
+
 	@Override
 	public Set<VTMatchTag> getMatchTags() {
 		Set<VTMatchTag> tags = new HashSet<>();
-		try {
-			lock.acquire();
+		try (Closeable c = lock.read()) {
 			RecordIterator records = matchTagAdapter.getRecords();
 			while (records.hasNext()) {
 				DBRecord record = records.next();
-				tags.add(getMatchTagNew(record));
+				tags.add(tagCache.getCachedInstance(record));
 			}
 		}
 		catch (IOException e) {
 			dbError(e);
 		}
-		finally {
-			lock.release();
-		}
+
 		return tags;
-	}
-
-	private VTMatchTagDB getMatchTagNew(DBRecord record) {
-		if (record == null) {
-			throw new AssertException("How can we have a null record?!!!");
-		}
-
-		try {
-			lock.acquire();
-			VTMatchTagDB matchTagDB = tagCache.get(record);
-			if (matchTagDB == null) {
-				matchTagDB = new VTMatchTagDB(this, tagCache, record);
-			}
-
-			return matchTagDB;
-		}
-		finally {
-			lock.release();
-		}
-	}
-
-	public VTMatchTag getMatchTag(long key) {
-		try {
-			lock.acquire();
-			VTMatchTagDB matchTagDB = tagCache.get(key);
-			if (matchTagDB != null) {
-				return matchTagDB;
-			}
-			DBRecord record = matchTagAdapter.getRecord(key);
-			if (record != null) {
-				return new VTMatchTagDB(this, tagCache, record);
-			}
-		}
-		catch (IOException e) {
-			dbError(e);
-		}
-		finally {
-			lock.release();
-		}
-		return VTMatchTag.UNTAGGED;
 	}
 
 	DBRecord getTagRecord(long key) throws IOException {
@@ -875,4 +812,24 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 		associationManager.dispose();
 		super.close();
 	}
+
+	private class TagFactory implements DbFactory<VTMatchTagDB> {
+		@Override
+		public VTMatchTagDB instantiate(long key) {
+			try {
+				DBRecord record = matchTagAdapter.getRecord(key);
+				return record == null ? null : instantiate(record);
+			}
+			catch (IOException e) {
+				dbError(e);
+				return null;
+			}
+		}
+
+		@Override
+		public VTMatchTagDB instantiate(DBRecord record) {
+			return new VTMatchTagDB(VTSessionDB.this, record);
+		}
+	}
+
 }

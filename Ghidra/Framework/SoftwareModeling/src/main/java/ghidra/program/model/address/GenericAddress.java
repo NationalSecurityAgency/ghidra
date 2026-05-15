@@ -176,6 +176,13 @@ public class GenericAddress implements Address {
 		}
 		return addrSpace.addNoWrap(this, displacement);
 	}
+	@Override
+	public Address subtractNoWrap(BigInteger displacement) throws AddressOverflowException {
+		if (displacement.equals(BigInteger.ZERO)) {
+			return this;
+		}
+		return addrSpace.subtractNoWrap(this, displacement);
+	}
 
 	@Override
 	public Address add(long displacement) {

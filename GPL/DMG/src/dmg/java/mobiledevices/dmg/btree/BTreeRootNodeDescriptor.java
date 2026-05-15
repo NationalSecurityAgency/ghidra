@@ -25,7 +25,10 @@ public class BTreeRootNodeDescriptor extends BTreeNodeDescriptor {
 
 		nodes.add( this );
 
-		int nodeSize = headerRecord.getNodeSize() & 0xffff;
+		int nodeSize = Short.toUnsignedInt(headerRecord.getNodeSize());
+		if (nodeSize == 0) {
+			throw new IOException("Bad nodeSize: " + nodeSize);
+		}
 
 		for ( int i = nodeSize ; i < reader.length() ; i += nodeSize ) {
 			reader.setPointerIndex( i );

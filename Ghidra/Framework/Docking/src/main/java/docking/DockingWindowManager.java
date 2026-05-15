@@ -2516,10 +2516,16 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 */
 	public ActionContext getDefaultActionContext(Class<? extends ActionContext> contextType) {
 		ActionContextProvider actionContextProvider = defaultContextProviderMap.get(contextType);
-		if (actionContextProvider != null) {
-			return actionContextProvider.getActionContext(null);
+		if (actionContextProvider == null) {
+			return null;
 		}
-		return null;
+
+		ActionContext context = actionContextProvider.getActionContext(null);
+		if (context != null) {
+			context.setContextProvider(actionContextProvider);
+		}
+
+		return context;
 	}
 
 	/**
@@ -2532,7 +2538,13 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			defaultContextProviderMap.entrySet();
 
 		for (Entry<Class<? extends ActionContext>, ActionContextProvider> entry : entrySet) {
-			contextMap.put(entry.getKey(), entry.getValue().getActionContext(null));
+			Class<? extends ActionContext> clazz = entry.getKey();
+			ActionContextProvider provider = entry.getValue();
+			ActionContext context = provider.getActionContext(null);
+			if (context != null) {
+				context.setContextProvider(provider);
+			}
+			contextMap.put(clazz, context);
 		}
 		return contextMap;
 	}
@@ -2549,8 +2561,11 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	public ActionContext createActionContext(DockingActionIf action) {
 		ComponentProvider provider = getActiveComponentProvider();
 		ActionContext context = provider == null ? null : provider.getActionContext(null);
-		if (context != null && action.isValidContext(context)) {
-			return context;
+		if (context != null) {
+			context.setContextProvider(provider);
+			if (action.isValidContext(context)) {
+				return context;
+			}
 		}
 
 		// Some actions work on a non-active, default component provider. See if this action
@@ -2574,10 +2589,16 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	private ActionContext getDefaultContext(Class<? extends ActionContext> contextType) {
 		ActionContextProvider contextProvider = defaultContextProviderMap.get(contextType);
-		if (contextProvider != null) {
-			return contextProvider.getActionContext(null);
+		if (contextProvider == null) {
+			return null;
 		}
-		return null;
+
+		ActionContext context = contextProvider.getActionContext(null);
+		if (context != null) {
+			context.setContextProvider(contextProvider);
+		}
+
+		return context;
 	}
 
 	/**

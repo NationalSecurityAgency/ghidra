@@ -93,7 +93,7 @@ public class ApplicationKeyManagerFactory {
 			}
 		}
 		catch (IOException e) {
-			throw new KeyStoreException("Failed to examine keystore: " + keystorePath, e);
+			throw new KeyStoreException("Failed to open keystore: " + keystorePath, e);
 		}
 
 		int tryCount = 0;

@@ -20,11 +20,10 @@ import java.awt.CardLayout;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.swing.*;
-import javax.swing.event.MouseInputAdapter;
+import javax.swing.event.*;
 
 import docking.ReusableDialogComponentProvider;
 import docking.widgets.button.GButton;
@@ -132,6 +131,23 @@ class RepositoryChooser extends ReusableDialogComponentProvider {
 
 		urlTextField = new JTextField("ghidra:");
 		urlTextField.getAccessibleContext().setAccessibleName("URL");
+		urlTextField.getDocument().addDocumentListener(new DocumentListener() {
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				choiceChanged();
+			}
+
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				choiceChanged();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				choiceChanged();
+			}
+		});
 
 		JPanel panel = new JPanel(new PairLayout());
 		panel.add(new GLabel("URL:"));
@@ -255,15 +271,26 @@ class RepositoryChooser extends ReusableDialogComponentProvider {
 		setOkEnabled(false);
 
 		try {
-			URL url = new URL(urlTextField.getText());
-			if (!GhidraURL.PROTOCOL.equals(url.getProtocol())) {
+			String urlText = urlTextField.getText();
+
+			if (!GhidraURL.isGhidraURL(urlText)) {
 				setStatusText("URL must specify 'ghidra:' protocol", MessageType.ERROR);
+				setOkEnabled(false);
+				return;
 			}
-			else {
-				setOkEnabled(true);
+
+			URL url = GhidraURL.toURL(urlText);  // check ability to form URL instance
+
+			if (!GhidraURL.isLocalURL(url) && !GhidraURL.isServerRepositoryURL(url)) {
+				setStatusText("URL must specify server repository or local project",
+					MessageType.ERROR);
+				setOkEnabled(false);
+				return;
 			}
+
+			setOkEnabled(true);
 		}
-		catch (MalformedURLException e) {
+		catch (IllegalArgumentException e) {
 			setStatusText(e.getMessage(), MessageType.ERROR);
 		}
 
@@ -294,9 +321,9 @@ class RepositoryChooser extends ReusableDialogComponentProvider {
 		// TODO: How do we restrict URL to repository only - not sure we can
 
 		try {
-			return new URL(urlTextField.getText());
+			return GhidraURL.toURL(urlTextField.getText());
 		}
-		catch (MalformedURLException e) {
+		catch (IllegalArgumentException e) {
 			Msg.error(this, e.getMessage());
 		}
 		return null;

@@ -28,6 +28,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.util.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
 
 /**
@@ -44,7 +45,7 @@ import ghidra.util.classfinder.ExtensionPoint;
  *   <LI>Class name ends with "Plugin" and does not match any other Plugin, regardless of its 
  *       location in the package tree.</LI>
  *   <LI>Have a {@link PluginInfo @PluginInfo()} annotation.</LI>
- *   <LI>Have a constructor with exactly 1 parameter: PluginTool.</LI>
+ *   <LI>Have a constructor with exactly 1 parameter: {@link PluginTool}.</LI>
  *   <LI>
  *     <UL>
  *       <LI><code>public MyPlugin(PluginTool tool) { ... }</code></LI>
@@ -53,7 +54,9 @@ import ghidra.util.classfinder.ExtensionPoint;
  *   <LI>Usually overrides <code>protected void init()</code>.</LI>
  * </UL>
  * <h2>Class naming</h2>
- * All Plugin Classes <b>MUST END IN</b> "Plugin".  If not, the ClassSearcher will not find them.
+ * <p>
+ * All Plugin Classes <b>MUST END IN</b> "Plugin".  If not, the {@link ClassSearcher} will not find
+ * them.
  * <p>
  * Some special Plugins marked with the {@link ProgramaticUseOnly} interface are manually
  * created and do not follow this naming requirement.
@@ -66,8 +69,8 @@ import ghidra.util.classfinder.ExtensionPoint;
  *       <LI>Plugin base class constructor is called.</LI>
  *       <LI>
  *         <OL>
- *           <LI>Services listed in the @PluginInfo annotation are automatically added to dependency 
- *               list</LI>
+ *           <LI>Services listed in the {@code @}{@link PluginInfo} annotation are automatically
+ *               added to dependency list</LI>
  *         </OL>
  *       </LI>
  *       <LI>Your Plugin publishes any services listed in PluginInfo using
@@ -87,7 +90,7 @@ import ghidra.util.classfinder.ExtensionPoint;
  *    <OL>
  *      <LI>Call {@link PluginTool#getService(Class)} to get service
  *          implementations. (the service class being requested should already be
- *          listed in the @PluginInfo)</LI>
+ *          listed in the PluginInfo)</LI>
  *       <LI>Create Actions (optional)</LI>
  *       <LI>Other initialization stuff.</LI>
  *    </OL>
@@ -126,9 +129,9 @@ import ghidra.util.classfinder.ExtensionPoint;
  * of its required services are loaded successfully and are available for use when your Plugin
  * calls the {@link PluginTool#getService(Class)} method.
  * <p>
- * Conversely, any services your Plugin advertises in &#64;PluginInfo must be published via calls to
- * {@link #registerServiceProvided(Class, Object) registerServiceProvided()} in your Plugin's
- * constructor.
+ * Conversely, any services your Plugin advertises in {@code @PluginInfo} must be published via
+ * calls to {@link #registerServiceProvided(Class, Object) registerServiceProvided()} in your
+ * Plugin's constructor.
  * <p>
  * <b>Cyclic dependencies</b> are not allowed and will cause the Plugin management code to fail to
  * load your Plugin. (i.e., PluginA requires a service that PluginB provides, which requires a
@@ -139,18 +142,19 @@ import ghidra.util.classfinder.ExtensionPoint;
  * annotation that it {@link PluginInfo#servicesProvided() provides} an interface class.
  * <p>
  * Your Plugin can either directly implement the interface in your Plugin class:
- * <p>
- * &nbsp;&nbsp;<code>public class MyPlugin extends Plugin <b>implements MyService</b> {....}</code>
+ * <pre>
+ * 	public class MyPlugin extends Plugin <b>implements MyService</b> {....}</code>
+ * </pre>
  * <p>
  * or it may delegate the handling of the service interface to another object during its
  * constructor:
- * <p>
- * &nbsp;&nbsp;<code>public MyPlugin(PluginTool tool) {</code><br>
- * &nbsp;&nbsp;&nbsp;&nbsp;<code>...</code><br>
- * &nbsp;&nbsp;&nbsp;&nbsp;<code>MyService serviceObj = new MyService() { ... };</code><br>
- * &nbsp;&nbsp;&nbsp;&nbsp;<code><b>registerServiceProvided(MyService.class, serviceObj);</b>
- * </code><br>
- * &nbsp;&nbsp;<code>}</code><br>
+ * <pre>
+ * 	public MyPlugin(PluginTool tool) {
+ * 		// ...
+ * 		MyService serviceObj = new MyService() { ... };
+ * 		<b>registerServiceProvided(MyService.class, serviceObj);</b>
+ * 	}
+ * </pre>
  * <p>
  * When your Plugin directly implements the advertised service interface, you should <b>not</b>
  * call {@link #registerServiceProvided(Class, Object) registerServiceProvided} for that service
@@ -189,12 +193,14 @@ import ghidra.util.classfinder.ExtensionPoint;
  * <h2>Important interfaces Plugins often need to implement</h2>
  * <UL>
  * 	<LI>{@link OptionsChangeListener} - to receive notification when a configuration option
- * 	is changed by the user.</LI>
+ * 	    is changed by the user.</LI>
  * 	<LI>{@link ApplicationLevelPlugin} - marks this Plugin as being suitable for inclusion in the
  * 		application-level tool.</LI>
  * 	<LI>{@link ApplicationLevelOnlyPlugin} - marks this Plugin as application-level only, not
  * 		usable in an application's sub-tools.</LI>
  * 	<LI>{@link ProgramaticUseOnly} - marks this Plugin as special and not for user configuration.</LI>
+ * 	<LI>{@link PluginWithTransientState} - allows this Plugin to save and restore per-program
+ * 	    transient state.</LI>
  * </UL>
  *
  */
@@ -441,6 +447,8 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	public void writeConfigState(SaveState saveState) {
 		// do nothing by default; subclasses should override as needed
 	}
+
+	// NOTE: get/restoreTransientState moved to PluginWithTransientState interface
 
 	/**
 	 * Tells the Plugin to write any data-dependent state to the
@@ -792,28 +800,6 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	@Override
 	public int hashCode() {
 		return name.hashCode();
-	}
-
-	/**
-	 * Provides the transient state object that was returned in the corresponding getTransientState()
-	 * call.  Plugins should override this method if they have state that needs to be saved as domain objects
-	 * get switched between active and inactive.
-	 * @param state the state object that was generated by this plugin's getTransientState() method.
-	 */
-	public void restoreTransientState(Object state) {
-		// do nothing by default; subclasses should override as needed
-	}
-
-	/**
-	 * Returns an object containing the plugins state.  Plugins should override this method if
-	 * they have state that they want to maintain between domain object state transitions (i.e. when the
-	 * user tabs to a different domain object and back) Whatever object is returned will be fed back to
-	 * the plugin after the tool state is switch back to the domain object that was active when the this
-	 * method was called.
-	 * @return Object to be return in the restoreTransientState() method.
-	 */
-	public Object getTransientState() {
-		return null;
 	}
 
 	/**

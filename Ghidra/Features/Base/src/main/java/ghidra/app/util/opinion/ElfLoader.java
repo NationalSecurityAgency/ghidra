@@ -61,6 +61,22 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 		return (oibStr != null) ? NumericUtilities.parseHexLong(oibStr) : null;
 	}
 
+	/**
+	 * {@return true if the specified program was loaded via the ELF loader}
+	 * @param program {@link Program}
+	 */
+	public static boolean isElf(Program program) {
+		return isElf(program.getExecutableFormat());
+	}
+
+	/**
+	 * {@return true if the specified executable format string matches the ELF loader}
+	 * @param executableFormatString executable format string retrieved from a program's properties
+	 */
+	public static boolean isElf(String executableFormatString) {
+		return executableFormatString != null && ELF_NAME.equals(executableFormatString);
+	}
+
 	public ElfLoader() {
 	}
 

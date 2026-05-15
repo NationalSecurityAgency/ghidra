@@ -15,11 +15,19 @@
  */
 package ghidra.program.model.gclass;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.SymbolPath;
 import ghidra.program.model.data.*;
 
 /**
  * Utility class for Class-related software modeling.
+ * <p>
+ * This class is experimental and subject to unannounced changes, including changes to processing
+ * philosophies and removal of methods
  */
 public class ClassUtils {
 
@@ -301,6 +309,264 @@ public class ClassUtils {
 			category = recurseGetCategoryPath(category, parent);
 		}
 		return new CategoryPath(category, symbolPath.getName());
+	}
+
+	/**
+	 * Finds and returns list of replacement pointer types for the specified owner class structure
+	 * @param dtm the data type manager
+	 * @param type the class structure type
+	 * @return the map of offset to owner replacement types
+	 */
+	public static Map<Long, Pointer> getReplacementPointers(DataTypeManager dtm,
+			Structure type) {
+		CategoryPath path = getClassPath(type);
+		Map<Long, Pointer> results = new HashMap<>();
+		Category category = dtm.getCategory(path);
+		if (category == null) {
+			return results;
+		}
+		for (DataType dt : category.getDataTypes()) {
+			if (!(dt instanceof Structure struct)) {
+				continue;
+			}
+			Long offset =
+				ClassUtils.validateVtableDescriptionOffsetTag(struct.getDescription());
+			if (offset == null) {
+				continue;
+			}
+			Pointer vxtptr = new PointerDataType(struct);
+			results.put(offset, vxtptr);
+		}
+		return results;
+	}
+
+	/**
+	 * Record containing a name and a pointer data type
+	 * @param name the name
+	 * @param pointer the pointer type
+	 */
+	public static record NameAndPointer(String name, DataType pointer) {}
+
+	/**
+	 * Tries to provide an appropriate data type replacement for special components, particularly
+	 *  for class objects such as virtual function table and virtual base table pointers within
+	 *  a flattened class structure
+	 * @param component the component to be checked
+	 * @param accumulatedOffset the accumulated offset of the component due to flattening
+	 * @param ownerVxtptrs the map of offset to owner vxtptr types
+	 * @return the replacement data type or the original type if there is no replacement needed
+	 */
+	public static NameAndPointer getReplacementType(DataTypeComponent component,
+			long accumulatedOffset, Map<Long, Pointer> ownerVxtptrs) {
+		if (!hasReplaceAttribute(component)) {
+			return null;
+		}
+		String fieldName = component.getFieldName();
+		Pointer vxtptr = ownerVxtptrs.get(accumulatedOffset);
+		if (vxtptr == null) {
+			return null;
+		}
+		DataType dt = vxtptr.getDataType();
+		String dtName = dt.getName(); // We are not using the full path name
+		String newFieldName;
+		if (dtName.startsWith(ClassUtils.VTABLE)) {
+			if (!ClassUtils.VTPTR.equals(fieldName)) {
+				return null;
+			}
+			newFieldName = fieldName + dtName.substring(VTABLE.length()); //crash if not more char
+		}
+		else if (dtName.startsWith(ClassUtils.VBTABLE)) {
+			if (!ClassUtils.VBPTR.equals(fieldName)) {
+				return null;
+			}
+			newFieldName = fieldName + dtName.substring(VFTABLE.length()); //crash if not more char
+		}
+		else if (dtName.startsWith(ClassUtils.VFTABLE)) {
+			if (!ClassUtils.VFPTR.equals(fieldName)) {
+				return null;
+			}
+			newFieldName = fieldName + dtName.substring(VBTABLE.length()); //crash if not more char
+		}
+		else {
+			return null;
+		}
+		return new NameAndPointer(newFieldName, vxtptr);
+	}
+
+	/**
+	 * Tries to provide an appropriate data type replacement for special components, particularly
+	 *  for class objects such as virtual function table and virtual base table pointers within
+	 *  a flattened class structure.  The {@code structure} argument becomes the return type if
+	 *  {@code enabled} is {@code false}, if the argument structure does not have class
+	 *  attributes, or if there is no suitable replacement for it
+	 * @param structure the structure to process
+	 * @param enabled {@code false} will immediately return the argument type
+	 * @return the replacement data type or null if could not or did not need to be replaced
+	 */
+	public static Structure getReplacementType(Structure structure, boolean enabled) {
+		if (!enabled) {
+			return structure;
+		}
+		if (!hasClassAttribute(structure)) {
+			return structure;
+		}
+		Structure replacement = getReplacementType(structure);
+		return replacement == null ? structure : replacement;
+	}
+
+	/**
+	 * Tries to provide an appropriate data type replacement for special components, particularly
+	 *  for class objects such as virtual function table and virtual base table pointers within
+	 *  a flattened class structure
+	 * @param structure the structure to process
+	 * @return the replacement data type or null if could not or did not need to be replaced
+	 */
+	public static Structure getReplacementType(Structure structure) {
+		DataTypeManager dtm = structure.getDataTypeManager();
+		Map<Long, Pointer> vxtptrs = ClassUtils.getReplacementPointers(dtm, structure);
+		StructureDataType newStruct = new StructureDataType(structure.getCategoryPath(),
+			structure.getName(), 0, structure.getDataTypeManager());
+		newStruct.setPackingEnabled(false);
+		// Future: consider whether we need to strip the class attribute from the description
+		//  of the resultant type.  Decompiler might still want/need it; but we probably don't
+		//  want it if it allows us to do replacement again (unless it doesn't really do
+		//  anything on another pass of replacement). This comment is really for while we are
+		//  using the description field to hold an attribute; this comment can be deleted once
+		//  we are not using the field for holding an attribute.
+		newStruct.setDescription(structure.getDescription());
+		try {
+			if (processComponents(structure, newStruct, 0, vxtptrs)) {
+				newStruct.setLength(structure.getLength());
+				// The original structure should be packed, so we can use its alignment
+				// as the alignment of our flattened structure.  We do not want to turn on
+				// packing for the flattened structure unless we supply appropriate padding
+				newStruct.align(structure.getAlignment());
+				return newStruct;
+			}
+		}
+		catch (InvalidDataTypeException e) {
+			// squelch
+		}
+		return null;
+	}
+
+	/**
+	 * Tries to provide an appropriate data type replacement for special components, particularly
+	 *  for class objects such as virtual function table and virtual base table pointers within
+	 *  a flattened class structure
+	 * @param type the structure to process
+	 * @param newType the new structure being created
+	 * @param baseOffset the accumulated offset of the component due to flattening
+	 * @param ownerVxtptrs the map of offset to owner vxtptr types
+	 * @return {@code true} if successful
+	 * @throws InvalidDataTypeException upon error
+	 */
+	private static boolean processComponents(Structure type, StructureDataType newType,
+			int baseOffset, Map<Long, Pointer> ownerVxtptrs) throws InvalidDataTypeException {
+		DataTypeComponent[] comps = type.getDefinedComponents();
+		boolean mod = false;
+		for (DataTypeComponent comp : comps) {
+			int accumulatedOffset = baseOffset + comp.getOffset();
+			if ((comp.getDataType() instanceof Structure struct && hasFlattenAttribute(comp))) {
+				processComponents(struct, newType, accumulatedOffset, ownerVxtptrs);
+				mod = true;
+				continue;
+			}
+			if (comp.getLength() == 0) {
+				continue;
+			}
+			if (comp instanceof BitFieldDataType bfComp) {
+				DataTypeComponent bfdtc = newType.insertBitFieldAt(accumulatedOffset,
+					bfComp.getBaseTypeSize(), bfComp.getBitOffset(), comp.getDataType(),
+					bfComp.getBitSize(), comp.getFieldName(), comp.getComment());
+				if (bfdtc.getOffset() != accumulatedOffset) {
+					throw new InvalidDataTypeException();
+				}
+				continue;
+			}
+			ClassUtils.NameAndPointer nap =
+				ClassUtils.getReplacementType(comp, accumulatedOffset, ownerVxtptrs);
+			String fieldName;
+			DataType fieldType;
+			if (nap == null) {
+				fieldName = comp.getFieldName();
+				fieldType = comp.getDataType();
+			}
+			else {
+				fieldName = nap.name();
+				fieldType = nap.pointer();
+				mod = true;
+			}
+			if (fieldName == null || fieldName.length() == 0) {
+				fieldName = comp.getDefaultFieldName();
+			}
+			DataTypeComponent dtc =
+				newType.insertAtOffset(accumulatedOffset, fieldType, fieldType.getLength(),
+					fieldName, comp.getComment());
+			if (dtc.getOffset() != accumulatedOffset) {
+				throw new InvalidDataTypeException();
+			}
+		}
+		return mod;
+	}
+
+	/**
+	 * This method returns true if the argument structure has a class attribute
+	 * @param structure the structure under question
+	 * @return {@code true} if has a class attribute
+	 */
+	public static boolean hasClassAttribute(Structure structure) {
+		// Future: Check attribute on structure
+		String description = structure.getDescription();
+		if (StringUtils.isEmpty(description)) {
+			return false;
+		}
+		return true; // true for now... later do the next line
+		//return description.contains("{{class}}");
+	}
+
+	/**
+	 * We hope to have the ability to set and use a "flatten" attribute on the component of
+	 * the structure
+	 * <p> This method is temporary for investigations... should rely on a real component attribute
+	 * @param component the member to check
+	 * @return {@code true} if has flatten attribute
+	 */
+	private static boolean hasFlattenAttribute(DataTypeComponent component) {
+		// Future: Check ComponentMutationEnum/Mode
+		String comment = component.getComment();
+		if (comment == null) {
+			return false;
+		}
+		if (comment.startsWith("Base") || comment.startsWith("Self Base") ||
+			comment.startsWith("Virtual Base")) {
+			return true;
+		}
+		return comment.contains("{{flatten}}");
+	}
+
+	/**
+	 * We hope to have the ability to set and use a "replace" attribute on the component of
+	 * the structure
+	 * <p> This method is temporary for investigations... should rely on a real component attribute
+	 * @param component the member to check
+	 * @return {@code true} if has replace attribute
+	 */
+	private static boolean hasReplaceAttribute(DataTypeComponent component) {
+		// Future: Check ComponentMutationEnum/Mode
+		DataType fieldType = component.getDataType();
+		if (!(fieldType instanceof Pointer ptr) || ptr.getDataType() != null) {
+			return false;
+		}
+		String fieldName = component.getFieldName();
+		if (ClassUtils.VFPTR.equals(fieldName) || ClassUtils.VBPTR.equals(fieldName)) {
+			return true;
+		}
+		String comment = component.getComment();
+		if (comment == null) {
+			return false;
+		}
+		return comment.contains("{{replace}}");
 	}
 
 }

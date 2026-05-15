@@ -402,8 +402,18 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 			setVisible(true);
 			isFilterDisplayed = true;
 		}
-
 		requestFocus();
+	}
+
+	/**
+	 * Hides this filter if showing.
+	 */
+	public void close() {
+		if (isFilterDisplayed) {
+			setVisible(false);
+			isFilterDisplayed = false;
+			table.requestFocus();
+		}
 	}
 
 	/**

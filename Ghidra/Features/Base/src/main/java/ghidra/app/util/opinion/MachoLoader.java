@@ -149,8 +149,11 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
 			loadIntoProgram, mirrorFsLayout);
 		if (!loadIntoProgram) {
-			list.add(new Option(REEXPORT_OPTION_NAME, REEXPORT_OPTION_DEFAULT,
-				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-reexport"));
+			list.add(Option.newBoolean(REEXPORT_OPTION_NAME)
+					.value(REEXPORT_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-reexport"))
+					.description("Transitively export symbols from LC_REEXPORT_DYLIB libraries.")
+					.build());
 		}
 		return list;
 	}

@@ -768,25 +768,10 @@ void FlowInfo::truncateIndirectJump(PcodeOp *op,JumpTable::RecoveryMode mode)
   }
 }
 
-/// \brief Test if the given p-code op is a member of an array
-///
-/// \param array is the array of p-code ops to search
-/// \param op is the given p-code op to search for
-/// \return \b true if the op is a member of the array
-bool FlowInfo::isInArray(vector<PcodeOp *> &array,PcodeOp *op)
-
-{
-  for(int4 i=0;i<array.size();++i) {
-    if (array[i] == op) return true;
-  }
-  return false;
-}
-
 void FlowInfo::generateOps(void)
 
 {
   vector<PcodeOp *> notreached;	// indirect ops that are not reachable
-  int4 notreachcnt = 0;
   clearProperties();
   addrlist.push_back(data.getAddress());
   while(!addrlist.empty())	// Recovering as much as possible except jumptables
@@ -812,10 +797,9 @@ void FlowInfo::generateOps(void)
     
     checkContainedCall();	// Check for PIC constructions
     checkMultistageJumptables();
-    while(notreachcnt < notreached.size()) {
-      tablelist.push_back(notreached[notreachcnt]);
-      notreachcnt += 1;
-    }
+    for(int4 i=0;i<notreached.size();++i)
+      tablelist.push_back(notreached[i]);
+    notreached.clear();
     if (hasInject())
       injectPcode();
   } while(!tablelist.empty());	// Inlining or multistage may have added new indirect branches
@@ -1445,7 +1429,7 @@ void FlowInfo::recoverJumpTables(vector<JumpTable *> &newTables,vector<PcodeOp *
 	truncateIndirectJump(op,mode); // Treat the indirect jump as a call
     }
     else if (jt->isPartial()) {
-      if (tablelist.size() > 1 && !isInArray(notreached,op)) {
+      if (tablelist.size() > 1 && jt->getRecoverCount() <= 1) {
 	// If the recovery is incomplete with current flow AND there is more flow to generate,
 	//     AND we haven't tried to recover this table before
 	notreached.push_back(op); // Save this op so we can try to recover the table again later

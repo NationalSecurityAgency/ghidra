@@ -243,7 +243,7 @@ public class JitPcodeThread extends BytesPcodeThread {
 			finishInstruction();
 		}
 		EntryPoint next = null;
-		while (!isSuspended()) {
+		while (!isSuspended() && !getMachine().isSuspended()) {
 			if (next == null) {
 				next = getEntry(new AddrCtx(getContext(), getCounter()));
 			}
@@ -272,7 +272,7 @@ public class JitPcodeThread extends BytesPcodeThread {
 	 *            in the current (partial) instruction.
 	 */
 	public void count(int instructions, int trailingOps) {
-		if (isSuspended()) {
+		if (isSuspended() || getMachine().isSuspended()) {
 			throw new SuspendedPcodeExecutionException(null, null);
 		}
 	}

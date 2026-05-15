@@ -23,11 +23,11 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteArrayConverter;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.DWordDataType;
-import ghidra.program.model.data.WordDataType;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.DataConverter;
+import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -51,7 +51,8 @@ public class BaseRelocationDataDirectory extends DataDirectory implements ByteAr
 
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
-			NTHeader nt) throws CodeUnitInsertionException {
+			NTHeader nt) throws CodeUnitInsertionException, DuplicateNameException, IOException,
+			MemoryAccessException {
 
 		monitor.setMessage(program.getName()+": base relocation(s)...");
 		Address addr = PeUtils.getMarkupAddress(program, isBinary, nt, virtualAddress);
@@ -59,26 +60,13 @@ public class BaseRelocationDataDirectory extends DataDirectory implements ByteAr
 			return;
 		}
 		createDirectoryBookmark(program, addr);
-
+		
         for (BaseRelocation reloc : relocs) {
             if (monitor.isCancelled()) {
                 return;
             }
-
-			PeUtils.createData(program, addr, DWordDataType.dataType, log);
-			addr = addr.add(DWordDataType.dataType.getLength());
-
-			PeUtils.createData(program, addr, DWordDataType.dataType, log);
-			addr = addr.add(DWordDataType.dataType.getLength());
-
-            int count = reloc.getCount();
-            for (int j = 0 ; j < count ; ++j) {
-                if (monitor.isCancelled()) {
-                    return;
-                }
-				PeUtils.createData(program, addr, WordDataType.dataType, log);
-				addr = addr.add(WordDataType.dataType.getLength());
-            }
+			reloc.markup(program, addr, isBinary, monitor, log, nt);
+			addr = addr.add(reloc.getSizeOfBlock());
         }
 	}
 
