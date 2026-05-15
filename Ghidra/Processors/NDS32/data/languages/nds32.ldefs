@@ -29,5 +29,33 @@
     <external_name tool="gnu" name="n1h_v3m"/>
     <external_name tool="DWARF.register.mapping.file" name="nds32.dwarf"/>
   </language>
+  <language processor="NDS32"
+            endian="little"
+            instructionEndian="big"
+            size="32"
+            variant="mt7663_bt"
+            version="1.0"
+            slafile="nds32le.sla"
+            processorspec="nds32_mt7663_bt.pspec"
+            id="NDS32:LE:32:mt7663_bt">
+    <description>NDS32 little-endian for MediaTek MT7663 Bluetooth core</description>
+    <compiler name="default" spec="nds32.cspec" id="default"/>
+    <external_name tool="gnu" name="n1h_v3m"/>
+    <external_name tool="DWARF.register.mapping.file" name="nds32.dwarf"/>
+  </language>
+  <language processor="NDS32"
+            endian="little"
+            instructionEndian="big"
+            size="32"
+            variant="mt3616"
+            version="1.0"
+            slafile="nds32le.sla"
+            processorspec="nds32_mt3616.pspec"
+            id="NDS32:LE:32:mt3616">
+    <description>NDS32 little-endian for MediaTek MT3616 (PS5 DualSense BT core)</description>
+    <compiler name="default" spec="nds32.cspec" id="default"/>
+    <external_name tool="gnu" name="n1h_v3m"/>
+    <external_name tool="DWARF.register.mapping.file" name="nds32.dwarf"/>
+  </language>
 </language_definitions>
 
