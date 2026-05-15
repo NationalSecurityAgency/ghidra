@@ -89,17 +89,19 @@ public class VariableAnnotatedStringHandler implements AnnotatedStringHandler {
 			return createPlaceholderString(prototypeString, text);
 		}
 
-		String functionName = text[2];
-		Function function = getFunction(program, functionName);
+		String entry = text[2];
+		Function function = getFunctionAt(program, entry);
 		if (function == null) {
-			throw new AnnotationException("Could not find function \"" + functionName + "\"");
+			throw new AnnotationException("Could not find function \"" + entry + "\"");
 		}
 
 		String address = text[1];
 		Variable var = getVariable(function, address);
 		if (var == null) {
-			throw new AnnotationException("Could not find variable in function \"" +
-				functionName + "\" matching \"" + text[1] + "\".");
+			String functionName = function.getName();
+			throw new AnnotationException(
+				"Could not find variable at address %s in function %s".formatted(functionName,
+					address));
 		}
 
 		return new AttributedString(var.getName(), prototypeString.getColor(0),
@@ -113,9 +115,9 @@ public class VariableAnnotatedStringHandler implements AnnotatedStringHandler {
 			prototypeString.getFontMetrics(0));
 	}
 
-	private static Function getFunction(Program program, String name) {
+	private Function getFunction(Program program, String value) {
 		FunctionManager manager = program.getFunctionManager();
-		for (Symbol s : NamespaceUtils.getSymbols(name, program)) {
+		for (Symbol s : NamespaceUtils.getSymbols(value, program)) {
 			Address addr = s.getAddress();
 			Function function = manager.getFunctionAt(addr);
 			if (function != null) {
@@ -124,7 +126,13 @@ public class VariableAnnotatedStringHandler implements AnnotatedStringHandler {
 		}
 
 		// if we get here, then see if the value is an address
-		Address addr = program.getAddressFactory().getAddress(name);
+		return getFunctionAt(program, value);
+	}
+
+	private Function getFunctionAt(Program program, String address) {
+		FunctionManager manager = program.getFunctionManager();
+		AddressFactory af = program.getAddressFactory();
+		Address addr = af.getAddress(address);
 		if (addr != null) {
 			Function function = manager.getFunctionAt(addr);
 			if (function != null) {
