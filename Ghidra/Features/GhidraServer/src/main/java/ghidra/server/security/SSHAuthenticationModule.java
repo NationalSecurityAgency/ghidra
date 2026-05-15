@@ -45,8 +45,7 @@ import ghidra.server.UserManager;
  */
 public class SSHAuthenticationModule {
 
-	private static final long MAX_TOKEN_TIME = 10000;
-	private static final int TOKEN_SIZE = 64;
+
 
 	private final boolean nameCallbackAllowed;
 
@@ -72,7 +71,7 @@ public class SSHAuthenticationModule {
 		if (addNameCallback) {
 			list.add(new NameCallback("User ID:"));
 		}
-		byte[] token = TokenGenerator.getNewToken(TOKEN_SIZE);
+		byte[] token = TokenGenerator.getNewToken();
 		try {
 			boolean usingSelfSignedCert =
 				DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate();
@@ -190,7 +189,7 @@ public class SSHAuthenticationModule {
 		}
 
 		byte[] token = sshCb.getToken();
-		if (!TokenGenerator.isRecentToken(token, MAX_TOKEN_TIME)) {
+		if (!TokenGenerator.isValidToken(token)) {
 			throw new FailedLoginException("Stale SSH Signature callback");
 		}
 
