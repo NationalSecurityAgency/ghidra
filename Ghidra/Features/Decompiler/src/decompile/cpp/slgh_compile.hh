@@ -60,14 +60,15 @@ class SectionVector {
   RtlPair main;			///< The main section
   vector<RtlPair> named;	///< Named sections accessed by index
 public:
-  SectionVector(ConstructTpl *rtl,SymbolScope *scope);					///< Constructor
-  ConstructTpl *getMainSection(void) const { return main.section; }			///< Get the \e main section
-  ConstructTpl *getNamedSection(int4 index) const { return named[index].section; }	///< Get a \e named section by index
-  RtlPair getMainPair(void) const { return main; }					///< Get the \e main section/namespace pair
-  RtlPair getNamedPair(int4 i) const { return named[i]; }		///< Get a \e named section/namespace pair by index
-  void setNextIndex(int4 i) { nextindex = i; }				///< Set the index of the currently parsing \e named section
-  int4 getMaxId(void) const { return named.size(); }			///< Get the maximum (exclusive) named section index
-  void append(ConstructTpl *rtl,SymbolScope *scope);			///< Add a new \e named section
+  SectionVector(ConstructTpl *rtl,SymbolScope *scope);		///< Constructor
+  ~SectionVector(void);						///< Destructor
+  ConstructTpl *releaseMainSection(void);			///< Get the \e main section, giving up ownership
+  ConstructTpl *releaseNamedSection(int4 index);		///< Get a \e named section by index, giving up ownership
+  RtlPair getMainPair(void) const { return main; }		///< Get the \e main section/namespace pair
+  RtlPair getNamedPair(int4 i) const { return named[i]; }	///< Get a \e named section/namespace pair by index
+  void setNextIndex(int4 i) { nextindex = i; }			///< Set the index of the currently parsing \e named section
+  int4 getMaxId(void) const { return named.size(); }		///< Get the maximum (exclusive) named section index
+  void append(ConstructTpl *rtl,SymbolScope *scope);		///< Add a new \e named section
 };
 
 /// \brief Qualities associated (via parsing) with an address space

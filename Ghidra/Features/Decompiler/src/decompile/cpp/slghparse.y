@@ -151,6 +151,14 @@ extern int sleigherror(const char *str );
 %type <specsym> specificsymbol
 %type <subtablesym> id_or_nil
 
+%destructor { delete $$; } INTEGER INTB STRING SYMBOLSTRING
+%destructor { delete $$; } paramlist rtl rtlmid rtlbody rtlfirstsection rtlcontinue statement expr
+%destructor { delete $$; } varnode integervarnode exportvarnode lhsvarnode jumpdest charstring
+%destructor { if ($$) PatternEquation::release($$); } pequation elleq ellrt atomic constraint bitpat_or_nil
+%destructor { PatternExpression::release($$); } pexpression
+%destructor { delete $$; } spaceprop fielddef contextfielddef sizedstar stringlist stringpart anystringlist anystringpart
+%destructor { delete $$; } oplist intblist intbpart valuelist valuepart varlist varpart contextlist contextblock
+
 %%
 spec: endiandef
   | spec aligndef
@@ -193,13 +201,13 @@ contextprop: DEFINE_KEY CONTEXT_KEY VARSYM { $$ = $3; }
                                             { slgh->reportError("All context definitions must come before constructors"); YYERROR; } }
   ;
 fielddef: STRING '=' '(' INTEGER ',' INTEGER ')' { $$ = new FieldQuality($1,$4,$6); }
-  | anysymbol '=' '(' INTEGER ',' INTEGER ')' { delete $4; delete $6; string errmsg = $1->getName()+": redefined as field"; slgh->reportError(errmsg); YYERROR; }
+  | anysymbol '=' '(' INTEGER ',' INTEGER ')' { $$ = (FieldQuality *)0; delete $4; delete $6; string errmsg = $1->getName()+": redefined as field"; slgh->reportError(errmsg); YYERROR; }
   | fielddef SIGNED_KEY			{ $$ = $1; $$->signext = true; }
   | fielddef HEX_KEY			{ $$ = $1; $$->hex = true; }
   | fielddef DEC_KEY			{ $$ = $1; $$->hex = false; }
   ;
 contextfielddef: STRING '=' '(' INTEGER ',' INTEGER ')' { $$ = new FieldQuality($1,$4,$6); }
-  | anysymbol '=' '(' INTEGER ',' INTEGER ')' { delete $4; delete $6; string errmsg = $1->getName()+": redefined as field"; slgh->reportError(errmsg); YYERROR; }
+  | anysymbol '=' '(' INTEGER ',' INTEGER ')' { $$ = (FieldQuality *)0; delete $4; delete $6; string errmsg = $1->getName()+": redefined as field"; slgh->reportError(errmsg); YYERROR; }
   | contextfielddef SIGNED_KEY			{ $$ = $1; $$->signext = true; }
   | contextfielddef NOFLOW_KEY			{ $$ = $1; $$->flow = false; }
   | contextfielddef HEX_KEY			{ $$ = $1; $$->hex = true; }
@@ -208,7 +216,7 @@ contextfielddef: STRING '=' '(' INTEGER ',' INTEGER ')' { $$ = new FieldQuality(
 spacedef: spaceprop ';'			{ slgh->newSpace($1); }
   ;
 spaceprop: DEFINE_KEY SPACE_KEY STRING	{ $$ = new SpaceQuality(*$3); delete $3; }
-  | DEFINE_KEY SPACE_KEY anysymbol	{ string errmsg = $3->getName()+": redefined as space"; slgh->reportError(errmsg); YYERROR; }
+  | DEFINE_KEY SPACE_KEY anysymbol	{ $$ = (SpaceQuality *)0; string errmsg = $3->getName()+": redefined as space"; slgh->reportError(errmsg); YYERROR; }
   | spaceprop TYPE_KEY '=' RAM_KEY	{ $$ = $1; $$->type = SpaceQuality::ramtype; }
   | spaceprop TYPE_KEY '=' REGISTER_KEY { $$ = $1; $$->type = SpaceQuality::registertype; }
   | spaceprop SIZE_KEY '=' INTEGER	{ $$ = $1; $$->size = *$4; delete $4; }
@@ -330,11 +338,11 @@ contextblock:				{ $$ = (vector<ContextChange *> *)0; }
   | '[' contextlist ']'			{ $$ = $2; }
   ;
 contextlist: 				{ $$ = new vector<ContextChange *>; }
-  | contextlist CONTEXTSYM '=' pexpression ';'  { $$ = $1; if (!slgh->contextMod($1,$2,$4)) { string errmsg="Cannot use 'inst_next' or 'inst_next2' to set context variable: "+$2->getName(); slgh->reportError(errmsg); YYERROR; } }
+  | contextlist CONTEXTSYM '=' pexpression ';'  { $$ = $1; if (!slgh->contextMod($1,$2,$4)) { string errmsg="Cannot use 'inst_next' or 'inst_next2' to set context variable: "+$2->getName(); slgh->reportError(errmsg); delete $1; $4->layClaim(); PatternExpression::release($4); YYERROR; } }
   | contextlist GLOBALSET_KEY '(' familysymbol ',' CONTEXTSYM ')' ';' { $$ = $1; slgh->contextSet($1,$4,$6); }
   | contextlist GLOBALSET_KEY '(' specificsymbol ',' CONTEXTSYM ')' ';' { $$ = $1; slgh->contextSet($1,$4,$6); }
   | contextlist OPERANDSYM '=' pexpression ';' { $$ = $1; slgh->defineOperand($2,$4); }
-  | contextlist STRING                  { string errmsg="Expecting context symbol, not "+*$2; delete $2; slgh->reportError(errmsg); YYERROR; }
+  | contextlist STRING                  { $$ = (vector<ContextChange *> *)0; delete $1; string errmsg="Expecting context symbol, not "+*$2; delete $2; slgh->reportError(errmsg); YYERROR; }
   ;
 section_def: OP_LEFT STRING OP_RIGHT    { $$ = slgh->newSectionSymbol( *$2 ); delete $2; }
   | OP_LEFT SECTIONSYM OP_RIGHT         { $$ = $2; }
@@ -347,11 +355,11 @@ rtlcontinue: rtlfirstsection { $$ = $1; }
 rtl: rtlmid { $$ = $1; if ($$->getOpvec().empty() && ($$->getResult() == (HandleTpl *)0)) slgh->recordNop(); }
   | rtlmid EXPORT_KEY exportvarnode ';' { $$ = slgh->setResultVarnode($1,$3); }
   | rtlmid EXPORT_KEY sizedstar lhsvarnode ';' { $$ = slgh->setResultStarVarnode($1,$3,$4); }
-  | rtlmid EXPORT_KEY STRING		{ string errmsg="Unknown export varnode: "+*$3; delete $3; slgh->reportError(errmsg); YYERROR; }
-  | rtlmid EXPORT_KEY sizedstar STRING	{ string errmsg="Unknown pointer varnode: "+*$4; delete $3; delete $4; slgh->reportError(errmsg); YYERROR; }
+  | rtlmid EXPORT_KEY STRING		{ $$ = (ConstructTpl *)0; delete $1; string errmsg="Unknown export varnode: "+*$3; delete $3; slgh->reportError(errmsg); YYERROR; }
+  | rtlmid EXPORT_KEY sizedstar STRING	{ $$ = (ConstructTpl *)0; delete $1; string errmsg="Unknown pointer varnode: "+*$4; delete $3; delete $4; slgh->reportError(errmsg); YYERROR; }
   ;
 rtlmid: /* EMPTY */			{ $$ = slgh->enterSection(); }
-  | rtlmid statement			{ $$ = $1; if (!$$->addOpList(*$2)) { delete $2; slgh->reportError("Multiple delayslot declarations"); YYERROR; } delete $2; }
+  | rtlmid statement			{ $$ = $1; if (!$$->addOpList(*$2)) { delete $1; delete $2; slgh->reportError("Multiple delayslot declarations"); YYERROR; } delete $2; }
   | rtlmid LOCAL_KEY STRING ';' { $$ = $1; slgh->pcode.newLocalDefinition($3); }
   | rtlmid LOCAL_KEY STRING ':' INTEGER ';' { $$ = $1; slgh->pcode.newLocalDefinition($3,*$5); delete $5; }
   ;
@@ -365,8 +373,8 @@ statement: lhsvarnode '=' expr ';'	{ $3->setOutput($1); $$ = ExprTree::toVector(
   | USEROPSYM '(' paramlist ')' ';'	{ $$ = slgh->pcode.createUserOpNoOut($1,$3); }
   | lhsvarnode '[' INTEGER ',' INTEGER ']' '=' expr ';' { $$ = slgh->pcode.assignBitRange($1,(uint4)*$3,(uint4)*$5,$8); delete $3, delete $5; }
   | BITSYM '=' expr ';'                 { $$=slgh->pcode.assignBitRange($1->getParentSymbol()->getVarnode(),$1->getBitOffset(),$1->numBits(),$3); }
-  | varnode ':' INTEGER '='		{ delete $1; delete $3; slgh->reportError("Illegal truncation on left-hand side of assignment"); YYERROR; }
-  | varnode '(' INTEGER ')'		{ delete $1; delete $3; slgh->reportError("Illegal subpiece on left-hand side of assignment"); YYERROR; }
+  | varnode ':' INTEGER '='		{ $$ = (vector<OpTpl *> *)0; delete $1; delete $3; slgh->reportError("Illegal truncation on left-hand side of assignment"); YYERROR; }
+  | varnode '(' INTEGER ')'		{ $$ = (vector<OpTpl *> *)0; delete $1; delete $3; slgh->reportError("Illegal subpiece on left-hand side of assignment"); YYERROR; }
   | BUILD_KEY OPERANDSYM ';'		{ $$ = slgh->pcode.createOpConst(BUILD,$2->getIndex()); }
   | CROSSBUILD_KEY varnode ',' SECTIONSYM ';' { $$ = slgh->createCrossBuild($2,$4); }
   | CROSSBUILD_KEY varnode ',' STRING ';'   { $$ = slgh->createCrossBuild($2,slgh->newSectionSymbol(*$4)); delete $4; }
@@ -376,7 +384,7 @@ statement: lhsvarnode '=' expr ';'	{ $3->setOutput($1); $$ = ExprTree::toVector(
   | GOTO_KEY '[' expr ']' ';'		{ $$ = slgh->pcode.createOpNoOut(CPUI_BRANCHIND,$3); }
   | CALL_KEY jumpdest ';'		{ $$ = slgh->pcode.createOpNoOut(CPUI_CALL,new ExprTree($2)); }
   | CALL_KEY '[' expr ']' ';'		{ $$ = slgh->pcode.createOpNoOut(CPUI_CALLIND,$3); }
-  | RETURN_KEY ';'			{ slgh->reportError("Must specify an indirect parameter for return"); YYERROR; }
+  | RETURN_KEY ';'			{ $$ = (vector<OpTpl *> *)0; slgh->reportError("Must specify an indirect parameter for return"); YYERROR; }
   | RETURN_KEY '[' expr ']' ';'		{ $$ = slgh->pcode.createOpNoOut(CPUI_RETURN,$3); }
   | MACROSYM '(' paramlist ')' ';'      { $$ = slgh->createMacroUse($1,$3); }
   | label                               { $$ = slgh->pcode.placeLabel( $1 ); }
@@ -447,7 +455,7 @@ expr: varnode { $$ = new ExprTree($1); }
   | specificsymbol '[' INTEGER ',' INTEGER ']' { $$ = slgh->pcode.createBitRange($1,(uint4)*$3,(uint4)*$5); delete $3, delete $5; }
   | BITSYM                      { $$=slgh->pcode.createBitRange($1->getParentSymbol(),$1->getBitOffset(),$1->numBits()); }
   | USEROPSYM '(' paramlist ')' { $$ = slgh->pcode.createUserOp($1,$3); }
-  | OP_CPOOLREF '(' paramlist ')'  { if ((*$3).size() < 2) { string errmsg = "Must at least two inputs to cpool"; slgh->reportError(errmsg); YYERROR; } $$ = slgh->pcode.createVariadic(CPUI_CPOOLREF,$3); }
+  | OP_CPOOLREF '(' paramlist ')'  { if ((*$3).size() < 2) { string errmsg = "Must be at least two inputs to cpool"; slgh->reportError(errmsg); delete $3; YYERROR; } $$ = slgh->pcode.createVariadic(CPUI_CPOOLREF,$3); }
   ;  
 sizedstar: '*' '[' SPACESYM ']' ':' INTEGER { $$ = new StarQuality; $$->size = *$6; delete $6; $$->id=ConstTpl($3->getSpace()); }
   | '*' '[' SPACESYM ']'	{ $$ = new StarQuality; $$->size = 0; $$->id=ConstTpl($3->getSpace()); }
@@ -460,12 +468,12 @@ jumpdest: JUMPSYM		{ VarnodeTpl *sym = $1->getVarnode(); $$ = new VarnodeTpl(Con
   | OPERANDSYM			{ $$ = $1->getVarnode(); $1->setCodeAddress(); }
   | INTEGER '[' SPACESYM ']'	{ AddrSpace *spc = $3->getSpace(); $$ = new VarnodeTpl(ConstTpl(spc),ConstTpl(ConstTpl::real,*$1),ConstTpl(ConstTpl::real,spc->getAddrSize())); delete $1; }
   | label                       { $$ = new VarnodeTpl(ConstTpl(slgh->getConstantSpace()),ConstTpl(ConstTpl::j_relative,$1->getIndex()),ConstTpl(ConstTpl::real,sizeof(uintm))); $1->incrementRefCount(); }
-  | STRING			{ string errmsg = "Unknown jump destination: "+*$1; delete $1; slgh->reportError(errmsg); YYERROR; }
+  | STRING			{ $$ = (VarnodeTpl *)0; string errmsg = "Unknown jump destination: "+*$1; delete $1; slgh->reportError(errmsg); YYERROR; }
   ;
 varnode: specificsymbol		{ $$ = $1->getVarnode(); }
   | integervarnode		{ $$ = $1; }
-  | STRING			{ string errmsg = "Unknown varnode parameter: "+*$1; delete $1; slgh->reportError(errmsg); YYERROR; }
-  | SUBTABLESYM                 { string errmsg = "Subtable not attached to operand: "+$1->getName(); slgh->reportError(errmsg); YYERROR; }
+  | STRING			{ $$ = (VarnodeTpl *)0; string errmsg = "Unknown varnode parameter: "+*$1; delete $1; slgh->reportError(errmsg); YYERROR; }
+  | SUBTABLESYM                 { $$ = (VarnodeTpl *)0; string errmsg = "Subtable not attached to operand: "+$1->getName(); slgh->reportError(errmsg); YYERROR; }
   ;
 integervarnode: INTEGER		{ $$ = new VarnodeTpl(ConstTpl(slgh->getConstantSpace()),ConstTpl(ConstTpl::real,*$1),ConstTpl(ConstTpl::real,0)); delete $1; }
   | BADINTEGER                  { $$ = new VarnodeTpl(ConstTpl(slgh->getConstantSpace()),ConstTpl(ConstTpl::real,0),ConstTpl(ConstTpl::real,0)); slgh->reportError("Parsed integer is too big (overflow)"); }
@@ -474,8 +482,8 @@ integervarnode: INTEGER		{ $$ = new VarnodeTpl(ConstTpl(slgh->getConstantSpace()
   | '&' ':' INTEGER varnode     { $$ = slgh->pcode.addressOf($4,*$3); delete $3; }
   ;
 lhsvarnode: specificsymbol	{ $$ = $1->getVarnode(); }
-  | STRING			{ string errmsg = "Unknown assignment varnode: "+*$1; delete $1; slgh->reportError(errmsg); YYERROR; }
-  | SUBTABLESYM                 { string errmsg = "Subtable not attached to operand: "+$1->getName(); slgh->reportError(errmsg); YYERROR; }
+  | STRING			{ $$ = (VarnodeTpl *)0; string errmsg = "Unknown assignment varnode: "+*$1; delete $1; slgh->reportError(errmsg); YYERROR; }
+  | SUBTABLESYM                 { $$ = (VarnodeTpl *)0; string errmsg = "Subtable not attached to operand: "+$1->getName(); slgh->reportError(errmsg); YYERROR; }
   ;
 label: '<' LABELSYM '>'         { $$ = $2; }
   | '<' STRING '>'              { $$ = slgh->pcode.defineLabel( $2 ); }
@@ -484,8 +492,8 @@ exportvarnode: specificsymbol	{ $$ = $1->getVarnode(); }
   | '&' varnode                 { $$ = slgh->pcode.addressOf($2,0); }
   | '&' ':' INTEGER varnode     { $$ = slgh->pcode.addressOf($4,*$3); delete $3; }
   | INTEGER ':' INTEGER		{ $$ = new VarnodeTpl(ConstTpl(slgh->getConstantSpace()),ConstTpl(ConstTpl::real,*$1),ConstTpl(ConstTpl::real,*$3)); delete $1; delete $3; }
-  | STRING			{ string errmsg="Unknown export varnode: "+*$1; delete $1; slgh->reportError(errmsg); YYERROR; }
-  | SUBTABLESYM                 { string errmsg = "Subtable not attached to operand: "+$1->getName(); slgh->reportError(errmsg); YYERROR; }
+  | STRING			{ $$ = (VarnodeTpl *)0; string errmsg="Unknown export varnode: "+*$1; delete $1; slgh->reportError(errmsg); YYERROR; }
+  | SUBTABLESYM                 { $$ = (VarnodeTpl *)0; string errmsg = "Subtable not attached to operand: "+$1->getName(); slgh->reportError(errmsg); YYERROR; }
   ;
 familysymbol: VALUESYM		{ $$ = $1; }
   | VALUEMAPSYM                 { $$ = $1; }
@@ -511,7 +519,7 @@ intbpart: INTEGER		{ $$ = new vector<intb>; $$->push_back(intb(*$1)); delete $1;
                                   $$ = new vector<intb>; $$->push_back((intb)0xBADBEEF); delete $1; }
   | intbpart INTEGER            { $$ = $1; $$->push_back(intb(*$2)); delete $2; }
   | intbpart '-' INTEGER        { $$ = $1; $$->push_back(-intb(*$3)); delete $3; }
-  | intbpart STRING             { if (*$2!="_") { string errmsg = "Expecting integer but saw: "+*$2; delete $2; slgh->reportError(errmsg); YYERROR; }
+  | intbpart STRING             { if (*$2!="_") { string errmsg = "Expecting integer but saw: "+*$2; delete $1; delete $2; slgh->reportError(errmsg); YYERROR; }
                                   $$ = $1; $$->push_back((intb)0xBADBEEF); delete $2; }
   ;
 stringlist: '[' stringpart ']'	{ $$ = $2; }
@@ -519,7 +527,7 @@ stringlist: '[' stringpart ']'	{ $$ = $2; }
   ;
 stringpart: STRING		{ $$ = new vector<string>; $$->push_back( *$1 ); delete $1; }
   | stringpart STRING		{ $$ = $1; $$->push_back(*$2); delete $2; }
-  | stringpart anysymbol	{ string errmsg = $2->getName()+": redefined"; slgh->reportError(errmsg); YYERROR; }
+  | stringpart anysymbol	{ $$ = (vector<string> *)0; delete $1; string errmsg = $2->getName()+": redefined"; slgh->reportError(errmsg); YYERROR; }
   ;
 anystringlist: '[' anystringpart ']' { $$ = $2; }
   ;
@@ -536,7 +544,7 @@ valuepart: VALUESYM		{ $$ = new vector<SleighSymbol *>; $$->push_back( $1 ); }
   | CONTEXTSYM                  { $$ = new vector<SleighSymbol *>; $$->push_back($1); }
   | valuepart VALUESYM		{ $$ = $1; $$->push_back($2); }
   | valuepart CONTEXTSYM        { $$ = $1; $$->push_back($2); }
-  | valuepart STRING		{ string errmsg = *$2+": is not a value pattern"; delete $2; slgh->reportError(errmsg); YYERROR; }
+  | valuepart STRING		{ $$ = (vector<SleighSymbol *> *)0; delete $1; string errmsg = *$2+": is not a value pattern"; delete $2; slgh->reportError(errmsg); YYERROR; }
   ;
 varlist: '[' varpart ']'	{ $$ = $2; }
   | VARSYM			{ $$ = new vector<SleighSymbol *>; $$->push_back($1); }
@@ -545,7 +553,7 @@ varpart: VARSYM			{ $$ = new vector<SleighSymbol *>; $$->push_back($1); }
   | STRING                      { if (*$1!="_") { string errmsg = *$1+": is not a varnode symbol"; delete $1; slgh->reportError(errmsg); YYERROR; }
 				  $$ = new vector<SleighSymbol *>; $$->push_back((SleighSymbol *)0); delete $1; }
   | varpart VARSYM		{ $$ = $1; $$->push_back($2); }
-  | varpart STRING		{ if (*$2!="_") { string errmsg = *$2+": is not a varnode symbol"; delete $2; slgh->reportError(errmsg); YYERROR; }
+  | varpart STRING		{ if (*$2!="_") { string errmsg = *$2+": is not a varnode symbol"; delete $1; delete $2; slgh->reportError(errmsg); YYERROR; }
                                   $$ = $1; $$->push_back((SleighSymbol *)0); delete $2; }
   ;
 paramlist: /* EMPTY */		{ $$ = new vector<ExprTree *>; }

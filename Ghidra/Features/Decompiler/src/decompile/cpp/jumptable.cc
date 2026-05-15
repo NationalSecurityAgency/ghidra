@@ -2482,11 +2482,11 @@ void JumpTable::setOverride(const vector<Address> &addrtable,const Address &nadd
   if (jmodel != (JumpModel *)0)
     delete jmodel;
 
-  JumpBasicOverride *override;
-  jmodel = override = new JumpBasicOverride(this);
-  override->setAddresses(addrtable);
-  override->setNorm(naddr,h);
-  override->setStartingValue(sv);
+  JumpBasicOverride *jumpOverride;
+  jmodel = jumpOverride = new JumpBasicOverride(this);
+  jumpOverride->setAddresses(addrtable);
+  jumpOverride->setNorm(naddr,h);
+  jumpOverride->setStartingValue(sv);
 }
 
 /// \brief Get the index of the i-th address table entry that corresponds to the given basic-block

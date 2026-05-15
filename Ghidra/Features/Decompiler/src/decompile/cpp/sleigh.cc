@@ -453,8 +453,8 @@ void DisassemblyCache::initialize(int4 min,int4 hashsize)
   hashtable = new ParserContext *[hashsize];
   for(int4 i=0;i<minimumreuse;++i) {
     ParserContext *pos = new ParserContext(contextcache,translate);
-    pos->initialize(75,20,constspace);
     list[i] = pos;
+    pos->initialize(75,20,constspace);
   }
   ParserContext *pos = list[0];
   for(int4 i=0;i<hashsize;++i)

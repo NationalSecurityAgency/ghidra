@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -231,7 +231,7 @@ static void shift_right(uint4 *arr,int4 size,int4 sa)
 ///
 /// The numerator and denominator, expressed in 32-bit \e digits, are provided.
 /// The algorithm calculates the quotient and the remainder is left in the array originally
-/// containing the numerator.
+/// containing the numerator.  We assume m > n > 0 and u[n-1] >= v[n-1] > 0.
 /// \param m is the number of 32-bit digits in the numerator
 /// \param n is the number of 32-bit digits in the denominator
 /// \param u is the numerator and will hold the remainder
@@ -311,8 +311,6 @@ void udiv128(uint8 *numer,uint8 *denom,uint8 *quotient_res,uint8 *remainder_res)
     remainder_res[1] = numer[1];
     return;
   }
-  u[m] = 0;
-  m += 1;			// Extend u array by 1 to account for normalization
   if (n == 1) {
     uint4 d = v[0];
     uint4 rem = 0;
@@ -325,10 +323,13 @@ void udiv128(uint8 *numer,uint8 *denom,uint8 *quotient_res,uint8 *remainder_res)
     u[0] = rem;			// Last carry is final remainder
   }
   else {
+    u[m] = 0;
+    m += 1;			// Temporarily extend u array by 1 to allow for normalization
     knuth_algorithm_d(m,n,u,v,q);
+    m -= 1;			// Remove the extension
   }
-  pack32_64(2,m-n,quotient_res,q);
-  pack32_64(2,m-1,remainder_res,u);
+  pack32_64(2,m-n+1,quotient_res,q);
+  pack32_64(2,m,remainder_res,u);
 }
 
 } // End namespace ghidra

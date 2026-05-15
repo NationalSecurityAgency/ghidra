@@ -682,8 +682,8 @@ bool FlowInfo::setupCallSpecs(PcodeOp *op,FuncCallSpecs *fc)
 {
   FuncCallSpecs *res;
   res = new FuncCallSpecs(op);
-  data.opSetInput(op,data.newVarnodeCallSpecs(res),0);
   qlst.push_back(res);
+  data.opSetInput(op,data.newVarnodeCallSpecs(res),0);
 
   data.getOverride().applyPrototype(data,*res);
   queryCall(*res);

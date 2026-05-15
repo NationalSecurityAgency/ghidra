@@ -624,8 +624,9 @@ void Architecture::postSpecFile(void)
 void Architecture::restoreFromSpec(DocumentStorage &store)
 
 {
-  Translate *newtrans = buildTranslator(store); // Once language is described we can build translator
-  newtrans->initialize(store);
+  unique_ptr<Translate> utrans(buildTranslator(store)); // Once language is described we can build translator
+  utrans->initialize(store);
+  Translate *newtrans = utrans.release();
   translate = newtrans;
   modifySpaces(newtrans);	// Give architecture chance to modify spaces, before copying
   copySpaces(newtrans);
@@ -741,23 +742,21 @@ void Architecture::decodeDynamicRule(Decoder &decoder)
 ProtoModel *Architecture::decodeProto(Decoder &decoder)
 
 {
-  ProtoModel *res;
+  unique_ptr<ProtoModel> model;
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_PROTOTYPE)
-    res = new ProtoModel(this);
+    model.reset(new ProtoModel(this));
   else if (elemId == ELEM_RESOLVEPROTOTYPE)
-    res = new ProtoModelMerged(this);
+    model.reset(new ProtoModelMerged(this));
   else
     throw LowlevelError("Expecting <prototype> or <resolveprototype> tag");
 
-  res->decode(decoder);
+  model->decode(decoder);
   
-  ProtoModel *other = getModel(res->getName());
-  if (other != (ProtoModel *)0) {
-    string errMsg = "Duplicate ProtoModel name: " + res->getName();
-    delete res;
-    throw LowlevelError(errMsg);
-  }
+  ProtoModel *other = getModel(model->getName());
+  if (other != (ProtoModel *)0)
+    throw LowlevelError("Duplicate ProtoModel name: " + model->getName());
+  ProtoModel *res = model.release();
   protoModels[res->getName()] = res;
   return res;
 }
