@@ -124,6 +124,29 @@ bool PcodeOp::isCollapsible(void) const
   return true;
 }
 
+/// \param slot is the specific input edge being marked
+void PcodeOp::setCopyImmed(int4 slot)
+
+{
+  FlowBlock *inbl = parent->getIn(slot);
+  int4 outedge = parent->getInRevIndex(slot);
+  inbl->setImmedCopyEdge(outedge);
+  addlflags |= immed_copy;
+}
+
+/// \param slot is the specific input edge to test
+/// \return \b true if an immediate COPY has been propagated along the edge
+bool PcodeOp::hasCopyImmed(int4 slot) const
+
+{
+  if ((addlflags & immed_copy) != 0) {
+    FlowBlock *inbl = parent->getIn(slot);
+    int4 outedge = parent->getInRevIndex(slot);
+    return inbl->hasImmedCopyEdge(outedge);
+  }
+  return false;
+}
+
 /// Produce a hash of the following attributes: output size, the opcode, and the identity
 /// of each input varnode.  This is suitable for determining if two PcodeOps calculate identical values
 /// \return the calculated hash or 0 if the op is not cse hashable

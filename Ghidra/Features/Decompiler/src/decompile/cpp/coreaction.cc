@@ -3552,12 +3552,11 @@ int4 ActionUnreachable::apply(Funcdata &data)
 int4 ActionDoNothing::apply(Funcdata &data)
 
 {				// Remove blocks that do nothing
-  int4 i;
   const BlockGraph &graph(data.getBasicBlocks());
-  BlockBasic *bb;
 
-  for(i=0;i<graph.getSize();++i) {
-    bb = (BlockBasic *) graph.getBlock(i);
+  for(int4 i=0;i<graph.getSize();++i) {
+    BlockBasic *bb = (BlockBasic *) graph.getBlock(i);
+    bb->clearDelayedDonothing();
     if (bb->isDoNothing()) {
       if ((bb->sizeOut()==1)&&(bb->getOut(0)==bb)) { // Infinite loop
 	if (!bb->isDonothingLoop()) {
@@ -3566,11 +3565,67 @@ int4 ActionDoNothing::apply(Funcdata &data)
 	}
       }
       else if (bb->unblockedMulti(0)) {
-	data.removeDoNothingBlock(bb);
-	count += 1;
-	return 0;
+	if (data.isNormalizationOn() || bb->hasNoImmediateCopy(0)) {
+	  data.removeDoNothingBlock(bb);
+	  count += 1;
+	  return 0;
+	}
+	else {
+	  // If there were immediate COPYs but the block was otherwise removable,
+	  // mark the block for possible late removal.
+	  bb->setDelayedDonothing();
+	}
       }
     }
+  }
+  return 0;
+}
+
+/// For each input to \b bl, check if all other out edges go to the same \e out block as \b bl.
+/// \param bl is the block being removed
+/// \return \b true if a redundancy would be created
+bool ActionLateDoNothing::removingCreatesRedundancy(FlowBlock *bl)
+
+{
+  FlowBlock *outbl = bl->getOut(0);
+  for(int4 i=0;i<bl->sizeIn();++i) {
+    FlowBlock *inbl = bl->getIn(i);
+    if (inbl->sizeOut() == 1) continue;
+    int4 count;
+    for(count=0;count<inbl->sizeOut();++count) {
+      FlowBlock *curbl = inbl->getOut(count);
+      if (curbl != bl && curbl != outbl)		// Check if this edge goes to outbl (possibly via bl)
+	break;
+    }
+    if (count == inbl->sizeOut())			// All edges lead to outbl
+      return true;
+  }
+  return false;
+}
+
+int4 ActionLateDoNothing::apply(Funcdata &data)
+
+{
+  const BlockGraph &graph(data.getBasicBlocks());
+  vector<BlockBasic *> removeList;
+
+  for(int4 i=0;i<graph.getSize();++i) {
+    BlockBasic *bb = (BlockBasic *) graph.getBlock(i);
+    if (!bb->isDelayedDonothing()) continue;
+    if (bb->isDoNothing()) {
+      if (removingCreatesRedundancy(bb)) continue;
+      if ((bb->sizeOut() == 1) && (bb->getOut(0) == bb)) { // Infinite loop
+	if (!bb->isDonothingLoop()) {
+	  bb->setDonothingLoop();
+	  data.warning("Do nothing block with infinite loop",bb->getStart());
+	}
+      }
+      else if (bb->unblockedMulti(0)) removeList.push_back(bb);
+    }
+  }
+  for(int4 i=0;i<removeList.size();++i) {
+    data.removeDoNothingBlock(removeList[i]);
+    count += 1;
   }
   return 0;
 }
@@ -5594,10 +5649,10 @@ void ActionDatabase::universalAction(Architecture *conf)
       actmainloop->addAction( new ActionRestrictLocal("localrecovery") ); // Do before dead code removed
       actmainloop->addAction( new ActionDeadCode("deadcode") );
       actmainloop->addAction( new ActionDynamicMapping("dynamic") ); // Must come before restructurevarnode and infertypes
-      actmainloop->addAction( new ActionRestructureVarnode("localrecovery") );
       actmainloop->addAction( new ActionSpacebase("base") );	// Must come before infertypes and nonzeromask
       actmainloop->addAction( new ActionNonzeroMask("analysis") );
       actmainloop->addAction( new ActionInferTypes("typerecovery") );
+      actmainloop->addAction( new ActionRestructureVarnode("localrecovery") );
       actstackstall = new ActionGroup(Action::rule_repeatapply,"stackstall");
       {
 	actprop = new ActionPool(Action::rule_repeatapply,"oppool1");
@@ -5809,8 +5864,8 @@ void ActionDatabase::universalAction(Architecture *conf)
   }
   act->addAction( actcleanup );
 
-  act->addAction( new ActionPreferComplement("blockrecovery") );
-  act->addAction( new ActionStructureTransform("blockrecovery") );
+  act->addAction( new ActionPreferComplement("blockrecovery", true) );
+  act->addAction( new ActionStructureTransform("blockrecovery", true) );	// Allow mods
   act->addAction( new ActionNormalizeBranches("normalizebranches") );
   act->addAction( new ActionAssignHigh("merge") );
   act->addAction( new ActionMergeRequired("merge") );
@@ -5825,6 +5880,10 @@ void ActionDatabase::universalAction(Architecture *conf)
   act->addAction( new ActionMergeType("merge") );
   act->addAction( new ActionHideShadow("merge") );
   act->addAction( new ActionCopyMarker("merge") );
+  act->addAction( new ActionLateDoNothing("blockrecovery") );
+  act->addAction( new ActionBlockStructure("blockrecovery") );
+  act->addAction( new ActionPreferComplement("blockrecovery", false) );		// Don't allow mods
+  act->addAction( new ActionStructureTransform("blockrecovery", false) );	// Don't allow mods
   act->addAction( new ActionOutputPrototype("localrecovery") );
   act->addAction( new ActionInputPrototype("fixateproto") );
   act->addAction( new ActionMapGlobals("fixateglobals") );

@@ -86,7 +86,7 @@ void Funcdata::clear(void)
 {				// Clear everything associated with decompilation (analysis)
 
   flags &= ~(highlevel_on|blocks_generated|processing_started|typerecovery_start|typerecovery_on|
-      double_precis_on|restart_pending);
+      double_precis_on|restart_pending|normalization_on);
   clean_up_index = 0;
   high_level_index = 0;
   cast_phase_index = 0;

@@ -174,6 +174,7 @@ private:
   void addDescend(PcodeOp *op);	///< Add a descendant (reading) PcodeOp to this Varnode's list
   void eraseDescend(PcodeOp *op); ///< Erase a descendant (reading) PcodeOp from this Varnode's list
   void destroyDescend(void);	///< Clear all descendant (reading) PcodeOps
+  void replaceInHigh(Varnode *replacevn);	///< Swap the given Varnode into the HighVariable for \b this
 public:
   // only to be used by HighVariable
   void setHigh(HighVariable *tv,int2 mg) { high = tv; mergegroup = mg; } ///< Set the HighVariable owning this Varnode

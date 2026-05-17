@@ -3969,6 +3969,9 @@ int4 RulePropagateCopy::applyOp(PcodeOp *op,Funcdata &data)
       if (invn->isAddrTied() && op->getOut()->isAddrTied() && 
 	  (op->getOut()->getAddr() != invn->getAddr()))
 	continue;		// We must not allow merging of different addrtieds
+      if (op->code() == CPUI_MULTIEQUAL && copyop->getParent() == op->getParent()->getIn(i)) {
+	op->setCopyImmed(i);
+      }
     }
     data.opSetInput(op,invn,i); // otherwise propagate just a single copy
     return 1;
@@ -5496,6 +5499,8 @@ int4 RuleCondNegate::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *vn,*outvn;
 
   if (!op->isBooleanFlip()) return 0;
+  if (data.opNormalizeFlip(op))
+    return 1;
 
   vn = op->getIn(1);
   newop = data.newOp(1,op->getAddr());
