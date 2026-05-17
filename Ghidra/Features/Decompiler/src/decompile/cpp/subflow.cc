@@ -1598,6 +1598,24 @@ void RuleSubvarSubpiece::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_SUBPIECE);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleSubvarSubpiece::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vn = op->getIn(0);
+  const Varnode *outvn = op->getOut();
+  int4 flowsize = outvn->getSize();
+  int4 sa = op->getIn(1)->getOffset();
+  if (flowsize + sa > sizeof(uintb)) return 0;
+  uintb mask = calc_mask(flowsize);
+  mask <<= 8 * sa;
+  bool aggressive = outvn->isPtrFlow();
+  if (!aggressive) {
+    if ((vn->getConsume() & mask) != vn->getConsume()) return 0;
+    if (op->getOut()->hasNoDescend()) return 0;
+  }
+  return 1;
+}
+
 int4 RuleSubvarSubpiece::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -1706,6 +1724,19 @@ void RuleSubvarShift::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_RIGHT);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleSubvarShift::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vn = op->getIn(0);
+  if (vn->getSize() != 1) return 0;
+  if (!op->getIn(1)->isConstant()) return 0;
+  int4 sa = (int4)op->getIn(1)->getOffset();
+  uintb mask = vn->getNZMask();
+  if ((mask >> sa) != (uintb)1) return 0;
+  if (op->getOut()->hasNoDescend()) return 0;
+  return 1;
 }
 
 int4 RuleSubvarShift::applyOp(PcodeOp *op,Funcdata &data)
@@ -2065,6 +2096,18 @@ void RuleSplitFlow::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_SUBPIECE);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleSplitFlow::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  int4 loSize = (int4)op->getIn(1)->getOffset();
+  if (loSize == 0) return 0;
+  const Varnode *vn = op->getIn(0);
+  if (!vn->isWritten()) return 0;
+  if (vn->isPrecisLo() || vn->isPrecisHi()) return 0;
+  if (op->getOut()->getSize() + loSize != vn->getSize()) return 0;
+  return 1;
 }
 
 int4 RuleSplitFlow::applyOp(PcodeOp *op,Funcdata &data)
@@ -3047,6 +3090,14 @@ void RuleDumptyHumpLate::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_SUBPIECE);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleDumptyHumpLate::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vn = op->getIn(0);
+  if (!vn->isWritten()) return 0;
+  return (vn->getDef()->code() == CPUI_PIECE) ? 1 : 0;
 }
 
 int4 RuleDumptyHumpLate::applyOp(PcodeOp *op,Funcdata &data)

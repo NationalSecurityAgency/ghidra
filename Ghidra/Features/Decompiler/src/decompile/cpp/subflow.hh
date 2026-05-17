@@ -146,13 +146,14 @@ public:
 /// \brief Perform SubVariableFlow analysis triggered by SUBPIECE
 class RuleSubvarSubpiece : public Rule {
 public:
-  RuleSubvarSubpiece(const string &g) : Rule( g, 0, "subvar_subpiece") {}	///< Constructor
+  RuleSubvarSubpiece(const string &g) : Rule( g, has_canapply, "subvar_subpiece") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSubvarSubpiece(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 /// \brief Perform SubvariableFlow analysis triggered by testing of a single bit
@@ -180,13 +181,14 @@ public:
 /// trigger the full SubvariableFlow analysis.
 class RuleSubvarShift : public Rule {
 public:
-  RuleSubvarShift(const string &g) : Rule( g, 0, "subvar_shift") {}	///< Constructor
+  RuleSubvarShift(const string &g) : Rule( g, has_canapply, "subvar_shift") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSubvarShift(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 /// \brief Perform SubvariableFlow analysis triggered by INT_ZEXT
@@ -241,13 +243,14 @@ public:
 /// If so:  split the pieces into independent data-flows
 class RuleSplitFlow : public Rule {
 public:
-  RuleSplitFlow(const string &g) : Rule( g, 0, "splitflow") {}	///< Constructor
+  RuleSplitFlow(const string &g) : Rule( g, has_canapply, "splitflow") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSplitFlow(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 /// \brief Split a p-code COPY, LOAD, or STORE op based on underlying composite data-type
@@ -366,13 +369,14 @@ public:
 /// preserving the data-types and removing the SUBPIECE and PIECE operations that are discarded.
 class RuleDumptyHumpLate : public Rule {
 public:
-  RuleDumptyHumpLate(const string &g) : Rule( g, 0, "dumptyhumplate") {}	///< Constructor
+  RuleDumptyHumpLate(const string &g) : Rule( g, has_canapply, "dumptyhumplate") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleDumptyHumpLate(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 /// \brief Class for tracing changes of precision in floating point variables
