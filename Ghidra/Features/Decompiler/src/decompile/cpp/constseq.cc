@@ -978,6 +978,18 @@ void RuleStringCopy::getOpList(vector<uint4> &oplist) const
 /// Given a root COPY of a constant character, search for other COPYs in the same basic block that form a sequence
 /// of characters that can be interpreted as a single string.  Replace the sequence of COPYs with a single
 /// \b memcpy or \b wcsncpy user-op.
+/// \brief Pure-read precondition mirror.
+int4 RuleStringCopy::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (!op->getIn(0)->isConstant()) return 0;
+  const Varnode *outvn = op->getOut();
+  Datatype *ct = outvn->getTypeDefFacing();
+  if (!ct->isCharPrint()) return 0;
+  if (ct->isOpaqueString()) return 0;
+  if (!outvn->isAddrTied()) return 0;
+  return 1;
+}
+
 int4 RuleStringCopy::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -1010,6 +1022,12 @@ void RuleStringStore::getOpList(vector<uint4> &oplist) const
 /// Given a root STORE of a constant character, search for other STOREs in the same basic block off of the
 /// same base pointer that form a sequence a sequence that can be interpreted as a single string.  Replace
 /// the STOREs with a single \b strncpy or \b wcsncpy user-op.
+/// \brief Pure-read precondition mirror.
+int4 RuleStringStore::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  return op->getIn(2)->isConstant() ? 1 : 0;
+}
+
 int4 RuleStringStore::applyOp(PcodeOp *op,Funcdata &data)
 
 {

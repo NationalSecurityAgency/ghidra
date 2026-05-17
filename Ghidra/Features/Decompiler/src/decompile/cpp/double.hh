@@ -321,7 +321,7 @@ public:
 class RuleDoubleIn : public Rule {
   int4 attemptMarking(Varnode *vn,PcodeOp *subpieceOp);
 public:
-  RuleDoubleIn(const string &g) : Rule(g, 0, "doublein") {}	///< Constructor
+  RuleDoubleIn(const string &g) : Rule(g, has_canapply, "doublein") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleDoubleIn(getGroup());
@@ -329,19 +329,21 @@ public:
   virtual void reset(Funcdata &data);
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 /// \brief Simplify a double precision operation, pulling back one level, starting from inputs to a PIECE operation
 class RuleDoubleOut : public Rule {
   int4 attemptMarking(Varnode *vnhi,Varnode *vnlo,PcodeOp *pieceOp);
 public:
-  RuleDoubleOut(const string &g) : Rule(g, 0, "doubleout") {}	///< Constructor
+  RuleDoubleOut(const string &g) : Rule(g, has_canapply, "doubleout") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleDoubleOut(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 /// \brief Collapse contiguous loads: `x = CONCAT44(*(ptr+4),*ptr)  =>  x = *ptr`

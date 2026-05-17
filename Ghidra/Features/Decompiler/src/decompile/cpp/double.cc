@@ -3256,6 +3256,16 @@ int4 RuleDoubleIn::attemptMarking(Varnode *vn,PcodeOp *subpieceOp)
   return 1;
 }
 
+/// \brief Pure-read precondition mirror.  Conservative: gate on isPrecisHi/Lo state.
+int4 RuleDoubleIn::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *outvn = op->getOut();
+  if (!outvn->isPrecisLo()) {
+    return outvn->isPrecisHi() ? 0 : 1;
+  }
+  return data.hasUnreachableBlocks() ? 0 : 1;
+}
+
 int4 RuleDoubleIn::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -3326,6 +3336,16 @@ int4 RuleDoubleOut::attemptMarking(Varnode *vnhi,Varnode *vnlo,PcodeOp *pieceOp)
     return 0;
   vnhi->setPrecisHi();
   vnlo->setPrecisLo();
+  return 1;
+}
+
+/// \brief Pure-read precondition mirror.  Conservative quick check.
+int4 RuleDoubleOut::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vnhi = op->getIn(0);
+  const Varnode *vnlo = op->getIn(1);
+  if (!vnhi->isInput() || !vnlo->isInput()) return 0;
+  if (!vnhi->isPersist() || !vnlo->isPersist()) return 0;
   return 1;
 }
 
