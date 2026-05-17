@@ -4793,6 +4793,12 @@ void RuleTransformCpool::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_CPOOLREF);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleTransformCpool::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  return op->isCpoolTransformed() ? 0 : 1;
+}
+
 int4 RuleTransformCpool::applyOp(PcodeOp *op,Funcdata &data)
 
 {

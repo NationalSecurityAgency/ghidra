@@ -770,13 +770,14 @@ public:
 };
 class RuleTransformCpool : public Rule {
 public:
-  RuleTransformCpool(const string &g) : Rule(g, 0, "transformcpool") {}	///< Constructor
+  RuleTransformCpool(const string &g) : Rule(g, has_canapply, "transformcpool") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleTransformCpool(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RulePropagateCopy : public Rule {
 public:
