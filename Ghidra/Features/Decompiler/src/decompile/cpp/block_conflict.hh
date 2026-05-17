@@ -53,6 +53,12 @@ public:
   /// \brief Get blocks colored with the given color.
   std::vector<int4> getColorGroup(int4 c) const;
 
+  /// \brief Get the color assigned to the given block index, or -1 if unbuilt/out-of-range.
+  int4 colorOf(int4 blockIndex) const {
+    if (blockIndex < 0 || blockIndex >= (int4)color.size()) return -1;
+    return color[blockIndex];
+  }
+
   /// \brief Number of blocks in the graph.
   int4 size(void) const { return (int4)adj.size(); }
 

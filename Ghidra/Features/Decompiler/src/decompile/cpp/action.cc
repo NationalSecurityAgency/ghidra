@@ -61,6 +61,17 @@ static bool getGraphStatsEnabled(void)
   return cached != 0;
 }
 
+/// \brief Path 3 dispatcher gate: route ActionPool::apply through applyBlockParallel.
+/// Set DECOMP_INTRA_BLOCK_PARALLEL=1 to enable.  Requires DECOMP_INTRA_WORKERS>1.
+static bool getBlockParallelEnabled(void)
+{
+  static int cached = -1;
+  if (cached >= 0) return cached != 0;
+  const char *env = std::getenv("DECOMP_INTRA_BLOCK_PARALLEL");
+  cached = (env != nullptr && std::atoi(env) != 0) ? 1 : 0;
+  return cached != 0;
+}
+
 /// \brief Path 3 instrumentation: per-scope rule-fire counters.
 /// Set DECOMP_INTRA_SCOPE_STATS=1 to enable.  Counts are dumped at process exit.
 /// Uses Path 2 mutation_scope annotations to validate the static distribution
@@ -1022,8 +1033,12 @@ int4 ActionPool::apply(Funcdata &data)
     int4 minOps = getIntraParallelMinOps();
     // Estimate op count via map size.  This is O(1).
     int4 opCount = (int4)data.obSize();
-    if (opCount >= minOps)
+    if (opCount >= minOps) {
+      // Path 3 dispatcher takes precedence over Path 1 when explicitly enabled.
+      if (getBlockParallelEnabled())
+        return applyBlockParallel(data,numWorkers);
       return applyParallel(data,numWorkers);
+    }
   }
 
   if (status != status_mid) {
@@ -1202,6 +1217,105 @@ int4 ActionPool::applyParallel(Funcdata &data,int4 numWorkers)
 	continue;
       }
       rule_idx += 1;
+    }
+  }
+
+  lastSeenModCount = data.getGlobalModCount();
+  return 0;
+}
+
+/// \brief Path 3 block-DAG parallel dispatcher.
+///
+/// Partitions the function's ops by the block-conflict-graph color of their
+/// containing BasicBlock.  Two blocks share a color iff they have no def-use
+/// edge between any of their ops, which means rules that only touch the matched
+/// op (scope_op_only) or insert helpers in the matched op's block
+/// (scope_block_local) can safely execute concurrently on ops of *different*
+/// colors.  Rules with broader scopes serialize.
+///
+/// This skeleton step (P3-2) builds the partition and dispatches in color
+/// order but still serially — it validates the wiring before P3-3 actually
+/// runs color groups in parallel.  Behavior is observationally equivalent to
+/// applyParallel modulo op iteration order (ops are visited in
+/// {color, SeqNum} order rather than pure SeqNum), which the ActionPool's
+/// iterate-to-quiescence loop tolerates.
+int4 ActionPool::applyBlockParallel(Funcdata &data,int4 numWorkers)
+{
+  // Build conflict graph + coloring once per call.  Caching across sweeps would
+  // require invalidation hooks tied to block-structure changes; for now rebuild.
+  BlockConflictGraph graph;
+  graph.build(data);
+  graph.colorBlocks();
+  int4 numColors = graph.getColorCount();
+  if (numColors <= 0) {
+    // Degenerate: no blocks or no edges.  Fall back to Path 1 behavior.
+    return applyParallel(data, numWorkers);
+  }
+
+  // Phase 0: snapshot ops, partition by their block's color.
+  // Ops with no parent block (e.g. dead/unreachable) go into a synthetic
+  // "loose" bucket appended after the colored groups and dispatched last.
+  vector<vector<PcodeOp *>> opsByColor(numColors + 1);
+  int4 looseBucket = numColors;
+  int4 totalOps = 0;
+  PcodeOpTree::const_iterator it;
+  for (it = data.beginOpAll(); it != data.endOpAll(); ++it) {
+    PcodeOp *op = (*it).second;
+    BlockBasic *bb = op->getParent();
+    int4 c = (bb != (BlockBasic *)0) ? graph.colorOf(bb->getIndex()) : -1;
+    if (c < 0 || c >= numColors)
+      opsByColor[looseBucket].push_back(op);
+    else
+      opsByColor[c].push_back(op);
+    totalOps += 1;
+  }
+  if (totalOps == 0) {
+    lastSeenModCount = data.getGlobalModCount();
+    return 0;
+  }
+
+  // Phase 1 (skipped in skeleton): would compute canApply mask in parallel.
+  // For P3-2 we run without the canApply filter; this matches behavior of
+  // serial dispatch and isolates the contribution of block-partitioning.
+
+  // Phase 2: dispatch by color group in serial.  Within a group we visit ops
+  // in their natural SeqNum order (already true because beginOpAll yields
+  // SeqNum order, and we preserve insertion order within each bucket).
+  for (int4 c = 0; c <= looseBucket; ++c) {
+    vector<PcodeOp *> &ops = opsByColor[c];
+    for (int4 i = 0; i < (int4)ops.size(); ++i) {
+      PcodeOp *op = ops[i];
+      if (op->isDead()) {
+	data.opDeadAndGone(op);
+	continue;
+      }
+      uint4 opc = op->code();
+      int4 rule_idx = 0;
+      while (rule_idx < (int4)perop[opc].size()) {
+	Rule *rl = perop[opc][rule_idx];
+	if (rl->isDisabled()) { rule_idx += 1; continue; }
+	rl->count_tests += 1;
+	int4 res = rl->applyOp(op, data);
+	if (getScopeStatsEnabled()) {
+	  int4 b = scopeBucket(rl->getMutationScope());
+	  scopeTests[b].fetch_add(1, std::memory_order_relaxed);
+	  if (res > 0) scopeFires[b].fetch_add(1, std::memory_order_relaxed);
+	}
+	if (res > 0) {
+	  rl->count_apply += 1;
+	  count += res;
+	  data.bumpIrModCount();
+	  rl->issueWarning(data.getArch());
+	  if (rl->checkActionBreak()) return -1;
+	  if (op->isDead()) break;
+	  if (opc != op->code()) { opc = op->code(); rule_idx = 0; continue; }
+	}
+	else if (opc != op->code()) {
+	  data.getArch()->printMessage("ERROR: Rule " + rl->getName() + " changed op without returning result of 1!");
+	  opc = op->code(); rule_idx = 0; continue;
+	}
+	rule_idx += 1;
+      }
     }
   }
 

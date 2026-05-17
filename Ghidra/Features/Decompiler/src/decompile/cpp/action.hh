@@ -303,6 +303,7 @@ class ActionPool : public Action {
   int4 rule_index;					///< Iterator over Rules for one OpCode
   int4 processOp(PcodeOp *op,Funcdata &data);		///< Apply the next possible Rule to a PcodeOp
   int4 applyParallel(Funcdata &data,int4 numWorkers);	///< Two-phase parallel sweep: phase 1 parallel canApply, phase 2 serial applyOp
+  int4 applyBlockParallel(Funcdata &data,int4 numWorkers);	///< Path 3 block-DAG dispatcher: parallel applyOp across non-conflicting block-color groups
 public:
   ActionPool(uint4 f,const string &nm) : Action(f,nm,"") {}	///< Construct providing properties and name
   virtual ~ActionPool(void);				///< Destructor
