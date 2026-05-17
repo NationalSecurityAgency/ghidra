@@ -24,6 +24,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <unordered_map>
+#include <atomic>
+#include <cstdio>
 
 namespace ghidra {
 
@@ -58,6 +60,65 @@ static bool getGraphStatsEnabled(void)
   cached = (env != nullptr && std::atoi(env) != 0) ? 1 : 0;
   return cached != 0;
 }
+
+/// \brief Path 3 instrumentation: per-scope rule-fire counters.
+/// Set DECOMP_INTRA_SCOPE_STATS=1 to enable.  Counts are dumped at process exit.
+/// Uses Path 2 mutation_scope annotations to validate the static distribution
+/// (66 op_only / 25 block_local / 36 block_global / etc.) against runtime fire rates.
+static bool getScopeStatsEnabled(void)
+{
+  static int cached = -1;
+  if (cached >= 0) return cached != 0;
+  const char *env = std::getenv("DECOMP_INTRA_SCOPE_STATS");
+  cached = (env != nullptr && std::atoi(env) != 0) ? 1 : 0;
+  return cached != 0;
+}
+
+// Five buckets corresponding to Rule::mutation_scope values, in declaration order.
+static std::atomic<uint64_t> scopeTests[5] = {};
+static std::atomic<uint64_t> scopeFires[5] = {};
+
+static int4 scopeBucket(uint4 scope)
+{
+  // mutation_scope is a bitfield value (powers of two from 0x01 to 0x10).
+  // Map to 0..4 by trailing-zero count.  Default scope_block_global on unknown.
+  switch (scope) {
+    case (uint4)Rule::scope_op_only:        return 0;
+    case (uint4)Rule::scope_op_inputs_defs: return 1;
+    case (uint4)Rule::scope_op_output_uses: return 2;
+    case (uint4)Rule::scope_block_local:    return 3;
+    case (uint4)Rule::scope_block_global:   return 4;
+    default:                                return 4;
+  }
+}
+
+// Dumper runs once at process teardown; only emits when stats enabled and any fires recorded.
+struct ScopeStatsDumper {
+  ~ScopeStatsDumper(void) {
+    if (!getScopeStatsEnabled()) return;
+    uint64_t totalTests = 0, totalFires = 0;
+    for (int4 i = 0; i < 5; ++i) {
+      totalTests += scopeTests[i].load(std::memory_order_relaxed);
+      totalFires += scopeFires[i].load(std::memory_order_relaxed);
+    }
+    if (totalTests == 0) return;
+    const char *names[5] = { "op_only", "inputs_defs", "output_uses", "block_local", "block_global" };
+    std::fprintf(stderr, "[scope-stats] total tests=%llu fires=%llu\n",
+                 (unsigned long long)totalTests, (unsigned long long)totalFires);
+    for (int4 i = 0; i < 5; ++i) {
+      uint64_t t = scopeTests[i].load(std::memory_order_relaxed);
+      uint64_t f = scopeFires[i].load(std::memory_order_relaxed);
+      double tpct = totalTests ? (100.0 * t / totalTests) : 0.0;
+      double fpct = totalFires ? (100.0 * f / totalFires) : 0.0;
+      std::fprintf(stderr, "[scope-stats] %-12s tests=%10llu (%5.2f%%) fires=%10llu (%5.2f%%)\n",
+                   names[i],
+                   (unsigned long long)t, tpct,
+                   (unsigned long long)f, fpct);
+    }
+    std::fflush(stderr);
+  }
+};
+static ScopeStatsDumper scopeStatsDumper;
 
 /// Specify the name, group, and properties of the Action
 /// \param f is the collection of property flags
@@ -898,6 +959,11 @@ int4 ActionPool::processOp(PcodeOp *op,Funcdata &data)
 #endif
     rl->count_tests += 1;
     res = rl->applyOp(op,data);
+    if (getScopeStatsEnabled()) {
+      int4 b = scopeBucket(rl->getMutationScope());
+      scopeTests[b].fetch_add(1, std::memory_order_relaxed);
+      if (res > 0) scopeFires[b].fetch_add(1, std::memory_order_relaxed);
+    }
 #ifdef OPACTION_DEBUG
     data.debugModPrint(rl->getName());
 #endif
@@ -1106,6 +1172,11 @@ int4 ActionPool::applyParallel(Funcdata &data,int4 numWorkers)
       }
       rl->count_tests += 1;
       int4 res = rl->applyOp(op,data);
+      if (getScopeStatsEnabled()) {
+	int4 b = scopeBucket(rl->getMutationScope());
+	scopeTests[b].fetch_add(1, std::memory_order_relaxed);
+	if (res > 0) scopeFires[b].fetch_add(1, std::memory_order_relaxed);
+      }
       if (res > 0) {
 	rl->count_apply += 1;
 	count += res;
