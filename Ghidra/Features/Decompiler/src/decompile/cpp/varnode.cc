@@ -316,6 +316,7 @@ void Varnode::printInfo(ostream &s) const
 void Varnode::eraseDescend(PcodeOp *op)
 
 {
+  std::lock_guard<std::mutex> lock(descendMutex);	// Path 4: L2
   list<PcodeOp *>::iterator iter;
 
   iter = descend.begin();
@@ -330,6 +331,7 @@ void Varnode::eraseDescend(PcodeOp *op)
 void Varnode::addDescend(PcodeOp *op)
 
 {
+  std::lock_guard<std::mutex> lock(descendMutex);	// Path 4: L2
   //  if (!heritageknown()) {
   if (isFree()&&(!isSpacebase())) {
     if (!descend.empty())

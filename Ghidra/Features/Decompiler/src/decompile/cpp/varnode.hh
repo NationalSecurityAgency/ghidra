@@ -20,6 +20,7 @@
 
 #include "pcoderaw.hh"
 #include "cover.hh"
+#include <mutex>
 
 namespace ghidra {
 
@@ -147,6 +148,10 @@ private:
   VarnodeLocSet::iterator lociter;	///< Iterator into VarnodeBank sorted by location
   VarnodeDefSet::iterator defiter;	///< Iterator into VarnodeBank sorted by definition
   list<PcodeOp *> descend;		///< List of every op using this varnode as input
+  /// \brief Path 4: per-Varnode mutex guarding the descend list (L2).
+  /// Acquired by addDescend/eraseDescend.  Never held across calls into
+  /// Funcdata; see parallel_safety.hh for the lock hierarchy.
+  mutable std::mutex descendMutex;
   mutable Cover *cover;		///< Addresses covered by the def->use of this Varnode
   mutable union {
     Datatype *dataType;		///< Temporary data-type associated with \b this for use in type propagate algorithm
