@@ -90,12 +90,26 @@
  *             opSetInput releases the old Varnode's mutex before acquiring
  *             the new Varnode's mutex.
  *
- *   L3.  globalModCount → std::atomic<uint8>
- *           — bumpIrModCount / bumpGlobalModCount / bumpVnCreateCount become
- *             relaxed atomic increments.  This makes the counter free to
- *             update without the pool mutex.  It also means
- *             ActionPool::lastSeenModCount comparisons are read-correct
- *             even mid-mutation; the counter is monotonically non-decreasing.
+ *   L2u. Funcdata::unionMutex     (recursive_mutex, per-Funcdata)
+ *           — Guards the unionMap (TypeUnion field-resolution cache).
+ *           — Acquired by getUnionField / getUnionResolution /
+ *             getAddressBasedUnionField / setUnionField /
+ *             setAddressBasedUnionField / updateUnionField /
+ *             forceFacingType / inheritUnionField / inheritUnionFieldPtr.
+ *           — Also acquired transitively by Datatype::findResolve when
+ *             called via Varnode::getTypeReadFacing on union-typed varnodes
+ *             (TypePointer::findResolve, TypeUnion::findResolve, etc.).
+ *           — Sibling of poolMutex (L1); acquired alone, never nested
+ *             under poolMutex.  Recursive so forceFacingType /
+ *             inheritUnionField (which delegate to setUnionField) don't
+ *             self-deadlock.
+ *
+ *   L3.  globalModCount + irModCount + vnCreateCount + typeModCount → std::atomic<uint8>
+ *           — bumpIrModCount / bumpGlobalModCount / bumpVnCreateCount /
+ *             bumpTypeModCount become relaxed atomic fetch_add.  This makes
+ *             the counters free to update without the pool mutex.  It also
+ *             means ActionPool::lastSeenModCount comparisons are read-correct
+ *             even mid-mutation; the counters are monotonically non-decreasing.
  *
  * What we deliberately do NOT lock (yet).
  * =======================================
@@ -138,7 +152,21 @@
  *   P4-4 wrap PcodeOp helpers  opSetInput/Output/Opcode/Swap honor the locks.
  *   P4-5 wire parallel dispatch  applyBlockParallel phase 2 uses ThreadPool to
  *                              run scope_op_only rules across color groups.
+ *                              Adds L2u unionMutex and L3 atomic mod-counters.
+ *                              Gated by DECOMP_INTRA_TRUE_PARALLEL=1.
  *   P4-6 validate + bench      Datatests 664/668 across all modes; perf sweep.
+ *
+ * Known limitations of P4-5 (TRUE_PARALLEL=1).
+ * ============================================
+ *   - Non-deterministic union-field resolution order across workers can
+ *     pick different valid fields for ambiguous union accesses, producing
+ *     equivalent-but-different decompiler output.  Manifests on Union #8,
+ *     Union #10 of the datatests suite (and intermittently Inlining #4).
+ *     Mitigation paths considered for follow-up: (a) order-independent
+ *     union scoring (deterministic tiebreaker on edge identity); (b) gate
+ *     phase 2a per-color sequentially when union types are observed in
+ *     the function; (c) restrict phase 2a to rules with provably no
+ *     type-resolution side effects (stricter scope_op_only annotation).
  */
 #ifndef __GHIDRA_PARALLEL_SAFETY_HH__
 #define __GHIDRA_PARALLEL_SAFETY_HH__
