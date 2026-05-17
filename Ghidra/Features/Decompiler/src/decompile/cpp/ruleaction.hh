@@ -1376,6 +1376,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 
 class RuleExtensionPush : public Rule {
@@ -1406,6 +1407,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 
 class RuleSubNormal : public Rule {
@@ -1563,6 +1565,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual uint4 getMutationScope(void) const { return scope_op_output_uses; }
 };
 
 class RuleSignMod2nOpt : public Rule {
@@ -1635,6 +1638,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 
 class RuleNegateNegate : public Rule {
@@ -1776,6 +1780,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 
 class RuleXorSwap : public Rule {
@@ -1854,6 +1859,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 
 } // End namespace ghidra
