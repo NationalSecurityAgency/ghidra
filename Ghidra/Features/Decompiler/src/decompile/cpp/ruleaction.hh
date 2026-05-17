@@ -254,13 +254,14 @@ public:
 // Reversible rules
 class RuleTermOrder : public Rule {
 public:
-  RuleTermOrder(const string &g) : Rule(g, 0, "termorder") {}	///< Constructor
+  RuleTermOrder(const string &g) : Rule(g, has_canapply, "termorder") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleTermOrder(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RulePullsubMulti : public Rule {
 public:
@@ -592,13 +593,14 @@ public:
 };
 class RuleLogic2Bool : public Rule {
 public:
-  RuleLogic2Bool(const string &g) : Rule(g, 0, "logic2bool") {}	///< Constructor
+  RuleLogic2Bool(const string &g) : Rule(g, has_canapply, "logic2bool") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleLogic2Bool(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleIndirectCollapse : public Rule {
 public:
@@ -673,13 +675,14 @@ public:
 };
 class RuleIdentityEl : public Rule {
 public:
-  RuleIdentityEl(const string &g) : Rule(g, 0, "identityel") {}	///< Constructor
+  RuleIdentityEl(const string &g) : Rule(g, has_canapply, "identityel") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleIdentityEl(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleShift2Mult : public Rule {
 public:
@@ -765,23 +768,25 @@ public:
 };
 class RuleXorCollapse : public Rule {
 public:
-  RuleXorCollapse(const string &g) : Rule(g, 0, "xorcollapse") {}	///< Constructor
+  RuleXorCollapse(const string &g) : Rule(g, has_canapply, "xorcollapse") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleXorCollapse(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleAddMultCollapse : public Rule {
 public:
-  RuleAddMultCollapse(const string &g) : Rule(g, 0, "addmultcollapse") {}	///< Constructor
+  RuleAddMultCollapse(const string &g) : Rule(g, has_canapply, "addmultcollapse") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleAddMultCollapse(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 // class RuleUndistribute : public Rule {
 // public:
@@ -1001,13 +1006,14 @@ public:
 };
 class RuleCondNegate : public Rule {
 public:
-  RuleCondNegate(const string &g) : Rule(g, 0, "condnegate") {}	///< Constructor
+  RuleCondNegate(const string &g) : Rule(g, has_canapply, "condnegate") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleCondNegate(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleBoolNegate : public Rule {
 public:
@@ -1435,13 +1441,14 @@ class RuleConditionalMove : public Rule {
   /// \brief Sort PcodeOps based only on order within a basic block
   static bool compareOp(PcodeOp *op0,PcodeOp *op1) { return op0->getSeqNum().getOrder() < op1->getSeqNum().getOrder(); }
 public:
-  RuleConditionalMove(const string &g) : Rule( g, 0, "conditionalmove") {}	///< Constructor
+  RuleConditionalMove(const string &g) : Rule( g, has_canapply, "conditionalmove") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleConditionalMove(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleFloatCast : public Rule {
@@ -1504,13 +1511,14 @@ public:
 
 class RuleThreeWayCompare : public Rule {
 public:
-  RuleThreeWayCompare(const string &g) : Rule( g, 0, "threewaycomp") {}	///< Constructor
+  RuleThreeWayCompare(const string &g) : Rule( g, has_canapply, "threewaycomp") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleThreeWayCompare(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
   static PcodeOp *detectThreeWay(PcodeOp *op,bool &isPartial);
   static int4 testCompareEquivalence(PcodeOp *lessop,PcodeOp *lessequalop);
 };

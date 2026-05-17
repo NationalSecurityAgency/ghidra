@@ -687,6 +687,14 @@ int4 RuleTermOrder::applyOp(PcodeOp *op,Funcdata &data)
   return 0;
 }
 
+/// \brief Pure-read mirror of applyOp's fail path.
+int4 RuleTermOrder::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vn1 = op->getIn(0);
+  const Varnode *vn2 = op->getIn(1);
+  return (vn1->isConstant() && !vn2->isConstant()) ? 1 : 0;
+}
+
 /// \brief Compute minimum and maximum bytes being used
 ///
 /// For bytes in given Varnode pass back the largest and smallest index (lsb=0)
@@ -3149,6 +3157,24 @@ void RuleLogic2Bool::getOpList(vector<uint4> &oplist) const
   oplist.insert(oplist.end(),list,list+3);
 }
 
+/// \brief Pure-read precondition mirror.  isBooleanValue is a const Varnode query.
+int4 RuleLogic2Bool::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *boolVn = op->getIn(0);
+  if (!boolVn->isBooleanValue(data.isTypeRecoveryOn())) return 0;
+  const Varnode *in1 = op->getIn(1);
+  if (in1->isConstant()) {
+    if (in1->getOffset() > (uintb)1) return 0;
+  }
+  else if (!in1->isBooleanValue(data.isTypeRecoveryOn())) {
+    return 0;
+  }
+  // Final opcode switch in applyOp accepts INT_AND/INT_OR/INT_XOR and otherwise returns 0;
+  // but the getOpList registers only those three opcodes, so the switch is always satisfied
+  // when canApply reaches here.  Conservative return 1.
+  return 1;
+}
+
 int4 RuleLogic2Bool::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -3707,6 +3733,18 @@ void RuleIdentityEl::getOpList(vector<uint4> &oplist) const
   oplist.insert(oplist.end(),list,list+6);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleIdentityEl::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *constvn = op->getIn(1);
+  if (!constvn->isConstant()) return 0;
+  uintb val = constvn->getOffset();
+  OpCode code = op->code();
+  if (val == 0 && code != CPUI_INT_MULT) return 1;
+  if (code != CPUI_INT_MULT) return 0;
+  return (val == 0 || val == 1) ? 1 : 0;
+}
+
 int4 RuleIdentityEl::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -4111,6 +4149,18 @@ void RuleXorCollapse::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_NOTEQUAL);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleXorCollapse::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (!op->getIn(1)->isConstant()) return 0;
+  const PcodeOp *xorop = op->getIn(0)->getDef();
+  if (xorop == (const PcodeOp *)0) return 0;
+  if (xorop->code() != CPUI_INT_XOR) return 0;
+  if (op->getIn(0)->loneDescend() == (PcodeOp *)0) return 0;
+  if (xorop->getIn(0)->isFree()) return 0;
+  return 1;
+}
+
 int4 RuleXorCollapse::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -4152,6 +4202,16 @@ void RuleAddMultCollapse::getOpList(vector<uint4> &oplist) const
 {
   uint4 list[]= { CPUI_INT_ADD, CPUI_INT_MULT };
   oplist.insert(oplist.end(),list,list+2);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleAddMultCollapse::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (!op->getIn(1)->isConstant()) return 0;
+  const Varnode *sub = op->getIn(0);
+  if (!sub->isWritten()) return 0;
+  if (sub->getDef()->code() != op->code()) return 0;
+  return 1;
 }
 
 int4 RuleAddMultCollapse::applyOp(PcodeOp *op,Funcdata &data)
@@ -5531,6 +5591,12 @@ void RuleCondNegate::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_CBRANCH);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleCondNegate::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  return op->isBooleanFlip() ? 1 : 0;
 }
 
 int4 RuleCondNegate::applyOp(PcodeOp *op,Funcdata &data)
@@ -9440,6 +9506,27 @@ void RuleConditionalMove::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_MULTIEQUAL);
 }
 
+/// \brief Pure-read precondition mirror.  Inlines checkBoolean logic to avoid const_cast.
+/// The downstream block-structure check is skipped — canApply returns 1 conservatively after
+/// the boolean checks, leaving the full block-structure verification to serial applyOp.
+int4 RuleConditionalMove::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (op->numInput() != 2) return 0;
+  for (int4 slot = 0; slot < 2; ++slot) {
+    const Varnode *vn = op->getIn(slot);
+    if (!vn->isWritten()) return 0;
+    const PcodeOp *defOp = vn->getDef();
+    if (defOp->isBoolOutput()) continue;
+    if (defOp->code() == CPUI_COPY) {
+      const Varnode *cvn = defOp->getIn(0);
+      if (cvn->isConstant() && (cvn->getOffset() & ~((uintb)1)) == 0)
+        continue;
+    }
+    return 0;
+  }
+  return 1;
+}
+
 int4 RuleConditionalMove::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -10194,6 +10281,26 @@ void RuleThreeWayCompare::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_SLESSEQUAL);
   oplist.push_back(CPUI_INT_EQUAL);
   oplist.push_back(CPUI_INT_NOTEQUAL);
+}
+
+/// \brief Pure-read precondition mirror.  Mirrors applyOp's early-exit checks; skips the
+/// expensive detectThreeWay() walk (let serial applyOp do it).
+int4 RuleThreeWayCompare::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  int4 constSlot = 0;
+  const Varnode *tmpvn = op->getIn(constSlot);
+  if (!tmpvn->isConstant()) {
+    constSlot = 1;
+    tmpvn = op->getIn(constSlot);
+    if (!tmpvn->isConstant()) return 0;
+  }
+  uintb val = tmpvn->getOffset();
+  if (val > 2 && val != calc_mask(tmpvn->getSize())) return 0;
+
+  tmpvn = op->getIn(1 - constSlot);
+  if (!tmpvn->isWritten()) return 0;
+  if (tmpvn->getDef()->code() != CPUI_INT_ADD) return 0;
+  return 1;
 }
 
 int4 RuleThreeWayCompare::applyOp(PcodeOp *op,Funcdata &data)
