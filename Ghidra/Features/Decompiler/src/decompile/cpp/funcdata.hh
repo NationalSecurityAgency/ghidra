@@ -439,6 +439,7 @@ public:
   void clearDeadVarnodes(void);					///< Delete any dead Varnodes
   bool calcNZMask(void);					///< Calculate \e non-zero masks for all Varnodes; returns true if any varnode's nzm actually changed
   void clearDeadOps(void) { obank.destroyDead(); }		///< Delete any dead PcodeOps
+  int4 obSize(void) const { return obank.size(); }		///< Number of PcodeOps in the op-bank (alive + dead)
   void remapVarnode(Varnode *vn,Symbol *sym,const Address &usepoint);
   void remapDynamicVarnode(Varnode *vn,Symbol *sym,const Address &usepoint,uint8 hash);
   void linkProtoPartial(Varnode *vn);				///< Find or create Symbol and a partial mapping

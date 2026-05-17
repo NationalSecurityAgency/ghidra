@@ -316,6 +316,7 @@ public:
   void moveSequenceDead(PcodeOp *firstop,PcodeOp *lastop,PcodeOp *prev);
   void markIncidentalCopy(PcodeOp *firstop,PcodeOp *lastop);	///< Mark any COPY ops in the given range as \e incidental
   bool empty(void) const { return optree.empty(); }	///< Return \b true if there are no PcodeOps in \b this container
+  int4 size(void) const { return (int4)optree.size(); }	///< Return number of PcodeOps in \b this container
   PcodeOp *target(const Address &addr) const;		///< Find the first executing PcodeOp for a target address
   PcodeOp *findOp(const SeqNum &num) const;		///< Find a PcodeOp by sequence number
   PcodeOp *fallthru(const PcodeOp *op) const;		///< Find the PcodeOp considered a \e fallthru of the given PcodeOp

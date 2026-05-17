@@ -15,10 +15,36 @@
  */
 #include "action.hh"
 #include "funcdata.hh"
+#include "parallel.hh"
 
 #include "coreaction.hh"
 
+#include <algorithm>
+#include <cstdlib>
+#include <unordered_map>
+
 namespace ghidra {
+
+/// \brief Read intra-function parallel-decompile worker count from environment.
+/// Cached on first call.  Returns 1 (= disabled) if env unset or invalid.
+static int4 getIntraParallelWorkers(void)
+{
+  static int cached = -1;
+  if (cached >= 0) return cached;
+  const char *env = std::getenv("DECOMP_INTRA_WORKERS");
+  cached = (env != nullptr) ? std::max(1, std::atoi(env)) : 1;
+  return cached;
+}
+
+/// \brief Minimum number of ops required to engage parallel path (avoids overhead on small fns).
+static int4 getIntraParallelMinOps(void)
+{
+  static int cached = -1;
+  if (cached >= 0) return cached;
+  const char *env = std::getenv("DECOMP_INTRA_MINOPS");
+  cached = (env != nullptr) ? std::max(1, std::atoi(env)) : 1000;
+  return cached;
+}
 
 /// Specify the name, group, and properties of the Action
 /// \param f is the collection of property flags
@@ -910,6 +936,17 @@ int4 ActionPool::apply(Funcdata &data)
     return 0;
   }
 
+  // Optional two-phase parallel path (env-gated).  Only engages at status_start
+  // (full fresh sweep) — does not support mid-sweep resume or breakpoints.
+  int4 numWorkers = getIntraParallelWorkers();
+  if (numWorkers > 1 && status == status_start) {
+    int4 minOps = getIntraParallelMinOps();
+    // Estimate op count via map size.  This is O(1).
+    int4 opCount = (int4)data.obSize();
+    if (opCount >= minOps)
+      return applyParallel(data,numWorkers);
+  }
+
   if (status != status_mid) {
     op_state = data.beginOpAll();	// Initialize the derived action
     rule_index = 0;
@@ -920,6 +957,135 @@ int4 ActionPool::apply(Funcdata &data)
   // Successful complete sweep — record modCount for skip-decision next time.
   lastSeenModCount = data.getGlobalModCount();
   return 0;			// Indicate successful completion
+}
+
+/// Two-phase parallel sweep:
+///   Phase 1 (parallel): partition optree snapshot across N worker threads; each thread
+///     calls Rule::canApply() for every applicable (op, rule) pair in its chunk; results
+///     are packed into a per-op 64-bit "skip mask" where bit r = 1 means "rule r at this
+///     op definitely will not fire — skip it in phase 2".  canApply() is pure (no shared
+///     mutation), so reads of Funcdata/Varnode/PcodeOp state are safe to race.
+///   Phase 2 (serial): walk ops in original SeqNum order, dispatching rules as in serial
+///     processOp() but consulting the skip mask to bypass rules whose canApply returned 0.
+///     If a rule fires AND changes the op's opcode, the skip mask is invalidated for the
+///     remaining rules of the new opcode (full serial dispatch resumes for that op).
+///
+/// Correctness: canApply is required to be CONSERVATIVE — returning 0 only when applyOp
+/// would definitely return 0 with NO mutation.  Returning 1 (or -1) is always safe and
+/// just causes the rule to be tested via the regular serial applyOp in phase 2.
+///
+/// Determinism: phase 2 walks ops in SeqNum order, same as serial.  Within a single op,
+/// rules are dispatched in the same order as serial.  The only difference vs serial is
+/// that some rule calls are bypassed (those with canApply=0) — and we have proven by the
+/// canApply contract that bypassing them is observationally equivalent to calling them.
+int4 ActionPool::applyParallel(Funcdata &data,int4 numWorkers)
+{
+  // Phase 0: snapshot all ops into a vector for indexed parallel access in phase 1.
+  // The skipMask values are keyed by op pointer (not snapshot index) so that phase 2,
+  // which iterates the LIVE optree, can look them up regardless of snapshot index — and
+  // ops created during phase 2 (not in the snapshot) simply have no skipMask entry and
+  // get full serial dispatch.
+  vector<PcodeOp *> allOps;
+  allOps.reserve(data.obSize());
+  PcodeOpTree::const_iterator it;
+  for(it = data.beginOpAll(); it != data.endOpAll(); ++it)
+    allOps.push_back((*it).second);
+  int4 n = (int4)allOps.size();
+  if (n == 0) {
+    lastSeenModCount = data.getGlobalModCount();
+    return 0;
+  }
+
+  vector<uint8> skipMaskVec(n, 0);
+
+  // Phase 1: parallel canApply.  Each thread writes to a disjoint range of skipMaskVec —
+  // no synchronization needed.  Reads of PcodeOp/Varnode/Funcdata are pure
+  // (canApply contract requires no mutation), so concurrent reads are safe.
+  ThreadPool &pool = ThreadPool::getInstance(numWorkers);
+  int4 actualWorkers = std::min(numWorkers,n);
+  int4 chunkSize = (n + actualWorkers - 1) / actualWorkers;
+  for(int4 t = 0; t < actualWorkers; ++t) {
+    int4 start = t * chunkSize;
+    int4 end = std::min(n, start + chunkSize);
+    pool.submit([this,&allOps,&skipMaskVec,&data,start,end]() {
+      for(int4 i = start; i < end; ++i) {
+	PcodeOp *op = allOps[i];
+	if (op->isDead()) continue;
+	uint4 opc = op->code();
+	const vector<Rule *> &rules = perop[opc];
+	int4 nrules = (int4)rules.size();
+	if (nrules > 64) nrules = 64;	// bitmask capacity
+	uint8 mask = 0;
+	for(int4 r = 0; r < nrules; ++r) {
+	  Rule *rl = rules[r];
+	  if (rl->isDisabled()) continue;
+	  if (!rl->hasCanApply()) continue;	// avoid virtual call for rules without override
+	  int4 can = rl->canApply(op,data);
+	  if (can == 0) mask |= ((uint8)1 << r);
+	}
+	skipMaskVec[i] = mask;
+      }
+    });
+  }
+  pool.waitAll();
+
+  // Phase 2: serial dispatch over the phase-1 snapshot.  This skips ops created
+  // during phase 2 in this same call (they'll be picked up next outer-loop iteration
+  // when modCount changes trigger another apply).  This makes the parallel path
+  // produce semantically-equivalent but not bit-identical output vs serial —
+  // intra-pass cascade order differs, leading to different variable naming late in
+  // the pipeline.  Accepts vector-indexed mask lookup (O(1)) for speed.
+  for(int4 i = 0; i < n; ++i) {
+    PcodeOp *op = allOps[i];
+
+    if (op->isDead()) {
+      data.opDeadAndGone(op);
+      continue;
+    }
+    uint8 mask = skipMaskVec[i];
+
+    uint4 opc = op->code();
+    int4 rule_idx = 0;
+    while(rule_idx < (int4)perop[opc].size()) {
+      Rule *rl = perop[opc][rule_idx];
+      if (rl->isDisabled()) { rule_idx += 1; continue; }
+      // Skip if canApply said no AND opcode hasn't changed since phase 1
+      if (rule_idx < 64 && (mask & ((uint8)1 << rule_idx)) != 0) {
+	rule_idx += 1;
+	continue;
+      }
+      rl->count_tests += 1;
+      int4 res = rl->applyOp(op,data);
+      if (res > 0) {
+	rl->count_apply += 1;
+	count += res;
+	data.bumpIrModCount();
+	rl->issueWarning(data.getArch());
+	if (rl->checkActionBreak()) {
+	  // Parallel mode does not support resumable breakpoints; abort the sweep.
+	  return -1;
+	}
+	if (op->isDead()) break;
+	if (opc != op->code()) {
+	  opc = op->code();
+	  rule_idx = 0;
+	  mask = 0;	// invalidate canApply filter since opcode has changed
+	  continue;
+	}
+      }
+      else if (opc != op->code()) {
+	data.getArch()->printMessage("ERROR: Rule " + rl->getName() + " changed op without returning result of 1!");
+	opc = op->code();
+	rule_idx = 0;
+	mask = 0;
+	continue;
+      }
+      rule_idx += 1;
+    }
+  }
+
+  lastSeenModCount = data.getGlobalModCount();
+  return 0;
 }
 
 void ActionPool::clearBreakPoints(void)

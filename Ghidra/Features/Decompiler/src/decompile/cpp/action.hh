@@ -200,7 +200,8 @@ public:
     type_disable = 1,		///< Is this rule disabled
     rule_debug = 2,		///< Print debug info specific for this rule
     warnings_on = 4,		///< A warning is issued if this rule is applied
-    warnings_given = 8		///< Set if a warning for this rule has been given before
+    warnings_given = 8,		///< Set if a warning for this rule has been given before
+    has_canapply = 0x10		///< Rule overrides canApply() — parallel ActionPool may consult it
   };
 private:
   friend class ActionPool;
@@ -224,6 +225,7 @@ public:
   void turnOnWarnings(void) { flags |= warnings_on; }		///< Enable warnings for \b this Rule
   void turnOffWarnings(void) { flags &= ~warnings_on; }		///< Disable warnings for \b this Rule
   bool isDisabled(void) const { return ((flags & type_disable)!=0); }	///< Return \b true if \b this Rule is disabled
+  bool hasCanApply(void) const { return ((flags & has_canapply)!=0); }	///< Return \b true if \b this Rule overrides canApply()
   void setDisable(void) { flags |= type_disable; }		///< Disable this Rule (within its pool)
   void clearDisable(void) { flags &= ~type_disable; }		///< Enable this Rule (within its pool)
   bool checkActionBreak(void);					///< Check if an action breakpoint is turned on
@@ -246,6 +248,17 @@ public:
   /// \param op is the given PcodeOp where the Rule may apply
   /// \param data is the function to which to apply
   virtual int4 applyOp(PcodeOp *op,Funcdata &data) { return 0; }
+
+  /// \brief Optional precondition predicate used by parallel ActionPool to decide whether
+  /// applyOp() might fire on a given op.  Must be PURE (no mutation of shared state — safe to call
+  /// from multiple threads concurrently) and CONSERVATIVE (returning 1 when applyOp would return 0
+  /// is fine; returning 0 when applyOp would return non-zero is NOT OK).
+  ///
+  /// Return: -1 unknown (default; rule may fire — serial phase must call applyOp), 0 certain-no-fire
+  /// (skip in serial phase), 1 may-fire (must call applyOp in serial phase).
+  ///
+  /// Default returns -1, so the optimization is a no-op for the rule until it overrides.
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const { return -1; }
   virtual void reset(Funcdata &data);				///< Reset \b this Rule
   virtual void resetStats(void);				///< Reset Rule statistics
   virtual void printStatistics(ostream &s) const;		///< Print statistics for \b this Rule
@@ -267,6 +280,7 @@ class ActionPool : public Action {
   PcodeOpTree::const_iterator op_state; 		///< Current PcodeOp up for rule application
   int4 rule_index;					///< Iterator over Rules for one OpCode
   int4 processOp(PcodeOp *op,Funcdata &data);		///< Apply the next possible Rule to a PcodeOp
+  int4 applyParallel(Funcdata &data,int4 numWorkers);	///< Two-phase parallel sweep: phase 1 parallel canApply, phase 2 serial applyOp
 public:
   ActionPool(uint4 f,const string &nm) : Action(f,nm,"") {}	///< Construct providing properties and name
   virtual ~ActionPool(void);				///< Destructor

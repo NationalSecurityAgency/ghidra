@@ -43,6 +43,20 @@ int4 RuleEarlyRemoval::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
+/// \brief Parallel-safe precondition predicate; mirrors applyOp's fail path without side effects.
+/// Skips the data.deadRemovalAllowedSeen() check (non-const, mutates info->deadremoved); serial
+/// applyOp will do the final check.
+int4 RuleEarlyRemoval::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (op->isCall()) return 0;
+  if (op->isIndirectSource()) return 0;
+  const Varnode *vn = op->getOut();
+  if (vn == (const Varnode *)0) return 0;
+  if (!vn->hasNoDescend()) return 0;
+  if (vn->isAutoLive()) return 0;
+  return 1;
+}
+
 // void RuleAddrForceRelease::getOpList(vector<uint4> &oplist) const
 
 // {
@@ -3869,6 +3883,12 @@ int4 RuleShiftPiece::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
+/// \brief Parallel-safe precondition: collapse can only happen if op is collapsible.
+int4 RuleCollapseConstants::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  return op->isCollapsible() ? 1 : 0;
+}
+
 /// \class RuleCollapseConstants
 /// \brief Collapse constant expressions
 int4 RuleCollapseConstants::applyOp(PcodeOp *op,Funcdata &data)
@@ -3939,6 +3959,30 @@ int4 RuleTransformCpool::applyOp(PcodeOp *op,Funcdata &data)
     data.opInsertInput(op,data.newConstant(4,rec->getTag()),op->numInput());
   }
   return 1;
+}
+
+/// \brief Parallel-safe precondition: scan inputs for any qualifying CPUI_COPY-defined varnode.
+int4 RulePropagateCopy::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (op->isReturnCopy()) return 0;
+  for(int4 i=0; i<op->numInput(); ++i) {
+    const Varnode *vn = op->getIn(i);
+    if (!vn->isWritten()) continue;
+    const PcodeOp *copyop = vn->getDef();
+    if (copyop->code() != CPUI_COPY) continue;
+    const Varnode *invn = copyop->getIn(0);
+    if (!invn->isHeritageKnown()) continue;
+    if (invn == vn) return 1;	// applyOp will throw; treat as may-apply (rare)
+    if (op->isMarker()) {
+      if (invn->isConstant()) continue;
+      if (vn->isAddrForce()) continue;
+      if (invn->isAddrTied() && op->getOut()->isAddrTied() &&
+          (op->getOut()->getAddr() != invn->getAddr()))
+        continue;
+    }
+    return 1;
+  }
+  return 0;
 }
 
 /// \class RulePropagateCopy

@@ -85,13 +85,14 @@ public:
 
 class RuleEarlyRemoval : public Rule {
 public:
-  RuleEarlyRemoval(const string &g) : Rule(g, 0, "earlyremoval") {}	///< Constructor
+  RuleEarlyRemoval(const string &g) : Rule(g, has_canapply, "earlyremoval") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleEarlyRemoval(getGroup());
   }
   // This rule applies to all ops
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 // class RuleAddrForceRelease : public Rule {
 // public:
@@ -702,13 +703,14 @@ public:
 };
 class RuleCollapseConstants : public Rule {
 public:
-  RuleCollapseConstants(const string &g) : Rule(g, 0, "collapseconstants") {}	///< Constructor
+  RuleCollapseConstants(const string &g) : Rule(g, has_canapply, "collapseconstants") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleCollapseConstants(getGroup());
   }
   // applies to all opcodes
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleTransformCpool : public Rule {
 public:
@@ -722,13 +724,14 @@ public:
 };
 class RulePropagateCopy : public Rule {
 public:
-  RulePropagateCopy(const string &g) : Rule(g, 0, "propagatecopy") {}	///< Constructor
+  RulePropagateCopy(const string &g) : Rule(g, has_canapply, "propagatecopy") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RulePropagateCopy(getGroup());
   }
   // applies to all opcodes
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class Rule2Comp2Mult : public Rule {
 public:
