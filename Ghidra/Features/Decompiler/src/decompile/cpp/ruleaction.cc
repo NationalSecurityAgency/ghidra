@@ -3523,6 +3523,19 @@ bool RuleBooleanDedup::isMatch(Varnode *leftVn,Varnode *rightVn,bool &isFlip)
   return false;
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleBooleanDedup::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vn0 = op->getIn(0);
+  if (!vn0->isWritten()) return 0;
+  const Varnode *vn1 = op->getIn(1);
+  if (!vn1->isWritten()) return 0;
+  OpCode opc0 = vn0->getDef()->code();
+  if (opc0 != CPUI_BOOL_AND && opc0 != CPUI_BOOL_OR) return 0;
+  OpCode opc1 = vn1->getDef()->code();
+  return (opc1 == CPUI_BOOL_AND || opc1 == CPUI_BOOL_OR) ? 1 : 0;
+}
+
 int4 RuleBooleanDedup::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -4081,6 +4094,23 @@ void RuleSborrow::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_SBORROW);
 }
 
+/// \brief Pure-read precondition mirror.  Permissive: returns 1 on trivial b=0 case or
+/// when output has descendants that look like comparisons of the right form.
+int4 RuleSborrow::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *bvn = op->getIn(1);
+  if (bvn->isConstant() && bvn->getOffset() == 0) return 1;
+  const Varnode *svn = op->getOut();
+  for (list<PcodeOp *>::const_iterator iter = svn->beginDescend(); iter != svn->endDescend(); ++iter) {
+    const PcodeOp *compop = *iter;
+    if (compop->code() == CPUI_INT_EQUAL || compop->code() == CPUI_INT_NOTEQUAL) {
+      const Varnode *cvn = (compop->getIn(0) == svn) ? compop->getIn(1) : compop->getIn(0);
+      if (cvn->isWritten() && cvn->getDef()->code() == CPUI_INT_SLESS) return 1;
+    }
+  }
+  return 0;
+}
+
 int4 RuleSborrow::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -4148,6 +4178,25 @@ void RuleScarry::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_SCARRY);
+}
+
+/// \brief Pure-read precondition mirror.  Permissive: trivial case + descendant compare scan.
+int4 RuleScarry::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *avn = op->getIn(0);
+  const Varnode *bvn = op->getIn(1);
+  if (bvn->isConstant() && bvn->getOffset() == 0) return 1;
+  if (avn->isConstant() && avn->getOffset() == 0) return 1;
+  if (!avn->isConstant() && !bvn->isConstant()) return 0;
+  const Varnode *svn = op->getOut();
+  for (list<PcodeOp *>::const_iterator iter = svn->beginDescend(); iter != svn->endDescend(); ++iter) {
+    const PcodeOp *compop = *iter;
+    if (compop->code() == CPUI_INT_EQUAL || compop->code() == CPUI_INT_NOTEQUAL) {
+      const Varnode *cvn = (compop->getIn(0) == svn) ? compop->getIn(1) : compop->getIn(0);
+      if (cvn->isWritten() && cvn->getDef()->code() == CPUI_INT_SLESS) return 1;
+    }
+  }
+  return 0;
 }
 
 int4 RuleScarry::applyOp(PcodeOp *op,Funcdata &data)
@@ -5156,6 +5205,14 @@ void RuleLoadVarnode::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_LOAD);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleLoadVarnode::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  uintb offoff;
+  AddrSpace *baseoff = checkSpacebase(data.getArch(), const_cast<PcodeOp *>(op), offoff);
+  return (baseoff == (AddrSpace *)0) ? 0 : 1;
+}
+
 int4 RuleLoadVarnode::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -5196,6 +5253,14 @@ void RuleStoreVarnode::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_STORE);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleStoreVarnode::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  uintb offoff;
+  AddrSpace *baseoff = RuleLoadVarnode::checkSpacebase(data.getArch(), const_cast<PcodeOp *>(op), offoff);
+  return (baseoff == (AddrSpace *)0) ? 0 : 1;
 }
 
 int4 RuleStoreVarnode::applyOp(PcodeOp *op,Funcdata &data)
@@ -5404,6 +5469,33 @@ bool RuleSubCommute::cancelExtensions(PcodeOp *longform,PcodeOp *subOp,Varnode *
   data.opSetInput(longform,ext1In,1);
   data.opSetInput(subOp,outvn,0);
   return true;
+}
+
+/// \brief Pure-read precondition mirror.  Quick filter.
+int4 RuleSubCommute::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *base = op->getIn(0);
+  if (!base->isWritten()) return 0;
+  const Varnode *outvn = op->getOut();
+  if (outvn->isPrecisLo() || outvn->isPrecisHi()) return 0;
+  OpCode lc = base->getDef()->code();
+  switch (lc) {
+  case CPUI_INT_LEFT:
+  case CPUI_INT_REM:
+  case CPUI_INT_DIV:
+  case CPUI_INT_RIGHT:
+  case CPUI_INT_AND:
+  case CPUI_INT_OR:
+  case CPUI_INT_XOR:
+  case CPUI_INT_ADD:
+  case CPUI_INT_MULT:
+  case CPUI_INT_SUB:
+  case CPUI_INT_NEGATE:
+  case CPUI_INT_2COMP:
+    return 1;
+  default:
+    return 0;
+  }
 }
 
 int4 RuleSubCommute::applyOp(PcodeOp *op,Funcdata &data)
@@ -9143,6 +9235,19 @@ void RuleDivTermAdd::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_SRIGHT); // added
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleDivTermAdd::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  int4 n;
+  OpCode shiftopc;
+  PcodeOp *subop = findSubshift(const_cast<PcodeOp *>(op), n, shiftopc);
+  if (subop == (PcodeOp *)0) return 0;
+  if (n > 127) return 0;
+  const Varnode *multvn = subop->getIn(0);
+  if (!multvn->isWritten()) return 0;
+  return (multvn->getDef()->code() == CPUI_INT_MULT) ? 1 : 0;
+}
+
 int4 RuleDivTermAdd::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -9262,6 +9367,15 @@ void RuleDivTermAdd2::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_RIGHT);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleDivTermAdd2::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (!op->getIn(1)->isConstant()) return 0;
+  if (op->getIn(1)->getOffset() != 1) return 0;
+  if (!op->getIn(0)->isWritten()) return 0;
+  return (op->getIn(0)->getDef()->code() == CPUI_INT_ADD) ? 1 : 0;
 }
 
 int4 RuleDivTermAdd2::applyOp(PcodeOp *op,Funcdata &data)
@@ -10053,6 +10167,14 @@ void RuleSignMod2nOpt::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_RIGHT);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleSignMod2nOpt::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (!op->getIn(1)->isConstant()) return 0;
+  Varnode *a = checkSignExtraction(const_cast<Varnode *>(op->getIn(0)));
+  return (a == (Varnode *)0 || a->isFree()) ? 0 : 1;
+}
+
 int4 RuleSignMod2nOpt::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -10173,6 +10295,17 @@ void RuleSignMod2Opt::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_AND);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleSignMod2Opt::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *constVn = op->getIn(1);
+  if (!constVn->isConstant()) return 0;
+  if (constVn->getOffset() != 1) return 0;
+  const Varnode *addOut = op->getIn(0);
+  if (!addOut->isWritten()) return 0;
+  return (addOut->getDef()->code() == CPUI_INT_ADD) ? 1 : 0;
 }
 
 int4 RuleSignMod2Opt::applyOp(PcodeOp *op,Funcdata &data)

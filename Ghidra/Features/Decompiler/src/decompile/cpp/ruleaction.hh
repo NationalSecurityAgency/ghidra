@@ -604,13 +604,14 @@ public:
 class RuleBooleanDedup : public Rule {
   static bool isMatch(Varnode *leftVn,Varnode *rightVn,bool &isFlip);
 public:
-  RuleBooleanDedup(const string &g) : Rule(g, 0, "booleandedup") {}	///< Constructor
+  RuleBooleanDedup(const string &g) : Rule(g, has_canapply, "booleandedup") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleBooleanDedup(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleBooleanNegate : public Rule {
 public:
@@ -666,23 +667,25 @@ public:
 };
 class RuleSborrow : public Rule {
 public:
-  RuleSborrow(const string &g) : Rule(g, 0, "sborrow") {}	///< Constructor
+  RuleSborrow(const string &g) : Rule(g, has_canapply, "sborrow") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSborrow(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleScarry : public Rule {
 public:
-  RuleScarry(const string &g) : Rule(g, 0, "scarry") {}	///< Constructor
+  RuleScarry(const string &g) : Rule(g, has_canapply, "scarry") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleScarry(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleTrivialShift : public Rule {
 public:
@@ -852,23 +855,25 @@ class RuleLoadVarnode : public Rule {
   static AddrSpace *vnSpacebase(Architecture *glb,Varnode *vn,uintb &val,AddrSpace *spc);
   static AddrSpace *checkSpacebase(Architecture *glb,PcodeOp *op,uintb &offoff);
 public:
-  RuleLoadVarnode(const string &g) : Rule(g, 0, "loadvarnode") {}	///< Constructor
+  RuleLoadVarnode(const string &g) : Rule(g, has_canapply, "loadvarnode") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleLoadVarnode(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleStoreVarnode : public Rule {
 public:
-  RuleStoreVarnode(const string &g) : Rule(g, 0, "storevarnode") {}	///< Constructor
+  RuleStoreVarnode(const string &g) : Rule(g, has_canapply, "storevarnode") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleStoreVarnode(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 // class RuleShadowVar : public Rule {
 // public:
@@ -893,13 +898,14 @@ public:
 };
 class RuleSubCommute : public Rule {
 public:
-  RuleSubCommute(const string &g) : Rule(g, 0, "subcommute") {}	///< Constructor
+  RuleSubCommute(const string &g) : Rule(g, has_canapply, "subcommute") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSubCommute(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
   static Varnode *shortenExtension(PcodeOp *extOp,int4 maxSize,Funcdata &data);
   static bool cancelExtensions(PcodeOp *longform,PcodeOp *subOp,Varnode *ext0In,Varnode *ext1In,Funcdata &data);
 };
@@ -1329,25 +1335,27 @@ public:
 
 class RuleDivTermAdd : public Rule {
 public:
-  RuleDivTermAdd(const string &g) : Rule( g, 0, "divtermadd") {}	///< Constructor
+  RuleDivTermAdd(const string &g) : Rule( g, has_canapply, "divtermadd") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleDivTermAdd(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
   static PcodeOp *findSubshift(PcodeOp *op,int4 &n,OpCode &shiftopc);
 };
 
 class RuleDivTermAdd2 : public Rule {
 public:
-  RuleDivTermAdd2(const string &g) : Rule( g, 0, "divtermadd2") {}	///< Constructor
+  RuleDivTermAdd2(const string &g) : Rule( g, has_canapply, "divtermadd2") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleDivTermAdd2(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleDivOpt : public Rule {
@@ -1439,25 +1447,27 @@ public:
 
 class RuleSignMod2nOpt : public Rule {
 public:
-  RuleSignMod2nOpt(const string &g) : Rule( g, 0, "signmod2nopt") {}	///< Constructor
+  RuleSignMod2nOpt(const string &g) : Rule( g, has_canapply, "signmod2nopt") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSignMod2nOpt(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
   static Varnode *checkSignExtraction(Varnode *outVn);
 };
 
 class RuleSignMod2Opt : public Rule {
 public:
-  RuleSignMod2Opt(const string &g) : Rule( g, 0, "signmod2opt") {}	///< Constructor
+  RuleSignMod2Opt(const string &g) : Rule( g, has_canapply, "signmod2opt") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSignMod2Opt(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleSignMod2nOpt2 : public Rule {
