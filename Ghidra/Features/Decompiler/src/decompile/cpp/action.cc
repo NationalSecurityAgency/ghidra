@@ -904,13 +904,13 @@ int4 ActionPool::processOp(PcodeOp *op,Funcdata &data)
       if (op->isDead()) break;
       if (opc != op->code()) {	// Set of rules to apply to this op has changed
         opc = op->code();
-        rule_index = 0;		
+        rule_index = 0;
       }
     }
     else if (opc != op->code()) {
       data.getArch()->printMessage("ERROR: Rule " + rl->getName() + " changed op without returning result of 1!");
       opc = op->code();
-      rule_index = 0;	
+      rule_index = 0;
     }
   }
   op_state++;
@@ -1001,33 +1001,49 @@ int4 ActionPool::applyParallel(Funcdata &data,int4 numWorkers)
   // Phase 1: parallel canApply.  Each thread writes to a disjoint range of skipMaskVec —
   // no synchronization needed.  Reads of PcodeOp/Varnode/Funcdata are pure
   // (canApply contract requires no mutation), so concurrent reads are safe.
-  ThreadPool &pool = ThreadPool::getInstance(numWorkers);
-  int4 actualWorkers = std::min(numWorkers,n);
-  int4 chunkSize = (n + actualWorkers - 1) / actualWorkers;
-  for(int4 t = 0; t < actualWorkers; ++t) {
-    int4 start = t * chunkSize;
-    int4 end = std::min(n, start + chunkSize);
-    pool.submit([this,&allOps,&skipMaskVec,&data,start,end]() {
-      for(int4 i = start; i < end; ++i) {
-	PcodeOp *op = allOps[i];
-	if (op->isDead()) continue;
-	uint4 opc = op->code();
-	const vector<Rule *> &rules = perop[opc];
-	int4 nrules = (int4)rules.size();
-	if (nrules > 64) nrules = 64;	// bitmask capacity
-	uint8 mask = 0;
-	for(int4 r = 0; r < nrules; ++r) {
-	  Rule *rl = rules[r];
-	  if (rl->isDisabled()) continue;
-	  if (!rl->hasCanApply()) continue;	// avoid virtual call for rules without override
-	  int4 can = rl->canApply(op,data);
-	  if (can == 0) mask |= ((uint8)1 << r);
-	}
-	skipMaskVec[i] = mask;
+  //
+  // Inline fast-path: for small workloads, skip thread dispatch entirely.  The mutex+
+  // condvar overhead of 4-way thread submit/wait is ~500-1000µs; chunks under
+  // INLINE_THRESHOLD ops × rules are not worth parallelizing.
+  auto computeMaskRange = [this,&allOps,&skipMaskVec,&data](int4 start, int4 end) {
+    for(int4 i = start; i < end; ++i) {
+      PcodeOp *op = allOps[i];
+      if (op->isDead()) continue;
+      uint4 opc = op->code();
+      const vector<Rule *> &rules = perop[opc];
+      int4 nrules = (int4)rules.size();
+      if (nrules > 64) nrules = 64;	// bitmask capacity
+      uint8 mask = 0;
+      for(int4 r = 0; r < nrules; ++r) {
+	Rule *rl = rules[r];
+	if (rl->isDisabled()) continue;
+	if (!rl->hasCanApply()) continue;	// avoid virtual call for rules without override
+	int4 can = rl->canApply(op,data);
+	if (can == 0) mask |= ((uint8)1 << r);
       }
-    });
+      skipMaskVec[i] = mask;
+    }
+  };
+
+  // Threshold: rough estimate of when parallel dispatch breaks even.  At ~50ns per
+  // canApply call and ~5 rules with canApply per op, per-op work is ~250ns.  Thread
+  // dispatch overhead per chunk is ~50µs.  Break-even at ~50µs / 250ns = ~200 ops/chunk.
+  // We need at least 200×numWorkers ops total to amortize.
+  const int4 INLINE_THRESHOLD = 200 * numWorkers;
+  if (n < INLINE_THRESHOLD) {
+    computeMaskRange(0, n);
   }
-  pool.waitAll();
+  else {
+    ThreadPool &pool = ThreadPool::getInstance(numWorkers);
+    int4 actualWorkers = std::min(numWorkers,n);
+    int4 chunkSize = (n + actualWorkers - 1) / actualWorkers;
+    for(int4 t = 0; t < actualWorkers; ++t) {
+      int4 start = t * chunkSize;
+      int4 end = std::min(n, start + chunkSize);
+      pool.submit([&computeMaskRange,start,end]() { computeMaskRange(start,end); });
+    }
+    pool.waitAll();
+  }
 
   // Phase 2: serial dispatch over the phase-1 snapshot.  This skips ops created
   // during phase 2 in this same call (they'll be picked up next outer-loop iteration
