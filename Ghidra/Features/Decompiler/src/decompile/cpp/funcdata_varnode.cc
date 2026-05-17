@@ -292,6 +292,7 @@ Varnode *Funcdata::cloneVarnode(const Varnode *vn)
 void Funcdata::destroyVarnode(Varnode *vn)
 
 {
+  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
   list<PcodeOp *>::const_iterator iter;
 
   for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
@@ -563,6 +564,7 @@ void Funcdata::adjustInputVarnodes(const Address &addr,int4 sz)
 void Funcdata::destroyVarnodeRecursive(Varnode *vn)
 
 {
+  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
   if (vn->isAutoLive() || !vn->hasNoDescend()) return;
   if (!vn->isWritten()) {
     vbank.destroy(vn);

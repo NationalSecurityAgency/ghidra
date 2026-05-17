@@ -191,6 +191,7 @@ void Funcdata::opUninsert(PcodeOp *op)
 void Funcdata::opUnlink(PcodeOp *op)
 
 {
+  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
   int4 i;
 #ifdef OPACTION_DEBUG
   if (opactdbg_active)
@@ -267,6 +268,7 @@ void Funcdata::opDestroyRecursive(PcodeOp *op,vector<PcodeOp *> &scratch)
 void Funcdata::opDestroyRaw(PcodeOp *op)
 
 {
+  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
   for(int4 i=0;i<op->numInput();++i)
     destroyVarnode(op->getIn(i));
   if (op->getOut() != (Varnode *)0)
@@ -281,6 +283,7 @@ void Funcdata::opDestroyRaw(PcodeOp *op)
 void Funcdata::opSetAllInput(PcodeOp *op,const vector<Varnode *> &vvec)
 
 {
+  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
   int4 i;
 
 #ifdef OPACTION_DEBUG
