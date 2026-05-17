@@ -133,6 +133,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RulePiece2Sext : public Rule {
 public:
@@ -144,6 +145,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RuleBxor2NotEqual : public Rule {
 public:
@@ -165,6 +167,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RuleAndMask : public Rule {
 public:
@@ -176,6 +179,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RuleOrConsume : public Rule {
 public:
@@ -187,6 +191,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RuleOrCollapse : public Rule {
 public:
@@ -198,6 +203,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RuleAndOrLump : public Rule {
 public:
@@ -276,6 +282,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RulePullsubMulti : public Rule {
 public:
@@ -734,6 +741,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RuleShift2Mult : public Rule {
 public:
@@ -831,6 +839,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RuleAddMultCollapse : public Rule {
 public:
@@ -1086,6 +1095,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleBoolNegate : public Rule {
