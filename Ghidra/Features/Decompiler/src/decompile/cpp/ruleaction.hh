@@ -467,13 +467,14 @@ public:
 };
 class RuleLeftRight : public Rule {
 public:
-  RuleLeftRight(const string &g) : Rule(g, 0, "leftright") {}	///< Constructor
+  RuleLeftRight(const string &g) : Rule(g, has_canapply, "leftright") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleLeftRight(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleShiftCompare : public Rule {
 public:
@@ -497,23 +498,25 @@ public:
 // };
 class RuleLessEqual : public Rule {
 public:
-  RuleLessEqual(const string &g) : Rule(g, 0, "lessequal") {}	///< Constructor
+  RuleLessEqual(const string &g) : Rule(g, has_canapply, "lessequal") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleLessEqual(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleLessNotEqual : public Rule {
 public:
-  RuleLessNotEqual(const string &g) : Rule(g, 0, "lessnotequal") {}	///< Constructor
+  RuleLessNotEqual(const string &g) : Rule(g, has_canapply, "lessnotequal") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleLessNotEqual(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleTrivialArith : public Rule {
 public:
@@ -528,13 +531,14 @@ public:
 };
 class RuleTrivialBool : public Rule {
 public:
-  RuleTrivialBool(const string &g) : Rule(g, 0, "trivialbool") {}	///< Constructor
+  RuleTrivialBool(const string &g) : Rule(g, has_canapply, "trivialbool") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleTrivialBool(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleZextEliminate : public Rule {
 public:
@@ -931,13 +935,14 @@ public:
 };
 class RuleZextShiftZext : public Rule {
 public:
-  RuleZextShiftZext(const string &g) : Rule(g, 0, "zextshiftzext") {}	///< Constructor
+  RuleZextShiftZext(const string &g) : Rule(g, has_canapply, "zextshiftzext") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleZextShiftZext(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleShiftAnd : public Rule {
 public:
@@ -1069,23 +1074,25 @@ public:
 };
 class RuleLess2Zero : public Rule {
 public:
-  RuleLess2Zero(const string &g) : Rule(g, 0, "less2zero") {}	///< Constructor
+  RuleLess2Zero(const string &g) : Rule(g, has_canapply, "less2zero") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleLess2Zero(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleLessEqual2Zero : public Rule {
 public:
-  RuleLessEqual2Zero(const string &g) : Rule(g, 0, "lessequal2zero") {}	///< Constructor
+  RuleLessEqual2Zero(const string &g) : Rule(g, has_canapply, "lessequal2zero") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleLessEqual2Zero(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleSLess2Zero : public Rule {
   static Varnode *getHiBit(PcodeOp *op);
@@ -1184,13 +1191,14 @@ public:
 // Cleanup rules
 class RuleMultNegOne : public Rule {
 public:
-  RuleMultNegOne(const string &g) : Rule( g, 0, "multnegone") {}	///< Constructor
+  RuleMultNegOne(const string &g) : Rule( g, has_canapply, "multnegone") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleMultNegOne(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleAddUnsigned : public Rule {
@@ -1473,13 +1481,14 @@ public:
 
 class RuleNegateNegate : public Rule {
 public:
-  RuleNegateNegate(const string &g) : Rule( g, 0, "negatenegate") {}	///< Constructor
+  RuleNegateNegate(const string &g) : Rule( g, has_canapply, "negatenegate") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleNegateNegate(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleConditionalMove : public Rule {
@@ -1609,13 +1618,14 @@ public:
 
 class RuleLzcountShiftBool : public Rule {
 public:
-  RuleLzcountShiftBool(const string &g) : Rule( g, 0, "lzcountshiftbool") {}	///< Constructor
+  RuleLzcountShiftBool(const string &g) : Rule( g, has_canapply, "lzcountshiftbool") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleLzcountShiftBool(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleFloatSign : public Rule {
