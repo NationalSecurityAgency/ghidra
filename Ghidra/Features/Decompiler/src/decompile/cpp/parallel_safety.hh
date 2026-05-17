@@ -156,8 +156,22 @@
  *                              Gated by DECOMP_INTRA_TRUE_PARALLEL=1.
  *   P4-6 validate + bench      Datatests 664/668 across all modes; perf sweep.
  *
- * Known limitations of P4-5 (TRUE_PARALLEL=1).
- * ============================================
+ * Known limitations of P4-5 (TRUE_PARALLEL=1) — post-fix status.
+ * =============================================================
+ *   - Datatests stress: 500/500 iterations clean under ASan W=4 path4.
+ *   - Real heavy-workload stress (libcrypto fat funcs, 50 iters W=4
+ *     path4): ~6% residual SEGV.  Stack: RuleSubvarZext::applyOp ->
+ *     SubvariableFlow::setReplacement reading isMark() on null Varnode,
+ *     in the SERIAL processOp dispatcher reached via status_mid (i.e.,
+ *     after a previous applyBlockParallel exited mid-sweep or after a
+ *     different action set status_mid).  Root cause not yet pinpointed;
+ *     hypotheses: (a) phase 2a leaves an op with output=null that the
+ *     later serial sweep crashes on; (b) a scope_op_only rule
+ *     transiently modifies an op-input chain that another worker reads
+ *     without lock; (c) workload-specific invariant in SubvariableFlow
+ *     that pre-existed but is exposed only when phase 2a mutates IR
+ *     before the serial cleanup.
+ *
  *   - Non-deterministic union-field resolution order across workers can
  *     pick different valid fields for ambiguous union accesses, producing
  *     equivalent-but-different decompiler output.  Manifests on Union #8,
@@ -167,6 +181,22 @@
  *     phase 2a per-color sequentially when union types are observed in
  *     the function; (c) restrict phase 2a to rules with provably no
  *     type-resolution side effects (stricter scope_op_only annotation).
+ *
+ * Recommended runtime configuration (per measurements).
+ * =====================================================
+ *   - Production default:    DECOMP_INTRA_WORKERS=0  (serial, safest)
+ *   - Bulk decompile, opt-in:
+ *       DECOMP_INTRA_WORKERS=8
+ *       DECOMP_INTRA_BLOCK_PARALLEL=0     # path1 alone
+ *     gives  -11.6% wall time on libcrypto heavy corpus with zero
+ *     reproduced crashes; recommended for headless batch jobs.
+ *   - Maximum throughput, accept risk:
+ *       DECOMP_INTRA_WORKERS=4
+ *       DECOMP_INTRA_BLOCK_PARALLEL=1
+ *       DECOMP_INTRA_TRUE_PARALLEL=1      # path4
+ *     gives  -13% mean (heavy libcrypto) but ~6% per-function SEGV rate
+ *     on non-libc workloads; use only if the caller can retry-on-crash
+ *     individual functions.
  */
 #ifndef __GHIDRA_PARALLEL_SAFETY_HH__
 #define __GHIDRA_PARALLEL_SAFETY_HH__
