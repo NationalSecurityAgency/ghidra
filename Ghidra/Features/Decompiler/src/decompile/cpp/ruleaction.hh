@@ -1144,6 +1144,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_block_local; }
 };
 class RuleSwitchSingle : public Rule {
 public:
@@ -1155,6 +1156,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 class RuleCondNegate : public Rule {
 public:
@@ -1178,6 +1180,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 class RuleLess2Zero : public Rule {
 public:
@@ -1189,6 +1192,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RuleLessEqual2Zero : public Rule {
 public:
@@ -1200,6 +1204,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RuleSLess2Zero : public Rule {
   static Varnode *getHiBit(PcodeOp *op);
@@ -1212,6 +1217,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RuleEqual2Zero : public Rule {
 public:
@@ -1223,6 +1229,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RuleEqual2Constant : public Rule {
 public:
@@ -1234,6 +1241,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RulePtrArith : public Rule {
   static bool verifyPreferredPointer(PcodeOp *op,int4 slot);
@@ -1280,6 +1288,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_block_local; }
 };
 class RulePtrsubUndo : public Rule {
   static const int4 DEPTH_LIMIT;	///< The maximum depth of the additive expression to check
@@ -1308,6 +1317,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 
 class RuleAddUnsigned : public Rule {
