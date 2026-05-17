@@ -245,13 +245,14 @@ public:
 };
 class RuleIntLessEqual : public Rule {
 public:
-  RuleIntLessEqual(const string &g) : Rule(g, 0, "intlessequal") {}	///< Constructor
+  RuleIntLessEqual(const string &g) : Rule(g, has_canapply, "intlessequal") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleIntLessEqual(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleEquality : public Rule {
 public:
@@ -626,13 +627,14 @@ public:
 };
 class RuleBoolZext : public Rule {
 public:
-  RuleBoolZext(const string &g) : Rule(g, 0, "boolzext") {}	///< Constructor
+  RuleBoolZext(const string &g) : Rule(g, has_canapply, "boolzext") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleBoolZext(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleLogic2Bool : public Rule {
 public:
@@ -647,13 +649,14 @@ public:
 };
 class RuleIndirectCollapse : public Rule {
 public:
-  RuleIndirectCollapse(const string &g) : Rule(g, 0, "indirectcollapse") {}	///< Constructor
+  RuleIndirectCollapse(const string &g) : Rule(g, has_canapply, "indirectcollapse") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleIndirectCollapse(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleMultiCollapse : public Rule {
 public:
@@ -1064,13 +1067,14 @@ public:
 };
 class RuleSwitchSingle : public Rule {
 public:
-  RuleSwitchSingle(const string &g) : Rule(g,0,"switchsingle") {}	///< Constructor
+  RuleSwitchSingle(const string &g) : Rule(g,has_canapply,"switchsingle") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSwitchSingle(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleCondNegate : public Rule {
 public:
@@ -1187,13 +1191,14 @@ public:
 };
 class RulePtraddUndo : public Rule {
 public:
-  RulePtraddUndo(const string &g) : Rule(g, 0, "ptraddundo") {}	///< Constructor
+  RulePtraddUndo(const string &g) : Rule(g, has_canapply, "ptraddundo") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RulePtraddUndo(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RulePtrsubUndo : public Rule {
   static const int4 DEPTH_LIMIT;	///< The maximum depth of the additive expression to check
@@ -1324,13 +1329,14 @@ public:
 
 class RulePositiveDiv : public Rule {
 public:
-  RulePositiveDiv(const string &g) : Rule( g, 0, "positivediv") {}	///< Constructor
+  RulePositiveDiv(const string &g) : Rule( g, has_canapply, "positivediv") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RulePositiveDiv(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleDivTermAdd : public Rule {
@@ -1486,13 +1492,14 @@ public:
 
 class RuleSegment : public Rule {
 public:
-  RuleSegment(const string &g) : Rule( g, 0, "segment") {}	///< Constructor
+  RuleSegment(const string &g) : Rule( g, has_canapply, "segment") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSegment(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RulePtrFlow : public Rule {
@@ -1543,13 +1550,14 @@ public:
 
 class RuleFloatCast : public Rule {
 public:
-  RuleFloatCast(const string &g) : Rule( g, 0, "floatcast") {}	///< Constructor
+  RuleFloatCast(const string &g) : Rule( g, has_canapply, "floatcast") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleFloatCast(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleIgnoreNan : public Rule {
@@ -1569,13 +1577,14 @@ public:
 
 class RuleUnsigned2Float : public Rule {
 public:
-  RuleUnsigned2Float(const string &g) : Rule( g, 0, "unsigned2float") {}	///< Constructor
+  RuleUnsigned2Float(const string &g) : Rule( g, has_canapply, "unsigned2float") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleUnsigned2Float(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleInt2FloatCollapse : public Rule {
@@ -1592,13 +1601,14 @@ public:
 
 class RuleFuncPtrEncoding : public Rule {
 public:
-  RuleFuncPtrEncoding(const string &g) : Rule( g, 0, "funcptrencoding") {}	///< Constructor
+  RuleFuncPtrEncoding(const string &g) : Rule( g, has_canapply, "funcptrencoding") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleFuncPtrEncoding(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleThreeWayCompare : public Rule {
