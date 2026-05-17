@@ -1245,7 +1245,8 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
-  virtual uint4 getMutationScope(void) const { return scope_op_only; }
+  // Calls Funcdata::inheritUnionField → writes shared unionMap, so not op-only.
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 class RulePtrArith : public Rule {
   static bool verifyPreferredPointer(PcodeOp *op,int4 slot);

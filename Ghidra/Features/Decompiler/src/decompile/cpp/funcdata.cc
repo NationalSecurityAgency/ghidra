@@ -922,6 +922,7 @@ void PcodeEmitFd::dump(const Address &addr,OpCode opc,VarnodeData *outvar,Varnod
 const ResolvedUnion *Funcdata::getUnionField(const Datatype *unresType,const PcodeOp *op,int4 slot) const
 
 {
+  std::lock_guard<std::recursive_mutex> lock(unionMutex);	// Path 4
   map<ResolveEdge,ResolvedUnion>::const_iterator iter;
   ResolveEdge edge(unresType,op,slot);
   iter = unionMap.find(edge);
@@ -946,6 +947,7 @@ const ResolvedUnion *Funcdata::getUnionField(const Datatype *unresType,const Pco
 const ResolvedUnion *Funcdata::getUnionResolution(const Datatype *unresType,const PcodeOp *op,int4 slot) const
 
 {
+  std::lock_guard<std::recursive_mutex> lock(unionMutex);	// Path 4
   map<ResolveEdge,ResolvedUnion>::const_iterator iter;
   ResolveEdge edge(unresType,op,slot);
   iter = unionMap.find(edge);
@@ -966,6 +968,7 @@ const ResolvedUnion *Funcdata::getUnionResolution(const Datatype *unresType,cons
 const ResolvedUnion *Funcdata::getAddressBasedUnionField(const Datatype *unresType,const Address &addr,int4 slot) const
 
 {
+  std::lock_guard<std::recursive_mutex> lock(unionMutex);	// Path 4
   map<ResolveEdge,ResolvedUnion>::const_iterator iter;
   ResolveEdge edge(unresType,addr,slot);
   iter = unionMap.find(edge);
@@ -986,6 +989,7 @@ const ResolvedUnion *Funcdata::getAddressBasedUnionField(const Datatype *unresTy
 bool Funcdata::setUnionField(const Datatype *unresType,const PcodeOp *op,int4 slot,const ResolvedUnion &resolve)
 
 {
+  std::lock_guard<std::recursive_mutex> lock(unionMutex);	// Path 4
   ResolveEdge edge(unresType,op,slot);
   pair<map<ResolveEdge,ResolvedUnion>::iterator,bool> res;
   res = unionMap.emplace(edge,resolve);
@@ -1022,6 +1026,7 @@ bool Funcdata::setUnionField(const Datatype *unresType,const PcodeOp *op,int4 sl
 bool Funcdata::setAddressBasedUnionField(const Datatype *unresType,const Address &addr,int4 slot,const ResolvedUnion &resolve)
 
 {
+  std::lock_guard<std::recursive_mutex> lock(unionMutex);	// Path 4
   ResolveEdge edge(unresType,addr,slot);
   pair<map<ResolveEdge,ResolvedUnion>::iterator,bool> res;
   res = unionMap.emplace(edge,resolve);
@@ -1045,6 +1050,7 @@ bool Funcdata::setAddressBasedUnionField(const Datatype *unresType,const Address
 bool Funcdata::updateUnionField(const Datatype *unresType,const PcodeOp *op,int4 slot,Datatype *resType)
 
 {
+  std::lock_guard<std::recursive_mutex> lock(unionMutex);	// Path 4
   map<ResolveEdge,ResolvedUnion>::iterator iter;
   ResolveEdge edge(unresType,op,slot);
   iter = unionMap.find(edge);
@@ -1064,6 +1070,7 @@ bool Funcdata::updateUnionField(const Datatype *unresType,const PcodeOp *op,int4
 void Funcdata::forceFacingType(Datatype *unresType,int4 fieldNum,PcodeOp *op,int4 slot)
 
 {
+  std::lock_guard<std::recursive_mutex> lock(unionMutex);	// Path 4 (recurses into setUnionField)
   Datatype *baseType = unresType;
   if (baseType->getMetatype() == TYPE_PTR)
     baseType = ((TypePointer *)baseType)->getPtrTo();
@@ -1086,6 +1093,7 @@ void Funcdata::forceFacingType(Datatype *unresType,int4 fieldNum,PcodeOp *op,int
 int4 Funcdata::inheritUnionField(Datatype *unresType,const PcodeOp *op,int4 slot,PcodeOp *oldOp,int4 oldSlot)
 
 {
+  std::lock_guard<std::recursive_mutex> lock(unionMutex);	// Path 4 (recurses into setUnionField)
   map<ResolveEdge,ResolvedUnion>::const_iterator iter;
   if (slot < 0 && oldOp->isMarker())
     slot = 0;
@@ -1108,6 +1116,7 @@ int4 Funcdata::inheritUnionField(Datatype *unresType,const PcodeOp *op,int4 slot
 int4 Funcdata::inheritUnionFieldPtr(Datatype *unresPtr,const PcodeOp *op,int4 slot,PcodeOp *oldOp,int4 oldSlot)
 
 {
+  std::lock_guard<std::recursive_mutex> lock(unionMutex);	// Path 4 (recurses into setUnionField)
   Datatype *parent = unresPtr->getDepend(0);
   if (slot < 0 && oldOp->isMarker())
     slot = 0;

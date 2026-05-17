@@ -101,6 +101,22 @@ static bool getBlockParallelEnabled(void)
   return cached != 0;
 }
 
+/// \brief Path 4 dispatcher gate: enable parallel phase-2a scope_op_only rule
+/// dispatch in applyBlockParallel.  Set DECOMP_INTRA_TRUE_PARALLEL=1 to enable.
+/// Requires DECOMP_INTRA_BLOCK_PARALLEL=1 and DECOMP_INTRA_WORKERS>1.
+/// When enabled, scope_op_only rules (~80% of fires) are dispatched in parallel
+/// across block-conflict-graph color groups; non-scope_op_only rules are then
+/// dispatched serially.  Funcdata mutators are protected by poolMutex (L1) and
+/// per-Varnode descendMutex (L2); mod-counters are atomic (L3).
+static bool getTrueParallelEnabled(void)
+{
+  static int cached = -1;
+  if (cached >= 0) return cached != 0;
+  const char *env = std::getenv("DECOMP_INTRA_TRUE_PARALLEL");
+  cached = (env != nullptr && std::atoi(env) != 0) ? 1 : 0;
+  return cached != 0;
+}
+
 /// \brief Path 3 instrumentation: per-scope rule-fire counters.
 /// Set DECOMP_INTRA_SCOPE_STATS=1 to enable.  Counts are dumped at process exit.
 /// Uses Path 2 mutation_scope annotations to validate the static distribution
@@ -1427,7 +1443,105 @@ int4 ActionPool::applyBlockParallel(Funcdata &data,int4 numWorkers)
     pool.waitAll();
   }
 
-  // Phase 2: serial dispatch in color-major order, with skip mask.
+  // Helper: process one op against a scope-filtered rule subset.
+  //  onlyOpScope=true  → only scope_op_only rules (used by phase 2a parallel)
+  //  onlyOpScope=false → only non-scope_op_only rules (used by phase 2b after 2a)
+  // Returns count of rule fires (>=0) or -1 to request action-break abort.
+  auto processOpFiltered = [this,&data](PcodeOp *op, uint8 maskIn, bool onlyOpScope) -> int4 {
+    int4 localCount = 0;
+    uint8 mask = maskIn;
+    uint4 opc = op->code();
+    int4 rule_idx = 0;
+    while (rule_idx < (int4)perop[opc].size()) {
+      Rule *rl = perop[opc][rule_idx];
+      if (rl->isDisabled()) { rule_idx += 1; continue; }
+      bool isOpOnly = (rl->getMutationScope() == (uint4)Rule::scope_op_only);
+      if (onlyOpScope != isOpOnly) { rule_idx += 1; continue; }
+      if (rule_idx < 64 && (mask & ((uint8)1 << rule_idx)) != 0) {
+	rule_idx += 1;
+	continue;
+      }
+      rl->count_tests += 1;
+      int4 res = rl->applyOp(op, data);
+      if (getScopeStatsEnabled()) {
+	int4 b = scopeBucket(rl->getMutationScope());
+	scopeTests[b].fetch_add(1, std::memory_order_relaxed);
+	if (res > 0) scopeFires[b].fetch_add(1, std::memory_order_relaxed);
+      }
+      recordRuleResult(rl, res);
+      if (res > 0) {
+	rl->count_apply += 1;
+	localCount += res;
+	data.bumpIrModCount();
+	rl->issueWarning(data.getArch());
+	if (rl->checkActionBreak()) return -1;
+	if (op->isDead()) break;
+	if (opc != op->code()) {
+	  opc = op->code();
+	  rule_idx = 0;
+	  mask = 0;
+	  continue;
+	}
+      }
+      else if (opc != op->code()) {
+	data.getArch()->printMessage("ERROR: Rule " + rl->getName() + " changed op without returning result of 1!");
+	opc = op->code();
+	rule_idx = 0;
+	mask = 0;
+	continue;
+      }
+      rule_idx += 1;
+    }
+    return localCount;
+  };
+
+  bool trueParallel = getTrueParallelEnabled() && (numColors > 1) && (numWorkers > 1);
+
+  // Snapshot original opcode per allOps slot so phase 2b can detect when phase 2a
+  // changed it (the cached skip mask refers to the original opcode and becomes
+  // meaningless after an opcode swap; phase 2b must invalidate mask in that case).
+  vector<uint4> origOpcode;
+  if (trueParallel) {
+    origOpcode.resize(n);
+    for (int4 i = 0; i < n; ++i)
+      origOpcode[i] = allOps[i]->isDead() ? 0xffffffff : allOps[i]->code();
+  }
+
+  // Phase 2a (parallel, optional): scope_op_only rules across color groups.
+  // scope_op_only rules mutate only the dispatched op itself (and Funcdata pool
+  // allocators) — no descendants, no block topology — so different colors never
+  // contend on op state.  Funcdata mutators acquire L1 poolMutex; Varnode
+  // descend list ops acquire L2 descendMutex; mod-counters are atomic (L3).
+  if (trueParallel) {
+    std::atomic<int4> count2a(0);
+    std::atomic<bool> breakReq(false);
+    ThreadPool &pool = ThreadPool::getInstance(numWorkers);
+    int4 colorsPerWorker = (numColors + numWorkers - 1) / numWorkers;
+    int4 actualWorkers = (numColors + colorsPerWorker - 1) / colorsPerWorker;
+    auto workerFn = [&,this](int4 startC, int4 endC) {
+      for (int4 c = startC; c < endC; ++c) {
+	if (breakReq.load(std::memory_order_relaxed)) return;
+	for (int4 i = colorStart[c]; i < colorStart[c+1]; ++i) {
+	  PcodeOp *op = allOps[i];
+	  if (op->isDead()) continue;
+	  int4 r = processOpFiltered(op, skipMaskVec[i], true);
+	  if (r < 0) { breakReq.store(true, std::memory_order_relaxed); return; }
+	  if (r > 0) count2a.fetch_add(r, std::memory_order_relaxed);
+	}
+      }
+    };
+    for (int4 t = 0; t < actualWorkers; ++t) {
+      int4 startC = t * colorsPerWorker;
+      int4 endC = std::min(numColors, startC + colorsPerWorker);
+      pool.submit([&workerFn, startC, endC]() { workerFn(startC, endC); });
+    }
+    pool.waitAll();
+    if (breakReq.load()) return -1;
+    count += count2a.load();
+  }
+
+  // Phase 2b: serial dispatch in color-major order, with skip mask.
+  // If phase 2a ran, skip scope_op_only rules here.  Otherwise dispatch all rules.
   // When a rule fires AND changes the op's opcode, the skip mask for the new
   // opcode is unknown, so we invalidate it (mask = 0) and let serial dispatch
   // fall through to full rule iteration.
@@ -1437,13 +1551,18 @@ int4 ActionPool::applyBlockParallel(Funcdata &data,int4 numWorkers)
       data.opDeadAndGone(op);
       continue;
     }
-    uint8 mask = skipMaskVec[i];
-
     uint4 opc = op->code();
+    // If phase 2a changed this op's opcode, the original skip mask is for the
+    // old opcode's rule list and is meaningless for the new opcode's rules.
+    uint8 mask = (trueParallel && opc != origOpcode[i]) ? 0 : skipMaskVec[i];
+
     int4 rule_idx = 0;
     while (rule_idx < (int4)perop[opc].size()) {
       Rule *rl = perop[opc][rule_idx];
       if (rl->isDisabled()) { rule_idx += 1; continue; }
+      if (trueParallel && rl->getMutationScope() == (uint4)Rule::scope_op_only) {
+	rule_idx += 1; continue;	// handled by phase 2a
+      }
       if (rule_idx < 64 && (mask & ((uint8)1 << rule_idx)) != 0) {
 	rule_idx += 1;
 	continue;
@@ -1480,6 +1599,8 @@ int4 ActionPool::applyBlockParallel(Funcdata &data,int4 numWorkers)
       rule_idx += 1;
     }
   }
+  // suppress unused-lambda warning if neither path uses it (it's referenced in 2a only)
+  (void)processOpFiltered;
 
   lastSeenModCount = data.getGlobalModCount();
   return 0;
