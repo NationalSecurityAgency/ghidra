@@ -207,6 +207,22 @@ void RuleSelectCse::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_SRIGHT); // For division optimization corrections
 }
 
+/// \brief Pure-read precondition mirror.  Needs at least 2 same-opcode descendants of input(0).
+int4 RuleSelectCse::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vn = op->getIn(0);
+  OpCode opc = op->code();
+  int4 sameOpcCount = 0;
+  for (list<PcodeOp *>::const_iterator iter = vn->beginDescend(); iter != vn->endDescend(); ++iter) {
+    const PcodeOp *other = *iter;
+    if (other->code() != opc) continue;
+    if (other->getCseHash() == 0) continue;
+    sameOpcCount += 1;
+    if (sameOpcCount >= 2) return 1;
+  }
+  return 0;
+}
+
 int4 RuleSelectCse::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -239,6 +255,13 @@ void RulePiece2Zext::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_PIECE);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RulePiece2Zext::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *constvn = op->getIn(0);
+  return (constvn->isConstant() && constvn->getOffset() == 0) ? 1 : 0;
+}
+
 int4 RulePiece2Zext::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -258,6 +281,21 @@ void RulePiece2Sext::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_PIECE);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RulePiece2Sext::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *shiftout = op->getIn(0);
+  if (!shiftout->isWritten()) return 0;
+  const PcodeOp *shiftop = shiftout->getDef();
+  if (shiftop->code() != CPUI_INT_SRIGHT) return 0;
+  if (!shiftop->getIn(1)->isConstant()) return 0;
+  int4 n = shiftop->getIn(1)->getOffset();
+  const Varnode *x = shiftop->getIn(0);
+  if (x != op->getIn(1)) return 0;
+  if (n != 8 * x->getSize() - 1) return 0;
+  return 1;
 }
 
 int4 RulePiece2Sext::applyOp(PcodeOp *op,Funcdata &data)
@@ -302,6 +340,18 @@ void RuleOrMask::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_OR);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleOrMask::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  int4 size = op->getOut()->getSize();
+  if (size > sizeof(uintb)) return 0;
+  const Varnode *constvn = op->getIn(1);
+  if (!constvn->isConstant()) return 0;
+  uintb val = constvn->getOffset();
+  uintb mask = calc_mask(size);
+  return ((val & mask) == mask) ? 1 : 0;
 }
 
 int4 RuleOrMask::applyOp(PcodeOp *op,Funcdata &data)
@@ -392,6 +442,18 @@ void RuleOrConsume::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_XOR);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleOrConsume::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *outvn = op->getOut();
+  int4 size = outvn->getSize();
+  if (size > sizeof(uintb)) return 0;
+  uintb consume = outvn->getConsume();
+  if ((consume & op->getIn(0)->getNZMask()) == 0) return 1;
+  if ((consume & op->getIn(1)->getNZMask()) == 0) return 1;
+  return 0;
+}
+
 int4 RuleOrConsume::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -421,6 +483,18 @@ void RuleOrCollapse::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_OR);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleOrCollapse::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  int4 size = op->getOut()->getSize();
+  const Varnode *vn = op->getIn(1);
+  if (!vn->isConstant()) return 0;
+  if (size > sizeof(uintb)) return 0;
+  uintb mask = op->getIn(0)->getNZMask();
+  uintb val = vn->getOffset();
+  return ((mask | val) == val) ? 1 : 0;
 }
 
 int4 RuleOrCollapse::applyOp(PcodeOp *op,Funcdata &data)
@@ -502,6 +576,23 @@ void RuleNegateIdentity::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_NEGATE);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleNegateIdentity::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vn = op->getIn(0);
+  const Varnode *outVn = op->getOut();
+  for (list<PcodeOp *>::const_iterator iter = outVn->beginDescend(); iter != outVn->endDescend(); ++iter) {
+    const PcodeOp *logicOp = *iter;
+    OpCode opc = logicOp->code();
+    if (opc != CPUI_INT_AND && opc != CPUI_INT_OR && opc != CPUI_INT_XOR)
+      continue;
+    int4 slot = logicOp->getSlot(outVn);
+    if (logicOp->getIn(1-slot) != vn) continue;
+    return 1;
+  }
+  return 0;
 }
 
 int4 RuleNegateIdentity::applyOp(PcodeOp *op,Funcdata &data)
@@ -643,6 +734,26 @@ void RuleRightShiftAnd::getOpList(vector<uint4> &oplist) const
 {
   oplist.push_back(CPUI_INT_RIGHT);
   oplist.push_back(CPUI_INT_SRIGHT);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleRightShiftAnd::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *constVn = op->getIn(1);
+  if (!constVn->isConstant()) return 0;
+  const Varnode *inVn = op->getIn(0);
+  if (!inVn->isWritten()) return 0;
+  const PcodeOp *andOp = inVn->getDef();
+  if (andOp->code() != CPUI_INT_AND) return 0;
+  const Varnode *maskVn = andOp->getIn(1);
+  if (!maskVn->isConstant()) return 0;
+  int4 sa = (int4)constVn->getOffset();
+  uintb mask = maskVn->getOffset() >> sa;
+  const Varnode *rootVn = andOp->getIn(0);
+  uintb full = calc_mask(rootVn->getSize()) >> sa;
+  if (full != mask) return 0;
+  if (rootVn->isFree()) return 0;
+  return 1;
 }
 
 int4 RuleRightShiftAnd::applyOp(PcodeOp *op,Funcdata &data)
@@ -1231,6 +1342,17 @@ void RuleNotDistribute::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_BOOL_NEGATE);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleNotDistribute::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vn = op->getIn(0);
+  if (!vn->isWritten()) return 0;
+  const PcodeOp *compop = vn->getDef();
+  if (compop == (const PcodeOp *)0) return 0;
+  OpCode c = compop->code();
+  return (c == CPUI_BOOL_AND || c == CPUI_BOOL_OR) ? 1 : 0;
+}
+
 int4 RuleNotDistribute::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -1420,6 +1542,17 @@ void RuleLessOne::getOpList(vector<uint4> &oplist) const
 {
   oplist.push_back(CPUI_INT_LESS);
   oplist.push_back(CPUI_INT_LESSEQUAL);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleLessOne::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *constvn = op->getIn(1);
+  if (!constvn->isConstant()) return 0;
+  uintb val = constvn->getOffset();
+  if ((op->code() == CPUI_INT_LESS) && (val != 1)) return 0;
+  if ((op->code() == CPUI_INT_LESSEQUAL) && (val != 0)) return 0;
+  return 1;
 }
 
 int4 RuleLessOne::applyOp(PcodeOp *op,Funcdata &data)
