@@ -1254,13 +1254,14 @@ public:
 
 class RuleSubRight : public Rule {
 public:
-  RuleSubRight(const string &g) : Rule( g, 0, "subright") {}	///< Constructor
+  RuleSubRight(const string &g) : Rule( g, has_canapply, "subright") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSubRight(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RulePtrsubCharConstant : public Rule {

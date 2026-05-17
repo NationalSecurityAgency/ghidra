@@ -3459,6 +3459,26 @@ void RuleDoubleLoad::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_PIECE);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleDoubleLoad::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *piece0 = op->getIn(0);
+  const Varnode *piece1 = op->getIn(1);
+  if (!piece0->isWritten()) return 0;
+  if (!piece1->isWritten()) return 0;
+  const PcodeOp *load1 = piece1->getDef();
+  if (load1->code() != CPUI_LOAD) return 0;
+  const PcodeOp *load0 = piece0->getDef();
+  OpCode opc = load0->code();
+  if (opc == CPUI_SUBPIECE) {
+    if (load0->getIn(1)->getOffset() != 0) return 0;
+    const Varnode *vn0 = load0->getIn(0);
+    if (!vn0->isWritten()) return 0;
+    return (vn0->getDef()->code() == CPUI_LOAD) ? 1 : 0;
+  }
+  return (opc == CPUI_LOAD) ? 1 : 0;
+}
+
 int4 RuleDoubleLoad::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -3528,6 +3548,18 @@ void RuleDoubleStore::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_STORE);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleDoubleStore::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vnlo = op->getIn(2);
+  if (!vnlo->isPrecisLo()) return 0;
+  if (!vnlo->isWritten()) return 0;
+  const PcodeOp *subpieceOpLo = vnlo->getDef();
+  if (subpieceOpLo->code() != CPUI_SUBPIECE) return 0;
+  if (subpieceOpLo->getIn(1)->getOffset() != 0) return 0;
+  return subpieceOpLo->getIn(0)->isFree() ? 0 : 1;
 }
 
 int4 RuleDoubleStore::applyOp(PcodeOp *op,Funcdata &data)

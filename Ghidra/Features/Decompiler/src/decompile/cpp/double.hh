@@ -349,26 +349,28 @@ public:
 /// \brief Collapse contiguous loads: `x = CONCAT44(*(ptr+4),*ptr)  =>  x = *ptr`
 class RuleDoubleLoad : public Rule {
 public:
-  RuleDoubleLoad(const string &g) : Rule( g, 0, "doubleload") {}
+  RuleDoubleLoad(const string &g) : Rule( g, has_canapply, "doubleload") {}
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleDoubleLoad(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
   static PcodeOp *noWriteConflict(PcodeOp *op1,PcodeOp *op2,AddrSpace *spc,vector<PcodeOp *> *indirects);
 };
 
 /// \brief Collapse contiguous stores:  `*ptr = SUB(x,0); *(ptr + 4) = SUB(x,4)  =>  *ptr = x`
 class RuleDoubleStore : public Rule {
 public:
-  RuleDoubleStore(const string &g) : Rule( g, 0, "doublestore") {}
+  RuleDoubleStore(const string &g) : Rule( g, has_canapply, "doublestore") {}
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleDoubleStore(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
   static bool testIndirectUse(PcodeOp *op1,PcodeOp *op2,const vector<PcodeOp *> &indirects);
   static void reassignIndirects(Funcdata &data,PcodeOp *newStore,const vector<PcodeOp *> &indirects);
 };

@@ -8647,6 +8647,14 @@ void RuleSubRight::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_SUBPIECE);
 }
 
+/// \brief Pure-read precondition mirror.  Only filter the doesSpecialPrinting case --
+/// the c==0 case must still dispatch applyOp because applyOp may need to mark structured
+/// pieces (a side effect required even when c==0).
+int4 RuleSubRight::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  return op->doesSpecialPrinting() ? 0 : 1;
+}
+
 int4 RuleSubRight::applyOp(PcodeOp *op,Funcdata &data)
 
 {
