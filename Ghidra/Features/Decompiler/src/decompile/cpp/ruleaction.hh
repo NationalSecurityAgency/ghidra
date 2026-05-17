@@ -93,7 +93,13 @@ public:
   // This rule applies to all ops
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
-  virtual uint4 getMutationScope(void) const { return scope_op_only; }
+  // P4-fix: was scope_op_only; calls data.opDestroy(op) which delete's the
+  // output Varnode.  Another phase-2a worker may have just picked up that
+  // Varnode as input on its own op between RuleEarlyRemoval's hasNoDescend
+  // check and the destroy, then dereferences a freed pointer (UAF caught by
+  // ASan).  Safer at scope_block_global until destroy is guarded by a
+  // grace-period or refcount scheme.
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 // class RuleAddrForceRelease : public Rule {
 // public:
@@ -292,7 +298,8 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
-  virtual uint4 getMutationScope(void) const { return scope_op_only; }
+  // P4-fix: was scope_op_only; inserts new op into block and creates Varnode at shared addr -> UAF in TRUE_PARALLEL.
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 class RulePullsubMulti : public Rule {
 public:
@@ -838,7 +845,8 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
-  virtual uint4 getMutationScope(void) const { return scope_op_only; }
+  // P4-fix: was scope_op_only; inserts new op into block.
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 class RulePropagateCopy : public Rule {
 public:
@@ -861,7 +869,8 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-  virtual uint4 getMutationScope(void) const { return scope_op_only; }
+  // P4-fix: was scope_op_only; inserts new op into block.
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 class RuleCarryElim : public Rule {
 public:
@@ -946,7 +955,8 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
-  virtual uint4 getMutationScope(void) const { return scope_op_only; }
+  // P4-fix: was scope_op_only; creates output Varnode at stack address; also touches ScopeLocal::markNotMapped.
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 // class RuleShadowVar : public Rule {
 // public:
@@ -1171,7 +1181,8 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-  virtual uint4 getMutationScope(void) const { return scope_op_only; }
+  // P4-fix: was scope_op_only; inserts new op into block.
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleBoolNegate : public Rule {
@@ -1621,7 +1632,8 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
-  virtual uint4 getMutationScope(void) const { return scope_op_only; }
+  // P4-fix: was scope_op_only; inserts new SUBPIECE op into block and creates Varnode at shared addr.
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 
 class RulePtrFlow : public Rule {
