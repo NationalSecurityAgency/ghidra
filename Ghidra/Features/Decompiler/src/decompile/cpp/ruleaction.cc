@@ -118,6 +118,15 @@ void RuleCollectTerms::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_ADD);
 }
 
+/// \brief Pure-read precondition mirror.  Only checks the cheap top-level rule
+/// (must be root of ADD tree).  TermOrder collect/sort + downstream logic stays in serial.
+int4 RuleCollectTerms::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const PcodeOp *nextop = op->getOut()->loneDescend();
+  if (nextop != (const PcodeOp *)0 && nextop->code() == CPUI_INT_ADD) return 0;
+  return 1;
+}
+
 int4 RuleCollectTerms::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -319,6 +328,25 @@ void RuleAndMask::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_AND);
+}
+
+/// \brief Pure-read precondition mirror.  NZMask/Consume are read-only during ActionPool dispatch.
+int4 RuleAndMask::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  int4 size = op->getOut()->getSize();
+  if (size > sizeof(uintb)) return 0;
+  uintb mask1 = op->getIn(0)->getNZMask();
+  if (mask1 == 0) return 1;	// fires: AND result is always 0
+  uintb mask2 = op->getIn(1)->getNZMask();
+  uintb andmask = mask1 & mask2;
+  if (andmask == 0) return 1;
+  if ((andmask & op->getOut()->getConsume()) == 0) return 1;
+  if (andmask == mask1) {
+    if (!op->getIn(1)->isConstant()) return 0;
+    if (!op->getIn(0)->isHeritageKnown()) return 0;
+    return 1;
+  }
+  return 0;
 }
 
 int4 RuleAndMask::applyOp(PcodeOp *op,Funcdata &data)
@@ -1119,11 +1147,22 @@ void RulePushMulti::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_MULTIEQUAL);
 }
 
+/// \brief Pure-read precondition mirror.  Skips the expensive functionalEqualityLevel walk.
+int4 RulePushMulti::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (op->numInput() != 2) return 0;
+  const Varnode *in1 = op->getIn(0);
+  const Varnode *in2 = op->getIn(1);
+  if (!in1->isWritten() || !in2->isWritten()) return 0;
+  if (in1->isSpacebase() || in2->isSpacebase()) return 0;
+  return 1;
+}
+
 int4 RulePushMulti::applyOp(PcodeOp *op,Funcdata &data)
 
 {
   if (op->numInput() != 2) return 0;
-  
+
   Varnode *in1 = op->getIn(0);
   Varnode *in2 = op->getIn(1);
 
@@ -1239,6 +1278,19 @@ void RuleHighOrderAnd::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_AND);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleHighOrderAnd::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *cvn1 = op->getIn(1);
+  if (!cvn1->isConstant()) return 0;
+  if (!op->getIn(0)->isWritten()) return 0;
+  if (op->getIn(0)->getDef()->code() != CPUI_INT_ADD) return 0;
+  uintb val = cvn1->getOffset();
+  int4 size = cvn1->getSize();
+  if (((val - 1) | val) != calc_mask(size)) return 0;
+  return 1;
 }
 
 int4 RuleHighOrderAnd::applyOp(PcodeOp *op,Funcdata &data)
@@ -1575,6 +1627,24 @@ void RuleAndCommute::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_AND);
+}
+
+/// \brief Pure-read precondition mirror.  Filters by presence of shift-with-constant on at least one input.
+int4 RuleAndCommute::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  int4 size = op->getOut()->getSize();
+  if (size > sizeof(uintb)) return 0;
+  for (int4 i = 0; i < 2; ++i) {
+    const Varnode *shiftvn = op->getIn(i);
+    const PcodeOp *shiftop = shiftvn->getDef();
+    if (shiftop == (const PcodeOp *)0) continue;
+    OpCode opc = shiftop->code();
+    if (opc != CPUI_INT_LEFT && opc != CPUI_INT_RIGHT) continue;
+    if (!shiftop->getIn(1)->isConstant()) continue;
+    if (!op->getIn(1 - i)->isHeritageKnown()) continue;
+    return 1;
+  }
+  return 0;
 }
 
 int4 RuleAndCommute::applyOp(PcodeOp *op,Funcdata &data)
@@ -3941,12 +4011,25 @@ void RuleShiftPiece::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_ADD);
 }
 
+/// \brief Pure-read precondition mirror.  At least one input must be INT_LEFT.
+int4 RuleShiftPiece::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vn1 = op->getIn(0);
+  if (!vn1->isWritten()) return 0;
+  const Varnode *vn2 = op->getIn(1);
+  if (!vn2->isWritten()) return 0;
+  OpCode c1 = vn1->getDef()->code();
+  OpCode c2 = vn2->getDef()->code();
+  if (c1 != CPUI_INT_LEFT && c2 != CPUI_INT_LEFT) return 0;
+  return 1;
+}
+
 int4 RuleShiftPiece::applyOp(PcodeOp *op,Funcdata &data)
 
 {
   PcodeOp *shiftop,*zextloop,*zexthiop;
   Varnode *vn1,*vn2;
-  
+
   vn1 = op->getIn(0);
   if (!vn1->isWritten()) return 0;
   vn2 = op->getIn(1);
@@ -8822,6 +8905,15 @@ void RuleSignNearMult::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_AND);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleSignNearMult::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (!op->getIn(1)->isConstant()) return 0;
+  if (!op->getIn(0)->isWritten()) return 0;
+  if (op->getIn(0)->getDef()->code() != CPUI_INT_ADD) return 0;
+  return 1;
+}
+
 int4 RuleSignNearMult::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -9138,6 +9230,27 @@ void RuleSignMod2nOpt2::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_MULT);
+}
+
+/// \brief Pure-read precondition mirror.  Stops before the expensive checkSignExtForm/checkMultiequalForm walk.
+int4 RuleSignMod2nOpt2::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *constVn = op->getIn(1);
+  if (!constVn->isConstant()) return 0;
+  uintb mask = calc_mask(constVn->getSize());
+  if (constVn->getOffset() != mask) return 0;
+  const Varnode *andOut = op->getIn(0);
+  if (!andOut->isWritten()) return 0;
+  const PcodeOp *andOp = andOut->getDef();
+  if (andOp->code() != CPUI_INT_AND) return 0;
+  constVn = andOp->getIn(1);
+  if (!constVn->isConstant()) return 0;
+  uintb npow = (~constVn->getOffset() + 1) & mask;
+  if (popcount(npow) != 1) return 0;
+  if (npow == 1) return 0;
+  if (!andOp->getIn(0)->isWritten()) return 0;
+  OpCode adjC = andOp->getIn(0)->getDef()->code();
+  return (adjC == CPUI_INT_ADD || adjC == CPUI_MULTIEQUAL) ? 1 : 0;
 }
 
 int4 RuleSignMod2nOpt2::applyOp(PcodeOp *op,Funcdata &data)

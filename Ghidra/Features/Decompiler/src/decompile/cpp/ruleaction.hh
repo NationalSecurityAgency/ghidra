@@ -103,13 +103,14 @@ public:
 class RuleCollectTerms : public Rule {
   static Varnode *getMultCoeff(Varnode *vn,uintb &coef);	///< Get the multiplicative coefficient
 public:
-  RuleCollectTerms(const string &g) : Rule(g, 0, "collect_terms") {}	///< Constructor
+  RuleCollectTerms(const string &g) : Rule(g, has_canapply, "collect_terms") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleCollectTerms(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleSelectCse : public Rule {
 public:
@@ -163,13 +164,14 @@ public:
 };
 class RuleAndMask : public Rule {
 public:
-  RuleAndMask(const string &g) : Rule(g, 0, "andmask") {}	///< Constructor
+  RuleAndMask(const string &g) : Rule(g, has_canapply, "andmask") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleAndMask(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleOrConsume : public Rule {
 public:
@@ -293,13 +295,14 @@ public:
 class RulePushMulti : public Rule {
   static PcodeOp *findSubstitute(Varnode *in1,Varnode *in2,BlockBasic *bb,PcodeOp *earliest);
 public:
-  RulePushMulti(const string &g) : Rule(g, 0, "push_multi") {}	///< Constructor
+  RulePushMulti(const string &g) : Rule(g, has_canapply, "push_multi") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RulePushMulti(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleNotDistribute : public Rule {
 public:
@@ -313,13 +316,14 @@ public:
 };
 class RuleHighOrderAnd : public Rule {
 public:
-  RuleHighOrderAnd(const string &g) : Rule(g, 0, "highorderand") {}	///< Constructor
+  RuleHighOrderAnd(const string &g) : Rule(g, has_canapply, "highorderand") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleHighOrderAnd(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleAndDistribute : public Rule {
 public:
@@ -363,13 +367,14 @@ public:
 };  
 class RuleAndCommute : public Rule {
 public:
-  RuleAndCommute(const string &g) : Rule(g, 0, "andcommute") {}	///< Constructor
+  RuleAndCommute(const string &g) : Rule(g, has_canapply, "andcommute") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleAndCommute(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };  
 class RuleAndPiece : public Rule {
 public:
@@ -703,13 +708,14 @@ public:
 };
 class RuleShiftPiece : public Rule {
 public:
-  RuleShiftPiece(const string &g) : Rule(g, 0, "shiftpiece") {}	///< Constructor
+  RuleShiftPiece(const string &g) : Rule(g, has_canapply, "shiftpiece") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleShiftPiece(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleCollapseConstants : public Rule {
 public:
@@ -1349,13 +1355,14 @@ public:
 
 class RuleSignNearMult : public Rule {
 public:
-  RuleSignNearMult(const string &g) : Rule( g, 0, "signnearmult") {}	///< Constructor
+  RuleSignNearMult(const string &g) : Rule( g, has_canapply, "signnearmult") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSignNearMult(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleModOpt: public Rule {
@@ -1396,13 +1403,14 @@ class RuleSignMod2nOpt2 : public Rule {
   static Varnode *checkMultiequalForm(PcodeOp *op,uintb npow);
   static Varnode *checkSignExtForm(PcodeOp *op);
 public:
-  RuleSignMod2nOpt2(const string &g) : Rule( g, 0, "signmod2nopt2") {}	///< Constructor
+  RuleSignMod2nOpt2(const string &g) : Rule( g, has_canapply, "signmod2nopt2") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSignMod2nOpt2(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleSegment : public Rule {

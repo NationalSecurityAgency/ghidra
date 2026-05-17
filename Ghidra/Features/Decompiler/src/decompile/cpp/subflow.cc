@@ -1550,6 +1550,17 @@ void RuleSubvarAnd::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_AND);
 }
 
+/// \brief Pure-read precondition mirror.  Stops before SubvariableFlow construction.
+int4 RuleSubvarAnd::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (!op->getIn(1)->isConstant()) return 0;
+  const Varnode *outvn = op->getOut();
+  if (outvn->getConsume() != op->getIn(1)->getOffset()) return 0;
+  if ((outvn->getConsume() & 1) == 0) return 0;
+  if (outvn->hasNoDescend()) return 0;
+  return 1;
+}
+
 int4 RuleSubvarAnd::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -1623,6 +1634,20 @@ void RuleSubvarCompZero::getOpList(vector<uint4> &oplist) const
 {
   oplist.push_back(CPUI_INT_NOTEQUAL);
   oplist.push_back(CPUI_INT_EQUAL);
+}
+
+/// \brief Pure-read precondition mirror.  Stops before SubvariableFlow construction.
+int4 RuleSubvarCompZero::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (!op->getIn(1)->isConstant()) return 0;
+  const Varnode *vn = op->getIn(0);
+  uintb mask = vn->getNZMask();
+  int4 bitnum = leastsigbit_set(mask);
+  if (bitnum == -1) return 0;
+  if ((mask >> bitnum) != 1) return 0;
+  if (op->getIn(1)->getOffset() != mask && op->getIn(1)->getOffset() != 0) return 0;
+  if (op->getOut()->hasNoDescend()) return 0;
+  return 1;
 }
 
 int4 RuleSubvarCompZero::applyOp(PcodeOp *op,Funcdata &data)

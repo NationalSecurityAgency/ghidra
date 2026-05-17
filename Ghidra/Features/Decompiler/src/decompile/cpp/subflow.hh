@@ -133,13 +133,14 @@ public:
 /// \brief Perform SubVariableFlow analysis triggered by INT_AND
 class RuleSubvarAnd : public Rule {
 public:
-  RuleSubvarAnd(const string &g) : Rule( g, 0, "subvar_and") {}	///< Constructor
+  RuleSubvarAnd(const string &g) : Rule( g, has_canapply, "subvar_and") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSubvarAnd(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 /// \brief Perform SubVariableFlow analysis triggered by SUBPIECE
@@ -162,13 +163,14 @@ public:
 /// the full SubvariableFlow analysis.
 class RuleSubvarCompZero : public Rule {
 public:
-  RuleSubvarCompZero(const string &g) : Rule( g, 0, "subvar_compzero") {}	///< Constructor
+  RuleSubvarCompZero(const string &g) : Rule( g, has_canapply, "subvar_compzero") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSubvarCompZero(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 /// \brief Perform SubvariableFlow analysis triggered by INT_RIGHT
