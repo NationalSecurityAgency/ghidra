@@ -1649,6 +1649,18 @@ void RuleRangeMeld::getOpList(vector<uint4> &oplist) const
 ///
 /// Try to union or intersect the ranges to produce
 /// a more concise expression.
+/// \brief Pure-read precondition mirror.
+int4 RuleRangeMeld::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vn1 = op->getIn(0);
+  if (!vn1->isWritten()) return 0;
+  const Varnode *vn2 = op->getIn(1);
+  if (!vn2->isWritten()) return 0;
+  if (!vn1->getDef()->isBoolOutput()) return 0;
+  if (!vn2->getDef()->isBoolOutput()) return 0;
+  return 1;
+}
+
 int4 RuleRangeMeld::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -1740,6 +1752,20 @@ void RuleFloatRange::getOpList(vector<uint4> &oplist) const
 {
   oplist.push_back(CPUI_BOOL_OR);
   oplist.push_back(CPUI_BOOL_AND);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleFloatRange::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vn1 = op->getIn(0);
+  if (!vn1->isWritten()) return 0;
+  const Varnode *vn2 = op->getIn(1);
+  if (!vn2->isWritten()) return 0;
+  OpCode c1 = vn1->getDef()->code();
+  OpCode c2 = vn2->getDef()->code();
+  bool has_less = (c1 == CPUI_FLOAT_LESS || c1 == CPUI_FLOAT_LESSEQUAL ||
+                   c2 == CPUI_FLOAT_LESS || c2 == CPUI_FLOAT_LESSEQUAL);
+  return has_less ? 1 : 0;
 }
 
 int4 RuleFloatRange::applyOp(PcodeOp *op,Funcdata &data)
@@ -3361,6 +3387,19 @@ bool RuleBooleanUndistribute::isMatch(Varnode *leftVn,Varnode *rightVn,bool &rig
     return true;
   }
   return false;
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleBooleanUndistribute::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vn0 = op->getIn(0);
+  if (!vn0->isWritten()) return 0;
+  const Varnode *vn1 = op->getIn(1);
+  if (!vn1->isWritten()) return 0;
+  OpCode opc0 = vn0->getDef()->code();
+  if (opc0 != CPUI_BOOL_AND && opc0 != CPUI_BOOL_OR) return 0;
+  OpCode opc1 = vn1->getDef()->code();
+  return (opc1 == CPUI_BOOL_AND || opc1 == CPUI_BOOL_OR) ? 1 : 0;
 }
 
 int4 RuleBooleanUndistribute::applyOp(PcodeOp *op,Funcdata &data)
@@ -9551,6 +9590,19 @@ void RuleDivOpt::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_SRIGHT);
 }
 
+/// \brief Pure-read precondition mirror.  Just calls findForm which is read-only.
+int4 RuleDivOpt::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  int4 n, xsize;
+  uint8 y[2];
+  OpCode extOpc;
+  PcodeOp *mop = const_cast<PcodeOp *>(op);
+  const Varnode *inVn = findForm(mop, n, y, xsize, extOpc);
+  if (inVn == (const Varnode *)0) return 0;
+  if (checkFormOverlap(mop)) return 0;
+  return 1;
+}
+
 int4 RuleDivOpt::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -9621,6 +9673,16 @@ void RuleSignDiv2::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_SRIGHT);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleSignDiv2::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (!op->getIn(1)->isConstant()) return 0;
+  if (op->getIn(1)->getOffset() != 1) return 0;
+  const Varnode *addout = op->getIn(0);
+  if (!addout->isWritten()) return 0;
+  return (addout->getDef()->code() == CPUI_INT_ADD) ? 1 : 0;
+}
+
 int4 RuleSignDiv2::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -9673,6 +9735,22 @@ void RuleDivChain::getOpList(vector<uint4> &oplist) const
 {
   oplist.push_back(CPUI_INT_DIV);
   oplist.push_back(CPUI_INT_SDIV);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleDivChain::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  OpCode opc2 = op->code();
+  const Varnode *constVn2 = op->getIn(1);
+  if (!constVn2->isConstant()) return 0;
+  const Varnode *vn = op->getIn(0);
+  if (!vn->isWritten()) return 0;
+  const PcodeOp *divOp = vn->getDef();
+  OpCode opc1 = divOp->code();
+  if (opc1 != opc2 && (opc2 != CPUI_INT_DIV || opc1 != CPUI_INT_RIGHT)) return 0;
+  if (!divOp->getIn(1)->isConstant()) return 0;
+  if (vn->loneDescend() == (PcodeOp *)0) return 0;
+  return 1;
 }
 
 int4 RuleDivChain::applyOp(PcodeOp *op,Funcdata &data)
@@ -11084,6 +11162,14 @@ Varnode *RuleIgnoreNan::testForComparison(Varnode *floatVar,PcodeOp *op,int4 slo
   return (Varnode *)0;
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleIgnoreNan::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (data.getArch()->nan_ignore_all) return 1;
+  const Varnode *floatVar = op->getIn(0);
+  return floatVar->isFree() ? 0 : 1;
+}
+
 int4 RuleIgnoreNan::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -11205,6 +11291,21 @@ void RuleInt2FloatCollapse::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_FLOAT_INT2FLOAT);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleInt2FloatCollapse::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (!op->getIn(0)->isWritten()) return 0;
+  const PcodeOp *zextop = op->getIn(0)->getDef();
+  if (zextop->code() != CPUI_INT_ZEXT) return 0;
+  const Varnode *basevn = zextop->getIn(0);
+  if (basevn->isFree()) return 0;
+  const PcodeOp *multiop = op->getOut()->loneDescend();
+  if (multiop == (const PcodeOp *)0) return 0;
+  if (multiop->code() != CPUI_MULTIEQUAL) return 0;
+  if (multiop->numInput() != 2) return 0;
+  return 1;
 }
 
 int4 RuleInt2FloatCollapse::applyOp(PcodeOp *op,Funcdata &data)
@@ -12147,6 +12248,33 @@ void RuleFloatSign::getOpList(vector<uint4> &oplist) const
   oplist.insert(oplist.end(),list,list+18);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleFloatSign::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  OpCode opc = op->code();
+  if (opc != CPUI_FLOAT_INT2FLOAT) {
+    const Varnode *vn = op->getIn(0);
+    if (vn->isWritten()) {
+      PcodeOp *signOp = const_cast<PcodeOp *>(vn->getDef());
+      if (TypeOp::floatSignManipulation(signOp) != CPUI_MAX) return 1;
+    }
+    if (op->numInput() == 2) {
+      vn = op->getIn(1);
+      if (vn->isWritten()) {
+        PcodeOp *signOp = const_cast<PcodeOp *>(vn->getDef());
+        if (TypeOp::floatSignManipulation(signOp) != CPUI_MAX) return 1;
+      }
+    }
+  }
+  if (op->isBoolOutput() || opc == CPUI_FLOAT_TRUNC) return 0;
+  const Varnode *outvn = op->getOut();
+  for (list<PcodeOp *>::const_iterator iter = outvn->beginDescend(); iter != outvn->endDescend(); ++iter) {
+    PcodeOp *readOp = *iter;
+    if (TypeOp::floatSignManipulation(readOp) != CPUI_MAX) return 1;
+  }
+  return 0;
+}
+
 int4 RuleFloatSign::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -12201,6 +12329,14 @@ void RuleFloatSignCleanup::getOpList(vector<uint4> &oplist) const
 {
   oplist.push_back(CPUI_INT_AND);
   oplist.push_back(CPUI_INT_XOR);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleFloatSignCleanup::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (op->getOut()->getType()->getMetatype() != TYPE_FLOAT) return 0;
+  PcodeOp *mop = const_cast<PcodeOp *>(op);
+  return (TypeOp::floatSignManipulation(mop) == CPUI_MAX) ? 0 : 1;
 }
 
 int4 RuleFloatSignCleanup::applyOp(PcodeOp *op,Funcdata &data)

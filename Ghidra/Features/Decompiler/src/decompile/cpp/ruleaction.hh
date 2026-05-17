@@ -361,23 +361,25 @@ public:
 };
 class RuleRangeMeld : public Rule {
 public:
-  RuleRangeMeld(const string &g) : Rule(g, 0, "rangemeld") {}	///< Constructor
+  RuleRangeMeld(const string &g) : Rule(g, has_canapply, "rangemeld") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleRangeMeld(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};  
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+};
 class RuleFloatRange : public Rule {
 public:
-  RuleFloatRange(const string &g) : Rule(g, 0, "floatrange") {}	///< Constructor
+  RuleFloatRange(const string &g) : Rule(g, has_canapply, "floatrange") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleFloatRange(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };  
 class RuleAndCommute : public Rule {
 public:
@@ -590,13 +592,14 @@ public:
 class RuleBooleanUndistribute : public Rule {
   static bool isMatch(Varnode *leftVn,Varnode *rightVn,bool &rightFlip);
 public:
-  RuleBooleanUndistribute(const string &g) : Rule(g, 0, "booleanundistribute") {}	///< Constructor
+  RuleBooleanUndistribute(const string &g) : Rule(g, has_canapply, "booleanundistribute") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleBooleanUndistribute(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleBooleanDedup : public Rule {
   static bool isMatch(Varnode *leftVn,Varnode *rightVn,bool &isFlip);
@@ -1352,36 +1355,39 @@ class RuleDivOpt : public Rule {
   static void moveSignBitExtraction(Varnode *firstVn,Varnode *replaceVn,Funcdata &data);
   static bool checkFormOverlap(PcodeOp *op);	///< If form rooted at given PcodeOp is superseded by an overlapping form
 public:
-  RuleDivOpt(const string &g) : Rule( g, 0, "divopt") {}	///< Constructor
+  RuleDivOpt(const string &g) : Rule( g, has_canapply, "divopt") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleDivOpt(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
   static Varnode *findForm(PcodeOp *op,int4 &n,uint8 *y,int4 &xsize,OpCode &extopc);
 };
 
 class RuleSignDiv2 : public Rule {
 public:
-  RuleSignDiv2(const string &g) : Rule( g, 0, "signdiv2") {}	///< Constructor
+  RuleSignDiv2(const string &g) : Rule( g, has_canapply, "signdiv2") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSignDiv2(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleDivChain : public Rule {
 public:
-  RuleDivChain(const string &g) : Rule( g, 0, "divchain") {}	///< Constructor
+  RuleDivChain(const string &g) : Rule( g, has_canapply, "divchain") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleDivChain(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleSignForm : public Rule {
@@ -1541,13 +1547,14 @@ class RuleIgnoreNan : public Rule {
   static bool isAnotherNan(Varnode *vn);
   static Varnode *testForComparison(Varnode *floatVar,PcodeOp *op,int4 slot,OpCode matchCode,int4 &count,Funcdata &data);
 public:
-  RuleIgnoreNan(const string &g) : Rule( g, 0, "ignorenan") {}	///< Constructor
+  RuleIgnoreNan(const string &g) : Rule( g, has_canapply, "ignorenan") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleIgnoreNan(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleUnsigned2Float : public Rule {
@@ -1563,13 +1570,14 @@ public:
 
 class RuleInt2FloatCollapse : public Rule {
 public:
-  RuleInt2FloatCollapse(const string &g) : Rule( g, 0, "int2floatcollapse") {}	///< Constructor
+  RuleInt2FloatCollapse(const string &g) : Rule( g, has_canapply, "int2floatcollapse") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleInt2FloatCollapse(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleFuncPtrEncoding : public Rule {
@@ -1649,24 +1657,26 @@ public:
 
 class RuleFloatSign : public Rule {
 public:
-  RuleFloatSign(const string &g) : Rule( g, 0, "floatsign") {}	///< Constructor
+  RuleFloatSign(const string &g) : Rule( g, has_canapply, "floatsign") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleFloatSign(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleFloatSignCleanup : public Rule {
 public:
-  RuleFloatSignCleanup(const string &g) : Rule( g, 0, "floatsigncleanup") {}	///< Constructor
+  RuleFloatSignCleanup(const string &g) : Rule( g, has_canapply, "floatsigncleanup") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleFloatSignCleanup(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RuleOrCompare : public Rule {
