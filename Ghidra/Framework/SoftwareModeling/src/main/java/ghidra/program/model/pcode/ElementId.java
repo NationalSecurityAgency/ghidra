@@ -442,6 +442,8 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_SPLITDATATYPE = new ElementId("splitdatatype", 270);
 	public static final ElementId ELEM_JUMPTABLEMAX = new ElementId("jumptablemax", 271);
 	public static final ElementId ELEM_NANIGNORE = new ElementId("nanignore", 272);
+	public static final ElementId ELEM_PARALLELDECOMPILE =
+		new ElementId("paralleldecompile", 290);
 
 	// modelrules
 	public static final ElementId ELEM_DATATYPE = new ElementId("datatype", 273);

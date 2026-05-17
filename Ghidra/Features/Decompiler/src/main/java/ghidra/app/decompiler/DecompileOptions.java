@@ -154,6 +154,28 @@ public class DecompileOptions {
 	private final static NanIgnoreEnum NANIGNORE_OPTIONDEFAULT = NanIgnoreEnum.Compare;	// Must match Architecture::resetDefaultsInternal
 	private NanIgnoreEnum nanIgnore;
 
+	private final static String PARALLEL_DECOMPILE_OPTIONSTRING =
+		"Analysis.Native intra-function parallelism";
+	private final static String PARALLEL_DECOMPILE_OPTIONDESCRIPTION =
+		"Enable native C++ decompiler staged intra-function parallelism. " +
+			"Off preserves legacy behavior. Staged parallelizes safe candidate discovery inside one function.";
+	private final static boolean PARALLEL_DECOMPILE_OPTIONDEFAULT = false;	// Must match Architecture::resetDefaultsInternal
+	private boolean parallelDecompile;
+
+	private final static String PARALLEL_DECOMPILE_WORKERS_OPTIONSTRING =
+		"Analysis.Native intra-function parallel workers";
+	private final static String PARALLEL_DECOMPILE_WORKERS_OPTIONDESCRIPTION =
+		"Number of native C++ decompiler worker threads used by staged intra-function parallelism.";
+	private final static int PARALLEL_DECOMPILE_WORKERS_OPTIONDEFAULT = 1;	// Must match Architecture::resetDefaultsInternal
+	private int parallelDecompileWorkers;
+
+	private final static String PARALLEL_DECOMPILE_MINOPS_OPTIONSTRING =
+		"Analysis.Native intra-function parallel minimum PcodeOps";
+	private final static String PARALLEL_DECOMPILE_MINOPS_OPTIONDESCRIPTION =
+		"Minimum number of PcodeOps in a function before native staged intra-function parallelism is enabled.";
+	private final static int PARALLEL_DECOMPILE_MINOPS_OPTIONDEFAULT = 4096;	// Must match Architecture::resetDefaultsInternal
+	private int parallelDecompileMinOps;
+
 	private final static String NULLTOKEN_OPTIONSTRING = "Display.Print 'NULL' for null pointers";
 	private final static String NULLTOKEN_OPTIONDESCRIPTION =
 		"If set, any zero valued pointer (null pointer) will " +
@@ -567,6 +589,12 @@ public class DecompileOptions {
 		splitArrays = opt.getBoolean(SPLITARRAYS_OPTIONSTRING, SPLITARRAYS_OPTIONDEFAULT);
 		splitPointers = opt.getBoolean(SPLITPOINTERS_OPTIONSTRING, SPLITPOINTERS_OPTIONDEFAULT);
 		nanIgnore = opt.getEnum(NANIGNORE_OPTIONSTRING, NANIGNORE_OPTIONDEFAULT);
+		parallelDecompile =
+			opt.getBoolean(PARALLEL_DECOMPILE_OPTIONSTRING, PARALLEL_DECOMPILE_OPTIONDEFAULT);
+		parallelDecompileWorkers = opt.getInt(PARALLEL_DECOMPILE_WORKERS_OPTIONSTRING,
+			PARALLEL_DECOMPILE_WORKERS_OPTIONDEFAULT);
+		parallelDecompileMinOps =
+			opt.getInt(PARALLEL_DECOMPILE_MINOPS_OPTIONSTRING, PARALLEL_DECOMPILE_MINOPS_OPTIONDEFAULT);
 
 		nullToken = opt.getBoolean(NULLTOKEN_OPTIONSTRING, NULLTOKEN_OPTIONDEFAULT);
 		inplaceTokens = opt.getBoolean(INPLACEOP_OPTIONSTRING, INPLACEOP_OPTIONDEFAULT);
@@ -694,6 +722,17 @@ public class DecompileOptions {
 		opt.registerOption(NANIGNORE_OPTIONSTRING, NANIGNORE_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisNanIgnore"),
 			NANIGNORE_OPTIONDESCRIPTION);
+		opt.registerOption(PARALLEL_DECOMPILE_OPTIONSTRING, PARALLEL_DECOMPILE_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisParallelDecompile"),
+			PARALLEL_DECOMPILE_OPTIONDESCRIPTION);
+		opt.registerOption(PARALLEL_DECOMPILE_WORKERS_OPTIONSTRING,
+			PARALLEL_DECOMPILE_WORKERS_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisParallelDecompile"),
+			PARALLEL_DECOMPILE_WORKERS_OPTIONDESCRIPTION);
+		opt.registerOption(PARALLEL_DECOMPILE_MINOPS_OPTIONSTRING,
+			PARALLEL_DECOMPILE_MINOPS_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisParallelDecompile"),
+			PARALLEL_DECOMPILE_MINOPS_OPTIONDESCRIPTION);
 		opt.registerOption(NULLTOKEN_OPTIONSTRING, NULLTOKEN_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayNull"), NULLTOKEN_OPTIONDESCRIPTION);
 		opt.registerOption(INPLACEOP_OPTIONSTRING, INPLACEOP_OPTIONDEFAULT,
@@ -849,6 +888,18 @@ public class DecompileOptions {
 	}
 
 	/**
+	 * Enable or disable native C++ staged intra-function decompiler parallelism.
+	 * @param enabled true enables staged native parallelism
+	 * @param workers number of native worker threads
+	 * @param minOps minimum PcodeOp count before staged mode is attempted
+	 */
+	public void setNativeParallelDecompile(boolean enabled, int workers, int minOps) {
+		parallelDecompile = enabled;
+		parallelDecompileWorkers = Math.max(1, workers);
+		parallelDecompileMinOps = Math.max(1, minOps);
+	}
+
+	/**
 	 * Encode all the configuration options to a stream for the decompiler process.
 	 * This object is global to all decompile processes so we can tailor to the specific process
 	 * by passing in the interface.
@@ -880,6 +931,11 @@ public class DecompileOptions {
 		}
 		if (nanIgnore != NANIGNORE_OPTIONDEFAULT) {
 			appendOption(encoder, ELEM_NANIGNORE, nanIgnore.getOptionString(), "", "");
+		}
+		if (parallelDecompile) {
+			appendOption(encoder, ELEM_PARALLELDECOMPILE, "staged",
+				Integer.toString(parallelDecompileWorkers),
+				Integer.toString(parallelDecompileMinOps));
 		}
 
 		appendOption(encoder, ELEM_READONLY, readOnly ? "on" : "off", "", "");

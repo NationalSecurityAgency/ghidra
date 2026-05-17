@@ -58,7 +58,8 @@ public:
     rule_oneactperfunc = 16,	///< Makes a change only once per function
     rule_debug = 32,		///< Print debug messages specifically for this action
     rule_warnings_on = 64,	///< If this action makes a change, issue a warning
-    rule_warnings_given = 128	///< A warning has been issued for this action
+    rule_warnings_given = 128,	///< A warning has been issued for this action
+    rule_modcount_skip = 256	///< Opt-in: skip the apply() body when Funcdata::globalModCount hasn't moved since last successful complete (action must be idempotent in IR state and must bump globalModCount itself when it mutates state via paths not covered by funcdata mutator hooks)
   };
   /// Boolean properties describing the \e status of an action
   enum statusflags {
@@ -84,6 +85,7 @@ protected:
   uint4 flags;			///< Behavior properties
   uint4 count_tests;		///< Number of times apply() has been called
   uint4 count_apply;		///< Number of times apply() made changes
+  uint8 lastSeenModCount;	///< Last value of Funcdata::globalModCount observed at end of perform; used to skip if no IR mutated since
   string name;			///< Name of the action
   string basegroup;		///< Base group this action belongs to
   void issueWarning(Architecture *glb);	///< Warn that this Action has applied

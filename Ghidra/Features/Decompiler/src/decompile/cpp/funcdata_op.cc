@@ -30,6 +30,7 @@ void Funcdata::opSetOpcode(PcodeOp *op,OpCode opc)
     debugModCheck(op);
 #endif
   obank.changeOpcode(op, glb->inst[opc] );
+  bumpIrModCount();
 }
 
 /// \param op is the given CPUI_RETURN op
@@ -84,6 +85,7 @@ void Funcdata::opSetOutput(PcodeOp *op,Varnode *vn)
   vn = vbank.setDef(vn,op);
   setVarnodeProperties(vn);
   op->setOutput(vn);
+  bumpIrModCount();
 }
 
 /// The input Varnode is unlinked from the op.
@@ -122,6 +124,7 @@ void Funcdata::opSetInput(PcodeOp *op,Varnode *vn,int4 slot)
 
   vn->addDescend(op);		// Add this op to list of vn's descendants
   op->setInput(vn,slot);	// op must be up to date AFTER calling descend_add
+  bumpIrModCount();
 }
 
 /// This is convenience method that is more efficient than call opSetInput() twice.
@@ -138,6 +141,7 @@ void Funcdata::opSwapInput(PcodeOp *op,int4 slot1,int4 slot2)
   Varnode *tmp = op->getIn(slot1);
   op->setInput(op->getIn(slot2),slot1);
   op->setInput(tmp,slot2);
+  bumpIrModCount();
 }
 
 /// \brief Insert the given PcodeOp at specific point in a basic block
@@ -219,6 +223,7 @@ void Funcdata::opDestroy(PcodeOp *op)
     obank.markDead(op);
     op->getParent()->removeOp(op);
   }
+  bumpIrModCount();
 }
 
 /// The given PcodeOp is always removed.  PcodeOps are recursively removed, if the only data-flow

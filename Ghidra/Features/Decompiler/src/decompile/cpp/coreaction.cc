@@ -5146,6 +5146,12 @@ bool ActionInferTypes::writeBack(Funcdata &data)
     if (vn->updateType(ct))
       change = true;
   }
+  // Type changes affect rule preconditions (RulePushPtr, RuleStructOffset0, etc.)
+  // and Varnode nzm (in calcNZMask, via isTypeLock+TYPE_BOOL).  bumpTypeModCount()
+  // both bumps the type-specific counter (used by ActionNonzeroMask's skip) and
+  // lifts the aggregate counter (so ActionPool re-checks type-dependent rules).
+  if (change)
+    data.bumpTypeModCount();
   return change;
 }
 
@@ -5487,6 +5493,17 @@ int4 ActionInferTypes::apply(Funcdata &data)
     }
     return 0;
   }
+  // Fast path: if last call's writeBack returned false (types had converged) AND
+  // no IR mutation has occurred since, propagation would yield the same result.
+  // Skipping doesn't advance localcount: that's safe because localcount is a
+  // monotonic guard against non-convergence; we only skip when we KNOW we have
+  // converged. Boundary handler at localcount==7 (above) still triggers on the
+  // run where localcount finally crosses the threshold, because we re-enter the
+  // body whenever IR moves.
+  if (lastTypesConverged && lastSeenIrMod != 0 &&
+      lastSeenIrMod == data.getIrModCount()) {
+    return 0;
+  }
   data.getScopeLocal()->applyTypeRecommendations();
   buildLocaltypes(data);	// Set up initial types (based on local info)
   for(iter=data.beginLoc();iter!=data.endLoc();++iter) {
@@ -5500,10 +5517,13 @@ int4 ActionInferTypes::apply(Funcdata &data)
   Varnode *spcvn = data.findSpacebaseInput(spcid);
   if (spcvn != (Varnode *)0)
     propagateSpacebaseRef(data,spcvn);
-  if (writeBack(data)) {
+  bool changed = writeBack(data);
+  if (changed) {
     // count += 1;			// Do not consider this a data-flow change
     localcount += 1;
   }
+  lastTypesConverged = !changed;
+  lastSeenIrMod = data.getIrModCount();
   return 0;
 }
 

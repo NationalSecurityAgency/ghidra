@@ -34,6 +34,7 @@ Action::Action(uint4 f,const string &nm,const string &g)
   basegroup = g;
   count_tests = 0;
   count_apply = 0;
+  lastSeenModCount = 0;	// 0 means "never seen"; Funcdata::globalModCount starts at 1, so first call always runs
 }
 
 /// If enabled, issue a warning that this Action has been applied
@@ -102,6 +103,7 @@ void Action::reset(Funcdata &data)
 {
   status = status_start;
   flags &= ~rule_warnings_given; // Indicate a warning has not been given yet
+  lastSeenModCount = 0;  // Force first-run after reset
 }
 
 /// Reset all the counts to zero
@@ -300,6 +302,19 @@ int4 Action::perform(Funcdata &data)
 {
   int4 res;
 
+  // Opt-in dirty skip (via rule_modcount_skip): if no IR or state mutation has
+  // occurred anywhere in the function since this Action last completed its
+  // perform(), short-circuit the apply() body.  Uses the IR-only counter so
+  // that non-IR state changes (nonzeromask, infertypes::writeBack) don't
+  // invalidate the skip for actions whose work depends purely on IR (deadcode,
+  // directwrite, varnodeprops, etc.).  Only triggers on status_start entry.
+  if ((flags & rule_modcount_skip) != 0 &&
+      status == status_start && lastSeenModCount != 0 &&
+      lastSeenModCount == data.getIrModCount()) {
+    count = 0;
+    return 0;
+  }
+
   do {
     switch(status) {
     case status_start:
@@ -358,6 +373,9 @@ int4 Action::perform(Funcdata &data)
   else
     status = status_start;
 
+  // Record modCount on successful complete so opt-in actions can skip next round
+  if ((flags & rule_modcount_skip) != 0)
+    lastSeenModCount = data.getIrModCount();
   return count;
 }
 
@@ -847,6 +865,7 @@ int4 ActionPool::processOp(PcodeOp *op,Funcdata &data)
     if (res>0) {
       rl->count_apply += 1;
       count += res;
+      data.bumpIrModCount();
       rl->issueWarning(data.getArch()); // Check if we need to issue a warning
       if (rl->checkActionBreak())
         return -1;
@@ -877,6 +896,20 @@ int4 ActionPool::processOp(PcodeOp *op,Funcdata &data)
 int4 ActionPool::apply(Funcdata &data)
 
 {
+  // ActionPool is the only Action subclass that is purely rule-driven: its
+  // entire effect happens via Rule::applyOp() inside processOp(), each of which
+  // bumps Funcdata::globalModCount on success.  Therefore, if no rule has
+  // fired anywhere in the function since the last successful completion of
+  // this ActionPool, no rule can fire here either, and the entire body sweep
+  // is provably a no-op.  Skip it without invalidating SHA.
+  //
+  // Restricted to status_start entries — we do not short-circuit a mid-sweep
+  // continuation (status_mid) because that has internal iterator state to drain.
+  if (status == status_start && lastSeenModCount != 0 &&
+      lastSeenModCount == data.getGlobalModCount()) {
+    return 0;
+  }
+
   if (status != status_mid) {
     op_state = data.beginOpAll();	// Initialize the derived action
     rule_index = 0;
@@ -884,6 +917,8 @@ int4 ActionPool::apply(Funcdata &data)
   for(;op_state!=data.endOpAll();)
 	  if (0!=processOp((*op_state).second,data)) return -1;
 
+  // Successful complete sweep — record modCount for skip-decision next time.
+  lastSeenModCount = data.getGlobalModCount();
   return 0;			// Indicate successful completion
 }
 

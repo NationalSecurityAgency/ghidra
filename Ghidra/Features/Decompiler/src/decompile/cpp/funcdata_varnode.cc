@@ -72,6 +72,8 @@ Varnode *Funcdata::newConstant(int4 s,uintb constant_val)
   assignHigh(vn);
 
 				// There is no chance of matching localmap
+  // Constants are in non-heritaged ConstantSpace; bump only IR counter
+  bumpVnCreateCount();
   return vn;
 }
 
@@ -91,6 +93,8 @@ Varnode *Funcdata::newUnique(int4 s,Datatype *ct)
     checkForLanedRegister(s, vn->getAddr());
 
 				// No chance of matching localmap
+  // UniqueSpace is non-heritaged; bump only IR counter
+  bumpVnCreateCount();
   return vn;
 }
 
@@ -118,6 +122,7 @@ Varnode *Funcdata::newVarnodeOut(int4 s,const Address &m,PcodeOp *op)
   else
     vn->setFlags(vflags & ~Varnode::typelock); // Typelock set by updateType
 
+  bumpVnCreateCount();
   return vn;
 }
 
@@ -136,6 +141,8 @@ Varnode *Funcdata::newUniqueOut(int4 s,PcodeOp *op)
   if (s >= minLanedSize)
     checkForLanedRegister(s, vn->getAddr());
   // No chance of matching localmap
+  // newUniqueOut: UniqueSpace is non-heritaged; bump only IR counter
+  bumpVnCreateCount();
   return vn;
 }
 
@@ -165,6 +172,7 @@ Varnode *Funcdata::newVarnode(int4 s,const Address &m,Datatype *ct)
   else
     vn->setFlags(vflags & ~Varnode::typelock); // Typelock set by updateType
 
+  bumpVnCreateCount();
   return vn;
 }
 
@@ -180,6 +188,8 @@ Varnode *Funcdata::newVarnodeIop(PcodeOp *op)
   AddrSpace *cspc = glb->getIopSpace();
   Varnode *vn = vbank.create(sizeof(op),Address(cspc,(uintb)(uintp)op),ct);
   assignHigh(vn);
+  // IopSpace is non-heritaged; bump only IR counter
+  bumpVnCreateCount();
   return vn;
 }
 
@@ -194,6 +204,8 @@ Varnode *Funcdata::newVarnodeSpace(AddrSpace *spc)
 
   Varnode *vn = vbank.create(sizeof(spc),glb->createConstFromSpace(spc),ct);
   assignHigh(vn);
+  // ConstantSpace is non-heritaged; bump only IR counter
+  bumpVnCreateCount();
   return vn;
 }
 
@@ -210,6 +222,8 @@ Varnode *Funcdata::newVarnodeCallSpecs(FuncCallSpecs *fc)
   AddrSpace *cspc = glb->getFspecSpace();
   Varnode *vn = vbank.create(sizeof(fc),Address(cspc,(uintb)(uintp)fc),ct);
   assignHigh(vn);
+  // FspecSpace is non-heritaged; bump only IR counter
+  bumpVnCreateCount();
   return vn;
 }
 
@@ -243,6 +257,7 @@ Varnode *Funcdata::newVarnode(int4 s,AddrSpace *base,uintb off)
 
   vn = newVarnode(s,Address(base,off));
 
+  bumpVnCreateCount();
   return vn;
 }
 
@@ -869,11 +884,12 @@ void Funcdata::clearDeadVarnodes(void)
 /// looks for situations where a p-code produces a value that is known to have some bits that are
 /// guaranteed to be zero.  It updates the state of the output Varnode then tries to push the
 /// information forward through the data-flow until additional changes are apparent.
-void Funcdata::calcNZMask(void)
+bool Funcdata::calcNZMask(void)
 
 {
   vector<PcodeOpNode> opstack;
   list<PcodeOp *>::const_iterator oiter;
+  bool anyChanged = false;
 
   for(oiter=beginOpAlive();oiter!=endOpAlive();++oiter) {
     PcodeOp *op = *oiter;
@@ -887,7 +903,9 @@ void Funcdata::calcNZMask(void)
       if (node.slot >= node.op->numInput()) { // If no edge left
 	Varnode *outvn = node.op->getOut();
 	if (outvn != (Varnode *)0) {
+	  uintb oldm = outvn->nzm;
 	  outvn->nzm = node.op->getNZMaskLocal(true);
+	  if (oldm != outvn->nzm) anyChanged = true;
 	}
 	opstack.pop_back();	// Pop a level
 	continue;
@@ -902,6 +920,7 @@ void Funcdata::calcNZMask(void)
       // Traverse edge indicated by slot
       Varnode *vn = node.op->getIn(oldslot);
       if (!vn->isWritten()) {
+	uintb oldm = vn->nzm;
 	if (vn->isConstant())
 	  vn->nzm = vn->getOffset();
 	else if (vn->isTypeLock() && vn->getType()->getMetatype() == TYPE_BOOL) {
@@ -912,6 +931,7 @@ void Funcdata::calcNZMask(void)
 	  if (vn->isSpacebase())
 	    vn->nzm &= ~((uintb)0xff); // Treat spacebase input as aligned
 	}
+	if (oldm != vn->nzm) anyChanged = true;
       }
       else if (!vn->getDef()->isMark()) { // If haven't traversed before
 	opstack.push_back(PcodeOpNode(vn->getDef(),0));
@@ -938,10 +958,12 @@ void Funcdata::calcNZMask(void)
     uintb nzmask = op->getNZMaskLocal(false);
     if (nzmask != vn->nzm) {
       vn->nzm = nzmask;
+      anyChanged = true;
       for(oiter=vn->beginDescend();oiter!=vn->endDescend();++oiter)
 	worklist.push_back(*oiter);
     }
   }
+  return anyChanged;
 }
 
 /// \brief Update Varnode properties based on (new) Symbol information

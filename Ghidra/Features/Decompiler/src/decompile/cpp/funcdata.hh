@@ -76,6 +76,10 @@ class Funcdata {
   uint4 high_level_index;	///< Creation index of first Varnode created after HighVariables are created
   uint4 cast_phase_index;	///< Creation index of first Varnode created after ActionSetCasts
   uint4 minLanedSize;		///< Minimum Varnode size to check as LanedRegister
+  uint8 globalModCount;		///< Aggregate change counter: bumps on ANY state mutation (IR + nzm + types).  ActionPool uses this for its skip decision since rules may depend on any of these.
+  uint8 irModCount;		///< IR-only counter: bumps ONLY on structural IR mutations (op*/destroy/new), not on nzm/type recomputation.  Used by actions whose work depends only on the IR graph (deadcode, directwrite, varnodeprops, etc.) so they can correctly skip when nonzeromask/infertypes bumped the aggregate but no IR has actually moved.
+  uint8 vnCreateCount;		///< New-Varnode counter: bumps each time a Varnode is created via newConstant/newUnique/newVarnode*/newVarnodeOut.  Used by heritage for a tight skip condition — heritage's only "input" is new free Varnodes; opSet* on existing Varnodes does NOT introduce new heritage work.
+  uint8 typeModCount;		///< Type-change counter: bumps when ActionInferTypes::writeBack commits an actual datatype update.  Used by ActionNonzeroMask to detect whether nzm could differ from cached values without an IR change.
   int4 size;			///< Number of bytes of binary data in function body
   Architecture *glb;		///< Global configuration data
   FunctionSymbol *functionSymbol;	///< The symbol representing \b this function
@@ -149,6 +153,14 @@ public:
   bool hasUnreachableBlocks(void) const { return ((flags&blocks_unreachable)!=0); }	///< Did this function exhibit unreachable code
   bool isTypeRecoveryOn(void) const { return ((flags&typerecovery_on)!=0); }	///< Will data-type analysis be performed
   bool hasTypeRecoveryStarted(void) const { return ((flags&typerecovery_start)!=0); }	///< Has data-type recovery processes started
+  uint8 getGlobalModCount(void) const { return globalModCount; }	///< Read aggregate mutation counter
+  void bumpGlobalModCount(void) { globalModCount += 1; }	///< Bump aggregate counter only (e.g. nonzeromask, infertypes::writeBack)
+  uint8 getIrModCount(void) const { return irModCount; }	///< Read IR-only mutation counter
+  void bumpIrModCount(void) { globalModCount += 1; irModCount += 1; }	///< Bump on structural IR change — also lifts aggregate counter
+  uint8 getVnCreateCount(void) const { return vnCreateCount; }	///< Read varnode-creation counter
+  void bumpVnCreateCount(void) { vnCreateCount += 1; bumpIrModCount(); }	///< Bump when a new Varnode is created — also lifts IR and aggregate counters since new varnode = IR change
+  uint8 getTypeModCount(void) const { return typeModCount; }	///< Read type-change counter
+  void bumpTypeModCount(void) { typeModCount += 1; globalModCount += 1; }	///< Bump when a datatype was actually changed; also lifts aggregate counter so ActionPool re-runs (rules may depend on types)
   bool isTypeRecoveryExceeded(void) const { return ((flags&typerecovery_exceeded)!=0); }	///< Has maximum propagation passes been reached
   bool hasNoCode(void) const { return ((flags & no_code)!=0); }		///< Return \b true if \b this function has no code body
   void setNoCode(bool val) { if (val) flags |= no_code; else flags &= ~no_code; }	///< Toggle whether \b this has a body
@@ -425,7 +437,7 @@ public:
   ParamActive *getActiveOutput(void) const { return activeoutput; }	///< Get the \e return prototype recovery object
   void setHighLevel(void);					///< Turn on HighVariable objects for all Varnodes
   void clearDeadVarnodes(void);					///< Delete any dead Varnodes
-  void calcNZMask(void);					///< Calculate \e non-zero masks for all Varnodes
+  bool calcNZMask(void);					///< Calculate \e non-zero masks for all Varnodes; returns true if any varnode's nzm actually changed
   void clearDeadOps(void) { obank.destroyDead(); }		///< Delete any dead PcodeOps
   void remapVarnode(Varnode *vn,Symbol *sym,const Address &usepoint);
   void remapDynamicVarnode(Varnode *vn,Symbol *sym,const Address &usepoint,uint8 hash);

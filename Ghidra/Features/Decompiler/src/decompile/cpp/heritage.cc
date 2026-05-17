@@ -221,6 +221,7 @@ Heritage::Heritage(Funcdata *data)
   fd = data;
   pass = 0;
   maxdepth = -1;
+  lastSeenVnCreate = 0;
 }
 
 void Heritage::clearInfoList(void)
@@ -2673,6 +2674,20 @@ void Heritage::heritage(void)
   vector<PcodeOp *> freeStores;
   PreferSplitManager splitmanage;
 
+  // Fast path: if no new free Varnode has been created since the previous
+  // successful heritage() call, the per-space iteration would find nothing
+  // new in globaldisjoint, placeMultiequals would have nothing to place, and
+  // rename() would just re-rename already-named Varnodes.  This is tighter
+  // than checking irModCount: opSet*/opDestroy on existing Varnodes alone
+  // does not introduce new heritage work; only new Varnodes do.  Still bump
+  // pass so downstream deadRemovalAllowed(spc) and numHeritagePasses() stay
+  // monotonic. Only valid after the first real heritage() —
+  // buildADT() / pass==0 setup must have run already.
+  if (lastSeenVnCreate != 0 && lastSeenVnCreate == fd->getVnCreateCount() && maxdepth != -1) {
+    pass += 1;
+    return;
+  }
+
   if (maxdepth == -1)		// Has a restructure been forced
     buildADT();
 
@@ -2746,8 +2761,17 @@ void Heritage::heritage(void)
       }
     }
   }
-  placeMultiequals();
-  rename();
+  // If disjoint is empty after the per-space loop, every heritaged Varnode is
+  // already known and contained in a previous-pass range — there are no new
+  // free Varnodes to phi-place or rename.  Skip placeMultiequals and rename:
+  // neither would do meaningful work (placeMultiequals iterates disjoint;
+  // rename only acts on Varnodes with isActiveHeritage(), which is set only by
+  // placeMultiequals).  The dominator-tree walk in rename is expensive on
+  // large functions, so skipping it is the main win.
+  if (!disjoint.empty()) {
+    placeMultiequals();
+    rename();
+  }
   if (reprocessStackCount > 0)
     reprocessFreeStores(stackSpace, freeStores);
   analyzeNewLoadGuards();
@@ -2755,6 +2779,7 @@ void Heritage::heritage(void)
   if (pass == 0)
     splitmanage.splitAdditional();
   pass += 1;
+  lastSeenVnCreate = fd->getVnCreateCount();
 }
 
 /// \param op is the given PcodeOp
@@ -2867,6 +2892,7 @@ void Heritage::clear(void)
   storeGuard.clear();
   maxdepth = -1;
   pass = 0;
+  lastSeenVnCreate = 0;
 }
 
 } // End namespace ghidra

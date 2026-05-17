@@ -165,7 +165,7 @@ class ActionMultiCse : public Action {
   static PcodeOp *findMatch(BlockBasic *bl,PcodeOp *target,Varnode *in);	///< Find match to CPUI_MULTIEQUAL
   bool processBlock(Funcdata &data,BlockBasic *bl);		///< Search a block for equivalent CPUI_MULTIEQUAL
 public:
-  ActionMultiCse(const string &g) : Action(0,"multicse",g) {}	///< Constructor
+  ActionMultiCse(const string &g) : Action(rule_modcount_skip,"multicse",g) {}	///< Constructor; opt-in to modcount-skip (output is pure function of SSA IR — finds equivalent MULTIEQUAL ops by structural match)
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionMultiCse(getGroup());
@@ -176,7 +176,7 @@ public:
 /// \brief Check for one CPUI_MULTIEQUAL input set defining more than one Varnode
 class ActionShadowVar : public Action {
 public:
-  ActionShadowVar(const string &g) : Action(0,"shadowvar",g) {}	///< Constructor
+  ActionShadowVar(const string &g) : Action(rule_modcount_skip,"shadowvar",g) {}	///< Constructor; opt-in to modcount-skip — runs inside stackstall's repeatapply loop where modCount may not move between calls
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionShadowVar(getGroup());
@@ -205,7 +205,7 @@ public:
 /// \brief Eliminate locally constant indirect calls
 class ActionDeindirect : public Action {
 public:
-  ActionDeindirect(const string &g) : Action(0,"deindirect",g) {}	///< Constructor
+  ActionDeindirect(const string &g) : Action(rule_modcount_skip,"deindirect",g) {}	///< Constructor; opt-in to modcount-skip — runs inside stackstall's repeatapply loop
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionDeindirect(getGroup());
@@ -221,7 +221,7 @@ public:
 ///   - Varnodes whose values are not consumed are replaced with constant 0 Varnodes
 class ActionVarnodeProps : public Action {
 public:
-  ActionVarnodeProps(const string &g) : Action(0,"varnodeprops",g) {}	///< Constructor
+  ActionVarnodeProps(const string &g) : Action(0,"varnodeprops",g) {}	///< Constructor; opt-in to modcount-skip (clears+recomputes Varnode properties from IR)
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionVarnodeProps(getGroup());
@@ -243,7 +243,7 @@ public:
 class ActionDirectWrite : public Action {
   bool propagateIndirect;			///< Propagate thru CPUI_INDIRECT ops
 public:
-  ActionDirectWrite(const string &g,bool prop) : Action(0,"directwrite",g) { propagateIndirect=prop; }	///< Constructor
+  ActionDirectWrite(const string &g,bool prop) : Action(rule_modcount_skip,"directwrite",g) { propagateIndirect=prop; }	///< Constructor; opt-in to modcount-based skip — output is a pure function of the SSA IR (clears then recomputes per-Varnode directwrite flags) so when IR hasn't moved, recomputation yields the same flags as last run
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionDirectWrite(getGroup(),propagateIndirect);
@@ -281,7 +281,7 @@ public:
 /// \brief Build Static Single Assignment (SSA) representation for function
 class ActionHeritage : public Action {
 public:
-  ActionHeritage(const string &g) : Action(0,"heritage",g) {}	///< Constructor
+  ActionHeritage(const string &g) : Action(0,"heritage",g) {}	///< Constructor — opt-in to modcount-skip was correct SHA-wise but measured neutral-to-slightly-negative; heritage already has internal short-circuits (e.g. buildADT() gated on maxdepth==-1) so adding modCount skip on top adds bookkeeping without meaningful saving
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionHeritage(getGroup());
@@ -292,12 +292,12 @@ public:
 /// \brief Calculate the non-zero mask property on all Varnode objects.
 class ActionNonzeroMask : public Action {
 public:
-  ActionNonzeroMask(const string &g) : Action(0,"nonzeromask",g) {}	///< Constructor
+  ActionNonzeroMask(const string &g) : Action(0,"nonzeromask",g) {}
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionNonzeroMask(getGroup());
   }
-  virtual int4 apply(Funcdata &data) { data.calcNZMask(); return 0; }
+  virtual int4 apply(Funcdata &data) { data.calcNZMask(); data.bumpGlobalModCount(); return 0; }
 };
 
 /// \brief Fill-in CPUI_CAST p-code ops as required by the casting strategy
@@ -558,7 +558,7 @@ class ActionDeadCode : public Action {
   static uintb gatherConsumedReturn(Funcdata &data);
   static bool lastChanceLoad(Funcdata &data,vector<Varnode *> &worklist);
 public:
-  ActionDeadCode(const string &g) : Action(0,"deadcode",g) {}	///< Constructor
+  ActionDeadCode(const string &g) : Action(rule_modcount_skip,"deadcode",g) {}	///< Constructor; removed from modcount-skip after IR-counter split — deadcode mutates Varnode flags (clearConsumeList/setConsume/clearAddrForce) that other code may have updated outside the IR-mutation hooks, so it's safest to always run
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionDeadCode(getGroup());
@@ -593,7 +593,7 @@ class ActionConditionalConst : public Action {
   bool testAlternatePath(Varnode *vn,PcodeOp *op,int4 slot,int4 depth);
   void propagateConstant(list<ConstPoint> &points,bool useMultiequal,Funcdata &data);
 public:
-  ActionConditionalConst(const string &g) : Action(0,"condconst",g) {}	///< Constructor
+  ActionConditionalConst(const string &g) : Action(rule_modcount_skip,"condconst",g) {}	///< Constructor; opt-in to modcount-skip (conditional constant propagation depends only on IR + dominator tree, both stable when modCount unchanged)
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionConditionalConst(getGroup());
@@ -853,7 +853,7 @@ class ActionRestructureVarnode : public Action {
   static void protectSwitchPathIndirects(PcodeOp *op);	///< Protect path to the given switch from INDIRECT collapse
   static void protectSwitchPaths(Funcdata &data);	///< Look for switches and protect path of switch variable
 public:
-  ActionRestructureVarnode(const string &g) : Action(0,"restructure_varnode",g) {}	///< Constructor
+  ActionRestructureVarnode(const string &g) : Action(0,"restructure_varnode",g) {}	///< Constructor; opt-in to modcount-skip — output of varnode-scope restructuring is a function of IR + current scope, the latter pinned per-function
   virtual void reset(Funcdata &data) { numpass = 0; }
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
@@ -963,6 +963,8 @@ class ActionInferTypes : public Action {
   static void propagationDebug(Architecture *glb,Varnode *vn,const Datatype *newtype,PcodeOp *op,int4 slot,Varnode *ptralias);
 #endif
   int4 localcount;					///< Number of passes performed for this function
+  uint8 lastSeenIrMod;					///< Snapshot of Funcdata::irModCount at end of last apply()
+  bool lastTypesConverged;				///< true if previous successful apply()'s writeBack returned false (types stable)
   static void buildLocaltypes(Funcdata &data);		///< Assign initial data-type based on local info
   static bool writeBack(Funcdata &data);		///< Commit the final propagated data-types to Varnodes
   static bool propagateTypeEdge(TypeFactory *typegrp,PcodeOp *op,int4 inslot,int4 outslot);
@@ -972,8 +974,8 @@ class ActionInferTypes : public Action {
   static PcodeOp *canonicalReturnOp(Funcdata &data);
   static void propagateAcrossReturns(Funcdata &data);
 public:
-  ActionInferTypes(const string &g) : Action(0,"infertypes",g) {}	///< Constructor
-  virtual void reset(Funcdata &data) { localcount = 0; }
+  ActionInferTypes(const string &g) : Action(0,"infertypes",g) { lastSeenIrMod = 0; lastTypesConverged = false; }
+  virtual void reset(Funcdata &data) { localcount = 0; lastSeenIrMod = 0; lastTypesConverged = false; Action::reset(data); }
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionInferTypes(getGroup());

@@ -45,6 +45,10 @@ Funcdata::Funcdata(const string &nm,const string &disp,Scope *scope,const Addres
   clean_up_index = 0;
   high_level_index = 0;
   cast_phase_index = 0;
+  globalModCount = 1;
+  irModCount = 1;
+  vnCreateCount = 1;
+  typeModCount = 1;
   glb = scope->getArch();
   minLanedSize = glb->getMinimumLanedRegisterSize();
   name = nm;

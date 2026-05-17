@@ -90,6 +90,7 @@ public:
   iterator begin(void) { return tasklist.begin(); }			///< Get iterator to beginning of \b this list
   iterator end(void) { return tasklist.end(); }				///< Get iterator to end of \b this list
   void clear(void) { tasklist.clear(); }				///< Clear all ranges in the list
+  bool empty(void) const { return tasklist.empty(); }			///< Return true if no ranges
 };
 
 /// \brief Priority queue for the phi-node (MULTIEQUAL) placement algorithm
@@ -244,6 +245,7 @@ class Heritage {
   vector<int4> depth;		///< Dominator depth of individual blocks
   int4 maxdepth;		///< Maximum depth of the dominator tree
   int4 pass;			///< Current pass being executed
+  uint8 lastSeenVnCreate;	///< Snapshot of Funcdata::vnCreateCount at end of last heritage() call; 0 means "never run since reset".  Used to short-circuit the body when no new Varnode has been created since — only new free Varnodes ever introduce heritage work; opSet*/opDestroy on existing varnodes don't.  Pass counter still advances so downstream deadcodedelay tracking stays correct.
 
   PriorityQueue pq;		///< Priority queue for phi-node placement
   vector<FlowBlock *> merge;	///< Calculate merge points (blocks containing phi-nodes)
