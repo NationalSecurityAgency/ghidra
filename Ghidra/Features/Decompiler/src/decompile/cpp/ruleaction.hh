@@ -423,14 +423,15 @@ public:
 };
 class RuleDoubleSub : public Rule {
 public:
-  RuleDoubleSub(const string &g) : Rule(g, 0, "doublesub") {}	///< Constructor
+  RuleDoubleSub(const string &g) : Rule(g, has_canapply, "doublesub") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleDoubleSub(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};  
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+};
 class RuleDoubleShift : public Rule {
 public:
   RuleDoubleShift(const string &g) : Rule(g, has_canapply, "doubleshift") {}	///< Constructor
@@ -444,23 +445,25 @@ public:
 };
 class RuleDoubleArithShift : public Rule {
 public:
-  RuleDoubleArithShift(const string &g) : Rule(g, 0, "doublearithshift") {}	///< Constructor
+  RuleDoubleArithShift(const string &g) : Rule(g, has_canapply, "doublearithshift") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleDoubleArithShift(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleConcatShift : public Rule {
 public:
-  RuleConcatShift(const string &g) : Rule(g, 0, "concatshift") {}	///< Constructor
+  RuleConcatShift(const string &g) : Rule(g, has_canapply, "concatshift") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleConcatShift(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleLeftRight : public Rule {
 public:
@@ -885,13 +888,14 @@ public:
 };
 class RuleConcatCommute : public Rule {
 public:
-  RuleConcatCommute(const string &g) : Rule(g, 0, "concatcommute") {}	///< Constructor
+  RuleConcatCommute(const string &g) : Rule(g, has_canapply, "concatcommute") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleConcatCommute(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 // class RuleIndirectConcat : public Rule {
 // public:
@@ -905,23 +909,25 @@ public:
 // };
 class RuleConcatZext : public Rule {
 public:
-  RuleConcatZext(const string &g) : Rule(g, 0, "concatzext") {}	///< Constructor
+  RuleConcatZext(const string &g) : Rule(g, has_canapply, "concatzext") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleConcatZext(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleZextCommute : public Rule {
 public:
-  RuleZextCommute(const string &g) : Rule(g, 0, "zextcommute") {}	///< Constructor
+  RuleZextCommute(const string &g) : Rule(g, has_canapply, "zextcommute") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleZextCommute(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleZextShiftZext : public Rule {
 public:
@@ -998,33 +1004,36 @@ public:
 };
 class RuleHumptyDumpty : public Rule {
 public:
-  RuleHumptyDumpty(const string &g) : Rule(g, 0, "humptydumpty") {}	///< Constructor
+  RuleHumptyDumpty(const string &g) : Rule(g, has_canapply, "humptydumpty") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleHumptyDumpty(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleDumptyHump : public Rule {
 public:
-  RuleDumptyHump(const string &g) : Rule(g, 0, "dumptyhump") {}	///< Constructor
+  RuleDumptyHump(const string &g) : Rule(g, has_canapply, "dumptyhump") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleDumptyHump(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleHumptyOr : public Rule {
 public:
-  RuleHumptyOr(const string &g) : Rule(g, 0, "humptyor") {}	///< Constructor
+  RuleHumptyOr(const string &g) : Rule(g, has_canapply, "humptyor") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleHumptyOr(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 class RuleSwitchSingle : public Rule {
 public:
@@ -1232,13 +1241,14 @@ public:
 
 class RuleExtensionPush : public Rule {
 public:
-  RuleExtensionPush(const string &g) : Rule( g, 0, "extensionpush") {}		///< Constructor
+  RuleExtensionPush(const string &g) : Rule( g, has_canapply, "extensionpush") {}		///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleExtensionPush(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
 };
 
 class RulePieceStructure : public Rule {

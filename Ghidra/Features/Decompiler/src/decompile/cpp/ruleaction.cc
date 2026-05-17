@@ -2158,6 +2158,14 @@ void RuleDoubleSub::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_SUBPIECE);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleDoubleSub::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vn = op->getIn(0);
+  if (!vn->isWritten()) return 0;
+  return (vn->getDef()->code() == CPUI_SUBPIECE) ? 1 : 0;
+}
+
 int4 RuleDoubleSub::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -2309,6 +2317,23 @@ void RuleDoubleArithShift::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_SRIGHT);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleDoubleArithShift::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *constD = op->getIn(1);
+  if (!constD->isConstant()) return 0;
+  const Varnode *shiftin = op->getIn(0);
+  if (!shiftin->isWritten()) return 0;
+  const PcodeOp *shift2op = shiftin->getDef();
+  if (shift2op->code() != CPUI_INT_SRIGHT) return 0;
+  const Varnode *constC = shift2op->getIn(1);
+  if (!constC->isConstant()) return 0;
+  const Varnode *inVn = shift2op->getIn(0);
+  if (inVn->isFree()) return 0;
+  int4 sa = (int4)constC->getOffset() + (int4)constD->getOffset();
+  return (sa > 0) ? 1 : 0;
+}
+
 int4 RuleDoubleArithShift::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -2345,6 +2370,22 @@ void RuleConcatShift::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_SRIGHT);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleConcatShift::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  if (!op->getIn(1)->isConstant()) return 0;
+  const Varnode *shiftin = op->getIn(0);
+  if (!shiftin->isWritten()) return 0;
+  const PcodeOp *concat = shiftin->getDef();
+  if (concat->code() != CPUI_PIECE) return 0;
+  int4 sa = op->getIn(1)->getOffset();
+  int4 leastsize = concat->getIn(1)->getSize() * 8;
+  if (sa < leastsize) return 0;
+  const Varnode *mainin = concat->getIn(0);
+  if (mainin->isFree()) return 0;
+  return 1;
+}
+
 int4 RuleConcatShift::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -2354,7 +2395,7 @@ int4 RuleConcatShift::applyOp(PcodeOp *op,Funcdata &data)
   if (!shiftin->isWritten()) return 0;
   PcodeOp *concat = shiftin->getDef();
   if (concat->code() != CPUI_PIECE) return 0;
-  
+
   int4 sa = op->getIn(1)->getOffset();
   int4 leastsize = concat->getIn(1)->getSize() * 8;
   if (sa < leastsize) return 0;	// Does shift throw away least sig part
@@ -5243,6 +5284,33 @@ void RuleConcatCommute::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_PIECE);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleConcatCommute::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  int4 outsz = op->getOut()->getSize();
+  if (outsz > sizeof(uintb)) return 0;
+  for (int4 i = 0; i < 2; ++i) {
+    const Varnode *vn = op->getIn(i);
+    if (!vn->isWritten()) continue;
+    const PcodeOp *logicop = vn->getDef();
+    OpCode opc = logicop->code();
+    if (opc != CPUI_INT_OR && opc != CPUI_INT_XOR && opc != CPUI_INT_AND) continue;
+    if (!logicop->getIn(1)->isConstant()) continue;
+    const Varnode *hi, *lo;
+    if (i == 0) {
+      hi = logicop->getIn(0);
+      lo = op->getIn(1);
+    } else {
+      hi = op->getIn(0);
+      lo = logicop->getIn(0);
+    }
+    if (hi->isFree()) continue;
+    if (lo->isFree()) continue;
+    return 1;
+  }
+  return 0;
+}
+
 int4 RuleConcatCommute::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -5370,6 +5438,20 @@ void RuleConcatZext::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_PIECE);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleConcatZext::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *hi = op->getIn(0);
+  if (!hi->isWritten()) return 0;
+  const PcodeOp *zextop = hi->getDef();
+  if (zextop->code() != CPUI_INT_ZEXT) return 0;
+  const Varnode *zin = zextop->getIn(0);
+  const Varnode *lo = op->getIn(1);
+  if (zin->isFree()) return 0;
+  if (lo->isFree()) return 0;
+  return 1;
+}
+
 int4 RuleConcatZext::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -5406,6 +5488,20 @@ void RuleZextCommute::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_RIGHT);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleZextCommute::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *zextvn = op->getIn(0);
+  if (!zextvn->isWritten()) return 0;
+  const PcodeOp *zextop = zextvn->getDef();
+  if (zextop->code() != CPUI_INT_ZEXT) return 0;
+  const Varnode *zextin = zextop->getIn(0);
+  if (zextin->isFree()) return 0;
+  const Varnode *savn = op->getIn(1);
+  if ((!savn->isConstant()) && savn->isFree()) return 0;
+  return 1;
 }
 
 int4 RuleZextCommute::applyOp(PcodeOp *op,Funcdata &data)
@@ -5844,6 +5940,25 @@ void RuleHumptyDumpty::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_PIECE);
 }
 
+/// \brief Pure-read precondition mirror.
+int4 RuleHumptyDumpty::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vn1 = op->getIn(0);
+  if (!vn1->isWritten()) return 0;
+  const PcodeOp *sub1 = vn1->getDef();
+  if (sub1->code() != CPUI_SUBPIECE) return 0;
+  const Varnode *vn2 = op->getIn(1);
+  if (!vn2->isWritten()) return 0;
+  const PcodeOp *sub2 = vn2->getDef();
+  if (sub2->code() != CPUI_SUBPIECE) return 0;
+  const Varnode *root = sub1->getIn(0);
+  if (root != sub2->getIn(0)) return 0;
+  uintb pos1 = sub1->getIn(1)->getOffset();
+  uintb pos2 = sub2->getIn(1)->getOffset();
+  int4 size2 = vn2->getSize();
+  return (pos1 == pos2 + size2) ? 1 : 0;
+}
+
 int4 RuleHumptyDumpty::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -5895,6 +6010,28 @@ void RuleDumptyHump::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_SUBPIECE);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleDumptyHump::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *base = op->getIn(0);
+  if (!base->isWritten()) return 0;
+  const PcodeOp *pieceop = base->getDef();
+  if (pieceop->code() != CPUI_PIECE) return 0;
+  int4 offset = op->getIn(1)->getOffset();
+  int4 outsize = op->getOut()->getSize();
+  const Varnode *vn1 = pieceop->getIn(0);
+  const Varnode *vn2 = pieceop->getIn(1);
+  const Varnode *vn;
+  if (offset < vn2->getSize()) {
+    if (offset + outsize > vn2->getSize()) return 0;
+    vn = vn2;
+  } else {
+    vn = vn1;
+  }
+  if (vn->isFree() && !vn->isConstant()) return 0;
+  return 1;
 }
 
 int4 RuleDumptyHump::applyOp(PcodeOp *op,Funcdata &data)
@@ -5949,6 +6086,24 @@ void RuleHumptyOr::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_INT_OR);
+}
+
+/// \brief Pure-read precondition mirror.  Same INT_AND / INT_AND match check as applyOp.
+int4 RuleHumptyOr::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *vn1 = op->getIn(0);
+  if (!vn1->isWritten()) return 0;
+  const Varnode *vn2 = op->getIn(1);
+  if (!vn2->isWritten()) return 0;
+  const PcodeOp *and1 = vn1->getDef();
+  if (and1->code() != CPUI_INT_AND) return 0;
+  const PcodeOp *and2 = vn2->getDef();
+  if (and2->code() != CPUI_INT_AND) return 0;
+  const Varnode *a = and1->getIn(0);
+  const Varnode *b = and1->getIn(1);
+  const Varnode *c = and2->getIn(0);
+  const Varnode *d = and2->getIn(1);
+  return (a == c || a == d || b == c || b == d) ? 1 : 0;
 }
 
 int4 RuleHumptyOr::applyOp(PcodeOp *op,Funcdata &data)
@@ -8103,6 +8258,38 @@ void RuleExtensionPush::getOpList(vector<uint4> &oplist) const
 {
   oplist.push_back(CPUI_INT_ZEXT);
   oplist.push_back(CPUI_INT_SEXT);
+}
+
+/// \brief Pure-read precondition mirror.
+int4 RuleExtensionPush::canApply(const PcodeOp *op,const Funcdata &data) const
+{
+  const Varnode *inVn = op->getIn(0);
+  if (inVn->isConstant()) return 0;
+  if (inVn->isAddrForce()) return 0;
+  if (inVn->isAddrTied()) return 0;
+  const Varnode *outVn = op->getOut();
+  if (outVn->isTypeLock() || outVn->isNameLock()) return 0;
+  if (outVn->isAddrForce() || outVn->isAddrTied()) return 0;
+  int4 addcount = 0;
+  int4 ptrcount = 0;
+  for (list<PcodeOp *>::const_iterator iter = outVn->beginDescend(); iter != outVn->endDescend(); ++iter) {
+    const PcodeOp *decOp = *iter;
+    OpCode opc = decOp->code();
+    if (opc == CPUI_PTRADD) {
+      ptrcount += 1;
+    } else if (opc == CPUI_INT_ADD) {
+      const PcodeOp *subOp = decOp->getOut()->loneDescend();
+      if (subOp == (const PcodeOp *)0 || subOp->code() != CPUI_PTRADD) return 0;
+      addcount += 1;
+    } else {
+      return 0;
+    }
+  }
+  if ((addcount + ptrcount) <= 1) return 0;
+  if (addcount > 0) {
+    if (op->getIn(0)->loneDescend() != (PcodeOp *)0) return 0;
+  }
+  return 1;
 }
 
 int4 RuleExtensionPush::applyOp(PcodeOp *op,Funcdata &data)
