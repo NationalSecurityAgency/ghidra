@@ -16,10 +16,12 @@
 #include "action.hh"
 #include "funcdata.hh"
 #include "parallel.hh"
+#include "block_conflict.hh"
 
 #include "coreaction.hh"
 
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <unordered_map>
 
@@ -44,6 +46,17 @@ static int4 getIntraParallelMinOps(void)
   const char *env = std::getenv("DECOMP_INTRA_MINOPS");
   cached = (env != nullptr) ? std::max(1, std::atoi(env)) : 1000;
   return cached;
+}
+
+/// \brief Path 2 instrumentation: print block conflict graph stats.
+/// Set DECOMP_INTRA_GRAPH_STATS=1 to enable.
+static bool getGraphStatsEnabled(void)
+{
+  static int cached = -1;
+  if (cached >= 0) return cached != 0;
+  const char *env = std::getenv("DECOMP_INTRA_GRAPH_STATS");
+  cached = (env != nullptr && std::atoi(env) != 0) ? 1 : 0;
+  return cached != 0;
 }
 
 /// Specify the name, group, and properties of the Action
@@ -980,6 +993,27 @@ int4 ActionPool::apply(Funcdata &data)
 /// canApply contract that bypassing them is observationally equivalent to calling them.
 int4 ActionPool::applyParallel(Funcdata &data,int4 numWorkers)
 {
+  // Path 2 instrumentation: build conflict graph on first call per function to gauge potential.
+  if (getGraphStatsEnabled()) {
+    static thread_local const Funcdata *lastGraphFuncdata = nullptr;
+    if (lastGraphFuncdata != &data) {
+      lastGraphFuncdata = &data;
+      BlockConflictGraph g;
+      g.build(data);
+      g.colorBlocks();
+      int4 nb = g.size();
+      int4 ne = g.edgeCount();
+      int4 nc = g.getColorCount();
+      int4 maxGroupSize = 0;
+      for (int4 c = 0; c < nc; ++c) {
+	int4 sz = (int4)g.getColorGroup(c).size();
+	if (sz > maxGroupSize) maxGroupSize = sz;
+      }
+      std::fprintf(stderr, "[block-conflict] fn=%s blocks=%d edges=%d colors=%d max_group=%d\n",
+		   data.getName().c_str(), nb, ne, nc, maxGroupSize);
+      std::fflush(stderr);
+    }
+  }
   // Phase 0: snapshot all ops into a vector for indexed parallel access in phase 1.
   // The skipMask values are keyed by op pointer (not snapshot index) so that phase 2,
   // which iterates the LIVE optree, can look them up regardless of snapshot index — and
