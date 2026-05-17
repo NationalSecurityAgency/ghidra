@@ -203,6 +203,23 @@ public:
     warnings_given = 8,		///< Set if a warning for this rule has been given before
     has_canapply = 0x10		///< Rule overrides canApply() — parallel ActionPool may consult it
   };
+
+  /// \brief Bitfield describing where in the IR \b this Rule's applyOp() may mutate.
+  ///
+  /// Used by Path 2 (block-DAG partitioning) to decide which basic blocks can be
+  /// processed concurrently within one ActionPool sweep.  Two block-batches may run
+  /// in parallel only if their pairwise scope intersection is empty.
+  ///
+  /// The scope is a property of the rule, not of a specific invocation — it must
+  /// upper-bound every possible mutation the rule could perform on any op.  When
+  /// in doubt, use scope_block_global (most conservative; rule will be serialized).
+  enum mutation_scope {
+    scope_op_only        = 0x01, ///< mutates op fields only (opcode, in-slots that swap rule output type)
+    scope_op_inputs_defs = 0x02, ///< also mutates input Varnodes' def-ops (rare; e.g., descend-list rewrite via opSetInput on neighbour op)
+    scope_op_output_uses = 0x04, ///< also mutates op's output's descendant ops (input-slot rewires on uses)
+    scope_block_local    = 0x08, ///< confined to ops within the same BasicBlock (e.g., RuleMultiCse local form)
+    scope_block_global   = 0x10  ///< may mutate any op in function (e.g., heritage-aware, MULTIEQUAL collapse) — serial only
+  };
 private:
   friend class ActionPool;
   uint4 flags;			///< Properties enabled with \b this Rule
@@ -259,6 +276,11 @@ public:
   ///
   /// Default returns -1, so the optimization is a no-op for the rule until it overrides.
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const { return -1; }
+
+  /// \brief Report mutation scope (Path 2).  Defaults to scope_block_global (most conservative).
+  /// Override per-rule to enable block-level parallel dispatch.
+  virtual uint4 getMutationScope(void) const { return (uint4)scope_block_global; }
+
   virtual void reset(Funcdata &data);				///< Reset \b this Rule
   virtual void resetStats(void);				///< Reset Rule statistics
   virtual void printStatistics(ostream &s) const;		///< Print statistics for \b this Rule
