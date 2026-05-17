@@ -23,6 +23,7 @@
 #include "override.hh"
 #include "heritage.hh"
 #include "merge.hh"
+#include "parallel_safety.hh"
 #include "dynamic.hh"
 #include "unionresolve.hh"
 
@@ -94,6 +95,15 @@ class Funcdata {
 
   VarnodeBank vbank;		///< Container of Varnode objects for \b this function
   PcodeOpBank obank;		///< Container of PcodeOp objects for \b this function
+  /// \brief Path 4: guards the obank/vbank allocators, block op-list mutations,
+  /// and the mod-counter bumps.  Acquired by every Funcdata mutation helper
+  /// that touches these shared structures.  Recursive so nested calls
+  /// (opSetInput → newConstant → bumpIrModCount) don't self-deadlock.
+  /// In serial mode (DECOMP_INTRA_WORKERS<=1) the mutex is uncontended; cost
+  /// is one CAS per allocator entry.  In parallel mode it serializes
+  /// allocations across worker threads.  See parallel_safety.hh for the
+  /// lock hierarchy (L1).
+  mutable std::recursive_mutex poolMutex;
   BlockGraph bblocks;		///< Unstructured basic blocks
   BlockGraph sblocks;		///< Structured block hierarchy (on top of basic blocks)
   Heritage heritage;		///< Manager for maintaining SSA form
