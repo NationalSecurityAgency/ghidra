@@ -1,0 +1,12 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
+data/extensions.json||GHIDRA||||END|
+data/extensions/aarch64/chkstk_darwin_fixup.xml||GHIDRA||||END|
+data/extensions/aarch64/objc_getProperty_fixup.xml||GHIDRA||||END|
+data/extensions/aarch64/objc_load_fixup.xml||GHIDRA||||END|
+data/extensions/aarch64/objc_msgSend_stub.xml||GHIDRA||||END|
+data/extensions/aarch64/objc_release_fixup.xml||GHIDRA||||END|
+data/extensions/aarch64/objc_retain_fixup.xml||GHIDRA||||END|
+data/extensions/aarch64/objc_setProperty_fixup.xml||GHIDRA||||END|
+data/extensions/aarch64/objc_store_fixup.xml||GHIDRA||||END|

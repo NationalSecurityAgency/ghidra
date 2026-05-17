@@ -15,14 +15,11 @@
  */
 package ghidra.app.util.opinion;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
 import org.apache.commons.collections4.map.LazySortedMap;
 
-import ghidra.app.plugin.core.analysis.rust.RustConstants;
-import ghidra.app.plugin.core.analysis.rust.RustUtilities;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.RelocationException;
@@ -40,8 +37,6 @@ import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.DyldChainType;
 import ghidra.app.util.bin.format.macho.dyld.DyldFixup;
 import ghidra.app.util.bin.format.macho.relocation.*;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
-import ghidra.app.util.bin.format.objc.ObjcUtils;
-import ghidra.app.util.bin.format.objc.objc1.Objc1Constants;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.database.function.OverlappingFunctionException;
@@ -173,9 +168,7 @@ public class MachoProgramBuilder {
 		}
 
 		// Perform additional actions
-		renameObjMsgSendRtpSymbol();
 		fixupProgramTree(null); // should be done last to account for new memory blocks
-		setCompiler(provider.getName());
 	}
 
 	/**
@@ -1805,53 +1798,6 @@ public class MachoProgramBuilder {
 		ItemWithAddress<GoBuildInfo> buildInfo = GoBuildInfo.findBuildInfo(program);
 		if (buildInfo != null) {
 			buildInfo.item().markupProgram(program, buildInfo.address());
-		}
-	}
-
-	protected void setCompiler(String source) throws CancelledException {
-		if (ObjcUtils.isObjc(program)) {
-			try {
-				program.setCompiler(ObjcUtils.OBJC_COMPILER);
-				int count = ObjcUtils.addExtensions(program, monitor);
-				if (count > 0) {
-					log.appendMsg("%s: installed %d objc SpecExtensions".formatted(source, count));
-				}
-			}
-			catch (IOException e) {
-				log.appendMsg("%s: objc error - %s".formatted(source, e.getMessage()));
-			}
-			return;
-		}
-
-		try {
-			Section section =
-				machoHeader.getSection(SegmentNames.SEG_TEXT, SectionNames.TEXT_CONST);
-			if (section != null && RustUtilities.isRust(program,
-				memory.getBlock(space.getAddress(section.getAddress())), monitor)) {
-				program.setCompiler(RustConstants.RUST_COMPILER);
-				int count = RustUtilities.addExtensions(program, monitor,
-					RustConstants.RUST_EXTENSIONS_UNIX);
-				if (count > 0) {
-					log.appendMsg("%s: installed %d rust SpecExtensions".formatted(source, count));
-				}
-			}
-		}
-		catch (IOException e) {
-			log.appendMsg("%s: Rust error - %s".formatted(source, e.getMessage()));
-		}
-	}
-
-	protected void renameObjMsgSendRtpSymbol()
-			throws DuplicateNameException, InvalidInputException {
-		Address address = space.getAddress(Objc1Constants.OBJ_MSGSEND_RTP);
-		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
-		if (symbol != null && symbol.isDynamic()) {
-			symbol.setName(Objc1Constants.OBJC_MSG_SEND_RTP_NAME, SourceType.IMPORTED);
-		}
-		else {
-			program.getSymbolTable()
-					.createLabel(address, Objc1Constants.OBJC_MSG_SEND_RTP_NAME,
-						SourceType.IMPORTED);
 		}
 	}
 

@@ -5,6 +5,9 @@ FieldFactory
 FieldMouseHandler
 StringHandler
 Loader
+SourceLanguage
+SourceLanguageDataArchive
+SourceLanguageSpecExtension
 TableRowMapper
 ScriptProvider
 Recognizer

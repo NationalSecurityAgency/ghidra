@@ -28,7 +28,6 @@ import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.dyld.DyldArchitecture;
 import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
-import ghidra.app.util.bin.format.swift.SwiftUtils;
 import ghidra.app.util.bin.format.ubi.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.*;
@@ -543,9 +542,6 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				.flatMap(seg -> seg.getSections().stream())
 				.map(section -> section.getSectionName())
 				.toList();
-		if (SwiftUtils.isSwift(sectionNames)) {
-			return SwiftUtils.SWIFT_COMPILER;
-		}
 		if (GoRttiMapper.hasGolangSections(sectionNames)) {
 			return GoConstants.GOLANG_CSPEC_NAME;
 		}
