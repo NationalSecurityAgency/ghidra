@@ -693,6 +693,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RuleIndirectCollapse : public Rule {
 public:
@@ -704,6 +705,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 class RuleMultiCollapse : public Rule {
 public:
@@ -725,6 +727,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_output_uses; }
 };
 class RuleScarry : public Rule {
 public:
@@ -736,6 +739,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_output_uses; }
 };
 class RuleTrivialShift : public Rule {
 public:
@@ -747,6 +751,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RuleSignShift : public Rule {
 public:
@@ -758,6 +763,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_block_local; }
 };
 class RuleTestSign : public Rule {
   void findComparisons(Varnode *vn,vector<PcodeOp *> &res);
@@ -770,6 +776,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_output_uses; }
 };
 class RuleIdentityEl : public Rule {
 public:
@@ -793,6 +800,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RuleShiftPiece : public Rule {
 public:
@@ -804,6 +812,7 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_block_local; }
 };
 class RuleCollapseConstants : public Rule {
 public:
@@ -815,6 +824,7 @@ public:
   // applies to all opcodes
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
+  virtual uint4 getMutationScope(void) const { return scope_op_only; }
 };
 class RuleTransformCpool : public Rule {
 public:
