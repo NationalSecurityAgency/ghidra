@@ -1,16 +1,6 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
 README.md||GHIDRA||||END|
-data/extensions/rust/unix32/cc.xml||GHIDRA||||END|
-data/extensions/rust/unix32/probe_fixup.xml||GHIDRA||||END|
-data/extensions/rust/unix32/try_fixup.xml||GHIDRA||||END|
-data/extensions/rust/unix64/cc.xml||GHIDRA||||END|
-data/extensions/rust/unix64/probe_fixup.xml||GHIDRA||||END|
-data/extensions/rust/unix64/try_fixup.xml||GHIDRA||||END|
-data/extensions/rust/windows32/probe_fixup.xml||GHIDRA||||END|
-data/extensions/rust/windows32/try_fixup.xml||GHIDRA||||END|
-data/extensions/rust/windows64/probe_fixup.xml||GHIDRA||||END|
-data/extensions/rust/windows64/try_fixup.xml||GHIDRA||||END|
 data/languages/adx.sinc||GHIDRA||||END|
 data/languages/avx.sinc||GHIDRA||||END|
 data/languages/avx2.sinc||GHIDRA||||END|
@@ -75,7 +65,6 @@ data/languages/x86-64-compat32.pspec||GHIDRA||||END|
 data/languages/x86-64-gcc.cspec||GHIDRA||||END|
 data/languages/x86-64-golang.cspec||GHIDRA||||END|
 data/languages/x86-64-golang.register.info||GHIDRA||||END|
-data/languages/x86-64-swift.cspec||GHIDRA||||END|
 data/languages/x86-64-win.cspec||GHIDRA||||END|
 data/languages/x86-64.dwarf||GHIDRA||||END|
 data/languages/x86-64.pspec||GHIDRA||||END|
