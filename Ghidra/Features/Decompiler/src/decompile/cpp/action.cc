@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <unordered_map>
 #include <map>
+#include <set>
 #include <atomic>
 #include <cstdio>
 #include <mutex>
@@ -61,6 +62,32 @@ static bool getGraphStatsEnabled(void)
   const char *env = std::getenv("DECOMP_INTRA_GRAPH_STATS");
   cached = (env != nullptr && std::atoi(env) != 0) ? 1 : 0;
   return cached != 0;
+}
+
+/// \brief Path 3 never-fires blocklist: comma-separated rule names disabled at
+/// ActionPool construction time.  Set via DECOMP_INTRA_RULE_BLOCKLIST=name1,name2,...
+/// Use the rule-stats reporter (DECOMP_INTRA_RULE_STATS=1) to identify candidates:
+/// rules with non-trivial test counts and zero fires for a given architecture/workload.
+/// The list is loaded once and held in a static set; lookup is O(log N).
+static const std::set<std::string>& getRuleBlocklist(void)
+{
+  static std::set<std::string> cache;
+  static bool loaded = false;
+  if (loaded) return cache;
+  loaded = true;
+  const char *env = std::getenv("DECOMP_INTRA_RULE_BLOCKLIST");
+  if (env == nullptr || *env == '\0') return cache;
+  std::string s(env);
+  std::string cur;
+  for (size_t i = 0; i <= s.size(); ++i) {
+    if (i == s.size() || s[i] == ',') {
+      if (!cur.empty()) cache.insert(cur);
+      cur.clear();
+    } else if (s[i] != ' ') {
+      cur.push_back(s[i]);
+    }
+  }
+  return cache;
 }
 
 /// \brief Path 3 dispatcher gate: route ActionPool::apply through applyBlockParallel.
@@ -932,6 +959,13 @@ void ActionPool::addRule(Rule *rl)
 {
   vector<uint4> oplist;
   vector<uint4>::iterator iter;
+
+  // Path 3: honor the optional rule blocklist for never-fires elimination.
+  // The rule is still registered (so cloning, stat printout, etc. work) but
+  // marked disabled so apply paths skip it via the existing isDisabled() gate.
+  const std::set<std::string> &blocklist = getRuleBlocklist();
+  if (!blocklist.empty() && blocklist.count(rl->getName()) != 0)
+    rl->setDisable();
 
   allrules.push_back(rl);
 
