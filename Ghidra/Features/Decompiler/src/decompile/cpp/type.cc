@@ -1163,7 +1163,7 @@ void TypePointer::decode(Decoder &decoder,TypeFactory &typegrp)
   ptrto = typegrp.decodeType( decoder );
   calcSubmeta();
   if (name.size() == 0)		// Inherit only if no name
-    flags |= ptrto->getInheritable();
+    flags |= ptrto->inheritForPointer();
   calcTruncate(typegrp);
 //  decoder.closeElement(elemId);
 }
@@ -2683,6 +2683,7 @@ TypePartialEnum::TypePartialEnum(const TypePartialEnum &op)
 TypePartialEnum::TypePartialEnum(TypeEnum *par,int4 off,int4 sz,Datatype *strip)
   : TypeEnum(sz, TYPE_PARTIALENUM)
 {
+  flags |= par->inheritForPartial();
   flags |= has_stripped;
   stripped = strip;
   parent = par;
@@ -2767,6 +2768,7 @@ TypePartialStruct::TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype
   if (contain->getMetatype() != TYPE_STRUCT && contain->getMetatype() != TYPE_ARRAY)
     throw LowlevelError("Parent of partial struct is not a structure or array");
 #endif
+  flags |= contain->inheritForPartial();
   flags |= has_stripped;
   stripped = strip;
   container = contain;
@@ -2861,6 +2863,7 @@ TypePartialUnion::TypePartialUnion(const TypePartialUnion &op)
 TypePartialUnion::TypePartialUnion(TypeUnion *contain,int4 off,int4 sz,Datatype *strip)
   : Datatype(sz,1,TYPE_PARTIALUNION)
 {
+  flags |= contain->inheritForPartial();
   flags |= (needs_resolution | has_stripped);
   stripped = strip;
   container = contain;
@@ -3703,6 +3706,25 @@ void TypeFactory::cacheCoreTypes(void)
   }
 }
 
+/// \param dt is the data-type to search for
+/// \return any associated warning string or the empty string otherwise
+string TypeFactory::findWarning(Datatype *dt) const
+
+{
+  while(dt->getMetatype() == TYPE_PTR)
+    dt = ((TypePointer *)dt)->getPtrTo();
+  while(dt->getTypedef() != (Datatype *)0)
+    dt = dt->getTypedef();
+  Datatype *base = dt->getPartialBase();
+  if (base != (Datatype *)0)
+    dt = base;
+  map<Datatype *,string>::const_iterator iter;
+  iter = warnings.find(dt);
+  if (iter != warnings.end())
+    return (*iter).second;
+  return "";
+}
+
 /// Remove all Datatype objects owned by this TypeFactory
 void TypeFactory::clear(void)
 
@@ -4212,23 +4234,15 @@ void TypeFactory::insertWarning(Datatype *dt,string warn)
   if (dt->getId() == 0)
     throw LowlevelError("Can only issue warnings for named data-types");
   dt->flags |= Datatype::warning_issued;
-  warnings.emplace_back(dt,warn);
+  warnings[dt] = warn;
 }
 
-/// Run through the \b warnings and delete any matching the given data-type
+/// Delete any warning matching the given data-type
 /// \param dt is the given data-type
 void TypeFactory::removeWarning(Datatype *dt)
 
 {
-  list<DatatypeWarning>::iterator iter = warnings.begin();
-  while(iter != warnings.end()) {
-    if ((*iter).dataType->getId() == dt->getId() && (*iter).dataType->getName() == dt->getName()) {
-      iter = warnings.erase(iter);
-    }
-    else {
-      ++iter;
-    }
-  }
+  warnings.erase(dt);
 }
 
 /// Run through typedefs that were initially defined on incomplete data-types.  If the data-type is now complete,

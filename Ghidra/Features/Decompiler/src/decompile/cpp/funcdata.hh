@@ -129,7 +129,7 @@ class Funcdata {
   void sortCallSpecs(void);			///< Sort calls using a dominance based order
   void deleteCallSpecs(PcodeOp *op);		///< Remove the specification for a particular call
   void clearCallSpecs(void);			///< Remove all call specifications
-  void issueDatatypeWarnings(void);		///< Add warning headers for any data-types that have been modified
+  void issueDatatypeWarning(Datatype *dt);	///< Add any warning header for the given data-type
 
   static bool descendantsOutside(Varnode *vn);
   static void encodeVarnode(Encoder &encoder,VarnodeLocSet::const_iterator iter,VarnodeLocSet::const_iterator enditer);

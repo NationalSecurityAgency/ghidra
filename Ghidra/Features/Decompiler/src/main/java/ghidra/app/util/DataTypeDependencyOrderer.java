@@ -252,7 +252,11 @@ public class DataTypeDependencyOrderer {
 			//Msg.debug(this, "SET_SIZE: " + procSet.size());
 			//Msg.debug(this, "DTYPE_IN: " + dataType.getName());
 			if (dataType instanceof Pointer) {
-				addDependent(entry, ((Pointer) dataType).getDataType());
+				DataType dt = ((Pointer) dataType).getDataType();
+				if (dt == null) {			// Treat a generic pointer as pointing to
+					dt = DataType.DEFAULT;	// "undefined" for dependency purposes
+				}
+				addDependent(entry, dt);
 			}
 			else if (dataType instanceof Array) {
 				addDependent(entry, ((Array) dataType).getDataType());
