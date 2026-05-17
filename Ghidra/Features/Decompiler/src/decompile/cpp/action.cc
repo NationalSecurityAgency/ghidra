@@ -24,8 +24,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <unordered_map>
+#include <map>
 #include <atomic>
 #include <cstdio>
+#include <mutex>
 
 namespace ghidra {
 
@@ -102,6 +104,65 @@ static int4 scopeBucket(uint4 scope)
     default:                                return 4;
   }
 }
+
+/// \brief Path 3 instrumentation: per-rule (test, fire) counters.
+/// Set DECOMP_INTRA_RULE_STATS=1 to enable.  Dumped at process exit,
+/// sorted by test count descending.  Also reports never-fires (rules
+/// with tests > 0 and fires == 0), which are candidates for static
+/// elimination per architecture.
+static bool getRuleStatsEnabled(void)
+{
+  static int cached = -1;
+  if (cached >= 0) return cached != 0;
+  const char *env = std::getenv("DECOMP_INTRA_RULE_STATS");
+  cached = (env != nullptr && std::atoi(env) != 0) ? 1 : 0;
+  return cached != 0;
+}
+
+// Rule stats are mutex-guarded and only updated when the env is set.
+// Cost when disabled: a single atomic int load (the cached env check).
+static std::mutex ruleStatsMutex;
+static std::map<std::string, std::pair<uint64_t,uint64_t>> ruleStatsMap;
+
+static void recordRuleResult(Rule *rl, int4 res)
+{
+  if (!getRuleStatsEnabled()) return;
+  std::lock_guard<std::mutex> lock(ruleStatsMutex);
+  auto &p = ruleStatsMap[rl->getName()];
+  p.first += 1;
+  if (res > 0) p.second += 1;
+}
+
+struct RuleStatsDumper {
+  ~RuleStatsDumper(void) {
+    if (!getRuleStatsEnabled()) return;
+    std::lock_guard<std::mutex> lock(ruleStatsMutex);
+    if (ruleStatsMap.empty()) return;
+    std::vector<std::pair<std::string,std::pair<uint64_t,uint64_t>>>
+      sorted(ruleStatsMap.begin(), ruleStatsMap.end());
+    std::sort(sorted.begin(), sorted.end(),
+              [](const std::pair<std::string,std::pair<uint64_t,uint64_t>> &a,
+                 const std::pair<std::string,std::pair<uint64_t,uint64_t>> &b) {
+                return a.second.first > b.second.first;
+              });
+    std::fprintf(stderr, "[rule-stats] rule_name                 tests     fires  fire_rate\n");
+    int4 neverFires = 0;
+    uint64_t neverFiresTests = 0;
+    for (size_t i = 0; i < sorted.size(); ++i) {
+      uint64_t t = sorted[i].second.first;
+      uint64_t f = sorted[i].second.second;
+      double pct = t ? (100.0 * (double)f / (double)t) : 0.0;
+      if (t > 0 && f == 0) { ++neverFires; neverFiresTests += t; }
+      std::fprintf(stderr, "[rule-stats] %-24s %10llu %10llu %6.3f%%\n",
+                   sorted[i].first.c_str(),
+                   (unsigned long long)t, (unsigned long long)f, pct);
+    }
+    std::fprintf(stderr, "[rule-stats] never-fires: %d / %zu rules, wasted_tests=%llu\n",
+                 neverFires, sorted.size(), (unsigned long long)neverFiresTests);
+    std::fflush(stderr);
+  }
+};
+static RuleStatsDumper ruleStatsDumperInst;
 
 // Dumper runs once at process teardown; only emits when stats enabled and any fires recorded.
 struct ScopeStatsDumper {
@@ -975,6 +1036,7 @@ int4 ActionPool::processOp(PcodeOp *op,Funcdata &data)
       scopeTests[b].fetch_add(1, std::memory_order_relaxed);
       if (res > 0) scopeFires[b].fetch_add(1, std::memory_order_relaxed);
     }
+    recordRuleResult(rl, res);
 #ifdef OPACTION_DEBUG
     data.debugModPrint(rl->getName());
 #endif
@@ -1192,6 +1254,7 @@ int4 ActionPool::applyParallel(Funcdata &data,int4 numWorkers)
 	scopeTests[b].fetch_add(1, std::memory_order_relaxed);
 	if (res > 0) scopeFires[b].fetch_add(1, std::memory_order_relaxed);
       }
+      recordRuleResult(rl, res);
       if (res > 0) {
 	rl->count_apply += 1;
 	count += res;
@@ -1224,25 +1287,28 @@ int4 ActionPool::applyParallel(Funcdata &data,int4 numWorkers)
   return 0;
 }
 
-/// \brief Path 3 block-DAG parallel dispatcher.
+/// \brief Path 3 block-DAG parallel dispatcher with color-aware canApply.
 ///
 /// Partitions the function's ops by the block-conflict-graph color of their
-/// containing BasicBlock.  Two blocks share a color iff they have no def-use
-/// edge between any of their ops, which means rules that only touch the matched
-/// op (scope_op_only) or insert helpers in the matched op's block
-/// (scope_block_local) can safely execute concurrently on ops of *different*
-/// colors.  Rules with broader scopes serialize.
+/// containing BasicBlock and runs the canApply filter (phase 1) in parallel
+/// across color groups, then dispatches applyOp (phase 2) serially in
+/// color-major order with the skip mask consulted.
 ///
-/// This skeleton step (P3-2) builds the partition and dispatches in color
-/// order but still serially — it validates the wiring before P3-3 actually
-/// runs color groups in parallel.  Behavior is observationally equivalent to
-/// applyParallel modulo op iteration order (ops are visited in
-/// {color, SeqNum} order rather than pure SeqNum), which the ActionPool's
-/// iterate-to-quiescence loop tolerates.
+/// Compared to applyParallel which strides the canApply phase by raw op
+/// index, color-aligned chunking keeps def-use locality within a worker
+/// (a worker reading op X's input Varnodes is likely to read other Varnodes
+/// from the same color group's block(s)).  It also enables a future P3-N
+/// to upgrade phase 2 to actual parallel applyOp once Funcdata is made
+/// thread-safe — the partition is already prepared.
+///
+/// Correctness: same contract as applyParallel.  canApply is pure-read;
+/// concurrent reads of Funcdata/Varnode/PcodeOp state are safe.  Phase 2
+/// is serial, so applyOp mutation is single-threaded.  Op visit order is
+/// {color, SeqNum} rather than pure SeqNum, but the ActionPool sweeps to
+/// quiescence so cross-color firings are picked up on subsequent sweeps.
 int4 ActionPool::applyBlockParallel(Funcdata &data,int4 numWorkers)
 {
-  // Build conflict graph + coloring once per call.  Caching across sweeps would
-  // require invalidation hooks tied to block-structure changes; for now rebuild.
+  // Build conflict graph + coloring once per call.
   BlockConflictGraph graph;
   graph.build(data);
   graph.colorBlocks();
@@ -1252,12 +1318,13 @@ int4 ActionPool::applyBlockParallel(Funcdata &data,int4 numWorkers)
     return applyParallel(data, numWorkers);
   }
 
-  // Phase 0: snapshot ops, partition by their block's color.
-  // Ops with no parent block (e.g. dead/unreachable) go into a synthetic
-  // "loose" bucket appended after the colored groups and dispatched last.
-  vector<vector<PcodeOp *>> opsByColor(numColors + 1);
+  // Phase 0: snapshot ops in color-major order, plus a loose bucket for
+  // ops without a valid parent block.  colorStart[c] is the index in allOps
+  // where color c begins; allOps[colorStart[c] .. colorStart[c+1]-1] are
+  // the ops of color c, all reachable independently from any other color.
+  int4 totalColors = numColors + 1;	// +1 for loose bucket
+  vector<vector<PcodeOp *>> opsByColor(totalColors);
   int4 looseBucket = numColors;
-  int4 totalOps = 0;
   PcodeOpTree::const_iterator it;
   for (it = data.beginOpAll(); it != data.endOpAll(); ++it) {
     PcodeOp *op = (*it).second;
@@ -1267,55 +1334,116 @@ int4 ActionPool::applyBlockParallel(Funcdata &data,int4 numWorkers)
       opsByColor[looseBucket].push_back(op);
     else
       opsByColor[c].push_back(op);
-    totalOps += 1;
   }
-  if (totalOps == 0) {
+
+  vector<PcodeOp *> allOps;
+  allOps.reserve(data.obSize());
+  vector<int4> colorStart(totalColors + 1, 0);
+  for (int4 c = 0; c < totalColors; ++c) {
+    colorStart[c] = (int4)allOps.size();
+    for (size_t i = 0; i < opsByColor[c].size(); ++i)
+      allOps.push_back(opsByColor[c][i]);
+  }
+  colorStart[totalColors] = (int4)allOps.size();
+  int4 n = (int4)allOps.size();
+  if (n == 0) {
     lastSeenModCount = data.getGlobalModCount();
     return 0;
   }
 
-  // Phase 1 (skipped in skeleton): would compute canApply mask in parallel.
-  // For P3-2 we run without the canApply filter; this matches behavior of
-  // serial dispatch and isolates the contribution of block-partitioning.
+  vector<uint8> skipMaskVec(n, 0);
 
-  // Phase 2: dispatch by color group in serial.  Within a group we visit ops
-  // in their natural SeqNum order (already true because beginOpAll yields
-  // SeqNum order, and we preserve insertion order within each bucket).
-  for (int4 c = 0; c <= looseBucket; ++c) {
-    vector<PcodeOp *> &ops = opsByColor[c];
-    for (int4 i = 0; i < (int4)ops.size(); ++i) {
-      PcodeOp *op = ops[i];
-      if (op->isDead()) {
-	data.opDeadAndGone(op);
+  // Phase 1: compute canApply mask, parallelized across color ranges.
+  auto computeMaskColorRange = [this,&allOps,&skipMaskVec,&colorStart,&data](int4 startC, int4 endC) {
+    for (int4 c = startC; c < endC; ++c) {
+      for (int4 i = colorStart[c]; i < colorStart[c+1]; ++i) {
+	PcodeOp *op = allOps[i];
+	if (op->isDead()) continue;
+	uint4 opc = op->code();
+	const vector<Rule *> &rules = perop[opc];
+	int4 nrules = (int4)rules.size();
+	if (nrules > 64) nrules = 64;
+	uint8 mask = 0;
+	for (int4 r = 0; r < nrules; ++r) {
+	  Rule *rl = rules[r];
+	  if (rl->isDisabled()) continue;
+	  if (!rl->hasCanApply()) continue;
+	  if (rl->canApply(op,data) == 0) mask |= ((uint8)1 << r);
+	}
+	skipMaskVec[i] = mask;
+      }
+    }
+  };
+
+  // Inline if too small to amortize dispatch overhead, or only one color.
+  const int4 INLINE_THRESHOLD = 200 * numWorkers;
+  if (n < INLINE_THRESHOLD || totalColors <= 1) {
+    computeMaskColorRange(0, totalColors);
+  } else {
+    ThreadPool &pool = ThreadPool::getInstance(numWorkers);
+    int4 colorsPerWorker = (totalColors + numWorkers - 1) / numWorkers;
+    int4 actualWorkers = (totalColors + colorsPerWorker - 1) / colorsPerWorker;
+    for (int4 t = 0; t < actualWorkers; ++t) {
+      int4 startC = t * colorsPerWorker;
+      int4 endC = std::min(totalColors, startC + colorsPerWorker);
+      pool.submit([&computeMaskColorRange, startC, endC]() {
+	computeMaskColorRange(startC, endC);
+      });
+    }
+    pool.waitAll();
+  }
+
+  // Phase 2: serial dispatch in color-major order, with skip mask.
+  // When a rule fires AND changes the op's opcode, the skip mask for the new
+  // opcode is unknown, so we invalidate it (mask = 0) and let serial dispatch
+  // fall through to full rule iteration.
+  for (int4 i = 0; i < n; ++i) {
+    PcodeOp *op = allOps[i];
+    if (op->isDead()) {
+      data.opDeadAndGone(op);
+      continue;
+    }
+    uint8 mask = skipMaskVec[i];
+
+    uint4 opc = op->code();
+    int4 rule_idx = 0;
+    while (rule_idx < (int4)perop[opc].size()) {
+      Rule *rl = perop[opc][rule_idx];
+      if (rl->isDisabled()) { rule_idx += 1; continue; }
+      if (rule_idx < 64 && (mask & ((uint8)1 << rule_idx)) != 0) {
+	rule_idx += 1;
 	continue;
       }
-      uint4 opc = op->code();
-      int4 rule_idx = 0;
-      while (rule_idx < (int4)perop[opc].size()) {
-	Rule *rl = perop[opc][rule_idx];
-	if (rl->isDisabled()) { rule_idx += 1; continue; }
-	rl->count_tests += 1;
-	int4 res = rl->applyOp(op, data);
-	if (getScopeStatsEnabled()) {
-	  int4 b = scopeBucket(rl->getMutationScope());
-	  scopeTests[b].fetch_add(1, std::memory_order_relaxed);
-	  if (res > 0) scopeFires[b].fetch_add(1, std::memory_order_relaxed);
-	}
-	if (res > 0) {
-	  rl->count_apply += 1;
-	  count += res;
-	  data.bumpIrModCount();
-	  rl->issueWarning(data.getArch());
-	  if (rl->checkActionBreak()) return -1;
-	  if (op->isDead()) break;
-	  if (opc != op->code()) { opc = op->code(); rule_idx = 0; continue; }
-	}
-	else if (opc != op->code()) {
-	  data.getArch()->printMessage("ERROR: Rule " + rl->getName() + " changed op without returning result of 1!");
-	  opc = op->code(); rule_idx = 0; continue;
-	}
-	rule_idx += 1;
+      rl->count_tests += 1;
+      int4 res = rl->applyOp(op, data);
+      if (getScopeStatsEnabled()) {
+	int4 b = scopeBucket(rl->getMutationScope());
+	scopeTests[b].fetch_add(1, std::memory_order_relaxed);
+	if (res > 0) scopeFires[b].fetch_add(1, std::memory_order_relaxed);
       }
+      recordRuleResult(rl, res);
+      if (res > 0) {
+	rl->count_apply += 1;
+	count += res;
+	data.bumpIrModCount();
+	rl->issueWarning(data.getArch());
+	if (rl->checkActionBreak()) return -1;
+	if (op->isDead()) break;
+	if (opc != op->code()) {
+	  opc = op->code();
+	  rule_idx = 0;
+	  mask = 0;	// opcode changed → skip mask is stale
+	  continue;
+	}
+      }
+      else if (opc != op->code()) {
+	data.getArch()->printMessage("ERROR: Rule " + rl->getName() + " changed op without returning result of 1!");
+	opc = op->code();
+	rule_idx = 0;
+	mask = 0;
+	continue;
+      }
+      rule_idx += 1;
     }
   }
 
