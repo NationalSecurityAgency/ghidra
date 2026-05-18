@@ -124,8 +124,8 @@ public abstract class DbObject {
 	 * additional checks that might require a database lock. The idea is that if the cache
 	 * modification hasn't  changed, then we know the object is valid. If the modification count
 	 * has changed then we may or may not be valid and stronger checks are needed which will require
-	 * a lock. Subclasses should override {@link #refreshIfNeeded()}, {@link #refresh()} to do
-	 * the more robust validation checking.
+	 * a lock. Subclasses should override {@link #refreshIfNeeded()}, 
+	 * {@link #refresh(DBRecord)} to do the more robust validation checking.
 	 * 
 	 * @return true if this object is invalid and must be re-validated, else false if object state
 	 * is currently valid which may include a deleted state.

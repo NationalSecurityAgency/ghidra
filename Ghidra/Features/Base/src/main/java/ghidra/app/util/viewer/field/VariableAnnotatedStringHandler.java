@@ -36,17 +36,17 @@ import ghidra.util.Msg;
  * This allows users to reference function variables in comments without having to change the 
  * comment text when the variable is renamed.  Users can enter the annotation using the variable's
  * name:
- * <pre>
+ * <pre>{@code
  * 	{@variable local_8}
  *		 		
  *	 or
  *		 		
  *	{@variable coolVariable SomeFunction}
- * </pre>
+ * }</pre>
  * The user annotation will be converted to use address information:
- * <pre>
+ * <pre>{@code
  * 	{@variable Stack[0xa] FUN_1234eaea}
- * </pre>
+ * }</pre>
  */
 public class VariableAnnotatedStringHandler implements AnnotatedStringHandler {
 

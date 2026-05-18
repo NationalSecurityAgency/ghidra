@@ -60,7 +60,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 	private Map<ResourceFile, String> getCurrentGdts() {
 		return Application.findFilesByExtensionInApplication(".gdt")
 				.stream()
-				.filter(f -> f.getAbsolutePath().contains("/data/typeinfo/"))
+				.filter(f -> f.getAbsolutePath().replace('\\', '/').contains("/data/typeinfo/"))
 				.collect(Collectors.toMap(Function.identity(), f -> getGdtUniversalId(f)));
 	}
 
@@ -80,7 +80,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 	}
 
 	private String getGdtRelativePath(ResourceFile gdtFile) {
-		String path = gdtFile.getAbsolutePath();
+		String path = gdtFile.getAbsolutePath().replace('\\', '/');
 		int ix = path.indexOf("/typeinfo/");
 		path = path.substring(ix + 1);
 		return path;
