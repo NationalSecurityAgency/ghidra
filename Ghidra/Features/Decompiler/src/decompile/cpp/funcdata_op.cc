@@ -25,7 +25,7 @@ namespace ghidra {
 void Funcdata::opSetOpcode(PcodeOp *op,OpCode opc)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1 (obank.changeOpcode + bump)
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1 (obank.changeOpcode + bump)
 #ifdef OPACTION_DEBUG
   if (opactdbg_active)
     debugModCheck(op);
@@ -58,7 +58,7 @@ void Funcdata::opUnsetOutput(PcodeOp *op)
 
   vn = op->getOut();
   if (vn == (Varnode *)0) return; // Nothing to do
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1 (vbank.makeFree)
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1 (vbank.makeFree)
 #ifdef OPACTION_DEBUG
   if (opactdbg_active)
     debugModCheck(op);
@@ -74,7 +74,7 @@ void Funcdata::opSetOutput(PcodeOp *op,Varnode *vn)
 
 {
   if (vn == op->getOut()) return; // Already set to this vn
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
 #ifdef OPACTION_DEBUG
   if (opactdbg_active)
     debugModCheck(op);
@@ -97,7 +97,7 @@ void Funcdata::opSetOutput(PcodeOp *op,Varnode *vn)
 void Funcdata::opUnsetInput(PcodeOp *op,int4 slot)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   Varnode *vn = op->getIn(slot);
 
   vn->eraseDescend(op);
@@ -111,7 +111,7 @@ void Funcdata::opSetInput(PcodeOp *op,Varnode *vn,int4 slot)
 
 {
   if (vn == op->getIn(slot)) return; // Already set to this vn
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   if (vn->isConstant()) {	// Constants should have only one descendant
     if (!vn->hasNoDescend())
       if (!vn->isSpacebase()) {	// Unless they are a spacebase
@@ -146,7 +146,7 @@ void Funcdata::opSetInput(PcodeOp *op,Varnode *vn,int4 slot)
 void Funcdata::opSwapInput(PcodeOp *op,int4 slot1,int4 slot2)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
 #ifdef OPACTION_DEBUG
   if (opactdbg_active)
     debugModCheck(op);
@@ -167,7 +167,7 @@ void Funcdata::opSwapInput(PcodeOp *op,int4 slot1,int4 slot2)
 void Funcdata::opInsert(PcodeOp *op,BlockBasic *bl,list<PcodeOp *>::iterator iter)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1 (obank + bl op list)
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1 (obank + bl op list)
 #ifdef OPACTION_DEBUG
   if (opactdbg_active)
     debugModCheck(op);
@@ -182,7 +182,7 @@ void Funcdata::opInsert(PcodeOp *op,BlockBasic *bl,list<PcodeOp *>::iterator ite
 void Funcdata::opUninsert(PcodeOp *op)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   #ifdef OPACTION_DEBUG
   if (opactdbg_active)
     debugModCheck(op);
@@ -198,7 +198,7 @@ void Funcdata::opUninsert(PcodeOp *op)
 void Funcdata::opUnlink(PcodeOp *op)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   int4 i;
 #ifdef OPACTION_DEBUG
   if (opactdbg_active)
@@ -223,7 +223,7 @@ void Funcdata::opUnlink(PcodeOp *op)
 void Funcdata::opDestroy(PcodeOp *op)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   #ifdef OPACTION_DEBUG
   if (opactdbg_active)
     debugModCheck(op);
@@ -275,7 +275,7 @@ void Funcdata::opDestroyRecursive(PcodeOp *op,vector<PcodeOp *> &scratch)
 void Funcdata::opDestroyRaw(PcodeOp *op)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   for(int4 i=0;i<op->numInput();++i)
     destroyVarnode(op->getIn(i));
   if (op->getOut() != (Varnode *)0)
@@ -290,7 +290,7 @@ void Funcdata::opDestroyRaw(PcodeOp *op)
 void Funcdata::opSetAllInput(PcodeOp *op,const vector<Varnode *> &vvec)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   int4 i;
 
 #ifdef OPACTION_DEBUG
@@ -315,7 +315,7 @@ void Funcdata::opSetAllInput(PcodeOp *op,const vector<Varnode *> &vvec)
 void Funcdata::opRemoveInput(PcodeOp *op,int4 slot)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
 #ifdef OPACTION_DEBUG
   if (opactdbg_active)
     debugModCheck(op);
@@ -333,7 +333,7 @@ void Funcdata::opRemoveInput(PcodeOp *op,int4 slot)
 void Funcdata::opInsertInput(PcodeOp *op,Varnode *vn,int4 slot)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
 #ifdef OPACTION_DEBUG
   if (opactdbg_active)
     debugModCheck(op);
@@ -348,7 +348,7 @@ void Funcdata::opInsertInput(PcodeOp *op,Varnode *vn,int4 slot)
 PcodeOp *Funcdata::newOp(int4 inputs,const Address &pc)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   return obank.create(inputs,pc);
 }
 
@@ -359,7 +359,7 @@ PcodeOp *Funcdata::newOp(int4 inputs,const Address &pc)
 PcodeOp *Funcdata::newOp(int4 inputs,const SeqNum &sq)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   return obank.create(inputs,sq);
 }
 

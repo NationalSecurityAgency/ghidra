@@ -15,6 +15,7 @@
  */
 #include "test.hh"
 #include "libdecomp.hh"
+#include "parallel_safety.hh"
 
 namespace ghidra {
 
@@ -103,6 +104,7 @@ int add_exit_code(int current, int add) {
 int main(int argc, char **argv) {
   using namespace ghidra;
 
+  initParallelActiveFromEnv();	// P4-d5: gate locks once at startup
   bool runUnitTests = true;
   bool runDataTests = true;
 

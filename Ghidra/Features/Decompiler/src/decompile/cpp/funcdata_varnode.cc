@@ -66,7 +66,7 @@ HighVariable *Funcdata::assignHigh(Varnode *vn)
 Varnode *Funcdata::newConstant(int4 s,uintb constant_val)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   Datatype *ct = glb->types->getBase(s,TYPE_UNKNOWN);
 
   Varnode *vn = vbank.create(s,glb->getConstant(constant_val),ct);
@@ -86,7 +86,7 @@ Varnode *Funcdata::newConstant(int4 s,uintb constant_val)
 Varnode *Funcdata::newUnique(int4 s,Datatype *ct)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   if (ct == (Datatype *)0)
     ct = glb->types->getBase(s,TYPE_UNKNOWN);
   Varnode *vn = vbank.createUnique(s,ct);
@@ -110,7 +110,7 @@ Varnode *Funcdata::newUnique(int4 s,Datatype *ct)
 Varnode *Funcdata::newVarnodeOut(int4 s,const Address &m,PcodeOp *op)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   Datatype *ct = glb->types->getBase(s,TYPE_UNKNOWN);
   Varnode *vn = vbank.createDef(s,m,ct,op);
   op->setOutput(vn);
@@ -137,7 +137,7 @@ Varnode *Funcdata::newVarnodeOut(int4 s,const Address &m,PcodeOp *op)
 Varnode *Funcdata::newUniqueOut(int4 s,PcodeOp *op)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   Datatype *ct = glb->types->getBase(s,TYPE_UNKNOWN);
   Varnode *vn = vbank.createDefUnique(s,ct,op);
   op->setOutput(vn);
@@ -159,7 +159,7 @@ Varnode *Funcdata::newUniqueOut(int4 s,PcodeOp *op)
 Varnode *Funcdata::newVarnode(int4 s,const Address &m,Datatype *ct)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   Varnode *vn;
 
   if (ct == (const Datatype *)0)
@@ -292,7 +292,7 @@ Varnode *Funcdata::cloneVarnode(const Varnode *vn)
 void Funcdata::destroyVarnode(Varnode *vn)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   list<PcodeOp *>::const_iterator iter;
 
   for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
@@ -564,7 +564,7 @@ void Funcdata::adjustInputVarnodes(const Address &addr,int4 sz)
 void Funcdata::destroyVarnodeRecursive(Varnode *vn)
 
 {
-  std::lock_guard<std::recursive_mutex> lock(poolMutex);	// Path 4: L1
+  ConditionalRecursiveLock lock(poolMutex);	// Path 4: L1
   if (vn->isAutoLive() || !vn->hasNoDescend()) return;
   if (!vn->isWritten()) {
     vbank.destroy(vn);

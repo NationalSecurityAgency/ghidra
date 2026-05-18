@@ -16,6 +16,7 @@
 #include "ghidra_process.hh"
 #include "flow.hh"
 #include "blockaction.hh"
+#include "parallel_safety.hh"
 
 #ifdef _WINDOWS
 #include <fcntl.h>
@@ -512,6 +513,7 @@ int main(int argc,char **argv)
 {
   using namespace ghidra;
 
+  initParallelActiveFromEnv();	// P4-d5: gate locks once at startup
   signal(SIGSEGV, &ArchitectureGhidra::segvHandler);  // Exit on SEGV errors
 #ifdef _WINDOWS
   // Force i/o streams to be in binary mode

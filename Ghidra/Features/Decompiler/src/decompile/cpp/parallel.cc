@@ -1,7 +1,40 @@
 /* ### See parallel.hh */
 #include "parallel.hh"
+#include "parallel_safety.hh"
+#include <cstdlib>
+#include <cstring>
 
 namespace ghidra {
+
+// P4-d5: process-global flag.  See parallel_safety.hh.
+std::atomic<bool> g_parallelActive{false};
+
+static bool parseBoolEnv(const char *name)
+{
+  const char *v = std::getenv(name);
+  if (v == nullptr) return false;
+  if (v[0] == '\0') return false;
+  if (v[0] == '0' && v[1] == '\0') return false;
+  return true;
+}
+
+static int parseIntEnv(const char *name, int def)
+{
+  const char *v = std::getenv(name);
+  if (v == nullptr || v[0] == '\0') return def;
+  return std::atoi(v);
+}
+
+void initParallelActiveFromEnv(void)
+{
+  // Engage locks iff a parallel mode is requested.  Match the conditions
+  // checked in action.cc (getIntraFunctionWorkers > 1) and heritage.cc
+  // (DECOMP_PARALLEL_GUARDCALLS=1).
+  int workers = parseIntEnv("DECOMP_INTRA_WORKERS", 0);
+  bool guardCalls = parseBoolEnv("DECOMP_PARALLEL_GUARDCALLS");
+  bool active = (workers > 1) || guardCalls;
+  g_parallelActive.store(active, std::memory_order_relaxed);
+}
 
 ThreadPool::ThreadPool(int n)
 {

@@ -20,6 +20,7 @@
 
 #include "pcoderaw.hh"
 #include "cover.hh"
+#include "parallel_safety.hh"
 #include <mutex>
 
 namespace ghidra {

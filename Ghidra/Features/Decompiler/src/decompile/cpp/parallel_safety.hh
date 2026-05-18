@@ -206,9 +206,72 @@
 
 namespace ghidra {
 
-// Forward placeholders.  Real declarations land in P4-2/P4-3.
-//   class PoolMutex;        // wrapper over std::recursive_mutex, owned by Funcdata
-//   class DescendMutex;     // owned by each Varnode
+// P4-d5: Conditional lock elision.
+// =================================
+// The Path 4 locks (Funcdata::poolMutex, Funcdata::unionMutex, Varnode::descendMutex)
+// are required for thread-safety only when intra-function parallel dispatch is
+// engaged.  In single-threaded mode (the default, and the only mode used by
+// Ghidra's normal headless / GUI invocation today), they are dead weight: a
+// measured +6.9% serial overhead vs stock master on libcrypto heavy corpus.
+//
+// Resolution: gate every project lock acquire through a single process-global
+// boolean read at startup.  When parallel is off, the RAII helpers below skip
+// the mutex op entirely — turning lock_guard<...> into a no-op other than a
+// predictable, branch-cached load of g_parallelActive.
+//
+// The flag is set exactly once at process init by readParallelActiveFromEnv()
+// (called from the decompile entry point before any Funcdata is created),
+// based on the presence of DECOMP_INTRA_WORKERS>1 or
+// DECOMP_PARALLEL_GUARDCALLS=1 in the environment.  Once set, the flag is
+// read but never written for the rest of the process lifetime, so the load
+// can be relaxed and well-predicted by the branch predictor.
+
+// Process-global flag — set at startup, read everywhere.
+extern std::atomic<bool> g_parallelActive;
+
+// Inline accessor.  Relaxed load: the value never changes after init.
+inline bool isParallelActive(void) noexcept
+{
+  return g_parallelActive.load(std::memory_order_relaxed);
+}
+
+// Called once at startup (from decompile entry / ghidra_process main / test main)
+// to seed g_parallelActive from the environment.  Idempotent.
+void initParallelActiveFromEnv(void);
+
+// Conditional RAII wrappers — identical signature surface to lock_guard but
+// skip the mutex op when isParallelActive() == false at construction time.
+class ConditionalRecursiveLock {
+  std::recursive_mutex *mtx;
+public:
+  explicit ConditionalRecursiveLock(std::recursive_mutex &m) noexcept
+    : mtx(isParallelActive() ? &m : nullptr)
+  {
+    if (mtx != nullptr) mtx->lock();
+  }
+  ~ConditionalRecursiveLock(void) noexcept
+  {
+    if (mtx != nullptr) mtx->unlock();
+  }
+  ConditionalRecursiveLock(const ConditionalRecursiveLock &) = delete;
+  ConditionalRecursiveLock &operator=(const ConditionalRecursiveLock &) = delete;
+};
+
+class ConditionalMutexLock {
+  std::mutex *mtx;
+public:
+  explicit ConditionalMutexLock(std::mutex &m) noexcept
+    : mtx(isParallelActive() ? &m : nullptr)
+  {
+    if (mtx != nullptr) mtx->lock();
+  }
+  ~ConditionalMutexLock(void) noexcept
+  {
+    if (mtx != nullptr) mtx->unlock();
+  }
+  ConditionalMutexLock(const ConditionalMutexLock &) = delete;
+  ConditionalMutexLock &operator=(const ConditionalMutexLock &) = delete;
+};
 
 } // namespace ghidra
 

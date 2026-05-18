@@ -16,6 +16,7 @@
 #include <iostream>
 #include <cstdlib>
 #include "libdecomp.hh"
+#include "parallel_safety.hh"
 
 namespace ghidra {
 
@@ -178,6 +179,7 @@ int main(int argc,char **argv)
 {
   using namespace ghidra;
 
+  initParallelActiveFromEnv();	// P4-d5: gate locks once at startup
   const char *initscript = (const char *)0;
 
   {
