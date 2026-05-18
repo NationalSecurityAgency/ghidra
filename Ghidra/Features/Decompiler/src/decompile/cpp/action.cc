@@ -1461,7 +1461,12 @@ int4 ActionPool::applyBlockParallel(Funcdata &data,int4 numWorkers)
 	rule_idx += 1;
 	continue;
       }
-      rl->count_tests += 1;
+      // P4-fix-6: skip rl->count_tests/count_apply increments in phase 2a
+      // parallel path.  Cross-core writes to the same Rule struct field
+      // bounce the cache line between workers; on a 48-core host this
+      // dominated phase 2a overhead.  Stats from path 2b serial still
+      // give a representative view; the under-count from path 2a fires
+      // is acceptable for a profiling counter.
       int4 res = rl->applyOp(op, data);
       if (getScopeStatsEnabled()) {
 	int4 b = scopeBucket(rl->getMutationScope());
@@ -1470,7 +1475,6 @@ int4 ActionPool::applyBlockParallel(Funcdata &data,int4 numWorkers)
       }
       recordRuleResult(rl, res);
       if (res > 0) {
-	rl->count_apply += 1;
 	localCount += res;
 	data.bumpIrModCount();
 	rl->issueWarning(data.getArch());
