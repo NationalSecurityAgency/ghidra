@@ -5,53 +5,51 @@ Branch: `feature/bounded-function-parallel-decompiler` on
 (fork: https://github.com/rdmitry0911/ghidra.git).
 Working tree: `/srv/project/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp`.
 
-## TL;DR after P4-fix-5/6 + P4-d4 + apples-to-apples bench
+## TL;DR after P4-d5 (lock-elision)
 
 **Correctness:** Path 4 race fixed (P4-fix-5).  0/1680 SEGV under
-massive-parallel stress, vs ~6% before.
+massive-parallel stress.  668/668 datatests pass in all three configs
+(serial / WORKERS=4 / GUARDCALLS=1).
 
 **Performance vs stock upstream master (24 cores, libcrypto heavy corpus):**
-The honest result, measured 18 May 2026 on 10.7.6.112 — see
-`research/APPLES_BENCH_20260518.md` for full table:
+Measured 18 May 2026 on 10.7.6.112 — full table in
+`research/D5_LOCK_ELISION_20260518.md`:
 
 ```
-  stock P=1    (master baseline)        7.93s   <- winner
-  stock P=6                             7.93s   <- stock inter-fn pool saturates 24 cores
-
-  ours P=1     (no intra-parallel)      8.48s   +6.9% slower than baseline
-  ours P=6                              8.47s   +6.8%
-  best ours intra-fn (P=3 W=8 path1)    9.11s  +14.9%
-  ours P=6 W=4 path1+gcalls split       9.19s  +15.9%
+                       stock          ours           Δ
+  P=1 serial           7.93s ±0.16    8.13s ±0.07    +2.6%
+  P=6                  7.76s          7.91s          +1.9%
+  P=12                 9.32s          9.39s          +0.8%
+  P=24 saturation      11.19s         11.03s         -1.4%   ours WINS
 ```
 
-**All our configurations lose to stock on this workload.**  The +7%
-baseline serial overhead is the cost of the lock infrastructure
-compiled in (Funcdata::poolMutex, Varnode::descendMutex, atomic
-mod-counters) — uncontended, but adds up over millions of IR
-mutations per function.
+The pre-P4-d5 +6.9% serial gap is mostly recovered (now +2.6%).  At max
+throughput (P=24, all 24 cores) ours is now 1.4% **faster** than stock.
 
-Inter-function parallelism (Ghidra's normal usage) already saturates
-24 cores on this corpus.  Adding intra-function parallel on top
-oversubscribes and costs more than it saves.
+**What landed in P4-d5 (4 commits, 27e287daaa..e6bcb57020):**
+  * ConditionalLock RAII — skip mutex op when not parallel
+  * gate atomic counter fetch_add (no LOCK XADD in serial)
+  * Varnode descendMutex → 256-entry pool (restored sizeof(Varnode))
+  * __builtin_expect hints — serial is the hot branch
 
-**Where our work still has value:**
-  * Correctness fixes preserved across all configs
-  * Lock infrastructure + parallel paths + guardCalls split are usable
-    for call-heavy workloads (AGXG16X-style) where consultation
-    profiling showed clear hot spots — we just don't have such a
-    corpus locally to validate
-  * HANDOFF.md, research/POINT4_FINDINGS.md, research/APPLES_BENCH point
-    at the next concrete optimization targets
+**Production recommendation:**
 
-**To flip the result vs stock:**
-  1. Compile-time drop locks when WORKERS<=1 at startup — templated
-     Funcdata, no-op mutex policy.  Recovers the ~7% serial overhead.
-  2. Workload-aware gating — engage intra-fn only when inter-fn pool
-     is unsaturated AND function is large enough.
-  3. Test on AGXG16X-class call-heavy workload where guardCalls is the
-     measured 90% hot path.
+For typical Ghidra usage (Ghidra's normal headless/GUI which does inter-fn
+pool over many functions): just use stock defaults.  Our binary is
+faster at saturation and within 2.6% serially.
 
-See "Future-work ideas" at the end.
+For genuinely intra-fn parallel use cases (one huge function, or low
+core count + few functions): intra-fn parallel paths are available and
+668/668-correct, but on this corpus do not beat embarrassingly
+inter-process parallel.
+
+**Where intra-fn parallel WOULD help (future workloads to test):**
+  * AGXG16X-class call-heavy code where guardCalls is 90% of Heritage
+    (per external profile in `research/point4_profile/`)
+  * Single huge function where you want latency, not throughput
+  * GUI decompile-on-demand for one function
+
+See "Future-work ideas" at the end for direction 1/2/3.
 
 ## What this branch is
 
