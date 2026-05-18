@@ -5,27 +5,53 @@ Branch: `feature/bounded-function-parallel-decompiler` on
 (fork: https://github.com/rdmitry0911/ghidra.git).
 Working tree: `/srv/project/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp`.
 
-## TL;DR after P4-fix-5/6
+## TL;DR after P4-fix-5/6 + P4-d4 + apples-to-apples bench
 
-**Correctness is fixed**, performance is currently net-negative
-across both hosts tested.  External consultation bisected the
-residual SEGV to two mis-annotated `scope_op_only` rules
-(`RuleHumptyDumpty`, `RuleDumptyHump`) that perform multi-step
-non-atomic IR rewrites.  Demoting them to `scope_block_global`
-(commit `5865290f9f`):
+**Correctness:** Path 4 race fixed (P4-fix-5).  0/1680 SEGV under
+massive-parallel stress, vs ~6% before.
 
-  * stability: 0/1680 SEGV across 24 procs × 5 iters × 14 funcs (vs ~6%
-    before) — race is gone
-  * perf: previously these were the highest-firing scope_op_only rules;
-    removing them from phase 2a shrinks the parallel work while
-    threadpool dispatch overhead stays, so all parallel modes are now
-    net-slower than serial on both tested hosts
+**Performance vs stock upstream master (24 cores, libcrypto heavy corpus):**
+The honest result, measured 18 May 2026 on 10.7.6.112 — see
+`research/APPLES_BENCH_20260518.md` for full table:
 
-Best path forward to recover perf without re-introducing the race:
-refactor the two rules to do atomic rewrites
-(`op->setAll(opcode, inputs)` style), OR add a per-PcodeOp
-shared_mutex with writer-exclusive acquire during phase 2a.  See
-"Future-work ideas" at the end.
+```
+  stock P=1    (master baseline)        7.93s   <- winner
+  stock P=6                             7.93s   <- stock inter-fn pool saturates 24 cores
+
+  ours P=1     (no intra-parallel)      8.48s   +6.9% slower than baseline
+  ours P=6                              8.47s   +6.8%
+  best ours intra-fn (P=3 W=8 path1)    9.11s  +14.9%
+  ours P=6 W=4 path1+gcalls split       9.19s  +15.9%
+```
+
+**All our configurations lose to stock on this workload.**  The +7%
+baseline serial overhead is the cost of the lock infrastructure
+compiled in (Funcdata::poolMutex, Varnode::descendMutex, atomic
+mod-counters) — uncontended, but adds up over millions of IR
+mutations per function.
+
+Inter-function parallelism (Ghidra's normal usage) already saturates
+24 cores on this corpus.  Adding intra-function parallel on top
+oversubscribes and costs more than it saves.
+
+**Where our work still has value:**
+  * Correctness fixes preserved across all configs
+  * Lock infrastructure + parallel paths + guardCalls split are usable
+    for call-heavy workloads (AGXG16X-style) where consultation
+    profiling showed clear hot spots — we just don't have such a
+    corpus locally to validate
+  * HANDOFF.md, research/POINT4_FINDINGS.md, research/APPLES_BENCH point
+    at the next concrete optimization targets
+
+**To flip the result vs stock:**
+  1. Compile-time drop locks when WORKERS<=1 at startup — templated
+     Funcdata, no-op mutex policy.  Recovers the ~7% serial overhead.
+  2. Workload-aware gating — engage intra-fn only when inter-fn pool
+     is unsaturated AND function is large enough.
+  3. Test on AGXG16X-class call-heavy workload where guardCalls is the
+     measured 90% hot path.
+
+See "Future-work ideas" at the end.
 
 ## What this branch is
 
