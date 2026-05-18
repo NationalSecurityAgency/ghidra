@@ -1134,7 +1134,19 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
-  virtual uint4 getMutationScope(void) const { return scope_op_only; }
+  // P4-fix-5: applyOp performs a multi-step rewrite — opRemoveInput
+  // followed by opSetInput and opSetOpcode — that is NOT atomic from a
+  // lock-free reader's perspective.  Phase-2a workers iterating an
+  // input's descend list can observe an op with shrunk input arity
+  // but stale slot pointers (or vice versa) and crash.  Bisected on
+  // libcrypto by the external consultation: this rule + RuleDumptyHump
+  // form the minimal denylist that makes 80/80 libcrypto iterations
+  // pass under TRUE_PARALLEL.  scope_op_only is not a strong enough
+  // criterion for true-parallel safety when the rule does multi-step
+  // mutation.  Demoting to scope_block_global until the rule is
+  // refactored to perform an atomic rewrite (or until phase 2a takes
+  // a per-op writer-lock that excludes readers).
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 class RuleDumptyHump : public Rule {
 public:
@@ -1146,7 +1158,12 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   virtual int4 canApply(const PcodeOp *op,const Funcdata &data) const;
-  virtual uint4 getMutationScope(void) const { return scope_op_only; }
+  // P4-fix-5: same multi-step (opSetOpcode + opRemoveInput + opSetInput)
+  // non-atomic rewrite pattern as RuleHumptyDumpty.  See the comment
+  // there.  Downgrading individual rules from the pair does not work
+  // (consultation bisect: humptydumpty-only or dumptyhump-only denylist
+  // causes hangs/no-progress); both must be demoted together.
+  virtual uint4 getMutationScope(void) const { return scope_block_global; }
 };
 class RuleHumptyOr : public Rule {
 public:
