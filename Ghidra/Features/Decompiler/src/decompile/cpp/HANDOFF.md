@@ -5,6 +5,28 @@ Branch: `feature/bounded-function-parallel-decompiler` on
 (fork: https://github.com/rdmitry0911/ghidra.git).
 Working tree: `/srv/project/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp`.
 
+## TL;DR after P4-fix-5/6
+
+**Correctness is fixed**, performance is currently net-negative
+across both hosts tested.  External consultation bisected the
+residual SEGV to two mis-annotated `scope_op_only` rules
+(`RuleHumptyDumpty`, `RuleDumptyHump`) that perform multi-step
+non-atomic IR rewrites.  Demoting them to `scope_block_global`
+(commit `5865290f9f`):
+
+  * stability: 0/1680 SEGV across 24 procs × 5 iters × 14 funcs (vs ~6%
+    before) — race is gone
+  * perf: previously these were the highest-firing scope_op_only rules;
+    removing them from phase 2a shrinks the parallel work while
+    threadpool dispatch overhead stays, so all parallel modes are now
+    net-slower than serial on both tested hosts
+
+Best path forward to recover perf without re-introducing the race:
+refactor the two rules to do atomic rewrites
+(`op->setAll(opcode, inputs)` style), OR add a per-PcodeOp
+shared_mutex with writer-exclusive acquire during phase 2a.  See
+"Future-work ideas" at the end.
+
 ## What this branch is
 
 Adds three optional intra-function parallel dispatch paths to
@@ -53,30 +75,56 @@ See `parallel_safety.hh` for the full lock-hierarchy design doc.
 
 ## Real-world performance (libcrypto 14 heavy funcs, 5 runs avg s)
 
+### Local 16-core fast-clock host
+
 ```
-serial baseline     5.09   base
-serial + bl         5.20   +2.2%   ← blocklist HURTS on crypto (workload-specific)
-path1 W=4           4.70   -7.7%
-path1 W=4 + bl      4.77   -6.3%
-path3 W=4           4.68   -8.1%
-path3 W=4 + bl      5.03   -1.2%
-path1 W=8           4.50  -11.6%   ← best stable, no crashes
-path3 W=8           4.67   -8.3%
-path4 W=4           4.13  -18.9%*  ← best (one segv in 5; ~-13% without)
-path4 W=8           4.22  -17.1%*  ← (one segv in 5; ~-13.6% without)
+                       pre-fix-5/6  post-fix-5/6   Δ (perf regression
+                       ~6% SEGV       0% SEGV       from rule demotion)
+serial baseline           5.09         4.78          base
+serial + bl               5.20         5.15
+path1 W=4                 4.70 -7.7%   4.73 -1.0%   +6.7pp
+path1 W=8                 4.50 -11.6%  4.75 -0.6%   +11.0pp
+path3 W=4                 4.68 -8.1%   4.95 +3.6%   +11.7pp
+path4 W=4                 4.13 -18.9%* 5.02 +5.0%   +23.9pp
+path4 W=8                 4.22 -17.1%* 5.07 +6.1%   +23.2pp
+                          * had ~6% SEGV
 ```
 
-The numbers vary across runs (noise band ~3-5%); the table reflects the
-last-recorded benchmark from commit `10acac5a98`. Bench scripts:
-`bench_real.sh`, `bench_minops.sh`, `bench_stress.sh`.
+### Remote 10.7.6.112, 48-core slow-clock host (post-fix-5/6)
+
+```
+serial baseline           8.50          base
+serial + bl               9.15          +7.7%
+path1 W=4                 9.08          +6.8%
+path1 W=8                 9.07          +6.7%
+path3 W=4                 9.47          +11.4%
+path3 W=8                 9.50          +11.8%
+path4 W=4                 9.95          +17.1%
+path4 W=8                10.04          +18.1%
+```
+
+### Stress (massive-parallel: 24 procs × 5 iters × 14 funcs = 1680 decompiles)
+
+```
+serial × 24:              wall = 57.2s          0/1680 SEGV
+path4 W=4 × 24:           wall = 65.5s   +14%   0/1680 SEGV  <- stability!
+```
+
+Bench scripts: `bench_real.sh`, `bench_minops.sh`, `bench_stress.sh`,
+`stress_parallel.sh` (in `/tmp/` on remote).  All scripts use
+`SLEIGHHOME` env override.
 
 ### Recommended runtime configuration
 
-- Production default: `WORKERS=0` (serial, safest)
-- Bulk decompile: `WORKERS=8` alone (path1, −11.6% on heavy, no crashes
-  reproduced)
-- Max throughput, opt-in: `WORKERS=4 BLOCK_PARALLEL=1 TRUE_PARALLEL=1`
-  (path4, ~−13% mean, ~6% per-function SEGV rate on non-libc workloads)
+- Production default: `WORKERS=0` (serial, safest AND fastest on
+  every host tested post-fix-5/6).
+- Bulk decompile across many functions: rely on Ghidra's existing
+  inter-function parallelism (function-level worker pool); intra-function
+  parallel paths currently add overhead without payback after the
+  HumptyDumpty/DumptyHump demotion.
+- Path 4 (TRUE_PARALLEL=1) is now correctness-clean on libcrypto but
+  net-slower than serial on both tested hosts.  Worth keeping the
+  infrastructure in tree as a base for the follow-up work below.
 
 ## Datatests baseline (664/668 expected — 4 stack-spill failures are pre-existing)
 
@@ -271,8 +319,65 @@ bash /tmp/asan_libc_repro.sh    # 30 iters until first crash; ASan stack
 
 ## Key open task
 
-The single most valuable next step is **finding and fixing the residual
-6% SEGV on libcrypto** (open item 1 above). The fix is likely small (a
-missing lock, a missing scope downgrade, or a phase 2b that needs to
-always run). Once that's clean, Path 4 becomes shippable at −13% and
-the whole branch is ready for upstream review.
+The residual 6% SEGV was bisected (by external consultation) to
+`RuleHumptyDumpty` + `RuleDumptyHump` and resolved by demoting both
+from `scope_op_only` to `scope_block_global` in commit `5865290f9f`.
+However, those were the highest-firing scope_op_only rules and
+removing them killed Path 4's perf win.
+
+## Future-work ideas to recover perf
+
+The fundamental observation: `scope_op_only` was too coarse a
+criterion — it asks "does the rule mutate only its own op?" but
+should also ask "does it mutate atomically?".  Three concrete
+directions for getting Path 4 back into a measurable speedup:
+
+1. **Refactor HumptyDumpty/DumptyHump (and similar) to atomic
+   rewrites.**  Add `Funcdata::opRewrite(op, new_opcode, new_inputs)`
+   that performs all the swap operations under poolMutex without
+   leaving the op in an intermediate state.  Then re-promote both
+   rules back to scope_op_only.  Expected ~10pp recovery on phase 2a
+   parallel work.
+
+2. **Add per-PcodeOp shared_mutex for phase 2a.**  Each op gets a
+   `shared_mutex`; phase 2a workers take a writer-exclusive lock
+   on the op they're rewriting; any thread reading op->getIn() /
+   op->getOut() takes a reader-shared lock.  Lots of new read sites
+   to wrap.  Memory overhead ~40 bytes per op (significant for large
+   functions).  Most thorough fix, biggest code churn.
+
+3. **Sequentialize phase 2a per color group.**  Currently each color
+   group runs on one worker thread.  If we can guarantee that no two
+   workers ever touch the same shared Varnode (true under the
+   color-graph partition), then multi-step rewrites within one color
+   are still safe.  Requires proving the partition is strict.  Today
+   the color partition is by BLOCK, but shared input Varnodes can
+   cross color boundaries via descend lists — that's exactly the
+   conflict the multi-step bug exposed.  Would require partitioning
+   by Varnode reachability rather than block, or extending the
+   conflict graph.
+
+Direction 1 is the cheapest to try.  Direction 3 is the most
+elegant if achievable — it would also fix the union-determinism
+issue (open item 2).
+
+## Other open items still relevant
+
+- Union #8 / #10 determinism (open item 2 in original list): order-
+  independent union scoring with a deterministic tiebreaker would fix it.
+- Verify no other multi-step scope_op_only rules: I downgraded 7
+  in `73520f94ac` plus the 2 above in `5865290f9f`; the consultation's
+  bisect process (binary-search the denylist on libcrypto) should be
+  re-run on a different non-libc binary to catch any remaining ones.
+
+## Commit timeline (most recent first)
+
+```
+e05701822c P4-fix-6: drop cross-core counter writes from phase 2a hot loop
+4c83aaa790 bench_real: SLEIGHHOME env-overridable (was hard-coded /srv path)
+5865290f9f P4-fix-5: downgrade HumptyDumpty + DumptyHump (non-atomic rewrites)
+ba9aa27986 Add HANDOFF.md for branch successor
+1c08eb7300 parallel_safety: document final P4 status + runtime recommendations
+10acac5a98 bench_real: add path4 W=4/W=8 modes; final P4 perf numbers
+73520f94ac Path 4 fixes: ASan-validated race triage + atomic opSetInput
+```
