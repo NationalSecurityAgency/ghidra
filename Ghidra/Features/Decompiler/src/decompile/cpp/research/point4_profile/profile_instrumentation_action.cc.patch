@@ -1,0 +1,74 @@
+--- /tmp/ghidra_p4_point4/ghidra_base/ghidra_12.0.4_PUBLIC/Ghidra/Features/Decompiler/src/decompile/cpp/action.cc	2026-03-03 14:29:30.000000000 +0000
++++ /tmp/ghidra_p4_point4/profile_work/Ghidra/Features/Decompiler/src/decompile/cpp/action.cc	2026-05-18 14:13:06.730515798 +0000
+@@ -17,6 +17,10 @@
+ #include "funcdata.hh"
+ 
+ #include "coreaction.hh"
++#include <chrono>
++#include <cstdlib>
++#include <iostream>
++#include <cstdio>
+ 
+ namespace ghidra {
+ 
+@@ -299,6 +303,9 @@
+ 
+ {
+   int4 res;
++  static const bool profileActions = (std::getenv("DECOMP_PROFILE_ACTIONS") != (const char *)0);
++  auto profileStart = std::chrono::steady_clock::now();
++  int4 profileRet = 0;
+ 
+   do {
+     switch(status) {
+@@ -306,7 +313,7 @@
+       count = 0;		// No changes made yet by this action
+       if (checkStartBreak()) {
+ 	status = status_breakstarthit;
+-	return -1;		// Indicate partial completion
++	profileRet = -1; goto action_profile_exit;	// Indicate partial completion
+       }
+       count_tests += 1;
+     case status_breakstarthit:
+@@ -322,14 +329,14 @@
+ #endif
+       if (res < 0) {		// negative indicates partial completion
+ 	status = status_mid;
+-	return res;
++	profileRet = res; goto action_profile_exit;
+       }
+       else if (lcount < count) { // Action has been applied
+ 	issueWarning(data.getArch());
+ 	count_apply += 1;
+ 	if (checkActionBreak()) {
+ 	  status = status_actionbreak;
+-	  return -1;		// Indicate action breakpoint
++	  profileRet = -1; goto action_profile_exit;	// Indicate action breakpoint
+ 	}
+ #ifdef OPACTION_DEBUG
+ 	else if (data.debugBreak()) {
+@@ -358,7 +365,23 @@
+   else
+     status = status_start;
+ 
+-  return count;
++  profileRet = count;
++  goto action_profile_exit;
++
++action_profile_exit:
++  if (profileActions) {
++    auto profileEnd = std::chrono::steady_clock::now();
++    long long ns = std::chrono::duration_cast<std::chrono::nanoseconds>(profileEnd - profileStart).count();
++    const char *path = std::getenv("DECOMP_PROFILE_FILE");
++    FILE *fp = (path == (const char *)0) ? stderr : fopen(path,"a");
++    if (fp != (FILE *)0) {
++      fprintf(fp,"DECOMP_ACTION_PROFILE name=%s group=%s ns=%lld ret=%d count=%d tests=%llu applies=%llu\n",
++              getName().c_str(), getGroup().c_str(), ns, profileRet, count,
++              (unsigned long long)count_tests, (unsigned long long)count_apply);
++      if (path != (const char *)0) fclose(fp);
++    }
++  }
++  return profileRet;
+ }
+ 
+ ActionGroup::~ActionGroup(void)

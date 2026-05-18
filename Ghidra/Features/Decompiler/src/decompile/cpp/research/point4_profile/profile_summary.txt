@@ -1,0 +1,69 @@
+
+RUN profile_run3 {'herit': 110, 'types': 63}
+herit
+  all_ns           4723.372 ms  100.0%
+  place_ns         3596.267 ms   76.1%
+  rename_ns         783.014 ms   16.6%
+  scan_ns           318.671 ms    6.7%
+types
+  all_ns           1246.651 ms  100.0%
+  prop_ns           702.652 ms   56.4%
+  build_ns          323.057 ms   25.9%
+  write_ns          202.139 ms   16.2%
+  spacebase_ns       18.509 ms    1.5%
+  returns_ns          0.106 ms    0.0%
+
+RUN profile_run5 {'guard': 1448, 'place': 55, 'herit': 55}
+herit
+  all_ns           3789.199 ms  100.0%
+  place_ns         2800.903 ms   73.9%
+  rename_ns         687.981 ms   18.2%
+  scan_ns           278.033 ms    7.3%
+place
+  all_ns           2783.070 ms  100.0%
+  guard_ns         2117.432 ms   76.1%
+  create_ns         591.532 ms   21.3%
+  calc_ns            41.457 ms    1.5%
+  collect_ns         20.730 ms    0.7%
+  refine_ns          10.968 ms    0.4%
+guard
+  all_ns           1900.027 ms  100.0%
+  calls_ns         1712.848 ms   90.1%
+  stores_ns         157.683 ms    8.3%
+  read_ns            21.324 ms    1.1%
+  returns_ns          3.950 ms    0.2%
+  write_ns            2.162 ms    0.1%
+  loads_ns            0.821 ms    0.0%
+  query_ns            0.620 ms    0.0%
+  ranges 1448 add_true 1448 calls_sum 575763
+
+RUN profile_libcrypto {'guard': 403, 'place': 20, 'herit': 20, 'types': 8}
+herit
+  all_ns             42.559 ms  100.0%
+  place_ns           39.091 ms   91.9%
+  rename_ns           2.464 ms    5.8%
+  scan_ns             0.918 ms    2.2%
+place
+  all_ns             36.974 ms  100.0%
+  guard_ns           33.847 ms   91.5%
+  refine_ns           1.343 ms    3.6%
+  create_ns           0.825 ms    2.2%
+  collect_ns          0.637 ms    1.7%
+  calc_ns             0.206 ms    0.6%
+guard
+  all_ns              7.957 ms  100.0%
+  write_ns            4.116 ms   51.7%
+  read_ns             3.294 ms   41.4%
+  returns_ns          0.123 ms    1.5%
+  query_ns            0.111 ms    1.4%
+  loads_ns            0.099 ms    1.2%
+  stores_ns           0.090 ms    1.1%
+  calls_ns            0.024 ms    0.3%
+  ranges 403 add_true 403 calls_sum 0
+types
+  all_ns              1.770 ms  100.0%
+  prop_ns             0.952 ms   53.8%
+  build_ns            0.685 ms   38.7%
+  write_ns            0.125 ms    7.0%
+  returns_ns          0.002 ms    0.1%
+  spacebase_ns        0.002 ms    0.1%

@@ -16,6 +16,9 @@
 #include "heritage.hh"
 #include "funcdata.hh"
 #include "prefersplit.hh"
+#include "parallel.hh"
+#include <cstdlib>
+#include <algorithm>
 
 namespace ghidra {
 
@@ -1441,9 +1444,223 @@ bool Heritage::tryOutputStackGuard(FuncCallSpecs *fc,const Address &addr,const A
 /// \param addr is the first address of given range
 /// \param size is the number of bytes in the range
 /// \param write is the list of written Varnodes in the range (may be updated)
+/// \brief Point-4: env-gated parallel guardCalls (planning/apply split).
+///
+/// Set DECOMP_PARALLEL_GUARDCALLS=1 (and DECOMP_INTRA_WORKERS>1) to engage
+/// the parallel planning phase.  Only fires when the function has many
+/// call sites (>= the threshold below); for small functions the serial
+/// loop is faster.  See parallel_safety.hh / HANDOFF.md for the design
+/// background.
+static bool getParallelGuardCallsEnabled(void)
+{
+  static int cached = -1;
+  if (cached >= 0) return cached != 0;
+  const char *env = std::getenv("DECOMP_PARALLEL_GUARDCALLS");
+  cached = (env != nullptr && std::atoi(env) != 0) ? 1 : 0;
+  return cached != 0;
+}
+
+/// Number of call-sites below which parallel guardCalls is not worth it.
+/// At 64+ calls per function, the inner loop dominates Heritage time (see
+/// research/point4_profile/POINT4_FINDINGS.md).  Overridable via env for
+/// stress-testing the new code path on small datatests.
+static int4 getParallelGuardCallsThreshold(void)
+{
+  static int4 cached = -1;
+  if (cached >= 0) return cached;
+  const char *env = std::getenv("DECOMP_PARALLEL_GUARDCALLS_MINCALLS");
+  cached = (env != nullptr) ? std::atoi(env) : 64;
+  if (cached < 1) cached = 1;
+  return cached;
+}
+
+/// \brief Build the read-only decision plan for one call-site.
+///
+/// Reads FuncCallSpecs and the call-site's PcodeOp.  Does NOT mutate any
+/// shared state (no Funcdata or ParamActive writes).  Safe to call from
+/// multiple worker threads in parallel for different call-site indices.
+void Heritage::buildGuardCallPlan(int4 i,const Address &addr,int4 size,GuardCallPlan &plan) const
+
+{
+  FuncCallSpecs *fc = fd->getCallSpecs(i);
+  plan.callIndex = i;
+  plan.skip = false;
+  plan.tryregister = true;
+  plan.isAssignmentSkip = false;
+  plan.isOutputActive = false;
+  plan.isStackOutputLock = false;
+  plan.isInputActive = false;
+  plan.outputCharacter = ParamEntry::no_containment;
+  plan.stackOutputCharacter = ParamEntry::no_containment;
+  plan.inputCharacter = ParamEntry::no_containment;
+  plan.transOffset = 0;
+
+  if (fc->getOp()->isAssignment()) {
+    Varnode *vn = fc->getOp()->getOut();
+    if ((vn->getAddr()==addr)&&(vn->getSize()==size)) {
+      plan.skip = true;
+      plan.isAssignmentSkip = true;
+      return;
+    }
+  }
+  AddrSpace *spc = addr.getSpace();
+  uintb off = addr.getOffset();
+  if (spc->getType() == IPTR_SPACEBASE) {
+    if (fc->getSpacebaseOffset() != FuncCallSpecs::offset_unknown)
+      off = spc->wrapOffset(off - fc->getSpacebaseOffset());
+    else
+      plan.tryregister = false;
+  }
+  plan.transOffset = off;
+  Address transAddr(spc,off);
+  plan.effecttype = fc->hasEffect(transAddr,size);
+  if (fc->isOutputActive() && plan.tryregister) {
+    plan.isOutputActive = true;
+    plan.outputCharacter = fc->characterizeAsOutput(transAddr, size);
+  }
+  else if (fc->isStackOutputLock() && plan.tryregister) {
+    plan.isStackOutputLock = true;
+    plan.stackOutputCharacter = fc->characterizeAsOutput(transAddr, size);
+  }
+  if (fc->isInputActive() && plan.tryregister) {
+    plan.isInputActive = true;
+    plan.inputCharacter = fc->characterizeAsInputParam(transAddr,size);
+  }
+}
+
+/// \brief Apply mutations for a single planned call-site, in call-index order.
+///
+/// Replays the per-call-site decision computed by buildGuardCallPlan, doing
+/// the actual Funcdata/ParamActive mutations.  Called serially in call-index
+/// order so trial registration and op insertion remain deterministic.  The
+/// few additional reads here (active->whichTrial, isAutoKilledByCall) are
+/// not cached because their results depend on prior-call apply effects.
+void Heritage::applyGuardCallPlan(uint4 fl,const Address &addr,int4 size,
+				  const GuardCallPlan &plan,vector<Varnode *> &write)
+
+{
+  if (plan.skip) return;
+  bool holdind = ((fl&Varnode::addrtied)!=0);
+  FuncCallSpecs *fc = fd->getCallSpecs(plan.callIndex);
+  AddrSpace *spc = addr.getSpace();
+  Address transAddr(spc, plan.transOffset);
+  uint4 effecttype = plan.effecttype;
+  bool possibleoutput = false;
+  if (plan.isOutputActive) {
+    ParamActive *active = fc->getActiveOutput();
+    if (plan.outputCharacter != ParamEntry::no_containment) {
+      if (effecttype != EffectRecord::killedbycall && fc->isAutoKilledByCall())
+	effecttype = EffectRecord::killedbycall;
+      if (plan.outputCharacter == ParamEntry::contained_by) {
+	if (tryOutputOverlapGuard(fc, addr, transAddr, size, write))
+	  effecttype = EffectRecord::unaffected;
+      }
+      else {
+	if (active->whichTrial(transAddr,size)<0) {
+	  active->registerTrial(transAddr,size);
+	  possibleoutput = true;
+	}
+      }
+    }
+  }
+  else if (plan.isStackOutputLock) {
+    if (plan.stackOutputCharacter != ParamEntry::no_containment) {
+      effecttype = EffectRecord::unknown_effect;
+      if (tryOutputStackGuard(fc, addr, transAddr, size, plan.stackOutputCharacter, write))
+	effecttype = EffectRecord::unaffected;
+    }
+  }
+  if (plan.isInputActive) {
+    if (plan.inputCharacter == ParamEntry::contains_justified) {
+      ParamActive *active = fc->getActiveInput();
+      if (active->whichTrial(transAddr,size)<0) {
+	PcodeOp *op = fc->getOp();
+	active->registerTrial(transAddr,size);
+	Varnode *vn = fd->newVarnode(size,addr);
+	vn->setActiveHeritage();
+	fd->opInsertInput(op,vn,op->numInput());
+      }
+    }
+    else if (plan.inputCharacter == ParamEntry::contained_by)
+      guardCallOverlappingInput(fc, addr, transAddr, size);
+  }
+  if ((effecttype == EffectRecord::unknown_effect)||(effecttype == EffectRecord::return_address)) {
+    PcodeOp *indop = fd->newIndirectOp(fc->getOp(),addr,size,0);
+    indop->getIn(0)->setActiveHeritage();
+    indop->getOut()->setActiveHeritage();
+    write.push_back(indop->getOut());
+    if (holdind)
+      indop->getOut()->setAddrForce();
+    if (effecttype == EffectRecord::return_address)
+      indop->getOut()->setReturnAddress();
+  }
+  else if (effecttype == EffectRecord::killedbycall) {
+    PcodeOp *indop = fd->newIndirectCreation(fc->getOp(),addr,size,possibleoutput);
+    indop->getOut()->setActiveHeritage();
+    write.push_back(indop->getOut());
+  }
+}
+
+/// \brief Parallel implementation of guardCalls (point-4 hot path).
+///
+/// Splits the O(numCalls) outer loop into two phases:
+///   Phase 1 (parallel, pure-read): for each call-site, build a
+///     GuardCallPlan capturing the read-only decisions (isAssignment,
+///     hasEffect, characterizeAsOutput/InputParam, etc.).  Each call-site
+///     is independent under this read-only contract, so worker threads
+///     can fan out across call-sites.
+///   Phase 2 (serial, in call-index order): replay each plan via
+///     applyGuardCallPlan, performing the actual Funcdata / ParamActive
+///     mutations.  Iteration order matches the original loop, preserving
+///     deterministic trial registration and op-insertion order.
+///
+/// Only engaged when fd->numCalls() >= PARALLEL_GUARDCALLS_THRESHOLD and
+/// DECOMP_INTRA_WORKERS > 1.  Below the threshold the serial path is
+/// faster because thread-pool dispatch overhead exceeds per-call read time.
+void Heritage::guardCallsParallel(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write)
+
+{
+  int4 numCalls = fd->numCalls();
+  vector<GuardCallPlan> plans(numCalls);
+  // Phase 1: parallel read-only plan build.
+  int4 numWorkers = 0;
+  {
+    const char *env = std::getenv("DECOMP_INTRA_WORKERS");
+    if (env != nullptr) numWorkers = std::atoi(env);
+  }
+  if (numWorkers <= 1) {
+    // Fall through to single-threaded plan build (still benefits from
+    // the split because phase 2 skips redundant reads).
+    for (int4 i = 0; i < numCalls; ++i)
+      buildGuardCallPlan(i, addr, size, plans[i]);
+  }
+  else {
+    ThreadPool &pool = ThreadPool::getInstance(numWorkers);
+    int4 chunk = (numCalls + numWorkers - 1) / numWorkers;
+    int4 actualWorkers = (numCalls + chunk - 1) / chunk;
+    for (int4 t = 0; t < actualWorkers; ++t) {
+      int4 startI = t * chunk;
+      int4 endI = std::min(numCalls, startI + chunk);
+      pool.submit([this, &plans, &addr, size, startI, endI]() {
+	for (int4 i = startI; i < endI; ++i)
+	  buildGuardCallPlan(i, addr, size, plans[i]);
+      });
+    }
+    pool.waitAll();
+  }
+  // Phase 2: serial apply in call-index order.
+  for (int4 i = 0; i < numCalls; ++i)
+    applyGuardCallPlan(fl, addr, size, plans[i], write);
+}
+
 void Heritage::guardCalls(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write)
 
 {
+  // Point-4: parallel planning/apply split for call-heavy functions.
+  if (getParallelGuardCallsEnabled() && fd->numCalls() >= getParallelGuardCallsThreshold()) {
+    guardCallsParallel(fl, addr, size, write);
+    return;
+  }
   FuncCallSpecs *fc;
   PcodeOp *indop;
   uint4 effecttype;

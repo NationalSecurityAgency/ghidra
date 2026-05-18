@@ -296,7 +296,37 @@ class Heritage {
   bool tryOutputStackGuard(FuncCallSpecs *fc,const Address &addr,const Address &transAddr,int4 size,
 			   int4 outputCharacter,vector<Varnode *> &write);
   void guardOutputOverlapStack(PcodeOp *callOp,const Address &addr,int4 size,const Address &retAddr,int4 retSize,vector<Varnode *> &write);
+public:
+  /// \brief Pre-computed per-call-site decisions for Heritage::guardCalls
+  ///
+  /// Point-4 optimization: the outer loop in guardCalls is O(numCalls) and is
+  /// the measured hot path of placeMultiequals on call-heavy functions
+  /// (90% of guard, which is 76% of placeMultiequals).  Each iteration's
+  /// EARLY decisions are read-only (hasEffect, characterizeAsOutput,
+  /// characterizeAsInputParam, isAssignment, getSpacebaseOffset) and can
+  /// be evaluated in parallel.  GuardCallPlan caches those decisions per
+  /// call-site so the serial apply phase can replay mutations in
+  /// call-index order without redoing the reads.
+  struct GuardCallPlan {
+    int4 callIndex;             ///< Index into Funcdata::callspecs
+    bool skip;                  ///< If true, this call-site is skipped entirely
+    bool tryregister;           ///< Translates the original 'tryregister' local
+    bool isAssignmentSkip;      ///< Caller's output Varnode equals (addr,size)
+    bool isOutputActive;        ///< fc->isOutputActive() && tryregister
+    bool isStackOutputLock;     ///< fc->isStackOutputLock() && tryregister
+    bool isInputActive;         ///< fc->isInputActive() && tryregister
+    int4 outputCharacter;       ///< characterizeAsOutput result if active
+    int4 stackOutputCharacter;  ///< characterizeAsOutput result for stack output lock
+    int4 inputCharacter;        ///< characterizeAsInputParam result if active
+    uint4 effecttype;           ///< Initial hasEffect result; may be overridden in apply
+    uintb transOffset;          ///< translated address offset (caller perspective)
+  };
+private:
+  void buildGuardCallPlan(int4 i,const Address &addr,int4 size,GuardCallPlan &plan) const;
   void guardCalls(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write);
+  void guardCallsParallel(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write);
+  void applyGuardCallPlan(uint4 fl,const Address &addr,int4 size,
+			  const GuardCallPlan &plan,vector<Varnode *> &write);
   void guardStores(const Address &addr,int4 size,vector<Varnode *> &write);
   void guardLoads(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write);
   void guardReturnsOverlapping(const Address &addr,int4 size);

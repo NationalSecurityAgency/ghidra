@@ -1,0 +1,231 @@
+--- /tmp/ghidra_p4_point4/ghidra_base/ghidra_12.0.4_PUBLIC/Ghidra/Features/Decompiler/src/decompile/cpp/heritage.cc	2026-03-03 14:29:30.000000000 +0000
++++ /tmp/ghidra_p4_point4/profile_work/Ghidra/Features/Decompiler/src/decompile/cpp/heritage.cc	2026-05-18 14:20:30.106160879 +0000
+@@ -14,6 +14,10 @@
+  * limitations under the License.
+  */
+ #include "heritage.hh"
++#include <chrono>
++#include <cstdlib>
++#include <iostream>
++#include <cstdio>
+ #include "funcdata.hh"
+ #include "prefersplit.hh"
+ 
+@@ -1157,10 +1161,14 @@
+ 		     vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &inputvars)
+ 
+ {
++  static const bool profileHeritageGuard = (std::getenv("DECOMP_PROFILE_HERITAGE_GUARD") != (const char *)0);
++  auto profGuard0 = std::chrono::steady_clock::now();
++  long long profReadNs=0, profWriteNs=0, profQueryNs=0, profCallsNs=0, profReturnsNs=0, profStoresNs=0, profLoadsNs=0;
+   uint4 fl;
+   Varnode *vn;
+   vector<Varnode *>::iterator iter;
+ 
++  auto tread0 = std::chrono::steady_clock::now();
+   for(iter=read.begin();iter!=read.end();++iter) {
+     vn = *iter;
+     list<PcodeOp *>::const_iterator oiter = vn->beginDescend();
+@@ -1174,6 +1182,8 @@
+     vn->setActiveHeritage();
+   }
+ 
++  profReadNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - tread0).count();
++  auto twrite0 = std::chrono::steady_clock::now();
+   for(iter=write.begin();iter!=write.end();++iter) {
+     vn = *iter;
+     if (vn->getSize() < size)
+@@ -1181,6 +1191,7 @@
+     vn->setActiveHeritage();
+   }
+ 
++  profWriteNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - twrite0).count();
+   // The full syntax tree may form over several stages, so we see a new
+   // free for an address that has already been guarded before.
+   // Because INDIRECTs for a single CALL or STORE really issue simultaneously, having multiple INDIRECT guards
+@@ -1188,12 +1199,34 @@
+   if (addIndirects) {
+     fl = 0;
+     // Query for generic properties of address (use empty usepoint)
++    { auto tq0 = std::chrono::steady_clock::now();
+     fd->getScopeLocal()->queryProperties(addr,size,Address(),fl);
++    profQueryNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - tq0).count(); }
++    { auto tc0 = std::chrono::steady_clock::now();
+     guardCalls(fl,addr,size,write);
++    profCallsNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - tc0).count(); }
++    { auto tr0 = std::chrono::steady_clock::now();
+     guardReturns(fl,addr,size,write);
++    profReturnsNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - tr0).count(); }
+     if (fd->getArch()->highPtrPossible(addr,size)) {
++      auto ts0 = std::chrono::steady_clock::now();
+       guardStores(addr,size,write);
++      profStoresNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - ts0).count();
++      auto tl0 = std::chrono::steady_clock::now();
+       guardLoads(fl,addr,size,write);
++      profLoadsNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - tl0).count();
++    }
++  }
++  if (profileHeritageGuard) {
++    long long allNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - profGuard0).count();
++    const char *path = std::getenv("DECOMP_PROFILE_FILE");
++    FILE *fp = (path == (const char *)0) ? stderr : fopen(path,"a");
++    if (fp != (FILE *)0) {
++      fprintf(fp,"DECOMP_HERITAGE_GUARD_PROFILE all_ns=%lld read_ns=%lld write_ns=%lld query_ns=%lld calls_ns=%lld returns_ns=%lld stores_ns=%lld loads_ns=%lld add=%d read=%zu write=%zu input=%zu calls=%d stores=%d loads=%d\n",
++              allNs, profReadNs, profWriteNs, profQueryNs, profCallsNs, profReturnsNs, profStoresNs, profLoadsNs,
++              addIndirects ? 1 : 0, read.size(), write.size(), inputvars.size(), fd->numCalls(),
++              0, 0);
++      if (path != (const char *)0) fclose(fp);
+     }
+   }
+ }
+@@ -2604,14 +2637,26 @@
+   vector<Varnode *> writevars;
+   vector<Varnode *> inputvars;
+   vector<Varnode *> removevars;
++  static const bool profileHeritagePlace = (std::getenv("DECOMP_PROFILE_HERITAGE_PLACE") != (const char *)0);
++  auto profPlace0 = std::chrono::steady_clock::now();
++  long long profCollectNs=0, profRefineNs=0, profRemoveNs=0, profGuardInputNs=0, profGuardNs=0, profCalcNs=0, profCreateNs=0;
++  long long profTasks=0, profRead=0, profWrite=0, profInput=0, profRemove=0, profMerge=0;
+ 
+   for(iter=disjoint.begin();iter!=disjoint.end();++iter) { 
++    profTasks += 1;
++    auto tcollect0 = std::chrono::steady_clock::now();
+     int4 max = collect(*iter,readvars,writevars,inputvars,removevars); // Collect reads/writes
++    profCollectNs += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - tcollect0).count();
++    profRead += readvars.size(); profWrite += writevars.size(); profInput += inputvars.size(); profRemove += removevars.size();
+     if ((*iter).size > 4 && max < (*iter).size) {
++      auto tref0 = std::chrono::steady_clock::now();
+       TaskList::iterator refiter = refinement(iter,readvars,writevars,inputvars);
++      profRefineNs += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - tref0).count();
+       if (refiter != disjoint.end()) {
+ 	iter = refiter;
++	auto tcollect1 = std::chrono::steady_clock::now();
+ 	collect(*iter,readvars,writevars,inputvars,removevars);
++	profCollectNs += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - tcollect1).count();
+       }
+     }
+     const MemRange &memrange(*iter);
+@@ -2623,11 +2668,22 @@
+       if (memrange.addr.getSpace()->getType() == IPTR_INTERNAL || memrange.oldAddresses())
+ 	continue;
+     }
+-    if (!removevars.empty())
++    if (!removevars.empty()) {
++      auto trm0 = std::chrono::steady_clock::now();
+       removeRevisitedMarkers(removevars, memrange.addr, size);
++      profRemoveNs += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - trm0).count();
++    }
++    { auto tgi0 = std::chrono::steady_clock::now();
+     guardInput(memrange.addr,size,inputvars);
++    profGuardInputNs += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - tgi0).count(); }
++    { auto tg0 = std::chrono::steady_clock::now();
+     guard(memrange.addr,size,memrange.newAddresses(),readvars,writevars,inputvars);
++    profGuardNs += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - tg0).count(); }
++    { auto tc0 = std::chrono::steady_clock::now();
+     calcMultiequals(writevars); // Calculate where MULTIEQUALs go
++    profCalcNs += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - tc0).count(); }
++    profMerge += merge.size();
++    auto tcreate0 = std::chrono::steady_clock::now();
+     for(int4 i=0;i<merge.size();++i) {
+       BlockBasic *bl = (BlockBasic *) merge[i];
+       PcodeOp *multiop = fd->newOp(bl->sizeIn(),bl->getStart());
+@@ -2640,8 +2696,20 @@
+       }
+       fd->opInsertBegin(multiop,bl);	// Insert at beginning of block
+     }
++    profCreateNs += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - tcreate0).count();
+   }
+   merge.clear();
++  if (profileHeritagePlace) {
++    long long allNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - profPlace0).count();
++    const char *path = std::getenv("DECOMP_PROFILE_FILE");
++    FILE *fp = (path == (const char *)0) ? stderr : fopen(path,"a");
++    if (fp != (FILE *)0) {
++      fprintf(fp,"DECOMP_HERITAGE_PLACE_PROFILE all_ns=%lld collect_ns=%lld refine_ns=%lld remove_ns=%lld guardinput_ns=%lld guard_ns=%lld calc_ns=%lld create_ns=%lld tasks=%lld read=%lld write=%lld input=%lld remove=%lld merge=%lld\n",
++              allNs, profCollectNs, profRefineNs, profRemoveNs, profGuardInputNs, profGuardNs, profCalcNs, profCreateNs,
++              profTasks, profRead, profWrite, profInput, profRemove, profMerge);
++      if (path != (const char *)0) fclose(fp);
++    }
++  }
+ }
+ 
+ /// This is called once to initialize \b this class in preparation for doing the
+@@ -2663,6 +2731,10 @@
+ void Heritage::heritage(void)
+ 
+ {
++  static const bool profileHeritage = (std::getenv("DECOMP_PROFILE_HERITAGE") != (const char *)0);
++  auto profAll0 = std::chrono::steady_clock::now();
++  long long profBuildAdtNs=0, profJoinsNs=0, profSplitNs=0, profScanNs=0, profPlaceNs=0, profRenameNs=0, profReprocessNs=0, profLoadGuardNs=0, profLoadCopiesNs=0, profSplitAddNs=0;
++  uint8 profVn0 = 0;
+   VarnodeLocSet::const_iterator iter,enditer;
+   HeritageInfo *info;
+   Varnode *vn;
+@@ -2673,14 +2745,22 @@
+   vector<PcodeOp *> freeStores;
+   PreferSplitManager splitmanage;
+ 
+-  if (maxdepth == -1)		// Has a restructure been forced
++  if (maxdepth == -1) {		// Has a restructure been forced
++    auto t0 = std::chrono::steady_clock::now();
+     buildADT();
++    profBuildAdtNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count();
++  }
+ 
++  { auto t0 = std::chrono::steady_clock::now();
+   processJoins();
++  profJoinsNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count(); }
+   if (pass == 0) {
++    auto t0 = std::chrono::steady_clock::now();
+     splitmanage.init(fd,&fd->getArch()->splitrecords);
+     splitmanage.split();
++    profSplitNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count();
+   }
++  auto profScan0 = std::chrono::steady_clock::now();
+   for(int4 i=0;i<infolist.size();++i) {
+     info = &infolist[i];
+     if (!info->isHeritaged()) continue;
+@@ -2746,15 +2826,41 @@
+       }
+     }
+   }
++  profScanNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - profScan0).count();
++  { auto t0 = std::chrono::steady_clock::now();
+   placeMultiequals();
++  profPlaceNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count(); }
++  { auto t0 = std::chrono::steady_clock::now();
+   rename();
+-  if (reprocessStackCount > 0)
++  profRenameNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count(); }
++  if (reprocessStackCount > 0) {
++    auto t0 = std::chrono::steady_clock::now();
+     reprocessFreeStores(stackSpace, freeStores);
++    profReprocessNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count();
++  }
++  { auto t0 = std::chrono::steady_clock::now();
+   analyzeNewLoadGuards();
++  profLoadGuardNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count(); }
++  { auto t0 = std::chrono::steady_clock::now();
+   handleNewLoadCopies();
+-  if (pass == 0)
++  profLoadCopiesNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count(); }
++  if (pass == 0) {
++    auto t0 = std::chrono::steady_clock::now();
+     splitmanage.splitAdditional();
++    profSplitAddNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count();
++  }
+   pass += 1;
++  if (profileHeritage) {
++    long long allNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - profAll0).count();
++    const char *path = std::getenv("DECOMP_PROFILE_FILE");
++    FILE *fp = (path == (const char *)0) ? stderr : fopen(path,"a");
++    if (fp != (FILE *)0) {
++      fprintf(fp,"DECOMP_HERITAGE_PROFILE all_ns=%lld buildadt_ns=%lld joins_ns=%lld split_ns=%lld scan_ns=%lld place_ns=%lld rename_ns=%lld reprocess_ns=%lld loadguard_ns=%lld loadcopies_ns=%lld splitadd_ns=%lld pass=%d vn0=%llu vn1=%llu\n",
++              allNs, profBuildAdtNs, profJoinsNs, profSplitNs, profScanNs, profPlaceNs, profRenameNs, profReprocessNs,
++              profLoadGuardNs, profLoadCopiesNs, profSplitAddNs, pass, (unsigned long long)profVn0, (unsigned long long)0);
++      if (path != (const char *)0) fclose(fp);
++    }
++  }
+ }
+ 
+ /// \param op is the given PcodeOp

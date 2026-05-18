@@ -1,0 +1,70 @@
+--- /tmp/ghidra_p4_point4/ghidra_base/ghidra_12.0.4_PUBLIC/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc	2026-03-03 14:29:30.000000000 +0000
++++ /tmp/ghidra_p4_point4/profile_work/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc	2026-05-18 14:13:06.731739634 +0000
+@@ -14,6 +14,10 @@
+  * limitations under the License.
+  */
+ #include "coreaction.hh"
++#include <chrono>
++#include <cstdlib>
++#include <iostream>
++#include <cstdio>
+ #include "condexe.hh"
+ #include "double.hh"
+ #include "subflow.hh"
+@@ -5374,6 +5378,10 @@
+ int4 ActionInferTypes::apply(Funcdata &data)
+ 
+ {
++  static const bool profileTypes = (std::getenv("DECOMP_PROFILE_TYPES") != (const char *)0);
++  auto profAll0 = std::chrono::steady_clock::now();
++  long long profBuildNs = 0, profPropNs = 0, profRetNs = 0, profSpaceNs = 0, profWriteNs = 0;
++  uint8 profIr0 = 0;
+   // Make sure spacebase is accurate or bases could get typed and then ptrarithed
+   if (!data.hasTypeRecoveryStarted()) return 0;
+   TypeFactory *typegrp = data.getArch()->types;
+@@ -5396,22 +5404,44 @@
+     return 0;
+   }
+   data.getScopeLocal()->applyTypeRecommendations();
++  auto profB0 = std::chrono::steady_clock::now();
+   buildLocaltypes(data);	// Set up initial types (based on local info)
++  profBuildNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - profB0).count();
++  auto profP0 = std::chrono::steady_clock::now();
+   for(iter=data.beginLoc();iter!=data.endLoc();++iter) {
+     vn = *iter;
+     if (vn->isAnnotation()) continue;
+     if ((!vn->isWritten())&&(vn->hasNoDescend())) continue;
+     propagateOneType(typegrp,vn);
+   }
++  profPropNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - profP0).count();
++  auto profR0 = std::chrono::steady_clock::now();
+   propagateAcrossReturns(data);
++  profRetNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - profR0).count();
+   AddrSpace *spcid = data.getScopeLocal()->getSpaceId();
+   Varnode *spcvn = data.findSpacebaseInput(spcid);
++  auto profS0 = std::chrono::steady_clock::now();
+   if (spcvn != (Varnode *)0)
+     propagateSpacebaseRef(data,spcvn);
+-  if (writeBack(data)) {
++  profSpaceNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - profS0).count();
++  auto profW0 = std::chrono::steady_clock::now();
++  bool changed = writeBack(data);
++  profWriteNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - profW0).count();
++  if (changed) {
+     // count += 1;			// Do not consider this a data-flow change
+     localcount += 1;
+   }
++  if (profileTypes) {
++    long long allNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - profAll0).count();
++    const char *path = std::getenv("DECOMP_PROFILE_FILE");
++    FILE *fp = (path == (const char *)0) ? stderr : fopen(path,"a");
++    if (fp != (FILE *)0) {
++      fprintf(fp,"DECOMP_TYPES_PROFILE all_ns=%lld build_ns=%lld prop_ns=%lld returns_ns=%lld spacebase_ns=%lld write_ns=%lld changed=%d localcount=%d ir0=%llu ir1=%llu\n",
++              allNs, profBuildNs, profPropNs, profRetNs, profSpaceNs, profWriteNs, changed ? 1 : 0, localcount,
++              (unsigned long long)profIr0, (unsigned long long)0);
++      if (path != (const char *)0) fclose(fp);
++    }
++  }
+   return 0;
+ }
+ 
