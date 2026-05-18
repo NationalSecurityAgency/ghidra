@@ -23,8 +23,10 @@ DRIVER=/tmp/bench_real_driver.dec
 if [ ! -x "$BIN" ]; then echo "error: $BIN not built" >&2; exit 1; fi
 if [ ! -d "$CORPUS" ]; then echo "error: $CORPUS not found" >&2; exit 1; fi
 
-# Need SLEIGHHOME for decomp_opt to find sleigh data.
-export SLEIGHHOME=/srv/project/ghidra/build/ghidra_install/ghidra_12.2_DEV
+# Need SLEIGHHOME for decomp_opt to find sleigh data.  Defaults to the
+# /srv/project layout; override via env when running on a different host.
+: "${SLEIGHHOME:=/srv/project/ghidra/build/ghidra_install/ghidra_12.2_DEV}"
+export SLEIGHHOME
 
 # Build the driver script that processes every XML once.
 {
