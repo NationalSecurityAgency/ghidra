@@ -179,7 +179,7 @@ public:
   // impact: counters are monotonically non-decreasing and only used as
   // skip-decision signals.
   void bumpGlobalModCount(void) {
-    if (isParallelActive()) {
+    if (GHIDRA_UNLIKELY(isParallelActive())) {
       globalModCount.fetch_add(1, std::memory_order_relaxed);
     } else {
       globalModCount.store(globalModCount.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
@@ -187,7 +187,7 @@ public:
   }
   uint8 getIrModCount(void) const { return irModCount.load(std::memory_order_relaxed); }	///< Read IR-only mutation counter
   void bumpIrModCount(void) {
-    if (isParallelActive()) {
+    if (GHIDRA_UNLIKELY(isParallelActive())) {
       globalModCount.fetch_add(1, std::memory_order_relaxed);
       irModCount.fetch_add(1, std::memory_order_relaxed);
     } else {
@@ -197,7 +197,7 @@ public:
   }
   uint8 getVnCreateCount(void) const { return vnCreateCount.load(std::memory_order_relaxed); }	///< Read varnode-creation counter
   void bumpVnCreateCount(void) {
-    if (isParallelActive()) {
+    if (GHIDRA_UNLIKELY(isParallelActive())) {
       vnCreateCount.fetch_add(1, std::memory_order_relaxed);
       globalModCount.fetch_add(1, std::memory_order_relaxed);
       irModCount.fetch_add(1, std::memory_order_relaxed);
@@ -209,7 +209,7 @@ public:
   }
   uint8 getTypeModCount(void) const { return typeModCount.load(std::memory_order_relaxed); }	///< Read type-change counter
   void bumpTypeModCount(void) {
-    if (isParallelActive()) {
+    if (GHIDRA_UNLIKELY(isParallelActive())) {
       typeModCount.fetch_add(1, std::memory_order_relaxed);
       globalModCount.fetch_add(1, std::memory_order_relaxed);
     } else {

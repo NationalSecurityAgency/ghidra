@@ -230,10 +230,24 @@ namespace ghidra {
 extern std::atomic<bool> g_parallelActive;
 
 // Inline accessor.  Relaxed load: the value never changes after init.
+// The compiler treats this as a possibly-changing memory read, so it
+// won't hoist it out of loops — but the value is in fact constant after
+// init, so the branch predictor sees one direction forever.
 inline bool isParallelActive(void) noexcept
 {
   return g_parallelActive.load(std::memory_order_relaxed);
 }
+
+// __builtin_expect wrapper.  Hot path is serial (parallel inactive); hints
+// the compiler to lay out the fast path (no lock acquire) as the taken
+// branch.  Used in hot mutator paths only.
+#if defined(__GNUC__) || defined(__clang__)
+#define GHIDRA_LIKELY(x)    __builtin_expect(!!(x), 1)
+#define GHIDRA_UNLIKELY(x)  __builtin_expect(!!(x), 0)
+#else
+#define GHIDRA_LIKELY(x)    (x)
+#define GHIDRA_UNLIKELY(x)  (x)
+#endif
 
 // Called once at startup (from decompile entry / ghidra_process main / test main)
 // to seed g_parallelActive from the environment.  Idempotent.
@@ -245,13 +259,13 @@ class ConditionalRecursiveLock {
   std::recursive_mutex *mtx;
 public:
   explicit ConditionalRecursiveLock(std::recursive_mutex &m) noexcept
-    : mtx(isParallelActive() ? &m : nullptr)
+    : mtx(GHIDRA_UNLIKELY(isParallelActive()) ? &m : nullptr)
   {
-    if (mtx != nullptr) mtx->lock();
+    if (GHIDRA_UNLIKELY(mtx != nullptr)) mtx->lock();
   }
   ~ConditionalRecursiveLock(void) noexcept
   {
-    if (mtx != nullptr) mtx->unlock();
+    if (GHIDRA_UNLIKELY(mtx != nullptr)) mtx->unlock();
   }
   ConditionalRecursiveLock(const ConditionalRecursiveLock &) = delete;
   ConditionalRecursiveLock &operator=(const ConditionalRecursiveLock &) = delete;
@@ -261,13 +275,13 @@ class ConditionalMutexLock {
   std::mutex *mtx;
 public:
   explicit ConditionalMutexLock(std::mutex &m) noexcept
-    : mtx(isParallelActive() ? &m : nullptr)
+    : mtx(GHIDRA_UNLIKELY(isParallelActive()) ? &m : nullptr)
   {
-    if (mtx != nullptr) mtx->lock();
+    if (GHIDRA_UNLIKELY(mtx != nullptr)) mtx->lock();
   }
   ~ConditionalMutexLock(void) noexcept
   {
-    if (mtx != nullptr) mtx->unlock();
+    if (GHIDRA_UNLIKELY(mtx != nullptr)) mtx->unlock();
   }
   ConditionalMutexLock(const ConditionalMutexLock &) = delete;
   ConditionalMutexLock &operator=(const ConditionalMutexLock &) = delete;
