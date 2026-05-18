@@ -15,8 +15,21 @@
  */
 #include "varnode.hh"
 #include "funcdata.hh"
+#include <cstdint>
 
 namespace ghidra {
+
+// P4-d5: process-global mutex pool for Varnode::addDescend/eraseDescend.
+// 256 mutexes hashed by Varnode address (>> 6 to drop low cache-line bits).
+// Replaces the per-Varnode mutex that bloated each Varnode by 40 bytes.
+// False sharing is bounded (1/256 collision); only matters in parallel mode.
+static std::mutex g_varnodeDescendMutexes[256];
+
+static inline std::mutex &descendMutexFor(const Varnode *vn) noexcept
+{
+  uintptr_t h = reinterpret_cast<uintptr_t>(vn) >> 6;
+  return g_varnodeDescendMutexes[h & 0xff];
+}
 
 AttributeId ATTRIB_ADDRTIED = AttributeId("addrtied",30);
 AttributeId ATTRIB_GRP = AttributeId("grp",31);
@@ -316,7 +329,7 @@ void Varnode::printInfo(ostream &s) const
 void Varnode::eraseDescend(PcodeOp *op)
 
 {
-  ConditionalMutexLock lock(descendMutex);	// Path 4: L2
+  ConditionalMutexLock lock(descendMutexFor(this));	// Path 4: L2 (pool)
   list<PcodeOp *>::iterator iter;
 
   iter = descend.begin();
@@ -331,7 +344,7 @@ void Varnode::eraseDescend(PcodeOp *op)
 void Varnode::addDescend(PcodeOp *op)
 
 {
-  ConditionalMutexLock lock(descendMutex);	// Path 4: L2
+  ConditionalMutexLock lock(descendMutexFor(this));	// Path 4: L2 (pool)
   //  if (!heritageknown()) {
   if (isFree()&&(!isSpacebase())) {
     if (!descend.empty())

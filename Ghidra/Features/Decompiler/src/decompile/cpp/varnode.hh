@@ -149,10 +149,12 @@ private:
   VarnodeLocSet::iterator lociter;	///< Iterator into VarnodeBank sorted by location
   VarnodeDefSet::iterator defiter;	///< Iterator into VarnodeBank sorted by definition
   list<PcodeOp *> descend;		///< List of every op using this varnode as input
-  /// \brief Path 4: per-Varnode mutex guarding the descend list (L2).
-  /// Acquired by addDescend/eraseDescend.  Never held across calls into
-  /// Funcdata; see parallel_safety.hh for the lock hierarchy.
-  mutable std::mutex descendMutex;
+  // P4-d5: descendMutex removed.  Lock now comes from a process-global
+  // 256-entry mutex pool hashed by Varnode address (see varnode.cc).  This
+  // restores Varnode size to the pre-P4 baseline, eliminating the +40-byte
+  // mutex bloat that doubled Varnode cache lines from 2 to 3.  False
+  // sharing across pool entries is bounded (1/256 collision probability)
+  // and only matters in parallel mode.
   mutable Cover *cover;		///< Addresses covered by the def->use of this Varnode
   mutable union {
     Datatype *dataType;		///< Temporary data-type associated with \b this for use in type propagate algorithm
