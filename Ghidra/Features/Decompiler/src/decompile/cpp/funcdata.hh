@@ -173,13 +173,50 @@ public:
   bool isTypeRecoveryOn(void) const { return ((flags&typerecovery_on)!=0); }	///< Will data-type analysis be performed
   bool hasTypeRecoveryStarted(void) const { return ((flags&typerecovery_start)!=0); }	///< Has data-type recovery processes started
   uint8 getGlobalModCount(void) const { return globalModCount.load(std::memory_order_relaxed); }	///< Read aggregate mutation counter
-  void bumpGlobalModCount(void) { globalModCount.fetch_add(1, std::memory_order_relaxed); }	///< Bump aggregate counter only (e.g. nonzeromask, infertypes::writeBack)
+  // P4-d5: gate fetch_add (LOCK XADD on x86) behind isParallelActive().  In
+  // serial mode (the default), use plain load+store sequence — pure MOV
+  // instructions on x86-64 for word-sized atomic relaxed.  No correctness
+  // impact: counters are monotonically non-decreasing and only used as
+  // skip-decision signals.
+  void bumpGlobalModCount(void) {
+    if (isParallelActive()) {
+      globalModCount.fetch_add(1, std::memory_order_relaxed);
+    } else {
+      globalModCount.store(globalModCount.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+    }
+  }
   uint8 getIrModCount(void) const { return irModCount.load(std::memory_order_relaxed); }	///< Read IR-only mutation counter
-  void bumpIrModCount(void) { globalModCount.fetch_add(1, std::memory_order_relaxed); irModCount.fetch_add(1, std::memory_order_relaxed); }	///< Bump on structural IR change — also lifts aggregate counter
+  void bumpIrModCount(void) {
+    if (isParallelActive()) {
+      globalModCount.fetch_add(1, std::memory_order_relaxed);
+      irModCount.fetch_add(1, std::memory_order_relaxed);
+    } else {
+      globalModCount.store(globalModCount.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+      irModCount.store(irModCount.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+    }
+  }
   uint8 getVnCreateCount(void) const { return vnCreateCount.load(std::memory_order_relaxed); }	///< Read varnode-creation counter
-  void bumpVnCreateCount(void) { vnCreateCount.fetch_add(1, std::memory_order_relaxed); bumpIrModCount(); }	///< Bump when a new Varnode is created — also lifts IR and aggregate counters since new varnode = IR change
+  void bumpVnCreateCount(void) {
+    if (isParallelActive()) {
+      vnCreateCount.fetch_add(1, std::memory_order_relaxed);
+      globalModCount.fetch_add(1, std::memory_order_relaxed);
+      irModCount.fetch_add(1, std::memory_order_relaxed);
+    } else {
+      vnCreateCount.store(vnCreateCount.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+      globalModCount.store(globalModCount.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+      irModCount.store(irModCount.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+    }
+  }
   uint8 getTypeModCount(void) const { return typeModCount.load(std::memory_order_relaxed); }	///< Read type-change counter
-  void bumpTypeModCount(void) { typeModCount.fetch_add(1, std::memory_order_relaxed); globalModCount.fetch_add(1, std::memory_order_relaxed); }	///< Bump when a datatype was actually changed; also lifts aggregate counter so ActionPool re-runs (rules may depend on types)
+  void bumpTypeModCount(void) {
+    if (isParallelActive()) {
+      typeModCount.fetch_add(1, std::memory_order_relaxed);
+      globalModCount.fetch_add(1, std::memory_order_relaxed);
+    } else {
+      typeModCount.store(typeModCount.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+      globalModCount.store(globalModCount.load(std::memory_order_relaxed) + 1, std::memory_order_relaxed);
+    }
+  }
   bool isTypeRecoveryExceeded(void) const { return ((flags&typerecovery_exceeded)!=0); }	///< Has maximum propagation passes been reached
   bool hasNoCode(void) const { return ((flags & no_code)!=0); }		///< Return \b true if \b this function has no code body
   void setNoCode(bool val) { if (val) flags |= no_code; else flags &= ~no_code; }	///< Toggle whether \b this has a body
