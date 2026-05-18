@@ -1460,6 +1460,44 @@ static bool getParallelGuardCallsEnabled(void)
   return cached != 0;
 }
 
+/// \brief Optional point-4 stats: counts guardCalls invocations and the
+/// distribution of fd->numCalls() observed.  Set DECOMP_GUARDCALLS_STATS=1
+/// to enable.  Dumped to stderr at process exit.
+static bool getGuardCallsStatsEnabled(void)
+{
+  static int cached = -1;
+  if (cached >= 0) return cached != 0;
+  const char *env = std::getenv("DECOMP_GUARDCALLS_STATS");
+  cached = (env != nullptr && std::atoi(env) != 0) ? 1 : 0;
+  return cached != 0;
+}
+
+static std::atomic<uint64_t> gc_invocations(0);
+static std::atomic<uint64_t> gc_callsTotal(0);
+static std::atomic<uint64_t> gc_parallelEngaged(0);
+static std::atomic<uint64_t> gc_parallelCallsTotal(0);
+static std::atomic<uint64_t> gc_maxCalls(0);
+
+struct GuardCallsStatsDumper {
+  ~GuardCallsStatsDumper(void) {
+    if (!getGuardCallsStatsEnabled()) return;
+    uint64_t inv = gc_invocations.load();
+    uint64_t calls = gc_callsTotal.load();
+    uint64_t parEng = gc_parallelEngaged.load();
+    uint64_t parCalls = gc_parallelCallsTotal.load();
+    uint64_t maxC = gc_maxCalls.load();
+    std::fprintf(stderr, "[guardcalls-stats] invocations=%llu calls_total=%llu calls_avg=%.1f max_calls_per_func=%llu parallel_engaged=%llu parallel_calls_total=%llu\n",
+                 (unsigned long long)inv,
+                 (unsigned long long)calls,
+                 inv ? (double)calls / (double)inv : 0.0,
+                 (unsigned long long)maxC,
+                 (unsigned long long)parEng,
+                 (unsigned long long)parCalls);
+    std::fflush(stderr);
+  }
+};
+static GuardCallsStatsDumper guardCallsStatsDumper;
+
 /// Number of call-sites below which parallel guardCalls is not worth it.
 /// At 64+ calls per function, the inner loop dominates Heritage time (see
 /// research/point4_profile/POINT4_FINDINGS.md).  Overridable via env for
@@ -1621,16 +1659,18 @@ void Heritage::guardCallsParallel(uint4 fl,const Address &addr,int4 size,vector<
 
 {
   int4 numCalls = fd->numCalls();
-  vector<GuardCallPlan> plans(numCalls);
   // Phase 1: parallel read-only plan build.
   int4 numWorkers = 0;
   {
     const char *env = std::getenv("DECOMP_INTRA_WORKERS");
     if (env != nullptr) numWorkers = std::atoi(env);
   }
+  vector<GuardCallPlan> plans(numCalls);
   if (numWorkers <= 1) {
-    // Fall through to single-threaded plan build (still benefits from
-    // the split because phase 2 skips redundant reads).
+    // Single-threaded plan build.  Still pays the small per-call struct
+    // initialization cost relative to the serial path — but the caller
+    // wouldn't reach here with W<=1 unless explicitly forced via env,
+    // since the outer guardCalls() gate is checked beforehand.
     for (int4 i = 0; i < numCalls; ++i)
       buildGuardCallPlan(i, addr, size, plans[i]);
   }
@@ -1656,8 +1696,20 @@ void Heritage::guardCallsParallel(uint4 fl,const Address &addr,int4 size,vector<
 void Heritage::guardCalls(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write)
 
 {
+  int4 numCallsLocal = fd->numCalls();
+  if (getGuardCallsStatsEnabled()) {
+    gc_invocations.fetch_add(1, std::memory_order_relaxed);
+    gc_callsTotal.fetch_add((uint64_t)numCallsLocal, std::memory_order_relaxed);
+    uint64_t cur = (uint64_t)numCallsLocal;
+    uint64_t prev = gc_maxCalls.load(std::memory_order_relaxed);
+    while (cur > prev && !gc_maxCalls.compare_exchange_weak(prev, cur)) {}
+  }
   // Point-4: parallel planning/apply split for call-heavy functions.
-  if (getParallelGuardCallsEnabled() && fd->numCalls() >= getParallelGuardCallsThreshold()) {
+  if (getParallelGuardCallsEnabled() && numCallsLocal >= getParallelGuardCallsThreshold()) {
+    if (getGuardCallsStatsEnabled()) {
+      gc_parallelEngaged.fetch_add(1, std::memory_order_relaxed);
+      gc_parallelCallsTotal.fetch_add((uint64_t)numCallsLocal, std::memory_order_relaxed);
+    }
     guardCallsParallel(fl, addr, size, write);
     return;
   }
