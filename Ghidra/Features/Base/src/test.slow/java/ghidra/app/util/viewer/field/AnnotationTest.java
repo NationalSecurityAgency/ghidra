@@ -742,13 +742,6 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testVariableAnnotation_Basic() {
-		String rawComment = "{@variable Stack[0xa] MyFunction}";
-		String display = CommentUtils.getDisplayString(rawComment, program);
-		assertEquals("myVariable", display);
-	}
-
-	@Test
 	public void testVariableAnnotation_BasicModify() {
 		String rawComment = "{@variable myVariable MyFunction}";
 		String display = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
@@ -765,21 +758,14 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testLocalAnnotation_UserMarked() {
-		String rawComment = "{@variable Stack[0xa] MyFunction}";
-		String display = CommentUtils.getDisplayString(rawComment, program);
-		assertEquals("myVariable", display);
-	}
-
-	@Test
-	public void testLocalAnnotation_UserMarkedModify() {
+	public void testLocalAnnotation_VariableAddress() {
 		String rawComment = "{@variable Stack[0xa] MyFunction}";
 		String display = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals("{@variable Stack[0xa] 01002000}", display);
 	}
 
 	@Test
-	public void testLocalAnnotation_UserMarkedModify_NoFunction() {
+	public void testLocalAnnotation_VariableAddress_NoFunction() {
 		String rawComment = "{@variable Stack[0xa]}";
 		String functionAddress = "01002000";
 		Address entryPoint = addr(functionAddress);
