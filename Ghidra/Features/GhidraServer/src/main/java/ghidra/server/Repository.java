@@ -357,9 +357,11 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			LinkedHashMap<String, User> newUserMap = new LinkedHashMap<>();
 			for (User user : users) {
 				String userName = user.getName();
-				if (UserManager.ANONYMOUS_USERNAME.equals(userName) ||
-					!allUsers.contains(userName)) {
+				if (UserManager.ANONYMOUS_USERNAME.equals(userName)) {
 					continue; // ignore
+				}
+				if (!allUsers.contains(userName)) {
+					throw new IOException("Unknown user specified: " + userName);
 				}
 				if (!user.hasWritePermission() && !user.isReadOnly() && !user.isAdmin()) {
 					throw new IOException("User specified with invalid permission: " + userName);

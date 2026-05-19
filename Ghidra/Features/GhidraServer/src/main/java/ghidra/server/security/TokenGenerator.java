@@ -16,8 +16,7 @@
 package ghidra.server.security;
 
 import java.security.SecureRandom;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 
 import generic.random.SecureRandomFactory;
@@ -85,12 +84,44 @@ public class TokenGenerator {
 	}
 
 	/**
+	 * {@link Token} provides a byte array token wrapper to facilitate value-based
+	 * hashcode and equality when used as a map key.
+	 */
+	private static class Token {
+		private byte[] token;
+
+		Token(byte[] token) {
+			this.token = token;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + Arrays.hashCode(token);
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Token other = (Token) obj;
+			return Arrays.equals(token, other.token);
+		}
+	}
+
+	/**
 	 * {@link CachedTokenSet} tracks timed token issuance and insures that they remain
 	 * valid for one-time consumption within limited life-span.
 	 */
 	private static class CachedTokenSet {
 
-		private final Map<byte[], Long> cache = new ConcurrentHashMap<>();
+		private final Map<Token, Long> cache = new ConcurrentHashMap<>();
 		private final ScheduledExecutorService scheduler =
 			Executors.newSingleThreadScheduledExecutor();
 
@@ -100,11 +131,11 @@ public class TokenGenerator {
 		}
 
 		void add(byte[] token) {
-			cache.put(token, System.currentTimeMillis());
+			cache.put(new Token(token), System.currentTimeMillis());
 		}
 
-		boolean consume(byte[] value) {
-			Long storedAt = cache.remove(value); // remove on retrieval
+		boolean consume(byte[] token) {
+			Long storedAt = cache.remove(new Token(token)); // remove on retrieval
 			if (storedAt == null)
 				return false;
 			return (System.currentTimeMillis() - storedAt < MAX_TTL_MS);
@@ -115,5 +146,4 @@ public class TokenGenerator {
 			cache.entrySet().removeIf(e -> now - e.getValue() >= MAX_TTL_MS);
 		}
 	}
-
 }
