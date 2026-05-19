@@ -18,7 +18,8 @@ package docking.widgets.textfield;
 import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -37,7 +38,6 @@ public abstract class AbstractIntegerTextFieldTest<T extends AbstractIntegerText
 
 	@Before
 	public void setUp() throws Exception {
-		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		field = createField();
 		field.setShowNumberMode(true);
 		textField = (JTextField) field.getComponent();

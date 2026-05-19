@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import java.util.*;
 
 import org.junit.*;
 
-import generic.test.TestUtils;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.program.database.ProgramBuilder;
@@ -404,7 +403,8 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 			Symbol[] symbols = symbolTable.getSymbols(address);
 			assertEquals("DAT_0481_00b6", symbols[0].getName());
 
-			TestUtils.invokeInstanceMethod("refresh", symbols[0]);
+			SymbolDB symbolDb = (SymbolDB) symbols[0];
+			symbolDb.refresh(null);
 			assertEquals("DAT_0481_00b6", symbols[0].getName());
 		}
 		finally {
@@ -1613,7 +1613,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		AddressSet set1 = new AddressSet();
 		set1.addRange(addr(100), addr(150));
-		Function f1 = listing.createFunction("aaaa", addr(100), set1, SourceType.USER_DEFINED);
+		listing.createFunction("aaaa", addr(100), set1, SourceType.USER_DEFINED);
 
 		AddressSet set2 = new AddressSet();
 		set2.addRange(addr(200), addr(250));
@@ -2220,7 +2220,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		AddressSet set1 = new AddressSet();
 		set1.addRange(addr(100), addr(150));
-		Function f1 = listing.createFunction("fredFunc", addr(100), set1, SourceType.USER_DEFINED);
+		listing.createFunction("fredFunc", addr(100), set1, SourceType.USER_DEFINED);
 
 		AddressSet set2 = new AddressSet();
 		set2.addRange(addr(200), addr(250));
@@ -2419,7 +2419,8 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 				createLabel(addr(offset), "offset" + offset);
 			}
 			int total = 0;
-			for (Symbol s : symbolTable.getAllSymbols(true)) {
+			SymbolIterator it = symbolTable.getAllSymbols(true);
+			for (; it.hasNext(); it.next()) {
 				total += 1;
 			}
 			assertEquals(offset, total);
