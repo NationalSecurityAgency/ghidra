@@ -53,8 +53,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 			Map.entry("typeinfo/golang/golang_1.20_anybit_any.gdt", "3533817003441909616"),
 			Map.entry("typeinfo/golang/golang_1.21_anybit_any.gdt", "3574190573109087960"),
 			Map.entry("typeinfo/golang/golang_1.22_anybit_any.gdt", "3596108668808850319"),
-			Map.entry("typeinfo/golang/golang_1.23_anybit_any.gdt", "3629085086035854850"),
-			Map.entry("typeinfo/rust/rust-common.gdt", "3557867258392862055"));
+			Map.entry("typeinfo/golang/golang_1.23_anybit_any.gdt", "3629085086035854850"));
 	//@formatter:on
 
 	private Map<ResourceFile, String> getCurrentGdts() {
