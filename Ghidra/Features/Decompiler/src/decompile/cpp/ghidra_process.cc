@@ -510,7 +510,7 @@ void GhidraDecompCapability::initialize(void)
 static void segvHandler(int4 sig)
 
 {
-  _exit(1);	// Don't do any cleanup, just die - prevents OS from popping-up a dialog
+  _Exit(1);	// Don't do any cleanup, just die - prevents OS from popping-up a dialog
 }
 
 } // End namespace ghidra
