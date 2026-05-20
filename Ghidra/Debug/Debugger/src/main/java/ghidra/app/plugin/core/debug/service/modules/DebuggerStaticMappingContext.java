@@ -22,8 +22,7 @@ import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.utils.ProgramLocationUtils;
 import ghidra.async.AsyncUtils;
-import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
-import ghidra.debug.api.modules.MappedAddressRange;
+import ghidra.debug.api.modules.*;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -32,7 +31,7 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
 
-public class DebuggerStaticMappingContext {
+public class DebuggerStaticMappingContext implements DebuggerAddressTranslator {
 
 	record ChangeCollector(DebuggerStaticMappingContext ctx, Set<Trace> traces,
 			Set<Program> programs) implements AutoCloseable {
@@ -237,6 +236,7 @@ public class DebuggerStaticMappingContext {
 		return info;
 	}
 
+	@Override
 	public Set<Program> getOpenMappedProgramsAtSnap(Trace trace, long snap) {
 		synchronized (lock) {
 			InfoPerTrace info = requireTrackedInfo(trace);
@@ -247,6 +247,7 @@ public class DebuggerStaticMappingContext {
 		}
 	}
 
+	@Override
 	public ProgramLocation getOpenMappedLocation(TraceLocation loc) {
 		synchronized (lock) {
 			InfoPerTrace info = requireTrackedInfo(loc.getTrace());
@@ -261,6 +262,7 @@ public class DebuggerStaticMappingContext {
 		return view.getViewport().getTop(s -> s >= 0 ? s : null);
 	}
 
+	@Override
 	public ProgramLocation getStaticLocationFromDynamic(ProgramLocation loc) {
 		synchronized (lock) {
 			loc = ProgramLocationUtils.fixLocation(loc, true);
@@ -277,6 +279,7 @@ public class DebuggerStaticMappingContext {
 		}
 	}
 
+	@Override
 	public Set<TraceLocation> getOpenMappedLocations(ProgramLocation loc) {
 		synchronized (lock) {
 			InfoPerProgram info = requireTrackedInfo(loc.getProgram());
@@ -287,6 +290,7 @@ public class DebuggerStaticMappingContext {
 		}
 	}
 
+	@Override
 	public TraceLocation getOpenMappedLocation(Trace trace, ProgramLocation loc, long snap) {
 		synchronized (lock) {
 			InfoPerProgram info = requireTrackedInfo(loc.getProgram());
@@ -297,6 +301,7 @@ public class DebuggerStaticMappingContext {
 		}
 	}
 
+	@Override
 	public ProgramLocation getDynamicLocationFromStatic(TraceProgramView view,
 			ProgramLocation loc) {
 		synchronized (lock) {
@@ -309,6 +314,7 @@ public class DebuggerStaticMappingContext {
 		}
 	}
 
+	@Override
 	public Map<Program, Collection<MappedAddressRange>> getOpenMappedViews(Trace trace,
 			AddressSetView set, long snap) {
 		synchronized (lock) {
@@ -320,6 +326,7 @@ public class DebuggerStaticMappingContext {
 		}
 	}
 
+	@Override
 	public Map<TraceSpan, Collection<MappedAddressRange>> getOpenMappedViews(Program program,
 			AddressSetView set) {
 		synchronized (lock) {
@@ -331,6 +338,7 @@ public class DebuggerStaticMappingContext {
 		}
 	}
 
+	@Override
 	public Set<URL> getMappedProgramUrlsInView(Trace trace, AddressSetView set, long snap) {
 		synchronized (lock) {
 			InfoPerTrace info = requireTrackedInfo(trace);

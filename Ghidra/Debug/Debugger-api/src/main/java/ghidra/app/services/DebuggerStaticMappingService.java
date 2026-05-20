@@ -31,25 +31,21 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
-import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * A service for consuming and mutating trace static mappings, i.e., relocations
- * 
  * <p>
  * This service consumes and tracks all open traces' mappings, tracks when the destination programs
  * are opened and closed, notifies listeners of changes in the tool's overall mapping picture, and
  * provides for addition and validation of new mappings.
- * 
  * <p>
  * Note, the relation of trace locations to program locations is many-to-one.
- * 
  * <p>
  * This service also provides methods for proposing and adding mappings.
  */
-public interface DebuggerStaticMappingService {
+public interface DebuggerStaticMappingService extends DebuggerAddressTranslator {
 
 	/**
 	 * Add a static mapping (relocation) from the given trace to the given program
@@ -84,12 +80,10 @@ public interface DebuggerStaticMappingService {
 
 	/**
 	 * Add several static mappings (relocations)
-	 * 
 	 * <p>
 	 * This will group the entries by trace and add each's entries in a single transaction. If any
 	 * entry fails, including due to conflicts, that failure is logged but ignored, and the
 	 * remaining entries are processed.
-	 * 
 	 * <p>
 	 * Any entries indicated for memorization will have their module paths added to the destination
 	 * program's metadata.
@@ -107,7 +101,6 @@ public interface DebuggerStaticMappingService {
 
 	/**
 	 * Add several static mappings (relocations)
-	 * 
 	 * <p>
 	 * This will group the entries by trace and add each's entries in a single transaction. If any
 	 * entry fails, including due to conflicts, that failure is logged but ignored, and the
@@ -124,7 +117,6 @@ public interface DebuggerStaticMappingService {
 
 	/**
 	 * Add several static mappings (relocations)
-	 * 
 	 * <p>
 	 * This will group the entries by trace and add each's entries in a single transaction. If any
 	 * entry fails, including due to conflicts, that failure is logged but ignored, and the
@@ -140,96 +132,15 @@ public interface DebuggerStaticMappingService {
 			boolean truncateExisting) throws CancelledException;
 
 	/**
-	 * Collect all the open destination programs relevant for the given trace and snap
-	 * 
-	 * @param trace the trace
-	 * @param snap the snap
-	 * @return the set of open destination programs
-	 */
-	Set<Program> getOpenMappedProgramsAtSnap(Trace trace, long snap);
-
-	/**
-	 * Map the given trace location to a program location, if the destination is open
-	 * 
-	 * @param loc the source location
-	 * @return the destination location, or {@code null} if not mapped, or not open
-	 */
-	ProgramLocation getOpenMappedLocation(TraceLocation loc);
-
-	/**
-	 * Similar to {@link #getOpenMappedLocation(TraceLocation)} but preserves details
-	 * 
-	 * <p>
-	 * The given location's {@link ProgramLocation#getProgram()} method must return a
-	 * {@link TraceProgramView}. It derives the trace and snap from that view. Additionally, this
-	 * will attempt to map over other "location" details, e.g., field, row, column.
-	 * 
-	 * @param loc a location within a trace view
-	 * @return a mapped location in a program, or {@code null}
-	 */
-	ProgramLocation getStaticLocationFromDynamic(ProgramLocation loc);
-
-	/**
-	 * Map the given program location back to open source trace locations
-	 * 
-	 * @param loc the program location
-	 * @return the, possibly empty, set of trace locations
-	 */
-	Set<TraceLocation> getOpenMappedLocations(ProgramLocation loc);
-
-	/**
-	 * Map the given program location back to a source trace and snap
-	 * 
-	 * @param trace the source trace, to which we are mapping back
-	 * @param loc the destination location, from which we are mapping back
-	 * @param snap the source snap, to which we are mapping back
-	 * @return the source of the found mapping, or {@code null} if not mapped
-	 */
-	TraceLocation getOpenMappedLocation(Trace trace, ProgramLocation loc, long snap);
-
-	/**
-	 * Similar to {@link #getOpenMappedLocation(Trace, ProgramLocation, long)} but preserves details
-	 * 
-	 * <p>
-	 * This method derives the source trace and snap from the given view. Additinoally, this will
-	 * attempt to map over other "location" details, e.g., field, row, column.
-	 * 
-	 * @param view the view, specifying the source trace and snap, to which we are mapping back
-	 * @param loc the destination location, from which we are mapping back.
-	 * @return the destination of the found mapping, or {@code null} if not mapped
-	 */
-	ProgramLocation getDynamicLocationFromStatic(TraceProgramView view, ProgramLocation loc);
-
-	/**
-	 * Find/compute all destination address sets given a source trace address set
-	 * 
-	 * @param trace the source trace
-	 * @param set the source address set
-	 * @param snap the source snap
-	 * @return a map of destination programs to corresponding computed destination address ranges
-	 */
-	Map<Program, Collection<MappedAddressRange>> getOpenMappedViews(Trace trace,
-			AddressSetView set, long snap);
-
-	/**
-	 * Find/compute all source address sets given a destination program address set
-	 * 
-	 * @param program the destination program, from which we are mapping back
-	 * @param set the destination address set, from which we are mapping back
-	 * @return a map of source traces to corresponding computed source address ranges
-	 */
-	Map<TraceSpan, Collection<MappedAddressRange>> getOpenMappedViews(Program program,
-			AddressSetView set);
-
-	/**
 	 * Open all destination programs in mappings intersecting the given source trace, address set,
 	 * and snap
-	 * 
+	 * <p>
+	 * This essentially calls {@link #getMappedProgramUrlsInView(Trace, AddressSetView, long)} and
+	 * then tries to open each one.
 	 * <p>
 	 * Note, because the trace's mapping table contains {@link Program} URLs, it's possible the
 	 * destination program(s) do not exist, and/or that there may be errors opening the destinations
 	 * program(s).
-	 * 
 	 * <p>
 	 * Note, the caller to this method should not expect the relevant mappings to be immediately
 	 * loaded by the manager implementation. Instead, it should listen for the expected changes in
@@ -265,7 +176,6 @@ public interface DebuggerStaticMappingService {
 
 	/**
 	 * Get a future which completes when pending changes have all settled
-	 * 
 	 * <p>
 	 * The returned future completes after all change listeners have been invoked.
 	 * 
@@ -275,7 +185,6 @@ public interface DebuggerStaticMappingService {
 
 	/**
 	 * Find the best match among programs in the project for the given trace module
-	 * 
 	 * <p>
 	 * The service maintains an index of likely module names to domain files in the active project.
 	 * This will search that index for the module's full file path. Failing that, it will search
@@ -295,7 +204,6 @@ public interface DebuggerStaticMappingService {
 
 	/**
 	 * Propose a module map for the given module to the given program
-	 * 
 	 * <p>
 	 * Note, no sanity check is performed on the given parameters. This will simply propose the
 	 * given module-program pair. It is strongly advised to use
@@ -312,14 +220,12 @@ public interface DebuggerStaticMappingService {
 
 	/**
 	 * Compute the best-scored module map for the given module and programs
-	 * 
 	 * <p>
 	 * Note, no sanity check is performed on any given module-program pair. Instead, the
 	 * highest-scoring proposal is selected from the possible module-program pairs. In particular,
 	 * the names of the programs vs. the module name may not be examined by the implementation.
 	 * 
 	 * @see ModuleMapProposal#computeScore()
-	 * 
 	 * @param module the module to consider
 	 * @param snap the source snapshot key
 	 * @param programs a set of proposed destination programs
@@ -331,7 +237,6 @@ public interface DebuggerStaticMappingService {
 	/**
 	 * Compute the "best" map of trace module to program for each given module given a collection of
 	 * proposed programs.
-	 * 
 	 * <p>
 	 * Note, this method will first examine module and program names in order to cull unlikely
 	 * pairs. It then takes the best-scored proposal for each module. If a module has no likely
@@ -349,7 +254,6 @@ public interface DebuggerStaticMappingService {
 
 	/**
 	 * Propose a singleton section map from the given section to the given program memory block
-	 * 
 	 * <p>
 	 * Note, no sanity check is performed on the given parameters. This will simply give a singleton
 	 * map of the given entry. It is strongly advised to use
@@ -368,7 +272,6 @@ public interface DebuggerStaticMappingService {
 
 	/**
 	 * Propose a section map for the given module to the given program
-	 * 
 	 * <p>
 	 * Note, no sanity check is performed on the given parameters. This will do its best to map
 	 * sections from the given module to memory blocks in the given program. It is strongly advised
@@ -385,14 +288,12 @@ public interface DebuggerStaticMappingService {
 
 	/**
 	 * Proposed the best-scored section map for the given module and programs
-	 * 
 	 * <p>
 	 * Note, no sanity check is performed on any given module-program pair. Instead, the
 	 * highest-scoring proposal is selected from the possible module-program pairs. In particular,
 	 * the names of the programs vs. the module name may not be examined by the implementation.
 	 * 
 	 * @see SectionMapProposal#computeScore()
-	 * 
 	 * @param module the module whose sections to map
 	 * @param snap the source snapshot key
 	 * @param programs a set of proposed destination programs
@@ -404,7 +305,6 @@ public interface DebuggerStaticMappingService {
 	/**
 	 * Propose the best-scored maps of trace sections to program memory blocks for each given module
 	 * given a collection of proposed programs.
-	 * 
 	 * <p>
 	 * Note, this method will first examine module and program names in order to cull unlikely
 	 * pairs. It then takes the best-scored proposal for each module. If a module has no likely
@@ -422,7 +322,6 @@ public interface DebuggerStaticMappingService {
 
 	/**
 	 * Propose a singleton region map from the given region to the given program memory block
-	 * 
 	 * <p>
 	 * Note, no sanity check is performed on the given parameters. This will simply give a singleton
 	 * map of the given entry. It is strongly advised to use
@@ -441,7 +340,6 @@ public interface DebuggerStaticMappingService {
 
 	/**
 	 * Propose a region map for the given regions to the given program
-	 * 
 	 * <p>
 	 * Note, no sanity check is performed on the given parameters. This will do its best to map
 	 * regions to memory blocks in the given program. For the best results, regions should all
@@ -462,7 +360,6 @@ public interface DebuggerStaticMappingService {
 	/**
 	 * Propose the best-scored maps of trace regions to program memory blocks for each given
 	 * "module" given a collection of proposed programs.
-	 * 
 	 * <p>
 	 * Note, this method will first group regions into likely modules by parsing their names, then
 	 * compare to program names in order to cull unlikely pairs. It then takes the best-scored

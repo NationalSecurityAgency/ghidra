@@ -255,6 +255,11 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	@Override
+	public Set<URL> getMappedProgramUrlsInView(Trace trace, AddressSetView set, long snap) {
+		return context.getMappedProgramUrlsInView(trace, set, snap);
+	}
+
+	@Override
 	public Set<Program> openMappedProgramsInView(Trace trace, AddressSetView set, long snap,
 			Set<Exception> failures) {
 		Set<URL> urls = context.getMappedProgramUrlsInView(trace, set, snap);
