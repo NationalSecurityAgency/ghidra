@@ -23,4 +23,6 @@ eclipse.project.name = 'Features Rust'
 dependencies {
 	api project(":Base")
 	api project(":Decompiler")
+	
+	testImplementation project(path: ':Base', configuration: 'testArtifacts')
 }
