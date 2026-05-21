@@ -96,6 +96,17 @@ public:
   void restoreXmlOldForm(DocumentStorage &store,const Element *el);	///< Load tests from \<binaryimage> tag.
   void runTests(list<string> &lateStream);	///< Run the script and perform the tests
   static int runTestFiles(const vector<string> &testFiles,ostream &s);	///< Run tests for each listed file
+
+  /// \brief Optional dump directory for the raw decompiler output of each test file.
+  ///
+  /// Sprint 9 audit support (issue #215). When non-empty, runTests() writes the
+  /// full `bulkout` stream (the actual decompiled C text produced by the script
+  /// commands) to `<dumpDir>/<basename(fileName)>.actual`. This lets the
+  /// `audit-datatests.yml` workflow capture actual-vs-expected and feed the
+  /// cosmetic-regex-drift vs. real-regression categorization. Empty (default)
+  /// preserves the original behavior of discarding bulkout after pattern
+  /// matching.
+  static string dumpDir;
 };
 
 } // End namespace ghidra
