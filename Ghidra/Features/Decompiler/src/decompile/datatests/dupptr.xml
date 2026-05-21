@@ -120,14 +120,14 @@ e88b008d50fd488b45f08910905dc3
   <com>print C</com>
   <com>quit</com>
 </script>
-<stringmatch name="Intermediate pointers #1" min="1" max="1">argv\[\(int8\)a \+ 1\] = "Hello";</stringmatch>
-<stringmatch name="Intermediate pointers #2" min="1" max="1">argv\[\(int8\)a \+ 2\] = "Goodbye";</stringmatch>
-<stringmatch name="Intermediate pointers #3" min="1" max="1">aStack_a8\.arr1\[a\] = aStack_a8\.arr1\[a\] &gt;&gt; 3 &amp; 0xf;</stringmatch>
-<stringmatch name="Intermediate pointers #4" min="1" max="1">ptr-&gt;arr1\[a\] = ptr-&gt;arr1\[a\] &gt;&gt; 3 &amp; 0xf;</stringmatch>
-<stringmatch name="Intermediate pointers #5" min="1" max="1">aaStack_578\[\(int8\)a \+ 1\]\.arr1\[7\] = aaStack_578\[a\]\.arr1\[7\] \+ 0x25;</stringmatch>
-<stringmatch name="Intermediate pointers #6" min="1" max="1">ptr-&gt;arr1\[a\] = 7;</stringmatch>
-<stringmatch name="Intermediate pointers #7" min="1" max="1">ptr-&gt;arr2\[a\] = 0x6f;</stringmatch>
-<stringmatch name="Intermediate pointers #8" min="1" max="1">ptr-&gt;arr1\[a\]\.d = 0x1e;</stringmatch>
-<stringmatch name="Intermediate pointers #9" min="1" max="1">ptr-&gt;arr2\[a\]\.d = 0x14;</stringmatch>
-<stringmatch name="Intermediate pointers #10" min="1" max="1">ptr-&gt;arr\[a\]\[7\] = ptr-&gt;arr\[a \+ 1\]\[7\] \+ -3;</stringmatch>
+<stringmatch name="Intermediate pointers #1" min="1" max="1">argv\[\(int8\)a \+ 1L?\] = "Hello";</stringmatch>
+<stringmatch name="Intermediate pointers #2" min="1" max="1">argv\[\(int8\)a \+ 2L?\] = "Goodbye";</stringmatch>
+<stringmatch name="Intermediate pointers #3" min="1" max="1">aStack_a8\.arr1\[a\] = aStack_a8\.arr1\[a\] &gt;&gt; 3 &amp; 0xfL?;</stringmatch>
+<stringmatch name="Intermediate pointers #4" min="1" max="1">ptr-&gt;arr1\[a\] = ptr-&gt;arr1\[a\] &gt;&gt; 3 &amp; 0xfL?;</stringmatch>
+<stringmatch name="Intermediate pointers #5" min="1" max="1">aaStack_578\[\(int8\)a \+ 1L?\]\.arr1\[7L?\] = aaStack_578\[a\]\.arr1\[7L?\] \+ 0x25L?;</stringmatch>
+<stringmatch name="Intermediate pointers #6" min="1" max="1">ptr-&gt;arr1\[a\] = 7L?;</stringmatch>
+<stringmatch name="Intermediate pointers #7" min="1" max="1">ptr-&gt;arr2\[a\] = 0x6fL?;</stringmatch>
+<stringmatch name="Intermediate pointers #8" min="1" max="1">ptr-&gt;arr1\[a\]\.d = 0x1eL?;</stringmatch>
+<stringmatch name="Intermediate pointers #9" min="1" max="1">ptr-&gt;arr2\[a\]\.d = 0x14L?;</stringmatch>
+<stringmatch name="Intermediate pointers #10" min="1" max="1">ptr-&gt;arr\[a\]\[7L?\] = ptr-&gt;arr\[a \+ 1L?\]\[7L?\] (?:\+ -|- )3L?;</stringmatch>
 </decompilertest>

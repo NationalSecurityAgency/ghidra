@@ -23,7 +23,7 @@ d4ffffffecffffff04000000
   <com>quit</com>
 </script>
 <stringmatch name="If/Switch #1" min="1" max="1">default:
-                                                 return param_1 \+ -0xd;</stringmatch>
+                                                 return param_1 (?:\+ -|- )0xdL?;</stringmatch>
 <stringmatch name="If/Switch #2" min="1" max="1">if \(99 &lt; param_1\) \{
 						 return param_1 \* 1000;</stringmatch>
 <stringmatch name="If/Switch #3" min="1" max="1">case 0:

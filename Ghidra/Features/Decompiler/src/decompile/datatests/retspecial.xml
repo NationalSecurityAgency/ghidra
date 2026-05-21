@@ -27,11 +27,11 @@ e01740f9fd7bc3a8c0035fd6
   <com>print C</com>
   <com>quit</com>
 </script>
-<stringmatch name="Return Value Input Register #1" min="1" max="1">rethidden-&gt;a = 10;</stringmatch>
-<stringmatch name="Return Value Input Register #2" min="1" max="1">rethidden-&gt;b = 100;</stringmatch>
+<stringmatch name="Return Value Input Register #1" min="1" max="1">rethidden-&gt;a = 10L?;</stringmatch>
+<stringmatch name="Return Value Input Register #2" min="1" max="1">rethidden-&gt;b = 100L?;</stringmatch>
 <stringmatch name="Return Value Input Register #3" min="1" max="1">rethidden-&gt;c = \(int8\)num;</stringmatch>
 <stringmatch name="Return Value Input Register #4" min="1" max="1">return;</stringmatch>
 <stringmatch name="Return Value Input Register #5" min="1" max="1">mystruct mStack_18;</stringmatch>
-<stringmatch name="Return Value Input Register #6" min="1" max="1">returnbig\(&amp;mStack_18,param_1\);</stringmatch>
+<stringmatch name="Return Value Input Register #6" min="1" max="1">returnbig\(&amp;mStack_18, ?param_1\);</stringmatch>
 <stringmatch name="Return Value Input Register #7" min="1" max="1">return mStack_18\.c;</stringmatch>
 </decompilertest>

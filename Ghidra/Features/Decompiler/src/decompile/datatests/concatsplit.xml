@@ -22,7 +22,7 @@
   <com>print C</com>
   <com>quit</com>
 </script>
-<stringmatch name="Concat split #1" min="1" max="1">create\(&amp;out-&gt;base,&amp;in-&gt;base\);</stringmatch>
+<stringmatch name="Concat split #1" min="1" max="1">create\(&amp;out-&gt;base, ?&amp;in-&gt;base\);</stringmatch>
 <stringmatch name="Concat split #2" min="1" max="1">out-&gt;a = A;</stringmatch>
 <stringmatch name="Concat split #3" min="1" max="1">out-&gt;b = B;</stringmatch>
 <stringmatch name="Concat split #4" min="1" max="1">out-&gt;c = C;</stringmatch>

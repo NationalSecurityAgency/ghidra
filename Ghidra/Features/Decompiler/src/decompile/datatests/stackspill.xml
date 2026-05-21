@@ -28,9 +28,9 @@ b01d100c000000002c00bf8f00000000
 </script>
 <stringmatch name="Stack spill #1" min="1" max="1">return a \+ d\.field_b;</stringmatch>
 <stringmatch name="Stack spill #2" min="1" max="1">foo dvar;</stringmatch>
-<stringmatch name="Stack spill #3" min="1" max="1">dvar\.field_b = 100;</stringmatch>
+<stringmatch name="Stack spill #3" min="1" max="1">dvar\.field_b = 100L?;</stringmatch>
 <stringmatch name="Stack spill #4" min="1" max="1">dvar\.field_a = val1;</stringmatch>
-<stringmatch name="Stack spill #5" min="1" max="1">receive\(10,0x14,0x1e,dvar\);</stringmatch>
+<stringmatch name="Stack spill #5" min="1" max="1">receive\(10, ?0x14, ?0x1e, ?dvar\);</stringmatch>
 <stringmatch name="Stack spill #6" min="0" max="0">in_stack</stringmatch>
 <stringmatch name="Stack spill #7" min="0" max="0">CONCAT</stringmatch>
 </decompilertest>

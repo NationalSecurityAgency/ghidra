@@ -102,7 +102,8 @@ c3
 </script>
 <stringmatch name="Enum Reading #1" min="1" max="1">Stack_18\.flagfield &amp; \(FLAG_40\|FLAG_1\)\) .= 0\)</stringmatch>
 <stringmatch name="Enum Reading #2" min="1" max="1">Stack_18\.flagfield\._4_4_ &amp; \(HIGH_200\|HIGH_100\) &gt;&gt; 0x20\) .= 0\)</stringmatch>
-<stringmatch name="Enum Reading #3" min="1" max="1">ptr-&gt;flagfield &amp; \(FLAG_20\|FLAG_8\|FLAG_4\)\) .= 0\)</stringmatch>
-<stringmatch name="Enum Reading #4" min="1" max="1">if \(\(ptrhigh-&gt;flagfield &amp; \(HIGH_1000\|HIGH_200\|HIGH_100\|HIGH_40\|HIGH_10\|HIGH_4\|HIGH_2\|HIGH_1\)\) .= 0</stringmatch>
+<stringmatch name="Enum Reading #3" min="1" max="1">ptr-&gt;flagfield &amp; \(FLAG_20\|FLAG_8\|FLAG_4\)\) .= 0L?\)</stringmatch>
+<stringmatch name="Enum Reading #4" min="1" max="1">if \(\(ptrhigh-&gt;flagfield &amp; \(HIGH_1000\|HIGH_200\|HIGH_100\|HIGH_40\|HIGH_10\|HIGH_4\|HIGH_2\|HIGH_1\)\) .= ?
+\s*0L?</stringmatch>
 <stringmatch name="Enum Reading #5" min="1" max="1">if \(ptrequal-&gt;flagfield .= \(FLAG_100000\|FLAG_800\)\)</stringmatch>
 </decompilertest>

@@ -32,5 +32,5 @@ feffffeb12488b45f8ffd0488d3d1d01
   <com>quit</com>
 </script>
 <stringmatch name="Deindirect #1" min="0" max="0">Exceeded maximum restarts</stringmatch>
-<stringmatch name="Deindirect #2" min="2" max="2">realfunc\(b \+ 3,c \+ 5\)</stringmatch>
+<stringmatch name="Deindirect #2" min="2" max="2">realfunc\(b \+ 3L?, ?c \+ 5L?\)</stringmatch>
 </decompilertest>

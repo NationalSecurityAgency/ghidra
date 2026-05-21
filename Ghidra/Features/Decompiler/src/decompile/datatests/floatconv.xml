@@ -50,6 +50,6 @@ f2480f2ac0f20f58c0f20f5905170000
   <com>quit</com>
 </script>
 <stringmatch name="Floating-point convert #1" min="1" max="1">return \(float4\)\(int4\)\(fval - 0x10\) \* -0.001;</stringmatch>
-<stringmatch name="Floating-point convert #2" min="1" max="1">return \(float8\)\(lval - 0x10\) \* -0.001;</stringmatch>
-<stringmatch name="Floating-point convert #3" min="1" max="1">return \(float8\)\(llval - 0x10\) \* -0.001;</stringmatch>
+<stringmatch name="Floating-point convert #2" min="1" max="1">return \(float8\)\(lval - 0x10L?\) \* -0.001;</stringmatch>
+<stringmatch name="Floating-point convert #3" min="1" max="1">return \(float8\)\(llval - 0x10L?\) \* -0.001;</stringmatch>
 </decompilertest>

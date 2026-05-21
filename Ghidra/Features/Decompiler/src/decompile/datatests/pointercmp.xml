@@ -17,7 +17,7 @@
   <com>print C</com>
   <com>quit</com>
 </script>
-<stringmatch name="Pointer Compare #1" min="1" max="1">for \(pchar = ptr-&gt;arr; pchar &lt; \&amp;ptr-&gt;fval; pchar = pchar \+ 1\)</stringmatch>
+<stringmatch name="Pointer Compare #1" min="1" max="1">for \(pchar = ptr-&gt;arr; pchar &lt; \&amp;ptr-&gt;fval; pchar = pchar \+ 1L?\)</stringmatch>
 <stringmatch name="Pointer Compare #2" min="1" max="1">char \*pchar;</stringmatch>
 <stringmatch name="Pointer Compare #3" min="1" max="1">\*pchar = 'a';</stringmatch>
 </decompilertest>

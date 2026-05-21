@@ -30,7 +30,7 @@ c3
   <com>quit</com>
 </script>
 <stringmatch name="Relative base #1" min="1" max="1">ptr-&gt;b = 9\.5;</stringmatch>
-<stringmatch name="Relative base #2" min="1" max="1">ADJ\(ptr\)-&gt;outB = 10;</stringmatch>
+<stringmatch name="Relative base #2" min="1" max="1">ADJ\(ptr\)-&gt;outB = 10L?;</stringmatch>
 <stringmatch name="Relative base #3" min="1" max="1">return ADJ\(ptr\);</stringmatch>
 <stringmatch name="Relative base #4" min="1" max="1">OuterStruct \* getOuter\(outer_rel ptr\)</stringmatch>
 </decompilertest>

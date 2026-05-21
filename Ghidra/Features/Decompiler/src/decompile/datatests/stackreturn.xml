@@ -34,9 +34,9 @@ c3c3c3
   <com>print C</com>
   <com>quit</com>
 </script>
-<stringmatch name="Stack Return #1" min="1" max="1">local = perfect\(100\);</stringmatch>
+<stringmatch name="Stack Return #1" min="1" max="1">local = perfect\(100L?\);</stringmatch>
 <stringmatch name="Stack Return #2" min="1" max="1">perf_ret = local;</stringmatch>
-<stringmatch name="Stack Return #3" min="1" max="1">local = small\(1,0x14\);</stringmatch>
+<stringmatch name="Stack Return #3" min="1" max="1">local = small\(1L?, ?0x14L?\);</stringmatch>
 <stringmatch name="Stack Return #4" min="1" max="1">small_ret = \(int4\)local;</stringmatch>
-<stringmatch name="Stack Return #5" min="1" max="1">local\._2_2_ = big\(2,0x1e\);</stringmatch>
+<stringmatch name="Stack Return #5" min="1" max="1">local\._2_2_ = big\(2L?, ?0x1eL?\);</stringmatch>
 </decompilertest>

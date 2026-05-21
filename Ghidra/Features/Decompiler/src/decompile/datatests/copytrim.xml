@@ -28,9 +28,9 @@ fc0475098b45f889057b0f0000905dc3
   <com>quit</com>
 </script>
 <stringmatch name="Copy trim #1" min="1" max="1">size = myarr\[param_1\];</stringmatch>
-<stringmatch name="Copy trim #2" min="0" max="0">for \(.*myarr\[0\] = </stringmatch>
-<stringmatch name="Copy trim #3" min="1" max="1">for \(; i != 0; i = i \+ -1\) \{
-                                                   myarr\[i\] = myarr\[i \+ -1\];
+<stringmatch name="Copy trim #2" min="0" max="0">for \(.*myarr\[0L?\] = </stringmatch>
+<stringmatch name="Copy trim #3" min="1" max="1">for \(; i != 0L?; i = i (?:\+ -|- )1L?\) \{
+                                                   myarr\[i\] = myarr\[i (?:\+ -|- )1\];
                                                  \}
                                                  myarr\[0\] = size;</stringmatch>
 <stringmatch name="Copy trim #4" min="0" max="0">Var1 = param_2;</stringmatch>

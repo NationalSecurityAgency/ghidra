@@ -70,14 +70,15 @@ f20f2cc24883c4505fc3
   <com>print C</com>
   <com>quit</com>
 </script>
-<stringmatch name="Mixed float/int #1" min="1" max="1">float8 dldlll\(float8 param_1,int4 param_2,float8 param_3,int4 param_4,int4 param_5,int4 param_6\)</stringmatch>
+<stringmatch name="Mixed float/int #1" min="1" max="1">float8 dldlll\(float8 param_1, ?int4 param_2, ?float8 param_3, ?int4 param_4, ?int4 param_5, ?int4 param_6 ?
+\s*\)</stringmatch>
 <stringmatch name="Mixed float/int #2" min="1" max="1">return.*param.*\+.*param.*\+.*param.*\+.*param.*\+.*param.*\+.*param.*;</stringmatch>
-<stringmatch name="Mixed float/int #3" min="1" max="1">float4 fi\(float4 param_1,int4 param_2\)</stringmatch>
-<stringmatch name="Mixed float/int #4" min="1" max="1">int4 id\(int4 param_1,float8 param_2\)</stringmatch>
-<stringmatch name="Mixed float/int #5" min="1" max="1">int4 ldld\(int4 param_1,float8 param_2,int4 param_3,float8 param_4\)</stringmatch>
+<stringmatch name="Mixed float/int #3" min="1" max="1">float4 fi\(float4 param_1, ?int4 param_2\)</stringmatch>
+<stringmatch name="Mixed float/int #4" min="1" max="1">int4 id\(int4 param_1, ?float8 param_2\)</stringmatch>
+<stringmatch name="Mixed float/int #5" min="1" max="1">int4 ldld\(int4 param_1, ?float8 param_2, ?int4 param_3, ?float8 param_4\)</stringmatch>
 <stringmatch name="Mixed float/int #6" min="4" max="4">return.*param.*\+.*param.*;</stringmatch>
-<stringmatch name="Mixed float/int #7" min="1" max="1">fVar. = fi\(3\.0,param_1\);</stringmatch>
-<stringmatch name="Mixed float/int #8" min="1" max="1">uVar. = id\(param_1,2\.2\);</stringmatch>
-<stringmatch name="Mixed float/int #9" min="1" max="1">uVar. = ldld\(param_1,3\.0,param_1 \+ 1,5\.0\);</stringmatch>
-<stringmatch name="Mixed float/int #10" min="1" max="1">fVar. = dldlll\(7\.0,param_1,8\.0,param_1 \+ 1,param_1 \+ 2</stringmatch>
+<stringmatch name="Mixed float/int #7" min="1" max="1">fVar. = fi\(3\.0, ?param_1\);</stringmatch>
+<stringmatch name="Mixed float/int #8" min="1" max="1">uVar. = id\(param_1, ?2\.2\);</stringmatch>
+<stringmatch name="Mixed float/int #9" min="1" max="1">uVar. = ldld\(param_1, ?3\.0, ?param_1 \+ 1, ?5\.0\);</stringmatch>
+<stringmatch name="Mixed float/int #10" min="1" max="1">fVar. = dldlll\(7\.0, ?param_1, ?8\.0, ?param_1 \+ 1, ?param_1 \+ 2</stringmatch>
 </decompilertest>

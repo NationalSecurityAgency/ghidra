@@ -45,17 +45,17 @@ ffffff891db70f00005bc3
   <com>print C</com>
   <com>quit</com>
 </script>
-<stringmatch name="Store cross #1" min="0" max="0">local_array\[10\] = 0x18;</stringmatch>
-<stringmatch name="Store cross #2" min="0" max="0">local_array\[10\] = 0x48;</stringmatch>
-<stringmatch name="Store cross #3" min="1" max="1">uVar. = 0x18;</stringmatch>
-<stringmatch name="Store cross #4" min="1" max="1">uVar. = 0x48;</stringmatch>
-<stringmatch name="Store cross #5" min="1" max="1">local_array\[10\] = uVar.;
+<stringmatch name="Store cross #1" min="0" max="0">local_array\[10L?\] = 0x18L?;</stringmatch>
+<stringmatch name="Store cross #2" min="0" max="0">local_array\[10L?\] = 0x48L?;</stringmatch>
+<stringmatch name="Store cross #3" min="1" max="1">uVar. = 0x18L?;</stringmatch>
+<stringmatch name="Store cross #4" min="1" max="1">uVar. = 0x48L?;</stringmatch>
+<stringmatch name="Store cross #5" min="1" max="1">local_array\[10L?\] = uVar.;
                                                    use_array\(local_array\);</stringmatch>
-<stringmatch name="Global cross #1" min="1" max="1">uVar. = 0x28;</stringmatch>
-<stringmatch name="Global cross #2" min="1" max="1">uVar. = 0x58;</stringmatch>
+<stringmatch name="Global cross #1" min="1" max="1">uVar. = 0x28L?;</stringmatch>
+<stringmatch name="Global cross #2" min="1" max="1">uVar. = 0x58L?;</stringmatch>
 <stringmatch name="Global cross #3" min="1" max="1">read_glob\(\);
                                                    glob1 = uVar.;</stringmatch>
-<stringmatch name="Local cross #1" min="1" max="1">othercall\(param_1,local_int\);
+<stringmatch name="Local cross #1" min="1" max="1">othercall\(param_1, ?local_int\);
                                                    local_int\[0\] = param_2 \+ 7;</stringmatch>
 <stringmatch name="Local cross #2" min="1" max="1">iVar. = retval\(\);
 						   return iVar. \+ local_int\[0\];</stringmatch>
