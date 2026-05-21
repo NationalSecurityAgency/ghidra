@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 #include "ifacedecomp.hh"
+#include <fstream>
 
 namespace ghidra {
+
+string FunctionTestCollection::dumpDir;
 
 void FunctionTestProperty::startTest(void) const
 
@@ -328,6 +331,21 @@ void FunctionTestCollection::runTests(list<string> &lateStream)
     return;
   }
   string result = bulkout.str();
+  if (!dumpDir.empty()) {
+    // Sprint 9 audit (issue #215): dump the raw decompiler output for this
+    // file so the workflow can compare expected stringmatch regexes against
+    // what the decompiler actually emitted. Strip the path; keep only the
+    // basename so a single dumpDir holds all .actual files flat.
+    string base = fileName;
+    string::size_type slash = base.find_last_of("/\\");
+    if (slash != string::npos)
+      base = base.substr(slash + 1);
+    string::size_type dot = base.rfind('.');
+    if (dot != string::npos)
+      base = base.substr(0, dot);
+    std::ofstream actual((dumpDir + "/" + base + ".actual").c_str());
+    actual << result;
+  }
   if (result.size() == 0) {
     ostringstream fs;
     fs << "No output for " << fileName;

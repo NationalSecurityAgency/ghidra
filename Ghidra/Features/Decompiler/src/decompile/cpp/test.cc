@@ -148,8 +148,17 @@ int main(int argc, char **argv) {
       dataTestNames.insert(argv + 1,argv + argc);
       break;
     }
+    else if (command == "-dumpdir") {
+      // Sprint 9 audit support (issue #215): when set, the test harness
+      // writes <dumpdir>/<testfile-basename>.actual containing the raw
+      // decompiler output for each datatest file. Lets audit-datatests.yml
+      // categorize cosmetic-regex-drift vs. real-regression failures.
+      FunctionTestCollection::dumpDir = argv[1];
+      argv += 2;
+      argc -= 2;
+    }
     else {
-      cout << "USAGE: ghidra_test [-usesleighenv] [-sleighpath <sleighdir>] [-path <datatestdir>] [[unittests|datatests] [testname1 testname2 ...]]" << endl;
+      cout << "USAGE: ghidra_test [-usesleighenv] [-sleighpath <sleighdir>] [-path <datatestdir>] [-dumpdir <actualdir>] [[unittests|datatests] [testname1 testname2 ...]]" << endl;
       return -1;
     }
   }
