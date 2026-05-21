@@ -588,8 +588,9 @@ class ActionConditionalConst : public Action {
   static Varnode *placeCopy(PcodeOp *op,BlockBasic *bl,Varnode *constVn,Funcdata &data);
   static void findConstCompare(list<ConstPoint> &points,Varnode *boolVn,FlowBlock *bl,bool *blockDom,bool flipEdge);
   static void pushConstant(list<ConstPoint> &points,PcodeOp *op);
-  static void placeMultipleConstants(vector<PcodeOpNode> &phiNodeEdges,vector<int4> &marks,Varnode *constVn,Funcdata &data);
-  void handlePhiNodes(Varnode *varVn,Varnode *constVn,vector<PcodeOpNode> &phiNodeEdges,Funcdata &data);
+  static void placeMultipleConstants(vector<PcodeOpNode> &phiNodeEdges,vector<int4> &marks,FlowBlock *constBlock,
+				     Varnode *constVn,Funcdata &data);
+  void handlePhiNodes(Varnode *varVn,FlowBlock *constBlock,Varnode *constVn,vector<PcodeOpNode> &phiNodeEdges,Funcdata &data);
   bool testAlternatePath(Varnode *vn,PcodeOp *op,int4 slot,int4 depth);
   void propagateConstant(list<ConstPoint> &points,bool useMultiequal,Funcdata &data);
 public:

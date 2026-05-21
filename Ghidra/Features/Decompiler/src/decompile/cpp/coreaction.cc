@@ -4323,7 +4323,7 @@ Varnode *ActionConditionalConst::placeCopy(PcodeOp *op,BlockBasic *bl,Varnode *c
 /// \param marks are the marks applied to the MULTIEQUALs (2 == flowtogether)
 /// \param constVn is the constant being assigned by the COPY
 /// \param data is the function
-void ActionConditionalConst::placeMultipleConstants(vector<PcodeOpNode> &phiNodeEdges,vector<int4> &marks,
+void ActionConditionalConst::placeMultipleConstants(vector<PcodeOpNode> &phiNodeEdges,vector<int4> &marks,FlowBlock *constBlock,
 						    Varnode *constVn,Funcdata &data)
 {
   vector<FlowBlock *> blocks;
@@ -4336,6 +4336,8 @@ void ActionConditionalConst::placeMultipleConstants(vector<PcodeOpNode> &phiNode
     blocks.push_back(bl);
   }
   BlockBasic *rootBlock = (BlockBasic *)FlowBlock::findCommonBlock(blocks);
+  if (constBlock->dominates(rootBlock))
+    rootBlock = (BlockBasic *)constBlock;
   Varnode *outVn = placeCopy(op, rootBlock, constVn, data);
   for(int4 i=0;i<phiNodeEdges.size();++i) {
     if (marks[i] != 2) continue;
@@ -4383,10 +4385,12 @@ void ActionConditionalConst::pushConstant(list<ConstPoint> &points,PcodeOp *op)
 /// data-flow, and the output of a MULTIEQUAL does not rejoin with the Varnode along an alternate path, then that
 /// edge is replaced with a constant.
 /// \param varVn is the given Varnode
+/// \param constBlock is the block from which the constant path starts
 /// \param constVn is the constant to replace it with
 /// \param phiNodeEdges is the set of edges the Varnode is known to be constant on
 /// \param data is the function containing this data-flow
-void ActionConditionalConst::handlePhiNodes(Varnode *varVn,Varnode *constVn,vector<PcodeOpNode> &phiNodeEdges,Funcdata &data)
+void ActionConditionalConst::handlePhiNodes(Varnode *varVn,FlowBlock *constBlock,Varnode *constVn,
+					    vector<PcodeOpNode> &phiNodeEdges,Funcdata &data)
 
 {
   vector<PcodeOp *> alternateFlow;
@@ -4416,12 +4420,14 @@ void ActionConditionalConst::handlePhiNodes(Varnode *varVn,Varnode *constVn,vect
     PcodeOp *op = phiNodeEdges[i].op;
     int4 slot = phiNodeEdges[i].slot;
     BlockBasic *bl = (BlockBasic *)op->getParent()->getIn(slot);
+    if (constBlock->dominates(bl))
+      bl = (BlockBasic *)constBlock;
     Varnode *outVn = placeCopy(op, bl, constVn, data);
     data.opSetInput(op,outVn,slot);
     count += 1;
   }
   if (hasFlowTogether) {
-    placeMultipleConstants(phiNodeEdges, results, constVn, data);	// Add COPY assignment for edges that flow together
+    placeMultipleConstants(phiNodeEdges, results, constBlock, constVn, data);	// Add COPY assignment for edges that flow together
     count += 1;
   }
 }
@@ -4549,7 +4555,7 @@ void ActionConditionalConst::propagateConstant(list<ConstPoint> &points,bool use
     if (!phiNodeEdges.empty()) {
       if (constVn == (Varnode *)0)
 	constVn = data.newConstant(varVn->getSize(), point.value);
-      handlePhiNodes(varVn, constVn, phiNodeEdges, data);
+      handlePhiNodes(varVn, constBlock, constVn, phiNodeEdges, data);
       phiNodeEdges.clear();
     }
     points.pop_front();
