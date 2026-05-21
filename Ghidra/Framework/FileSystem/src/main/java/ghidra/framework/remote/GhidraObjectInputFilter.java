@@ -65,7 +65,7 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 	private static final String MAXBYTES = "maxbytes";
 
 	// NOTE: Be sure to update serialFilterREADME.md if values are updated.
-	private int MAXARRAY_DEFAULT = 32_000;
+	private int MAXARRAY_DEFAULT = 200_000;
 	private int MAXREFS_DEFAULT = 10_000;
 	private int MAXDEPTH_DEFAULT = 50;
 	private int MAXBYTES_DEFAULT = 32 * 1024 * 1024; // 32MB
