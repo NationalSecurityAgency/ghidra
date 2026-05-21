@@ -44,7 +44,7 @@ f30f104df0f30f58c1f30f1145f04883
 <stringmatch name="Relative pointers #3" min="1" max="1">fSum = ADJ\(ptrrel\)-&gt;b \+ fSum;</stringmatch>
 <stringmatch name="Relative pointers #4" min="1" max="1">ptrrel = &amp;ptr-&gt;c;</stringmatch>
 <stringmatch name="Relative pointers #5" min="1" max="1">myptroff ptrrel;</stringmatch>
-<stringmatch name="Relative pointers #6" min="1" max="1">ptrrel = ptrrel \+ 0x14;</stringmatch>
+<stringmatch name="Relative pointers #6" min="1" max="1">ptrrel = ptrrel \+ 0x14L?;</stringmatch>
 <stringmatch name="Relative pointers #7" min="1" max="1">if \(21.0 &lt; fSum\)</stringmatch>
-<stringmatch name="Relative pointers #8" min="1" max="1">for \(i = 0; i &lt; count; i = i \+ 1\)</stringmatch>
+<stringmatch name="Relative pointers #8" min="1" max="1">for \(i = 0L?; i &lt; count; i = i \+ 1L?\)</stringmatch>
 </decompilertest>

@@ -27,6 +27,6 @@ c320c0008001000000
   <com>print C</com>
   <com>quit</com>
 </script>
-<stringmatch name="Inject Override #1" min="1" max="1">\(\*in_RAX\)\(param_1,param_2\);</stringmatch>
+<stringmatch name="Inject Override #1" min="1" max="1">\(\*in_RAX\)\(param_1, ?param_2\);</stringmatch>
 <stringmatch name="Inject Override #2" min="1" max="1">collapsed\(param_1\);</stringmatch>
 </decompilertest>

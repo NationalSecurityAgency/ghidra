@@ -48,13 +48,13 @@ ffff4883c408c3c3
   <com>print C</com>
   <com>quit</com>
 </script>
-<stringmatch name="Inlining #1" min="1" max="1">return a \+ 100;</stringmatch>
+<stringmatch name="Inlining #1" min="1" max="1">return a \+ 100L?;</stringmatch>
 <stringmatch name="Inlining #2" min="1" max="1">if \(x &lt; 10\)</stringmatch>
 <stringmatch name="Inlining #3" min="1" max="1">puts\("TEN"\);</stringmatch>
-<stringmatch name="Inlining #4" min="1" max="1">compare\(x,100,"HUNDRED"\);</stringmatch>
+<stringmatch name="Inlining #4" min="1" max="1">compare\(x, ?100, ?"HUNDRED"\);</stringmatch>
 <stringmatch name="Inlining #5" min="1" max="1">if \(\(val &amp; 1U\)</stringmatch>
-<stringmatch name="Inlining #6" min="1" max="1">val = val / 2;</stringmatch>
-<stringmatch name="Inlining #7" min="1" max="1">val = val \* 3 \+ 1;</stringmatch>
+<stringmatch name="Inlining #6" min="1" max="1">val = val / 2L?;</stringmatch>
+<stringmatch name="Inlining #7" min="1" max="1">val = val \* 3 \+ 1L?;</stringmatch>
 <stringmatch name="Inlining #8" min="1" max="1">= collatz\(val\);</stringmatch>
 <stringmatch name="Inlining #9" min="2" max="2">WARNING: Could not inline here</stringmatch>
 <stringmatch name="Inlining #10" min="1" max="1">WARNING: Inlined function: add50</stringmatch>

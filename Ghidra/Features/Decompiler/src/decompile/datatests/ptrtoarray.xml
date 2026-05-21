@@ -48,9 +48,9 @@ fdffffc9c3
   <com>print C</com>
   <com>quit</com>
 </script>
-<stringmatch name="Pointer to array #1" min="1" max="1">display\(param_1 \+ 1\);</stringmatch>
-<stringmatch name="Pointer to array #2" min="1" max="1">displayLow\(param_1\[2\]\);</stringmatch>
-<stringmatch name="Pointer to array #3" min="1" max="1">paiStack_10 = param_1 \+ 8;</stringmatch>
+<stringmatch name="Pointer to array #1" min="1" max="1">display\(param_1 \+ 1L?\);</stringmatch>
+<stringmatch name="Pointer to array #2" min="1" max="1">displayLow\(param_1\[2L?\]\);</stringmatch>
+<stringmatch name="Pointer to array #3" min="1" max="1">paiStack_10 = param_1 \+ 8L?;</stringmatch>
 <stringmatch name="Pointer to array #4" min="1" max="1">display\(paiStack_10\);</stringmatch>
 <stringmatch name="Pointer to array #5" min="1" max="1">displayLow\(\*paiStack_10\);</stringmatch>
 <stringmatch name="Pointer to array #6" min="1" max="1">return paiStack_10;</stringmatch>

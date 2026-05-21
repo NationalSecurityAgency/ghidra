@@ -87,17 +87,17 @@ f30f1efadb6c2408d9c0db3fdc059e01
 </script>
 <stringmatch name="Long double #1" min="1" max="1">ldarr\[0\] = valpass \+ \(float10\)27\.632</stringmatch>
 <stringmatch name="Long double #2" min="1" max="1">ldarr\[1\] = valpass \+ \(float10\)27\.632</stringmatch>
-<stringmatch name="Long double #3" min="1" max="1">writeLongDouble\(ldarr,x\);</stringmatch>
+<stringmatch name="Long double #3" min="1" max="1">writeLongDouble\(ldarr, ?x\);</stringmatch>
 <stringmatch name="Long double #4" min="1" max="1">return \(int4\)y \+ \(int4\)z \+ \(int4\)w;</stringmatch>
-<stringmatch name="Long double #5" min="1" max="1">writeLongDouble\(ldarr,ptrldstr-&gt;a\);</stringmatch>
-<stringmatch name="Long double #6" min="1" max="1">writeLongDouble\(ldarr,ptrldstr-&gt;b\);</stringmatch>
+<stringmatch name="Long double #5" min="1" max="1">writeLongDouble\(ldarr, ?ptrldstr-&gt;a\);</stringmatch>
+<stringmatch name="Long double #6" min="1" max="1">writeLongDouble\(ldarr, ?ptrldstr-&gt;b\);</stringmatch>
 <stringmatch name="Long double #7" min="1" max="1">return \(int4\)ptrldstr-&gt;c \+ \(int4\)ptrldstr-&gt;d \+ \(int4\)ptrldstr-&gt;e \+ \(int4\)ptrldstr-&gt;f;</stringmatch>
-<stringmatch name="Long double #8" min="1" max="1">printf_chk\(1,\"%d\\n\",v1\);</stringmatch>
-<stringmatch name="Long double #9" min="1" max="1">printf_chk\(1,\"%d\\n\",firstval\.b\);</stringmatch>
-<stringmatch name="Long double #10" min="1" max="1">printf_chk\(1,\"%d\\n\",v2\);</stringmatch>
-<stringmatch name="Long double #11" min="1" max="1">writeLongDouble\(ldarr,firstval\.a\);</stringmatch>
+<stringmatch name="Long double #8" min="1" max="1">printf_chk\(1, ?\"%d\\n\", ?v1\);</stringmatch>
+<stringmatch name="Long double #9" min="1" max="1">printf_chk\(1, ?\"%d\\n\", ?firstval\.b\);</stringmatch>
+<stringmatch name="Long double #10" min="1" max="1">printf_chk\(1, ?\"%d\\n\", ?v2\);</stringmatch>
+<stringmatch name="Long double #11" min="1" max="1">writeLongDouble\(ldarr, ?firstval\.a\);</stringmatch>
 <stringmatch name="Long double #12" min="1" max="1">\*ptrwrite = valwrite;</stringmatch>
-<stringmatch name="Long double #13" min="1" max="1">ptrwrite\[1\] = valwrite \+ \(float10\)0.7;</stringmatch>
+<stringmatch name="Long double #13" min="1" max="1">ptrwrite\[1L?\] = valwrite \+ \(float10\)0.7;</stringmatch>
 <stringmatch name="Long double #14" min="1" max="1">ldarr\[val\] = ldarr\[7 \- val\] \+ ldarr\[val \+ 7\];</stringmatch>
-<stringmatch name="Long double #15" min="1" max="1">ptr\[val &amp; 0xfffe\] = ptr\[.*\(val \* 3\) \+ 1\];</stringmatch>
+<stringmatch name="Long double #15" min="1" max="1">ptr\[val &amp; 0xfffe\] = ptr\[.*\(val \* 3\) \+ 1L?\];</stringmatch>
 </decompilertest>

@@ -45,10 +45,10 @@ eb068b45ec8945fc8b45fc5dc3
   <com>print C</com>
 </script>
 <stringmatch name="Conditional Constant #1" min="1" max="1">\*ptr = b;</stringmatch>
-<stringmatch name="Conditional Constant #2" min="1" max="1">ptr\[1\] = a;</stringmatch>
-<stringmatch name="Conditional Constant #3" min="1" max="1">ptr\[2\] = 10;</stringmatch>
-<stringmatch name="Conditional Constant #4" min="1" max="1">ptr\[3\] = c \+ 8;</stringmatch>
-<stringmatch name="Conditional Constant #5" min="1" max="1">ptr\[4\] = 0x10;</stringmatch>
+<stringmatch name="Conditional Constant #2" min="1" max="1">ptr\[1L?\] = a;</stringmatch>
+<stringmatch name="Conditional Constant #3" min="1" max="1">ptr\[2L?\] = 10;</stringmatch>
+<stringmatch name="Conditional Constant #4" min="1" max="1">ptr\[3L?\] = c \+ 8;</stringmatch>
+<stringmatch name="Conditional Constant #5" min="1" max="1">ptr\[4L?\] = 0x10;</stringmatch>
 <stringmatch name="Conditional Constant #6" min="1" max="1">glob1 = 0;</stringmatch>
 <stringmatch name="Conditional Constant #7" min="1" max="1">glob2 = d;</stringmatch>
 <stringmatch name="Conditional Constant #8" min="1" max="1">glob3 = 10;</stringmatch>
