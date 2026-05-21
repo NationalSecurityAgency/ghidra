@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,19 +56,28 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 
 		private final Socket socket;
 		private final InputStream in;
-
+		private final Inflater inf;
+		
 		private int blocksRemaining = getBlockCount();
 
 		ClientInputBlockStream(Socket socket) throws IOException {
 			this.socket = socket;
-			in = compressed ? new InflaterInputStream(socket.getInputStream())
-					: socket.getInputStream();
+			if (compressed) {
+				inf = new Inflater();
+				in = new InflaterInputStream(socket.getInputStream(), inf);
+			} else {
+				in = socket.getInputStream();
+				inf = null;
+			}
 		}
 
 		@Override
 		public void close() throws IOException {
 			in.close();
 			socket.close();
+			if (inf != null) {
+				inf.end(); // get rid of any native memory rather than waiting for GC
+			}
 		}
 
 		@Override
@@ -153,24 +162,33 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 	private void copyBlockData(InputBlockStream inputBlockStream, OutputStream out)
 			throws IOException {
 
-		if (compressed) {
-			out = new DeflaterOutputStream(out, new Deflater(Deflater.BEST_SPEED));
-		}
-
-		int blocksRemaining = getBlockCount();
-
-		BufferFileBlock block;
-		while ((block = inputBlockStream.readBlock()) != null) {
-			if (blocksRemaining == 0) {
-				throw new IOException("unexpected data in stream");
+		Deflater def = null;
+		
+		try {
+			if (compressed) {
+				def = new Deflater(Deflater.BEST_SPEED);
+				out = new DeflaterOutputStream(out, def);
 			}
-			out.write(block.toBytes());
-			--blocksRemaining;
-		}
-
-		// done with compressed stream, force compressed data to flush
-		if (out instanceof DeflaterOutputStream) {
-			((DeflaterOutputStream) out).finish();
+	
+			int blocksRemaining = getBlockCount();
+	
+			BufferFileBlock block;
+			while ((block = inputBlockStream.readBlock()) != null) {
+				if (blocksRemaining == 0) {
+					throw new IOException("unexpected data in stream");
+				}
+				out.write(block.toBytes());
+				--blocksRemaining;
+			}
+	
+			// done with compressed stream, force compressed data to flush
+			if (out instanceof DeflaterOutputStream) {
+				((DeflaterOutputStream) out).finish();
+			}
+		} finally {
+			if (def != null) {
+				def.end();
+			}
 		}
 	}
 

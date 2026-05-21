@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -155,23 +155,27 @@ public class ZLIB {
 
             Deflater deflater = new Deflater( 0, noWrap );
 
-           	deflater.setInput( decompressedBytes, offset, decompressedBytes.length - offset );
-
-           	deflater.finish();
-
-            if ( deflater.needsInput() ) {
-            	System.out.println( "needs input??" );
+            try {
+	           	deflater.setInput( decompressedBytes, offset, decompressedBytes.length - offset );
+	
+	           	deflater.finish();
+	
+	            if ( deflater.needsInput() ) {
+	            	System.out.println( "needs input??" );
+	            }
+	
+	            int nDeflated = deflater.deflate( tempBuffer );
+	
+	            if ( nDeflated == 0 ) {
+	            	break;
+	            }
+	
+	            compressedBOS.write( tempBuffer, 0, nDeflated );
+	
+	            offset += deflater.getTotalIn();
+            } finally {
+            	deflater.end();
             }
-
-            int nDeflated = deflater.deflate( tempBuffer );
-
-            if ( nDeflated == 0 ) {
-            	break;
-            }
-
-            compressedBOS.write( tempBuffer, 0, nDeflated );
-
-            offset += deflater.getTotalIn();
     	}
 
         return compressedBOS;

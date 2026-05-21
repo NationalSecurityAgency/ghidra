@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -331,22 +331,26 @@ public class DataBuffer implements Buffer, Externalizable {
 	private static int deflateData(byte[] data, byte[] compressedData) {
 
 		Deflater deflate = new Deflater(Deflater.BEST_COMPRESSION, true);
-		deflate.setStrategy(Deflater.HUFFMAN_ONLY);
-		deflate.setInput(data, 0, data.length);
-		deflate.finish();
-
-		int compressedDataOffset = 0;
-
-		while (!deflate.finished() && compressedDataOffset < compressedData.length) {
-			compressedDataOffset += deflate.deflate(compressedData, compressedDataOffset,
-				compressedData.length - compressedDataOffset, Deflater.SYNC_FLUSH);
+		try {
+			deflate.setStrategy(Deflater.HUFFMAN_ONLY);
+			deflate.setInput(data, 0, data.length);
+			deflate.finish();
+	
+			int compressedDataOffset = 0;
+	
+			while (!deflate.finished() && compressedDataOffset < compressedData.length) {
+				compressedDataOffset += deflate.deflate(compressedData, compressedDataOffset,
+					compressedData.length - compressedDataOffset, Deflater.SYNC_FLUSH);
+			}
+	
+			if (!deflate.finished()) {
+				return -1;
+			}
+			
+			return compressedDataOffset;
+		} finally {
+			deflate.end();  // get rid of any native memory rather than waiting for GC
 		}
-
-		if (!deflate.finished()) {
-			return -1;
-		}
-
-		return compressedDataOffset;
 	}
 
 	@Override
@@ -429,6 +433,9 @@ public class DataBuffer implements Buffer, Externalizable {
 		}
 		catch (DataFormatException e) {
 			throw new IOException("DataBuffer inflation failed", e);
+		}
+		finally {
+			inflater.end();  // get rid of any native memory rather than waiting for GC
 		}
 	}
 
