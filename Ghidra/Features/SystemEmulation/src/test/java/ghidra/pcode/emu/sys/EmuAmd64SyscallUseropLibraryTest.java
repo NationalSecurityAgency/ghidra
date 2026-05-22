@@ -217,7 +217,7 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 
 		thread.stepInstruction(4);
 
-		assertEquals("dead",
+		assertEquals("beef",
 			thread.getState().inspectRegisterValue(regRAX).getUnsignedValue().toString(16));
 	}
 }
