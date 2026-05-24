@@ -107,32 +107,24 @@
 # fmax.s D,S,T 28001053 fe00707f SIMPLE (0, 0) 
 :fmax.s frd,frs1S,frs2S is frs1S & frd & frs2S & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x14
 {
-	#TODO  redo this
-	local tmpfrs1 = frs1S;
-	local tmpfrs2 = frs2S;
-	fassignS(frd, tmpfrs1);
-	if (nan(tmpfrs1) && nan(tmpfrs2)) goto inst_next;
-	if (nan(tmpfrs2)) goto inst_next;
-	fassignS(frd, tmpfrs2);
-	if (nan(tmpfrs1)) goto inst_next;
-	if (tmpfrs2 f>= tmpfrs1) goto inst_next;
-	fassignS(frd, tmpfrs1);
+	local tmp:$(SFLEN) = frs1S;
+	if (frs1S f> frs2S) goto <WRITE>;
+	if (nan(frs2S)) goto <WRITE>;
+	tmp = frs2S;
+	<WRITE>
+	fassignS(frd, tmp);
 }
 
 
 # fmin.s D,S,T 28000053 fe00707f SIMPLE (0, 0) 
 :fmin.s frd,frs1S,frs2S is frs1S & frd & frs2S & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x14
 {
-	#TODO  redo this
-	local tmpfrs1 = frs1S;
-	local tmpfrs2 = frs2S;
-	fassignS(frd, tmpfrs1);
-	if (nan(tmpfrs1) && nan(tmpfrs2)) goto inst_next;
-	if (nan(tmpfrs2)) goto inst_next;
-	fassignS(frd, tmpfrs2);
-	if (nan(tmpfrs1)) goto inst_next;
-	if (tmpfrs2 f<= tmpfrs1) goto inst_next;
-	fassignS(frd, tmpfrs1);
+	local tmp:$(SFLEN) = frs1S;
+	if (frs1S f< frs2S) goto <WRITE>;
+	if (nan(frs2S)) goto <WRITE>;
+	tmp = frs2S;
+	<WRITE>
+	fassignS(frd, tmp);
 }
 
 

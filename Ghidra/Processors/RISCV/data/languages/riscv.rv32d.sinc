@@ -122,32 +122,24 @@
 # fmax.d D,S,T 2a001053 fe00707f SIMPLE (0, 0) 
 :fmax.d frd,frs1D,frs2D is frs1D & frd & frs2D & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x15
 {
-	#TODO  redo this
-	local tmpfrs1 = frs1D;
-	local tmpfrs2 = frs2D;
-	frd = tmpfrs1;
-	if (nan(tmpfrs1) && nan(tmpfrs2)) goto inst_next;
-	if (nan(tmpfrs2)) goto inst_next;
-	frd = tmpfrs2;
-	if (nan(tmpfrs1)) goto inst_next;
-	if (tmpfrs2 f> tmpfrs1) goto inst_next;
-	frd = tmpfrs1;
+	local tmp:$(DFLEN) = frs1D;
+	if (frs1D f> frs2D) goto <WRITE>;
+	if (nan(frs2D)) goto <WRITE>;
+	tmp = frs2D;
+	<WRITE>
+	frd = tmp;
 }
 
 
 # fmin.d D,S,T 2a000053 fe00707f SIMPLE (0, 0) 
 :fmin.d frd,frs1D,frs2D is frs1D & frd & frs2D & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x15
 {
-	#TODO  redo this
-	local tmpfrs1 = frs1D;
-	local tmpfrs2 = frs2D;
-	frd = tmpfrs1;
-	if (nan(tmpfrs1) && nan(tmpfrs2)) goto inst_next;
-	if (nan(tmpfrs2)) goto inst_next;
-	frd = tmpfrs2;
-	if (nan(tmpfrs1)) goto inst_next;
-	if (tmpfrs2 f<= tmpfrs1) goto inst_next;
-	frd = tmpfrs1;
+	local tmp:$(DFLEN) = frs1D;
+	if (frs1D f< frs2D) goto <WRITE>;
+	if (nan(frs2D)) goto <WRITE>;
+	tmp = frs2D;
+	<WRITE>
+	frd = tmp;
 }
 
 
