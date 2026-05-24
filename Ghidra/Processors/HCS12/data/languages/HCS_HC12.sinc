@@ -251,41 +251,38 @@ define pcodeop backgroundDebugMode;
 macro setHCSphysPage(addr) {
 	local a3:3 = zext(addr);
 	
-	local isReg:1         = (a3  & 0xfC00) == 0x0;
-	local isEpage:1      = (a3 & 0xfc00) ==0x800;
+	local isReg:1      = (a3 & 0xfc00) ==0x0;
+	local isEpage:1    = (a3 & 0xfc00) ==0x800;
 	local isEpage_FF:1 = (a3 & 0xfc00) ==0xC00;
-	local isRpage:1      = (a3 & 0xf000) ==0x1000;
+	local isRpage:1    = (a3 & 0xf000) ==0x1000;
 	local isRpage_FE:1 = (a3 & 0xf000) ==0x2000;
 	local isRpage_FF:1 = (a3 & 0xf000) ==0x3000;
 	local isPpage_FD:1 = (a3 & 0xc000) ==0x4000;
-	local isPpage:1       = (a3 & 0xc000) ==0x8000;
+	local isPpage:1    = (a3 & 0xc000) ==0x8000;
 	local isPpage_FF:1 = (a3 & 0xc000) ==0xC000;
 	
-	physPage = (zext(isReg) *          0x0) +
-	                       (zext(isEpage) *      (0x100000 | ((zext(EPAGE) << 10) ^ 0x800))) +
-	                       (zext(isEpage_FF) * ((0x4FF << 10) ^ 0xC00)) +
-	                       (zext(isRpage) *      (((zext(RPAGE) << 12) ^ 0x1000))) +
-	                       (zext(isRpage_FE) * (((0xFE << 12) ^ 0x2000))) +
-	                       (zext(isRpage_FF) * (((0xFF << 12) ^ 0x3000))) +
-	                       (zext(isPpage_FD) * (0x400000 | ((0x3F4000) ^ 0x4000))) +
-	                       (zext(isPpage) *       (0x400000 | ((zext(PPAGE) << 14 ) ^ 0x8000))) +
-	                       (zext(isPpage_FF) * (0x400000 | ((0x3FC000) ^ 0xC000))) ;
+	physPage = (zext(isReg) *      0x0) +
+	           (zext(isEpage) *    (0x100000 | ((zext(EPAGE) << 10) ^ 0x800))) +
+	           (zext(isEpage_FF) * ((0x4FF << 10) ^ 0xC00)) +
+	           (zext(isRpage) *    (((zext(RPAGE) << 12) ^ 0x1000))) +
+	           (zext(isRpage_FE) * (((0xFE << 12) ^ 0x2000))) +
+	           (zext(isRpage_FF) * (((0xFF << 12) ^ 0x3000))) +
+	           (zext(isPpage_FD) * (0x400000 | ((0x3F4000) ^ 0x4000))) +
+	           (zext(isPpage) *    (0x400000 | ((zext(PPAGE) << 14 ) ^ 0x8000))) +
+	           (zext(isPpage_FF) * (0x400000 | ((0x3FC000) ^ 0xC000))) ;
 }
 @elif defined(HCS12)  && SIZE=="3"
 macro setHCSphysPage(addr) {
-	local a3:3 = zext(addr);
-
-	local isPpage_3D:1 = (a3 & 0xc000) ==0x0000;
-	local isPpage_3E:1 = (a3 & 0xc000) ==0x4000;
-	local isPpage:1    = (a3 & 0xc000) ==0x8000;
-	local isPpage_3F:1 = (a3 & 0xc000) ==0xC000;
+	# TODO some devices have paged RAM and EEPROM like modern HCS12X
+#	local isNonPaged:1 = (addr & 0xc000) ==0x0000;
+	local isPpage_3E:1 = (addr & 0xc000) ==0x4000;
+	local isPpage:1    = (addr & 0xc000) ==0x8000;
+	local isPpage_3F:1 = (addr & 0xc000) ==0xC000;
 	
-#	physPage = (zext(isPpage)    * (0x000000 | ((zext(PPAGE) << 14 ) ^ 0x8000)));
-
-	physPage = (zext(isPpage_3D) * (0x000000 | ((0xF4000) ^ 0x0000))) +
-	           (zext(isPpage_3E) * (0x000000 | ((0xF8000) ^ 0x4000))) +
-	           (zext(isPpage)    * (0x000000 | ((zext(PPAGE) << 14 ) ^ 0x8000))) +
-	           (zext(isPpage_3F) * (0x000000 | ((0xFC000) ^ 0xC000))) ;
+	physPage = # (zext(isNonPaged) * 0) + # it's useless
+	           (zext(isPpage_3E) * ((0xF8000) ^ 0x4000)) +
+	           (zext(isPpage)    * ((zext(PPAGE) << 14 ) ^ 0x8000)) +
+	           (zext(isPpage_3F) * ((0xFC000) ^ 0xC000)) ;
 }
 @endif
 
@@ -373,9 +370,9 @@ opr16a:         imm16    is imm16p=0xD & imm16 & imm16pv { local addr:3 = 0x4000
 opr16a:         imm16    is imm16p=0xE & imm16 & imm16pv { local addr:3 = 0x400000; pageCAddr(addr,14,0xFF,imm16pv); export addr; }
 opr16a:         imm16    is imm16p=0xF & imm16 & imm16pv { local addr:3 = 0x400000; pageCAddr(addr,14,0xFF,imm16pv); export addr; }
 
-opr16a:			imm16    is imm16e & imm16                        { local addr:3 = imm16; export addr; }
+opr16a:			imm16    is imm16e & imm16          { local addr:3 = imm16; export addr; }
 
-opr8a:			imm8    is imm8                        { export *[const]:3 imm8; }
+opr8a:			imm8    is imm8                     { export *[const]:3 imm8; }
 
 opr8a_8:		imm8     is UseGPAGE=0 & imm8       { export *:1 imm8; }
 opr8a_8:		imm8     is UseGPAGE=1 & imm8       { local addr:3 = 0; pagePAddr(addr,16,GPAGE,imm8); export *:1 addr; }
@@ -383,9 +380,9 @@ opr8a_16:		imm8     is UseGPAGE=0 & imm8       { export *:2 imm8; }
 opr8a_16:		imm8     is UseGPAGE=1 & imm8       { local addr:3 = 0; pagePAddr(addr,16,GPAGE,imm8); export *:2 addr; }
 
 opr16a_8:	    opr16a   is UseGPAGE=0 & opr16a     { export *:1 opr16a; }
-opr16a_8:	    imm16   is UseGPAGE=1 & imm16      { local addr:3 = 0; pagePAddr(addr,16,GPAGE,imm16); export *:1 addr; }
+opr16a_8:	    imm16    is UseGPAGE=1 & imm16      { local addr:3 = 0; pagePAddr(addr,16,GPAGE,imm16); export *:1 addr; }
 opr16a_16:	    opr16a   is UseGPAGE=0 & opr16a     { export *:2 opr16a; }
-opr16a_16:	    imm16   is UseGPAGE=1 & imm16      { local addr:3 = 0; pagePAddr(addr,16,GPAGE,imm16); export *:2 addr; }
+opr16a_16:	    imm16    is UseGPAGE=1 & imm16      { local addr:3 = 0; pagePAddr(addr,16,GPAGE,imm16); export *:2 addr; }
 
 iopr8i:			"#"imm8  is imm8       { export *[const]:1 imm8; }
 iopr16i:		"#"imm16 is imm16      { export *[const]:2 imm16; }
@@ -402,14 +399,15 @@ page:		    imm8     is imm8       { export *[const]:1 imm8; }
 #PageDest: dest    is imm16p=0xf & imm16 & imm16pv ; imm8 [ dest = ($(MAXFLASHPage) << 16) | imm16; ] { 	 export *:1 dest; }
 PageDest: opr16a   is opr16a; page  { export opr16a; }
 
-@else
+@else # HC12 / HCS12
 
 
 @if SIZE=="3"
-opr16a:         imm16    is imm16p=0x0 & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3D,imm16pv); export addr; }
-opr16a:         imm16    is imm16p=0x1 & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3D,imm16pv); export addr; }
-opr16a:         imm16    is imm16p=0x2 & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3D,imm16pv); export addr; }
-opr16a:         imm16    is imm16p=0x3 & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3D,imm16pv); export addr; }
+
+opr16a:         imm16    is imm16p=0x0 & imm16 { local addr:3 = imm16; export addr; }
+opr16a:         imm16    is imm16p=0x1 & imm16 { local addr:3 = imm16; export addr; }
+opr16a:         imm16    is imm16p=0x2 & imm16 { local addr:3 = imm16; export addr; }
+opr16a:         imm16    is imm16p=0x3 & imm16 { local addr:3 = imm16; export addr; }
 
 opr16a:         imm16    is imm16p=0x4 & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3E,imm16pv); export addr; }
 opr16a:         imm16    is imm16p=0x5 & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3E,imm16pv); export addr; }
@@ -559,7 +557,7 @@ IDX_m: [D, rr4_3]		is  xb7_5=0b111 & rr4_3 & xb2_0=0b111 & D
 	{ address:2 = rr4_3 + D; Load2(address,address); export address; }	
 
 IDX_m: [D, PC]		is  xb7_5=0b111 & rr4_3=3 & xb2_0=0b111 & D & PC
-	{ address:2 = inst_next + D; Load2(address,address); export address; }	
+	{ address:3 = inst_next + zext(D); export *:2 address; }
 
 ######################################################################
 ######################################################################
