@@ -27,7 +27,7 @@
 
 
 # fcvt.d.s D,S 42000053 fff0707f SIMPLE (0, 0) 
-:fcvt.d.s frd,frs1S is frs1S & frd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x21 & op2024=0x0
+:fcvt.d.s frd,frs1S,FRM is frs1S & frd & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x21 & op2024=0x0
 {
 	local tmp:8 = float2float(frs1S);
 	frd = tmp;
@@ -35,7 +35,7 @@
 
 
 # fcvt.d.w D,s d2000053 fff0707f SIMPLE (0, 0) 
-:fcvt.d.w frd,rs1W is frd & rs1W & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x69 & op2024=0x0
+:fcvt.d.w frd,rs1W,FRM is frd & rs1W & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x69 & op2024=0x0
 {
 	local tmp:8 = int2float(rs1W);
 	frd = tmp;
@@ -43,7 +43,7 @@
 
 
 # fcvt.d.wu D,s d2100053 fff0707f SIMPLE (0, 0) 
-:fcvt.d.wu frd,rs1W is frd & rs1W & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x69 & op2024=0x1
+:fcvt.d.wu frd,rs1W,FRM is frd & rs1W & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x69 & op2024=0x1
 {
 	#ATTN  unsigned can be an issue here
 	local u32:$(XLEN2) = zext(rs1W);
