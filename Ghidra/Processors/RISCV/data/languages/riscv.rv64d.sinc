@@ -41,7 +41,5 @@
 
 :fmv.x.d rdL,frs1D is frs1D & rdL & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x71 & op2024=0x0
 {
-	local tmpreg:4 = &frs1D;
-	local tmp:8 = *[register]:8 tmpreg;
-	rdL = tmp;
+	rdL = frs1D;
 }
