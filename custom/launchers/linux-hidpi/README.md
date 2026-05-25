@@ -4,6 +4,16 @@ A Linux `.desktop` launcher setup for starting Ghidra with Java UI-scaling and f
 
 This was developed while running Ghidra on a Lenovo ThinkPad X13s ARM64 Linux setup, but the launcher template can be adapted for other Linux machines.
 
+## Screenshots
+
+![Ghidra running with HiDPI scaling applied](screenshots/Screenshot_From_2026-05-25_07-12-14.png)
+
+*Ghidra running with the HiDPI launcher. The Java/Swing UI is scaled up via `-Dsun.java2d.uiScale=2.5` with font antialiasing enabled — readable on the ThinkPad X13s built-in display.*
+
+![Application menu showing the installed launcher entries](screenshots/Screenshot_From_2026-05-25_07-12-55.png)
+
+*Application menu after installing the launcher. The blank icon and duplicate "Ghidra" entries are cosmetic issues fixable by correcting the `Icon=` path and changing `Name=` to something distinct like `Ghidra (HiDPI)` in the `.desktop` file.*
+
 ## Why this exists
 
 Ghidra is a Java/Swing application. On some Linux desktop environments, especially high-DPI displays, the interface can render too small for comfortable reverse-engineering work.
