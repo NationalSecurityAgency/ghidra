@@ -32,6 +32,23 @@ The launcher starts Ghidra with these Java options:
 
 ## Install on your own Linux system
 
+### 0. Get the launcher template
+
+Either clone the repo and switch to this folder:
+
+```bash
+git clone https://github.com/WinnCore/ghidra.git
+cd ghidra
+git checkout hidpi-launcher-arm64
+cd custom/launchers/linux-hidpi
+```
+
+Or download just the template file directly, without cloning the whole repo:
+
+```bash
+curl -O https://raw.githubusercontent.com/WinnCore/ghidra/hidpi-launcher-arm64/custom/launchers/linux-hidpi/ghidra-hidpi-template.desktop
+```
+
 ### 1. Find your Ghidra install
 
 Find the `ghidraRun` file:
