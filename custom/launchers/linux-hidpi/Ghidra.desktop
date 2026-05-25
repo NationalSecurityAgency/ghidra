@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Ghidra
+Comment=Reverse Engineering Tool
+Exec=/opt/ghidra-11.4.1-arm64/ghidraRun
+Icon=/opt/ghidra-11.4.1-arm64/support/ghidra.png
+Terminal=false
+Categories=Development;

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Ghidra (Dev, scaled)
+Comment=Custom Ghidra with 2.5x UI scale
+Exec=env _JAVA_OPTIONS="-Dsun.java2d.uiScale=2.5 -Dswing.aatext=true -Dawt.useSystemAAFontSettings=on" "/home/zacharywinn/ghidra-src/build/dist/ghidra_12.1_DEV/ghidraRun"
+Icon=/home/zacharywinn/ghidra-src/build/dist/ghidra_12.1_DEV/support/ghidra.png
+Terminal=false
+Categories=Development;Utility;
