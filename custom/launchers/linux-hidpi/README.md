@@ -1,56 +1,57 @@
 # Ghidra Linux HiDPI Launcher
 
-A Linux `.desktop` launcher setup for starting Ghidra with Java UI-scaling and font-antialiasing options, so the CodeBrowser is easier to read on high-DPI Linux displays.
+A Linux `.desktop` launcher setup for starting Ghidra with Java UI-scaling and font-antialiasing options, so the Ghidra CodeBrowser is easier to read on high-DPI Linux displays.
+
+This was developed while running Ghidra on a Lenovo ThinkPad X13s ARM64 Linux setup, but the launcher template can be adapted for other Linux machines.
 
 ## Why this exists
 
-Ghidra is a Java/Swing application. On some HiDPI Linux setups, the default interface can render too small for comfortable reverse-engineering work. Swing applications may also ignore parts of the desktop font-smoothing configuration, which can make text look rough even when normal GTK applications look fine.
+Ghidra is a Java/Swing application. On some Linux desktop environments, especially high-DPI displays, the interface can render too small for comfortable reverse-engineering work.
 
-This launcher fixes that without modifying Ghidra source code. It passes Java `-D` properties to the JVM at startup.
+This launcher fixes that by passing Java display options to the JVM at startup.
 
-This setup was originally put together on a Lenovo ThinkPad X13s ARM64 Linux system, where Ghidra usability needed a few manual adjustments.
+This does not modify Ghidra source code. It only changes how Ghidra is launched.
 
-## What this changes
+## What it changes
 
-This does not modify Ghidra source code.
+The launcher starts Ghidra with these Java options:
 
-It starts Ghidra with:
-
-| Java option | Effect |
+| Option | Purpose |
 |---|---|
-| `-Dsun.java2d.uiScale=2.5` | Scales the Swing UI. Adjust this value for your display. |
-| `-Dswing.aatext=true` | Enables antialiased text rendering in Swing components. |
-| `-Dawt.useSystemAAFontSettings=on` | Tells AWT/Swing to use system font-smoothing settings. |
+| `-Dsun.java2d.uiScale=2.5` | Scales the Java/Swing interface. |
+| `-Dswing.aatext=true` | Enables antialiased text rendering. |
+| `-Dawt.useSystemAAFontSettings=on` | Uses system font-smoothing settings. |
 
 ## Files
 
-- `ghidra-dev.desktop`  
-  Local development launcher for a Ghidra dev build.
+| File | Purpose |
+|---|---|
+| `ghidra-dev.desktop` | My local launcher for a Ghidra development build. |
+| `Ghidra.desktop` | My local launcher for an installed ARM64 Ghidra build. |
+| `ghidra-hidpi-template.desktop` | Portable launcher template for other users. |
 
-- `Ghidra.desktop`  
-  Local launcher for an installed ARM64 Ghidra build.
+## Install on your own Linux system
 
-- `ghidra-hidpi-template.desktop`  
-  Portable `.desktop` launcher template. Edit the `Exec=` and `Icon=` paths before using it.
+### 1. Find your Ghidra install
 
-## Install on your own system
-
-### 1. Find your Ghidra install path
-
-Your Ghidra folder should contain a file named `ghidraRun`.
-
-Example locations:
-
-```bash
-/opt/ghidra-11.4.1/ghidraRun
-~/ghidra/ghidraRun
-~/Downloads/ghidra_11.x_PUBLIC/ghidraRun
-```
-
-Search for it with:
+Find the `ghidraRun` file:
 
 ```bash
 find ~ /opt -name ghidraRun 2>/dev/null
+```
+
+Common examples:
+
+```text
+/opt/ghidra-11.4.1/ghidraRun
+~/Downloads/ghidra_11.x_PUBLIC/ghidraRun
+~/ghidra/ghidraRun
+```
+
+Also find the icon:
+
+```bash
+find ~ /opt -path "*support/ghidra.png" 2>/dev/null
 ```
 
 ### 2. Copy the launcher template
@@ -61,15 +62,13 @@ From this folder:
 cp ghidra-hidpi-template.desktop ~/.local/share/applications/ghidra-hidpi.desktop
 ```
 
-### 3. Edit the launcher
-
-Open it:
+### 3. Edit the copied launcher
 
 ```bash
 nano ~/.local/share/applications/ghidra-hidpi.desktop
 ```
 
-Change these lines:
+Change these two lines:
 
 ```text
 Exec=env _JAVA_OPTIONS="-Dsun.java2d.uiScale=2.5 -Dswing.aatext=true -Dawt.useSystemAAFontSettings=on" "/CHANGE/ME/path/to/ghidraRun"
@@ -83,24 +82,34 @@ Exec=env _JAVA_OPTIONS="-Dsun.java2d.uiScale=2.5 -Dswing.aatext=true -Dawt.useSy
 Icon=/opt/ghidra-11.4.1/support/ghidra.png
 ```
 
-### 4. Refresh desktop entries
+### 4. Refresh the application menu
 
 ```bash
 update-desktop-database ~/.local/share/applications/ 2>/dev/null || true
 ```
 
-If the launcher does not appear right away, log out and log back in.
+If it does not appear, log out and log back in.
 
-## Tuning the scale factor
+Then launch:
 
-| Display type | Suggested value |
-|---|---|
-| 1080p laptop screen | `1.25` or `1.5` |
-| 2K / HiDPI laptop display | `2.0` |
-| ThinkPad X13s built-in display | `2.5` |
-| 4K external monitor | `2.5` or `3.0` |
+```text
+Ghidra HiDPI
+```
 
-To change it, edit:
+from the app menu.
+
+## Tuning the scale
+
+The value `2.5` may not be right for every display.
+
+| Display                        | Suggested value |
+| ------------------------------ | --------------- |
+| 1080p laptop                   | `1.25` or `1.5` |
+| 2K laptop display              | `2.0`           |
+| ThinkPad X13s built-in display | `2.5`           |
+| 4K monitor                     | `2.5` or `3.0`  |
+
+Edit this part:
 
 ```text
 -Dsun.java2d.uiScale=2.5
@@ -110,26 +119,24 @@ Then relaunch Ghidra.
 
 ## Visual analysis workflow
 
-Readable UI matters because reverse engineering is visually dense. A Ghidra project can contain hundreds of functions, generated names, strings, labels, cross-references, and blocks of assembly.
+Readable UI matters because reverse engineering is visually dense. Ghidra projects can contain many functions, generated names, labels, strings, cross-references, and blocks of assembly.
 
-Color-coding and renaming help turn a binary from a wall of assembly into a map.
+A simple visual workflow helps:
 
-A simple workflow:
-
-- Rename functions based on evidence, not guesses.
-- Use strings and cross-references to locate important behavior.
-- Leave runtime/compiler helper functions alone unless they matter.
-- Mark reviewed functions so you do not waste time rereading them.
-- Mark suspicious or important logic for later review.
+* Rename functions based on evidence.
+* Use strings and cross-references to locate important behavior.
+* Leave compiler/runtime helper functions alone unless they matter.
+* Mark reviewed functions so they are not repeatedly reanalyzed.
+* Use color-coding to separate known, unknown, suspicious, and important code.
 
 Example color system:
 
-| Color | Meaning |
-|---|---|
-| Green | reviewed or understood |
-| Yellow | needs investigation |
-| Red | important or suspicious behavior |
-| Blue | main program flow |
+| Color  | Meaning                                   |
+| ------ | ----------------------------------------- |
+| Green  | reviewed or understood                    |
+| Yellow | needs investigation                       |
+| Red    | important or suspicious behavior          |
+| Blue   | main program flow                         |
 | Purple | encoding, crypto, or transformation logic |
 
 The point is not decoration. The point is reducing mental load while analyzing code.
@@ -146,7 +153,7 @@ Then log out and log back in.
 
 ### Ghidra does not start
 
-Check that the `Exec=` path points to the real `ghidraRun` file:
+Check the path:
 
 ```bash
 ls -l /path/to/ghidraRun
@@ -158,7 +165,7 @@ Make sure it is executable:
 chmod +x /path/to/ghidraRun
 ```
 
-### UI scale is too large or too small
+### Scale is too large or too small
 
 Edit:
 
@@ -176,7 +183,7 @@ Check GNOME font antialiasing:
 gsettings get org.gnome.desktop.interface font-antialiasing
 ```
 
-Check whether fontconfig is returning a normal font:
+Check fontconfig:
 
 ```bash
 fc-match
@@ -184,15 +191,27 @@ fc-match
 
 ### Decompiler text is still too small
 
-Some Ghidra tool windows have their own font settings. Check Ghidra's tool options and increase the font size for Listing or Decompiler views if needed.
+Some Ghidra views have their own font settings. Open Ghidra tool options and increase the font size for Listing or Decompiler views if needed.
 
-## Tested / developed on
+## Developed on
 
-- Lenovo ThinkPad X13s Gen 1
-- ARM64 / AArch64 Linux
-- Ghidra 11.x and local Ghidra dev build
-- GNOME desktop environment
+* Lenovo ThinkPad X13s Gen 1
+* ARM64 / AArch64 Linux
+* GNOME desktop environment
+* Ghidra 11.x and local Ghidra development build
 
 ## Notes
 
-This is a usability shim, not a Ghidra extension or plugin. It belongs under `custom/launchers/` rather than `Ghidra/Extensions/`.
+This is a launcher/configuration usability shim, not a Ghidra plugin or extension.
+
+It belongs under:
+
+```text
+custom/launchers/
+```
+
+not:
+
+```text
+Ghidra/Extensions/
+```
