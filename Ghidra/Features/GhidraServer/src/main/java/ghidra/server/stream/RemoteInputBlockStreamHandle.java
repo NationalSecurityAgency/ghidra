@@ -18,7 +18,8 @@ package ghidra.server.stream;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.zip.*;
+import java.util.zip.Deflater;
+import java.util.zip.InflaterInputStream;
 
 import db.buffers.*;
 
@@ -56,18 +57,16 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 
 		private final Socket socket;
 		private final InputStream in;
-		private final Inflater inf;
 		
 		private int blocksRemaining = getBlockCount();
 
 		ClientInputBlockStream(Socket socket) throws IOException {
 			this.socket = socket;
 			if (compressed) {
-				inf = new Inflater();
-				in = new InflaterInputStream(socket.getInputStream(), inf);
+				// Uses default Inflater with nowrap=false
+				in = new InflaterInputStream(socket.getInputStream());
 			} else {
 				in = socket.getInputStream();
-				inf = null;
 			}
 		}
 
@@ -75,9 +74,6 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 		public void close() throws IOException {
 			in.close();
 			socket.close();
-			if (inf != null) {
-				inf.end(); // get rid of any native memory rather than waiting for GC
-			}
 		}
 
 		@Override
@@ -142,7 +138,7 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 		socket.setSendBufferSize(getPreferredBufferSize());
 
 		InputBlockStream inputBlockStream = (InputBlockStream) blockStream;
-		try (OutputStream out = socket.getOutputStream()) {
+		try (OutputStream out = getBlockInputStream(socket)) {
 
 			copyBlockData(inputBlockStream, out);
 
@@ -159,36 +155,26 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 		}
 	}
 
+	private OutputStream getBlockInputStream(Socket socket) throws IOException {
+		OutputStream out = socket.getOutputStream();
+		if (compressed) {
+			out = new RemoteDeflaterOutputStream(out, Deflater.BEST_SPEED);
+		}
+		return out;
+	}
+
 	private void copyBlockData(InputBlockStream inputBlockStream, OutputStream out)
 			throws IOException {
 
-		Deflater def = null;
-		
-		try {
-			if (compressed) {
-				def = new Deflater(Deflater.BEST_SPEED);
-				out = new DeflaterOutputStream(out, def);
+		int blocksRemaining = getBlockCount();
+
+		BufferFileBlock block;
+		while ((block = inputBlockStream.readBlock()) != null) {
+			if (blocksRemaining == 0) {
+				throw new IOException("unexpected data in stream");
 			}
-	
-			int blocksRemaining = getBlockCount();
-	
-			BufferFileBlock block;
-			while ((block = inputBlockStream.readBlock()) != null) {
-				if (blocksRemaining == 0) {
-					throw new IOException("unexpected data in stream");
-				}
-				out.write(block.toBytes());
-				--blocksRemaining;
-			}
-	
-			// done with compressed stream, force compressed data to flush
-			if (out instanceof DeflaterOutputStream) {
-				((DeflaterOutputStream) out).finish();
-			}
-		} finally {
-			if (def != null) {
-				def.end();
-			}
+			out.write(block.toBytes());
+			--blocksRemaining;
 		}
 	}
 

@@ -55,17 +55,14 @@ public class RemoteOutputBlockStreamHandle extends RemoteBlockStreamHandle<Outpu
 
 		private final Socket socket;
 		private final OutputStream out;
-		private final Deflater def;
 
 		private int blocksRemaining = getBlockCount();
 
 		ClientOutputBlockStream(Socket socket) throws IOException {
 			this.socket = socket;
 			if (compressed) {
-				def = new Deflater(Deflater.BEST_SPEED);
-				out = new DeflaterOutputStream(socket.getOutputStream(), def);
+				out = new RemoteDeflaterOutputStream(socket.getOutputStream(), Deflater.BEST_SPEED);
 			} else {
-				def = null;
 			    out = socket.getOutputStream();
 			}
 		}
@@ -84,9 +81,6 @@ public class RemoteOutputBlockStreamHandle extends RemoteBlockStreamHandle<Outpu
 		public void close() throws IOException {
 			out.close();
 			socket.close();
-			if (def != null) {
-				def.end();   // get rid of any native memory rather than waiting for GC
-			}
 		}
 
 		@Override
@@ -130,7 +124,7 @@ public class RemoteOutputBlockStreamHandle extends RemoteBlockStreamHandle<Outpu
 		socket.setReceiveBufferSize(getPreferredBufferSize());
 
 		OutputBlockStream outputBlockStream = (OutputBlockStream) blockStream;
-		try (InputStream in = socket.getInputStream()) {
+		try (InputStream in = getBlockInputStream(socket)) {
 
 			copyBlockData(outputBlockStream, in);
 
@@ -155,43 +149,37 @@ public class RemoteOutputBlockStreamHandle extends RemoteBlockStreamHandle<Outpu
 
 	}
 
+	private InputStream getBlockInputStream(Socket socket) throws IOException {
+		InputStream in = socket.getInputStream();
+		if (compressed) {
+			in = new InflaterInputStream(in);
+		}
+		return in;
+	}
+
 	private void copyBlockData(OutputBlockStream outputBlockStream, InputStream in)
 			throws IOException, EOFException {
 
-		Inflater inf = null;
-		try {
-			if (compressed) {
-				inf = new Inflater(); // not necessary, but doing it this way
-				                      // allows end to be called, which frees native memory
-									  // before GC is called
-				in = new InflaterInputStream(in, inf);
-			}
-	
-			int blocksRemaining = getBlockCount();
-	
-			byte[] bytes = new byte[getBlockSize() + 4]; // include space for index
-			while (blocksRemaining > 0) {
-				int total = 0;
-				while (total < bytes.length) {
-					int readlen = in.read(bytes, total, bytes.length - total);
-					if (readlen < 0) {
-						throw new EOFException("unexpected end of stream");
-					}
-					total += readlen;
+		int blocksRemaining = getBlockCount();
+
+		byte[] bytes = new byte[getBlockSize() + 4]; // include space for index
+		while (blocksRemaining > 0) {
+			int total = 0;
+			while (total < bytes.length) {
+				int readlen = in.read(bytes, total, bytes.length - total);
+				if (readlen < 0) {
+					throw new EOFException("unexpected end of stream");
 				}
-	
-				BufferFileBlock block = new BufferFileBlock(bytes);
-				outputBlockStream.writeBlock(block);
-				--blocksRemaining;
+				total += readlen;
 			}
-			if (compressed && in.read() != -1) {
-				// failed to properly exhaust compressed stream
-				throw new IOException("expected end of compressed stream");
-			}
-		} finally {
-			if (inf != null) {
-				inf.end();   // get rid of any native memory rather than waiting for GC
-			}
+
+			BufferFileBlock block = new BufferFileBlock(bytes);
+			outputBlockStream.writeBlock(block);
+			--blocksRemaining;
+		}
+		if (compressed && in.read() != -1) {
+			// failed to properly exhaust compressed stream
+			throw new IOException("expected end of compressed stream");
 		}
 	}
 }

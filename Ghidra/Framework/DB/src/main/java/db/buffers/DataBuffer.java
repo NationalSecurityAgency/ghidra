@@ -330,17 +330,19 @@ public class DataBuffer implements Buffer, Externalizable {
 	 */
 	private static int deflateData(byte[] data, byte[] compressedData) {
 
-		Deflater deflate = new Deflater(Deflater.BEST_COMPRESSION, true);
+		// Deflater must be consistent with inflateData nowrap option and should
+		// not be changed since client/server must match.
+		// NOTE: compression mode may be adjusted to optimize performance
+		Deflater deflate = new Deflater(Deflater.BEST_SPEED, true);
 		try {
-			deflate.setStrategy(Deflater.HUFFMAN_ONLY);
 			deflate.setInput(data, 0, data.length);
 			deflate.finish();
-	
+
 			int compressedDataOffset = 0;
 	
 			while (!deflate.finished() && compressedDataOffset < compressedData.length) {
 				compressedDataOffset += deflate.deflate(compressedData, compressedDataOffset,
-					compressedData.length - compressedDataOffset, Deflater.SYNC_FLUSH);
+					compressedData.length - compressedDataOffset);
 			}
 	
 			if (!deflate.finished()) {
@@ -416,10 +418,11 @@ public class DataBuffer implements Buffer, Externalizable {
 	 */
 	private static void inflateData(byte[] compressedData, byte[] data) throws IOException {
 
+		// Inflater must be consistent with deflateData nowrap option and should
+		// not be changed since client/server must match.
 		Inflater inflater = new Inflater(true);
-		inflater.setInput(compressedData, 0, compressedData.length);
-
 		try {
+			inflater.setInput(compressedData);
 			int off = 0;
 			while (!inflater.finished() && off < data.length) {
 				off += inflater.inflate(data, off, data.length - off);
