@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,12 @@
  */
 package ghidra.file.formats.zlib;
 
-import ghidra.app.util.bin.ByteProvider;
-
 import java.io.*;
 import java.util.Arrays;
 import java.util.zip.*;
+
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.util.Msg;
 
 /**
  * 
@@ -57,12 +58,14 @@ public class ZLIB {
 	 * Note: When using the 'noWrap' option it is also necessary to provide an extra "dummy" byte as input. 
 	 * This is required by the ZLIB native library in order to support certain optimizations.
 	 * @param compressedIn an input stream containing the compressed data
-	 * @param expectedDecompressedLength the expected length of the decompressed data
+	 * @param decompressedSizeLimit the maximum length of the decompressed data.  Actual decompressed
+	 * data within returned ByteArrayOutputStream may still exceed this limit.
 	 * @param noWrap if true then support GZIP compatible compression
 	 * @return an output stream containing the decompressed data
-	 * @throws IOException
+	 * @throws IOException if IO error occurs while reading compressedIn stream
 	 */
-	public ByteArrayOutputStream decompress( InputStream compressedIn, int expectedDecompressedLength, boolean noWrap ) throws IOException {
+	public ByteArrayOutputStream decompress(InputStream compressedIn, int decompressedSizeLimit,
+			boolean noWrap) throws IOException {
 
     	byte [] compressedBytes = convertInputStreamToByteArray( compressedIn );
 
@@ -70,37 +73,25 @@ public class ZLIB {
 
     	byte [] tempDecompressedBytes = new byte[ 0x10000 ];
 
-    	int totalDecompressed = 0;
-        int offset = 0;
-
-        try {
-        	while ( offset < compressedBytes.length && totalDecompressed < expectedDecompressedLength ) {
-
-        		if ( !noWrap && compressedBytes [ offset ] != 0x78 ) {
-        			break;
-        		}
-
-                Inflater inflater = new Inflater( noWrap );
-
-                inflater.setInput( compressedBytes, offset, compressedBytes.length - offset );
-
-        		int nDecompressed = inflater.inflate( tempDecompressedBytes );
-
-        		if ( nDecompressed == 0 ) {
-        			break;
-        		}
-
-        		totalDecompressed += nDecompressed;
-
-        		decompressedBOS.write( tempDecompressedBytes, 0, nDecompressed );
-
-        		offset += inflater.getTotalIn();//increment total compressed bytes consumed
-        	}
-        }
-        catch ( DataFormatException e ) {
-        	throw new IOException( e.getMessage() );
-        }
-
+		Inflater inflater = new Inflater(noWrap);
+		try {
+			inflater.setInput(compressedBytes);
+			while (!inflater.finished()) {
+				int nDecompressed = inflater.inflate(tempDecompressedBytes);
+				decompressedBOS.write(tempDecompressedBytes, 0, nDecompressed);
+				if (decompressedBOS.size() > decompressedSizeLimit) {
+					Msg.warn(this, "ZLIB decompress exceeded specified limit (" +
+						decompressedBOS.size() + " > " + decompressedSizeLimit + ")");
+					break;
+				}
+			}
+		}
+		catch (DataFormatException e) {
+			throw new IOException(e.getMessage());
+		}
+		finally {
+			inflater.end();
+		}
         return decompressedBOS;
     }
 
@@ -129,9 +120,8 @@ public class ZLIB {
 	 * to support the compression format used in both GZIP and PKZIP.
 	 * @param decompressedBytes the decompressed bytes
 	 * @return an output stream containing the compressed data
-	 * @throws IOException
 	 */
-	public ByteArrayOutputStream compress( byte [] decompressedBytes ) throws IOException {
+	public ByteArrayOutputStream compress(byte[] decompressedBytes) {
 		return compress( false, decompressedBytes );
 	}
 
@@ -142,38 +132,24 @@ public class ZLIB {
 	 * @param noWrap if true then use GZIP compatible compression
 	 * @param decompressedBytes the decompressed bytes
 	 * @return an output stream containing the compressed data
-	 * @throws IOException
 	 */
-	public ByteArrayOutputStream compress( boolean noWrap, byte [] decompressedBytes ) throws IOException {
+	public ByteArrayOutputStream compress(boolean noWrap, byte[] decompressedBytes) {
         ByteArrayOutputStream compressedBOS = new ByteArrayOutputStream();
 
        	byte [] tempBuffer = new byte[ 0x10000 ];
 
-        int offset = 0;
-
-    	while ( offset < decompressedBytes.length ) {
-
-            Deflater deflater = new Deflater( 0, noWrap );
-
-           	deflater.setInput( decompressedBytes, offset, decompressedBytes.length - offset );
-
-           	deflater.finish();
-
-            if ( deflater.needsInput() ) {
-            	System.out.println( "needs input??" );
-            }
-
-            int nDeflated = deflater.deflate( tempBuffer );
-
-            if ( nDeflated == 0 ) {
-            	break;
-            }
-
-            compressedBOS.write( tempBuffer, 0, nDeflated );
-
-            offset += deflater.getTotalIn();
-    	}
-
+		Deflater deflater = new Deflater(0, noWrap);
+		try {
+			deflater.setInput(decompressedBytes);
+			deflater.finish();
+			while (!deflater.finished()) {
+				int nDeflated = deflater.deflate(tempBuffer);
+				compressedBOS.write(tempBuffer, 0, nDeflated);
+			}
+		}
+		finally {
+			deflater.end();
+		}
         return compressedBOS;
 	}
 
