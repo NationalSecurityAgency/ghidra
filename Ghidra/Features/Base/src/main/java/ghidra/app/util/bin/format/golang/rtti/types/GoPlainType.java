@@ -67,20 +67,39 @@ public class GoPlainType extends GoType implements StructureReader<GoType> {
 
 	@Override
 	public boolean isValid() {
-		return super.isValid() && switch (typ.getKind()) {
-			case Bool -> typ.getSize() == 1;
-			case Float32 -> typ.getSize() == 4;
-			case Float64 -> typ.getSize() == 8;
-			case Uint, Int -> typ.getSize() == programContext.getPtrSize();
-			case Uint8, Int8 -> typ.getSize() == 1;
-			case Uint16, Int16 -> typ.getSize() == 2;
-			case Uint32, Int32 -> typ.getSize() == 4;
-			case Uint64, Int64 -> typ.getSize() == 8;
-			case Uintptr -> typ.getSize() == programContext.getPtrSize();
-			case String -> typ.getSize() == programContext.getPtrSize() * 2;
-			case UnsafePointer -> typ.getSize() == programContext.getPtrSize();
+		return super.isValid() && isValidSize();
+	}
+
+	public boolean isValidSize() {
+		return switch (typ.getKind()) {
+			case Bool -> isValidPrimitiveSize(1);
+
+			case Float32 -> isValidPrimitiveSize(4);
+			case Float64 -> isValidPrimitiveSize(8);
+			case Complex64 -> isValidPrimitiveSize(8);
+			case Complex128 -> isValidPrimitiveSize(16);
+
+			case Uint, Int -> isValidPrimitiveSize(programContext.getPtrSize());
+			case Uint8, Int8 -> isValidPrimitiveSize(1);
+			case Uint16, Int16 -> isValidPrimitiveSize(2);
+			case Uint32, Int32 -> isValidPrimitiveSize(4);
+			case Uint64, Int64 -> isValidPrimitiveSize(8);
+			case Uintptr -> isValidPrimitiveSize(programContext.getPtrSize());
+
+			case UnsafePointer -> typ.getSize() == programContext.getPtrSize() &&
+				typ.getPtrBytes() == programContext.getPtrSize();
+
+			case String -> typ.getSize() == programContext.getPtrSize() * 2 &&
+				typ.getPtrBytes() == programContext.getPtrSize();
+
+			// Pointer, Chan, Map, Slice, Array validSize checking in each custom GoXYZType class  			
+
 			default -> true;
 		};
+	}
+
+	private boolean isValidPrimitiveSize(long expectedSize) {
+		return typ.getPtrBytes() == 0 && typ.getSize() == expectedSize;
 	}
 
 }

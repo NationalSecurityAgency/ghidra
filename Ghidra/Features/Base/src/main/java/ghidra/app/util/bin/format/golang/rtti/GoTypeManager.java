@@ -119,7 +119,14 @@ public class GoTypeManager {
 
 				GoType goType = getTypeUnchecked(typeAddr);
 				if (goType != null) {
-					goType.discoverGoTypes(discoveredTypes);
+					try {
+						goType.discoverGoTypes(discoveredTypes);
+					}
+					catch (IOException e) {
+						Msg.warn(this, "Failed to recurse into Go type %s"
+								.formatted(goType.getStructureContext().getStructureAddress()),
+							e);
+					}
 				}
 				else {
 					Msg.warn(this, "Failed to read Go type at " + typeAddr);
