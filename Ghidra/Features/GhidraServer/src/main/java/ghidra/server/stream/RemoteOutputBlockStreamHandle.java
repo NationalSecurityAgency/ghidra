@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,10 +60,11 @@ public class RemoteOutputBlockStreamHandle extends RemoteBlockStreamHandle<Outpu
 
 		ClientOutputBlockStream(Socket socket) throws IOException {
 			this.socket = socket;
-			out = compressed
-					? new DeflaterOutputStream(socket.getOutputStream(),
-						new Deflater(Deflater.BEST_SPEED))
-					: socket.getOutputStream();
+			if (compressed) {
+				out = new RemoteDeflaterOutputStream(socket.getOutputStream(), Deflater.BEST_SPEED);
+			} else {
+			    out = socket.getOutputStream();
+			}
 		}
 
 		@Override
@@ -123,7 +124,7 @@ public class RemoteOutputBlockStreamHandle extends RemoteBlockStreamHandle<Outpu
 		socket.setReceiveBufferSize(getPreferredBufferSize());
 
 		OutputBlockStream outputBlockStream = (OutputBlockStream) blockStream;
-		try (InputStream in = socket.getInputStream()) {
+		try (InputStream in = getBlockInputStream(socket)) {
 
 			copyBlockData(outputBlockStream, in);
 
@@ -148,12 +149,16 @@ public class RemoteOutputBlockStreamHandle extends RemoteBlockStreamHandle<Outpu
 
 	}
 
-	private void copyBlockData(OutputBlockStream outputBlockStream, InputStream in)
-			throws IOException, EOFException {
-
+	private InputStream getBlockInputStream(Socket socket) throws IOException {
+		InputStream in = socket.getInputStream();
 		if (compressed) {
 			in = new InflaterInputStream(in);
 		}
+		return in;
+	}
+
+	private void copyBlockData(OutputBlockStream outputBlockStream, InputStream in)
+			throws IOException, EOFException {
 
 		int blocksRemaining = getBlockCount();
 
