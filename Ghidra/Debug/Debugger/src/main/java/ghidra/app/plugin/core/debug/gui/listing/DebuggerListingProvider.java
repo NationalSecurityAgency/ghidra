@@ -67,6 +67,7 @@ import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.debug.api.action.*;
 import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.listing.DebuggerListing;
 import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -90,7 +91,7 @@ import ghidra.util.datastruct.ListenerSet;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
 
-public class DebuggerListingProvider extends CodeViewerProvider {
+public class DebuggerListingProvider extends CodeViewerProvider implements DebuggerListing {
 
 	private static final AutoConfigState.ClassHandler<
 		DebuggerListingProvider> CONFIG_STATE_HANDLER =
@@ -500,6 +501,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		CONFIG_STATE_HANDLER.writeConfigState(this, saveState);
 		trackingTrait.writeConfigState(saveState);
 		readsMemTrait.writeConfigState(saveState);
+		if (!isMainListing() && getTitle() != null) {
+			saveState.putString("title", getTitle());
+		}
 	}
 
 	void readConfigState(SaveState saveState) {
@@ -514,7 +518,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
 		trackingTrait.readConfigState(saveState);
 		readsMemTrait.readConfigState(saveState);
-
+		if (!isMainListing() && saveState.hasValue("title")) {
+			setTitle(saveState.getString("title", ""));
+		}
 		if (isMainListing()) {
 			followsCurrentThread = true;
 		}
