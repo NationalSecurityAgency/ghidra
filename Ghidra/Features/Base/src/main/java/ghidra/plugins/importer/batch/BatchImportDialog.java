@@ -336,7 +336,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 		mirrorFsCb = new GCheckBox("Mirror Filesystem", mirrorFs);
 		mirrorFsCb.addChangeListener(e -> setMirrorFs(mirrorFsCb.isSelected()));
 		mirrorFsCb.setToolTipText(
-			"The imported files' project paths will mirror the filesystem rooted at the desination folder");
+			"The imported files' project paths will mirror the filesystem rooted at the destination folder");
 		mirrorFsCb.getAccessibleContext().setAccessibleName("Mirror Filesystem");
 		setMirrorFs(mirrorFs); // needed to possibly disable other checkboxes
 
