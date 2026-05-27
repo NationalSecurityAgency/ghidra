@@ -11,13 +11,13 @@
 }
 
 # csrrc d,E,s 00003073 0000707f SIMPLE (0, 0) 
-:csrrc rdDst,csr,rs1 is rs1 & csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x3 & op0711
+:csrrc rd,csr,rs1 is rs1 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x3 & op0711
 {
 	local tmprs1:$(XLEN) = rs1;
 	local oldcsr:$(XLEN) = csr:$(XLEN);
 	local newcsr:$(XLEN) = oldcsr & ~tmprs1;
 	csr = newcsr;
-	rdDst = oldcsr;
+	rd = oldcsr;
 }
 
 # csrrci d,E,Z 00007073 0000707f SIMPLE (0, 0) 
@@ -30,19 +30,19 @@
 
 
 # csrrci d,E,Z 00007073 0000707f SIMPLE (0, 0) 
-:csrrci rdDst,csr,op1519 is op1519 & csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x7
+:csrrci rd,csr,op1519 is op1519 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x7
 {
 	local oldcsr:$(XLEN) = csr:$(XLEN);
 	local tmp:$(XLEN) = op1519;
 	csr = oldcsr & ~tmp;
-	rdDst = oldcsr;
+	rd = oldcsr;
 }
 
 
 # csrrs d,E,s 00002073 0000707f SIMPLE (0, 0) 
-:csrr rdDst,csr is csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1519=0 & op0711
+:csrr rd,csr is csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1519=0 & op0711
 {
-	rdDst = csr:$(XLEN);
+	rd = csr:$(XLEN);
 }
 
 # csrrs d,E,s 00002073 0000707f SIMPLE (0, 0) 
@@ -53,11 +53,11 @@
 }
 
 # csrrs d,E,s 00002073 0000707f SIMPLE (0, 0) 
-:csrrs rdDst,csr,rs1 is rs1 & csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1519 & op0711
+:csrrs rd,csr,rs1 is rs1 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1519 & op0711
 {
 	local oldcsr:$(XLEN) = csr:$(XLEN);
 	csr = oldcsr | rs1;
-	rdDst  = oldcsr;
+	rd  = oldcsr;
 }
 
 # csrrsi d,E,Z 00006073 0000707f SIMPLE (0, 0) 
@@ -69,12 +69,12 @@
 }
 
 # csrrsi d,E,Z 00006073 0000707f SIMPLE (0, 0) 
-:csrrsi rdDst,csr,op1519 is op1519 & csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x6 & op0711
+:csrrsi rd,csr,op1519 is op1519 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x6 & op0711
 {
 	local oldcsr:$(XLEN) = csr:$(XLEN);
 	local tmp:$(XLEN) = op1519;
 	csr = oldcsr | tmp;
-	rdDst = oldcsr;
+	rd = oldcsr;
 }
 
 # csrw d,E,s 00001073 0000707f SIMPLE (0, 0) 
@@ -84,12 +84,12 @@
 }
 
 # csrrw d,E,s 00001073 0000707f SIMPLE (0, 0) 
-:csrrw rdDst,csr,rs1 is rs1 & csr & rdDst & r0711 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1
+:csrrw rd,csr,rs1 is rs1 & csr & rd & r0711 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1
 {
 	local tmprs1:$(XLEN) = rs1;
 	local oldcsr:$(XLEN) = csr:$(XLEN);
 	csr = tmprs1;
-	rdDst = oldcsr;
+	rd = oldcsr;
 }
 
 # csrrwi d,E,Z 00005073 0000707f SIMPLE (0, 0) 
@@ -100,31 +100,31 @@
 }
 
 # csrrwi d,E,Z 00005073 0000707f SIMPLE (0, 0) 
-:csrrwi rdDst,csr,op1519 is op1519 & csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5 & r0711
+:csrrwi rd,csr,op1519 is op1519 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5 & r0711
 {
 	local oldcsr:$(XLEN) = csr:$(XLEN);
 	local val:$(XLEN) = op1519;
 	csr = val;
-	rdDst = oldcsr;
+	rd = oldcsr;
 }
 
 
 # frcsr d 00302073 fffff07f SIMPLE (0, 0) 
-:frcsr rdDst is rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x60
+:frcsr rd is rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x60
 {
-	rdDst = fcsr;
+	rd = fcsr;
 }
 
 # frflags d 00102073 fffff07f SIMPLE (0, 0) 
-:frflags rdDst is rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x20
+:frflags rd is rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x20
 {
-	rdDst = zext(fflags[0,5]);
+	rd = zext(fflags[0,5]);
 }
 
 # frrm d 00202073 fffff07f SIMPLE (0, 0) 
-:frrm rdDst is rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x40
+:frrm rd is rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x40
 {
-	rdDst = frm;
+	rd = frm;
 }
 
 # fscsr s 00301073 fff07fff SIMPLE (0, 0) 
@@ -135,9 +135,9 @@
 }
 
 # fscsr d,s 00301073 fff0707f SIMPLE (0, 0) 
-:fscsr rdDst,rs1 is rs1 & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op2031=0x3
+:fscsr rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op2031=0x3
 {
-	rdDst = fcsr;
+	rd = fcsr;
 	fcsr = rs1;
 }
 
@@ -150,16 +150,16 @@
 }
 
 # fsflags d,s 00101073 fff0707f SIMPLE (0, 0) 
-:fsflags rdDst,rs1 is rs1 & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op2031=0x1
+:fsflags rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op2031=0x1
 {
-	rdDst = zext(fflags[0,5]);
+	rd = zext(fflags[0,5]);
 	fflags[0,5] = rs1[0,5];
 }
 
 # fsflagsi d,Z 00105073 fff0707f SIMPLE (0, 0) 
-:fsflagsi rdDst,op1519 is op1519 & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5 & op2031=0x1
+:fsflagsi rd,op1519 is op1519 & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5 & op2031=0x1
 {
-	rdDst = zext(fflags[0,5]);
+	rd = zext(fflags[0,5]);
 	local tmp:1 = op1519:1;
 	fflags[0,5] = tmp[0,5];
 }
@@ -180,16 +180,16 @@
 }
 
 # fsrm d,s 00201073 fff0707f SIMPLE (0, 0) 
-:fsrm rdDst,rs1 is rs1 & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op2031=0x2
+:fsrm rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op2031=0x2
 {
-	rdDst = zext(frm[0,3]);
+	rd = zext(frm[0,3]);
 	frm[0,3] = rs1[0,3];
 }
 
 # fsrmi d,Z 00205073 fff0707f SIMPLE (0, 0) 
-:fsrmi rdDst,op1519 is op1519 & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5 & op2031=0x2
+:fsrmi rd,op1519 is op1519 & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5 & op2031=0x2
 {
-	rdDst = zext(frm[0,3]);
+	rd = zext(frm[0,3]);
 	local tmp:1 = op1519:1;
 	frm[0,3] = tmp[0,3];
 }
