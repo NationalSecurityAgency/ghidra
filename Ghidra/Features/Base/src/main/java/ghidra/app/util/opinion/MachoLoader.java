@@ -537,13 +537,18 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * @throws IOException if an IO-related error occurred
 	 */
 	private String detectCompilerName(MachHeader machHeader) throws IOException {
-		List<String> sectionNames = machHeader.parseSegments()
-				.stream()
-				.flatMap(seg -> seg.getSections().stream())
-				.map(section -> section.getSectionName())
-				.toList();
-		if (GoRttiMapper.hasGolangSections(sectionNames)) {
-			return GoConstants.GOLANG_CSPEC_NAME;
+		try {
+			List<String> sectionNames = machHeader.parseSegments()
+					.stream()
+					.flatMap(seg -> seg.getSections().stream())
+					.map(section -> section.getSectionName())
+					.toList();
+			if (GoRttiMapper.hasGolangSections(sectionNames)) {
+				return GoConstants.GOLANG_CSPEC_NAME;
+			}
+		}
+		catch (MachException e) {
+			// fall thru
 		}
 		return null;
 	}
