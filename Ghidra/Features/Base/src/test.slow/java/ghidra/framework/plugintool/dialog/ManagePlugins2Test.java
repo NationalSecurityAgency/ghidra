@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,8 @@
  */
 package ghidra.framework.plugintool.dialog;
 
-import static org.hamcrest.collection.IsEmptyCollection.*;
-import static org.hamcrest.core.IsNot.*;
+import static org.hamcrest.collection.IsEmptyCollection.empty;
+import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -31,6 +31,7 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.classfinder.ClassSearcher;
 import resources.Icons;
 
 /**
@@ -372,9 +373,9 @@ public class ManagePlugins2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		private void loadPlugin(String name) {
 			try {
-				Class<?> clazz = Class.forName(name);
-				Plugin plugin =
-					(Plugin) clazz.getDeclaredConstructor(PluginTool.class).newInstance(tool);
+				Class<? extends Plugin> clazz =
+					ClassSearcher.forNameSafe(name, Plugin.class, getClass().getClassLoader());
+				Plugin plugin = clazz.getDeclaredConstructor(PluginTool.class).newInstance(tool);
 				loadedPlugins.add(plugin);
 			}
 			catch (Exception e) {

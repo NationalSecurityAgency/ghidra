@@ -45,6 +45,7 @@ import ghidra.program.model.pcode.*;
 import ghidra.program.model.util.ProcessorSymbolType;
 import ghidra.sleigh.grammar.SourceFileIndexer;
 import ghidra.util.*;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.exception.TimeoutException;
 import ghidra.util.task.PreserveStateWrappingTaskMonitor;
@@ -1492,18 +1493,10 @@ public class SleighLanguage implements Language {
 			return;
 		}
 		try {
-			Class<?> helperClass = Class.forName(className);
-			if (!ParallelInstructionLanguageHelper.class.isAssignableFrom(helperClass)) {
-				Msg.error(this,
-					"Invalid Class specified for " +
-						GhidraLanguagePropertyKeys.PARALLEL_INSTRUCTION_HELPER_CLASS + " (" +
-						helperClass.getName() + "): " + description.getSpecFile());
-			}
-			else {
-				parallelHelper =
-					(ParallelInstructionLanguageHelper) helperClass.getDeclaredConstructor()
-							.newInstance();
-			}
+			Class<? extends ParallelInstructionLanguageHelper> helperClass =
+				ClassSearcher.forNameSafe(className, ParallelInstructionLanguageHelper.class,
+					getClass().getClassLoader());
+			parallelHelper = helperClass.getDeclaredConstructor().newInstance();
 		}
 		catch (Exception e) {
 			throw new SleighException("Failed to instantiate " +

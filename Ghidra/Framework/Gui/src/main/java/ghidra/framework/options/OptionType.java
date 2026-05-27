@@ -27,6 +27,7 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.XMLOutputter;
 
 import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.xml.GenericXMLOutputter;
 import ghidra.util.xml.XmlUtilities;
 
@@ -231,8 +232,9 @@ public enum OptionType {
 			String customOptionClassName =
 				saveState.getString(CustomOption.CUSTOM_OPTION_CLASS_NAME_KEY, null);
 			try {
-				Class<?> c = Class.forName(customOptionClassName);
-				CustomOption option = (CustomOption) c.getConstructor().newInstance();
+				Class<? extends CustomOption> c = ClassSearcher.forNameSafe(customOptionClassName,
+					CustomOption.class, OptionType.class.getClassLoader());
+				CustomOption option = c.getConstructor().newInstance();
 				option.readState(saveState);
 				return option;
 			}

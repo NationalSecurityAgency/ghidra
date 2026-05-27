@@ -20,6 +20,7 @@ import java.io.IOException;
 
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassSearcher;
 
 /**
  * Reads and writes current theme info to preferences
@@ -47,15 +48,9 @@ public class ThemePreferences {
 		else if (themeId.startsWith(DiscoverableGTheme.CLASS_PREFIX)) {
 			String className = themeId.substring(DiscoverableGTheme.CLASS_PREFIX.length());
 			try {
-				ClassLoader loader = getClass().getClassLoader();
-				Class<?> clazz = Class.forName(className, false, loader);
-				if (!GTheme.class.isAssignableFrom(clazz)) {
-					Msg.showError(GTheme.class, null, "Can't Load Previous Theme",
-						"Theme class name does not point to a GTheme instance: " + className);
-					return ThemeManager.getDefaultTheme();
-				}
-
-				return (GTheme) clazz.getDeclaredConstructor().newInstance();
+				Class<? extends GTheme> clazz =
+					ClassSearcher.forNameSafe(className, GTheme.class, getClass().getClassLoader());
+				return clazz.getDeclaredConstructor().newInstance();
 			}
 			catch (Exception e) {
 				Msg.showError(GTheme.class, null, "Can't Load Previous Theme",

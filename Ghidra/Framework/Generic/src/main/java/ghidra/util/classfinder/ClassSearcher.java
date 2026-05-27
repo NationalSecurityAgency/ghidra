@@ -275,6 +275,42 @@ public class ClassSearcher {
 	}
 
 	/**
+	 * Get the named class in a safe(r) manner.
+	 * <p>
+	 * This addresses the concern that many tools and database entries can refer to custom types,
+	 * e.g., options and properties, that may permit an attacker to construct instances of arbitrary
+	 * class, those constructors perhaps implementing gadgets that could be used in an exploit
+	 * chain.
+	 * <p>
+	 * The pattern to "mitigate" this is to ensure the found class implements a given interface or
+	 * extends from a given class, <em>before</em> invoking a constructor. Ideally, this check can
+	 * be applied before <em>class initialization</em>. While much narrower, static initializers may
+	 * also provide gadgets. This method implements the pattern which avoids class initialization
+	 * until the type has been checked.
+	 * <p>
+	 * <b>WARNING:</b> Do not pass {@link Object}, a standard JDK interface, or any interface from a
+	 * dependency like apache-commons. The purpose of the super type is to narrow the set of
+	 * acceptable classes to those we control or that a user has intentionally installed/loaded as a
+	 * Ghidra extension. Thus, the static initializers and constructors of all subclasses should be
+	 * reviewed carefully.
+	 * 
+	 * @param <T> the super type
+	 * @param name the class binary name, as in {@link Class#forName(String, boolean, ClassLoader)}.
+	 * @param sup the super type
+	 * @param loader the class loader, or {@code null} to use the bootstrap loader.
+	 * @return the found class as a subclass of the given type
+	 * @throws ClassNotFoundException if the class cannot be found
+	 * @throws ClassCastException if the found class is not a sub type of the given type
+	 */
+	public static <T> Class<? extends T> forNameSafe(String name, Class<T> sup, ClassLoader loader)
+			throws ClassNotFoundException {
+		Class<?> cls = Class.forName(name, false, loader);
+		Class<? extends T> sub = cls.asSubclass(sup);
+		Class.forName(name, true, loader); // Initialize it this time
+		return sub;
+	}
+
+	/**
 	 * Add a change listener that will be notified when the classpath
 	 * is searched for new classes.
 	 * <p><strong>Note:</strong> The listener list is implemented
@@ -631,11 +667,11 @@ public class ClassSearcher {
 
 	/**
 	 * If the given class name matches the known extension name patterns, then this method will try
-	 * to load that class using the provided path.   Extensions may be loaded using their own 
-	 * class loader, depending on the system property 
+	 * to load that class using the provided path.  Extensions may be loaded using their own
+	 * class loader, depending on the system property
 	 * {@link GhidraClassLoader#ENABLE_RESTRICTED_EXTENSIONS_PROPERTY}.
 	 * <p>
-	 * Examples: 
+	 * Examples:
 	 * <pre>
 	 * /foo/bar/baz/file.jar fully.qualified.ClassName
 	 * /foo/bar/baz/bin fully.qualified.ClassName
