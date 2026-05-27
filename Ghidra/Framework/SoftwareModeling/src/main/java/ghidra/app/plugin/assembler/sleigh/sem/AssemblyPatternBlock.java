@@ -139,17 +139,32 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 		}
 
 		// Convert the bytes
-		// TODO: Optimize this some
 		byte[] mask = new byte[length];
 		byte[] vals = new byte[length];
-		AtomicLong msk = new AtomicLong();
-		AtomicLong val = new AtomicLong();
 		int i = 0;
-		for (String hex : str.substring(pos).split(":")) {
-			NumericUtilities.convertHexStringToMaskedValue(msk, val, hex, 2, 0, null);
-			mask[i] = (byte) msk.get();
-			vals[i] = (byte) val.get();
+		int p = pos;
+		while (p < str.length()) {
+			int newpos = str.indexOf(':', p);
+			if (newpos == -1) {
+				newpos = str.length();
+			}
+			byte m = 0;
+			byte v = 0;
+			for (int j = p; j < newpos; j++) {
+				char c = str.charAt(j);
+				m <<= 4;
+				v <<= 4;
+				if (c == 'X' || c == 'x') {
+					continue;
+				}
+				int nibble = Character.digit(c, 16);
+				m |= 0x0f;
+				v |= nibble;
+			}
+			mask[i] = m;
+			vals[i] = v;
 			i++;
+			p = newpos + 1;
 		}
 
 		return new AssemblyPatternBlock(offset, mask, vals);
