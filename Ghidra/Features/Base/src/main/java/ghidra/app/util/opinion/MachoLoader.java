@@ -535,16 +535,21 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * @throws IOException if an IO-related error occurred
 	 */
 	private String detectCompilerName(MachHeader machHeader) throws IOException {
-		List<String> sectionNames = machHeader.parseSegments()
-				.stream()
-				.flatMap(seg -> seg.getSections().stream())
-				.map(section -> section.getSectionName())
-				.toList();
-		if (SwiftUtils.isSwift(sectionNames)) {
-			return SwiftUtils.SWIFT_COMPILER;
+		try {
+			List<String> sectionNames = machHeader.parseSegments()
+					.stream()
+					.flatMap(seg -> seg.getSections().stream())
+					.map(section -> section.getSectionName())
+					.toList();
+			if (SwiftUtils.isSwift(sectionNames)) {
+				return SwiftUtils.SWIFT_COMPILER;
+			}
+			if (GoRttiMapper.hasGolangSections(sectionNames)) {
+				return GoConstants.GOLANG_CSPEC_NAME;
+			}
 		}
-		if (GoRttiMapper.hasGolangSections(sectionNames)) {
-			return GoConstants.GOLANG_CSPEC_NAME;
+		catch (MachException e) {
+			// fall thru
 		}
 		return null;
 	}
