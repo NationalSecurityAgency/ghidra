@@ -25,10 +25,13 @@ import org.jdom2.*;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.XMLOutputter;
 
+import com.sun.source.util.Plugin;
+
 import ghidra.framework.model.ProjectManager;
 import ghidra.framework.model.ToolTemplate;
 import ghidra.framework.project.tool.GhidraToolTemplate;
 import ghidra.util.*;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
 import ghidra.util.xml.GenericXMLOutputter;
 import ghidra.util.xml.XmlUtilities;
@@ -175,7 +178,7 @@ public class ToolUtils {
 			// check to see if we can still find the plugin class (it may have
 			// been removed)
 			try {
-				Class.forName(value);
+				ClassSearcher.forNameSafe(value, Plugin.class, ToolUtils.class.getClassLoader());
 			}
 			catch (Throwable t) {
 				// oh well, leave it out
