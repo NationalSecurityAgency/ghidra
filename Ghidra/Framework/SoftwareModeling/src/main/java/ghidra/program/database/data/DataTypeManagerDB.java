@@ -50,6 +50,7 @@ import ghidra.program.model.data.Enum;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Function;
 import ghidra.util.*;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ClassTranslator;
 import ghidra.util.datastruct.FixedSizeHashMap;
 import ghidra.util.exception.*;
@@ -2909,9 +2910,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			String classPath = record.getString(BuiltinDBAdapter.BUILT_IN_CLASSNAME_COL);
 			String name = record.getString(BuiltinDBAdapter.BUILT_IN_NAME_COL);
 			try {
-				Class<?> c;
+				Class<? extends BuiltInDataType> c;
 				try {
-					c = Class.forName(classPath);
+					c = ClassSearcher.forNameSafe(classPath, BuiltInDataType.class,
+						getClass().getClassLoader());
 				}
 				catch (ClassNotFoundException | NoClassDefFoundError e) {
 					// Check the classNameMap.
@@ -2920,14 +2922,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 						throw e;
 					}
 					try {
-						c = Class.forName(newClassPath);
+						c = ClassSearcher.forNameSafe(newClassPath, BuiltInDataType.class,
+							getClass().getClassLoader());
 					}
 					catch (ClassNotFoundException e1) {
 						throw e1;
 					}
 				}
 
-				BuiltInDataType bdt = (BuiltInDataType) c.getDeclaredConstructor().newInstance();
+				BuiltInDataType bdt = c.getDeclaredConstructor().newInstance();
 				bdt.setName(name);
 				bdt.setCategoryPath(catPath);
 

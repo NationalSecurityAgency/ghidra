@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,16 @@
  */
 package ghidra.app.nav;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.AddressFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
+import ghidra.util.classfinder.ClassSearcher;
 
 public class LocationMemento {
 	private static final String PROGRAM_PATH = "PROGRAM_PATH_";
@@ -151,8 +152,8 @@ public class LocationMemento {
 		}
 
 		try {
-			Class<? extends LocationMemento> mementoClass =
-				(Class<? extends LocationMemento>) Class.forName(className);
+			Class<? extends LocationMemento> mementoClass = ClassSearcher.forNameSafe(className,
+				LocationMemento.class, LocationMemento.class.getClassLoader());
 
 			Constructor<? extends LocationMemento> constructor =
 				mementoClass.getConstructor(SaveState.class, Program[].class);
