@@ -1,6 +1,7 @@
 # Ghidra 12.1.1 Change History (May 2026)
 
 ### Improvements
+* _MachineLearning_. Upgraded the Machine Learning extension's Tribuo jars to 4.3.2. (GP-6838)
 * _Multi-User_. Made Ghidra Server security improvements. (GP-6832)
 * _Scripting_. Removed the `support/jythonRun(.bat)` launch capability. (GP-6826)
 
@@ -15,6 +16,7 @@
 * _Processors_. Fixed several issues with x86 instruction semantics for numerous instructions. (GP-6675, Issue #9097)
 * _Processors_. Corrected MIPS signed offsets which were incorrectly interpreted as unsigned. (GP-6697)
 * _Processors_. Fixed issue with the CIP-51 variant language definition. (GP-6798)
+* _Processors_. Corrected issue with RISC-V attempting to write to constants. (GP-6849, Issue #9198)
 * _PyGhidra_. Handled a possible `NotADirectoryError` in `pyghidra_launcher.py`. (GP-6825)
 
 # Ghidra 12.1 Change History (May 2026)
