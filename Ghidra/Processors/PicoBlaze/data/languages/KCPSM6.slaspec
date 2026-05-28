@@ -139,28 +139,28 @@ define pcodeop move_banks;
 
 # Test and compare
 
-define pcodeop odd_parity;
-
 :TEST sX, sY is opc=0x0C & sX & sY & op0_3=0 {
 	local tmp:1 = sX & sY;
     Z = tmp == 0;
-    C = odd_parity(tmp);
+    C = popcount(tmp) & 1;
 }
 :TEST sX, kk is opc=0x0D & sX & kk {
 	local tmp:1 = sX & kk;
     Z = tmp == 0;
-    C = odd_parity(tmp);
+    C = popcount(tmp) & 1;
 }
 
 :TESTCY sX, sY is opc=0x0E & sX & sY & op0_3=0 {
 	local tmp:1 = sX & sY;
     Z = (tmp == 0) & Z;
-    C = odd_parity(tmp, C);
+    local tmp2:2 = (zext(tmp)<<1) | zext(C);
+    C = popcount(tmp2) & 1;
 }
 :TESTCY sX, kk is opc=0x0F & sX & kk {
 	local tmp:1 = sX & kk;
     Z = (tmp == 0) & Z;
-    C = odd_parity(tmp, C);
+    local tmp2:2 = (zext(tmp)<<1) | zext(C);
+    C = popcount(tmp2) & 1;
 }
 
 :COMPARE sX, sY is opc=0x1C & sX & sY & op0_3=0 {

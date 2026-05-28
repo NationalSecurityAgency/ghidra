@@ -188,18 +188,16 @@ macro update_flags(v) {
 }
 
 # TEST
-define pcodeop odd_parity;
-
 :TEST reg8_11,op0_7 is op12_17=0b010010 & reg8_11 & op0_7 {
 	local tmp:1 = reg8_11 & op0_7;
     Z = tmp == 0;
-    C = odd_parity(tmp);
+    C = popcount(tmp) & 1;
 }
 
 :TEST reg8_11,reg4_7 is op12_17=0b010011 & reg8_11 & reg4_7 & op0_3=0b0000 {
 	local tmp:1 = reg8_11 & reg4_7;
     Z = tmp == 0;
-    C = odd_parity(tmp);
+    C = popcount(tmp) & 1;
 }
 
 # ADD
