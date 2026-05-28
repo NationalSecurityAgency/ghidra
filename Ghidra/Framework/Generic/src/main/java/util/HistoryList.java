@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.datastruct.FixedSizeStack;
 
 /**
@@ -121,7 +121,7 @@ public class HistoryList<T> {
 
 	/**
 	 * True signals that the client allows null items to be used.  When this is true, a null
-	 * value will be stored in this list <b>only as the last item</b>.  See the javadoc for 
+	 * value will be stored in this list <b>only as the last item</b>.  See the class javadoc for 
 	 * more info.
 	 * 
 	 * @param allowNulls true to allow nulls; the default is false
@@ -133,9 +133,12 @@ public class HistoryList<T> {
 	/**
 	 * Adds an item to this history list.  <code>null</code> values are ignored.
 	 * 
+	 * <p>After this call, the {@link #getCurrentHistoryItem() current history item} will be the 
+	 * newly added item.
+	 * 
 	 * <p>Calls to this method during selection notification will have no effect.  If you need
 	 * to update the history during a notification, then you must do so at a later time, perhaps
-	 * by using  {@link SystemUtilities#runSwingLater(Runnable)}.
+	 * by using  {@link Swing#runLater(Runnable)}.
 	 * 
 	 * @param t the item to add.
 	 */
@@ -152,7 +155,7 @@ public class HistoryList<T> {
 		dropNull();
 
 		// once we add a new item, any old history that was after this item needs to be
-		// removed, as that is old alternate timeline that no longer makes sense
+		// removed, as that old alternate timeline that no longer makes sense
 		trimHistoryToCurrentIndex();
 
 		handleDuplicate(t);
@@ -161,6 +164,35 @@ public class HistoryList<T> {
 
 		// '- 1' because we want to be at the new item
 		historyIndex = historyStack.size() - 1;
+	}
+
+	/**
+	 * Performs an {@link #add(Object)} after removing the last item in the history, which is 
+	 * effectively a replace operation.  This method is useful for clients that wish to keep the 
+	 * history from filling up with transient items as the user is navigating.  The client may 
+	 * decide to replace the previous history marker with the newest history marker, such as when
+	 * the navigations are frequent and not necessarily important, such as when using the down arrow
+	 * key to cursor through a text file.
+	 * 
+	 * <p>After this call, the {@link #getCurrentHistoryItem() current history item} will be the 
+	 * newly added item.
+	 * 
+	 * <p>Calls to this method during selection notification will have no effect.  If you need
+	 * to update the history during a notification, then you must do so at a later time, perhaps
+	 * by using  {@link Swing#runLater(Runnable)}.
+	 * 
+	 * @param t the item to add.
+	 */
+	public void addReplace(T t) {
+
+		if (isBroadcasting) {
+			return;
+		}
+
+		historyStack.pop();
+		historyIndex = historyStack.size() - 1;
+
+		add(t);
 	}
 
 	/**
