@@ -30,9 +30,9 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
-import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingContext.ChangeCollector;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.action.ByModuleAutoMapSpec;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingContext.ChangeCollector;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingProposals.*;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.app.services.*;
@@ -130,7 +130,8 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	private void checkTraceMapping(Trace trace, TaskMonitor monitor) throws CancelledException {
 		DebuggerAutoMappingService autoMappingService =
 			tool.getService(DebuggerAutoMappingService.class);
-		if (!(autoMappingService.getAutoMapSpec() instanceof ByModuleAutoMapSpec)) {
+		if (autoMappingService == null ||
+			!(autoMappingService.getAutoMapSpec() instanceof ByModuleAutoMapSpec)) {
 			// TODO GP-6856: This should be factored into the ByModuleAutoMapSpec and the
 			//  other specs should have their own implementation
 			return;
@@ -186,19 +187,21 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	private void checkAllTraceMappingsForProgram(Program program, TaskMonitor monitor)
-		throws CancelledException {
-		Iterator<Trace> iterator =
-			traceManager.getOpenTraces().stream().filter(t -> !t.isClosed()).iterator();
+			throws CancelledException {
 		DebuggerAutoMappingService autoMappingService =
 			tool.getService(DebuggerAutoMappingService.class);
+		if (autoMappingService == null ||
+			!(autoMappingService.getAutoMapSpec() instanceof ByModuleAutoMapSpec)) {
+			// TODO GP-6856: This should be factored into the ByModuleAutoMapSpec and the
+			//  other specs should have their own implementation
+			return;
+		}
 
+		Iterator<Trace> iterator =
+			traceManager.getOpenTraces().stream().filter(t -> !t.isClosed()).iterator();
 		while (iterator.hasNext()) {
 			Trace trace = iterator.next();
-			if (!(autoMappingService.getAutoMapSpec() instanceof ByModuleAutoMapSpec)) {
-				// TODO GP-6856: This should be factored into the ByModuleAutoMapSpec and the
-				//  other specs should have their own implementation
-				continue;
-			}
+
 			final TraceModuleManager moduleManager = trace.getModuleManager();
 
 			for (final TraceModule module : moduleManager.getAllModules()) {
@@ -226,11 +229,20 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		return getOpenMappedProgramsAtSnap(trace, snap).contains(program);
 	}
 
+	protected void executeTask(Task task) {
+		if (progressService != null) {
+			progressService.execute(task);
+		}
+		else {
+			tool.execute(task);
+		}
+	}
+
 	@Override
 	public void processEvent(PluginEvent event) {
 		if (event instanceof ProgramOpenedPluginEvent ev) {
 			CompletableFuture.runAsync(this::programsChanged, executor);
-			progressService.execute(new Task("Check trace mappings") {
+			executeTask(new Task("Check trace mappings") {
 				@Override
 				public void run(TaskMonitor monitor) throws CancelledException {
 					checkAllTraceMappingsForProgram(ev.getProgram(), monitor);
@@ -242,7 +254,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		}
 		else if (event instanceof TraceOpenedPluginEvent ev) {
 			CompletableFuture.runAsync(this::tracesChanged, executor);
-			progressService.execute(new Task("Check trace mappings") {
+			executeTask(new Task("Check trace mappings") {
 				@Override
 				public void run(TaskMonitor monitor) throws CancelledException {
 					checkTraceMapping(ev.getTrace(), monitor);
