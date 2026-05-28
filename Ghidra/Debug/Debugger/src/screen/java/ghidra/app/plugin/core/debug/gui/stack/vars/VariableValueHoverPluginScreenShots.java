@@ -231,6 +231,8 @@ public class VariableValueHoverPluginScreenShots extends GhidraScreenShotGenerat
 
 		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
+		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
+		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 
 		Function function = createFibonacciProgramX86_32();
 		GhidraProgramUtilities.markProgramAnalyzed(program);

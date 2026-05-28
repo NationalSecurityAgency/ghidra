@@ -26,6 +26,7 @@
 		<attribute name="Instruction Offset" schema="ADDRESS" required="yes" />
 		<attribute-alias from="_pc" to="Instruction Offset" />
 		<attribute name="Stack Offset" schema="ADDRESS" />
+		<attribute-alias from="_sp" to="Stack Offset" />
 		<attribute name="Return Offset" schema="ADDRESS" />
 		<attribute name="Frame Offset" schema="ADDRESS" />
 		<attribute schema="ANY" />

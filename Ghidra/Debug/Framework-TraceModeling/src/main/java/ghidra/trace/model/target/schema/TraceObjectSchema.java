@@ -1021,14 +1021,17 @@ public interface TraceObjectSchema {
 	 * {@link TraceStack} with a single index between. There <em>must</em> be an intervening
 	 * {@link TraceStackFrame}, and the frame level (index) must precede it.
 	 * 
-	 * @param frameLevel the frame level. May be ignored if not applicable
+	 * @param frameLevel the frame level. Must be 0 if not applicable
 	 * @param path the path of the seed object relative to the root
 	 * @return the filter where the register container should be found, possibly
 	 *         {@link PathFilter#NONE}
 	 */
 	default PathFilter searchForRegisterContainer(int frameLevel, KeyPath path) {
 		KeyPath simple = searchForSuitable(TraceRegisterContainer.class, path);
-		if (simple != null) {
+		// NB: This is technically not correct. It's possible, although unlikely, that
+		//  the target has an accessible stack but no stack in its schema.  If so,
+		//  this method should be called with 0 instead of the actual stack level.
+		if (simple != null && frameLevel == 0) {
 			return PathFilter.pattern(simple);
 		}
 		KeyPath stackPath = searchForSuitable(TraceStack.class, path);
@@ -1053,7 +1056,7 @@ public interface TraceObjectSchema {
 				framePatternRelStack.applyKeys(index).getSingletonPath();
 			KeyPath framePath = stackPath.extend(framePathRelStack);
 			KeyPath regsPath = searchForSuitable(TraceRegisterContainer.class, framePath);
-			if (regsPath != null) {
+			if (regsPath != null && stackPath.isAncestor(regsPath)) {
 				patterns.add(new PathPattern(regsPath));
 			}
 		}
