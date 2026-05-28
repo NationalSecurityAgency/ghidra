@@ -107,7 +107,14 @@ public class GoPointerType extends GoType {
 
 	@Override
 	public boolean isValid() {
-		return super.isValid() && typ.getSize() == programContext.getPtrSize();
+		return super.isValid() && isValidSize();
+	}
+
+	private boolean isValidSize() {
+		long ptrBytesSize = typ.getPtrBytes();
+		// Future: ptrbytessize will occasionally be 0 instead of ptrSize.  Need to nail down why
+		return typ.getSize() == programContext.getPtrSize() &&
+			(ptrBytesSize == 0 || ptrBytesSize == programContext.getPtrSize());
 	}
 
 }
