@@ -118,6 +118,8 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 			}
 		};
 
+	private Map<Program, UnwindAnalysis> analyses = new HashMap<>();
+
 	public VariableValueHoverService(PluginTool tool) {
 		super(tool, PRIORITY);
 		autoServiceWiring = AutoService.wireServicesConsumed(tool, this);
@@ -623,7 +625,8 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		}
 		VariableEvaluator eval;
 		synchronized (cachedEvaluators) {
-			eval = cachedEvaluators.computeIfAbsent(current, c -> new VariableEvaluator(tool, c));
+			eval = cachedEvaluators.computeIfAbsent(current,
+				c -> new VariableEvaluator(tool, c));
 		}
 		TableFiller filler = new TableFiller(table, tool, current, eval, warnings);
 		if (field instanceof ClangTextField clangField) {
@@ -724,4 +727,13 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 			cachedEvaluators.keySet().removeIf(coords -> coords.getTrace() == trace);
 		}
 	}
+
+	public UnwindInfo getUnwindInfo(Program program, Address key, TaskMonitor monitor) {
+		synchronized (analyses) {
+			UnwindAnalysis ua =
+				analyses.computeIfAbsent(program, p -> new UnwindAnalysis(p));
+			return ua.getUnwindInfo(key, monitor);
+		}
+	}
+
 }
