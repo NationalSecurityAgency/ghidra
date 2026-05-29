@@ -15,6 +15,7 @@
  */
 package ghidra.framework.main.wizard.project;
 
+import java.awt.Component;
 import java.io.IOException;
 import java.util.List;
 
@@ -40,6 +41,11 @@ public class RepositoryStep extends WizardStep<ProjectWizardData> {
 
 	protected RepositoryStep(WizardModel<ProjectWizardData> model) {
 		super(model, "", new HelpLocation(GenericHelpTopics.FRONT_END, "SelectRepository"));
+	}
+
+	@Override
+	public Component getDefaultFocusComponent() {
+		return panel.getDefaultFocusComponent();
 	}
 
 	@Override
