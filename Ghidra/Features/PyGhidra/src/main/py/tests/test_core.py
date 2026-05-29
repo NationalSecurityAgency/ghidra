@@ -171,6 +171,15 @@ def test_import_script(capsys, shared_datadir: Path):
     assert captured.out.rstrip() == "imported successfully"
 
 
+def test_import_from_main(capsys, shared_datadir: Path):
+    strings_exe = shared_datadir / EXE_NAME
+    script_path = shared_datadir / "main_import_script.py"
+    pyghidra.run_script(strings_exe, script_path, analyze=False)
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    assert captured.out.rstrip() == EXE_NAME
+
+
 def test_import_ghidra_base_java_packages():
 
     def get_runtime_top_level_java_packages(launcher) -> set:

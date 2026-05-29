@@ -38,7 +38,7 @@ from java.util.function import Consumer # type:ignore @UnresolvedImport
 from jpype import JClass, JImplements, JOverride
 
 from pyghidra.internal.plugin.completions import PythonCodeCompleter
-from pyghidra.script import PyGhidraScript
+from pyghidra.script import PyGhidraScript, _bind_main_module, _create_main_module
 
 
 logger = logging.getLogger(__name__)
@@ -303,11 +303,14 @@ class PyConsole(InteractiveConsole):
     def _run_context(self) -> Generator[None, None, None]:
         self._script.start()
         success = False
+        main_module = _create_main_module(self.locals)
         try:
             self._state = ConsoleState.RUNNING
             sys.settrace(_interpreter_trace)
             # NOTE: redirect stdout to self so we can flush after each write
-            with contextlib.redirect_stdout(self), contextlib.redirect_stderr(self._err):
+            with _bind_main_module(main_module), \
+                 contextlib.redirect_stdout(self), \
+                 contextlib.redirect_stderr(self._err):
                 yield
                 success = True
         except KeyboardInterrupt:

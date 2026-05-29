@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
+import contextlib
 import functools
 import importlib.util
 import inspect
@@ -29,6 +30,7 @@ from typing import List
 from pyghidra import debug_callback
 
 _NO_ATTRIBUTE = object()
+_NO_MAIN_MODULE = object()
 
 _headless_interpreter = None
 
@@ -106,10 +108,42 @@ class _GhidraScriptModule:
     def __init__(self, spec: ModuleSpec):
         super().__setattr__("__dict__", spec.loader_state["script"])
 
+    def __getattr__(self, attr):
+        try:
+            return self.__dict__[attr]
+        except KeyError as exc:
+            raise AttributeError(attr) from exc
+
     def __setattr__(self, attr, value):
-        if hasattr(self, attr):
+        if attr in self.__dict__:
             raise AttributeError(f"readonly attribute {attr}")
         super().__setattr__(attr, value)
+
+
+@contextlib.contextmanager
+def _bind_main_module(module):
+    existing = sys.modules.get("__main__", _NO_MAIN_MODULE)
+    sys.modules["__main__"] = module
+    try:
+        yield
+    finally:
+        if existing is _NO_MAIN_MODULE:
+            sys.modules.pop("__main__", None)
+        else:
+            sys.modules["__main__"] = existing
+
+
+def _create_main_module(script: "PyGhidraScript"):
+    spec = ModuleSpec("__main__", None)
+    spec.loader_state = {"script": script}
+    script.setdefault("__name__", "__main__")
+    script.setdefault("__loader__", None)
+    script.setdefault("__package__", None)
+    script.setdefault("__spec__", None)
+    script.setdefault("__doc__", None)
+    script.setdefault("__annotations__", {})
+    script.setdefault("__builtins__", __builtins__)
+    return _GhidraScriptModule(spec)
 
 
 class _GhidraScriptLoader(SourceFileLoader):
@@ -252,7 +286,8 @@ class PyGhidraScript(dict):
             spec.loader = _GhidraScriptLoader(self, spec)
             m = importlib.util.module_from_spec(spec)
             try:
-                spec.loader.exec_module(m)
+                with _bind_main_module(m):
+                    spec.loader.exec_module(m)
             # pylint: disable=bare-except
             except:
                 # filter the traceback so that it stops at the script
