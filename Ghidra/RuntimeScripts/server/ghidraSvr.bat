@@ -93,8 +93,8 @@ if exist "%SERVER_DIR%\..\Ghidra\" goto normal
 :: NOTE: Variables that get accessed in server.conf must be lowercase
 
 :: Development Environment (Eclipse classes or "gradle jar")
-set "GHIDRA_HOME=%SERVER_DIR%\..\..\..\.."
-set "WRAPPER_CONF=%SERVER_DIR%\..\..\Common\server\server.conf"
+set "GHIDRA_HOME=%SERVER_DIR%\..\..\.."
+set "WRAPPER_CONF=%SERVER_DIR%\server.conf"
 set "DATA_DIR=%GHIDRA_HOME%\%MODULE_DIR%\build\data"
 set "CLASSPATH_FRAG=%GHIDRA_HOME%\%MODULE_DIR%\build\dev-meta\classpath.frag"
 set "LS_CPATH=%GHIDRA_HOME%\GhidraBuild\LaunchSupport\bin\main"

@@ -104,12 +104,12 @@ set "CPATH=%INSTALL_DIR%\Ghidra\Framework\Utility\lib\Utility.jar"
 set "LS_CPATH=%SUPPORT_DIR%\LaunchSupport.jar"
 set "DEBUG_LOG4J=%SUPPORT_DIR%\debug.log4j.xml"
 
-if exist "%INSTALL_DIR%\Ghidra" goto continue2
+if exist "%INSTALL_DIR%\Ghidra\application.properties" goto continue2
 
 ::
 :: Development Environment (Eclipse classes or "gradle jar")
 ::
-set "INSTALL_DIR=%INSTALL_DIR%\..\..\.."
+set "INSTALL_DIR=%INSTALL_DIR%\..\.."
 set "CPATH=%INSTALL_DIR%\Ghidra\Framework\Utility\bin\main"
 set "LS_CPATH=%INSTALL_DIR%\GhidraBuild\LaunchSupport\bin\main"
 if not exist "%LS_CPATH%" (
@@ -121,7 +121,7 @@ if not exist "%LS_CPATH%" (
 	set ERRORLEVEL=1
 	goto exit1
 )
-set "DEBUG_LOG4J=%INSTALL_DIR%\Ghidra\RuntimeScripts\Common\support\debug.log4j.xml"
+set "DEBUG_LOG4J=%INSTALL_DIR%\Ghidra\RuntimeScripts\support\debug.log4j.xml"
 
 :continue2
 

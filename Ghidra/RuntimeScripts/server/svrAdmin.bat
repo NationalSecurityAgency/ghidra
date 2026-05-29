@@ -47,16 +47,7 @@ set MAXMEM=128M
 :: 'd' - drive
 :: 'p' - path (without filename)
 set "SCRIPT_DIR=%~dp0"
-
-:: Production Environment
 set "CONFIG=%SCRIPT_DIR%.\server.conf"
-
-if exist "%CONFIG%" goto continue
-
-:: Development Environment
-set "CONFIG=%SCRIPT_DIR%..\..\Common\server\server.conf"
-
-:continue
 
 set VMARGS=-DUserAdmin.invocation=%~n0
 
