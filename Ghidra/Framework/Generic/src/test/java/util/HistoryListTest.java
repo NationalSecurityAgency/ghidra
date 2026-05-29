@@ -19,8 +19,7 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 import org.junit.Test;
@@ -151,6 +150,52 @@ public class HistoryListTest {
 		assertHistory(A, B, C, D);
 
 		assertCannotGoBack();
+	}
+
+	@Test
+	public void testAddReplace() {
+
+		addHistory(A);
+		addHistory(B);
+		addHistory(C);
+		replaceHistory(D); // C -> D
+		replaceHistory(E); // D -> E
+
+		assertHistory(A, B, E);
+
+		goBack();
+		assertNotified(B);
+		assertCurrentItem(B);
+
+		goBack();
+		assertNotified(A);
+		assertCannotGoBack();
+
+		goForward();
+		assertNotified(B);
+
+		goForward();
+		assertNotified(E);
+	}
+
+	@Test
+	public void testAddReplace_NotAtEnd() {
+
+		addHistory(A);
+		addHistory(B);
+		addHistory(C);
+		addHistory(D);
+		assertHistory(A, B, C, D);
+
+		goBack();
+		goBack();
+		assertNotified(B);
+		assertCurrentItem(B);
+
+		replaceHistory(E); // D -> E
+		assertHistory(A, B, C, E);
+
+		assertCurrentItem(E);
 	}
 
 	@Test
@@ -503,10 +548,15 @@ public class HistoryListTest {
 		historyList.add(item);
 	}
 
+	private void replaceHistory(String item) {
+		historyList.addReplace(item);
+	}
+
 	private void assertHistory(String... names) {
 
 		FixedSizeStack<String> stack = historyList.getHistoryStack();
-		assertEquals(names.length, stack.size());
+		assertEquals("History size is wrong: " + Arrays.toString(names) + " vs " + stack,
+			names.length, stack.size());
 		for (int i = 0; i < stack.size(); i++) {
 			assertEquals("Unexpected item in history", names[i], stack.get(i));
 		}
