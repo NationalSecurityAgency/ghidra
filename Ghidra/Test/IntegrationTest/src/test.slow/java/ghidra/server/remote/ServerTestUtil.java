@@ -29,6 +29,7 @@ import javax.rmi.ssl.SslRMIClientSocketFactory;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
+import db.buffers.DataBuffer;
 import generic.hash.HashUtilities;
 import generic.test.*;
 import ghidra.framework.Application;
@@ -91,6 +92,8 @@ public class ServerTestUtil {
 	public static final String USER_B = "userB";
 
 	private static final int SERVER_STARTUP_MAXWAIT_MS = 20000;
+
+	public static boolean enableCompressionOnServerStart = true;
 
 	private static IOThread cmdOut;
 	private static IOThread cmdErr;
@@ -413,6 +416,9 @@ public class ServerTestUtil {
 			boolean enableAltLoginName, boolean enableSSHAuthentication,
 			boolean enableAnonymousAuthentication) throws IOException {
 
+		// Set client-side compression to match server
+		DataBuffer.enableCompressedSerializationOutput(enableCompressionOnServerStart);
+
 		if (port == 0) {
 			port = GHIDRA_TEST_SERVER_PORT;
 		}
@@ -442,6 +448,7 @@ public class ServerTestUtil {
 		argList.add("-Xdebug");
 		argList.add("-Xnoagent");
 		argList.add("-Djava.compiler=NONE");
+		argList.add("-Ddb.buffers.DataBuffer.compressedOutput=" + enableCompressionOnServerStart);
 		argList.add("-D" + DefaultTrustManagerFactory.GHIDRA_CACERTS_PATH_PROPERTY + "=" +
 			getTestPkiCACertsPath());
 		argList.add("-D" + DefaultKeyManagerFactory.KEYSTORE_PATH_PROPERTY + "=" +
