@@ -69,6 +69,8 @@ public:
   static const uint4 BUILTIN_MEMCPY;		///< Built-in id for memcpy
   static const uint4 BUILTIN_STRNCPY;		///< Built-in id for strcpy
   static const uint4 BUILTIN_WCSNCPY;		///< Built-in id for wcsncpy
+  static const uint4 BUILTIN_BZERO;		///< Built-in id for bzero
+  static const uint4 BUILTIN_MEMSET;		///< Built-in id for memset
 protected:
   string name;			///< Low-level name of p-code operator
   Architecture *glb;		///< Architecture owning the user defined op
