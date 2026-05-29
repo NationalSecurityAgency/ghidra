@@ -23,6 +23,7 @@ data/languages/bmi2.sinc||GHIDRA||||END|
 data/languages/cet.sinc||GHIDRA||||END|
 data/languages/clwb.sinc||GHIDRA||||END|
 data/languages/fma.sinc||GHIDRA||||END|
+data/languages/gfni.sinc||GHIDRA||||END|
 data/languages/ia.sinc||GHIDRA||||END|
 data/languages/lockable.sinc||GHIDRA||||END|
 data/languages/lzcnt.sinc||GHIDRA||||END|
