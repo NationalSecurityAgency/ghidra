@@ -351,11 +351,23 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			validate();
 			validateAdminPrivilege(currentUser);
 
+			Set<String> allUsers = Set.of(mgr.getAllUsers(currentUser));
+			Set<String> updatedUsers = new HashSet<>();
+
 			LinkedHashMap<String, User> newUserMap = new LinkedHashMap<>();
 			for (User user : users) {
 				String userName = user.getName();
 				if (UserManager.ANONYMOUS_USERNAME.equals(userName)) {
 					continue; // ignore
+				}
+				if (!allUsers.contains(userName)) {
+					throw new IOException("Unknown user specified: " + userName);
+				}
+				if (!user.hasWritePermission() && !user.isReadOnly() && !user.isAdmin()) {
+					throw new IOException("User specified with invalid permission: " + userName);
+				}
+				if (!updatedUsers.add(userName)) {
+					throw new IOException("Duplicate user entry specified: " + userName);
 				}
 				newUserMap.put(userName, user);
 			}
@@ -508,7 +520,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * @throws UserAccessException if currentUser does not have admin priviledge
 	 * @throws IOException if an IO error occurs
 	 */
-	private void writeUserList(LinkedHashMap<String, User> newUserMap, boolean allowAnonymous)
+	private synchronized void writeUserList(LinkedHashMap<String, User> newUserMap,
+			boolean allowAnonymous)
 			throws IOException {
 
 		File temp = new File(userAccessFile.getParentFile(), "tempAccess.tmp");

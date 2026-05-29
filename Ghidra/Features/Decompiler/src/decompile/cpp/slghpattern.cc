@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -141,16 +141,16 @@ bool DisjointPattern::resolvesIntersect(const DisjointPattern *op1,const Disjoin
 DisjointPattern *DisjointPattern::decodeDisjoint(Decoder &decoder)
 
 {				// DisjointPattern factory
-  DisjointPattern *res;
+  unique_ptr<DisjointPattern> res;
   uint4 el = decoder.peekElement();
   if (el == sla::ELEM_INSTRUCT_PAT)
-    res = new InstructionPattern();
+    res.reset(new InstructionPattern());
   else if (el == sla::ELEM_CONTEXT_PAT)
-    res = new ContextPattern();
+    res.reset(new ContextPattern());
   else
-    res = new CombinePattern();
+    res.reset(new CombinePattern());
   res->decode(decoder);
-  return res;
+  return res.release();
 }
 
 void PatternBlock::normalize(void)

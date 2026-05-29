@@ -31,6 +31,7 @@ import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -113,18 +114,10 @@ public class Emulate {
 			return;
 		}
 		try {
-			Class<?> c = Class.forName(classname);
-			if (!EmulateInstructionStateModifier.class.isAssignableFrom(c)) {
-				Msg.error(this,
-					"Language " + language.getLanguageID() + " does not specify a valid " +
-						GhidraLanguagePropertyKeys.EMULATE_INSTRUCTION_STATE_MODIFIER_CLASS);
-				throw new RuntimeException(classname + " does not implement interface " +
-					EmulateInstructionStateModifier.class.getName());
-			}
-			Class<? extends EmulateInstructionStateModifier> instructionStateModifierClass =
-				(Class<? extends EmulateInstructionStateModifier>) c;
+			Class<? extends EmulateInstructionStateModifier> c = ClassSearcher.forNameSafe(
+				classname, EmulateInstructionStateModifier.class, getClass().getClassLoader());
 			Constructor<? extends EmulateInstructionStateModifier> constructor =
-				instructionStateModifierClass.getConstructor(Emulate.class);
+				c.getConstructor(Emulate.class);
 			instructionStateModifier = constructor.newInstance(this);
 		}
 		catch (Exception e) {

@@ -15,7 +15,8 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
@@ -80,6 +81,7 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.ColorUtils;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskMonitor;
@@ -1355,10 +1357,9 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 
 	public Plugin loadPlugin(String className) {
 		try {
-			Class<?> clazz = Class.forName(className);
-			@SuppressWarnings("unchecked")
-			Class<? extends Plugin> pluginClazz = (Class<? extends Plugin>) clazz;
-			return loadPlugin(pluginClazz);
+			Class<? extends Plugin> clazz =
+				ClassSearcher.forNameSafe(className, Plugin.class, getClass().getClassLoader());
+			return loadPlugin(clazz);
 		}
 		catch (ClassCastException e) {
 			e.printStackTrace();
