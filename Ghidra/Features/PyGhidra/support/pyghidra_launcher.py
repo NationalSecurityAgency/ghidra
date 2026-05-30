@@ -104,6 +104,8 @@ def find_supported_python_exe(install_dir: Path, dev: bool) -> List[str]:
                 return cmd
         except FileNotFoundError:
             pass
+        except NotADirectoryError:
+            pass
         
     return None
     

@@ -42,6 +42,8 @@ please refer to the [Getting Started][gettingstarted] document which can be foun
 Ghidra installation directory. 
 
 ## Build
+[![Build Ghidra][build-ghidra-badge]][build-ghidra-action]
+
 To create the latest development build for your platform from this source repository:
 
 ##### Install build tools:
@@ -127,7 +129,8 @@ If you would like to contribute bug fixes, improvements, and new features back t
 take a look at our [Contributor's Guide][contrib] to see how you can participate in this open 
 source project.
 
-
+[build-ghidra-action]: https://github.com/NationalSecurityAgency/ghidra/actions/workflows/build-ghidra.yml
+[build-ghidra-badge]: https://github.com/NationalSecurityAgency/ghidra/actions/workflows/build-ghidra.yml/badge.svg
 [nsa]: https://www.nsa.gov
 [contrib]: CONTRIBUTING.md
 [devguide]: DevGuide.md

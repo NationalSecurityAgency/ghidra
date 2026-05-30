@@ -531,6 +531,19 @@ void HighVariable::remove(Varnode *vn)
   }
 }
 
+/// \b this is assigned directly to the Varnode, losing any reference to a previous HighVariable,
+/// so the caller must take this into account.
+/// \param newvn is the Varnode to add to \b this
+/// \param mergeGroup is the group to associate with this merge
+void HighVariable::insert(Varnode *newvn,int2 mergeGroup)
+
+{
+  vector<Varnode *>::iterator iter;
+  iter = lower_bound(inst.begin(),inst.end(),newvn,compareJustLoc);
+  inst.insert(iter,newvn);
+  newvn->setHigh(this,mergeGroup);
+}
+
 /// Assuming there is a Symbol attached to \b this, run through the Varnode members
 /// until we find one with a SymbolEntry corresponding to the Symbol and return it.
 /// \return the SymbolEntry that mapped the Symbol to \b this or null if no Symbol is attached

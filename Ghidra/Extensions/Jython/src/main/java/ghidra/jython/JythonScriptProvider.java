@@ -40,8 +40,7 @@ public class JythonScriptProvider extends AbstractPythonScriptProvider {
 			throws GhidraScriptLoadException {
 
 		try {
-			Class<?> clazz = Class.forName(JythonScript.class.getName());
-			GhidraScript script = (GhidraScript) clazz.getConstructor().newInstance();
+			GhidraScript script = new JythonScript();
 			script.setSourceFile(sourceFile);
 			return script;
 		}

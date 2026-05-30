@@ -15,7 +15,9 @@
  */
 package ghidra.app.plugin.core.debug.gui.stack.vars;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import ghidra.app.decompiler.ClangLine;
 import ghidra.app.decompiler.ClangToken;
@@ -464,6 +466,77 @@ public enum VariableValueUtils {
 	}
 
 	/**
+	 * Get the stack pointer for the given thread's innermost frame using its {@link TraceStack}
+	 * 
+	 * <p>
+	 * This will prefer the stack pointer in the {@link TraceStackFrame}. If that's not available,
+	 * it will use the value of the stack pointer register from the thread's register bank for
+	 * frame 0.
+	 * 
+	 * @param platform the platform
+	 * @param thread the thread
+	 * @param snap the snapshot key
+	 * @return the address
+	 */
+	public static Address getStackPointerFromStack(TracePlatform platform, TraceThread thread,
+			long snap) {
+		TraceStack stack = thread.getTrace().getStackManager().getStack(thread, snap, false);
+		if (stack == null) {
+			return null;
+		}
+		TraceStackFrame frame = stack.getFrame(snap, 0, false);
+		if (frame == null) {
+			return null;
+		}
+		return frame.getStackPointer(snap);
+	}
+
+	/**
+	 * Get the program counter for the given thread's innermost frame using its
+	 * {@link TraceMemorySpace}, i.e., registers
+	 * 
+	 * @param platform the platform
+	 * @param thread the thread
+	 * @param snap the snapshot key
+	 * @return the address
+	 */
+	public static Address getStackPointerFromRegisters(TracePlatform platform, TraceThread thread,
+			long snap) {
+		TraceMemorySpace regs =
+			thread.getTrace().getMemoryManager().getMemoryRegisterSpace(thread, false);
+		if (regs == null) {
+			return null;
+		}
+		CompilerSpec compiler = platform.getCompilerSpec();
+		RegisterValue value =
+			regs.getValue(platform, snap, compiler.getStackPointer());
+		return platform.getLanguage()
+				.getDefaultSpace()
+				.getAddress(value.getUnsignedValue().longValue());
+	}
+
+	/**
+	 * Get the stack pointer from the innermost frame of the given thread's stack
+	 * 
+	 * <p>
+	 * This will prefer the stack pointer in the {@link TraceStackFrame}. If that's not available,
+	 * it will use the value of the stack pointer register from the thread's register bank for
+	 * frame 0.
+	 * 
+	 * @param platform the platform
+	 * @param thread the thread
+	 * @param snap the snapshot key
+	 * @return the address
+	 */
+	public static Address getStackPointer(TracePlatform platform, TraceThread thread, long snap) {
+		Address spFromStack = getStackPointerFromStack(platform, thread, snap);
+		if (spFromStack != null) {
+			return spFromStack;
+		}
+		return getStackPointerFromRegisters(platform, thread, snap);
+	}
+
+	/**
 	 * Check if the unwound frames annotated in the listing are "fresh"
 	 * 
 	 * <p>
@@ -685,8 +758,8 @@ public enum VariableValueUtils {
 		private final Language language;
 		private final ListenerForChanges listenerForChanges = new ListenerForChanges();
 
-		private List<UnwoundFrame<WatchValue>> unwound;
 		private FakeUnwoundFrame<WatchValue> fakeFrame;
+		private StackUnwinder unwinder;
 
 		/**
 		 * Construct an evaluator for the given tool and coordinates
@@ -698,6 +771,7 @@ public enum VariableValueUtils {
 			this.tool = tool;
 			this.coordinates = coordinates;
 			this.language = coordinates.getPlatform().getLanguage();
+			this.unwinder = new StackUnwinder(tool, coordinates.getPlatform());
 
 			coordinates.getTrace().addListener(listenerForChanges);
 		}
@@ -714,7 +788,7 @@ public enum VariableValueUtils {
 		 */
 		public void invalidateCache() {
 			synchronized (lock) {
-				unwound = null;
+				unwinder.invalidateCache();
 			}
 		}
 
@@ -734,21 +808,6 @@ public enum VariableValueUtils {
 		}
 
 		/**
-		 * Refresh the stack unwind
-		 * 
-		 * @param monitor a monitor for cancellation
-		 */
-		protected void doUnwind(TaskMonitor monitor) {
-			monitor.setMessage("Unwinding Stack");
-			StackUnwinder unwinder = new StackUnwinder(tool, coordinates.getPlatform());
-			unwound = new ArrayList<>();
-			for (AnalysisUnwoundFrame<WatchValue> frame : unwinder.frames(coordinates.frame(0),
-				monitor)) {
-				unwound.add(frame);
-			}
-		}
-
-		/**
 		 * Get the stack frame for the given function at or beyond the coordinates' frame level
 		 * 
 		 * @param function the desired function
@@ -760,48 +819,19 @@ public enum VariableValueUtils {
 		public UnwoundFrame<WatchValue> getStackFrame(Function function,
 				StackUnwindWarningSet warnings, TaskMonitor monitor, boolean required) {
 			synchronized (lock) {
-				if (unwound == null) {
-					try {
-						doUnwind(monitor);
-					}
-					catch (Exception e) {
-						/**
-						 * Most exceptions should be caught and wrapped by the unwind analysis. If
-						 * one gets here, something bad has happened, and for debugging purposes, we
-						 * should invalidate, so that the error will repeat next time the frame is
-						 * requested.
-						 */
-						unwound = null;
-						throw e;
-					}
+				AnalysisUnwoundFrame<WatchValue> currentFrame =
+					unwinder.findMatchForFunction(function, coordinates, warnings, monitor);
+				if (currentFrame != null) {
+					return currentFrame;
 				}
 
-				for (UnwoundFrame<WatchValue> frame : unwound.subList(coordinates.getFrame(),
-					unwound.size())) {
-					if (frame.getFunction() == function) {
-						StackUnwindWarningSet unwindWarnings = frame.getWarnings();
-						if (unwindWarnings != null) {
-							warnings.addAll(unwindWarnings);
-						}
-						return frame;
-					}
-				}
-				String message;
-				if (unwound.isEmpty()) {
-					message = "Could not recover the innermost frame!";
-				}
-				else {
-					message = "There is no frame for %s among the %d frames unwound."
-							.formatted(function, unwound.size());
-					Exception error = unwound.get(unwound.size() - 1).getError();
-					if (error != null) {
-						message += "\nTerminating error: %s".formatted(error.getMessage());
-					}
-				}
+				warnings.add(
+					new CustomStackUnwindWarning("Failed to find match for %s among the %d frames."
+							.formatted(function, unwinder.getRecoveredFrameCount())));
 				if (required) {
-					throw new UnwindException(message);
+					throw new UnwindException(
+						warnings.stream().map(w -> w.toString()).collect(Collectors.joining("\n")));
 				}
-				warnings.add(new CustomStackUnwindWarning(message));
 				return null;
 			}
 		}

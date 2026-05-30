@@ -353,6 +353,7 @@ public class RepositoryFile {
 			throws IOException {
 		synchronized (fileSystem) {
 			validate();
+			repository.validateWritePrivilege(user); // don't allow update if read-only 
 			folderItem.updateCheckoutVersion(checkoutId, checkoutVersion, user);
 		}
 	}
@@ -367,6 +368,7 @@ public class RepositoryFile {
 	public void terminateCheckout(long checkoutId, String user, boolean notify) throws IOException {
 		synchronized (fileSystem) {
 			validate();
+			repository.validateWritePrivilege(user); // don't allow update if read-only 
 			ItemCheckoutStatus coStatus = folderItem.getCheckout(checkoutId);
 			if (coStatus != null) {
 				User userObj = repository.getUser(user);

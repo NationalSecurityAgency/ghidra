@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.stack;
 
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -47,14 +46,7 @@ import ghidra.util.task.TaskMonitor;
  * 
  * <p>
  * The typical pattern for invoking analysis to unwind an entire stack is to use
- * {@link StackUnwinder#start(DebuggerCoordinates, TaskMonitor)} or similar, followed by
- * {@link #unwindNext(TaskMonitor)} in a chain until the stack is exhausted or analysis fails to
- * unwind a frame. It may be more convenient to use
- * {@link StackUnwinder#frames(DebuggerCoordinates, TaskMonitor)}. Its iterator implements that
- * pattern. Because unwinding can be expensive, it is recommended to cache the unwound stack when
- * possible. A centralized service for stack unwinding may be added later.
- * 
- * @param <T> the type of values retrievable from the unwound frame
+ * {@link StackUnwinder#getFrames(DebuggerCoordinates, TaskMonitor)}.
  */
 public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 
@@ -64,7 +56,7 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	private final Address spVal;
 	private final Address staticPcVal;
 	private final UnwindInfo info;
-	private final SavedRegisterMap registerMap;
+	final SavedRegisterMap registerMap;
 
 	private final Address base;
 
@@ -83,22 +75,19 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	 * @param state the machine state, typically the watch value state for the same coordinates. It
 	 *            is the caller's (i.e., subclass') responsibility to ensure the given state
 	 *            corresponds to the given coordinates.
-	 * @param level the level of this frame
 	 * @param pcVal the (dynamic) address of the next instruction when this frame becomes the
 	 *            current frame
 	 * @param spVal the address of the top of the stack when this frame becomes the current frame
 	 * @param staticPcVal the (static) address of the next instruction
 	 * @param info the information used to unwind this frame
-	 * @param infoErr if applicable, an error describing why the unwind info is missing or
-	 *            incomplete
 	 * @param registerMap a map from registers to the offsets of their saved values on the stack
 	 */
 	AnalysisUnwoundFrame(PluginTool tool, DebuggerCoordinates coordinates, StackUnwinder unwinder,
-			PcodeExecutorState<T> state, int level, Address pcVal, Address spVal,
+			PcodeExecutorState<T> state, Address pcVal, Address spVal,
 			Address staticPcVal, UnwindInfo info, SavedRegisterMap registerMap) {
 		super(tool, coordinates, state);
 		this.unwinder = unwinder;
-		this.level = level;
+		this.level = coordinates.getFrame();
 
 		this.pcVal = pcVal;
 		this.spVal = spVal;
@@ -136,15 +125,13 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	 * @throws CancelledException if the monitor is cancelled
 	 * @throws UnwindException if unwinding fails
 	 */
-	public AnalysisUnwoundFrame<T> unwindNext(TaskMonitor monitor) throws CancelledException {
+	public AnalysisUnwoundFrame<T> unwindNext(TaskMonitor monitor)
+			throws CancelledException {
 		if (info == null || info.ofReturn() == null) {
 			throw new NoSuchElementException();
 		}
-		SavedRegisterMap registerMap = this.registerMap.fork();
-		info.mapSavedRegisters(base, registerMap);
-		Address pcVal = info.computeNextPc(base, state, codeSpace, pc);
-		Address spVal = info.computeNextSp(base);
-		return unwinder.unwind(coordinates, level + 1, pcVal, spVal, state, registerMap, monitor);
+		return (AnalysisUnwoundFrame<T>) unwinder.getFrame(coordinates, state, level + 1, null,
+			monitor);
 	}
 
 	@Override
@@ -334,8 +321,13 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 				"Frame " + level + " has lenght 0");
 			return null;
 		}
-		for (TraceBookmark existing : bm.getBookmarksIntersecting(span,
-			new AddressRangeImpl(spPlusParams, spPlusParams.add(structure.getLength() - 1)))) {
+
+		List<TraceBookmark> copy = new ArrayList<>();
+		bm.getBookmarksIntersecting(span,
+			new AddressRangeImpl(spPlusParams, spPlusParams.add(structure.getLength() - 1)))
+				.forEach(copy::add);
+
+		for (TraceBookmark existing : copy) {
 			truncateOrDelete(existing, span);
 		}
 		if (!warnings.isBlank()) {

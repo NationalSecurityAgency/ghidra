@@ -3,17 +3,20 @@
 ## Overview
 As of version 12.0.5, Ghidra employs serialization input filters to address concerns about potential 
 serialization vulnerabilities in relation to the use of Java RMI (e.g., Ghidra Server).  Filters 
-are employed by both Ghidra Server and client applications.  The consequqnce of this filtering is
+are employed by both Ghidra Server and client applications.  The consequence of this filtering is
 that all Java Object deserialization is subject to the filter even when it corresponds to purely 
 local functionality.  This can occur with certain code that relies on serialization to facilitate 
 object cloning (e.g., `org.apache.commons.collections4.functors.PrototypeFactory`).  When such cases occur
-it may be neccessary to add allowed classes to a client-side serial input filter.
+it may be necessary to add allowed classes to a client-side serial input filter.
 
 The Ghidra application discovers serial input filter specifications (`*.serial.filter`) files within
 each Ghidra module's data directory (e.g., `Ghidra/Framework/FileSystem/data`) at startup.  The 
 combined filter set is used to establish a global input serialization filter for Ghidra.
 
-When adding functionality to Ghidra it may be neccessary to adjust the defined serial filter 
+NOTE: The Ghidra Server has a dedicated server-side serial filter file: 
+`Ghidra/Features/GhidraServer/data/serial.filter`.
+
+When adding functionality to Ghidra it may be necessary to adjust the defined serial filter 
 specifications.  When the filter rejects a class deserialization an `InvalidClassException` will be 
 thrown and the rejected class name will be logged.  The log will need to be consulted since the 
 exception itself does not convey the name of the offending class.
@@ -72,26 +75,34 @@ can be exploited.
 ```
     remoteIf=ghidra.remote.MyRemoteIf;
 ```
-- Maximum number of array elements (default: `32000`).  The maximum specified by any filter will be 
-used.  A specified value will be ignore if less than the default.
-
+- Maximum number of array elements (default: `200000`).  The maximum specified by any filter will be 
+used.  A specified value will be ignored if less than the default.  
+  
+  NOTE: The GhidraServer interface can pass large integer arrays based on its free-buffer list and
+  change maps.  The size of the arrays are sensitive to the size of the database and the extent of
+  revisions.  If changes are required, this value should be adjusted within these two files:  
+  
 ```
+   Ghidra/Features/GhidraServer/data/serial.filter
+   Ghidra/Framework/FileSystem/data/client.rmi.serial.filter
+
     maxarray=200000;
 ```
+
 - Maximum number of bytes in a serialization stream (default: `33554432` / 32MB).  The maximum 
-specified by any filter will be used.  A specified value will be ignore if less than the default.
+specified by any filter will be used.  A specified value will be ignored if less than the default.  
 
 ```
     maxbytes=100000000;
 ```
 - Maximum references in a graph between objects (default: `10000`).  The maximum specified by any 
-filter will be used.  A specified value will be ignore if less than the default.
+filter will be used.  A specified value will be ignored if less than the default.
 
 ```
     maxrefs=15000;
 ```
 - Maximum depth of an object graph. (default: `50`).  The maximum specified by any filter will be used.  
-A specified value will be ignore if less than the default.
+A specified value will be ignored if less than the default.
 
 ```
     maxdepth=75;

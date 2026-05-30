@@ -210,24 +210,24 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 		}
 
 		@Override
-		protected boolean refresh() {
+		protected boolean refresh(DBRecord rec) {
 			try {
 				storage = VariableStorage.BAD_STORAGE;
-				if (record != null) {
-					DBRecord rec = adapter.getRecord(key);
-					if (rec == null) {
-						return false;
-					}
-					record = rec;
-					try {
-						storage = VariableStorage.deserialize(arch,
-							record.getString(VariableStorageDBAdapter.STORAGE_COL));
-					}
-					catch (InvalidInputException e) {
-						// treat as bad storage
-					}
-					return true;
+				if (rec == null) {
+					rec = adapter.getRecord(key);
 				}
+				if (rec == null) {
+					return false;
+				}
+				record = rec;
+				try {
+					storage = VariableStorage.deserialize(arch,
+						record.getString(VariableStorageDBAdapter.STORAGE_COL));
+				}
+				catch (InvalidInputException e) {
+					// treat as bad storage
+				}
+				return true;
 			}
 			catch (IOException e) {
 				errorHandler.dbError(e);

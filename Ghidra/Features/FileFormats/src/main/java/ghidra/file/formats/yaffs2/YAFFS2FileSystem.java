@@ -216,8 +216,8 @@ public class YAFFS2FileSystem extends AbstractFileSystem<YAFFS2FileSystem.Metada
 		if (b != 0 && b != -1) {
 			return false;
 		}
-		for (int i = 0; i < pageBytes.length; i++) {
-			if (pageBytes[i] != b) {
+		for (byte pageByte : pageBytes) {
+			if (pageByte != b) {
 				return false;
 			}
 		}

@@ -347,6 +347,25 @@ void Varnode::destroyDescend(void)
   descend.clear();
 }
 
+/// We assume the replacement Varnode is initially a singleton in its own HighVariable.
+/// We swap \b this and the replacement between their respective HighVariables.
+/// \param replacevn is the replacement Varnode
+void Varnode::replaceInHigh(Varnode *replacevn)
+
+{
+#ifdef CPUI_DEBUG
+  if (replacevn->high->inst.size() != 1)
+    throw LowlevelError("Attempting to replace with merged Varnode");
+#endif
+  high->remove(this);
+  HighVariable *replaceHigh = replacevn->high;
+  replacevn->high = (HighVariable *)0;
+  replaceHigh->inst[0] = this;
+  high->insert(replacevn,mergegroup);
+  high = replaceHigh;
+  mergegroup = 0;
+}
+
 /// Set desired boolean attributes on this Varnode and then set dirty bits if appropriate
 /// \param fl is the mask containing the list of attributes to set
 void Varnode::setFlags(uint4 fl) const

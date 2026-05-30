@@ -258,20 +258,20 @@ AddrSpace *AddrSpaceManager::decodeSpace(Decoder &decoder,const Translate *trans
 
 {
   uint4 elemId = decoder.peekElement();
-  AddrSpace *res;
+  unique_ptr<AddrSpace> res;
   if (elemId == ELEM_SPACE_BASE)
-    res = new SpacebaseSpace(this,trans);
+    res.reset(new SpacebaseSpace(this,trans));
   else if (elemId == ELEM_SPACE_UNIQUE)
-    res = new UniqueSpace(this,trans);
+    res.reset(new UniqueSpace(this,trans));
   else if (elemId == ELEM_SPACE_OTHER)
-    res = new OtherSpace(this,trans);
+    res.reset(new OtherSpace(this,trans));
   else if (elemId == ELEM_SPACE_OVERLAY)
-    res = new OverlaySpace(this,trans);
+    res.reset(new OverlaySpace(this,trans));
   else
-    res = new AddrSpace(this,trans,IPTR_PROCESSOR);
+    res.reset(new AddrSpace(this,trans,IPTR_PROCESSOR));
 
   res->decode(decoder);
-  return res;
+  return res.release();
 }
 
 /// This routine initializes (almost) all the address spaces used
@@ -352,49 +352,49 @@ void AddrSpaceManager::setReverseJustified(AddrSpace *spc)
 void AddrSpaceManager::insertSpace(AddrSpace *spc)
 
 {
-  bool nameTypeMismatch = false;
-  bool duplicateName = false;
-  bool duplicateId = false;
+  unique_ptr<AddrSpace> owner;
+  if (spc->refcount == 0)
+    owner.reset(spc);		// Take ownership if this is the first reference
   switch(spc->getType()) {
   case IPTR_CONSTANT:
     if (spc->getName() != ConstantSpace::NAME)
-      nameTypeMismatch = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized with wrong type");
     if (spc->index != ConstantSpace::INDEX)
       throw LowlevelError("const space must be assigned index 0");
     constantspace = spc;
     break;
   case IPTR_INTERNAL:
     if (spc->getName() != UniqueSpace::NAME)
-      nameTypeMismatch = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized with wrong type");
     if (uniqspace != (AddrSpace *)0)
-      duplicateName = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized more than once");
     uniqspace = spc;
     break;
   case IPTR_FSPEC:
     if (spc->getName() != "fspec")
-      nameTypeMismatch = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized with wrong type");
     if (fspecspace != (AddrSpace *)0)
-      duplicateName = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized more than once");
     fspecspace = spc;
     break;
   case IPTR_JOIN:
     if (spc->getName() != JoinSpace::NAME)
-      nameTypeMismatch = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized with wrong type");
     if (joinspace != (AddrSpace *)0)
-      duplicateName = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized more than once");
     joinspace = spc;
     break;
   case IPTR_IOP:
     if (spc->getName() != "iop")
-      nameTypeMismatch = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized with wrong type");
     if (iopspace != (AddrSpace *)0)
-      duplicateName = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized more than once");
     iopspace = spc;
     break;
   case IPTR_SPACEBASE:
     if (spc->getName() == "stack") {
       if (stackspace != (AddrSpace *)0)
-	duplicateName = true;
+	throw LowlevelError("Space " + spc->getName() + " was initialized more than once");
       stackspace = spc;
     }
     // fallthru
@@ -412,26 +412,14 @@ void AddrSpaceManager::insertSpace(AddrSpace *spc)
   if (baselist.size() <= spc->index)
     baselist.resize(spc->index+1, (AddrSpace *)0);
 
-  duplicateId = baselist[spc->index] != (AddrSpace *)0;
+  if (baselist[spc->index] != (AddrSpace *)0)
+    throw LowlevelError("Space " + spc->getName() + " was assigned id duplicating: "+baselist[spc->index]->getName());
 
-  if (!nameTypeMismatch && !duplicateName && !duplicateId) {
-    duplicateName = !name2Space.insert(pair<string,AddrSpace *>(spc->getName(),spc)).second;
-  }
+   if (!name2Space.insert(pair<string,AddrSpace *>(spc->getName(),spc)).second)
+     throw LowlevelError("Space " + spc->getName() + " was initialized more than once");
 
-  if (nameTypeMismatch || duplicateName || duplicateId) {
-    string errMsg = "Space " + spc->getName();
-    if (nameTypeMismatch)
-      errMsg = errMsg + " was initialized with wrong type";
-    if (duplicateName)
-      errMsg = errMsg + " was initialized more than once";
-    if (duplicateId)
-      errMsg = errMsg + " was assigned as id duplicating: "+baselist[spc->index]->getName();
-    if (spc->refcount == 0)
-      delete spc;
-    spc = (AddrSpace *)0;
-    throw LowlevelError(errMsg);
-  }
   baselist[spc->index] = spc;
+  owner.release();
   spc->refcount += 1;
   assignShortcut(spc);
 }
@@ -1024,7 +1012,7 @@ const FloatFormat *Translate::getFloatFormat(int4 size) const
 void PcodeEmit::decodeOp(const Address &addr,Decoder &decoder)
 
 {
-  int4 opcode;
+  OpCode opcode;
   int4 isize;
   VarnodeData outvar;
   VarnodeData invar[16];
@@ -1033,14 +1021,19 @@ void PcodeEmit::decodeOp(const Address &addr,Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_OP);
   isize = decoder.readSignedInteger(ATTRIB_SIZE);
   outptr = &outvar;
-  if (isize <= 16)
+  if (isize <= 16) {
+    if (isize < 0)
+      throw DecoderError("Bad <op> size attribute");
     opcode = PcodeOpRaw::decode(decoder, isize, invar, &outptr);
+    decoder.closeElement(elemId);
+    dump(addr,opcode,outptr,invar,isize);
+  }
   else {
     vector<VarnodeData> varStorage(isize,VarnodeData());
     opcode = PcodeOpRaw::decode(decoder, isize, varStorage.data(), &outptr);
+    decoder.closeElement(elemId);
+    dump(addr,opcode,outptr,varStorage.data(),isize);
   }
-  decoder.closeElement(elemId);
-  dump(addr,(OpCode)opcode,outptr,invar,isize);
 }
 
 } // End namespace ghidra

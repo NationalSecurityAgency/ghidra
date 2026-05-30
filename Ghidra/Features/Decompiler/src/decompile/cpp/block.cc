@@ -1042,7 +1042,7 @@ void BlockGraph::findSpanningTree(vector<FlowBlock *> &preorder,vector<FlowBlock
     bool extraroots = false;
     int4 rpostcount = list.size();
     int4 rootindex = 0;
-    clearEdgeFlags(~((uint4)0));	// Clear all edge flags
+    clearEdgeFlags(f_irreducible|f_tree_edge|f_forward_edge|f_cross_edge|f_back_edge|f_loop_edge|f_loop_exit_edge);	// Clear spanning tree
     while(preorder.size() < list.size()) {
       FlowBlock *startbl = (FlowBlock *)0;
       while(rootindex<rootlist.size()) { // Go thru blocks with no in edges
@@ -1244,6 +1244,7 @@ void BlockGraph::clear(void)
   for(iter=list.begin();iter!=list.end();++iter)
     delete *iter;
   list.clear();
+  clearAllFlags();
 }
 
 void BlockGraph::markUnstructured(void)
@@ -1352,13 +1353,16 @@ FlowBlock *BlockGraph::nextFlowAfter(const FlowBlock *bl) const
   return nextbl;
 }
 
-void BlockGraph::finalTransform(Funcdata &data)
+void BlockGraph::finalTransform(Funcdata &data,bool allowOpMoves)
 
 {
+  if (hasFinalTransform())
+    return;			// Already performed
   // Recurse into all the substructures
   vector<FlowBlock *>::const_iterator iter;
   for(iter=list.begin();iter!=list.end();++iter)
-    (*iter)->finalTransform(data);
+    (*iter)->finalTransform(data,allowOpMoves);
+  setFlag(f_final_transform);	// Mark that transform has been performed
 }
 
 void BlockGraph::finalizePrinting(Funcdata &data) const
@@ -1402,7 +1406,7 @@ void BlockGraph::decodeBody(Decoder &decoder)
 
 {
   BlockMap newresolver;
-  vector<FlowBlock *> tmplist;
+  vector<unique_ptr<FlowBlock> > tmplist;
 
   for(;;) {
     uint4 subId = decoder.peekElement();
@@ -1411,15 +1415,14 @@ void BlockGraph::decodeBody(Decoder &decoder)
     int4 newindex = decoder.readSignedInteger(ATTRIB_INDEX);
     FlowBlock *bl = newresolver.createBlock(decoder.readString(ATTRIB_TYPE));
     bl->index = newindex;	// Need to set index here for sort
-    tmplist.push_back(bl);
+    tmplist.push_back(unique_ptr<FlowBlock>(bl));
     decoder.closeElement(subId);
   }
   newresolver.sortList();
 
   for(int4 i=0;i<tmplist.size();++i) {
-    FlowBlock *bl = tmplist[i];
-    bl->decode(decoder,newresolver);
-    addBlock(bl);
+    tmplist[i]->decode(decoder,newresolver);
+    addBlock(tmplist[i].release());
   }
 }
 
@@ -1905,12 +1908,13 @@ BlockSwitch *BlockGraph::newBlockSwitch(const vector<FlowBlock *> &cs,bool hasEx
 
 {
   FlowBlock *rootbl = cs[0];
-  BlockSwitch *ret = new BlockSwitch(rootbl);
+  unique_ptr<BlockSwitch> uret( new BlockSwitch(rootbl) );
   const FlowBlock *leafbl = rootbl->getExitLeaf();
   if ((leafbl == (const FlowBlock *)0)||(leafbl->getType() != FlowBlock::t_copy))
     throw LowlevelError("Could not get switch leaf");
-  ret->grabCaseBasic(leafbl->subBlock(0),cs); // Must be called before the identifyInternal
-  identifyInternal(ret,cs);
+  uret->grabCaseBasic(leafbl->subBlock(0),cs); // Must be called before the identifyInternal
+  identifyInternal(uret.get(),cs);
+  BlockSwitch *ret = uret.release();
   addBlock(ret);
   if (hasExit)
     ret->forceOutputNum(1);	// If there is an exit, there should be exactly 1 out edge
@@ -2365,14 +2369,23 @@ FlowBlock *BlockBasic::getSplitPoint(void)
   return this;
 }
 
-int4 BlockBasic::flipInPlaceTest(vector<PcodeOp *> &fliplist) const
+int4 BlockBasic::flipInPlaceTest(vector<PcodeOp *> &fliplist,bool allowOpRemoval) const
 
 {
   if (op.empty()) return 2;
   PcodeOp *lastop = op.back();
   if (lastop->code() != CPUI_CBRANCH)
     return 2;
-  return Funcdata::opFlipInPlaceTest(lastop,fliplist);
+  int4 res;
+  if (lastop->isBooleanFlip()) {
+    // If the flip bit is set, don't change any ops to accomplish flip
+    vector<PcodeOp *> unusedOps;
+    res = Funcdata::opFlipInPlaceTest(lastop,unusedOps,allowOpRemoval);
+  }
+  else {
+    res = Funcdata::opFlipInPlaceTest(lastop,fliplist,allowOpRemoval);
+  }
+  return res;
 }
 
 void BlockBasic::flipInPlaceExecute(void)
@@ -2381,7 +2394,9 @@ void BlockBasic::flipInPlaceExecute(void)
   PcodeOp *lastop = op.back();
   // This is similar to negateCondition but we don't need to set the boolean_flip flag on lastop
   // because it is getting explicitly changed
-  lastop->flipFlag(PcodeOp::fallthru_true); // Flip whether the fallthru block is true/false
+  lastop->flipFlag(PcodeOp::fallthru_true);	// Flip whether the fallthru block is true/false
+  if (lastop->isBooleanFlip())			// If the flip flag is set
+    lastop->flipFlag(PcodeOp::boolean_flip);	// unflip it (instead of flipping ops)
   FlowBlock::negateCondition(true); // Flip the order of outof this
 }
 
@@ -2441,6 +2456,18 @@ bool BlockBasic::isComplex(void) const
     if (statement >2) return true;
   }
   return false;
+}
+
+void BlockBasic::finalTransform(Funcdata &data,bool allowOpMoves)
+
+{
+  if (sizeOut() != 2) return;
+  PcodeOp *cbranch = lastOp();
+  if (cbranch == (PcodeOp *)0 || cbranch->code() != CPUI_CBRANCH)
+    return;
+  if (!cbranch->isBooleanFlip())
+    return;
+  data.opNormalizeFlip(cbranch);
 }
 
 /// \param encoder is the stream encoder
@@ -2552,13 +2579,14 @@ bool BlockBasic::unblockedMulti(int4 outslot) const
 				// outlists
   }
   if (redundlist.empty()) return true;
+  int4 inIndexToThis = blout->getInIndex(this);
   for(iter=blout->op.begin();iter!=blout->op.end();++iter) {
     multiop = *iter;
     if (multiop->code() != CPUI_MULTIEQUAL) continue;
     for(vector<const FlowBlock *>::iterator biter=redundlist.begin();biter!=redundlist.end();++biter) {
       bl = *biter;
       vnredund = multiop->getIn(blout->getInIndex(bl)); // One of the redundant varnodes
-      vnremove = multiop->getIn(blout->getInIndex(this));
+      vnremove = multiop->getIn(inIndexToThis);
       if (vnremove->isWritten()) {
 	othermulti = vnremove->getDef();
 	if ((othermulti->code()==CPUI_MULTIEQUAL)&&(othermulti->getParent()==this))
@@ -2566,6 +2594,26 @@ bool BlockBasic::unblockedMulti(int4 outslot) const
       }
       if (vnremove != vnredund) return false; // Redundant branches must be identical
     }
+  }
+  return true;
+}
+
+/// Was there copy propagation directly out of \b this block into a MULTIEQUAL in the immediate \e out block?
+/// If so, \b this block shouldn't be removed as the COPY may need to be put back during merge.
+/// \param outslot is the output edge to search along
+/// \return \b true if there was no immediate copy propagation, \b false otherwise
+bool BlockBasic::hasNoImmediateCopy(int4 outslot) const
+
+{
+  if (!hasImmedCopyEdge(outslot)) return true;
+  const BlockBasic *blout = (const BlockBasic *)getOut(outslot);
+  int4 inIndexToThis = blout->getInIndex(this);
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=blout->op.begin();iter!=blout->op.end();++iter) {
+    PcodeOp *multiop = *iter;
+    if (multiop->code() != CPUI_MULTIEQUAL) continue;
+    if (multiop->hasCopyImmed(inIndexToThis))
+      return false;
   }
   return true;
 }
@@ -2987,7 +3035,7 @@ void BlockList::printHeader(ostream &s) const
   FlowBlock::printHeader(s);
 }
 
-int4 BlockCondition::flipInPlaceTest(vector<PcodeOp *> &fliplist) const
+int4 BlockCondition::flipInPlaceTest(vector<PcodeOp *> &fliplist,bool allowOpRemoval) const
 
 {
   FlowBlock *split1 = getBlock(0)->getSplitPoint();
@@ -2996,10 +3044,10 @@ int4 BlockCondition::flipInPlaceTest(vector<PcodeOp *> &fliplist) const
   FlowBlock *split2 = getBlock(1)->getSplitPoint();
   if (split2 == (FlowBlock *)0)
     return 2;
-  int4 subtest1 = split1->flipInPlaceTest(fliplist);
+  int4 subtest1 = split1->flipInPlaceTest(fliplist,allowOpRemoval);
   if (subtest1 == 2)
     return 2;
-  int4 subtest2 = split2->flipInPlaceTest(fliplist);
+  int4 subtest2 = split2->flipInPlaceTest(fliplist,allowOpRemoval);
   if (subtest2 == 2)
     return 2;
   return subtest1;
@@ -3090,7 +3138,7 @@ void BlockIf::printHeader(ostream &s) const
   FlowBlock::printHeader(s);
 }
 
-bool BlockIf::preferComplement(Funcdata &data)
+bool BlockIf::preferComplement(Funcdata &data,bool allowOpRemoval)
 
 {
   if (getSize()!=3)		// If we are an if/else
@@ -3100,7 +3148,7 @@ bool BlockIf::preferComplement(Funcdata &data)
   if (split == (FlowBlock *)0)
     return false;
   vector<PcodeOp *> fliplist;
-  if (0 != split->flipInPlaceTest(fliplist))
+  if (0 != split->flipInPlaceTest(fliplist,allowOpRemoval))
     return false;
   split->flipInPlaceExecute();
   data.opFlipInPlaceExecute(fliplist);
@@ -3353,10 +3401,11 @@ FlowBlock *BlockWhileDo::nextFlowAfter(const FlowBlock *bl) const
 /// Determine if \b this block can be printed as a \e for loop, with an \e initializer statement
 /// extracted from the previous block, and an \e iterator statement extracted from the body.
 /// \param data is the function containing \b this loop
-void BlockWhileDo::finalTransform(Funcdata &data)
+/// \param allowOpMoves is \b true if iterator and initializer ops can be moved
+void BlockWhileDo::finalTransform(Funcdata &data,bool allowOpMoves)
 
 {
-  BlockGraph::finalTransform(data);
+  BlockGraph::finalTransform(data,allowOpMoves);
   if (!data.getArch()->analyze_for_loops) return;
   if (hasOverflowSyntax()) return;
   FlowBlock *copyBl = getFrontLeaf();
@@ -3379,6 +3428,7 @@ void BlockWhileDo::finalTransform(Funcdata &data)
   if (iterateOp == (PcodeOp *)0) return;
 
   if (iterateOp != lastOp) {
+    if (!allowOpMoves) return;
     data.opUninsert(iterateOp);
     data.opInsertAfter(iterateOp, lastOp);
   }
@@ -3391,6 +3441,7 @@ void BlockWhileDo::finalTransform(Funcdata &data)
     return;
   }
   if (initializeOp != lastOp) {
+    if (!allowOpMoves) return;
     data.opUninsert(initializeOp);
     data.opInsertAfter(initializeOp, lastOp);
   }

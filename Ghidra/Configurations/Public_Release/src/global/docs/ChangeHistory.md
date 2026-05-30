@@ -1,3 +1,29 @@
+# Ghidra 12.1.1 Change History (May 2026)
+
+### Improvements
+* _MachineLearning_. Upgraded the Machine Learning extension's Tribuo jars to 4.3.2. (GP-6838)
+* _Multi-User_. Made Ghidra Server security improvements. (GP-6832)
+* _Scripting_. Removed the `support/jythonRun(.bat)` launch capability. (GP-6826)
+
+### Bugs
+* _Analysis_. Changed non-returning function detection analyzer to ignore callfixup targets with fall-through behavior. (GP-6791, Issue #9154)
+* _Data Types_. Fixed the Data Type Preview to show the typedef data type before the typedef name. (GP-6858)
+* _Debugger:Agents_. Patched a possible out-of-memory vulnerability in TraceRmi. (GP-6718)
+* _Debugger:Listing_. Added __Disassemble as MIPS__:_:16e__ for the dynamic listing. (GP-6655)
+* _Framework_. Changed potentially unsafe calls to `Class.forName` to perform additional checks prior to instantiation. (GP-6717)
+* _Multi-User_. Increased the default value for serialization filter `maxarray` limit from 32,000 to 200,000.  This was done to avoid related class serialization errors when communicating with the Ghidra Server for large repository database files.  See `Ghidra/Framework/FileSystem/data/serialFilterREADME.md` - it may be necessary to specify an increased `maxarray` value if related serialization errors occur. (GP-6842)
+* _Multi-User_. Corrected memory leak issue related to Ghidra Server, affecting both client and server.  Buffer compression logic failed to properly release system resources. (GP-6862)
+* _Multi-User:Merge_. Corrected bug in Property List Merge which could cause an exception. (GP-6854)
+* _Processors_. Fixed several issues with x86 instruction semantics for numerous instructions. (GP-6675, Issue #9097)
+* _Processors_. Corrected MIPS signed offsets which were incorrectly interpreted as unsigned. (GP-6697)
+* _Processors_. Fixed issue with the CIP-51 variant language definition. (GP-6798)
+* _Processors_. Corrected issue with RISC-V attempting to write to constants. (GP-6849, Issue #9198)
+* _PyGhidra_. Handled a possible `NotADirectoryError` in `pyghidra_launcher.py`. (GP-6825)
+
+### Notable API Changes
+* _BSim_. (GP-6866) The unused methods `FunctionDatabase.getConfigurationTemplates` and `FunctionDatabase.isConfigTemplate` have been removed.
+* _Framework_. (GP-6717) Added `ClassSearcher.forNameSafe` method.
+
 # Ghidra 12.1 Change History (May 2026)
 
 ### New Features

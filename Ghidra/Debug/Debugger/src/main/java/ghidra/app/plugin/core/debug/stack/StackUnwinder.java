@@ -16,7 +16,10 @@
 package ghidra.app.plugin.core.debug.stack;
 
 import java.util.*;
+import java.util.Map.Entry;
 
+import ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueHoverService;
+import ghidra.app.plugin.core.debug.stack.StackUnwindWarning.CustomStackUnwindWarning;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
@@ -27,8 +30,8 @@ import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.lang.CompilerSpec;
-import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
@@ -82,7 +85,7 @@ public class StackUnwinder {
 		return tool.getService(DebuggerStaticMappingService.class);
 	}
 
-	private static WatchValuePcodeExecutorState getState(PluginTool tool,
+	public static WatchValuePcodeExecutorState getState(PluginTool tool,
 			DebuggerCoordinates coordinates) {
 		return DebuggerPcodeUtils.buildWatchState(tool, coordinates);
 	}
@@ -95,7 +98,13 @@ public class StackUnwinder {
 	final Register pc;
 	final AddressSpace codeSpace;
 	private final Register sp;
-	private final AddressSpace stackSpace;
+
+	record ThreadAndSnap(TraceThread thread, Long viewSnap) {}
+
+	private Map<ThreadAndSnap, TreeMap<Integer, AnalysisUnwoundFrame<WatchValue>>> unwound =
+		new HashMap<>();
+	private boolean returnErrorFrame = false;
+	private VariableValueHoverService service;
 
 	/**
 	 * Construct an unwinder
@@ -107,6 +116,7 @@ public class StackUnwinder {
 		this.tool = tool;
 		this.mappings = getMappings(tool);
 		this.platform = platform;
+		this.service = tool.getService(VariableValueHoverService.class);
 		this.trace = platform.getTrace();
 
 		this.pc = Objects.requireNonNull(platform.getLanguage().getProgramCounter(),
@@ -116,29 +126,6 @@ public class StackUnwinder {
 		CompilerSpec compiler = platform.getCompilerSpec();
 		this.sp = Objects.requireNonNull(compiler.getStackPointer(),
 			"Platform must have a stack pointer");
-		this.stackSpace = compiler.getStackBaseSpace();
-	}
-
-	/**
-	 * Begin unwinding frames that can evaluate variables as {@link WatchValue}s
-	 * 
-	 * <p>
-	 * While the returned frame is not technically "unwound," it is necessary to derive its base
-	 * pointer in order to evaluate any of its variables and unwind subsequent frames. The returned
-	 * frame has the {@link AnalysisUnwoundFrame#unwindNext(TaskMonitor)} method.
-	 * 
-	 * @param coordinates the starting coordinates, particularly the frame level
-	 * @param monitor a monitor for cancellation
-	 * @return the frame for the given level
-	 * @throws CancelledException if the monitor is cancelled
-	 */
-	public AnalysisUnwoundFrame<WatchValue> start(DebuggerCoordinates coordinates,
-			TaskMonitor monitor)
-			throws CancelledException {
-		if (coordinates.getPlatform() != platform) {
-			throw new IllegalArgumentException("Not same platform");
-		}
-		return start(coordinates, getState(tool, coordinates), monitor);
 	}
 
 	/**
@@ -161,52 +148,156 @@ public class StackUnwinder {
 	 * Subsequent frames are handled similarly. See
 	 * {@link AnalysisUnwoundFrame#unwindNext(TaskMonitor)}.
 	 * 
-	 * @param <T> the type of values in the state, and the result of variable evaluations
 	 * @param coordinates the starting coordinates, particularly the frame level
-	 * @param state the state, which must correspond to the given coordinates
 	 * @param monitor a monitor for cancellation
 	 * @return the frame for the given level
 	 * @throws CancelledException if the monitor is cancelled
 	 */
-	public <T> AnalysisUnwoundFrame<T> start(DebuggerCoordinates coordinates,
-			PcodeExecutorState<T> state, TaskMonitor monitor) throws CancelledException {
-		return start(coordinates, coordinates.getFrame(), state, monitor);
+	public AnalysisUnwoundFrame<WatchValue> start(DebuggerCoordinates coordinates,
+			TaskMonitor monitor) throws CancelledException {
+		if (coordinates.getPlatform() != platform) {
+			throw new IllegalArgumentException("Not same platform");
+		}
+		returnErrorFrame = true;
+		return getFrame(coordinates, getState(tool, coordinates), coordinates.getFrame(), null,
+			monitor);
 	}
 
-	protected <T> AnalysisUnwoundFrame<T> start(DebuggerCoordinates coordinates, int level,
-			PcodeExecutorState<T> state, TaskMonitor monitor) throws CancelledException {
-		Address pcVal = null;
+	public AnalysisUnwoundFrame<WatchValue> getFrame(DebuggerCoordinates coordinates,
+			PcodeExecutorState<?> state, int level, StackUnwindWarningSet warnings,
+			TaskMonitor monitor) {
+		// Current strategy: save the UnwindInfo, do not save the UnwoundFrame's.
+		return unwindStack(coordinates, level, warnings, monitor);
+	}
+
+	private AnalysisUnwoundFrame<WatchValue> unwindStack(DebuggerCoordinates coordinates,
+			int targetLevel, StackUnwindWarningSet warnings, TaskMonitor monitor) {
+		WatchValuePcodeExecutorState state = null;
+		SavedRegisterMap registerMap = null;
+		AnalysisUnwoundFrame<WatchValue> frame = null;
+
+		for (int level = coordinates.getFrame(); level <= targetLevel || targetLevel < 0; level++) {
+			DebuggerCoordinates coord = coordinates.frame(level);
+			if (frame == null || frame.getError() != null) {
+				state = getState(tool, coord);
+				registerMap = new SavedRegisterMap();
+				frame = null;
+			}
+
+			ThreadAndSnap tas = new ThreadAndSnap(coord.getThread(), coord.getViewSnap());
+			TreeMap<Integer, AnalysisUnwoundFrame<WatchValue>> treeMap = unwound.computeIfAbsent(
+				tas, t -> new TreeMap<Integer, AnalysisUnwoundFrame<WatchValue>>());
+			AnalysisUnwoundFrame<WatchValue> savedFrame = treeMap.get(coord.getFrame());
+			if (savedFrame != null) {
+				// Short circuit here if possible to avoid recomputing UnwindInfo
+				frame = savedFrame;
+				registerMap = frame.registerMap;
+				continue;
+			}
+
+			Address pcVal = pcOrSp(frame, coord, state, true);
+
+			ProgramLocation loc = getProgramLocation(coord.getSnap(), pcVal);
+			if (loc != null && service != null) {
+				UnwindInfo info =
+					service.getUnwindInfo(loc.getProgram(), loc.getAddress(), monitor);
+				if (info == null) {
+					// Continue here to generate a frame and prevent recalculating info
+					try {
+						StaticAndUnwind sau = computeUnwindInfo(coord.getSnap(), pcVal, monitor);
+						info = sau.info();
+					}
+					catch (CancelledException e) {
+						warnings.add(
+							new CustomStackUnwindWarning("Unwind cancelled for frame " + level));
+					}
+				}
+			}
+
+			Address spVal = pcOrSp(frame, coord, state, false);
+
+			SavedRegisterMap nextRegisterMap = updateMap(frame, registerMap);
+			frame = unwind(coord, pcVal, spVal, state, nextRegisterMap, monitor);
+			if (frame != null) {
+				registerMap = frame.registerMap;
+				treeMap.put(coord.getFrame(), frame);
+			}
+			else if (targetLevel < 0) {
+				break;
+			}
+		}
+		return frame;
+	}
+
+	private SavedRegisterMap updateMap(AnalysisUnwoundFrame<WatchValue> frame,
+			SavedRegisterMap registerMap) {
+		if (frame != null) {
+			SavedRegisterMap nextRegisterMap = registerMap.fork();
+			Address base = frame.getBasePointer();
+			if (base != null) {
+				frame.getUnwindInfo().mapSavedRegisters(base, nextRegisterMap);
+			}
+			return nextRegisterMap;
+		}
+		return registerMap;
+	}
+
+	private Address pcOrSp(AnalysisUnwoundFrame<WatchValue> frame,
+			DebuggerCoordinates coordinates,
+			PcodeExecutorState<?> state, boolean getPc) {
 		TraceThread thread = coordinates.getThread();
+		int level = coordinates.getFrame();
 		long viewSnap = coordinates.getViewSnap();
-		try {
-			TraceStack stack = trace.getStackManager().getLatestStack(thread, viewSnap);
-			if (stack != null) {
-				TraceStackFrame frame = stack.getFrame(viewSnap, level, false);
-				if (frame != null) {
-					pcVal = frame.getProgramCounter(viewSnap);
+
+		Address regVal = null;
+
+		// Try asking the stack
+		TraceStack stack =
+			trace.getStackManager().getStack(thread, viewSnap, false);
+		if (stack != null) {
+			TraceStackFrame frameForLevel = stack.getFrame(viewSnap, level, false);
+			if (frameForLevel != null) {
+				regVal = getPc ? frameForLevel.getProgramCounter(viewSnap)
+						: frameForLevel.getStackPointer(viewSnap);
+				if (regVal != null) {
+					return regVal;
 				}
 			}
 		}
-		catch (IllegalStateException e) {
-			// Schema does not specify a stack
-			// leave pcVal = null, so we'll get it from registers
-		}
-		TraceMemorySpace regs = Objects.requireNonNull(
-			trace.getMemoryManager().getMemoryRegisterSpace(thread, level, false),
-			"Frame must have a register bank");
-		if (pcVal == null) {
-			if (TraceMemoryState.KNOWN != regs.getState(platform, viewSnap, pc)) {
-				throw new UnwindException("Frame must have KNOWN " + pc + " value");
+
+		// Try asking the registers
+		TraceMemorySpace regs =
+			trace.getMemoryManager().getMemoryRegisterSpace(thread, level, false);
+		if (regs != null) {
+			if (TraceMemoryState.KNOWN == regs.getState(platform, viewSnap, getPc ? pc : sp)) {
+				regVal = codeSpace.getAddress(regs.getValue(platform, viewSnap, getPc ? pc : sp)
+						.getUnsignedValue()
+						.longValue());
+				if (regVal != null) {
+					return regVal;
+				}
 			}
-			pcVal = codeSpace.getAddress(
-				regs.getValue(platform, viewSnap, pc).getUnsignedValue().longValue());
 		}
-		if (TraceMemoryState.KNOWN != regs.getState(platform, viewSnap, sp)) {
-			throw new UnwindException("Frame must have KNOWN " + sp + " value");
+
+		// Try unwinding the stack
+		if (frame != null) {
+			UnwindInfo prevInfo = frame.getUnwindInfo();
+			Address base = frame.getBasePointer();
+			try {
+				regVal = getPc ? prevInfo.computeNextPc(base, state, codeSpace, pc)
+						: prevInfo.computeNextSp(base);
+				if (regVal != null) {
+					return regVal;
+				}
+			}
+			catch (Exception e) {
+				// Use the fall-back case below
+			}
 		}
-		Address spVal = stackSpace.getAddress(
-			regs.getValue(platform, viewSnap, sp).getUnsignedValue().longValue());
-		return unwind(coordinates, level, pcVal, spVal, state, new SavedRegisterMap(), monitor);
+
+		// Fall-back to current frame
+		RegisterValue rval = state.inspectRegisterValue(getPc ? pc : sp);
+		return codeSpace.getAddress(rval.getUnsignedValue().longValue());
 	}
 
 	record StaticAndUnwind(Address staticPc, UnwindInfo info) {}
@@ -219,110 +310,109 @@ public class StackUnwinder {
 	 * address and then invokes {@link UnwindAnalysis#computeUnwindInfo(Address, TaskMonitor)}.
 	 * 
 	 * @param snap the snapshot key (used for mapping the program counter to a program database)
-	 * @param level the frame level, used only for error messages
 	 * @param pcVal the program counter (dynamic)
 	 * @param monitor a monitor for cancellation
 	 * @return the unwind info, possibly incomplete
 	 * @throws CancelledException if the monitor is cancelled
 	 */
-	public StaticAndUnwind computeUnwindInfo(long snap, int level, Address pcVal,
+	public StaticAndUnwind computeUnwindInfo(long snap, Address pcVal,
 			TaskMonitor monitor) throws CancelledException {
 		// TODO: Try markup in trace first?
-		ProgramLocation staticPcLoc = mappings == null ? null
-				: mappings.getOpenMappedLocation(
-					new DefaultTraceLocation(trace, null, Lifespan.at(snap), pcVal));
+		ProgramLocation staticPcLoc = getProgramLocation(snap, pcVal);
 		if (staticPcLoc == null) {
-			throw new UnwindException("Cannot find static program for frame " + level + " (" +
-				pc + "=" + pcVal + ")");
+			throw new UnwindException(
+				"Cannot find static program for frame  (" + pc + "=" + pcVal + ")");
 		}
 		Program program = staticPcLoc.getProgram();
 		Address staticPc = staticPcLoc.getAddress();
 		try {
-			// TODO: Cache these?
-			UnwindAnalysis ua = new UnwindAnalysis(program);
-			return new StaticAndUnwind(staticPc, ua.computeUnwindInfo(staticPc, monitor));
+			UnwindInfo info = service.getUnwindInfo(program, staticPc, monitor);
+			StaticAndUnwind sau = new StaticAndUnwind(staticPc, info);
+			if (sau.info().ofReturn() == null) {
+				Function function = sau.info().function();
+				if (function != null) {
+					Address ep = function.getEntryPoint();
+					UnwindInfo epInfo = service.getUnwindInfo(program, ep, monitor);
+					info = new UnwindInfo(info.function(), info.depth(),
+						info.adjust(), epInfo.ofReturn(), epInfo.maskOfReturn(), info.saved(),
+						info.warnings(), info.error());
+					sau = new StaticAndUnwind(staticPc, info);
+				}
+			}
+			return sau;
 		}
 		catch (Exception e) {
 			return new StaticAndUnwind(staticPc, UnwindInfo.errorOnly(e));
 		}
 	}
 
-	<T> AnalysisUnwoundFrame<T> unwind(DebuggerCoordinates coordinates, int level, Address pcVal,
+	private ProgramLocation getProgramLocation(long snap, Address pcVal) {
+		return mappings == null ? null
+				: mappings.getOpenMappedLocation(
+					new DefaultTraceLocation(trace, null, Lifespan.at(snap), pcVal));
+	}
+
+	<T> AnalysisUnwoundFrame<T> unwind(DebuggerCoordinates coordinates, Address pcVal,
 			Address spVal, PcodeExecutorState<T> state, SavedRegisterMap registerMap,
-			TaskMonitor monitor) throws CancelledException {
+			TaskMonitor monitor) {
 		try {
-			StaticAndUnwind sau = computeUnwindInfo(coordinates.getSnap(), level, pcVal, monitor);
-			return new AnalysisUnwoundFrame<>(tool, coordinates, this, state, level, pcVal, spVal,
+			StaticAndUnwind sau = computeUnwindInfo(coordinates.getSnap(), pcVal, monitor);
+			return new AnalysisUnwoundFrame<>(tool, coordinates, this, state, pcVal, spVal,
 				sau.staticPc, sau.info, registerMap);
 		}
 		catch (Exception e) {
-			return new AnalysisUnwoundFrame<>(tool, coordinates, this, state, level, pcVal, spVal,
-				null, UnwindInfo.errorOnly(e), registerMap);
+			if (!returnErrorFrame) {
+				return null;
+			}
+			return new AnalysisUnwoundFrame<>(tool, coordinates, this, state, pcVal, spVal, null,
+				UnwindInfo.errorOnly(e), registerMap);
 		}
 	}
 
 	/**
-	 * An iterable wrapper for {@link #start(DebuggerCoordinates, PcodeExecutorState, TaskMonitor)}
-	 * and {@link AnalysisUnwoundFrame#unwindNext(TaskMonitor)}
-	 * 
-	 * @param <T> the type of values in the state
-	 * @param coordinates the starting coordinates
-	 * @param state the state
-	 * @param monitor the monitor
-	 * @return the iterable over unwound frames
+	 * A convenience method 
+	 * @return the deepest level
 	 */
-	public <T> Iterable<AnalysisUnwoundFrame<T>> frames(DebuggerCoordinates coordinates,
-			PcodeExecutorState<T> state, TaskMonitor monitor) {
-		return new Iterable<>() {
-			@Override
-			public Iterator<AnalysisUnwoundFrame<T>> iterator() {
-				return new Iterator<>() {
-					AnalysisUnwoundFrame<T> next = tryStart();
-
-					@Override
-					public boolean hasNext() {
-						return next != null;
-					}
-
-					@Override
-					public AnalysisUnwoundFrame<T> next() {
-						AnalysisUnwoundFrame<T> cur = next;
-						next = tryNext();
-						return cur;
-					}
-
-					private AnalysisUnwoundFrame<T> tryStart() {
-						try {
-							return start(coordinates, state, monitor);
-						}
-						catch (UnwindException | CancelledException e) {
-							return null;
-						}
-					}
-
-					private AnalysisUnwoundFrame<T> tryNext() {
-						try {
-							return next.unwindNext(monitor);
-						}
-						catch (NoSuchElementException | UnwindException | CancelledException e) {
-							return null;
-						}
-					}
-				};
-			}
-		};
+	public int getRecoveredFrameCount() {
+		return unwound.size();
 	}
 
-	/**
-	 * An iterable wrapper for {@link #start(DebuggerCoordinates, TaskMonitor)} and
-	 * {@link AnalysisUnwoundFrame#unwindNext(TaskMonitor)}
-	 * 
-	 * @param coordinates the starting coordinates
-	 * @param monitor the monitor
-	 * @return the iterable over unwound frames
-	 */
-	public Iterable<AnalysisUnwoundFrame<WatchValue>> frames(DebuggerCoordinates coordinates,
-			TaskMonitor monitor) {
-		return frames(coordinates, getState(tool, coordinates), monitor);
+	public void invalidateCache() {
+		unwound.clear();
+	}
+
+	public Map<Integer, AnalysisUnwoundFrame<WatchValue>> getFrames(
+			DebuggerCoordinates coordinates, TaskMonitor monitor) {
+		unwindStack(coordinates, getTargetReportedMaxFrame(coordinates), null, monitor);
+		ThreadAndSnap tas = new ThreadAndSnap(coordinates.getThread(), coordinates.getViewSnap());
+		return unwound.get(tas);
+	}
+
+	public AnalysisUnwoundFrame<WatchValue> findMatchForFunction(Function function,
+			DebuggerCoordinates coordinates, StackUnwindWarningSet warnings, TaskMonitor monitor) {
+		unwindStack(coordinates, getTargetReportedMaxFrame(coordinates), warnings, monitor);
+		AnalysisUnwoundFrame<WatchValue> candidate = null;
+		ThreadAndSnap tas = new ThreadAndSnap(coordinates.getThread(), coordinates.getViewSnap());
+		for (Entry<Integer, AnalysisUnwoundFrame<WatchValue>> entry : unwound.get(tas).entrySet()) {
+			AnalysisUnwoundFrame<WatchValue> frame = entry.getValue();
+			if (frame.getFunction() == function) {
+				StackUnwindWarningSet unwindWarnings = frame.getWarnings();
+				if (unwindWarnings != null) {
+					warnings.addAll(unwindWarnings);
+				}
+				candidate = frame;
+				if (entry.getKey() >= coordinates.getFrame()) {
+					return frame;
+				}
+			}
+		}
+		return candidate;
+	}
+
+	private int getTargetReportedMaxFrame(DebuggerCoordinates coordinates) {
+		TraceThread thread = coordinates.getThread();
+		long snap = coordinates.getViewSnap();
+		TraceStack stack = trace.getStackManager().getStack(thread, snap, false);
+		return stack == null ? -1 : stack.getDepth(snap) - 1;
 	}
 }

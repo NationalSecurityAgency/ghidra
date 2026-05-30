@@ -165,7 +165,6 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		cloneAction.setToolBarData(new ToolBarData(image, toolbarEndGroup));
 		cloneAction.setDescription(
 			"Create a snapshot (disconnected) copy of this Function Graph window");
-		cloneAction.setHelpLocation(new HelpLocation("Snapshots", "Snapshots_Start"));
 		cloneAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Function_Graph_Action_Snapshot"));
 		cloneAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_T,

@@ -703,7 +703,7 @@ public class DynamicStaticSynchronizationPlugin extends Plugin {
 			consoleService.log(DebuggerResources.ICON_LOG_ERROR,
 				"<html>The module <b><tt>" + HTMLUtilities.escapeHTML(mod.getName(snap)) +
 					"</tt></b> was not found in the project</html>",
-				new DebuggerMissingModuleActionContext(mod));
+				new DebuggerMissingModuleActionContext(mod, snap));
 		}
 		/**
 		 * Once the programs are opened, including those which are successfully imported, the

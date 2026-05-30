@@ -86,7 +86,7 @@ void Funcdata::clear(void)
 {				// Clear everything associated with decompilation (analysis)
 
   flags &= ~(highlevel_on|blocks_generated|processing_started|typerecovery_start|typerecovery_on|
-      double_precis_on|restart_pending);
+      double_precis_on|restart_pending|normalization_on);
   clean_up_index = 0;
   high_level_index = 0;
   cast_phase_index = 0;
@@ -172,8 +172,6 @@ void Funcdata::stopProcessing(void)
 {
   flags |= processing_complete;
   obank.destroyDead();		// Free up anything in the dead list
-  if (!isJumptableRecoveryOn())
-    issueDatatypeWarnings();
 #ifdef CPUI_STATISTICS
   glb->stats->process(*this);
 #endif
@@ -472,13 +470,12 @@ void Funcdata::clearCallSpecs(void)
   qlst.clear();			// Delete list of pointers
 }
 
-void Funcdata::issueDatatypeWarnings(void)
+void Funcdata::issueDatatypeWarning(Datatype *dt)
 
 {
-  list<DatatypeWarning>::const_iterator iter;
-  for(iter=glb->types->beginWarnings();iter!=glb->types->endWarnings();++iter) {
-    warningHeader((*iter).getWarning());
-  }
+  string warn = glb->types->findWarning(dt);
+  if (warn.size() > 0)
+    warningHeader(warn);
 }
 
 FuncCallSpecs *Funcdata::getCallSpecs(const PcodeOp *op) const
@@ -615,9 +612,9 @@ void Funcdata::decodeJumpTable(Decoder &decoder)
 {
   uint4 elemId = decoder.openElement(ELEM_JUMPTABLELIST);
   while(decoder.peekElement() != 0) {
-    JumpTable *jt = new JumpTable();
+    unique_ptr<JumpTable> jt(new JumpTable());
     jt->decode(decoder);
-    jumpvec.push_back(jt);
+    jumpvec.push_back(jt.release());
   }
   decoder.closeElement(elemId);
 }

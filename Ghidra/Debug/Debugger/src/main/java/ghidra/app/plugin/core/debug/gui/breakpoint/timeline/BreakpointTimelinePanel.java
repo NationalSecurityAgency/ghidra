@@ -180,28 +180,7 @@ class BreakpointTimelinePanel extends JPanel {
 		}
 
 		if (!BreakpointTimelinePanel.singleColumn) {
-			final long numCells = visibleEnd - visibleStart;
-
-			double xSideLength;
-			double ySideLength;
-
-			final double xPixelsPerCell = Math.ceil(Math.sqrt((numCells * width) / height));
-			if ((Math.floor((xPixelsPerCell * height) / width) * xPixelsPerCell) < numCells) {
-				xSideLength = (height / Math.ceil((height * xPixelsPerCell) / width));
-			}
-			else {
-				xSideLength = width / xPixelsPerCell;
-			}
-
-			final double yPixelsPerCell = Math.ceil(Math.sqrt((numCells * height) / width));
-			if ((Math.floor((yPixelsPerCell * width) / height) * yPixelsPerCell) < numCells) {
-				ySideLength = (width / Math.ceil((width * yPixelsPerCell) / height));
-			}
-			else {
-				ySideLength = height / yPixelsPerCell;
-			}
-
-			final long potentialSideLength = (long) Math.max(xSideLength, ySideLength);
+			final long potentialSideLength = getPotentialSideLength(width, height);
 
 			cellWidth = Math.max(defaultCellSize, potentialSideLength);
 			cellHeight = cellWidth;
@@ -248,6 +227,34 @@ class BreakpointTimelinePanel extends JPanel {
 		}
 
 		repaint();
+	}
+
+	private long getPotentialSideLength(int width, int height) {
+		final long numCells = visibleEnd - visibleStart;
+
+		double xSideLength;
+		double ySideLength;
+
+		double xPixelsPerCell = Math.ceil(Math.sqrt((numCells * width) / height));
+		if (xPixelsPerCell == 0) {
+			xPixelsPerCell = width;
+		}
+		if ((Math.floor((xPixelsPerCell * height) / width) * xPixelsPerCell) < numCells) {
+			xSideLength = (height / Math.ceil((height * xPixelsPerCell) / width));
+		}
+		else {
+			xSideLength = width / xPixelsPerCell;
+		}
+
+		final double yPixelsPerCell = Math.ceil(Math.sqrt((numCells * height) / width));
+		if ((Math.floor((yPixelsPerCell * width) / height) * yPixelsPerCell) < numCells) {
+			ySideLength = (width / Math.ceil((width * yPixelsPerCell) / height));
+		}
+		else {
+			ySideLength = height / yPixelsPerCell;
+		}
+
+		return (long) Math.max(xSideLength, ySideLength);
 	}
 
 	@Override

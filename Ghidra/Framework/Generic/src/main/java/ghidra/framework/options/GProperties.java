@@ -33,6 +33,7 @@ import com.google.gson.*;
 
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
 import ghidra.util.xml.XmlUtilities;
 import utilities.util.FileUtilities;
@@ -112,9 +113,7 @@ public class GProperties {
 	 */
 	public GProperties(Element root) {
 		this(root.getName());
-		Iterator<?> iter = root.getChildren().iterator();
-		while (iter.hasNext()) {
-			Element elem = (Element) iter.next();
+		for (Element elem : root.getChildren()) {
 			processElement(elem);
 		}
 	}
@@ -298,7 +297,7 @@ public class GProperties {
 			}
 		}
 		else if (tag.equals(GPROPERTIES_TAG)) {
-			Element element = (Element) elem.getChildren().get(0);
+			Element element = elem.getChildren().get(0);
 			if (element != null) {
 				map.put(name, new GProperties(element));
 			}
@@ -436,7 +435,13 @@ public class GProperties {
 
 	Enum<?> getEnumValue(String enumClassName, String value) {
 		try {
-			Class<?> enumClass = Class.forName(enumClassName).asSubclass(Enum.class);
+			// It would be better to restrict this to some interface we define. Otherwise, we ought
+			// to examine the static initializers of every enum in our classpath. Luckily, the
+			// constructor invocations are all defined by the enum values, and so cannot be randomly
+			// invoked. Famous last words: I doubt there's anything of concern in any enum's static
+			// initializer....
+			Class<?> enumClass =
+				ClassSearcher.forNameSafe(enumClassName, Enum.class, getClass().getClassLoader());
 
 			Method m = enumClass.getMethod("valueOf", new Class[] { String.class });
 			if (m != null) {
@@ -821,7 +826,7 @@ public class GProperties {
 	protected Element createElementFromElement(String internalKey, Element internalElement) {
 		Element newElement = createElement("XML", internalKey);
 
-		Element internalElementClone = (Element) internalElement.clone();
+		Element internalElementClone = internalElement.clone();
 		newElement.addContent(internalElementClone);
 
 		return newElement;

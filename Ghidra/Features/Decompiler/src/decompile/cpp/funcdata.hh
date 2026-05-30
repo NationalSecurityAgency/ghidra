@@ -69,7 +69,8 @@ class Funcdata {
     unimplemented_present = 0x800,	///< Set if function contains unimplemented instructions
     baddata_present = 0x1000,	///< Set if function flowed into bad data
     double_precis_on = 0x2000,	///< Set if we are performing double precision recovery
-    typerecovery_exceeded= 0x4000	///< Set if data-type propagation passes reached maximum
+    typerecovery_exceeded= 0x4000,	///< Set if data-type propagation passes reached maximum
+    normalization_on = 0x8000	///< Set if normalization will be performed
   };
   uint4 flags;			///< Boolean properties associated with \b this function
   uint4 clean_up_index;		///< Creation index of first Varnode created after start of cleanup
@@ -116,6 +117,7 @@ class Funcdata {
 				// Low level block functions
   void blockRemoveInternal(BlockBasic *bb,bool unreachable);
   void branchRemoveInternal(BlockBasic *bb,int4 num);
+  Varnode *createReplaceVarnode(Varnode *origvn,bool makeUnique);	///< Create a replacement for a Varnode that may be merged
   void pushMultiequals(BlockBasic *bb);		///< Push MULTIEQUAL Varnodes of the given block into the output block
   void clearBlocks(void);			///< Clear all basic blocks
   void structureReset(void);			///< Calculate initial basic block structures (after a control-flow change)
@@ -127,7 +129,7 @@ class Funcdata {
   void sortCallSpecs(void);			///< Sort calls using a dominance based order
   void deleteCallSpecs(PcodeOp *op);		///< Remove the specification for a particular call
   void clearCallSpecs(void);			///< Remove all call specifications
-  void issueDatatypeWarnings(void);		///< Add warning headers for any data-types that have been modified
+  void issueDatatypeWarning(Datatype *dt);	///< Add any warning header for the given data-type
 
   static bool descendantsOutside(Varnode *vn);
   static void encodeVarnode(Encoder &encoder,VarnodeLocSet::const_iterator iter,VarnodeLocSet::const_iterator enditer);
@@ -150,6 +152,7 @@ public:
   bool isTypeRecoveryOn(void) const { return ((flags&typerecovery_on)!=0); }	///< Will data-type analysis be performed
   bool hasTypeRecoveryStarted(void) const { return ((flags&typerecovery_start)!=0); }	///< Has data-type recovery processes started
   bool isTypeRecoveryExceeded(void) const { return ((flags&typerecovery_exceeded)!=0); }	///< Has maximum propagation passes been reached
+  bool isNormalizationOn(void) const { return ((flags&normalization_on)!=0); }	///< Will normalization be performed
   bool hasNoCode(void) const { return ((flags & no_code)!=0); }		///< Return \b true if \b this function has no code body
   void setNoCode(bool val) { if (val) flags |= no_code; else flags &= ~no_code; }	///< Toggle whether \b this has a body
   void setLanedRegGenerated(void) { minLanedSize = 1000000; }	///< Mark that laned registers have been collected
@@ -180,6 +183,11 @@ public:
   /// \param val is \b true if data-type analysis is enabled
   void setTypeRecovery(bool val) { flags = val ? (flags | typerecovery_on) : (flags & ~typerecovery_on); }
   void setTypeRecoveryExceeded(void) { flags |= typerecovery_exceeded; }	///< Mark propagation passes have reached maximum
+
+  /// \brief Toggle whether normalization transforms will be performed on \b this function
+  ///
+  /// \param val is \b true if normalization is enabled
+  void setNormalization(bool val) { flags = val ? (flags | normalization_on) : (flags & ~normalization_on); }
   void startCastPhase(void) { cast_phase_index = vbank.getCreateIndex(); }	///< Start the \b cast insertion phase
   uint4 getCastPhaseIndex(void) const { return cast_phase_index; }	///< Get creation index at the start of \b cast insertion
   uint4 getHighLevelIndex(void) const { return high_level_index; }	///< Get creation index at the start of HighVariable creation
@@ -494,8 +502,9 @@ public:
   PcodeOp *opStackStore(AddrSpace *spc,uintb off,PcodeOp *op,bool insertafter);
   Varnode *opBoolNegate(Varnode *vn,PcodeOp *op,bool insertafter);
   void opUndoPtradd(PcodeOp *op,bool finalize);	///< Convert a CPUI_PTRADD back into a CPUI_INT_ADD
-  static int4 opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist);
+  static int4 opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist,bool allowOpRemoval);
   void opFlipInPlaceExecute(vector<PcodeOp *> &fliplist);
+  bool opNormalizeFlip(PcodeOp *cbranch);
 
   /// \brief Start of PcodeOp objects with the given op-code
   list<PcodeOp *>::const_iterator beginOp(OpCode opc) const { return obank.begin(opc); }

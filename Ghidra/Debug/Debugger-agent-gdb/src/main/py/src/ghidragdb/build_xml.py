@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-from merge_xml import merge
 import os
 import sys
 rmi_path = os.getcwd() + "/../../../../../../Debugger-rmi-trace/src/main/py/src/ghidratrace/"
 sys.path.append(rmi_path)
+from merge_xml import merge
 
 
 def main():

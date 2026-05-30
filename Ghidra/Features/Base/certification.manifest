@@ -236,7 +236,6 @@ data/typeinfo/golang/patchverdiffs/go1.24.4.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.24.5.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.24.6.json.diff||GHIDRA||||END|
 data/typeinfo/mac_10.9/mac_osx.gdt||GHIDRA||||END|
-data/typeinfo/rust/rust-common.gdt||GHIDRA||||END|
 data/typeinfo/win32/msvcrt/clsids.txt||GHIDRA||reviewed||END|
 data/typeinfo/win32/msvcrt/guids.txt||GHIDRA||reviewed||END|
 data/typeinfo/win32/msvcrt/iids.txt||GHIDRA||||END|

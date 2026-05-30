@@ -51,6 +51,8 @@ HighVariable *Funcdata::assignHigh(Varnode *vn)
   if ((flags & highlevel_on)!=0) {
     if (vn->hasCover())
       vn->calcCover();
+    if (vn->getType()->hasWarning())
+      issueDatatypeWarning(vn->getType());
     if (!vn->isAnnotation()) {
       return new HighVariable(vn);
     }

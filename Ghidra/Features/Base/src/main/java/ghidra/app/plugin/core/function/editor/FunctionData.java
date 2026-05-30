@@ -193,10 +193,11 @@ class FunctionData extends FunctionDataView {
 
 	void setVarArgs(boolean enable) {
 		this.hasVarArgs = enable;
+		updateParameterAndReturnStorage();
 	}
 
 	/**
-	 * Update dynamic storage and auto-params when custom storage is disasbled.
+	 * Update dynamic storage and auto-params when custom storage is disabled.
 	 * Returns immediately if custom storage is enabled.
 	 */
 	void updateParameterAndReturnStorage() {
@@ -222,7 +223,8 @@ class FunctionData extends FunctionDataView {
 		}
 
 		VariableStorage[] paramStorage =
-			effectiveCallingConvention.getStorageLocations(getProgram(), dataTypes, true);
+			effectiveCallingConvention.getStorageLocations(getProgram(), dataTypes, true,
+				hasVarArgs);
 
 		returnInfo.setStorage(paramStorage[0]);
 

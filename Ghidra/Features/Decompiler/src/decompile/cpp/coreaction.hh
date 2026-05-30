@@ -510,6 +510,18 @@ public:
   virtual int4 apply(Funcdata &data);
 };
 
+/// \brief Remove blocks that do nothing after variable merging has occurred
+class ActionLateDoNothing : public Action {
+  static bool removingCreatesRedundancy(FlowBlock *bl);	///< Does removing the given block create a redundant branch point
+public:
+  ActionLateDoNothing(const string &g) : Action(0,"latedonothing",g) {}	///< Constructor
+  virtual Action *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Action *)0;
+    return new ActionLateDoNothing(getGroup());
+  }
+  virtual int4 apply(Funcdata &data);
+};
+
 /// \brief Get rid of \b redundant branches: duplicate edges between the same input and output block
 class ActionRedundBranch : public Action {
 public:
@@ -629,6 +641,7 @@ public:
 class ActionNormalizeSetup : public Action {
 public:
   ActionNormalizeSetup(const string &g) : Action(rule_onceperfunc,"normalizesetup",g) {}	///< Constructor
+  virtual void reset(Funcdata &data) { data.setNormalization(true); }
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionNormalizeSetup(getGroup());

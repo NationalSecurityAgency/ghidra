@@ -721,8 +721,8 @@ void OpTpl::decode(Decoder &decoder)
   }
   while(decoder.peekElement() != 0) {
     VarnodeTpl *vn = new VarnodeTpl();
-    vn->decode(decoder);
     input.push_back(vn);
+    vn->decode(decoder);
   }
   decoder.closeElement(el);
 }
@@ -915,8 +915,8 @@ int4 ConstructTpl::decode(Decoder &decoder)
   }
   while(decoder.peekElement() != 0) {
     OpTpl *op = new OpTpl();
-    op->decode(decoder);
     vec.push_back(op);
+    op->decode(decoder);
   }
   decoder.closeElement(el);
   return sectionid;

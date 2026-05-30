@@ -143,7 +143,7 @@ import ghidra.util.classfinder.ExtensionPoint;
  * <p>
  * Your Plugin can either directly implement the interface in your Plugin class:
  * <pre>
- * 	public class MyPlugin extends Plugin <b>implements MyService</b> {....}</code>
+ * 	public class MyPlugin extends Plugin <b>implements MyService</b> {....}
  * </pre>
  * <p>
  * or it may delegate the handling of the service interface to another object during its
