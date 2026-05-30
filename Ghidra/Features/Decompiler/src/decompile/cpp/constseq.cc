@@ -429,26 +429,21 @@ PcodeOp *StringSequence::buildFill(void)
     return (PcodeOp *)0;
   PcodeOp *insertPoint = moveOps[0].op;
   Architecture *glb = data.getArch();
-  uint4 builtInId = (fillVal == 0) ? UserPcodeOp::BUILTIN_BZERO : UserPcodeOp::BUILTIN_MEMSET;
+  uint4 builtInId = UserPcodeOp::BUILTIN_MEMSET;
   glb->userops.registerBuiltin(builtInId);
-  int4 numInputs = (fillVal == 0) ? 3 : 4;
-  PcodeOp *fillOp = data.newOp(numInputs, insertPoint->getAddr());
+  PcodeOp *fillOp = data.newOp(4, insertPoint->getAddr());
   data.opSetOpcode(fillOp, CPUI_CALLOTHER);
   data.opSetInput(fillOp, data.newConstant(4, builtInId), 0);
   Varnode *destPtr = constructTypedPointer(insertPoint);
   data.opSetInput(fillOp, destPtr, 1);
   if (destPtr->getType()->needsResolution())
     data.inheritUnionFieldPtr(destPtr->getType(), fillOp, 1, insertPoint, -1);
-  int4 lenSlot = 2;
-  if (fillVal != 0) {
-    Varnode *valVn = data.newConstant(4, fillVal);
-    valVn->updateType(fillOp->inputTypeLocal(2));
-    data.opSetInput(fillOp, valVn, 2);
-    lenSlot = 3;
-  }
+  Varnode *valVn = data.newConstant(4, fillVal);
+  valVn->updateType(fillOp->inputTypeLocal(2));
+  data.opSetInput(fillOp, valVn, 2);
   Varnode *lenVn = data.newConstant(4, moveOps.size() * charType->getSize());
-  lenVn->updateType(fillOp->inputTypeLocal(lenSlot));
-  data.opSetInput(fillOp, lenVn, lenSlot);
+  lenVn->updateType(fillOp->inputTypeLocal(3));
+  data.opSetInput(fillOp, lenVn, 3);
   data.opInsertBefore(fillOp, insertPoint);
   return fillOp;
 }
@@ -906,23 +901,18 @@ PcodeOp *HeapSequence::buildFill(void)
     if (basePointer->getType()->needsResolution())
       data.inheritUnionField(basePointer->getType(), ptrAdd, 0, immedRead, immedRead->getSlot(basePointer));
   }
-  uint4 builtInId = (fillVal == 0) ? UserPcodeOp::BUILTIN_BZERO : UserPcodeOp::BUILTIN_MEMSET;
+  uint4 builtInId = UserPcodeOp::BUILTIN_MEMSET;
   glb->userops.registerBuiltin(builtInId);
-  int4 numInputs = (fillVal == 0) ? 3 : 4;
-  PcodeOp *fillOp = data.newOp(numInputs, insertPoint->getAddr());
+  PcodeOp *fillOp = data.newOp(4, insertPoint->getAddr());
   data.opSetOpcode(fillOp, CPUI_CALLOTHER);
   data.opSetInput(fillOp, data.newConstant(4, builtInId), 0);
   data.opSetInput(fillOp, destPtr, 1);
-  int4 lenSlot = 2;
-  if (fillVal != 0) {
-    Varnode *valVn = data.newConstant(4, fillVal);
-    valVn->updateType(fillOp->inputTypeLocal(2));
-    data.opSetInput(fillOp, valVn, 2);
-    lenSlot = 3;
-  }
+  Varnode *valVn = data.newConstant(4, fillVal);
+  valVn->updateType(fillOp->inputTypeLocal(2));
+  data.opSetInput(fillOp, valVn, 2);
   Varnode *lenVn = data.newConstant(4, moveOps.size() * charType->getSize());
-  lenVn->updateType(fillOp->inputTypeLocal(lenSlot));
-  data.opSetInput(fillOp, lenVn, lenSlot);
+  lenVn->updateType(fillOp->inputTypeLocal(3));
+  data.opSetInput(fillOp, lenVn, 3);
   data.opInsertBefore(fillOp, insertPoint);
   if (destPtr->getType()->needsResolution())
     data.inheritUnionField(destPtr->getType(), fillOp, 1, immedRead, immedRead->getSlot(destPtr));

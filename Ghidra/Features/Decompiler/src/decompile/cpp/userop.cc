@@ -33,8 +33,7 @@ const uint4 UserPcodeOp::BUILTIN_VOLATILE_WRITE = 0x10000002;
 const uint4 UserPcodeOp::BUILTIN_MEMCPY = 0x10000003;
 const uint4 UserPcodeOp::BUILTIN_STRNCPY = 0x10000004;
 const uint4 UserPcodeOp::BUILTIN_WCSNCPY = 0x10000005;
-const uint4 UserPcodeOp::BUILTIN_BZERO = 0x10000006;
-const uint4 UserPcodeOp::BUILTIN_MEMSET = 0x10000007;
+const uint4 UserPcodeOp::BUILTIN_MEMSET = 0x10000006;
 
 int4 UserPcodeOp::extractAnnotationSize(const Varnode *vn,const PcodeOp *op)
 
@@ -476,16 +475,6 @@ UserPcodeOp *UserOpManage::registerBuiltin(uint4 i)
       Datatype *ptrType = glb->types->getTypePointer(ptrSize,cType,wordSize);
       Datatype *intType = glb->types->getBase(4,TYPE_INT);
       res = new DatatypeUserOp("builtin_wcsncpy",glb,UserPcodeOp::BUILTIN_WCSNCPY,ptrType,ptrType,ptrType,intType);
-      break;
-    }
-    case UserPcodeOp::BUILTIN_BZERO:
-    {
-      int4 ptrSize = glb->types->getSizeOfPointer();
-      int4 wordSize = glb->getDefaultDataSpace()->getWordSize();
-      Datatype *vType = glb->types->getTypeVoid();
-      Datatype *ptrType = glb->types->getTypePointer(ptrSize,vType,wordSize);
-      Datatype *intType = glb->types->getBase(4,TYPE_INT);
-      res = new DatatypeUserOp("builtin_bzero",glb,UserPcodeOp::BUILTIN_BZERO,vType,ptrType,intType);
       break;
     }
     case UserPcodeOp::BUILTIN_MEMSET:
