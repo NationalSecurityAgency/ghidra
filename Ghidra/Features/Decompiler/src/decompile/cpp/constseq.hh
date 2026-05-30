@@ -69,7 +69,7 @@ class StringSequence : public ArraySequence {
   Address startAddr;		///< Starting address of the memory region
   SymbolEntry *entry;		///< Symbol at the root Address
   bool collectCopyOps(int size);	///< Collect ops COPYing constants into the memory region
-  PcodeOp *buildFill(void);		///< Build the bzero or memset function for repeated byte values
+  PcodeOp *buildFill(void);		///< Build the memset function for repeated byte values
   PcodeOp *buildStringCopy(void);	///< Build the strncpy,wcsncpy, or memcpy function with string as input
   static void removeForward(const WriteNode &curNode,map<PcodeOp *,list<WriteNode>::iterator> &xref,
 			    list<WriteNode> &points,vector<WriteNode> &deadOps);
@@ -110,7 +110,7 @@ class HeapSequence : public ArraySequence {
   static bool setsEqual(const vector<Varnode *> &op1,const vector<Varnode *> &op2);
   bool testValue(PcodeOp *op);		///< Test if a STORE value has the matching form for the sequence
   bool collectStoreOps(void);		///< Collect ops STOREing into a memory region from the same root pointer
-  PcodeOp *buildFill(void);		///< Build the bzero or memset function for repeated byte values
+  PcodeOp *buildFill(void);		///< Build the memset function for repeated byte values
   PcodeOp *buildStringCopy(void);	///< Build the strncpy,wcsncpy, or memcpy function with string as input
   void gatherIndirectPairs(vector<PcodeOp *> &indirects,vector<IndirectPair> &pairs);
   bool deduplicatePairs(vector<IndirectPair> &pairs);	///< Find and eliminate duplicate INDIRECT pairs
