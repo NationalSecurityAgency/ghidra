@@ -3,6 +3,10 @@
 # div d,s,t 02004033 fe00707f SIMPLE (0, 0) 
 :div rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x4 & funct7=0x1
 {
+	if (rs2 != 0) goto <do_div>;
+	rd = -1;
+	goto inst_next;
+<do_div>
 	rd = rs1 s/ rs2;
 }
 
@@ -10,6 +14,10 @@
 # divu d,s,t 02005033 fe00707f SIMPLE (0, 0) 
 :divu rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x5 & funct7=0x1
 {
+	if (rs2 != 0) goto <do_divu>;
+	rd = -1;
+	goto inst_next;
+<do_divu>
 	rd = rs1 / rs2;
 }
 
@@ -54,6 +62,10 @@
 # rem d,s,t 02006033 fe00707f SIMPLE (0, 0) 
 :rem rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x6 & funct7=0x1
 {
+	if (rs2 != 0) goto <do_rem>;
+	rd = rs1;
+	goto inst_next;
+<do_rem>
 	rd = rs1 s% rs2;
 }
 
@@ -61,5 +73,9 @@
 # remu d,s,t 02007033 fe00707f SIMPLE (0, 0) 
 :remu rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x7 & funct7=0x1
 {
+	if (rs2 != 0) goto <do_remu>;
+	rd = rs1;
+	goto inst_next;
+<do_remu>
 	rd = rs1 % rs2;
 }

@@ -5,6 +5,10 @@
 {
 	local tmpr1:4 = rs1:4;
 	local tmpr2:4 = rs2:4;
+	if (tmpr2 != 0) goto <do_divuw>;
+	rd = -1;
+	goto inst_next;
+<do_divuw>
 	rd = sext(tmpr1 / tmpr2);
 }
 
@@ -14,6 +18,10 @@
 {
 	local tmpr1:4 = rs1:4;
 	local tmpr2:4 = rs2:4;
+	if (tmpr2 != 0) goto <do_divw>;
+	rd = -1;
+	goto inst_next;
+<do_divw>
 	rd = sext(tmpr1 s/ tmpr2);
 }
 
@@ -31,6 +39,10 @@
 {
 	local tmpr1:4 = rs1:4;
 	local tmpr2:4 = rs2:4;
+	if (tmpr2 != 0) goto <do_remuw>;
+	rd = sext(tmpr1);
+	goto inst_next;
+<do_remuw>
 	rd = sext(tmpr1 % tmpr2);
 }
 
@@ -40,5 +52,9 @@
 {
 	local tmpr1:4 = rs1:4;
 	local tmpr2:4 = rs2:4;
+	if (tmpr2 != 0) goto <do_remw>;
+	rd = sext(tmpr1);
+	goto inst_next;
+<do_remw>
 	rd = sext(tmpr1 s% tmpr2);
 }
