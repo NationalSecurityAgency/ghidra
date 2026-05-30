@@ -131,7 +131,7 @@ def get_ghidra_venv(install_dir: Path, dev: bool) -> Path:
     
 def create_ghidra_venv(python_cmd: List[str], venv_dir: Path) -> None:
     print(f'Creating Ghidra virtual environment at {venv_dir}...')
-    subprocess.run(python_cmd + ['-m', 'venv', venv_dir.absolute()])
+    subprocess.run(python_cmd + ['-m', 'venv', '--upgrade-deps', venv_dir.absolute()], check=True)
 
 def version_tuple(v: str) -> Tuple[str, ...]:
     filled = []
