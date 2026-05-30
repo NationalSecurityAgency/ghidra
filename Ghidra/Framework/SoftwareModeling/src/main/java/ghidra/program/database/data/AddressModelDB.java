@@ -216,4 +216,10 @@ class AddressModelDB extends DataTypeDB {//implements AddressModel {
 	protected boolean isEquivalent(DataType dataType, DataTypeConflictHandler handler) {
 		return this.addressModel.equals(dataType.getAddressModel());
 	}
+
+	@Override
+	protected boolean refresh(DBRecord record) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }
