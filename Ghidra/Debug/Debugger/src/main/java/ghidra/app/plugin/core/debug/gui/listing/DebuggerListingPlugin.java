@@ -17,10 +17,14 @@ package ghidra.app.plugin.core.debug.gui.listing;
 
 import static ghidra.app.plugin.core.debug.gui.DebuggerResources.GROUP_TRANSIENT_VIEWS;
 
+import java.util.ArrayList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import docking.ComponentProvider;
+import ghidra.debug.api.listing.DebuggerListing;
 import org.jdom2.Element;
 
 import docking.ActionContext;
@@ -39,6 +43,7 @@ import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.debug.api.action.AutoReadMemorySpec;
 import ghidra.debug.api.action.LocationTrackingSpec;
+import ghidra.debug.api.listing.DebuggerListing;
 import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
@@ -178,6 +183,22 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 			provider.goToCoordinates(current);
 			return provider;
 		}
+	}
+
+	@Override
+	public DebuggerListing createNewListing() {
+		return createNewDisconnectedProvider();
+	}
+
+	public String findNextCustomTitle() {
+		List<String> allTitles = disconnectedProviders.stream().map(ComponentProvider::getTitle).toList();
+		int i;
+		for (i = 0; i < allTitles.size(); i++) {
+			if (!allTitles.contains("Dynamic %d".formatted(i))) {
+				return "Dynamic %d".formatted(i);
+			}
+		}
+		return "Dynamic %d".formatted(i);
 	}
 
 	@Override
@@ -352,31 +373,12 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 		return goTo(loc, centerOnScreen);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * <p>
-	 * This is only used by the ProgramManager. I don't need state per program. It would be nice to
-	 * have state per Trace, but this facility is usurped only for the ProgramManager. Here, it gets
-	 * in my way, since it restores previous, now incorrect, state on program switch. It tends to
-	 * override the static sync.
-	 */
 	@Override
-	public Object getTransientState() {
-		// ProgramManager does all this for programs. I don't need that here.
-		return new Object[] {};
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @see #getTransientState()
-	 */
-	@Override
-	public void restoreTransientState(Object objectState) {
-		/*try (Suppression supp = cbGoTo.suppress(null)) {
-			super.restoreTransientState(objectState);
-		}*/
+	public List<DebuggerListing> getAllListings() {
+		final List<DebuggerListing> ret = new ArrayList<>();
+		ret.add(connectedProvider);
+		ret.addAll(disconnectedProviders);
+		return ret;
 	}
 
 	@Override

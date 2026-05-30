@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* A Bison parser, made by GNU Bison 3.5.1.  */
+/* A Bison parser, made by GNU Bison 3.7.4.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
@@ -49,6 +49,10 @@
 /* C LALR(1) parser skeleton written by Richard Stallman, by
    simplifying the original so-called "semantic" parser.  */
 
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
 /* All symbols defined below should begin with yy or YY, to avoid
    infringing on user name space.  This should be done even for local
    variables, as they might otherwise be expanded by user macros.
@@ -56,14 +60,11 @@
    define necessary library symbols; they are noted "INFRINGES ON
    USER NAME SPACE" below.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* Identify Bison output, and Bison version.  */
+#define YYBISON 30704
 
-/* Identify Bison output.  */
-#define YYBISON 1
-
-/* Bison version.  */
-#define YYBISON_VERSION "3.5.1"
+/* Bison version string.  */
+#define YYBISON_VERSION "3.7.4"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -124,211 +125,222 @@ extern int sleigherror(const char *str );
 #  endif
 # endif
 
-/* Enabling verbose error messages.  */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#else
-# define YYERROR_VERBOSE 0
-#endif
-
-/* Use api.header.include to #include this header
-   instead of duplicating it here.  */
-#ifndef YY_SLEIGH_SLGHPARSE_HH_INCLUDED
-# define YY_SLEIGH_SLGHPARSE_HH_INCLUDED
-/* Debug traces.  */
-#ifndef SLEIGHDEBUG
-# if defined YYDEBUG
-#if YYDEBUG
-#   define SLEIGHDEBUG 1
-#  else
-#   define SLEIGHDEBUG 0
-#  endif
-# else /* ! defined YYDEBUG */
-#  define SLEIGHDEBUG 0
-# endif /* ! defined YYDEBUG */
-#endif  /* ! defined SLEIGHDEBUG */
-#if SLEIGHDEBUG
-extern int sleighdebug;
-#endif
-
-/* Token type.  */
-#ifndef SLEIGHTOKENTYPE
-# define SLEIGHTOKENTYPE
-  enum sleightokentype
-  {
-    OP_BOOL_OR = 258,
-    OP_BOOL_AND = 259,
-    OP_BOOL_XOR = 260,
-    OP_OR = 261,
-    OP_XOR = 262,
-    OP_AND = 263,
-    OP_EQUAL = 264,
-    OP_NOTEQUAL = 265,
-    OP_FEQUAL = 266,
-    OP_FNOTEQUAL = 267,
-    OP_GREATEQUAL = 268,
-    OP_LESSEQUAL = 269,
-    OP_SLESS = 270,
-    OP_SGREATEQUAL = 271,
-    OP_SLESSEQUAL = 272,
-    OP_SGREAT = 273,
-    OP_FLESS = 274,
-    OP_FGREAT = 275,
-    OP_FLESSEQUAL = 276,
-    OP_FGREATEQUAL = 277,
-    OP_LEFT = 278,
-    OP_RIGHT = 279,
-    OP_SRIGHT = 280,
-    OP_FADD = 281,
-    OP_FSUB = 282,
-    OP_SDIV = 283,
-    OP_SREM = 284,
-    OP_FMULT = 285,
-    OP_FDIV = 286,
-    OP_ZEXT = 287,
-    OP_CARRY = 288,
-    OP_BORROW = 289,
-    OP_SEXT = 290,
-    OP_SCARRY = 291,
-    OP_SBORROW = 292,
-    OP_NAN = 293,
-    OP_ABS = 294,
-    OP_SQRT = 295,
-    OP_CEIL = 296,
-    OP_FLOOR = 297,
-    OP_ROUND = 298,
-    OP_INT2FLOAT = 299,
-    OP_FLOAT2FLOAT = 300,
-    OP_TRUNC = 301,
-    OP_CPOOLREF = 302,
-    OP_NEW = 303,
-    OP_POPCOUNT = 304,
-    OP_LZCOUNT = 305,
-    BADINTEGER = 306,
-    GOTO_KEY = 307,
-    CALL_KEY = 308,
-    RETURN_KEY = 309,
-    IF_KEY = 310,
-    DEFINE_KEY = 311,
-    ATTACH_KEY = 312,
-    MACRO_KEY = 313,
-    SPACE_KEY = 314,
-    TYPE_KEY = 315,
-    RAM_KEY = 316,
-    DEFAULT_KEY = 317,
-    REGISTER_KEY = 318,
-    ENDIAN_KEY = 319,
-    WITH_KEY = 320,
-    ALIGN_KEY = 321,
-    OP_UNIMPL = 322,
-    TOKEN_KEY = 323,
-    SIGNED_KEY = 324,
-    NOFLOW_KEY = 325,
-    HEX_KEY = 326,
-    DEC_KEY = 327,
-    BIG_KEY = 328,
-    LITTLE_KEY = 329,
-    SIZE_KEY = 330,
-    WORDSIZE_KEY = 331,
-    OFFSET_KEY = 332,
-    NAMES_KEY = 333,
-    VALUES_KEY = 334,
-    VARIABLES_KEY = 335,
-    PCODEOP_KEY = 336,
-    IS_KEY = 337,
-    LOCAL_KEY = 338,
-    DELAYSLOT_KEY = 339,
-    CROSSBUILD_KEY = 340,
-    EXPORT_KEY = 341,
-    BUILD_KEY = 342,
-    CONTEXT_KEY = 343,
-    ELLIPSIS_KEY = 344,
-    GLOBALSET_KEY = 345,
-    BITRANGE_KEY = 346,
-    CHAR = 347,
-    INTEGER = 348,
-    INTB = 349,
-    STRING = 350,
-    SYMBOLSTRING = 351,
-    SPACESYM = 352,
-    SECTIONSYM = 353,
-    TOKENSYM = 354,
-    USEROPSYM = 355,
-    VALUESYM = 356,
-    VALUEMAPSYM = 357,
-    CONTEXTSYM = 358,
-    NAMESYM = 359,
-    VARSYM = 360,
-    BITSYM = 361,
-    SPECSYM = 362,
-    VARLISTSYM = 363,
-    OPERANDSYM = 364,
-    JUMPSYM = 365,
-    MACROSYM = 366,
-    LABELSYM = 367,
-    SUBTABLESYM = 368
-  };
-#endif
-
-/* Value type.  */
-#if ! defined SLEIGHSTYPE && ! defined SLEIGHSTYPE_IS_DECLARED
-union SLEIGHSTYPE
+#include "slghparse.hh"
+/* Symbol kind.  */
+enum yysymbol_kind_t
 {
-
-  char ch;
-  uintb *i;
-  intb *big;
-  string *str;
-  vector<string> *strlist;
-  vector<intb> *biglist;
-  vector<ExprTree *> *param;
-  SpaceQuality *spacequal;
-  FieldQuality *fieldqual;
-  StarQuality *starqual;
-  VarnodeTpl *varnode;
-  ExprTree *tree;
-  vector<OpTpl *> *stmt;
-  ConstructTpl *sem;
-  SectionVector *sectionstart;
-  Constructor *construct;
-  PatternEquation *pateq;
-  PatternExpression *patexp;
-
-  vector<SleighSymbol *> *symlist;
-  vector<ContextChange *> *contop;
-  SleighSymbol *anysym;
-  SpaceSymbol *spacesym;
-  SectionSymbol *sectionsym;
-  TokenSymbol *tokensym;
-  UserOpSymbol *useropsym;
-  MacroSymbol *macrosym;
-  LabelSymbol *labelsym;
-  SubtableSymbol *subtablesym;
-  OperandSymbol *operandsym;
-  VarnodeListSymbol *varlistsym;
-  VarnodeSymbol *varsym;
-  BitrangeSymbol *bitsym;
-  NameSymbol *namesym;
-  ValueSymbol *valuesym;
-  ValueMapSymbol *valuemapsym;
-  ContextSymbol *contextsym;
-  FamilySymbol *famsym;
-  SpecificSymbol *specsym;
-
-
+  YYSYMBOL_YYEMPTY = -2,
+  YYSYMBOL_YYEOF = 0,                      /* "end of file"  */
+  YYSYMBOL_YYerror = 1,                    /* error  */
+  YYSYMBOL_YYUNDEF = 2,                    /* "invalid token"  */
+  YYSYMBOL_OP_BOOL_OR = 3,                 /* OP_BOOL_OR  */
+  YYSYMBOL_OP_BOOL_AND = 4,                /* OP_BOOL_AND  */
+  YYSYMBOL_OP_BOOL_XOR = 5,                /* OP_BOOL_XOR  */
+  YYSYMBOL_6_ = 6,                         /* '|'  */
+  YYSYMBOL_OP_OR = 7,                      /* OP_OR  */
+  YYSYMBOL_8_ = 8,                         /* ';'  */
+  YYSYMBOL_9_ = 9,                         /* '^'  */
+  YYSYMBOL_OP_XOR = 10,                    /* OP_XOR  */
+  YYSYMBOL_11_ = 11,                       /* '&'  */
+  YYSYMBOL_OP_AND = 12,                    /* OP_AND  */
+  YYSYMBOL_OP_EQUAL = 13,                  /* OP_EQUAL  */
+  YYSYMBOL_OP_NOTEQUAL = 14,               /* OP_NOTEQUAL  */
+  YYSYMBOL_OP_FEQUAL = 15,                 /* OP_FEQUAL  */
+  YYSYMBOL_OP_FNOTEQUAL = 16,              /* OP_FNOTEQUAL  */
+  YYSYMBOL_17_ = 17,                       /* '<'  */
+  YYSYMBOL_18_ = 18,                       /* '>'  */
+  YYSYMBOL_OP_GREATEQUAL = 19,             /* OP_GREATEQUAL  */
+  YYSYMBOL_OP_LESSEQUAL = 20,              /* OP_LESSEQUAL  */
+  YYSYMBOL_OP_SLESS = 21,                  /* OP_SLESS  */
+  YYSYMBOL_OP_SGREATEQUAL = 22,            /* OP_SGREATEQUAL  */
+  YYSYMBOL_OP_SLESSEQUAL = 23,             /* OP_SLESSEQUAL  */
+  YYSYMBOL_OP_SGREAT = 24,                 /* OP_SGREAT  */
+  YYSYMBOL_OP_FLESS = 25,                  /* OP_FLESS  */
+  YYSYMBOL_OP_FGREAT = 26,                 /* OP_FGREAT  */
+  YYSYMBOL_OP_FLESSEQUAL = 27,             /* OP_FLESSEQUAL  */
+  YYSYMBOL_OP_FGREATEQUAL = 28,            /* OP_FGREATEQUAL  */
+  YYSYMBOL_OP_LEFT = 29,                   /* OP_LEFT  */
+  YYSYMBOL_OP_RIGHT = 30,                  /* OP_RIGHT  */
+  YYSYMBOL_OP_SRIGHT = 31,                 /* OP_SRIGHT  */
+  YYSYMBOL_32_ = 32,                       /* '+'  */
+  YYSYMBOL_33_ = 33,                       /* '-'  */
+  YYSYMBOL_OP_FADD = 34,                   /* OP_FADD  */
+  YYSYMBOL_OP_FSUB = 35,                   /* OP_FSUB  */
+  YYSYMBOL_36_ = 36,                       /* '*'  */
+  YYSYMBOL_37_ = 37,                       /* '/'  */
+  YYSYMBOL_38_ = 38,                       /* '%'  */
+  YYSYMBOL_OP_SDIV = 39,                   /* OP_SDIV  */
+  YYSYMBOL_OP_SREM = 40,                   /* OP_SREM  */
+  YYSYMBOL_OP_FMULT = 41,                  /* OP_FMULT  */
+  YYSYMBOL_OP_FDIV = 42,                   /* OP_FDIV  */
+  YYSYMBOL_43_ = 43,                       /* '!'  */
+  YYSYMBOL_44_ = 44,                       /* '~'  */
+  YYSYMBOL_OP_ZEXT = 45,                   /* OP_ZEXT  */
+  YYSYMBOL_OP_CARRY = 46,                  /* OP_CARRY  */
+  YYSYMBOL_OP_BORROW = 47,                 /* OP_BORROW  */
+  YYSYMBOL_OP_SEXT = 48,                   /* OP_SEXT  */
+  YYSYMBOL_OP_SCARRY = 49,                 /* OP_SCARRY  */
+  YYSYMBOL_OP_SBORROW = 50,                /* OP_SBORROW  */
+  YYSYMBOL_OP_NAN = 51,                    /* OP_NAN  */
+  YYSYMBOL_OP_ABS = 52,                    /* OP_ABS  */
+  YYSYMBOL_OP_SQRT = 53,                   /* OP_SQRT  */
+  YYSYMBOL_OP_CEIL = 54,                   /* OP_CEIL  */
+  YYSYMBOL_OP_FLOOR = 55,                  /* OP_FLOOR  */
+  YYSYMBOL_OP_ROUND = 56,                  /* OP_ROUND  */
+  YYSYMBOL_OP_INT2FLOAT = 57,              /* OP_INT2FLOAT  */
+  YYSYMBOL_OP_FLOAT2FLOAT = 58,            /* OP_FLOAT2FLOAT  */
+  YYSYMBOL_OP_TRUNC = 59,                  /* OP_TRUNC  */
+  YYSYMBOL_OP_CPOOLREF = 60,               /* OP_CPOOLREF  */
+  YYSYMBOL_OP_NEW = 61,                    /* OP_NEW  */
+  YYSYMBOL_OP_POPCOUNT = 62,               /* OP_POPCOUNT  */
+  YYSYMBOL_OP_LZCOUNT = 63,                /* OP_LZCOUNT  */
+  YYSYMBOL_BADINTEGER = 64,                /* BADINTEGER  */
+  YYSYMBOL_GOTO_KEY = 65,                  /* GOTO_KEY  */
+  YYSYMBOL_CALL_KEY = 66,                  /* CALL_KEY  */
+  YYSYMBOL_RETURN_KEY = 67,                /* RETURN_KEY  */
+  YYSYMBOL_IF_KEY = 68,                    /* IF_KEY  */
+  YYSYMBOL_DEFINE_KEY = 69,                /* DEFINE_KEY  */
+  YYSYMBOL_ATTACH_KEY = 70,                /* ATTACH_KEY  */
+  YYSYMBOL_MACRO_KEY = 71,                 /* MACRO_KEY  */
+  YYSYMBOL_SPACE_KEY = 72,                 /* SPACE_KEY  */
+  YYSYMBOL_TYPE_KEY = 73,                  /* TYPE_KEY  */
+  YYSYMBOL_RAM_KEY = 74,                   /* RAM_KEY  */
+  YYSYMBOL_DEFAULT_KEY = 75,               /* DEFAULT_KEY  */
+  YYSYMBOL_REGISTER_KEY = 76,              /* REGISTER_KEY  */
+  YYSYMBOL_ENDIAN_KEY = 77,                /* ENDIAN_KEY  */
+  YYSYMBOL_WITH_KEY = 78,                  /* WITH_KEY  */
+  YYSYMBOL_ALIGN_KEY = 79,                 /* ALIGN_KEY  */
+  YYSYMBOL_OP_UNIMPL = 80,                 /* OP_UNIMPL  */
+  YYSYMBOL_TOKEN_KEY = 81,                 /* TOKEN_KEY  */
+  YYSYMBOL_SIGNED_KEY = 82,                /* SIGNED_KEY  */
+  YYSYMBOL_NOFLOW_KEY = 83,                /* NOFLOW_KEY  */
+  YYSYMBOL_HEX_KEY = 84,                   /* HEX_KEY  */
+  YYSYMBOL_DEC_KEY = 85,                   /* DEC_KEY  */
+  YYSYMBOL_BIG_KEY = 86,                   /* BIG_KEY  */
+  YYSYMBOL_LITTLE_KEY = 87,                /* LITTLE_KEY  */
+  YYSYMBOL_SIZE_KEY = 88,                  /* SIZE_KEY  */
+  YYSYMBOL_WORDSIZE_KEY = 89,              /* WORDSIZE_KEY  */
+  YYSYMBOL_OFFSET_KEY = 90,                /* OFFSET_KEY  */
+  YYSYMBOL_NAMES_KEY = 91,                 /* NAMES_KEY  */
+  YYSYMBOL_VALUES_KEY = 92,                /* VALUES_KEY  */
+  YYSYMBOL_VARIABLES_KEY = 93,             /* VARIABLES_KEY  */
+  YYSYMBOL_PCODEOP_KEY = 94,               /* PCODEOP_KEY  */
+  YYSYMBOL_IS_KEY = 95,                    /* IS_KEY  */
+  YYSYMBOL_LOCAL_KEY = 96,                 /* LOCAL_KEY  */
+  YYSYMBOL_DELAYSLOT_KEY = 97,             /* DELAYSLOT_KEY  */
+  YYSYMBOL_CROSSBUILD_KEY = 98,            /* CROSSBUILD_KEY  */
+  YYSYMBOL_EXPORT_KEY = 99,                /* EXPORT_KEY  */
+  YYSYMBOL_BUILD_KEY = 100,                /* BUILD_KEY  */
+  YYSYMBOL_CONTEXT_KEY = 101,              /* CONTEXT_KEY  */
+  YYSYMBOL_ELLIPSIS_KEY = 102,             /* ELLIPSIS_KEY  */
+  YYSYMBOL_GLOBALSET_KEY = 103,            /* GLOBALSET_KEY  */
+  YYSYMBOL_BITRANGE_KEY = 104,             /* BITRANGE_KEY  */
+  YYSYMBOL_CHAR = 105,                     /* CHAR  */
+  YYSYMBOL_INTEGER = 106,                  /* INTEGER  */
+  YYSYMBOL_INTB = 107,                     /* INTB  */
+  YYSYMBOL_STRING = 108,                   /* STRING  */
+  YYSYMBOL_SYMBOLSTRING = 109,             /* SYMBOLSTRING  */
+  YYSYMBOL_SPACESYM = 110,                 /* SPACESYM  */
+  YYSYMBOL_SECTIONSYM = 111,               /* SECTIONSYM  */
+  YYSYMBOL_TOKENSYM = 112,                 /* TOKENSYM  */
+  YYSYMBOL_USEROPSYM = 113,                /* USEROPSYM  */
+  YYSYMBOL_VALUESYM = 114,                 /* VALUESYM  */
+  YYSYMBOL_VALUEMAPSYM = 115,              /* VALUEMAPSYM  */
+  YYSYMBOL_CONTEXTSYM = 116,               /* CONTEXTSYM  */
+  YYSYMBOL_NAMESYM = 117,                  /* NAMESYM  */
+  YYSYMBOL_VARSYM = 118,                   /* VARSYM  */
+  YYSYMBOL_BITSYM = 119,                   /* BITSYM  */
+  YYSYMBOL_SPECSYM = 120,                  /* SPECSYM  */
+  YYSYMBOL_VARLISTSYM = 121,               /* VARLISTSYM  */
+  YYSYMBOL_OPERANDSYM = 122,               /* OPERANDSYM  */
+  YYSYMBOL_JUMPSYM = 123,                  /* JUMPSYM  */
+  YYSYMBOL_MACROSYM = 124,                 /* MACROSYM  */
+  YYSYMBOL_LABELSYM = 125,                 /* LABELSYM  */
+  YYSYMBOL_SUBTABLESYM = 126,              /* SUBTABLESYM  */
+  YYSYMBOL_127_ = 127,                     /* '}'  */
+  YYSYMBOL_128_ = 128,                     /* '='  */
+  YYSYMBOL_129_ = 129,                     /* '('  */
+  YYSYMBOL_130_ = 130,                     /* ')'  */
+  YYSYMBOL_131_ = 131,                     /* ','  */
+  YYSYMBOL_132_ = 132,                     /* '['  */
+  YYSYMBOL_133_ = 133,                     /* ']'  */
+  YYSYMBOL_134_ = 134,                     /* '{'  */
+  YYSYMBOL_135_ = 135,                     /* ':'  */
+  YYSYMBOL_136_ = 136,                     /* ' '  */
+  YYSYMBOL_YYACCEPT = 137,                 /* $accept  */
+  YYSYMBOL_spec = 138,                     /* spec  */
+  YYSYMBOL_definition = 139,               /* definition  */
+  YYSYMBOL_constructorlike = 140,          /* constructorlike  */
+  YYSYMBOL_endiandef = 141,                /* endiandef  */
+  YYSYMBOL_aligndef = 142,                 /* aligndef  */
+  YYSYMBOL_tokendef = 143,                 /* tokendef  */
+  YYSYMBOL_tokenprop = 144,                /* tokenprop  */
+  YYSYMBOL_contextdef = 145,               /* contextdef  */
+  YYSYMBOL_contextprop = 146,              /* contextprop  */
+  YYSYMBOL_fielddef = 147,                 /* fielddef  */
+  YYSYMBOL_contextfielddef = 148,          /* contextfielddef  */
+  YYSYMBOL_spacedef = 149,                 /* spacedef  */
+  YYSYMBOL_spaceprop = 150,                /* spaceprop  */
+  YYSYMBOL_varnodedef = 151,               /* varnodedef  */
+  YYSYMBOL_bitrangedef = 152,              /* bitrangedef  */
+  YYSYMBOL_bitrangelist = 153,             /* bitrangelist  */
+  YYSYMBOL_bitrangesingle = 154,           /* bitrangesingle  */
+  YYSYMBOL_pcodeopdef = 155,               /* pcodeopdef  */
+  YYSYMBOL_valueattach = 156,              /* valueattach  */
+  YYSYMBOL_nameattach = 157,               /* nameattach  */
+  YYSYMBOL_varattach = 158,                /* varattach  */
+  YYSYMBOL_macrodef = 159,                 /* macrodef  */
+  YYSYMBOL_withblockstart = 160,           /* withblockstart  */
+  YYSYMBOL_withblockmid = 161,             /* withblockmid  */
+  YYSYMBOL_withblock = 162,                /* withblock  */
+  YYSYMBOL_id_or_nil = 163,                /* id_or_nil  */
+  YYSYMBOL_bitpat_or_nil = 164,            /* bitpat_or_nil  */
+  YYSYMBOL_macrostart = 165,               /* macrostart  */
+  YYSYMBOL_rtlbody = 166,                  /* rtlbody  */
+  YYSYMBOL_constructor = 167,              /* constructor  */
+  YYSYMBOL_constructprint = 168,           /* constructprint  */
+  YYSYMBOL_subtablestart = 169,            /* subtablestart  */
+  YYSYMBOL_pexpression = 170,              /* pexpression  */
+  YYSYMBOL_pequation = 171,                /* pequation  */
+  YYSYMBOL_elleq = 172,                    /* elleq  */
+  YYSYMBOL_ellrt = 173,                    /* ellrt  */
+  YYSYMBOL_atomic = 174,                   /* atomic  */
+  YYSYMBOL_constraint = 175,               /* constraint  */
+  YYSYMBOL_contextblock = 176,             /* contextblock  */
+  YYSYMBOL_contextlist = 177,              /* contextlist  */
+  YYSYMBOL_section_def = 178,              /* section_def  */
+  YYSYMBOL_rtlfirstsection = 179,          /* rtlfirstsection  */
+  YYSYMBOL_rtlcontinue = 180,              /* rtlcontinue  */
+  YYSYMBOL_rtl = 181,                      /* rtl  */
+  YYSYMBOL_rtlmid = 182,                   /* rtlmid  */
+  YYSYMBOL_statement = 183,                /* statement  */
+  YYSYMBOL_expr = 184,                     /* expr  */
+  YYSYMBOL_sizedstar = 185,                /* sizedstar  */
+  YYSYMBOL_jumpdest = 186,                 /* jumpdest  */
+  YYSYMBOL_varnode = 187,                  /* varnode  */
+  YYSYMBOL_integervarnode = 188,           /* integervarnode  */
+  YYSYMBOL_lhsvarnode = 189,               /* lhsvarnode  */
+  YYSYMBOL_label = 190,                    /* label  */
+  YYSYMBOL_exportvarnode = 191,            /* exportvarnode  */
+  YYSYMBOL_familysymbol = 192,             /* familysymbol  */
+  YYSYMBOL_specificsymbol = 193,           /* specificsymbol  */
+  YYSYMBOL_charstring = 194,               /* charstring  */
+  YYSYMBOL_intblist = 195,                 /* intblist  */
+  YYSYMBOL_intbpart = 196,                 /* intbpart  */
+  YYSYMBOL_stringlist = 197,               /* stringlist  */
+  YYSYMBOL_stringpart = 198,               /* stringpart  */
+  YYSYMBOL_anystringlist = 199,            /* anystringlist  */
+  YYSYMBOL_anystringpart = 200,            /* anystringpart  */
+  YYSYMBOL_valuelist = 201,                /* valuelist  */
+  YYSYMBOL_valuepart = 202,                /* valuepart  */
+  YYSYMBOL_varlist = 203,                  /* varlist  */
+  YYSYMBOL_varpart = 204,                  /* varpart  */
+  YYSYMBOL_paramlist = 205,                /* paramlist  */
+  YYSYMBOL_oplist = 206,                   /* oplist  */
+  YYSYMBOL_anysymbol = 207                 /* anysymbol  */
 };
-typedef union SLEIGHSTYPE SLEIGHSTYPE;
-# define SLEIGHSTYPE_IS_TRIVIAL 1
-# define SLEIGHSTYPE_IS_DECLARED 1
-#endif
+typedef enum yysymbol_kind_t yysymbol_kind_t;
 
-
-extern SLEIGHSTYPE sleighlval;
-
-int sleighparse (void);
-
-#endif /* !YY_SLEIGH_SLGHPARSE_HH_INCLUDED  */
 
 
 
@@ -428,6 +440,7 @@ typedef int yytype_uint16;
 
 #define YYSIZEOF(X) YY_CAST (YYPTRDIFF_T, sizeof (X))
 
+
 /* Stored state numbers (used for stacks). */
 typedef yytype_int16 yy_state_t;
 
@@ -445,6 +458,7 @@ typedef int yy_state_fast_t;
 #  define YY_(Msgid) Msgid
 # endif
 #endif
+
 
 #ifndef YY_ATTRIBUTE_PURE
 # if defined __GNUC__ && 2 < __GNUC__ + (96 <= __GNUC_MINOR__)
@@ -503,7 +517,7 @@ typedef int yy_state_fast_t;
 
 #define YY_ASSERT(E) ((void) (0 && (E)))
 
-#if ! defined yyoverflow || YYERROR_VERBOSE
+#if !defined yyoverflow
 
 /* The parser invokes alloca or malloc; define the necessary symbols.  */
 
@@ -568,8 +582,7 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 #   endif
 #  endif
 # endif
-#endif /* ! defined yyoverflow || YYERROR_VERBOSE */
-
+#endif /* !defined yyoverflow */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
@@ -645,14 +658,16 @@ union yyalloc
 /* YYNSTATES -- Number of states.  */
 #define YYNSTATES  714
 
-#define YYUNDEFTOK  2
+/* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   368
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
    as returned by yylex, with out-of-bounds checking.  */
-#define YYTRANSLATE(YYX)                                                \
-  (0 <= (YYX) && (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
+#define YYTRANSLATE(YYX)                                \
+  (0 <= (YYX) && (YYX) <= YYMAXUTOK                     \
+   ? YY_CAST (yysymbol_kind_t, yytranslate[YYX])        \
+   : YYSYMBOL_YYUNDEF)
 
 /* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
    as returned by yylex.  */
@@ -701,64 +716,71 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   155,   155,   156,   157,   158,   160,   161,   162,   163,
-     164,   165,   166,   167,   168,   169,   171,   172,   173,   174,
-     176,   177,   179,   181,   183,   184,   185,   186,   187,   189,
-     191,   192,   195,   196,   197,   198,   199,   201,   202,   203,
-     204,   205,   206,   208,   210,   211,   212,   213,   214,   215,
-     216,   218,   220,   222,   224,   225,   227,   230,   232,   234,
-     236,   238,   241,   243,   244,   245,   247,   249,   250,   251,
-     254,   255,   258,   260,   261,   262,   264,   265,   267,   268,
-     269,   270,   271,   272,   273,   274,   275,   277,   278,   279,
-     280,   282,   284,   287,   288,   289,   290,   291,   292,   293,
-     294,   295,   296,   297,   298,   299,   301,   302,   303,   304,
-     306,   307,   309,   310,   312,   313,   315,   316,   317,   318,
-     319,   320,   321,   324,   325,   326,   327,   329,   330,   332,
-     333,   334,   335,   336,   337,   339,   340,   342,   344,   345,
-     347,   348,   349,   350,   351,   353,   354,   355,   356,   358,
-     359,   360,   361,   362,   363,   364,   365,   366,   367,   368,
-     369,   370,   371,   372,   373,   374,   375,   376,   377,   378,
-     379,   380,   381,   382,   384,   385,   386,   387,   388,   389,
-     390,   391,   392,   393,   394,   395,   396,   397,   398,   399,
-     400,   401,   402,   403,   404,   405,   406,   407,   408,   409,
-     410,   411,   412,   413,   414,   415,   416,   417,   418,   419,
-     420,   421,   422,   423,   424,   425,   426,   427,   428,   429,
-     430,   431,   432,   433,   434,   435,   436,   437,   438,   439,
-     440,   441,   442,   443,   444,   445,   446,   447,   448,   449,
-     450,   452,   453,   454,   455,   457,   458,   459,   460,   461,
-     462,   463,   465,   466,   467,   468,   470,   471,   472,   473,
-     474,   476,   477,   478,   480,   481,   483,   484,   485,   486,
-     487,   488,   490,   491,   492,   493,   494,   496,   497,   498,
-     499,   501,   502,   504,   505,   506,   508,   509,   510,   512,
-     513,   514,   517,   518,   520,   521,   522,   524,   526,   527,
-     528,   529,   531,   532,   533,   535,   536,   537,   538,   539,
-     541,   542,   544,   545,   547,   548,   551,   552,   553,   555,
-     556,   557,   559,   560,   561,   562,   563,   564,   565,   566,
-     567,   568,   569,   570,   571,   572,   573
+       0,   163,   163,   164,   165,   166,   168,   169,   170,   171,
+     172,   173,   174,   175,   176,   177,   179,   180,   181,   182,
+     184,   185,   187,   189,   191,   192,   193,   194,   195,   197,
+     199,   200,   203,   204,   205,   206,   207,   209,   210,   211,
+     212,   213,   214,   216,   218,   219,   220,   221,   222,   223,
+     224,   226,   228,   230,   232,   233,   235,   238,   240,   242,
+     244,   246,   249,   251,   252,   253,   255,   257,   258,   259,
+     262,   263,   266,   268,   269,   270,   272,   273,   275,   276,
+     277,   278,   279,   280,   281,   282,   283,   285,   286,   287,
+     288,   290,   292,   295,   296,   297,   298,   299,   300,   301,
+     302,   303,   304,   305,   306,   307,   309,   310,   311,   312,
+     314,   315,   317,   318,   320,   321,   323,   324,   325,   326,
+     327,   328,   329,   332,   333,   334,   335,   337,   338,   340,
+     341,   342,   343,   344,   345,   347,   348,   350,   352,   353,
+     355,   356,   357,   358,   359,   361,   362,   363,   364,   366,
+     367,   368,   369,   370,   371,   372,   373,   374,   375,   376,
+     377,   378,   379,   380,   381,   382,   383,   384,   385,   386,
+     387,   388,   389,   390,   392,   393,   394,   395,   396,   397,
+     398,   399,   400,   401,   402,   403,   404,   405,   406,   407,
+     408,   409,   410,   411,   412,   413,   414,   415,   416,   417,
+     418,   419,   420,   421,   422,   423,   424,   425,   426,   427,
+     428,   429,   430,   431,   432,   433,   434,   435,   436,   437,
+     438,   439,   440,   441,   442,   443,   444,   445,   446,   447,
+     448,   449,   450,   451,   452,   453,   454,   455,   456,   457,
+     458,   460,   461,   462,   463,   465,   466,   467,   468,   469,
+     470,   471,   473,   474,   475,   476,   478,   479,   480,   481,
+     482,   484,   485,   486,   488,   489,   491,   492,   493,   494,
+     495,   496,   498,   499,   500,   501,   502,   504,   505,   506,
+     507,   509,   510,   512,   513,   514,   516,   517,   518,   520,
+     521,   522,   525,   526,   528,   529,   530,   532,   534,   535,
+     536,   537,   539,   540,   541,   543,   544,   545,   546,   547,
+     549,   550,   552,   553,   555,   556,   559,   560,   561,   563,
+     564,   565,   567,   568,   569,   570,   571,   572,   573,   574,
+     575,   576,   577,   578,   579,   580,   581
 };
 #endif
 
-#if SLEIGHDEBUG || YYERROR_VERBOSE || 0
+/** Accessing symbol of state STATE.  */
+#define YY_ACCESSING_SYMBOL(State) YY_CAST (yysymbol_kind_t, yystos[State])
+
+#if SLEIGHDEBUG || 0
+/* The user-facing name of the symbol whose (internal) number is
+   YYSYMBOL.  No bounds checking.  */
+static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
+
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "OP_BOOL_OR", "OP_BOOL_AND",
-  "OP_BOOL_XOR", "'|'", "OP_OR", "';'", "'^'", "OP_XOR", "'&'", "OP_AND",
-  "OP_EQUAL", "OP_NOTEQUAL", "OP_FEQUAL", "OP_FNOTEQUAL", "'<'", "'>'",
-  "OP_GREATEQUAL", "OP_LESSEQUAL", "OP_SLESS", "OP_SGREATEQUAL",
-  "OP_SLESSEQUAL", "OP_SGREAT", "OP_FLESS", "OP_FGREAT", "OP_FLESSEQUAL",
-  "OP_FGREATEQUAL", "OP_LEFT", "OP_RIGHT", "OP_SRIGHT", "'+'", "'-'",
-  "OP_FADD", "OP_FSUB", "'*'", "'/'", "'%'", "OP_SDIV", "OP_SREM",
-  "OP_FMULT", "OP_FDIV", "'!'", "'~'", "OP_ZEXT", "OP_CARRY", "OP_BORROW",
-  "OP_SEXT", "OP_SCARRY", "OP_SBORROW", "OP_NAN", "OP_ABS", "OP_SQRT",
-  "OP_CEIL", "OP_FLOOR", "OP_ROUND", "OP_INT2FLOAT", "OP_FLOAT2FLOAT",
-  "OP_TRUNC", "OP_CPOOLREF", "OP_NEW", "OP_POPCOUNT", "OP_LZCOUNT",
-  "BADINTEGER", "GOTO_KEY", "CALL_KEY", "RETURN_KEY", "IF_KEY",
-  "DEFINE_KEY", "ATTACH_KEY", "MACRO_KEY", "SPACE_KEY", "TYPE_KEY",
-  "RAM_KEY", "DEFAULT_KEY", "REGISTER_KEY", "ENDIAN_KEY", "WITH_KEY",
-  "ALIGN_KEY", "OP_UNIMPL", "TOKEN_KEY", "SIGNED_KEY", "NOFLOW_KEY",
-  "HEX_KEY", "DEC_KEY", "BIG_KEY", "LITTLE_KEY", "SIZE_KEY",
+  "\"end of file\"", "error", "\"invalid token\"", "OP_BOOL_OR",
+  "OP_BOOL_AND", "OP_BOOL_XOR", "'|'", "OP_OR", "';'", "'^'", "OP_XOR",
+  "'&'", "OP_AND", "OP_EQUAL", "OP_NOTEQUAL", "OP_FEQUAL", "OP_FNOTEQUAL",
+  "'<'", "'>'", "OP_GREATEQUAL", "OP_LESSEQUAL", "OP_SLESS",
+  "OP_SGREATEQUAL", "OP_SLESSEQUAL", "OP_SGREAT", "OP_FLESS", "OP_FGREAT",
+  "OP_FLESSEQUAL", "OP_FGREATEQUAL", "OP_LEFT", "OP_RIGHT", "OP_SRIGHT",
+  "'+'", "'-'", "OP_FADD", "OP_FSUB", "'*'", "'/'", "'%'", "OP_SDIV",
+  "OP_SREM", "OP_FMULT", "OP_FDIV", "'!'", "'~'", "OP_ZEXT", "OP_CARRY",
+  "OP_BORROW", "OP_SEXT", "OP_SCARRY", "OP_SBORROW", "OP_NAN", "OP_ABS",
+  "OP_SQRT", "OP_CEIL", "OP_FLOOR", "OP_ROUND", "OP_INT2FLOAT",
+  "OP_FLOAT2FLOAT", "OP_TRUNC", "OP_CPOOLREF", "OP_NEW", "OP_POPCOUNT",
+  "OP_LZCOUNT", "BADINTEGER", "GOTO_KEY", "CALL_KEY", "RETURN_KEY",
+  "IF_KEY", "DEFINE_KEY", "ATTACH_KEY", "MACRO_KEY", "SPACE_KEY",
+  "TYPE_KEY", "RAM_KEY", "DEFAULT_KEY", "REGISTER_KEY", "ENDIAN_KEY",
+  "WITH_KEY", "ALIGN_KEY", "OP_UNIMPL", "TOKEN_KEY", "SIGNED_KEY",
+  "NOFLOW_KEY", "HEX_KEY", "DEC_KEY", "BIG_KEY", "LITTLE_KEY", "SIZE_KEY",
   "WORDSIZE_KEY", "OFFSET_KEY", "NAMES_KEY", "VALUES_KEY", "VARIABLES_KEY",
   "PCODEOP_KEY", "IS_KEY", "LOCAL_KEY", "DELAYSLOT_KEY", "CROSSBUILD_KEY",
   "EXPORT_KEY", "BUILD_KEY", "CONTEXT_KEY", "ELLIPSIS_KEY",
@@ -783,9 +805,15 @@ static const char *const yytname[] =
   "stringpart", "anystringlist", "anystringpart", "valuelist", "valuepart",
   "varlist", "varpart", "paramlist", "oplist", "anysymbol", YY_NULLPTR
 };
+
+static const char *
+yysymbol_name (yysymbol_kind_t yysymbol)
+{
+  return yytname[yysymbol];
+}
 #endif
 
-# ifdef YYPRINT
+#ifdef YYPRINT
 /* YYTOKNUM[NUM] -- (External) token number corresponding to the
    (internal) symbol number NUM (which must be that of a token).  */
 static const yytype_int16 yytoknum[] =
@@ -805,7 +833,7 @@ static const yytype_int16 yytoknum[] =
      362,   363,   364,   365,   366,   367,   368,   125,    61,    40,
       41,    44,    91,    93,   123,    58,    32
 };
-# endif
+#endif
 
 #define YYPACT_NINF (-293)
 
@@ -1694,10 +1722,10 @@ static const yytype_int8 yyr2[] =
 };
 
 
+enum { YYENOMEM = -2 };
+
 #define yyerrok         (yyerrstatus = 0)
-#define yyclearin       (yychar = YYEMPTY)
-#define YYEMPTY         (-2)
-#define YYEOF           0
+#define yyclearin       (yychar = SLEIGHEMPTY)
 
 #define YYACCEPT        goto yyacceptlab
 #define YYABORT         goto yyabortlab
@@ -1708,7 +1736,7 @@ static const yytype_int8 yyr2[] =
 
 #define YYBACKUP(Token, Value)                                    \
   do                                                              \
-    if (yychar == YYEMPTY)                                        \
+    if (yychar == SLEIGHEMPTY)                                        \
       {                                                           \
         yychar = (Token);                                         \
         yylval = (Value);                                         \
@@ -1723,10 +1751,9 @@ static const yytype_int8 yyr2[] =
       }                                                           \
   while (0)
 
-/* Error token number */
-#define YYTERROR        1
-#define YYERRCODE       256
-
+/* Backward compatibility with an undocumented macro.
+   Use SLEIGHerror or SLEIGHUNDEF. */
+#define YYERRCODE SLEIGHUNDEF
 
 
 /* Enable debugging if requested.  */
@@ -1744,18 +1771,18 @@ do {                                            \
 } while (0)
 
 /* This macro is provided for backward compatibility. */
-#ifndef YY_LOCATION_PRINT
-# define YY_LOCATION_PRINT(File, Loc) ((void) 0)
-#endif
+# ifndef YY_LOCATION_PRINT
+#  define YY_LOCATION_PRINT(File, Loc) ((void) 0)
+# endif
 
 
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)                    \
+# define YY_SYMBOL_PRINT(Title, Kind, Value, Location)                    \
 do {                                                                      \
   if (yydebug)                                                            \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Type, Value); \
+                  Kind, Value); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -1766,18 +1793,19 @@ do {                                                                      \
 `-----------------------------------*/
 
 static void
-yy_symbol_value_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_value_print (FILE *yyo,
+                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep)
 {
   FILE *yyoutput = yyo;
   YYUSE (yyoutput);
   if (!yyvaluep)
     return;
 # ifdef YYPRINT
-  if (yytype < YYNTOKENS)
-    YYPRINT (yyo, yytoknum[yytype], *yyvaluep);
+  if (yykind < YYNTOKENS)
+    YYPRINT (yyo, yytoknum[yykind], *yyvaluep);
 # endif
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE (yytype);
+  YYUSE (yykind);
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
@@ -1787,12 +1815,13 @@ yy_symbol_value_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep)
 `---------------------------*/
 
 static void
-yy_symbol_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_print (FILE *yyo,
+                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep)
 {
   YYFPRINTF (yyo, "%s %s (",
-             yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
+             yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
 
-  yy_symbol_value_print (yyo, yytype, yyvaluep);
+  yy_symbol_value_print (yyo, yykind, yyvaluep);
   YYFPRINTF (yyo, ")");
 }
 
@@ -1825,7 +1854,8 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp, int yyrule)
+yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
+                 int yyrule)
 {
   int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -1837,9 +1867,8 @@ yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp, int yyrule)
     {
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr,
-                       yystos[+yyssp[yyi + 1 - yynrhs]],
-                       &yyvsp[(yyi + 1) - (yynrhs)]
-                                              );
+                       YY_ACCESSING_SYMBOL (+yyssp[yyi + 1 - yynrhs]),
+                       &yyvsp[(yyi + 1) - (yynrhs)]);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -1854,8 +1883,8 @@ do {                                    \
    multiple parsers can coexist.  */
 int yydebug;
 #else /* !SLEIGHDEBUG */
-# define YYDPRINTF(Args)
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)
+# define YYDPRINTF(Args) ((void) 0)
+# define YY_SYMBOL_PRINT(Title, Kind, Value, Location)
 # define YY_STACK_PRINT(Bottom, Top)
 # define YY_REDUCE_PRINT(Rule)
 #endif /* !SLEIGHDEBUG */
@@ -1878,265 +1907,210 @@ int yydebug;
 #endif
 
 
-#if YYERROR_VERBOSE
 
-# ifndef yystrlen
-#  if defined __GLIBC__ && defined _STRING_H
-#   define yystrlen(S) (YY_CAST (YYPTRDIFF_T, strlen (S)))
-#  else
-/* Return the length of YYSTR.  */
-static YYPTRDIFF_T
-yystrlen (const char *yystr)
-{
-  YYPTRDIFF_T yylen;
-  for (yylen = 0; yystr[yylen]; yylen++)
-    continue;
-  return yylen;
-}
-#  endif
-# endif
 
-# ifndef yystpcpy
-#  if defined __GLIBC__ && defined _STRING_H && defined _GNU_SOURCE
-#   define yystpcpy stpcpy
-#  else
-/* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
-   YYDEST.  */
-static char *
-yystpcpy (char *yydest, const char *yysrc)
-{
-  char *yyd = yydest;
-  const char *yys = yysrc;
 
-  while ((*yyd++ = *yys++) != '\0')
-    continue;
-
-  return yyd - 1;
-}
-#  endif
-# endif
-
-# ifndef yytnamerr
-/* Copy to YYRES the contents of YYSTR after stripping away unnecessary
-   quotes and backslashes, so that it's suitable for yyerror.  The
-   heuristic is that double-quoting is unnecessary unless the string
-   contains an apostrophe, a comma, or backslash (other than
-   backslash-backslash).  YYSTR is taken from yytname.  If YYRES is
-   null, do not copy; instead, return the length of what the result
-   would have been.  */
-static YYPTRDIFF_T
-yytnamerr (char *yyres, const char *yystr)
-{
-  if (*yystr == '"')
-    {
-      YYPTRDIFF_T yyn = 0;
-      char const *yyp = yystr;
-
-      for (;;)
-        switch (*++yyp)
-          {
-          case '\'':
-          case ',':
-            goto do_not_strip_quotes;
-
-          case '\\':
-            if (*++yyp != '\\')
-              goto do_not_strip_quotes;
-            else
-              goto append;
-
-          append:
-          default:
-            if (yyres)
-              yyres[yyn] = *yyp;
-            yyn++;
-            break;
-
-          case '"':
-            if (yyres)
-              yyres[yyn] = '\0';
-            return yyn;
-          }
-    do_not_strip_quotes: ;
-    }
-
-  if (yyres)
-    return yystpcpy (yyres, yystr) - yyres;
-  else
-    return yystrlen (yystr);
-}
-# endif
-
-/* Copy into *YYMSG, which is of size *YYMSG_ALLOC, an error message
-   about the unexpected token YYTOKEN for the state stack whose top is
-   YYSSP.
-
-   Return 0 if *YYMSG was successfully written.  Return 1 if *YYMSG is
-   not large enough to hold the message.  In that case, also set
-   *YYMSG_ALLOC to the required number of bytes.  Return 2 if the
-   required number of bytes is too large to store.  */
-static int
-yysyntax_error (YYPTRDIFF_T *yymsg_alloc, char **yymsg,
-                yy_state_t *yyssp, int yytoken)
-{
-  enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
-  /* Internationalized format string. */
-  const char *yyformat = YY_NULLPTR;
-  /* Arguments of yyformat: reported tokens (one for the "unexpected",
-     one per "expected"). */
-  char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
-  /* Actual size of YYARG. */
-  int yycount = 0;
-  /* Cumulated lengths of YYARG.  */
-  YYPTRDIFF_T yysize = 0;
-
-  /* There are many possibilities here to consider:
-     - If this state is a consistent state with a default action, then
-       the only way this function was invoked is if the default action
-       is an error action.  In that case, don't check for expected
-       tokens because there are none.
-     - The only way there can be no lookahead present (in yychar) is if
-       this state is a consistent state with a default action.  Thus,
-       detecting the absence of a lookahead is sufficient to determine
-       that there is no unexpected or expected token to report.  In that
-       case, just report a simple "syntax error".
-     - Don't assume there isn't a lookahead just because this state is a
-       consistent state with a default action.  There might have been a
-       previous inconsistent state, consistent state with a non-default
-       action, or user semantic action that manipulated yychar.
-     - Of course, the expected token list depends on states to have
-       correct lookahead information, and it depends on the parser not
-       to perform extra reductions after fetching a lookahead from the
-       scanner and before detecting a syntax error.  Thus, state merging
-       (from LALR or IELR) and default reductions corrupt the expected
-       token list.  However, the list is correct for canonical LR with
-       one exception: it will still contain any token that will not be
-       accepted due to an error action in a later state.
-  */
-  if (yytoken != YYEMPTY)
-    {
-      int yyn = yypact[+*yyssp];
-      YYPTRDIFF_T yysize0 = yytnamerr (YY_NULLPTR, yytname[yytoken]);
-      yysize = yysize0;
-      yyarg[yycount++] = yytname[yytoken];
-      if (!yypact_value_is_default (yyn))
-        {
-          /* Start YYX at -YYN if negative to avoid negative indexes in
-             YYCHECK.  In other words, skip the first -YYN actions for
-             this state because they are default actions.  */
-          int yyxbegin = yyn < 0 ? -yyn : 0;
-          /* Stay within bounds of both yycheck and yytname.  */
-          int yychecklim = YYLAST - yyn + 1;
-          int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-          int yyx;
-
-          for (yyx = yyxbegin; yyx < yyxend; ++yyx)
-            if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR
-                && !yytable_value_is_error (yytable[yyx + yyn]))
-              {
-                if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
-                  {
-                    yycount = 1;
-                    yysize = yysize0;
-                    break;
-                  }
-                yyarg[yycount++] = yytname[yyx];
-                {
-                  YYPTRDIFF_T yysize1
-                    = yysize + yytnamerr (YY_NULLPTR, yytname[yyx]);
-                  if (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM)
-                    yysize = yysize1;
-                  else
-                    return 2;
-                }
-              }
-        }
-    }
-
-  switch (yycount)
-    {
-# define YYCASE_(N, S)                      \
-      case N:                               \
-        yyformat = S;                       \
-      break
-    default: /* Avoid compiler warnings. */
-      YYCASE_(0, YY_("syntax error"));
-      YYCASE_(1, YY_("syntax error, unexpected %s"));
-      YYCASE_(2, YY_("syntax error, unexpected %s, expecting %s"));
-      YYCASE_(3, YY_("syntax error, unexpected %s, expecting %s or %s"));
-      YYCASE_(4, YY_("syntax error, unexpected %s, expecting %s or %s or %s"));
-      YYCASE_(5, YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s"));
-# undef YYCASE_
-    }
-
-  {
-    /* Don't count the "%s"s in the final size, but reserve room for
-       the terminator.  */
-    YYPTRDIFF_T yysize1 = yysize + (yystrlen (yyformat) - 2 * yycount) + 1;
-    if (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM)
-      yysize = yysize1;
-    else
-      return 2;
-  }
-
-  if (*yymsg_alloc < yysize)
-    {
-      *yymsg_alloc = 2 * yysize;
-      if (! (yysize <= *yymsg_alloc
-             && *yymsg_alloc <= YYSTACK_ALLOC_MAXIMUM))
-        *yymsg_alloc = YYSTACK_ALLOC_MAXIMUM;
-      return 1;
-    }
-
-  /* Avoid sprintf, as that infringes on the user's name space.
-     Don't have undefined behavior even if the translation
-     produced a string with the wrong number of "%s"s.  */
-  {
-    char *yyp = *yymsg;
-    int yyi = 0;
-    while ((*yyp = *yyformat) != '\0')
-      if (*yyp == '%' && yyformat[1] == 's' && yyi < yycount)
-        {
-          yyp += yytnamerr (yyp, yyarg[yyi++]);
-          yyformat += 2;
-        }
-      else
-        {
-          ++yyp;
-          ++yyformat;
-        }
-  }
-  return 0;
-}
-#endif /* YYERROR_VERBOSE */
 
 /*-----------------------------------------------.
 | Release the memory associated to this symbol.  |
 `-----------------------------------------------*/
 
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
+yydestruct (const char *yymsg,
+            yysymbol_kind_t yykind, YYSTYPE *yyvaluep)
 {
   YYUSE (yyvaluep);
   if (!yymsg)
     yymsg = "Deleting";
-  YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
+  YY_SYMBOL_PRINT (yymsg, yykind, yyvaluep, yylocationp);
 
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE (yytype);
+  switch (yykind)
+    {
+    case YYSYMBOL_INTEGER: /* INTEGER  */
+            { delete ((*yyvaluep).i); }
+        break;
+
+    case YYSYMBOL_INTB: /* INTB  */
+            { delete ((*yyvaluep).big); }
+        break;
+
+    case YYSYMBOL_STRING: /* STRING  */
+            { delete ((*yyvaluep).str); }
+        break;
+
+    case YYSYMBOL_SYMBOLSTRING: /* SYMBOLSTRING  */
+            { delete ((*yyvaluep).str); }
+        break;
+
+    case YYSYMBOL_fielddef: /* fielddef  */
+            { delete ((*yyvaluep).fieldqual); }
+        break;
+
+    case YYSYMBOL_contextfielddef: /* contextfielddef  */
+            { delete ((*yyvaluep).fieldqual); }
+        break;
+
+    case YYSYMBOL_spaceprop: /* spaceprop  */
+            { delete ((*yyvaluep).spacequal); }
+        break;
+
+    case YYSYMBOL_bitpat_or_nil: /* bitpat_or_nil  */
+            { if (((*yyvaluep).pateq)) PatternEquation::release(((*yyvaluep).pateq)); }
+        break;
+
+    case YYSYMBOL_rtlbody: /* rtlbody  */
+            { delete ((*yyvaluep).sectionstart); }
+        break;
+
+    case YYSYMBOL_pexpression: /* pexpression  */
+            { PatternExpression::release(((*yyvaluep).patexp)); }
+        break;
+
+    case YYSYMBOL_pequation: /* pequation  */
+            { if (((*yyvaluep).pateq)) PatternEquation::release(((*yyvaluep).pateq)); }
+        break;
+
+    case YYSYMBOL_elleq: /* elleq  */
+            { if (((*yyvaluep).pateq)) PatternEquation::release(((*yyvaluep).pateq)); }
+        break;
+
+    case YYSYMBOL_ellrt: /* ellrt  */
+            { if (((*yyvaluep).pateq)) PatternEquation::release(((*yyvaluep).pateq)); }
+        break;
+
+    case YYSYMBOL_atomic: /* atomic  */
+            { if (((*yyvaluep).pateq)) PatternEquation::release(((*yyvaluep).pateq)); }
+        break;
+
+    case YYSYMBOL_constraint: /* constraint  */
+            { if (((*yyvaluep).pateq)) PatternEquation::release(((*yyvaluep).pateq)); }
+        break;
+
+    case YYSYMBOL_contextblock: /* contextblock  */
+            { delete ((*yyvaluep).contop); }
+        break;
+
+    case YYSYMBOL_contextlist: /* contextlist  */
+            { delete ((*yyvaluep).contop); }
+        break;
+
+    case YYSYMBOL_rtlfirstsection: /* rtlfirstsection  */
+            { delete ((*yyvaluep).sectionstart); }
+        break;
+
+    case YYSYMBOL_rtlcontinue: /* rtlcontinue  */
+            { delete ((*yyvaluep).sectionstart); }
+        break;
+
+    case YYSYMBOL_rtl: /* rtl  */
+            { delete ((*yyvaluep).sem); }
+        break;
+
+    case YYSYMBOL_rtlmid: /* rtlmid  */
+            { delete ((*yyvaluep).sem); }
+        break;
+
+    case YYSYMBOL_statement: /* statement  */
+            { delete ((*yyvaluep).stmt); }
+        break;
+
+    case YYSYMBOL_expr: /* expr  */
+            { delete ((*yyvaluep).tree); }
+        break;
+
+    case YYSYMBOL_sizedstar: /* sizedstar  */
+            { delete ((*yyvaluep).starqual); }
+        break;
+
+    case YYSYMBOL_jumpdest: /* jumpdest  */
+            { delete ((*yyvaluep).varnode); }
+        break;
+
+    case YYSYMBOL_varnode: /* varnode  */
+            { delete ((*yyvaluep).varnode); }
+        break;
+
+    case YYSYMBOL_integervarnode: /* integervarnode  */
+            { delete ((*yyvaluep).varnode); }
+        break;
+
+    case YYSYMBOL_lhsvarnode: /* lhsvarnode  */
+            { delete ((*yyvaluep).varnode); }
+        break;
+
+    case YYSYMBOL_exportvarnode: /* exportvarnode  */
+            { delete ((*yyvaluep).varnode); }
+        break;
+
+    case YYSYMBOL_charstring: /* charstring  */
+            { delete ((*yyvaluep).str); }
+        break;
+
+    case YYSYMBOL_intblist: /* intblist  */
+            { delete ((*yyvaluep).biglist); }
+        break;
+
+    case YYSYMBOL_intbpart: /* intbpart  */
+            { delete ((*yyvaluep).biglist); }
+        break;
+
+    case YYSYMBOL_stringlist: /* stringlist  */
+            { delete ((*yyvaluep).strlist); }
+        break;
+
+    case YYSYMBOL_stringpart: /* stringpart  */
+            { delete ((*yyvaluep).strlist); }
+        break;
+
+    case YYSYMBOL_anystringlist: /* anystringlist  */
+            { delete ((*yyvaluep).strlist); }
+        break;
+
+    case YYSYMBOL_anystringpart: /* anystringpart  */
+            { delete ((*yyvaluep).strlist); }
+        break;
+
+    case YYSYMBOL_valuelist: /* valuelist  */
+            { delete ((*yyvaluep).symlist); }
+        break;
+
+    case YYSYMBOL_valuepart: /* valuepart  */
+            { delete ((*yyvaluep).symlist); }
+        break;
+
+    case YYSYMBOL_varlist: /* varlist  */
+            { delete ((*yyvaluep).symlist); }
+        break;
+
+    case YYSYMBOL_varpart: /* varpart  */
+            { delete ((*yyvaluep).symlist); }
+        break;
+
+    case YYSYMBOL_paramlist: /* paramlist  */
+            { delete ((*yyvaluep).param); }
+        break;
+
+    case YYSYMBOL_oplist: /* oplist  */
+            { delete ((*yyvaluep).strlist); }
+        break;
+
+      default:
+        break;
+    }
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
 
-
-
-/* The lookahead symbol.  */
+/* Lookahead token kind.  */
 int yychar;
 
 /* The semantic value of the lookahead symbol.  */
 YYSTYPE yylval;
 /* Number of syntax errors so far.  */
 int yynerrs;
+
+
 
 
 /*----------.
@@ -2146,43 +2120,36 @@ int yynerrs;
 int
 yyparse (void)
 {
-    yy_state_fast_t yystate;
+    yy_state_fast_t yystate = 0;
     /* Number of tokens to shift before error messages enabled.  */
-    int yyerrstatus;
+    int yyerrstatus = 0;
 
-    /* The stacks and their tools:
-       'yyss': related to states.
-       'yyvs': related to semantic values.
-
-       Refer to the stacks through separate pointers, to allow yyoverflow
+    /* Refer to the stacks through separate pointers, to allow yyoverflow
        to reallocate them elsewhere.  */
 
-    /* The state stack.  */
+    /* Their size.  */
+    YYPTRDIFF_T yystacksize = YYINITDEPTH;
+
+    /* The state stack: array, bottom, top.  */
     yy_state_t yyssa[YYINITDEPTH];
-    yy_state_t *yyss;
-    yy_state_t *yyssp;
+    yy_state_t *yyss = yyssa;
+    yy_state_t *yyssp = yyss;
 
-    /* The semantic value stack.  */
+    /* The semantic value stack: array, bottom, top.  */
     YYSTYPE yyvsa[YYINITDEPTH];
-    YYSTYPE *yyvs;
-    YYSTYPE *yyvsp;
-
-    YYPTRDIFF_T yystacksize;
+    YYSTYPE *yyvs = yyvsa;
+    YYSTYPE *yyvsp = yyvs;
 
   int yyn;
+  /* The return value of yyparse.  */
   int yyresult;
-  /* Lookahead token as an internal (translated) token number.  */
-  int yytoken = 0;
+  /* Lookahead symbol kind.  */
+  yysymbol_kind_t yytoken = YYSYMBOL_YYEMPTY;
   /* The variables used to return semantic value and location from the
      action routines.  */
   YYSTYPE yyval;
 
-#if YYERROR_VERBOSE
-  /* Buffer for error messages, and its allocated size.  */
-  char yymsgbuf[128];
-  char *yymsg = yymsgbuf;
-  YYPTRDIFF_T yymsg_alloc = sizeof yymsgbuf;
-#endif
+
 
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
 
@@ -2190,16 +2157,9 @@ yyparse (void)
      Keep to zero when no symbol should be popped.  */
   int yylen = 0;
 
-  yyssp = yyss = yyssa;
-  yyvsp = yyvs = yyvsa;
-  yystacksize = YYINITDEPTH;
-
   YYDPRINTF ((stderr, "Starting parse\n"));
 
-  yystate = 0;
-  yyerrstatus = 0;
-  yynerrs = 0;
-  yychar = YYEMPTY; /* Cause a token to be read.  */
+  yychar = SLEIGHEMPTY; /* Cause a token to be read.  */
   goto yysetstate;
 
 
@@ -2221,6 +2181,7 @@ yysetstate:
   YY_IGNORE_USELESS_CAST_BEGIN
   *yyssp = YY_CAST (yy_state_t, yystate);
   YY_IGNORE_USELESS_CAST_END
+  YY_STACK_PRINT (yyss, yyssp);
 
   if (yyss + yystacksize - 1 <= yyssp)
 #if !defined yyoverflow && !defined YYSTACK_RELOCATE
@@ -2266,7 +2227,7 @@ yysetstate:
           goto yyexhaustedlab;
         YYSTACK_RELOCATE (yyss_alloc, yyss);
         YYSTACK_RELOCATE (yyvs_alloc, yyvs);
-# undef YYSTACK_RELOCATE
+#  undef YYSTACK_RELOCATE
         if (yyss1 != yyssa)
           YYSTACK_FREE (yyss1);
       }
@@ -2305,17 +2266,28 @@ yybackup:
 
   /* Not known => get a lookahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
-  if (yychar == YYEMPTY)
+  /* YYCHAR is either empty, or end-of-input, or a valid lookahead.  */
+  if (yychar == SLEIGHEMPTY)
     {
-      YYDPRINTF ((stderr, "Reading a token: "));
+      YYDPRINTF ((stderr, "Reading a token\n"));
       yychar = yylex ();
     }
 
-  if (yychar <= YYEOF)
+  if (yychar <= SLEIGHEOF)
     {
-      yychar = yytoken = YYEOF;
+      yychar = SLEIGHEOF;
+      yytoken = YYSYMBOL_YYEOF;
       YYDPRINTF ((stderr, "Now at end of input.\n"));
+    }
+  else if (yychar == SLEIGHerror)
+    {
+      /* The scanner already issued an error message, process directly
+         to error recovery.  But do not keep the error token as
+         lookahead, it is too special and may lead us to an endless
+         loop in error recovery. */
+      yychar = SLEIGHUNDEF;
+      yytoken = YYSYMBOL_YYerror;
+      goto yyerrlab1;
     }
   else
     {
@@ -2350,7 +2322,7 @@ yybackup:
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 
   /* Discard the shifted token.  */
-  yychar = YYEMPTY;
+  yychar = SLEIGHEMPTY;
   goto yynewstate;
 
 
@@ -2385,1245 +2357,1245 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-  case 19:
+  case 19: /* constructorlike: error '}'  */
                                        { slgh->resetConstructors(); }
     break;
 
-  case 20:
+  case 20: /* endiandef: DEFINE_KEY ENDIAN_KEY '=' BIG_KEY ';'  */
                                                  { slgh->setEndian(1); }
     break;
 
-  case 21:
+  case 21: /* endiandef: DEFINE_KEY ENDIAN_KEY '=' LITTLE_KEY ';'  */
                                              { slgh->setEndian(0); }
     break;
 
-  case 22:
+  case 22: /* aligndef: DEFINE_KEY ALIGN_KEY '=' INTEGER ';'  */
                                                { slgh->setAlignment(*(yyvsp[-1].i)); delete (yyvsp[-1].i); }
     break;
 
-  case 23:
+  case 23: /* tokendef: tokenprop ';'  */
                                        {}
     break;
 
-  case 24:
+  case 24: /* tokenprop: DEFINE_KEY TOKEN_KEY STRING '(' INTEGER ')'  */
                                                        { (yyval.tokensym) = slgh->defineToken((yyvsp[-3].str),(yyvsp[-1].i),0); }
     break;
 
-  case 25:
+  case 25: /* tokenprop: DEFINE_KEY TOKEN_KEY STRING '(' INTEGER ')' ENDIAN_KEY '=' LITTLE_KEY  */
                                                                           { (yyval.tokensym) = slgh->defineToken((yyvsp[-6].str),(yyvsp[-4].i),-1); }
     break;
 
-  case 26:
+  case 26: /* tokenprop: DEFINE_KEY TOKEN_KEY STRING '(' INTEGER ')' ENDIAN_KEY '=' BIG_KEY  */
                                                                        { (yyval.tokensym) = slgh->defineToken((yyvsp[-6].str),(yyvsp[-4].i),1); }
     break;
 
-  case 27:
+  case 27: /* tokenprop: tokenprop fielddef  */
                                        { (yyval.tokensym) = (yyvsp[-1].tokensym); slgh->addTokenField((yyvsp[-1].tokensym),(yyvsp[0].fieldqual)); }
     break;
 
-  case 28:
+  case 28: /* tokenprop: DEFINE_KEY TOKEN_KEY anysymbol  */
                                        { string errmsg=(yyvsp[0].anysym)->getName()+": redefined as a token"; slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 29:
+  case 29: /* contextdef: contextprop ';'  */
                                        {}
     break;
 
-  case 30:
+  case 30: /* contextprop: DEFINE_KEY CONTEXT_KEY VARSYM  */
                                            { (yyval.varsym) = (yyvsp[0].varsym); }
     break;
 
-  case 31:
+  case 31: /* contextprop: contextprop contextfielddef  */
                                          { (yyval.varsym) = (yyvsp[-1].varsym); if (!slgh->addContextField( (yyvsp[-1].varsym), (yyvsp[0].fieldqual) ))
                                             { slgh->reportError("All context definitions must come before constructors"); YYERROR; } }
     break;
 
-  case 32:
+  case 32: /* fielddef: STRING '=' '(' INTEGER ',' INTEGER ')'  */
                                                  { (yyval.fieldqual) = new FieldQuality((yyvsp[-6].str),(yyvsp[-3].i),(yyvsp[-1].i)); }
     break;
 
-  case 33:
-                                              { delete (yyvsp[-3].i); delete (yyvsp[-1].i); string errmsg = (yyvsp[-6].anysym)->getName()+": redefined as field"; slgh->reportError(errmsg); YYERROR; }
+  case 33: /* fielddef: anysymbol '=' '(' INTEGER ',' INTEGER ')'  */
+                                              { (yyval.fieldqual) = (FieldQuality *)0; delete (yyvsp[-3].i); delete (yyvsp[-1].i); string errmsg = (yyvsp[-6].anysym)->getName()+": redefined as field"; slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 34:
+  case 34: /* fielddef: fielddef SIGNED_KEY  */
                                         { (yyval.fieldqual) = (yyvsp[-1].fieldqual); (yyval.fieldqual)->signext = true; }
     break;
 
-  case 35:
+  case 35: /* fielddef: fielddef HEX_KEY  */
                                         { (yyval.fieldqual) = (yyvsp[-1].fieldqual); (yyval.fieldqual)->hex = true; }
     break;
 
-  case 36:
+  case 36: /* fielddef: fielddef DEC_KEY  */
                                         { (yyval.fieldqual) = (yyvsp[-1].fieldqual); (yyval.fieldqual)->hex = false; }
     break;
 
-  case 37:
+  case 37: /* contextfielddef: STRING '=' '(' INTEGER ',' INTEGER ')'  */
                                                         { (yyval.fieldqual) = new FieldQuality((yyvsp[-6].str),(yyvsp[-3].i),(yyvsp[-1].i)); }
     break;
 
-  case 38:
-                                              { delete (yyvsp[-3].i); delete (yyvsp[-1].i); string errmsg = (yyvsp[-6].anysym)->getName()+": redefined as field"; slgh->reportError(errmsg); YYERROR; }
+  case 38: /* contextfielddef: anysymbol '=' '(' INTEGER ',' INTEGER ')'  */
+                                              { (yyval.fieldqual) = (FieldQuality *)0; delete (yyvsp[-3].i); delete (yyvsp[-1].i); string errmsg = (yyvsp[-6].anysym)->getName()+": redefined as field"; slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 39:
+  case 39: /* contextfielddef: contextfielddef SIGNED_KEY  */
                                                 { (yyval.fieldqual) = (yyvsp[-1].fieldqual); (yyval.fieldqual)->signext = true; }
     break;
 
-  case 40:
+  case 40: /* contextfielddef: contextfielddef NOFLOW_KEY  */
                                                 { (yyval.fieldqual) = (yyvsp[-1].fieldqual); (yyval.fieldqual)->flow = false; }
     break;
 
-  case 41:
+  case 41: /* contextfielddef: contextfielddef HEX_KEY  */
                                                 { (yyval.fieldqual) = (yyvsp[-1].fieldqual); (yyval.fieldqual)->hex = true; }
     break;
 
-  case 42:
+  case 42: /* contextfielddef: contextfielddef DEC_KEY  */
                                                 { (yyval.fieldqual) = (yyvsp[-1].fieldqual); (yyval.fieldqual)->hex = false; }
     break;
 
-  case 43:
+  case 43: /* spacedef: spaceprop ';'  */
                                         { slgh->newSpace((yyvsp[-1].spacequal)); }
     break;
 
-  case 44:
+  case 44: /* spaceprop: DEFINE_KEY SPACE_KEY STRING  */
                                         { (yyval.spacequal) = new SpaceQuality(*(yyvsp[0].str)); delete (yyvsp[0].str); }
     break;
 
-  case 45:
-                                        { string errmsg = (yyvsp[0].anysym)->getName()+": redefined as space"; slgh->reportError(errmsg); YYERROR; }
+  case 45: /* spaceprop: DEFINE_KEY SPACE_KEY anysymbol  */
+                                        { (yyval.spacequal) = (SpaceQuality *)0; string errmsg = (yyvsp[0].anysym)->getName()+": redefined as space"; slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 46:
+  case 46: /* spaceprop: spaceprop TYPE_KEY '=' RAM_KEY  */
                                         { (yyval.spacequal) = (yyvsp[-3].spacequal); (yyval.spacequal)->type = SpaceQuality::ramtype; }
     break;
 
-  case 47:
+  case 47: /* spaceprop: spaceprop TYPE_KEY '=' REGISTER_KEY  */
                                         { (yyval.spacequal) = (yyvsp[-3].spacequal); (yyval.spacequal)->type = SpaceQuality::registertype; }
     break;
 
-  case 48:
+  case 48: /* spaceprop: spaceprop SIZE_KEY '=' INTEGER  */
                                         { (yyval.spacequal) = (yyvsp[-3].spacequal); (yyval.spacequal)->size = *(yyvsp[0].i); delete (yyvsp[0].i); }
     break;
 
-  case 49:
+  case 49: /* spaceprop: spaceprop WORDSIZE_KEY '=' INTEGER  */
                                         { (yyval.spacequal) = (yyvsp[-3].spacequal); (yyval.spacequal)->wordsize = *(yyvsp[0].i); delete (yyvsp[0].i); }
     break;
 
-  case 50:
+  case 50: /* spaceprop: spaceprop DEFAULT_KEY  */
                                         { (yyval.spacequal) = (yyvsp[-1].spacequal); (yyval.spacequal)->isdefault = true; }
     break;
 
-  case 51:
+  case 51: /* varnodedef: DEFINE_KEY SPACESYM OFFSET_KEY '=' INTEGER SIZE_KEY '=' INTEGER stringlist ';'  */
                                                                                            {
                slgh->defineVarnodes((yyvsp[-8].spacesym),(yyvsp[-5].i),(yyvsp[-2].i),(yyvsp[-1].strlist)); }
     break;
 
-  case 52:
+  case 52: /* varnodedef: DEFINE_KEY SPACESYM OFFSET_KEY '=' BADINTEGER  */
                                                   { slgh->reportError("Parsed integer is too big (overflow)"); YYERROR; }
     break;
 
-  case 56:
+  case 56: /* bitrangesingle: STRING '=' VARSYM '[' INTEGER ',' INTEGER ']'  */
                                                               {
                slgh->defineBitrange((yyvsp[-7].str),(yyvsp[-5].varsym),(uint4)*(yyvsp[-3].i),(uint4)*(yyvsp[-1].i)); delete (yyvsp[-3].i); delete (yyvsp[-1].i); }
     break;
 
-  case 57:
+  case 57: /* pcodeopdef: DEFINE_KEY PCODEOP_KEY stringlist ';'  */
                                                   { slgh->addUserOp((yyvsp[-1].strlist)); }
     break;
 
-  case 58:
+  case 58: /* valueattach: ATTACH_KEY VALUES_KEY valuelist intblist ';'  */
                                                           { slgh->attachValues((yyvsp[-2].symlist),(yyvsp[-1].biglist)); }
     break;
 
-  case 59:
+  case 59: /* nameattach: ATTACH_KEY NAMES_KEY valuelist anystringlist ';'  */
                                                              { slgh->attachNames((yyvsp[-2].symlist),(yyvsp[-1].strlist)); }
     break;
 
-  case 60:
+  case 60: /* varattach: ATTACH_KEY VARIABLES_KEY valuelist varlist ';'  */
                                                           { slgh->attachVarnodes((yyvsp[-2].symlist),(yyvsp[-1].symlist)); }
     break;
 
-  case 61:
+  case 61: /* macrodef: macrostart '{' rtl '}'  */
                                         { slgh->buildMacro((yyvsp[-3].macrosym),(yyvsp[-1].sem)); }
     break;
 
-  case 62:
+  case 62: /* withblockstart: WITH_KEY id_or_nil ':' bitpat_or_nil contextblock '{'  */
                                                                        {  slgh->pushWith((yyvsp[-4].subtablesym),(yyvsp[-2].pateq),(yyvsp[-1].contop)); }
     break;
 
-  case 66:
+  case 66: /* withblock: withblockmid '}'  */
                              { slgh->popWith(); }
     break;
 
-  case 67:
+  case 67: /* id_or_nil: %empty  */
                         { (yyval.subtablesym) = (SubtableSymbol *)0; }
     break;
 
-  case 68:
+  case 68: /* id_or_nil: SUBTABLESYM  */
                         { (yyval.subtablesym) = (yyvsp[0].subtablesym); }
     break;
 
-  case 69:
+  case 69: /* id_or_nil: STRING  */
                         { (yyval.subtablesym) = slgh->newTable((yyvsp[0].str)); }
     break;
 
-  case 70:
+  case 70: /* bitpat_or_nil: %empty  */
                            { (yyval.pateq) = (PatternEquation *)0; }
     break;
 
-  case 71:
+  case 71: /* bitpat_or_nil: pequation  */
                            { (yyval.pateq) = (yyvsp[0].pateq); }
     break;
 
-  case 72:
+  case 72: /* macrostart: MACRO_KEY STRING '(' oplist ')'  */
                                             { (yyval.macrosym) = slgh->createMacro((yyvsp[-3].str),(yyvsp[-1].strlist)); }
     break;
 
-  case 73:
+  case 73: /* rtlbody: '{' rtl '}'  */
                      { (yyval.sectionstart) = slgh->standaloneSection((yyvsp[-1].sem)); }
     break;
 
-  case 74:
+  case 74: /* rtlbody: '{' rtlcontinue rtlmid '}'  */
                                { (yyval.sectionstart) = slgh->finalNamedSection((yyvsp[-2].sectionstart),(yyvsp[-1].sem)); }
     break;
 
-  case 75:
+  case 75: /* rtlbody: OP_UNIMPL  */
                      { (yyval.sectionstart) = (SectionVector *)0; }
     break;
 
-  case 76:
+  case 76: /* constructor: constructprint IS_KEY pequation contextblock rtlbody  */
                                                                   { slgh->buildConstructor((yyvsp[-4].construct),(yyvsp[-2].pateq),(yyvsp[-1].contop),(yyvsp[0].sectionstart)); }
     break;
 
-  case 77:
+  case 77: /* constructor: subtablestart IS_KEY pequation contextblock rtlbody  */
                                                                   { slgh->buildConstructor((yyvsp[-4].construct),(yyvsp[-2].pateq),(yyvsp[-1].contop),(yyvsp[0].sectionstart)); }
     break;
 
-  case 78:
+  case 78: /* constructprint: subtablestart STRING  */
                                         { (yyval.construct) = (yyvsp[-1].construct); (yyval.construct)->addSyntax(*(yyvsp[0].str)); delete (yyvsp[0].str); }
     break;
 
-  case 79:
+  case 79: /* constructprint: subtablestart charstring  */
                                         { (yyval.construct) = (yyvsp[-1].construct); (yyval.construct)->addSyntax(*(yyvsp[0].str)); delete (yyvsp[0].str); }
     break;
 
-  case 80:
+  case 80: /* constructprint: subtablestart SYMBOLSTRING  */
                                         { (yyval.construct) = (yyvsp[-1].construct); if (slgh->isInRoot((yyvsp[-1].construct))) { (yyval.construct)->addSyntax(*(yyvsp[0].str)); delete (yyvsp[0].str); } else slgh->newOperand((yyvsp[-1].construct),(yyvsp[0].str)); }
     break;
 
-  case 81:
+  case 81: /* constructprint: subtablestart '^'  */
                                                 { (yyval.construct) = (yyvsp[-1].construct); if (!slgh->isInRoot((yyvsp[-1].construct))) { slgh->reportError("Unexpected '^' at start of print pieces");  YYERROR; } }
     break;
 
-  case 82:
+  case 82: /* constructprint: constructprint '^'  */
                                                 { (yyval.construct) = (yyvsp[-1].construct); }
     break;
 
-  case 83:
+  case 83: /* constructprint: constructprint STRING  */
                                                 { (yyval.construct) = (yyvsp[-1].construct); (yyval.construct)->addSyntax(*(yyvsp[0].str)); delete (yyvsp[0].str); }
     break;
 
-  case 84:
+  case 84: /* constructprint: constructprint charstring  */
                                         { (yyval.construct) = (yyvsp[-1].construct); (yyval.construct)->addSyntax(*(yyvsp[0].str)); delete (yyvsp[0].str); }
     break;
 
-  case 85:
+  case 85: /* constructprint: constructprint ' '  */
                                                 { (yyval.construct) = (yyvsp[-1].construct); (yyval.construct)->addSyntax(string(" ")); }
     break;
 
-  case 86:
+  case 86: /* constructprint: constructprint SYMBOLSTRING  */
                                         { (yyval.construct) = (yyvsp[-1].construct); slgh->newOperand((yyvsp[-1].construct),(yyvsp[0].str)); }
     break;
 
-  case 87:
+  case 87: /* subtablestart: SUBTABLESYM ':'  */
                                 { (yyval.construct) = slgh->createConstructor((yyvsp[-1].subtablesym)); }
     break;
 
-  case 88:
+  case 88: /* subtablestart: STRING ':'  */
                                                 { SubtableSymbol *sym=slgh->newTable((yyvsp[-1].str)); (yyval.construct) = slgh->createConstructor(sym); }
     break;
 
-  case 89:
+  case 89: /* subtablestart: ':'  */
                                                         { (yyval.construct) = slgh->createConstructor((SubtableSymbol *)0); }
     break;
 
-  case 90:
+  case 90: /* subtablestart: subtablestart ' '  */
                                         { (yyval.construct) = (yyvsp[-1].construct); }
     break;
 
-  case 91:
+  case 91: /* pexpression: INTB  */
                                         { (yyval.patexp) = new ConstantValue(*(yyvsp[0].big)); delete (yyvsp[0].big); }
     break;
 
-  case 92:
+  case 92: /* pexpression: familysymbol  */
                                         { if ((actionon==1)&&((yyvsp[0].famsym)->getType() != SleighSymbol::context_symbol))
                                              { string errmsg="Global symbol "+(yyvsp[0].famsym)->getName(); errmsg += " is not allowed in action expression"; slgh->reportError(errmsg); } (yyval.patexp) = (yyvsp[0].famsym)->getPatternValue(); }
     break;
 
-  case 93:
+  case 93: /* pexpression: specificsymbol  */
                                         { (yyval.patexp) = (yyvsp[0].specsym)->getPatternExpression(); }
     break;
 
-  case 94:
+  case 94: /* pexpression: '(' pexpression ')'  */
                                         { (yyval.patexp) = (yyvsp[-1].patexp); }
     break;
 
-  case 95:
+  case 95: /* pexpression: pexpression '+' pexpression  */
                                         { (yyval.patexp) = new PlusExpression((yyvsp[-2].patexp),(yyvsp[0].patexp)); }
     break;
 
-  case 96:
+  case 96: /* pexpression: pexpression '-' pexpression  */
                                         { (yyval.patexp) = new SubExpression((yyvsp[-2].patexp),(yyvsp[0].patexp)); }
     break;
 
-  case 97:
+  case 97: /* pexpression: pexpression '*' pexpression  */
                                         { (yyval.patexp) = new MultExpression((yyvsp[-2].patexp),(yyvsp[0].patexp)); }
     break;
 
-  case 98:
+  case 98: /* pexpression: pexpression OP_LEFT pexpression  */
                                         { (yyval.patexp) = new LeftShiftExpression((yyvsp[-2].patexp),(yyvsp[0].patexp)); }
     break;
 
-  case 99:
+  case 99: /* pexpression: pexpression OP_RIGHT pexpression  */
                                         { (yyval.patexp) = new RightShiftExpression((yyvsp[-2].patexp),(yyvsp[0].patexp)); }
     break;
 
-  case 100:
+  case 100: /* pexpression: pexpression OP_AND pexpression  */
                                         { (yyval.patexp) = new AndExpression((yyvsp[-2].patexp),(yyvsp[0].patexp)); }
     break;
 
-  case 101:
+  case 101: /* pexpression: pexpression OP_OR pexpression  */
                                         { (yyval.patexp) = new OrExpression((yyvsp[-2].patexp),(yyvsp[0].patexp)); }
     break;
 
-  case 102:
+  case 102: /* pexpression: pexpression OP_XOR pexpression  */
                                         { (yyval.patexp) = new XorExpression((yyvsp[-2].patexp),(yyvsp[0].patexp)); }
     break;
 
-  case 103:
+  case 103: /* pexpression: pexpression '/' pexpression  */
                                         { (yyval.patexp) = new DivExpression((yyvsp[-2].patexp),(yyvsp[0].patexp)); }
     break;
 
-  case 104:
+  case 104: /* pexpression: '-' pexpression  */
                                         { (yyval.patexp) = new MinusExpression((yyvsp[0].patexp)); }
     break;
 
-  case 105:
+  case 105: /* pexpression: '~' pexpression  */
                                         { (yyval.patexp) = new NotExpression((yyvsp[0].patexp)); }
     break;
 
-  case 107:
+  case 107: /* pequation: pequation '&' pequation  */
                                         { (yyval.pateq) = new EquationAnd((yyvsp[-2].pateq),(yyvsp[0].pateq)); }
     break;
 
-  case 108:
+  case 108: /* pequation: pequation '|' pequation  */
                                         { (yyval.pateq) = new EquationOr((yyvsp[-2].pateq),(yyvsp[0].pateq)); }
     break;
 
-  case 109:
+  case 109: /* pequation: pequation ';' pequation  */
                                         { (yyval.pateq) = new EquationCat((yyvsp[-2].pateq),(yyvsp[0].pateq)); }
     break;
 
-  case 110:
+  case 110: /* elleq: ELLIPSIS_KEY ellrt  */
                                         { (yyval.pateq) = new EquationLeftEllipsis((yyvsp[0].pateq)); }
     break;
 
-  case 112:
+  case 112: /* ellrt: atomic ELLIPSIS_KEY  */
                                         { (yyval.pateq) = new EquationRightEllipsis((yyvsp[-1].pateq)); }
     break;
 
-  case 115:
+  case 115: /* atomic: '(' pequation ')'  */
                                         { (yyval.pateq) = (yyvsp[-1].pateq); }
     break;
 
-  case 116:
+  case 116: /* constraint: familysymbol '=' pexpression  */
                                          { (yyval.pateq) = new EqualEquation((yyvsp[-2].famsym)->getPatternValue(),(yyvsp[0].patexp)); }
     break;
 
-  case 117:
+  case 117: /* constraint: familysymbol OP_NOTEQUAL pexpression  */
                                          { (yyval.pateq) = new NotEqualEquation((yyvsp[-2].famsym)->getPatternValue(),(yyvsp[0].patexp)); }
     break;
 
-  case 118:
+  case 118: /* constraint: familysymbol '<' pexpression  */
                                         { (yyval.pateq) = new LessEquation((yyvsp[-2].famsym)->getPatternValue(),(yyvsp[0].patexp)); }
     break;
 
-  case 119:
+  case 119: /* constraint: familysymbol OP_LESSEQUAL pexpression  */
                                           { (yyval.pateq) = new LessEqualEquation((yyvsp[-2].famsym)->getPatternValue(),(yyvsp[0].patexp)); }
     break;
 
-  case 120:
+  case 120: /* constraint: familysymbol '>' pexpression  */
                                         { (yyval.pateq) = new GreaterEquation((yyvsp[-2].famsym)->getPatternValue(),(yyvsp[0].patexp)); }
     break;
 
-  case 121:
+  case 121: /* constraint: familysymbol OP_GREATEQUAL pexpression  */
                                            { (yyval.pateq) = new GreaterEqualEquation((yyvsp[-2].famsym)->getPatternValue(),(yyvsp[0].patexp)); }
     break;
 
-  case 122:
+  case 122: /* constraint: OPERANDSYM '=' pexpression  */
                                         { (yyval.pateq) = slgh->constrainOperand((yyvsp[-2].operandsym),(yyvsp[0].patexp)); 
                                           if ((yyval.pateq) == (PatternEquation *)0) 
                                             { string errmsg="Constraining currently undefined operand "+(yyvsp[-2].operandsym)->getName(); slgh->reportError(errmsg); } }
     break;
 
-  case 123:
+  case 123: /* constraint: OPERANDSYM  */
                                         { (yyval.pateq) = new OperandEquation((yyvsp[0].operandsym)->getIndex()); slgh->selfDefine((yyvsp[0].operandsym)); }
     break;
 
-  case 124:
+  case 124: /* constraint: SPECSYM  */
                                         { (yyval.pateq) = new UnconstrainedEquation((yyvsp[0].specsym)->getPatternExpression()); }
     break;
 
-  case 125:
+  case 125: /* constraint: familysymbol  */
                                         { (yyval.pateq) = slgh->defineInvisibleOperand((yyvsp[0].famsym)); }
     break;
 
-  case 126:
+  case 126: /* constraint: SUBTABLESYM  */
                                         { (yyval.pateq) = slgh->defineInvisibleOperand((yyvsp[0].subtablesym)); }
     break;
 
-  case 127:
+  case 127: /* contextblock: %empty  */
                                         { (yyval.contop) = (vector<ContextChange *> *)0; }
     break;
 
-  case 128:
+  case 128: /* contextblock: '[' contextlist ']'  */
                                         { (yyval.contop) = (yyvsp[-1].contop); }
     break;
 
-  case 129:
+  case 129: /* contextlist: %empty  */
                                         { (yyval.contop) = new vector<ContextChange *>; }
     break;
 
-  case 130:
-                                                { (yyval.contop) = (yyvsp[-4].contop); if (!slgh->contextMod((yyvsp[-4].contop),(yyvsp[-3].contextsym),(yyvsp[-1].patexp))) { string errmsg="Cannot use 'inst_next' or 'inst_next2' to set context variable: "+(yyvsp[-3].contextsym)->getName(); slgh->reportError(errmsg); YYERROR; } }
+  case 130: /* contextlist: contextlist CONTEXTSYM '=' pexpression ';'  */
+                                                { (yyval.contop) = (yyvsp[-4].contop); if (!slgh->contextMod((yyvsp[-4].contop),(yyvsp[-3].contextsym),(yyvsp[-1].patexp))) { string errmsg="Cannot use 'inst_next' or 'inst_next2' to set context variable: "+(yyvsp[-3].contextsym)->getName(); slgh->reportError(errmsg); delete (yyvsp[-4].contop); (yyvsp[-1].patexp)->layClaim(); PatternExpression::release((yyvsp[-1].patexp)); YYERROR; } }
     break;
 
-  case 131:
+  case 131: /* contextlist: contextlist GLOBALSET_KEY '(' familysymbol ',' CONTEXTSYM ')' ';'  */
                                                                       { (yyval.contop) = (yyvsp[-7].contop); slgh->contextSet((yyvsp[-7].contop),(yyvsp[-4].famsym),(yyvsp[-2].contextsym)); }
     break;
 
-  case 132:
+  case 132: /* contextlist: contextlist GLOBALSET_KEY '(' specificsymbol ',' CONTEXTSYM ')' ';'  */
                                                                         { (yyval.contop) = (yyvsp[-7].contop); slgh->contextSet((yyvsp[-7].contop),(yyvsp[-4].specsym),(yyvsp[-2].contextsym)); }
     break;
 
-  case 133:
+  case 133: /* contextlist: contextlist OPERANDSYM '=' pexpression ';'  */
                                                { (yyval.contop) = (yyvsp[-4].contop); slgh->defineOperand((yyvsp[-3].operandsym),(yyvsp[-1].patexp)); }
     break;
 
-  case 134:
-                                        { string errmsg="Expecting context symbol, not "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
+  case 134: /* contextlist: contextlist STRING  */
+                                        { (yyval.contop) = (vector<ContextChange *> *)0; delete (yyvsp[-1].contop); string errmsg="Expecting context symbol, not "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 135:
+  case 135: /* section_def: OP_LEFT STRING OP_RIGHT  */
                                         { (yyval.sectionsym) = slgh->newSectionSymbol( *(yyvsp[-1].str) ); delete (yyvsp[-1].str); }
     break;
 
-  case 136:
+  case 136: /* section_def: OP_LEFT SECTIONSYM OP_RIGHT  */
                                         { (yyval.sectionsym) = (yyvsp[-1].sectionsym); }
     break;
 
-  case 137:
+  case 137: /* rtlfirstsection: rtl section_def  */
                                         { (yyval.sectionstart) = slgh->firstNamedSection((yyvsp[-1].sem),(yyvsp[0].sectionsym)); }
     break;
 
-  case 138:
+  case 138: /* rtlcontinue: rtlfirstsection  */
                              { (yyval.sectionstart) = (yyvsp[0].sectionstart); }
     break;
 
-  case 139:
+  case 139: /* rtlcontinue: rtlcontinue rtlmid section_def  */
                                         { (yyval.sectionstart) = slgh->nextNamedSection((yyvsp[-2].sectionstart),(yyvsp[-1].sem),(yyvsp[0].sectionsym)); }
     break;
 
-  case 140:
+  case 140: /* rtl: rtlmid  */
             { (yyval.sem) = (yyvsp[0].sem); if ((yyval.sem)->getOpvec().empty() && ((yyval.sem)->getResult() == (HandleTpl *)0)) slgh->recordNop(); }
     break;
 
-  case 141:
+  case 141: /* rtl: rtlmid EXPORT_KEY exportvarnode ';'  */
                                         { (yyval.sem) = slgh->setResultVarnode((yyvsp[-3].sem),(yyvsp[-1].varnode)); }
     break;
 
-  case 142:
+  case 142: /* rtl: rtlmid EXPORT_KEY sizedstar lhsvarnode ';'  */
                                                { (yyval.sem) = slgh->setResultStarVarnode((yyvsp[-4].sem),(yyvsp[-2].starqual),(yyvsp[-1].varnode)); }
     break;
 
-  case 143:
-                                        { string errmsg="Unknown export varnode: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
+  case 143: /* rtl: rtlmid EXPORT_KEY STRING  */
+                                        { (yyval.sem) = (ConstructTpl *)0; delete (yyvsp[-2].sem); string errmsg="Unknown export varnode: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 144:
-                                        { string errmsg="Unknown pointer varnode: "+*(yyvsp[0].str); delete (yyvsp[-1].starqual); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
+  case 144: /* rtl: rtlmid EXPORT_KEY sizedstar STRING  */
+                                        { (yyval.sem) = (ConstructTpl *)0; delete (yyvsp[-3].sem); string errmsg="Unknown pointer varnode: "+*(yyvsp[0].str); delete (yyvsp[-1].starqual); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 145:
+  case 145: /* rtlmid: %empty  */
                                         { (yyval.sem) = slgh->enterSection(); }
     break;
 
-  case 146:
-                                        { (yyval.sem) = (yyvsp[-1].sem); if (!(yyval.sem)->addOpList(*(yyvsp[0].stmt))) { delete (yyvsp[0].stmt); slgh->reportError("Multiple delayslot declarations"); YYERROR; } delete (yyvsp[0].stmt); }
+  case 146: /* rtlmid: rtlmid statement  */
+                                        { (yyval.sem) = (yyvsp[-1].sem); if (!(yyval.sem)->addOpList(*(yyvsp[0].stmt))) { delete (yyvsp[-1].sem); delete (yyvsp[0].stmt); slgh->reportError("Multiple delayslot declarations"); YYERROR; } delete (yyvsp[0].stmt); }
     break;
 
-  case 147:
+  case 147: /* rtlmid: rtlmid LOCAL_KEY STRING ';'  */
                                 { (yyval.sem) = (yyvsp[-3].sem); slgh->pcode.newLocalDefinition((yyvsp[-1].str)); }
     break;
 
-  case 148:
+  case 148: /* rtlmid: rtlmid LOCAL_KEY STRING ':' INTEGER ';'  */
                                             { (yyval.sem) = (yyvsp[-5].sem); slgh->pcode.newLocalDefinition((yyvsp[-3].str),*(yyvsp[-1].i)); delete (yyvsp[-1].i); }
     break;
 
-  case 149:
+  case 149: /* statement: lhsvarnode '=' expr ';'  */
                                         { (yyvsp[-1].tree)->setOutput((yyvsp[-3].varnode)); (yyval.stmt) = ExprTree::toVector((yyvsp[-1].tree)); }
     break;
 
-  case 150:
+  case 150: /* statement: LOCAL_KEY STRING '=' expr ';'  */
                                         { (yyval.stmt) = slgh->pcode.newOutput(true,(yyvsp[-1].tree),(yyvsp[-3].str)); }
     break;
 
-  case 151:
+  case 151: /* statement: STRING '=' expr ';'  */
                                         { (yyval.stmt) = slgh->pcode.newOutput(false,(yyvsp[-1].tree),(yyvsp[-3].str)); }
     break;
 
-  case 152:
+  case 152: /* statement: LOCAL_KEY STRING ':' INTEGER '=' expr ';'  */
                                                 { (yyval.stmt) = slgh->pcode.newOutput(true,(yyvsp[-1].tree),(yyvsp[-5].str),*(yyvsp[-3].i)); delete (yyvsp[-3].i); }
     break;
 
-  case 153:
+  case 153: /* statement: STRING ':' INTEGER '=' expr ';'  */
                                         { (yyval.stmt) = slgh->pcode.newOutput(true,(yyvsp[-1].tree),(yyvsp[-5].str),*(yyvsp[-3].i)); delete (yyvsp[-3].i); }
     break;
 
-  case 154:
+  case 154: /* statement: LOCAL_KEY specificsymbol '='  */
                                  { (yyval.stmt) = (vector<OpTpl *> *)0; string errmsg = "Redefinition of symbol: "+(yyvsp[-1].specsym)->getName(); slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 155:
+  case 155: /* statement: sizedstar expr '=' expr ';'  */
                                         { (yyval.stmt) = slgh->pcode.createStore((yyvsp[-4].starqual),(yyvsp[-3].tree),(yyvsp[-1].tree)); }
     break;
 
-  case 156:
+  case 156: /* statement: USEROPSYM '(' paramlist ')' ';'  */
                                         { (yyval.stmt) = slgh->pcode.createUserOpNoOut((yyvsp[-4].useropsym),(yyvsp[-2].param)); }
     break;
 
-  case 157:
+  case 157: /* statement: lhsvarnode '[' INTEGER ',' INTEGER ']' '=' expr ';'  */
                                                         { (yyval.stmt) = slgh->pcode.assignBitRange((yyvsp[-8].varnode),(uint4)*(yyvsp[-6].i),(uint4)*(yyvsp[-4].i),(yyvsp[-1].tree)); delete (yyvsp[-6].i), delete (yyvsp[-4].i); }
     break;
 
-  case 158:
+  case 158: /* statement: BITSYM '=' expr ';'  */
                                         { (yyval.stmt)=slgh->pcode.assignBitRange((yyvsp[-3].bitsym)->getParentSymbol()->getVarnode(),(yyvsp[-3].bitsym)->getBitOffset(),(yyvsp[-3].bitsym)->numBits(),(yyvsp[-1].tree)); }
     break;
 
-  case 159:
-                                        { delete (yyvsp[-3].varnode); delete (yyvsp[-1].i); slgh->reportError("Illegal truncation on left-hand side of assignment"); YYERROR; }
+  case 159: /* statement: varnode ':' INTEGER '='  */
+                                        { (yyval.stmt) = (vector<OpTpl *> *)0; delete (yyvsp[-3].varnode); delete (yyvsp[-1].i); slgh->reportError("Illegal truncation on left-hand side of assignment"); YYERROR; }
     break;
 
-  case 160:
-                                        { delete (yyvsp[-3].varnode); delete (yyvsp[-1].i); slgh->reportError("Illegal subpiece on left-hand side of assignment"); YYERROR; }
+  case 160: /* statement: varnode '(' INTEGER ')'  */
+                                        { (yyval.stmt) = (vector<OpTpl *> *)0; delete (yyvsp[-3].varnode); delete (yyvsp[-1].i); slgh->reportError("Illegal subpiece on left-hand side of assignment"); YYERROR; }
     break;
 
-  case 161:
+  case 161: /* statement: BUILD_KEY OPERANDSYM ';'  */
                                         { (yyval.stmt) = slgh->pcode.createOpConst(BUILD,(yyvsp[-1].operandsym)->getIndex()); }
     break;
 
-  case 162:
+  case 162: /* statement: CROSSBUILD_KEY varnode ',' SECTIONSYM ';'  */
                                               { (yyval.stmt) = slgh->createCrossBuild((yyvsp[-3].varnode),(yyvsp[-1].sectionsym)); }
     break;
 
-  case 163:
+  case 163: /* statement: CROSSBUILD_KEY varnode ',' STRING ';'  */
                                             { (yyval.stmt) = slgh->createCrossBuild((yyvsp[-3].varnode),slgh->newSectionSymbol(*(yyvsp[-1].str))); delete (yyvsp[-1].str); }
     break;
 
-  case 164:
+  case 164: /* statement: DELAYSLOT_KEY '(' INTEGER ')' ';'  */
                                         { (yyval.stmt) = slgh->pcode.createOpConst(DELAY_SLOT,*(yyvsp[-2].i)); delete (yyvsp[-2].i); }
     break;
 
-  case 165:
+  case 165: /* statement: GOTO_KEY jumpdest ';'  */
                                         { (yyval.stmt) = slgh->pcode.createOpNoOut(CPUI_BRANCH,new ExprTree((yyvsp[-1].varnode))); }
     break;
 
-  case 166:
+  case 166: /* statement: IF_KEY expr GOTO_KEY jumpdest ';'  */
                                         { (yyval.stmt) = slgh->pcode.createOpNoOut(CPUI_CBRANCH,new ExprTree((yyvsp[-1].varnode)),(yyvsp[-3].tree)); }
     break;
 
-  case 167:
+  case 167: /* statement: GOTO_KEY '[' expr ']' ';'  */
                                         { (yyval.stmt) = slgh->pcode.createOpNoOut(CPUI_BRANCHIND,(yyvsp[-2].tree)); }
     break;
 
-  case 168:
+  case 168: /* statement: CALL_KEY jumpdest ';'  */
                                         { (yyval.stmt) = slgh->pcode.createOpNoOut(CPUI_CALL,new ExprTree((yyvsp[-1].varnode))); }
     break;
 
-  case 169:
+  case 169: /* statement: CALL_KEY '[' expr ']' ';'  */
                                         { (yyval.stmt) = slgh->pcode.createOpNoOut(CPUI_CALLIND,(yyvsp[-2].tree)); }
     break;
 
-  case 170:
-                                        { slgh->reportError("Must specify an indirect parameter for return"); YYERROR; }
+  case 170: /* statement: RETURN_KEY ';'  */
+                                        { (yyval.stmt) = (vector<OpTpl *> *)0; slgh->reportError("Must specify an indirect parameter for return"); YYERROR; }
     break;
 
-  case 171:
+  case 171: /* statement: RETURN_KEY '[' expr ']' ';'  */
                                         { (yyval.stmt) = slgh->pcode.createOpNoOut(CPUI_RETURN,(yyvsp[-2].tree)); }
     break;
 
-  case 172:
+  case 172: /* statement: MACROSYM '(' paramlist ')' ';'  */
                                         { (yyval.stmt) = slgh->createMacroUse((yyvsp[-4].macrosym),(yyvsp[-2].param)); }
     break;
 
-  case 173:
+  case 173: /* statement: label  */
                                         { (yyval.stmt) = slgh->pcode.placeLabel( (yyvsp[0].labelsym) ); }
     break;
 
-  case 174:
+  case 174: /* expr: varnode  */
               { (yyval.tree) = new ExprTree((yyvsp[0].varnode)); }
     break;
 
-  case 175:
+  case 175: /* expr: sizedstar expr  */
                                 { (yyval.tree) = slgh->pcode.createLoad((yyvsp[-1].starqual),(yyvsp[0].tree)); }
     break;
 
-  case 176:
+  case 176: /* expr: '(' expr ')'  */
                                 { (yyval.tree) = (yyvsp[-1].tree); }
     break;
 
-  case 177:
+  case 177: /* expr: expr '+' expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_ADD,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 178:
+  case 178: /* expr: expr '-' expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_SUB,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 179:
+  case 179: /* expr: expr OP_EQUAL expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_EQUAL,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 180:
+  case 180: /* expr: expr OP_NOTEQUAL expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_NOTEQUAL,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 181:
+  case 181: /* expr: expr '<' expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_LESS,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 182:
+  case 182: /* expr: expr OP_GREATEQUAL expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_LESSEQUAL,(yyvsp[0].tree),(yyvsp[-2].tree)); }
     break;
 
-  case 183:
+  case 183: /* expr: expr OP_LESSEQUAL expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_LESSEQUAL,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 184:
+  case 184: /* expr: expr '>' expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_LESS,(yyvsp[0].tree),(yyvsp[-2].tree)); }
     break;
 
-  case 185:
+  case 185: /* expr: expr OP_SLESS expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_SLESS,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 186:
+  case 186: /* expr: expr OP_SGREATEQUAL expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_SLESSEQUAL,(yyvsp[0].tree),(yyvsp[-2].tree)); }
     break;
 
-  case 187:
+  case 187: /* expr: expr OP_SLESSEQUAL expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_SLESSEQUAL,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 188:
+  case 188: /* expr: expr OP_SGREAT expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_SLESS,(yyvsp[0].tree),(yyvsp[-2].tree)); }
     break;
 
-  case 189:
+  case 189: /* expr: '-' expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_2COMP,(yyvsp[0].tree)); }
     break;
 
-  case 190:
+  case 190: /* expr: '~' expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_NEGATE,(yyvsp[0].tree)); }
     break;
 
-  case 191:
+  case 191: /* expr: expr '^' expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_XOR,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 192:
+  case 192: /* expr: expr '&' expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_AND,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 193:
+  case 193: /* expr: expr '|' expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_OR,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 194:
+  case 194: /* expr: expr OP_LEFT expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_LEFT,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 195:
+  case 195: /* expr: expr OP_RIGHT expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_RIGHT,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 196:
+  case 196: /* expr: expr OP_SRIGHT expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_SRIGHT,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 197:
+  case 197: /* expr: expr '*' expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_MULT,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 198:
+  case 198: /* expr: expr '/' expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_DIV,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 199:
+  case 199: /* expr: expr OP_SDIV expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_SDIV,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 200:
+  case 200: /* expr: expr '%' expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_REM,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 201:
+  case 201: /* expr: expr OP_SREM expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_SREM,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 202:
+  case 202: /* expr: '!' expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_BOOL_NEGATE,(yyvsp[0].tree)); }
     break;
 
-  case 203:
+  case 203: /* expr: expr OP_BOOL_XOR expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_BOOL_XOR,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 204:
+  case 204: /* expr: expr OP_BOOL_AND expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_BOOL_AND,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 205:
+  case 205: /* expr: expr OP_BOOL_OR expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_BOOL_OR,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 206:
+  case 206: /* expr: expr OP_FEQUAL expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_EQUAL,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 207:
+  case 207: /* expr: expr OP_FNOTEQUAL expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_NOTEQUAL,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 208:
+  case 208: /* expr: expr OP_FLESS expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_LESS,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 209:
+  case 209: /* expr: expr OP_FGREAT expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_LESS,(yyvsp[0].tree),(yyvsp[-2].tree)); }
     break;
 
-  case 210:
+  case 210: /* expr: expr OP_FLESSEQUAL expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_LESSEQUAL,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 211:
+  case 211: /* expr: expr OP_FGREATEQUAL expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_LESSEQUAL,(yyvsp[0].tree),(yyvsp[-2].tree)); }
     break;
 
-  case 212:
+  case 212: /* expr: expr OP_FADD expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_ADD,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 213:
+  case 213: /* expr: expr OP_FSUB expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_SUB,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 214:
+  case 214: /* expr: expr OP_FMULT expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_MULT,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 215:
+  case 215: /* expr: expr OP_FDIV expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_DIV,(yyvsp[-2].tree),(yyvsp[0].tree)); }
     break;
 
-  case 216:
+  case 216: /* expr: OP_FSUB expr  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_NEG,(yyvsp[0].tree)); }
     break;
 
-  case 217:
+  case 217: /* expr: OP_ABS '(' expr ')'  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_ABS,(yyvsp[-1].tree)); }
     break;
 
-  case 218:
+  case 218: /* expr: OP_SQRT '(' expr ')'  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_SQRT,(yyvsp[-1].tree)); }
     break;
 
-  case 219:
+  case 219: /* expr: OP_SEXT '(' expr ')'  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_SEXT,(yyvsp[-1].tree)); }
     break;
 
-  case 220:
+  case 220: /* expr: OP_ZEXT '(' expr ')'  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_ZEXT,(yyvsp[-1].tree)); }
     break;
 
-  case 221:
+  case 221: /* expr: OP_CARRY '(' expr ',' expr ')'  */
                                    { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_CARRY,(yyvsp[-3].tree),(yyvsp[-1].tree)); }
     break;
 
-  case 222:
+  case 222: /* expr: OP_SCARRY '(' expr ',' expr ')'  */
                                     { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_SCARRY,(yyvsp[-3].tree),(yyvsp[-1].tree)); }
     break;
 
-  case 223:
+  case 223: /* expr: OP_SBORROW '(' expr ',' expr ')'  */
                                      { (yyval.tree) = slgh->pcode.createOp(CPUI_INT_SBORROW,(yyvsp[-3].tree),(yyvsp[-1].tree)); }
     break;
 
-  case 224:
+  case 224: /* expr: OP_FLOAT2FLOAT '(' expr ')'  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_FLOAT2FLOAT,(yyvsp[-1].tree)); }
     break;
 
-  case 225:
+  case 225: /* expr: OP_INT2FLOAT '(' expr ')'  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_INT2FLOAT,(yyvsp[-1].tree)); }
     break;
 
-  case 226:
+  case 226: /* expr: OP_NAN '(' expr ')'  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_NAN,(yyvsp[-1].tree)); }
     break;
 
-  case 227:
+  case 227: /* expr: OP_TRUNC '(' expr ')'  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_TRUNC,(yyvsp[-1].tree)); }
     break;
 
-  case 228:
+  case 228: /* expr: OP_CEIL '(' expr ')'  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_CEIL,(yyvsp[-1].tree)); }
     break;
 
-  case 229:
+  case 229: /* expr: OP_FLOOR '(' expr ')'  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_FLOOR,(yyvsp[-1].tree)); }
     break;
 
-  case 230:
+  case 230: /* expr: OP_ROUND '(' expr ')'  */
                                 { (yyval.tree) = slgh->pcode.createOp(CPUI_FLOAT_ROUND,(yyvsp[-1].tree)); }
     break;
 
-  case 231:
+  case 231: /* expr: OP_NEW '(' expr ')'  */
                             { (yyval.tree) = slgh->pcode.createOp(CPUI_NEW,(yyvsp[-1].tree)); }
     break;
 
-  case 232:
+  case 232: /* expr: OP_NEW '(' expr ',' expr ')'  */
                                  { (yyval.tree) = slgh->pcode.createOp(CPUI_NEW,(yyvsp[-3].tree),(yyvsp[-1].tree)); }
     break;
 
-  case 233:
+  case 233: /* expr: OP_POPCOUNT '(' expr ')'  */
                              { (yyval.tree) = slgh->pcode.createOp(CPUI_POPCOUNT,(yyvsp[-1].tree)); }
     break;
 
-  case 234:
+  case 234: /* expr: OP_LZCOUNT '(' expr ')'  */
                             { (yyval.tree) = slgh->pcode.createOp(CPUI_LZCOUNT,(yyvsp[-1].tree)); }
     break;
 
-  case 235:
+  case 235: /* expr: specificsymbol '(' integervarnode ')'  */
                                           { (yyval.tree) = slgh->pcode.createOp(CPUI_SUBPIECE,new ExprTree((yyvsp[-3].specsym)->getVarnode()),new ExprTree((yyvsp[-1].varnode))); }
     break;
 
-  case 236:
+  case 236: /* expr: specificsymbol ':' INTEGER  */
                                 { (yyval.tree) = slgh->pcode.createBitRange((yyvsp[-2].specsym),0,(uint4)(*(yyvsp[0].i) * 8)); delete (yyvsp[0].i); }
     break;
 
-  case 237:
+  case 237: /* expr: specificsymbol '[' INTEGER ',' INTEGER ']'  */
                                                { (yyval.tree) = slgh->pcode.createBitRange((yyvsp[-5].specsym),(uint4)*(yyvsp[-3].i),(uint4)*(yyvsp[-1].i)); delete (yyvsp[-3].i), delete (yyvsp[-1].i); }
     break;
 
-  case 238:
+  case 238: /* expr: BITSYM  */
                                 { (yyval.tree)=slgh->pcode.createBitRange((yyvsp[0].bitsym)->getParentSymbol(),(yyvsp[0].bitsym)->getBitOffset(),(yyvsp[0].bitsym)->numBits()); }
     break;
 
-  case 239:
+  case 239: /* expr: USEROPSYM '(' paramlist ')'  */
                                 { (yyval.tree) = slgh->pcode.createUserOp((yyvsp[-3].useropsym),(yyvsp[-1].param)); }
     break;
 
-  case 240:
-                                   { if ((*(yyvsp[-1].param)).size() < 2) { string errmsg = "Must at least two inputs to cpool"; slgh->reportError(errmsg); YYERROR; } (yyval.tree) = slgh->pcode.createVariadic(CPUI_CPOOLREF,(yyvsp[-1].param)); }
+  case 240: /* expr: OP_CPOOLREF '(' paramlist ')'  */
+                                   { if ((*(yyvsp[-1].param)).size() < 2) { string errmsg = "Must be at least two inputs to cpool"; slgh->reportError(errmsg); delete (yyvsp[-1].param); YYERROR; } (yyval.tree) = slgh->pcode.createVariadic(CPUI_CPOOLREF,(yyvsp[-1].param)); }
     break;
 
-  case 241:
+  case 241: /* sizedstar: '*' '[' SPACESYM ']' ':' INTEGER  */
                                             { (yyval.starqual) = new StarQuality; (yyval.starqual)->size = *(yyvsp[0].i); delete (yyvsp[0].i); (yyval.starqual)->id=ConstTpl((yyvsp[-3].spacesym)->getSpace()); }
     break;
 
-  case 242:
+  case 242: /* sizedstar: '*' '[' SPACESYM ']'  */
                                 { (yyval.starqual) = new StarQuality; (yyval.starqual)->size = 0; (yyval.starqual)->id=ConstTpl((yyvsp[-1].spacesym)->getSpace()); }
     break;
 
-  case 243:
+  case 243: /* sizedstar: '*' ':' INTEGER  */
                                 { (yyval.starqual) = new StarQuality; (yyval.starqual)->size = *(yyvsp[0].i); delete (yyvsp[0].i); (yyval.starqual)->id=ConstTpl(slgh->getDefaultCodeSpace()); }
     break;
 
-  case 244:
+  case 244: /* sizedstar: '*'  */
                                 { (yyval.starqual) = new StarQuality; (yyval.starqual)->size = 0; (yyval.starqual)->id=ConstTpl(slgh->getDefaultCodeSpace()); }
     break;
 
-  case 245:
+  case 245: /* jumpdest: JUMPSYM  */
                                 { VarnodeTpl *sym = (yyvsp[0].specsym)->getVarnode(); (yyval.varnode) = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
     break;
 
-  case 246:
+  case 246: /* jumpdest: INTEGER  */
                                 { (yyval.varnode) = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),ConstTpl(ConstTpl::real,*(yyvsp[0].i)),ConstTpl(ConstTpl::j_curspace_size)); delete (yyvsp[0].i); }
     break;
 
-  case 247:
+  case 247: /* jumpdest: BADINTEGER  */
                                 { (yyval.varnode) = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),ConstTpl(ConstTpl::real,0),ConstTpl(ConstTpl::j_curspace_size)); slgh->reportError("Parsed integer is too big (overflow)"); }
     break;
 
-  case 248:
+  case 248: /* jumpdest: OPERANDSYM  */
                                 { (yyval.varnode) = (yyvsp[0].operandsym)->getVarnode(); (yyvsp[0].operandsym)->setCodeAddress(); }
     break;
 
-  case 249:
+  case 249: /* jumpdest: INTEGER '[' SPACESYM ']'  */
                                 { AddrSpace *spc = (yyvsp[-1].spacesym)->getSpace(); (yyval.varnode) = new VarnodeTpl(ConstTpl(spc),ConstTpl(ConstTpl::real,*(yyvsp[-3].i)),ConstTpl(ConstTpl::real,spc->getAddrSize())); delete (yyvsp[-3].i); }
     break;
 
-  case 250:
+  case 250: /* jumpdest: label  */
                                 { (yyval.varnode) = new VarnodeTpl(ConstTpl(slgh->getConstantSpace()),ConstTpl(ConstTpl::j_relative,(yyvsp[0].labelsym)->getIndex()),ConstTpl(ConstTpl::real,sizeof(uintm))); (yyvsp[0].labelsym)->incrementRefCount(); }
     break;
 
-  case 251:
-                                { string errmsg = "Unknown jump destination: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
+  case 251: /* jumpdest: STRING  */
+                                { (yyval.varnode) = (VarnodeTpl *)0; string errmsg = "Unknown jump destination: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 252:
+  case 252: /* varnode: specificsymbol  */
                                 { (yyval.varnode) = (yyvsp[0].specsym)->getVarnode(); }
     break;
 
-  case 253:
+  case 253: /* varnode: integervarnode  */
                                 { (yyval.varnode) = (yyvsp[0].varnode); }
     break;
 
-  case 254:
-                                { string errmsg = "Unknown varnode parameter: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
+  case 254: /* varnode: STRING  */
+                                { (yyval.varnode) = (VarnodeTpl *)0; string errmsg = "Unknown varnode parameter: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 255:
-                                { string errmsg = "Subtable not attached to operand: "+(yyvsp[0].subtablesym)->getName(); slgh->reportError(errmsg); YYERROR; }
+  case 255: /* varnode: SUBTABLESYM  */
+                                { (yyval.varnode) = (VarnodeTpl *)0; string errmsg = "Subtable not attached to operand: "+(yyvsp[0].subtablesym)->getName(); slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 256:
+  case 256: /* integervarnode: INTEGER  */
                                 { (yyval.varnode) = new VarnodeTpl(ConstTpl(slgh->getConstantSpace()),ConstTpl(ConstTpl::real,*(yyvsp[0].i)),ConstTpl(ConstTpl::real,0)); delete (yyvsp[0].i); }
     break;
 
-  case 257:
+  case 257: /* integervarnode: BADINTEGER  */
                                 { (yyval.varnode) = new VarnodeTpl(ConstTpl(slgh->getConstantSpace()),ConstTpl(ConstTpl::real,0),ConstTpl(ConstTpl::real,0)); slgh->reportError("Parsed integer is too big (overflow)"); }
     break;
 
-  case 258:
+  case 258: /* integervarnode: INTEGER ':' INTEGER  */
                                 { (yyval.varnode) = new VarnodeTpl(ConstTpl(slgh->getConstantSpace()),ConstTpl(ConstTpl::real,*(yyvsp[-2].i)),ConstTpl(ConstTpl::real,*(yyvsp[0].i))); delete (yyvsp[-2].i); delete (yyvsp[0].i); }
     break;
 
-  case 259:
+  case 259: /* integervarnode: '&' varnode  */
                                 { (yyval.varnode) = slgh->pcode.addressOf((yyvsp[0].varnode),0); }
     break;
 
-  case 260:
+  case 260: /* integervarnode: '&' ':' INTEGER varnode  */
                                 { (yyval.varnode) = slgh->pcode.addressOf((yyvsp[0].varnode),*(yyvsp[-1].i)); delete (yyvsp[-1].i); }
     break;
 
-  case 261:
+  case 261: /* lhsvarnode: specificsymbol  */
                                 { (yyval.varnode) = (yyvsp[0].specsym)->getVarnode(); }
     break;
 
-  case 262:
-                                { string errmsg = "Unknown assignment varnode: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
+  case 262: /* lhsvarnode: STRING  */
+                                { (yyval.varnode) = (VarnodeTpl *)0; string errmsg = "Unknown assignment varnode: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 263:
-                                { string errmsg = "Subtable not attached to operand: "+(yyvsp[0].subtablesym)->getName(); slgh->reportError(errmsg); YYERROR; }
+  case 263: /* lhsvarnode: SUBTABLESYM  */
+                                { (yyval.varnode) = (VarnodeTpl *)0; string errmsg = "Subtable not attached to operand: "+(yyvsp[0].subtablesym)->getName(); slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 264:
+  case 264: /* label: '<' LABELSYM '>'  */
                                 { (yyval.labelsym) = (yyvsp[-1].labelsym); }
     break;
 
-  case 265:
+  case 265: /* label: '<' STRING '>'  */
                                 { (yyval.labelsym) = slgh->pcode.defineLabel( (yyvsp[-1].str) ); }
     break;
 
-  case 266:
+  case 266: /* exportvarnode: specificsymbol  */
                                 { (yyval.varnode) = (yyvsp[0].specsym)->getVarnode(); }
     break;
 
-  case 267:
+  case 267: /* exportvarnode: '&' varnode  */
                                 { (yyval.varnode) = slgh->pcode.addressOf((yyvsp[0].varnode),0); }
     break;
 
-  case 268:
+  case 268: /* exportvarnode: '&' ':' INTEGER varnode  */
                                 { (yyval.varnode) = slgh->pcode.addressOf((yyvsp[0].varnode),*(yyvsp[-1].i)); delete (yyvsp[-1].i); }
     break;
 
-  case 269:
+  case 269: /* exportvarnode: INTEGER ':' INTEGER  */
                                 { (yyval.varnode) = new VarnodeTpl(ConstTpl(slgh->getConstantSpace()),ConstTpl(ConstTpl::real,*(yyvsp[-2].i)),ConstTpl(ConstTpl::real,*(yyvsp[0].i))); delete (yyvsp[-2].i); delete (yyvsp[0].i); }
     break;
 
-  case 270:
-                                { string errmsg="Unknown export varnode: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
+  case 270: /* exportvarnode: STRING  */
+                                { (yyval.varnode) = (VarnodeTpl *)0; string errmsg="Unknown export varnode: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 271:
-                                { string errmsg = "Subtable not attached to operand: "+(yyvsp[0].subtablesym)->getName(); slgh->reportError(errmsg); YYERROR; }
+  case 271: /* exportvarnode: SUBTABLESYM  */
+                                { (yyval.varnode) = (VarnodeTpl *)0; string errmsg = "Subtable not attached to operand: "+(yyvsp[0].subtablesym)->getName(); slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 272:
+  case 272: /* familysymbol: VALUESYM  */
                                 { (yyval.famsym) = (yyvsp[0].valuesym); }
     break;
 
-  case 273:
+  case 273: /* familysymbol: VALUEMAPSYM  */
                                 { (yyval.famsym) = (yyvsp[0].valuemapsym); }
     break;
 
-  case 274:
+  case 274: /* familysymbol: CONTEXTSYM  */
                                 { (yyval.famsym) = (yyvsp[0].contextsym); }
     break;
 
-  case 275:
+  case 275: /* familysymbol: NAMESYM  */
                                 { (yyval.famsym) = (yyvsp[0].namesym); }
     break;
 
-  case 276:
+  case 276: /* familysymbol: VARLISTSYM  */
                                 { (yyval.famsym) = (yyvsp[0].varlistsym); }
     break;
 
-  case 277:
+  case 277: /* specificsymbol: VARSYM  */
                                 { (yyval.specsym) = (yyvsp[0].varsym); }
     break;
 
-  case 278:
+  case 278: /* specificsymbol: SPECSYM  */
                                 { (yyval.specsym) = (yyvsp[0].specsym); }
     break;
 
-  case 279:
+  case 279: /* specificsymbol: OPERANDSYM  */
                                 { (yyval.specsym) = (yyvsp[0].operandsym); }
     break;
 
-  case 280:
+  case 280: /* specificsymbol: JUMPSYM  */
                                 { (yyval.specsym) = (yyvsp[0].specsym); }
     break;
 
-  case 281:
+  case 281: /* charstring: CHAR  */
                                 { (yyval.str) = new string; (*(yyval.str)) += (yyvsp[0].ch); }
     break;
 
-  case 282:
+  case 282: /* charstring: charstring CHAR  */
                                 { (yyval.str) = (yyvsp[-1].str); (*(yyval.str)) += (yyvsp[0].ch); }
     break;
 
-  case 283:
+  case 283: /* intblist: '[' intbpart ']'  */
                                 { (yyval.biglist) = (yyvsp[-1].biglist); }
     break;
 
-  case 284:
+  case 284: /* intblist: INTEGER  */
                                 { (yyval.biglist) = new vector<intb>; (yyval.biglist)->push_back(intb(*(yyvsp[0].i))); delete (yyvsp[0].i); }
     break;
 
-  case 285:
+  case 285: /* intblist: '-' INTEGER  */
                                 { (yyval.biglist) = new vector<intb>; (yyval.biglist)->push_back(-intb(*(yyvsp[0].i))); delete (yyvsp[0].i); }
     break;
 
-  case 286:
+  case 286: /* intbpart: INTEGER  */
                                 { (yyval.biglist) = new vector<intb>; (yyval.biglist)->push_back(intb(*(yyvsp[0].i))); delete (yyvsp[0].i); }
     break;
 
-  case 287:
+  case 287: /* intbpart: '-' INTEGER  */
                                 { (yyval.biglist) = new vector<intb>; (yyval.biglist)->push_back(-intb(*(yyvsp[0].i))); delete (yyvsp[0].i); }
     break;
 
-  case 288:
+  case 288: /* intbpart: STRING  */
                                 { if (*(yyvsp[0].str)!="_") { string errmsg = "Expecting integer but saw: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
                                   (yyval.biglist) = new vector<intb>; (yyval.biglist)->push_back((intb)0xBADBEEF); delete (yyvsp[0].str); }
     break;
 
-  case 289:
+  case 289: /* intbpart: intbpart INTEGER  */
                                 { (yyval.biglist) = (yyvsp[-1].biglist); (yyval.biglist)->push_back(intb(*(yyvsp[0].i))); delete (yyvsp[0].i); }
     break;
 
-  case 290:
+  case 290: /* intbpart: intbpart '-' INTEGER  */
                                 { (yyval.biglist) = (yyvsp[-2].biglist); (yyval.biglist)->push_back(-intb(*(yyvsp[0].i))); delete (yyvsp[0].i); }
     break;
 
-  case 291:
-                                { if (*(yyvsp[0].str)!="_") { string errmsg = "Expecting integer but saw: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
+  case 291: /* intbpart: intbpart STRING  */
+                                { if (*(yyvsp[0].str)!="_") { string errmsg = "Expecting integer but saw: "+*(yyvsp[0].str); delete (yyvsp[-1].biglist); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
                                   (yyval.biglist) = (yyvsp[-1].biglist); (yyval.biglist)->push_back((intb)0xBADBEEF); delete (yyvsp[0].str); }
     break;
 
-  case 292:
+  case 292: /* stringlist: '[' stringpart ']'  */
                                 { (yyval.strlist) = (yyvsp[-1].strlist); }
     break;
 
-  case 293:
+  case 293: /* stringlist: STRING  */
                                 { (yyval.strlist) = new vector<string>; (yyval.strlist)->push_back(*(yyvsp[0].str)); delete (yyvsp[0].str); }
     break;
 
-  case 294:
+  case 294: /* stringpart: STRING  */
                                 { (yyval.strlist) = new vector<string>; (yyval.strlist)->push_back( *(yyvsp[0].str) ); delete (yyvsp[0].str); }
     break;
 
-  case 295:
+  case 295: /* stringpart: stringpart STRING  */
                                 { (yyval.strlist) = (yyvsp[-1].strlist); (yyval.strlist)->push_back(*(yyvsp[0].str)); delete (yyvsp[0].str); }
     break;
 
-  case 296:
-                                { string errmsg = (yyvsp[0].anysym)->getName()+": redefined"; slgh->reportError(errmsg); YYERROR; }
+  case 296: /* stringpart: stringpart anysymbol  */
+                                { (yyval.strlist) = (vector<string> *)0; delete (yyvsp[-1].strlist); string errmsg = (yyvsp[0].anysym)->getName()+": redefined"; slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 297:
+  case 297: /* anystringlist: '[' anystringpart ']'  */
                                      { (yyval.strlist) = (yyvsp[-1].strlist); }
     break;
 
-  case 298:
+  case 298: /* anystringpart: STRING  */
                                 { (yyval.strlist) = new vector<string>; (yyval.strlist)->push_back( *(yyvsp[0].str) ); delete (yyvsp[0].str); }
     break;
 
-  case 299:
+  case 299: /* anystringpart: anysymbol  */
                                 { (yyval.strlist) = new vector<string>; (yyval.strlist)->push_back( (yyvsp[0].anysym)->getName() ); }
     break;
 
-  case 300:
+  case 300: /* anystringpart: anystringpart STRING  */
                                 { (yyval.strlist) = (yyvsp[-1].strlist); (yyval.strlist)->push_back(*(yyvsp[0].str)); delete (yyvsp[0].str); }
     break;
 
-  case 301:
+  case 301: /* anystringpart: anystringpart anysymbol  */
                                 { (yyval.strlist) = (yyvsp[-1].strlist); (yyval.strlist)->push_back((yyvsp[0].anysym)->getName()); }
     break;
 
-  case 302:
+  case 302: /* valuelist: '[' valuepart ']'  */
                                 { (yyval.symlist) = (yyvsp[-1].symlist); }
     break;
 
-  case 303:
+  case 303: /* valuelist: VALUESYM  */
                                 { (yyval.symlist) = new vector<SleighSymbol *>; (yyval.symlist)->push_back((yyvsp[0].valuesym)); }
     break;
 
-  case 304:
+  case 304: /* valuelist: CONTEXTSYM  */
                                 { (yyval.symlist) = new vector<SleighSymbol *>; (yyval.symlist)->push_back((yyvsp[0].contextsym)); }
     break;
 
-  case 305:
+  case 305: /* valuepart: VALUESYM  */
                                 { (yyval.symlist) = new vector<SleighSymbol *>; (yyval.symlist)->push_back( (yyvsp[0].valuesym) ); }
     break;
 
-  case 306:
+  case 306: /* valuepart: CONTEXTSYM  */
                                 { (yyval.symlist) = new vector<SleighSymbol *>; (yyval.symlist)->push_back((yyvsp[0].contextsym)); }
     break;
 
-  case 307:
+  case 307: /* valuepart: valuepart VALUESYM  */
                                 { (yyval.symlist) = (yyvsp[-1].symlist); (yyval.symlist)->push_back((yyvsp[0].valuesym)); }
     break;
 
-  case 308:
+  case 308: /* valuepart: valuepart CONTEXTSYM  */
                                 { (yyval.symlist) = (yyvsp[-1].symlist); (yyval.symlist)->push_back((yyvsp[0].contextsym)); }
     break;
 
-  case 309:
-                                { string errmsg = *(yyvsp[0].str)+": is not a value pattern"; delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
+  case 309: /* valuepart: valuepart STRING  */
+                                { (yyval.symlist) = (vector<SleighSymbol *> *)0; delete (yyvsp[-1].symlist); string errmsg = *(yyvsp[0].str)+": is not a value pattern"; delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
     break;
 
-  case 310:
+  case 310: /* varlist: '[' varpart ']'  */
                                 { (yyval.symlist) = (yyvsp[-1].symlist); }
     break;
 
-  case 311:
+  case 311: /* varlist: VARSYM  */
                                 { (yyval.symlist) = new vector<SleighSymbol *>; (yyval.symlist)->push_back((yyvsp[0].varsym)); }
     break;
 
-  case 312:
+  case 312: /* varpart: VARSYM  */
                                 { (yyval.symlist) = new vector<SleighSymbol *>; (yyval.symlist)->push_back((yyvsp[0].varsym)); }
     break;
 
-  case 313:
+  case 313: /* varpart: STRING  */
                                 { if (*(yyvsp[0].str)!="_") { string errmsg = *(yyvsp[0].str)+": is not a varnode symbol"; delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
 				  (yyval.symlist) = new vector<SleighSymbol *>; (yyval.symlist)->push_back((SleighSymbol *)0); delete (yyvsp[0].str); }
     break;
 
-  case 314:
+  case 314: /* varpart: varpart VARSYM  */
                                 { (yyval.symlist) = (yyvsp[-1].symlist); (yyval.symlist)->push_back((yyvsp[0].varsym)); }
     break;
 
-  case 315:
-                                { if (*(yyvsp[0].str)!="_") { string errmsg = *(yyvsp[0].str)+": is not a varnode symbol"; delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
+  case 315: /* varpart: varpart STRING  */
+                                { if (*(yyvsp[0].str)!="_") { string errmsg = *(yyvsp[0].str)+": is not a varnode symbol"; delete (yyvsp[-1].symlist); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
                                   (yyval.symlist) = (yyvsp[-1].symlist); (yyval.symlist)->push_back((SleighSymbol *)0); delete (yyvsp[0].str); }
     break;
 
-  case 316:
+  case 316: /* paramlist: %empty  */
                                 { (yyval.param) = new vector<ExprTree *>; }
     break;
 
-  case 317:
+  case 317: /* paramlist: expr  */
                                 { (yyval.param) = new vector<ExprTree *>; (yyval.param)->push_back((yyvsp[0].tree)); }
     break;
 
-  case 318:
+  case 318: /* paramlist: paramlist ',' expr  */
                                 { (yyval.param) = (yyvsp[-2].param); (yyval.param)->push_back((yyvsp[0].tree)); }
     break;
 
-  case 319:
+  case 319: /* oplist: %empty  */
                                 { (yyval.strlist) = new vector<string>; }
     break;
 
-  case 320:
+  case 320: /* oplist: STRING  */
                                 { (yyval.strlist) = new vector<string>; (yyval.strlist)->push_back(*(yyvsp[0].str)); delete (yyvsp[0].str); }
     break;
 
-  case 321:
+  case 321: /* oplist: oplist ',' STRING  */
                                 { (yyval.strlist) = (yyvsp[-2].strlist); (yyval.strlist)->push_back(*(yyvsp[0].str)); delete (yyvsp[0].str); }
     break;
 
-  case 322:
+  case 322: /* anysymbol: SPACESYM  */
                                 { (yyval.anysym) = (yyvsp[0].spacesym); }
     break;
 
-  case 323:
+  case 323: /* anysymbol: SECTIONSYM  */
                                 { (yyval.anysym) = (yyvsp[0].sectionsym); }
     break;
 
-  case 324:
+  case 324: /* anysymbol: TOKENSYM  */
                                 { (yyval.anysym) = (yyvsp[0].tokensym); }
     break;
 
-  case 325:
+  case 325: /* anysymbol: USEROPSYM  */
                                 { (yyval.anysym) = (yyvsp[0].useropsym); }
     break;
 
-  case 326:
+  case 326: /* anysymbol: MACROSYM  */
                                 { (yyval.anysym) = (yyvsp[0].macrosym); }
     break;
 
-  case 327:
+  case 327: /* anysymbol: SUBTABLESYM  */
                                 { (yyval.anysym) = (yyvsp[0].subtablesym); }
     break;
 
-  case 328:
+  case 328: /* anysymbol: VALUESYM  */
                                 { (yyval.anysym) = (yyvsp[0].valuesym); }
     break;
 
-  case 329:
+  case 329: /* anysymbol: VALUEMAPSYM  */
                                 { (yyval.anysym) = (yyvsp[0].valuemapsym); }
     break;
 
-  case 330:
+  case 330: /* anysymbol: CONTEXTSYM  */
                                 { (yyval.anysym) = (yyvsp[0].contextsym); }
     break;
 
-  case 331:
+  case 331: /* anysymbol: NAMESYM  */
                                 { (yyval.anysym) = (yyvsp[0].namesym); }
     break;
 
-  case 332:
+  case 332: /* anysymbol: VARSYM  */
                                 { (yyval.anysym) = (yyvsp[0].varsym); }
     break;
 
-  case 333:
+  case 333: /* anysymbol: VARLISTSYM  */
                                 { (yyval.anysym) = (yyvsp[0].varlistsym); }
     break;
 
-  case 334:
+  case 334: /* anysymbol: OPERANDSYM  */
                                 { (yyval.anysym) = (yyvsp[0].operandsym); }
     break;
 
-  case 335:
+  case 335: /* anysymbol: JUMPSYM  */
                                 { (yyval.anysym) = (yyvsp[0].specsym); }
     break;
 
-  case 336:
+  case 336: /* anysymbol: BITSYM  */
                                 { (yyval.anysym) = (yyvsp[0].bitsym); }
     break;
 
@@ -3642,11 +3614,10 @@ yyreduce:
      case of YYERROR or YYBACKUP, subsequent parser actions might lead
      to an incorrect destructor call or verbose syntax error message
      before the lookahead is translated.  */
-  YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
+  YY_SYMBOL_PRINT ("-> $$ =", YY_CAST (yysymbol_kind_t, yyr1[yyn]), &yyval, &yyloc);
 
   YYPOPSTACK (yylen);
   yylen = 0;
-  YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
 
@@ -3670,66 +3641,30 @@ yyreduce:
 yyerrlab:
   /* Make sure we have latest lookahead translation.  See comments at
      user semantic actions for why this is necessary.  */
-  yytoken = yychar == YYEMPTY ? YYEMPTY : YYTRANSLATE (yychar);
-
+  yytoken = yychar == SLEIGHEMPTY ? YYSYMBOL_YYEMPTY : YYTRANSLATE (yychar);
   /* If not already recovering from an error, report this error.  */
   if (!yyerrstatus)
     {
       ++yynerrs;
-#if ! YYERROR_VERBOSE
       yyerror (YY_("syntax error"));
-#else
-# define YYSYNTAX_ERROR yysyntax_error (&yymsg_alloc, &yymsg, \
-                                        yyssp, yytoken)
-      {
-        char const *yymsgp = YY_("syntax error");
-        int yysyntax_error_status;
-        yysyntax_error_status = YYSYNTAX_ERROR;
-        if (yysyntax_error_status == 0)
-          yymsgp = yymsg;
-        else if (yysyntax_error_status == 1)
-          {
-            if (yymsg != yymsgbuf)
-              YYSTACK_FREE (yymsg);
-            yymsg = YY_CAST (char *, YYSTACK_ALLOC (YY_CAST (YYSIZE_T, yymsg_alloc)));
-            if (!yymsg)
-              {
-                yymsg = yymsgbuf;
-                yymsg_alloc = sizeof yymsgbuf;
-                yysyntax_error_status = 2;
-              }
-            else
-              {
-                yysyntax_error_status = YYSYNTAX_ERROR;
-                yymsgp = yymsg;
-              }
-          }
-        yyerror (yymsgp);
-        if (yysyntax_error_status == 2)
-          goto yyexhaustedlab;
-      }
-# undef YYSYNTAX_ERROR
-#endif
     }
-
-
 
   if (yyerrstatus == 3)
     {
       /* If just tried and failed to reuse lookahead token after an
          error, discard it.  */
 
-      if (yychar <= YYEOF)
+      if (yychar <= SLEIGHEOF)
         {
           /* Return failure if at end of input.  */
-          if (yychar == YYEOF)
+          if (yychar == SLEIGHEOF)
             YYABORT;
         }
       else
         {
           yydestruct ("Error: discarding",
                       yytoken, &yylval);
-          yychar = YYEMPTY;
+          yychar = SLEIGHEMPTY;
         }
     }
 
@@ -3762,13 +3697,14 @@ yyerrorlab:
 yyerrlab1:
   yyerrstatus = 3;      /* Each real token shifted decrements this.  */
 
+  /* Pop stack until we find a state that shifts the error token.  */
   for (;;)
     {
       yyn = yypact[yystate];
       if (!yypact_value_is_default (yyn))
         {
-          yyn += YYTERROR;
-          if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYTERROR)
+          yyn += YYSYMBOL_YYerror;
+          if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYSYMBOL_YYerror)
             {
               yyn = yytable[yyn];
               if (0 < yyn)
@@ -3782,7 +3718,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-                  yystos[yystate], yyvsp);
+                  YY_ACCESSING_SYMBOL (yystate), yyvsp);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -3794,7 +3730,7 @@ yyerrlab1:
 
 
   /* Shift the error token.  */
-  YY_SYMBOL_PRINT ("Shifting", yystos[yyn], yyvsp, yylsp);
+  YY_SYMBOL_PRINT ("Shifting", YY_ACCESSING_SYMBOL (yyn), yyvsp, yylsp);
 
   yystate = yyn;
   goto yynewstate;
@@ -3816,22 +3752,22 @@ yyabortlab:
   goto yyreturn;
 
 
-#if !defined yyoverflow || YYERROR_VERBOSE
+#if !defined yyoverflow
 /*-------------------------------------------------.
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
   yyerror (YY_("memory exhausted"));
   yyresult = 2;
-  /* Fall through.  */
+  goto yyreturn;
 #endif
 
 
-/*-----------------------------------------------------.
-| yyreturn -- parsing is finished, return the result.  |
-`-----------------------------------------------------*/
+/*-------------------------------------------------------.
+| yyreturn -- parsing is finished, clean up and return.  |
+`-------------------------------------------------------*/
 yyreturn:
-  if (yychar != YYEMPTY)
+  if (yychar != SLEIGHEMPTY)
     {
       /* Make sure we have latest lookahead translation.  See comments at
          user semantic actions for why this is necessary.  */
@@ -3846,19 +3782,17 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  yystos[+*yyssp], yyvsp);
+                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
   if (yyss != yyssa)
     YYSTACK_FREE (yyss);
 #endif
-#if YYERROR_VERBOSE
-  if (yymsg != yymsgbuf)
-    YYSTACK_FREE (yymsg);
-#endif
+
   return yyresult;
 }
+
 
 
 int sleigherror(const char *s)

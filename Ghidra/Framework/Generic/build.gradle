@@ -34,18 +34,18 @@ dependencies {
 	}
 	api "com.google.guava:failureaccess:1.0.1"
 	api "org.jdom:jdom2:2.0.6.1"
-	api "org.apache.logging.log4j:log4j-api:2.25.3"
-	api "org.apache.logging.log4j:log4j-core:2.25.3"
+	api "org.apache.logging.log4j:log4j-api:2.25.4"
+	api "org.apache.logging.log4j:log4j-core:2.25.4"
 	api "org.apache.commons:commons-collections4:4.1"
 	api "org.apache.commons:commons-compress:1.27.1" // requires commons-codec
 	api "commons-codec:commons-codec:1.18.0"
 	api "org.apache.commons:commons-lang3:3.20.0"
 	api "org.apache.commons:commons-text:1.10.0"
 	api "commons-io:commons-io:2.19.0"	
-	api "com.google.code.gson:gson:2.9.0"
-	api "org.bouncycastle:bcpkix-jdk18on:1.80" // requires bcutil and bcprov
-	api "org.bouncycastle:bcprov-jdk18on:1.80"
-	api "org.bouncycastle:bcutil-jdk18on:1.80"
+	api "com.google.code.gson:gson:2.13.2"
+	api "org.bouncycastle:bcpkix-jdk18on:1.84" // requires bcutil and bcprov
+	api "org.bouncycastle:bcprov-jdk18on:1.84"
+	api "org.bouncycastle:bcutil-jdk18on:1.84"
 
 	compileOnly "junit:junit:4.13.2"
 	compileOnly "org.hamcrest:hamcrest:2.2"

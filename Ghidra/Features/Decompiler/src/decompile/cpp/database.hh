@@ -318,10 +318,12 @@ public:
 /// different symbols attached.  The Symbol's associated data-type will be the desired \e union to force.
 class UnionFacetSymbol : public Symbol {
   int4 fieldNum;			///< Particular field to associate with Symbol access
+  bool addrBased;			///< Set to \b true if facet matches any PcodeOp at the address
 public:
-  UnionFacetSymbol(Scope *sc,const string &nm,Datatype *unionDt,int4 fldNum);	///< Constructor from components
-  UnionFacetSymbol(Scope *sc) : Symbol(sc) { fieldNum = -1; category = union_facet; }	///< Constructor for decode
+  UnionFacetSymbol(Scope *sc,const string &nm,Datatype *unionDt,int4 fldNum,bool isAddr=false);	///< Constructor from components
+  UnionFacetSymbol(Scope *sc) : Symbol(sc) { fieldNum = -1; category = union_facet; addrBased = false; }	///< Constructor for decode
   int4 getFieldNumber(void) const { return fieldNum; }		///< Get the particular field associate with \b this
+  bool isAddrBased(void) const { return addrBased; }		///< Return \b true if facet matches any PcodeOp at the address
   virtual void encode(Encoder &encoder) const;
   virtual void decode(Decoder &decoder);
 };

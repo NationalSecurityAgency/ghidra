@@ -149,10 +149,10 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 				return 60;
 			}
 		},
-		KINDS("Kinds", String.class, LogicalBreakpointRow::getKinds) {
+		KIND("Kind", String.class, LogicalBreakpointRow::getKind) {
 			@Override
 			public int getPreferredWidth() {
-				return 150;
+				return 50;
 			}
 		},
 		LOCATIONS("Locations", Integer.class, LogicalBreakpointRow::getLocationCount) {
@@ -276,12 +276,6 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 			}
 		},
 		TRACE("Trace", String.class, BreakpointLocationRow::getTraceName),
-		THREADS("Threads", String.class, BreakpointLocationRow::getThreads) {
-			@Override
-			public boolean isVisible() {
-				return false;
-			}
-		},
 		COMMENT("Comment", String.class, BreakpointLocationRow::getComment,
 				BreakpointLocationRow::setComment),
 		EXPRESSION("Expression", String.class, BreakpointLocationRow::getExpression),

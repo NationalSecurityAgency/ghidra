@@ -2403,9 +2403,7 @@ JumpTable::JumpTable(Address ad)
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
   lastBlock = -1;
-  maxaddsub = 1;
-  maxleftright = 1;
-  maxext = 1;
+  recoverCount = 0;
   displayFormat = 0;
   partialTable = false;
   collectloads = false;
@@ -2424,9 +2422,7 @@ JumpTable::JumpTable(const JumpTable *op2)
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
   lastBlock = op2->lastBlock;
-  maxaddsub = op2->maxaddsub;
-  maxleftright = op2->maxleftright;
-  maxext = op2->maxext;
+  recoverCount = op2->recoverCount;
   displayFormat = op2->displayFormat;
   partialTable = op2->partialTable;
   collectloads = op2->collectloads;
@@ -2486,11 +2482,11 @@ void JumpTable::setOverride(const vector<Address> &addrtable,const Address &nadd
   if (jmodel != (JumpModel *)0)
     delete jmodel;
 
-  JumpBasicOverride *override;
-  jmodel = override = new JumpBasicOverride(this);
-  override->setAddresses(addrtable);
-  override->setNorm(naddr,h);
-  override->setStartingValue(sv);
+  JumpBasicOverride *jumpOverride;
+  jmodel = jumpOverride = new JumpBasicOverride(this);
+  jumpOverride->setAddresses(addrtable);
+  jumpOverride->setNorm(naddr,h);
+  jumpOverride->setStartingValue(sv);
 }
 
 /// \brief Get the index of the i-th address table entry that corresponds to the given basic-block
@@ -2771,8 +2767,9 @@ void JumpTable::clear(void)
   indirect = (PcodeOp *)0;
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
+  recoverCount = 0;
   partialTable = false;
-  // -opaddress- -maxtablesize- -maxaddsub- -maxleftright- -maxext- -collectloads- are permanent
+  // -opaddress- -maxtablesize- -collectloads- are permanent
 }
 
 /// The recovered addresses and case labels are encode to the stream.
@@ -2871,6 +2868,7 @@ bool JumpTable::checkForMultistage(Funcdata *fd)
   if (addresstable.size()!=1) return false;
   if (partialTable) return false;
   if (indirect == (PcodeOp *)0) return false;
+  if (recoverCount > 1) return false;
 
   if (fd->getOverride().queryMultistageJumptable(indirect->getAddr())) {
     partialTable = true;		// Mark that we need additional recovery

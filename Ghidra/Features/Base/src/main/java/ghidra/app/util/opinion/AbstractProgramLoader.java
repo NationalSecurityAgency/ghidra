@@ -25,6 +25,7 @@ import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.sourcelanguage.SourceLanguageService;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
@@ -106,6 +107,7 @@ public abstract class AbstractProgramLoader implements Loader {
 				Program program = loadedProgram.getDomainObject(this);
 				try {
 					applyProcessorLabels(settings.options(), program);
+					setSourceLanguages(program, settings);
 					program.setEventsEnabled(true);
 				}
 				finally {
@@ -485,6 +487,18 @@ public abstract class AbstractProgramLoader implements Loader {
 			}
 
 			GhidraProgramUtilities.resetAnalysisFlags(program);
+		}
+		finally {
+			program.endTransaction(id, true);
+		}
+	}
+
+	private void setSourceLanguages(Program program, ImporterSettings settings)
+			throws CancelledException {
+		int id = program.startTransaction("Set Source Languages");
+		try {
+			program.setSourceLanguageIDs(
+				SourceLanguageService.find(program, settings.log(), settings.monitor()));
 		}
 		finally {
 			program.endTransaction(id, true);

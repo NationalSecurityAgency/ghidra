@@ -66,7 +66,13 @@ allprojects {
 	tasks.withType(JavaForkOptions) {
 		jvmArgs '-Djava.awt.headless=true'
 	}
+
+	// enable generating lock files for gradle dependencies
+	dependencyLocking {
+		lockAllConfigurations()
+	}
 }
+
 
 /*********************************************************************************
  *  Use flat directory-style repository if flatRepo directory is present.
@@ -338,6 +344,47 @@ def getCurrentDateTimeLong() {
 	def formattedDate = date.format('yyyy-MMM-dd HHmm z')
 	return formattedDate
 }
+
+/*********************************************************************************
+ * Returns the project object from the given projectDependency
+ *********************************************************************************/
+def getDependencyProject(p, projectDependency) {
+    if (projectDependency.hasProperty("path")) {
+        // Supported by Gradle 8.11 and later
+        return p.project(projectDependency.path)
+    }
+    else {
+        // Supported in Gradle 8.5, removed in Gradle 9
+        return projectDependency.dependencyProject
+    }
+}
+
+/*********************************************************************************
+ * Returns true if 'project' has a direct or transitive API project dependency
+ * on the project with path 'targetPath'. The 'targetPath' should be specified
+ * in the form ":<project-name>"
+ *********************************************************************************/
+boolean hasApiProjectDependency(Project project, String targetPath) {
+    def visited = [] as Set
+
+    def walk
+    walk = { Project p ->
+        if (!visited.add(p)) return false
+
+        def apiDeps = p.configurations.api
+            .allDependencies
+            .withType(org.gradle.api.artifacts.ProjectDependency)
+
+        if (apiDeps.any { getDependencyProject(p, it).path == targetPath }) {
+            return true
+        }
+
+        return apiDeps.any { walk(getDependencyProject(p, it)) }
+    }
+
+    walk(project)
+}
+
 
 /*********************************************************************************
  * Returns a list of all the external library paths declared as dependencies for the 

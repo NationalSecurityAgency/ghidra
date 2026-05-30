@@ -40,7 +40,7 @@ import ghidra.util.exception.*;
  * Represents a function that was read from DWARF information.
  */
 public class DWARFFunction {
-	public enum CommitMode { SKIP, FORMAL, STORAGE, }
+	public enum CommitMode { SKIP, FORMAL, STORAGE, NO_PARAMS }
 
 	public DIEAggregate diea;
 	public DWARFName name;
@@ -456,27 +456,33 @@ public class DWARFFunction {
 
 	public void updateFunctionSignature() {
 		try {
-			boolean includeStorageDetail = signatureCommitMode == CommitMode.STORAGE;
-			FunctionUpdateType functionUpdateType = includeStorageDetail
-					? FunctionUpdateType.CUSTOM_STORAGE
-					: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
+			if (signatureCommitMode != CommitMode.NO_PARAMS) {
+				boolean includeStorageDetail = signatureCommitMode == CommitMode.STORAGE;
+				FunctionUpdateType functionUpdateType = includeStorageDetail
+						? FunctionUpdateType.CUSTOM_STORAGE
+						: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
 
-			Parameter returnVar = retval.asReturnParameter(includeStorageDetail);
-			List<Parameter> parameters = getParameters(includeStorageDetail);
+				Parameter returnVar = retval.asReturnParameter(includeStorageDetail);
+				List<Parameter> parameters = getParameters(includeStorageDetail);
 
-			if (includeStorageDetail && !retval.isZeroByte() && retval.isMissingStorage()) {
-				// TODO: this logic is faulty and borks the auto _return_storage_ptr_ when present
-				// Update return value in a separate step as its storage isn't typically specified
-				// in dwarf info.
-				// This will allow automagical storage assignment for return value by ghidra.
-				function.updateFunction(callingConventionName, returnVar, List.of(),
-					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.IMPORTED);
-				returnVar = null; // don't update it in the second call to updateFunction()
+				if (includeStorageDetail && !retval.isZeroByte() && retval.isMissingStorage()) {
+					// TODO: this logic is faulty and borks the auto _return_storage_ptr_ when present
+					// Update return value in a separate step as its storage isn't typically specified
+					// in dwarf info.
+					// This will allow automagical storage assignment for return value by ghidra.
+					function.updateFunction(callingConventionName, returnVar, List.of(),
+						FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.IMPORTED);
+					returnVar = null; // don't update it in the second call to updateFunction()
+				}
+
+				function.updateFunction(callingConventionName, returnVar, parameters,
+					functionUpdateType, true, SourceType.IMPORTED);
+				function.setVarArgs(varArg);
 			}
-
-			function.updateFunction(callingConventionName, returnVar, parameters,
-				functionUpdateType, true, SourceType.IMPORTED);
-			function.setVarArgs(varArg);
+			else {
+				// omit setting SourceType to allow other analyzers to provide param info
+				function.setCallingConvention(callingConventionName);
+			}
 			function.setNoReturn(noReturn);
 		}
 		catch (InvalidInputException | IllegalArgumentException | DuplicateNameException e) {

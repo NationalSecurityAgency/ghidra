@@ -570,7 +570,7 @@ class ProjectActionManager {
 			ProjectManager projectManager = tool.getProjectManager();
 			projectManager.forgetViewedProject(view);
 			Msg.showError(getClass(), tool.getToolFrame(), "Error Adding View",
-				"Failed to view project/repository: " + e.getMessage(), e);
+				"Failed to view project/repository: " + e.getMessage());
 		}
 	}
 

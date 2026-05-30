@@ -689,7 +689,10 @@ void PackedDecode::endIngest(int4 bufPos)
     }
     uint1 *buf = inStream.back().start;
     buf[bufPos] = ELEMENT_END;
+  } else {
+    throw DecoderError("Ended ingestion without any input");
   }
+
 }
 
 PackedDecode::~PackedDecode(void)
@@ -961,11 +964,10 @@ string PackedDecode::readString(void)
     attributeRead = true;
     throw DecoderError("Expecting string attribute");
   }
-  int4 length = readLengthCode(typeByte);
-  length = readInteger(length);
+  uint8 length = readInteger(readLengthCode(typeByte));
 
   attributeRead = true;
-  int4 curLen = curPos.end - curPos.current;
+  uint8 curLen = curPos.end - curPos.current;
   if (curLen >= length) {
     string res((const char *)curPos.current,length);
     advancePosition(curPos, length);
@@ -1002,10 +1004,12 @@ AddrSpace *PackedDecode::readSpace(void)
     getNextByte(curPos);
   uint1 typeByte = getNextByte(curPos);
   uint4 typeCode = typeByte >> TYPECODE_SHIFT;
-  int4 res;
   AddrSpace *spc;
   if (typeCode == TYPECODE_ADDRESSSPACE) {
-    res = readInteger(readLengthCode(typeByte));
+    uint8 res = readInteger(readLengthCode(typeByte));
+    if (res >= spcManager->numSpaces())
+      throw DecoderError("Invalid address space index");
+
     spc = spcManager->getSpace(res);
     if (spc == (AddrSpace *)0)
       throw DecoderError("Unknown address space index");

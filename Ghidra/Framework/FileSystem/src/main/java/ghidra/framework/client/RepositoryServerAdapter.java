@@ -199,7 +199,7 @@ public class RepositoryServerAdapter {
 				lastConnectError = t;
 			}
 			Msg.showError(this, null, "Server Error",
-				"An error occurred on the server (" + serverInfoStr + ").\n" + msg, e);
+				"An error occurred on the server (" + serverInfoStr + ").\n" + msg);
 		}
 		catch (IOException e) {
 			String err = e.getMessage();
@@ -208,8 +208,8 @@ public class RepositoryServerAdapter {
 			}
 			String msg = err != null ? err : e.toString();
 			Msg.showError(this, null, "Server Error",
-				"An error occurred while connecting to the server (" + serverInfoStr + ").\n" + msg,
-				e);
+				"An error occurred while connecting to the server (" + serverInfoStr + ").\n" +
+					msg);
 		}
 		throw new NotConnectedException("Not connected to repository server", lastConnectError);
 	}

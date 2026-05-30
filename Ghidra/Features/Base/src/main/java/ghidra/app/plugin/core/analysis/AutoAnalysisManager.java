@@ -1552,7 +1552,7 @@ public class AutoAnalysisManager {
 
 		@Override
 		public void removeCancelledListener(CancelledListener listener) {
-			primaryMonitor.addCancelledListener(listener);
+			primaryMonitor.removeCancelledListener(listener);
 		}
 
 		@Override

@@ -456,7 +456,8 @@ def on_breakpoint_deleted(b: gdb.Breakpoint) -> None:
 
 
 @log_errors
-def on_before_prompt(a: None) -> object:
+# DO NOT put (a: None) into the arguments here, no matter what mypy says!
+def on_before_prompt() -> object:
     HOOK_STATE.end_batch()
     return None
 
@@ -559,7 +560,7 @@ def install_hooks() -> None:
     gdb.events.breakpoint_deleted.connect(on_breakpoint_deleted)
     gdb.events.breakpoint_modified.connect(on_breakpoint_modified)
 
-    gdb.events.before_prompt.connect(on_before_prompt)
+    gdb.events.before_prompt.connect(on_before_prompt)  # type: ignore
 
 
 def remove_hooks() -> None:
@@ -593,7 +594,7 @@ def remove_hooks() -> None:
     gdb.events.breakpoint_deleted.disconnect(on_breakpoint_deleted)
     gdb.events.breakpoint_modified.disconnect(on_breakpoint_modified)
 
-    gdb.events.before_prompt.disconnect(on_before_prompt)
+    gdb.events.before_prompt.disconnect(on_before_prompt)  # type: ignore
 
 
 def enable_current_inferior() -> None:

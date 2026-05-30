@@ -18,12 +18,14 @@ package ghidra.program.database;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
 import db.DBHandle;
 import ghidra.app.plugin.processors.generic.LanguageFixupUtil;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.util.sourcelanguage.SourceLanguageID;
 import ghidra.framework.Application;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.data.OpenMode;
@@ -162,6 +164,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	private static final String EXECUTE_PATH = "Execute Path";
 	private static final String EXECUTE_FORMAT = "Execute Format";
 	private static final String IMAGE_OFFSET = "Image Offset";
+	private static final String SOURCE_LANGUAGES = "Source Languages";
 
 	//
 	// The numbering of managers controls the order in which they are notified.
@@ -641,6 +644,28 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	public void setCompiler(String compiler) {
 		Options pl = getOptions(PROGRAM_INFO);
 		pl.setString(COMPILER, compiler);
+	}
+
+	@Override
+	public Set<SourceLanguageID> getSourceLanguageIDs() {
+		Set<SourceLanguageID> ret = new HashSet<>();
+		String value = getOptions(PROGRAM_INFO).getString(SOURCE_LANGUAGES, "");
+		for (String entry : value.split(",")) {
+			entry = entry.trim();
+			if (!entry.isEmpty()) {
+				ret.add(new SourceLanguageID(entry));
+			}
+		}
+		return ret;
+	}
+
+	@Override
+	public void setSourceLanguageIDs(Set<SourceLanguageID> sourceLanguageIDs) {
+		String combined = sourceLanguageIDs.stream()
+				.map(SourceLanguageID::getIdAsString)
+				.sorted()
+				.collect(Collectors.joining(", "));
+		getOptions(PROGRAM_INFO).setString(SOURCE_LANGUAGES, combined);
 	}
 
 	@Override

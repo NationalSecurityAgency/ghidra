@@ -39,6 +39,37 @@ SectionVector::SectionVector(ConstructTpl *rtl,SymbolScope *scope)
   main.scope = scope;
 }
 
+SectionVector::~SectionVector(void)
+
+{
+  if (main.section != (ConstructTpl *)0)
+    delete main.section;
+  for(int4 i=0;i<named.size();++i) {
+    ConstructTpl *section = named[i].section;
+    if (section != (ConstructTpl *)0)
+      delete section;
+  }
+}
+
+/// \return the p-code template for the main section
+ConstructTpl *SectionVector::releaseMainSection(void)
+
+{
+  ConstructTpl *res = main.section;
+  main.section = (ConstructTpl *)0;
+  return res;
+}
+
+/// \param index is the index of the requested section
+/// \return the p-code template for the section
+ConstructTpl *SectionVector::releaseNamedSection(int4 index)
+
+{
+  ConstructTpl *res = named[index].section;
+  named[index].section = (ConstructTpl *)0;
+  return res;
+}
+
 /// Associate the new section with \b nextindex, established prior to parsing
 /// \param rtl is the \e named section of p-code
 /// \param scope is the associated symbol scope
@@ -3671,10 +3702,10 @@ void SleighCompile::buildConstructor(Constructor *big,PatternEquation *pateq,vec
   if (vec != (SectionVector *)0) { // If the sections were implemented
     noerrors = finalizeSections(big,vec);
     if (noerrors) {		// Attach the sections to the Constructor
-      big->setMainSection(vec->getMainSection());
+      big->setMainSection(vec->releaseMainSection());
       int4 max = vec->getMaxId();
       for(int4 i=0;i<max;++i) {
-	ConstructTpl *section = vec->getNamedSection(i);
+	ConstructTpl *section = vec->releaseNamedSection(i);
 	if (section != (ConstructTpl *)0)
 	  big->setNamedSection(section,i);
       }
@@ -3690,6 +3721,9 @@ void SleighCompile::buildConstructor(Constructor *big,PatternEquation *pateq,vec
       big->addContext(*contvec);
       delete contvec;
     }
+  }
+  else {
+    PatternEquation::release(pateq);
   }
   symtab.popScope();		// In all cases pop scope
 }
@@ -3751,6 +3785,7 @@ int4 SleighCompile::run_compilation(const string &filein,const string &fileout)
   try {
     int4 parseres = sleighparse();	// Try to parse
     fclose(sleighin);
+    sleighlex_destroy(); // Make sure lexer is reset so we can parse multiple files
     if (parseres==0)
       process();	// Do all the post-processing
     if ((parseres==0)&&(numErrors()==0)) { // If no errors
@@ -3777,7 +3812,6 @@ int4 SleighCompile::run_compilation(const string &filein,const string &fileout)
       cerr << "No output produced" <<endl;
       return 2;
     }
-    sleighlex_destroy(); // Make sure lexer is reset so we can parse multiple files
   } catch(LowlevelError &err) {
     cerr << "Unrecoverable error: " << err.explain << endl;
     return 2;

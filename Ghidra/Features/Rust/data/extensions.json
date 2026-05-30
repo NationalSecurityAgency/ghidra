@@ -1,0 +1,40 @@
+[
+  {
+    "processor": "x86",
+    "endian": "little",
+    "size": "32",
+    "formats":  [
+      "Mac OS X Mach-O",
+      "Executable and Linking Format (ELF)"
+    ],
+    "directory": "extensions/unix32"
+  },
+  {
+    "processor": "x86",
+    "endian": "little",
+    "size": "64",
+    "formats":  [
+      "Mac OS X Mach-O",
+      "Executable and Linking Format (ELF)"
+    ],
+    "directory": "extensions/unix64"
+  },
+  {
+    "processor": "x86",
+    "endian": "little",
+    "size": "32",
+    "formats":  [
+      "Portable Executable (PE)"
+    ],
+    "directory": "extensions/windows32"
+  },
+  {
+    "processor": "x86",
+    "endian": "little",
+    "size": "64",
+    "formats":  [
+      "Portable Executable (PE)"
+    ],
+    "directory": "extensions/windows64"
+  }
+]

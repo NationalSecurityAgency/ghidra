@@ -53,7 +53,8 @@ public class DBTraceStackFrame implements TraceStackFrame, DBTraceObjectInterfac
 		TraceObjectSchema schema = object.getSchema();
 		synchronized (KEYS_BY_SCHEMA) {
 			keys = KEYS_BY_SCHEMA.computeIfAbsent(schema,
-				s -> Set.of(schema.checkAliasedAttribute(KEY_PC)));
+				s -> Set.of(schema.checkAliasedAttribute(KEY_PC),
+					schema.checkAliasedAttribute(KEY_SP)));
 		}
 	}
 
@@ -103,6 +104,21 @@ public class DBTraceStackFrame implements TraceStackFrame, DBTraceObjectInterfac
 				pc = null;
 			}
 			object.setValue(span, KEY_PC, pc);
+		}
+	}
+
+	@Override
+	public Address getStackPointer(long snap) {
+		return TraceObjectInterfaceUtils.getValue(object, snap, KEY_SP, Address.class, null);
+	}
+
+	@Override
+	public void setStackPointer(Lifespan span, Address sp) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			if (sp == Address.NO_ADDRESS) {
+				sp = null;
+			}
+			object.setValue(span, KEY_SP, sp);
 		}
 	}
 

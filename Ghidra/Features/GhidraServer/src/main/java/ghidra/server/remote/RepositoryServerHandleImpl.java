@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,27 +37,13 @@ public class RepositoryServerHandleImpl extends UnicastRemoteObject
 	private final boolean supportPasswordChange;
 	private final boolean readOnly;
 
-	/*
-	 * @see ghidra.framework.remote.RepositoryServerHandle#anonymousAccessAllowed()
-	 */
-	@Override
-	public boolean anonymousAccessAllowed() {
-		return mgr.anonymousAccessAllowed();
-	}
-
-	/*
-	 * @see ghidra.framework.remote.RepositoryServerHandle#isReadOnly()
-	 */
-	@Override
-	public boolean isReadOnly() {
-		return readOnly;
-	}
-
 	/**
 	 * Construct a repository server handle for a specific user.
 	 * @param user remote user
+	 * @param readOnly true if restricted to read-only use
 	 * @param mgr repository manager
-	 * @throws RemoteException
+	 * @param supportPasswordChange true if password change is allowed
+	 * @throws RemoteException if failed to instantiate remote object
 	 */
 	public RepositoryServerHandleImpl(String user, boolean readOnly, RepositoryManager mgr,
 			boolean supportPasswordChange) throws RemoteException {
@@ -77,98 +63,103 @@ public class RepositoryServerHandleImpl extends UnicastRemoteObject
 		mgr.dropHandle(this);
 	}
 
-	/*
-	 * @see rmitest.RepositoryServerHandle#createRepository(java.lang.String)
-	 */
 	@Override
-	public RemoteRepositoryHandle createRepository(String name) throws IOException {
-		Repository repository = mgr.createRepository(currentUser, name);
-		return new RepositoryHandleImpl(currentUser, repository);
+	public boolean anonymousAccessAllowed() {
+		return mgr.anonymousAccessAllowed();
 	}
 
-	/*
-	 * @see rmitest.RepositoryServerHandle#getRepository(java.lang.String)
-	 */
 	@Override
-	public RemoteRepositoryHandle getRepository(String name) throws IOException {
+	public boolean isReadOnly() {
+		return readOnly;
+	}
+
+	@Override
+	public RemoteRepositoryHandle createRepository(String name) throws IOException {
+		try {
+			Repository repository = mgr.createRepository(currentUser, name);
+			RemoteLoggingUtil.log(name, null, "repository created", currentUser, false);
+			return new RepositoryHandleImpl(currentUser, repository);
+		}
+		catch (Throwable t) {
+			throw RemoteExceptionUtil.dispatchIOException(t, name,
+				null, "Create repository", currentUser);
+		}
+	}
+
+	@Override
+	public RemoteRepositoryHandle getRepository(String name)
+			throws UserAccessException, IOException {
 
 		System.gc();
 
-		Repository repository = mgr.getRepository(currentUser, name);
-		if (repository == null) {
-			return null;
+		try {
+			Repository repository = mgr.getRepository(currentUser, name);
+			if (repository == null) {
+				return null;
+			}
+			return new RepositoryHandleImpl(currentUser, repository);
 		}
-		return new RepositoryHandleImpl(currentUser, repository);
+		catch (Throwable t) {
+			throw RemoteExceptionUtil.dispatchIOException(t, name,
+				null, "Get repository", currentUser);
+		}
 	}
 
-	/*
-	 * @see ghidra.framework.remote.RepositoryServerHandle#deleteRepository(java.lang.String)
-	 */
 	@Override
 	public void deleteRepository(String name) throws UserAccessException, IOException {
-		mgr.deleteRepository(currentUser, name);
+		try {
+			mgr.deleteRepository(currentUser, name);
+		}
+		catch (Throwable t) {
+			throw RemoteExceptionUtil.dispatchIOException(t, name,
+				null, "Delete repository", currentUser);
+		}
 	}
 
-	/*
-	 * @see rmitest.RepositoryServerHandle#getRepositoryNames()
-	 */
 	@Override
 	public String[] getRepositoryNames() {
 		return mgr.getRepositoryNames(currentUser);
 	}
 
-	/*
-	 * @see ghidra.framework.remote.RepositoryServerHandle#getUser()
-	 */
 	@Override
-	public String getUser() throws IOException {
+	public String getUser() {
 		return currentUser;
 	}
 
-	/*
-	 * @see ghidra.framework.remote.RepositoryServerHandle#getAllUsers()
-	 */
 	@Override
-	public String[] getAllUsers() throws IOException {
+	public String[] getAllUsers() {
 		if (readOnly) {
 			return new String[0];
 		}
 		return mgr.getAllUsers(currentUser);
 	}
 
-	/*
-	 * @see ghidra.framework.remote.RepositoryServerHandle#canSetPassword()
-	 */
 	@Override
-	public boolean canSetPassword() throws RemoteException {
+	public boolean canSetPassword() {
 		return supportPasswordChange && mgr.getUserManager().canSetPassword(currentUser);
 	}
 
-	/*
-	 * @see ghidra.framework.remote.RepositoryServerHandle#getPasswordExpiration()
-	 */
 	@Override
-	public long getPasswordExpiration() throws IOException {
+	public long getPasswordExpiration() {
 		if (canSetPassword()) {
 			return mgr.getUserManager().getPasswordExpiration(currentUser);
 		}
 		return -1;
 	}
 
-	/*
-	 * @see ghidra.framework.remote.RepositoryServerHandle#setPassword(char[])
-	 */
 	@Override
 	public boolean setPassword(char[] saltedSHA256PasswordHash) throws IOException {
-		if (!canSetPassword()) {
-			return false;
+		try {
+			if (!canSetPassword()) {
+				return false;
+			}
+			return mgr.getUserManager().setPassword(currentUser, saltedSHA256PasswordHash, false);
 		}
-		return mgr.getUserManager().setPassword(currentUser, saltedSHA256PasswordHash, false);
+		catch (Throwable t) {
+			throw RemoteExceptionUtil.dispatchIOException(t, "Set password", currentUser);
+		}
 	}
 
-	/*
-	 * @see ghidra.framework.remote.RepositoryServerHandle#connected()
-	 */
 	@Override
 	public void connected() {
 		// do nothing

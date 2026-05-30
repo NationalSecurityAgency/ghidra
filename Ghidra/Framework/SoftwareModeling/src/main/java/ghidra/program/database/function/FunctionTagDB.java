@@ -108,14 +108,6 @@ public class FunctionTagDB extends DbObject implements FunctionTag {
 	}
 
 	@Override
-	protected boolean refresh() {
-
-		// Call refresh with a null value to force the record
-		// to be refreshed using whatever is in the database.
-		return refresh(null);
-	}
-
-	@Override
 	protected boolean refresh(DBRecord rec) {
 
 		// As per the description of this function, if the record passed-in

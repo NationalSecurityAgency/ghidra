@@ -311,8 +311,10 @@ def initTestJVM(Task task, String rootDirName) {
     task.minHeapSize xms
     task.maxHeapSize xmx
     	
-    task.doFirst {	    
-		task.jvmArgs '-DupgradeProgramErrorMessage=' + upgradeProgramErrorMessage,
+    task.doFirst {	
+        	 
+		def args = [
+		 	'-DupgradeProgramErrorMessage=' + upgradeProgramErrorMessage,
 			'-DupgradeTimeErrorMessage=' + upgradeTimeErrorMessage,
 			'-Dlog4j.configurationFile=' + logPropertiesUrl,
 			'-Dghidra.test.property.batch.mode=true',
@@ -333,8 +335,10 @@ def initTestJVM(Task task, String rootDirName) {
 			'-Duser.language=en',
 			'-Djdk.attach.allowAttachSelf',
 			'-XX:TieredStopAtLevel=1',
-			'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=' + debugPort,
-
+			
+			// Note: this following arg is needed to enable remote debug.
+			//'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:' + debugPort,
+			
 			// Allow illegal reflective accesses
 			'--add-opens=java.base/java.util.concurrent=ALL-UNNAMED',
 			'--add-opens=java.desktop/sun.awt=ALL-UNNAMED',
@@ -343,18 +347,19 @@ def initTestJVM(Task task, String rootDirName) {
 			'--add-opens=java.desktop/javax.swing=ALL-UNNAMED',			
 			'--add-opens=java.desktop/javax.swing.text=ALL-UNNAMED'
 			
-			// Note: this args are used to speed-up the tests, but are not safe for production code
-			// -noverify and -XX:TieredStopAtLevel=1			
+			// Note: these args are used to speed-up the tests, but are not safe for production code
+			// -noverify and -XX:TieredStopAtLevel=1
+		]
+		
+		if (hasApiProjectDependency(project, ":FileSystem")) {
+			// If project has a FileSystem dependency we must assume there may be a
+			// Ghidra ApplicationConfiguration that will attempt to configure a
+			// serial filter factory which must be done in a lazy fashion when gradle
+			// test workers are used.
+			args << '-Djdk.serialFilterFactory=ghidra.framework.remote.GhidraSerialFilterFactory'	
+		}
 			
-			// Note: modern remote debug invocation;
-			// 	-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
-			
-			// 
-			// We removed these lines, which should not be needed in modern JVMs
-			//  -Xdebug
-			//  -Xnoagent
-			//  -Djava.compiler=NONE
-			//  -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000
+		task.jvmArgs args			
 	}
 }
 

@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.service.modules;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.*;
@@ -29,8 +30,10 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.gui.action.ByModuleAutoMapSpec;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingContext.ChangeCollector;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingProposals.*;
-import ghidra.app.plugin.core.debug.utils.ProgramLocationUtils;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.app.services.*;
 import ghidra.debug.api.modules.*;
@@ -50,9 +53,11 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
 @PluginInfo(
@@ -76,51 +81,17 @@ import ghidra.util.task.TaskMonitor;
 public class DebuggerStaticMappingServicePlugin extends Plugin
 		implements DebuggerStaticMappingService, DomainFolderChangeListener {
 
-	record ChangeCollector(DebuggerStaticMappingServicePlugin plugin, Set<Trace> traces,
-			Set<Program> programs) implements AutoCloseable {
-
-		static <T> Set<T> subtract(Set<T> a, Set<T> b) {
-			Set<T> result = new HashSet<>(a);
-			result.removeAll(b);
-			return result;
-		}
-
-		public ChangeCollector(DebuggerStaticMappingServicePlugin plugin) {
-			this(plugin, new HashSet<>(), new HashSet<>());
-		}
-
-		public void traceAffected(Trace trace) {
-			this.traces.add(trace);
-		}
-
-		public void programAffected(Program program) {
-			if (program != null) {
-				this.programs.add(program);
-			}
-		}
-
-		@Override
-		public void close() {
-			plugin.changeListeners.getProxy().mappingsChanged(traces, programs);
-		}
-	}
-
-	final Map<Trace, InfoPerTrace> traceInfoByTrace = new HashMap<>();
-	final Map<Program, InfoPerProgram> programInfoByProgram = new HashMap<>();
-	final Map<URL, InfoPerProgram> programInfoByUrl = new HashMap<>();
-
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
 	@AutoServiceConsumed
 	private ProgramManager programManager;
+	@AutoServiceConsumed
+	private ProgressService progressService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoWiring;
 
-	final Object lock = new Object();
-
-	final ExecutorService executor = Executors.newSingleThreadExecutor();
-	private final ListenerSet<DebuggerStaticMappingChangeListener> changeListeners =
-		new ListenerSet<>(DebuggerStaticMappingChangeListener.class, true);
+	private final ExecutorService executor = Executors.newSingleThreadExecutor();
+	private final DebuggerStaticMappingContext context;
 
 	private final ProgramModuleIndexer programModuleIndexer;
 	private final ModuleMapProposalGenerator moduleMapProposalGenerator;
@@ -128,6 +99,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	public DebuggerStaticMappingServicePlugin(PluginTool tool) {
 		super(tool);
 		this.autoWiring = AutoService.wireServicesProvidedAndConsumed(this);
+		this.context = new DebuggerStaticMappingContext(executor);
 		this.programModuleIndexer = new ProgramModuleIndexer(tool);
 		this.moduleMapProposalGenerator = new ModuleMapProposalGenerator(programModuleIndexer);
 	}
@@ -141,28 +113,12 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 	@Override
 	public void addChangeListener(DebuggerStaticMappingChangeListener l) {
-		changeListeners.add(l);
+		context.addChangeListener(l);
 	}
 
 	@Override
 	public void removeChangeListener(DebuggerStaticMappingChangeListener l) {
-		changeListeners.remove(l);
-	}
-
-	void checkAndClearProgram(ChangeCollector cc, MappingEntry me) {
-		InfoPerProgram info = programInfoByUrl.get(me.getStaticProgramUrl());
-		if (info == null) {
-			return;
-		}
-		info.clearProgram(cc, me);
-	}
-
-	void checkAndFillProgram(ChangeCollector cc, MappingEntry me) {
-		InfoPerProgram info = programInfoByUrl.get(me.getStaticProgramUrl());
-		if (info == null) {
-			return;
-		}
-		info.fillProgram(cc, me);
+		context.removeChangeListener(l);
 	}
 
 	@Override
@@ -171,109 +127,139 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		}, executor);
 	}
 
-	void programsChanged() {
-		try (ChangeCollector cc = new ChangeCollector(this)) {
-			// Invoke change callbacks without the lock! (try must surround sync)
-			synchronized (lock) {
-				programsChanged(cc);
+	private void checkTraceMapping(Trace trace, TaskMonitor monitor) throws CancelledException {
+		DebuggerAutoMappingService autoMappingService =
+			tool.getService(DebuggerAutoMappingService.class);
+		if (autoMappingService == null ||
+			!(autoMappingService.getAutoMapSpec() instanceof ByModuleAutoMapSpec)) {
+			// TODO GP-6856: This should be factored into the ByModuleAutoMapSpec and the
+			//  other specs should have their own implementation
+			return;
+		}
+
+		final TraceModuleManager moduleManager = trace.getModuleManager();
+		final DebuggerConsoleService consoleService = tool.getService(DebuggerConsoleService.class);
+
+		for (final TraceModule module : moduleManager.getAllModules()) {
+			for (final Lifespan lifespan : module.getObject().getLife().spans()) {
+				final Long firstSnap = lifespan.min();
+
+				final DomainFile match = findBestModuleProgram(
+					module.getMaxAddress(firstSnap).getAddressSpace(), module, firstSnap);
+				if (match == null) {
+					consoleService.log(DebuggerResources.ICON_LOG_ERROR,
+						"<html>The module <b><tt>" +
+							HTMLUtilities.escapeHTML(module.getName(firstSnap)) +
+							"</tt></b> was not found in the project</html>",
+						new DebuggerMissingModuleActionContext(module, firstSnap));
+				}
+				else {
+					if (match.isOpen()) {
+						try {
+							if (match.getDomainObject(this, false, false,
+								monitor) instanceof final Program p) {
+								if (!alreadyMapped(trace, firstSnap, p)) {
+									final ModuleMapProposal proposeModuleMap =
+										proposeModuleMap(module, firstSnap, p);
+									final Map<TraceModule, ModuleMapEntry> computeMap =
+										proposeModuleMap.computeMap();
+									addMappings(computeMap.values(), monitor, true, "");
+								}
+							}
+						}
+						catch (VersionException | IOException e) {
+							// This should not happen since the domain file is already open
+							Msg.error(this,
+								"Error getting domainObject: %s".formatted(e.getMessage()));
+						}
+					}
+					else {
+						consoleService.log(DebuggerResources.ICON_MODULES,
+							"<html>Program <b><tt>" +
+								HTMLUtilities.escapeHTML(match.getPathname()) +
+								"</tt></b> is used by " + trace.getName() +
+								". Open it so it can mapped.</html>",
+							new DebuggerOpenProgramActionContext(match));
+					}
+				}
 			}
 		}
 	}
 
-	void programsChanged(ChangeCollector cc) {
-		Set<Program> curProgs = Stream.of(programManager.getAllOpenPrograms())
-				.filter(p -> !p.isClosed()) // Double-check
-				.collect(Collectors.toSet());
-		Set<InfoPerProgram> removed = programInfoByProgram.values()
-				.stream()
-				.filter(i -> !curProgs.contains(i.program) || !i.urlMatches())
-				.collect(Collectors.toSet());
-		processRemovedProgramInfos(cc, removed);
-		Set<Program> added = ChangeCollector.subtract(curProgs, programInfoByProgram.keySet());
-		processAddedPrograms(cc, added);
-	}
-
-	void processRemovedProgramInfos(ChangeCollector cc, Set<InfoPerProgram> removed) {
-		for (InfoPerProgram info : removed) {
-			processRemovedProgramInfo(cc, info);
+	private void checkAllTraceMappingsForProgram(Program program, TaskMonitor monitor)
+			throws CancelledException {
+		DebuggerAutoMappingService autoMappingService =
+			tool.getService(DebuggerAutoMappingService.class);
+		if (autoMappingService == null ||
+			!(autoMappingService.getAutoMapSpec() instanceof ByModuleAutoMapSpec)) {
+			// TODO GP-6856: This should be factored into the ByModuleAutoMapSpec and the
+			//  other specs should have their own implementation
+			return;
 		}
-	}
 
-	void processRemovedProgramInfo(ChangeCollector cc, InfoPerProgram info) {
-		programInfoByProgram.remove(info.program);
-		programInfoByUrl.remove(info.url);
-		info.clearEntries(cc);
-	}
+		Iterator<Trace> iterator =
+			traceManager.getOpenTraces().stream().filter(t -> !t.isClosed()).iterator();
+		while (iterator.hasNext()) {
+			Trace trace = iterator.next();
 
-	void processAddedPrograms(ChangeCollector cc, Set<Program> added) {
-		for (Program program : added) {
-			processAddedProgram(cc, program);
-		}
-	}
+			final TraceModuleManager moduleManager = trace.getModuleManager();
 
-	void processAddedProgram(ChangeCollector cc, Program program) {
-		InfoPerProgram info = new InfoPerProgram(this, program);
-		programInfoByProgram.put(program, info);
-		programInfoByUrl.put(info.url, info);
-		info.fillEntries(cc);
-	}
+			for (final TraceModule module : moduleManager.getAllModules()) {
+				for (final Lifespan lifespan : module.getObject().getLife().spans()) {
+					final Long firstSnap = lifespan.min();
+					if (alreadyMapped(trace, firstSnap, program)) {
+						continue;
+					}
 
-	private void tracesChanged() {
-		try (ChangeCollector cc = new ChangeCollector(this)) {
-			// Invoke change callbacks without the lock! (try must surround sync)
-			synchronized (lock) {
-				tracesChanged(cc);
+					final DomainFile match = findBestModuleProgram(
+						module.getMaxAddress(firstSnap).getAddressSpace(), module, firstSnap);
+					if (match != null && match.equals(program.getDomainFile())) {
+						final ModuleMapProposal proposeModuleMap =
+							proposeModuleMap(module, firstSnap, program);
+						final Map<TraceModule, ModuleMapEntry> computeMap =
+							proposeModuleMap.computeMap();
+						addMappings(computeMap.values(), monitor, true, "");
+					}
+				}
 			}
 		}
 	}
 
-	void tracesChanged(ChangeCollector cc) {
-		Set<Trace> curTraces = traceManager.getOpenTraces()
-				.stream()
-				.filter(t -> !t.isClosed()) // Double-check
-				.collect(Collectors.toSet());
-		Set<Trace> oldTraces = traceInfoByTrace.keySet();
-
-		Set<Trace> removed = ChangeCollector.subtract(oldTraces, curTraces);
-		Set<Trace> added = ChangeCollector.subtract(curTraces, oldTraces);
-
-		processRemovedTraces(cc, removed);
-		processAddedTraces(cc, added);
+	private boolean alreadyMapped(Trace trace, long snap, Program program) {
+		return getOpenMappedProgramsAtSnap(trace, snap).contains(program);
 	}
 
-	void processRemovedTraces(ChangeCollector cc, Set<Trace> removed) {
-		for (Trace trace : removed) {
-			processRemovedTrace(cc, trace);
+	protected void executeTask(Task task) {
+		if (progressService != null) {
+			progressService.execute(task);
 		}
-	}
-
-	void processRemovedTrace(ChangeCollector cc, Trace trace) {
-		InfoPerTrace info = traceInfoByTrace.remove(trace);
-		info.removeEntries(cc);
-	}
-
-	void processAddedTraces(ChangeCollector cc, Set<Trace> added) {
-		for (Trace trace : added) {
-			processAddedTrace(cc, trace);
+		else {
+			tool.execute(task);
 		}
-	}
-
-	void processAddedTrace(ChangeCollector cc, Trace trace) {
-		InfoPerTrace info = new InfoPerTrace(this, trace);
-		traceInfoByTrace.put(trace, info);
-		info.resyncEntries(cc);
 	}
 
 	@Override
 	public void processEvent(PluginEvent event) {
-		if (event instanceof ProgramOpenedPluginEvent) {
+		if (event instanceof ProgramOpenedPluginEvent ev) {
 			CompletableFuture.runAsync(this::programsChanged, executor);
+			executeTask(new Task("Check trace mappings") {
+				@Override
+				public void run(TaskMonitor monitor) throws CancelledException {
+					checkAllTraceMappingsForProgram(ev.getProgram(), monitor);
+				}
+			});
 		}
 		else if (event instanceof ProgramClosedPluginEvent) {
 			CompletableFuture.runAsync(this::programsChanged, executor);
 		}
-		else if (event instanceof TraceOpenedPluginEvent) {
+		else if (event instanceof TraceOpenedPluginEvent ev) {
 			CompletableFuture.runAsync(this::tracesChanged, executor);
+			executeTask(new Task("Check trace mappings") {
+				@Override
+				public void run(TaskMonitor monitor) throws CancelledException {
+					checkTraceMapping(ev.getTrace(), monitor);
+				}
+			});
 		}
 		else if (event instanceof TraceClosedPluginEvent) {
 			CompletableFuture.runAsync(this::tracesChanged, executor);
@@ -284,13 +270,32 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject object) {
 		// This get called when a domain object is saved into the active project
 		// We essentially need to update the URL, which requires examining every entry
-		// TODO: Could probably cut out a bit of the kruft, but this should do
+		// LATER: Could probably cut out a bit of the kruft, but this should do
 		if (object instanceof Program program) {
-			synchronized (lock) {
-				if (programInfoByProgram.containsKey(program)) {
+			synchronized (context.lock) {
+				if (context.programInfoByProgram.containsKey(program)) {
 					CompletableFuture.runAsync(this::programsChanged, executor);
 				}
 			}
+		}
+	}
+
+	void programsChanged() {
+		try (ChangeCollector cc = context.collectChanges()) {
+			Set<Program> curProgs = Stream.of(programManager.getAllOpenPrograms())
+					.filter(p -> !p.isClosed()) // Double-check
+					.collect(Collectors.toSet());
+			context.setPrograms(cc, curProgs);
+		}
+	}
+
+	private void tracesChanged() {
+		try (ChangeCollector cc = context.collectChanges()) {
+			Set<Trace> curTraces = traceManager.getOpenTraces()
+					.stream()
+					.filter(t -> !t.isClosed()) // Double-check
+					.collect(Collectors.toSet());
+			context.setTraces(cc, curTraces);
 		}
 	}
 
@@ -380,151 +385,15 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		addMappings(entries, monitor, truncateExisting, "Add regions mappings");
 	}
 
-	protected <T> T noTraceInfo() {
-		Msg.debug(this, "The given trace is not open in this tool " +
-			"(or the service hasn't received and processed the open-trace event, yet)");
-		return null;
-	}
-
-	protected <T> T noProgramInfo() {
-		Msg.debug(this, "The given program is not open in this tool " +
-			"(or the service hasn't received and processed the open-program event, yet)");
-		return null;
-	}
-
-	protected <T> T noProject() {
-		return DebuggerStaticMappingUtils.noProject(this);
-	}
-
-	protected InfoPerTrace requireTrackedInfo(Trace trace) {
-		InfoPerTrace info = traceInfoByTrace.get(trace);
-		if (info == null) {
-			return noTraceInfo();
-		}
-		return info;
-	}
-
-	protected InfoPerProgram requireTrackedInfo(Program program) {
-		InfoPerProgram info = programInfoByProgram.get(program);
-		if (info == null) {
-			return noProgramInfo();
-		}
-		return info;
-	}
-
 	@Override
-	public Set<Program> getOpenMappedProgramsAtSnap(Trace trace, long snap) {
-		synchronized (lock) {
-			InfoPerTrace info = requireTrackedInfo(trace);
-			if (info == null) {
-				return null;
-			}
-			return info.getOpenMappedProgramsAtSnap(snap);
-		}
-	}
-
-	@Override
-	public ProgramLocation getOpenMappedLocation(TraceLocation loc) {
-		synchronized (lock) {
-			InfoPerTrace info = requireTrackedInfo(loc.getTrace());
-			if (info == null) {
-				return null;
-			}
-			return info.getOpenMappedProgramLocation(loc.getAddress(), loc.getLifespan());
-		}
-	}
-
-	protected long getNonScratchSnap(TraceProgramView view) {
-		return view.getViewport().getTop(s -> s >= 0 ? s : null);
-	}
-
-	@Override
-	public ProgramLocation getStaticLocationFromDynamic(ProgramLocation loc) {
-		synchronized (lock) {
-			loc = ProgramLocationUtils.fixLocation(loc, true);
-			TraceProgramView view = (TraceProgramView) loc.getProgram();
-			Trace trace = view.getTrace();
-			TraceLocation tloc = new DefaultTraceLocation(trace, null,
-				Lifespan.at(getNonScratchSnap(view)), loc.getByteAddress());
-			ProgramLocation mapped = getOpenMappedLocation(tloc);
-			if (mapped == null) {
-				return null;
-			}
-			return ProgramLocationUtils.replaceAddress(loc, mapped.getProgram(),
-				mapped.getByteAddress());
-		}
-	}
-
-	@Override
-	public Set<TraceLocation> getOpenMappedLocations(ProgramLocation loc) {
-		synchronized (lock) {
-			InfoPerProgram info = requireTrackedInfo(loc.getProgram());
-			if (info == null) {
-				return null;
-			}
-			return info.getOpenMappedTraceLocations(loc.getByteAddress());
-		}
-	}
-
-	@Override
-	public TraceLocation getOpenMappedLocation(Trace trace, ProgramLocation loc, long snap) {
-		synchronized (lock) {
-			InfoPerProgram info = requireTrackedInfo(loc.getProgram());
-			if (info == null) {
-				return null;
-			}
-			return info.getOpenMappedTraceLocation(trace, loc.getByteAddress(), snap);
-		}
-	}
-
-	@Override
-	public ProgramLocation getDynamicLocationFromStatic(TraceProgramView view,
-			ProgramLocation loc) {
-		synchronized (lock) {
-			TraceLocation tloc =
-				getOpenMappedLocation(view.getTrace(), loc, getNonScratchSnap(view));
-			if (tloc == null) {
-				return null;
-			}
-			return ProgramLocationUtils.replaceAddress(loc, view, tloc.getAddress());
-		}
-	}
-
-	@Override
-	public Map<Program, Collection<MappedAddressRange>> getOpenMappedViews(Trace trace,
-			AddressSetView set, long snap) {
-		synchronized (lock) {
-			InfoPerTrace info = requireTrackedInfo(trace);
-			if (info == null) {
-				return Map.of();
-			}
-			return info.getOpenMappedViews(set, Lifespan.at(snap));
-		}
-	}
-
-	@Override
-	public Map<TraceSpan, Collection<MappedAddressRange>> getOpenMappedViews(Program program,
-			AddressSetView set) {
-		synchronized (lock) {
-			InfoPerProgram info = requireTrackedInfo(program);
-			if (info == null) {
-				return Map.of();
-			}
-			return info.getOpenMappedViews(set);
-		}
+	public Set<URL> getMappedProgramUrlsInView(Trace trace, AddressSetView set, long snap) {
+		return context.getMappedProgramUrlsInView(trace, set, snap);
 	}
 
 	@Override
 	public Set<Program> openMappedProgramsInView(Trace trace, AddressSetView set, long snap,
 			Set<Exception> failures) {
-		Set<URL> urls;
-		synchronized (lock) {
-			InfoPerTrace info = requireTrackedInfo(trace);
-			if (info == null) {
-				return null;
-			}
-			urls = info.getMappedProgramUrlsInView(set, Lifespan.at(snap));
-		}
+		Set<URL> urls = context.getMappedProgramUrlsInView(trace, set, snap);
 		Set<Program> result = new HashSet<>();
 		for (URL url : urls) {
 			try {
@@ -543,6 +412,49 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			}
 		}
 		return result;
+	}
+
+	@Override
+	public Set<Program> getOpenMappedProgramsAtSnap(Trace trace, long snap) {
+		return context.getOpenMappedProgramsAtSnap(trace, snap);
+	}
+
+	@Override
+	public ProgramLocation getOpenMappedLocation(TraceLocation loc) {
+		return context.getOpenMappedLocation(loc);
+	}
+
+	@Override
+	public ProgramLocation getStaticLocationFromDynamic(ProgramLocation loc) {
+		return context.getStaticLocationFromDynamic(loc);
+	}
+
+	@Override
+	public Set<TraceLocation> getOpenMappedLocations(ProgramLocation loc) {
+		return context.getOpenMappedLocations(loc);
+	}
+
+	@Override
+	public TraceLocation getOpenMappedLocation(Trace trace, ProgramLocation loc, long snap) {
+		return context.getOpenMappedLocation(trace, loc, snap);
+	}
+
+	@Override
+	public ProgramLocation getDynamicLocationFromStatic(TraceProgramView view,
+			ProgramLocation loc) {
+		return context.getDynamicLocationFromStatic(view, loc);
+	}
+
+	@Override
+	public Map<Program, Collection<MappedAddressRange>> getOpenMappedViews(Trace trace,
+			AddressSetView set, long snap) {
+		return context.getOpenMappedViews(trace, set, snap);
+	}
+
+	@Override
+	public Map<TraceSpan, Collection<MappedAddressRange>> getOpenMappedViews(Program program,
+			AddressSetView set) {
+		return context.getOpenMappedViews(program, set);
 	}
 
 	protected Collection<? extends Program> orderCurrentFirst(

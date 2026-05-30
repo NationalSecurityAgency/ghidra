@@ -539,8 +539,9 @@ define token instr(32)
     pcrel       = (19,20)
     pcrel2      = (18,20)
     cc          = (18,20)
-    immed1625   = (16,25) signed
-    immed1623   = (16,23) signed
+    immed1625   = (16,25)
+    simmed1625   = (16,25) signed
+    simmed1623   = (16,23) signed
     rt32        = (16,20)
     rt          = (16,20)
     rtmtdsp     = (16,20)
@@ -617,7 +618,7 @@ define token instr(32)
     spec2       = (9,10)
     svrs_s1     = (10,10)
     spec3       = (8,10)
-    simmed9     = (7,15)
+    simmed9     = (7,15) signed
     zero2       = (7,10)
     code        = (6,15)
     fdD         = (6,10)
@@ -650,7 +651,7 @@ define token instr(32)
     immed       = (0,15)
     simmed      = (0,15) signed
     simmseq     = (6,15) signed
-    simmed11    = (0,10)
+    simmed11    = (0,10) signed
 ;
 
 attach variables [ rs rt rd base index baser6 ] [ 

@@ -241,9 +241,8 @@ public class DecompilerCodeComparisonView extends CodeComparisonView {
 	private void linkHighlightControllers() {
 		DiffClangHighlightController left = cDisplays.get(LEFT).getHighlightController();
 		DiffClangHighlightController right = cDisplays.get(RIGHT).getHighlightController();
-		left.addListener(right);
-		right.addListener(left);
-
+		left.setTokenChangedListener(right);
+		right.setTokenChangedListener(left);
 	}
 
 	@Override

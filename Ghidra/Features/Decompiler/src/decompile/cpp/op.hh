@@ -116,7 +116,8 @@ public:
     hold_output = 0x80,		///< Output varnode (of call) should not be removed if it is unread
     concat_root = 0x100,	///< Output of \b this is root of a CONCAT tree
     no_indirect_collapse = 0x200,	///< Do not collapse \b this INDIRECT (via RuleIndirectCollapse)
-    store_unmapped = 0x400	///< If STORE collapses to a stack Varnode, force it to be unmapped
+    store_unmapped = 0x400,	///< If STORE collapses to a stack Varnode, force it to be unmapped
+    immed_copy = 0x800		///< Copy has propagated into input of \b this op
   };
 private:
   TypeOp *opcode;		///< Pointer to class providing behavioral details of the operation
@@ -224,6 +225,8 @@ public:
   void setNoIndirectCollapse(void) { addlflags |= no_indirect_collapse; }	///< Prevent collapse of INDIRECT
   bool isStoreUnmapped(void) const { return ((addlflags & store_unmapped)!=0); }	///< Is STORE location supposed to be unmapped
   void setStoreUnmapped(void) const { addlflags |= store_unmapped; }	///< Mark that STORE location should be unmapped
+  void setCopyImmed(int4 slot);		///< Mark that a COPY propagation from the immediate input block has happened
+  bool hasCopyImmed(int4 slot) const;	///< Return \b true if a COPY propagation from an immediate input block has happened
   /// \brief Return \b true if this LOADs or STOREs from a dynamic \e spacebase pointer
   bool usesSpacebasePtr(void) const { return ((flags&PcodeOp::spacebase_ptr)!=0); }
   uintm getCseHash(void) const;	///< Return hash indicating possibility of common subexpression elimination

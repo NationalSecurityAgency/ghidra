@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.service.tracemgr;
 
-import static ghidra.framework.main.DataTreeDialogType.*;
-
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.ConnectException;
@@ -46,7 +44,9 @@ import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.data.DomainObjectAdapterDB;
+import ghidra.framework.data.DomainObjectFileListener;
 import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.main.DataTreeDialogType;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
@@ -66,7 +66,6 @@ import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.*;
-import ghidra.util.database.DomainObjectLockHold;
 import ghidra.util.exception.*;
 import ghidra.util.task.*;
 
@@ -96,17 +95,21 @@ import ghidra.util.task.*;
 public class DebuggerTraceManagerServicePlugin extends Plugin
 		implements DebuggerTraceManagerService {
 
-	private static final AutoConfigState.ClassHandler<DebuggerTraceManagerServicePlugin> //
-	CONFIG_STATE_HANDLER = AutoConfigState.wireHandler(DebuggerTraceManagerServicePlugin.class,
-		MethodHandles.lookup());
+	private static final AutoConfigState.ClassHandler<
+		DebuggerTraceManagerServicePlugin> CONFIG_STATE_HANDLER = AutoConfigState
+				.wireHandler(DebuggerTraceManagerServicePlugin.class, MethodHandles.lookup());
 
 	private static final String KEY_TRACE_COUNT = "NUM_TRACES";
 	private static final String PREFIX_OPEN_TRACE = "OPEN_TRACE_";
 	private static final String KEY_CURRENT_COORDS = "CURRENT_COORDS";
 	public static final String NEW_TRACES_FOLDER_NAME = "New Traces";
 
-	class ListenerForTraceChanges extends TraceDomainObjectListener {
+	class ListenerForTraceChanges extends TraceDomainObjectListener
+			implements DomainObjectFileListener, TransactionListener {
 		private final Trace trace;
+
+		// Put txEnd logic in this listener, since it's already well-managed gc-wise.
+		private volatile CompletableFuture<Void> txEnd;
 
 		public ListenerForTraceChanges(Trace trace) {
 			this.trace = trace;
@@ -162,18 +165,13 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 			activate(current.object(object), ActivationCause.SYNC_MODEL);
 		}
-	}
 
-	static class TransactionEndFuture extends CompletableFuture<Void>
-			implements TransactionListener {
-		final Trace trace;
-
-		public TransactionEndFuture(Trace trace) {
-			this.trace = trace;
-			this.trace.addTransactionListener(this);
-			if (this.trace.getCurrentTransactionInfo() == null) {
-				complete(null);
+		@Override
+		public void domainFileChanged(DomainObject domainObject) {
+			if (current.getTrace() != trace) {
+				return;
 			}
+			contextChanged();
 		}
 
 		@Override
@@ -181,14 +179,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 
 		@Override
-		public boolean complete(Void value) {
-			trace.removeTransactionListener(this);
-			return super.complete(value);
-		}
-
-		@Override
-		public void transactionEnded(DomainObjectAdapterDB domainObj) {
-			complete(null);
+		public synchronized void transactionEnded(DomainObjectAdapterDB domainObj) {
+			if (txEnd != null) {
+				txEnd.complete(null);
+				txEnd = null;
+			}
 		}
 
 		@Override
@@ -198,9 +193,24 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		@Override
 		public void undoRedoOccurred(DomainObjectAdapterDB domainObj) {
 		}
+
+		public synchronized CompletableFuture<Void> waitTxEnd() {
+			if (trace.getCurrentTransactionInfo() == null) {
+				return AsyncUtils.nil();
+			}
+			if (txEnd == null) {
+				txEnd = new CompletableFuture<>();
+			}
+			/**
+			 * We're in a synchronized block on the same monitor as transactionEnded, so we can be
+			 * sure that if the transaction ends between checking tx info and creating "txEnd", that
+			 * the callback is waiting on this lock and will complete the future.
+			 */
+			return txEnd;
+		}
 	}
 
-	// TODO: This is a bit out of this manager's bounds, but acceptable for now.
+	// LATER: This is a bit out of this manager's bounds, but acceptable for now.
 	class ForTargetsListener implements TargetPublicationListener {
 		@Override
 		public void targetPublished(Target target) {
@@ -209,7 +219,13 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 		public CompletableFuture<Void> waitUnlockedDebounced(Target target) {
 			Trace trace = target.getTrace();
-			return new TransactionEndFuture(trace)
+			ListenerForTraceChanges listener = listenersByTrace.get(trace);
+			if (listener == null) {
+				Msg.warn(this, "Waiting on a target whose trace is not managed: %s, %s".formatted(
+					target, trace));
+				return AsyncUtils.nil();
+			}
+			return listener.waitTxEnd()
 					.thenCompose(__ -> AsyncTimer.DEFAULT_TIMER.mark().after(100))
 					.thenComposeAsync(__ -> {
 						if (trace.isLocked()) {
@@ -310,6 +326,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	DockingAction actionCloseOtherTraces;
 	DockingAction actionCloseDeadTraces;
 	DockingAction actionSaveTrace;
+	DockingAction actionSaveTraceAs;
 	DockingAction actionOpenTrace;
 	ToggleDockingAction actionSaveByDefault;
 	ToggleDockingAction actionCloseOnTerminate;
@@ -336,6 +353,10 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		actionSaveTrace = SaveTraceAction.builder(this)
 				.enabledWhen(c -> current.getTrace() != null)
 				.onAction(this::activatedSaveTrace)
+				.buildAndInstall(tool);
+		actionSaveTraceAs = SaveTraceAsAction.builder(this)
+				.enabledWhen(c -> current.getTrace() != null)
+				.onAction(this::activatedSaveTraceAs)
 				.buildAndInstall(tool);
 		actionOpenTrace = OpenTraceAction.builder(this)
 				.enabledWhen(ctx -> true)
@@ -381,12 +402,26 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		saveTrace(trace);
 	}
 
-	private void activatedOpenTrace(ActionContext ctx) {
-		DomainFile df = askTrace(current.getTrace());
-		if (df != null) {
-			Trace trace = openTrace(df, DomainFile.DEFAULT_VERSION); // TODO: Permit opening a previous revision?
-			activateTrace(trace);
+	private void activatedSaveTraceAs(ActionContext ctx) {
+		Trace trace = current.getTrace();
+		if (trace == null) {
+			return;
 		}
+		saveTraceAs(trace);
+	}
+
+	private void activatedOpenTrace(ActionContext ctx) {
+		AskTraceResult asked =
+			askTrace(tool, OpenTraceAction.NAME, DataTreeDialogType.OPEN, current.getTrace());
+		if (asked == null) {
+			return;
+		}
+		if (asked.file() == null) {
+			return;
+		}
+		// LATER: Permit opening a previous revision?
+		Trace trace = openTrace(asked.file(), DomainFile.DEFAULT_VERSION);
+		activateTrace(trace);
 	}
 
 	private void activatedCloseTrace(ActionContext ctx) {
@@ -413,18 +448,55 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		closeDeadTraces();
 	}
 
-	protected DataTreeDialog getTraceChooserDialog() {
+	protected static DataTreeDialog getTraceChooserDialog(String title, DataTreeDialogType type) {
 		DomainFileFilter filter = new DefaultDomainFileFilter(Trace.class, false);
-		return new DataTreeDialog(null, OpenTraceAction.NAME, OPEN, filter);
+		return new DataTreeDialog(null, title, type, filter);
 	}
 
-	public DomainFile askTrace(Trace trace) {
-		DataTreeDialog dialog = getTraceChooserDialog();
-		if (trace != null) {
-			dialog.selectDomainFile(trace.getDomainFile());
+	public record AskTraceResult(DomainFile file, DomainFolder parent, String name) {}
+
+	public static AskTraceResult askTrace(PluginTool tool, String title, DataTreeDialogType type,
+			Trace defaultTrace) {
+		DataTreeDialog dialog = getTraceChooserDialog(title, type);
+		if (defaultTrace != null) {
+			dialog.selectDomainFile(defaultTrace.getDomainFile());
 		}
+
+		dialog.addOkActionListener(ev -> {
+			dialog.setStatusText("");
+			String name = dialog.getNameText();
+			if (name.isBlank()) {
+				dialog.setStatusText("Please enter a name");
+				return;
+			}
+			DomainFolder parent = dialog.getDomainFolder();
+			if (parent == null) {
+				dialog.setStatusText("Please select a folder");
+				return;
+			}
+			DomainFile file = parent.getFile(name);
+			if (type == DataTreeDialogType.SAVE && file != null && file.isReadOnly()) {
+				dialog.setStatusText("Specified file is read-only");
+				return;
+			}
+			if (type == DataTreeDialogType.SAVE && file != null) {
+				String msg = """
+						Domain file %s already exists with type %s. Do you want to overwrite it?\
+						""".formatted(name, file.getContentType());
+				int overwrite = OptionDialog.showYesNoDialog(tool.getToolFrame(), "Overwrite", msg);
+				if (overwrite != OptionDialog.YES_OPTION) {
+					return;
+				}
+			}
+			dialog.close();
+		});
+
 		tool.showDialog(dialog);
-		return dialog.getDomainFile();
+		if (dialog.wasCancelled()) {
+			return null;
+		}
+		return new AskTraceResult(dialog.getDomainFile(), dialog.getDomainFolder(),
+			dialog.getNameText());
 	}
 
 	@Override
@@ -553,9 +625,18 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return newCurrent;
 	}
 
+	protected String getTraceDisplayName(Trace trace) {
+		DomainFile file = trace.getDomainFile();
+		String name = file.getName();
+		if (!name.isBlank()) {
+			return name;
+		}
+		return trace.getName();
+	}
+
 	protected void contextChanged() {
 		Trace trace = current.getTrace();
-		String itemName = trace == null ? "..." : trace.getName();
+		String itemName = trace == null ? "..." : getTraceDisplayName(trace);
 		actionCloseTrace.getMenuBarData().setMenuItemName(CloseTraceAction.NAME_PREFIX + itemName);
 		actionSaveTrace.getMenuBarData().setMenuItemName(SaveTraceAction.NAME_PREFIX + itemName);
 		tool.contextChanged(null);
@@ -793,6 +874,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			ListenerForTraceChanges listener = new ListenerForTraceChanges(trace);
 			listenersByTrace.put(trace, listener);
 			trace.addListener(listener);
+			trace.addDomainFileListener(listener);
+			trace.addTransactionListener(listener);
 		}
 		contextChanged();
 		firePluginEvent(new TraceOpenedPluginEvent(getName(), trace));
@@ -867,7 +950,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	public static DomainFolder createOrGetFolder(PluginTool tool, String operation,
-			DomainFolder parent, String name) throws InvalidNameException {
+			DomainFolder parent, String name) {
 		try {
 			return parent.createFolder(name);
 		}
@@ -883,118 +966,70 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				tool.getToolFrame());
 			return null;
 		}
-	}
-
-	protected static DomainObjectLockHold maybeLock(Trace trace, boolean lock) {
-		if (!lock) {
-			return null;
+		catch (InvalidNameException e) {
+			throw new AssertionError(e);
 		}
-		return DomainObjectLockHold.forceLock(trace, false, "Auto Save");
 	}
 
-	public static CompletableFuture<Void> saveTrace(PluginTool tool, Trace trace, boolean force) {
+	public static AskTraceResult deriveDefaults(PluginTool tool, Trace trace) {
+		DomainFile file = trace.getDomainFile();
+		DomainFolder folder = file.getParent();
+		if (folder != null) {
+			return new AskTraceResult(file, folder, file.getName());
+		}
+		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
+		return new AskTraceResult(file,
+			createOrGetFolder(tool, "Save New Trace", root, NEW_TRACES_FOLDER_NAME),
+			trace.getName());
+	}
+
+	public static CompletableFuture<Void> saveTrace(PluginTool tool, Trace trace,
+			boolean promptPath, boolean force) {
+		AskTraceResult asked = promptPath
+				? askTrace(tool, SaveTraceAsAction.NAME, DataTreeDialogType.SAVE, trace)
+				: deriveDefaults(tool, trace);
+		if (asked == null) {
+			return CompletableFuture.failedFuture(new CancelledException("User cancelled"));
+		}
 		tool.prepareToSave(trace);
-		CompletableFuture<Void> future = new CompletableFuture<>();
-		// TODO: Get all the nuances for this correct...
-		// "Save As" action, Locking, transaction flushing, etc....
-		if (trace.getDomainFile().getParent() != null) {
-			new TaskLauncher(new Task("Save Trace", true, true, true) {
-				@Override
-				public void run(TaskMonitor monitor) throws CancelledException {
-					try (DomainObjectLockHold hold = maybeLock(trace, force)) {
-						trace.getDomainFile().save(monitor);
-						future.complete(null);
-					}
-					catch (CancelledException e) {
-						// Done
-						future.completeExceptionally(e);
-					}
-					catch (NotConnectedException | ConnectException e) {
-						ClientUtil.promptForReconnect(tool.getProject().getRepository(),
-							tool.getToolFrame());
-						future.completeExceptionally(e);
-					}
-					catch (IOException e) {
-						ClientUtil.handleException(tool.getProject().getRepository(), e,
-							"Save Trace", tool.getToolFrame());
-						future.completeExceptionally(e);
-					}
-					catch (Throwable e) {
-						future.completeExceptionally(e);
-					}
-				}
-			});
+		// LATER: Get all the nuances for this correct: Locking, tx flushing, etc.
+
+		final AbstractSaveTraceTask task;
+		if (promptPath) {
+			if (Objects.equals(trace.getDomainFile(), asked.parent().getFile(asked.name()))) {
+				task = new SaveTraceTask(tool, trace, asked, force);
+			}
+			else {
+				task = new SaveTraceAsTask(tool, trace, asked, force);
+			}
+		}
+		else if (trace.getDomainFile().getParent() == null) {
+			task = new SaveNewTraceTask(tool, trace, asked, force);
 		}
 		else {
-			DomainFolder root = tool.getProject().getProjectData().getRootFolder();
-			DomainFolder traces;
-			try {
-				traces = createOrGetFolder(tool, "Save New Trace", root, NEW_TRACES_FOLDER_NAME);
-			}
-			catch (InvalidNameException e) {
-				throw new AssertionError(e);
-			}
-
-			new TaskLauncher(new Task("Save New Trace", true, true, true) {
-
-				@Override
-				public void run(TaskMonitor monitor) throws CancelledException {
-					String filename = trace.getName();
-					try (DomainObjectLockHold hold = maybeLock(trace, force)) {
-						for (int i = 1;; i++) {
-							try {
-								traces.createFile(filename, trace, monitor);
-								break;
-							}
-							catch (DuplicateFileException e) {
-								filename = trace.getName() + "." + i;
-							}
-						}
-						trace.save("Initial save", monitor);
-						future.complete(null);
-					}
-					catch (CancelledException e) {
-						// Done
-						future.completeExceptionally(e);
-					}
-					catch (NotConnectedException | ConnectException e) {
-						ClientUtil.promptForReconnect(tool.getProject().getRepository(),
-							tool.getToolFrame());
-						future.completeExceptionally(e);
-					}
-					catch (IOException e) {
-						ClientUtil.handleException(tool.getProject().getRepository(), e,
-							"Save New Trace", tool.getToolFrame());
-						future.completeExceptionally(e);
-					}
-					catch (InvalidNameException e) {
-						Msg.showError(DebuggerTraceManagerServicePlugin.class, null,
-							"Save New Trace Error", e.getMessage());
-						future.completeExceptionally(e);
-					}
-					catch (Throwable e) {
-						Msg.showError(DebuggerTraceManagerServicePlugin.class, null,
-							"Save New Trace Error", e.getMessage(), e);
-						future.completeExceptionally(e);
-					}
-				}
-
-			});
+			task = new SaveTraceTask(tool, trace, asked, force);
 		}
-		return future;
+
+		new TaskLauncher(task);
+		return task.future;
 	}
 
-	public CompletableFuture<Void> saveTrace(Trace trace, boolean force) {
+	public CompletableFuture<Void> saveTrace(Trace trace, boolean promptPath, boolean force) {
 		if (isDisposed()) {
 			Msg.error(this, "Cannot save trace after manager disposal! Data may have been lost.");
 			return AsyncUtils.nil();
 		}
-		return saveTrace(tool, trace, force);
+		return saveTrace(tool, trace, promptPath, force);
 	}
 
 	@Override
 	public CompletableFuture<Void> saveTrace(Trace trace) {
-		return saveTrace(trace, false);
+		return saveTrace(trace, false, false);
+	}
+
+	@Override
+	public CompletableFuture<Void> saveTraceAs(Trace trace) {
+		return saveTrace(trace, true, false);
 	}
 
 	protected void doTraceClosed(Trace trace) {
@@ -1003,8 +1038,10 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 		synchronized (listenersByTrace) {
 			lastCoordsByTrace.remove(trace);
-			trace.removeListener(listenersByTrace.remove(trace));
-			//Msg.debug(this, "Remaining Consumers of " + trace + ": " + trace.getConsumerList());
+			ListenerForTraceChanges listener = listenersByTrace.remove(trace);
+			trace.removeListener(listener);
+			trace.removeDomainFileListener(listener);
+			trace.removeTransactionListener(listener);
 		}
 		try {
 			if (current.getTrace() == trace) {
@@ -1089,7 +1126,10 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				Trace trace = it.next();
 				trace.release(this);
 				lastCoordsByTrace.remove(trace);
-				trace.removeListener(listenersByTrace.get(trace));
+				ListenerForTraceChanges listener = listenersByTrace.get(trace);
+				trace.removeListener(listener);
+				trace.removeDomainFileListener(listener);
+				trace.removeTransactionListener(listener);
 				it.remove();
 			}
 			// Be certain

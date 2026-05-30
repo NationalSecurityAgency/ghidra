@@ -54,7 +54,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.model.*;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryManager;
@@ -448,7 +448,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		try (Transaction tx = trace.openTransaction("Add breakpoint")) {
 			trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), addrI2, Set.of(thread),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
+						CommonSet.SWX.kinds(), true, "test");
 		}
 
 		EmulationResult result = emulationPlugin.run(trace.getPlatformManager().getHostPlatform(),
@@ -506,10 +506,10 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		try (Transaction tx = trace.openTransaction("Add breakpoint")) {
 			trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), addrText, Set.of(thread),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
+						CommonSet.SWX.kinds(), true, "test");
 			TraceBreakpointLocation tb = trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[1]", Lifespan.nowOn(0), addrI1, Set.of(thread),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
+						CommonSet.SWX.kinds(), true, "test");
 			// Force "partial instruction"
 			tb.setEmuSleigh(0, """
 					r1 = 0xbeef;
@@ -518,7 +518,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 					""");
 			trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[2]", Lifespan.nowOn(0), addrI2, Set.of(thread),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
+						CommonSet.SWX.kinds(), true, "test");
 		}
 
 		assertEquals(0, emulationPlugin.cache.size());
@@ -580,10 +580,10 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		try (Transaction tx = trace.openTransaction("Add breakpoint")) {
 			trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), addrText, Set.of(thread),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
+						CommonSet.SWX.kinds(), true, "test");
 			TraceBreakpointLocation tb = trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[1]", Lifespan.nowOn(0), addrI1, Set.of(thread),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
+						CommonSet.SWX.kinds(), true, "test");
 			// Force "partial instruction"
 			tb.setEmuSleigh(0, """
 					r1 = 0xbeef;
@@ -649,7 +649,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		try (Transaction tx = trace.openTransaction("Add breakpoint")) {
 			TraceBreakpointLocation tb = trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[1]", Lifespan.nowOn(0), addrI1, Set.of(thread),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
+						CommonSet.SWX.kinds(), true, "test");
 			// Force "partial instruction"
 			tb.setEmuSleigh(0, """
 					r1 = 0xbeef;
@@ -724,7 +724,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		try (Transaction tx = trace.openTransaction("Add breakpoint")) {
 			TraceBreakpointLocation tb = trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), addrI2, Set.of(thread),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
+						CommonSet.SWX.kinds(), true, "test");
 			tb.setEmuSleigh(0, """
 					r1 = 0x5678;
 					emu_swi();
@@ -791,7 +791,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		try (Transaction tx = trace.openTransaction("Add breakpoint")) {
 			trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), addr(trace, 0x1234),
-						Set.of(thread), Set.of(TraceBreakpointKind.READ), true, "test");
+						Set.of(thread), CommonSet.READ.kinds(), true, "test");
 		}
 
 		EmulationResult result = emulationPlugin.run(trace.getPlatformManager().getHostPlatform(),
@@ -869,7 +869,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		try (Transaction tx = trace.openTransaction("Add breakpoint")) {
 			TraceBreakpointLocation tb = trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), addrI2, Set.of(thread),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
+						CommonSet.SWX.kinds(), true, "test");
 			tb.setEmuSleigh(0, """
 					r1 = 0x5678;
 					emu_exec_decoded();

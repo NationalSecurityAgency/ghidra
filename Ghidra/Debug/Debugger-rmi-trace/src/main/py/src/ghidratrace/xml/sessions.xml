@@ -1,0 +1,21 @@
+<context>
+	<schema name="SessionContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<element schema="Session" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="ANY"/>
+	</schema>
+	<schema name="Session" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Activatable" />
+		<interface name="FocusScope" />
+		<interface name="Aggregate" />
+		<interface name="ExecutionStateful" />
+		<element schema="VOID" />
+		<attribute name="Processes" schema="ProcessContainer" required="yes" fixed="yes" />
+		<attribute name="Available" schema="AvailableContainer" required="yes" fixed="yes" />
+		<attribute name="_event_thread" schema="OBJECT" hidden="yes" />
+		<attribute name="_focus" schema="Selectable" required="yes" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="ANY"/>
+	</schema>
+</context>

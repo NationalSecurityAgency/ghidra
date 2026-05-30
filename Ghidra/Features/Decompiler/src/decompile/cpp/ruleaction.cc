@@ -3969,6 +3969,9 @@ int4 RulePropagateCopy::applyOp(PcodeOp *op,Funcdata &data)
       if (invn->isAddrTied() && op->getOut()->isAddrTied() && 
 	  (op->getOut()->getAddr() != invn->getAddr()))
 	continue;		// We must not allow merging of different addrtieds
+      if (op->code() == CPUI_MULTIEQUAL && copyop->getParent() == op->getParent()->getIn(i)) {
+	op->setCopyImmed(i);
+      }
     }
     data.opSetInput(op,invn,i); // otherwise propagate just a single copy
     return 1;
@@ -5496,6 +5499,8 @@ int4 RuleCondNegate::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *vn,*outvn;
 
   if (!op->isBooleanFlip()) return 0;
+  if (data.opNormalizeFlip(op))
+    return 1;
 
   vn = op->getIn(1);
   newop = data.newOp(1,op->getAddr());
@@ -6517,8 +6522,12 @@ void AddTreeState::buildTree(void)
   // Create PTRADD portion of operation
   if (multNode != (Varnode *)0) {
     newop = data.newOpBefore(baseOp,CPUI_PTRADD,ptr,multNode,data.newConstant(ptrsize,size));
-    if (ptr->getType()->needsResolution())
-      data.inheritResolution(ptr->getType(),newop, 0, baseOp, baseSlot);
+    if (ptr->getType()->needsResolution()) {
+      if (((TypePointer *)ptr->getType())->getPtrTo()->getSize() == baseType->getSize())
+	data.forceFacingType(ptr->getType(),-1,newop, 0);		// Force type not to resolve before the index is applied
+      else
+	data.inheritUnionField(ptr->getType(), newop, 0, baseOp, baseSlot);
+    }
     if (data.isTypeRecoveryExceeded())
       assignPropagatedType(newop);
     multNode = newop->getOut();
@@ -6530,7 +6539,7 @@ void AddTreeState::buildTree(void)
   if (isSubtype) {
     newop = data.newOpBefore(baseOp,CPUI_PTRSUB,multNode,data.newConstant(ptrsize,offset));
     if (multNode->getType()->needsResolution())
-      data.inheritResolution(multNode->getType(),newop, 0, baseOp, baseSlot);
+      data.inheritUnionField(multNode->getType(),newop, 0, baseOp, baseSlot);
     if (data.isTypeRecoveryExceeded())
       assignPropagatedType(newop);
     if (size != 0)
@@ -6731,7 +6740,7 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
     // Create pointer up to parent
     PcodeOp *newop = data.newOpBefore(op,CPUI_PTRSUB,ptrVn,data.newConstant(ptrVn->getSize(),offset));
     if (ptrVn->getType()->needsResolution())
-      data.inheritResolution(ptrVn->getType(),newop, 0, op, 1);
+      data.inheritUnionField(ptrVn->getType(),newop, 0, op, 1);
     newop->setStopTypePropagation();
     if (newoff != 0) {
       // Add newoff in to get back to zero total offset
@@ -6769,7 +6778,7 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
 
   PcodeOp *newop = data.newOpBefore(op,CPUI_PTRSUB,ptrVn,data.newConstant(ptrVn->getSize(),0));
   if (ptrVn->getType()->needsResolution())
-    data.inheritResolution(ptrVn->getType(),newop, 0, op, 1);
+    data.inheritUnionField(ptrVn->getType(),newop, 0, op, 1);
   newop->setStopTypePropagation();
   data.opSetInput(op,newop->getOut(),1);
   return 1;
@@ -7100,10 +7109,11 @@ int8 RulePtrsubUndo::removeLocalAdds(Varnode *vn,Funcdata &data)
 {
   int8 extra = 0;
   PcodeOp *op = vn->loneDescend();
+  Varnode *nextVn = vn;
   while(op != (PcodeOp *)0) {
     OpCode opc = op->code();
     if (opc == CPUI_INT_ADD) {
-      int4 slot = op->getSlot(vn);
+      int4 slot = op->getSlot(nextVn);
       if (slot == 0 && op->getIn(1)->isConstant()) {
 	extra += (int8)op->getIn(1)->getOffset();
 	data.opRemoveInput(op, 1);
@@ -7120,7 +7130,7 @@ int8 RulePtrsubUndo::removeLocalAdds(Varnode *vn,Funcdata &data)
       data.opSetOpcode(op, CPUI_COPY);
     }
     else if (opc == CPUI_PTRADD) {
-      if (op->getIn(0) != vn) break;
+      if (op->getIn(0) != nextVn) break;
       // The PTRADD should be converted to an INT_ADD or COPY
       // as it is associated with the invalid PTRSUB
       int8 ptraddmult = op->getIn(2)->getOffset();
@@ -7139,9 +7149,11 @@ int8 RulePtrsubUndo::removeLocalAdds(Varnode *vn,Funcdata &data)
     else {
       break;
     }
-    vn = op->getOut();
-    op = vn->loneDescend();
+    nextVn = op->getOut();
+    op = nextVn->loneDescend();
   }
+  if (nextVn != vn)
+    vn->updateType(nextVn->getType());
   return extra;
 }
 
@@ -7561,7 +7573,7 @@ bool RulePieceStructure::convertZextToPiece(PcodeOp *zext,Datatype *ct,int4 offs
   data.opSetOpcode(zext, CPUI_PIECE);
   data.opInsertInput(zext, zerovn, 0);
   if (invn->getType()->needsResolution())
-    data.inheritResolution(invn->getType(), zext, 1, zext, 0);	// Transfer invn's resolution to slot 1
+    data.inheritUnionField(invn->getType(), zext, 1, zext, 0);	// Transfer invn's resolution to slot 1
   return true;
 }
 
@@ -7692,7 +7704,7 @@ int4 RulePieceStructure::applyOp(PcodeOp *op,Funcdata &data)
       data.opInsertBefore(copyOp, node.getOp());
       if (vn->getType()->needsResolution()) {
 	// Inherit PIECE's read resolution for COPY's read
-	data.inheritResolution(vn->getType(), copyOp, 0, node.getOp(), node.getSlot());
+	data.inheritUnionField(vn->getType(), copyOp, 0, node.getOp(), node.getSlot());
       }
       if (newType->needsResolution()) {
 	newType->resolveInFlow(copyOp, -1);	// If the piece represents part of a union, resolve it

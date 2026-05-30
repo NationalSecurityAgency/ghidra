@@ -17,6 +17,7 @@ package ghidra.framework.remote;
 
 import java.io.IOException;
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 import java.rmi.server.RemoteObjectInvocationHandler;
 
 import db.buffers.ManagedBufferFileHandle;
@@ -33,10 +34,10 @@ import ghidra.util.InvalidNameException;
  */
 public interface RemoteRepositoryHandle extends RepositoryHandle, Remote {
 	@Override
-	String getName() throws IOException;
+	String getName() throws RemoteException;
 
 	@Override
-	User getUser() throws IOException;
+	User getUser() throws RemoteException;
 
 	@Override
 	User[] getUserList() throws IOException;
@@ -45,7 +46,7 @@ public interface RemoteRepositoryHandle extends RepositoryHandle, Remote {
 	boolean anonymousAccessAllowed() throws IOException;
 
 	@Override
-	String[] getServerUserList() throws IOException;
+	String[] getServerUserList() throws RemoteException;
 
 	@Override
 	void setUserList(User[] users, boolean anonymousAccessAllowed) throws IOException;

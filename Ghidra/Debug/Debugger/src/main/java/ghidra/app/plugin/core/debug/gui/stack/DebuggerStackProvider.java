@@ -76,6 +76,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 
 	@AutoServiceConsumed // TODO: Add listener for mapping changes to refresh table
 	DebuggerStaticMappingService mappingService;
+
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 

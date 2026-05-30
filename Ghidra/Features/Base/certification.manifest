@@ -237,7 +237,6 @@ data/typeinfo/golang/patchverdiffs/go1.24.4.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.24.5.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.24.6.json.diff||GHIDRA||||END|
 data/typeinfo/mac_10.9/mac_osx.gdt||GHIDRA||||END|
-data/typeinfo/rust/rust-common.gdt||GHIDRA||||END|
 data/typeinfo/win32/msvcrt/clsids.txt||GHIDRA||reviewed||END|
 data/typeinfo/win32/msvcrt/guids.txt||GHIDRA||reviewed||END|
 data/typeinfo/win32/msvcrt/iids.txt||GHIDRA||||END|
@@ -705,9 +704,9 @@ src/main/help/help/topics/Search/images/SearchMemoryRegex.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchText.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/StringSearchDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/StringSearchResults.png||GHIDRA||||END|
-src/main/help/help/topics/SelectBlockPlugin/Select_Block_Help.html||GHIDRA||||END|
-src/main/help/help/topics/SelectBlockPlugin/images/Dialog.png||GHIDRA||||END|
-src/main/help/help/topics/SelectBlockPlugin/images/ToBadAddr.png||GHIDRA||||END|
+src/main/help/help/topics/SelectBytesPlugin/Select_Bytes_Help.html||GHIDRA||||END|
+src/main/help/help/topics/SelectBytesPlugin/images/Dialog.png||GHIDRA||||END|
+src/main/help/help/topics/SelectBytesPlugin/images/ToBadAddr.png||GHIDRA||||END|
 src/main/help/help/topics/Selection/Selecting.htm||GHIDRA||||END|
 src/main/help/help/topics/SetHighlightPlugin/Highlighting.htm||GHIDRA||||END|
 src/main/help/help/topics/ShowInstructionInfoPlugin/ShowInstructionInfo.htm||GHIDRA||||END|

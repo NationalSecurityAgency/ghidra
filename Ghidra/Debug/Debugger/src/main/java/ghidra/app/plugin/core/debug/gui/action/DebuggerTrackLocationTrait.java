@@ -85,6 +85,9 @@ public class DebuggerTrackLocationTrait {
 			if (!value.getEntryKey().equals(TraceStackFrame.KEY_PC)) {
 				return;
 			}
+			if (!value.getEntryKey().equals(TraceStackFrame.KEY_SP)) {
+				return;
+			}
 			TraceStackFrame frame = value.getParent().queryInterface(TraceStackFrame.class);
 			if (frame == null) {
 				return;
@@ -102,6 +105,9 @@ public class DebuggerTrackLocationTrait {
 				return;
 			}
 			if (!value.getEntryKey().equals(TraceStackFrame.KEY_PC)) {
+				return;
+			}
+			if (!value.getEntryKey().equals(TraceStackFrame.KEY_SP)) {
 				return;
 			}
 			TraceStackFrame frame = value.getParent().queryInterface(TraceStackFrame.class);
@@ -223,6 +229,10 @@ public class DebuggerTrackLocationTrait {
 
 	public ProgramLocation getTrackedLocation() {
 		return trackedLocation;
+	}
+
+	public void clearTrackedLocation() {
+		trackedLocation = null;
 	}
 
 	public MultiStateDockingAction<LocationTrackingSpec> installAction() {

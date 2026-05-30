@@ -1028,7 +1028,7 @@ m16_RD0: m16_rd0_7  is m16_rd0_7 & ext_imm_2123=7  { export m16_rd0_7; }
     setCopReg(0:1, m16_RD0, m16_ry); 
 }
 
-:movz m16_rx, m16_ry, ext_rb	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=1 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=1 & m16_shft_f=0b10 {
+:movz m16_rx, ext_rb, m16_ry	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=1 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=1 & m16_shft_f=0b10 {
     if(m16_ry != 0) goto inst_next;
         m16_rx = ext_rb;
 }
@@ -1038,7 +1038,7 @@ m16_RD0: m16_rd0_7  is m16_rd0_7 & ext_imm_2123=7  { export m16_rd0_7; }
         m16_rx = 0;
 }
 
-:movn m16_rx, m16_ry, ext_rb	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=1 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=2 & m16_shft_f=0b10 {
+:movn m16_rx, ext_rb, m16_ry	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=1 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=2 & m16_shft_f=0b10 {
     if(m16_ry == 0) goto inst_next;
         m16_rx = ext_rb;
 }

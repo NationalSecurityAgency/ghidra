@@ -23,6 +23,7 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.XMLOutputter;
 
 import ghidra.framework.store.*;
+import ghidra.util.Msg;
 import ghidra.util.xml.GenericXMLOutputter;
 import ghidra.util.xml.XmlUtilities;
 
@@ -47,7 +48,7 @@ class CheckoutManager {
 	 * @param item folder item
 	 * @param create if true an empty checkout data file is written, else the
 	 *            initial data is read from the file.
-	 * @throws IOException
+	 * @throws IOException if create is true and checkouts data file creation failed
 	 */
 	CheckoutManager(LocalFolderItem item, boolean create) throws IOException {
 		this.item = item;
@@ -70,6 +71,7 @@ class CheckoutManager {
 	 * @param checkoutType type of checkout
 	 * @param user name of user requesting checkout
 	 * @param version item version to be checked-out
+	 * @param projectPath client-side project and path
 	 * @return checkout data or null if exclusive checkout denied due to
 	 *         existing checkouts.
 	 * @throws IOException if checkout fails
@@ -109,6 +111,7 @@ class CheckoutManager {
 	 * 
 	 * @param checkoutId checkout ID to be updated
 	 * @param version item version to be associated with checkout
+	 * @throws IOException if item validation fails
 	 */
 	synchronized void updateCheckout(long checkoutId, int version) throws IOException {
 		validate();
@@ -133,7 +136,7 @@ class CheckoutManager {
 	 * Terminate the specified checkout
 	 * 
 	 * @param checkoutId checkout ID
-	 * @throws IOException
+	 * @throws IOException @throws IOException if item validation fails or data update fails
 	 */
 	synchronized void endCheckout(long checkoutId) throws IOException {
 		validate();
@@ -156,10 +159,11 @@ class CheckoutManager {
 	}
 
 	/**
-	 * Returns true if the specified version of the associated item is
-	 * checked-out.
+	 * {@return true if the specified version of the associated item has
+	 * one or more checkedouts}
 	 * 
 	 * @param version the specific version to check for checkouts.
+	 * @throws IOException if item validation fails
 	 */
 	synchronized boolean isCheckedOut(int version) throws IOException {
 		validate();
@@ -173,7 +177,8 @@ class CheckoutManager {
 	}
 
 	/**
-	 * Returns true if the any version of the associated item is checked-out.
+	 * {@return true if one or more checkouts exist for the associated item}
+	 * @throws IOException if item validation fails
 	 */
 	synchronized boolean isCheckedOut() throws IOException {
 		validate();
@@ -181,10 +186,11 @@ class CheckoutManager {
 	}
 
 	/**
-	 * Returns the checkout data corresponding to the specified checkout ID.
-	 * Null is returned if checkout ID is not found.
+	 * {@return the checkout data corresponding to the specified checkout ID.
+	 * Null is returned if checkout ID is not found.}
 	 * 
 	 * @param checkoutId checkout ID
+	 * @throws IOException if item validation fails
 	 */
 	synchronized ItemCheckoutStatus getCheckout(long checkoutId) throws IOException {
 		validate();
@@ -192,8 +198,10 @@ class CheckoutManager {
 	}
 
 	/**
-	 * Returns the checkout data for all existing checkouts of the associated
-	 * item.
+	 * {@return the checkout data for all existing checkouts of the associated
+	 * item.}
+	 * 
+	 * @throws IOException if item validation fails
 	 */
 	synchronized ItemCheckoutStatus[] getAllCheckouts() throws IOException {
 		validate();
@@ -207,6 +215,8 @@ class CheckoutManager {
 	 * updated, the checkout data will be re-initialized from the file. This is
 	 * undesirable and is only required when multiple instances of a
 	 * LocalFolderItem are used for a specific item path (e.g., unit testing).
+	 *
+	 * @throws IOException if failed to read checkouts file
 	 */
 	private void validate() throws IOException {
 		if (LocalFileSystem.isRefreshRequired()) {
@@ -218,6 +228,11 @@ class CheckoutManager {
 			try {
 				readCheckoutsFile();
 				success = true;
+			}
+			catch (IOException e) {
+				String msg = "Item validation failed: " + item.getPathName();
+				Msg.error(this, msg, e);
+				throw new IOException(msg);
 			}
 			finally {
 				if (!success) {
@@ -231,9 +246,8 @@ class CheckoutManager {
 	/**
 	 * Read data from checkout file.
 	 * 
-	 * @throws IOException
+	 * @throws IOException if reading checkout data fails
 	 */
-	@SuppressWarnings("unchecked")
 	private void readCheckoutsFile() throws IOException {
 
 		checkouts = new HashMap<>();
@@ -266,7 +280,7 @@ class CheckoutManager {
 			}
 		}
 		catch (org.jdom2.JDOMException je) {
-			throw new InvalidObjectException("Invalid checkouts file: " + checkoutsFile);
+			throw new IOException("Invalid checkouts file: " + checkoutsFile, je);
 		}
 		finally {
 			istream.close();
@@ -278,7 +292,7 @@ class CheckoutManager {
 	 * 
 	 * @param coElement checkout data element
 	 * @return checkout data for specified element
-	 * @throws JDOMException
+	 * @throws JDOMException if checkout data parse fails
 	 */
 	ItemCheckoutStatus parseCheckoutElement(Element coElement) throws JDOMException {
 		try {
@@ -302,7 +316,7 @@ class CheckoutManager {
 	/**
 	 * Write checkout data file.
 	 * 
-	 * @throws IOException
+	 * @throws IOException if error writing checkout data file occurs
 	 */
 	private void writeCheckoutsFile() throws IOException {
 
@@ -341,14 +355,14 @@ class CheckoutManager {
 			oldFile = new File(checkoutsFile.getParentFile(), checkoutsFile.getName() + ".bak");
 			oldFile.delete();
 			if (!checkoutsFile.renameTo(oldFile)) {
-				throw new IOException("Failed to update checkouts: " + item.getPathName());
+				throw new IOException("Failed to update checkout file: " + checkoutsFile);
 			}
 		}
 		if (!tmpFile.renameTo(checkoutsFile)) {
 			if (oldFile != null) {
 				oldFile.renameTo(checkoutsFile);
 			}
-			throw new IOException("Failed to update checkouts: " + item.getPathName());
+			throw new IOException("Failed to update checkout file: " + checkoutsFile);
 		}
 		if (oldFile != null) {
 			oldFile.delete();

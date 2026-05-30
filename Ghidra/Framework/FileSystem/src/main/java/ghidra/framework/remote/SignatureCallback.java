@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +32,10 @@ import javax.security.auth.x500.X500Principal;
  * It is the responsibility of the callback handler to invoke the 
  * sign(X509Certificate[], byte[]) and return this object in response
  * to the callback.
+ * <p>
+ * The supplied token is validated by the server during authentication as one that it had issued
+ * but is primarily intended as the basis for the client's signature.  This callback must be 
+ * signed and returned to the server in a short period of time or the authentication will fail.
  */
 public class SignatureCallback implements Callback, Serializable {
 
@@ -50,6 +53,7 @@ public class SignatureCallback implements Callback, Serializable {
 	 * @param recognizedAuthorities list of CA's from which one must occur
 	 * within the certificate chain of the signing certificate.
 	 * @param token random bytes to be signed
+	 * @param serverSignature servers signature of token at time of generation
 	 */
 	public SignatureCallback(X500Principal[] recognizedAuthorities, byte[] token,
 			byte[] serverSignature) {
@@ -59,35 +63,36 @@ public class SignatureCallback implements Callback, Serializable {
 	}
 
 	/**
-	 * Returns list of approved certificate authorities.
+	 * {@return list of approved certificate authorities which constrains which user certificate is
+	 * used to authenticate.}
 	 */
 	public Principal[] getRecognizedAuthorities() {
-		return (recognizedAuthorities == null ? null : (Principal[]) recognizedAuthorities.clone());
+		return recognizedAuthorities;
 	}
 
 	/**
-	 * Returns token to be signed using user certificate.
+	 * {@return token to be signed using user certificate}
 	 */
 	public byte[] getToken() {
-		return (token == null ? null : (byte[]) token.clone());
+		return token;
 	}
 
 	/**
-	 * Returns signed token bytes set by callback handler.
+	 * {@return signed token bytes set by callback handler}
 	 */
 	public byte[] getSignature() {
-		return (signature == null ? null : (byte[]) signature.clone());
+		return signature;
 	}
 
 	/**
-	 * Returns the server's signature of the token bytes.
+	 * {@return the server's signature of the token bytes}
 	 */
 	public byte[] getServerSignature() {
 		return serverSignature;
 	}
 
 	/**
-	 * Returns certificate chain used to sign token.
+	 * {@return certificate chain used to sign token}
 	 */
 	public X509Certificate[] getCertificateChain() {
 		return certChain;
@@ -101,47 +106,7 @@ public class SignatureCallback implements Callback, Serializable {
 	 */
 	public void sign(X509Certificate[] sigCertChain, byte[] certSignature) {
 		this.certChain = sigCertChain;
-		this.signature = (certSignature == null ? null : certSignature.clone());
+		this.signature = certSignature;
 	}
-
-	public String getSigAlg() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-//	private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-//		
-//		out.defaultWriteObject();
-//		
-//		try {
-//			out.writeInt(certChain == null ? -1 : certChain.length);
-//			if (certChain != null) {
-//				for (int i = 0; i < certChain.length; i++) {
-//					out.writeObject(certChain[i].getEncoded());
-//				}
-//			}
-//		} catch (CertificateEncodingException e) {
-//			throw new IOException("Can not serialize certificate chain");
-//		}
-//	}
-//	
-// 	private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-// 		
-// 		in.defaultReadObject();
-// 		
-// 		try {
-// 			int cnt = in.readInt();
-// 			if (cnt >= 0) {
-// 				CertificateFactory cf = CertificateFactory.getInstance("X509");
-// 				certChain = new X509Certificate[cnt];
-// 				for (int i = 0; i < cnt; i++) {
-// 					byte[] bytes = (byte[]) in.readObject();
-// 					certChain[i] = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(bytes));
-// 				}
-// 			}
-// 		} catch (CertificateException e) {
-// 			throw new IOException("Can not de-serialize certificate chain");
-// 		}
-// 	}
 
 }

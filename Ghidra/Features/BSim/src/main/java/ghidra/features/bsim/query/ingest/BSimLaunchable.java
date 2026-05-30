@@ -564,17 +564,19 @@ public class BSimLaunchable implements GhidraLaunchable {
 		}
 	}
 
-	private boolean confirmDrop() throws IOException {
+	private boolean confirmDrop() {
 		if (booleanOptions.contains(DROP_DATABASE_FORCE_OPTION)) {
 			return true;
 		}
+		Console cons = System.console();
+		if (cons == null) {
+			System.out.println("Could not acquire console");
+			return false;
+		}
 		System.out.print("Are you sure you want to drop the database? (y/n): ");
-		try (InputStreamReader isReader = new InputStreamReader(System.in);
-				BufferedReader bReader = new BufferedReader(isReader)) {
-			String input = bReader.readLine();
-			if (input != null && input.equalsIgnoreCase("y")) {
-				return true;
-			}
+		String input = cons.readLine();
+		if (input.equalsIgnoreCase("y")) {
+			return true;
 		}
 		System.out.println("Database NOT dropped");
 		return false;

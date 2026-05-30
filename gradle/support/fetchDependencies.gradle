@@ -52,6 +52,7 @@ ext.FID_DIR = file("${DEPS_DIR}/fidb")
 ext.FLAT_REPO_DIR = file("${DEPS_DIR}/flatRepo")
 ext.OFFLINE = System.properties["offline"] != null
 ext.HIDE_DOWNLOAD_PROGRESS = System.properties["hideDownloadProgress"] != null
+ext.NO_ECLIPSE = System.properties["noEclipse"] != null
 ext.createdDirs = [] as Set
 
 file("${REPO_DIR}/Ghidra/application.properties").withReader { reader ->
@@ -105,13 +106,15 @@ ext.deps = [
 		name: "PyDev 9.3.0.zip",
 		url: "https://sourceforge.net/projects/pydev/files/pydev/PyDev%209.3.0/PyDev%209.3.0.zip",
 		sha256: "45398edf2adb56078a80bc88a919941578f0c0b363efbdd011bfd158a99b112e",
-		destination: file("${DEPS_DIR}/GhidraDev")
+		destination: file("${DEPS_DIR}/GhidraDev"),
+		eclipse: true
 	],
 	[
 		name: "cdt-8.6.0.zip",
 		url: "https://archive.eclipse.org/tools/cdt/releases/8.6/cdt-8.6.0.zip",
 		sha256: "81b7d19d57c4a3009f4761699a72e8d642b5e1d9251d2bb98df438b1e28f8ba9",
-		destination: file("${DEPS_DIR}/GhidraDev")
+		destination: file("${DEPS_DIR}/GhidraDev"),
+		eclipse: true
 	],
 	[
 		name: "vs2012_x64.fidb",
@@ -474,6 +477,9 @@ ext.deps = [
 // Download dependencies (if necessary) and verify their hashes
 mkdirs(DOWNLOADS_DIR)
 deps.each {
+	if (NO_ECLIPSE && it.eclipse) {
+		return
+	}
 	File file = new File(DOWNLOADS_DIR, it.name)
 	if (OFFLINE || !it.sha256.equals(generateHash(file))) {
 		download(it.url, file)
@@ -486,6 +492,9 @@ deps.each {
 // Copies the downloaded dependencies to their required destination. 
 // Some downloads require pre-processing before their relevant pieces can be copied.
 deps.each {
+	if (NO_ECLIPSE && it.eclipse) {
+		return
+	}
 	def copier = { File fp ->
 		if (!OFFLINE) {
 			println "Copying " + it.name + " to " + fp

@@ -2141,7 +2141,7 @@ bool SplitDatatype::RootPointer::backUpPointer(Datatype *impliedBase)
 /// \param op is the LOAD or STORE
 /// \param valueType is the specific data-type to match
 /// \return \b true if the root pointer is found
-bool SplitDatatype::RootPointer::find(PcodeOp *op,Datatype *valueType)
+bool SplitDatatype::RootPointer::find(PcodeOp *op,Datatype *valueType,ResolveCache &resolver)
 
 {
   Datatype *impliedBase = (Datatype *)0;
@@ -2151,12 +2151,14 @@ bool SplitDatatype::RootPointer::find(PcodeOp *op,Datatype *valueType)
     valueType = ((TypeArray *)valueType)->getBase();
     impliedBase = valueType;				// we allow an implied array (pointer to element) as a match
   }
+  int4 key = (op->code() == CPUI_LOAD) ? 0 : 1;
   loadStore = op;
   baseOffset = 0;
   firstPointer = pointer = op->getIn(1);
   Datatype *ct = pointer->getTypeReadFacing(op);
   if (ct->getMetatype() != TYPE_PTR)
     return false;
+  resolver.addResolution(key, pointer->getType(), op, 1);
   ptrType = (TypePointer *)ct;
   if (ptrType->getPtrTo() != valueType) {
     if (impliedBase != (Datatype *)0)
@@ -2169,8 +2171,10 @@ bool SplitDatatype::RootPointer::find(PcodeOp *op,Datatype *valueType)
   // The required pointer is found.  We try to back up to pointers to containing structures or arrays
   for(int4 i=0;i<3;++i) {
     if (pointer->isAddrTied() || pointer->loneDescend() == (PcodeOp *)0) break;
+    Varnode *lastVn = pointer;
     if (!backUpPointer(impliedBase))
       break;
+    resolver.addResolution(key, pointer->getType(), lastVn->getDef(), 0);
   }
   return true;
 }
@@ -2639,9 +2643,15 @@ void SplitDatatype::buildPointers(Varnode *rootVn,TypePointer *ptrType,int4 base
 	  newOff = 0;
 	}
       }
-      if (tmpType == newType || tmpType->getMetatype() == TYPE_ARRAY) {
+      Datatype *resType;
+      if (newType->needsResolution())
+	resType = resolver.resolve(isInput ? 0 : 1, newType);
+      else
+	resType = newType;
+
+      if (tmpType == resType || tmpType->getMetatype() == TYPE_ARRAY) {
 	int8 finalOffset = curOff - newOff;
-	int4 sz = newType->getSize();		// Element size in bytes
+	int4 sz = resType->getSize();		// Element size in bytes
 	finalOffset = finalOffset / sz;		// Number of elements
 	sz = AddrSpace::byteToAddressInt(sz, ptrType->getWordSize());
 	newOp = data.newOp(3,followOp->getAddr());
@@ -2660,11 +2670,12 @@ void SplitDatatype::buildPointers(Varnode *rootVn,TypePointer *ptrType,int4 base
 	data.opSetInput(newOp, inPtr, 0);
 	data.opSetInput(newOp, data.newConstant(inPtr->getSize(), finalOffset), 1);
       }
+      resolver.inheritResolution(isInput ? 0 : 1, inPtr, newOp, 0);
       inPtr = data.newUniqueOut(inPtr->getSize(), newOp);
       Datatype *tmpPtr = types->getTypePointerStripArray(ptrType->getSize(), newType, ptrType->getWordSize());
       inPtr->updateType(tmpPtr);
       data.opInsertBefore(newOp, followOp);
-      tmpType = newType;
+      tmpType = resType;
       curOff = newOff;
     } while(tmpType->getSize() > matchType->getSize());
     ptrVarnodes.push_back(inPtr);
@@ -2699,7 +2710,7 @@ bool SplitDatatype::isArithmeticOutput(Varnode *vn)
 }
 
 SplitDatatype::SplitDatatype(Funcdata &func)
-  : data(func)
+  : data(func), resolver(func)
 {
   Architecture *glb = func.getArch();
   types = glb->types;
@@ -2729,6 +2740,8 @@ bool SplitDatatype::splitCopy(PcodeOp *copyOp,Datatype *inType,Datatype *outType
     return false;
   vector<Varnode *> inVarnodes;
   vector<Varnode *> outVarnodes;
+  Datatype *unresOutType = outVn->getType();
+  resolver.addResolution(0,unresOutType, copyOp, -1);
   if (inVn->isConstant())
     buildInConstants(inVn,inVarnodes,outVn->getSpace()->isBigEndian());
   else
@@ -2741,6 +2754,7 @@ bool SplitDatatype::splitCopy(PcodeOp *copyOp,Datatype *inType,Datatype *outType
     data.opSetInput(newCopyOp,inVarnodes[i],0);
     data.opSetOutput(newCopyOp,outVarnodes[i]);
     data.opInsertBefore(newCopyOp, copyOp);
+    resolver.inheritResolution(0,unresOutType, dataTypePieces[i].offset, outVarnodes[i], newCopyOp, -1);
   }
   data.opDestroy(copyOp);
   return true;
@@ -2776,7 +2790,7 @@ bool SplitDatatype::splitLoad(PcodeOp *loadOp,Datatype *inType)
   if (isArithmeticInput(outVn))			// Sanity check on output
     return false;
   RootPointer root;
-  if (!root.find(loadOp,inType))
+  if (!root.find(loadOp,inType,resolver))
     return false;
   vector<Varnode *> ptrVarnodes;
   vector<Varnode *> outVarnodes;
@@ -2839,12 +2853,12 @@ bool SplitDatatype::splitStore(PcodeOp *storeOp,Datatype *outType)
     return false;
 
   RootPointer storeRoot;
-  if (!storeRoot.find(storeOp,outType))
+  if (!storeRoot.find(storeOp,outType,resolver))
     return false;
 
   RootPointer loadRoot;
   if (loadOp != (PcodeOp *)0) {
-    if (!loadRoot.find(loadOp,inType))
+    if (!loadRoot.find(loadOp,inType,resolver))
       return false;
   }
 

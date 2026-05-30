@@ -876,6 +876,7 @@ public interface VtHandler {
 					handleMoveCursorCol(n - 1);
 					return;
 				}
+				case 'f': // Horizontal and Vertical Position (same as CUP)
 				case 'H': { // Cursor position
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;

@@ -43,7 +43,7 @@ import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.memory.TraceMemoryRegion;
@@ -146,20 +146,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 				// NB. starti avoid use of temporary main breakpoint
 				assertBreakLoc(infBreakLocVals.get(0), "[1.1]", main, 1,
-					Set.of(TraceBreakpointKind.SW_EXECUTE),
-					"*main");
+					CommonSet.SWX.kinds(), "*main");
 				assertBreakLoc(infBreakLocVals.get(1), "[2.1]", main.add(10), 1,
-					Set.of(TraceBreakpointKind.HW_EXECUTE),
-					"*main+10");
+					CommonSet.HWX.kinds(), "*main+10");
 				assertBreakLoc(infBreakLocVals.get(2), "[3.1]", main.add(20), 1,
-					Set.of(TraceBreakpointKind.WRITE),
-					"-location *((char*)(&main+20))");
+					CommonSet.WRITE.kinds(), "-location *((char*)(&main+20))");
 				assertBreakLoc(infBreakLocVals.get(3), "[4.1]", main.add(30), 8,
-					Set.of(TraceBreakpointKind.READ),
-					"-location *((char(*)[8])(&main+30))");
+					CommonSet.READ.kinds(), "-location *((char(*)[8])(&main+30))");
 				assertBreakLoc(infBreakLocVals.get(4), "[5.1]", main.add(40), 5,
-					Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE),
-					"-location *((char(*)[5])(&main+40))");
+					CommonSet.ACCESS.kinds(), "-location *((char(*)[5])(&main+40))");
 			}
 		}
 	}
@@ -202,20 +197,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 				// NB. starti avoid use of temporary main breakpoint
 				assertBreakLoc(infBreakLocVals.get(0), "[1.1]", main, 1,
-					Set.of(TraceBreakpointKind.SW_EXECUTE),
-					"*main");
+					CommonSet.SWX.kinds(), "*main");
 				assertBreakLoc(infBreakLocVals.get(1), "[2.1]", main.add(10), 1,
-					Set.of(TraceBreakpointKind.HW_EXECUTE),
-					"*main+10");
+					CommonSet.HWX.kinds(), "*main+10");
 				assertBreakLoc(infBreakLocVals.get(2), "[3.1]", main.add(20), 1,
-					Set.of(TraceBreakpointKind.WRITE),
-					"-location *((char*)(&main+20))");
+					CommonSet.WRITE.kinds(), "-location *((char*)(&main+20))");
 				assertBreakLoc(infBreakLocVals.get(3), "[4.1]", main.add(30), 8,
-					Set.of(TraceBreakpointKind.READ),
-					"-location *((char(*)[8])(&main+30))");
+					CommonSet.READ.kinds(), "-location *((char(*)[8])(&main+30))");
 				assertBreakLoc(infBreakLocVals.get(4), "[5.1]", main.add(40), 5,
-					Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE),
-					"-location *((char(*)[5])(&main+40))");
+					CommonSet.ACCESS.kinds(), "-location *((char(*)[5])(&main+40))");
 			}
 		}
 	}

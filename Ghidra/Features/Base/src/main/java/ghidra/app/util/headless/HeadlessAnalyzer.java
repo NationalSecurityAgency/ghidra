@@ -30,6 +30,7 @@ import ghidra.GhidraJarApplicationLayout;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.*;
+import ghidra.app.script.JythonStubScriptProvider.JythonStubException;
 import ghidra.app.util.headless.HeadlessScript.HeadlessContinuationOption;
 import ghidra.app.util.importer.ProgramLoader;
 import ghidra.app.util.opinion.*;
@@ -53,6 +54,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.*;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
@@ -773,20 +775,20 @@ public class HeadlessAnalyzer {
 				classLoaderForDotClassScripts =
 					URLClassLoader.newInstance(urls.toArray(new URL[0]));
 
-				Class<?> c = Class.forName(className, true, classLoaderForDotClassScripts);
+				ClassSearcher.forNameSafe(className, GhidraScript.class,
+					classLoaderForDotClassScripts);
 
-				if (GhidraScript.class.isAssignableFrom(c)) {
-					// No issues, but return null, which signifies we don't actually have a
-					// ResourceFile to associate with the script name
-					return null;
-				}
-
-				Msg.error(this,
-					"REPORT SCRIPT ERROR: java class '" + className + "' is not a GhidraScript");
+				// No issues, but return null, which signifies we don't actually have a
+				// ResourceFile to associate with the script name
+				return null;
 			}
 			catch (ClassNotFoundException e) {
 				Msg.error(this,
 					"REPORT SCRIPT ERROR: java class not found for '" + className + "'");
+			}
+			catch (ClassCastException e) {
+				Msg.error(this,
+					"REPORT SCRIPT ERROR: java class '" + className + "' is not a GhidraScript");
 			}
 			throw new IllegalArgumentException("Invalid script: " + scriptName);
 		}
@@ -900,13 +902,14 @@ public class HeadlessAnalyzer {
 					}
 
 					String className = scriptName.substring(0, scriptName.length() - 6);
-					Class<?> c = Class.forName(className, true, classLoaderForDotClassScripts);
+					Class<? extends GhidraScript> c = ClassSearcher.forNameSafe(className,
+						GhidraScript.class, classLoaderForDotClassScripts);
 
 					// Get parent folder to pass to GhidraScript
 					File parentFile = new File(c.getResource(c.getSimpleName() + ".class").toURI())
 							.getParentFile();
 
-					currScript = (GhidraScript) c.getConstructor().newInstance();
+					currScript = c.getConstructor().newInstance();
 					currScript.setScriptArgs(scriptArgs);
 
 					if (options.propertiesFilePaths.size() > 0) {
@@ -957,6 +960,14 @@ public class HeadlessAnalyzer {
 					}
 				}
 			}
+		}
+		catch (JythonStubException e) {
+			// We want to effectively exit with an error code, but this class may be used as a 
+			// Ghidra library method in some scenarios, so System.exit(1) is too aggressive.
+			// Throwing an Error allows Ghidra to exit with an uncaught exception when run from
+			// the command line, but allows for the possibility of a library client to handle
+			// the problem in a way that better suits their application.
+			throw new Error(e);
 		}
 		catch (Exception exc) {
 			String logErrorMsg = "REPORT SCRIPT ERROR: " + scriptName + " : " + exc.getMessage();

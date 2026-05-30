@@ -141,7 +141,8 @@ class FunctionVariables {
 		}
 
 		VariableStorage[] variableStorage =
-			callingConvention.getStorageLocations(function.getProgram(), dataTypes, true);
+			callingConvention.getStorageLocations(function.getProgram(), dataTypes, true,
+				function.hasVarArgs());
 		returnParam.setDynamicStorage(variableStorage[0]);
 
 		int autoIndex = 0;

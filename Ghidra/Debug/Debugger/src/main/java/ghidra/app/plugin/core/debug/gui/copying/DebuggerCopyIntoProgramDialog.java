@@ -32,7 +32,7 @@ import docking.widgets.table.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.copying.DebuggerCopyPlan.Copier;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
+import ghidra.debug.api.modules.MappedAddressRange;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;

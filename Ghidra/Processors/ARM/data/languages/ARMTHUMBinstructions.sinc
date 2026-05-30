@@ -1202,10 +1202,11 @@ with : ARMcondCk=1 {
   Hrd0002 = Hrd0002 + Hrm0305;
 }
 
+# Destination is PC
 :add^ItCond	Hrd0002,Hrm0305		is TMode=1 & ItCond & op8=0x44 & Hrd0002 & Hrm0305 & hrd0002=7 & h1=1
 {
   build ItCond;
-  dest:4 = Hrd0002 + Hrm0305;
+  dest:4 = (Hrd0002 + Hrm0305) & 0xfffffffe;  # Simple branch, mask off the last bit
   BranchWritePC(dest);
   goto [pc];
 }
@@ -2653,18 +2654,20 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   Hrd0002 = Hrm0305;
 }
 
+# Destination is PC
 :mov^ItCond	Hrd0002,Hrm0305		is TMode=1 & ItCond & op8=0x46 & Hrm0305 & Hrd0002 & hrd0002=7 & h1=1
 {
   build ItCond;
-  dest:4 = Hrm0305;
+  dest:4 = Hrm0305 & 0xfffffffe; # Simple branch, mask off the last bit
   BranchWritePC(dest);
   goto [pc];
 }
 
+# Destination is PC
 :mov^ItCond	Hrd0002,Hrm0305		is TMode=1 & ItCond & op8=0x46 & Hrm0305 & rm0306=14 & Hrd0002 & hrd0002=7 & h1=1
 {
   build ItCond;
-  dest:4 = Hrm0305;
+  dest:4 = Hrm0305 & 0xfffffffe;  # Simple branch, mask off the last bit
   BranchWritePC(dest);
   return [pc];
 }
@@ -3664,7 +3667,7 @@ macro BitReverse(val) {
   cpsr = *ptr;
   ptr = ptr - 4;
   dest:4 = *ptr;
-  BranchWritePC(dest);
+  BranchWritePC(dest & 0xfffffffe); # Simple branch, mask off the last bit
   return [pc];
 }
 
@@ -3676,7 +3679,7 @@ macro BitReverse(val) {
   ptr = ptr - 4;
   dest:4 = *ptr;
   part2Rd0003 = ptr;
-  BranchWritePC(dest);
+  BranchWritePC(dest & 0xfffffffe); # Simple branch, mask off the last bit
   return [pc];
 }
 
@@ -3687,7 +3690,7 @@ macro BitReverse(val) {
   cpsr = *ptr;
   ptr = ptr + 4;
   dest:4 = *ptr;
-  BranchWritePC(dest);
+  BranchWritePC(dest & 0xfffffffe); # Simple branch, mask off the last bit
   return [pc];
 }
 
@@ -3699,7 +3702,7 @@ macro BitReverse(val) {
   ptr = ptr + 4;
   dest:4 = *ptr;
   part2Rd0003 = ptr + 4;
-  BranchWritePC(dest);
+  BranchWritePC(dest & 0xfffffffe); # Simple branch, mask off the last bit
   return [pc];
 }
 

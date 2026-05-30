@@ -548,7 +548,8 @@ simdExpImm_8: "#"^imm		is TMode=1 & thv_c2828 & thv_c1818 & thv_c1717 & thv_c161
 # see note d
 simdExpImm_16:  "#"^imm		is (TMode=0 & c2424=0 & c1618=0 & c0003=0) |
 							   (TMode=1 & thv_c2828=0 & thv_c1618=0 & thv_c0003=0) [ imm = 0; ] {
-	export *[const]:16 imm;
+	tmp:16 = 0;
+	export *[const]:16 tmp;
 }
 
 # cmode 0xxx I32

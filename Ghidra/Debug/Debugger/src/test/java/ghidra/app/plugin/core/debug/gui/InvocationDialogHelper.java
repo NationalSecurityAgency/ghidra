@@ -27,12 +27,11 @@ import docking.test.AbstractDockingTest;
 import ghidra.app.plugin.core.debug.utils.MiscellaneousUtils;
 import ghidra.async.SwingExecutorService;
 import ghidra.debug.api.ValStr;
-import ghidra.framework.options.SaveState;
 
 public class InvocationDialogHelper<P, D extends AbstractDebuggerParameterDialog<P>> {
 
-	public static <P, D extends AbstractDebuggerParameterDialog<P>> InvocationDialogHelper<P, D> waitFor(
-			Class<D> cls) {
+	public static <P, D extends AbstractDebuggerParameterDialog<P>> InvocationDialogHelper<P, D>
+			waitFor(Class<D> cls) {
 		D dialog = AbstractDockingTest.waitForDialogComponent(cls);
 		return new InvocationDialogHelper<>(dialog);
 	}
@@ -85,17 +84,5 @@ public class InvocationDialogHelper<P, D extends AbstractDebuggerParameterDialog
 
 	public void invoke() {
 		runSwing(() -> dialog.invoke(null));
-	}
-
-	public SaveState saveState() {
-		SaveState parent = new SaveState();
-		runSwing(() -> dialog.writeConfigState(parent));
-		return parent.getSaveState(AbstractDebuggerParameterDialog.KEY_MEMORIZED_ARGUMENTS);
-	}
-
-	public void loadState(SaveState state) {
-		SaveState parent = new SaveState();
-		parent.putSaveState(AbstractDebuggerParameterDialog.KEY_MEMORIZED_ARGUMENTS, state);
-		runSwing(() -> dialog.readConfigState(parent));
 	}
 }

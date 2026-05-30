@@ -63,9 +63,11 @@ class ModuleDB extends DbObject implements ProgramModule {
 	}
 
 	@Override
-	protected boolean refresh() {
+	protected boolean refresh(DBRecord rec) {
 		try {
-			DBRecord rec = moduleAdapter.getModuleRecord(key);
+			if (rec == null) {
+				rec = moduleAdapter.getModuleRecord(key);
+			}
 			if (rec != null) {
 				record = rec;
 				childCount = rec.getIntValue(ModuleDBAdapter.MODULE_CHILD_COUNT_COL);

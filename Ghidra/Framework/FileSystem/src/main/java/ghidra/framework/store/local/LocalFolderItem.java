@@ -21,7 +21,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ghidra.framework.store.*;
-import ghidra.util.Msg;
 import ghidra.util.ReadOnlyException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -155,7 +154,7 @@ public abstract class LocalFolderItem implements FolderItem {
 	}
 
 	/**
-	 * Returns hidden data directory.
+	 * {@return data storage directory}
 	 * NOTE: Even if a data directory is not required this method will still return one to 
 	 * allow removal of an unknown item type that may or may not use it.
 	 */
@@ -170,7 +169,7 @@ public abstract class LocalFolderItem implements FolderItem {
 	}
 
 	/**
-	 * Return the oldest/minimum version.
+	 * {@return the oldest/minimum version}
 	 * @throws IOException thrown if an IO error occurs.
 	 */
 	abstract int getMinimumVersion() throws IOException;
@@ -178,7 +177,7 @@ public abstract class LocalFolderItem implements FolderItem {
 	/**
 	 * Verify that the specified version of this item is not in use.
 	 * @param version the specific version to check for versioned items.
-	 * @throws FileInUseException
+	 * @throws FileInUseException if specified item version is in use or unable to determine
 	 */
 	void checkInUse(int version) throws FileInUseException {
 		synchronized (fileSystem) {
@@ -188,7 +187,7 @@ public abstract class LocalFolderItem implements FolderItem {
 					isCheckedOut = checkoutMgr.isCheckedOut(version);
 				}
 				catch (IOException e) {
-					throw new FileInUseException(getName() + " versioning error", e);
+					throw new FileInUseException(getName() + " versioning error");
 				}
 				if (isCheckedOut) {
 					throw new FileInUseException(
@@ -203,7 +202,7 @@ public abstract class LocalFolderItem implements FolderItem {
 
 	/**
 	 * Verify that this item is not in use.
-	 * @throws FileInUseException
+	 * @throws FileInUseException if item is in use or unable to determine
 	 */
 	void checkInUse() throws FileInUseException {
 		synchronized (fileSystem) {
@@ -216,7 +215,8 @@ public abstract class LocalFolderItem implements FolderItem {
 					isCheckedOut = checkoutMgr.isCheckedOut();
 				}
 				catch (IOException e) {
-					throw new FileInUseException(getName() + " versioning error", e);
+					// A bad checkouts file can cause this (check log)
+					throw new FileInUseException(getName() + " versioning error");
 				}
 				if (isCheckedOut) {
 					throw new FileInUseException(getName() + " is checked out");
@@ -231,7 +231,7 @@ public abstract class LocalFolderItem implements FolderItem {
 	/**
 	 * Begin the check-in process for a versioned item.
 	 * @param checkoutId assigned at time of checkout, becomes the check-in ID.
-	 * @throws FileInUseException
+	 * @throws FileInUseException if specified item version is in use or unable to determine
 	 */
 	void beginCheckin(long checkoutId) throws FileInUseException {
 		synchronized (fileSystem) {
@@ -244,7 +244,7 @@ public abstract class LocalFolderItem implements FolderItem {
 					status = checkoutMgr.getCheckout(checkinId);
 				}
 				catch (IOException e) {
-					throw new FileInUseException(getName() + " versioning error", e);
+					throw new FileInUseException(getName() + " versioning error");
 				}
 				String byMsg = status != null ? (" by: " + status.getUser()) : "";
 				throw new FileInUseException("Another checkin is in progress" + byMsg);
@@ -401,7 +401,7 @@ public abstract class LocalFolderItem implements FolderItem {
 	 * never be the only version (i.e., minVersion will always be less
 	 * than the currentVersion).
 	 * @param user user name
-	 * @throws IOException
+	 * @throws IOException if item update failure occurs
 	 */
 	abstract void deleteMinimumVersion(String user) throws IOException;
 
@@ -411,7 +411,7 @@ public abstract class LocalFolderItem implements FolderItem {
 	 * never be the only version (i.e., minVersion will always be less
 	 * than the currentVersion).
 	 * @param user user name
-	 * @throws IOException
+	 * @throws IOException if item update failure occurs
 	 */
 	abstract void deleteCurrentVersion(String user) throws IOException;
 
@@ -419,10 +419,11 @@ public abstract class LocalFolderItem implements FolderItem {
 	 * Move this item into a newFolder which has a path of newPath.
 	 * @param newFolder new parent directory/folder 
 	 * @param newStorageName new storage name
-	 * @param newPath new parent path
-	 * @throws DuplicateFileException
-	 * @throws FileInUseException
-	 * @throws IOException
+	 * @param newFolderPath new parent path
+	 * @param newName new item name
+	 * @throws DuplicateFileException if detsination item already exists
+	 * @throws FileInUseException if items appears to be in use
+	 * @throws IOException if item update failure occurs
 	 * @see ghidra.framework.store.FileSystem#moveItem
 	 */
 	void moveTo(File newFolder, String newStorageName, String newFolderPath, String newName)
@@ -831,8 +832,7 @@ public abstract class LocalFolderItem implements FolderItem {
 					return checkoutMgr != null && checkoutMgr.isCheckedOut();
 				}
 				catch (IOException e) {
-					Msg.error(getName() + " versioning error", e);
-					return true;
+					return true; // error already logged
 				}
 			}
 			return false;
@@ -879,8 +879,8 @@ public abstract class LocalFolderItem implements FolderItem {
 	 * Update this non-versioned item with the contents of the specified item which must be 
 	 * within the same non-versioned fileSystem.  If successful, the specified item will be 
 	 * removed after its content has been moved into this item.
-	 * @param item
-	 * @param checkoutVersion
+	 * @param item source item for update of this item
+	 * @param checkoutVersion version of current checkout
 	 * @throws IOException if this file is not a checked-out non-versioned file 
 	 * or an IO error occurs.
 	 */

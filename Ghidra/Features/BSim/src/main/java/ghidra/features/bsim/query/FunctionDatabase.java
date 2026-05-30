@@ -15,13 +15,9 @@
  */
 package ghidra.features.bsim.query;
 
-import java.io.*;
-import java.util.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
-import javax.xml.parsers.*;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 import generic.jar.ResourceFile;
@@ -33,7 +29,6 @@ import ghidra.features.bsim.query.facade.SFOverviewInfo;
 import ghidra.features.bsim.query.facade.SFQueryInfo;
 import ghidra.features.bsim.query.protocol.*;
 import ghidra.framework.Application;
-import ghidra.util.Msg;
 
 public interface FunctionDatabase extends AutoCloseable {
 
@@ -331,72 +326,6 @@ public interface FunctionDatabase extends AutoCloseable {
 	 */
 	public static WeightedLSHCosineVectorFactory generateLSHVectorFactory() {
 		return new WeightedLSHCosineVectorFactory();
-	}
-
-	/**
-	 * Returns a list of all configuration template files. 
-	 * 
-	 * @return list of template files
-	 */
-	public static List<File> getConfigurationTemplates() {
-		List<File> templateFiles = new ArrayList<>();
-
-		ResourceFile moduleDataSubDirectory;
-		try {
-			moduleDataSubDirectory = Application.getModuleDataSubDirectory("");
-			File templateDir = new File(moduleDataSubDirectory.getAbsolutePath());
-			if (!templateDir.exists()) {
-				return Collections.emptyList();
-			}
-
-			FilenameFilter nameFilter = (dir, name) -> {
-				if (!name.endsWith(".xml")) {
-					return false;
-				}
-
-				return true;
-			};
-
-			File[] files = templateDir.listFiles(nameFilter);
-			if (files != null) {
-				for (File file : files) {
-					if (isConfigTemplate(file)) {
-						templateFiles.add(file);
-					}
-				}
-			}
-		}
-		catch (IOException e) {
-			Msg.error(null, "Error retrieving configuration templates", e);
-		}
-
-		return templateFiles;
-	}
-
-	/**
-	 * Determines if a given xml file is a config template. This is done by opening the file
-	 * and checking for the presence of a {@code <dbconfig>} root tag.
-	 * 
-	 * @param file the file to inspect
-	 * @return true if the file is config template
-	 */
-	static boolean isConfigTemplate(File file) {
-
-		try {
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document doc = builder.parse(file);
-
-			Element rootElem = doc.getDocumentElement();
-			if (rootElem.getTagName().equals("dbconfig")) {
-				return true;
-			}
-		}
-		catch (ParserConfigurationException | SAXException | IOException e) {
-			Msg.error(null, "Error inspecting xml file", e);
-		}
-
-		return false;
 	}
 
 	/**

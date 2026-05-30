@@ -296,10 +296,12 @@ def start_trace(name: str) -> None:
     frame = inspect.currentframe()
     if frame is None:
         raise AssertionError("cannot locate schema.xml")
+
     parent = os.path.dirname(inspect.getfile(frame))
     schema_fn = os.path.join(parent, 'schema.xml')
     with open(schema_fn, 'r') as schema_file:
         schema_xml = schema_file.read()
+
     with STATE.trace.open_tx("Create Root Object"):
         root = STATE.trace.create_root_object(schema_xml, 'GdbSession')
         root.set_value('_display', 'GNU gdb ' + util.GDB_VERSION.full)
@@ -1101,22 +1103,22 @@ def put_single_breakpoint(b: gdb.Breakpoint, ibobj: TraceObject,
     brkobj.set_value('Enabled', b.enabled)
     if b.type == gdb.BP_BREAKPOINT:
         brkobj.set_value('Expression', b.location)
-        brkobj.set_value('Kinds', 'SW_EXECUTE')
+        brkobj.set_value('Kinds', 'x')
     elif b.type == gdb.BP_HARDWARE_BREAKPOINT:
         brkobj.set_value('Expression', b.location)
-        brkobj.set_value('Kinds', 'HW_EXECUTE')
+        brkobj.set_value('Kinds', 'X')
     elif b.type == gdb.BP_WATCHPOINT:
         brkobj.set_value('Expression', b.expression)
-        brkobj.set_value('Kinds', 'WRITE')
+        brkobj.set_value('Kinds', 'W')
     elif b.type == gdb.BP_HARDWARE_WATCHPOINT:
         brkobj.set_value('Expression', b.expression)
-        brkobj.set_value('Kinds', 'WRITE')
+        brkobj.set_value('Kinds', 'W')
     elif b.type == gdb.BP_READ_WATCHPOINT:
         brkobj.set_value('Expression', b.expression)
-        brkobj.set_value('Kinds', 'READ')
+        brkobj.set_value('Kinds', 'R')
     elif b.type == gdb.BP_ACCESS_WATCHPOINT:
         brkobj.set_value('Expression', b.expression)
-        brkobj.set_value('Kinds', 'READ,WRITE')
+        brkobj.set_value('Kinds', 'RW')
     else:
         brkobj.set_value('Expression', '(unknown)')
         brkobj.set_value('Kinds', '')

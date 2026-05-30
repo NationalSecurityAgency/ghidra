@@ -31,18 +31,16 @@ import org.apache.logging.log4j.*;
 import ghidra.framework.remote.GhidraPrincipal;
 import ghidra.framework.remote.SignatureCallback;
 import ghidra.net.*;
-import ghidra.server.RepositoryManager;
 import ghidra.server.UserManager;
+import ghidra.server.remote.RemoteLoggingUtil;
 
 /**
  * <code>PKIAuthenticationModule</code> performs client authentication through the 
  * use of a dual-signed token.  
  */
 public class PKIAuthenticationModule implements AuthenticationModule {
-	static final Logger log = LogManager.getLogger(PKIAuthenticationModule.class);
 
-	private static final long MAX_TOKEN_TIME = 5 * 60000; // 5-minutes
-	private static final int TOKEN_SIZE = 64;
+	static final Logger log = LogManager.getLogger(PKIAuthenticationModule.class);
 
 	private X500Principal[] authorities; // imposed on client certificate
 	private boolean anonymousAllowed;
@@ -70,7 +68,7 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 	public Callback[] getAuthenticationCallbacks() {
 		SignatureCallback sigCb;
 		try {
-			byte[] token = TokenGenerator.getNewToken(TOKEN_SIZE);
+			byte[] token = TokenGenerator.getNewToken();
 			boolean usingSelfSignedCert =
 				DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate();
 			SignedToken signedToken = DefaultKeyManagerFactory
@@ -86,27 +84,6 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 	@Override
 	public boolean isNameCallbackAllowed() {
 		return false;
-	}
-
-	private void checkTokenIntegrity(byte[] token) throws LoginException {
-		if (token.length != TOKEN_SIZE) {
-			throw new FailedLoginException("Invalid Signature callback");
-		}
-
-		boolean isZeroToken = true;
-		for (byte b : token) {
-			if (b != 0) {
-				isZeroToken = false;
-				break;
-			}
-		}
-		if (isZeroToken) {
-			throw new FailedLoginException("Invalid Signature callback");
-		}
-
-		if (!TokenGenerator.isRecentToken(token, MAX_TOKEN_TIME)) {
-			throw new FailedLoginException("Stale Signature callback");
-		}
 	}
 
 	/*
@@ -142,7 +119,9 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 		try {
 
 			byte[] token = sigCb.getToken();
-			checkTokenIntegrity(token);
+			if (!TokenGenerator.isValidToken(token)) {
+				throw new FailedLoginException("Stale Signature callback");
+			}
 
 			boolean usingSelfSignedCert =
 				DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate();
@@ -203,7 +182,7 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 			}
 
 			if (UserManager.ANONYMOUS_USERNAME.equals(username)) {
-				RepositoryManager.log(null, null, "Anonymous access allowed for: " +
+				RemoteLoggingUtil.log("Anonymous access allowed for: " +
 					certChain[0].getSubjectX500Principal().toString(), user.getName());
 			}
 

@@ -252,23 +252,23 @@ PrimitiveExtractor::PrimitiveExtractor(Datatype *dt,bool unionIllegal,int offset
 DatatypeFilter *DatatypeFilter::decodeFilter(Decoder &decoder)
 
 {
-  DatatypeFilter *filter;
+  unique_ptr<DatatypeFilter> filter;
   uint4 elemId = decoder.openElement(ELEM_DATATYPE);
   string nm = decoder.readString(ATTRIB_NAME);
   if (nm == "any") {
-    filter = new SizeRestrictedFilter();
+    filter.reset(new SizeRestrictedFilter());
   }
   else if (nm == "homogeneous-float-aggregate") {
-    filter = new HomogeneousAggregate(TYPE_FLOAT,4,0,0);
+    filter.reset(new HomogeneousAggregate(TYPE_FLOAT,4,0,0));
   }
   else {
     // If no other name matches, assume this is a metatype
     type_metatype meta = string2metatype(nm);
-    filter = new MetaTypeFilter(meta);
+    filter.reset(new MetaTypeFilter(meta));
   }
   filter->decode(decoder);
   decoder.closeElement(elemId);
-  return filter;
+  return filter.release();
 }
 
 /// Parse the given string as a comma or space separated list of decimal integers,
@@ -451,18 +451,18 @@ void HomogeneousAggregate::decode(Decoder &decoder)
 QualifierFilter *QualifierFilter::decodeFilter(Decoder &decoder)
 
 {
-  QualifierFilter *filter;
+  unique_ptr<QualifierFilter> filter;
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_VARARGS)
-    filter = new VarargsFilter();
+    filter.reset(new VarargsFilter());
   else if (elemId == ELEM_POSITION)
-    filter = new PositionMatchFilter(-1);
+    filter.reset(new PositionMatchFilter(-1));
   else if (elemId == ELEM_DATATYPE_AT)
-    filter = new DatatypeMatchFilter();
+    filter.reset(new DatatypeMatchFilter());
   else
     return (QualifierFilter *)0;
   filter->decode(decoder);
-  return filter;
+  return filter.release();
 }
 
 /// The AndFilter assumes ownership of all the filters in the array and the original vector is cleared
@@ -592,32 +592,32 @@ bool AssignAction::fillinOutputMap(ParamActive *active) const
 AssignAction *AssignAction::decodeAction(Decoder &decoder,const ParamListStandard *res)
 
 {
-  AssignAction *action;
+  unique_ptr<AssignAction> action;
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_GOTO_STACK)
-    action = new GotoStack(res,0);
+    action.reset(new GotoStack(res,0));
   else if (elemId == ELEM_JOIN) {
-    action = new MultiSlotAssign(res);
+    action.reset(new MultiSlotAssign(res));
   }
   else if (elemId == ELEM_CONSUME) {
-    action = new ConsumeAs(TYPECLASS_GENERAL,res);
+    action.reset(new ConsumeAs(TYPECLASS_GENERAL,res));
   }
   else if (elemId == ELEM_CONVERT_TO_PTR) {
-    action = new ConvertToPointer(res);
+    action.reset(new ConvertToPointer(res));
   }
   else if (elemId == ELEM_HIDDEN_RETURN) {
-    action = new HiddenReturnAssign(res,hiddenret_specialreg);
+    action.reset(new HiddenReturnAssign(res,hiddenret_specialreg));
   }
   else if (elemId == ELEM_JOIN_PER_PRIMITIVE) {
-    action = new MultiMemberAssign(TYPECLASS_GENERAL,false,res->isBigEndian(),res);
+    action.reset(new MultiMemberAssign(TYPECLASS_GENERAL,false,res->isBigEndian(),res));
   }
   else if (elemId == ELEM_JOIN_DUAL_CLASS) {
-    action = new MultiSlotDualAssign(res);
+    action.reset(new MultiSlotDualAssign(res));
   }
   else
     throw DecoderError("Expecting model rule action");
   action->decode(decoder);
-  return action;
+  return action.release();
 }
 
 /// \brief Read the next model rule precondition element from the stream
@@ -629,18 +629,18 @@ AssignAction *AssignAction::decodeAction(Decoder &decoder,const ParamListStandar
 /// \return the new precondition, or null if no more preconditions are in the stream
 AssignAction *AssignAction::decodePrecondition(Decoder &decoder,const ParamListStandard *res)
 {
-  AssignAction *action;
+  unique_ptr<AssignAction> action;
   uint4 elemId = decoder.peekElement();
   
   if (elemId == ELEM_CONSUME_EXTRA) {
-	action = new ConsumeExtra(res);
+    action.reset(new ConsumeExtra(res));
   }
   else {
     return (AssignAction *)0;
   }
   
   action->decode(decoder);
-  return action;
+  return action.release();
 }
 
 /// \brief Read the next model rule sideeffect element from the stream
@@ -653,22 +653,22 @@ AssignAction *AssignAction::decodePrecondition(Decoder &decoder,const ParamListS
 AssignAction *AssignAction::decodeSideeffect(Decoder &decoder,const ParamListStandard *res)
 
 {
-  AssignAction *action;
+  unique_ptr<AssignAction> action;
   uint4 elemId = decoder.peekElement();
 
   if (elemId == ELEM_CONSUME_EXTRA) {
-    action = new ConsumeExtra(res);
+    action.reset(new ConsumeExtra(res));
   }
   else if (elemId == ELEM_EXTRA_STACK) {
-    action = new ExtraStack(res);
+    action.reset(new ExtraStack(res));
   }
   else if (elemId == ELEM_CONSUME_REMAINING) {
-	action = new ConsumeRemaining(res);
+    action.reset(new ConsumeRemaining(res));
   }
   else
     throw DecoderError("Expecting model rule sideeffect");
   action->decode(decoder);
-  return action;
+  return action.release();
 }
 
 /// \brief Truncate a tiling by a given number of bytes
@@ -1695,9 +1695,9 @@ void ModelRule::decode(Decoder &decoder,const ParamListStandard *res)
     qualifier = new AndFilter(qualifiers);
   }
   for (;;) {
-	AssignAction *precond = AssignAction::decodePrecondition(decoder, res);
-	if (precond == (AssignAction *)0)
-	  break;
+    AssignAction *precond = AssignAction::decodePrecondition(decoder, res);
+    if (precond == (AssignAction *)0)
+      break;
     preconditions.push_back(precond);
   }
   assign = AssignAction::decodeAction(decoder, res);

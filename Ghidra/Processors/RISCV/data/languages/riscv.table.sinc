@@ -615,33 +615,30 @@ rs3: r2731 is r2731 { export r2731; }
 rs3: zero is zero & op2731=0 { export 0:$(XLEN); }
 
 rd: r0711 is r0711 { export r0711; }
-rd: zero is r0711 & zero & op0711=0 { local tempZero:$(XLEN) = 0; export tempZero; }
-rdDst: r0711 is r0711 { export r0711; }
-
+rd: zero is r0711=0 & zero { local tmp:$(XLEN) = 0; export tmp; }
 
 rs1W: r1519 is r1519 { local tmp:$(WXLEN) = r1519:$(WXLEN); export tmp; }
-rs1W: zero is r1519 & zero & op1519=0 { export 0:$(WXLEN); }
+rs1W: zero  is r1519 & zero & op1519=0 { export 0:$(WXLEN); }
 
 rs2W: r2024 is r2024 { local tmp:$(WXLEN) = r2024:$(WXLEN); export tmp; }
 rs2W: zero is r2024 & zero & op2024=0 { export 0:$(WXLEN); }
 
-#TODO  dest may be bad, might need an assign macro
 rdW: r0711 is r0711 { local tmp:$(WXLEN) = r0711:$(WXLEN); export tmp; }
-rdW: zero is r0711 & zero & op0711=0 { export 0:$(WXLEN); }
-
+rdW: zero is r0711=0 & zero { local tmp:$(WXLEN) = 0; export tmp; }
 
 
 #TODO  does this need to be in an if/endif
 @if ADDRSIZE == "64"
-rs1L: r1519 is r1519 { local tmp:8 = r1519:8; export tmp; }
+rs1L: r1519 is r1519 { export r1519; }
 rs1L: zero is r1519 & zero & op1519=0 { export 0:8; }
 
-rs2L: r2024 is r2024 { local tmp:8 = r2024:8; export tmp; }
+rs2L: r2024 is r2024 { export r2024; }
 rs2L: zero is r2024 & zero & op2024=0 { export 0:8; }
 
-#TODO  dest may be bad, might need an assign macro
 rdL: r0711 is r0711 { export r0711; }
-rdL: zero is r0711 & zero & op0711=0 { export 0:8; }
+rdL: zero is r0711=0 & zero { local tmp:8 = 0; export tmp; }
+
+
 @endif
 
 

@@ -183,7 +183,8 @@ public class DecompilerTextFinderTableModel extends GhidraProgramTableModel<Text
 				return renderPlainContext(data, context);
 			}
 
-			return renderHtmlContext(data, context);
+			// don't show line numbers since we have a separate column for that
+			return renderHtmlContext(data, context, false);
 		}
 
 	}

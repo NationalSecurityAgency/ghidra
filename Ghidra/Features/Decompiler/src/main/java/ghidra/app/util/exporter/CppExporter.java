@@ -295,7 +295,7 @@ public class CppExporter extends Exporter {
 			DataTypeWriter dataTypeWriter =
 				new DataTypeWriter(dtm, headerWriter, isUseCppStyleComments);
 			headerWriter.write(getFakeCTypeDefinitions(dtm.getDataOrganization()));
-			dataTypeWriter.write(dtm, monitor);
+			dataTypeWriter.write(monitor);
 
 			headerWriter.println("");
 			headerWriter.println("");
@@ -308,7 +308,7 @@ public class CppExporter extends Exporter {
 			DataTypeManager dtm = program.getDataTypeManager();
 			DataTypeWriter dataTypeWriter =
 				new DataTypeWriter(dtm, cFileWriter, isUseCppStyleComments);
-			dataTypeWriter.write(dtm, monitor);
+			dataTypeWriter.write(monitor);
 		}
 
 		if (cFileWriter != null) {

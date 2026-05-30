@@ -30,10 +30,13 @@ import ghidra.trace.model.target.info.TraceObjectInfo;
 	shortName = "frame",
 	attributes = {
 		TraceStackFrame.KEY_PC,
+		TraceStackFrame.KEY_SP,
 	},
-	fixedKeys = {})
+	fixedKeys = {}
+)
 public interface TraceStackFrame extends TraceObjectInterface {
 	String KEY_PC = "_pc";
+	String KEY_SP = "_sp";
 
 	/**
 	 * Get the trace containing this frame
@@ -76,6 +79,22 @@ public interface TraceStackFrame extends TraceObjectInterface {
 	 * @param pc the program counter
 	 */
 	void setProgramCounter(@Experimental Lifespan span, Address pc);
+
+	/**
+	 * Get the stack pointer at the given snap
+	 * 
+	 * @param snap the snap 
+	 * @return the stack pointer
+	 */
+	Address getStackPointer(@Experimental long snap);
+
+	/**
+	 * Set the stack pointer over the given span
+	 * 
+	 * @param span the span 
+	 * @param sp the stack pointer
+	 */
+	void setStackPointer(@Experimental Lifespan span, Address sp);
 
 	/**
 	 * Get the user comment for the frame

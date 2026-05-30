@@ -688,11 +688,13 @@ void EquateSymbol::decode(Decoder &decoder)
 /// \param nm is the name of the symbol
 /// \param unionDt is the union data-type being forced
 /// \param fldNum is the particular field to force (-1 indicates the whole union)
-UnionFacetSymbol::UnionFacetSymbol(Scope *sc,const string &nm,Datatype *unionDt,int4 fldNum)
+/// \param isAddr is \b true for facets that apply to all ops at the address
+UnionFacetSymbol::UnionFacetSymbol(Scope *sc,const string &nm,Datatype *unionDt,int4 fldNum,bool isAddr)
   : Symbol(sc, nm, unionDt)
 {
   fieldNum = fldNum;
   category = union_facet;
+  addrBased = isAddr;
 }
 
 void UnionFacetSymbol::encode(Encoder &encoder) const
@@ -701,6 +703,7 @@ void UnionFacetSymbol::encode(Encoder &encoder) const
   encoder.openElement(ELEM_FACETSYMBOL);
   encodeHeader(encoder);
   encoder.writeSignedInteger(ATTRIB_FIELD, fieldNum);
+  encoder.writeBool(ATTRIB_ADDRTIED, true);
   encodeBody(encoder);
   encoder.closeElement(ELEM_FACETSYMBOL);
 }
@@ -711,6 +714,7 @@ void UnionFacetSymbol::decode(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_FACETSYMBOL);
   decodeHeader(decoder);
   fieldNum = decoder.readSignedInteger(ATTRIB_FIELD);
+  addrBased = decoder.readBool(ATTRIB_ADDRTIED);
 
   decodeBody(decoder);
   decoder.closeElement(elemId);
@@ -1585,7 +1589,7 @@ Symbol *Scope::addMapSym(Decoder &decoder)
     throw LowlevelError("Unknown symbol type");
   try {		// Protect against duplicate scope errors
     sym->decode(decoder);
-  } catch(RecovError &err) {
+  } catch(...) {
     delete sym;
     throw;
   }
@@ -2946,12 +2950,13 @@ Database::~Database(void)
 void Database::attachScope(Scope *newscope,Scope *parent)
 
 {
+  unique_ptr<Scope> owner(newscope);
   if (parent == (Scope *)0) {
     if (globalscope != (Scope *)0)
       throw LowlevelError("Multiple global scopes");
     if (newscope->name.size() != 0)
       throw LowlevelError("Global scope does not have empty name");
-    globalscope = newscope;
+    globalscope = owner.release();
     idmap[globalscope->uniqueId] = globalscope;
     return;
   }
@@ -2960,14 +2965,9 @@ void Database::attachScope(Scope *newscope,Scope *parent)
   pair<uint8,Scope *> value(newscope->uniqueId,newscope);
   pair<ScopeMap::iterator,bool> res;
   res = idmap.insert(value);
-  if (res.second==false) {
-    ostringstream s;
-    s << "Duplicate scope id: ";
-    s << newscope->getFullName();
-    delete newscope;
-    throw RecovError(s.str());
-  }
-  parent->attachScope(newscope);
+  if (res.second==false)
+    throw RecovError("Duplicate scope id: " + newscope->getFullName());
+  parent->attachScope(owner.release());
 }
 
 /// Give \b this database the chance to inform existing scopes of any change to the
@@ -3375,17 +3375,18 @@ void Database::decode(Decoder &decoder)
 void Database::decodeScope(Decoder &decoder,Scope *newScope)
 
 {
+  unique_ptr<Scope> owner(newScope);
   uint4 elemId = decoder.openElement();
   if (elemId == ELEM_SCOPE) {
     Scope *parentScope = parseParentTag(decoder);
-    attachScope(newScope,parentScope);
+    attachScope(owner.release(),parentScope);
     newScope->decode(decoder);
   }
   else {
     newScope->decodeWrappingAttributes(decoder);
     uint4 subId = decoder.openElement(ELEM_SCOPE);
     Scope *parentScope = parseParentTag(decoder);
-    attachScope(newScope,parentScope);
+    attachScope(owner.release(),parentScope);
     newScope->decode(decoder);
     decoder.closeElement(subId);
   }

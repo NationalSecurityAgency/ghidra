@@ -1300,6 +1300,9 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 		assertNotNull("Action cannot be null", action);
 		assertNotNull("Action context cannot be null", context);
 
+		boolean isValid = runSwing(() -> action.isValidContext(context));
+		assertTrue("Attempted to invoke action with invalid context", isValid);
+
 		runSwing(() -> {
 
 			action.isAddToPopup(context);

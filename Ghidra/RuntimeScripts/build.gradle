@@ -41,7 +41,7 @@ rootProject.assembleMarkdownToHtml {
 }
 
 rootProject.PLATFORMS.each { platform ->
-	rootProject.tasks.findAll {it.name == "assembleDistribution_${platform.name}"}.each { t -> 
+	rootProject.tasks.matching {it.name == "assembleDistribution_${platform.name}"}.each { t -> 
 		def p = this.project
 
 		if (isLinux(platform.name) || isMac(platform.name)) {

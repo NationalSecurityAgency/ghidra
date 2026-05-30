@@ -68,10 +68,10 @@ This lists the *logical* breakpoints, preferring static addresses.
   Again, because the module has not been imported yet, this column is blank.
 * The next column **Length** gives the length of the breakpoint.
   In GDB, this generally applies to watchpoints only.
-* The next column **Kinds** gives the kinds of breakpoint.
-  Most breakpoints are software execution breakpoints, indicated by "SW_EXECUTE."
+* The next column **Kind** gives the kind(s) of breakpoint.
+  Most breakpoints are software execution breakpoints, indicated by (lower case) `x`.
   That is, they are implemented by patching the target's memory with a special instruction that traps execution &mdash; `INT3` on x86.
-  There are also hardware execution breakpoints indicated by "HW_EXECUTE," and access breakpoints indicated by "HW_READ" and/or "HW_WRITE".
+  There are also hardware execution breakpoints indicated by (upper case) `X` and access breakpoints indicated by `R` and/or `W`.
   **NOTE**: GDB would call access breakpoints *watchpoints*.
   An advantage to software breakpoints is that you can have a practically unlimited number of them. Some disadvantages are they can be detected easily, and they are limited to execution breakpoints.
 * The next column **Locations** counts the number of locations for the breakpoint.

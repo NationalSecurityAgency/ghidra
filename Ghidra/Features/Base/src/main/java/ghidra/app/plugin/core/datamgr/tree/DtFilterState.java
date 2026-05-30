@@ -21,7 +21,6 @@ import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
-import ghidra.program.model.listing.Function;
 
 /**
  * A simple object to store various filter settings for the data type provider.
@@ -34,6 +33,7 @@ public class DtFilterState {
 	private DtTypeFilter enumsFilter = new DtTypeFilter("Enums");
 	private DtTypeFilter functionsFilter = new DtTypeFilter("Functions");
 	private DtTypeFilter structuresFilter = new DtTypeFilter("Structures");
+	private DtTypeFilter otherFilter = new DtTypeFilter("Other");
 	private DtTypeFilter pointersFilter = new DtTypeFilter("Pointers");
 	private DtTypeFilter unionsFilter = new DtTypeFilter("Unions");
 
@@ -46,6 +46,7 @@ public class DtFilterState {
 	public DtFilterState copy() {
 		DtFilterState filterState = new DtFilterState();
 		filterState.arraysFilter = arraysFilter.copy();
+		filterState.otherFilter = otherFilter.copy();
 		filterState.enumsFilter = enumsFilter.copy();
 		filterState.functionsFilter = functionsFilter.copy();
 		filterState.structuresFilter = structuresFilter.copy();
@@ -64,6 +65,18 @@ public class DtFilterState {
 
 	public void setArraysFilter(DtTypeFilter filter) {
 		this.arraysFilter = filter;
+	}
+
+	public boolean isShowOther() {
+		return otherFilter.isTypeActive();
+	}
+
+	public DtTypeFilter getOtherFilter() {
+		return otherFilter;
+	}
+
+	public void setOtherFilter(DtTypeFilter filter) {
+		this.otherFilter = filter;
 	}
 
 	public boolean isShowEnums() {
@@ -155,7 +168,7 @@ public class DtFilterState {
 			return passes(enumsFilter, dt);
 		}
 
-		if (baseDt instanceof Function) {
+		if (baseDt instanceof FunctionDefinition) {
 			return passes(functionsFilter, dt);
 		}
 
@@ -167,7 +180,7 @@ public class DtFilterState {
 			return passes(unionsFilter, dt);
 		}
 
-		return true;
+		return passes(otherFilter, dt);
 	}
 
 	private boolean passes(DtTypeFilter filter, DataType dt) {
@@ -184,6 +197,7 @@ public class DtFilterState {
 		ss.putSaveState(arraysFilter.getName(), arraysFilter.save());
 		ss.putSaveState(enumsFilter.getName(), enumsFilter.save());
 		ss.putSaveState(functionsFilter.getName(), functionsFilter.save());
+		ss.putSaveState(otherFilter.getName(), otherFilter.save());
 		ss.putSaveState(pointersFilter.getName(), pointersFilter.save());
 		ss.putSaveState(structuresFilter.getName(), structuresFilter.save());
 		ss.putSaveState(unionsFilter.getName(), unionsFilter.save());
@@ -201,6 +215,7 @@ public class DtFilterState {
 		arraysFilter = DtTypeFilter.restore("Arrays", ss.getSaveState("Arrays"));
 		enumsFilter = DtTypeFilter.restore("Enums", ss.getSaveState("Enums"));
 		functionsFilter = DtTypeFilter.restore("Functions", ss.getSaveState("Functions"));
+		otherFilter = DtTypeFilter.restore("Other", ss.getSaveState("Other"));
 		pointersFilter = DtTypeFilter.restore("Pointers", ss.getSaveState("Pointers"));
 		structuresFilter = DtTypeFilter.restore("Structures", ss.getSaveState("Structures"));
 		unionsFilter = DtTypeFilter.restore("Unions", ss.getSaveState("Unions"));
@@ -208,8 +223,8 @@ public class DtFilterState {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(arraysFilter, enumsFilter, functionsFilter, pointersFilter,
-			structuresFilter, unionsFilter);
+		return Objects.hash(arraysFilter, enumsFilter, functionsFilter,
+			otherFilter, pointersFilter, structuresFilter, unionsFilter);
 	}
 
 	@Override
@@ -227,6 +242,7 @@ public class DtFilterState {
 		return Objects.equals(arraysFilter, other.arraysFilter) &&
 			Objects.equals(enumsFilter, other.enumsFilter) &&
 			Objects.equals(functionsFilter, other.functionsFilter) &&
+			Objects.equals(otherFilter, other.otherFilter) &&
 			Objects.equals(pointersFilter, other.pointersFilter) &&
 			Objects.equals(structuresFilter, other.structuresFilter) &&
 			Objects.equals(unionsFilter, other.unionsFilter);

@@ -24,6 +24,7 @@ src/decompile/datatests/condconstsub.xml||GHIDRA||||END|
 src/decompile/datatests/condexesub.xml||GHIDRA||||END|
 src/decompile/datatests/condmulti.xml||GHIDRA||||END|
 src/decompile/datatests/convert.xml||GHIDRA||||END|
+src/decompile/datatests/copytrim.xml||GHIDRA||||END|
 src/decompile/datatests/deadvolatile.xml||GHIDRA||||END|
 src/decompile/datatests/deindirect.xml||GHIDRA||||END|
 src/decompile/datatests/deindirect2.xml||GHIDRA||||END|
@@ -81,6 +82,7 @@ src/decompile/datatests/revisit.xml||GHIDRA||||END|
 src/decompile/datatests/sbyte.xml||GHIDRA||||END|
 src/decompile/datatests/skipnext2.xml||GHIDRA||||END|
 src/decompile/datatests/stackreturn.xml||GHIDRA||||END|
+src/decompile/datatests/stackspill.xml||GHIDRA||||END|
 src/decompile/datatests/stackstring.xml||GHIDRA||||END|
 src/decompile/datatests/statuscmp.xml||GHIDRA||||END|
 src/decompile/datatests/switchhide.xml||GHIDRA||||END|

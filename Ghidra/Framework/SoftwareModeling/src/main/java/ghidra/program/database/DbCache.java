@@ -139,7 +139,7 @@ public class DbCache<T extends DbObject> {
 	 * This form should be used in conjunction with record iterators to avoid unnecessary
 	 * record query during a possible object refresh.  To benefit from the record the cached
 	 * object must implement the {@link DbObject#refresh(DBRecord)} method which by default
-	 * ignores the record and simply calls {@link DbObject#refresh()}.
+	 * ignores the record and simply calls {@link DbObject#refresh(DBRecord)}.
 	 * <P>
 	 * This method is similar to the get() method in that it can be called without the database 
 	 * lock. It will first check if the object is in the cache and definitely valid before 

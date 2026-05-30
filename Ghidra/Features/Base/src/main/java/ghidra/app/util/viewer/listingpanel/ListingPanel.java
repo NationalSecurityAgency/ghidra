@@ -45,6 +45,7 @@ import ghidra.app.util.viewer.format.FieldHeader;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.util.*;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.StringDataInstance;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
@@ -834,7 +835,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		Program program = getProgram();
 		CodeUnit cu = program.getListing().getCodeUnitContaining(address);
 		if (cu instanceof Data data) {
-			openData(data, address);
+			openDataAndShowComponentAtAddress(data, address);
 		}
 		else if (cu instanceof Instruction instruction) {
 			openFunction(instruction);
@@ -859,7 +860,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		}
 	}
 
-	private void openData(Data data, Address address) {
+	private void openDataAndShowComponentAtAddress(Data data, Address address) {
 		if (data.getComponent(0) == null) {
 			// not sub data to open
 			return;
@@ -870,10 +871,19 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 			return;
 		}
 
+		if (subData != data && subData.getParentOffset() == 0 &&
+			StringDataInstance.isString(subData.getParent())) {
+			// if the primitive subData was the first char inside a char[], manipulate subData
+			// so that we skip opening the char[], but retain any parents that contain it.
+			subData = subData.getParent().getParent();
+			if (subData == null) {
+				return;
+			}
+		}
+
 		if (openAllData(subData)) {
 			layoutModel.dataChanged(true);
 		}
-
 	}
 
 	private FieldLocation getFieldLocationForDataAndOpenAsNeeded(Data data, Address address) {

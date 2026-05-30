@@ -15,10 +15,10 @@
  */
 package docking.widgets.table;
 
-import static docking.DockingUtils.CONTROL_KEY_MODIFIER_MASK;
-import static docking.action.MenuData.NO_MNEMONIC;
-import static java.awt.event.InputEvent.SHIFT_DOWN_MASK;
-import static javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION;
+import static docking.DockingUtils.*;
+import static docking.action.MenuData.*;
+import static java.awt.event.InputEvent.*;
+import static javax.swing.ListSelectionModel.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -636,12 +636,23 @@ public class GTable extends JTable {
 	}
 
 	/**
-	 * {@return the underlying ConfigurableColumnTableModel if one is in-use}
+	 * {@return the underlying ConfigurableColumnTableModel if one is in use}
 	 */
 	public ConfigurableColumnTableModel getConfigurableColumnTableModel() {
 		TableModel model = getUnwrappedTableModel();
 		if (model instanceof ConfigurableColumnTableModel) {
 			return (ConfigurableColumnTableModel) model;
+		}
+		return null;
+	}
+
+	/**
+	 * {@return the underlying DynamicColumnTableModel if one is in use}
+	 */
+	public DynamicColumnTableModel<?> getDynamicTableModel() {
+		TableModel model = getUnwrappedTableModel();
+		if (model instanceof DynamicColumnTableModel<?>) {
+			return (DynamicColumnTableModel<?>) model;
 		}
 		return null;
 	}
@@ -912,7 +923,17 @@ public class GTable extends JTable {
 	 * @see #setPreferenceKey(String)
 	 */
 	public String getPreferenceKey() {
-		return preferenceKey;
+		if (preferenceKey != null) {
+			// prefer the key that has been set programmatically
+			return preferenceKey;
+		}
+
+		DynamicColumnTableModel<?> dynamicModel = getDynamicTableModel();
+		if (dynamicModel != null) {
+			return dynamicModel.getPreferenceKey();
+		}
+
+		return null;
 	}
 
 	/**

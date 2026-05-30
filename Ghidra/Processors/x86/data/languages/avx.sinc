@@ -1453,6 +1453,7 @@ define pcodeop vmpsadbw_avx ;
     YmmReg1[128,32] = vexVVVV_YmmReg[128,32] f* m[128,32];
     YmmReg1[160,32] = vexVVVV_YmmReg[160,32] f* m[160,32];
     YmmReg1[192,32] = vexVVVV_YmmReg[192,32] f* m[192,32];
+    YmmReg1[224,32] = vexVVVV_YmmReg[224,32] f* m[224,32];
 	ZmmReg1 = zext(YmmReg1);
 }
 
@@ -3054,9 +3055,9 @@ define pcodeop vtestps_avx ;
 	local val1 = YmmReg2_m256;
 	local val2 = YmmReg1;
 	local ztest = val1 & val2;
-	ZF = (ztest[31,1] | ztest[63,1] | ztest[95,1] | ztest[127,1] | ztest[160,1] | ztest[191,1] | ztest[224,1] | ztest[255,1]) == 0;
+	ZF = (ztest[31,1] | ztest[63,1] | ztest[95,1] | ztest[127,1] | ztest[159,1] | ztest[191,1] | ztest[223,1] | ztest[255,1]) == 0;
 	local ctest = val1 & ~val2;
-	CF = (ctest[31,1] | ctest[63,1] | ctest[95,1] | ctest[127,1] | ctest[160,1] | ctest[191,1] | ctest[224,1] | ctest[255,1]) == 0;
+	CF = (ctest[31,1] | ctest[63,1] | ctest[95,1] | ctest[127,1] | ctest[159,1] | ctest[191,1] | ctest[223,1] | ctest[255,1]) == 0;
 	AF = 0;
 	OF = 0;
 	PF = 0;

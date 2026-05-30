@@ -21,6 +21,26 @@
     <external_name tool="qemu_system" name="qemu-system-mips"/>
   </language>
   <language processor="MIPS"
+            endian="big"
+            size="32"
+            variant="16e"
+            version="1.9"
+            slafile="mips32be.sla"
+            processorspec="mips32_16e.pspec"
+            manualindexfile="../manuals/mipsM16.idx"
+            id="MIPS:BE:32:16e">
+    <description>MIPS32 32-bit addresses, big endian, in mips16e mode</description>
+    <compiler name="default" spec="mips32be.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="mips32be.cspec" id="windows"/>
+    <compiler name="eabi" spec="mips32_eabi.cspec" id="eabi"/>
+    <external_name tool="gnu" name="mips:3000"/>
+    <external_name tool="gnu" name="mips:4000"/>
+    <external_name tool="IDA-PRO" name="mipsb"/>
+    <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mips"/>
+    <external_name tool="qemu_system" name="qemu-system-mips"/>
+  </language>
+  <language processor="MIPS"
             endian="little"
             size="32"
             variant="default"
@@ -30,6 +50,25 @@
             manualindexfile="../manuals/mipsM16.idx"
             id="MIPS:LE:32:default">
     <description>MIPS32 32-bit addresses, little endian, with mips16e</description>
+    <compiler name="default" spec="mips32le.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="mips32le.cspec" id="windows"/>
+    <compiler name="eabi" spec="mips32_eabi.cspec" id="eabi"/>
+    <external_name tool="gnu" name="mips:3000"/>
+    <external_name tool="gnu" name="mips:4000"/>
+    <external_name tool="IDA-PRO" name="mipsl"/>
+    <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mipsel"/>
+    <external_name tool="qemu_system" name="qemu-system-mipsel"/>
+  </language><language processor="MIPS"
+            endian="little"
+            size="32"
+            variant="16e"
+            version="1.9"
+            slafile="mips32le.sla"
+            processorspec="mips32_16e.pspec"
+            manualindexfile="../manuals/mipsM16.idx"
+            id="MIPS:LE:32:16e">
+    <description>MIPS32 32-bit addresses, little endian, in mips16e mode</description>
     <compiler name="default" spec="mips32le.cspec" id="default"/>
     <compiler name="Visual Studio" spec="mips32le.cspec" id="windows"/>
     <compiler name="eabi" spec="mips32_eabi.cspec" id="eabi"/>
@@ -91,6 +130,24 @@
     <external_name tool="qemu_system" name="qemu-system-mips64"/>
   </language>
   <language processor="MIPS"
+            endian="big"
+            size="64"
+            variant="default"
+            version="1.9"
+            slafile="mips64be.sla"
+            processorspec="mips64_16e.pspec"
+            manualindexfile="../manuals/mipsM16.idx"
+            id="MIPS:BE:64:16e">
+    <description>MIPS64 64-bit addresses, big endian, in mips16e mode</description>
+    <compiler name="default" spec="mips64be.cspec" id="default"/>
+    <external_name tool="gnu" name="mips:5000"/>
+    <external_name tool="IDA-PRO" name="mipsb"/>
+    <external_name tool="IDA-PRO" name="r5900r"/>
+    <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mips64"/>
+    <external_name tool="qemu_system" name="qemu-system-mips64"/>
+  </language>
+  <language processor="MIPS"
             endian="little"
             size="64"
             variant="default"
@@ -99,7 +156,26 @@
             processorspec="mips64.pspec"
             manualindexfile="../manuals/mipsM16.idx"
             id="MIPS:LE:64:default">
-    <description>MIPS64 64-bit addreses, little endian, with mips16e</description>
+    <description>MIPS64 64-bit addresses, little endian, with mips16e</description>
+    <compiler name="default" spec="mips64le.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="mips64le.cspec" id="windows"/>
+    <external_name tool="gnu" name="mips:5000"/>
+    <external_name tool="IDA-PRO" name="mipsl"/>
+    <external_name tool="IDA-PRO" name="r5900l"/>
+    <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mips64el"/>
+    <external_name tool="qemu_system" name="qemu-system-mips64el"/>
+  </language>
+  <language processor="MIPS"
+            endian="little"
+            size="64"
+            variant="default"
+            version="1.9"
+            slafile="mips64le.sla"
+            processorspec="mips64_16e.pspec"
+            manualindexfile="../manuals/mipsM16.idx"
+            id="MIPS:LE:64:16e">
+    <description>MIPS64 64-bit addresses, little endian, in mips16e mode</description>
     <compiler name="default" spec="mips64le.cspec" id="default"/>
     <compiler name="Visual Studio" spec="mips64le.cspec" id="windows"/>
     <external_name tool="gnu" name="mips:5000"/>

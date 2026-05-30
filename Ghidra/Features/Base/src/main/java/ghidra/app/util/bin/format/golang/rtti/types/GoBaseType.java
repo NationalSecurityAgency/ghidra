@@ -73,6 +73,13 @@ public class GoBaseType implements StructureVerifier {
 	}
 
 	/**
+	 * {@return the number of bytes of this type that contain pointer data}
+	 */
+	public long getPtrBytes() {
+		return ptrdata;
+	}
+
+	/**
 	 * {@return the {@link GoKind} enum assigned to this type definition}
 	 */
 	public GoKind getKind() {

@@ -73,13 +73,16 @@ class ArrayDB extends DataTypeDB implements Array {
 	}
 
 	@Override
-	protected boolean refresh() {
+	protected boolean refresh(DBRecord rec) {
 		try {
 			elementLength = -1;
-			DBRecord rec = adapter.getRecord(key);
+			if (rec == null) {
+				rec = adapter.getRecord(key);
+			}
 			if (rec != null) {
 				record = rec;
-				return super.refresh();
+				completeRefresh();
+				return true;
 			}
 		}
 		catch (IOException e) {

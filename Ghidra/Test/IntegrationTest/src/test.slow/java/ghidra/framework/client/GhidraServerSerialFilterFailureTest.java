@@ -19,7 +19,6 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.InvalidClassException;
-import java.rmi.RemoteException;
 import java.rmi.UnmarshalException;
 import java.security.Principal;
 import java.util.HashSet;
@@ -117,11 +116,10 @@ public class GhidraServerSerialFilterFailureTest extends AbstractGhidraHeadlessI
 			serverHandle.getRepositoryServer(getBogusUserSubject(), new Callback[0]);
 			fail("serial filter rejection failed to perform");
 		}
-		catch (RemoteException e) {
+		catch (Exception e) {
 			Throwable cause = e.getCause();
-			assertTrue("expected remote unmarshall exception", cause instanceof UnmarshalException);
-			cause = cause.getCause();
-			assertTrue("expected remote invalid class exceptionn",
+			assertTrue("Expected remote unmarshall exception", e instanceof UnmarshalException);
+			assertTrue("Expected remote invalid class exceptionn",
 				cause instanceof InvalidClassException);
 		}
 
