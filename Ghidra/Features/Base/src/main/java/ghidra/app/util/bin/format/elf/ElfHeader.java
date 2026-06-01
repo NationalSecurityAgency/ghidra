@@ -1012,9 +1012,9 @@ public class ElfHeader implements StructConverter {
 	private int deriveGnuHashDynamicSymbolCount(long gnuHashTableOffset) throws IOException {
 		int numBuckets = reader.readInt(gnuHashTableOffset);
 		int symbolBase = reader.readInt(gnuHashTableOffset + 4);
-		int bloomSize = reader.readInt(gnuHashTableOffset + 8);
+		long bloomSize = reader.readUnsignedInt(gnuHashTableOffset + 8);
 		// int bloomShift = reader.readInt(gnuHashTableOffset + 12);
-		int bloomWordSize = is64Bit() ? 8 : 4;
+		long bloomWordSize = is64Bit() ? 8 : 4;
 		long bucketsOffset = gnuHashTableOffset + 16 + (bloomWordSize * bloomSize);
 
 
