@@ -47,7 +47,7 @@ set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 set "INSTALL_DIR=%SCRIPT_DIR%\.."
 if not exist "%INSTALL_DIR%\Ghidra" (
 	set DEV_ARG="--dev"
-	set "INSTALL_DIR=%SCRIPT_DIR%\..\..\..\.."
+	set "INSTALL_DIR=%SCRIPT_DIR%\..\..\.."
 )
 
 set "PYGHIDRA_LAUNCHER=%INSTALL_DIR%\Ghidra\Features\PyGhidra\support\pyghidra_launcher.py

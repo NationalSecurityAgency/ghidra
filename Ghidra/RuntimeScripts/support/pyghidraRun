@@ -27,7 +27,7 @@ DEV_ARG=
 INSTALL_DIR="${SCRIPT_DIR}/.."
 if [ ! -d "${INSTALL_DIR}/Ghidra" ]; then
 	DEV_ARG="--dev"
-	INSTALL_DIR="${SCRIPT_DIR}/../../../.."
+	INSTALL_DIR="${SCRIPT_DIR}/../../.."
 fi
 
 PYGHIDRA_LAUNCHER="${INSTALL_DIR}/Ghidra/Features/PyGhidra/support/pyghidra_launcher.py"

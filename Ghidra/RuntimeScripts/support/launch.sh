@@ -100,7 +100,7 @@ if [[ "${SUPPORT_DIR}" = *"!"* ]]; then
 	exit 1
 fi
 
-if [ -f "${SUPPORT_DIR}/launch.properties" ]; then
+if [ -f "${SUPPORT_DIR}/../Ghidra/application.properties" ]; then
 
 	# Production Environment
 	export INSTALL_DIR="${SUPPORT_DIR}/.."
@@ -110,7 +110,7 @@ if [ -f "${SUPPORT_DIR}/launch.properties" ]; then
 else
 
 	# Development Environment (Eclipse classes or "gradle jar")
-	export INSTALL_DIR="${SUPPORT_DIR}/../../../.."
+	export INSTALL_DIR="${SUPPORT_DIR}/../../.."
 	CPATH="${INSTALL_DIR}/Ghidra/Framework/Utility/bin/main"
 	LS_CPATH="${INSTALL_DIR}/GhidraBuild/LaunchSupport/bin/main"
 	if ! [ -d "${LS_CPATH}" ]; then
@@ -121,7 +121,7 @@ else
 			exit 1
 		fi
 	fi
-	DEBUG_LOG4J="${INSTALL_DIR}/Ghidra/RuntimeScripts/Common/support/debug.log4j.xml"
+	DEBUG_LOG4J="${INSTALL_DIR}/Ghidra/RuntimeScripts/support/debug.log4j.xml"
 fi
 
 # Identify java command from either JAVA_HOME or PATH, try PATH first

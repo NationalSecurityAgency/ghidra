@@ -35,7 +35,7 @@ REM Production Environment
 if exist "%GHIDRA_DIR%" goto continue
 
 REM Development Environment
-set "GHIDRA_DIR=%SCRIPT_DIR%..\..\.."
+set "GHIDRA_DIR=%SCRIPT_DIR%..\.."
 set OS_DIR=build\os
 
 :continue

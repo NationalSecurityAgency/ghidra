@@ -500,7 +500,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		}
 
 		ResourceFile serverRoot = new ResourceFile(Application.getInstallationDirectory(),
-			SystemUtilities.isInDevelopmentMode() ? "ghidra/Ghidra/RuntimeScripts/Common/server"
+			SystemUtilities.isInDevelopmentMode() ? "ghidra/Ghidra/RuntimeScripts/server"
 					: "server");
 		if (serverRoot.getFile(false) == null) {
 			System.err.println(

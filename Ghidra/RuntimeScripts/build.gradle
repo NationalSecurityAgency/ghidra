@@ -19,58 +19,33 @@ eclipse.project.name = '_Runtime Scripts'
 
 rootProject.assembleDistribution {
 
-	from (this.project.file("Common/support")) {
+	from (this.project.file("support")) {
 		into "support"
 	}
 	
-	from (this.project.file("Common/server")) {
+	from (this.project.file("server")) {
 		into "server"
+	}
+	
+	from (this.project.file("ghidraRun"))
+	from (this.project.file("ghidraRun.bat"))
+	
+	from (rootProject.projectDir) {
+		include "gradlew"
+		include "gradlew.bat"
+		into "support/gradle"
 	}
 }
 
 rootProject.assembleMarkdownToHtml {
-	from (this.project.file("Common/support")) {
+	from (this.project.file("support")) {
 		include "*.md"
 		into "support"
 	}
 	
-	from (this.project.file("Common/server")) {
+	from (this.project.file("server")) {
 		include "*.md"
 		into "server"
-	}
-}
-
-rootProject.PLATFORMS.each { platform ->
-	rootProject.tasks.matching {it.name == "assembleDistribution_${platform.name}"}.each { t -> 
-		def p = this.project
-
-		if (isLinux(platform.name) || isMac(platform.name)) {
-			t.from ("${p.projectDir}/Linux/support") {
-				into "support"
-			}
-			t.from ("${p.projectDir}/Linux/server") {
-				into "server"
-			}
-			t.from ("${rootProject.projectDir}") {
-				include "gradlew"
-				into "support/gradle"
-			}
-			t.from (p.file("Linux/ghidraRun"))
-		}
-
-		if (isWindows(platform.name)) {
-			t.from ("${p.projectDir}/Windows/support") {
-				into "support"
-			}
-			t.from ("${p.projectDir}/Windows/server") {
-				into "server"
-			}
-			t.from ("${rootProject.projectDir}") {
-				include "gradlew.bat"
-				into "support/gradle"
-			}
-			t.from (p.file("Windows/ghidraRun.bat"))
-		}
 	}
 }
 

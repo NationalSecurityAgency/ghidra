@@ -93,7 +93,7 @@ else
 	OS_DIRNAME="linux64"
 fi
 
-if [ -d "${SCRIPT_DIR}/../Ghidra" ]; then
+if [ -f "${SCRIPT_DIR}/../Ghidra/application.properties" ]; then
 
 	# Production Environment
 	GHIDRA_HOME="${SCRIPT_DIR}/.."
@@ -105,8 +105,8 @@ if [ -d "${SCRIPT_DIR}/../Ghidra" ]; then
 else
 
 	# Development Environment (Eclipse classes or "gradle jar")
-	GHIDRA_HOME="${SCRIPT_DIR}/../../../.."
-	WRAPPER_CONF="${SCRIPT_DIR}/../../Common/server/server.conf"
+	GHIDRA_HOME="${SCRIPT_DIR}/../../.."
+	WRAPPER_CONF="${SCRIPT_DIR}/server.conf"
 	DATA_DIR="${GHIDRA_HOME}/${MODULE_DIR}/build/data"
 	OS_DIR="${GHIDRA_HOME}/${MODULE_DIR}/os/${OS_DIRNAME}"
 	CLASSPATH_FRAG="${GHIDRA_HOME}/${MODULE_DIR}/build/dev-meta/classpath.frag"
