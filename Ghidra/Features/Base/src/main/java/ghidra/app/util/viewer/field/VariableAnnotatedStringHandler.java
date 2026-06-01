@@ -251,9 +251,14 @@ public class VariableAnnotatedStringHandler implements AnnotatedStringHandler {
 		return null;
 	}
 
+	/* Only local addresses, such as Stack, register, and HASH need to be supported. */
 	private static Address toAddress(Program p, String s) {
 		AddressFactory af = p.getAddressFactory();
-		return af.getAddress(s);
+		Address addr = af.getAddress(s);
+		if (addr == null) {
+			return null;
+		}
+		return addr.isMemoryAddress() ? null : addr;
 	}
 
 	private static interface VariableMatcher {
