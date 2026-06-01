@@ -61,7 +61,7 @@ public class GTreeTableModel<T extends GTreeTableNode> extends ThreadedTableMode
 	}
 
 	/**
-	 * Add the {@TreeColumn} by default, override to add additional columns
+	 * Add the {@link TreeColumn} by default, override to add additional columns
 	 * <p>
 	 * {@inheritDoc}
 	 */
