@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
+import util.CollectionUtils;
 
 /**
  * Factory and utility methods for working with {@link Loader}s.
@@ -41,24 +42,48 @@ public class LoaderService {
 	public static LoaderMap getSupportedLoadSpecs(ByteProvider provider,
 			Predicate<Loader> loaderFilter) {
 		LoaderMap loaderMap = new LoaderMap();
+		List<Loader> fallback = new ArrayList<>();
 		for (Loader loader : getAllLoaders()) {
 			if (loaderFilter.test(loader)) {
-				try {
-					Collection<LoadSpec> loadSpecs = loader.findSupportedLoadSpecs(provider);
-					if (loadSpecs != null && !loadSpecs.isEmpty()) { // shouldn't be null, but protect against rogue loaders
-						loaderMap.put(loader, loadSpecs);
-					}
+				if (!loader.isFallback()) {
+					tryLoadSpecs(loader, provider, loaderMap);
 				}
-				catch (IOException e) {
-					// file not applicable for loader
-				}
-				catch (RuntimeException e) {
-					Msg.error(LoaderService.class,
-						"Unexpected Loader exception from " + loader.getName(), e);
+				else {
+					fallback.add(loader);
 				}
 			}
 		}
+
+		if (loaderMap.size() <= 1) { // BinaryLoader is always there
+			for (Loader loader : fallback) {
+				tryLoadSpecs(loader, provider, loaderMap);
+			}
+		}
+
 		return loaderMap;
+	}
+
+	/**
+	 * Attempts to find and register supported {@link LoadSpec}s for the given {@link Loader}
+	 * 
+	 * @param loader The {@link Loader} to query
+	 * @param provider The {@link ByteProvider} to load from
+	 * @param loaderMap The {@link LoaderMap} to populate with discovered {@link LoadSpec}s
+	 */
+	private static void tryLoadSpecs(Loader loader, ByteProvider provider, LoaderMap loaderMap) {
+		try {
+			Collection<LoadSpec> loadSpecs = loader.findSupportedLoadSpecs(provider);
+			if (!CollectionUtils.isBlank(loadSpecs)) {
+				loaderMap.put(loader, loadSpecs);
+			}
+		}
+		catch (IOException e) {
+			// file not applicable for loader
+		}
+		catch (RuntimeException e) {
+			Msg.error(LoaderService.class, "Unexpected Loader exception from " + loader.getName(),
+				e);
+		}
 	}
 
 	/**
