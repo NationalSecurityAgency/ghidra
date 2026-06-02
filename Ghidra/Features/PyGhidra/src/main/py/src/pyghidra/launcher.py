@@ -225,7 +225,7 @@ class PyGhidraLauncher:
     def _setup_dev_classpath(self, utility_dir: Path):
         """
         Sets up the classpath for dev mode as seen in
-        Ghidra/RuntimeScripts/Linux/support/launch.sh
+        Ghidra/RuntimeScripts/support/launch.sh
         """
         bin_dir = Path("bin") / "main"
         build_dir = Path("build") / "libs"
@@ -274,7 +274,7 @@ class PyGhidraLauncher:
         root = self._install_dir
 
         if self._dev_mode:
-            root = root / "Ghidra" / "RuntimeScripts" / "Common"
+            root = root / "Ghidra" / "RuntimeScripts"
 
         launch_properties = root / "support" / "launch.properties"
 

@@ -1425,6 +1425,11 @@ def put_frames() -> None:
         if base != offset_inst.space:
             trace.create_overlay_space(base, offset_inst.space)
         fobj.set_value('Instruction Offset', offset_inst)
+        keys.append(FRAME_KEY_PATTERN.format(level=f.FrameNumber))
+        base, offset_stack = mapper.map(nproc, f.StackOffset)
+        if base != offset_inst.space:
+            trace.create_overlay_space(base, offset_stack.space)
+        fobj.set_value('Stack Offset', offset_stack)
         if not util.dbg.use_generics:
             base, offset_stack = mapper.map(nproc, f.StackOffset)
             if base != offset_stack.space:
@@ -1438,8 +1443,7 @@ def put_frames() -> None:
             fobj.set_value('Stack Offset', offset_stack)
             fobj.set_value('Return Offset', offset_ret)
             fobj.set_value('Frame Offset', offset_frame)
-        fobj.set_value('_display', "#{} {}".format(
-            f.FrameNumber, offset_inst.offset))
+        fobj.set_value('_display', f'{f.FrameNumber} {offset_inst.offset:008x}')
         fobj.insert()
     trace.proxy_object_path(STACK_PATTERN.format(
         procnum=nproc, tnum=nthrd)).retain_values(keys)

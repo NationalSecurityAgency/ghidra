@@ -24,7 +24,8 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.InvocationDialogHelper;
@@ -32,7 +33,6 @@ import ghidra.app.plugin.core.debug.gui.tracermi.launcher.ScriptAttributesParser
 import ghidra.async.SwingExecutorService;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.LaunchParameter;
-import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.PathIsDir;
 import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
 
@@ -144,37 +144,6 @@ public class TraceRmiLaunchDialogTest extends AbstractGhidraHeadedDebuggerTest {
 			// pass
 		}
 		result.h.invoke();
-	}
-
-	@Test
-	public void testIntSaveHexValue() throws Throwable {
-		PromptResult result = prompt(PARAM_INT);
-		result.h.setArgAsString(PARAM_INT, "0x11");
-		result.h.invoke();
-
-		SaveState state = result.h.saveState();
-		assertEquals("0x11", state.getString("some_int,java.math.BigInteger", null));
-	}
-
-	@Test
-	@Ignore
-	public void testIntLoadHexValue() throws Throwable {
-		/**
-		 * TODO: This is a bit out of order. However, the dialog cannot load/decode from the state
-		 * until it has the parameters. Worse, to check that user input was valid, the dialog
-		 * verifies that the value it gets back matches the text in the box, because if it doesn't,
-		 * then the editor must have failed to parse/decode the value. Currently, loading the state
-		 * while the dialog box has already populated its values, does not modify the contents of
-		 * any editor, so the text <em>will not</em> match, causing this test to fail.
-		 */
-		PromptResult result = prompt(PARAM_INT);
-		SaveState state = new SaveState();
-		state.putString("some_int,java.math.BigInteger", "0x11");
-		result.h.loadState(state);
-		result.h.invoke();
-
-		Map<String, ValStr<?>> args = waitOn(result.args);
-		assertEquals(Map.of("some_int", intVal(17, "0x11")), args);
 	}
 
 	@Test

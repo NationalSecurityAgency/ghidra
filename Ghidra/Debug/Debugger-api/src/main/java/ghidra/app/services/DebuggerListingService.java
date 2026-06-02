@@ -15,9 +15,12 @@
  */
 package ghidra.app.services;
 
+import java.util.List;
+
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.debug.api.action.AutoReadMemorySpec;
 import ghidra.debug.api.action.LocationTrackingSpec;
+import ghidra.debug.api.listing.DebuggerListing;
 import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.address.Address;
@@ -56,6 +59,20 @@ public interface DebuggerListingService extends CodeViewerService {
 	 * @return the current specification
 	 */
 	LocationTrackingSpec getTrackingSpec();
+
+	/**
+	 * Create a new disconnected debugger listing
+	 *
+	 * @return newly created debugger listing
+	 */
+	DebuggerListing createNewListing();
+
+	/**
+	 * Get all debugger listings
+	 *
+	 * @return List of all debugger listings
+	 */
+	List<DebuggerListing> getAllListings();
 
 	/**
 	 * Get the auto-read memory specification of the main listing.
@@ -108,4 +125,11 @@ public interface DebuggerListingService extends CodeViewerService {
 	 */
 	MultiBlendedListingBackgroundColorModel createListingBackgroundColorModel(
 			ListingPanel listingPanel);
+
+	/**
+	 * Get the next custom title for a DebuggerListing
+	 *
+	 * @return Next custom title
+	 */
+	String findNextCustomTitle();
 }

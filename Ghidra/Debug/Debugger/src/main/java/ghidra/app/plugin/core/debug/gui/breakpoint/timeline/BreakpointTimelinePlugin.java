@@ -22,6 +22,7 @@ import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
+import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -33,11 +34,13 @@ import ghidra.trace.model.Trace;
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.UNSTABLE,
-	servicesRequired = { DebuggerTraceManagerService.class, },
+	servicesRequired = { DebuggerTraceManagerService.class, DebuggerStaticMappingService.class },
 	eventsConsumed = { TraceClosedPluginEvent.class, TraceActivatedPluginEvent.class, }
 )
 public class BreakpointTimelinePlugin extends AbstractDebuggerPlugin {
 	BreakpointTimelineProvider provider;
+	BreakpointTimelineActions actions;
+
 	private Trace currentTrace;
 
 	private final Map<Trace, List<BreakpointTimelineProvider>> traceSpecificZoomProviders =
@@ -54,6 +57,7 @@ public class BreakpointTimelinePlugin extends AbstractDebuggerPlugin {
 
 	@Override
 	protected void dispose() {
+		actions.dispose();
 		for (final var providers : traceSpecificZoomProviders.values()) {
 			for (final var provider : providers) {
 				tool.removeComponentProvider(provider);
@@ -76,6 +80,7 @@ public class BreakpointTimelinePlugin extends AbstractDebuggerPlugin {
 	protected void init() {
 		super.init();
 		provider = new BreakpointTimelineProvider(this);
+		actions = new BreakpointTimelineActions(getTool());
 	}
 
 	@Override

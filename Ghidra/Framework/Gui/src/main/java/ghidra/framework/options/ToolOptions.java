@@ -30,6 +30,7 @@ import org.jdom2.Element;
 
 import ghidra.util.*;
 import ghidra.util.bean.opteditor.OptionsVetoException;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
 
 /**
@@ -151,9 +152,11 @@ public class ToolOptions extends AbstractOptions {
 				continue; // shouldn't happen
 			}
 
-			Class<?> c = Class.forName(element.getAttributeValue(CLASS_ATTRIBUTE));
-			Constructor<?> constructor = c.getDeclaredConstructor();
-			WrappedOption wo = (WrappedOption) constructor.newInstance();
+			Class<? extends WrappedOption> c =
+				ClassSearcher.forNameSafe(element.getAttributeValue(CLASS_ATTRIBUTE),
+					WrappedOption.class, getClass().getClassLoader());
+			Constructor<? extends WrappedOption> constructor = c.getDeclaredConstructor();
+			WrappedOption wo = constructor.newInstance();
 			wo.readState(new SaveState(element));
 			if (wo instanceof WrappedCustomOption wrappedCustom && !wrappedCustom.isValid()) {
 				continue;

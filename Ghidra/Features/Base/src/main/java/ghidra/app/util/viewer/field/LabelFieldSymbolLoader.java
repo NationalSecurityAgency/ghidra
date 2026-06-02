@@ -141,7 +141,9 @@ public class LabelFieldSymbolLoader {
 			}
 
 			Symbol s = symbolTable.getPrimarySymbol(addr);
-			symbols.addOffcut(s);
+			if (s != null) {
+				symbols.addOffcut(s);
+			}
 		}
 
 		SymbolIterator symIter = symbolTable.getSymbolIterator(nextAddr, true);

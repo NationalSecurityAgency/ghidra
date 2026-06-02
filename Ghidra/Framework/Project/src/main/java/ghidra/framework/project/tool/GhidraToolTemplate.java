@@ -22,11 +22,11 @@ import javax.swing.ImageIcon;
 import org.jdom2.Element;
 
 import docking.util.image.ToolIconURL;
-import ghidra.framework.model.Project;
-import ghidra.framework.model.ToolTemplate;
+import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
+import ghidra.util.classfinder.ClassSearcher;
 
 /**
  * Implementation for a tool template that has the class names of the
@@ -135,8 +135,8 @@ public class GhidraToolTemplate implements ToolTemplate {
 			Element elem = (Element) list.get(i);
 			String className = elem.getAttribute(CLASS_NAME_XML_NAME).getValue();
 			try {
-				// no need to perform static initialization; clients only check isAssignableFrom()
-				dtList.add(Class.forName(className, false, loader));
+				dtList.add(ClassSearcher
+						.forNameSafe(className, DomainObject.class, loader));
 			}
 			catch (ClassNotFoundException e) {
 				Msg.warn(this, "Tool supported content class not found: " + className);
@@ -182,8 +182,7 @@ public class GhidraToolTemplate implements ToolTemplate {
 			iconElem.setText(NumericUtilities.convertBytesToString(iconURL.getIconBytes()));
 		}
 		root.addContent(iconElem);
-
-		root.addContent((toolElement.clone()));
+		root.addContent(toolElement.clone());
 
 		return root;
 	}

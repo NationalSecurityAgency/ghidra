@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.service.modules;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.*;
@@ -29,6 +30,8 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.gui.action.ByModuleAutoMapSpec;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingContext.ChangeCollector;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingProposals.*;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
@@ -50,8 +53,11 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
 @PluginInfo(
@@ -79,6 +85,8 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	private DebuggerTraceManagerService traceManager;
 	@AutoServiceConsumed
 	private ProgramManager programManager;
+	@AutoServiceConsumed
+	private ProgressService progressService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoWiring;
 
@@ -119,16 +127,139 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		}, executor);
 	}
 
+	private void checkTraceMapping(Trace trace, TaskMonitor monitor) throws CancelledException {
+		DebuggerAutoMappingService autoMappingService =
+			tool.getService(DebuggerAutoMappingService.class);
+		if (autoMappingService == null ||
+			!(autoMappingService.getAutoMapSpec() instanceof ByModuleAutoMapSpec)) {
+			// TODO GP-6856: This should be factored into the ByModuleAutoMapSpec and the
+			//  other specs should have their own implementation
+			return;
+		}
+
+		final TraceModuleManager moduleManager = trace.getModuleManager();
+		final DebuggerConsoleService consoleService = tool.getService(DebuggerConsoleService.class);
+
+		for (final TraceModule module : moduleManager.getAllModules()) {
+			for (final Lifespan lifespan : module.getObject().getLife().spans()) {
+				final Long firstSnap = lifespan.min();
+
+				final DomainFile match = findBestModuleProgram(
+					module.getMaxAddress(firstSnap).getAddressSpace(), module, firstSnap);
+				if (match == null) {
+					consoleService.log(DebuggerResources.ICON_LOG_ERROR,
+						"<html>The module <b><tt>" +
+							HTMLUtilities.escapeHTML(module.getName(firstSnap)) +
+							"</tt></b> was not found in the project</html>",
+						new DebuggerMissingModuleActionContext(module, firstSnap));
+				}
+				else {
+					if (match.isOpen()) {
+						try {
+							if (match.getDomainObject(this, false, false,
+								monitor) instanceof final Program p) {
+								if (!alreadyMapped(trace, firstSnap, p)) {
+									final ModuleMapProposal proposeModuleMap =
+										proposeModuleMap(module, firstSnap, p);
+									final Map<TraceModule, ModuleMapEntry> computeMap =
+										proposeModuleMap.computeMap();
+									addMappings(computeMap.values(), monitor, true, "");
+								}
+							}
+						}
+						catch (VersionException | IOException e) {
+							// This should not happen since the domain file is already open
+							Msg.error(this,
+								"Error getting domainObject: %s".formatted(e.getMessage()));
+						}
+					}
+					else {
+						consoleService.log(DebuggerResources.ICON_MODULES,
+							"<html>Program <b><tt>" +
+								HTMLUtilities.escapeHTML(match.getPathname()) +
+								"</tt></b> is used by " + trace.getName() +
+								". Open it so it can mapped.</html>",
+							new DebuggerOpenProgramActionContext(match));
+					}
+				}
+			}
+		}
+	}
+
+	private void checkAllTraceMappingsForProgram(Program program, TaskMonitor monitor)
+			throws CancelledException {
+		DebuggerAutoMappingService autoMappingService =
+			tool.getService(DebuggerAutoMappingService.class);
+		if (autoMappingService == null ||
+			!(autoMappingService.getAutoMapSpec() instanceof ByModuleAutoMapSpec)) {
+			// TODO GP-6856: This should be factored into the ByModuleAutoMapSpec and the
+			//  other specs should have their own implementation
+			return;
+		}
+
+		Iterator<Trace> iterator =
+			traceManager.getOpenTraces().stream().filter(t -> !t.isClosed()).iterator();
+		while (iterator.hasNext()) {
+			Trace trace = iterator.next();
+
+			final TraceModuleManager moduleManager = trace.getModuleManager();
+
+			for (final TraceModule module : moduleManager.getAllModules()) {
+				for (final Lifespan lifespan : module.getObject().getLife().spans()) {
+					final Long firstSnap = lifespan.min();
+					if (alreadyMapped(trace, firstSnap, program)) {
+						continue;
+					}
+
+					final DomainFile match = findBestModuleProgram(
+						module.getMaxAddress(firstSnap).getAddressSpace(), module, firstSnap);
+					if (match != null && match.equals(program.getDomainFile())) {
+						final ModuleMapProposal proposeModuleMap =
+							proposeModuleMap(module, firstSnap, program);
+						final Map<TraceModule, ModuleMapEntry> computeMap =
+							proposeModuleMap.computeMap();
+						addMappings(computeMap.values(), monitor, true, "");
+					}
+				}
+			}
+		}
+	}
+
+	private boolean alreadyMapped(Trace trace, long snap, Program program) {
+		return getOpenMappedProgramsAtSnap(trace, snap).contains(program);
+	}
+
+	protected void executeTask(Task task) {
+		if (progressService != null) {
+			progressService.execute(task);
+		}
+		else {
+			tool.execute(task);
+		}
+	}
+
 	@Override
 	public void processEvent(PluginEvent event) {
-		if (event instanceof ProgramOpenedPluginEvent) {
+		if (event instanceof ProgramOpenedPluginEvent ev) {
 			CompletableFuture.runAsync(this::programsChanged, executor);
+			executeTask(new Task("Check trace mappings") {
+				@Override
+				public void run(TaskMonitor monitor) throws CancelledException {
+					checkAllTraceMappingsForProgram(ev.getProgram(), monitor);
+				}
+			});
 		}
 		else if (event instanceof ProgramClosedPluginEvent) {
 			CompletableFuture.runAsync(this::programsChanged, executor);
 		}
-		else if (event instanceof TraceOpenedPluginEvent) {
+		else if (event instanceof TraceOpenedPluginEvent ev) {
 			CompletableFuture.runAsync(this::tracesChanged, executor);
+			executeTask(new Task("Check trace mappings") {
+				@Override
+				public void run(TaskMonitor monitor) throws CancelledException {
+					checkTraceMapping(ev.getTrace(), monitor);
+				}
+			});
 		}
 		else if (event instanceof TraceClosedPluginEvent) {
 			CompletableFuture.runAsync(this::tracesChanged, executor);
@@ -252,6 +383,11 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	public void addRegionMappings(Collection<RegionMapEntry> entries, TaskMonitor monitor,
 			boolean truncateExisting) throws CancelledException {
 		addMappings(entries, monitor, truncateExisting, "Add regions mappings");
+	}
+
+	@Override
+	public Set<URL> getMappedProgramUrlsInView(Trace trace, AddressSetView set, long snap) {
+		return context.getMappedProgramUrlsInView(trace, set, snap);
 	}
 
 	@Override

@@ -53,7 +53,7 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 	private static final String README_PATH =
 		"Ghidra/Framework/FileSystem/data/serialFilterREADME.md";
 
-	private static final Logger log = LogManager.getLogger(GhidraObjectInputFilter.class);
+	private static Logger logger;
 
 	private static final String FILTER_SEARCH_EXTENSION = ".serial.filter";
 
@@ -65,7 +65,7 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 	private static final String MAXBYTES = "maxbytes";
 
 	// NOTE: Be sure to update serialFilterREADME.md if values are updated.
-	private int MAXARRAY_DEFAULT = 32_000;
+	private int MAXARRAY_DEFAULT = 200_000;
 	private int MAXREFS_DEFAULT = 10_000;
 	private int MAXDEPTH_DEFAULT = 50;
 	private int MAXBYTES_DEFAULT = 32 * 1024 * 1024; // 32MB
@@ -83,10 +83,10 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 	// all filters will be ignored.  An normal process shutdown will dump the list of deserialized 
 	// classes to the file TRACKER_LOG_FILE.
 
-	// IMPORTANT: TRACKER_ENABLED must be set to 'false' when comitted to source control !!
+	// IMPORTANT: TRACKER_ENABLED must be set to 'false' when committed to source control !!
 
 	private static final boolean TRACKER_ENABLED = false; // class tracking enablement
-	private Map<String, ClassInfo> classTracker = new TreeMap<>(); // classnames -> ClassInfo
+	private Map<String, ClassInfo> classTracker = new TreeMap<>(); // classname -> ClassInfo
 	private File trackerLogFile;
 
 	/**
@@ -100,12 +100,19 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 		// See configure methods.
 	}
 
+	private static Logger log() {
+		if (logger == null) {
+			logger = LogManager.getLogger(GhidraObjectInputFilter.class);
+		}
+		return logger;
+	}
+
 	private void initializeFilter(List<ResourceFile> filterFiles,
 			Supplier<String> sourceNameSupplier)
 			throws IllegalStateException {
 
 		if (TRACKER_ENABLED) {
-			log.warn(
+			log().warn(
 				"Object deserialization filter tracking enabled! All deserializations will be ALLOWED.");
 		}
 
@@ -143,7 +150,6 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 			throw new IllegalStateException("Serial input filter previously initialized");
 		}
 	}
-
 
 	@Override
 	public Status checkInput(FilterInfo info) {
@@ -211,7 +217,6 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 			return Status.UNDECIDED;
 		}
 
-
 		return serialReject(info, "not allowed");
 	}
 
@@ -271,7 +276,7 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 		}
 
 		if (classTracker.isEmpty()) {
-			log.info(
+			log().info(
 				"Installing deserialization class tracking: " + trackerLogFile);
 			Thread hook = new Thread(() -> {
 				List<String> list = classTracker.keySet().stream().collect(Collectors.toList());
@@ -301,7 +306,7 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 					}
 				}
 				catch (IOException e) {
-					log.error("Error when consuming file: " + trackerLogFile + "\n", e);
+					log().error("Error when consuming file: " + trackerLogFile + "\n", e);
 				}
 			}
 		}
@@ -354,7 +359,7 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 
 		buf.append(" (see " + README_PATH + ")");
 
-		log.error(buf.toString());
+		log().error(buf.toString());
 		return Status.REJECTED;
 	}
 
@@ -369,7 +374,7 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 			ResourceFile p1 = filterFile.getParentFile();
 			ResourceFile p2 = p1.getParentFile();
 			String path = p2.getName() + "/" + p1.getName() + "/" + filterFile.getName();
-			log.debug("Including serial input filter: " + path);
+			log().debug("Including serial input filter: " + path);
 
 			try (InputStream in = filterFile.getInputStream()) {
 				try {
@@ -433,7 +438,7 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 		int equalIx = line.indexOf('=');
 		String name = line.substring(0, equalIx);
 		String valueStr = line.substring(equalIx + 1, line.length() - 1);
-		
+
 		if (REMOTE_INTERFACE.equals(name)) {
 			// Add allowed Remote interface for proxies
 			try {
@@ -477,7 +482,7 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 			throw new NumberFormatException("Positive value required");
 		}
 		if (value < defaultMin) {
-			log.warn("Ignoring '" + name + "=" + valueStr +
+			log().warn("Ignoring '" + name + "=" + valueStr +
 				"' serial filter entry which is less than " + defaultMin);
 			return -1; // ignore entry
 		}
@@ -519,7 +524,7 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 	 * This filter will make use of the {@link GhidraSerialFilterFactory} and ensure that it is
 	 * properly installed.
 	 * 
-	 * @throws IllegalStateException if error occured building or installing serial input filter
+	 * @throws IllegalStateException if error occurred building or installing serial input filter
 	 * and related filter factory.
 	 */
 	public static synchronized void configureClientSerialFilter()
@@ -528,7 +533,7 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 		List<ResourceFile> filterFiles =
 			Application.findFilesByExtensionInApplication(FILTER_SEARCH_EXTENSION);
 		if (filterFiles.isEmpty()) {
-			log.warn("No serial input filter files were found (*" +
+			log().warn("No serial input filter files were found (*" +
 				FILTER_SEARCH_EXTENSION + ")");
 		}
 

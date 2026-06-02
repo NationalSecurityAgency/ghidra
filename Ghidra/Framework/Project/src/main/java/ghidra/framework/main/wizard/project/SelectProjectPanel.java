@@ -16,6 +16,7 @@
 package ghidra.framework.main.wizard.project;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.io.File;
 
 import javax.swing.*;
@@ -62,6 +63,10 @@ public class SelectProjectPanel extends JPanel {
 
 		this.statusChangedCallback = statusChangedCallback;
 		buildMainPanel();
+	}
+
+	public Component getDefaultFocusComponent() {
+		return directoryField;
 	}
 
 	void setProjectName(String projectName) {

@@ -52,6 +52,7 @@ public class SourceLanguageAnalyzer extends AbstractAnalyzer {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
 		setPriority(AnalysisPriority.FORMAT_ANALYSIS.before().before().before().before().before());
 		setDefaultEnablement(true);
+		setSupportsOneTimeAnalysis();
 	}
 
 	@Override

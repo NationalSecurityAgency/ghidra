@@ -113,6 +113,15 @@ public abstract class VisualGraphComponentProvider<V extends VisualVertex,
 		return pickedState.getPicked();
 	}
 
+	public void setSelectedVertices(Set<V> vertices) {
+		VisualGraphView<V, E, G> view = getView();
+		VisualizationViewer<V, E> viewer = view.getPrimaryGraphViewer();
+		PickedState<V> pickedState = viewer.getPickedVertexState();
+		for (V v : vertices) {
+			pickedState.pick(v, true);
+		}
+	}
+
 	protected ComponentProvider getSatelliteProvider() {
 		VgSatelliteFeaturette<V, E, G> feature = getSatelliteFeature();
 		if (feature == null) {

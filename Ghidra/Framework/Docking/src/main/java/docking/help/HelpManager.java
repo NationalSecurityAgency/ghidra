@@ -18,8 +18,7 @@ package docking.help;
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.util.*;
 import java.util.List;
 import java.util.Map;
@@ -358,9 +357,9 @@ public class HelpManager implements HelpService {
 		// To do this, try making a URL out of the help string and doing a reverse lookup
 		URL URL = null;
 		try {
-			URL = new URL(helpIDString);
+			URL = URI.create(helpIDString).toURL();
 		}
-		catch (MalformedURLException e) {
+		catch (IllegalArgumentException | MalformedURLException e) {
 			// nothing we can do, fall through the method to the previous exception
 		}
 

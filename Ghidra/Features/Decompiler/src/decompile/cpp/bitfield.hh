@@ -112,6 +112,8 @@ public:
   BitFieldInsertTransform(Funcdata *f,PcodeOp *op,Datatype *dt,int4 off);	///< Construct from a terminating op
   bool doTrace(void);		 			///< Trace bitfields backward from the terminating op
   void apply(void);					///< Transform recovered expressions into INSERT operations
+
+ static const vector<uint4> allowedFinalWrites;		///< List of opcodes allowed for finalWriteOp (must be sorted)
 };
 
 /// \brief Class that converts bitfield pull expressions into explicit ZPULL and SPULL operations

@@ -58,6 +58,12 @@ public abstract class OverlayAddressSpace extends AbstractAddressSpace {
 		return Objects.hash(orderedKey, baseSpace);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * NOTE: This overridden method behaves like {@link #getAddressInThisSpaceOnly(long)}, not
+	 * {@link #getAddress(long)}
+	 */
 	@Override
 	public Address getAddress(String addrString, boolean caseSensitive)
 			throws AddressFormatException {
@@ -124,6 +130,12 @@ public abstract class OverlayAddressSpace extends AbstractAddressSpace {
 		return new GenericAddress(offset, this);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * NOTE: If the offset is not contained in the bounds of the overlay region, the offset into the
+	 * base space is returned.
+	 */
 	@Override
 	public Address getAddress(long offset) {
 		if (contains(offset)) {

@@ -33,6 +33,7 @@ import com.google.gson.*;
 
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
 import ghidra.util.xml.XmlUtilities;
 import utilities.util.FileUtilities;
@@ -433,17 +434,16 @@ public class GProperties {
 	}
 
 	Enum<?> getEnumValue(String enumClassName, String value) {
-
-		ClassLoader loader = getClass().getClassLoader();
 		try {
-			Class<?> clazz = Class.forName(enumClassName, false, loader);
-			if (!Enum.class.isAssignableFrom(clazz)) {
-				Msg.error(this, "Class is not an Enum: " + clazz);
-				return null;
-			}
+			// It would be better to restrict this to some interface we define. Otherwise, we ought
+			// to examine the static initializers of every enum in our classpath. Luckily, the
+			// constructor invocations are all defined by the enum values, and so cannot be randomly
+			// invoked. Famous last words: I doubt there's anything of concern in any enum's static
+			// initializer....
+			Class<?> enumClass =
+				ClassSearcher.forNameSafe(enumClassName, Enum.class, getClass().getClassLoader());
 
-			// Note: calling valueOf() will trigger class initialization
-			Method m = clazz.getMethod("valueOf", new Class[] { String.class });
+			Method m = enumClass.getMethod("valueOf", new Class[] { String.class });
 			if (m != null) {
 				return (Enum<?>) m.invoke(null, new Object[] { value });
 			}

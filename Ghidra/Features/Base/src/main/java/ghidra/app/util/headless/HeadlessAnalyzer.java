@@ -54,6 +54,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.*;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
@@ -774,20 +775,20 @@ public class HeadlessAnalyzer {
 				classLoaderForDotClassScripts =
 					URLClassLoader.newInstance(urls.toArray(new URL[0]));
 
-				Class<?> c = Class.forName(className, true, classLoaderForDotClassScripts);
+				ClassSearcher.forNameSafe(className, GhidraScript.class,
+					classLoaderForDotClassScripts);
 
-				if (GhidraScript.class.isAssignableFrom(c)) {
-					// No issues, but return null, which signifies we don't actually have a
-					// ResourceFile to associate with the script name
-					return null;
-				}
-
-				Msg.error(this,
-					"REPORT SCRIPT ERROR: java class '" + className + "' is not a GhidraScript");
+				// No issues, but return null, which signifies we don't actually have a
+				// ResourceFile to associate with the script name
+				return null;
 			}
 			catch (ClassNotFoundException e) {
 				Msg.error(this,
 					"REPORT SCRIPT ERROR: java class not found for '" + className + "'");
+			}
+			catch (ClassCastException e) {
+				Msg.error(this,
+					"REPORT SCRIPT ERROR: java class '" + className + "' is not a GhidraScript");
 			}
 			throw new IllegalArgumentException("Invalid script: " + scriptName);
 		}
@@ -901,13 +902,14 @@ public class HeadlessAnalyzer {
 					}
 
 					String className = scriptName.substring(0, scriptName.length() - 6);
-					Class<?> c = Class.forName(className, true, classLoaderForDotClassScripts);
+					Class<? extends GhidraScript> c = ClassSearcher.forNameSafe(className,
+						GhidraScript.class, classLoaderForDotClassScripts);
 
 					// Get parent folder to pass to GhidraScript
 					File parentFile = new File(c.getResource(c.getSimpleName() + ".class").toURI())
 							.getParentFile();
 
-					currScript = (GhidraScript) c.getConstructor().newInstance();
+					currScript = c.getConstructor().newInstance();
 					currScript.setScriptArgs(scriptArgs);
 
 					if (options.propertiesFilePaths.size() > 0) {

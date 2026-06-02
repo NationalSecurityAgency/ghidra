@@ -24,6 +24,7 @@ import ghidra.program.util.AddressFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
+import ghidra.util.classfinder.ClassSearcher;
 
 public class LocationMemento {
 	private static final String PROGRAM_PATH = "PROGRAM_PATH_";
@@ -147,34 +148,25 @@ public class LocationMemento {
 			return null;
 		}
 
-		ClassLoader loader = LocationMemento.class.getClassLoader();
 		try {
-			Class<?> clazz = Class.forName(className, false, loader);
-			if (!LocationMemento.class.isAssignableFrom(clazz)) {
-				Msg.error(LocationMemento.class, "Class is not a LocationMemento: " + clazz);
-				return null;
-			}
-
-			Class<? extends LocationMemento> mementoClass = clazz.asSubclass(LocationMemento.class);
+			Class<? extends LocationMemento> mementoClass = ClassSearcher.forNameSafe(className,
+				LocationMemento.class, LocationMemento.class.getClassLoader());
 			Constructor<? extends LocationMemento> constructor =
 				mementoClass.getConstructor(SaveState.class, Program[].class);
 			return constructor.newInstance(saveState, programs);
 		}
 		catch (ClassNotFoundException e) {
-			// class must have been deleted or renamed
+			// this can happen for locations created by plugins that are no longer installed
+			Msg.info(LocationMemento.class,
+				"Unable to identify saved location, class not found: " + className);
 		}
-		catch (InstantiationException e) {
-			Msg.showError(ProgramLocation.class, null, "Programming Error", "Class " + className +
-				" must have public constructor!", e);
-		}
-		catch (IllegalAccessException e) {
-			Msg.showError(ProgramLocation.class, null, "Programming Error", "Class " + className +
+		catch (InstantiationException | IllegalAccessException e) {
+			Msg.showError(LocationMemento.class, null, "Programming Error", "Class " + className +
 				" must have public constructor!", e);
 		}
 		catch (NoSuchMethodException e) {
-			Msg.showError(ProgramLocation.class, null, "Programming Error", "Class " + className +
+			Msg.showError(LocationMemento.class, null, "Programming Error", "Class " + className +
 				" must have a public constructor that takes a SaveState " + "and a Program[]!", e);
-			e.printStackTrace();
 		}
 		catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();

@@ -28,13 +28,13 @@ dependencies {
 
     api "com.oracle.labs.olcut:olcut-config-protobuf:5.2.0" //{exclude group: "com.google.protobuf", module: "protobuf-java"}
     api ("com.oracle.labs.olcut:olcut-core:5.2.0") {exclude group: "org.jline"}
-    api "org.tribuo:tribuo-classification-core:4.2.0"
-    api "org.tribuo:tribuo-classification-tree:4.2.0"
-    api "org.tribuo:tribuo-common-tree:4.2.0"
-    api 'org.tribuo:tribuo-core:4.2.0' 
-    api ("org.tribuo:tribuo-data:4.2.0") {exclude group: "com.opencsv"}
-    api "org.tribuo:tribuo-math:4.2.0" 
-    api ("org.tribuo:tribuo-util-onnx:4.2.0") //{exclude group: "com.google.protobuf", module: "protobuf-java"}
+    api "org.tribuo:tribuo-classification-core:4.3.2"
+    api "org.tribuo:tribuo-classification-tree:4.3.2"
+    api "org.tribuo:tribuo-common-tree:4.3.2"
+    api 'org.tribuo:tribuo-core:4.3.2' 
+    api ("org.tribuo:tribuo-data:4.3.2") {exclude group: "com.opencsv"}
+    api "org.tribuo:tribuo-math:4.3.2" 
+    api ("org.tribuo:tribuo-util-onnx:4.3.2") //{exclude group: "com.google.protobuf", module: "protobuf-java"}
     
     testImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')
     testImplementation "com.google.protobuf:protobuf-java:${protobufVersion}"

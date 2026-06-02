@@ -1905,35 +1905,49 @@ public class FieldPanel extends JPanel
 		}
 
 		void mouseDragged(MouseEvent e) {
+
 			if ((e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == 0) {
 				return;
 			}
+
+			BigInteger n = model.getNumIndexes();
+			if (n == BigInteger.ZERO) {
+				return; // empty display
+			}
+
 			int x = e.getX();
 			int y = e.getY();
-			if (((Math.abs(x - mouseDownX) > 3) || (Math.abs(y - mouseDownY) > 3))) {
-				didDrag = true;
-				if (selectionHandler.isInProgress()) {
-					if (y < 0 || y >= getHeight()) {
-						timerScrollAmount = y < 0 ? y : y - getHeight();
-						scrollTimer.start();
-					}
-					else {
-						scrollTimer.stop();
-						cursorHandler.setCursorPos(x, y, null); // null means don't notify listeners
-						FieldLocation selectionEnd = cursorPosition;
-						// if the mouse is to the right of the last field, make the selection 
-						// include the last field
-						Layout layout = getLayoutModel().getLayout(selectionEnd.getIndex());
-						int width = layout.getWidth();
-						if (x > width) {
-							selectionEnd =
-								new FieldLocation(selectionEnd.getIndex().add(BigInteger.ONE));
-						}
-						selectionHandler.updateSelectionSequence(selectionEnd);
-						repaint();
-					}
-				}
+			boolean draggedEnough = Math.abs(x - mouseDownX) > 3 || Math.abs(y - mouseDownY) > 3;
+			if (!draggedEnough) {
+				return;
 			}
+
+			didDrag = true;
+			if (!selectionHandler.isInProgress()) {
+				return;
+			}
+
+			if (y < 0 || y >= getHeight()) {
+				// mouse if off the screen; initiate scrolling
+				timerScrollAmount = y < 0 ? y : y - getHeight();
+				scrollTimer.start();
+				return;
+			}
+
+			// the drag is being used to update the selection
+			scrollTimer.stop();
+			cursorHandler.setCursorPos(x, y, null); // null means don't notify listeners			
+
+			// if the mouse is to the right of the last field, include the last field
+			FieldLocation selectionEnd = cursorPosition;
+			BigInteger endIndex = selectionEnd.getIndex();
+			Layout layout = model.getLayout(endIndex);
+			int width = layout.getWidth();
+			if (x > width) {
+				selectionEnd = new FieldLocation(endIndex.add(BigInteger.ONE));
+			}
+			selectionHandler.updateSelectionSequence(selectionEnd);
+			repaint();
 		}
 
 		void mouseReleased(MouseEvent e) {
