@@ -41,6 +41,7 @@ public class DWARFImportSummary {
 	int paramZeroLenDataType;
 	public int badSourceFileCount;
 	public int numEnumsCreated;
+	public int tombstonedSourceLineEntrySkippedCount;
 
 	Set<Integer> dwarfVers = new HashSet<>();
 	int compUnitCount;
