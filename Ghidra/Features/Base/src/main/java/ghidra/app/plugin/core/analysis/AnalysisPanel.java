@@ -453,6 +453,8 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 						boolean enabledState = (Boolean) model.getValueAt(row, column);
 						model.setValueAt(!enabledState, row, column);
 					}
+
+					e.consume();
 				}
 			}
 		});
@@ -498,9 +500,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	void setAnalyzerEnabled(String analyzerName, boolean enabled, boolean fireEvent) {
 		List<Component> list = analyzerManagedComponentsMap.get(analyzerName);
 		if (list != null) {
-			Iterator<Component> iterator = list.iterator();
-			while (iterator.hasNext()) {
-				Component next = iterator.next();
+			for (Component next : list) {
 				next.setEnabled(enabled);
 			}
 		}
@@ -914,7 +914,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 				optionsComboBox.addItemListener(optionsComboBoxListener);
 				return;
 			}
-			selectedOptions = (FileOptions) optionsComboBox.getSelectedItem();
+			selectedOptions = optionsComboBox.getSelectedItem();
 			updateDeleteButton();
 			loadCurrentOptionsIntoEditors();
 			propertyChangeListener.propertyChange(
