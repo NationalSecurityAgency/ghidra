@@ -230,7 +230,7 @@ public class ImporterUtilities {
 			}
 
 			LoaderMap loaderMap = LoaderService.getSupportedLoadSpecs(provider,
-				loader -> loader.supportsLoadIntoProgram(program));
+				loader -> loader.supportsLoadIntoProgram(program), monitor);
 
 			SystemUtilities.runSwingLater(() -> {
 				AddToProgramDialog dialog =
@@ -275,7 +275,7 @@ public class ImporterUtilities {
 					"Cannot Load Libraries. Program does not have file bytes associated with it.");
 				return;
 			}
-			LoadSpec loadSpec = getLoadSpec(provider, program);
+			LoadSpec loadSpec = getLoadSpec(provider, program, monitor);
 			if (loadSpec == null || loadSpec.getLoader()
 					.getDefaultOptions(provider, loadSpec, null, false, false)
 					.stream()
@@ -319,7 +319,7 @@ public class ImporterUtilities {
 
 		try {
 			ByteProvider provider = fsService.getByteProvider(fsrl, true, monitor);
-			LoaderMap loaderMap = LoaderService.getAllSupportedLoadSpecs(provider);
+			LoaderMap loaderMap = LoaderService.getAllSupportedLoadSpecs(provider, monitor);
 
 			SystemUtilities.runSwingLater(() -> {
 				ImporterDialog importerDialog = new ImporterDialog(tool, programManager, loaderMap,
@@ -573,12 +573,13 @@ public class ImporterUtilities {
 	 * 
 	 * @param provider The original bytes of the {@link Program}
 	 * @param program The {@link Program}
+	 * @param monitor The {@link TaskMonitor}
 	 * @return The {@link LoadSpec} that was used to import the given {@link Program}, or null if
 	 *   it could not be determined
 	 */
-	static LoadSpec getLoadSpec(ByteProvider provider, Program program) {
+	static LoadSpec getLoadSpec(ByteProvider provider, Program program, TaskMonitor monitor) {
 		LoaderMap loaderMap = LoaderService.getSupportedLoadSpecs(provider,
-			loader -> loader.getName().equalsIgnoreCase(program.getExecutableFormat()));
+			loader -> loader.getName().equalsIgnoreCase(program.getExecutableFormat()), monitor);
 
 		if (loaderMap.isEmpty()) {
 			return null;
@@ -601,15 +602,16 @@ public class ImporterUtilities {
 	 * Get's the {@link LoadSpec} that was used to import the given {@link Program}
 	 * 
 	 * @param program The {@link Program}
+	 * @param monitor The {@link TaskMonitor}
 	 * @return The {@link LoadSpec} that was used to import the given {@link Program}, or null if
 	 *   it could not be determined
 	 */
-	public static LoadSpec getLoadSpec(Program program) {
+	public static LoadSpec getLoadSpec(Program program, TaskMonitor monitor) {
 		ByteProvider provider;
 		if (program == null || (provider = getProvider(program)) == null) {
 			return null;
 		}
-		return getLoadSpec(provider, program);
+		return getLoadSpec(provider, program, monitor);
 	}
 	
 	private static boolean ensureFileImportable(RefdFile refdFile, TaskMonitor monitor) {

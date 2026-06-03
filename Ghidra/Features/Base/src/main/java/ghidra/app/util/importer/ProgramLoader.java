@@ -615,7 +615,7 @@ public class ProgramLoader {
 		 */
 		private LoadSpec getLoadSpec(ByteProvider p)
 				throws LanguageNotFoundException, LoadException {
-			LoaderMap loaderMap = LoaderService.getSupportedLoadSpecs(p, loaderFilter);
+			LoaderMap loaderMap = LoaderService.getSupportedLoadSpecs(p, loaderFilter, monitor);
 			LoadSpecChooser loadSpecChooser =
 				languageId != null ? new LcsHintLoadSpecChooser(languageId, compilerSpecId)
 						: (compilerSpecId != null ? new CsHintLoadSpecChooser(compilerSpecId)
