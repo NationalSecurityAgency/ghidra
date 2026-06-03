@@ -1236,12 +1236,13 @@ public class DWARFDataTypeImporter {
 	 * pointing to the destination and omit creating a Ghidra typedef.
 	 * <p>
 	 * If the typedef points (via a pointer) to a function definition type that doesn't
-	 * have a name yet, update the function defintion with the name from this typedef
+	 * have a name yet, update the function definition with the name from this typedef
 	 * and elide this typedef.
 	 * <p>
 	 * If the typedef points to a base type (eg int, float, etc), let the base type factory
 	 * create the typedef as it can do it better if there are size specifiers in the typedef name
-	 * (eg. int64_t).
+	 * (eg. int64_t).  Standard typedefs may be replaced by a Ghidra BuiltIn or alternative
+	 * typedef that leverage a BuiltIn for well-known cases.
 	 * 
 	 */
 	private DWARFDataType makeDataTypeForTypedef(DIEAggregate diea)
@@ -1294,9 +1295,14 @@ public class DWARFDataTypeImporter {
 
 		TypedefDataType typedefDT = new TypedefDataType(typedefDNI.getParentCP(),
 			typedefDNI.getName(), refdDT.dataType, dataTypeManager);
-		updateMapping(refdDT.dataType, typedefDT.getDataType());
+		DataType resultDT = DataTypeUtilities.getTypedefReplacement(typedefDT, true);
 
-		return new DWARFDataType(typedefDT, typedefDNI, diea.getOffset());
+// TODO: Original code appeared to update mapping with no real impact
+// TODO: Re-examine what should be done for updateMapping if anything.
+//		updateMapping(refdDT.dataType, 
+//			resultDT instanceof TypeDef tdResult ? tdResult.getDataType() : resultDT);
+
+		return new DWARFDataType(resultDT, typedefDNI, diea.getOffset());
 	}
 
 	/*
