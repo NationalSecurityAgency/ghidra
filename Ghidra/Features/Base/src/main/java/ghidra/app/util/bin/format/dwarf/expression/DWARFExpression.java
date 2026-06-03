@@ -31,7 +31,7 @@ import ghidra.app.util.bin.format.dwarf.DWARFRegisterMappings;
  * Use a {@link DWARFExpressionEvaluator} to execute a {@link DWARFExpression}.
  */
 public class DWARFExpression {
-	public static final int MAX_SANE_EXPR = 256;
+	public static final int MAX_SANE_EXPR = 512;
 
 	/**
 	 * Deserializes a {@link DWARFExpression} from its raw bytes.

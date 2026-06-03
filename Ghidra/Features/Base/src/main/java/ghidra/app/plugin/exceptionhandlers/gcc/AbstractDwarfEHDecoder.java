@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.exceptionhandlers.gcc;
 
+import ghidra.app.util.opinion.ElfLoader;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
@@ -230,7 +231,20 @@ abstract class AbstractDwarfEHDecoder implements DwarfEHDecoder {
 
 		long offset = decode(context);
 
+		if (appMode == DwarfEHDataApplicationMode.DW_EH_PE_absptr &&
+			prog.getRelocationTable().getRelocations(context.getAddress()).isEmpty()) {
+			offset += getImageBaseAdjustment(prog);
+		}
+
 		return addrFactory.getAddress(ram.getSpaceID(), offset);
+	}
+
+	private static long getImageBaseAdjustment(Program program) {
+		Long originalImageBase = ElfLoader.getElfOriginalImageBase(program);
+		if (originalImageBase != null) {
+			return program.getImageBase().getOffset() - originalImageBase;
+		}
+		return 0;
 	}
 
 	/**
@@ -245,7 +259,6 @@ abstract class AbstractDwarfEHDecoder implements DwarfEHDecoder {
 		long val = doDecode(context);
 
 		return resolveRelativeOffset(val, context);
-
 	}
 
 	private long resolveRelativeOffset(long val, DwarfDecodeContext context)
@@ -263,8 +276,8 @@ abstract class AbstractDwarfEHDecoder implements DwarfEHDecoder {
 
 		switch (appMode) {
 			case DW_EH_PE_absptr:
-				// adjust abs ptr for any changes to imagebase during import
-				val = context.getImageBaseAdjustment() + val;
+				// This mode is used for counts, offsets, etc as well as pointer values, so it
+				// shouldn't be 'fixed' here by applying imageBaseOffset from Elf loader
 				break;
 
 			case DW_EH_PE_aligned:
