@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.analysis;
 
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
 import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
@@ -64,20 +65,23 @@ public class SourceLanguageAnalyzer extends AbstractAnalyzer {
 			return true;
 		}
 
-		// Look for new source languages in the program
-		Set<SourceLanguageID> ids = SourceLanguageService.find(program, log, monitor);
+		Set<SourceLanguageID> currentIds = program.getSourceLanguageIDs();
+		Set<SourceLanguageID> newIds = SourceLanguageService.find(program, log, monitor);
+		program.setSourceLanguageIDs(newIds);
 
-		// Update the "Source Languages" program property
-		program.setSourceLanguageIDs(ids);
+		if (newIds.stream().anyMatch(Predicate.not(currentIds::contains))) {
+			log.appendMsg(NAME + "> New source languages were found.\n" +
+				"New analyzers may be available if the program is reopened and Auto Analysis is run again.");
+		}
 
 		// Optionally add source language spec extensions
 		if (addSpecExtensions) {
 			if (program.hasExclusiveAccess()) {
-				SourceLanguageService.addSpecExtensions(program, ids, log, monitor);
+				SourceLanguageService.addSpecExtensions(program, newIds, log, monitor);
 			}
 			else {
 				log.appendMsg(
-					NAME + ": Cannot add spec extensions without exclusive access to program.");
+					NAME + "> Cannot add spec extensions without exclusive access to program.");
 			}
 		}
 
