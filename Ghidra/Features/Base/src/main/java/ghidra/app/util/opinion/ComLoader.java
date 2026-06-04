@@ -16,185 +16,206 @@
 
 package ghidra.app.util.opinion;
 
-import ghidra.app.util.*;
-import ghidra.app.util.bin.*;
-import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.*;
-import ghidra.program.database.mem.FileBytes;
-import ghidra.program.model.address.*;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
-import ghidra.program.model.symbol.*;
-import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.TaskMonitor;
 import java.io.IOException;
 import java.util.*;
 
+import ghidra.app.util.MemoryBlockUtils;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.program.database.mem.FileBytes;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.LanguageCompilerSpecPair;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.SymbolTable;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
+import ghidra.util.task.TaskMonitor;
+
+/**
+ * A {@link Loader} for processing old-style DOS COM executables 
+ */
 public class ComLoader extends AbstractLibrarySupportLoader {
 
-  public final static String COM_NAME = "Old-style DOS Executable (COM)";
-  private final static String ENTRY_NAME = "entry";
-  private final static int PSP_START_ADDRESS = 0x0;
-  private final static int COM_START_ADDRESS = 0x100;
-  private final static int COM_MAX_LEN = 0xff00; // 0xFFFF - 0xFF (PSP size)
-  private static final int SCORE_THRESHOLD = 12; // for score system
+	public final static String COM_NAME = "Old-style DOS Executable (COM)";
 
-  @Override
-  public String getName() {
-    return COM_NAME;
-  }
+	private final static String ENTRY_NAME = "entry";
+	private final static int PSP_START_ADDRESS = 0x0;
+	private final static int COM_START_ADDRESS = 0x100;
+	private final static int COM_MAX_LEN = 0xff00; // 0xFFFF - 0xFF (PSP size)
+	private static final int SCORE_THRESHOLD = 12; // for score system
 
-  @Override
-  public int getTierPriority() {
-    return 1000; // make sure it is fallback
-  }
+	@Override
+	public String getName() {
+		return COM_NAME;
+	}
 
-  @Override
-  public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
+	@Override
+	public boolean isFallback() {
+		return true;
+	}
 
-    List<LoadSpec> specs = new ArrayList<>();
-    long len = provider.length();
+	@Override
+	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
 
-    if (len == 0 || len > COM_MAX_LEN)
-      return specs;
+		List<LoadSpec> specs = new ArrayList<>();
+		long len = provider.length();
 
-    byte[] data = provider.readBytes(0, len);
+		if (len == 0 || len > COM_MAX_LEN) {
+			return specs;
+		}
 
-    // Reject MZ executables
-    if (data.length > 1 && (data[0] & 0xFF) == 'M' && (data[1] & 0xFF) == 'Z')
-      return specs;
+		byte[] data = provider.readBytes(0, len);
 
-    int score = calculateScore(data);
+		// Reject MZ executables
+		if (data.length > 1 && (data[0] & 0xFF) == 'M' && (data[1] & 0xFF) == 'Z') {
+			return specs;
+		}
 
-    if (score >= SCORE_THRESHOLD) {
-      specs.add(new LoadSpec(this, 0, new LanguageCompilerSpecPair("x86:LE:16:Real Mode", "default"), true));
-    }
+		int score = calculateScore(data);
 
-    Msg.info(this, "DOS COM file score: " + score + "/" + SCORE_THRESHOLD);
-    return specs;
-  }
+		if (score >= SCORE_THRESHOLD) {
+			specs.add(new LoadSpec(this, 0,
+				new LanguageCompilerSpecPair("x86:LE:16:Real Mode", "default"), true));
+		}
 
-  private int calculateScore(byte[] data) {
+		return specs;
+	}
 
-    int score = 0;
+	private int calculateScore(byte[] data) {
 
-    for (int i = 0; i < data.length - 2 && score < SCORE_THRESHOLD; i++) {
+		int score = 0;
 
-      // INT 21h (DOS services)
-      if ((data[i] & 0xFF) == 0xCD && (data[i + 1] & 0xFF) == 0x21) {
+		for (int i = 0; i < data.length - 2 && score < SCORE_THRESHOLD; i++) {
 
-        score += 2;
+			// INT 21h (DOS services)
+			if ((data[i] & 0xFF) == 0xCD && (data[i + 1] & 0xFF) == 0x21) {
 
-        // MOV AH, imm8 or MOV AL, imm8 before INT 21h
-        if (i >= 2 && ((data[i - 2] & 0xFF) == 0xB4 || (data[i - 2] & 0xFF) == 0xB0))
-          score += 3;
+				score += 2;
 
-        // MOV AX, imm16 before INT 21h
-        if (i >= 3 && (data[i - 3] & 0xFF) == 0xB8)
-          score += 2;
-      }
+				// MOV AH, imm8 or MOV AL, imm8 before INT 21h
+				if (i >= 2 && ((data[i - 2] & 0xFF) == 0xB4 || (data[i - 2] & 0xFF) == 0xB0)) {
+					score += 3;
+				}
 
-      // INT 20h (program terminate)
-      if ((data[i] & 0xFF) == 0xCD && (data[i + 1] & 0xFF) == 0x20)
-        score += 2;
+				// MOV AX, imm16 before INT 21h
+				if (i >= 3 && (data[i - 3] & 0xFF) == 0xB8) {
+					score += 2;
+				}
+			}
 
-      if (score >= SCORE_THRESHOLD)
-        return score;
+			// INT 20h (program terminate)
+			if ((data[i] & 0xFF) == 0xCD && (data[i + 1] & 0xFF) == 0x20) {
+				score += 2;
+			}
 
-      // Other INT patterns preceded by register setup
-      if (i > 1 && (data[i] & 0xFF) == 0xCD && ((data[i - 2] & 0xFF) == 0xB4 || (data[i - 2] & 0xFF) == 0xB0))
-          score += 2;
-      if (i > 2 && (data[i - 3] & 0xFF) == 0xB8)
-          score += 2;
+			if (score >= SCORE_THRESHOLD) {
+				return score;
+			}
 
-      if (score >= SCORE_THRESHOLD)
-        return score;
-    }
+			// Other INT patterns preceded by register setup
+			if (i > 1 && (data[i] & 0xFF) == 0xCD &&
+				((data[i - 2] & 0xFF) == 0xB4 || (data[i - 2] & 0xFF) == 0xB0)) {
+				score += 2;
+			}
+			if (i > 2 && (data[i - 3] & 0xFF) == 0xB8) {
+				score += 2;
+			}
 
-    // Only attempt string heuristic if needed
-    int dollarStrings = countDollarStrings(data);
-    if (dollarStrings > 0)
-      score += 3;
-    if (dollarStrings > 2)
-      score += 2;
+			if (score >= SCORE_THRESHOLD) {
+				return score;
+			}
+		}
 
-    return score;
-  }
+		// Only attempt string heuristic if needed
+		int dollarStrings = countDollarStrings(data);
+		if (dollarStrings > 0) {
+			score += 3;
+		}
+		if (dollarStrings > 2) {
+			score += 2;
+		}
 
-  /**
-   * Counts occurrences of DOS-style "$"-terminated strings.
-   *
-   * In DOS COM programs, function AH=09h (INT 21h) prints a string
-   * terminated by '$'. Therefore, COM binaries frequently contain
-   * printable ASCII sequences followed by '$'.
-   *
-   * This heuristic looks for printable ASCII runs of length >= 4
-   * followed by '$'. The scan is limited to a small prefix of the file
-   * for performance, since this method runs on every file imported.
-   */
-  private int countDollarStrings(byte[] data) {
+		return score;
+	}
 
-    int count = 0;
-    int minLen = 4;
+	/**
+	 * Counts occurrences of DOS-style "$"-terminated strings.
+	 * <p>
+	 * In DOS COM programs, function AH=09h (INT 21h) prints a string
+	 * terminated by '$'. Therefore, COM binaries frequently contain
+	 * printable ASCII sequences followed by '$'.
+	 * <p>
+	 * This heuristic looks for printable ASCII runs of length >= 4
+	 * followed by '$'. The scan is limited to a small prefix of the file
+	 * for performance, since this method runs on every file imported.
+	 */
+	private int countDollarStrings(byte[] data) {
 
-    for (int i = 0; i < data.length - minLen && count < 3; i++) {
+		int count = 0;
+		int minLen = 4;
 
-      int len = 0;
+		for (int i = 0; i < data.length - minLen && count < 3; i++) {
 
-      while (i + len < data.length && isPrintable(data[i + len])) {
-        len++;
+			int len = 0;
 
-        if (i + len < data.length && data[i + len] == '$' && len >= minLen) {
-          count++;
-          i += len; // skip ahead
-          break;
-        }
-      }
-    }
+			while (i + len < data.length && isPrintable(data[i + len])) {
+				len++;
 
-    return count;
-  }
+				if (i + len < data.length && data[i + len] == '$' && len >= minLen) {
+					count++;
+					i += len; // skip ahead
+					break;
+				}
+			}
+		}
 
-  private boolean isPrintable(byte b) {
-    int c = b & 0xFF;
-    return c >= 0x20 && c <= 0x7E;
-  }
+		return count;
+	}
 
-  @Override
-  protected void load(Program program, ImporterSettings settings) throws IOException, CancelledException {
+	private boolean isPrintable(byte b) {
+		int c = b & 0xFF;
+		return c >= 0x20 && c <= 0x7E;
+	}
 
-    ByteProvider provider = settings.provider();
-    TaskMonitor monitor = settings.monitor();
-    MessageLog log = settings.log();
+	@Override
+	protected void load(Program program, ImporterSettings settings)
+			throws IOException, CancelledException {
 
-    AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+		ByteProvider provider = settings.provider();
+		TaskMonitor monitor = settings.monitor();
+		MessageLog log = settings.log();
 
-    try {
-      // Create PSP block at 0000h
-      MemoryBlockUtils.createInitializedBlock(program, false, "PSP", space.getAddress(PSP_START_ADDRESS), 0x100, "PSP",
-          null, true, true, false, log);
+		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
 
-      FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
+		try {
+			// Create PSP block at 0000h
+			MemoryBlockUtils.createInitializedBlock(program, false, "PSP",
+				space.getAddress(PSP_START_ADDRESS), 0x100, "PSP",
+				null, true, true, false, log);
 
-      // Create CODE block at 0100h
-      MemoryBlockUtils.createInitializedBlock(program, false, "CODE", space.getAddress(COM_START_ADDRESS), fileBytes, 0,
-          provider.length(), "COM Code", null, true, true, false, log);
+			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
 
-    } catch (Exception e) {
-      log.appendMsg("Failed to create blocks");
-    }
+			// Create CODE block at 0100h
+			MemoryBlockUtils.createInitializedBlock(program, false, "CODE",
+				space.getAddress(COM_START_ADDRESS), fileBytes, 0,
+				provider.length(), "COM Code", null, true, true, false, log);
 
-    // Create entry point
-    SymbolTable symbolTable = program.getSymbolTable();
-    try {
-      Address addr = space.getAddress(COM_START_ADDRESS);
-      symbolTable.createLabel(addr, ENTRY_NAME, SourceType.IMPORTED);
-      symbolTable.addExternalEntryPoint(addr);
-    } catch (InvalidInputException e) {
-      log.appendMsg("Failed to process entry point");
-    }
-  }
+		}
+		catch (Exception e) {
+			log.appendMsg("Failed to create blocks");
+		}
+
+		// Create entry point
+		SymbolTable symbolTable = program.getSymbolTable();
+		try {
+			Address addr = space.getAddress(COM_START_ADDRESS);
+			symbolTable.createLabel(addr, ENTRY_NAME, SourceType.IMPORTED);
+			symbolTable.addExternalEntryPoint(addr);
+		}
+		catch (InvalidInputException e) {
+			log.appendMsg("Failed to process entry point");
+		}
+	}
 }
