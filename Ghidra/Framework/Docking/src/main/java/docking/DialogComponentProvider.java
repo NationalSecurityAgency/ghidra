@@ -1509,7 +1509,10 @@ public class DialogComponentProvider
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
 			ActionContextProvider contextProvider = context.getContextProvider();
-			return provider == contextProvider;
+			if (provider != contextProvider) {
+				return false;
+			}
+			return dockingAction.isEnabledForContext(context);
 		}
 	}
 }
