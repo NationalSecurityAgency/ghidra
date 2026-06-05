@@ -115,7 +115,7 @@ public class ByteViewerComponent extends FieldPanel
 		if (info != null) {
 			String modelName = model.getName();
 			String location = getAccessibleLocationInfo(info.getBlock(), info.getOffset());
-			return modelName + " format at " + location;
+			return modelName + " value = " + field.getText() + " at " + location;
 		}
 		return null;
 	}
