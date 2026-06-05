@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import javax.swing.JFrame;
 
 import docking.action.DockingActionIf;
 import docking.tool.ToolConstants;
-import docking.wizard.WizardManager;
+import docking.wizard.WizardDialog;
 import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -37,7 +37,7 @@ import ghidra.feature.vt.gui.provider.functionassociation.VTFunctionAssociationP
 import ghidra.feature.vt.gui.provider.impliedmatches.*;
 import ghidra.feature.vt.gui.provider.markuptable.VTMarkupItemsTableProvider;
 import ghidra.feature.vt.gui.provider.matchtable.VTMatchTableProvider;
-import ghidra.feature.vt.gui.wizard.VTNewSessionWizardManager;
+import ghidra.feature.vt.gui.wizard.session.VTNewSessionWizardModel;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
@@ -87,9 +87,9 @@ public class VTPlugin extends Plugin {
 
 	private VTController controller;
 
-	// common resources
-
-	// destination-side resources
+	// plugins we have to add to our tool manually
+	private Set<String> additionalPluginNames = new HashSet<>(Set.of(
+		"ghidra.features.codecompare.plugin.FunctionComparisonPlugin"));
 
 	private VTMatchTableProvider matchesProvider;
 	private VTMarkupItemsTableProvider markupProvider;
@@ -99,16 +99,15 @@ public class VTPlugin extends Plugin {
 
 	public VTPlugin(PluginTool tool) {
 		super(tool);
+
+		tool.setUnconfigurable();
+
 		OWNER = getName();
 		controller = new VTControllerImpl(this);
-		matchesProvider = new VTMatchTableProvider(controller);
-		markupProvider = new VTMarkupItemsTableProvider(controller);
-		impliedMatchesTable = new VTImpliedMatchesTableProvider(controller);
-		functionAssociationProvider = new VTFunctionAssociationProvider(controller);
+		registerServiceProvided(VTController.class, controller);
+
 		toolManager = new VTSubToolManager(this);
 		createActions();
-		registerServiceProvided(VTController.class, controller);
-		tool.setUnconfigurable();
 
 		DockingActionIf saveAs = getToolAction("Save Tool As");
 		tool.removeAction(saveAs);
@@ -116,11 +115,7 @@ public class VTPlugin extends Plugin {
 		DockingActionIf export = getToolAction("Export Tool");
 		tool.removeAction(export);
 
-		new MatchStatusUpdaterAssociationHook(controller);
-		new ImpliedMatchAssociationHook(controller);
-
 		initializeOptions();
-
 	}
 
 	private DockingActionIf getToolAction(String actionName) {
@@ -143,18 +138,36 @@ public class VTPlugin extends Plugin {
 
 	@Override
 	protected void init() {
+
+		removeUnwantedPlugins();
 		addCustomPlugins();
+
+		matchesProvider = new VTMatchTableProvider(controller);
+		markupProvider = new VTMarkupItemsTableProvider(controller);
+		impliedMatchesTable = new VTImpliedMatchesTableProvider(controller);
+		functionAssociationProvider = new VTFunctionAssociationProvider(controller);
+
+		new MatchStatusUpdaterAssociationHook(controller);
+		new ImpliedMatchAssociationHook(controller);
 
 		maybeShowHelp();
 	}
 
+	private void removeUnwantedPlugins() {
+
+		List<Plugin> allPlugins = tool.getManagedPlugins();
+		List<Plugin> toRemove = new ArrayList<>(allPlugins);
+		toRemove.remove(this);
+		tool.removePlugins(toRemove);
+	}
+
 	private void addCustomPlugins() {
 
-		List<String> names =
-			new ArrayList<>(List.of("ghidra.features.codecompare.plugin.FunctionComparisonPlugin"));
 		List<Plugin> plugins = tool.getManagedPlugins();
-		Set<String> existingNames =
-			plugins.stream().map(c -> c.getName()).collect(Collectors.toSet());
+		Set<String> existingNames = new HashSet<>(
+			plugins.stream()
+					.map(c -> c.getName())
+					.collect(Collectors.toSet()));
 
 		// Note: we check to see if the plugins we want to add have already been added to the tool.
 		// We should not need to do this, but once the tool has been saved with the plugins added,
@@ -162,7 +175,7 @@ public class VTPlugin extends Plugin {
 		// easier than modifying the default to file to load the plugins, since the amount of xml
 		// required for that is non-trivial.
 		try {
-			for (String className : names) {
+			for (String className : additionalPluginNames) {
 				if (!existingNames.contains(className)) {
 					tool.addPlugin(className);
 				}
@@ -268,11 +281,10 @@ public class VTPlugin extends Plugin {
 			if (!controller.closeVersionTrackingSession()) {
 				return false; // user cancelled  during save dialog
 			}
-			VTNewSessionWizardManager vtWizardManager =
-				new VTNewSessionWizardManager(controller, programFile1, programFile2);
-			WizardManager wizardManager =
-				new WizardManager("Version Tracking Wizard", true, vtWizardManager);
-			wizardManager.showWizard(tool.getToolFrame());
+			VTNewSessionWizardModel model =
+				new VTNewSessionWizardModel(controller, programFile1, programFile2);
+			WizardDialog wizardDialog = new WizardDialog(model);
+			wizardDialog.show(tool.getToolFrame());
 			return true;
 		}
 

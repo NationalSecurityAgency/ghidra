@@ -113,12 +113,13 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		table.addRowSelectionInterval(0, 0);
 		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
-			if (action.getName().equals("Merge Blocks") || action.getName().equals("Local Menu") ||
-				action.getName().equals("Rename Overlay Space")) {
+			String name = action.getName();
+			if (name.equals("Merge Blocks") || name.equals("Local Menu") ||
+				name.equals("Rename Overlay Space") || name.equals("Close Window")) {
 				assertFalse(action.isEnabled());
 			}
 			else {
-				assertTrue("Action not enabled when it should be: " + action.getName(),
+				assertTrue("Action not enabled when it should be: " + name,
 					action.isEnabled());
 			}
 		}

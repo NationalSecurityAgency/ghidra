@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
@@ -35,11 +36,8 @@ import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.app.services.ClipboardContentProviderService;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.viewer.field.*;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
-import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.*;
@@ -48,7 +46,6 @@ import ghidra.program.util.AddressFieldLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.AbstractProgramBasedTest;
 import ghidra.test.ToyProgramBuilder;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Test the plugin that deals with cut/paste comments and labels
@@ -57,8 +54,8 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 
 	private PluginTool toolOne;
 	private PluginTool toolTwo;
-	private ProgramDB programOne;
-	private ProgramDB programTwo;
+	private Program programOne;
+	private Program programTwo;
 	private ProgramManager pmOne;
 	private ProgramManager pmTwo;
 	private CodeBrowserPlugin cb;
@@ -77,13 +74,13 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 		builder.createLabel("0x31b", "RSTOR()");
 
 		builder.addBytesFallthrough("0x0326");
-		builder.createComment("0x0326", "Hey There", CodeUnit.EOL_COMMENT);
-		builder.createComment("0x0182", "SAVE register 'I'", CodeUnit.EOL_COMMENT);
-		builder.createComment("0x0334", "Set the SP to RAM:ESAV", CodeUnit.EOL_COMMENT);
-		builder.createComment("0x0335", "RESTORE register 'DE'", CodeUnit.EOL_COMMENT);
-		builder.createComment("0x0336", "RESTORE register 'BC'", CodeUnit.EOL_COMMENT);
-		builder.createComment("0x0337", "RESTORE register 'A' and FLAGS", CodeUnit.EOL_COMMENT);
-		builder.createComment("0x0338", "RESTORE register 'SP'", CodeUnit.EOL_COMMENT);
+		builder.createComment("0x0326", "Hey There", CommentType.EOL);
+		builder.createComment("0x0182", "SAVE register 'I'", CommentType.EOL);
+		builder.createComment("0x0334", "Set the SP to RAM:ESAV", CommentType.EOL);
+		builder.createComment("0x0335", "RESTORE register 'DE'", CommentType.EOL);
+		builder.createComment("0x0336", "RESTORE register 'BC'", CommentType.EOL);
+		builder.createComment("0x0337", "RESTORE register 'A' and FLAGS", CommentType.EOL);
+		builder.createComment("0x0338", "RESTORE register 'SP'", CommentType.EOL);
 
 		builder.createMemoryReference("0x1000", "0x331", RefType.UNCONDITIONAL_JUMP,
 			SourceType.DEFAULT);
@@ -106,33 +103,21 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 		setupTool(toolTwo);
 		cb2 = getPlugin(toolTwo, CodeBrowserPlugin.class);
 
-		DomainFolder rootFolder = env.getProject().getProjectData().getRootFolder();
-
-		Program sdk = program;
-		final DomainFile df = rootFolder.createFile("sdk1", sdk, TaskMonitor.DUMMY);
-		programOne = (ProgramDB) df.getDomainObject(this, true, false, TaskMonitor.DUMMY);
-		env.release(sdk);
-
-		Program sdk2 = buildProgram("sdk2");
-		final DomainFile df2 = rootFolder.createFile("sdk2", sdk2, TaskMonitor.DUMMY);
-		programTwo = (ProgramDB) df2.getDomainObject(this, true, false, TaskMonitor.DUMMY);
-		env.release(sdk2);
+		programOne = program;
+		programTwo = buildProgram("sdk2");
 
 		setupProgramOne();
 		setupProgramTwo();
 
 		pmOne = toolOne.getService(ProgramManager.class);
 		runSwing(() -> {
-			pmOne.openProgram(df);
-			programOne = (ProgramDB) pmOne.getCurrentProgram();
+			pmOne.openProgram(programOne);
 		});
 
 		pmTwo = toolTwo.getService(ProgramManager.class);
 		runSwing(() -> {
-			pmTwo.openProgram(df2);
-			programTwo = (ProgramDB) pmTwo.getCurrentProgram();
+			pmTwo.openProgram(programTwo);
 		});
-
 	}
 
 	@Test
@@ -197,8 +182,7 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 
 		int transactionID = programOne.startTransaction("test");
 		programOne.getSymbolTable()
-				.createLabel(addr(programOne, 0x032a), "MyLabel",
-					SourceType.USER_DEFINED);
+				.createLabel(addr(programOne, 0x032a), "MyLabel", SourceType.USER_DEFINED);
 		programOne.endTransaction(transactionID, true);
 
 		goTo(toolTwo, 0x0326);
@@ -389,8 +373,7 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 		// in Browser(1) change default label at 331 to JUNK
 		int transactionID = programOne.startTransaction("test");
 		programOne.getSymbolTable()
-				.createLabel(addr(programOne, 0x0331), "JUNK",
-					SourceType.USER_DEFINED);
+				.createLabel(addr(programOne, 0x0331), "JUNK", SourceType.USER_DEFINED);
 		programOne.endTransaction(transactionID, true);
 		//
 		// in Browser(1) go to 331
@@ -431,8 +414,7 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 		// in program 2, create a second label, JUNK2, at 0331
 		int transactionID = programOne.startTransaction("test");
 		programOne.getSymbolTable()
-				.createLabel(addr(programOne, 0x331), "JUNK2",
-					SourceType.USER_DEFINED);
+				.createLabel(addr(programOne, 0x331), "JUNK2", SourceType.USER_DEFINED);
 		programOne.endTransaction(transactionID, true);
 
 		// in Browser(2) select 331 through 334, contains "RSR10"
@@ -480,8 +462,7 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 	public void testPasteWhereUserLabelExists() throws Exception {
 		int transactionID = programOne.startTransaction("test");
 		programOne.getSymbolTable()
-				.createLabel(addr(programOne, 0x331), "JUNK2",
-					SourceType.USER_DEFINED);
+				.createLabel(addr(programOne, 0x331), "JUNK2", SourceType.USER_DEFINED);
 		programOne.endTransaction(transactionID, true);
 
 		// in Browser(2) select 331 through 334, contains "RSR10"
@@ -538,7 +519,7 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 		// in Browser(1) add a pre comment at 331
 		CodeUnit cu = programOne.getListing().getCodeUnitAt(addr(programOne, 0x331));
 		int transactionID = programOne.startTransaction("test");
-		cu.setComment(CodeUnit.PRE_COMMENT, "my pre comment for this test");
+		cu.setComment(CommentType.PRE, "my pre comment for this test");
 		programOne.endTransaction(transactionID, true);
 		waitForSwing();
 
@@ -572,7 +553,7 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 
 		// verify pre comment at 331 remains unaffected
 		cu = programOne.getListing().getCodeUnitAt(addr(programOne, 0x331));
-		assertEquals("my pre comment for this test", cu.getComment(CodeUnit.PRE_COMMENT));
+		assertEquals("my pre comment for this test", cu.getComment(CommentType.PRE));
 
 		// verify browser field
 
@@ -593,16 +574,14 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 		cb.goToField(addr(programOne, 0x0331), LabelFieldFactory.FIELD_NAME, 0, 0);
 		f = (ListingTextField) cb.getCurrentField();
 		assertEquals(programOne.getSymbolTable()
-				.getSymbol("LAB_00000331", addr(programOne, 0x0331),
-					null)
+				.getSymbol("LAB_00000331", addr(programOne, 0x0331), null)
 				.getName(),
 			f.getText());
 
 		cb.goToField(addr(programOne, 0x031b), LabelFieldFactory.FIELD_NAME, 0, 0);
 		f = (ListingTextField) cb.getCurrentField();
 		assertEquals(programOne.getSymbolTable()
-				.getSymbol("LAB_0000031b", addr(programOne, 0x031b),
-					null)
+				.getSymbol("LAB_0000031b", addr(programOne, 0x031b), null)
 				.getName(),
 			f.getText());
 
@@ -629,8 +608,7 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 		int transactionID = programOne.startTransaction("test");
 		String name = SymbolUtilities.getDefaultFunctionName(min);
 		programOne.getListing()
-				.createFunction(name, min, new AddressSet(min, max),
-					SourceType.USER_DEFINED);
+				.createFunction(name, min, new AddressSet(min, max), SourceType.USER_DEFINED);
 		programOne.endTransaction(transactionID, true);
 		programOne.flushEvents();
 		waitForSwing();
@@ -649,18 +627,18 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 
 		// verify comments are copied
 		CodeUnit cu = listing.getCodeUnitAt(addr(programOne, 0x0320));
-		assertEquals("My Plate Comment", cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("My Post comment", cu.getComment(CodeUnit.POST_COMMENT));
+		assertEquals("My Plate Comment", cu.getComment(CommentType.PLATE));
+		assertEquals("My Post comment", cu.getComment(CommentType.POST));
 
 		cu = listing.getCodeUnitAt(addr(programOne, 0x326));
-		assertEquals("More Plate Comments (1)", cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("More Post comments (1)", cu.getComment(CodeUnit.POST_COMMENT));
-		assertEquals("More EOL comments (1)", cu.getComment(CodeUnit.EOL_COMMENT));
+		assertEquals("More Plate Comments (1)", cu.getComment(CommentType.PLATE));
+		assertEquals("More Post comments (1)", cu.getComment(CommentType.POST));
+		assertEquals("More EOL comments (1)", cu.getComment(CommentType.EOL));
 
 		cu = listing.getCodeUnitAt(addr(programOne, 0x32a));
-		assertEquals("More Plate Comments (2)", cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("More Post comments (2)", cu.getComment(CodeUnit.POST_COMMENT));
-		assertEquals("More EOL comments (2)", cu.getComment(CodeUnit.EOL_COMMENT));
+		assertEquals("More Plate Comments (2)", cu.getComment(CommentType.PLATE));
+		assertEquals("More Post comments (2)", cu.getComment(CommentType.POST));
+		assertEquals("More EOL comments (2)", cu.getComment(CommentType.EOL));
 
 		cb.goToField(addr(programOne, 0x0320), PlateFieldFactory.FIELD_NAME, 0, 0);
 		ListingTextField f = (ListingTextField) cb.getCurrentField();
@@ -708,7 +686,7 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 		Address addr = addr(programOne, 0x334);
 		for (String element : comments) {
 			CodeUnit cu = listing.getCodeUnitAt(addr);
-			assertEquals(element, cu.getComment(CodeUnit.EOL_COMMENT));
+			assertEquals(element, cu.getComment(CommentType.EOL));
 			assertTrue(cb.goToField(addr, EolCommentFieldFactory.FIELD_NAME, 0, 0));
 			ListingTextField f = (ListingTextField) cb.getCurrentField();
 			assertEquals(element, f.getText());
@@ -722,8 +700,7 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 
 	private void copyToolTwoLabels() {
 		ClipboardPlugin plugin = getPlugin(toolTwo, ClipboardPlugin.class);
-		ClipboardContentProviderService service =
-			getClipboardService(plugin);
+		ClipboardContentProviderService service = getClipboardService(plugin);
 		DockingAction action = getLocalAction(service, "Copy Special", plugin);
 		assertNotNull(action);
 		assertEnabled(action, cb2.getProvider());
@@ -791,18 +768,18 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 		function.setComment("my function comment");
 		// add some Plate, Pre, and Post comments within this function.
 		CodeUnit cu = listing.getCodeUnitAt(addr(programTwo, 0x0320));
-		cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-		cu.setComment(CodeUnit.POST_COMMENT, "My Post comment");
+		cu.setComment(CommentType.PLATE, "My Plate Comment");
+		cu.setComment(CommentType.POST, "My Post comment");
 
 		cu = listing.getCodeUnitAt(addr(programTwo, 0x326));
-		cu.setComment(CodeUnit.PLATE_COMMENT, "More Plate Comments (1)");
-		cu.setComment(CodeUnit.POST_COMMENT, "More Post comments (1)");
-		cu.setComment(CodeUnit.EOL_COMMENT, "More EOL comments (1)");
+		cu.setComment(CommentType.PLATE, "More Plate Comments (1)");
+		cu.setComment(CommentType.POST, "More Post comments (1)");
+		cu.setComment(CommentType.EOL, "More EOL comments (1)");
 
 		cu = listing.getCodeUnitAt(addr(programTwo, 0x32a));
-		cu.setComment(CodeUnit.PLATE_COMMENT, "More Plate Comments (2)");
-		cu.setComment(CodeUnit.POST_COMMENT, "More Post comments (2)");
-		cu.setComment(CodeUnit.EOL_COMMENT, "More EOL comments (2)");
+		cu.setComment(CommentType.PLATE, "More Plate Comments (2)");
+		cu.setComment(CommentType.POST, "More Post comments (2)");
+		cu.setComment(CommentType.EOL, "More EOL comments (2)");
 
 		// Edit the label at 0x32d (RSR05) and make it part of a scope
 		Symbol symbol = getUniqueSymbol(programTwo, "RSR05", null);
@@ -826,8 +803,7 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 		waitForSwing();
 	}
 
-	private ClipboardContentProviderService getClipboardService(
-			ClipboardPlugin clipboardPlugin) {
+	private ClipboardContentProviderService getClipboardService(ClipboardPlugin clipboardPlugin) {
 		Map<?, ?> serviceMap = (Map<?, ?>) getInstanceField("serviceActionMap", clipboardPlugin);
 		Set<?> keySet = serviceMap.keySet();
 		for (Object name : keySet) {
@@ -855,10 +831,10 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 	}
 
 	private void assertEnabled(DockingActionIf action, ComponentProvider provider) {
-		boolean isEnabled =
-			runSwing(() -> {
-				return action.isEnabledForContext(provider.getActionContext(null));
-			});
+		boolean isEnabled = runSwing(() -> {
+			ActionContext context = createActionContext(provider);
+			return action.isEnabledForContext(context);
+		});
 		assertTrue("Action was not enabled when it should be", isEnabled);
 	}
 }

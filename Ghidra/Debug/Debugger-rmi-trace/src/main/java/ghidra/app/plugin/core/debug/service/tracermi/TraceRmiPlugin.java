@@ -79,7 +79,7 @@ public class TraceRmiPlugin extends Plugin implements InternalTraceRmiService {
 	@SuppressWarnings("unused")
 	private final Wiring autoServiceWiring;
 
-	private SocketAddress serverAddress = new InetSocketAddress("0.0.0.0", DEFAULT_PORT);
+	private SocketAddress serverAddress = new InetSocketAddress("127.0.0.1", DEFAULT_PORT);
 	private TraceRmiServer server;
 
 	private final Set<TraceRmiHandler> handlers = new LinkedHashSet<>();
@@ -108,9 +108,11 @@ public class TraceRmiPlugin extends Plugin implements InternalTraceRmiService {
 			}
 		}
 
-		for (ConnAndTarget cat : targets) {
-			targetService.publishTarget(cat.target);
-			listeners.invoke().targetPublished(cat.conn, cat.target);
+		if (targetService != null) {
+			for (ConnAndTarget cat : targets) {
+				targetService.publishTarget(cat.target);
+				listeners.invoke().targetPublished(cat.conn, cat.target);
+			}
 		}
 	}
 

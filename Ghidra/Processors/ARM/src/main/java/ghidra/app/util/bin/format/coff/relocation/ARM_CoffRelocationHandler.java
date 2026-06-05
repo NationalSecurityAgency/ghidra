@@ -97,9 +97,6 @@ public class ARM_CoffRelocationHandler implements CoffRelocationHandler {
 	 */
 	public static final short IMAGE_REL_THUMB_BLX23 = 0x0015;
 
-	/**
-	 * 
-	 */
 	public static final short IMAGE_REL_ARM_PAIR = 0x0016;
 
 	@Override

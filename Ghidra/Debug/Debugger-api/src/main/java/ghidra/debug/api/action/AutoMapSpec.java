@@ -93,7 +93,7 @@ public interface AutoMapSpec extends ExtensionPoint {
 
 	boolean objectHasType(TraceObjectValue value);
 
-	String getInfoForObjects(Trace trace);
+	String getInfoForObjects(Trace trace, long snap);
 
 	default boolean hasTask() {
 		return true;
@@ -103,7 +103,7 @@ public interface AutoMapSpec extends ExtensionPoint {
 		return getMenuName();
 	}
 
-	default void runTask(PluginTool tool, Trace trace) {
+	default void runTask(PluginTool tool, Trace trace, long snap) {
 		DebuggerStaticMappingService mappingService =
 			tool.getService(DebuggerStaticMappingService.class);
 		ProgramManager programManager = tool.getService(ProgramManager.class);
@@ -114,7 +114,7 @@ public interface AutoMapSpec extends ExtensionPoint {
 			@Override
 			public boolean applyTo(Trace trace, TaskMonitor monitor) {
 				try {
-					performMapping(mappingService, trace, programManager, monitor);
+					performMapping(mappingService, trace, snap, programManager, monitor);
 					return true;
 				}
 				catch (CancelledException e) {
@@ -132,12 +132,13 @@ public interface AutoMapSpec extends ExtensionPoint {
 	 * 
 	 * @param mappingService the mapping service
 	 * @param trace the trace
+	 * @param snap the snap
 	 * @param programs the programs to consider
 	 * @param monitor a task monitor
 	 * @return true if any mappings were added
 	 * @throws CancelledException if the task monitor cancelled the task
 	 */
-	boolean performMapping(DebuggerStaticMappingService mappingService, Trace trace,
+	boolean performMapping(DebuggerStaticMappingService mappingService, Trace trace, long snap,
 			List<Program> programs, TaskMonitor monitor) throws CancelledException;
 
 	/**
@@ -145,13 +146,15 @@ public interface AutoMapSpec extends ExtensionPoint {
 	 * 
 	 * @param mappingService the mapping service
 	 * @param trace the trace
+	 * @param snap the snap
 	 * @param programManager the program manager
 	 * @param monitor a task monitor
 	 * @return true if any mappings were added
 	 * @throws CancelledException if the task monitor cancelled the task
 	 */
 	default boolean performMapping(DebuggerStaticMappingService mappingService, Trace trace,
-			ProgramManager programManager, TaskMonitor monitor) throws CancelledException {
-		return performMapping(mappingService, trace, programs(programManager), monitor);
+			long snap, ProgramManager programManager, TaskMonitor monitor)
+			throws CancelledException {
+		return performMapping(mappingService, trace, snap, programs(programManager), monitor);
 	}
 }

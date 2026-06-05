@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.trace.model.time.schedule;
 import java.util.List;
 
 import ghidra.program.model.lang.Language;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 
 public abstract class AbstractStep implements Step {
 	protected final long threadKey;
@@ -34,16 +35,22 @@ public abstract class AbstractStep implements Step {
 	/**
 	 * Return the step portion of {@link #toString()}
 	 * 
+	 * @param radix the radix
 	 * @return the string
 	 */
-	protected abstract String toStringStepPart();
+	protected abstract String toStringStepPart(TimeRadix radix);
 
 	@Override
 	public String toString() {
+		return toString(TimeRadix.DEFAULT);
+	}
+
+	@Override
+	public String toString(TimeRadix radix) {
 		if (threadKey == -1) {
-			return toStringStepPart();
+			return toStringStepPart(radix);
 		}
-		return String.format("t%d-", threadKey) + toStringStepPart();
+		return String.format("t%d-%s", threadKey, toStringStepPart(radix));
 	}
 
 	@Override

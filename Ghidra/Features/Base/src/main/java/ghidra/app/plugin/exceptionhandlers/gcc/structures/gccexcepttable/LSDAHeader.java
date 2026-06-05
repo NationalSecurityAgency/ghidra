@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import ghidra.app.plugin.exceptionhandlers.gcc.datatype.DwarfEncodingModeDataTyp
 import ghidra.app.util.bin.LEB128Info;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.SourceType;
@@ -39,7 +39,6 @@ import ghidra.util.task.TaskMonitor;
 public class LSDAHeader extends GccAnalysisClass {
 
 	static final int OMITTED_ENCODING_TYPE = 0xFF;
-
 
 	/* Class Members */
 	private RegionDescriptor region;
@@ -84,7 +83,7 @@ public class LSDAHeader extends GccAnalysisClass {
 
 		String comment = "(LSDA) LPStart Encoding";
 		createAndCommentData(program, addr, new DwarfEncodingModeDataType(), comment,
-			CodeUnit.EOL_COMMENT);
+			CommentType.EOL);
 		lpStartEncoding = GccAnalysisUtils.readByte(program, addr);
 
 		curSize += BYTE_LEN;
@@ -122,7 +121,7 @@ public class LSDAHeader extends GccAnalysisClass {
 
 		DataType encodedDt = decoder.getDataType(program);
 
-		createAndCommentData(program, addr, encodedDt, comment, CodeUnit.EOL_COMMENT);
+		createAndCommentData(program, addr, encodedDt, comment, CommentType.EOL);
 
 		curSize += encodedLen;
 		return addr.add(encodedLen);
@@ -134,7 +133,7 @@ public class LSDAHeader extends GccAnalysisClass {
 		ttypeEncoding = GccAnalysisUtils.readByte(program, addr);
 
 		createAndCommentData(program, addr, new DwarfEncodingModeDataType(), comment,
-			CodeUnit.EOL_COMMENT);
+			CommentType.EOL);
 
 		curSize += BYTE_LEN;
 		return addr.add(BYTE_LEN);
@@ -155,7 +154,7 @@ public class LSDAHeader extends GccAnalysisClass {
 		ttypeOffset = uleb128.asLong() + curSize;
 
 		createAndCommentData(program, addr, UnsignedLeb128DataType.dataType, comment,
-			CodeUnit.EOL_COMMENT);
+			CommentType.EOL);
 
 		return addr.add(uleb128.getLength());
 	}
@@ -165,7 +164,7 @@ public class LSDAHeader extends GccAnalysisClass {
 		callSiteTableEncoding = GccAnalysisUtils.readByte(program, addr);
 
 		createAndCommentData(program, addr, new DwarfEncodingModeDataType(), comment,
-			CodeUnit.EOL_COMMENT);
+			CommentType.EOL);
 
 		curSize += BYTE_LEN;
 		return addr.add(BYTE_LEN);
@@ -179,7 +178,7 @@ public class LSDAHeader extends GccAnalysisClass {
 		callSiteTableLength = (int) uleb128.asLong();
 
 		createAndCommentData(program, addr, UnsignedLeb128DataType.dataType, comment,
-			CodeUnit.EOL_COMMENT);
+			CommentType.EOL);
 
 		curSize += uleb128.getLength();
 		return addr.add(uleb128.getLength());
@@ -243,7 +242,7 @@ public class LSDAHeader extends GccAnalysisClass {
 		}
 
 		SetCommentCmd commentCmd =
-			new SetCommentCmd(baseAddr, CodeUnit.PLATE_COMMENT, "(LSDA) Exception Table");
+			new SetCommentCmd(baseAddr, CommentType.PLATE, "(LSDA) Exception Table");
 		commentCmd.applyTo(program);
 
 		nextAddress = addr;

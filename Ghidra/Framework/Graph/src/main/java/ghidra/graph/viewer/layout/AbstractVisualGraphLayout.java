@@ -27,6 +27,7 @@ import com.google.common.base.Function;
 import edu.uci.ics.jung.algorithms.layout.AbstractLayout;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.visualization.RenderContext;
 import edu.uci.ics.jung.visualization.renderers.BasicEdgeRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer.EdgeLabel;
 import ghidra.graph.VisualGraph;
@@ -126,7 +127,8 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 	}
 
 	@Override
-	public Function<E, Shape> getEdgeShapeTransformer() {
+	public Function<E, Shape> getEdgeShapeTransformer(RenderContext<V, E> context) {
+		edgeShapeTransformer.setRenderContext(context);
 		return edgeShapeTransformer;
 	}
 
@@ -282,7 +284,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 		for (Entry<V, Point2D> entry : entrySet) {
 			V vertex = entry.getKey();
 			Point2D location = entry.getValue();
-			setLocation(vertex, location);
+			setLocation(vertex, location, ChangeType.RESTORE);
 			vertex.setLocation(location);
 		}
 	}
@@ -698,10 +700,10 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 	}
 
 	private void fireVertexLocationChanged(V v, Point2D p) {
-		fireVertexLocationChanged(v, p, ChangeType.USER);
+		fireVertexLocationChanged(v, p, ChangeType.API);
 	}
 
-	private void fireVertexLocationChanged(V v, Point2D p, ChangeType type) {
+	protected void fireVertexLocationChanged(V v, Point2D p, ChangeType type) {
 		Iterator<LayoutListener<V, E>> iterator = listeners.iterator();
 		for (; iterator.hasNext();) {
 			LayoutListener<V, E> layoutListener = iterator.next();

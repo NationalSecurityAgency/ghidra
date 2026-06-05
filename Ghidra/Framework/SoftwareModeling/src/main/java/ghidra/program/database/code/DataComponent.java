@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,12 @@ package ghidra.program.database.code;
 
 import db.DBRecord;
 import ghidra.docking.settings.Settings;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.util.Lock.Closeable;
 
 /**
  * <code>DataComponent</code> provides Data and CodeUnit access to Struct and Array components.
@@ -44,15 +44,14 @@ class DataComponent extends DataDB {
 	 * NOTE: a zero-length component will be forced to have a length of 1-byte.
 	 * This can result in what would appear to be overlapping components with the same overset.
 	 * @param codeMgr the code manager.
-	 * @param componentCache data component cache
 	 * @param address the address of the data component
 	 * @param addr the convert address long value
 	 * @param parent the DataDB object that contains this component.
 	 * @param component the DataTypeComponent for this DataComponent.
 	 */
-	public DataComponent(CodeManager codeMgr, DBObjectCache<DataDB> componentCache, Address address,
-			long addr, DataDB parent, DataTypeComponent component) {
-		super(codeMgr, componentCache, component.getOrdinal(), address, addr,
+	DataComponent(CodeManager codeMgr, Address address, long addr, DataDB parent,
+			DataTypeComponent component) {
+		super(codeMgr, component.getOrdinal(), address, addr,
 			component.getDataType());
 		this.indexInParent = component.getOrdinal();
 		this.parent = parent;
@@ -75,9 +74,9 @@ class DataComponent extends DataDB {
 	 * @param array the array containing this component.
 	 * @param ordinal the array index for this component.
 	 */
-	DataComponent(CodeManager codeMgr, DBObjectCache<DataDB> componentCache, Address address,
-			long addr, DataDB parent, Array array, int ordinal) {
-		super(codeMgr, componentCache, ordinal, address, addr, array.getDataType());
+	DataComponent(CodeManager codeMgr, Address address, long addr, DataDB parent, Array array,
+			int ordinal) {
+		super(codeMgr, ordinal, address, addr, array.getDataType());
 		int elementLength = array.getElementLength();
 		this.indexInParent = ordinal;
 		this.parent = parent;
@@ -234,49 +233,37 @@ class DataComponent extends DataDB {
 	}
 
 	@Override
-	public int getBytes(byte[] b, int offset) {
-		lock.acquire();
-		try {
-			checkIsValid();
-			return parent.getBytes(b, this.offset + offset);
-		}
-		finally {
-			lock.release();
+	public int getBytes(byte[] b, int off) {
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
+			return parent.getBytes(b, this.offset + off);
 		}
 	}
 
 	@Override
 	public byte[] getBytes() throws MemoryAccessException {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			byte[] b = new byte[length];
 			if (parent.getBytes(b, this.offset) != length) {
 				throw new MemoryAccessException("Couldn't get all bytes for CodeUnit");
 			}
 			return b;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public byte getByte(int n) throws MemoryAccessException {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return parent.getByte(this.offset + n);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
-	public String getComment(int commentType) {
+	public String getComment(CommentType commentType) {
 		String cmt = super.getComment(commentType);
-		if (cmt == null && commentType == CodeUnit.EOL_COMMENT && component != null) {
+		if (cmt == null && commentType == CommentType.EOL && component != null) {
 			cmt = component.getComment();
 		}
 		return cmt;

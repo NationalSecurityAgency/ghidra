@@ -27,7 +27,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Handles marking up and program info for Golang binaries.
+ * Handles marking up and program info for Go binaries.
  * <ul>
  *   <li>NoteGoBuildId</li>
  * 	 <li>GoBuildInfo</li>
@@ -49,8 +49,8 @@ public class GolangElfInfoProducer implements ElfInfoProducer {
 	private ElfLoadHelper elfLoadHelper;
 
 	@Override
-	public void init(ElfLoadHelper elfLoadHelper) {
-		this.elfLoadHelper = elfLoadHelper;
+	public void init(ElfLoadHelper newElfLoadHelper) {
+		this.elfLoadHelper = newElfLoadHelper;
 	}
 
 	@Override

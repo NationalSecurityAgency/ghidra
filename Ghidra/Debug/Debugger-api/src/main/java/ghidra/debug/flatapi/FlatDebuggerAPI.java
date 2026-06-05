@@ -27,7 +27,6 @@ import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraState;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.StateEditor;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.model.DebuggerObjectActionContext;
@@ -35,6 +34,7 @@ import ghidra.debug.api.model.DebuggerSingleObjectPathActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.target.Target.ObjectArgumentPolicy;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
@@ -45,13 +45,15 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryOperations;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.target.*;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.MathUtilities;
@@ -1443,22 +1445,20 @@ public interface FlatDebuggerAPI {
 	}
 
 	default ActionContext createContext(TraceObject object) {
+		Trace trace = object.getTrace();
+		DebuggerCoordinates coords = getTraceManager().getCurrentFor(trace);
 		TraceObjectValue value = object.getCanonicalParents(Lifespan.ALL).findAny().orElseThrow();
-		return new DebuggerObjectActionContext(List.of(value), null, null);
+		return new DebuggerObjectActionContext(List.of(value), null, null, coords.getSnap());
 	}
 
 	default ActionContext createContext(TraceThread thread) {
-		if (thread instanceof TraceObjectThread objThread) {
-			return createContext(objThread.getObject());
-		}
-		return new DebuggerSingleObjectPathActionContext(
-			TraceObjectKeyPath.parse(thread.getPath()));
+		return createContext(thread.getObject());
 	}
 
 	default ActionContext createContext(Trace trace) {
 		DebuggerCoordinates coords = getTraceManager().getCurrentFor(trace);
 		if (coords == null) {
-			return new DebuggerSingleObjectPathActionContext(TraceObjectKeyPath.of());
+			return new DebuggerSingleObjectPathActionContext(KeyPath.of());
 		}
 		if (coords.getObject() != null) {
 			return createContext(coords.getObject());
@@ -1466,11 +1466,11 @@ public interface FlatDebuggerAPI {
 		if (coords.getPath() != null) {
 			return new DebuggerSingleObjectPathActionContext(coords.getPath());
 		}
-		return new DebuggerSingleObjectPathActionContext(TraceObjectKeyPath.of());
+		return new DebuggerSingleObjectPathActionContext(KeyPath.of());
 	}
 
 	default ActionEntry findAction(Target target, ActionName action, ActionContext context) {
-		return target.collectActions(action, context)
+		return target.collectActions(action, context, ObjectArgumentPolicy.EITHER_AND_RELATED)
 				.values()
 				.stream()
 				.filter(e -> !e.requiresPrompt())
@@ -1688,25 +1688,25 @@ public interface FlatDebuggerAPI {
 	 * 
 	 * <p>
 	 * If the trace does not have a live target, it is considered
-	 * {@link TargetExecutionState#TERMINATED} (even if the trace <em>never</em> technically had a
+	 * {@link TraceExecutionState#TERMINATED} (even if the trace <em>never</em> technically had a
 	 * live target.) Otherwise, this gets the state of that live target. <b>NOTE:</b> This does not
 	 * consider the current snap. It only considers a live target in the present.
 	 * 
 	 * @param trace the trace
 	 * @return the trace's execution state
 	 */
-	default TargetExecutionState getExecutionState(Trace trace) {
+	default TraceExecutionState getExecutionState(Trace trace) {
 		Target target = getTargetService().getTarget(trace);
 		if (target == null) {
-			return TargetExecutionState.TERMINATED;
+			return TraceExecutionState.TERMINATED;
 		}
 		// Use resume action's enablement as a proxy for state
 		// This should work for recorder or rmi targets
 		ActionEntry action = findAction(target, ActionName.RESUME, createContext(trace));
 		if (action == null) {
-			return TargetExecutionState.ALIVE;
+			return TraceExecutionState.ALIVE;
 		}
-		return action.isEnabled() ? TargetExecutionState.STOPPED : TargetExecutionState.RUNNING;
+		return action.isEnabled() ? TraceExecutionState.STOPPED : TraceExecutionState.RUNNING;
 	}
 
 	/**
@@ -1714,21 +1714,20 @@ public interface FlatDebuggerAPI {
 	 * 
 	 * <p>
 	 * If the thread does not have a corresponding live target thread, it is considered
-	 * {@link TargetExecutionState#TERMINATED} (even if the thread <em>never</em> technically had a
+	 * {@link TraceExecutionState#TERMINATED} (even if the thread <em>never</em> technically had a
 	 * live target thread.) Otherwise, this gets the state of that live target thread. <b>NOTE:</b>
 	 * This does not consider the current snap. It only considers a live target thread in the
 	 * present. In other words, if the user rewinds trace history to a point where the thread was
 	 * alive, this method still considers that thread terminated. To compute state with respect to
-	 * trace history, use {@link TraceThread#getLifespan()} and check if it contains the current
-	 * snap.
+	 * trace history, use {@link TraceThread#isValid(long)}.
 	 * 
 	 * @param thread
 	 * @return the thread's execution state
 	 */
-	default TargetExecutionState getExecutionState(TraceThread thread) {
+	default TraceExecutionState getExecutionState(TraceThread thread) {
 		DebuggerCoordinates coords = getTraceManager().getCurrentFor(thread.getTrace());
 		if (!coords.isAlive()) {
-			return TargetExecutionState.TERMINATED;
+			return TraceExecutionState.TERMINATED;
 		}
 		return coords.getTarget().getThreadExecutionState(thread);
 	}
@@ -1740,7 +1739,7 @@ public interface FlatDebuggerAPI {
 	 * @return true if alive
 	 */
 	default boolean isTargetAlive(Trace trace) {
-		return getExecutionState(trace).isAlive();
+		return getExecutionState(trace) != TraceExecutionState.TERMINATED;
 	}
 
 	/**
@@ -1763,7 +1762,7 @@ public interface FlatDebuggerAPI {
 	 * @return true if alive
 	 */
 	default boolean isThreadAlive(TraceThread thread) {
-		return getExecutionState(thread).isAlive();
+		return getExecutionState(thread) != TraceExecutionState.TERMINATED;
 	}
 
 	/**
@@ -1792,7 +1791,7 @@ public interface FlatDebuggerAPI {
 	 * @throws TimeoutException if the timeout expires
 	 */
 	default void waitForBreak(Trace trace, long timeout, TimeUnit unit) throws TimeoutException {
-		if (!getExecutionState(trace).isRunning()) {
+		if (getExecutionState(trace) != TraceExecutionState.RUNNING) {
 			return;
 		}
 		var listener = new DomainObjectListener() {
@@ -1800,14 +1799,14 @@ public interface FlatDebuggerAPI {
 
 			@Override
 			public void domainObjectChanged(DomainObjectChangedEvent ev) {
-				if (!getExecutionState(trace).isRunning()) {
+				if (getExecutionState(trace) != TraceExecutionState.RUNNING) {
 					future.complete(null);
 				}
 			}
 		};
 		trace.addListener(listener);
 		try {
-			if (!getExecutionState(trace).isRunning()) {
+			if (getExecutionState(trace) != TraceExecutionState.RUNNING) {
 				return;
 			}
 			listener.future.get(timeout, unit);
@@ -2176,7 +2175,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointSetSoftwareExecute(ProgramLocation location,
 			String name) {
-		return breakpointSet(location, 1, TraceBreakpointKindSet.SW_EXECUTE, name);
+		return breakpointSet(location, 1, CommonSet.SWX.kinds(), name);
 	}
 
 	/**
@@ -2189,7 +2188,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointSetHardwareExecute(ProgramLocation location,
 			String name) {
-		return breakpointSet(location, 1, TraceBreakpointKindSet.HW_EXECUTE, name);
+		return breakpointSet(location, 1, CommonSet.HWX.kinds(), name);
 	}
 
 	/**
@@ -2206,7 +2205,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointSetRead(ProgramLocation location, int length,
 			String name) {
-		return breakpointSet(location, length, TraceBreakpointKindSet.READ, name);
+		return breakpointSet(location, length, CommonSet.READ.kinds(), name);
 	}
 
 	/**
@@ -2223,7 +2222,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointSetWrite(ProgramLocation location, int length,
 			String name) {
-		return breakpointSet(location, length, TraceBreakpointKindSet.WRITE, name);
+		return breakpointSet(location, length, CommonSet.WRITE.kinds(), name);
 	}
 
 	/**
@@ -2240,7 +2239,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointSetAccess(ProgramLocation location, int length,
 			String name) {
-		return breakpointSet(location, length, TraceBreakpointKindSet.ACCESS, name);
+		return breakpointSet(location, length, CommonSet.ACCESS.kinds(), name);
 	}
 
 	/**

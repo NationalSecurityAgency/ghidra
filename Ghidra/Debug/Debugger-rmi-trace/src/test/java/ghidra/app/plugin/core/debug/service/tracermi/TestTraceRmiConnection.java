@@ -24,17 +24,19 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.swing.Icon;
+
 import db.Transaction;
 import ghidra.app.services.DebuggerTargetService;
 import ghidra.async.*;
-import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracermi.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.time.TraceSnapshot;
 
 public abstract class TestTraceRmiConnection extends AbstractTraceRmiConnection {
@@ -56,6 +58,11 @@ public abstract class TestTraceRmiConnection extends AbstractTraceRmiConnection 
 			String description, Map<String, RemoteParameter> parameters, SchemaName retType,
 			AsyncPairingQueue<Map<String, Object>> argQueue, AsyncPairingQueue<Object> retQueue)
 			implements RemoteMethod {
+
+		public TestRemoteMethod {
+			Objects.requireNonNull(action);
+		}
+
 		public TestRemoteMethod(String name, ActionName action, String display, String description,
 				Map<String, RemoteParameter> parameters, SchemaName retType) {
 			this(name, action, display, description, parameters, retType, new AsyncPairingQueue<>(),
@@ -70,13 +77,13 @@ public abstract class TestTraceRmiConnection extends AbstractTraceRmiConnection 
 		}
 
 		public TestRemoteMethod(String name, ActionName action, String display, String description,
-				Map<String, RemoteParameter> parameters, TargetObjectSchema retType) {
+				Map<String, RemoteParameter> parameters, TraceObjectSchema retType) {
 			this(name, action, display, description, parameters, retType.getName(),
 				new AsyncPairingQueue<>(), new AsyncPairingQueue<>());
 		}
 
 		public TestRemoteMethod(String name, ActionName action, String display, String description,
-				TargetObjectSchema retType, RemoteParameter... parameters) {
+				TraceObjectSchema retType, RemoteParameter... parameters) {
 			this(name, action, display, description, Stream.of(parameters)
 					.collect(Collectors.toMap(RemoteParameter::name, p -> p)),
 				retType);
@@ -106,11 +113,21 @@ public abstract class TestTraceRmiConnection extends AbstractTraceRmiConnection 
 			result.thenApply(ar -> ar.ret).handle(AsyncUtils.copyTo(retQueue().give()));
 			return result.thenApply(ar -> ar.args);
 		}
+
+		@Override
+		public String okText() {
+			return "OK";
+		}
+
+		@Override
+		public Icon icon() {
+			return null;
+		}
 	}
 
 	public record TestRemoteParameter(String name, SchemaName type, boolean required,
 			Object defaultValue, String display, String description) implements RemoteParameter {
-		public TestRemoteParameter(String name, TargetObjectSchema type, boolean required,
+		public TestRemoteParameter(String name, TraceObjectSchema type, boolean required,
 				Object defaultValue, String display, String description) {
 			this(name, type.getName(), required, defaultValue, display, description);
 		}
@@ -249,5 +266,19 @@ public abstract class TestTraceRmiConnection extends AbstractTraceRmiConnection 
 	public void synthActivate(TraceObject object) {
 		Trace trace = object.getTrace();
 		doActivate(object, trace, snapshots.get(trace));
+	}
+
+	@Override
+	public boolean isBusy() {
+		return false;
+	}
+
+	@Override
+	public boolean isBusy(Target target) {
+		return false;
+	}
+
+	@Override
+	public void forciblyCloseTransactions(Target target) {
 	}
 }

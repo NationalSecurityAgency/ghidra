@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -126,6 +126,7 @@ public class GraphPerspectiveInfo<V extends VisualVertex, E extends VisualEdge<V
 	/**
 	 * The offset of the transform from the world origin (which at the time of writing is
 	 * the (0,0) at the upper left-hand corner of the GUI.  This is for the layout transformer.
+	 * @return the point
 	 */
 	public Point getLayoutTranslateCoordinates() {
 		return layoutTranslateCoordinates;
@@ -135,6 +136,7 @@ public class GraphPerspectiveInfo<V extends VisualVertex, E extends VisualEdge<V
 	 * The offset of the transform from the world origin (which at the time of writing is
 	 * the (0,0) at the upper left-hand corner of the GUI.  This is for the view transformer, 
 	 * which also potentially has a scale applied to the transform.
+	 * @return the point
 	 */
 	public Point getViewTranslateCoordinates() {
 		return viewTranslateCoordinates;

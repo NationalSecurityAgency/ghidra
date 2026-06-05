@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.data.*;
 
 /**
@@ -61,7 +63,19 @@ public class OmfUtils {
 	 */
 	public static OmfString readString(BinaryReader reader) throws IOException {
 		int count = reader.readNextUnsignedByte();
-		return new OmfString(count, reader.readNextAsciiString(count));
+		return new OmfString(count, count != 0 ? reader.readNextAsciiString(count) : "");
+	}
+
+	/**
+	 * Read the OMF big string format: 2-byte length, followed by that many ascii characters
+	 * 
+	 * @param reader A {@link BinaryReader} positioned at the start of the string
+	 * @return the read OMF big string
+	 * @throws IOException if an IO-related error occurred
+	 */
+	public static OmfString readBigString(BinaryReader reader) throws IOException {
+		int count = reader.readNextUnsignedShort();
+		return new OmfString(count, count != 0 ? reader.readNextAsciiString(count) : "", true);
 	}
 
 	/**
@@ -113,23 +127,47 @@ public class OmfUtils {
 	 * {@link AbstractOmfRecordFactory}
 	 * 
 	 * @param factory The {@link AbstractOmfRecordFactory}
+	 * @param log The log
 	 * @return A {@link List} of read {@link OmfRecord records}
 	 * @throws IOException if there was an IO-related error
 	 * @throws OmfException if there was a problem with the OMF specification
 	 */
-	public static List<OmfRecord> readRecords(AbstractOmfRecordFactory factory)
+	public static List<OmfRecord> readRecords(AbstractOmfRecordFactory factory, MessageLog log)
 			throws OmfException, IOException {
 		List<OmfRecord> records = new ArrayList<>();
 		factory.reset();
 
 		while (true) {
-			OmfRecord rec = factory.readNextRecord();
-			records.add(rec);
-			if (rec.getRecordType() == factory.getEndRecordType()) {
+			try {
+				OmfRecord rec = factory.readNextRecord();
+				if (!rec.validCheckSum()) {
+					log.appendMsg("OMF record [%s] has an invalid checksum".formatted(rec));
+				}
+				records.add(rec);
+				if (rec.getRecordType() == factory.getEndRecordType()) {
+					break;
+				}
+			}
+			catch (IOException e) {
+				log.appendException(e);
 				break;
 			}
 		}
 		
 		return records;
+	}
+
+	/**
+	 * Returns a {@link Stream} of {@link OmfRecord records} that match the given class type
+	 * 
+	 * @param <T> The class type
+	 * @param records The {@link List} of all {@link OmfRecord records}
+	 * @param classType The class type to match on
+	 * @return A {@link Stream} of matching (@link OmfRecord records}
+	 */
+	public static <T> Stream<T> filterRecords(List<OmfRecord> records, Class<T> classType) {
+		return records.stream()
+				.filter(classType::isInstance)
+				.map(classType::cast);
 	}
 }

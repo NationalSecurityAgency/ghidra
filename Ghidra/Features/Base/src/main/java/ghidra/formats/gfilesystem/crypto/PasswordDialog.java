@@ -52,6 +52,7 @@ class PasswordDialog extends DialogComponentProvider {
 		setMinimumSize(300, 100);
 
 		passwordField = new JPasswordField(16);
+		passwordField.getAccessibleContext().setAccessibleName("Password Entry");
 		passwordField.addKeyListener(new KeyListener() {
 			@Override
 			public void keyTyped(KeyEvent e) {
@@ -77,11 +78,12 @@ class PasswordDialog extends DialogComponentProvider {
 
 		workPanel.add(new GLabel(prompt != null ? prompt : "Password:"));
 		workPanel.add(passwordField);
-
+		workPanel.getAccessibleContext().setAccessibleName("Password");
 		addWorkPanel(workPanel);
 		addOKButton();
 		addCancelButton();
 		JButton cancelAllButton = new JButton("Cancel All");
+		cancelAllButton.getAccessibleContext().setAccessibleName("Cancel All");
 		cancelAllButton.addActionListener(e -> {
 			cancelledAll = true;
 			cancelButton.doClick();
@@ -91,8 +93,7 @@ class PasswordDialog extends DialogComponentProvider {
 
 		setFocusComponent(passwordField);
 
-		setHelpLocation(
-			new HelpLocation("FileSystemBrowserPlugin", "PasswordDialog"));
+		setHelpLocation(new HelpLocation("FileSystemBrowserPlugin", "PasswordDialog"));
 	}
 
 	private void updateCapLockWarning() {

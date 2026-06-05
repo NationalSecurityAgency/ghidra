@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -151,14 +151,8 @@ public class IconPropertyEditor extends PropertyEditorSupport {
 		private Component buildTopPanel() {
 			JPanel panel = new JPanel(new BorderLayout());
 			dataModel = new IconDropDownDataModel();
-			dropDown = new DropDownSelectionTextField<>(dataModel) {
-				protected List<Icon> getMatchingData(String searchText) {
-					if (searchText.isBlank()) {
-						return ((IconDropDownDataModel) dataModel).getData();
-					}
-					return super.getMatchingData(searchText);
-				}
-			};
+			dropDown = new DropDownSelectionTextField<>(dataModel);
+			dropDown.setShowMatchingListOnEmptyText(true);
 			dropDown.addDropDownSelectionChoiceListener(choiceListener);
 			panel.add(dropDown, BorderLayout.CENTER);
 			JButton browseButton = new BrowseButton();

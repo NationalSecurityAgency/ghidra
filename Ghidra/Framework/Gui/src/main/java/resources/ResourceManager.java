@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -491,7 +491,6 @@ public class ResourceManager {
 	 * found from the given path. This differs from {@link #loadImage(String)} in that
 	 * loadImage will return the default Icon if one can't be found. Further, loadImage will cache
 	 * even the default value, while findIcon only caches resolved icons.
-	 * <p>
 	 * 
 	 * @param path the icon to load, e.g., "images/home.gif"
 	 * @return the ImageIcon if it exists or null
@@ -610,7 +609,7 @@ public class ResourceManager {
 	/**
 	 * Load the images specified by filenames; substitutes the default bomb icon
 	 * if problems occur trying to load an individual file.
-	 * <p>
+	 * 
 	 * @param filenames vararg list of string filenames (ie. "images/home.gif")
 	 * @return list of ImageIcons with each image, problem / missing images replaced with
 	 * the default icon.

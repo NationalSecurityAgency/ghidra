@@ -18,6 +18,7 @@ package ghidra.features.base.memsearch.bytesource;
 import java.util.List;
 
 import ghidra.program.model.address.Address;
+import ghidra.program.util.ProgramLocation;
 
 /**
  * Implementation for an empty {@link AddressableByteSource}
@@ -39,4 +40,15 @@ public enum EmptyByteSource implements AddressableByteSource {
 	public void invalidate() {
 		// nothing to do
 	}
+
+	@Override
+	public ProgramLocation getCanonicalLocation(Address address) {
+		return AddressableByteSource.generateProgramLocation(null, address);
+	}
+
+	@Override
+	public Address rebaseFromCanonical(ProgramLocation location) {
+		return location.getAddress();
+	}
+	
 }

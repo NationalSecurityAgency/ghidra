@@ -56,6 +56,7 @@ public class ImporterLanguageDialog extends DialogComponentProvider {
 		languagePanel = new NewLanguagePanel();
 		languagePanel.setRecommendedLcsPairsList(new ArrayList<LanguageCompilerSpecPair>());
 		languagePanel.setShowAllLcsPairs(false);
+		languagePanel.getAccessibleContext().setAccessibleName("Language");
 		languagePanel.setBorder(
 			BorderFactory.createTitledBorder(" Select Language and Compiler Specification "));
 		languagePanel.addSelectionListener(e -> {
@@ -126,8 +127,8 @@ public class ImporterLanguageDialog extends DialogComponentProvider {
 			}
 		}
 		if (preferredLoadSpecs.size() == 1) {
-			languagePanel.setRecommendedLcsPair(
-				preferredLoadSpecs.get(0).getLanguageCompilerSpec());
+			languagePanel
+					.setRecommendedLcsPair(preferredLoadSpecs.get(0).getLanguageCompilerSpec());
 		}
 		else {
 			languagePanel.setRecommendedLcsPair(null);

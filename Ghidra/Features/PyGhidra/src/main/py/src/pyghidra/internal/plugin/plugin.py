@@ -22,11 +22,15 @@ import sys
 import threading
 import types
 from code import InteractiveConsole
+from typing import Generator
 
+from ghidra.app.script import ScriptControls
 from ghidra.framework import Application
 from ghidra.pyghidra import PyGhidraScriptProvider, PyGhidraPlugin
 from ghidra.pyghidra.interpreter import PyGhidraConsole
+from ghidra.util.task import TaskMonitor
 from java.io import BufferedReader, InputStreamReader # type:ignore @UnresolvedImport
+from java.lang import Boolean # type:ignore @UnresolvedImport
 from java.lang import String # type:ignore @UnresolvedImport 
 from java.lang import Thread as JThread # type:ignore @UnresolvedImport
 from java.util import Collections # type:ignore @UnresolvedImport
@@ -160,13 +164,15 @@ class PyConsole(InteractiveConsole):
         self._out = console.getOutWriter()
         self._err = console.getErrWriter()
         self._writer = self._out
+        self._error_writer = self._err
         self._thread = None
         self._interact_thread = None
         self._script = self.locals._script
         state = self._script.getState()
-        self._script.set(state, self._out)
+        self._script.set(state, ScriptControls(console, TaskMonitor.DUMMY))
         self._state = ConsoleState.RESET
         self._completer = PythonCodeCompleter(self)
+        self._orig_modules = sys.modules.copy()
 
     def raw_input(self, prompt=''):
         self._console.setPrompt(prompt)
@@ -234,6 +240,11 @@ class PyConsole(InteractiveConsole):
 
         # this resets the locals, and gets a new code compiler
         super().__init__(locals=PyGhidraScript(self._script))
+        
+        # restore sys.modules to its original state
+        if not Boolean.getBoolean("pyghidra.sys.modules.restore.disable"):
+            for k in list(set(sys.modules) - set(self._orig_modules)):
+                sys.modules.pop(k, None)
     
     @property
     def name(self) -> str:
@@ -273,23 +284,23 @@ class PyConsole(InteractiveConsole):
                 self.reset()
 
     @contextlib.contextmanager
-    def redirect_writer(self):
+    def redirect_writer(self) -> Generator[None, None, None]:
         self._writer = self._err
         try:
             yield
         finally:
             self._writer = self._out
 
-    def showsyntaxerror(self, filename=None):
+    def showsyntaxerror(self, filename=None, **kwargs):
         with self.redirect_writer():
-            super().showsyntaxerror(filename=filename)
+            super().showsyntaxerror(filename=filename, **kwargs)
 
     def showtraceback(self) -> None:
         with self.redirect_writer():
             super().showtraceback()
 
     @contextlib.contextmanager
-    def _run_context(self):
+    def _run_context(self) -> Generator[None, None, None]:
         self._script.start()
         success = False
         try:

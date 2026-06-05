@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -155,7 +155,14 @@ class VarnodeTableModel extends AbstractGTableModel<VarnodeInfo> {
 				return;
 			}
 			if (aValue instanceof Address) {
-				storageModel.setVarnode(varnode, (Address) aValue, varnode.getSize());
+				Integer size = varnode.getSize();
+				if (size == null) {
+					size = storageModel.getRequiredSize() - storageModel.getCurrentSize();
+					if (size <= 0) {
+						size = 1;
+					}
+				}
+				storageModel.setVarnode(varnode, (Address) aValue, size);
 			}
 			else if (aValue instanceof Register) {
 				storageModel.setVarnode(varnode, (Register) aValue);
@@ -187,6 +194,9 @@ class VarnodeTableModel extends AbstractGTableModel<VarnodeInfo> {
 			}
 			Address address = varnode.getAddress();
 			int size = (Integer) aValue;
+			if (size <= 0) {
+				return;
+			}
 			if (address != null) {
 				Register reg = varnode.getRegister();
 				if (reg != null && reg.isBigEndian()) {

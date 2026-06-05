@@ -634,6 +634,16 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
+class RuleScarry : public Rule {
+public:
+  RuleScarry(const string &g) : Rule(g, 0, "scarry") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleScarry(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
 class RuleTrivialShift : public Rule {
 public:
   RuleTrivialShift(const string &g) : Rule(g, 0, "trivialshift") {}	///< Constructor
@@ -1423,7 +1433,8 @@ public:
 class RuleConditionalMove : public Rule {
   static Varnode *checkBoolean(Varnode *vn);			///< Check for boolean expression
   static bool gatherExpression(Varnode *vn,vector<PcodeOp *> &ops,FlowBlock *root,FlowBlock *branch);
-  static Varnode *constructBool(Varnode *vn,PcodeOp *insertop,vector<PcodeOp *> &ops,Funcdata &data);	///< Construct the expression after the merge
+  static Varnode *constructBool(Varnode *vn,PcodeOp *insertop,vector<PcodeOp *> &ops,Funcdata &data);
+  /// \brief Sort PcodeOps based only on order within a basic block
   static bool compareOp(PcodeOp *op0,PcodeOp *op1) { return op0->getSeqNum().getOrder() < op1->getSeqNum().getOrder(); }
 public:
   RuleConditionalMove(const string &g) : Rule( g, 0, "conditionalmove") {}	///< Constructor

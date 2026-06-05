@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.util.SystemUtilities;
 /**
  * Dialog that presents the user with a list of strings and returns the object
  * associated with the user-picked element.
- * <p>
+ * 
  * @param <T> opaque object type that will be selected by the user.
  */
 public class SelectFromListDialog<T> extends DialogComponentProvider {
@@ -122,11 +122,13 @@ public class SelectFromListDialog<T> extends DialogComponentProvider {
 		listPanel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		listPanel.setSelectedIndex(0);
 		listPanel.setDoubleClickActionListener(e -> okCallback());
+		listPanel.getAccessibleContext().setAccessibleName("List");
 
 		JPanel workPanel = new JPanel(new BorderLayout());
 		MultiLineLabel mll = new MultiLineLabel("\n" + prompt + ":");
 		workPanel.add(mll, BorderLayout.NORTH);
 		workPanel.add(listPanel, BorderLayout.CENTER);
+		workPanel.getAccessibleContext().setAccessibleName("Select From List");
 		return workPanel;
 	}
 }

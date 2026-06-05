@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,27 +32,27 @@ import ghidra.util.map.IntValueMap;
  * that contains a value.
  */
 public class RangeMap {
-	
+
 	IntValueMap map;
 	int defaultValue;
-	
+
 	/**
 	 * Constructor for RangeMap with a default value of 0.
 	 */
 	public RangeMap() {
 		this(0);
 	}
-	
+
 	/**
-	 * Creates a new range map with spcified default value.
+	 * Creates a new range map with specified default value.
 	 * @param defaultValue the default value
 	 */
 	public RangeMap(int defaultValue) {
 		map = new IntValueMap("RangeMap");
 		this.defaultValue = defaultValue;
-		map.putInt(0, defaultValue);		
+		map.putInt(0, defaultValue);
 	}
-	
+
 	/**
 	 * Get the total number of ranges in map.
 	 * @return number of ranges
@@ -66,9 +66,9 @@ public class RangeMap {
 	 */
 	public void clear() {
 		map.removeRange(0, Long.MAX_VALUE);
-		map.putInt(0,defaultValue);
+		map.putInt(0, defaultValue);
 	}
-	
+
 	/**
 	 * Associates the given value with every index from start to end (inclusive)
 	 * Any previous associates are overwritten.
@@ -80,34 +80,33 @@ public class RangeMap {
 
 		// first fix up the end of the range, unless the end goes to the END
 		if (end != Long.MAX_VALUE) {
-			int origEndValue = getValue(end+1);
+			int origEndValue = getValue(end + 1);
 			if (origEndValue != value) {
-				map.putInt(end+1, origEndValue);
+				map.putInt(end + 1, origEndValue);
 			}
 			else {
-				map.remove(end+1);
+				map.remove(end + 1);
 			}
 		}
 
-		
 		// now remove any values stored from start to end
 		LongIterator it = map.getPropertyIterator(start);
-		while(it.hasNext()) {
+		while (it.hasNext()) {
 			long next = it.next();
-			if (next > end) break;
+			if (next > end)
+				break;
 			map.remove(next);
 		}
 
-
 		if (start == 0) {
-			map.putInt(0,value);
-		} 
+			map.putInt(0, value);
+		}
 		else {
 			int startValue = getValue(start);
 			if (startValue != value) {
 				map.putInt(start, value);
 			}
-		}			
+		}
 	}
 
 	/**
@@ -118,19 +117,19 @@ public class RangeMap {
 		try {
 			return map.getInt(index);
 		}
-		catch(NoValueException e) {
+		catch (NoValueException e) {
 			try {
-				index = map.getPreviousPropertyIndex(index);	
+				index = map.getPreviousPropertyIndex(index);
 				return map.getInt(index);
 			}
-			catch(NoSuchIndexException ex) {
+			catch (NoSuchIndexException ex) {
 			}
-			catch(NoValueException ex) {
+			catch (NoValueException ex) {
 			}
-		}		
+		}
 		return 0;
 	}
-	
+
 	/**
 	 * Returns the value range containing the given index. The value range indicates
 	 * the int value and the start and end index for the range.
@@ -139,7 +138,7 @@ public class RangeMap {
 	 */
 	public ValueRange getValueRange(long index) {
 		if (map.getSize() == 1) {
-			return new ValueRange(0,Long.MAX_VALUE,0);
+			return new ValueRange(0, Long.MAX_VALUE, defaultValue);
 		}
 		long start = 0;
 		if (map.hasProperty(index)) {
@@ -148,19 +147,28 @@ public class RangeMap {
 		else {
 			try {
 				start = map.getPreviousPropertyIndex(index);
-			}catch(NoSuchIndexException e){}
+			}
+			catch (NoSuchIndexException e) {
+				// Use minimum start if index not found: 0
+			}
 		}
 		long end = Long.MAX_VALUE;
 		try {
-			end = map.getNextPropertyIndex(start)-1;
-		}catch(NoSuchIndexException e){}
+			end = map.getNextPropertyIndex(start) - 1;
+		}
+		catch (NoSuchIndexException e) {
+			// Use maximum end: Long.MAX_VALUE
+		}
 		int value = 0;
 		try {
 			value = map.getInt(start);
-		} catch (NoValueException e1) {}
+		}
+		catch (NoValueException e1) {
+			// Use minimum value if (e.g., empty map): 0
+		}
 		return new ValueRange(start, end, value);
 	}
-	
+
 	/**
 	 * Returns an iterator over all occupied ranges in the map.
 	 * @param index the index to start the iterator
@@ -177,6 +185,6 @@ public class RangeMap {
 	 * @return an iterator over all indexes where the value changes.
 	 */
 	public LongIterator getChangePointIterator(long start, long end) {
-		return map.getPropertyIterator(start, end);	
+		return map.getPropertyIterator(start, end);
 	}
 }

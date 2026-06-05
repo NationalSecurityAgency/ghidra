@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package functioncalls.plugin;
 import static functioncalls.graph.FcgDirection.*;
 
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.Predicate;
@@ -42,6 +42,7 @@ import functioncalls.graph.layout.BowTieLayoutProvider;
 import functioncalls.graph.renderer.FcgTooltipProvider;
 import functioncalls.graph.view.FcgComponent;
 import functioncalls.graph.view.FcgView;
+import generic.theme.GIcon;
 import ghidra.app.context.NavigationActionContext;
 import ghidra.graph.VisualGraphComponentProvider;
 import ghidra.graph.viewer.*;
@@ -52,8 +53,7 @@ import ghidra.graph.viewer.vertex.VertexClickListener;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import resources.Icons;
@@ -70,6 +70,7 @@ public class FcgProvider
 
 	private static final String TOOLBAR_GROUP_A = "A";
 	private static final String TOOLBAR_GROUP_B = "B";
+	private static final String TOOLBAR_GROUP_C = "C";
 
 	// here we sort popup groups by trial-and-error
 	private static final String MENU_GROUP_EXPAND = "A";
@@ -88,6 +89,7 @@ public class FcgProvider
 
 	private FcgDataFactory dataFactory;
 	private FcgData graphData;
+	private boolean isConnected;
 
 	private FcgVertexExpansionListener expansionListener = new ExpansionListener();
 
@@ -97,9 +99,14 @@ public class FcgProvider
 
 	private ToggleDockingAction navigateIncomingToggleAction;
 
-	public FcgProvider(Tool tool, FunctionCallGraphPlugin plugin) {
-		super(tool, NAME, plugin.getName());
+	public FcgProvider(FunctionCallGraphPlugin plugin, boolean isConnected) {
+		super(plugin.getTool(), NAME, plugin.getName());
 		this.plugin = plugin;
+
+		this.isConnected = isConnected;
+		if (!isConnected) {
+			setTransient();
+		}
 
 		dataFactory = new FcgDataFactory(this::graphDataCacheRemoved);
 		graphData = dataFactory.create(null);
@@ -133,11 +140,21 @@ public class FcgProvider
 		installGraph();
 	}
 
+	@Override
+	public void closeComponent() {
+		super.closeComponent();
+		plugin.closeProvider(this);
+	}
+
 	void optionsChanged() {
 		view.optionsChanged();
 	}
 
 	void locationChanged(ProgramLocation loc) {
+		if (!isConnected) {
+			return;
+		}
+
 		if (!navigateIncomingToggleAction.isSelected()) {
 			return;
 		}
@@ -164,6 +181,12 @@ public class FcgProvider
 		updateTitle();
 	}
 
+	private void setClonedGraphData(FcgData data) {
+		this.graphData = data;
+		installGraph();
+		updateTitle();
+	}
+
 	private void saveCurrentGraphPerspective() {
 
 		if (!isVisible()) {
@@ -186,14 +209,30 @@ public class FcgProvider
 	}
 
 	private void updateTitle() {
-		setTitle(NAME);
-		String subTitle = null;
-		if (graphData.hasResults()) {
-			FunctionCallGraph graph = graphData.getGraph();
-			subTitle = graphData.getFunction().getName() + " (" + graph.getVertexCount() +
-				" functions; " + graph.getEdgeCount() + " edges)";
+
+		if (!graphData.hasResults()) {
+			setTitle(NAME);
+			setSubTitle(null);
+			return;
 		}
+
+		FunctionCallGraph graph = graphData.getGraph();
+		Function function = graphData.getFunction();
+		String functionName = function.getName();
+		int vertices = graph.getVertexCount();
+		int edges = graph.getEdgeCount();
+		String subTitle = "%s (%s functions; %s edges)".formatted(functionName, vertices, edges);
+
+		String title = NAME;
+		String tabText = NAME;
+		if (!isConnected) {
+			title = "[" + title + "]";
+			tabText = "[" + functionName + "]";
+		}
+
+		setTitle(NAME);
 		setSubTitle(subTitle);
+		setTabText(tabText);
 	}
 
 	private void rebuildCurrentGraph() {
@@ -240,7 +279,9 @@ public class FcgProvider
 		setLayout(graph);
 
 		FcgLevel source = FcgLevel.sourceLevel();
-		FcgVertex sourceVertex = new FcgVertex(graphData.getFunction(), source, expansionListener);
+		FcgOptions options = plugin.getOptions();
+		FcgVertex sourceVertex =
+			new FcgVertex(graphData.getFunction(), source, expansionListener, options);
 		graph.setSource(sourceVertex);
 		trackFunctionEdges(sourceVertex);
 
@@ -264,7 +305,8 @@ public class FcgProvider
 			return v;
 		}
 
-		v = new FcgVertex(f, level, expansionListener);
+		FcgOptions options = plugin.getOptions();
+		v = new FcgVertex(f, level, expansionListener, options);
 		trackFunctionEdges(v);
 		return v;
 	}
@@ -300,7 +342,7 @@ public class FcgProvider
 			Function f = v.getFunction();
 			Address entry = f.getEntryPoint();
 			Program p = f.getProgram();
-			plugin.handleProviderLocationChanged(new ProgramLocation(p, entry));
+			plugin.handleProviderLocationChanged(this, new ProgramLocation(p, entry));
 			return true; // consume the event
 		});
 
@@ -425,7 +467,7 @@ public class FcgProvider
 
 		navigateIncomingToggleAction.setSelected(true);
 		navigateIncomingToggleAction.setToolBarData(
-			new ToolBarData(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON, TOOLBAR_GROUP_A));
+			new ToolBarData(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON, TOOLBAR_GROUP_B));
 		navigateIncomingToggleAction.setDescription(
 			"<html>Incoming Navigation<br><br>Toggle <b>On</b>  - change the graphed " +
 				"function on Listing navigation events" +
@@ -469,6 +511,55 @@ public class FcgProvider
 			new MenuData(new String[] { "Graph Function" }, MENU_GROUP_GRAPH));
 		addLocalAction(graphFunctionAction);
 
+		DockingAction cloneAction = new DockingAction("Function Graph Clone", plugin.getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				cloneWindow();
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return graphData.hasResults();
+			}
+		};
+
+		Icon image = new GIcon("icon.plugin.fcg.action.viewer.clone");
+		cloneAction.setToolBarData(new ToolBarData(image, TOOLBAR_GROUP_C));
+		cloneAction.setDescription(
+			"Create a snapshot (disconnected) copy of this Function Call Graph window");
+
+		cloneAction.setHelpLocation(
+			new HelpLocation("FunctionCallGraphPlugin", "Snapshot"));
+		cloneAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_T,
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK));
+		addLocalAction(cloneAction);
+	}
+
+	void cloneWindow() {
+
+		// update the perspective so the current state is given to the clone
+		saveCurrentGraphPerspective();
+
+		FcgProvider newProvider = plugin.createNewDisconnecedProvider();
+		Swing.runLater(() -> {
+			FcgData newData = graphData.cloneGraphData(newProvider.expansionListener);
+			newProvider.setClonedGraphData(newData);
+
+			reselectVerticesInClonedProvider(newProvider);
+		});
+	}
+
+	private void reselectVerticesInClonedProvider(FcgProvider newProvider) {
+		FunctionCallGraph newGraph = newProvider.getGraph();
+		Set<FcgVertex> newVertices = new HashSet<>();
+		Set<FcgVertex> selectedVertices = getSelectedVertices();
+		for (FcgVertex selected : selectedVertices) {
+			Function f = selected.getFunction();
+			FcgVertex newVertex = newGraph.getVertex(f);
+			newVertices.add(newVertex);
+		}
+
+		newProvider.setSelectedVertices(newVertices);
 	}
 
 	private Collection<FcgEdge> getGraphEdges(FcgVertex v, FcgDirection direction) {
@@ -521,7 +612,7 @@ public class FcgProvider
 				rebuildCurrentGraph();
 			}
 		};
-		resetGraphAction.setToolBarData(new ToolBarData(Icons.REFRESH_ICON));
+		resetGraphAction.setToolBarData(new ToolBarData(Icons.REFRESH_ICON, TOOLBAR_GROUP_A));
 		resetGraphAction
 				.setDescription("<html>Resets the graph--All positioning will be <b>lost</b>");
 		resetGraphAction
@@ -530,7 +621,8 @@ public class FcgProvider
 		addLocalAction(resetGraphAction);
 
 		MultiStateDockingAction<LayoutProvider<FcgVertex, FcgEdge, FunctionCallGraph>> layoutAction =
-			new MultiStateDockingAction<>(RELAYOUT_GRAPH_ACTION_NAME, plugin.getName()) {
+			new MultiStateDockingAction<>(RELAYOUT_GRAPH_ACTION_NAME, plugin.getName(),
+				KeyBindingType.SHARED) {
 
 				@Override
 				public void actionPerformed(ActionContext context) {
@@ -547,7 +639,7 @@ public class FcgProvider
 					changeLayout(newActionState.getUserData());
 				}
 			};
-		layoutAction.setGroup(TOOLBAR_GROUP_B);
+		layoutAction.setGroup(TOOLBAR_GROUP_A);
 
 		addLayoutProviders(layoutAction);
 
@@ -971,10 +1063,6 @@ public class FcgProvider
 		VisualGraphViewUpdater<FcgVertex, FcgEdge> updater = view.getViewUpdater();
 		updater.scheduleViewChangeJob(job);
 		updateTitle();
-
-		String viewName = "Function Call Graph";
-		viewer.setName(viewName);
-		viewer.getAccessibleContext().setAccessibleName(viewName);
 	}
 
 	private void highlightExistingEdges(FcgExpandingVertexCollection collection) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,11 +23,13 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import docking.DockingUtils;
+import docking.util.AnimationUtils;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
+import ghidra.util.layout.AbstractLayoutManager;
 import utility.function.Callback;
 
 /**
@@ -101,33 +103,12 @@ public class FilterTextField extends JPanel {
 		textField.getDocument().addDocumentListener(new FilterDocumentListener());
 		textField.addActionListener(e -> notifyEnterPressed());
 
-		layeredPane = new JLayeredPane() {
-			@Override
-			public Dimension getPreferredSize() {
-				Insets insets = getInsets();
-				Dimension ps = textField.getPreferredSize();
-				ps.width += insets.left + insets.right;
-				ps.height += insets.top + insets.bottom;
-				return ps;
-			}
-		};
+		layeredPane = new JLayeredPane();
+		layeredPane.setLayout(new FilterFieldLayoutManager());
 		layeredPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 		layeredPane.add(textField, BASE_COMPONENT_LAYER);
 		layeredPane.add(clearLabel, HOVER_COMPONENT_LAYER);
 		clearLabel.setVisible(false);
-
-		layeredPane.addComponentListener(new ComponentAdapter() {
-			@Override
-			public void componentResized(java.awt.event.ComponentEvent e) {
-				Dimension preferredSize = layeredPane.getSize();
-				Insets insets = layeredPane.getInsets();
-				int x = insets.left;
-				int y = insets.top;
-				int width = preferredSize.width - insets.right - x;
-				int height = preferredSize.height - (insets.top + insets.bottom);
-				textField.setBounds(x, y, width, height);
-			}
-		});
 
 		add(layeredPane, BorderLayout.NORTH);
 
@@ -298,6 +279,11 @@ public class FilterTextField extends JPanel {
 		textField.requestFocus();
 	}
 
+	@Override
+	public boolean requestFocusInWindow() {
+		return textField.requestFocusInWindow();
+	}
+
 	private void fireFilterChanged(String text) {
 		for (FilterListener l : listeners) {
 			l.filterChanged(text);
@@ -305,7 +291,7 @@ public class FilterTextField extends JPanel {
 	}
 
 	/**
-	 * Sets the accessible name prefix for for the focusable components in the filter panel.
+	 * Sets the accessible name prefix for the focusable components in the filter panel.
 	 * @param prefix the base name for these components. A suffix will be added to further
 	 * describe the sub component.
 	 */
@@ -387,7 +373,7 @@ public class FilterTextField extends JPanel {
 
 		// Note: this must be run on the Swing thread.  When the filter button shows itself,
 		//       it requires an AWT lock.  If called from a non-Swing thread, deadlocks!
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			if (showFilter) {
 				clearLabel.showFilterButton();
 			}
@@ -402,29 +388,47 @@ public class FilterTextField extends JPanel {
 // Inner Classes
 //==================================================================================================
 
-	private class TraversalKeyListener implements KeyListener {
+	/**
+	 * A simple layout manager to size and position the text field within this widget.   The manager
+	 * does not update the clear button, as that manages its own bounds.
+	 */
+	private class FilterFieldLayoutManager extends AbstractLayoutManager {
+
+		@Override
+		public void layoutContainer(Container parent) {
+			Dimension d = parent.getSize();
+			Insets insets = parent.getInsets();
+			int width = d.width - insets.left - insets.right;
+			int x = insets.left;
+			int y = insets.top;
+			int height = d.height - (insets.top + insets.bottom);
+			textField.setBounds(x, y, width, height);
+		}
+
+		@Override
+		public Dimension preferredLayoutSize(Container parent) {
+			Insets insets = parent.getInsets();
+			Dimension ps = textField.getPreferredSize();
+			ps.width += insets.left + insets.right;
+			ps.height += insets.top + insets.bottom;
+			return ps;
+		}
+	}
+
+	private class TraversalKeyListener extends KeyAdapter {
 		private final Component component;
 
 		private TraversalKeyListener(Component component) {
 			this.component = component;
-
 		}
 
 		@Override
 		public void keyPressed(KeyEvent e) {
-			// don't care
-		}
-
-		@Override
-		public void keyReleased(KeyEvent e) {
 			if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN) {
 				component.requestFocus();
+				KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+				kfm.redispatchEvent(component, e);
 			}
-		}
-
-		@Override
-		public void keyTyped(KeyEvent e) {
-			// don't care
 		}
 	}
 
@@ -464,6 +468,11 @@ public class FilterTextField extends JPanel {
 
 		@Override
 		public void actionPerformed(ActionEvent event) {
+			if (!AnimationUtils.isAnimationEnabled()) {
+				stop();
+				return;
+			}
+
 			if (flashCount < MAX_FLASH_COUNT) {
 				contrastColors();
 				flashCount++;

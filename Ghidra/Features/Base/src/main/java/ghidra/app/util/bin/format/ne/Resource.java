@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -131,8 +131,8 @@ public class Resource {
 	 * @return the shifted file offset of this resource
 	 */
 	public int getFileOffsetShifted() {
-		int shift_int = Conv.shortToInt(rt.getAlignmentShiftCount());
-		int offset_int = Conv.shortToInt(fileOffset);
+		int shift_int = Short.toUnsignedInt(rt.getAlignmentShiftCount());
+		int offset_int = Short.toUnsignedInt(fileOffset);
 		return offset_int << shift_int;
 	}
 
@@ -142,8 +142,8 @@ public class Resource {
 	 * @return the shifted file length of this resource
 	 */
 	public int getFileLengthShifted() {
-		int shift_int = Conv.shortToInt(rt.getAlignmentShiftCount());
-		int length_int = Conv.shortToInt(fileLength);
+		int shift_int = Short.toUnsignedInt(rt.getAlignmentShiftCount());
+		int length_int = Short.toUnsignedInt(fileLength);
 		return length_int << shift_int;
 	}
 

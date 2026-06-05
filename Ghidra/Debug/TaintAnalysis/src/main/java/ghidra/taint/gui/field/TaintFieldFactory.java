@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
-import ghidra.pcode.emu.taint.trace.TaintTracePcodeExecutorStatePiece;
+import ghidra.pcode.emu.taint.state.TaintPieceHandler;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.ProgramLocation;
@@ -42,7 +42,7 @@ import ghidra.taint.model.TaintVec;
  * framework. I used the "sample" module's {@code EntropyFieldFactory} for reference.
  */
 public class TaintFieldFactory extends FieldFactory {
-	public static final String PROPERTY_NAME = TaintTracePcodeExecutorStatePiece.NAME;
+	public static final String PROPERTY_NAME = TaintPieceHandler.NAME;
 	public static final GColor COLOR = new GColor("color.fg.listing.taint");
 	public static final String FIELD_NAME = "Taint";
 
@@ -50,7 +50,8 @@ public class TaintFieldFactory extends FieldFactory {
 		super(FIELD_NAME);
 	}
 
-	protected TaintFieldFactory(FieldFormatModel formatModel, ListingHighlightProvider highlightProvider,
+	protected TaintFieldFactory(FieldFormatModel formatModel,
+			ListingHighlightProvider highlightProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, formatModel, highlightProvider, displayOptions, fieldOptions);
 	}

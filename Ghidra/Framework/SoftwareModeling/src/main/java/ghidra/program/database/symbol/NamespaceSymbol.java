@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,33 +16,26 @@
 package ghidra.program.database.symbol;
 
 import db.DBRecord;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.ProgramLocation;
+import ghidra.util.Lock.Closeable;
 
 /**
  * Symbol class for namespaces.
  */
-
 public class NamespaceSymbol extends SymbolDB {
 
-	NamespaceDB namespace;
+	private NamespaceDB namespace;
 
 	/**
 	 * Construct a new namespace symbol
 	 * @param mgr the symbol manager.
-	 * @param cache symbol object cache
-	 * @param addr the address for this symbol.
 	 * @param record the record for this symbol.
 	 */
-	NamespaceSymbol(SymbolManager mgr, DBObjectCache<SymbolDB> cache, Address addr, DBRecord record) {
-		super(mgr, cache, addr, record);
+	NamespaceSymbol(SymbolManager mgr, DBRecord record) {
+		super(mgr, Address.NO_ADDRESS, record, record.getKey());
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDB#isPrimary()
-	 */
 	@Override
 	public boolean isPrimary() {
 		return true;
@@ -54,40 +47,24 @@ public class NamespaceSymbol extends SymbolDB {
 		return parentSymbol != null ? parentSymbol.isExternal() : false;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getSymbolType()
-	 */
 	@Override
 	public SymbolType getSymbolType() {
 		return SymbolType.NAMESPACE;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getProgramLocation()
-	 */
 	@Override
-	public ProgramLocation getProgramLocation() {
-		return null;
-	}
-
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getObject()
-	 */
-	@Override
-	public Object getObject() {
-		return getNamespace();
-	}
-
-	private Namespace getNamespace() {
-		if (namespace == null) {
-			namespace = new NamespaceDB(this, symbolMgr.getProgram().getNamespaceManager());
+	public Namespace getObject() {
+		try (Closeable c = lock.read()) {
+			if (!refreshIfNeeded()) {
+				return null;
+			}
+			if (namespace == null) {
+				namespace = new NamespaceDB(this, symbolMgr.getProgram().getNamespaceManager());
+			}
+			return namespace;
 		}
-		return namespace;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#isValidParent(ghidra.program.model.symbol.Namespace)
-	 */
 	@Override
 	public boolean isValidParent(Namespace parent) {
 		// TODO: Not sure what other constraints should be placed on namespace movement

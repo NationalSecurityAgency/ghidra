@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 
-import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.*;
@@ -41,12 +40,15 @@ import ghidra.xml.*;
  */
 public class MultiSlotAssign extends AssignAction {
 	private StorageClass resourceType;	// Resource list from which to consume
+	private boolean isBigEndian;		// True for big endian architectures
 	private boolean consumeFromStack;	// True if resources should be consumed from the stack
 	private boolean consumeMostSig;		// True if resources are consumed starting with most significant bytes
 	private boolean enforceAlignment;	// True if register resources are discarded to match alignment
 	private boolean justifyRight;		// True if initial bytes are padding for odd data-type sizes
+	private boolean adjacentEntries;	// True if an assignment should only consume adjacent entries in the list
+	private boolean allowBackfill;		// True if entries skipped for alignment can be reused for later params
+	private ParamEntry[] tiles;			// Registers that can be joined
 	private ParamEntry stackEntry;		// The stack resource
-	private int firstIter;				// Iterator to first element in the resource list
 
 	/**
 	 * Cache specific ParamEntry needed by the action
@@ -56,19 +58,9 @@ public class MultiSlotAssign extends AssignAction {
 	 * @throws InvalidInputException if the required elements are not available in the resource list
 	 */
 	private void initializeEntries() throws InvalidInputException {
-		firstIter = -1;
-		for (int i = 0; i < resource.getNumParamEntry(); ++i) {
-			ParamEntry entry = resource.getEntry(i);
-			if (firstIter == -1 && entry.isExclusion() && entry.getType() == resourceType &&
-				entry.getAllGroups().length == 1) {
-				firstIter = i;	// First matching resource size
-			}
-			if (!entry.isExclusion() && entry.getSpace().isStackSpace()) {
-				stackEntry = entry;
-				break;
-			}
-		}
-		if (firstIter == -1) {
+		tiles = resource.extractTiles(resourceType);
+		stackEntry = resource.extractStack();
+		if (tiles.length == 0) {
 			throw new InvalidInputException("Could not find matching resources for action: join");
 		}
 		if (consumeFromStack && stackEntry == null) {
@@ -82,12 +74,15 @@ public class MultiSlotAssign extends AssignAction {
 	 */
 	protected MultiSlotAssign(ParamListStandard res) {
 		super(res);
+		isBigEndian = res.isBigEndian();
 		resourceType = StorageClass.GENERAL;	// Join general purpose registers
 		consumeFromStack = !(res instanceof ParamListStandardOut);	// Spill into stack by default
 		consumeMostSig = false;
 		enforceAlignment = false;
 		justifyRight = false;
-		if (res.getEntry(0).isBigEndian()) {
+		adjacentEntries = true;
+		allowBackfill = false;
+		if (isBigEndian) {
 			consumeMostSig = true;
 			justifyRight = true;
 		}
@@ -95,13 +90,17 @@ public class MultiSlotAssign extends AssignAction {
 	}
 
 	public MultiSlotAssign(StorageClass store, boolean stack, boolean mostSig, boolean align,
-			boolean justRight, ParamListStandard res) throws InvalidInputException {
+			boolean justRight, boolean backfill, ParamListStandard res)
+			throws InvalidInputException {
 		super(res);
+		isBigEndian = res.isBigEndian();
 		resourceType = store;
 		consumeFromStack = stack;
 		consumeMostSig = mostSig;
 		enforceAlignment = align;
 		justifyRight = justRight;
+		adjacentEntries = true;
+		allowBackfill = backfill;
 		stackEntry = null;
 		initializeEntries();
 	}
@@ -109,7 +108,7 @@ public class MultiSlotAssign extends AssignAction {
 	@Override
 	public AssignAction clone(ParamListStandard newResource) throws InvalidInputException {
 		return new MultiSlotAssign(resourceType, consumeFromStack, consumeMostSig, enforceAlignment,
-			justifyRight, newResource);
+			justifyRight, allowBackfill, newResource);
 	}
 
 	@Override
@@ -120,14 +119,22 @@ public class MultiSlotAssign extends AssignAction {
 		MultiSlotAssign otherAction = (MultiSlotAssign) op;
 		if (consumeFromStack != otherAction.consumeFromStack ||
 			consumeMostSig != otherAction.consumeMostSig ||
-			enforceAlignment != otherAction.enforceAlignment) {
-			return false;
-		}
-		if (firstIter != otherAction.firstIter || justifyRight != otherAction.justifyRight) {
+			enforceAlignment != otherAction.enforceAlignment ||
+			justifyRight != otherAction.justifyRight ||
+			adjacentEntries != otherAction.adjacentEntries ||
+			allowBackfill != otherAction.allowBackfill) {
 			return false;
 		}
 		if (resourceType != otherAction.resourceType) {
 			return false;
+		}
+		if (tiles.length != otherAction.tiles.length) {
+			return false;
+		}
+		for (int i = 0; i < tiles.length; ++i) {
+			if (!tiles[i].isEquivalent(otherAction.tiles[i])) {
+				return false;
+			}
 		}
 		if (stackEntry == null && otherAction.stackEntry == null) {
 			// Nothing to compare
@@ -143,6 +150,44 @@ public class MultiSlotAssign extends AssignAction {
 		return true;
 	}
 
+	/**
+	 * Test if a data-type of the given size will fit starting at a particular entry within
+	 * the resource list.  If necessary, check
+	 *    1)  If the type will be properly aligned
+	 *    2)  If there are enough remaining registers, up to the end of the resource list, to
+	 *        cover the data-type and that have not been consumed.
+	 * @param iter is the first resource entry to use for the data-type
+	 * @param sizeLeft initially holds the size of the data-type to cover in bytes
+	 * @param align is the alignment requirement for the data-type
+	 * @param resourcesConsumed is the number of bytes in resources already consumed/skipped
+	 * @param tmpStatus is the current consumption status for the resource list
+	 * @return true if the data-type will fit
+	 */
+	private boolean checkFit(int iter, int sizeLeft, int align, int resourcesConsumed,
+			int[] tmpStatus) {
+		ParamEntry entry = tiles[iter];
+		if (tmpStatus[entry.getGroup()] != 0) {
+			return false;
+		}
+		if (enforceAlignment) {
+			int regSize = entry.getSize();
+			if (align > regSize && (resourcesConsumed % align) != 0) {
+				return false;
+			}
+		}
+		if (!adjacentEntries) {
+			return true;
+		}
+		while (iter != tiles.length && sizeLeft > 0) {
+			entry = tiles[iter];
+			if (tmpStatus[entry.getGroup()] != 0) {
+				return false;
+			}
+			sizeLeft -= entry.getSize();
+		}
+		return true;
+	}
+
 	@Override
 	public int assignAddress(DataType dt, PrototypePieces proto, int pos, DataTypeManager dtManager,
 			int[] status, ParameterPieces res) {
@@ -151,37 +196,22 @@ public class MultiSlotAssign extends AssignAction {
 		ParameterPieces param = new ParameterPieces();
 		int sizeLeft = dt.getLength();
 		int align = dt.getAlignment();
-		int iter = firstIter;
-		int endIter = resource.getNumParamEntry();
-		if (enforceAlignment) {
-			int resourcesConsumed = 0;
-			while (iter != endIter) {
-				ParamEntry entry = resource.getEntry(iter);
-				if (!entry.isExclusion()) {
-					break;
-				}		// Reached end of resource list
-				if (entry.getType() == resourceType && entry.getAllGroups().length == 1) {	// Single register
-					if (tmpStatus[entry.getGroup()] == 0) {		// Not consumed
-						int regSize = entry.getSize();
-						if (align <= regSize || (resourcesConsumed % align) == 0) {
-							break;
-						}
-						tmpStatus[entry.getGroup()] = -1;	// Consume unaligned register
-					}
-					resourcesConsumed += entry.getSize();
-				}
-				++iter;
-			}
-		}
-		while (sizeLeft > 0 && iter != endIter) {
-			ParamEntry entry = resource.getEntry(iter);
-			++iter;
-			if (!entry.isExclusion()) {
+		int iter = 0;
+		int resourcesConsumed = 0;
+		while (iter != tiles.length) {
+			if (checkFit(iter, sizeLeft, align, resourcesConsumed, tmpStatus)) {
 				break;
-			}		// Reached end of resource list
-			if (entry.getType() != resourceType || entry.getAllGroups().length != 1) {
-				continue;
-			}		// Not a single register from desired resource list
+			}
+			ParamEntry entry = tiles[iter];
+			if (!allowBackfill) {
+				tmpStatus[entry.getGroup()] = -1;	// Consume unaligned register
+			}
+			resourcesConsumed += entry.getSize();
+			++iter;
+		}
+		while (sizeLeft > 0 && iter != tiles.length) {
+			ParamEntry entry = tiles[iter];
+			++iter;
 			if (tmpStatus[entry.getGroup()] != 0) {
 				continue;
 			}		// Already consumed
@@ -199,7 +229,8 @@ public class MultiSlotAssign extends AssignAction {
 				return FAIL;
 			}
 			int grp = stackEntry.getGroup();
-			tmpStatus[grp] = stackEntry.getAddrBySlot(tmpStatus[grp], sizeLeft, align, param);	// Consume all the space we need	
+			tmpStatus[grp] =
+				stackEntry.getAddrBySlot(tmpStatus[grp], sizeLeft, align, param, justifyRight);	// Consume all the space we need	
 			if (param.address == null) {
 				return FAIL;
 			}
@@ -211,54 +242,31 @@ public class MultiSlotAssign extends AssignAction {
 				// Floating-point register holding extended lower precision value
 				onePieceJoin = true;		// Treat as "join" of full size register
 			}
-			else if (justifyRight) {
-				// Initial bytes are padding
-				Varnode vn = pieces.get(0);
-				Address addr = vn.getAddress().add(-sizeLeft);
-				int sz = vn.getSize() + sizeLeft;
-				vn = new Varnode(addr, sz);
-				pieces.set(0, vn);
-			}
 			else {
-				int end = pieces.size() - 1;
-				Varnode vn = pieces.get(end);
-				int sz = vn.getSize() + sizeLeft;
-				vn = new Varnode(vn.getAddress(), sz);
-				pieces.set(end, vn);
+				justifyPieces(pieces, -sizeLeft, isBigEndian, consumeMostSig, justifyRight);
 			}
 		}
 		System.arraycopy(tmpStatus, 0, status, 0, tmpStatus.length);	// Commit resource usage for all the pieces
 		res.type = dt;
-		if (pieces.size() == 1 && !onePieceJoin) {
-			res.address = pieces.get(0).getAddress();
-			return SUCCESS;
-		}
-		res.joinPieces = new Varnode[pieces.size()];
-		if (!consumeMostSig) {
-			for (int i = 0; i < res.joinPieces.length; ++i) {
-				res.joinPieces[i] = pieces.get(pieces.size() - 1 - i);
-			}
-		}
-		else {
-			for (int i = 0; i < pieces.size(); ++i) {
-				res.joinPieces[i] = pieces.get(i);
-			}
-		}
-		res.address = Address.NO_ADDRESS;		// Placeholder for join space address
+		res.assignAddressFromPieces(pieces, consumeMostSig, onePieceJoin, resource.getLanguage());
 		return SUCCESS;
 	}
 
 	@Override
 	public void encode(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_JOIN);
-		if (resource.getEntry(0).isBigEndian() != justifyRight) {
+		if (resource.isBigEndian() != justifyRight) {
 			encoder.writeBool(ATTRIB_REVERSEJUSTIFY, true);
+		}
+		if (resource.isBigEndian() != consumeMostSig) {
+			encoder.writeBool(ATTRIB_REVERSESIGNIF, true);
 		}
 		if (resourceType != StorageClass.GENERAL) {
 			encoder.writeString(ATTRIB_STORAGE, resourceType.toString());
 		}
 		encoder.writeBool(ATTRIB_ALIGN, enforceAlignment);
 		encoder.writeBool(ATTRIB_STACKSPILL, consumeFromStack);
+		encoder.writeBool(ATTRIB_BACKFILL, allowBackfill);
 		encoder.closeElement(ELEM_JOIN);
 	}
 
@@ -272,6 +280,11 @@ public class MultiSlotAssign extends AssignAction {
 					justifyRight = !justifyRight;
 				}
 			}
+			else if (name.equals(ATTRIB_REVERSESIGNIF.name())) {
+				if (SpecXmlUtils.decodeBoolean(attrib.getValue())) {
+					consumeMostSig = !consumeMostSig;
+				}
+			}
 			else if (name.equals(ATTRIB_STORAGE.name())) {
 				resourceType = StorageClass.getClass(attrib.getValue());
 			}
@@ -280,6 +293,9 @@ public class MultiSlotAssign extends AssignAction {
 			}
 			else if (name.equals(ATTRIB_STACKSPILL.name())) {
 				consumeFromStack = SpecXmlUtils.decodeBoolean(attrib.getValue());
+			}
+			else if (name.equals(ATTRIB_BACKFILL.name())) {
+				allowBackfill = SpecXmlUtils.decodeBoolean(attrib.getValue());
 			}
 		}
 		parser.end(elem);

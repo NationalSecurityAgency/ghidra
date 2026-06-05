@@ -50,9 +50,6 @@ class MaskValue {
 		this.textRepresentation = textRepresentation;
 	}
 
-	/**
-	 * 
-	 */
 	@Override
 	public String toString() {
 		String rep = textRepresentation == null ? "" : textRepresentation;

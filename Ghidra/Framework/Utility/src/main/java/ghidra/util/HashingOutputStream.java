@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,32 +34,38 @@ public class HashingOutputStream extends OutputStream {
 	/**
 	 * @param out - OutputStream to wrap
 	 * @param hashAlgo - see {@link MessageDigest#getInstance(String)}, ie. "MD5".
-	 * @throws NoSuchAlgorithmException
+	 * @throws NoSuchAlgorithmException if no Provider supports a MessageDigestSpi implementation 
+	 *   for the specified algorithm
 	 */
 	public HashingOutputStream(OutputStream out, String hashAlgo) throws NoSuchAlgorithmException {
 		this.out = out;
 		this.messageDigest = MessageDigest.getInstance(hashAlgo);
 	}
 
+	@Override
 	public void write(int b) throws IOException {
 		messageDigest.update((byte) (b & 0xff));
 		out.write(b);
 	}
 
+	@Override
 	public void write(byte b[]) throws IOException {
 		messageDigest.update(b);
 		out.write(b, 0, b.length);
 	}
 
+	@Override
 	public void write(byte b[], int off, int len) throws IOException {
 		messageDigest.update(b, off, len);
 		out.write(b, off, len);
 	}
 
+	@Override
 	public void flush() throws IOException {
 		out.flush();
 	}
 
+	@Override
 	public void close() throws IOException {
 		try (OutputStream ostream = out) {
 			ostream.flush();

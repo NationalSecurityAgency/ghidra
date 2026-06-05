@@ -22,7 +22,7 @@ package ghidra.app.util.demangler;
  * future date.  Below is a listing of known uses:
  * <TABLE>
  * 		<TR>
- * 			<TH ALIGN="left">Method</TH><TH ALIGN="left">Description</TH>
+ * 			<TH style="text-align:left">Method</TH><TH style="text-align:left">Description</TH>
  * 		</TR>
  * 		<TR>
  * 			<TD>

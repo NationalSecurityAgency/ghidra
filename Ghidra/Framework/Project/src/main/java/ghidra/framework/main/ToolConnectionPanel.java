@@ -388,14 +388,17 @@ class ToolConnectionPanel extends JPanel implements ListSelectionListener {
 
 		consumerList = new JList<>(new DefaultListModel<>());
 		consumerList.setName("Consumers");
+		consumerList.getAccessibleContext().setAccessibleName("Consumers");
 		JScrollPane consumerListScrollPane = new JScrollPane(consumerList);
 
 		producerList = new JList<>(new DefaultListModel<>());
 		producerList.setName("Producers");
+		producerList.getAccessibleContext().setAccessibleName("Producers");
 		JScrollPane producerListScrollPane = new JScrollPane(producerList);
 
 		eventList = new JList<>(new DefaultListModel<>());
 		eventList.setName("Events");
+		eventList.getAccessibleContext().setAccessibleName("Events");
 		JScrollPane eventListScrollPane = new JScrollPane(eventList);
 
 		Dimension minimumSize = new Dimension(150, 150);
@@ -416,8 +419,11 @@ class ToolConnectionPanel extends JPanel implements ListSelectionListener {
 		JComponent[] row2 = null;
 
 		JLabel producerLabel = new GDLabel("Event Producer:");
+		producerLabel.getAccessibleContext().setAccessibleName("Event Producer");
 		JLabel consumerLabel = new GDLabel("Event Consumer:");
+		consumerLabel.getAccessibleContext().setAccessibleName("Event Consumer");
 		JLabel eventLabel = new GDLabel("Event Names:");
+		eventLabel.getAccessibleContext().setAccessibleName("Event Name");
 
 		JComponent[] c1 = { producerLabel, consumerLabel, eventLabel };
 		JComponent[] c2 = { producerListScrollPane, consumerListScrollPane, eventListScrollPane };
@@ -456,6 +462,7 @@ class ToolConnectionPanel extends JPanel implements ListSelectionListener {
 			gbl.setConstraints(row2[i], gbc);
 			panel.add(row2[i]);
 		}
+		panel.getAccessibleContext().setAccessibleName("Tool Connection");
 		return (panel);
 	}
 

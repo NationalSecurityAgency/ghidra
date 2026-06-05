@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,8 @@ import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.plugin.core.bookmark.BookmarkEditCmd;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.services.GoToService;
+import ghidra.app.util.viewer.field.AddressFieldFactory;
+import ghidra.app.util.viewer.field.FunctionSignatureFieldFactory;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
@@ -38,6 +40,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.test.*;
 import ghidra.util.task.TaskMonitor;
 import resources.Icons;
@@ -157,6 +160,9 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testSearchInstruction() throws Exception {
 
+		// Note: if we don't start on the address field, then the first call to nextInstruction() 
+		// will go to the address field.  
+		cb.goToField(addr("0x1001000"), AddressFieldFactory.FIELD_NAME, 0, 0);
 		assertAddress("0x1001000");
 		nextInstruction();
 		assertAddress("0x1002239");
@@ -171,6 +177,35 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 
 		// no more instructions, this is the last range
 		assertAddress("0x100294d");
+	}
+
+	@Test
+	public void testSearchInstruction_WhenOnFunctionSignature() throws Exception {
+
+		//
+		// Test that the Next Instruction action will go to the Address Field when inside of a 
+		// function signature.
+		//
+
+		Symbol symbol = getUniqueSymbol(program, "FUN_01002239");
+		Address functionEntry = symbol.getAddress();
+
+		assertTrue(cb.goToField(functionEntry, FunctionSignatureFieldFactory.FIELD_NAME, 0, 0));
+
+		nextInstruction();
+
+		// address is the same, but the field has changed from the signature to the bytes field
+		assertAddress(functionEntry);
+
+		nextInstruction();
+		assertAddress("0x1002cf5");
+
+		toggleDirection();
+
+		// going backwards the address before the function will be chosen
+		nextInstruction();
+		assertAddress("0x100294d");
+
 	}
 
 	@Test
@@ -637,7 +672,7 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		clearExisingBookmarks();
 
 		// add more to our current set
-		CompoundCmd addCmd = new CompoundCmd("Add Bookmarks");
+		CompoundCmd<Program> addCmd = new CompoundCmd<>("Add Bookmarks");
 		addCmd.add(new BookmarkEditCmd(addr("01001110"), BookmarkType.ERROR, "Cat1a", "Cmt1A"));
 		addCmd.add(new BookmarkEditCmd(addr("01001118"), BookmarkType.NOTE, "Cat1a", "Cmt1B"));
 		addCmd.add(new BookmarkEditCmd(addr("01001120"), BookmarkType.ERROR, "Cat1a", "Cmt1B"));
@@ -736,7 +771,7 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		clearExisingBookmarks();
 
 		// add more to our current set
-		CompoundCmd addCmd = new CompoundCmd("Add Bookmarks");
+		CompoundCmd<Program> addCmd = new CompoundCmd<>("Add Bookmarks");
 		addCmd.add(new BookmarkEditCmd(addr("01003e2c"), BookmarkType.WARNING, "Cat1a", "Cmt1A"));
 		addCmd.add(new BookmarkEditCmd(addr("01003e2e"), BookmarkType.NOTE, "Cat1a", "Cmt1B"));
 		addCmd.add(new BookmarkEditCmd(addr("01003e30"), BookmarkType.WARNING, "Cat1a", "Cmt1B"));
@@ -803,7 +838,7 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		String typeString = bob.getTypeString();
 
 		// add more to our current set
-		CompoundCmd addCmd = new CompoundCmd("Add Bookmarks");
+		CompoundCmd<Program> addCmd = new CompoundCmd<>("Add Bookmarks");
 		addCmd.add(new BookmarkEditCmd(addr("0100529b"), typeString, "Cat1a", "Cmt1A"));
 		addCmd.add(new BookmarkEditCmd(addr("0100529d"), BookmarkType.NOTE, "Cat1a", "Cmt1B"));
 		addCmd.add(new BookmarkEditCmd(addr("0100529e"), typeString, "Cat1a", "Cmt1B"));

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,14 +19,17 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.Icon;
-import javax.swing.JComponent;
+import javax.swing.*;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import docking.action.builder.ActionBuilder;
+import docking.widgets.FindDialog;
 import docking.widgets.OptionDialog;
+import docking.widgets.search.TextComponentSearcher;
 import generic.theme.GIcon;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.util.HelpLocation;
 import resources.Icons;
@@ -39,9 +42,11 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 	private InterpreterConnection interpreter;
 	private List<Callback> firstActivationCallbacks;
 
+	private FindDialog findDialog;
+
 	public InterpreterComponentProvider(InterpreterPanelPlugin plugin,
 			InterpreterConnection interpreter, boolean visible) {
-		super(plugin.getTool(), interpreter.getTitle(), plugin.getName());
+		super(plugin.getTool(), interpreter.getTitle(), interpreter.getTitle());
 
 		this.panel = new InterpreterPanel(plugin.getTool(), interpreter);
 		this.interpreter = interpreter;
@@ -63,7 +68,7 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 
 	private void createActions() {
 
-		DockingAction clearAction = new DockingAction("Clear Interpreter", getName()) {
+		DockingAction clearAction = new DockingAction("Clear Interpreter", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				clear();
@@ -72,8 +77,29 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 		clearAction.setDescription("Clear Interpreter");
 		clearAction.setToolBarData(new ToolBarData(Icons.CLEAR_ICON, null));
 		clearAction.setEnabled(true);
-
 		addLocalAction(clearAction);
+
+		//@formatter:off
+		new ActionBuilder("Find", getOwner())
+			.keyBinding("Ctrl F")
+			.sharedKeyBinding()
+			.helpLocation(new HelpLocation(HelpTopics.CONSOLE, "Console_Find"))
+			.popupMenuPath("Find...")
+			.onAction(c -> {
+				showFindDialog();
+			})
+			.buildAndInstallLocal(this)
+			;
+		//@formatter:on	
+	}
+
+	private void showFindDialog() {
+		if (findDialog == null) {
+			JTextPane textPane = panel.getOutputTextPane();
+			TextComponentSearcher searcher = new TextComponentSearcher(textPane);
+			findDialog = new FindDialog("Intepreter Find", searcher);
+		}
+		getTool().showDialog(findDialog);
 	}
 
 	@Override
@@ -128,6 +154,10 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 	@Override
 	public void clear() {
 		panel.clear();
+
+		if (findDialog != null) {
+			findDialog.close(); // this will also dispose of any search highlights
+		}
 	}
 
 	@Override

@@ -44,7 +44,8 @@ public interface Structure extends Composite {
 	public DataTypeComponent getComponent(int ordinal) throws IndexOutOfBoundsException;
 
 	/**
-	 * Gets the first defined component located at or after the specified offset. 
+	 * Gets the first defined component located at or after the specified offset.  If a
+	 * component contains the specified offset that component will be returned.
 	 * Note: The returned component may be a zero-length component.
 	 * 
 	 * @param offset the byte offset into this structure
@@ -161,7 +162,8 @@ public interface Structure extends Composite {
 	 * @param baseDataType the bitfield base datatype (certain restrictions apply).
 	 * @param bitSize the declared bitfield size in bits. The effective bit size may be adjusted
 	 *            based upon the specified baseDataType.
-	 * @param componentName the field name to associate with this component.
+	 * @param componentName the field name to associate with this component. (may be null)
+	 * 			The name may be sanitized to convert all whitespace characters to an underscore.  
 	 * @param comment the comment to associate with this component.
 	 * @return the bitfield component created whose associated data type will be BitFieldDataType.
 	 * @throws InvalidDataTypeException if the specified baseDataType is not a valid base type for
@@ -195,7 +197,6 @@ public interface Structure extends Composite {
 	 * Zero length bitfields may be inserted although they have no real affect when packing disabled. 
 	 * Only the resulting byte offset within the structure is of significance in
 	 * determining its ordinal placement.
-	 * <p>
 	 * 
 	 * @param byteOffset the first byte offset within this structure which corresponds to the first
 	 *            byte of the specified storage unit identified by its byteWidth.
@@ -206,7 +207,8 @@ public interface Structure extends Composite {
 	 *            viewed as big-endian. The final offset may be reduced based upon the minimal
 	 *            storage size determined during insertion.
 	 * @param baseDataType the bitfield base datatype (certain restrictions apply).
-	 * @param componentName the field name to associate with this component.
+	 * @param componentName the field name to associate with this component. (may be null)
+	 * 			The name may be sanitized to convert all whitespace characters to an underscore.  
 	 * @param bitSize the bitfield size in bits. A bitSize of 0 may be specified although its name
 	 *            will be ignored.
 	 * @param comment the comment to associate with this component.
@@ -240,9 +242,16 @@ public interface Structure extends Composite {
 	/**
 	 * Inserts a new datatype at the specified offset into this structure. Inserting a component
 	 * will cause any conflicting components to shift down to the extent necessary to avoid a
-	 * conflict.
+	 * conflict.  The overall structure length will always increase when a non-zero-length
+	 * component is inserted. NOTE: bitfields may share an offset with other bitfields and
+	 * zero-length components.
 	 * <p>
-	 * This method does not support bit-field insertions which must use the method 
+	 * Any component insert at an offset will be placed after any zero-length components 
+	 * at the same offset but before any non-zero-length components.  The components which 
+	 * fall after the insertion point will have there ordinal incremented and offset 
+	 * adjusted as needed.
+	 * <p>
+	 * This method will defer bit-field insertions to the method 
 	 * {@link #insertBitFieldAt(int, int, int, DataType, int, String, String)}.
 	 * 
 	 * @param offset the byte offset into the structure where the new datatype is to be inserted.
@@ -250,7 +259,8 @@ public interface Structure extends Composite {
 	 * 				structure an {@link Undefined1DataType} will be used in its place.
 	 * @param length the length to associate with the dataType. For fixed length types a length
 	 *            &lt;= 0 will use the length of the resolved dataType.
-	 * @param name the field name to associate with this component.
+	 * @param componentName the field name to associate with this component. (may be null)
+	 * 			The name may be sanitized to convert all whitespace characters to an underscore.  
 	 * @param comment the comment to associate with this component.
 	 * @return the componentDataType created.
 	 * @throws IllegalArgumentException if the specified data type is not allowed to be inserted
@@ -258,7 +268,8 @@ public interface Structure extends Composite {
 	 *             suppose dt1 contains dt2. Therefore it is not valid to insert dt1 to dt2 since
 	 *             this would cause a cyclic dependency.
 	 */
-	public DataTypeComponent insertAtOffset(int offset, DataType dataType, int length, String name,
+	public DataTypeComponent insertAtOffset(int offset, DataType dataType, int length,
+			String componentName,
 			String comment) throws IllegalArgumentException;
 
 	/**
@@ -376,20 +387,23 @@ public interface Structure extends Composite {
 	 * @param length component length for containing the specified dataType. A positive length is required 
 	 *             for sizable {@link Dynamic} datatypes and should be specified as -1 for fixed-length
 	 *             datatypes to rely on their resolved size.
-	 * @param name the field name to associate with this component or null.
+	 * @param componentName the field name to associate with this component. (may be null)
+	 * 			The name may be sanitized to convert all whitespace characters to an underscore.  
 	 * @param comment the comment to associate with this component or null.
 	 * @return the new component.
 	 * @throws IllegalArgumentException may be caused by: 1) invalid offset specified, 2) invalid datatype or 
 	 *             associated length specified, or 3) insufficient space for replacement.
 	 * @throws IndexOutOfBoundsException if component ordinal is out of bounds
 	 */
-	public DataTypeComponent replace(int ordinal, DataType dataType, int length, String name,
+	public DataTypeComponent replace(int ordinal, DataType dataType, int length,
+			String componentName,
 			String comment) throws IndexOutOfBoundsException, IllegalArgumentException;
 
 	/**
 	 * Replaces all components containing the specified byte offset with a new component using the 
 	 * specified datatype, length, name and comment. If the offset corresponds to a bit-field 
-	 * more than one component may be consumed by this replacement.  
+	 * more than one component may be consumed by this replacement.  In general, this method 
+	 * should not be used to replace bitfield components. 
 	 * <p>
 	 * This method may not be used to replace a zero-length component since there may be any number 
 	 * of zero-length components at the same offset. If the only defined component(s) at the specified
@@ -420,13 +434,15 @@ public interface Structure extends Composite {
 	 * @param length component length for containing the specified dataType. A positive length is required 
 	 *             for sizable {@link Dynamic} datatypes and should be specified as -1 for fixed-length
 	 *             datatypes to rely on their resolved size.
-	 * @param name the field name to associate with this component or null.
+	 * @param componentName the field name to associate with this component. (may be null)
+	 * 			The name may be sanitized to convert all whitespace characters to an underscore.  
 	 * @param comment the comment to associate with this component or null.
 	 * @return the new component.
 	 * @throws IllegalArgumentException may be caused by: 1) invalid offset specified, 2) invalid datatype or 
 	 *             associated length specified, or 3) insufficient space for replacement.
 	 */
-	public DataTypeComponent replaceAtOffset(int offset, DataType dataType, int length, String name,
+	public DataTypeComponent replaceAtOffset(int offset, DataType dataType, int length,
+			String componentName,
 			String comment) throws IllegalArgumentException;
 
 	/**
@@ -437,7 +453,7 @@ public interface Structure extends Composite {
 	 * @throws IllegalArgumentException if amount &lt; 0
 	 */
 	public void growStructure(int amount);
-	
+
 	/**
 	 * Set the size of the structure to the specified byte-length.  If the length is shortened defined
 	 * components will be cleared and removed as required.

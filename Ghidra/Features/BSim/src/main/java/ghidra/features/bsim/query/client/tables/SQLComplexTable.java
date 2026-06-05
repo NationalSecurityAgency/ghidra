@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ public abstract class SQLComplexTable {
 	public abstract void create(Statement st) throws SQLException;
 
 	/**
-	 * Deletes the row with the given id from the db. Users must set the {@link #DELETE_STMT} string
+	 * Deletes the row with the given id from the db. Users must set the {@code DELETE_STMT} string
 	 * to delete the exact table they need.
 	 * 
 	 * @param id the database row ID

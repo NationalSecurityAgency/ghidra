@@ -22,6 +22,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.interpreter.InterpreterPanelService;
 import ghidra.app.script.GhidraState;
+import ghidra.app.script.ScriptControls;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -57,7 +58,7 @@ public class PyGhidraPlugin extends ProgramPlugin {
 		super(tool);
 		GhidraState state = new GhidraState(tool, tool.getProject(), null, null, null, null);
 		// use the copy constructor so this state doesn't fire plugin events
-		script.set(new GhidraState(state), null, null);
+		script.set(new GhidraState(state), ScriptControls.NONE);
 	}
 
 	/**

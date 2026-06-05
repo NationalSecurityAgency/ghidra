@@ -29,8 +29,8 @@ import ghidra.debug.api.modules.ModuleMapProposal;
 import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
-import ghidra.trace.model.modules.TraceObjectModule;
+import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.util.TraceEvent;
 import ghidra.trace.util.TraceEvents;
@@ -76,19 +76,19 @@ public class ByModuleAutoMapSpec implements AutoMapSpec {
 
 	@Override
 	public boolean objectHasType(TraceObjectValue value) {
-		return value.getParent().queryInterface(TraceObjectModule.class) != null ||
-			value.getParent().queryInterface(TraceObjectMemoryRegion.class) != null;
+		return value.getParent().queryInterface(TraceModule.class) != null ||
+			value.getParent().queryInterface(TraceMemoryRegion.class) != null;
 	}
 
 	@Override
-	public String getInfoForObjects(Trace trace) {
+	public String getInfoForObjects(Trace trace, long snap) {
 		String modPart = trace.getModuleManager()
-				.getAllModules()
+				.getLoadedModules(snap)
 				.stream()
-				.map(m -> m.getName() + ":" + m.getBase())
+				.map(m -> m.getName(snap) + ":" + m.getBase(snap))
 				.sorted()
 				.collect(Collectors.joining(","));
-		String regPart = ByRegionAutoMapSpec.getInfoForRegions(trace);
+		String regPart = ByRegionAutoMapSpec.getInfoForRegions(trace, snap);
 		return modPart + ";" + regPart;
 	}
 
@@ -99,9 +99,9 @@ public class ByModuleAutoMapSpec implements AutoMapSpec {
 
 	@Override
 	public boolean performMapping(DebuggerStaticMappingService mappingService, Trace trace,
-			List<Program> programs, TaskMonitor monitor) throws CancelledException {
+			long snap, List<Program> programs, TaskMonitor monitor) throws CancelledException {
 		Map<?, ModuleMapProposal> maps = mappingService
-				.proposeModuleMaps(trace.getModuleManager().getAllModules(), programs);
+				.proposeModuleMaps(trace.getModuleManager().getLoadedModules(snap), snap, programs);
 		Collection<ModuleMapEntry> entries = MapProposal.flatten(maps.values());
 		entries = MapProposal.removeOverlapping(entries);
 		mappingService.addModuleMappings(entries, monitor, false);

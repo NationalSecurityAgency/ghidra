@@ -9,10 +9,12 @@
 # contains the link you are calling (which is the best we can do on macOS), and the "echo" is the 
 # fallback, which doesn't attempt to do anything with links.
 SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
-SCRIPT_DIR="${SCRIPT_FILE%/*}"
+SCRIPT_DIR="$(dirname -- "$SCRIPT_FILE")"
+# Since JPype doesn't seem to pick up JDK_JAVA_OPTIONS automatically, include it ourselves
+VMARG_LIST="${JDK_JAVA_OPTIONS}"
 
-# Add optional JVM args inside the quotes
-VMARG_LIST=""
+# Apply Java options from externally set environment variables
+VMARG_LIST="${VMARG_LIST} ${GHIDRA_JAVA_OPTIONS} ${PYGHIDRA_JAVA_OPTIONS}"
 
 # Make sure Python3 is installed
 if ! [ -x "$(command -v python3)" ] ; then

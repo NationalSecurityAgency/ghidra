@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.debug.mapping;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.disassemble.DisassemblyInject;
@@ -28,7 +27,6 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Endian;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceInstruction;
 import ghidra.trace.model.memory.TraceMemoryOperations;
@@ -75,6 +73,10 @@ public abstract class AbstractDebuggerPlatformMapper implements DebuggerPlatform
 			TraceMemoryState.KNOWN);
 	}
 
+	protected TracePlatform getDisassemblyPlatform(TraceObject object, Address start, long snap) {
+		return trace.getPlatformManager().getPlatform(getCompilerSpec(object, snap));
+	}
+
 	protected Collection<DisassemblyInject> getDisassemblyInjections(TracePlatform platform) {
 		return ClassSearcher.getInstances(DisassemblyInject.class)
 				.stream()
@@ -89,8 +91,8 @@ public abstract class AbstractDebuggerPlatformMapper implements DebuggerPlatform
 		if (isCancelSilently(start, snap)) {
 			return DisassemblyResult.CANCELLED;
 		}
-		TracePlatform platform = trace.getPlatformManager().getPlatform(getCompilerSpec(object));
 
+		TracePlatform platform = getDisassemblyPlatform(object, start, snap);
 		Collection<DisassemblyInject> injects = getDisassemblyInjections(platform);
 		TraceDisassembleCommand dis = new TraceDisassembleCommand(platform, start, restricted);
 		AddressSet startSet = new AddressSet(start);

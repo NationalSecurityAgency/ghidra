@@ -16,6 +16,7 @@
 apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
 apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javadoc.gradle"
 apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
 apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
 
@@ -23,17 +24,15 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Features BSim'
 
 import java.nio.file.Files
-import org.gradle.util.GUtil
 
 // NOTE: fetchDependencies.gradle must be updated if postgresql version changes
-def postgresql_distro = "postgresql-15.3.tar.gz"
+def postgresql_distro = "postgresql-15.13.tar.gz"
 
 dependencies {
 	api project(":Decompiler")
 	api project(":CodeCompare")
 
-	api "org.postgresql:postgresql:42.6.2"
-    api "com.googlecode.json-simple:json-simple:1.1.1"
+	api "org.postgresql:postgresql:42.7.11"
     api "org.apache.commons:commons-dbcp2:2.9.0"
     api "org.apache.commons:commons-pool2:2.11.1"
     api "commons-logging:commons-logging:1.2"
@@ -108,7 +107,7 @@ task buildBSimHelpPdf(type: Exec) {
 		"""
 
 	// Allows doLast block regardless of exit value.
-	ignoreExitValue true
+	ignoreExitValue = true
 
 	// Store the output instead of printing to the console.
 	standardOutput = new ByteArrayOutputStream()
@@ -169,7 +168,7 @@ task buildBSimHelpHtml(type: Exec) {
 	"""
 
 	// Allows doLast block regardless of exit value.
-	ignoreExitValue true
+	ignoreExitValue = true
 
 	// Store the output instead of printing to the console.
 	standardOutput = new ByteArrayOutputStream()

@@ -459,20 +459,22 @@ public class DiffTest extends DiffTestAdapter {
 		programBuilderDiffTest1.createMemory("d4", "0x400", 0x100);
 		programBuilderDiffTest2.createMemory("d2", "0x200", 0x100);
 
-		programBuilderDiffTest2.createComment("0x01008000", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x01008607", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x01008a99", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x0100a001", "My comment", CodeUnit.EOL_COMMENT);
+		programBuilderDiffTest2.createComment("0x01008000", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x01008607", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x01008a99", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x0100a001", "My comment", CommentType.EOL);
 
 		openDiff(diffTestP1, diffTestP2);
 		JTree tree = getProgramTree();
 		selectTreeNodeByText(tree, ".data");
 
-		runSwing(() -> setView.actionPerformed(programTreeProvider.getActionContext(null)));
+		ActionContext context1 = createActionContext(programTreeProvider);
+		runSwing(() -> setView.actionPerformed(context1));
 
 		selectTreeNodeByText(tree, ".rsrc");
 
-		runSwing(() -> goToView.actionPerformed(programTreeProvider.getActionContext(null)));
+		ActionContext context2 = createActionContext(programTreeProvider);
+		runSwing(() -> goToView.actionPerformed(context2));
 
 		topOfFile(fp1);
 		assertEquals(addr("1008000"), cb.getCurrentAddress());
@@ -528,15 +530,15 @@ public class DiffTest extends DiffTestAdapter {
 		programBuilderDiffTest1.createMemory("d4", "0x400", 0x100);
 		programBuilderDiffTest2.createMemory("d2", "0x200", 0x100);
 
-		programBuilderDiffTest2.createComment("0x01008000", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x01008607", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x01009943", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x0100a001", "My comment", CodeUnit.EOL_COMMENT);
+		programBuilderDiffTest2.createComment("0x01008000", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x01008607", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x01009943", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x0100a001", "My comment", CommentType.EOL);
 
 		openDiff(diffTestP1, diffTestP2);
 		JTree tree = getProgramTree();
 		selectTreeNodeByText(tree, "DiffTestPgm1");
-		ActionContext context = runSwing(() -> programTreeProvider.getActionContext(null));
+		ActionContext context = runSwing(() -> createActionContext(programTreeProvider));
 		performAction(removeView, context, true);
 		AddressSet viewSet = new AddressSet();
 		assertEquals(viewSet, cb.getView());

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,10 @@ import docking.ActionContext;
 import docking.Tool;
 import docking.action.DockingActionIf;
 import docking.actions.PopupActionProvider;
-import generic.jar.ResourceFile;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingActionContext;
+import ghidra.app.plugin.processors.sleigh.SleighLanguageDescription;
 import ghidra.app.services.DebuggerPlatformService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.framework.plugintool.*;
@@ -39,6 +39,7 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.IntersectionAddressSetView;
 import ghidra.util.UnionAddressSetView;
@@ -117,13 +118,13 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 			// It has never been known up to this snap
 			return null;
 		}
-		TraceMemoryRegion region =
-			memoryManager.getRegionContaining(mrent.getKey().getY1(), start);
-		if (region == null || region.isWrite()) {
+		long ks = mrent.getKey().getY1();
+		TraceMemoryRegion region = memoryManager.getRegionContaining(ks, start);
+		if (region == null || region.isWrite(ks)) {
 			// It could have changed this snap, so unknown
 			return null;
 		}
-		return mrent.getKey().getY1();
+		return ks;
 	}
 
 	/**
@@ -133,8 +134,8 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 	 * The view contains the addresses in {@code known | (readOnly & everKnown)}, where {@code
 	 * known} is the set of addresses in the {@link TraceMemoryState#KNOWN} state, {@code readOnly}
 	 * is the set of addresses in a {@link TraceMemoryRegion} having
-	 * {@link TraceMemoryRegion#isWrite()} false, and {@code everKnown} is the set of addresses in
-	 * the {@link TraceMemoryState#KNOWN} state in any previous snapshot.
+	 * {@link TraceMemoryRegion#isWrite(long)} false, and {@code everKnown} is the set of addresses
+	 * in the {@link TraceMemoryState#KNOWN} state in any previous snapshot.
 	 * 
 	 * <p>
 	 * In plainer English, we want addresses that have freshly read bytes right now, or addresses in
@@ -158,18 +159,18 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 		}
 		TraceMemoryManager memoryManager = trace.getMemoryManager();
 		AddressSetView readOnly =
-			memoryManager.getRegionsAddressSetWith(ks, r -> !r.isWrite());
-		AddressSetView everKnown = memoryManager.getAddressesWithState(Lifespan.since(ks),
-			s -> s == TraceMemoryState.KNOWN);
+			memoryManager.getRegionsAddressSetWith(ks, r -> !r.isWrite(ks));
+		AddressSetView everKnown =
+			memoryManager.getAddressesWithState(Lifespan.since(ks), StatePredicate.IS_KNOWN);
 		AddressSetView roEverKnown = new IntersectionAddressSetView(readOnly, everKnown);
-		AddressSetView known =
-			memoryManager.getAddressesWithState(ks, s -> s == TraceMemoryState.KNOWN);
+		AddressSetView known = memoryManager.getAddressesWithState(ks, StatePredicate.IS_KNOWN);
 		AddressSetView disassemblable = new UnionAddressSetView(known, roEverKnown);
 		return disassemblable;
 	}
 
 	CurrentPlatformTraceDisassembleAction actionDisassemble;
 	CurrentPlatformTracePatchInstructionAction actionPatchInstruction;
+	TracePatchDataAction actionPatchData;
 
 	public DebuggerDisassemblerPlugin(PluginTool tool) {
 		super(tool);
@@ -185,9 +186,11 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 	protected void createActions() {
 		actionDisassemble = new CurrentPlatformTraceDisassembleAction(this);
 		actionPatchInstruction = new CurrentPlatformTracePatchInstructionAction(this);
+		actionPatchData = new TracePatchDataAction(this);
 
 		tool.addAction(actionDisassemble);
 		tool.addAction(actionPatchInstruction);
+		tool.addAction(actionPatchData);
 	}
 
 	/**
@@ -199,27 +202,17 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 	protected Collection<LanguageID> getAlternativeLanguageIDs(Language language) {
 		// One of the alternatives is the language's actual default
 		LanguageDescription desc = language.getLanguageDescription();
-		if (!(desc instanceof SleighLanguageDescription)) {
+		if (!(desc instanceof SleighLanguageDescription sld)) {
 			return List.of();
 		}
-		SleighLanguageDescription sld = (SleighLanguageDescription) desc;
-		ResourceFile slaFile = sld.getSlaFile();
 
 		List<LanguageID> result = new ArrayList<>();
 		LanguageService langServ = DefaultLanguageService.getLanguageService();
 		for (LanguageDescription altDesc : langServ.getLanguageDescriptions(false)) {
-			if (!(altDesc instanceof SleighLanguageDescription)) {
-				continue;
+			if (altDesc instanceof SleighLanguageDescription altSld &&
+				sld.isSameSleighLanguageFile(altSld) && sld.getEndian() == altSld.getEndian()) {
+				result.add(altSld.getLanguageID());
 			}
-			SleighLanguageDescription altSld = (SleighLanguageDescription) altDesc;
-			if (!altSld.getSlaFile().equals(slaFile)) {
-				continue;
-			}
-			if (altSld.getEndian() != sld.getEndian()) {
-				// Memory endian, not necessarily instruction endian
-				continue;
-			}
-			result.add(altSld.getLanguageID());
 		}
 		return result;
 	}

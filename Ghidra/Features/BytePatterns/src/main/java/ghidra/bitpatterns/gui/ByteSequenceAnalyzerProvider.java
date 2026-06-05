@@ -99,6 +99,8 @@ public abstract class ByteSequenceAnalyzerProvider extends DialogComponentProvid
 		panel.add(infoPanel, BorderLayout.NORTH);
 		GFilterTable<ByteSequenceRowObject> filterTable = new GFilterTable<>(byteSequenceTable);
 		panel.add(filterTable, BorderLayout.CENTER);
+
+		panel.getAccessibleContext().setAccessibleName("Byte Sequence Analyzer");
 		return panel;
 	}
 
@@ -108,21 +110,26 @@ public abstract class ByteSequenceAnalyzerProvider extends DialogComponentProvid
 		mergedSeqTextField.setEditable(false);
 		TitledBorder lubBorder = new TitledBorder("Merged Selections");
 		mergedSeqTextField.setBorder(lubBorder);
+		mergedSeqTextField.getAccessibleContext().setAccessibleName("Merged Selections");
 
 		bitsOfCheckField = new JTextField(5);
 		bitsOfCheckField.setEditable(false);
 		TitledBorder bitsOfCheckBorder = new TitledBorder("Bits of Check");
 		bitsOfCheckField.setBorder(bitsOfCheckBorder);
+		bitsOfCheckField.getAccessibleContext().setAccessibleName("Bits of Check");
 
 		noteField = new JTextField(60);
 		noteField.setText(note);
 		noteField.setEditable(true);
 		TitledBorder noteBorder = new TitledBorder("Note");
 		noteField.setBorder(noteBorder);
+		noteField.getAccessibleContext().setAccessibleName("Note");
 
 		panel.add(mergedSeqTextField, BorderLayout.NORTH);
 		panel.add(bitsOfCheckField, BorderLayout.CENTER);
 		panel.add(noteField, BorderLayout.SOUTH);
+
+		panel.getAccessibleContext().setAccessibleName("Info");
 		return panel;
 	}
 
@@ -161,9 +168,9 @@ public abstract class ByteSequenceAnalyzerProvider extends DialogComponentProvid
 		Icon icon = new GIcon("icon.bytepatterns.send.to.clipboard");
 		sendSelectedToClipboardAction.setPopupMenuData(
 			new MenuData(new String[] { "Send Selected to Clipboard" }, icon));
-		sendSelectedToClipboardAction.setDescription(
-			"Creates patterns for the currently-selected strings of " +
-				"bytes and sends them to the clipboard");
+		sendSelectedToClipboardAction
+				.setDescription("Creates patterns for the currently-selected strings of " +
+					"bytes and sends them to the clipboard");
 		sendSelectedToClipboardAction.setHelpLocation(
 			new HelpLocation("FunctionBitPatternsExplorerPlugin", "Analyzing_Byte_Sequences"));
 		this.addAction(sendSelectedToClipboardAction);
@@ -235,8 +242,8 @@ public abstract class ByteSequenceAnalyzerProvider extends DialogComponentProvid
 
 		};
 		Icon icon = new GIcon("icon.bytepatterns.byte.sequence.analyzer.clipboard.merged");
-		sendMergedToClipboardAction.setPopupMenuData(
-			new MenuData(new String[] { "Send Merged to Clipboard" }, icon));
+		sendMergedToClipboardAction
+				.setPopupMenuData(new MenuData(new String[] { "Send Merged to Clipboard" }, icon));
 		sendMergedToClipboardAction.setDescription("Sends the Merge Patterns to the Clipboard");
 		sendMergedToClipboardAction.setHelpLocation(
 			new HelpLocation("FunctionBitPatternsExplorerPlugin", "Analyzing_Byte_Sequences"));

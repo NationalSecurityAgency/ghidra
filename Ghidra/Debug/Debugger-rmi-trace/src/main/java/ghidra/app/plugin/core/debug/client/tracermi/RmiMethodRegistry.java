@@ -26,12 +26,16 @@ public class RmiMethodRegistry {
 	 */
 	@Target(ElementType.METHOD)
 	@Retention(RetentionPolicy.RUNTIME)
-	public static @interface TraceMethod {
+	public static @interface TraceRmiMethod {
 		String action() default "";
 
 		String display() default "";
 
 		String description() default "";
+
+		String okText() default "";
+
+		String icon() default "";
 	}
 
 	Map<String, RmiRemoteMethod> map = new HashMap<>();

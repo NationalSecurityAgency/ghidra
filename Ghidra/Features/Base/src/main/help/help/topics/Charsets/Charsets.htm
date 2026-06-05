@@ -1,0 +1,96 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+	<HEAD>
+		<TITLE>Charsets</TITLE>
+		<META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+		<LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+	</HEAD>
+
+<BODY lang="EN-US">
+	<H1><a name="Charsets"></a>Charsets</H1>
+
+	<P>Charsets are named mappings between byte sequences and Unicode code points.</P>
+	<p>Common examples:
+		<ul>
+			<li>US-ASCII</li>
+			<li>UTF-8</li>
+			<li>UTF-16</li>
+		</ul>
+	</p>
+	
+	<h2><a name="UnicodeCodePoint"></a>Unicode Code Point</h2>
+	
+	<p>The term "code point" denotes an integer that represents a character in the Unicode standard.
+	The first 127 code points map directly to the well-known ASCII characters.</p>
+	
+	<p>There are approximately 1.1 million defined code points in the Unicode standard.</p>
+	
+	<h2><a name="UnicodeScripts"></a>Unicode Scripts</h2>
+	
+	<p>Unicode code points are grouped into categories called 'scripts'.  For example, the Latin
+	script contains the well-known ABC..XYZ characters, the Common script contains numbers (0-9) and
+	punctuation, and the Greek script contains characters such as the delta '&#x394;' symbol.</p>
+	
+	<p>Do not conflate a script (alphabet) with a human language, even though there can be some
+	correlation.</p>
+	
+	<p>The Unicode standard that Java implements has about 160 different scripts.</p>
+	
+	<h2><a name="CharsetPicker"></a>Charset Picker</h2>
+	
+	<p>The charset picker dialog allows the user to browse the available installed charsets
+	and select one to be used when decoding strings / character data.</p>
+
+	<div style="text-align: center;">
+		<br>
+		<img src="images/CharsetPickerDialog.png">
+		<br>
+	</div>
+	
+	<p>The dialog has a table with the following columns:</p>
+
+	<h3>Name</h3>
+	<p>Name of the charset.  Charsets not in the IANA Charset Registry will have a "x-" prefix</p>
+	
+	<h3>Description</h3>
+	<p>A short description of the charset.</p>
+	
+	<h3>Fixed Length</h3>
+	<p>Flag to indicate that the charset always uses a fixed number of bytes to encode a character.</p>
+	
+	<h3>Min BPC / Max BPC (Bytes Per Character)</h3>
+	<p>The minimum and maximum number of bytes that the charset uses to encoded a single character.
+	This value may include the length of escape sequences that typically only appear once in a
+	string.</p>
+	
+	<h3>Scripts</h3>
+	<p>A list of the scripts (alphabets) that the charset can encode/decode characters for.  For
+	example, US-ASCII can only produce Latin characters (along with ubiquitous Common characters),
+	whereas the UTF-8 charset can encoded characters for every script that the Unicode standard
+	supports.</p>
+	
+	<p>In the Details panel, the <b>Scripts</b> list also can contain a short snippet of example
+	characters from that script (if your font supports the script in question).</p>
+	
+	<h3>Charset <b>Details</b></h3>
+	<p>Below the dialog's table is an area that displays the details of the charset, which
+	in addition to the information displayed in the table contains:</p>
+	
+	<h3>Aligned Size</h3>
+	<p>For charsets where the bytes of encoded characters should be treated as a larger-than-byte
+	integer type (because they would have been specified as arrays of those integer types), this
+	field will specify the size of that integer.  Currently, only UTF-16 and UTF-32 specify a
+	value for this setting.</p>
+	
+	<P class="relatedtopic">Related Topics:</P>
+
+	<UL>
+		<LI><A href="help/topics/Search/Search_for_Strings.htm">Search .. for Strings</A></LI>
+		<LI><A href="../Search/Search_for_Strings.htm#Encoded_Strings_Dialog">Search for Encoded Strings</A></LI>
+		<LI><A href="../TranslateStringsPlugin/TranslateStringsPlugin.htm">Translate Strings Plugin</A></LI>
+		<LI><A href="../DataPlugin/Data.htm#StringDataTypes">String data types</A></LI>
+	</UL>
+	<p></p>
+</BODY>
+</HTML>

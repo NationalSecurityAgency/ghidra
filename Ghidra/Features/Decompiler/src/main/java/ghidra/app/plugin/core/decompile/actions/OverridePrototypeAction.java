@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.exception.InvalidInputException;
 public class OverridePrototypeAction extends AbstractDecompilerAction {
 
 	public OverridePrototypeAction() {
-		super("Override Signature"); 
+		super("Override Signature");
 		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionOverrideSignature"));
 		setPopupMenuData(new MenuData(new String[] { "Override Signature" }, "Decompile"));
 	}
@@ -174,11 +174,9 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		// for the initial signature.  HighFunction does not make it easy to grab 
 		// existing override prototype
 
-		if (calledfunc != null) {
-			SourceType signatureSource = calledfunc.getSignatureSource();
-			if (signatureSource == SourceType.DEFAULT || signatureSource == SourceType.ANALYSIS) {
-				calledfunc = null; // ignore
-			}
+		if (calledfunc != null &&
+			calledfunc.getSignatureSource().isLowerOrEqualPriorityThan(SourceType.ANALYSIS)) {
+			calledfunc = null; // ignore
 		}
 
 		StringBuffer buf = new StringBuffer();

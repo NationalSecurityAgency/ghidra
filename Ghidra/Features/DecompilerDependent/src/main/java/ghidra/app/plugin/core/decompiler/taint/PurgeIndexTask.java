@@ -48,10 +48,10 @@ public class PurgeIndexTask extends Task {
 
 		// This will pull all the Taint options default set in the plugin.  These could also be set in Ghidra configuration files.
 		String facts_directory =
-			options.getString(TaintOptions.OP_KEY_TAINT_FACTS_DIR, "/tmp/export");
+			options.getString(TaintOptions.OP_KEY_TAINT_FACTS_DIR, "/tmp/export").trim();
 		String index_directory =
-			options.getString(TaintOptions.OP_KEY_TAINT_OUTPUT_DIR, "/tmp/output");
-		String index_db_name = options.getString(TaintOptions.OP_KEY_TAINT_DB, "ctadlir.db");
+			options.getString(TaintOptions.OP_KEY_TAINT_OUTPUT_DIR, "/tmp/output").trim();
+		String index_db_name = options.getString(TaintOptions.OP_KEY_TAINT_DB, "ctadlir.db").trim();
 
 		// builds a custom db name with the string of the binary embedded in it for better identification.
 		index_db_name = TaintOptions.makeDBName(index_db_name, program.getName());

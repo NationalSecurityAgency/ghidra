@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -163,7 +163,7 @@ class TraceDAG {
   FlowBlock *finishblock;		///< Designated exit block for the DAG (or null)
   void removeTrace(BlockTrace *trace);	///< Remove the indicated BlockTrace
   void processExitConflict(list<BadEdgeScore>::iterator start,list<BadEdgeScore>::iterator end);
-  BlockTrace *selectBadEdge(void);	///< Select the the most likely unstructured edge from active BlockTraces
+  BlockTrace *selectBadEdge(void);	///< Select the most likely unstructured edge from active BlockTraces
   void insertActive(BlockTrace *trace);	///< Move a BlockTrace into the \e active category
   void removeActive(BlockTrace *trace);	///< Remove a BlockTrace from the \e active category
   bool checkOpen(BlockTrace *trace);	///< Check if we can push the given BlockTrace into its next node
@@ -268,11 +268,12 @@ public:
 ///
 /// This is currently used to set up \e for loops via BlockWhileDo
 class ActionStructureTransform : public Action {
+  bool allowOpMoves;		///< Are p-code ops allowed to be moved by \b this action
 public:
-  ActionStructureTransform(const string &g) : Action(0,"structuretransform",g) {}	///< Constructor
+  ActionStructureTransform(const string &g,bool allowMoves) : Action(0,"structuretransform",g) { allowOpMoves = allowMoves; }	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
-    return new ActionStructureTransform(getGroup());
+    return new ActionStructureTransform(getGroup(),allowOpMoves);
   }
   virtual int4 apply(Funcdata &data);
 };
@@ -298,11 +299,12 @@ public:
 /// This uses the preferComplement() method on structured FlowBlocks to choose between symmetric
 /// structurings, such as an if/else where the \b true and \b false blocks can be swapped.
 class ActionPreferComplement : public Action {
+  bool allowOpMods;		///< Are p-code ops allowed to be modified by \b this action
 public:
-  ActionPreferComplement(const string &g) : Action(0,"prefercomplement",g) {}	///< Constructor
+  ActionPreferComplement(const string &g,bool allowMods) : Action(0,"prefercomplement",g) { allowOpMods = allowMods; }	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
-    return new ActionPreferComplement(getGroup());
+    return new ActionPreferComplement(getGroup(),allowOpMods);
   }
   virtual int4 apply(Funcdata &data);
 };

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,16 +17,10 @@ package ghidra.app.plugin.core.debug.gui.model.columns;
 
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
-import ghidra.dbg.target.TargetAttacher.TargetAttachKindSet;
-import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.TargetMethod.TargetParameterMap;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetSteppable.TargetStepKindSet;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
-import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.TraceExecutionState;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
+import ghidra.trace.model.target.schema.TraceObjectSchema.AttributeSchema;
 
 /**
  * A column which displays the object's value for a given attribute
@@ -44,24 +38,9 @@ public class TraceValueObjectAttributeColumn<T> extends TraceValueObjectProperty
 	 */
 	public static Class<?> computeAttributeType(SchemaContext ctx,
 			AttributeSchema attributeSchema) {
-		TargetObjectSchema schema = ctx.getSchema(attributeSchema.getSchema());
+		TraceObjectSchema schema = ctx.getSchema(attributeSchema.getSchema());
 		Class<?> type = schema.getType();
-		if (type == TargetObject.class) {
-			return TraceObject.class;
-		}
-		if (type == TargetExecutionState.class) {
-			return String.class;
-		}
-		if (type == TargetParameterMap.class) {
-			return String.class;
-		}
-		if (type == TargetAttachKindSet.class) {
-			return String.class;
-		}
-		if (type == TargetBreakpointKindSet.class) {
-			return String.class;
-		}
-		if (type == TargetStepKindSet.class) {
+		if (type == TraceExecutionState.class) {
 			return String.class;
 		}
 		return type;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -89,9 +89,14 @@ public class ExportTrie {
 	 * @throws IOException if there was an IO-related error
 	 */
 	private void parseTrie() throws IOException {
+		Set<Integer> visited = new HashSet<>();
+		visited.add(0);
 		LinkedList<Node> remainingNodes = parseNode("", 0);
 		while(!remainingNodes.isEmpty()) {
 			Node parent = remainingNodes.removeFirst();
+			if (!visited.add(parent.offset())) {
+				continue; // skip already-visited offsets
+			}
 			LinkedList<Node> children = parseNode(parent.name, parent.offset);
 			for (Node child : children) {
 				remainingNodes.add(new Node(parent.name + child.name, child.offset));
@@ -122,6 +127,7 @@ public class ExportTrie {
 			if ((flags & EXPORT_SYMBOL_FLAGS_REEXPORT) != 0) {
 				ulebOffsets.add(reader.getPointerIndex() - base);
 				other = reader.readNext(LEB128::unsigned); // dylib ordinal
+				stringOffsets.add(reader.getPointerIndex() - base);
 				importName = reader.readNextAsciiString();
 			}
 			else {

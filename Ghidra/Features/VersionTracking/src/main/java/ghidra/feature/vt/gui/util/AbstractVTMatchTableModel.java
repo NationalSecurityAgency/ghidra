@@ -1132,7 +1132,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 
 		@Override
 		public String getColumnDescription() {
-			return "Votes - The number of references from from previously accepted " +
+			return "Votes - The number of references from previously accepted " +
 				"matches that would suggest that this is a correct match";
 		}
 

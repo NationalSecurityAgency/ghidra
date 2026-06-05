@@ -72,8 +72,10 @@ public class NewLanguagePanel extends JPanel {
 
 		descriptionLabel = new GDLabel(DEFAULT_DESCRIPTION_TEXT);
 		Gui.registerFont(descriptionLabel, Font.ITALIC);
+		descriptionLabel.getAccessibleContext().setAccessibleName("Description");
 
 		recommendedCheckbox = new GCheckBox("Show Only Recommended Language/Compiler Specs");
+		recommendedCheckbox.getAccessibleContext().setAccessibleName("Recomendation");
 		recommendedCheckbox.addItemListener(e -> {
 			switch (e.getStateChange()) {
 				case ItemEvent.SELECTED:
@@ -88,6 +90,7 @@ public class NewLanguagePanel extends JPanel {
 		});
 
 		formatLabel = new GDLabel();
+		formatLabel.getAccessibleContext().setAccessibleName("Format");
 		formatLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		formatLabel.setForeground(Messages.NORMAL);
 	}
@@ -109,6 +112,7 @@ public class NewLanguagePanel extends JPanel {
 		};
 
 		JPanel descriptionPanel = new JPanel();
+		descriptionPanel.getAccessibleContext().setAccessibleName("Description");
 		Border titledBorder = BorderFactory.createTitledBorder("Description");
 		descriptionPanel.setBorder(titledBorder);
 		descriptionPanel.setLayout(new BorderLayout());
@@ -118,16 +122,19 @@ public class NewLanguagePanel extends JPanel {
 		innerPanel.setLayout(new BorderLayout());
 		innerPanel.add(scrollPane, BorderLayout.CENTER);
 		innerPanel.add(tableFilterPanel, BorderLayout.SOUTH);
+		innerPanel.getAccessibleContext().setAccessibleName("Table Filter");
 
 		JPanel middlePanel = new JPanel();
 		middlePanel.setLayout(new BorderLayout());
 		middlePanel.add(innerPanel, BorderLayout.CENTER);
 		middlePanel.add(descriptionPanel, BorderLayout.SOUTH);
+		middlePanel.getAccessibleContext().setAccessibleName("Table Filter Panel and Description");
 
 		JPanel outerPanel = new JPanel();
 		outerPanel.setLayout(new BorderLayout());
 		outerPanel.add(middlePanel, BorderLayout.CENTER);
 		outerPanel.add(recommendedCheckbox, BorderLayout.SOUTH);
+		outerPanel.getAccessibleContext().setAccessibleName("Recommended Checkbox");
 
 		setLayout(new BorderLayout());
 		add(outerPanel, BorderLayout.CENTER);

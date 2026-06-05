@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
@@ -123,15 +123,14 @@ public class CodeSignatureCodeDirectory extends CodeSignatureGenericBlob {
 				DataUtilities.createData(program, identAddr, STRING, -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				program.getListing()
-						.setComment(identAddr, CodeUnit.PRE_COMMENT, "CS_CodeDirectory identifer");
+						.setComment(identAddr, CommentType.PRE, "CS_CodeDirectory identifer");
 			}
 			if (teamOffset != 0) {
 				Address teamAddr = addr.add(teamOffset);
 				DataUtilities.createData(program, teamAddr, STRING, -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				program.getListing()
-						.setComment(teamAddr, CodeUnit.PRE_COMMENT,
-							"CS_CodeDirectory team identifier");
+						.setComment(teamAddr, CommentType.PRE, "CS_CodeDirectory team identifier");
 			}
 			if (hashOffset != 0 && hashSize != 0) {
 				Address hashAddr = addr.add(hashOffset);
@@ -140,7 +139,7 @@ public class CodeSignatureCodeDirectory extends CodeSignatureGenericBlob {
 				DataUtilities.createData(program, hashAddr, hasheArrayArrayDt, -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				program.getListing()
-						.setComment(hashAddr, CodeUnit.PRE_COMMENT, "CS_CodeDirectory hashes");
+						.setComment(hashAddr, CommentType.PRE, "CS_CodeDirectory hashes");
 			}
 		}
 		catch (Exception e) {

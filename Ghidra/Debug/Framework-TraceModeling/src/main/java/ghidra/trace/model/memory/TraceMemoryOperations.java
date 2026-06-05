@@ -17,8 +17,8 @@ package ghidra.trace.model.memory;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 
@@ -29,12 +29,10 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.time.TraceSnapshot;
-import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * Operations for mutating memory regions, values, and state within a trace
- * 
  * <p>
  * This models memory over the course of an arbitrary number of snaps. The duration between snaps is
  * unspecified. However, the mapping of snaps to real time ought to be strictly monotonic.
@@ -47,7 +45,11 @@ import ghidra.util.task.TaskMonitor;
  * states can be manipulated directly; however, this is recommended only to record read failures,
  * using the state {@link TraceMemoryState#ERROR}. A state of {@code null} is equivalent to
  * {@link TraceMemoryState#UNKNOWN} and indicates no observation has been made.
- * 
+ * <p>
+ * To support queries for the "most recent" bytes and states, entries are extended as far into the
+ * future until it would collide with another entry, splitting the entry so it can be extended
+ * piecewise. Note that the state itself is only effective <em>at the starting snap</em> of the
+ * lifespan. Otherwise, the effective state is {@link TraceMemoryState#UNKNOWN}.
  * <p>
  * Negative snaps may have different semantics than positive, since negative snaps are used as
  * "scratch space". These snaps are not presumed to have any temporal relation to their neighbors,
@@ -62,14 +64,55 @@ import ghidra.util.task.TaskMonitor;
  * accidentally rely on implied temporal relationships in scratch space.
  */
 public interface TraceMemoryOperations {
+
 	/**
 	 * Check if the return value of {@link #getStates(long, AddressRange)} or similar represents a
-	 * single entry of the given state.
-	 * 
+	 * single state across the given range.
 	 * <p>
-	 * This method returns false if there is not exactly one entry of the given state whose range
-	 * covers the given range. As a special case, an empty collection will cause this method to
-	 * return true iff state is {@link TraceMemoryState#UNKNOWN}.
+	 * This method returns null if any of the entries indicate a state that differs from the others,
+	 * or if the given entries do not completely cover the given range. As a special case, an empty
+	 * collection will result in {@link TraceMemoryState#UNKNOWN}.
+	 * <p>
+	 * Each of the given entries <em>must</em> intersect the given range, or else the behavior is
+	 * undefined. If the same range is given to {@link #getStates(long, AddressRange)}, this
+	 * requirement is satisfied.
+	 * 
+	 * @param range the range to check, usually that passed to
+	 *            {@link #getStates(long, AddressRange)}.
+	 * @param states the collection returned by {@link #getStates(long, AddressRange)}.
+	 * @return the uniform state, or null
+	 */
+	static TraceMemoryState oneState(AddressRange range,
+			Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> states) {
+		Iterator<Entry<TraceAddressSnapRange, TraceMemoryState>> it = states.iterator();
+		if (!it.hasNext()) {
+			return TraceMemoryState.IMPLIED_BY_NULL;
+		}
+		Entry<TraceAddressSnapRange, TraceMemoryState> entry = it.next();
+		TraceMemoryState state = entry.getValue();
+		AddressSet remains = new AddressSet(range);
+		remains.delete(entry.getKey().getRange());
+		while (it.hasNext()) {
+			if (entry.getValue() != state) {
+				return null;
+			}
+			remains.delete(entry.getKey().getRange());
+		}
+		return remains.isEmpty() ? state : null;
+	}
+
+	/**
+	 * Check if the return value of {@link #getStates(long, AddressRange)} or similar represents a
+	 * given state across the given range.
+	 * <p>
+	 * This method returns false if any of the entries indicate a state other than the given one, or
+	 * if the given entries do not completely cover the given range. As a special case, an empty
+	 * collection will cause this method to return true iff state is
+	 * {@link TraceMemoryState#UNKNOWN}.
+	 * <p>
+	 * Each of the given entries <em>must</em> intersect the given range, or else the behavior is
+	 * undefined. If the same range is given to {@link #getStates(long, AddressRange)}, this
+	 * requirement is satisfied.
 	 * 
 	 * @param range the range to check, usually that passed to
 	 *            {@link #getStates(long, AddressRange)}.
@@ -80,18 +123,7 @@ public interface TraceMemoryOperations {
 	static boolean isStateEntirely(AddressRange range,
 			Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> stateEntries,
 			TraceMemoryState state) {
-		if (stateEntries.isEmpty()) {
-			return state == TraceMemoryState.UNKNOWN;
-		}
-		if (stateEntries.size() != 1) {
-			return false;
-		}
-		Entry<TraceAddressSnapRange, TraceMemoryState> ent = stateEntries.iterator().next();
-		if (ent.getValue() != state) {
-			return false;
-		}
-		AddressRange entRange = ent.getKey().getRange();
-		return entRange.contains(range.getMinAddress()) && entRange.contains(range.getMaxAddress());
+		return oneState(range, stateEntries) == state;
 	}
 
 	/**
@@ -102,130 +134,7 @@ public interface TraceMemoryOperations {
 	Trace getTrace();
 
 	/**
-	 * Add a new region with the given properties
-	 * 
-	 * <p>
-	 * Regions model the memory mappings of a debugging target. As such, they are never allowed to
-	 * overlap. Additionally, to ensure {@link #getLiveRegionByPath(long, String)} returns a unique
-	 * region, duplicate paths cannot exist in the same snap.
-	 * 
-	 * <p>
-	 * Regions have a "full name" (path) as well as a short name. The path is immutable and can be
-	 * used to reliably retrieve the same region later. The short name should be something suitable
-	 * for display on the screen. Short names are mutable and can be -- but probbaly shouldn't be --
-	 * duplicated.
-	 * 
-	 * @param path the "full name" of the region
-	 * @param lifespan the lifespan of the region
-	 * @param range the address range of the region
-	 * @param flags the flags, e.g., permissions, of the region
-	 * @return the newly-added region
-	 * @throws TraceOverlappedRegionException if the specified region would overlap an existing one
-	 * @throws DuplicateNameException if the specified region has a name which duplicates another at
-	 *             any intersecting snap
-	 */
-	TraceMemoryRegion addRegion(String path, Lifespan lifespan, AddressRange range,
-			Collection<TraceMemoryFlag> flags)
-			throws TraceOverlappedRegionException, DuplicateNameException;
-
-	/**
-	 * @see #addRegion(String, Lifespan, AddressRange, Collection)
-	 */
-	default TraceMemoryRegion addRegion(String path, Lifespan lifespan,
-			AddressRange range, TraceMemoryFlag... flags)
-			throws TraceOverlappedRegionException, DuplicateNameException {
-		return addRegion(path, lifespan, range, Arrays.asList(flags));
-	}
-
-	/**
-	 * Add a region created at the given snap, with no specified destruction snap
-	 * 
-	 * @see #addRegion(String, Lifespan, AddressRange, Collection)
-	 */
-	default TraceMemoryRegion createRegion(String path, long snap, AddressRange range,
-			Collection<TraceMemoryFlag> flags)
-			throws TraceOverlappedRegionException, DuplicateNameException {
-		return addRegion(path, Lifespan.nowOn(snap), range, flags);
-	}
-
-	/**
-	 * @see #createRegion(String, long, AddressRange, Collection)
-	 */
-	default TraceMemoryRegion createRegion(String path, long snap, AddressRange range,
-			TraceMemoryFlag... flags)
-			throws TraceOverlappedRegionException, DuplicateNameException {
-		return addRegion(path, Lifespan.nowOn(snap), range, flags);
-	}
-
-	/**
-	 * Get all the regions in this space or manager
-	 * 
-	 * @return the collection of all regions
-	 */
-	Collection<? extends TraceMemoryRegion> getAllRegions();
-
-	/**
-	 * Get the region with the given path at the given snap
-	 * 
-	 * @param snap the snap which must be within the region's lifespan
-	 * @param path the "full name" of the region
-	 * @return the region, or {@code null} if no region matches
-	 */
-	TraceMemoryRegion getLiveRegionByPath(long snap, String path);
-
-	/**
-	 * Get the region at the given address and snap
-	 * 
-	 * @param snap the snap which must be within the region's lifespan
-	 * @param address the address which must be within the region's range
-	 * @return the region, or {@code null} if no region matches
-	 */
-	TraceMemoryRegion getRegionContaining(long snap, Address address);
-
-	/**
-	 * Collect regions intersecting the given lifespan and range
-	 * 
-	 * @param lifespan the lifespan
-	 * @param range the range
-	 * @return the collection of matching regions
-	 */
-	Collection<? extends TraceMemoryRegion> getRegionsIntersecting(Lifespan lifespan,
-			AddressRange range);
-
-	/**
-	 * Collect regions at the given snap
-	 * 
-	 * @param snap the snap which must be within the regions' lifespans
-	 * @return the collection of matching regions
-	 */
-	Collection<? extends TraceMemoryRegion> getRegionsAtSnap(long snap);
-
-	/**
-	 * Get the addresses contained by regions at the given snap
-	 * 
-	 * <p>
-	 * The implementation may provide a view that updates with changes.
-	 * 
-	 * @param snap the snap which must be within the regions' lifespans
-	 * @return the union of ranges of matching regions
-	 */
-	AddressSetView getRegionsAddressSet(long snap);
-
-	/**
-	 * Get the addresses contained by regions at the given snap satisfying the given predicate
-	 * 
-	 * <p>
-	 * The implementation may provide a view that updates with changes.
-	 * 
-	 * @param snap the snap which must be within the region's lifespans
-	 * @param predicate a predicate on regions to search for
-	 * @return the address set
-	 */
-	AddressSetView getRegionsAddressSetWith(long snap, Predicate<TraceMemoryRegion> predicate);
-
-	/**
 	 * Set the state of memory over a given time and address range
-	 * 
 	 * <p>
 	 * Setting state to {@link TraceMemoryState#KNOWN} via this method is not recommended. Setting
 	 * bytes will automatically update the state accordingly.
@@ -255,7 +164,6 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Get the state of memory at a given snap and address
-	 * 
 	 * <p>
 	 * If the location's state has not been set, the result is {@code null}, which implies
 	 * {@link TraceMemoryState#UNKNOWN}.
@@ -277,14 +185,15 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Get the entry recording the most recent state at the given snap and address
-	 * 
 	 * <p>
-	 * The entry includes the entire entry at that snap. Parts occluded by more recent snaps are not
-	 * subtracted from the entry's address range.
+	 * The entry may include more addresses and snaps than requested. The address range is largely
+	 * circumstantial, but may be useful if the client is performing multiple queries in a locality.
+	 * The lifespan is more important as it indicates the actual effective snapshot (the lower
+	 * bound) as well as when the next change is (one after the upper bound.)
 	 * 
 	 * @param snap the time
 	 * @param address the location
-	 * @return the entry including the entire recorded range
+	 * @return the most-recent entry
 	 */
 	Entry<TraceAddressSnapRange, TraceMemoryState> getMostRecentStateEntry(long snap,
 			Address address);
@@ -301,19 +210,49 @@ public interface TraceMemoryOperations {
 			Address address);
 
 	/**
+	 * Built-in predicates for filtering/testing state entries
+	 * <p>
+	 * Many methods accept an unrestricted {@link Predicate} on {@link TraceMemoryState}. However,
+	 * use of these built-ins is strongly recommended for two reasons: 1) They handle conventional
+	 * cases, e.g., null representing {@link TraceMemoryState#UNKNOWN}. 2) Caching depends on the
+	 * implementation being able to recognize the identity of the predicate. This generally cannot
+	 * be done with lambda methods.
+	 */
+	enum StatePredicate implements Predicate<TraceMemoryState> {
+		IS_KNOWN {
+			@Override
+			public boolean test(TraceMemoryState state) {
+				return state == TraceMemoryState.KNOWN;
+			}
+		},
+		IS_ERROR {
+			@Override
+			public boolean test(TraceMemoryState state) {
+				return state == TraceMemoryState.ERROR;
+			}
+		},
+		IS_KNOWN_OR_ERROR {
+			@Override
+			public boolean test(TraceMemoryState state) {
+				return state != null && state != TraceMemoryState.UNKNOWN;
+			}
+		}
+	}
+
+	/**
 	 * Get the entry recording the most recent state since the given snap within the given range
 	 * that satisfies a given predicate, following schedule forks
 	 * 
 	 * @param snap the latest time to consider
 	 * @param range the range of addresses
 	 * @param predicate a predicate on the state
-	 * @return the most-recent entry
+	 * @return the most-recent entry or null
 	 */
 	Entry<TraceAddressSnapRange, TraceMemoryState> getViewMostRecentStateEntry(long snap,
 			AddressRange range, Predicate<TraceMemoryState> predicate);
 
 	/**
-	 * Get at least the subset of addresses having state satisfying the given predicate
+	 * Get at least the intersection of addresses having state satisfying the given predicate
 	 * 
 	 * @param snap the time
 	 * @param set the set to examine
@@ -327,21 +266,18 @@ public interface TraceMemoryOperations {
 	}
 
 	/**
-	 * Get at least the subset of addresses having state satisfying the given predicate
-	 * 
+	 * Get at least the intersection of addresses having state satisfying the given predicate
 	 * <p>
-	 * The implementation may provide a larger view than requested, but within the requested set,
+	 * The implementation may provide a larger set than requested, but within the requested set,
 	 * only ranges satisfying the predicate may be present. Use
-	 * {@link AddressSetView#intersect(AddressSetView)} with {@code set} if a strict subset is
+	 * {@link AddressSetView#intersect(AddressSetView)} with {@code set} if a strict intersection is
 	 * required.
-	 * 
 	 * <p>
 	 * Because {@link TraceMemoryState#UNKNOWN} is not explicitly stored in the map, to compute the
 	 * set of {@link TraceMemoryState#UNKNOWN} addresses, use the predicate
-	 * {@code state -> state != null && state != TraceMemoryState.UNKNOWN} and subtract the result
-	 * from {@code set}.
+	 * {@link StatePredicate#IS_KNOWN_OR_ERROR} and subtract the result from {@code set}.
 	 * 
-	 * @param snap the time
+	 * @param span the range of time
 	 * @param set the set to examine
 	 * @param predicate a predicate on state to search for
 	 * @return the address set
@@ -351,7 +287,6 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Get the addresses having state satisfying the given predicate
-	 * 
 	 * <p>
 	 * The implementation may provide a view that updates with changes. Behavior is not well defined
 	 * for predicates testing for {@link TraceMemoryState#UNKNOWN}.
@@ -365,7 +300,6 @@ public interface TraceMemoryOperations {
 	/**
 	 * Get the addresses having state satisfying the given predicate at any time in the specified
 	 * lifespan
-	 * 
 	 * <p>
 	 * The implementation may provide a view that updates with changes. Behavior is not well defined
 	 * for predicates testing for {@link TraceMemoryState#UNKNOWN} .
@@ -374,12 +308,10 @@ public interface TraceMemoryOperations {
 	 * @param predicate a predicate on state to search for
 	 * @return the address set
 	 */
-	AddressSetView getAddressesWithState(Lifespan lifespan,
-			Predicate<TraceMemoryState> predicate);
+	AddressSetView getAddressesWithState(Lifespan lifespan, Predicate<TraceMemoryState> predicate);
 
 	/**
-	 * Break a range of addresses into smaller ranges each mapped to its state at the given snap
-	 * 
+	 * Get all the entries covering the given range effective at the given snap
 	 * <p>
 	 * Note that {@link TraceMemoryState#UNKNOWN} entries will not appear in the result. Gaps in the
 	 * returned entries are implied to be {@link TraceMemoryState#UNKNOWN}.
@@ -400,31 +332,24 @@ public interface TraceMemoryOperations {
 	 */
 	default boolean isKnown(long snap, AddressRange range) {
 		Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> states = getStates(snap, range);
-		if (states.isEmpty()) {
-			return false;
-		}
-		if (states.size() != 1) {
-			return false;
-		}
-		AddressRange entryRange = states.iterator().next().getKey().getRange();
-		if (!entryRange.contains(range.getMinAddress()) ||
-			!entryRange.contains(range.getMaxAddress())) {
-			return false;
-		}
-		return true;
+		return isStateEntirely(range, states, TraceMemoryState.KNOWN);
 	}
 
 	/**
-	 * Break a range of addresses into smaller ranges each mapped to its most recent state at the
-	 * given time
-	 * 
+	 * Get all the entries covering the given range, effective at or extending as "most recent" to
+	 * the given snap.
 	 * <p>
-	 * Typically {@code within} is the box whose width is the address range to break down and whose
-	 * height is from "negative infinity" to the "current" snap.
-	 * 
+	 * Typically {@code within} is the box whose width is the address range and whose height is
+	 * {@link Lifespan#since(long)} a desired snap. Queries that respect forking should only extend
+	 * as far back as the most recent forked snapshot.
 	 * <p>
 	 * In this context, "most recent" means the latest state other than
-	 * {@link TraceMemoryState#UNKNOWN}.
+	 * {@link TraceMemoryState#UNKNOWN}. The entries returned <em>can</em> overlap. The rule is that
+	 * {@link TraceMemoryState#KNOWN} entries may <em>not</em> overlap one another. They are split
+	 * and truncated so that they extend as far as possible into the future without overlapping. A
+	 * {@link TraceMemoryState#ERROR} entry can overlap a less-recent {@link TraceMemoryState#KNOWN}
+	 * entry, but not a more-recent one. This is to ensure the most-recent-known values can still be
+	 * obtained when the most recent attempt to read bytes resulted in an error.
 	 * 
 	 * @param within a box intersecting entries to consider
 	 * @return an iterable over the snap ranges and states
@@ -443,7 +368,6 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Write bytes at the given snap and address
-	 * 
 	 * <p>
 	 * This will attempt to read {@link ByteBuffer#remaining()} bytes starting at
 	 * {@link ByteBuffer#position()} from the source buffer {@code buf} and write them into memory
@@ -460,7 +384,6 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Read the most recent bytes from the given snap and address
-	 * 
 	 * <p>
 	 * This will attempt to read {@link ByteBuffer#remaining()} of the most recent bytes from memory
 	 * at the specified time and location and write them into the destination buffer {@code buf}
@@ -477,7 +400,6 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Read the most recent bytes from the given snap and address, following schedule forks
-	 * 
 	 * <p>
 	 * This behaves similarly to {@link #getBytes(long, Address, ByteBuffer)}, except it checks for
 	 * the {@link TraceMemoryState#KNOWN} state among each involved snap range and reads the
@@ -508,14 +430,12 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Remove bytes from the given time and location
-	 * 
 	 * <p>
 	 * This deletes all observed bytes from the given address through length at the given snap. If
 	 * there were no observations in the range at exactly the given snap, this has no effect. If
 	 * there were, then those observations are removed. The next time those bytes are read, they
 	 * will have a value from a previous snap, or no value at all. The affected region's state is
-	 * also deleted, i.e., set to {@code null}, implying {@link TraceMemoryState#UNKNOWN}.
-	 * 
+	 * also deleted, i.e., set to {@link TraceMemoryState#UNKNOWN}.
 	 * <p>
 	 * Note, use of this method is discouraged. The more observations within the same range that
 	 * follow the deleted observation, the more expensive this operation typically is, since all of
@@ -529,7 +449,6 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Get a view of a particular snap as a memory buffer
-	 * 
 	 * <p>
 	 * The bytes read by this buffer are the most recent bytes written before the given snap
 	 * 
@@ -554,7 +473,6 @@ public interface TraceMemoryOperations {
 	/**
 	 * Find the internal storage block that most-recently defines the value at the given snap and
 	 * address, and return the block's snap.
-	 * 
 	 * <p>
 	 * This method reveals portions of the internal storage so that clients can optimize difference
 	 * computations by eliminating corresponding ranges defined by the same block. If the underlying
@@ -568,7 +486,6 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Get the block size used by internal storage.
-	 * 
 	 * <p>
 	 * This method reveals portions of the internal storage so that clients can optimize searches.
 	 * If the underlying implementation cannot answer this question, this returns 0.
@@ -579,7 +496,6 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Optimize storage space
-	 * 
 	 * <p>
 	 * This gives the implementation an opportunity to clean up garbage, apply compression, etc., in
 	 * order to best use the storage space. Because memory observations can be sparse, a trace's
@@ -590,7 +506,6 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Set the state of a given register at a given time
-	 * 
 	 * <p>
 	 * Setting state to {@link TraceMemoryState#KNOWN} via this method is not recommended. Setting
 	 * bytes will automatically update the state accordingly.
@@ -604,7 +519,6 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Set the state of a given register at a given time
-	 * 
 	 * <p>
 	 * Setting state to {@link TraceMemoryState#KNOWN} via this method is not recommended. Setting
 	 * bytes will automatically update the state accordingly.
@@ -643,8 +557,7 @@ public interface TraceMemoryOperations {
 	}
 
 	/**
-	 * Break the register's range into smaller ranges each mapped to its state at the given snap
-	 * 
+	 * Get all the entries covering the given register at the given snap
 	 * <p>
 	 * If the register is memory mapped, this will delegate to the appropriate space.
 	 * 
@@ -657,8 +570,7 @@ public interface TraceMemoryOperations {
 			long snap, Register register);
 
 	/**
-	 * Break the register's range into smaller ranges each mapped to its state at the given snap
-	 * 
+	 * Get all the entries covering the given register at the given snap
 	 * <p>
 	 * If the register is memory mapped, this will delegate to the appropriate space.
 	 * 
@@ -682,11 +594,9 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Set the value of a register at the given snap
-	 * 
 	 * <p>
 	 * If the register is memory mapped, this will delegate to the appropriate space. In those
 	 * cases, the assignment affects all threads.
-	 * 
 	 * <p>
 	 * <b>IMPORTANT:</b> The trace database cannot track the state ({@link TraceMemoryState#KNOWN},
 	 * etc.) with per-bit accuracy. It only has byte precision. If the given value specifies, e.g.,
@@ -713,11 +623,9 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Write bytes at the given snap and register address
-	 * 
 	 * <p>
 	 * If the register is memory mapped, this will delegate to the appropriate space. In those
 	 * cases, the assignment affects all threads.
-	 * 
 	 * <p>
 	 * Note that bit-masked registers are not properly heeded. If the caller wishes to preserve
 	 * non-masked bits, it must first retrieve the current value and combine it with the desired
@@ -735,7 +643,6 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Get the most-recent value of a given register at the given time
-	 * 
 	 * <p>
 	 * If the register is memory mapped, this will delegate to the appropriate space.
 	 * 
@@ -748,7 +655,6 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Get the most-recent value of a given register at the given time
-	 * 
 	 * <p>
 	 * If the register is memory mapped, this will delegate to the appropriate space.
 	 * 
@@ -761,8 +667,7 @@ public interface TraceMemoryOperations {
 	}
 
 	/**
-	 * Get the most-recent value of a given register at the given time
-	 * 
+	 * Get the most-recent value of a given register at the given time, following schedule forks
 	 * <p>
 	 * If the register is memory mapped, this will delegate to the appropriate space.
 	 * 
@@ -775,7 +680,6 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Get the most-recent value of a given register at the given time, following schedule forks
-	 * 
 	 * <p>
 	 * If the register is memory mapped, this will delegate to the appropriate space.
 	 * 
@@ -789,7 +693,6 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Get the most-recent bytes of a given register at the given time
-	 * 
 	 * <p>
 	 * If the register is memory mapped, this will delegate to the appropriate space.
 	 * 
@@ -803,7 +706,6 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Get the most-recent bytes of a given register at the given time
-	 * 
 	 * <p>
 	 * If the register is memory mapped, this will delegate to the appropriate space.
 	 * 
@@ -826,10 +728,8 @@ public interface TraceMemoryOperations {
 
 	/**
 	 * Remove a value from the given time and register
-	 * 
 	 * <p>
 	 * If the register is memory mapped, this will delegate to the appropriate space.
-	 * 
 	 * <p>
 	 * <b>IMPORANT:</b> The trace database cannot track the state ({@link TraceMemoryState#KNOWN},
 	 * etc.) with per-bit accuracy. It only has byte precision. If the given register specifies,

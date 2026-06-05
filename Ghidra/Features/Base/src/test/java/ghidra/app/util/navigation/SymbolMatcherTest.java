@@ -421,6 +421,16 @@ public class SymbolMatcherTest {
 
 	}
 
+	@Test
+	public void testBackslash() {
+		matcher = new SymbolMatcher("\\", false);
+		assertMatches(matcher, "\\");
+
+		matcher = new SymbolMatcher("\\bob\\", false);
+		assertMatches(matcher, "\\bob\\");
+
+	}
+
 	private Symbol symbol(String path) {
 		String[] split = path.split(Namespace.DELIMITER);
 		String name = split[split.length - 1];

@@ -31,6 +31,7 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -97,14 +98,10 @@ public class TreeManager implements ManagerDB {
 	}
 
 	public void imageBaseChanged(boolean commit) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			for (ModuleManager m : treeMap.values()) {
 				m.imageBaseChanged(commit);
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -117,8 +114,7 @@ public class TreeManager implements ManagerDB {
 	 */
 	public ProgramModule createRootModule(String treeName) throws DuplicateNameException {
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			if (treeMap.containsKey(treeName)) {
 				throw new DuplicateNameException(
 					"Root module named " + treeName + " already exists");
@@ -140,9 +136,6 @@ public class TreeManager implements ManagerDB {
 		catch (VersionException | CancelledException e) {
 			throw new RuntimeException(e); // unexpected exception
 		}
-		finally {
-			lock.release();
-		}
 		return null;
 	}
 
@@ -153,8 +146,7 @@ public class TreeManager implements ManagerDB {
 	 * given name
 	 */
 	public ProgramModule getRootModule(String treeName) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			ModuleManager m = treeMap.get(treeName);
 			if (m != null) {
 				return m.getRootModule();
@@ -162,9 +154,6 @@ public class TreeManager implements ManagerDB {
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return null;
 
@@ -225,8 +214,7 @@ public class TreeManager implements ManagerDB {
 	 * for another root
 	 */
 	public void renameTree(String oldName, String newName) throws DuplicateNameException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			if (treeMap.containsKey(newName)) {
 				throw new DuplicateNameException("Name " + newName + " already exists");
 			}
@@ -242,9 +230,6 @@ public class TreeManager implements ManagerDB {
 				null, oldName, newName);
 
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	/**
@@ -253,8 +238,7 @@ public class TreeManager implements ManagerDB {
 	 * @return true if the tree was removed
 	 */
 	public boolean removeTree(String treeName) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			if (treeMap.containsKey(treeName)) {
 				DBRecord rec = treeAdapter.getRecord(treeName);
 				treeAdapter.deleteRecord(rec.getKey());
@@ -269,9 +253,6 @@ public class TreeManager implements ManagerDB {
 		catch (IOException e) {
 			errHandler.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return false;
 	}
 
@@ -283,8 +264,7 @@ public class TreeManager implements ManagerDB {
 	 * @return null if there is no module with the given name in the tree
 	 */
 	public ProgramModule getModule(String treeName, String name) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			ModuleManager m = treeMap.get(treeName);
 			if (m != null) {
 				return m.getModule(name);
@@ -294,10 +274,6 @@ public class TreeManager implements ManagerDB {
 			errHandler.dbError(e);
 
 		}
-		finally {
-			lock.release();
-		}
-
 		return null;
 	}
 
@@ -309,8 +285,7 @@ public class TreeManager implements ManagerDB {
 	 * @return null if there is no fragment with the given name in the tree
 	 */
 	public ProgramFragment getFragment(String treeName, String name) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			ModuleManager m = treeMap.get(treeName);
 			if (m != null) {
 				return m.getFragment(name);
@@ -320,9 +295,7 @@ public class TreeManager implements ManagerDB {
 			errHandler.dbError(e);
 
 		}
-		finally {
-			lock.release();
-		}
+
 		return null;
 	}
 
@@ -335,8 +308,7 @@ public class TreeManager implements ManagerDB {
 	 * exist in memory
 	 */
 	public ProgramFragment getFragment(String treeName, Address addr) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			ModuleManager m = treeMap.get(treeName);
 			if (m != null) {
 				return m.getFragment(addr);
@@ -345,10 +317,6 @@ public class TreeManager implements ManagerDB {
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
-
-		}
-		finally {
-			lock.release();
 		}
 		return null;
 	}
@@ -359,8 +327,7 @@ public class TreeManager implements ManagerDB {
 	 * @param range memory block address range
 	 */
 	public void addMemoryBlock(String name, AddressRange range) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			Iterator<String> keys = treeMap.keySet().iterator();
 			while (keys.hasNext()) {
 				ModuleManager m = treeMap.get(keys.next());
@@ -370,17 +337,13 @@ public class TreeManager implements ManagerDB {
 		catch (IOException e) {
 			errHandler.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
 		AddressRange.checkValidRange(startAddr, endAddr);
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			Iterator<String> keys = treeMap.keySet().iterator();
 			while (keys.hasNext()) {
 				if (monitor.isCancelled()) {
@@ -390,22 +353,13 @@ public class TreeManager implements ManagerDB {
 				m.removeMemoryBlock(startAddr, endAddr, monitor);
 			}
 		}
-		catch (IOException e) {
-			errHandler.dbError(e);
-
-		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws AddressOverflowException, CancelledException {
 
-		lock.acquire();
-
-		try {
+		try (Closeable c = lock.write()) {
 			Iterator<String> keys = treeMap.keySet().iterator();
 			monitor.setMessage("Moving folders/fragments...");
 			while (keys.hasNext()) {
@@ -420,9 +374,6 @@ public class TreeManager implements ManagerDB {
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -536,12 +487,8 @@ public class TreeManager implements ManagerDB {
 
 	@Override
 	public void invalidateCache(boolean all) throws IOException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			refreshTreeMap(all);
-		}
-		finally {
-			lock.release();
 		}
 	}
 

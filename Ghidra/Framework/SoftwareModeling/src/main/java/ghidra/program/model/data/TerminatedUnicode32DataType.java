@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,10 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.util.charset.CharsetInfoManager;
+
 /**
  * A null-terminated UTF-32 string {@link DataType}.
- * <p>
  */
 public class TerminatedUnicode32DataType extends AbstractStringDataType {
 
@@ -34,7 +35,7 @@ public class TerminatedUnicode32DataType extends AbstractStringDataType {
 			"UNI", // default label prefix
 			"u", // default abbrev label prefix
 			"String (Null Terminated UTF-32 Unicode)", // description
-			CharsetInfo.UTF32, // charset
+			CharsetInfoManager.UTF32, // charset
 			WideChar32DataType.dataType, // replacement data type
 			StringLayoutEnum.NULL_TERMINATED_UNBOUNDED, // StringLayoutEnum
 			dtm// data type manager

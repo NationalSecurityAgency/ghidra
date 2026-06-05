@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,13 +16,13 @@
 package ghidra.program.model.data;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.database.data.DataTypeUtilities;
-import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -32,7 +32,7 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 	private final static long serialVersionUID = 1;
 
 	private DataType dataType;
-	private CompositeDataTypeImpl parent; // parent prototype containing us
+	private CompositeDataTypeImpl parent; // composite containing us (may be null in certain use cases)
 	private int offset; // offset in parent
 	private int ordinal; // position in parent
 	private SettingsImpl defaultSettings;
@@ -48,23 +48,25 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 	 * @param length the length of the dataType in this component.
 	 * @param ordinal the index within its parent.
 	 * @param offset the byte offset within the parent
-	 * @param fieldName the name associated with this component
-	 * @param comment the comment associated with this component
+	 * @param fieldName the name associated with this component or null
+	 * @param comment the comment associated with this component or null
 	 */
 	public DataTypeComponentImpl(DataType dataType, CompositeDataTypeImpl parent, int length,
 			int ordinal, int offset, String fieldName, String comment) {
-
 		this.parent = parent;
 		this.ordinal = ordinal;
 		this.offset = offset;
 		this.length = length;
-		this.fieldName = fieldName;
+		this.fieldName = InternalDataTypeComponent.cleanupFieldName(fieldName);
 		setDataType(dataType);
 		setComment(comment);
+		if (isZeroBitFieldComponent()) {
+			this.length = 0; // previously stored as 1, force to 0
+		}
 	}
 
 	/**
-	 * Create a new DataTypeComponent
+	 * Create a new DataTypeComponent without a name
 	 * @param dataType the dataType for this component
 	 * @param parent the dataType that this component belongs to
 	 * @param length the length of the dataType in this component.
@@ -116,8 +118,9 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 	}
 
 	@Override
-	public void setComment(String comment) {
+	public DataTypeComponentImpl setComment(String comment) {
 		this.comment = StringUtils.isBlank(comment) ? null : comment;
+		return this;
 	}
 
 	@Override
@@ -129,33 +132,10 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 	}
 
 	@Override
-	public void setFieldName(String name) throws DuplicateNameException {
-		this.fieldName = checkFieldName(name);
-	}
-
-	private void checkDuplicateName(String name) throws DuplicateNameException {
-		checkDefaultFieldName(name);
-		if (parent == null) {
-			return; // Bad situation
-		}
-		for (DataTypeComponent comp : parent.getDefinedComponents()) {
-			if (comp != this && name.equals(comp.getFieldName())) {
-				throw new DuplicateNameException("Duplicate field name: " + name);
-			}
-		}
-	}
-
-	private String checkFieldName(String name) throws DuplicateNameException {
-		if (name != null) {
-			name = name.trim();
-			if (name.length() == 0 || name.equals(getDefaultFieldName())) {
-				name = null;
-			}
-			else {
-				checkDuplicateName(name);
-			}
-		}
-		return name;
+	public DataTypeComponentImpl setFieldName(String name) {
+		// Cleanup invalid names and make unique within its parent
+		fieldName = InternalDataTypeComponent.cleanupFieldName(name);
+		return this;
 	}
 
 	public static void checkDefaultFieldName(String fieldName) throws DuplicateNameException {
@@ -192,22 +172,20 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 	/**
 	 * Perform special-case component update that does not result in size or alignment changes. 
 	 * @param name new component name
-	 * @param dt new resolved datatype
-	 * @param cmt new comment
+	 * @param newDataType new resolved datatype
+	 * @param newComment new comment
 	 */
-	void update(String name, DataType dt, String cmt) {
-		// TODO: Need to check field name and throw DuplicateNameException
-		// this.fieldName =  = checkFieldName(name);
-		this.fieldName = name;
-		this.dataType = dt;
-		this.comment = StringUtils.isBlank(cmt) ? null : cmt;
+	void update(String name, DataType newDataType, String newComment) {
+		this.dataType = newDataType;
+		setFieldName(name);
+		setComment(newComment);
 	}
 
 	@Override
-	public void update(int ordinal, int offset, int length) {
-		this.ordinal = ordinal;
-		this.offset = offset;
-		this.length = length;
+	public void update(int newOrdinal, int newOffset, int newLength) {
+		this.ordinal = newOrdinal;
+		this.offset = newOffset;
+		this.length = newLength;
 	}
 
 	/**
@@ -244,7 +222,7 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 
 	@Override
 	public Settings getDefaultSettings() {
-		if (defaultSettings == null) {
+		if (defaultSettings == null && parent != null) {
 			DataTypeManager dataMgr = parent.getDataTypeManager();
 			boolean immutableSettings =
 				dataMgr == null || !dataMgr.allowsDefaultComponentSettings();
@@ -275,8 +253,8 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 
 		if (offset != dtc.getOffset() || getLength() != dtc.getLength() ||
 			ordinal != dtc.getOrdinal() ||
-			!SystemUtilities.isEqual(getFieldName(), dtc.getFieldName()) ||
-			!SystemUtilities.isEqual(getComment(), dtc.getComment())) {
+			!Objects.equals(getFieldName(), dtc.getFieldName()) ||
+			!Objects.equals(getComment(), dtc.getComment())) {
 			return false;
 		}
 		if (!(myDt instanceof Pointer)) {
@@ -315,8 +293,8 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 			(myParent instanceof Composite) ? ((Composite) myParent).isPackingEnabled() : false;
 		// Components don't need to have matching offset when they are aligned
 		if ((!aligned && (offset != dtc.getOffset())) ||
-			!SystemUtilities.isEqual(getFieldName(), dtc.getFieldName()) ||
-			!SystemUtilities.isEqual(getComment(), dtc.getComment())) {
+			!Objects.equals(getFieldName(), dtc.getFieldName()) ||
+			!Objects.equals(getComment(), dtc.getComment())) {
 			return false;
 		}
 
@@ -334,11 +312,8 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 		dataType = dt;
 	}
 
-	/**
-	 * Determine if component is an undefined filler component
-	 * @return true if undefined filler component, else false
-	 */
-	boolean isUndefined() {
+	@Override
+	public boolean isUndefined() {
 		return dataType == DataType.DEFAULT;
 	}
 
@@ -361,6 +336,9 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 	public static int getPreferredComponentLength(DataType dataType, int length) {
 		if (DataTypeComponent.usesZeroLengthComponent(dataType)) {
 			return 0;
+		}
+		if ((dataType instanceof Dynamic dynamic) && dynamic.canSpecifyLength()) {
+			return length;
 		}
 		int dtLength = dataType.getLength();
 		if (length <= 0) {

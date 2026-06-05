@@ -16,6 +16,7 @@
 package ghidra.util.database;
 
 import java.io.IOException;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.*;
 import java.lang.reflect.Field;
 import java.nio.*;
@@ -47,13 +48,13 @@ import ghidra.util.exception.VersionException;
  * 
  * 	Person getPerson(long id);
  * 
- * 	Collection<? extends Person> getPeopleNamed(String name);
+ * 	Collection&lt;? extends Person&gt; getPeopleNamed(String name);
  * }
  * 
  * public class DBMyDomainObject extends DBCachedDomainObjectAdapter implements MyDomainObject {
  * 	private final DBCachedObjectStoreFactory factory;
- * 	private final DBCachedObjectStore<DBPerson> people;
- * 	private final DBCachedObjectIndex<String, DBPerson> peopleByName;
+ * 	private final DBCachedObjectStore&lt;DBPerson&gt; people;
+ * 	private final DBCachedObjectIndex&lt;String, DBPerson&gt; peopleByName;
  * 
  * 	public DBMyDomainObject() { // Constructor parameters elided
  * 		// super() invocation elided
@@ -86,7 +87,7 @@ import ghidra.util.exception.VersionException;
  * 	}
  * 
  * 	&#64;Override
- * 	public Collection<Person> getPeopleNamed(String name) {
+ * 	public Collection&lt;Person&gt; getPeopleNamed(String name) {
  * 		// Locking details elided
  * 		return peopleByName.get(name);
  * 	}
@@ -168,10 +169,10 @@ public class DBCachedObjectStoreFactory {
 	 * 	MyContext getContext();
 	 * }
 	 * 
-	 * public static class MyDBFieldCodec<OT extends DBAnnotatedObject & ContextProvider> extends
-	 * 		AbstractDBFieldCodec<MyType, OT, BinaryField> {
+	 * public static class MyDBFieldCodec&lt;OT extends DBAnnotatedObject &amp; ContextProvider&gt; extends
+	 * 		AbstractDBFieldCodec&lt;MyType, OT, BinaryField&gt; {
 	 * 
-	 * 	public MyDBFieldCodec(Class<OT> objectType, Field field, int column) {
+	 * 	public MyDBFieldCodec(Class&lt;OT&gt; objectType, Field field, int column) {
 	 * 		super(MyType.class, objectType, BinaryField.class, field, column);
 	 * 	}
 	 * 
@@ -307,9 +308,11 @@ public class DBCachedObjectStoreFactory {
 	 * This reduces the implementation burden to {@link #doLoad(DBAnnotatedObject, DBRecord)},
 	 * {@link #doStore(DBAnnotatedObject, DBRecord)}, and {@link #store(Object, db.Field)}.
 	 */
-	public static abstract class AbstractDBFieldCodec<VT, OT extends DBAnnotatedObject, FT extends db.Field>
+	public static abstract class AbstractDBFieldCodec<VT, OT extends DBAnnotatedObject,
+		FT extends db.Field>
 			implements DBFieldCodec<VT, OT, FT> {
 		protected final Class<VT> valueType;
+		protected final Class<VT> boxedType;
 		protected final Class<OT> objectType;
 		protected final Class<FT> fieldType;
 		protected final Field field;
@@ -335,6 +338,9 @@ public class DBCachedObjectStoreFactory {
 					"Given field does not have the given type: " + valueType + " != " + field);
 			}
 			this.valueType = valueType;
+			@SuppressWarnings("unchecked")
+			Class<VT> boxedType = (Class<VT>) MethodType.methodType(valueType).wrap().returnType();
+			this.boxedType = boxedType;
 			this.objectType = objectType;
 			this.fieldType = fieldType;
 			this.field = field;
@@ -379,7 +385,7 @@ public class DBCachedObjectStoreFactory {
 		@Override
 		public VT getValue(OT obj) {
 			try {
-				return valueType.cast(field.get(obj));
+				return boxedType.cast(field.get(obj));
 			}
 			catch (IllegalArgumentException | IllegalAccessException e) {
 				throw new AssertionError(e);
@@ -406,7 +412,7 @@ public class DBCachedObjectStoreFactory {
 				throws IllegalArgumentException, IllegalAccessException;
 
 		/**
-		 * Same as {@link #load(DBAnnotatedObject, DBRecord), but permits exceptions
+		 * Same as {@link #load(DBAnnotatedObject, DBRecord)}, but permits exceptions
 		 */
 		protected abstract void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException;

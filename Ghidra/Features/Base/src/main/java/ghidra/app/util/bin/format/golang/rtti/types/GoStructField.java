@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,14 +62,12 @@ public class GoStructField {
 	}
 
 	/**
-	 * Returns the type of this field.
-	 * 
-	 * @return type of this field
+	 * {@return the type of this field}
 	 * @throws IOException if error reading
 	 */
 	@Markup
 	public GoType getType() throws IOException {
-		return programContext.getGoType(typ);
+		return programContext.getGoTypes().getType(typ);
 	}
 
 	/**
@@ -83,21 +81,14 @@ public class GoStructField {
 	}
 
 	/**
-	 * Returns the offset of this field.
-	 * @return offset of this field
+	 * {@return the offset of this field}
 	 */
 	public long getOffset() {
 		return offset;
 	}
 
-//	public boolean isEmbedded() {
-//		return (offsetAnon & 0x1) != 0;
-//	}
-
 	/**
-	 * Returns the name of this field.
-	 * 
-	 * @return name of this field
+	 * {@return the name of this field}
 	 */
 	public String getName() {
 		return programContext.getSafeName(this::getGoName, this, null).getName();

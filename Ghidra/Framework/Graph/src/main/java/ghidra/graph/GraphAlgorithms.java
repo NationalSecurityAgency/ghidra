@@ -73,12 +73,12 @@ import util.CollectionUtils;
  *     
  *     <LI>
  *     	<B>graph density:</B>
- *     </LI>
  *     <PRE>
  *                        E
  *          Density =  --------
  *                      V(V-1)
  *		</PRE>
+ *     </LI>
  * </OL>
  */
 public class GraphAlgorithms {

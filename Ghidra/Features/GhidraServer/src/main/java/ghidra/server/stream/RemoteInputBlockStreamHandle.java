@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,8 @@ package ghidra.server.stream;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.zip.*;
+import java.util.zip.Deflater;
+import java.util.zip.InflaterInputStream;
 
 import db.buffers.*;
 
@@ -56,13 +57,17 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 
 		private final Socket socket;
 		private final InputStream in;
-
+		
 		private int blocksRemaining = getBlockCount();
 
 		ClientInputBlockStream(Socket socket) throws IOException {
 			this.socket = socket;
-			in = compressed ? new InflaterInputStream(socket.getInputStream())
-					: socket.getInputStream();
+			if (compressed) {
+				// Uses default Inflater with nowrap=false
+				in = new InflaterInputStream(socket.getInputStream());
+			} else {
+				in = socket.getInputStream();
+			}
 		}
 
 		@Override
@@ -133,7 +138,7 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 		socket.setSendBufferSize(getPreferredBufferSize());
 
 		InputBlockStream inputBlockStream = (InputBlockStream) blockStream;
-		try (OutputStream out = socket.getOutputStream()) {
+		try (OutputStream out = getBlockInputStream(socket)) {
 
 			copyBlockData(inputBlockStream, out);
 
@@ -150,12 +155,16 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 		}
 	}
 
+	private OutputStream getBlockInputStream(Socket socket) throws IOException {
+		OutputStream out = socket.getOutputStream();
+		if (compressed) {
+			out = new RemoteDeflaterOutputStream(out, Deflater.BEST_SPEED);
+		}
+		return out;
+	}
+
 	private void copyBlockData(InputBlockStream inputBlockStream, OutputStream out)
 			throws IOException {
-
-		if (compressed) {
-			out = new DeflaterOutputStream(out, new Deflater(Deflater.BEST_SPEED));
-		}
 
 		int blocksRemaining = getBlockCount();
 
@@ -166,11 +175,6 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 			}
 			out.write(block.toBytes());
 			--blocksRemaining;
-		}
-
-		// done with compressed stream, force compressed data to flush
-		if (out instanceof DeflaterOutputStream) {
-			((DeflaterOutputStream) out).finish();
 		}
 	}
 

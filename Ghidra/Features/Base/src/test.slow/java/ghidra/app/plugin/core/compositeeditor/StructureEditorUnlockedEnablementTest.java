@@ -118,7 +118,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof ArrayAction) || (action instanceof PointerAction) ||
 				(action instanceof HexNumbersAction) ||
 				(action instanceof CreateInternalStructureAction) ||
-				(action instanceof ShowDataTypeInTreeAction)) {
+				(action instanceof ShowDataTypeInTreeAction ||
+					action instanceof FindReferencesToStructureFieldAction)) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -158,7 +159,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof DeleteAction) || (action instanceof ArrayAction) ||
 				(action instanceof PointerAction) || (action instanceof HexNumbersAction) ||
 				(action instanceof CreateInternalStructureAction) ||
-				(action instanceof ShowDataTypeInTreeAction)) {
+				(action instanceof ShowDataTypeInTreeAction ||
+					action instanceof FindReferencesToStructureFieldAction)) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -199,7 +201,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof ArrayAction) || (action instanceof PointerAction) ||
 				(action instanceof HexNumbersAction) ||
 				(action instanceof CreateInternalStructureAction) ||
-				(action instanceof ShowDataTypeInTreeAction)) {
+				(action instanceof ShowDataTypeInTreeAction ||
+					action instanceof FindReferencesToStructureFieldAction)) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -254,7 +257,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 		init(complexStructure, pgmBbCat);
 
 		structureModel.viewDTM.withTransaction("Add Bitfield",
-			() -> ((Structure) structureModel.viewComposite).insertBitField(2, 1, 4,
+			() -> structureModel.viewComposite.insertBitField(2, 1, 4,
 				CharDataType.dataType, 2, "bf1", null));
 
 		setSelection(new int[] { 2 });
@@ -296,7 +299,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 		init(complexStructure, pgmBbCat);
 
 		structureModel.viewDTM.withTransaction("Add Bitfield",
-			() -> ((Structure) structureModel.viewComposite).insertBitField(2, 1, 4,
+			() -> structureModel.viewComposite.insertBitField(2, 1, 4,
 				CharDataType.dataType, 2, "bf1", null));
 
 		setSelection(new int[] { 2 });
@@ -341,7 +344,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 
 		setSelection(new int[] { 19 });
 		assertEquals("simpleStructureTypedef", getDataType(19).getDisplayName());
-		assertTrue(!unpackageAction.isEnabled());
+		assertTrue(unpackageAction.isEnabled());
 
 		setSelection(new int[] { 21 });
 		assertEquals("simpleStructure", getDataType(21).getDisplayName());

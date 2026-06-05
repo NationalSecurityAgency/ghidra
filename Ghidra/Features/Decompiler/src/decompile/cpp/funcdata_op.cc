@@ -221,6 +221,31 @@ void Funcdata::opDestroy(PcodeOp *op)
   }
 }
 
+/// The given PcodeOp is always removed.  PcodeOps are recursively removed, if the only data-flow
+/// path of their output is to the given op, and they are not a CALL or are otherwise special.
+/// \param op is the given PcodeOp to remove
+/// \param scratch is scratch space for holding PcodeOps being examined
+void Funcdata::opDestroyRecursive(PcodeOp *op,vector<PcodeOp *> &scratch)
+
+{
+  scratch.clear();
+  scratch.push_back(op);
+  int4 pos = 0;
+  while(pos < scratch.size()) {
+    op = scratch[pos];
+    pos += 1;
+    for(int4 i=0;i<op->numInput();++i) {
+      Varnode *vn = op->getIn(i);
+      if (!vn->isWritten() || vn->isAutoLive()) continue;
+      if (vn->loneDescend() == (PcodeOp *)0) continue;
+      PcodeOp *defOp = vn->getDef();
+      if (defOp->isCall() || defOp->isIndirectSource()) continue;
+      scratch.push_back(defOp);
+    }
+    opDestroy(op);
+  }
+}
+
 /// This is a specialized routine for deleting an op during flow generation that has
 /// been replaced by something else.  The op is expected to be \e dead with none of its inputs
 /// or outputs linked to anything else.  Both the PcodeOp and all the input/output Varnodes are destroyed.
@@ -530,6 +555,7 @@ Varnode *Funcdata::opStackLoad(AddrSpace *spc,uintb off,uint4 sz,PcodeOp *op,Var
 ///
 /// \param vn is the given Varnode
 /// \param op is the point at which to insert the BOOL_NEGATE op
+/// \param insertafter is \b true if the BOOL_NEGATE is inserted after, otherwise its inserted before
 /// \return the result Varnode
 Varnode *Funcdata::opBoolNegate(Varnode *vn,PcodeOp *op,bool insertafter)
 
@@ -854,8 +880,10 @@ int4 Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
       --oiter;
       PcodeOp *lastop = *oiter;
       obank.moveSequenceDead(firstop,lastop,callop); // Move cloned sequence to right after callop
-      if (callop->isBlockStart())
+      if (callop->isBlockStart()) {
 	firstop->setFlag(PcodeOp::startbasic); // First op of inline inherits callop's startbasic flag
+	flow.updateTarget(callop, firstop);
+      }
       else
 	firstop->clearFlag(PcodeOp::startbasic);
     }
@@ -1003,7 +1031,8 @@ bool Funcdata::replaceLessequal(PcodeOp *op)
 {
   Varnode *vn;
   int4 i;
-  intb val,diff;
+  uintb val;
+  intb diff;
   
   if ((vn=op->getIn(0))->isConstant()) {
     diff = -1;
@@ -1016,15 +1045,16 @@ bool Funcdata::replaceLessequal(PcodeOp *op)
   else
     return false;
 
-  val = sign_extend(vn->getOffset(),8*vn->getSize()-1);
+  val = vn->getOffset();
   if (op->code() == CPUI_INT_SLESSEQUAL) {
-    if ((val<0)&&(val+diff>0)) return false; // Check for sign overflow
-    if ((val>0)&&(val+diff<0)) return false;
+    // Check for signed overflow
+    if ((diff == -1) && (val == calc_int_min(vn->getSize()))) return false;
+    if ((diff ==  1) && (val == calc_int_max(vn->getSize()))) return false;
     opSetOpcode(op,CPUI_INT_SLESS);
   }
   else {			// Check for unsigned overflow
-    if ((diff==-1)&&(val==0)) return false;
-    if ((diff==1)&&(val==-1)) return false;
+    if ((diff == -1) && (val == 0)) return false;
+    if ((diff ==  1) && (val == calc_uint_max(vn->getSize()))) return false;
     opSetOpcode(op,CPUI_INT_LESS);
   }
   uintb res = (val+diff) & calc_mask(vn->getSize());
@@ -1199,11 +1229,12 @@ Varnode *Funcdata::buildCopyTemp(Varnode *vn,PcodeOp *point)
 ///
 /// The boolean Varnode is either the output of the given PcodeOp or the
 /// first input if the PcodeOp is a CBRANCH. The list of ops that need flipping is
-/// returned in an array
+/// returned in an array.
 /// \param op is the given PcodeOp
 /// \param fliplist is the array that will hold the ops to flip
-/// \return 0 if the change normalizes, 1 if the change is ambivalent, 2 if the change does not normalize
-int4 Funcdata::opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist)
+/// \param allowOpRemoval if \b true allow for removal of BOOL_NEGATE ops to achieve flip
+/// \return 0 if the change normalizes, 1 if the change denormalizes or is ambivalent, 2 if flip in place is not possible
+int4 Funcdata::opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist,bool allowOpRemoval)
 
 {
   Varnode *vn;
@@ -1213,12 +1244,19 @@ int4 Funcdata::opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist)
     vn = op->getIn(1);
     if (vn->loneDescend() != op) return 2;
     if (!vn->isWritten()) return 2;
-    return opFlipInPlaceTest(vn->getDef(),fliplist);
+    subtest1 = opFlipInPlaceTest(vn->getDef(),fliplist,allowOpRemoval);
+    if (subtest1 != 2 && op->isBooleanFlip())
+      subtest1 = 1-subtest1;
+    return subtest1;
   case CPUI_INT_EQUAL:
   case CPUI_FLOAT_EQUAL:
     fliplist.push_back(op);
     return 1;
   case CPUI_BOOL_NEGATE:
+    if (!allowOpRemoval)
+      return 2;
+    fliplist.push_back(op);
+    return 0;
   case CPUI_INT_NOTEQUAL:
   case CPUI_FLOAT_NOTEQUAL:
     fliplist.push_back(op);
@@ -1240,13 +1278,13 @@ int4 Funcdata::opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist)
     vn = op->getIn(0);
     if (vn->loneDescend() != op) return 2;
     if (!vn->isWritten()) return 2;
-    subtest1 = opFlipInPlaceTest(vn->getDef(),fliplist);
+    subtest1 = opFlipInPlaceTest(vn->getDef(),fliplist,allowOpRemoval);
     if (subtest1 == 2)
       return 2;
     vn = op->getIn(1);
     if (vn->loneDescend() != op) return 2;
     if (!vn->isWritten()) return 2;
-    subtest2 = opFlipInPlaceTest(vn->getDef(),fliplist);
+    subtest2 = opFlipInPlaceTest(vn->getDef(),fliplist,allowOpRemoval);
     if (subtest2 == 2)
       return 2;
     fliplist.push_back(op);
@@ -1261,7 +1299,6 @@ int4 Funcdata::opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist)
 ///
 /// The precomputed list of PcodeOps have their op-codes modified to
 /// facilitate the flip.
-/// \param data is the function being modified
 /// \param fliplist is the list of PcodeOps to modify
 void Funcdata::opFlipInPlaceExecute(vector<PcodeOp *> &fliplist)
 
@@ -1296,6 +1333,31 @@ void Funcdata::opFlipInPlaceExecute(vector<PcodeOp *> &fliplist)
       }
     }
   }
+}
+
+/// \brief Remove the \b boolean_flip flag on a CBRANCH op, without changing behavior
+///
+/// Try to flip the true/false meaning of the CBRANCH and negate the meaning of the comparison op feeding the CBRANCH.
+/// Only the \b boolean_flip flag and the comparison op's opcode are affected.
+/// \param cbranch is CBRANCH to modify
+/// \return \b true if the ops were successfully modified
+bool Funcdata::opNormalizeFlip(PcodeOp *cbranch)
+
+{
+  Varnode *boolVn = cbranch->getIn(1);
+  if (!boolVn->isWritten()) return false;
+  if (boolVn->loneDescend() != cbranch) return false;
+  PcodeOp *condOp = boolVn->getDef();
+  bool flipyes;
+  OpCode opc = get_booleanflip(condOp->code(), flipyes);
+  if (opc == CPUI_MAX) return false;
+  opSetOpcode(condOp,opc); // Set the negated opcode
+  if (flipyes)			// Do we need to reverse the two operands
+    opSwapInput(condOp,0,1);
+  cbranch->flipFlag(PcodeOp::boolean_flip);
+  if (opc == CPUI_INT_LESSEQUAL || opc == CPUI_INT_SLESSEQUAL)
+    replaceLessequal(condOp);
+  return true;
 }
 
 /// \brief Find a duplicate calculation of a given PcodeOp reading a specific Varnode

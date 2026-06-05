@@ -32,15 +32,16 @@ import ghidra.app.plugin.core.debug.gui.InvocationDialogHelper;
 import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiConnection.TestRemoteMethod;
 import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiConnection.TestRemoteParameter;
 import ghidra.async.SwingExecutorService;
-import ghidra.dbg.target.TargetMethod.Param;
-import ghidra.dbg.target.TargetMethod.ParameterDescription;
-import ghidra.dbg.target.schema.*;
-import ghidra.dbg.target.schema.EnumerableTargetObjectSchema.MinimalSchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.debug.api.ValStr;
+import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.tracermi.RemoteMethod;
 import ghidra.debug.api.tracermi.RemoteParameter;
 import ghidra.framework.options.PropertyBoolean;
+import ghidra.trace.model.target.iface.TraceMethod.Param;
+import ghidra.trace.model.target.iface.TraceMethod.ParameterDescription;
+import ghidra.trace.model.target.schema.*;
+import ghidra.trace.model.target.schema.PrimitiveTraceObjectSchema.MinimalSchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 
 public class RemoteMethodInvocationDialogTest extends AbstractGhidraHeadedDebuggerTest {
 
@@ -52,15 +53,16 @@ public class RemoteMethodInvocationDialogTest extends AbstractGhidraHeadedDebugg
 			TestRemoteParameter parameter = createParameter(p);
 			params.put(parameter.name(), parameter);
 		}
-		return new TestRemoteMethod(m.getName(), null, "Test", "A test method", params,
-			EnumerableTargetObjectSchema.schemaForPrimitive(m.getReturnType()));
+		return new TestRemoteMethod(m.getName(), ActionName.name(m.getName()), "Test",
+			"A test method", params,
+			PrimitiveTraceObjectSchema.schemaForPrimitive(m.getReturnType()));
 	}
 
 	public static TestRemoteParameter createParameter(Parameter p) {
 		ParameterDescription<?> desc = ParameterDescription.annotated(p);
-		TargetObjectSchema schema = EnumerableTargetObjectSchema.schemaForPrimitive(desc.type);
-		if (schema == EnumerableTargetObjectSchema.OBJECT ||
-			schema == EnumerableTargetObjectSchema.ANY) {
+		TraceObjectSchema schema = PrimitiveTraceObjectSchema.schemaForPrimitive(desc.type);
+		if (schema == PrimitiveTraceObjectSchema.OBJECT ||
+			schema == PrimitiveTraceObjectSchema.ANY) {
 			schema = CTX.getSchema(new SchemaName(desc.schema));
 		}
 		return new TestRemoteParameter(desc.name, schema, desc.required, desc.defaultValue,

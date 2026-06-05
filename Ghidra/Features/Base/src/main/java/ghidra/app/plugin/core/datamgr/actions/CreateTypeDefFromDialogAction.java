@@ -53,7 +53,7 @@ public class CreateTypeDefFromDialogAction extends AbstractTypeDefAction {
 
 		String name = dialog.getTypeDefName();
 		DataType dataType = dialog.getDataType();
-		DataTypeManager dataTypeManager = dialog.getDataTypeManager();
+		DataTypeManager dataTypeManager = category.getDataTypeManager();
 
 		final DataTypeArchiveGTree gTree = (DataTypeArchiveGTree) context.getContextObject();
 		CategoryPath categoryPath = category.getCategoryPath();

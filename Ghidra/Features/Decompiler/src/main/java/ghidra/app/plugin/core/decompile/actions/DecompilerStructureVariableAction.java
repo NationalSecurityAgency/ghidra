@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,37 +40,32 @@ public class DecompilerStructureVariableAction extends CreateStructureVariableAc
 			return false;
 		}
 
-		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
-		return decompilerContext.checkActionEnablement(() -> {
+		Function function = controller.getFunction();
+		if (function == null || function instanceof UndefinedFunction) {
+			return false;
+		}
 
-			Function function = controller.getFunction();
-			if (function == null || function instanceof UndefinedFunction) {
-				return false;
-			}
+		DataType dt = null;
+		boolean isThisParam = false;
 
-			DataType dt = null;
-			boolean isThisParam = false;
+		// get the data type at the location and see if it is OK
+		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
+		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
+		if (tokenAtCursor == null) {
+			return false;
+		}
+		int maxPointerSize = controller.getProgram().getDefaultPointerSize();
+		HighVariable var = tokenAtCursor.getHighVariable();
+		if (var != null && !(var instanceof HighConstant)) {
+			dt = var.getDataType();
+			isThisParam = DecompilerUtils.isThisParameter(var, function);
+		}
 
-			// get the data type at the location and see if it is OK
-			DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-			ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
-			if (tokenAtCursor == null) {
-				return false;
-			}
-			int maxPointerSize = controller.getProgram().getDefaultPointerSize();
-			HighVariable var = tokenAtCursor.getHighVariable();
-			if (var != null && !(var instanceof HighConstant)) {
-				dt = var.getDataType();
-				isThisParam = DecompilerUtils.isThisParameter(var, function);
-			}
+		if (dt == null || dt.getLength() > maxPointerSize) {
+			return false;
+		}
 
-			if (dt == null || dt.getLength() > maxPointerSize) {
-				return false;
-			}
-
-			adjustCreateStructureMenuText(dt, isThisParam);
-			return true;
-
-		});
+		adjustCreateStructureMenuText(dt, isThisParam);
+		return true;
 	}
 }

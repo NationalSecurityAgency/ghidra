@@ -77,6 +77,27 @@ void Funcdata::removeJumpTable(JumpTable *jt)
   jumpvec = remain;
 }
 
+/// The replacement has the same address and size as the given Varnode but can optionally turned into a new \e unique.
+/// We assume the given Varnode will be destroyed but that it may already be merged into a HighVariable.
+/// If a HighVariable exists, the given Varnode is removed and the replacement is added.
+/// \param origvn is the given Varnode to be replaced
+/// \param makeUnique is \b true if the replacement should be a new \e unique
+/// \return the new replacement Varnode
+Varnode *Funcdata::createReplaceVarnode(Varnode *origvn,bool makeUnique)
+
+{
+  Varnode *replacevn;
+  if (makeUnique)
+    replacevn = newUnique(origvn->getSize(),origvn->getType());
+  else
+    replacevn = newVarnode(origvn->getSize(),origvn->getAddr(),origvn->getType());
+  if (isHighOn()) {
+    origvn->replaceInHigh(replacevn);
+    replacevn->setExplicit();
+  }
+  return replacevn;
+}
+
 /// Assuming the given basic block is being removed, force any Varnode defined by
 /// a MULTIEQUAL in the block to be defined in the output block instead. This is used
 /// as part of the basic block removal process to patch up data-flow.
@@ -128,11 +149,8 @@ void Funcdata::pushMultiequals(BlockBasic *bb)
     }
     if (!needreplace) continue;
 				// Construct artificial MULTIEQUAL
+    replacevn = createReplaceVarnode(origvn, neednewunique);
     vector<Varnode *> branches;
-    if (neednewunique)
-      replacevn = newUnique(origvn->getSize());
-    else
-      replacevn = newVarnode(origvn->getSize(),origvn->getAddr());
     for(int4 i=0;i<outblock->sizeIn();++i) {
       if (outblock->getIn(i) == bb)
 	branches.push_back(origvn);
@@ -157,12 +175,15 @@ void Funcdata::pushMultiequals(BlockBasic *bb)
     list<PcodeOp *>::iterator titer = origvn->descend.begin();
     while(titer != origvn->descend.end()) {
       PcodeOp *op = *titer++;
-      i = op->getSlot(origvn);
-      // Do not replace MULTIEQUAL references in the same block
-      // as replaceop.  These are patched by block_remove
-      if ((op->code()==CPUI_MULTIEQUAL)&&(op->getParent()==outblock)&&(i==outblock_ind))
-	continue;
-      opSetInput(op,replacevn,i);
+      for(i=0;i<op->numInput();++i) {
+	if (op->getIn(i) != origvn)
+	  continue;
+	if (i == outblock_ind && op->getParent() == outblock && op->code() == CPUI_MULTIEQUAL) {
+	  continue;
+	}
+	opSetInput(op,replacevn,i);
+	break;
+      }
     }
   }
 }
@@ -205,7 +226,7 @@ void Funcdata::branchRemoveInternal(BlockBasic *bb,int4 num)
   bblocks.removeEdge(bb,bbout); // Sever (one) connection between bb and bbout
   for(iter=bbout->beginOp();iter!=bbout->endOp();++iter) {
     op = *iter;
-    if (op->code() != CPUI_MULTIEQUAL) continue;
+    if (op->code() != CPUI_MULTIEQUAL) break;
     opRemoveInput(op,blocknum);
     opZeroMulti(op);
   }
@@ -467,7 +488,7 @@ JumpTable *Funcdata::installJumpTable(const Address &addr)
     if (jt->getOpAddress() == addr)
       throw LowlevelError("Trying to install over existing jumptable");
   }
-  JumpTable *newjt = new JumpTable(glb,addr);
+  JumpTable *newjt = new JumpTable(addr);
   jumpvec.push_back(newjt);
   return newjt;
 }
@@ -488,6 +509,7 @@ JumpTable *Funcdata::installJumpTable(const Address &addr)
 JumpTable::RecoveryMode Funcdata::stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowInfo *flow)
 
 {
+  jt->incrementRecoveryCount();
   if (!partial.isJumptableRecoveryOn()) {
     // Do full analysis on the table if we haven't before
     partial.flags |= jumptablerecovery_on; // Mark that this Funcdata object is dedicated to jumptable recovery
@@ -642,10 +664,10 @@ JumpTable *Funcdata::recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *fl
   jt = linkJumpTable(op);		// Search for pre-existing jumptable
   if (jt != (JumpTable *)0) {
     if (!jt->isOverride()) {
-      if (!jt->isPartial())
+      if (!jt->isPartial() && jt->numEntries() != 0)
 	return jt;		// Previously calculated jumptable (NOT an override and NOT incomplete)
     }
-    mode = stageJumpTable(partial,jt,op,flow); // Recover based on override information
+    mode = stageJumpTable(partial,jt,op,flow); // Recover empty jumptable or based on override information
     if (mode != JumpTable::success)
       return (JumpTable *)0;
     jt->setIndirectOp(op);	// Relink table back to original op
@@ -657,7 +679,7 @@ JumpTable *Funcdata::recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *fl
   mode = earlyJumpTableFail(op);
   if (mode != JumpTable::success)
     return (JumpTable *)0;
-  JumpTable trialjt(glb);
+  JumpTable trialjt;
   mode = stageJumpTable(partial,&trialjt,op,flow);
   if (mode != JumpTable::success)
     return (JumpTable *)0;
@@ -971,10 +993,10 @@ PcodeOp *CloneBlockOps::buildOpClone(PcodeOp *op)
   return dup;
 }
 
-/// Make a basic clone of the Varnode and its flags. The clone is created
-/// as an output of a previously cloned PcodeOp.
-/// \param op is the given op whose output should be cloned
-/// \param newop is the cloned version
+/// Make a basic clone of a Varnode and its flags. The clone is created
+/// as an output Varnode of a previously cloned PcodeOp.
+/// \param origOp is the given op whose output should be cloned
+/// \param cloneOp is the cloned version
 void CloneBlockOps::buildVarnodeOutput(PcodeOp *origOp,PcodeOp *cloneOp)
 
 {

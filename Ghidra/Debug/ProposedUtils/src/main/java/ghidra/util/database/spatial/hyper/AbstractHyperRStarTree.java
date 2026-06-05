@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,20 +23,20 @@ import ghidra.util.database.DBCachedObjectStoreFactory;
 import ghidra.util.database.spatial.*;
 import ghidra.util.exception.VersionException;
 
-public abstract class AbstractHyperRStarTree< //
-		P extends HyperPoint, //
-		DS extends BoundedShape<NS>, //
-		DR extends DBTreeDataRecord<DS, NS, T>, //
-		NS extends HyperBox<P, NS>, //
-		NR extends DBTreeNodeRecord<NS>, //
-		T, //
-		Q extends AbstractHyperBoxQuery<P, DS, NS, Q>> //
+public abstract class AbstractHyperRStarTree<
+	P extends HyperPoint,
+	DS extends BoundedShape<NS>,
+	DR extends DBTreeDataRecord<DS, NS, T>,
+	NS extends HyperBox<P, NS>,
+	NR extends DBTreeNodeRecord<NS>,
+	T,
+	Q extends AbstractHyperBoxQuery<P, DS, NS, Q>>
 		extends AbstractRStarConstraintsTree<DS, DR, NS, NR, T, Q> {
 
-	protected static class AsSpatialMap< //
-			DS extends BoundedShape<NS>, //
-			DR extends DBTreeDataRecord<DS, NS, T>, //
-			NS extends HyperBox<?, NS>, T, Q extends AbstractHyperBoxQuery<?, DS, NS, Q>>
+	protected static class AsSpatialMap<
+		DS extends BoundedShape<NS>,
+		DR extends DBTreeDataRecord<DS, NS, T>,
+		NS extends HyperBox<?, NS>, T, Q extends AbstractHyperBoxQuery<?, DS, NS, Q>>
 			extends AbstractConstraintsTreeSpatialMap<DS, DR, NS, T, Q> {
 		public AsSpatialMap(AbstractConstraintsTree<DS, DR, NS, ?, T, Q> tree, Q query) {
 			super(tree, query);

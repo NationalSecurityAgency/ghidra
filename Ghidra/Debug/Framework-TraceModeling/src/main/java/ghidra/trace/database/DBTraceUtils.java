@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package ghidra.trace.database;
 
 import java.lang.reflect.Field;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Objects;
@@ -93,7 +92,9 @@ public enum DBTraceUtils {
 
 	// TODO: Should this be in by default?
 	/**
-	 * A codec or URLs
+	 * A codec for URLs
+	 * 
+	 * @param <OT> the type of the object whose field is encoded/decoded.
 	 */
 	public static class URLDBFieldCodec<OT extends DBAnnotatedObject>
 			extends AbstractDBFieldCodec<URL, OT, StringField> {
@@ -128,10 +129,10 @@ public enum DBTraceUtils {
 					setValue(obj, null);
 				}
 				else {
-					setValue(obj, new URL(data));
+					setValue(obj, new URI(data).toURL());
 				}
 			}
-			catch (MalformedURLException e) {
+			catch (MalformedURLException | URISyntaxException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -139,6 +140,8 @@ public enum DBTraceUtils {
 
 	/**
 	 * A codec for language IDs
+	 * 
+	 * @param <OT> the type of the object whose field is encoded/decoded.
 	 */
 	public static class LanguageIDDBFieldCodec<OT extends DBAnnotatedObject>
 			extends AbstractDBFieldCodec<LanguageID, OT, StringField> {
@@ -179,6 +182,8 @@ public enum DBTraceUtils {
 
 	/**
 	 * A codec for compiler spec IDs
+	 * 
+	 * @param <OT> the type of the object whose field is encoded/decoded.
 	 */
 	public static class CompilerSpecIDDBFieldCodec<OT extends DBAnnotatedObject>
 			extends AbstractDBFieldCodec<CompilerSpecID, OT, StringField> {
@@ -219,6 +224,8 @@ public enum DBTraceUtils {
 
 	/**
 	 * A (abstract) codec for the offset-snap tuple
+	 * 
+	 * @param <OT> the type of the object whose field is encoded/decoded.
 	 */
 	public abstract static class AbstractOffsetSnapDBFieldCodec<OT extends DBAnnotatedObject>
 			extends AbstractDBFieldCodec<OffsetSnap, OT, BinaryField> {
@@ -301,6 +308,8 @@ public enum DBTraceUtils {
 
 	/**
 	 * A codec for reference types
+	 * 
+	 * @param <OT> the type of the object whose field is encoded/decoded.
 	 */
 	public static class RefTypeDBFieldCodec<OT extends DBAnnotatedObject>
 			extends AbstractDBFieldCodec<RefType, OT, ByteField> {
@@ -424,18 +433,9 @@ public enum DBTraceUtils {
 	 * 
 	 * @param baseName the base name of the table group
 	 * @param space the address space
-	 * @param threadKey the thread key, -1 usually indicating "no thread"
-	 * @param frameLevel the frame level
 	 * @return the table name
 	 */
-	public static String tableName(String baseName, AddressSpace space, long threadKey,
-			int frameLevel) {
-		if (space.isRegisterSpace()) {
-			if (frameLevel == 0) {
-				return baseName + "_" + space.getName() + "_" + threadKey;
-			}
-			return baseName + "_" + space.getName() + "_" + threadKey + "_" + frameLevel;
-		}
+	public static String tableName(String baseName, AddressSpace space) {
 		return baseName + "_" + space.getName();
 	}
 

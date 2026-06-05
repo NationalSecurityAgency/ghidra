@@ -45,7 +45,7 @@ public class CParserUtils {
 				message += errMsg + "\n\n";
 			}
 
-			String msg = cppParseMessages;
+			String msg = cParseMessages;
 			if (msg != null && msg.length() != 0) {
 				message += "CParser Messages:\n" + msg + "\n\n";
 			}
@@ -539,7 +539,7 @@ public class CParserUtils {
 
 		cppMessages = cpp.getParseMessages();
 		if (!parseSucceeded) {
-			return new CParseResults(cpp, "", cppMessages, false);
+			return new CParseResults(cpp, cppMessages, "", false);
 		}
 
 		// process all the defines and add any that are integer values into
@@ -567,8 +567,8 @@ public class CParserUtils {
 				parserMessages = cParser.getParseMessages();
 			}
 		}
-
-		return new CParseResults(cpp, parserMessages, cppMessages, cparseSucceeded);
+		
+		return new CParseResults(cpp, cppMessages, parserMessages, cparseSucceeded);
 	}
 
 	private static String parseFile(String filename, TaskMonitor monitor, PreProcessor cpp)

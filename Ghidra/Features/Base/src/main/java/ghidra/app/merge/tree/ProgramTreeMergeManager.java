@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,7 +79,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 	 * @param myProgram source of changes to apply to the destination
 	 * program
 	 * @param originalProgram program that was originally checked out
-	 * @param latestProgram program that that is the latest version; the
+	 * @param latestProgram program that is the latest version; the
 	 * resultProgram and latestProgram start out as being identical
 	 * @param latestChangeSet change set of the destination program
 	 * @param myChangeSet change set for the source program

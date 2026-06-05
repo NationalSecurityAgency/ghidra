@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,11 +63,12 @@ import ghidra.util.Swing;
  * called.  Each of these methods called will overwrite the previously called method.
  *
  * <P>If the user selects the checkBox, then the dialog result will be remembered.
- * In future calls to display that dialog (or any dialog sharing
- * the same DialogRememberChoice object), the dialog will first check if has a
- * DialogRememberChoice object and that it has a remembered result, and if so, will just return
- * the remembered result instead of showing the dialog.
- *
+ * In future calls to display that dialog , the dialog will first check if has a
+ * {@link DialogRememberOption} object and that it has a remembered result, and if so, will just 
+ * return the remembered result instead of showing the dialog.  The remember options will be used
+ * as long as the dialog is being used by the client.  The client must hold onto the dialog so that
+ * repeated calls will work as expected with the remember option chosen.   The client could instead
+ * hold onto the builder and use the {@link #show()} method to get the same behavior.
  */
 public class OptionDialogBuilder {
 	private String title;

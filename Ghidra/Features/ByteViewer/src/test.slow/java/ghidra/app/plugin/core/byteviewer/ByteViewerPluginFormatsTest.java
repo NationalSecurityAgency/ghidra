@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,80 +17,50 @@ package ghidra.app.plugin.core.byteviewer;
 
 import static org.junit.Assert.*;
 
-import java.awt.*;
+import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.math.BigInteger;
 import java.util.Date;
-import java.util.Map;
+import java.util.List;
 
-import javax.swing.*;
+import javax.swing.JScrollBar;
 
-import org.junit.*;
+import org.junit.Test;
 
 import docking.DefaultActionContext;
-import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
-import generic.test.TestUtils;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.format.*;
 import ghidra.app.plugin.core.navigation.NavigationHistoryPlugin;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramManager;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.Plugin;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.ByteDataType;
 import ghidra.program.model.data.StructureDataType;
-import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.util.ProgramLocation;
-import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.test.TestEnv;
 
 /**
  * Test for byte viewer formats. 
  */
-public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegrationTest {
+public class ByteViewerPluginFormatsTest extends AbstractByteViewerPluginTest {
 
-	private TestEnv env;
-	private PluginTool tool;
-	private Program program;
-	private Memory memory;
-	private Listing listing;
-	private ByteViewerPlugin plugin;
-	private ByteViewerPanel panel;
-	private ByteViewerComponentProvider provider;
 
-	@Before
-	public void setUp() throws Exception {
-		env = new TestEnv();
-		tool = env.getTool();
-		tool.addPlugin(NavigationHistoryPlugin.class.getName());
-		tool.addPlugin(NextPrevAddressPlugin.class.getName());
-		tool.addPlugin(CodeBrowserPlugin.class.getName());
-		tool.addPlugin(ByteViewerPlugin.class.getName());
-
-		plugin = env.getPlugin(ByteViewerPlugin.class);
-		provider =
-			(ByteViewerComponentProvider) TestUtils.getInstanceField("connectedProvider", plugin);
-		tool.showComponentProvider(provider, true);
-
-		program = buildNotepad();
-		memory = program.getMemory();
-		listing = program.getListing();
-		ProgramManager pm = tool.getService(ProgramManager.class);
-		pm.openProgram(program.getDomainFile());
-		panel = provider.getByteViewerPanel();
-		waitForSwing();
+	@Override
+	protected List<Class<? extends Plugin>> getDefaultPlugins() {
+		return List.of(NavigationHistoryPlugin.class, NextPrevAddressPlugin.class,
+			CodeBrowserPlugin.class);
 	}
 
-	private Program buildNotepad() throws Exception {
+	@Override
+	protected Program buildProgram() throws Exception {
 		ProgramBuilder builder = new ProgramBuilder("notepad", ProgramBuilder._TOY);
 		builder.createMemory("test2", "0x1001000", 0x2000);
 		Program p = builder.getProgram();
@@ -105,11 +75,6 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		return builder.getProgram();
 	}
 
-	@After
-	public void tearDown() throws Exception {
-		env.release(program);
-		env.dispose();
-	}
 
 	@Test
 	public void testInsertionFieldHex() throws Exception {
@@ -118,7 +83,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 
 		// move the cursor to the right; the insertion field should not update
 		runSwing(() -> {
-			FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+			FieldLocation loc = getFieldLocation(addr(0x01001000));
 			ByteViewerComponent c = panel.getCurrentComponent();
 			c.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			c.cursorRight();
@@ -135,7 +100,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 //			TestUtils.getInstanceField("updateManager", provider);
 //		waitForSwingUpdateManager( updateManager );
 		waitForSwing();
-		assertEquals(getAddr(0x01001001).toString(), findLabelStr(panel, "Insertion"));
+		assertEquals(addr(0x01001001).toString(), findLabelStr(panel, "Insertion"));
 
 		// move the cursor to the left; the insertion field should have 
 		//   been decremented by one
@@ -143,7 +108,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			ByteViewerComponent c = panel.getCurrentComponent();
 			c.cursorLeft();
 		});
-		assertEquals(getAddr(0x01001000).toString(), findLabelStr(panel, "Insertion"));
+		assertEquals(addr(0x01001000).toString(), findLabelStr(panel, "Insertion"));
 
 		// move the cursor to the left; the insertion field should not change
 		runSwing(() -> {
@@ -164,7 +129,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 
 		// move the cursor to the right two times; the insertion field should not update
 		runSwing(() -> {
-			FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+			FieldLocation loc = getFieldLocation(addr(0x01001000));
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			currentComponent.cursorRight();
@@ -177,7 +142,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.cursorRight();
 		});
-		assertEquals(getAddr(0x01001001).toString(), findLabelStr(panel, "Insertion"));
+		assertEquals(addr(0x01001001).toString(), findLabelStr(panel, "Insertion"));
 
 		// move the cursor to the left; the insertion field should have 
 		//   been decremented by one
@@ -185,7 +150,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.cursorLeft();
 		});
-		assertEquals(getAddr(0x01001000).toString(), findLabelStr(panel, "Insertion"));
+		assertEquals(addr(0x01001000).toString(), findLabelStr(panel, "Insertion"));
 
 		// move the cursor to the left two times; the insertion field should not change
 		runSwing(() -> {
@@ -200,26 +165,26 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 	public void testInsertionFieldAscii() throws Exception {
 		env.showTool();
 		addViews();
-		ByteViewerComponent c = findComponent(panel, "Ascii");
+		ByteViewerComponent c = findComponent(panel, "Chars");
 		panel.setCurrentView(c);
 
 		String insertionStr = findLabelStr(panel, "Insertion");
 
 		// move the cursor to the right; the insertion field should update by one
 		runSwing(() -> {
-			FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+			FieldLocation loc = getFieldLocation(addr(0x01001000));
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			currentComponent.cursorRight();
 		});
-		assertEquals(getAddr(0x01001001).toString(), findLabelStr(panel, "Insertion"));
+		assertEquals(addr(0x01001001).toString(), findLabelStr(panel, "Insertion"));
 
 		// move the cursor to the right; the insertion field should update by one
 		runSwing(() -> {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.cursorRight();
 		});
-		assertEquals(getAddr(0x01001002).toString(), findLabelStr(panel, "Insertion"));
+		assertEquals(addr(0x01001002).toString(), findLabelStr(panel, "Insertion"));
 
 		// move the cursor to the left; the insertion field should have 
 		//   been decremented by one
@@ -227,7 +192,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.cursorLeft();
 		});
-		assertEquals(getAddr(0x01001001).toString(), findLabelStr(panel, "Insertion"));
+		assertEquals(addr(0x01001001).toString(), findLabelStr(panel, "Insertion"));
 
 		// move the cursor to the left; the insertion field should update
 		runSwing(() -> {
@@ -248,7 +213,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		assertEquals(8, c.getNumberOfFields());
 		assertEquals(2, c.getDataModel().getUnitByteSize());
 
-		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+		final FieldLocation loc = getFieldLocation(addr(0x01001000));
 		runSwing(() -> {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
@@ -264,12 +229,11 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		env.showTool();
 		addViews();
 
-		final ByteViewerComponent c = findComponent(panel, "Ascii");
+		final ByteViewerComponent c = findComponent(panel, "Chars");
 		panel.setCurrentView(c);
 
-		final ToggleDockingAction action =
-			(ToggleDockingAction) getAction(plugin, "Enable/Disable Byteviewer Editing");
-		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+		ToggleDockingAction action = provider.getEditModeAction();
+		final FieldLocation loc = getFieldLocation(addr(0x01001000));
 		runSwing(() -> {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
@@ -287,12 +251,12 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		runSwing(() -> {
 			ProgramByteBlockSet blockset =
 				(ProgramByteBlockSet) plugin.getProvider().getByteBlockSet();
-			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(getAddr(0x01001000));
+			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(addr(0x01001000));
 			FieldLocation l = hexComp.getFieldLocation(bbInfo.getBlock(), bbInfo.getOffset());
 			hexComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
 		});
 
-		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
+		assertEquals(ByteViewerComponentProvider.EDITED_TEXT_COLOR,
 			((ByteField) hexComp.getCurrentField()).getForeground());
 	}
 
@@ -307,7 +271,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		assertEquals(4, c.getNumberOfFields());
 		assertEquals(4, c.getDataModel().getUnitByteSize());
 
-		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+		final FieldLocation loc = getFieldLocation(addr(0x01001000));
 		runSwing(() -> {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
@@ -323,12 +287,11 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		env.showTool();
 		addViews();
 
-		final ByteViewerComponent c = findComponent(panel, "Ascii");
+		final ByteViewerComponent c = findComponent(panel, "Chars");
 		panel.setCurrentView(c);
 
-		final ToggleDockingAction action =
-			(ToggleDockingAction) getAction(plugin, "Enable/Disable Byteviewer Editing");
-		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+		ToggleDockingAction action = provider.getEditModeAction();
+		final FieldLocation loc = getFieldLocation(addr(0x01001000));
 		runSwing(() -> {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
@@ -346,12 +309,12 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		runSwing(() -> {
 			ProgramByteBlockSet blockset =
 				(ProgramByteBlockSet) plugin.getProvider().getByteBlockSet();
-			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(getAddr(0x01001000));
+			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(addr(0x01001000));
 			FieldLocation l = hexComp.getFieldLocation(bbInfo.getBlock(), bbInfo.getOffset());
 			hexComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
 		});
 
-		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
+		assertEquals(ByteViewerComponentProvider.EDITED_TEXT_COLOR,
 			((ByteField) hexComp.getCurrentField()).getForeground());
 	}
 
@@ -366,7 +329,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		assertEquals(2, c.getNumberOfFields());
 		assertEquals(8, c.getDataModel().getUnitByteSize());
 
-		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+		final FieldLocation loc = getFieldLocation(addr(0x01001000));
 		runSwing(() -> {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
@@ -382,12 +345,11 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		env.showTool();
 		addViews();
 
-		final ByteViewerComponent c = findComponent(panel, "Ascii");
+		final ByteViewerComponent c = findComponent(panel, "Chars");
 		panel.setCurrentView(c);
 
-		final ToggleDockingAction action =
-			(ToggleDockingAction) getAction(plugin, "Enable/Disable Byteviewer Editing");
-		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+		ToggleDockingAction action = provider.getEditModeAction();
+		final FieldLocation loc = getFieldLocation(addr(0x01001000));
 		runSwing(() -> {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
@@ -405,12 +367,12 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		runSwing(() -> {
 			ProgramByteBlockSet blockset =
 				(ProgramByteBlockSet) plugin.getProvider().getByteBlockSet();
-			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(getAddr(0x01001000));
+			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(addr(0x01001000));
 			FieldLocation l = hexComp.getFieldLocation(bbInfo.getBlock(), bbInfo.getOffset());
 			hexComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
 		});
 
-		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
+		assertEquals(ByteViewerComponentProvider.EDITED_TEXT_COLOR,
 			((ByteField) hexComp.getCurrentField()).getForeground());
 	}
 
@@ -425,7 +387,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		assertEquals(1, c.getNumberOfFields());
 		assertEquals(16, c.getDataModel().getUnitByteSize());
 
-		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+		final FieldLocation loc = getFieldLocation(addr(0x01001000));
 		runSwing(() -> {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
@@ -441,12 +403,11 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		env.showTool();
 		addViews();
 
-		final ByteViewerComponent c = findComponent(panel, "Ascii");
+		final ByteViewerComponent c = findComponent(panel, "Chars");
 		panel.setCurrentView(c);
 
-		final ToggleDockingAction action =
-			(ToggleDockingAction) getAction(plugin, "Enable/Disable Byteviewer Editing");
-		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+		ToggleDockingAction action = provider.getEditModeAction();
+		final FieldLocation loc = getFieldLocation(addr(0x01001000));
 		runSwing(() -> {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
@@ -464,12 +425,12 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		runSwing(() -> {
 			ProgramByteBlockSet blockset =
 				(ProgramByteBlockSet) plugin.getProvider().getByteBlockSet();
-			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(getAddr(0x01001000));
+			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(addr(0x01001000));
 			FieldLocation l = hexComp.getFieldLocation(bbInfo.getBlock(), bbInfo.getOffset());
 			hexComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
 		});
 
-		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
+		assertEquals(ByteViewerComponentProvider.EDITED_TEXT_COLOR,
 			((ByteField) hexComp.getCurrentField()).getForeground());
 	}
 
@@ -479,7 +440,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		env.showTool();
 
 		runSwing(() -> {
-			FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+			FieldLocation loc = getFieldLocation(addr(0x01001000));
 			ByteViewerComponent c = panel.getCurrentComponent();
 			c.setCursorPosition(loc.getIndex(), loc.getFieldNum(), loc.getRow(), loc.getCol());
 		});
@@ -506,20 +467,20 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			ProgramByteBlockSet blockset =
 				(ProgramByteBlockSet) plugin.getProvider().getByteBlockSet();
-			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(getAddr(0x01001003));
+			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(addr(0x01001003));
 			currentComponent.setViewerCursorLocation(bbInfo.getBlock(), bbInfo.getOffset(),
 				bbInfo.getColumn());
 		});
 		waitForSwing();
 
-		FieldLocation loc = getFieldLocation(getAddr(0x01001003));
+		FieldLocation loc = getFieldLocation(addr(0x01001003));
 		assertEquals(11, c.getCurrentField().getNumCols(loc.getRow()));
 
 		// verify that no edits can be done in Integer format since it
 		// does not support editing
 		Color fg = ((ByteField) c.getCurrentField()).getForeground();
 		if (fg != null) {
-			assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR, fg);
+			assertEquals(ByteViewerComponentProvider.CURSOR_COLOR_FOCUSED_NON_EDIT, fg);
 		}
 	}
 
@@ -528,7 +489,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		env.showTool();
 
 		runSwing(() -> {
-			FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+			FieldLocation loc = getFieldLocation(addr(0x01001000));
 			ByteViewerComponent c = panel.getCurrentComponent();
 			c.setCursorPosition(loc.getIndex(), loc.getFieldNum(), loc.getRow(), loc.getCol());
 		});
@@ -555,20 +516,20 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			ProgramByteBlockSet blockset =
 				(ProgramByteBlockSet) plugin.getProvider().getByteBlockSet();
-			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(getAddr(0x01001003));
+			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(addr(0x01001003));
 			currentComponent.setViewerCursorLocation(bbInfo.getBlock(), bbInfo.getOffset(),
 				bbInfo.getColumn());
 		});
 		waitForSwing();
 
-		FieldLocation loc = getFieldLocation(getAddr(0x01001003));
+		FieldLocation loc = getFieldLocation(addr(0x01001003));
 		assertEquals(3, c.getCurrentField().getNumCols(loc.getRow()));
 
 		// verify that no edits can be done in Integer format since it
 		// does not support editing
 		Color fg = ((ByteField) c.getCurrentField()).getForeground();
 		if (fg != null) {
-			assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR, fg);
+			assertEquals(ByteViewerComponentProvider.CURSOR_COLOR_FOCUSED_NON_EDIT, fg);
 		}
 	}
 
@@ -577,19 +538,18 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		// verify that changed bytes are rendered in red in the Integer view
 		env.showTool();
 		ByteViewerOptionsDialog dialog = launchByteViewerOptions();
-		setViewSelected(dialog, "Ascii", true);
+		setViewSelected(dialog, "Chars", true);
 		setViewSelected(dialog, "Octal", true);
 		setViewSelected(dialog, "Hex Integer", true);
 		setViewSelected(dialog, "Integer", true);
 		pressButtonByText(dialog.getComponent(), "OK");
 		waitForSwing();
 
-		final ByteViewerComponent c = findComponent(panel, "Ascii");
+		final ByteViewerComponent c = findComponent(panel, "Chars");
 		panel.setCurrentView(c);
 
-		final ToggleDockingAction action =
-			(ToggleDockingAction) getAction(plugin, "Enable/Disable Byteviewer Editing");
-		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+		ToggleDockingAction action = provider.getEditModeAction();
+		final FieldLocation loc = getFieldLocation(addr(0x01001000));
 		runSwing(() -> {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
@@ -608,12 +568,12 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		runSwing(() -> {
 			ProgramByteBlockSet blockset =
 				(ProgramByteBlockSet) plugin.getProvider().getByteBlockSet();
-			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(getAddr(0x01001000));
+			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(addr(0x01001000));
 			FieldLocation l = intComp.getFieldLocation(bbInfo.getBlock(), bbInfo.getOffset());
 			intComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
 		});
 		// color should indicate the edit
-		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
+		assertEquals(ByteViewerComponentProvider.EDITED_TEXT_COLOR,
 			((ByteField) intComp.getCurrentField()).getForeground());
 	}
 
@@ -622,7 +582,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		env.showTool();
 
 		runSwing(() -> {
-			FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+			FieldLocation loc = getFieldLocation(addr(0x01001000));
 			ByteViewerComponent c = panel.getCurrentComponent();
 			c.setCursorPosition(loc.getIndex(), loc.getFieldNum(), loc.getRow(), loc.getCol());
 		});
@@ -633,10 +593,10 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 
 		final ByteViewerComponent c = findComponent(panel, "Integer");
 		panel.setCurrentView(c);
-		int v = program.getMemory().getInt(getAddr(0x01001000));
+		int v = program.getMemory().getInt(addr(0x01001000));
 		runSwing(() -> {
-			FieldLocation loc = getFieldLocation(getAddr(0x01001000));
-			DockingActionIf action = getAction(plugin, "Enable/Disable Byteviewer Editing");
+			FieldLocation loc = getFieldLocation(addr(0x01001000));
+			ToggleDockingAction action = provider.getEditModeAction();
 
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
@@ -649,7 +609,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		});
 		program.flushEvents();
 		// verify that no changes were made
-		assertEquals(v, program.getMemory().getInt(getAddr(0x01001000)));
+		assertEquals(v, program.getMemory().getInt(addr(0x01001000)));
 	}
 
 	@Test
@@ -782,12 +742,12 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		panel.setCurrentView(c);
 
 		GoToService goToService = tool.getService(GoToService.class);
-		goToService.goTo(new ProgramLocation(program, getAddr(01001530)));
+		goToService.goTo(new ProgramLocation(program, addr(01001530)));
 
 		waitForSwing();
 
 		int transactionID = program.startTransaction("test");
-		Address addr = getAddr(0x01001530);
+		Address addr = addr(0x01001530);
 		for (int i = 0; i < 5; i++) {
 			listing.createData(addr, new ByteDataType(), 1);
 			addr = addr.add(1);
@@ -797,7 +757,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		program.flushEvents();
 		waitForSwing();
 
-		addr = getAddr(0x01001530);
+		addr = addr(0x01001530);
 		for (int i = 0; i < 5; i++) {
 			FieldLocation loc = getFieldLocation(addr);
 			ByteField field = c.getField(loc.getIndex(), loc.getFieldNum());
@@ -821,12 +781,12 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		panel.setCurrentView(c);
 
 		GoToService goToService = tool.getService(GoToService.class);
-		goToService.goTo(new ProgramLocation(program, getAddr(01001530)));
+		goToService.goTo(new ProgramLocation(program, addr(01001530)));
 
 		waitForSwing();
 
 		int transactionID = program.startTransaction("test");
-		Address addr = getAddr(0x01001530);
+		Address addr = addr(0x01001530);
 		StructureDataType dt = new StructureDataType("test", 0);
 		for (int i = 0; i < 7; i++) {
 			dt.add(new ByteDataType());
@@ -837,7 +797,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		program.flushEvents();
 		waitForSwing();
 
-		addr = getAddr(0x01001530);
+		addr = addr(0x01001530);
 		for (int i = 0; i < dt.getLength(); i++) {
 			FieldLocation loc = getFieldLocation(addr);
 			ByteField field = c.getField(loc.getIndex(), loc.getFieldNum());
@@ -910,100 +870,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		return null;
 	}
 
-	private Address getAddr(long offset) {
-		return getAddr(program, offset);
-	}
-
-	private Address getAddr(Program p, long offset) {
-		return p.getMinAddress().getNewAddress(offset);
-	}
-
-	private FieldLocation getFieldLocation(Address addr) {
-		ByteViewerComponent c = panel.getCurrentComponent();
-		ProgramByteBlockSet blockset = (ProgramByteBlockSet) plugin.getProvider().getByteBlockSet();
-		ByteBlockInfo bbInfo = blockset.getByteBlockInfo(addr);
-		return c.getFieldLocation(bbInfo.getBlock(), bbInfo.getOffset());
-
-	}
-
-	private String findLabelStr(Container container, String name) {
-		Component[] c = container.getComponents();
-		for (Component element : c) {
-			if (element instanceof JLabel) {
-				if (name.equals(((JLabel) element).getName())) {
-					return ((JLabel) element).getText();
-				}
-			}
-			if (element instanceof Container) {
-				String str = findLabelStr((Container) element, name);
-				if (str != null) {
-					return str;
-				}
-			}
-		}
-		return null;
-	}
-
-	private ByteViewerComponent findComponent(Container container, String name) {
-		Component[] c = container.getComponents();
-		for (Component element : c) {
-			if (element instanceof ByteViewerComponent) {
-				if (((ByteViewerComponent) element).getDataModel().getName().equals(name)) {
-					return (ByteViewerComponent) element;
-				}
-			}
-			else if (element instanceof Container) {
-				ByteViewerComponent bvc = findComponent((Container) element, name);
-				if (bvc != null) {
-					return bvc;
-				}
-			}
-		}
-		return null;
-	}
-
-	private Container findContainer(Container parent, Class<?> theClass) {
-		Component[] c = parent.getComponents();
-		for (Component element : c) {
-			if (element.getClass() == theClass) {
-				return (Container) element;
-			}
-			if (element instanceof Container) {
-				Container container = findContainer((Container) element, theClass);
-				if (container != null) {
-					return container;
-				}
-			}
-		}
-		return null;
-	}
-
 	private void addViews() throws Exception {
-		ByteViewerOptionsDialog dialog = launchByteViewerOptions();
-		setViewSelected(dialog, "Ascii", true);
-		setViewSelected(dialog, "Octal", true);
-		setViewSelected(dialog, "Hex Short", true);
-		setViewSelected(dialog, "Hex Integer", true);
-		setViewSelected(dialog, "Hex Long", true);
-		setViewSelected(dialog, "Hex Long Long", true);
-		pressButtonByText(dialog.getComponent(), "OK");
-		waitForSwing();
-	}
-
-	private void setViewSelected(ByteViewerOptionsDialog dialog, String viewName,
-			boolean selected) {
-		Map<?, ?> checkboxMap = (Map<?, ?>) getInstanceField("checkboxMap", dialog);
-		JCheckBox checkbox = (JCheckBox) checkboxMap.get(viewName);
-		checkbox.setSelected(selected);
-	}
-
-	private ByteViewerOptionsDialog launchByteViewerOptions() {
-		final DockingActionIf action = getAction(plugin, "Byte Viewer Options");
-		assertTrue(action.isEnabled());
-
-		runSwing(() -> action.actionPerformed(new DefaultActionContext()), false);
-		waitForSwing();
-		ByteViewerOptionsDialog d = waitForDialogComponent(ByteViewerOptionsDialog.class);
-		return d;
+		loadViews("Chars", "Octal", "Hex Short", "Hex Integer", "Hex Long", "Hex Long Long");
 	}
 }

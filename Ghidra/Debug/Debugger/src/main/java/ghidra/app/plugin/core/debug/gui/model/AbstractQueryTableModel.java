@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,8 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.trace.model.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
@@ -56,11 +58,19 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 			if (query != null && query.involves(span, value)) {
 				reload(); // Can I be more surgical?
 			}
+
+			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+				fireTableDataChanged();
+			}
 		}
 
 		protected void valueDeleted(TraceObjectValue value) {
 			if (query != null && query.involves(span, value)) {
 				reload(); // Can I be more surgical?
+			}
+
+			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+				fireTableDataChanged();
 			}
 		}
 
@@ -302,6 +312,7 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 	@Override
 	protected void doLoad(Accumulator<T> accumulator, TaskMonitor monitor)
 			throws CancelledException {
+		Trace trace = this.trace;
 		if (trace == null || query == null || trace.getObjectManager().getRootSchema() == null) {
 			return;
 		}

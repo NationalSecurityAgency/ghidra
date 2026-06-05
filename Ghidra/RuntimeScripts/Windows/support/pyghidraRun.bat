@@ -1,3 +1,18 @@
+:: ###
+:: IP: GHIDRA
+::
+:: Licensed under the Apache License, Version 2.0 (the "License");
+:: you may not use this file except in compliance with the License.
+:: You may obtain a copy of the License at
+::
+::      http://www.apache.org/licenses/LICENSE-2.0
+::
+:: Unless required by applicable law or agreed to in writing, software
+:: distributed under the License is distributed on an "AS IS" BASIS,
+:: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+:: See the License for the specific language governing permissions and
+:: limitations under the License.
+:: ##
 :: PyGhidra launch
 
 @echo off
@@ -7,8 +22,11 @@ setlocal enabledelayedexpansion
 set DOUBLE_CLICKED=n
 for /f "tokens=2" %%# in ("%cmdcmdline%") do if /i "%%#" equ "/c" set DOUBLE_CLICKED=y
 
-:: Add optional JVM args inside the quotes
-set VMARG_LIST=-Dsun.java2d.dpiaware=true
+:: Since JPype doesn't seem to pick up JDK_JAVA_OPTIONS automatically, include it ourselves
+set VMARG_LIST=%JDK_JAVA_OPTIONS%
+
+:: Apply Java options from externally set environment variables
+set VMARG_LIST=%VMARG_LIST% %GHIDRA_JAVA_OPTIONS% %PYGHIDRA_JAVA_OPTIONS% -Dsun.java2d.dpiaware=true
 
 :: Make sure Python3 is installed
 set PYTHON=py

@@ -19,7 +19,7 @@ import ghidra.app.cmd.data.rtti.RttiUtil;
 import ghidra.app.util.datatype.microsoft.DataValidationOptions;
 import ghidra.app.util.datatype.microsoft.MSDataTypeUtils;
 import ghidra.app.util.demangler.*;
-import ghidra.app.util.demangler.microsoft.MicrosoftDemangler;
+import ghidra.app.util.demangler.microsoft.*;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -28,11 +28,9 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.DumbMemBufferImpl;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -54,6 +52,7 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 
 	private String originalTypeName;
 	private DemangledDataType demangledDataType;
+	private DemangledDataType originalDemangledDataType;
 	private boolean hasProcessedName = false;
 	private Namespace namespace;
 
@@ -446,7 +445,9 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 		if (value instanceof String) {
 			originalTypeName = (String) value;
 			// The returned demangledDataType an be null
-			demangledDataType = getDemangledDataType(originalTypeName, program, nameAddress);
+			demangledDataType = getDemangledDataType(originalTypeName, program, nameAddress, false);
+			originalDemangledDataType =
+				getDemangledDataType(originalTypeName, program, nameAddress, true);
 		}
 		hasProcessedName = true;
 		return originalTypeName;
@@ -473,6 +474,10 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 		return hasComplexType() ? demangledDataType.getOriginalDemangled() : null;
 	}
 
+	public String getOriginalTypename() {
+		return originalTypeName;
+	}
+
 	/**
 	 * Gets just the name of the type descriptor.
 	 * @return the name of the thing referred to by this descriptor, or null if it couldn't
@@ -497,6 +502,18 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	 */
 	public String getDescriptorTypeNamespace() {
 		return hasComplexType() ? demangledDataType.getNamespaceString() : null;
+	}
+
+	/**
+	 * Gets the full pathname (includes namespaces) of the original type descriptor.
+	 * This means a namespace that was not modified by the demangler output options.
+	 * Does not currently account or anonymous namespace replacement.
+	 * Will return the modified namespace if the non-modified one cannot be reproduced.
+	 * This may include modifiers. It doesn't contain the refType.
+	 * @return the full pathname or null.
+	 */
+	public String getOriginalDescriptorTypeNamespace() {
+		return hasComplexType() ? originalDemangledDataType.getNamespaceString() : null;
 	}
 
 	/**
@@ -583,6 +600,23 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 		Program program = getProgram();
 		namespace = DemangledObject.createNamespace(program, demangledDataType,
 			program.getGlobalNamespace(), false);
+
+		// if for some reason the mangled name can't be demangled, use the mangled name
+		if (namespace.isGlobal()) {
+			try {
+				namespace = program.getSymbolTable()
+						.getOrCreateNameSpace(program.getGlobalNamespace(), originalTypeName,
+							SourceType.IMPORTED);
+			}
+			catch (DuplicateNameException e) {
+				// ok if it is duplicate as it was likely created in another rtti handling method
+			}
+			catch (InvalidInputException e) {
+				Msg.error(TypeDescriptorModel.class,
+					"Failed to create namespace: " + e.getMessage());
+				namespace = null;
+			}
+		}
 		return namespace;
 	}
 
@@ -599,14 +633,17 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	 * @param mangledString the mangled string to be demangled
 	 * @param program the program
 	 * @param address address of the mangled string
+	 * @param useOriginalOptions {@code true} to use original underlying demangler output options
 	 * @return the DemangledDataType or null if couldn't demangle or is not a class type
 	 */
 	private static DemangledDataType getDemangledDataType(String mangledString, Program program,
-			Address address) {
+			Address address, boolean useOriginalOptions) {
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
 		try {
-			MangledContext mangledContext =
-				demangler.createMangledContext(mangledString, null, program, address);
+			MicrosoftDemanglerOptions mdo =
+				useOriginalOptions ? MicrosoftDemanglerOptions.DEFAULT_UNDERLYING_OUTPUT : null;
+			MicrosoftMangledContext mangledContext =
+				demangler.createMangledContext(mangledString, mdo, program, address);
 			DemangledDataType demangledType = demangler.demangleType(mangledContext);
 			if (isPermittedType(demangledType)) {
 				return demangledType;

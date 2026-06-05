@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,25 +19,41 @@ public interface AddressFactory {
 
 	/**
 	 * Create an address from String. Attempts to use the "default" address space
-	 * first.  Otherwise loops through each addressSpace, returning the first valid
-	 * address that any addressSpace creates from the string.
-	 * Returns an Address if the string is valid, otherwise null.
+	 * first.  Otherwise factory will loop through each defined address space, returning the first 
+	 * valid address that any address space creates from the string.  For this reason, only the
+	 * default memory address space should be specified with an offset  only.  All other
+	 * address space addresses should be specified with the space name prefix and hex offset
+	 * (e.g., MYSPACE:abcd).  In addition to all define memory and overlay address spaces, 
+	 * special purpose address spaces known to this address factory will be considered 
+	 * (e.g., CONST, UNIQUE, etc.).
+	 * @param addrString the address string to parse.
+	 * @return an Address if the string is valid, otherwise null.
 	 */
 	public Address getAddress(String addrString);
 
 	/**
-	 * Generates all reasonable addresses that can be interpreted from
-	 * the given string.  Each Address Space is given a change to parse
-	 * the string and all the valid results are return in the array.
+	 * Generates all reasonable memory addresses that can be interpreted from the given string.  
+	 * Each defined memory Address Space is given a change to parse the string and all the valid 
+	 * results are returned in the array.
+	 * <p>
+	 * NOTE: Only when unable to parse any valid loaded memory addresses (see 
+	 * {@link AddressSpace#isLoadedMemorySpace()}) will one uniquely specified non-loaded memory 
+	 * address be considered and returned.
+	 * 
 	 * @param addrString the address string to parse.
 	 * @return Address[] The list of addresses generated from the string.
 	 */
 	public Address[] getAllAddresses(String addrString);
 
 	/**
-	 * Generates all reasonable addresses that can be interpreted from
-	 * the given string.  Each Address Space is given a change to parse
-	 * the string and all the valid results are return in the array.
+	 * Generates all reasonable memory addresses that can be interpreted from the given string.  
+	 * Each defined memory Address Space is given a change to parse the string and all the valid 
+	 * results are returned in the array.
+	 * <p>
+	 * NOTE: Only when unable to parse any valid loaded memory addresses (see 
+	 * {@link AddressSpace#isLoadedMemorySpace()}) will one uniquely specified non-loaded memory 
+	 * address be considered and returned. 
+	 *  
 	 * @param addrString the address string to parse.
 	 * @param caseSensitive determines if addressSpace names must be case sensitive to match. 
 	 * @return Address[] The list of addresses generated from the string.
@@ -45,12 +61,12 @@ public interface AddressFactory {
 	public Address[] getAllAddresses(String addrString, boolean caseSensitive);
 
 	/**
-	 * Returns the default AddressSpace
+	 * {@return the default AddressSpace}
 	 */
 	public AddressSpace getDefaultAddressSpace();
 
 	/**
-	 * Get the array of all "physical" AddressSpaces.
+	 * {@return the array of all "physical" AddressSpaces.}
 	 */
 	public AddressSpace[] getAddressSpaces();
 
@@ -61,18 +77,20 @@ public interface AddressFactory {
 	public AddressSpace[] getAllAddressSpaces();
 
 	/**
-	 * Returns the space with the given name or null if no space
-	 * exists with that name.
+	 * {@return the space with the given name or null if no space
+	 * exists with that name.}
+	 * @param name address space name
 	 */
 	public AddressSpace getAddressSpace(String name);
 
 	/**
-	 * Returns the space with the given spaceID or null if none exists
+	 * {@return the space with the given spaceID or null if none exists}
+	 * @param spaceID address space unique ID
 	 */
 	public AddressSpace getAddressSpace(int spaceID);
 
 	/**
-	 * Returns the number of physical AddressSpaces.
+	 * {@return the number of physical AddressSpaces.}
 	 */
 	public int getNumAddressSpaces();
 
@@ -84,14 +102,11 @@ public interface AddressFactory {
 	 */
 	public boolean isValidAddress(Address addr);
 
-	/**
-	 * @see java.lang.Object#equals(Object)
-	 */
 	@Override
 	public boolean equals(Object o);
 
 	/**
-	 * Returns the index (old encoding) for the given address.
+	 * {@return the index (old encoding) for the given address.}
 	 * @param addr the address to encode.
 	 */
 	public long getIndex(Address addr);
@@ -119,22 +134,22 @@ public interface AddressFactory {
 	public Address getAddress(int spaceID, long offset);
 
 	/**
-	 * Returns the "constant" address space.
+	 * {@return the "constant" address space.}
 	 */
 	public AddressSpace getConstantSpace();
 
 	/**
-	 * Returns the "unique" address space.
+	 * {@return the "unique" address space.}
 	 */
 	public AddressSpace getUniqueSpace();
 
 	/**
-	 * Returns the "stack" address space.
+	 * {@return the "stack" address space.}
 	 */
 	public AddressSpace getStackSpace();
 
 	/**
-	 * Returns the "register" address space.
+	 * {@return the "register" address space.}
 	 */
 	public AddressSpace getRegisterSpace();
 
@@ -157,18 +172,18 @@ public interface AddressFactory {
 	public AddressSet getAddressSet(Address min, Address max);
 
 	/**
-	 * Returns an addressSet containing all possible "real" addresses for this address factory.
+	 * {@return an addressSet containing all possible "real" addresses for this address factory.}
 	 */
 	public AddressSet getAddressSet();
 
 	/**
-	 * Returns the address using the old encoding format.
+	 * {@return the address using the old encoding format.}
 	 * @param value to decode into an address.
 	 */
 	public Address oldGetAddressFromLong(long value);
 
 	/**
-	 * Returns true if there is more than one memory address space
+	 * {@return true if there is more than one memory address space}
 	 */
 	public boolean hasMultipleMemorySpaces();
 

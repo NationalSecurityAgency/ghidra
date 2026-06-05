@@ -77,8 +77,8 @@ details.
 
 ## Version
 
-The current BSim plug-in was tested with Elasticsearch version `8.8.1`. A change to the 
-Elasticsearch scripting interface, starting with version `7.15`, makes the BSim plug-in incompatible
+The current BSim plug-in was tested with Elasticsearch version `8.19.7`. A change to the 
+Elasticsearch scripting interface, starting with version `8.16`, makes the BSim plug-in incompatible
 with previous versions, but the lsh plug-in jars may work without change across later Elasticsearch 
 versions.
 
@@ -93,7 +93,7 @@ elasticsearch/plugin-descriptor.properties
 
 The file format is fairly simple: edit the line
 ```
-elasticsearch.version=8.8.1
+elasticsearch.version=8.19.7
 ```
 
 The plugin may work with other nearby versions, but proceed at your own risk.

@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,11 +15,11 @@
  */
 package help.validator;
 
-import help.validator.model.AnchorDefinition;
-import help.validator.model.HelpTopic;
-
 import java.nio.file.Path;
 import java.util.List;
+
+import help.validator.model.AnchorDefinition;
+import help.validator.model.HelpTopic;
 
 public class DuplicateAnchorCollectionByHelpTopic implements DuplicateAnchorCollection,
 		Comparable<DuplicateAnchorCollectionByHelpTopic> {
@@ -35,7 +34,7 @@ public class DuplicateAnchorCollectionByHelpTopic implements DuplicateAnchorColl
 
 	@Override
 	public String toString() {
-		return "Duplicate anchors for topic\n\ttopic file:  " + topic.getTopicFile() + "\n" +
+		return "Duplicate anchors for topic\n\ttopic dir:  " + topic.getTopicDir() + "\n" +
 			getAnchorsAsString();
 	}
 
@@ -49,8 +48,8 @@ public class DuplicateAnchorCollectionByHelpTopic implements DuplicateAnchorColl
 
 	@Override
 	public int compareTo(DuplicateAnchorCollectionByHelpTopic o) {
-		Path topicFile1 = topic.getTopicFile();
-		Path topicFile2 = o.topic.getTopicFile();
-		return topicFile1.compareTo(topicFile2);
+		Path topicDir1 = topic.getTopicDir();
+		Path topicDir2 = o.topic.getTopicDir();
+		return topicDir1.compareTo(topicDir2);
 	}
 }

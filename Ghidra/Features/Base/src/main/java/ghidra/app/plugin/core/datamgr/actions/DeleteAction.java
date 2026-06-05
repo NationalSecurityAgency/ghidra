@@ -110,7 +110,7 @@ public class DeleteAction extends DockingAction {
 				"Are you sure you want to delete selected\n" + 
 				"data types and/or categories?\n\n" + 
 				"Note: Changes may trigger the removal of related\n" + 
-				"data types, components and defined data.)");
+				"data types, components and defined data.");
 		//@formatter:on
 		if (choice != OptionDialog.OPTION_ONE) {
 			return;

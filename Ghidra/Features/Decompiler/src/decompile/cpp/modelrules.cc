@@ -18,6 +18,14 @@
 
 namespace ghidra {
 
+AttributeId ATTRIB_SIZES = AttributeId("sizes",151);
+AttributeId ATTRIB_MAX_PRIMITIVES = AttributeId("maxprimitives", 153);
+AttributeId ATTRIB_REVERSESIGNIF = AttributeId("reversesignif", 154);
+AttributeId ATTRIB_MATCHSIZE = AttributeId("matchsize", 155);
+AttributeId ATTRIB_AFTER_BYTES = AttributeId("afterbytes", 156);
+AttributeId ATTRIB_AFTER_STORAGE = AttributeId("afterstorage", 157);
+AttributeId ATTRIB_FILL_ALTERNATE = AttributeId("fillalternate", 158);
+
 ElementId ELEM_DATATYPE = ElementId("datatype",273);
 ElementId ELEM_CONSUME = ElementId("consume",274);
 ElementId ELEM_CONSUME_EXTRA = ElementId("consume_extra",275);
@@ -30,6 +38,8 @@ ElementId ELEM_VARARGS = ElementId("varargs",281);
 ElementId ELEM_HIDDEN_RETURN = ElementId("hidden_return",282);
 ElementId ELEM_JOIN_PER_PRIMITIVE = ElementId("join_per_primitive",283);
 ElementId ELEM_JOIN_DUAL_CLASS = ElementId("join_dual_class",285);
+ElementId ELEM_EXTRA_STACK = ElementId("extra_stack",287);
+ElementId ELEM_CONSUME_REMAINING = ElementId("consume_remaining",288);
 
 /// \brief Check that a big Primitive properly overlaps smaller Primitives
 ///
@@ -221,9 +231,9 @@ bool PrimitiveExtractor::extract(Datatype *dt,int4 max,int4 offset)
     if (!extract(compDt,max,curOff))
       return false;
     expectedOff = curOff + compDt->getAlignSize();
- }
+  }
   return true;
-}
+} 
 
 /// \param dt is data-type extract from
 /// \param unionIllegal is \b true if unions encountered during extraction are considered illegal
@@ -242,23 +252,52 @@ PrimitiveExtractor::PrimitiveExtractor(Datatype *dt,bool unionIllegal,int offset
 DatatypeFilter *DatatypeFilter::decodeFilter(Decoder &decoder)
 
 {
-  DatatypeFilter *filter;
+  unique_ptr<DatatypeFilter> filter;
   uint4 elemId = decoder.openElement(ELEM_DATATYPE);
   string nm = decoder.readString(ATTRIB_NAME);
   if (nm == "any") {
-    filter = new SizeRestrictedFilter();
+    filter.reset(new SizeRestrictedFilter());
   }
   else if (nm == "homogeneous-float-aggregate") {
-    filter = new HomogeneousAggregate(TYPE_FLOAT,4,0,0);
+    filter.reset(new HomogeneousAggregate(TYPE_FLOAT,4,0,0));
   }
   else {
     // If no other name matches, assume this is a metatype
     type_metatype meta = string2metatype(nm);
-    filter = new MetaTypeFilter(meta);
+    filter.reset(new MetaTypeFilter(meta));
   }
   filter->decode(decoder);
   decoder.closeElement(elemId);
-  return filter;
+  return filter.release();
+}
+
+/// Parse the given string as a comma or space separated list of decimal integers,
+/// populating the \b sizes set.
+/// \param str is the given string to parse
+void SizeRestrictedFilter::initFromSizeList(const string &str)
+
+{
+  istringstream s(str);
+  int4 val;
+  for(;;) {
+    val = -1;
+    s >> ws;
+    if (s.eof()) break;
+    if (s.peek() == ',') {
+      char punc;
+      s >> punc >> ws;
+    }
+    s >> val;
+    if (val <= 0)
+      throw DecoderError("Bad filter size");
+    sizes.insert(val);
+  }
+  if (!sizes.empty()) {
+    minSize = *sizes.begin();
+    set<int4>::const_iterator iter = sizes.end();
+    --iter;
+    maxSize = *iter;
+  }
 }
 
 SizeRestrictedFilter::SizeRestrictedFilter(int4 min,int4 max)
@@ -272,14 +311,26 @@ SizeRestrictedFilter::SizeRestrictedFilter(int4 min,int4 max)
   }
 }
 
+SizeRestrictedFilter::SizeRestrictedFilter(const SizeRestrictedFilter &op2)
+
+{
+  minSize = op2.minSize;
+  maxSize = op2.maxSize;
+  sizes = op2.sizes;
+}
+
 /// If \b maxSize is not zero, the data-type is checked to see if its size in bytes
-/// falls between \b minSize and \b maxSize inclusive.
+/// falls between \b minSize and \b maxSize inclusive. If enumerated sizes are present,
+/// also check that the particular size is in the enumerated set.
 /// \param dt is the data-type to test
 /// \return \b true if the data-type meets the size restrictions
 bool SizeRestrictedFilter::filterOnSize(Datatype *dt) const
 
 {
   if (maxSize == 0) return true;	// maxSize of 0 means no size filtering is performed
+  if (!sizes.empty()) {
+    return (sizes.find(dt->getSize()) != sizes.end());
+  }
   return (dt->getSize() >= minSize && dt->getSize() <= maxSize);
 }
 
@@ -289,10 +340,22 @@ void SizeRestrictedFilter::decode(Decoder &decoder)
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
     if (attribId == 0) break;
-    if (attribId == ATTRIB_MINSIZE)
+    if (attribId == ATTRIB_MINSIZE) {
+      if (!sizes.empty())
+	throw DecoderError("Mixing \"sizes\" with \"minsize\" and \"maxsize\"");
       minSize = decoder.readUnsignedInteger();
-    else if (attribId == ATTRIB_MAXSIZE)
+    }
+    else if (attribId == ATTRIB_MAXSIZE) {
+      if (!sizes.empty())
+	throw DecoderError("Mixing \"sizes\" with \"minsize\" and \"maxsize\"");
       maxSize = decoder.readUnsignedInteger();
+    }
+    else if (attribId == ATTRIB_SIZES) {
+      if (minSize != 0 || maxSize != 0)
+	throw DecoderError("Mixing \"sizes\" with \"minsize\" and \"maxsize\"");
+      string sizeList = decoder.readString();
+      initFromSizeList(sizeList);
+    }
   }
   if (maxSize == 0 && minSize >= 0) {
     // If no ATTRIB_MAXSIZE is given, assume there is no upper bound on size
@@ -312,6 +375,12 @@ MetaTypeFilter::MetaTypeFilter(type_metatype meta,int4 min,int4 max)
   metaType = meta;
 }
 
+MetaTypeFilter::MetaTypeFilter(const MetaTypeFilter &op2)
+  : SizeRestrictedFilter(op2)
+{
+  metaType = op2.metaType;
+}
+
 bool MetaTypeFilter::filter(Datatype *dt) const
 
 {
@@ -323,14 +392,21 @@ HomogeneousAggregate::HomogeneousAggregate(type_metatype meta)
 
 {
   metaType = meta;
-  maxPrimitives = 2;
+  maxPrimitives = 4;
 }
 
-HomogeneousAggregate::HomogeneousAggregate(type_metatype meta,int4 maxPrim,int4 min,int4 max)
-  : SizeRestrictedFilter(min,max)
+HomogeneousAggregate::HomogeneousAggregate(type_metatype meta,int4 maxPrim,int4 minSize,int4 maxSize)
+  : SizeRestrictedFilter(minSize, maxSize)
 {
   metaType = meta;
   maxPrimitives = maxPrim;
+}
+
+HomogeneousAggregate::HomogeneousAggregate(const HomogeneousAggregate &op2)
+  : SizeRestrictedFilter(op2)
+{
+  metaType = op2.metaType;
+  maxPrimitives = op2.maxPrimitives;
 }
 
 bool HomogeneousAggregate::filter(Datatype *dt) const
@@ -339,7 +415,7 @@ bool HomogeneousAggregate::filter(Datatype *dt) const
   type_metatype meta = dt->getMetatype();
   if (meta != TYPE_ARRAY && meta != TYPE_STRUCT)
     return false;
-  PrimitiveExtractor primitives(dt,true,0,4);
+  PrimitiveExtractor primitives(dt,true,0,maxPrimitives);
   if (!primitives.isValid() || primitives.size() == 0 || primitives.containsUnknown()
       || !primitives.isAligned() || primitives.containsHoles())
     return false;
@@ -353,6 +429,21 @@ bool HomogeneousAggregate::filter(Datatype *dt) const
   return true;
 }
 
+void HomogeneousAggregate::decode(Decoder &decoder)
+{
+	SizeRestrictedFilter::decode(decoder);
+	decoder.rewindAttributes();
+	for(;;) {
+    	uint4 attribId = decoder.getNextAttributeId();
+    	if (attribId == 0) break;
+    	if (attribId == ATTRIB_MAX_PRIMITIVES) {
+			uint4 xmlMaxPrim = decoder.readUnsignedInteger();
+			if (xmlMaxPrim > 0) maxPrimitives = xmlMaxPrim;
+		}
+	}
+	
+}
+
 /// If the next element is a qualifier filter, decode it from the stream and return it.
 /// Otherwise return null
 /// \param decoder is the given stream decoder
@@ -360,18 +451,18 @@ bool HomogeneousAggregate::filter(Datatype *dt) const
 QualifierFilter *QualifierFilter::decodeFilter(Decoder &decoder)
 
 {
-  QualifierFilter *filter;
+  unique_ptr<QualifierFilter> filter;
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_VARARGS)
-    filter = new VarargsFilter();
+    filter.reset(new VarargsFilter());
   else if (elemId == ELEM_POSITION)
-    filter = new PositionMatchFilter(-1);
+    filter.reset(new PositionMatchFilter(-1));
   else if (elemId == ELEM_DATATYPE_AT)
-    filter = new DatatypeMatchFilter();
+    filter.reset(new DatatypeMatchFilter());
   else
     return (QualifierFilter *)0;
   filter->decode(decoder);
-  return filter;
+  return filter.release();
 }
 
 /// The AndFilter assumes ownership of all the filters in the array and the original vector is cleared
@@ -501,37 +592,55 @@ bool AssignAction::fillinOutputMap(ParamActive *active) const
 AssignAction *AssignAction::decodeAction(Decoder &decoder,const ParamListStandard *res)
 
 {
-  AssignAction *action;
+  unique_ptr<AssignAction> action;
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_GOTO_STACK)
-    action = new GotoStack(res,0);
+    action.reset(new GotoStack(res,0));
   else if (elemId == ELEM_JOIN) {
-    action = new MultiSlotAssign(res);
+    action.reset(new MultiSlotAssign(res));
   }
   else if (elemId == ELEM_CONSUME) {
-    action = new ConsumeAs(TYPECLASS_GENERAL,res);
+    action.reset(new ConsumeAs(TYPECLASS_GENERAL,res));
   }
   else if (elemId == ELEM_CONVERT_TO_PTR) {
-    action = new ConvertToPointer(res);
+    action.reset(new ConvertToPointer(res));
   }
   else if (elemId == ELEM_HIDDEN_RETURN) {
-    action = new HiddenReturnAssign(res,hiddenret_specialreg);
+    action.reset(new HiddenReturnAssign(res,hiddenret_specialreg));
   }
   else if (elemId == ELEM_JOIN_PER_PRIMITIVE) {
-    bool consumeMostSig = false;
-    AddrSpace *spc = res->getSpacebase();
-    if (spc != (AddrSpace *)0 && spc->isBigEndian()) {
-      consumeMostSig = true;
-     }
-    action = new MultiMemberAssign(TYPECLASS_GENERAL,false,consumeMostSig,res);
+    action.reset(new MultiMemberAssign(TYPECLASS_GENERAL,false,res->isBigEndian(),res));
   }
   else if (elemId == ELEM_JOIN_DUAL_CLASS) {
-    action = new MultiSlotDualAssign(res);
+    action.reset(new MultiSlotDualAssign(res));
   }
   else
     throw DecoderError("Expecting model rule action");
   action->decode(decoder);
-  return action;
+  return action.release();
+}
+
+/// \brief Read the next model rule precondition element from the stream
+///
+/// Allocate the precondition object corresponding to the element and configure it.
+/// If the next element is not a precondition, return null.
+/// \param decoder is the stream decoder
+/// \param res is the resource set for the new precondition
+/// \return the new precondition, or null if no more preconditions are in the stream
+AssignAction *AssignAction::decodePrecondition(Decoder &decoder,const ParamListStandard *res)
+{
+  unique_ptr<AssignAction> action;
+  uint4 elemId = decoder.peekElement();
+  
+  if (elemId == ELEM_CONSUME_EXTRA) {
+    action.reset(new ConsumeExtra(res));
+  }
+  else {
+    return (AssignAction *)0;
+  }
+  
+  action->decode(decoder);
+  return action.release();
 }
 
 /// \brief Read the next model rule sideeffect element from the stream
@@ -544,16 +653,44 @@ AssignAction *AssignAction::decodeAction(Decoder &decoder,const ParamListStandar
 AssignAction *AssignAction::decodeSideeffect(Decoder &decoder,const ParamListStandard *res)
 
 {
-  AssignAction *action;
+  unique_ptr<AssignAction> action;
   uint4 elemId = decoder.peekElement();
 
   if (elemId == ELEM_CONSUME_EXTRA) {
-    action = new ConsumeExtra(res);
+    action.reset(new ConsumeExtra(res));
+  }
+  else if (elemId == ELEM_EXTRA_STACK) {
+    action.reset(new ExtraStack(res));
+  }
+  else if (elemId == ELEM_CONSUME_REMAINING) {
+    action.reset(new ConsumeRemaining(res));
   }
   else
     throw DecoderError("Expecting model rule sideeffect");
   action->decode(decoder);
-  return action;
+  return action.release();
+}
+
+/// \brief Truncate a tiling by a given number of bytes
+///
+/// The extra bytes are considered padding and removed from one end of the tiling.
+/// The bytes removed depend on the endianness and how the data is justified within the tiling.
+/// \param pieces is the tiling of 2 or more Varnodes
+/// \param offset is the given number of bytes to truncate
+/// \param isBigEndian is true for big endian architectures
+/// \param consumeMostSig is true if the first tile in the list covers the most significant bytes
+/// \param justifyRight is true if the data is right justified within the tiling
+void AssignAction::justifyPieces(vector<VarnodeData> &pieces,int4 offset,bool isBigEndian,
+				 bool consumeMostSig,bool justifyRight)
+{
+  bool addOffset = isBigEndian ^ consumeMostSig ^ justifyRight;
+  int pos = justifyRight ? 0 : pieces.size() - 1;
+
+  VarnodeData &vndata(pieces[pos]);
+  if (addOffset) {
+    vndata.offset += offset;
+  }
+  vndata.size -= offset;
 }
 
 void GotoStack::initializeEntry(void)
@@ -561,7 +698,7 @@ void GotoStack::initializeEntry(void)
 {
   stackEntry = resource->getStackEntry();
   if (stackEntry == (const ParamEntry *)0)
-    throw LowlevelError("Cannot find matching <pentry> for action: gotostack");
+    throw LowlevelError("Cannot find matching <pentry> for action: goto_stack");
 }
 
 /// \param res is the new resource set to associate with \b this action
@@ -650,9 +787,9 @@ void ConvertToPointer::decode(Decoder &decoder)
 void MultiSlotAssign::initializeEntries(void)
 
 {
-  firstIter = resource->getFirstIter(resourceType);
+  resource->extractTiles(tiles,resourceType);
   stackEntry = resource->getStackEntry();
-  if (firstIter == resource->getEntry().end())
+  if (tiles.size() == 0)
     throw LowlevelError("Could not find matching resources for action: join");
   if (consumeFromStack && stackEntry == (const ParamEntry *)0)
     throw LowlevelError("Cannot find matching <pentry> for action: join");
@@ -664,6 +801,7 @@ MultiSlotAssign::MultiSlotAssign(const ParamListStandard *res)
   : AssignAction(res)
 {
   resourceType = TYPECLASS_GENERAL;	// Join general purpose registers
+  isBigEndian = res->isBigEndian();
   fillinOutputActive = true;
   uint4 listType = res->getType();
   // Consume from stack on input parameters by default
@@ -671,8 +809,7 @@ MultiSlotAssign::MultiSlotAssign(const ParamListStandard *res)
   consumeMostSig = false;
   enforceAlignment = false;
   justifyRight = false;
-  AddrSpace *spc = res->getSpacebase();
-  if (spc != (AddrSpace *)0 && spc->isBigEndian()) {
+  if (isBigEndian) {
     consumeMostSig = true;
     justifyRight = true;
   }
@@ -683,6 +820,7 @@ MultiSlotAssign::MultiSlotAssign(type_class store,bool stack,bool mostSig,bool a
   : AssignAction(res)
 {
   resourceType = store;
+  isBigEndian = res->isBigEndian();
   fillinOutputActive = true;
   consumeFromStack = stack;
   consumeMostSig = mostSig;
@@ -699,38 +837,29 @@ uint4 MultiSlotAssign::assignAddress(Datatype *dt,const PrototypePieces &proto,i
   vector<VarnodeData> pieces;
   int4 sizeLeft = dt->getSize();
   int4 align = dt->getAlignment();
-  list<ParamEntry>::const_iterator iter = firstIter;
-  list<ParamEntry>::const_iterator endIter = resource->getEntry().end();
+  int4 iter = 0;
   if (enforceAlignment) {
     int4 resourcesConsumed = 0;
-    while(iter != endIter) {
-      const ParamEntry &entry( *iter );
-      if (!entry.isExclusion())
-        break;		// Reached end of resource list
-      if (entry.getType() == resourceType && entry.getAllGroups().size() == 1) {	// Single register
-	if (tmpStatus[entry.getGroup()] == 0) {		// Not consumed
-	  int4 regSize = entry.getSize();
-	  if (align <= regSize || (resourcesConsumed % align) == 0)
-	    break;
-	  tmpStatus[entry.getGroup()] = -1;	// Consume unaligned register
-	}
-	resourcesConsumed += entry.getSize();
+    while(iter != tiles.size()) {
+      const ParamEntry *entry = tiles[iter];
+      if (tmpStatus[entry->getGroup()] == 0) {		// Not consumed
+	int4 regSize = entry->getSize();
+	if (align <= regSize || (resourcesConsumed % align) == 0)
+	  break;
+	tmpStatus[entry->getGroup()] = -1;	// Consume unaligned register
       }
+      resourcesConsumed += entry->getSize();
       ++iter;
     }
   }
-  while(sizeLeft > 0 && iter != endIter) {
-    const ParamEntry &entry( *iter );
+  while(sizeLeft > 0 && iter != tiles.size()) {
+    const ParamEntry *entry = tiles[iter];
     ++iter;
-    if (!entry.isExclusion())
-      break;		// Reached end of resource list
-    if (entry.getType() != resourceType || entry.getAllGroups().size() != 1)
-      continue;		// Not a single register from desired resource list
-    if (tmpStatus[entry.getGroup()] != 0)
+    if (tmpStatus[entry->getGroup()] != 0)
       continue;		// Already consumed
-    int4 trialSize = entry.getSize();
-    Address addr = entry.getAddrBySlot(tmpStatus[entry.getGroup()], trialSize,align);
-    tmpStatus[entry.getGroup()] = -1;	// Consume the register
+    int4 trialSize = entry->getSize();
+    Address addr = entry->getAddrBySlot(tmpStatus[entry->getGroup()], trialSize,align);
+    tmpStatus[entry->getGroup()] = -1;	// Consume the register
     pieces.push_back(VarnodeData());
     pieces.back().space = addr.getSpace();
     pieces.back().offset = addr.getOffset();
@@ -742,7 +871,7 @@ uint4 MultiSlotAssign::assignAddress(Datatype *dt,const PrototypePieces &proto,i
     if (!consumeFromStack)
       return fail;
     int4 grp = stackEntry->getGroup();
-    Address addr = stackEntry->getAddrBySlot(tmpStatus[grp],sizeLeft,align);	// Consume all the space we need
+    Address addr = stackEntry->getAddrBySlot(tmpStatus[grp],sizeLeft,align,justifyRight);	// Consume all the space we need
     if (addr.isInvalid())
       return fail;
     pieces.push_back(VarnodeData());
@@ -759,29 +888,14 @@ uint4 MultiSlotAssign::assignAddress(Datatype *dt,const PrototypePieces &proto,i
       tmp.offset = addr.getOffset();
       tmp.size = dt->getSize();
     }
-    else if (justifyRight) {
-      pieces.front().offset += -sizeLeft;	// Initial bytes of first entry are padding
-      pieces.front().size += sizeLeft;
-    }
     else {
-      pieces.back().size += sizeLeft;
+      justifyPieces(pieces, -sizeLeft, isBigEndian, consumeMostSig, justifyRight);
     }
   }
   status = tmpStatus;				// Commit resource usage for all the pieces
   res.flags = 0;
   res.type = dt;
-  if (pieces.size() == 1) {
-    res.addr = pieces[0].getAddr();
-    return success;
-  }
-  if (!consumeMostSig) {
-    vector<VarnodeData> reverse;
-    for(int4 i=pieces.size()-1;i>=0;--i)
-      reverse.push_back(pieces[i]);
-    pieces.swap(reverse);
-  }
-  JoinRecord *joinRecord = tlist.getArch()->findAddJoin(pieces, 0);
-  res.addr = joinRecord->getUnified().getAddr();
+  res.assignAddressFromPieces(pieces, consumeMostSig, tlist.getArch());
   return success;
 }
 
@@ -831,7 +945,10 @@ bool MultiSlotAssign::fillinOutputMap(ParamActive *active) const
       }
     }
   }
-  return (count > 0);
+  if (count==0) return false;
+  if (consumeMostSig)
+    active->setJoinReverse();
+  return true;
 }
 
 void MultiSlotAssign::decode(Decoder &decoder)
@@ -843,8 +960,12 @@ void MultiSlotAssign::decode(Decoder &decoder)
     if (attribId == 0) break;
     if (attribId == ATTRIB_REVERSEJUSTIFY) {
       if (decoder.readBool())
-	justifyRight = !justifyRight;
+	    justifyRight = !justifyRight;
     }
+    else if (attribId == ATTRIB_REVERSESIGNIF) {
+	  if (decoder.readBool()) 
+	    consumeMostSig = !consumeMostSig;
+	}
     else if (attribId == ATTRIB_STORAGE) {
       resourceType = string2typeclass(decoder.readString());
     }
@@ -891,18 +1012,7 @@ uint4 MultiMemberAssign::assignAddress(Datatype *dt,const PrototypePieces &proto
   status = tmpStatus;				// Commit resource usage for all the pieces
   res.flags = 0;
   res.type = dt;
-  if (pieces.size() == 1) {
-    res.addr = pieces[0].getAddr();
-    return success;
-  }
-  if (!consumeMostSig) {
-    vector<VarnodeData> reverse;
-    for(int4 i=pieces.size()-1;i>=0;--i)
-      reverse.push_back(pieces[i]);
-    pieces.swap(reverse);
-  }
-  JoinRecord *joinRecord = tlist.getArch()->findAddJoin(pieces, 0);
-  res.addr = joinRecord->getUnified().getAddr();
+  res.assignAddressFromPieces(pieces, consumeMostSig, tlist.getArch());
   return success;
 }
 
@@ -930,7 +1040,10 @@ bool MultiMemberAssign::fillinOutputMap(ParamActive *active) const
       return false;			// Entry must be justified
     count += 1;
   }
-  return (count > 0);
+  if (count==0) return false;
+  if (consumeMostSig)
+    active->setJoinReverse();
+  return true;
 }
 
 void MultiMemberAssign::decode(Decoder &decoder)
@@ -951,37 +1064,34 @@ void MultiMemberAssign::decode(Decoder &decoder)
 void MultiSlotDualAssign::initializeEntries(void)
 
 {
-  baseIter = resource->getFirstIter(baseType);
-  altIter = resource->getFirstIter(altType);
-  list<ParamEntry>::const_iterator enditer = resource->getEntry().end();
-  if (baseIter == enditer || altIter == enditer)
+  resource->extractTiles(baseTiles,baseType);
+  resource->extractTiles(altTiles,altType);
+  stackEntry = resource->getStackEntry();
+  
+  if (baseTiles.size() == 0 || altTiles.size() == 0)
     throw LowlevelError("Could not find matching resources for action: join_dual_class");
-  tileSize = (*baseIter).getSize();
-  if (tileSize != (*altIter).getSize())
+  tileSize = baseTiles[0]->getSize();
+  if (tileSize != altTiles[0]->getSize())
     throw LowlevelError("Storage class register sizes do not match for action: join_dual_class");
+  if (consumeFromStack && stackEntry == (const ParamEntry *)0)
+    throw LowlevelError("Cannot find matching stack resource for action: join_dual_class");
 }
 
-/// \brief Get the first unused ParamEntry that matches the given storage class
+/// \brief Get the index of the first unused ParamEntry in the given list
 ///
-/// \param iter points to the starting entry to search
-/// \param storage is the given storage class to match
+/// \param iter is the index of the starting entry to search
+/// \param tiles is the given list to search
 /// \param status is the usage information for the entries
-/// \return the iterator to the unused ParamEntry
-list<ParamEntry>::const_iterator MultiSlotDualAssign::getFirstUnused(list<ParamEntry>::const_iterator iter,
-								     type_class storage,vector<int4> &status) const
+/// \return the index of the unused ParamEntry
+int4 MultiSlotDualAssign::getFirstUnused(int4 iter,const vector<const ParamEntry *> &tiles,vector<int4> &status) const
 {
-  list<ParamEntry>::const_iterator endIter = resource->getEntry().end();
-  for(;iter != endIter; ++iter) {
-    const ParamEntry &entry( *iter );
-    if (!entry.isExclusion())
-      break;		// Reached end of resource list
-    if (entry.getType() != storage || entry.getAllGroups().size() != 1)
-      continue;		// Not a single register from desired resource
-    if (status[entry.getGroup()] != 0)
+  for(;iter != tiles.size(); ++iter) {
+    const ParamEntry *entry = tiles[iter];
+    if (status[entry->getGroup()] != 0)
       continue;		// Already consumed
     return iter;
   }
-  return endIter;
+  return tiles.size();
 }
 
 /// \brief Get the storage class to use for the specific section of the data-type
@@ -1001,6 +1111,8 @@ int4 MultiSlotDualAssign::getTileClass(const PrimitiveExtractor &primitives,int4
   int4 res = 1;
   int4 count = 0;
   int4 endBoundary = off + tileSize;
+  if (index >= primitives.size()) return -1;
+  const PrimitiveExtractor::Primitive &firstPrimitive( primitives.get(index) );
   while(index < primitives.size()) {
     const PrimitiveExtractor::Primitive &element( primitives.get(index) );
     if (element.offset < off) return -1;
@@ -1013,6 +1125,12 @@ int4 MultiSlotDualAssign::getTileClass(const PrimitiveExtractor &primitives,int4
       res = 0;
   }
   if (count == 0) return -1;	// Must be at least one primitive in section
+  if (fillAlternate) { // Only use altType if the tile contains one primitive of exactly the tile size
+	if (count > 1)
+	  res = 0;
+    if (firstPrimitive.dt->getSize() != tileSize)
+      res = 0;
+  }
   return res;
 }
 
@@ -1021,28 +1139,35 @@ int4 MultiSlotDualAssign::getTileClass(const PrimitiveExtractor &primitives,int4
 MultiSlotDualAssign::MultiSlotDualAssign(const ParamListStandard *res)
   : AssignAction(res)
 {
+  isBigEndian = res->isBigEndian();
   fillinOutputActive = true;
   baseType = TYPECLASS_GENERAL;		// Tile from general purpose registers
   altType = TYPECLASS_FLOAT;		// Use specialized registers for floating-point components
+  consumeFromStack = false;
   consumeMostSig = false;
   justifyRight = false;
-  AddrSpace *spc = res->getSpacebase();
-  if (spc != (AddrSpace *)0 && spc->isBigEndian()) {
+  if (isBigEndian) {
     consumeMostSig = true;
     justifyRight = true;
   }
+  fillAlternate = false;
   tileSize = 0;
+  stackEntry = (const ParamEntry *)0;
 }
 
-MultiSlotDualAssign::MultiSlotDualAssign(type_class baseStore,type_class altStore,bool mostSig,bool justRight,
-					 const ParamListStandard *res)
+MultiSlotDualAssign::MultiSlotDualAssign(type_class baseStore,type_class altStore,bool stack,
+                     bool mostSig,bool justRight,bool fillAlt,const ParamListStandard *res)
   : AssignAction(res)
 {
+  isBigEndian = res->isBigEndian();
   fillinOutputActive = true;
   baseType = baseStore;
   altType = altStore;
+  consumeFromStack = stack;
   consumeMostSig = mostSig;
   justifyRight = justRight;
+  fillAlternate = fillAlt;
+  stackEntry = (const ParamEntry *)0;
   initializeEntries();
 }
 
@@ -1056,57 +1181,61 @@ uint4 MultiSlotDualAssign::assignAddress(Datatype *dt,const PrototypePieces &pro
   vector<int4> tmpStatus = status;
   vector<VarnodeData> pieces;
   int4 typeSize = dt->getSize();
+  int4 align = dt->getAlignment();
   int4 sizeLeft = typeSize;
-  list<ParamEntry>::const_iterator iterBase = baseIter;
-  list<ParamEntry>::const_iterator iterAlt = altIter;
-  list<ParamEntry>::const_iterator endIter = resource->getEntry().end();
+  int4 iterBase = 0;
+  int4 iterAlt = 0;
   while(sizeLeft > 0) {
-    list<ParamEntry>::const_iterator iter;
+    const ParamEntry *entry;
     int4 iterType = getTileClass(primitives, typeSize-sizeLeft, primitiveIndex);
     if (iterType < 0)
       return fail;
     if (iterType == 0) {
-      iter = iterBase = getFirstUnused(iterBase, baseType, tmpStatus);
+      iterBase = getFirstUnused(iterBase, baseTiles, tmpStatus);
+      if (iterBase == baseTiles.size()) {
+	    if (!consumeFromStack)
+	      return fail;		// Out of general purpose registers
+        break;
+      }
+      entry = baseTiles[iterBase];
     }
     else {
-      iter = iterAlt = getFirstUnused(iterAlt, altType, tmpStatus);
+      iterAlt = getFirstUnused(iterAlt, altTiles, tmpStatus);
+      if (iterAlt == altTiles.size()) {
+        if (!consumeFromStack)
+          return fail;		// Out of alternate registers
+        break;
+      }
+      entry = altTiles[iterAlt];
     }
-    if (iter == endIter)
-      return fail;	// Out of the particular resource
-    const ParamEntry &entry( *iter );
-    int4 trialSize = entry.getSize();
-    Address addr = entry.getAddrBySlot(tmpStatus[entry.getGroup()], trialSize,1);
-    tmpStatus[entry.getGroup()] = -1;	// Consume the register
+    int4 trialSize = entry->getSize();
+    Address addr = entry->getAddrBySlot(tmpStatus[entry->getGroup()], trialSize,1);
+    tmpStatus[entry->getGroup()] = -1;	// Consume the register
     pieces.push_back(VarnodeData());
     pieces.back().space = addr.getSpace();
     pieces.back().offset = addr.getOffset();
     pieces.back().size = trialSize;
     sizeLeft -= trialSize;
   }
+  if (sizeLeft > 0) {
+	if (!consumeFromStack)
+	  return fail;
+    int4 grp = stackEntry->getGroup();
+    Address addr = stackEntry->getAddrBySlot(tmpStatus[grp],sizeLeft,align,justifyRight);	// Consume all the space we need
+    if (addr.isInvalid())
+      return fail;
+    pieces.push_back(VarnodeData());
+    pieces.back().space = addr.getSpace();
+    pieces.back().offset = addr.getOffset();
+    pieces.back().size = sizeLeft;
+  }
   if (sizeLeft < 0) {			// Have odd data-type size
-    if (justifyRight) {
-      pieces.front().offset += -sizeLeft;	// Initial bytes of first entry are padding
-      pieces.front().size += sizeLeft;
-    }
-    else {
-      pieces.back().size += sizeLeft;
-    }
+    justifyPieces(pieces, -sizeLeft, isBigEndian, consumeMostSig, justifyRight);
   }
   status = tmpStatus;				// Commit resource usage for all the pieces
   res.flags = 0;
   res.type = dt;
-  if (pieces.size() == 1) {
-    res.addr = pieces[0].getAddr();
-    return success;
-  }
-  if (!consumeMostSig) {
-    vector<VarnodeData> reverse;
-    for(int4 i=pieces.size()-1;i>=0;--i)
-      reverse.push_back(pieces[i]);
-    pieces.swap(reverse);
-  }
-  JoinRecord *joinRecord = tlist.getArch()->findAddJoin(pieces, 0);
-  res.addr = joinRecord->getUnified().getAddr();
+  res.assignAddressFromPieces(pieces, consumeMostSig, tlist.getArch());
   return success;
 }
 
@@ -1162,8 +1291,10 @@ bool MultiSlotDualAssign::fillinOutputMap(ParamActive *active) const
       }
     }
   }
-  return (count > 0);
-
+  if (count==0) return false;
+  if (consumeMostSig)
+    active->setJoinReverse();
+  return true;
 }
 
 void MultiSlotDualAssign::decode(Decoder &decoder)
@@ -1174,15 +1305,25 @@ void MultiSlotDualAssign::decode(Decoder &decoder)
     uint4 attribId = decoder.getNextAttributeId();
     if (attribId == 0) break;
     if (attribId == ATTRIB_REVERSEJUSTIFY) {
-      if (decoder.readBool())
-	justifyRight = !justifyRight;
+	  if (decoder.readBool())
+	    justifyRight = !justifyRight;
     }
+    else if (attribId == ATTRIB_REVERSESIGNIF) {
+	  if (decoder.readBool())
+	    consumeMostSig = !consumeMostSig;
+	}
     else if (attribId == ATTRIB_STORAGE || attribId == ATTRIB_A) {
       baseType = string2typeclass(decoder.readString());
     }
     else if (attribId == ATTRIB_B) {
       altType = string2typeclass(decoder.readString());
     }
+    else if (attribId == ATTRIB_STACKSPILL) {
+		consumeFromStack = decoder.readBool();
+	}
+    else if (attribId == ATTRIB_FILL_ALTERNATE) {
+		fillAlternate = decoder.readBool();
+	}
   }
   decoder.closeElement(elemId);
   initializeEntries();			// Need new firstIter
@@ -1270,9 +1411,9 @@ void HiddenReturnAssign::decode(Decoder &decoder)
 void ConsumeExtra::initializeEntries(void)
 
 {
-  firstIter = resource->getFirstIter(resourceType);
-  if (firstIter == resource->getEntry().end())
-    throw LowlevelError("Could not find matching resources for action: consumeextra");
+  resource->extractTiles(tiles,resourceType);
+  if (tiles.size() == 0)
+    throw LowlevelError("Could not find matching resources for action: consume_extra");
 }
 
 ConsumeExtra::ConsumeExtra(const ParamListStandard *res)
@@ -1293,20 +1434,15 @@ ConsumeExtra::ConsumeExtra(type_class store,bool match,const ParamListStandard *
 uint4 ConsumeExtra::assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
 				     vector<int4> &status,ParameterPieces &res) const
 {
-  list<ParamEntry>::const_iterator iter = firstIter;
-  list<ParamEntry>::const_iterator endIter = resource->getEntry().end();
+  int4 iter = 0;
   int4 sizeLeft = dt->getSize();
-  while(sizeLeft > 0 && iter != endIter) {
-    const ParamEntry &entry(*iter);
+  while(sizeLeft > 0 && iter != tiles.size()) {
+    const ParamEntry *entry = tiles[iter];
     ++iter;
-    if (!entry.isExclusion())
-      break;		// Reached end of resource list
-    if (entry.getType() != resourceType || entry.getAllGroups().size() != 1)
-      continue;		// Not a single register in desired list
-    if (status[entry.getGroup()] != 0)
+    if (status[entry->getGroup()] != 0)
       continue;		// Already consumed
-    status[entry.getGroup()] = -1;	// Consume the slot/register
-    sizeLeft -= entry.getSize();
+    status[entry->getGroup()] = -1;	// Consume the slot/register
+    sizeLeft -= entry->getSize();
     if (!matchSize)
       break;		// Only consume a single register
   }
@@ -1317,9 +1453,138 @@ void ConsumeExtra::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_CONSUME_EXTRA);
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    else if (attribId == ATTRIB_STORAGE) {
+		resourceType = string2typeclass(decoder.readString());
+	}
+	else if (attribId == ATTRIB_MATCHSIZE) {
+		matchSize = decoder.readBool();
+	}
+  }
+  decoder.closeElement(elemId);
+  initializeEntries();
+}
+
+
+/// Find the first ParamEntry matching the \b resourceType.
+void ConsumeRemaining::initializeEntries(void)
+
+{
+  resource->extractTiles(tiles,resourceType);
+  if (tiles.size() == 0)
+    throw LowlevelError("Could not find matching resources for action: consume_remaining");
+}
+
+ConsumeRemaining::ConsumeRemaining(const ParamListStandard *res)
+  : AssignAction(res)
+{
+  resourceType = TYPECLASS_GENERAL;
+}
+
+ConsumeRemaining::ConsumeRemaining(type_class store,const ParamListStandard *res)
+  : AssignAction(res)
+{
+  resourceType = store;
+  initializeEntries();
+}
+
+uint4 ConsumeRemaining::assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
+				     vector<int4> &status,ParameterPieces &res) const
+{
+  int4 iter = 0;
+  while(iter != tiles.size()) {
+    const ParamEntry *entry = tiles[iter];
+    ++iter;
+    if (status[entry->getGroup()] != 0)
+      continue;		// Already consumed
+    status[entry->getGroup()] = -1;	// Consume the slot/register
+  }
+  return success;
+}
+
+void ConsumeRemaining::decode(Decoder &decoder)
+
+{
+  uint4 elemId = decoder.openElement(ELEM_CONSUME_REMAINING);
   resourceType = string2typeclass(decoder.readString(ATTRIB_STORAGE));
   decoder.closeElement(elemId);
   initializeEntries();
+}
+
+void ExtraStack::initializeEntry(void)
+
+{
+  stackEntry = resource->getStackEntry();
+  if (stackEntry == (const ParamEntry *)0)
+    throw LowlevelError("Cannot find matching <pentry> for action: extra_stack");
+}
+
+/// \param res is the new resource set to associate with \b this action
+ExtraStack::ExtraStack(const ParamListStandard *res)
+  : AssignAction(res)
+{
+  afterBytes = -1;
+  afterStorage = TYPECLASS_GENERAL;
+  stackEntry = (const ParamEntry *)0;
+}
+
+ExtraStack::ExtraStack(type_class storage, int4 offset, const ParamListStandard *res)
+  : AssignAction(res)
+{
+  afterStorage = storage;
+  afterBytes = offset;
+  stackEntry = (const ParamEntry *)0;
+  initializeEntry();
+}
+
+uint4 ExtraStack::assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlst,
+				vector<int4> &status,ParameterPieces &res) const
+{
+  if (res.addr.getSpace() == stackEntry->getSpace())
+    return success;	// Parameter was already assigned to the stack
+  int4 grp = stackEntry->getGroup();
+  // Check whether we have consumed enough storage to need to adjust the stack yet
+  if (afterBytes > 0) {
+    const list<ParamEntry>& entryList = resource->getEntry();
+    int4 bytesConsumed = 0;
+    list<ParamEntry>::const_iterator iter = entryList.begin();
+    list<ParamEntry>::const_iterator endIter = entryList.end();
+    while (iter != endIter) {
+	  const ParamEntry &entry(*iter);
+	  ++iter;
+	  if (entry.getGroup() == grp || entry.getType() != afterStorage) {
+		continue;
+	  }
+	  if (status[entry.getGroup()] != 0) {
+	    bytesConsumed += entry.getSize();
+	  }
+	}
+	if (bytesConsumed < afterBytes) {
+	  return success;
+	}
+  }
+  // We assign the stack address (but ignore the actual address) updating the status for the stack,
+  // which consumes the stack resources.
+  stackEntry->getAddrBySlot(status[grp],dt->getSize(),dt->getAlignment());
+  return success;
+}
+
+void ExtraStack::decode(Decoder &decoder)
+
+{
+  uint4 elemId = decoder.openElement(ELEM_EXTRA_STACK);
+  for (;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    else if (attribId == ATTRIB_AFTER_BYTES)
+	  afterBytes = decoder.readUnsignedInteger();
+    else if (attribId == ATTRIB_AFTER_STORAGE)
+      afterStorage = string2typeclass(decoder.readString());
+  }
+  decoder.closeElement(elemId);
+  initializeEntry();
 }
 
 ModelRule::ModelRule(const ModelRule &op2,const ParamListStandard *res)
@@ -1337,6 +1602,8 @@ ModelRule::ModelRule(const ModelRule &op2,const ParamListStandard *res)
     assign = op2.assign->clone(res);
   else
     assign = (AssignAction *)0;
+  for (int4 i=0;i<op2.preconditions.size();++i)
+    preconditions.push_back(op2.preconditions[i]->clone(res)); 
   for(int4 i=0;i<op2.sideeffects.size();++i)
     sideeffects.push_back(op2.sideeffects[i]->clone(res));
 }
@@ -1362,6 +1629,8 @@ ModelRule::~ModelRule(void)
     delete qualifier;
   if (assign != (AssignAction *)0)
     delete assign;
+  for(int4 i=0;i<preconditions.size();++i)
+    delete preconditions[i];
   for(int4 i=0;i<sideeffects.size();++i)
     delete sideeffects[i];
 }
@@ -1388,8 +1657,13 @@ uint4 ModelRule::assignAddress(Datatype *dt,const PrototypePieces &proto,int4 po
   if (qualifier != (QualifierFilter *)0 && !qualifier->filter(proto,pos)) {
     return AssignAction::fail;
   }
-  uint4 response = assign->assignAddress(dt,proto,pos,tlist,status,res);
+  vector<int4> tmpStatus = status;
+  for(int4 i =0;i<preconditions.size();++i) {
+	preconditions[i]->assignAddress(dt,proto,pos,tlist,tmpStatus,res);
+  }
+  uint4 response = assign->assignAddress(dt,proto,pos,tlist,tmpStatus,res);
   if (response != AssignAction::fail) {
+	status = tmpStatus;
     for(int4 i=0;i<sideeffects.size();++i) {
       sideeffects[i]->assignAddress(dt,proto,pos,tlist,status,res);
     }
@@ -1419,6 +1693,12 @@ void ModelRule::decode(Decoder &decoder,const ParamListStandard *res)
   }
   else {
     qualifier = new AndFilter(qualifiers);
+  }
+  for (;;) {
+    AssignAction *precond = AssignAction::decodePrecondition(decoder, res);
+    if (precond == (AssignAction *)0)
+      break;
+    preconditions.push_back(precond);
   }
   assign = AssignAction::decodeAction(decoder, res);
   while(decoder.peekElement() != 0) {

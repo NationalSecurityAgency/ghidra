@@ -22,10 +22,9 @@ import docking.action.MenuData;
 import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
-import ghidra.app.plugin.core.decompiler.taint.TaintState;
 import ghidra.app.plugin.core.decompiler.taint.TaintState.MarkType;
-import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.Function;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.util.HelpLocation;
 import ghidra.util.UndefinedFunction;
 
@@ -49,7 +48,7 @@ public class TaintSourceAction extends TaintAbstractDecompilerAction {
 	private TaintPlugin plugin;
 	private MarkType mtype;
 
-	public TaintSourceAction(TaintPlugin plugin, TaintState state) {
+	public TaintSourceAction(TaintPlugin plugin) {
 		super("Mark Source");
 		setHelpLocation(new HelpLocation(TaintPlugin.HELP_LOCATION, "TaintSource"));
 		// Taint Menu  -> Source sub item.
@@ -66,6 +65,10 @@ public class TaintSourceAction extends TaintAbstractDecompilerAction {
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
+		if (plugin.getTaintState() == null) {
+			return false;
+		}
+
 		Function function = context.getFunction();
 		if (function == null || function instanceof UndefinedFunction) {
 			return false;
@@ -84,6 +87,9 @@ public class TaintSourceAction extends TaintAbstractDecompilerAction {
 		if (tokenAtCursor instanceof ClangFuncNameToken) {
 			return true;
 		}
+		if (tokenAtCursor instanceof ClangOpToken) {
+			return true;
+		}
 		if (!tokenAtCursor.isVariableRef()) {
 			return false;
 		}
@@ -92,6 +98,26 @@ public class TaintSourceAction extends TaintAbstractDecompilerAction {
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		mark(context.getTokenAtCursor());
+		ClangToken tokenAtCursor = context.getTokenAtCursor();
+		if (tokenAtCursor instanceof ClangOpToken) {
+			markOp(tokenAtCursor);
+		}
+		else {
+			mark(tokenAtCursor);
+		}
+	}
+
+	private void markOp(ClangToken tokenAtCursor) {
+		ClangLine line = tokenAtCursor.getLineParent();
+		for (ClangToken token : line.getAllTokens()) {
+			if (token instanceof ClangVariableToken varToken) {
+				if (varToken.isVariableRef()) {
+					Varnode varnode = varToken.getVarnode();
+					if (!varnode.isConstant()) {
+						mark(varToken);
+					}
+				}
+			}
+		}
 	}
 }

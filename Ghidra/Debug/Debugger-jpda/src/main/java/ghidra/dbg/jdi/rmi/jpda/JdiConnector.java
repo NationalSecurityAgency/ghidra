@@ -21,12 +21,12 @@ import java.util.Map;
 import com.sun.jdi.*;
 
 import ghidra.app.plugin.core.debug.client.tracermi.*;
-import ghidra.app.plugin.core.debug.client.tracermi.RmiMethodRegistry.TraceMethod;
+import ghidra.app.plugin.core.debug.client.tracermi.RmiMethodRegistry.TraceRmiMethod;
 import ghidra.dbg.jdi.manager.impl.DebugStatus;
 import ghidra.dbg.jdi.manager.impl.JdiManagerImpl;
-import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
-import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.*;
+import ghidra.trace.model.target.schema.PrimitiveTraceObjectSchema;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.util.Msg;
 
 public class JdiConnector {
@@ -92,7 +92,7 @@ public class JdiConnector {
 	private final Map<ReferenceType, AddressRange> cpAddressRangeByClass = new HashMap<>();
 
 	private final Map<String, DebugStatus> returnStatusMap = new HashMap<>();
-	final TargetObjectSchema rootSchema;
+	final TraceObjectSchema rootSchema;
 	private Map<String, String> env;
 
 	public JdiConnector(JdiManagerImpl manager, Map<String, String> env) {
@@ -144,19 +144,9 @@ public class JdiConnector {
 	}
 
 	public void registerRemoteMethod(JdiMethods methods, java.lang.reflect.Method m, String name) {
-		String action = name;
-		String display = name;
-		String description = name;
-		TraceMethod annot = m.getAnnotation(TraceMethod.class);
+		TraceRmiMethod annot = m.getAnnotation(TraceRmiMethod.class);
 		if (annot == null) {
 			return;
-		}
-		action = annot.action();
-		if (annot.display() != null) {
-			display = annot.display();
-		}
-		if (annot.description() != null) {
-			description = annot.description();
 		}
 		int pcount = m.getParameterCount();
 		if (pcount < 1) {
@@ -166,9 +156,9 @@ public class JdiConnector {
 		 * TODO: The return type should be reflected from the method; however, none of the parameter
 		 * collection routines currently use the return type, so just use ANY for now.
 		 */
-		TargetObjectSchema schema = EnumerableTargetObjectSchema.ANY;
-		RmiRemoteMethod method = new RmiRemoteMethod(rootSchema.getContext(), name, action, display,
-			description, schema, methods, m);
+		TraceObjectSchema schema = PrimitiveTraceObjectSchema.ANY;
+		RmiRemoteMethod method = new RmiRemoteMethod(rootSchema.getContext(), name, annot.action(),
+			annot.display(), annot.description(), annot.okText(), annot.icon(), schema, methods, m);
 		remoteMethodRegistry.putMethod(name, method);
 	}
 

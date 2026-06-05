@@ -430,7 +430,7 @@ macro complement(op)
 {
         $(V) = 0;
         $(C) = 1;
-        A = ~A;
+        op = ~op;
         setNZFlags(op);
 }
 

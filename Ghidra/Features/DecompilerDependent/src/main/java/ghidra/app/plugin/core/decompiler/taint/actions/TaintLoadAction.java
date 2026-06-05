@@ -27,7 +27,6 @@ import generic.theme.GIcon;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
 import ghidra.app.plugin.core.decompiler.taint.TaintState;
-import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
@@ -47,12 +46,11 @@ import ghidra.util.HelpLocation;
 public class TaintLoadAction extends TaintAbstractDecompilerAction {
 
 	private TaintPlugin plugin;
-	private TaintState state;
 
 	private static String loadSarifFileIconString = "icon.fsbrowser.file.extension.obj";
 	private static Icon loadSarifFileIcon = new GIcon(loadSarifFileIconString);
 
-	public TaintLoadAction(TaintPlugin plugin, TaintState state) {
+	public TaintLoadAction(TaintPlugin plugin) {
 		super("Load SARIF file");
 		setHelpLocation(new HelpLocation(TaintPlugin.HELP_LOCATION, "TaintLoadSarif"));
 
@@ -60,7 +58,6 @@ public class TaintLoadAction extends TaintAbstractDecompilerAction {
 		setToolBarData(new ToolBarData(loadSarifFileIcon));
 
 		this.plugin = plugin;
-		this.state = state;
 	}
 
 	@Override
@@ -78,6 +75,7 @@ public class TaintLoadAction extends TaintAbstractDecompilerAction {
 		// Pop a file dialog to select the SARIF file.
 
 		// need to pop-up a file chooser dialog.
+		TaintState state = plugin.getTaintState();
 		GhidraFileChooser file_chooser = new GhidraFileChooser(tool.getToolFrame());
 		file_chooser.setCurrentDirectory(new File(state.getOptions().getTaintEnginePath()));
 		file_chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);

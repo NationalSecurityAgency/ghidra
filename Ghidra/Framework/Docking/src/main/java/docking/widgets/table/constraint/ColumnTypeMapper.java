@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ import utilities.util.reflection.ReflectionUtilities;
  * want more than that, you could instead create a new {@link ColumnConstraint} that filters on
  * more attributes of a Person.  See {@link NumberColumnConstraintProvider} for an example
  * of how to create these ColumnConstraints and their associated editors.
- * <P>
+ * 
  * @param <T> The column type that has no inherent {@link ColumnConstraint} for filtering that
  * column type.
  * @param <M> The column type to map to that already has {@link ColumnConstraint}s defined

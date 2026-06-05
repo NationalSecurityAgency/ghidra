@@ -22,9 +22,9 @@ import ghidra.program.model.data.BitFieldDataType;
 import ghidra.program.model.data.DataType;
 
 /**
- * <code>BitFieldGroupCompositeMember</code> provides the ability to collect related 
+ * <code>BitFieldGroupCompositeMember</code> provides the ability to collect related
  * {@link DefaultCompositeMember} members within a group during the composite reconstruction
- * process.  
+ * process.
  */
 public class BitFieldGroupCompositeMember extends CompositeMember {
 
@@ -128,7 +128,7 @@ public class BitFieldGroupCompositeMember extends CompositeMember {
 	}
 
 	@Override
-	void finalizeDataType(int preferredSize) {
+	void finalizeDataType(int preferredSize, boolean packingDisabled) {
 		return; // nothing to do
 	}
 
@@ -149,8 +149,8 @@ public class BitFieldGroupCompositeMember extends CompositeMember {
 
 	/**
 	 * Add a new member to the end of this bit-field group.  The caller should ensure that the
-	 * specified member is a suitable addition to this group (must be single bit field whose 
-	 * member offset and length match this group's). 
+	 * specified member is a suitable addition to this group (must be single bit field whose
+	 * member offset and length match this group's).
 	 * @param member bit-field member (must have data type of BitFieldDataType).
 	 * @throws IllegalArgumentException if specified member is not suitable for this group.
 	 */

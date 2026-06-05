@@ -84,12 +84,23 @@ public:
 /// a single string into memory.  If the transform() method is called, an explicit string is constructed, and
 /// the STOREs are replaced with a \b strncpy or similar CALLOTHER that takes the string as its source input.
 class HeapSequence : public ArraySequence {
+  /// \brief Helper class containing Varnode pairs that flow across a sequence of INDIRECTs
+  class IndirectPair {
+  public:
+    Varnode *inVn;	///< Input to INDIRECTs
+    Varnode *outVn;	///< Output of INDIRECTs
+    IndirectPair(Varnode *in,Varnode *out) { inVn = in; outVn = out; }	///< Constructor
+    void markDuplicate(void) { inVn = (Varnode *)0; }			///< Note that \b this is a duplicate of another pair
+    bool isDuplicate(void) const { return (inVn == (Varnode *)0); }	///< Return \b true if \b this is marked as a duplicate
+    static bool compareOutput(const IndirectPair *a,const IndirectPair *b);	///< Compare pairs by output storage
+  };
   Varnode *basePointer;			///< Pointer that sequence is stored to
+  PcodeOp *immedRead;			///< Op immediately reading basePointer
   uint8 baseOffset;			///< Offset relative to pointer to root STORE
   AddrSpace *storeSpace;		///< Address space being STOREed to
   int4 ptrAddMult;			///< Required multiplier for PTRADD ops
   vector<Varnode *> nonConstAdds;	///< non-constant Varnodes being added into pointer calculation
-  void findBasePointer(Varnode *initPtr);	///< Find the base pointer for the sequence
+  void findBasePointer(void);		///< Find the base pointer for the sequence
   void findDuplicateBases(vector<Varnode *> &duplist);	///< Find any duplicates of \b basePointer
   void findInitialStores(vector<PcodeOp *> &stores);
   static uint8 calcAddElements(Varnode *vn,vector<Varnode *> &nonConst,int4 maxDepth);
@@ -98,9 +109,9 @@ class HeapSequence : public ArraySequence {
   bool testValue(PcodeOp *op);		///< Test if a STORE value has the matching form for the sequence
   bool collectStoreOps(void);		///< Collect ops STOREing into a memory region from the same root pointer
   PcodeOp *buildStringCopy(void);	///< Build the strncpy,wcsncpy, or memcpy function with string as input
-  void gatherIndirectPairs(vector<PcodeOp *> &indirects,vector<Varnode *> &pairs);
-  void removeRecursive(PcodeOp *op,vector<PcodeOp *> &scratch);
-  void removeStoreOps(PcodeOp *replaceOp);	///< Remove all STORE ops from the basic block
+  void gatherIndirectPairs(vector<PcodeOp *> &indirects,vector<IndirectPair> &pairs);
+  bool deduplicatePairs(vector<IndirectPair> &pairs);	///< Find and eliminate duplicate INDIRECT pairs
+  void removeStoreOps(vector<PcodeOp *> &indirects,vector<IndirectPair> &indirectPairs,PcodeOp *replaceOp);	///< Remove all STORE ops from the basic block
 public:
   HeapSequence(Funcdata &fdata,Datatype *ct,PcodeOp *root);
   bool transform(void);		///< Transform STOREs into a single memcpy user-op

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.framework.remote.User;
  * as checkboxes that can be selected by users, provided they have admin access.
  *
  */
-class UserAccessTableModel extends GDynamicColumnTableModel<User, List<User>> {
+public class UserAccessTableModel extends GDynamicColumnTableModel<User, List<User>> {
 
 	private List<User> users;
 	private String currentUser;
@@ -147,7 +147,7 @@ class UserAccessTableModel extends GDynamicColumnTableModel<User, List<User>> {
 	 *
 	 * @param users the user list
 	 */
-	void setUserList(List<User> users) {
+	public void setUserList(List<User> users) {
 		this.users = users;
 		refresh();
 	}
@@ -155,20 +155,20 @@ class UserAccessTableModel extends GDynamicColumnTableModel<User, List<User>> {
 	/**
 	 * Remove a list of users from the table.
 	 *
-	 * @param list list of User objects
+	 * @param removedUsers list of User objects
 	 */
-	void removeUsers(ArrayList<User> users) {
-		this.users.removeAll(users);
+	public void removeUsers(List<User> removedUsers) {
+		this.users.removeAll(removedUsers);
 		refresh();
 	}
 
 	/**
 	 * Add a list of users to the table.
 	 *
-	 * @param users list of User objects
+	 * @param addedUsers list of User objects
 	 */
-	void addUsers(ArrayList<User> users) {
-		this.users.addAll(users);
+	public void addUsers(List<User> addedUsers) {
+		this.users.addAll(addedUsers);
 		refresh();
 	}
 
@@ -198,7 +198,7 @@ class UserAccessTableModel extends GDynamicColumnTableModel<User, List<User>> {
 
 		@Override
 		public String getValue(User rowObject, Settings settings, List<User> data,
-				ServiceProvider serviceProvider) throws IllegalArgumentException {
+				ServiceProvider p) throws IllegalArgumentException {
 			return rowObject.getName();
 		}
 	}
@@ -215,7 +215,7 @@ class UserAccessTableModel extends GDynamicColumnTableModel<User, List<User>> {
 
 		@Override
 		public Boolean getValue(User rowObject, Settings settings, List<User> data,
-				ServiceProvider serviceProvider) throws IllegalArgumentException {
+				ServiceProvider p) throws IllegalArgumentException {
 			return rowObject.isReadOnly();
 		}
 	}
@@ -232,7 +232,7 @@ class UserAccessTableModel extends GDynamicColumnTableModel<User, List<User>> {
 
 		@Override
 		public Boolean getValue(User rowObject, Settings settings, List<User> data,
-				ServiceProvider serviceProvider) throws IllegalArgumentException {
+				ServiceProvider p) throws IllegalArgumentException {
 			return rowObject.hasWritePermission() && !rowObject.isAdmin();
 		}
 	}
@@ -249,9 +249,10 @@ class UserAccessTableModel extends GDynamicColumnTableModel<User, List<User>> {
 
 		@Override
 		public Boolean getValue(User rowObject, Settings settings, List<User> data,
-				ServiceProvider serviceProvider) throws IllegalArgumentException {
+				ServiceProvider p) throws IllegalArgumentException {
 			return rowObject.isAdmin();
 		}
+
 	}
 
 	@Override

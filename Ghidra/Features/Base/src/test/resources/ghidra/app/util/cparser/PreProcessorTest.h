@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,34 @@
  #ifdef a
  #undef a
  #endif
+
+#ifdef __WCHAR_MAX__
+# define __WCHAR_MAX    __WCHAR_MAX__
+#elif L'\0' - 1 > 0
+# define __WCHAR_MAX    (0xffffffffu + L'\0')
+#else
+# define __WCHAR_MAX    (0x7fffffff + L'\0')
+#endif
+
+/* test for comment parsing */
+# define         AComment(a)   B(a)  /**/
+
+# define         BComment(a)   C(a)  /***/
+# define         CComment            /****/
+ 
+# ifndef FOO
+#define DidFOO  "true" /* test comment */
+# endif
+
+#ifdef NOFOO
+int IntShouldBeCommented;
+#pragma PragmaShouldBeCommented
+#endif
+
+#ifndef NOFOO
+int IntShouldNotBeCommented;
+#pragma PragmaShouldNotBeCommented;
+#endif
 
 
  /* definition coming from -D, should evaluate to true */
@@ -171,10 +199,10 @@ int foo;
 #define TWOFISH 2
 
 #if (ONEFISH + TWOFISH + REDFISH + BLUEFISH) > 2
-#error "Too many fish"
 #define TOO_MANY_FISH 0
 int TooManyFish;
 #else
+#error "Too few fish"
 int NotEnoughFish;
 #endif
 
@@ -443,6 +471,23 @@ ldp LDP((
         _Pragma("clang diagnostic ignored \"-Wmismatched-tags\"")
 
 /**
+ ** Multi line false ifdef with Quoted string
+ */
+
+#define __USE_GNU "1"
+
+#ifdef __USE_GNU
+extern int pthread_yield (void) __THROW;
+# ifdef __REDIRECT_NTH
+extern int __REDIRECT_NTH (pthread_yield, (void), sched_yield)
+  __attribute_deprecated_msg__ ("\
+pthread_yield is deprecated, use sched_yield instead");
+# else
+#  define pthread_yield sched_yield
+# endif
+#endif
+
+/**
  ** Protected from macro expansion
  **/
  
@@ -536,5 +581,32 @@ D = DUAL_MULTILINE(2, "Caution: First line"
                                       " second line"
                                       " third line"
                                       " fourth line")
-                                                                 
+
+//
+// check calculations
+//
+#define NUMBER1        0x10000000
+#define NUMBER2        0x10000001
+#define NUMBER3        0xF0000002
+
+#if (NUMBER2 <= NUMBER1) || (NUMBER3 <= NUMBER2)
+#error new number must be greater than the old one
+#endif
+
+#if (NUMBER1 & 0xE0000000)
+#error NUMBER1 & 0xE0000000 should be false
+#endif
+
+#if (NUMBER2 & 0xE0000000)
+#error NUMBER2 & 0xE0000000 should be false
+#endif
+
+#if !(NUMBER3 & 0xE0000000)
+#error NUMBER3 & 0xE0000000 should be true
+#endif
+
+#if ((NUMBER2 & 0xE0000000) || (NUMBER2 & 0xE0000000)) || !(NUMBER3 & 0xE0000000)
+#error ((NUMBER2 & 0xE0000000) || (NUMBER2 & 0xE0000000)) || !(NUMBER3 & 0xE0000000) should be false
+#endif
+
 theEnd();

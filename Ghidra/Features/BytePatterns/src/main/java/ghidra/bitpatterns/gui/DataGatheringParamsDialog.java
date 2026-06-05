@@ -87,37 +87,50 @@ public class DataGatheringParamsDialog extends InputDialogComponentProvider {
 		mainPanel.add(new GLabel(FIRST_BYTES_TEXT));
 		firstBytesField = new IntegerTextField();
 		firstBytesField.setValue(DEFAULT_FIRST_BYTES);
+		firstBytesField.getComponent().getAccessibleContext().setAccessibleName("First Bytes");
 		mainPanel.add(firstBytesField.getComponent());
 
 		mainPanel.add(new GLabel(PRE_BYTES_TEXT));
 		preBytesField = new IntegerTextField();
 		preBytesField.setValue(DEFAULT_PRE_BYTES);
+		preBytesField.getComponent().getAccessibleContext().setAccessibleName("Pre Bytes");
 		mainPanel.add(preBytesField.getComponent());
 
 		mainPanel.add(new GLabel(RETURN_BYTES_TEXT));
 		returnBytesField = new IntegerTextField();
 		returnBytesField.setValue(DEFAULT_RETURN_BYTES);
+		returnBytesField.getComponent().getAccessibleContext().setAccessibleName("Return Bytes");
 		mainPanel.add(returnBytesField.getComponent());
 
 		mainPanel.add(new GLabel(FIRST_INSTRUCTIONS_TEXT));
 		firstInstructionsField = new IntegerTextField();
 		firstInstructionsField.setValue(DEFAULT_FIRST_INSTRUCTIONS);
+		firstInstructionsField.getComponent()
+				.getAccessibleContext()
+				.setAccessibleName("First Instructions");
 		mainPanel.add(firstInstructionsField.getComponent());
 
 		mainPanel.add(new GLabel(PRE_INSTRUCTIONS_TEXT));
 		preInstructionsField = new IntegerTextField();
 		preInstructionsField.setValue(DEFAULT_PRE_INSTRUCTIONS);
+		preInstructionsField.getComponent()
+				.getAccessibleContext()
+				.setAccessibleName("Pre Instructions");
 		mainPanel.add(preInstructionsField.getComponent());
 
 		mainPanel.add(new GLabel(RETURN_INSTRUCTIONS_TEXT));
 		returnInstructionsField = new IntegerTextField();
 		returnInstructionsField.setValue(DEFAULT_RETURN_INSTRUCTIONS);
+		returnInstructionsField.getComponent()
+				.getAccessibleContext()
+				.setAccessibleName("Return Instructions");
 		mainPanel.add(returnInstructionsField.getComponent());
 
 		mainPanel.add(new GLabel(CONTEXT_REGISTER_TEXT));
 		contextRegistersField = new JTextField(DEFAULT_CONTEXT_REGISTERS);
+		contextRegistersField.getAccessibleContext().setAccessibleName("Context Registers");
 		mainPanel.add(contextRegistersField);
-
+		mainPanel.getAccessibleContext().setAccessibleName("Data Gathering Parameters");
 		return mainPanel;
 	}
 

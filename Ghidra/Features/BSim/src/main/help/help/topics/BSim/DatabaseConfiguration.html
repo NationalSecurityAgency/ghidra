@@ -107,13 +107,13 @@
               in the module directory <CODE>Ghidra/Features/BSim/support</CODE> that builds both the PostgreSQL
               server and the BSim extension from source and prepares the installation for use with
               Ghidra.  If not already included in the Ghidra installation, the source distribution
-              file, currently <CODE>postgresql-15.3.tar.gz</CODE>, can be obtained from the PostgreSQL
+              file, currently <CODE>postgresql-15.13.tar.gz</CODE>, can be obtained from the PostgreSQL
               website at </P>
 	    
             <DIV class="informalexample">
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
-                  <TD><CODE class="computeroutput">https://www.postgresql.org/ftp/source/v15.3
+                  <TD><CODE class="computeroutput">https://www.postgresql.org/ftp/source/v15.13
 		  </CODE></TD>
                 </TR>
               </TABLE>
@@ -122,12 +122,12 @@
 	    <P>The steps to build the PostgreSQL server with the BSim extension then are:</P>
 
 	    <P>1) If not already present, place the PostgreSQL source distribution file
-	      <CODE>postgresql-15.3.tar.gz</CODE> in the Ghidra installation at</P>
+	      <CODE>postgresql-15.13.tar.gz</CODE> in the Ghidra installation at</P>
 
             <DIV class="informalexample">
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
-                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/support/postgresql-15.3.tar.gz
+                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/support/postgresql-15.13.tar.gz
 		  </CODE></TD>
                 </TR>
               </TABLE>
@@ -175,8 +175,18 @@
 		</TR>
 		
 		<TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/build/os/linux_arm_64/postgresql
+                      OR</CODE></TD>
+		</TR>
+    
+		<TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/build/os/mac_x86_64/postgresql
+                      OR</CODE></TD>
+		</TR>
+    
+		<TR>
                   <TD><CODE class=
-			    "computeroutput">$(ROOT)/Ghidra/Features/BSim/build/os/mac_x86_64/postgresql</CODE></TD>
+			    "computeroutput">$(ROOT)/Ghidra/Features/BSim/build/os/mac_arm_64/postgresql</CODE></TD>
 		</TR>
               </TABLE>
             </DIV>
@@ -978,11 +988,11 @@ curl -k -u elastic:XXXXXX -X POST "https://localhost:9200/_security/user/ghidrau
           </DIV>
 
           <P>The single time-stamp field can be renamed by appending the keyword "date" to the
-          command after the name of the category. Once a category, the corresponding program
+          command after the name of the category. Once a category is added, the corresponding program
           options set for any new executables will automatically read into the database as part of
           the ingest process. Previously ingested executables, assuming they have the new program
           options set, can be updated within the BSim database using one of the <SPAN class=
-          "command"><STRONG>bsim updaterepo</STRONG></SPAN> command variants. In either case, the
+          "command"><STRONG>bsim generateupdates</STRONG></SPAN> command variants. In either case, the
           relevant program options typically need to be filled by running a Ghidra script (See <A
           class="xref" href="IngestProcess.html#IngestExeCat" title=
           "Ingesting Executable Categories">&ldquo;Ingesting Executable Categories&rdquo;</A>).
@@ -1032,7 +1042,7 @@ curl -k -u elastic:XXXXXX -X POST "https://localhost:9200/_security/user/ghidrau
           <P>The new tag will automatically be read in when any new executables are ingested. If
           previously ingested executables already had the new tags before they were registered,
           their metadata within BSim database can be updated using the <SPAN class=
-          "command"><STRONG>bsim updaterepo</STRONG></SPAN> command variants. BSim is limited to 29
+          "command"><STRONG>bsim generateupdates</STRONG></SPAN> command variants. BSim is limited to 29
           registered tag names, and there is currently no way to remove a tag once it has been
           registered.</P>
         </DIV>

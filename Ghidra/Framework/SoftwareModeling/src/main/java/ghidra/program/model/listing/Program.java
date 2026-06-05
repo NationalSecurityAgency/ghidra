@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,9 @@
 package ghidra.program.model.listing;
 
 import java.util.Date;
+import java.util.Set;
 
+import ghidra.app.util.sourcelanguage.SourceLanguageID;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.IntRangeMap;
 import ghidra.program.database.ProgramOverlayAddressSpace;
@@ -178,6 +180,22 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	 * @param compiler   the name
 	 */
 	public void setCompiler(String compiler);
+
+	/**
+	 * {@return the {@link SourceLanguageID}s of the source languages found in the program}
+	 */
+	default public Set<SourceLanguageID> getSourceLanguageIDs() {
+		return Set.of();
+	}
+
+	/**
+	 * Sets the {@link SourceLanguageID}s of the source languages found in the program
+	 * 
+	 * @param sourceLanguageIDs The {@link Set} of {@link SourceLanguageID}s
+	 */
+	default public void setSourceLanguageIDs(Set<SourceLanguageID> sourceLanguageIDs) {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Gets the preferred root data type category path which corresponds
@@ -349,19 +367,45 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	public AddressFactory getAddressFactory();
 
 	/**
-	 * Return an array of Addresses that could represent the given
-	 * string.
-	 * @param addrStr the string to parse.
+	 * Return an array of memory Addresses that could correspond to the given
+	 * string.  Non-memory spaces are not considered.  Since this method allows
+	 * memory-block style addresses first it can be slower to parse than using 
+	 * {@link AddressFactory#getAddress(String)} or {@link AddressFactory#getAllAddresses(String)}
+	 * if block-name based address need not be handled.
+	 * <p> 
+	 * Supported addresses include (order also indicates precedence):
+	 * <ul>
+	 * <li>Memory block-name based address (e.g., 'MyBlk:abcd', 'MyBlk::abcd' ; only one address 
+	 * will be returned)</li>
+	 * <li>Default memory space (hex-offset only or with space-name, e.g., 'abcd', '0xabcd')</li>
+	 * <li>Memory space-name based address (with hex-offset, e.g., 'ram:abc')</li>
+	 * </ul>
+	 * <p>
+	 * NOTE: Names are case-sensitive.
+	 * 
+	 * @param addrStr the string to parse (memory block style addresses are also supported).
 	 * @return zero length array if addrStr is properly formatted but
 	 * no matching addresses were found or if the address is improperly formatted.
 	 */
 	public Address[] parseAddress(String addrStr);
 
 	/**
-	 * Return an array of Addresses that could represent the given
-	 * string.
-	 * @param addrStr the string to parse.
-	 * @param caseSensitive whether or not to process any addressSpace names as case sensitive.
+	 * Return an array of memory Addresses that could correspond to the given
+	 * string.  Non-memory spaces are not considered.  Since this method allows
+	 * memory-block style addresses first it can be slower to parse than using 
+	 * {@link AddressFactory#getAddress(String)} or {@link AddressFactory#getAllAddresses(String)}
+	 * if block-name based address need not be handled.
+	 * <p> 
+	 * Supported addresses include (order also indicates precedence):
+	 * <ul>
+	 * <li>Memory block-name based address (e.g., 'MyBlk:abcd', 'MyBlk::abcd' ; only one address 
+	 * will be returned)</li>
+	 * <li>Default memory space (hex-offset only or with space-name, e.g., 'abcd', '0xabcd')</li>
+	 * <li>Memory space-name based address (with hex-offset, e.g., 'ram:abc')</li>
+	 * </ul>
+	 * 
+	 * @param addrStr the string to parse (memory block style addresses are also supported).
+	 * @param caseSensitive whether or not to process space/block names as case sensitive.
 	 * @return zero length array if addrStr is properly formatted but
 	 * no matching addresses were found or if the address is improperly formatted.
 	 */

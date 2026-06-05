@@ -40,8 +40,16 @@ public class Omf51ModuleHeader extends OmfRecord {
 	@Override
 	public void parseData() throws IOException, OmfException {
 		moduleName = OmfUtils.readString(dataReader);
-		dataReader.readNextByte();
 		trnId = dataReader.readNextByte();
+
+		switch (trnId) {
+			case (byte) 0xfd: // ASM51
+			case (byte) 0xfe: // PL/M-51
+			case (byte) 0xff: // RL51
+				break;
+			default:
+				throw new OmfException("Invalid TRN ID: 0x%x".formatted(trnId));
+		}
 	}
 
 	/**
@@ -56,7 +64,7 @@ public class Omf51ModuleHeader extends OmfRecord {
 		StructureDataType struct = new StructureDataType(Omf51RecordTypes.getName(recordType), 0);
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
-		struct.add(moduleName.toDataType(), "name", null);
+		struct.add(moduleName.toDataType(), moduleName.getDataTypeSize(), "name", null);
 		struct.add(BYTE, "TRN ID", null);
 		struct.add(BYTE, "padding", null);
 		struct.add(BYTE, "checksum", null);

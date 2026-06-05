@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,23 +17,24 @@ package ghidra.app.plugin.core.byteviewer;
 
 import java.util.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
-import ghidra.app.events.ProgramLocationPluginEvent;
-import ghidra.app.events.ProgramSelectionPluginEvent;
+import ghidra.app.events.AbstractLocationPluginEvent;
+import ghidra.app.events.AbstractSelectionPluginEvent;
+import ghidra.app.plugin.core.byteviewer.AbstractByteViewerPlugin.ByteViewerTransientState;
 import ghidra.app.services.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.Plugin;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
+import ghidra.util.SystemUtilities;
 import utility.function.Callback;
 
 public abstract class AbstractByteViewerPlugin<P extends ProgramByteViewerComponentProvider>
-		extends Plugin {
+		extends Plugin implements PluginWithTransientState<ByteViewerTransientState> {
 
 	protected Program currentProgram;
 	private boolean areEventsDisabled;
@@ -215,26 +216,20 @@ public abstract class AbstractByteViewerPlugin<P extends ProgramByteViewerCompon
 		}
 	}
 
-	@Override
-	public Object getTransientState() {
-		Object[] state = new Object[2];
+	protected record ByteViewerTransientState(SaveState ss, ProgramSelection selection) {}
 
+	@Override
+	public ByteViewerTransientState getTransientState() {
 		SaveState ss = new SaveState();
 		connectedProvider.writeDataState(ss);
-
-		state[0] = ss;
-		state[1] = connectedProvider.getCurrentSelection();
-
-		return state;
+		return new ByteViewerTransientState(ss, connectedProvider.getCurrentSelection());
 	}
 
 	@Override
-	public void restoreTransientState(Object objectState) {
-
+	public void restoreTransientState(ByteViewerTransientState state) {
 		doWithEventsDisabled(() -> {
-			Object[] state = (Object[]) objectState;
-			connectedProvider.restoreLocation((SaveState) state[0]);
-			connectedProvider.setSelection((ProgramSelection) state[1]);
+			connectedProvider.restoreLocation(state.ss);
+			connectedProvider.setSelection(state.selection);
 		});
 	}
 
@@ -270,8 +265,12 @@ public abstract class AbstractByteViewerPlugin<P extends ProgramByteViewerCompon
 		return connectedProvider;
 	}
 
-	public abstract void updateSelection(ByteViewerComponentProvider provider,
-			ProgramSelectionPluginEvent event, Program program);
+	public void updateSelection(ByteViewerComponentProvider provider,
+			AbstractSelectionPluginEvent event, Program program) {
+		if (provider == connectedProvider) {
+			firePluginEvent(event);
+		}
+	}
 
 	public abstract void highlightChanged(ByteViewerComponentProvider provider,
 			ProgramSelection highlight);
@@ -298,11 +297,31 @@ public abstract class AbstractByteViewerPlugin<P extends ProgramByteViewerCompon
 		provider.dispose();
 	}
 
-	protected abstract void updateLocation(
-			ProgramByteViewerComponentProvider programByteViewerComponentProvider,
-			ProgramLocationPluginEvent event, boolean export);
+	public void updateLocation(ProgramByteViewerComponentProvider provider,
+			AbstractLocationPluginEvent event, boolean export) {
 
-	protected abstract void fireProgramLocationPluginEvent(
-			ProgramByteViewerComponentProvider programByteViewerComponentProvider,
-			ProgramLocationPluginEvent pluginEvent);
+		if (eventsDisabled()) {
+			return;
+		}
+
+		if (provider == connectedProvider) {
+			fireProgramLocationPluginEvent(provider, event);
+		}
+		else if (export) {
+			exportLocation(provider.getProgram(), event.getLocation());
+		}
+	}
+
+	public void fireProgramLocationPluginEvent(ProgramByteViewerComponentProvider provider,
+			AbstractLocationPluginEvent event) {
+
+		if (SystemUtilities.isEqual(event.getLocation(), currentLocation)) {
+			return;
+		}
+
+		currentLocation = event.getLocation();
+		if (provider == connectedProvider) {
+			firePluginEvent(event);
+		}
+	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -129,7 +129,14 @@ public class VtBuffer {
 		if (c == 0) {
 			return;
 		}
-		checkVerticalScroll();
+		// Only scroll if cursor is completely off-screen (beyond the display).
+		// Do NOT scroll when cursor is outside the scroll region but still within
+		// the display (e.g., on a fixed status bar line). Scroll region scrolling
+		// for line feeds is handled by moveCursorDown() via checkVerticalScroll().
+		while (curY >= rows) {
+			scrollViewportDown(true);
+			curY = Math.max(0, curY - 1);
+		}
 		// At this point, we have no choice but to wrap
 		lines.get(curY).putChar(curX, c, curAttrs);
 	}
@@ -310,13 +317,29 @@ public class VtBuffer {
 	 */
 	public void moveCursorRight(int n, boolean wrap, boolean isCursorShowing) {
 		if (wrap && curX + n >= cols) {
-			checkVerticalScroll();
+			// Decide based on the pre-wrap position whether we are in the scroll region.
+			// If the cursor was inside the scroll region before wrapping, the wrap may
+			// push it past the bottom margin and should trigger scroll-region scrolling.
+			// If outside (e.g., on a fixed status bar line), just clamp to the display.
+			boolean wasInScrollRegion = (curY >= scrollStart && curY < scrollEnd);
+			if (wasInScrollRegion) {
+				checkVerticalScroll();
+			}
 			curX = 0;
-			lines.get(curY).wrappedToNext = true;
+			if (curY < rows) {
+				lines.get(curY).wrappedToNext = true;
+			}
 			curY++;
 			bottomY = Math.max(bottomY, curY);
-			if (isCursorShowing) {
+			if (wasInScrollRegion) {
+				// Always scroll when wrapping within the scroll region, regardless
+				// of cursor visibility. This prevents deferred scrolls from leaking
+				// into subsequent putChar() calls.
 				checkVerticalScroll();
+			}
+			else {
+				// Outside scroll region: clamp to display bounds
+				curY = Math.min(curY, rows - 1);
 			}
 		}
 		else {

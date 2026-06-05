@@ -35,7 +35,7 @@ public class ShowDataTypeInTreeAction extends CompositeEditorTableAction {
 	private static final String TOOLBAR_GROUP = "4_COMPONENT_EDITOR_ACTION";
 	private static final Icon ICON = new GIcon("icon.plugin.composite.editor.show.type");
 
-	public ShowDataTypeInTreeAction(CompositeEditorProvider provider) {
+	public ShowDataTypeInTreeAction(CompositeEditorProvider<?, ?> provider) {
 		super(provider, ACTION_NAME, TOOLBAR_GROUP, null /*popupPath*/, null /*menuPath*/, ICON);
 
 		setToolBarData(new ToolBarData(ICON, TOOLBAR_GROUP));

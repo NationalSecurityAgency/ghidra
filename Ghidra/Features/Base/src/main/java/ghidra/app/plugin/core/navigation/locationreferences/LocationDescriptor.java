@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.*;
 import ghidra.util.datastruct.Accumulator;
+import ghidra.util.datastruct.SetAccumulatorWrapper;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -262,8 +263,8 @@ public abstract class LocationDescriptor {
 	}
 
 	/**
-	 * Returns a generic {@link ProgramLocation} based upon the <tt>program</tt> and
-	 * <tt>homeAddress</tt> of this <tt>LocationDescriptor</tt>.  Subclasses should override this
+	 * Returns a generic {@link ProgramLocation} based upon the {@code program} and
+	 * {@code homeAddress} of this {@code LocationDescriptor}.  Subclasses should override this
 	 * method to return more specific addresses.
 	 *
 	 * @return a generic ProgramLocation.
@@ -314,7 +315,7 @@ public abstract class LocationDescriptor {
 	 * @param obj The object associated with the text being rendered (e.g., CodeUnit).
 	 * @param fieldFactoryClass The class that created the field being rendered.
 	 * @param highlightColor The color to use for highlighting.
-	 * @return An array of highlights to render for the given <tt>text</tt>
+	 * @return An array of highlights to render for the given {@code text}
 	 */
 	abstract Highlight[] getHighlights(String text, Object obj,
 			Class<? extends FieldFactory> fieldFactoryClass, Color highlightColor);
@@ -343,16 +344,22 @@ public abstract class LocationDescriptor {
 	private void getReferenceAddressSet(Accumulator<LocationReference> accumulator,
 			TaskMonitor monitor, boolean reload) throws CancelledException {
 
-		if (referenceAddressList == null || reload) {
-			doGetReferences(accumulator, monitor);
-
-			// put into list so that we can later perform fast lookups of Addresses
-			referenceAddressList = new ArrayList<>(accumulator.get());
-			Collections.sort(referenceAddressList);
+		if (referenceAddressList != null && !reload) {
+			accumulator.addAll(referenceAddressList);
 			return;
 		}
 
-		accumulator.addAll(referenceAddressList);
+		// We do not want duplicates.  Use a known set accumulator here, which also allows us to get
+		// the results when the loading is finished.
+		SetAccumulatorWrapper<LocationReference> setAccumulator =
+			new SetAccumulatorWrapper<>(accumulator);
+
+		doGetReferences(setAccumulator, monitor);
+
+		// Save results so we can later perform fast lookups of Addresses using a binary search
+		referenceAddressList = new ArrayList<>(setAccumulator.asSet());
+		Collections.sort(referenceAddressList);
+
 	}
 
 	/**

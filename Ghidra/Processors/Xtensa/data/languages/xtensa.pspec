@@ -5,6 +5,7 @@
   
   <properties>
     <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.XtensaEmulateInstructionStateModifier" />
+    <property key="useropLibs" value="xtensa"/>
   </properties>
   
   <context_data>

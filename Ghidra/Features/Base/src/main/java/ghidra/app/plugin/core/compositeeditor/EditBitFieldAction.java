@@ -25,7 +25,7 @@ public class EditBitFieldAction extends CompositeEditorTableAction {
 	private final static String DESCRIPTION = "Edit an existing bitfield";
 	private static String[] POPUP_PATH = new String[] { ACTION_NAME };
 
-	public EditBitFieldAction(CompositeEditorProvider provider) {
+	public EditBitFieldAction(CompositeEditorProvider<?, ?> provider) {
 		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, null);
 		setDescription(DESCRIPTION);
 		if (!(model instanceof CompEditorModel)) {

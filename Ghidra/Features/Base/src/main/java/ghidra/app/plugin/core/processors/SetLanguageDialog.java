@@ -82,7 +82,7 @@ public class SetLanguageDialog extends DialogComponentProvider {
 		selectLangPanel.addSelectionListener(listener);
 
 		selectLangPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
+		selectLangPanel.getAccessibleContext().setAccessibleName("Set Language");
 		addWorkPanel(selectLangPanel);
 		addOKButton();
 		addCancelButton();

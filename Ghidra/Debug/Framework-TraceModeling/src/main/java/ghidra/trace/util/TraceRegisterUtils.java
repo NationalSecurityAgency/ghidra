@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,10 +26,14 @@ import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceData;
-import ghidra.trace.model.memory.TraceMemorySpace;
-import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.memory.*;
+import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.OverlappingObjectIterator.Ranger;
 
 public enum TraceRegisterUtils {
@@ -38,8 +42,7 @@ public enum TraceRegisterUtils {
 	private static class RegisterIndex {
 		// Could this all go into RegisterManager instead?
 		// Would need the overlapping object iterator, or replacement, moved up
-		private record RegEntry(AddressRange base, Set<Register> regs) {
-		}
+		private record RegEntry(AddressRange base, Set<Register> regs) {}
 
 		private static final Ranger<RegEntry> ENTRY_RANGER = new Ranger<>() {
 			@Override
@@ -294,5 +297,74 @@ public enum TraceRegisterUtils {
 			throw new IllegalArgumentException(
 				"Cannot work with sub-byte registers. Consider a parent instead.");
 		}
+	}
+
+	public static TraceRegisterContainer getRegisterContainer(TraceThread thread, int frameLevel) {
+		return getRegisterContainer(thread.getObject(), frameLevel);
+	}
+
+	public static TraceRegisterContainer getRegisterContainer(TraceStackFrame frame) {
+		// Use frameLevel = 0, because we're already in the frame
+		// so, no wild cards between here and registers
+		return getRegisterContainer(frame.getObject(), 0);
+	}
+
+	public static TraceRegisterContainer getRegisterContainer(TraceObject object, int frameLevel) {
+		if (object.getSchema()
+				.getInterfaces()
+				.contains(TraceRegisterContainer.class)) {
+			return object.queryInterface(TraceRegisterContainer.class);
+		}
+		TraceObject contObj = object.findRegisterContainer(frameLevel);
+		return contObj == null ? null : contObj.queryInterface(TraceRegisterContainer.class);
+	}
+
+	public static AddressSpace getRegisterAddressSpace(TraceRegisterContainer cont,
+			boolean createIfAbsent) {
+		TraceObject object = cont.getObject();
+		Trace trace = object.getTrace();
+		String name = object.getCanonicalPath().toString();
+		AddressSpace regSpace = trace.getBaseAddressFactory().getRegisterSpace();
+		if (createIfAbsent) {
+			return trace.getMemoryManager().getOrCreateOverlayAddressSpace(name, regSpace);
+		}
+		return trace.getBaseAddressFactory().getAddressSpace(name);
+	}
+
+	public static AddressSpace getRegisterAddressSpace(TraceThread thread, int frameLevel,
+			boolean createIfAbsent) {
+		return getRegisterAddressSpace(getRegisterContainer(thread, frameLevel), createIfAbsent);
+	}
+
+	public static AddressSpace getRegisterAddressSpace(TraceStackFrame frame,
+			boolean createIfAbsent) {
+		return getRegisterAddressSpace(getRegisterContainer(frame), createIfAbsent);
+	}
+
+	public static TraceThread getThread(Trace trace, AddressSpace space) {
+		if (space.isMemorySpace()) {
+			return null;
+		}
+		TraceObject regs = trace.getObjectManager()
+				.getObjectByCanonicalPath(KeyPath.parse(space.getName()));
+		if (regs == null) {
+			return null;
+		}
+		return regs.queryCanonicalAncestorsInterface(TraceThread.class).findAny().orElse(null);
+	}
+
+	public static int getFrameLevel(Trace trace, AddressSpace space) {
+		if (space.isMemorySpace()) {
+			return 0;
+		}
+		TraceObject regs = trace.getObjectManager()
+				.getObjectByCanonicalPath(KeyPath.parse(space.getName()));
+		if (regs == null) {
+			return 0;
+		}
+		return regs.queryCanonicalAncestorsInterface(TraceStackFrame.class)
+				.findAny()
+				.map(r -> r.getLevel())
+				.orElse(0);
 	}
 }

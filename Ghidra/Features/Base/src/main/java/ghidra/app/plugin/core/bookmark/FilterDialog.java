@@ -47,6 +47,7 @@ class FilterDialog extends DialogComponentProvider {
 	private JComponent buildPanel(Program program) {
 		JPanel p = new JPanel(new VerticalLayout(20));
 		p.add(getTypesPanel(program));
+		p.getAccessibleContext().setAccessibleName("Bookmark Filter");
 		return p;
 	}
 
@@ -58,14 +59,18 @@ class FilterDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createTitledBorder("Include Bookmark Types"));
 		for (int i = 0; i < types.length; i++) {
 			buttons[i] = new GCheckBox();
+			buttons[i].getAccessibleContext().setAccessibleDescription(types[i].getTypeString());
 			JPanel p = new JPanel(new BorderLayout());
 			p.add(buttons[i], BorderLayout.WEST);
 			buttons[i].setSelected(provider.isShowingType(types[i].getTypeString()));
 			JLabel l =
 				new GLabel(types[i].getTypeString(), types[i].getIcon(), SwingConstants.LEFT);
 			p.add(l, BorderLayout.CENTER);
+			p.getAccessibleContext()
+					.setAccessibleName(types[i].getTypeString() + " Button and Label");
 			panel.add(p);
 		}
+		panel.getAccessibleContext().setAccessibleName("Bookmark Inclusion");
 		return panel;
 	}
 

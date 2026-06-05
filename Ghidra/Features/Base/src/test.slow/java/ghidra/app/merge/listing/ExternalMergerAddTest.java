@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.app.merge.listing;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -74,15 +75,8 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 	@Override
 	protected ProgramMultiUserMergeManager createMergeManager(ProgramChangeSet resultChangeSet,
 			ProgramChangeSet myChangeSet) {
-
-		// NOTE: this makes the tests faster.  If you need visual debugging, then make this true
-		boolean showListingPanels = false;
-
-		ProgramMultiUserMergeManager mergeManger =
-			new ProgramMultiUserMergeManager(resultProgram, myProgram, originalProgram,
-				latestProgram, resultChangeSet, myChangeSet, showListingPanels);
-
-		return mergeManger;
+		return new ProgramMultiUserMergeManager(resultProgram, myProgram, originalProgram,
+			latestProgram, resultChangeSet, myChangeSet);
 	}
 
 	@Test
@@ -445,8 +439,11 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
-		List<ExternalLocation> externals = externalManager.getExternalLocations(libname, label);
-		assertEquals(2, externals.size());
+		Set<ExternalLocation> externalLocations =
+			externalManager.getExternalLocations(libname, label);
+		assertEquals(2, externalLocations.size());
+		assertHasExtAddresses(externalLocations, address1, address2);
+
 		ExternalLocationIterator loc1It = externalManager.getExternalLocations(addr(address1));
 		assertTrue(loc1It.hasNext());
 		assertEquals(label, loc1It.next().getLabel());
@@ -2103,8 +2100,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		Symbol blue = getUniqueSymbol(resultProgram, namespace1, myNamespace);
 		Symbol blueConflict =
 			getUniqueSymbol(resultProgram, namespace1 + "_conflict1", myNamespace);
@@ -2167,8 +2165,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
@@ -2221,8 +2220,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label1, myNamespace);
 		Symbol oranges = getUniqueSymbol(resultProgram, label2, myNamespace);
@@ -2296,8 +2296,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
@@ -2361,8 +2362,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
@@ -2501,8 +2503,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
@@ -2585,8 +2588,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
@@ -2780,8 +2784,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
@@ -2863,8 +2868,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
@@ -2948,8 +2954,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 
 		List<Symbol> symbols = symbolTable.getSymbols(label, myNamespace);
 		assertEquals(2, symbols.size());
@@ -3400,13 +3407,16 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 
-		List<ExternalLocation> externalLocations =
+		Set<ExternalLocation> externalLocations =
 			externalManager.getExternalLocations(libname, label);
 		assertEquals(2, externalLocations.size());
+		assertHasExtAddresses(externalLocations, "00000100", "00000110");
 
-		List<ExternalLocation> externalLocations2 =
+		Set<ExternalLocation> externalLocations2 =
 			externalManager.getExternalLocations(BLUE_PATH[0], BLUE_PATH[1]);
 		assertEquals(2, externalLocations2.size());
+		assertHasExtAddresses(externalLocations, "00000100", "00000110");
+
 	}
 
 	@Test
@@ -3481,13 +3491,15 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 
-		List<ExternalLocation> externalLocations =
+		Set<ExternalLocation> externalLocations =
 			externalManager.getExternalLocations(libname, label);
 		assertEquals(2, externalLocations.size());
+		assertHasExtAddresses(externalLocations, "00000100", "00000110");
 
-		List<ExternalLocation> externalLocations2 =
+		Set<ExternalLocation> externalLocations2 =
 			externalManager.getExternalLocations(BLUE_PATH[0], BLUE_PATH[1]);
 		assertEquals(2, externalLocations2.size());
+		assertHasExtAddresses(externalLocations, "00000100", "00000110");
 	}
 
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,28 +16,15 @@
 package sarif.managers;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.google.gson.JsonArray;
 
 import ghidra.app.util.importer.MessageLog;
 import ghidra.docking.settings.Settings;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeInstance;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.CodeUnitIterator;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.DataIterator;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.address.*;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.DumbMemBufferImpl;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.CancelledException;
@@ -62,8 +49,8 @@ public class DefinedDataSarifMgr extends SarifMgr {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean read(Map<String, Object> result, SarifProgramOptions options, TaskMonitor monitor)
-			throws CancelledException {
+	public boolean read(Map<String, Object> result, SarifProgramOptions options,
+			TaskMonitor monitor) throws CancelledException {
 
 		Listing listing = program.getListing();
 		DataTypeManager dataManager = program.getDataTypeManager();
@@ -80,7 +67,8 @@ public class DefinedDataSarifMgr extends SarifMgr {
 
 			String dataTypeName = (String) result.get("typeName");
 			String typeLocation = (String) result.get("typeLocation");
-			CategoryPath path = typeLocation != null ? new CategoryPath(typeLocation) : CategoryPath.ROOT;
+			CategoryPath path =
+				typeLocation != null ? new CategoryPath(typeLocation) : CategoryPath.ROOT;
 
 			DataType dt = dtParser.parseDataType(dataTypeName, path, size);
 			if (dt == null) {
@@ -90,7 +78,8 @@ public class DefinedDataSarifMgr extends SarifMgr {
 				}
 			}
 			if (dt == null) {
-				log.appendMsg("Defined root: unknown datatype: " + dataTypeName + " in category: " + path);
+				log.appendMsg(
+					"Defined root: unknown datatype: " + dataTypeName + " in category: " + path);
 				return false;
 			}
 
@@ -104,17 +93,20 @@ public class DefinedDataSarifMgr extends SarifMgr {
 				Map<String, Object> comments = (Map<String, Object>) result.get("nested");
 				processComment(comments, data);
 
-			} catch (CodeUnitInsertionException e) {
+			}
+			catch (CodeUnitInsertionException e) {
 				Data d = listing.getDefinedDataAt(addr);
 				if (d == null || !d.getDataType().isEquivalent(dt)) {
 					log.appendMsg(e.getMessage());
 				}
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				log.appendException(e);
 			}
-		} catch (AddressOverflowException e1) {
+		}
+		catch (AddressOverflowException e1) {
 			log.appendException(e1);
-		} 
+		}
 		return true;
 	}
 
@@ -147,10 +139,13 @@ public class DefinedDataSarifMgr extends SarifMgr {
 		if (localComments != null) {
 			for (Map<String, Object> lmap : localComments) {
 				String comment = (String) lmap.get("comment");
-				int type = (int) (double) lmap.get("commentType");
-				String existing = data.getComment(type);
-				if (existing == null || !existing.equals(comment)) {
-					data.setComment(type, comment);
+				String typeStr = (String) lmap.get("commentType");
+				CommentType type = CommentsSarifMgr.getCommentType(typeStr);
+				if (type != null) {
+					String existing = data.getComment(type);
+					if (existing == null || !existing.equals(comment)) {
+						data.setComment(type, comment);
+					}
 				}
 			}
 		}
@@ -166,7 +161,8 @@ public class DefinedDataSarifMgr extends SarifMgr {
 				}
 			}
 		}
-		Map<String, Map<String, Object>> embedded = (Map<String, Map<String, Object>>) c.get("embedded");
+		Map<String, Map<String, Object>> embedded =
+			(Map<String, Map<String, Object>>) c.get("embedded");
 		if (embedded != null) {
 			for (String index : embedded.keySet()) {
 				Data component = data.getComponent(Integer.parseInt(index));
@@ -182,14 +178,16 @@ public class DefinedDataSarifMgr extends SarifMgr {
 		if (dti != null) {
 			boolean doClear = false;
 			Address maxAddr = addr.add(dti.getLength() - 1);
-			CodeUnitIterator codeUnits = listing.getCodeUnitIterator(CodeUnit.DEFINED_DATA_PROPERTY, new AddressSet(addr, maxAddr), true);
+			CodeUnitIterator codeUnits = listing.getCodeUnitIterator(CodeUnit.DEFINED_DATA_PROPERTY,
+				new AddressSet(addr, maxAddr), true);
 			while (codeUnits.hasNext()) {
 				CodeUnit cu = codeUnits.next();
 				if (cu instanceof Data) {
 					if (((Data) cu).isDefined()) {
 						doClear = true;
 					}
-				} else {
+				}
+				else {
 					return; // don't clear instructions
 				}
 			}
@@ -203,7 +201,8 @@ public class DefinedDataSarifMgr extends SarifMgr {
 	// SARIF WRITE CURRENT DTD //
 	/////////////////////////////
 
-	void write(JsonArray results, AddressSetView addrset, TaskMonitor monitor) throws IOException, CancelledException {
+	void write(JsonArray results, AddressSetView addrset, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		monitor.setMessage("Writing DATA ...");
 
 		List<Data> request = new ArrayList<>();
@@ -216,7 +215,8 @@ public class DefinedDataSarifMgr extends SarifMgr {
 		writeAsSARIF(program, request, results);
 	}
 
-	public static void writeAsSARIF(Program program, List<Data> request, JsonArray results) throws IOException {
+	public static void writeAsSARIF(Program program, List<Data> request, JsonArray results)
+			throws IOException {
 		SarifDataWriter writer = new SarifDataWriter(request, null);
 		new TaskLauncher(new SarifWriterTask("DefinedData", writer, results), null);
 	}

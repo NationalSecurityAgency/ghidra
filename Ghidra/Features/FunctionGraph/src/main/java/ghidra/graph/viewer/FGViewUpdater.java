@@ -447,8 +447,8 @@ public class FGViewUpdater extends VisualGraphViewUpdater<FGVertex, FGEdge> {
 			GroupedFunctionGraphVertex groupVertex, Point2D groupVertexLocation,
 			boolean relayoutOverride, boolean animate, boolean isRegroup) {
 
-		boolean doAnimate = animate & isAnimationEnabled(); // never animate when the user has disabled it
-		if (groupVertex.getVertices().size() == 0) {
+		boolean doAnimate = animate && isAnimationEnabled(); // never animate when the user has disabled it
+		if (groupVertex.getVertices().isEmpty()) {
 			return false;
 		}
 

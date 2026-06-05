@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,10 +48,6 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 
 	private ApplicationLayout appLayout;
 
-	/*
-	 * Create dummy archive and installation folders in the temp space that we can populate
-	 * with extensions.
-	 */
 	@Before
 	public void setup() throws IOException {
 
@@ -60,16 +56,10 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 
 		setErrorGUIEnabled(false);
 
-		// clear static caching of extensions
-		ExtensionUtils.clearCache();
-
 		appLayout = Application.getApplicationLayout();
 
-		FileUtilities.deleteDir(appLayout.getExtensionArchiveDir().getFile(false));
-		for (ResourceFile installDir : appLayout.getExtensionInstallationDirs()) {
-			FileUtilities.deleteDir(installDir.getFile(false));
-		}
-
+		ExtensionUtils.clearCache();
+		deleteExtensionDirs();
 		createExtensionDirs();
 	}
 
@@ -239,7 +229,8 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 	}
 
 	@Test
-	public void testCleanupUninstalledExtions_WithExtensionMarkedForUninstall() throws Exception {
+	public void testCleanupUninstalledExtensions_WithExtensionMarkedForUninstall()
+			throws Exception {
 
 		File externalFolder = createExternalExtensionInFolder();
 		assertTrue(ExtensionInstaller.install(externalFolder));
@@ -256,7 +247,8 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 	}
 
 	@Test
-	public void testCleanupUninstalledExtions_SomeExtensionMarkedForUninstall() throws Exception {
+	public void testCleanupUninstalledExtensions_SomeExtensionMarkedForUninstall()
+			throws Exception {
 
 		List<File> extensionFolders = createTwoExternalExtensionsInFolder();
 		assertTrue(ExtensionInstaller.install(extensionFolders.get(0)));
@@ -280,7 +272,7 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 	}
 
 	@Test
-	public void testCleanupUninstalledExtions_NoExtensionsMarkedForUninstall() throws Exception {
+	public void testCleanupUninstalledExtensions_NoExtensionsMarkedForUninstall() throws Exception {
 
 		File externalFolder = createExternalExtensionInFolder();
 		assertTrue(ExtensionInstaller.install(externalFolder));
@@ -426,14 +418,14 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 
 		/*
 		 	Create a zip file that looks something like this:
-
+		
 		 	/
 		 	 	{Extension Name 1}/
 					extension.properties
-
+		
 				{Extension Name 2}/
 					extension.properties
-
+		
 		 */
 
 		errorsExpected(() -> {
@@ -518,6 +510,13 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 			if (!installDir.mkdir()) {
 				throw new IOException("Failed to create extension installation directory for test");
 			}
+		}
+	}
+
+	private void deleteExtensionDirs() {
+		FileUtilities.deleteDir(appLayout.getExtensionArchiveDir().getFile(false));
+		for (ResourceFile installDir : appLayout.getExtensionInstallationDirs()) {
+			FileUtilities.deleteDir(installDir.getFile(false));
 		}
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -126,9 +126,8 @@ public class DialogResourceDataType extends DynamicDataType {
 	private int addDlgTemplateStructure(MemBuffer memBuffer, List<DataTypeComponent> comps,
 			int tempOffset, boolean ex) {
 
-		tempOffset =
-			addComp(ex ? dlgTemplateExStructure() : dlgTemplateStructure(), ex ? 26 : 18,
-				"Dialog Template Structure", memBuffer.getAddress(), comps, tempOffset);
+		tempOffset = addComp(ex ? dlgTemplateExStructure() : dlgTemplateStructure(), ex ? 26 : 18,
+			"Dialog Template Structure", memBuffer.getAddress(), comps, tempOffset);
 
 		return tempOffset;
 	}
@@ -139,15 +138,13 @@ public class DialogResourceDataType extends DynamicDataType {
 
 		short dialogMenuInfo = memBuffer.getShort(tempOffset);
 		if (dialogMenuInfo == 0x0000) { //if 0x0000 - no menu
-			tempOffset =
-				addComp(createArrayOfShorts(1), 2, "Dialog Menu",
-					memBuffer.getAddress().add(tempOffset), comps, tempOffset);
+			tempOffset = addComp(createArrayOfShorts(1), 2, "Dialog Menu",
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 		//if 0xFFFF - one more item that is resource number of the menu
 		else if (dialogMenuInfo == 0xFFFF) {
-			tempOffset =
-				addComp(createArrayOfShorts(2), 4, "Dialog Menu",
-					memBuffer.getAddress().add(tempOffset), comps, tempOffset);
+			tempOffset = addComp(createArrayOfShorts(2), 4, "Dialog Menu",
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 		//array is unicode name of menu in executable file
 		else {
@@ -164,15 +161,13 @@ public class DialogResourceDataType extends DynamicDataType {
 
 		//if 0x0000 - use predefined class
 		if (dialogClassInfo == 0x0000) {
-			tempOffset =
-				addComp(createArrayOfShorts(1), 2, "Dialog Class",
-					memBuffer.getAddress().add(tempOffset), comps, tempOffset);
+			tempOffset = addComp(createArrayOfShorts(1), 2, "Dialog Class",
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 		//if 0xFFFF - one more item that is ordinal value of system window class
 		else if (dialogClassInfo == 0xFFFF) {
-			tempOffset =
-				addComp(createArrayOfShorts(2), 4, "Dialog Class",
-					memBuffer.getAddress().add(tempOffset), comps, tempOffset);
+			tempOffset = addComp(createArrayOfShorts(2), 4, "Dialog Class",
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 		//array is unicode name of menu in executable file
 		else {
@@ -188,9 +183,8 @@ public class DialogResourceDataType extends DynamicDataType {
 		short dialogTitleInfo = memBuffer.getShort(tempOffset);
 		//if 0x0000 - Dialog has no title
 		if (dialogTitleInfo == 0x0000) {
-			tempOffset =
-				addComp(createArrayOfShorts(1), 2, "Dialog Title",
-					memBuffer.getAddress().add(tempOffset), comps, tempOffset);
+			tempOffset = addComp(createArrayOfShorts(1), 2, "Dialog Title",
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 		//array is unicode name of menu in executable file
 		else {
@@ -206,22 +200,21 @@ public class DialogResourceDataType extends DynamicDataType {
 	private int addDialogFontComponents(MemBuffer memBuffer, List<DataTypeComponent> comps,
 			int tempOffset, boolean ex) {
 		//add Dialog Font size
-		tempOffset =
-			addComp(new ShortDataType(), 2, "Dialog Font Size",
-				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
+		tempOffset = addComp(new ShortDataType(), 2, "Dialog Font Size",
+			memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 
 		if (ex) {
 			//add Dialog Font weight
-			tempOffset = addComp(new WordDataType(), 2, "Dialog Font Weight", memBuffer.getAddress().add(tempOffset),
-					comps, tempOffset);
+			tempOffset = addComp(new WordDataType(), 2, "Dialog Font Weight",
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 
 			//add Dialog Font Italic
-			tempOffset = addComp(new ByteDataType(), 1, "Dialog Font Italic", memBuffer.getAddress().add(tempOffset),
-					comps, tempOffset);
+			tempOffset = addComp(new ByteDataType(), 1, "Dialog Font Italic",
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 
 			//add Dialog Font Charset
-			tempOffset = addComp(new ByteDataType(), 1, "Dialog Font Charset", memBuffer.getAddress().add(tempOffset),
-					comps, tempOffset);
+			tempOffset = addComp(new ByteDataType(), 1, "Dialog Font Charset",
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 
 		//add Dialog Font Style array
@@ -235,9 +228,8 @@ public class DialogResourceDataType extends DynamicDataType {
 			int tempOffset, boolean ex) {
 
 		if ((memBuffer.getAddress().add(tempOffset).getOffset() % 4) != 0) {
-			tempOffset =
-				addComp(new AlignmentDataType(), 2, "Alignment",
-					memBuffer.getAddress().add(tempOffset), comps, tempOffset);
+			tempOffset = addComp(new AlignmentDataType(), 2, "Alignment",
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 		tempOffset =
 			addComp(ex ? dlgItemTemplateExStructure() : dlgItemTemplateStructure(), ex ? 24 : 18,
@@ -247,16 +239,15 @@ public class DialogResourceDataType extends DynamicDataType {
 	}
 
 	//adds Item class array - 1st after component after each DLGITEMTEMPLATE structure
-	private int addItemClassArray(MemBuffer memBuffer, List<DataTypeComponent> comps, int tempOffset)
-			throws MemoryAccessException {
+	private int addItemClassArray(MemBuffer memBuffer, List<DataTypeComponent> comps,
+			int tempOffset) throws MemoryAccessException {
 
 		short itemClassInfo = memBuffer.getShort(tempOffset);
 		if ((itemClassInfo & 0xffff) == 0xffff) {
 			short classType = memBuffer.getShort(tempOffset + 2);
-			tempOffset =
-				addComp(createArrayOfShorts(2), 4, "Item Class Type or Name" + "(" +
-					getItemType(Integer.valueOf(classType)) + ")",
-					memBuffer.getAddress().add(tempOffset), comps, tempOffset);
+			tempOffset = addComp(createArrayOfShorts(2), 4,
+				"Item Class Type or Name" + "(" + getItemType(Integer.valueOf(classType)) + ")",
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 		else {
 			tempOffset = addUnicodeString(memBuffer, comps, tempOffset, "Item Class Type or Name");
@@ -265,14 +256,13 @@ public class DialogResourceDataType extends DynamicDataType {
 	}
 
 	//adds Item title array - 2nd after each DLGITEMTEMPLATE structure
-	private int addItemTitleArray(MemBuffer memBuffer, List<DataTypeComponent> comps, int tempOffset)
-			throws MemoryAccessException {
+	private int addItemTitleArray(MemBuffer memBuffer, List<DataTypeComponent> comps,
+			int tempOffset) throws MemoryAccessException {
 
 		short itemTitleInfo = memBuffer.getShort(tempOffset);
 		if ((itemTitleInfo & 0xffff) == 0xffff) {
-			tempOffset =
-				addComp(createArrayOfShorts(2), 4, "Item Title or Resource ID",
-					memBuffer.getAddress().add(tempOffset), comps, tempOffset);
+			tempOffset = addComp(createArrayOfShorts(2), 4, "Item Title or Resource ID",
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 		else {
 			tempOffset =
@@ -287,15 +277,13 @@ public class DialogResourceDataType extends DynamicDataType {
 
 		short itemDataLength = memBuffer.getShort(tempOffset);
 		if (itemDataLength == 0x0000) {
-			tempOffset =
-				addComp(createArrayOfShorts(1), 2, "Item Data",
-					memBuffer.getAddress().add(tempOffset), comps, tempOffset);
+			tempOffset = addComp(createArrayOfShorts(1), 2, "Item Data",
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 		else {
 			tempOffset =
-				addComp(new ArrayDataType(ByteDataType.dataType, itemDataLength, 1),
-					itemDataLength, "Item Data", memBuffer.getAddress().add(tempOffset), comps,
-					tempOffset);
+				addComp(new ArrayDataType(ByteDataType.dataType, itemDataLength, 1), itemDataLength,
+					"Item Data", memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 		return tempOffset;
 	}
@@ -303,154 +291,56 @@ public class DialogResourceDataType extends DynamicDataType {
 	//This is always the first structure in the dialog resource
 	private StructureDataType dlgTemplateExStructure() {
 		StructureDataType struct = new StructureDataType("DLGTEMPLATEEX", 0);
-
-		struct.add(WordDataType.dataType);
-		struct.add(WordDataType.dataType);
-		struct.add(DWordDataType.dataType);
-		struct.add(DWordDataType.dataType);
-		struct.add(DWordDataType.dataType);
-		struct.add(WordDataType.dataType);
-		struct.add(ShortDataType.dataType);
-		struct.add(ShortDataType.dataType);
-		struct.add(ShortDataType.dataType);
-		struct.add(ShortDataType.dataType);
-
-		try {
-			struct.getComponent(0).setFieldName("dlgVer");
-			struct.getComponent(1).setFieldName("signature");
-			struct.getComponent(2).setFieldName("helpId");
-			struct.getComponent(3).setFieldName("exStyle");
-			struct.getComponent(4).setFieldName("style");
-			struct.getComponent(5).setFieldName("cDlgItems");
-			struct.getComponent(6).setFieldName("x");
-			struct.getComponent(7).setFieldName("y");
-			struct.getComponent(8).setFieldName("cx");
-			struct.getComponent(9).setFieldName("cy");
-		}
-		catch (DuplicateNameException e) {
-			Msg.debug(this, "Unexpected exception building DLGTEMPLATEEX", e);
-		}
-		struct.getComponent(0).setComment("version (must be 1)");
-		struct.getComponent(1).setComment("signature (must be 0xffff)");
-		struct.getComponent(2).setComment("help context identifier");
-		struct.getComponent(3).setComment("extended styles for a window");
-		struct.getComponent(4).setComment("style of dialog box");
-		struct.getComponent(5).setComment("number of items in dialog box");
-		struct.getComponent(6).setComment("x-coordinate of upper-left corner of dialog");
-		struct.getComponent(7).setComment("y-coordinate of upper-left corner of dialog");
-		struct.getComponent(8).setComment("width of dialog box");
-		struct.getComponent(9).setComment("height of dialog box");
-
+		struct.add(WordDataType.dataType, "dlgVer", "version (must be 1)");
+		struct.add(WordDataType.dataType, "signature", "signature (must be 0xffff)");
+		struct.add(DWordDataType.dataType, "helpId", "help context identifier");
+		struct.add(DWordDataType.dataType, "exStyle", "extended styles for a window");
+		struct.add(DWordDataType.dataType, "style", "style of dialog box");
+		struct.add(WordDataType.dataType, "cDlgItems", "number of items in dialog box");
+		struct.add(ShortDataType.dataType, "x", "x-coordinate of upper-left corner of dialog");
+		struct.add(ShortDataType.dataType, "y", "y-coordinate of upper-left corner of dialog");
+		struct.add(ShortDataType.dataType, "cx", "width of dialog box");
+		struct.add(ShortDataType.dataType, "cy", "height of dialog box");
 		return struct;
 	}
 
 	//This is always the first structure in the dialog resource
 	private StructureDataType dlgTemplateStructure() {
 		StructureDataType struct = new StructureDataType("DLGTEMPLATE", 0);
-
-		struct.add(DWordDataType.dataType);
-		struct.add(DWordDataType.dataType);
-		struct.add(WordDataType.dataType);
-		struct.add(ShortDataType.dataType);
-		struct.add(ShortDataType.dataType);
-		struct.add(ShortDataType.dataType);
-		struct.add(ShortDataType.dataType);
-
-		try {
-			struct.getComponent(0).setFieldName("style");
-			struct.getComponent(1).setFieldName("dwExtendedStyle");
-			struct.getComponent(2).setFieldName("cdit");
-			struct.getComponent(3).setFieldName("x");
-			struct.getComponent(4).setFieldName("y");
-			struct.getComponent(5).setFieldName("cx");
-			struct.getComponent(6).setFieldName("cy");
-		}
-		catch (DuplicateNameException e) {
-			Msg.debug(this, "Unexpected exception building DLGTEMPLATE", e);
-		}
-		struct.getComponent(0).setComment("style of dialog box");
-		struct.getComponent(1).setComment("extended styles for a window");
-		struct.getComponent(2).setComment("number of items in dialog box");
-		struct.getComponent(3).setComment("x-coordinate of upper-left corner of dialog");
-		struct.getComponent(4).setComment("y-coordinate of upper-left corner of dialog");
-		struct.getComponent(5).setComment("width of dialog box");
-		struct.getComponent(6).setComment("height of dialog box");
-
+		struct.add(DWordDataType.dataType, "style", "style of dialog box");
+		struct.add(DWordDataType.dataType, "dwExtendedStyle", "extended styles for a window");
+		struct.add(WordDataType.dataType, "cdit", "number of items in dialog box");
+		struct.add(ShortDataType.dataType, "x", "x-coordinate of upper-left corner of dialog");
+		struct.add(ShortDataType.dataType, "y", "y-coordinate of upper-left corner of dialog");
+		struct.add(ShortDataType.dataType, "cx", "width of dialog box");
+		struct.add(ShortDataType.dataType, "cy", "height of dialog box");
 		return struct;
 	}
 
 	//Each control item has one of these structures
 	private StructureDataType dlgItemTemplateExStructure() {
 		StructureDataType struct = new StructureDataType("DLGITEMTEMPLATEEX", 0);
-
-		try {
-			struct.add(DWordDataType.dataType);
-			struct.add(DWordDataType.dataType);
-			struct.add(DWordDataType.dataType);
-			struct.add(ShortDataType.dataType);
-			struct.add(ShortDataType.dataType);
-			struct.add(ShortDataType.dataType);
-			struct.add(ShortDataType.dataType);
-			struct.add(DWordDataType.dataType);
-
-			struct.getComponent(0).setFieldName("helpID");
-			struct.getComponent(1).setFieldName("exStyle");
-			struct.getComponent(2).setFieldName("style");
-			struct.getComponent(3).setFieldName("x");
-			struct.getComponent(4).setFieldName("y");
-			struct.getComponent(5).setFieldName("cx");
-			struct.getComponent(6).setFieldName("cy");
-			struct.getComponent(7).setFieldName("id");
-		}
-		catch (DuplicateNameException e) {
-			Msg.debug(this, "Unexpected exception building DLGITEMTEMPLATEEX", e);
-		}
-
-		struct.getComponent(0).setComment("help context identifier");
-		struct.getComponent(1).setComment("extended styles for a window");
-		struct.getComponent(2).setComment("style of control");
-		struct.getComponent(3).setComment("x-coordinate of upper-left corner of control");
-		struct.getComponent(4).setComment("y-coordinate of upper-left corner of control");
-		struct.getComponent(5).setComment("width of control");
-		struct.getComponent(6).setComment("height of control");
-		struct.getComponent(7).setComment("control identifier");
-
+		struct.add(DWordDataType.dataType, "helpID", "help context identifier");
+		struct.add(DWordDataType.dataType, "exStyle", "extended styles for a window");
+		struct.add(DWordDataType.dataType, "style", "style of control");
+		struct.add(ShortDataType.dataType, "x", "x-coordinate of upper-left corner of control");
+		struct.add(ShortDataType.dataType, "y", "y-coordinate of upper-left corner of control");
+		struct.add(ShortDataType.dataType, "cx", "width of control");
+		struct.add(ShortDataType.dataType, "cy", "height of control");
+		struct.add(DWordDataType.dataType, "id", "control identifier");
 		return struct;
 	}
 
 	//Each control item has one of these structures
 	private StructureDataType dlgItemTemplateStructure() {
 		StructureDataType struct = new StructureDataType("DLGITEMTEMPLATE", 0);
-
-		try {
-			struct.add(DWordDataType.dataType);
-			struct.add(DWordDataType.dataType);
-			struct.add(ShortDataType.dataType);
-			struct.add(ShortDataType.dataType);
-			struct.add(ShortDataType.dataType);
-			struct.add(ShortDataType.dataType);
-			struct.add(WordDataType.dataType);
-
-			struct.getComponent(0).setFieldName("style");
-			struct.getComponent(1).setFieldName("dwExtendedStyle");
-			struct.getComponent(2).setFieldName("x");
-			struct.getComponent(3).setFieldName("y");
-			struct.getComponent(4).setFieldName("cx");
-			struct.getComponent(5).setFieldName("cy");
-			struct.getComponent(6).setFieldName("id");
-		}
-		catch (DuplicateNameException e) {
-			Msg.debug(this, "Unexpected exception building DLGITEMTEMPLATE", e);
-		}
-
-		struct.getComponent(0).setComment("style of control");
-		struct.getComponent(1).setComment("extended styles for a window");
-		struct.getComponent(2).setComment("x-coordinate of upper-left corner of control");
-		struct.getComponent(3).setComment("y-coordinate of upper-left corner of control");
-		struct.getComponent(4).setComment("width of control");
-		struct.getComponent(5).setComment("height of control");
-		struct.getComponent(6).setComment("control identifier");
-
+		struct.add(DWordDataType.dataType, "style", "style of dialog box");
+		struct.add(DWordDataType.dataType, "dwExtendedStyle", "extended styles for a window");
+		struct.add(ShortDataType.dataType, "x", "x-coordinate of upper-left corner of control");
+		struct.add(ShortDataType.dataType, "y", "y-coordinate of upper-left corner of control");
+		struct.add(ShortDataType.dataType, "cx", "width of control");
+		struct.add(ShortDataType.dataType, "cy", "height of control");
+		struct.add(DWordDataType.dataType, "id", "control identifier");
 		return struct;
 	}
 
@@ -459,16 +349,15 @@ public class DialogResourceDataType extends DynamicDataType {
 		return itemTypeMap.get(value);
 	}
 
-	private int addUnicodeString(MemBuffer memBuffer, List<DataTypeComponent> comps,
-			int tempOffset, String title) {
+	private int addUnicodeString(MemBuffer memBuffer, List<DataTypeComponent> comps, int tempOffset,
+			String title) {
 
 		byte[] tempBytes = new byte[1024];
 		memBuffer.getBytes(tempBytes, tempOffset);
 		int strLength = findUnicodeLength(tempBytes);
 		if (strLength >= 2) {
-			tempOffset =
-				addComp(UnicodeDataType.dataType, strLength, title,
-					memBuffer.getAddress().add(tempOffset), comps, tempOffset);
+			tempOffset = addComp(UnicodeDataType.dataType, strLength, title,
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 		}
 
 		return tempOffset;
@@ -495,9 +384,8 @@ public class DialogResourceDataType extends DynamicDataType {
 	private int addComp(DataType dataType, int len, String fieldName, Address address,
 			List<DataTypeComponent> comps, int currentOffset) {
 		if (len > 0) {
-			ReadOnlyDataTypeComponent readOnlyDataTypeComponent =
-				new ReadOnlyDataTypeComponent(dataType, this, len, comps.size(), currentOffset,
-					fieldName, null);
+			ReadOnlyDataTypeComponent readOnlyDataTypeComponent = new ReadOnlyDataTypeComponent(
+				dataType, this, len, comps.size(), currentOffset, fieldName, null);
 			comps.add(readOnlyDataTypeComponent);
 			currentOffset += len;
 		}

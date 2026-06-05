@@ -17,7 +17,7 @@ package ghidra.feature.vt.gui.plugin;
 
 import java.util.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import generic.cache.FixedSizeMRUCachingFactory;
 import generic.stl.Pair;

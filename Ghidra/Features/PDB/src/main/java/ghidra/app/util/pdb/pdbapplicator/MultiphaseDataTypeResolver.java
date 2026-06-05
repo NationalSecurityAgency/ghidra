@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -94,7 +94,7 @@ public class MultiphaseDataTypeResolver {
 			monitor.checkCancelled();
 			DataType dataType = applicator.getDataType(recordToProcess);
 			// Resolve and re-store most types.  Normally we wouldn't want to resolve
-			// pointer types, but here it is preferred while we have the types in hand the the
+			// pointer types, but here it is preferred while we have the types in hand.  The
 			// PDB would have a type record if it wasn't used somewhere here or as the referred-to
 			// type of a typedef.
 			if (!(dataType instanceof BitFieldDataType)) {
@@ -120,7 +120,7 @@ public class MultiphaseDataTypeResolver {
 	void scheduleTodo(RecordNumber recordNumber) {
 		MsTypeApplier applier = applicator.getTypeApplier(recordNumber);
 		if (!(applier instanceof MsDataTypeApplier dataTypeApplier)) {
-			// Return without scheduling... only want to schedule that that have a legitimate
+			// Return without scheduling... only want to schedule records that have a legitimate
 			//  data type to store
 			return;
 		}
@@ -188,7 +188,7 @@ public class MultiphaseDataTypeResolver {
 		}
 
 		/**
-		 * Indicates if number number exists on stack
+		 * Indicates if a record number exists on the stack
 		 * @param recordNumber the record number to check
 		 * @return {@code true} if exists
 		 */
@@ -227,7 +227,7 @@ public class MultiphaseDataTypeResolver {
 
 		/**
 		 * Peek at top node
-		 * @return the node's record number or {@code null} if if no nodes left
+		 * @return the node's record number or {@code null} if there are no nodes left
 		 */
 		RecordNumber peek() {
 			RecordNode node = getTop();
@@ -239,7 +239,7 @@ public class MultiphaseDataTypeResolver {
 
 		/**
 		 * Pop top node
-		 * @return the popped node's record number or {@code null} if if no nodes left
+		 * @return the popped node's record number or {@code null} if there are no nodes left
 		 */
 		RecordNumber pop() {
 			RecordNode node = getTop();

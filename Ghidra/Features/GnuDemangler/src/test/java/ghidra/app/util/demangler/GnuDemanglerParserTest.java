@@ -108,6 +108,26 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testParse_CastInTemplates_ToPointer() throws Exception {
+
+		String mangled =
+			"_ZN3ndk4impl15ScopedAResourceIP7AStatusXadL_Z14AStatus_deleteEELS3_0EEaSEOS4_";
+		String demangled = process.demangle(mangled);
+		assertEquals(
+			"ndk::impl::ScopedAResource<AStatus*, &AStatus_delete, (AStatus*)0>::operator=(ndk::impl::ScopedAResource<AStatus*, &AStatus_delete, (AStatus*)0>&&)",
+			demangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledFunction.class);
+		assertName(object, "operator=", "ndk", "impl",
+			"ScopedAResource<AStatus*,&AStatus_delete,(AStatus*)0>");
+
+		assertEquals(
+			"undefined ndk::impl::ScopedAResource<AStatus*,&AStatus_delete,(AStatus*)0>::operator=(ndk::impl::ScopedAResource<AStatus *,&AStatus_delete,(AStatus*)0> &&)",
+			object.getSignature(false));
+	}
+
+	@Test
 	public void testParse_MultiDimensionalArray() throws Exception {
 
 		DemangledObject object = parser.parse("fake", "Layout::graphNew(short[][][][], char*)");
@@ -162,6 +182,63 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testLegacy_DemangledFunctionCharacter() throws Exception {
+
+		// This is only supported in the older v24 demangler.  The 'F' character was not being 
+		// correctly demangled.  The native demangler was updated to fix this.
+		String mangled = "foo__03FooCFUcT1";
+		process = GnuDemanglerNativeProcess
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+		String demangled = process.demangle(mangled);
+		assertEquals("Foo::foo(unsigned char, unsigned char) const", demangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledFunction.class);
+		assertName(object, "foo", "Foo");
+		assertEquals("undefined Foo::foo(unsigned char,unsigned char)", object.getSignature());
+	}
+
+	@Test
+	public void testLegacy_DemangedFunctionCharacter_Qualifiers() throws Exception {
+
+		// This is only supported in the older v24 demangler.  The 'F' character was not being 
+		// correctly demangled along with some qualifier characters.  The native demangler was 
+		// updated to fix this.
+		process = GnuDemanglerNativeProcess
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+
+		//@formatter:off
+		assertLegacyDemangled("foo__03FooCF", 
+							  "Foo::foo(void) const",
+							  "undefined Foo::foo(void)");
+		
+		assertLegacyDemangled("foo__03FooSF", 
+							  "Foo::foo(void) static",
+							  "undefined Foo::foo(void)");
+		
+		assertLegacyDemangled("foo__03FooSFUcT1", 
+							  "Foo::foo(unsigned char, unsigned char) static",
+							  "undefined Foo::foo(unsigned char,unsigned char)");
+		
+		assertLegacyDemangled("foo__03FooSCFUcT1", 
+							  "Foo::foo(unsigned char, unsigned char) static const",
+							  "undefined Foo::foo(unsigned char,unsigned char)");
+		
+		//@formatter:on
+	}
+
+	private void assertLegacyDemangled(String mangled, String demangledExpected,
+			String signatureExpected) throws Exception {
+
+		String demangledActual = process.demangle(mangled);
+		assertEquals(demangledExpected, demangledActual);
+
+		DemangledObject object = parser.parse(mangled, demangledExpected);
+		assertType(object, DemangledFunction.class);
+		assertEquals(signatureExpected, object.getSignature());
+	}
+
+	@Test
 	public void testTemplates_TemplatedType() throws Exception {
 		String mangled =
 			"_ZNKSt8_Rb_treeI8LocationS0_St9_IdentityIS0_ESt4lessIS0_ESaIS0_EE4findERKS0_";
@@ -197,15 +274,15 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		List<DemangledParameter> parameters = function.getParameters();
 
 		assertEquals(
-			"__insertion_sort<__normal_iterator<std::pair<unsigned_long,PcodeOp*>*,std::vector<std::pair<unsigned_long,PcodeOp*>,std::allocator<std::pair<unsigned_long,PcodeOp*>>>>,bool(*)(std::pair<unsigned_long,PcodeOp*>const&,std::pair<unsigned_long,PcodeOp*>const&)>",
+			"__insertion_sort<__gnu_cxx::__normal_iterator<std::pair<unsigned_long,PcodeOp*>*,std::vector<std::pair<unsigned_long,PcodeOp*>,std::allocator<std::pair<unsigned_long,PcodeOp*>>>>,bool(*)(std::pair<unsigned_long,PcodeOp*>const&,std::pair<unsigned_long,PcodeOp*>const&)>",
 			function.getName());
 		assertEquals("std", function.getNamespace().getName());
 
 		assertEquals(
-			"__normal_iterator<std::pair<unsigned long,PcodeOp *> *,std::vector<std::pair<unsigned long,PcodeOp *>,std::allocator<std::pair<unsigned long,PcodeOp *>>>>",
+			"__gnu_cxx::__normal_iterator<std::pair<unsigned long,PcodeOp *> *,std::vector<std::pair<unsigned long,PcodeOp *>,std::allocator<std::pair<unsigned long,PcodeOp *>>>>",
 			parameters.get(0).toString());
 		assertEquals(
-			"__normal_iterator<std::pair<unsigned long,PcodeOp *> *,std::vector<std::pair<unsigned long,PcodeOp *>,std::allocator<std::pair<unsigned long,PcodeOp *>>>>",
+			"__gnu_cxx::__normal_iterator<std::pair<unsigned long,PcodeOp *> *,std::vector<std::pair<unsigned long,PcodeOp *>,std::allocator<std::pair<unsigned long,PcodeOp *>>>>",
 			parameters.get(1).toString());
 		assertEquals(
 			"bool (*)(std::pair<unsigned long,PcodeOp *> const &,std::pair<unsigned long,PcodeOp *> const &)",
@@ -615,6 +692,24 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testTlsInitFunctionFor() throws Exception {
+
+		String mangled = "_ZTH8SomeName";
+		String demangled = process.demangle(mangled);
+
+		assertEquals("TLS init function for SomeName", demangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledFunction.class);
+		assertName(object, "__tls_init", "SomeName");
+
+		DemangledFunction function = (DemangledFunction) object;
+		String plate = function.generatePlateComment();
+		assertEquals("TLS init function for SomeName", plate);
+		assertEquals("SomeName::__tls_init(void)", object.getSignature(false));
+	}
+
+	@Test
 	public void testGuardVariable_WithGuardVariableText() throws Exception {
 
 		String mangled = "_ZGVZN10KDirLister11emitChangesEvE3dot";
@@ -651,6 +746,26 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		DemangledVariable variable = (DemangledVariable) object;
 		assertEquals("__gthread_active_ptr", variable.getName());
 		assertEquals("__gthread_active_p()", variable.getNamespace().getNamespaceName());
+		assertNull(variable.getDataType()); // no type information provided
+	}
+
+	@Test
+	public void testGuardVariable_GlobalVariable() throws Exception {
+
+		String mangled = "_ZGV17globalVariableFoo";
+
+		String demangled = process.demangle(mangled);
+
+		assertEquals("guard variable for globalVariableFoo", demangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledVariable.class);
+		assertName(object, "globalVariableFoo");
+
+		assertEquals("globalVariableFoo", object.getSignature(false));
+
+		DemangledVariable variable = (DemangledVariable) object;
+		assertEquals("globalVariableFoo", variable.getName());
 		assertNull(variable.getDataType()); // no type information provided
 	}
 
@@ -1112,7 +1227,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"std::string std::_Bind<std::string(EduAppConfigs::*(EduAppConfigs_const*))()const>::operator()<missing_argument,std::string>(void)",
+			"std::__cxx11::string std::_Bind<std::__cxx11::string(EduAppConfigs::*(EduAppConfigs_const*))()const>::operator()<missing_argument,std::__cxx11::string>(void)",
 			signature);
 	}
 
@@ -1145,7 +1260,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"std::string gsl::to_string<char_const,-1l>(gsl::basic_string_span<char const,long>)",
+			"std::__cxx11::string gsl::to_string<char_const,-1l>(gsl::basic_string_span<char const,long>)",
 			signature);
 	}
 
@@ -1630,7 +1745,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 			"vector<boost::function<void()>,std::allocator<boost::function<void()>>>");
 
 		assertEquals(
-			"undefined std::vector<boost::function<void()>,std::allocator<boost::function<void()>>>::_M_insert_aux(__normal_iterator<boost::function<void ()> *,std::vector<boost::function<void ()>,std::allocator<boost::function<void ()>>>>,boost::function<void ()> const &)",
+			"undefined std::vector<boost::function<void()>,std::allocator<boost::function<void()>>>::_M_insert_aux(__gnu_cxx::__normal_iterator<boost::function<void ()> *,std::vector<boost::function<void ()>,std::allocator<boost::function<void ()>>>>,boost::function<void ()> const &)",
 			object.getSignature(false));
 	}
 
@@ -1770,7 +1885,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals("undefined " +
-			"__stoa<long,int,char,int>(long(*)(char_const*,char**,int),char_const*,char_const*,unsigned_long*,int)" +
+			"__gnu_cxx::__stoa<long,int,char,int>(long(*)(char_const*,char**,int),char_const*,char_const*,unsigned_long*,int)" +
 			"::_Save_errno::_Save_errno(void)", signature);
 	}
 

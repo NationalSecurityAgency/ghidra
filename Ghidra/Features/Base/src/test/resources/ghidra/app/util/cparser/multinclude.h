@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,15 +17,15 @@
 #define INCLUDE1
 #pragma pack(push,1)
 
-#else if !defined(INCLUDE2)
+#elif !defined(INCLUDE2)
 #define INCLUDE2
 #pragma pack(push, 2)
 
-#else if !defined(INCLUDE3)
+#elif !defined(INCLUDE3)
 #define INCLUDE3
 #pragma pack(push, 4)
 
-#else if !defined(INCLUDE4)
+#elif !defined(INCLUDE4)
 #define INCLUDE4
 #pragma pack(push, 8)
 

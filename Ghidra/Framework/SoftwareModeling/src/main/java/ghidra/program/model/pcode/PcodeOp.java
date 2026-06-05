@@ -62,7 +62,7 @@ public class PcodeOp {
 	public static final int INT_SLESS = 13;         	// Return TRUE if signed op1 < signed op2
 	public static final int INT_SLESSEQUAL = 14;	// Return TRUE if signed op1 <= signed op2
 	public static final int INT_LESS = 15;		// Return TRUE if unsigned op1 < unsigned op2
-	// Also indicates borrow on unsigned substraction
+	// Also indicates borrow on unsigned subtraction
 	public static final int INT_LESSEQUAL = 16;	// Return TRUE if unsigned op1 <= unsigned op2
 	public static final int INT_ZEXT = 17;		// Zero extend operand 
 	public static final int INT_SEXT = 18;		// Sign extend operand 
@@ -130,11 +130,12 @@ public class PcodeOp {
 	public static final int CPOOLREF = 68;
 	public static final int NEW = 69;
 	public static final int INSERT = 70;
-	public static final int EXTRACT = 71;
+	public static final int ZPULL = 71;
 	public static final int POPCOUNT = 72;
 	public static final int LZCOUNT = 73;
+	public static final int SPULL = 74;
 
-	public static final int PCODE_MAX = 74;
+	public static final int PCODE_MAX = 75;
 
 	private static Hashtable<String, Integer> opcodeTable;
 
@@ -689,19 +690,22 @@ public class PcodeOp {
 				return "PTRADD";
 			case PTRSUB:
 				return "PTRSUB";
+			case SEGMENTOP:
+				return "SEGMENTOP";
 			case CPOOLREF:
 				return "CPOOLREF";
 			case NEW:
 				return "NEW";
 			case INSERT:
 				return "INSERT";
-			case EXTRACT:
-				return "EXTRACT";
+			case ZPULL:
+				return "ZPULL";
 			case POPCOUNT:
 				return "POPCOUNT";
 			case LZCOUNT:
 				return "LZCOUNT";
-
+			case SPULL:
+				return "SPULL";
 			default:
 				return "INVALID_OP";
 		}

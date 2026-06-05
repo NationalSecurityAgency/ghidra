@@ -204,7 +204,7 @@ public class JavaHelpValidator {
 		Path dirPath = Paths.get(dir.getAbsolutePath());
 		Path imagePath = Paths.get(imgSrc);
 
-		Path imageFileFS = HelpBuildUtils.toFS(dirPath, imagePath);
+		Path imageFileFS = HelpBuildUtils.relativeTo(dirPath, imagePath);
 		Path toCheck = dirPath.resolve(imageFileFS);
 		if (Files.exists(toCheck)) {
 			return toCheck;
@@ -214,7 +214,7 @@ public class JavaHelpValidator {
 
 	private Path makePath(Path helpDir, Path imagePath) {
 
-		Path imageFileFS = HelpBuildUtils.toFS(helpDir, imagePath);
+		Path imageFileFS = HelpBuildUtils.relativeTo(helpDir, imagePath);
 		imageFileFS = removeRedundantHelp(helpDir, imageFileFS);
 		Path toCheck = helpDir.resolve(imageFileFS);
 		if (Files.exists(toCheck)) {

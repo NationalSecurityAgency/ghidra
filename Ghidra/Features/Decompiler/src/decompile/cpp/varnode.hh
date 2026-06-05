@@ -174,6 +174,7 @@ private:
   void addDescend(PcodeOp *op);	///< Add a descendant (reading) PcodeOp to this Varnode's list
   void eraseDescend(PcodeOp *op); ///< Erase a descendant (reading) PcodeOp from this Varnode's list
   void destroyDescend(void);	///< Clear all descendant (reading) PcodeOps
+  void replaceInHigh(Varnode *replacevn);	///< Swap the given Varnode into the HighVariable for \b this
 public:
   // only to be used by HighVariable
   void setHigh(HighVariable *tv,int2 mg) { high = tv; mergegroup = mg; } ///< Set the HighVariable owning this Varnode
@@ -390,6 +391,7 @@ public:
   Varnode *findInput(int4 s,const Address &loc) const;		///< Find an input Varnode
   Varnode *findCoveredInput(int4 s,const Address &loc) const;	///< Find an input Varnode contained within this range
   Varnode *findCoveringInput(int4 s,const Address &loc) const;	///< Find an input Varnode covering a range
+  bool hasInputIntersection(int4 s,const Address &loc) const;	///< Check for input Varnode that overlaps the given range
   uint4 getCreateIndex(void) const { return create_index; }	///< Get the next creation index to be assigned
   VarnodeLocSet::const_iterator beginLoc(void) const { return loc_tree.begin(); }	///< Beginning of location list
   VarnodeLocSet::const_iterator endLoc(void) const { return loc_tree.end(); }		///< End of location list
@@ -413,21 +415,6 @@ public:
 #ifdef VARBANK_DEBUG
   void verifyIntegrity(void) const;		///< Verify the integrity of the container
 #endif
-};
-
-/// \brief Node for a forward traversal of a Varnode expression
-struct TraverseNode {
-  enum {
-    actionalt = 1,	///< Alternate path traverses a solid action or \e non-incidental COPY
-    indirect = 2,	///< Main path traverses an INDIRECT
-    indirectalt = 4,	///< Alternate path traverses an INDIRECT
-    lsb_truncated = 8,	///< Least significant byte(s) of original value have been truncated
-    concat_high = 0x10	///< Original value has been concatented as \e most significant portion
-  };
-  const Varnode *vn;		///< Varnode at the point of traversal
-  uint4 flags;			///< Flags associated with the node
-  TraverseNode(const Varnode *v,uint4 f) { vn = v; flags = f; }		///< Constructor
-  static bool isAlternatePathValid(const Varnode *vn,uint4 flags);
 };
 
 bool contiguous_test(Varnode *vn1,Varnode *vn2);	///< Test if Varnodes are pieces of a whole

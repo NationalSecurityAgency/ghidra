@@ -325,7 +325,7 @@ void PrintC::pushTypeEnd(const Datatype *ct)
       const TypeArray *ctarray = (const TypeArray *)ct;
       ct = ctarray->getBase();
       push_integer(ctarray->numElements(),4,false,syntax,
-		   (const Varnode *)0,(const PcodeOp *)0);
+		   (const Varnode *)0,(const PcodeOp *)0,0);
     }
     else if (ct->getMetatype()==TYPE_CODE) {
       const TypeCode *ctcode = (const TypeCode *)ct;
@@ -366,6 +366,25 @@ bool PrintC::checkArrayDeref(const Varnode *vn) const
   }
   if ((op->code()!=CPUI_PTRSUB)&&(op->code()!=CPUI_PTRADD)) return false;
   return true;
+}
+
+/// Bitfield accesses through a LOAD or STORE may have a PTRSUB accessing the
+/// bitfield storage range.  But with any additional PTRSUB or PTRADD, we can use
+/// member syntax.
+/// \param vn is the root of the pointer expression (the input into LOAD or STORE)
+/// \param field is the bitfield being displayed
+/// \return \b true if member syntax ('.') should be used or \b false for pointer syntax ('->')
+bool PrintC::checkBitFieldMember(const Varnode *vn,const TypeBitField *field) const
+
+{
+  if (field->bits.byteOffset != 0) {	// Bitfield not at offset 0, a PTRSUB should be present
+    const PcodeOp *op;
+    if (!vn->isWritten()) return false;
+    op = vn->getDef();
+    if (op->code() != CPUI_PTRSUB) return false;
+    vn = op->getIn(0);			// Skip this PTRSUB
+  }
+  return checkArrayDeref(vn);
 }
 
 /// Check that the output data-type is a pointer to an array and then that
@@ -849,22 +868,22 @@ void PrintC::opSubpiece(const PcodeOp *op)
     if (ct->isPieceStructured()) {
       int8 offset;
       int8 byteOff = TypeOpSubpiece::computeByteOffsetForComposite(op);
+      Symbol *sym = vn->getHigh()->getSymbol();
+      if (sym != (Symbol *)0 && vn->isExplicit()) {
+	int4 sz = op->getOut()->getSize();
+	int4 suboff = vn->getHigh()->getSymbolOffset();
+	if (suboff > 0)
+	  byteOff += suboff;
+	int4 slot = ct->needsResolution() ? 1 : 0;		// Use artificial slot for initial resolution
+	pushPartialSymbol(sym, byteOff, sz, op->getOut(), op, slot, true);
+	return;
+      }
       const TypeField *field = ct->findTruncation(byteOff,op->getOut()->getSize(),op,1,offset);	// Use artificial slot
       if (field != (const TypeField*)0 && offset == 0) {		// A formal structure field
 	pushOp(&object_member,op);
 	pushVn(vn,op,mods);
 	pushAtom(Atom(field->name,fieldtoken,EmitMarkup::no_color,ct,field->ident,op));
 	return;
-      }
-      else if (vn->isExplicit() && vn->getHigh()->getSymbolOffset() == -1) {	// An explicit, entire, structured object
-	Symbol *sym = vn->getHigh()->getSymbol();
-	if (sym != (Symbol *)0) {
-	  int4 sz = op->getOut()->getSize();
-	  int4 off = (int4)op->getIn(1)->getOffset();
-	  off = vn->getSpace()->isBigEndian() ? vn->getSize() - (sz + off) : off;
-	  pushPartialSymbol(sym, off, sz, vn, op, -1);
-	  return;
-	}
       }
       // Fall thru to functional printing
     }
@@ -1051,7 +1070,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	pushAtom(Atom(fieldname,fieldtoken,EmitMarkup::no_color,ct,fieldid,op));
       }
       if (arrayvalue)
-	push_integer(0,4,false,syntax,(Varnode *)0,op);
+	push_integer(0,4,false,syntax,(Varnode *)0,op,0);
     }
   }
   else if (ct->getMetatype() == TYPE_SPACEBASE) {
@@ -1089,11 +1108,11 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	// we can't use a cast in its description, so turn off
 	// casting when printing the partial symbol
 	//	Datatype *exttype = ((mods & print_store_value)!=0) ? (Datatype *)0 : ct;
-	pushPartialSymbol(symbol,off,0,(Varnode *)0,op,-1);
+	pushPartialSymbol(symbol,off,0,(Varnode *)0,op,-1,false);
       }
     }
     if (arrayvalue)
-      push_integer(0,4,false,syntax,(Varnode *)0,op);
+      push_integer(0,4,false,syntax,(Varnode *)0,op,0);
   }
   else if (ct->getMetatype() == TYPE_ARRAY) {
     if (in1const != 0) {
@@ -1124,7 +1143,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	if (ptrel != (TypePointerRel *)0)
 	  pushTypePointerRel(op);
 	pushVn(in0,op,m | print_load_value);		// Absorb one dereference into in0's defining op
-	push_integer(0,4,false,syntax,(Varnode *)0,op);
+	push_integer(0,4,false,syntax,(Varnode *)0,op,0);
       }
       else {			// EMIT  (* )[0]
 	pushOp(&subscript,op);
@@ -1132,7 +1151,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	if (ptrel != (TypePointerRel *)0)
 	  pushTypePointerRel(op);
 	pushVn(in0,op,m);
-	push_integer(0,4,false,syntax,(Varnode *)0,op);
+	push_integer(0,4,false,syntax,(Varnode *)0,op,0);
       }
     }
   }
@@ -1264,13 +1283,59 @@ void PrintC::opNewOp(const PcodeOp *op)
 void PrintC::opInsertOp(const PcodeOp *op)
 
 {
-  opFunc(op);	// If no other way to print it, print as functional operator
+  opFunc(op);
 }
 
-void PrintC::opExtractOp(const PcodeOp *op)
+void PrintC::opZpullOp(const PcodeOp *op)
 
 {
-  opFunc(op);	// If no other way to print it, print as functional operator
+  PullExpression expr(op);
+  if (!expr.isValid()) {
+    opFunc(op);	// If no other way to print it, print as functional operator
+    return;
+  }
+  if (expr.loadOp != (const PcodeOp *)0) {
+    uint4 m = mods;
+    if (checkBitFieldMember(expr.loadOp->getIn(1),expr.bitfield)) {
+      m |= print_load_value;
+      pushOp(&object_member,op);
+    }
+    else
+      pushOp(&pointer_member,op);
+    pushVn(expr.structPtr,expr.loadOp,m);
+    pushAtom(Atom(expr.bitfield->name,bitfieldtoken,EmitMarkup::no_color,expr.theStruct,expr.bitfield->ident,op));
+  }
+  else {
+    pushOp(&object_member,op);
+    pushSymbolDetail(op->getIn(0),op,true);
+    pushAtom(Atom(expr.bitfield->name,bitfieldtoken,EmitMarkup::no_color,expr.theStruct,expr.bitfield->ident,op));
+  }
+}
+
+void PrintC::opSpullOp(const PcodeOp *op)
+
+{
+  PullExpression expr(op);
+  if (!expr.isValid()) {
+    opFunc(op);	// If no other way to print it, print as functional operator
+    return;
+  }
+  if (expr.loadOp != (const PcodeOp *)0) {
+    uint4 m = mods;
+    if (checkBitFieldMember(expr.loadOp->getIn(1),expr.bitfield)) {
+      m |= print_load_value;
+      pushOp(&object_member,op);
+    }
+    else
+      pushOp(&pointer_member,op);
+    pushVn(expr.structPtr,expr.loadOp,m);
+    pushAtom(Atom(expr.bitfield->name,bitfieldtoken,EmitMarkup::no_color,expr.theStruct,expr.bitfield->ident,op));
+  }
+  else {
+    pushOp(&object_member,op);
+    pushSymbolDetail(op->getIn(0),op,true);
+    pushAtom(Atom(expr.bitfield->name,bitfieldtoken,EmitMarkup::no_color,expr.theStruct,expr.bitfield->ident,op));
+  }
 }
 
 /// \brief Push a constant with an integer data-type to the RPN stack
@@ -1285,13 +1350,13 @@ void PrintC::opExtractOp(const PcodeOp *op)
 /// \param tag is the type of token to associate with the integer
 /// \param vn is the Varnode holding the value
 /// \param op is the PcodeOp using the value
+/// \param displayFormat is the default display format (which can be 0 and may be overridden)
 void PrintC::push_integer(uintb val,int4 sz,bool sign,tagtype tag,
-			  const Varnode *vn,const PcodeOp *op)
+			  const Varnode *vn,const PcodeOp *op,uint4 displayFormat)
 {
   bool print_negsign;
   bool force_unsigned_token;
   bool force_sized_token;
-  uint4 displayFormat = 0;
 
   force_unsigned_token = false;
   force_sized_token = false;
@@ -1307,8 +1372,6 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,tagtype tag,
     }
     force_unsigned_token = vn->isUnsignedPrint();
     force_sized_token = vn->isLongPrint();
-    if (displayFormat == 0)	// The symbol's formatting overrides any formatting on the data-type
-      displayFormat = high->getType()->getDisplayFormat();
   }
   if (sign && displayFormat != Symbol::force_char) { // Print the constant as signed
     uintb mask = calc_mask(sz);
@@ -1324,7 +1387,7 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,tagtype tag,
 
 				// Figure whether to print as hex or decimal
   if (displayFormat != 0) {
-    // Format is forced by the Symbol
+    // Format is forced by the Symbol or data-type
   }
   else if ((mods & force_hex)!=0) {
     displayFormat = Symbol::force_hex;
@@ -1623,7 +1686,7 @@ void PrintC::pushCharConstant(uintb val,const Datatype *ct,tagtype tag,const Var
   }
   if (displayFormat != 0 && displayFormat != Symbol::force_char) {
     if (!castStrategy->caresAboutCharRepresentation(vn, op)) {
-      push_integer(val, ct->getSize(), isSigned, tag, vn, op);
+      push_integer(val, ct->getSize(), isSigned, tag, vn, op, displayFormat);
       return;
     }
   }
@@ -1633,7 +1696,7 @@ void PrintC::pushCharConstant(uintb val,const Datatype *ct,tagtype tag,const Var
     // unicode code-point. Its either part of a multi-byte UTF-8 encoding or an unknown
     // code-page value. In either case, we print as an integer or an escape sequence.
     if (displayFormat != Symbol::force_hex && displayFormat != Symbol::force_char) {
-      push_integer(val, 1, isSigned, tag, vn, op);
+      push_integer(val, 1, isSigned, tag, vn, op, displayFormat);
       return;
     }
     displayFormat = Symbol::force_hex;	// Fallthru but force a hex representation
@@ -1679,10 +1742,10 @@ void PrintC::pushEnumConstant(uintb val,const TypeEnum *ct,tagtype tag,
     for(int4 i=0;i<rep.matchname.size();++i)
       pushAtom(Atom(rep.matchname[i],tag,EmitMarkup::const_color,op,vn,val));
     if (rep.shiftAmount != 0)
-      push_integer(rep.shiftAmount,4,false,tag,vn,op);
+      push_integer(rep.shiftAmount,4,false,tag,vn,op,0);
   }
   else {
-    push_integer(val,ct->getSize(),false,tag,vn,op);
+    push_integer(val,ct->getSize(),false,tag,vn,op,ct->getDisplayFormat());
   }
 }
 
@@ -1742,8 +1805,7 @@ bool PrintC::pushPtrCodeConstant(uintb val,const TypePointer *ct,
 }
 
 void PrintC::pushConstant(uintb val,const Datatype *ct,tagtype tag,
-			    const Varnode *vn,
-			    const PcodeOp *op)
+			  const Varnode *vn,const PcodeOp *op,uint4 displayFormat)
 {
   Datatype *subtype;
   switch(ct->getMetatype()) {
@@ -1753,7 +1815,7 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,tagtype tag,
     else if (ct->isEnumType())
       pushEnumConstant(val,(TypeEnum *)ct,tag,vn,op);
     else
-      push_integer(val,ct->getSize(),false,tag,vn,op);
+      push_integer(val,ct->getSize(),false,tag,vn,op,displayFormat);
     return;
   case TYPE_INT:
     if (ct->isCharPrint())
@@ -1761,10 +1823,10 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,tagtype tag,
     else if (ct->isEnumType())
       pushEnumConstant(val,(TypeEnum *)ct,tag,vn,op);
     else
-      push_integer(val,ct->getSize(),true,tag,vn,op);
+      push_integer(val,ct->getSize(),true,tag,vn,op,displayFormat);
     return;
   case TYPE_UNKNOWN:
-    push_integer(val,ct->getSize(),false,tag,vn,op);
+    push_integer(val,ct->getSize(),false,tag,vn,op,displayFormat);
     return;
   case TYPE_BOOL:
     pushBoolConstant(val,(const TypeBase *)ct,tag,vn,op);
@@ -1811,7 +1873,7 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,tagtype tag,
   pushMod();
   if (!isSet(force_dec))
     setMod(force_hex);
-  push_integer(val,ct->getSize(),false,tag,vn,op);
+  push_integer(val,ct->getSize(),false,tag,vn,op,displayFormat);
   popMod();
 }
 
@@ -1845,14 +1907,14 @@ bool PrintC::pushEquate(uintb val,int4 sz,const EquateSymbol *sym,const Varnode 
   if (modval == val) {
     pushOp(&binary_plus,(const PcodeOp *)0);
     pushSymbol(sym,vn,op);
-    push_integer(1, sz, false, syntax, (const Varnode *)0, (const PcodeOp *)0);
+    push_integer(1, sz, false, syntax, (const Varnode *)0, (const PcodeOp *)0, 0);
     return true;
   }
   modval = (baseval - 1) & mask;
   if (modval == val) {
     pushOp(&binary_minus,(const PcodeOp *)0);
     pushSymbol(sym,vn,op);
-    push_integer(1, sz, false, syntax, (const Varnode *)0, (const PcodeOp *)0);
+    push_integer(1, sz, false, syntax, (const Varnode *)0, (const PcodeOp *)0, 0);
     return true;
   }
   return false;
@@ -1883,7 +1945,7 @@ void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
       pushSymbol(entry->getSymbol(),vn,op);
     else {
       int4 symboloff = vn->getOffset() - entry->getFirst();
-      pushPartialSymbol(entry->getSymbol(),symboloff,size,vn,op,-1);
+      pushPartialSymbol(entry->getSymbol(),symboloff,size,vn,op,-1,false);
     }
   }
   else {
@@ -1946,7 +2008,7 @@ void PrintC::pushUnnamedLocation(const Address &addr,
 
 void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
 			       const Varnode *vn,const PcodeOp *op,
-			       int4 inslot)
+			       int4 slot,bool allowCast)
 {
   // We need to print "bottom up" in order to get parentheses right
   // I.e. we want to print globalstruct.arrayfield[0], rather than
@@ -1965,12 +2027,12 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
     bool succeeded = false;
     if (ct->getMetatype()==TYPE_STRUCT) {
       if (ct->needsResolution() && ct->getSize() == sz) {
-	Datatype *outtype = ct->findResolve(op, inslot);
+	Datatype *outtype = ct->findResolve(op, slot);
 	if (outtype == ct)
 	  break;	// Turns out we don't resolve to the field
       }
       const TypeField *field;
-      field = ct->findTruncation(off,sz,op,inslot,newoff);
+      field = ct->findTruncation(off,sz,op,slot,newoff);
       if (field != (const TypeField *)0) {
 	off = newoff;
 	stack.emplace_back();
@@ -1981,6 +2043,10 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
 	entry.hilite = EmitMarkup::no_color;
 	ct = field->type;
 	succeeded = true;
+      }
+      else if (op->code() == CPUI_ZPULL || op->code() == CPUI_SPULL) {
+	// Cannot resolve final byte field because it is a bit field
+	break;	// But we have fully resolved the Varnode
       }
     }
     else if (ct->getMetatype() == TYPE_ARRAY) {
@@ -2000,7 +2066,7 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
     }
     else if (ct->getMetatype() == TYPE_UNION) {
       const TypeField *field;
-      field = ct->findTruncation(off,sz,op,inslot,newoff);
+      field = ct->findTruncation(off,sz,op,slot,newoff);
       if (field != (const TypeField*)0) {
 	off = newoff;
 	stack.emplace_back();
@@ -2015,7 +2081,7 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
       else if (ct->getSize() == sz)
 	break;		// Turns out we don't need to resolve the field
     }
-    else if (inslot >= 0) {
+    else if (allowCast) {
       Datatype *outtype = vn->getHigh()->getType();
       AddrSpace *spc = sym->getFirstWholeMap()->getAddr().getSpace();
       if (spc == (AddrSpace *)0)
@@ -2053,7 +2119,7 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
     PartialSymbolEntry &entry (stack[i]);
     if (entry.field == (const TypeField *)0) {
       if (entry.size <= 0)
-	push_integer(entry.offset, entry.size, (entry.offset < 0), syntax, (Varnode *)0, op);
+	push_integer(entry.offset, entry.size, (entry.offset < 0), syntax, (Varnode *)0, op, 0);
       else {
 	string field = unnamedField(entry.offset,entry.size);
 	pushAtom(Atom(field,syntax,entry.hilite,op));
@@ -2172,7 +2238,7 @@ void PrintC::emitEnumDefinition(const TypeEnum *ct)
     emit->spaces(1);
     emit->print(EQUALSIGN,EmitMarkup::no_color);
     emit->spaces(1);
-    push_integer((*iter).first,ct->getSize(),sign,syntax,(Varnode *)0,(PcodeOp *)0);
+    push_integer((*iter).first,ct->getSize(),sign,syntax,(Varnode *)0,(PcodeOp *)0,0);
     recurse();
     emit->print(SEMICOLON);
     ++iter;
@@ -2468,21 +2534,31 @@ bool PrintC::emitInplaceOp(const PcodeOp *op)
 void PrintC::emitExpression(const PcodeOp *op)
    
 {
+  if (op->doesSpecialPrinting()) {
+    if (op->isCall()) {
+      emitConstructor(op);
+      return;
+    }
+    OpCode opc = op->code();
+    if (opc == CPUI_STORE) {
+      emitBitFieldStore(op);
+      return;
+    }
+    else if (opc == CPUI_INSERT) {
+      emitBitFieldExpression(op);
+      return;
+    }
+    else if (opc == CPUI_SUBPIECE) {
+      // Don't modify printing here
+    }
+    else
+      throw LowlevelError("Unsupported special printing");
+  }
   const Varnode *outvn = op->getOut();
   if (outvn != (Varnode *)0) {
     if (option_inplace_ops && emitInplaceOp(op)) return;
     pushOp(&assignment,op);
     pushSymbolDetail(outvn,op,false);
-  }
-  else if (op->doesSpecialPrinting()) {
-    // Printing of constructor syntax
-    const PcodeOp *newop = op->getIn(1)->getDef();
-    outvn = newop->getOut();
-    pushOp(&assignment,newop);
-    pushSymbolDetail(outvn,newop,false);
-    opConstructor(op,true);
-    recurse();
-    return;
   }
     // If STORE, print  *( ) = ( )
     // If BRANCH, print nothing
@@ -2491,6 +2567,62 @@ void PrintC::emitExpression(const PcodeOp *op)
     // If CALL, CALLIND, CALLOTHER  print  call
     // If RETURN,   print return ( )
   op->getOpcode()->push(this,op,(PcodeOp *)0);
+  recurse();
+}
+
+void PrintC::emitConstructor(const PcodeOp *op)
+
+{
+  // Printing of constructor syntax
+  const PcodeOp *newop = op->getIn(1)->getDef();
+  const Varnode *outvn = newop->getOut();
+  pushOp(&assignment,newop);
+  pushSymbolDetail(outvn,newop,false);
+  opConstructor(op,true);
+  recurse();
+}
+
+void PrintC::emitBitFieldStore(const PcodeOp *op)
+
+{
+  InsertStoreExpression expr(op);
+  if (!expr.isValid()) {
+    op->getOpcode()->push(this,op,(PcodeOp *)0);
+    recurse();
+    return;
+  }
+
+  // We assume the STORE is a statement
+  pushOp(&assignment,op);	// This is an assignment
+  uint4 m = mods;
+  if (checkBitFieldMember(op->getIn(1),expr.bitfield)) {
+    m |= print_store_value;
+    pushOp(&object_member,expr.insertOp);
+  }
+  else
+    pushOp(&pointer_member,expr.insertOp);
+  pushVn(expr.structPtr,op,m);
+  pushAtom(Atom(expr.bitfield->name,bitfieldtoken,EmitMarkup::no_color,expr.theStruct,expr.bitfield->ident,op));
+  // implied vn's pushed on in reverse order for efficiency
+  // see PrintLanguage::pushVnImplied
+  pushVn(expr.insertOp->getIn(1),op,mods);
+  recurse();
+}
+
+void PrintC::emitBitFieldExpression(const PcodeOp *op)
+
+{
+  InsertExpression expr(op);
+  if (!expr.isValid()) {
+    opFunc(op);	// If no other way to print it, print as functional operator
+    recurse();
+    return;
+  }
+  pushOp(&assignment,op);	// This is an assignment
+  pushOp(&object_member,expr.insertOp);
+  pushPartialSymbol(expr.symbol, expr.offsetToBitStruct, expr.theStruct->getSize(), op->getOut(), op, -1, false);
+  pushAtom(Atom(expr.bitfield->name,bitfieldtoken,EmitMarkup::no_color,expr.theStruct,expr.bitfield->ident,op));
+  pushVn(op->getIn(1),op,mods);
   recurse();
 }
 
@@ -3145,12 +3277,15 @@ void PrintC::emitSwitchCase(int4 casenum,const BlockSwitch *switchbl)
   }
   else {
     num = switchbl->getNumLabels(casenum);
+    uint4 displayFormat = switchbl->getDisplayFormat();
+    if (displayFormat == 0)
+      displayFormat = ct->getDisplayFormat();
     for(i=0;i<num;++i) {
       val = switchbl->getLabel(casenum,i);
       emit->tagLine();
       emit->print(KEYWORD_CASE,EmitMarkup::keyword_color);
       emit->spaces(1);
-      pushConstant(val,ct,casetoken,(Varnode *)0,op);
+      pushConstant(val,ct,casetoken,(Varnode *)0,op,displayFormat);
       recurse();
       emit->print(COLON);
     }

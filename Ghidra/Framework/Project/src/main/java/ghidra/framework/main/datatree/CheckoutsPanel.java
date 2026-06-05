@@ -101,7 +101,9 @@ public class CheckoutsPanel extends JPanel {
 		tableModel.setTableSortState(tsse.createTableSortState());
 
 		table = new GTable(tableModel);
+		table.getAccessibleContext().setAccessibleName("Checkouts");
 		JScrollPane sp = new JScrollPane(table);
+		sp.getAccessibleContext().setAccessibleName("Checkout");
 		table.setPreferredScrollableViewportSize(new Dimension(680, 120));
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		add(sp, BorderLayout.CENTER);
@@ -180,8 +182,8 @@ public class CheckoutsPanel extends JPanel {
 				}
 			};
 		terminateCheckoutAction.setDescription("Terminates the selected Checkout");
-		terminateCheckoutAction.setPopupMenuData(
-			new MenuData(new String[] { "Terminate Checkout" }, "AAA"));
+		terminateCheckoutAction
+				.setPopupMenuData(new MenuData(new String[] { "Terminate Checkout" }, "AAA"));
 
 		provider.addAction(terminateCheckoutAction);
 	}

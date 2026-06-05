@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import ghidra.framework.remote.*;
 import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.FileSystemListener;
 import ghidra.framework.store.local.*;
+import ghidra.server.remote.RemoteLoggingUtil;
 import ghidra.server.remote.RepositoryHandleImpl;
 import ghidra.server.store.RepositoryFile;
 import ghidra.server.store.RepositoryFolder;
@@ -169,8 +170,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			GTimer.scheduleRunnable(RepositoryHandle.CLIENT_CHECK_PERIOD, () -> {
 				synchronized (fileSystem) {
 					RepositoryHandleImpl[] handles = getHandles();
-					for (int i = 0; i < handles.length; i++) {
-						handles[i].checkHandle();
+					for (RepositoryHandleImpl handle : handles) {
+						handle.checkHandle();
 					}
 					scheduleHandleCheck();
 				}
@@ -195,8 +196,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 				handles = new RepositoryHandleImpl[handleList.size()];
 				handleList.toArray(handles);
 			}
-			for (int i = 0; i < handles.length; i++) {
-				handles[i].dispose();
+			for (RepositoryHandleImpl handle : handles) {
+				handle.dispose();
 			}
 		}
 	}
@@ -239,8 +240,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 		}
 
 		RepositoryHandleImpl[] handles = getHandles();
-		for (int i = 0; i < handles.length; i++) {
-			handles[i].dispatchEvents(events);
+		for (RepositoryHandleImpl handle : handles) {
+			handle.dispatchEvents(events);
 		}
 	}
 
@@ -327,9 +328,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * defined to the repository user manager.
 	 * @param currentUser user performing request
 	 * @return list of user names.
-	 * @throws IOException
 	 */
-	public String[] getServerUserList(String currentUser) throws IOException {
+	public String[] getServerUserList(String currentUser) {
 		if (UserManager.ANONYMOUS_USERNAME.equals(currentUser)) {
 			return new String[0];
 		}
@@ -343,7 +343,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * @param users user access list
 	 * @param allowAnonymousAccess true if anonymous access should be permitted (assume allowed by server config).
 	 * @throws UserAccessException if currentUser is not a current repository admin
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	public void setUserList(String currentUser, User[] users, boolean allowAnonymousAccess)
 			throws UserAccessException, IOException {
@@ -351,13 +351,25 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			validate();
 			validateAdminPrivilege(currentUser);
 
+			Set<String> allUsers = Set.of(mgr.getAllUsers(currentUser));
+			Set<String> updatedUsers = new HashSet<>();
+
 			LinkedHashMap<String, User> newUserMap = new LinkedHashMap<>();
-			for (int i = 0; i < users.length; i++) {
-				String userName = users[i].getName();
+			for (User user : users) {
+				String userName = user.getName();
 				if (UserManager.ANONYMOUS_USERNAME.equals(userName)) {
 					continue; // ignore
 				}
-				newUserMap.put(userName, users[i]);
+				if (!allUsers.contains(userName)) {
+					throw new IOException("Unknown user specified: " + userName);
+				}
+				if (!user.hasWritePermission() && !user.isReadOnly() && !user.isAdmin()) {
+					throw new IOException("User specified with invalid permission: " + userName);
+				}
+				if (!updatedUsers.add(userName)) {
+					throw new IOException("Duplicate user entry specified: " + userName);
+				}
+				newUserMap.put(userName, user);
 			}
 			User user = newUserMap.get(currentUser);
 			if (user == null || !user.isAdmin()) {
@@ -433,9 +445,10 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 
 	/**
 	 * Get the list of known users for this repository.
-	 * @param currentUser user that is requesting the user list. 
+	 * @param currentUser user that is requesting the user list.
+	 * @return array of repository users in the ACL 
 	 * @throws UserAccessException if currentUser is not a current repository admin
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	public User[] getUserList(String currentUser) throws UserAccessException, IOException {
 		synchronized (fileSystem) {
@@ -446,9 +459,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			validateReadPrivilege(currentUser);
 			User[] users = new User[userMap.size()];
 			int i = 0;
-			Iterator<User> iter = userMap.values().iterator();
-			while (iter.hasNext()) {
-				users[i++] = iter.next();
+			for (User element : userMap.values()) {
+				users[i++] = element;
 			}
 			return users;
 		}
@@ -488,7 +500,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * @param newUserMap user map
 	 * @param allowAnonymous true if anonymous access is allowed
 	 * @throws UserAccessException if currentUser does not have admin priviledge
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	private void writeUserList(String currentUser, LinkedHashMap<String, User> newUserMap,
 			boolean allowAnonymous) throws UserAccessException, IOException {
@@ -506,9 +518,10 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * @param newUserMap user map
 	 * @param allowAnonymous true if anonymous access is allowed
 	 * @throws UserAccessException if currentUser does not have admin priviledge
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
-	private void writeUserList(LinkedHashMap<String, User> newUserMap, boolean allowAnonymous)
+	private synchronized void writeUserList(LinkedHashMap<String, User> newUserMap,
+			boolean allowAnonymous)
 			throws IOException {
 
 		File temp = new File(userAccessFile.getParentFile(), "tempAccess.tmp");
@@ -524,9 +537,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 				out.println(ANONYMOUS_STR);
 			}
 
-			Iterator<User> iter = newUserMap.values().iterator();
-			while (iter.hasNext()) {
-				User user = iter.next();
+			for (User user : newUserMap.values()) {
 				String line = user.getName() + "=" + TYPE_NAMES[user.getPermissionType()];
 				out.println(line);
 			}
@@ -546,8 +557,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * NOTE: This method is not yet implemented.  Server admin should stop server
 	 * and simply delete those repository directories which are unwanted.
 	 * @param currentUser current user
-	 * @throws IOException
-	 * @throws UserAccessException
+	 * @throws IOException if an IO error occurs
+	 * @throws UserAccessException if currentUser does not have Admin priviledge
 	 */
 	void delete(String currentUser) throws IOException, UserAccessException {
 		synchronized (fileSystem) {
@@ -621,7 +632,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 
 	/**
 	 * Read user access list from local file.
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	private void readAccessFile() throws IOException {
 		if (!userAccessFile.exists()) {
@@ -633,15 +644,14 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			readAccessFile(userAccessFile, list) && mgr.anonymousAccessAllowed();
 
 		LinkedHashMap<String, User> newUserMap = new LinkedHashMap<>();
-		Iterator<User> iter = list.iterator();
 		boolean hasAdmin = false;
-		while (iter.hasNext()) {
-			User user = iter.next();
+		for (User user : list) {
 			hasAdmin |= user.isAdmin();
 			newUserMap.put(user.getName(), user);
 		}
 		if (!hasAdmin) {
-			throw new IOException("Repository does not have an Admin");
+			RepositoryManager.log
+					.info("WARNING: Repository '" + name + "' does not have an assigned Admin");
 		}
 		userMap = newUserMap;
 	}
@@ -652,7 +662,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * @param userAccessFile repository user access file
 	 * @param users list to be populated with user permissions defined by userAccessFile
 	 * @return true if anonymous read-only access is permitted, else false 
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	private static boolean readAccessFile(File userAccessFile, List<User> users)
 			throws IOException {
@@ -684,7 +694,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	/**
 	 * Parse input line from user access list
 	 * @param line text line from user access file
-	 * @return
+	 * @return new {@link User} instance parsed from text line of file or null
 	 */
 	private static User processAccessLine(String line) {
 
@@ -782,7 +792,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			RepositoryFolder folder = getFolder(null, parentPath, false);
 			if (folder == null || folder.getFolder(folderName) == null) {
 				RepositoryManager.log(name, RepositoryFolder.makePathname(parentPath, folderName),
-					"ERROR! folder not found", null);
+					"ERROR! folder not found");
 				return;
 			}
 		}
@@ -791,7 +801,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 		}
 		catch (IOException e) {
 			RepositoryManager.log(name, RepositoryFolder.makePathname(parentPath, folderName),
-				"ERROR! " + e.getMessage(), null);
+				"ERROR! " + e.getMessage());
 		}
 
 		RepositoryChangeEvent event = new RepositoryChangeEvent(
@@ -811,7 +821,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			RepositoryFolder folder = getFolder(null, parentPath, false);
 			if (folder == null || folder.getFile(itemName) == null) {
 				RepositoryManager.log(name, RepositoryFolder.makePathname(parentPath, itemName),
-					"file not found", null);
+					"file not found");
 				return;
 			}
 		}
@@ -820,7 +830,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 		}
 		catch (IOException e) {
 			RepositoryManager.log(name, RepositoryFolder.makePathname(parentPath, itemName),
-				"ERROR! " + e.getMessage(), null);
+				"ERROR! " + e.getMessage());
 		}
 
 		RepositoryChangeEvent event = new RepositoryChangeEvent(
@@ -847,7 +857,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			throw new AssertException();
 		}
 		catch (IOException e) {
-			RepositoryManager.log(name, parentPath, "ERROR! " + e.getMessage(), null);
+			RepositoryManager.log(name, parentPath, "ERROR! " + e.getMessage());
 		}
 
 		RepositoryChangeEvent event = new RepositoryChangeEvent(
@@ -936,11 +946,10 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 		}
 		catch (IOException e) {
 			RepositoryManager.log(name, RepositoryFolder.makePathname(parentPath, itemName),
-				"ERROR! " + e.getMessage(), null);
+				"ERROR! " + e.getMessage());
 		}
 		if (syncErr) {
-			RepositoryManager.log(name, null, "ERROR! Repository instance may be out-of-sync",
-				null);
+			RepositoryManager.log(name, null, "ERROR! Repository instance may be out-of-sync");
 			return;
 		}
 
@@ -959,7 +968,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 
 	@Override
 	public void log(String path, String msg, String user) {
-		RepositoryManager.log(name, path, msg, user);
+		RemoteLoggingUtil.log(name, path, msg, user, false);
 	}
 
 	static boolean markRepositoryForIndexMigration(File serverDir, String repositoryName,
@@ -977,8 +986,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 				int indexVersion = IndexedLocalFileSystem.readIndexVersion(rootPath);
 				if (indexVersion >= IndexedLocalFileSystem.LATEST_INDEX_VERSION) {
 					if (!silent) {
-						System.err.println(
-							"Repository '" + repositoryName + "' is already indexed!");
+						System.err
+								.println("Repository '" + repositoryName + "' is already indexed!");
 					}
 					return false;
 				}

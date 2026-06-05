@@ -87,7 +87,7 @@ public class CopyPasteFunctionInfoTest extends AbstractGhidraHeadedIntegrationTe
 		builder.createFunction("0x1006420");
 		builder.createEntryPoint("0x1006420", "entry");
 		builder.createFunction("0x1004700");
-		builder.createComment("0x1006420", "FUNCTION", CodeUnit.PLATE_COMMENT);
+		builder.createComment("0x1006420", "FUNCTION", CommentType.PLATE);
 		DataType dt = Undefined4DataType.dataType;
 		Parameter p = new ParameterImpl(null, dt, builder.getProgram());
 		builder.createEmptyFunction("BOB", "0x1004260", 1, dt, p, p, p, p, p, p, p, p, p, p, p, p,

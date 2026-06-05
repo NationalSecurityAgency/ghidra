@@ -24,7 +24,8 @@ import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
-import org.python.google.common.primitives.Longs;
+
+import com.google.common.primitives.Longs;
 
 import ghidra.framework.store.LockException;
 import ghidra.util.SourceFileUtils;
@@ -52,9 +53,48 @@ public class SourceFileTest extends AbstractSourceFileTest {
 	}
 
 	@Test
-	public void testPathNormalization() {
+	public void testPathNormalizationLinux() {
 		assertEquals("/src/dir1/dir2/file.c",
 			new SourceFile("/src/test/../dir1/test/../dir2/file.c").getPath());
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testInteriorPathNormalizationLinux() {
+		new SourceFile("/src/../../../file.c");
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testInteriorPathNormalizationLinuxUtilsMethod() {
+		SourceFileUtils.getSourceFileFromPathString("/src/../../../file.c");
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testInteriorPathNormalizationWindows() {
+		new SourceFile("/c:/src/../../../file.c");
+	}
+
+	@Test
+	public void testFixDwarfRelativePath() {
+		String baseDirName = "root_dir";
+		assertEquals("/src/file.c",
+			SourceFileUtils.normalizeDwarfPath("/src/file.c", baseDirName));
+		assertEquals("/file.c",
+			SourceFileUtils.normalizeDwarfPath("/src/../file.c", baseDirName));
+		assertEquals("/root_dir/file.c",
+			SourceFileUtils.normalizeDwarfPath("./file.c", baseDirName));
+		assertEquals("/root_dir_1/file.c",
+			SourceFileUtils.normalizeDwarfPath("/../file.c", baseDirName));
+		assertEquals("/root_dir_2/file.c",
+			SourceFileUtils.normalizeDwarfPath("/.././../file.c", baseDirName));
+		assertEquals("/root_dir_1/file.c",
+			SourceFileUtils.normalizeDwarfPath("./../file.c", baseDirName));
+		assertEquals("/C:/Users/test/src/dir1/file.c",
+			SourceFileUtils.normalizeDwarfPath("C:\\Users\\test/src/dir1/file.c", baseDirName));
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testInteriorPathNormalizationWindowsUtilsMethod() {
+		SourceFileUtils.getSourceFileFromPathString("c:\\src\\..\\..\\..\\file.c");
 	}
 
 	@Test

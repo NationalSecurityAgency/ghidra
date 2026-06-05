@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,7 @@ import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldRange;
 import ghidra.app.plugin.core.terminal.vt.*;
+import ghidra.app.plugin.core.terminal.vt.AnsiColorResolver.ReverseVideo;
 import ghidra.app.plugin.core.terminal.vt.VtCharset.G;
 import ghidra.util.*;
 
@@ -54,6 +55,9 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 
 	protected final CharsetDecoder decoder;
 
+	// For "repeat char"
+	protected byte lastChar;
+
 	// States for handling VT-style charsets
 	protected final Map<VtCharset.G, VtCharset> vtCharsets = new HashMap<>();
 	protected VtCharset.G curVtCharsetG = VtCharset.G.G0;
@@ -65,6 +69,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 
 	// Rendering properties
 	protected FontMetrics metrics;
+	protected float fontSizeAdjustment;
 	protected final AnsiColorResolver colors;
 
 	protected final ArrayList<LayoutModelListener> listeners = new ArrayList<>();
@@ -89,6 +94,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	// Flags for what's been enabled
 	protected boolean showCursor;
 	protected boolean bracketedPaste;
+	protected boolean win32InputMode; // not implemented
 	protected boolean reportMousePress;
 	protected boolean reportMouseRelease;
 	protected boolean reportFocus;
@@ -103,6 +109,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	 * @param panel the panel to receive commands from the model's VT/ANSI parser
 	 * @param charset the charset for decoding bytes to characters
 	 * @param metrics font metrics for the monospaced terminal font
+	 * @param fontSizeAdjustment the font size adjustment
 	 * @param colors a resolver for ANSI colors
 	 */
 	public TerminalLayoutModel(TerminalPanel panel, Charset charset, FontMetrics metrics,
@@ -133,6 +140,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 		buffer = bufPrimary;
 
 		bracketedPaste = false;
+		win32InputMode = false;
 		reportMousePress = false;
 		reportMouseRelease = false;
 		reportFocus = false;
@@ -202,7 +210,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	}
 
 	protected TerminalLayout newLayout(VtLine line) {
-		return new TerminalLayout(line, metrics, colors);
+		return new TerminalLayout(line, metrics, fontSizeAdjustment, colors);
 	}
 
 	protected void buildLayouts() {
@@ -262,9 +270,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 		return NumericUtilities.convertBytesToString(data, ":");
 	}
 
-	@Override
-	public void handleChar(byte b) throws Exception {
-		bb.put(b);
+	protected void doHandleCharBytes() {
 		bb.flip();
 		CoderResult result = decoder.decode(bb, cb, false);
 		if (result.isError()) {
@@ -290,6 +296,13 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	}
 
 	@Override
+	public void handleChar(byte b) throws Exception {
+		bb.put(b);
+		lastChar = b;
+		doHandleCharBytes();
+	}
+
+	@Override
 	public void handleBell() {
 		DockingWindowManager.beep();
 	}
@@ -309,6 +322,28 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 		for (int i = 0; i < n; i++) {
 			buffer.tabBack();
 		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * It's unclear exactly what is repeated. Some documentation, including
+	 * http://rheuh.free.fr/docpack/C/ansi/ansi.html says Repeat Character or Control. Here, I only
+	 * handle characters. I tried repeating a Cursor Up control. I also tried repeating a new line.
+	 * Neither did what I expected when tested against the reference. That said, those control also
+	 * seemed to "forget" what the last character was. Nothing was repeated at all. I'll assume that
+	 * is undefined behavior. I'll not worry about "forgetting," as I'll assume the character to
+	 * repeat will always immediately precede this CSI.
+	 */
+	@Override
+	public void handleRepeatChar(int n) {
+		if (lastChar == 0) {
+			return;
+		}
+		for (int i = 0; i < n; i++) {
+			bb.put(lastChar);
+		}
+		doHandleCharBytes();
 	}
 
 	@Override
@@ -371,7 +406,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	}
 
 	@Override
-	public void handleReverseVideo(boolean reverse) {
+	public void handleReverseVideo(ReverseVideo reverse) {
 		buffer.setAttributes(buffer.getAttributes().reverseVideo(reverse));
 	}
 
@@ -412,7 +447,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 
 	@Override
 	public void handleAutoWrapMode(boolean en) {
-		System.err.println("TODO: handleAutoWrapMode: " + en);
+		Msg.trace(this, "TODO: handleAutoWrapMode: " + en);
 	}
 
 	@Override
@@ -463,6 +498,11 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	@Override
 	public void handleBracketedPasteMode(boolean en) {
 		this.bracketedPaste = en;
+	}
+	
+	@Override
+	public void handleWin32InputMode(boolean en) {
+		this.win32InputMode = en;
 	}
 
 	@Override
@@ -641,7 +681,9 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 		}
 	}
 
-	public void setFontMetrics(FontMetrics metrics2) {
+	public void setFontMetrics(FontMetrics metrics, float fontSizeAdjustment) {
+		this.metrics = metrics;
+		this.fontSizeAdjustment = fontSizeAdjustment;
 		layouts.clear();
 		layoutCache.clear();
 		buildLayouts();

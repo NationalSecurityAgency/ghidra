@@ -17,6 +17,7 @@ package ghidra.app.util.pdb.classtype;
 
 import ghidra.app.util.SymbolPath;
 import ghidra.program.model.data.*;
+import ghidra.program.model.gclass.ClassID;
 
 /**
  * Class Type Manager
@@ -44,10 +45,7 @@ public class ClassTypeManager {
 	}
 
 	public SymbolPath getSymbolPath(ClassID classId) {
-		if (classId instanceof ProgramClassID gId) {
-			return gId.getSymbolPath();
-		}
-		return null;
+		return classId.getSymbolPath();
 	}
 
 	/**
@@ -86,7 +84,7 @@ public class ClassTypeManager {
 	 * Returns the default size of a virtual base table entry
 	 * @return the size of the entry
 	 */
-	public int getDefaultVbtTableElementSize() {
+	public int getDefaultVbTableElementSize() {
 		return dtm.getDataOrganization().getIntegerSize();
 	}
 
@@ -94,7 +92,7 @@ public class ClassTypeManager {
 	 * Returns the default size of a virtual function table entry
 	 * @return the size of the entry
 	 */
-	public int getDefaultVftTableElementSize() {
+	public int getDefaultVfTableElementSize() {
 		return dtm.getDataOrganization().getPointerSize();
 	}
 

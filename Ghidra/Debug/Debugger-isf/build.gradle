@@ -24,10 +24,5 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger-isf'
 
 dependencies {
-	api project(':Framework-AsyncComm')
-	api project(':Framework-Debugging')
 	api project(':ProposedUtils')
-
-	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
-	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
 }

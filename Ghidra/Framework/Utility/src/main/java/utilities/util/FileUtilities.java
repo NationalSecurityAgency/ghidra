@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -298,7 +298,6 @@ public final class FileUtilities {
 	 * <p>
 	 * Takes into account race conditions with external threads/processes
 	 * creating the same directory at the same time.
-	 * <p>
 	 *
 	 * @param dir The directory to create.
 	 * @return True If the directory exists when this method completes; otherwise, false.
@@ -347,7 +346,7 @@ public final class FileUtilities {
 	 * <p>
 	 * Takes into account race conditions with external threads/processes
 	 * creating the same directory at the same time.
-	 * <p>
+	 * 
 	 * @param dir The directory to create.
 	 * @return a reference to the same {@link File} instance that was passed in.
 	 * @throws IOException if there was a failure when creating the directory (ie. the
@@ -368,7 +367,6 @@ public final class FileUtilities {
 	 * <p>
 	 * Uses {@link #createDir(File)} to create new directories (which handles
 	 * race conditions if other processes are also trying to create the same directory).
-	 * <p>
 	 *
 	 * @param dir directory path to be created
 	 * @return a reference to the same {@link File} instance that was passed in.
@@ -681,7 +679,7 @@ public final class FileUtilities {
 	 * Returns all of the lines in the file without any newline characters.
 	 * <p>
 	 * The file is treated as UTF-8 encoded.
-	 * <p>
+	 * 
 	 * @param file The text file to read in
 	 * @return a list of file lines
 	 * @throws IOException if an error occurs reading the file
@@ -717,7 +715,7 @@ public final class FileUtilities {
 	 * Returns all of the lines in the BufferedReader without any newline characters.
 	 * <p>
 	 * The file is treated as UTF-8 encoded.
-	 * <p>
+	 * 
 	 * @param url the input stream from which to read
 	 * @return a list of file lines
 	 * @throws IOException thrown if there was a problem accessing the files
@@ -731,7 +729,6 @@ public final class FileUtilities {
 
 	/**
 	 * Returns all of the lines in the given {@link InputStream} without any newline characters.
-	 * <p>
 	 *
 	 * @param is the input stream from which to read
 	 * @return a {@link List} of strings representing the text lines of the file
@@ -745,7 +742,7 @@ public final class FileUtilities {
 	 * Returns all of the text in the given {@link InputStream}.
 	 * <p>
 	 * EOL characters are normalized to simple '\n's.
-	 * <p>
+	 * 
 	 * @param is the input stream from which to read
 	 * @return the content as a String
 	 * @throws IOException if there are any issues reading the file
@@ -764,7 +761,7 @@ public final class FileUtilities {
 	 * Returns all of the text in the given {@link File}.
 	 * <p>
 	 * See {@link #getText(InputStream)}
-	 * <p>
+	 * 
 	 * @param f the file to read
 	 * @return the content as a String
 	 * @throws IOException if there are any issues reading the file or file is too large.
@@ -845,12 +842,50 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Returns true if the given <code>potentialParentFile</code> is the parent path of
-	 * the given <code>otherFile</code>, or if the two file paths point to the same path.
+	 * Tests if {@code otherPath} starts with {@code potentialParentPath}. The paths are
+	 * {@link Path#normalize() normalized} before comparing.
+	 *
+	 * @param potentialParentPath The path that may be the parent
+	 * @param otherPath The path that may be the child
+	 * @return true if the normalized {@code otherPath} starts with the normalized 
+	 *   {@code potentialParentPath} and the paths are {@link Paths#get valid}; otherwise false
+	 */
+	public static boolean startsWith(String potentialParentPath, String otherPath) {
+		try {
+			return Paths.get(otherPath)
+					.normalize()
+					.startsWith(Paths.get(potentialParentPath).normalize());
+		}
+		catch (InvalidPathException e) {
+			return false;
+		}
+	}
+
+	/**
+	 * Tests if {@code otherPath} starts with any of the given {@code potentialParents}. The paths 
+	 * are {@link Path#normalize() normalized} before comparing.
+	 *
+	 * @param potentialParents The paths that may be the parent
+	 * @param otherPath The path that may be the child
+	 * @return boolean true if the normalized {@code otherPath} starts with any of the given
+	 *   normalized {@code potentialParents}s and the paths are {@link Paths#get valid}; otherwise
+	 *   false
+	 */
+	public static boolean startsWith(Collection<ResourceFile> potentialParents, String otherPath) {
+		return potentialParents.stream().anyMatch(p -> startsWith(p.getAbsolutePath(), otherPath));
+	}
+
+	/**
+	 * Returns true if the given {@code potentialParentFile} is the parent path of
+	 * the given {@code otherFile}, or if the two file paths point to the same path.
+	 * <p>
+	 * NOTE: Both files are converted to their {@link File#getCanonicalPath() canonical form} prior
+	 * to comparing their paths, which may have performance implications, particularly on Windows.
 	 *
 	 * @param potentialParentFile The file that may be the parent
 	 * @param otherFile The file that may be the child
-	 * @return boolean true if otherFile's path is within potentialParentFile's path
+	 * @return boolean true if {@code otherFile}'s canonical path is within 
+	 *   {@code potentialParentFile}'s canonical path
 	 */
 	public static boolean isPathContainedWithin(File potentialParentFile, File otherFile) {
 		try {
@@ -872,17 +907,21 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Returns true if any of the given <code>potentialParents</code> is the parent path of or has
-	 * the same path as the given <code>otherFile</code>.
+	 * Returns true if any of the given {@code potentialParents} is the parent path of or has
+	 * the same path as the given {@code otherFile}.
+	 * <p>
+	 * NOTE: All files are converted to their {@link File#getCanonicalPath() canonical form} prior
+	 * to comparing their paths, which may have performance implications, particularly on Windows.
 	 *
 	 * @param potentialParents The files that may be the parent
 	 * @param otherFile The file that may be the child
-	 * @return boolean true if otherFile's path is within any of the potentialParents' paths 
+	 * @return boolean true if {@code otherFile}'s canonical path is within any of the 
+	 *   {@code potentialParents}' canonical paths 
 	 */
 	public static boolean isPathContainedWithin(Collection<ResourceFile> potentialParents,
 			ResourceFile otherFile) {
-
-		return potentialParents.stream().anyMatch(parent -> parent.containsPath(otherFile));
+		File f = otherFile.getFile(false);
+		return potentialParents.stream().anyMatch(p -> isPathContainedWithin(p.getFile(false), f));
 	}
 
 	/**
@@ -1075,7 +1114,7 @@ public final class FileUtilities {
 	 * <p>
 	 * Querying a filepath that does not exist will result in a 'success' and the caller will
 	 * receive the non-existent File instance back.
-	 * <p>
+	 * 
 	 * @param caseSensitiveFile {@link File} to enforce case-sensitive-ness of the name portion
 	 * @return the same {@link File} instance if it points to a file on the filesystem with
 	 * the same case, or a NULL if the case does not match.
@@ -1114,7 +1153,7 @@ public final class FileUtilities {
 	 * If no file is found that matches, the original File instance is returned.
 	 * <p>
 	 * See also {@link #existsAndIsCaseDependent(ResourceFile)}.
-	 * <p>
+	 * 
 	 * @param f File instance
 	 * @return File instance pointing to a case-insensitive match of the File parameter
 	 */
@@ -1158,7 +1197,6 @@ public final class FileUtilities {
 	 * Returns the size of the given file as a human readable String.
 	 * <p>
 	 * See {@link #formatLength(long)}
-	 * <p>
 	 *
 	 * @param file the file for which to get size
 	 * @return the pretty string

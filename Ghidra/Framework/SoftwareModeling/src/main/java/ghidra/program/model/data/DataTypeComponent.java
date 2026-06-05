@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,6 @@
 package ghidra.program.model.data;
 
 import ghidra.docking.settings.Settings;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * DataTypeComponents are holders for the dataTypes that make up composite (Structures
@@ -98,9 +97,14 @@ public interface DataTypeComponent {
 
 	/**
 	 * Sets the comment for the component.
+	 * <P>
+	 * NOTE: Since a datatype component instance is intended to be immutable a new component
+	 * instance is returned which will reflect the modified component.
+	 * 
 	 * @param comment this components comment or null to clear comment.
+	 * @return a new component instance which will reflect the change.
 	 */
-	public void setComment(String comment);
+	public DataTypeComponent setComment(String comment);
 
 	/**
 	 * Get this component's field name within its parent.
@@ -112,15 +116,17 @@ public interface DataTypeComponent {
 
 	/**
 	 * Sets the field name. If the field name is empty it will be set to null,
-	 * which is the default field name. An exception is thrown if one of the
-	 * parent's other components already has the specified field name.
+	 * which is the default field name. The field name may be sanitized to convert all whitespace
+	 * characters to an underscore.  If a name conflict occurs with another component, a one-up
+	 * number suffix will be added to avoid duplication.
+	 * <P>
+	 * NOTE: Since a datatype component instance is intended to be immutable a new component
+	 * instance is returned which will reflect the modified component.
 	 *
 	 * @param fieldName the new field name for this component.
-	 *
-	 * @throws DuplicateNameException if another component of the parent has
-	 * the specified field name.
+	 * @return a new component instance which will reflect the change.
 	 */
-	public void setFieldName(String fieldName) throws DuplicateNameException;
+	public DataTypeComponent setFieldName(String fieldName);
 
 	/**
 	 * Returns a default field name for this component.  Used only if a field name is not set.
@@ -135,6 +141,29 @@ public interface DataTypeComponent {
 			name += "_0x" + Integer.toHexString(getOffset());
 		}
 		return name;
+	}
+
+	/**
+	 * Returns true if the given string represents the default field name for this data type 
+	 * component.  This value returned from {@link #getDefaultFieldName()} may not be a default name
+	 * when this method returns true.  
+	 * 
+	 * @param s the string to check
+	 * @return true if the given string is the default name for this component
+	 */
+	public default boolean isDefaultFieldName(String s) {
+		if (isZeroBitFieldComponent()) {
+			return false;
+		}
+
+		String offset = "";
+		if (getParent() instanceof Structure) {
+			offset += "_0x" + Integer.toHexString(getOffset());
+		}
+
+		String newStyleName = DEFAULT_FIELD_NAME_PREFIX + getOrdinal() + offset;
+		String oldStyleName = DEFAULT_FIELD_NAME_PREFIX + offset;
+		return newStyleName.equals(s) || oldStyleName.equals(s);
 	}
 
 	/**
@@ -167,10 +196,16 @@ public interface DataTypeComponent {
 			if (dataType instanceof Array) {
 				return true;
 			}
-			// assumes undefined types will ultimately have a non-zero length
+			// assumes not-yet-defined types will ultimately have a non-zero length
 			return !dataType.isNotYetDefined();
 		}
 		return false;
 	}
+
+	/**
+	 * Returns true if this component is not defined. It is just a placeholder.
+	 * @return true if this component is not defined. It is just a placeholder.
+	 */
+	public boolean isUndefined();
 
 }

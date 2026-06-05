@@ -16,27 +16,39 @@
 package ghidra.app.plugin.core.debug.service.breakpoint;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 
 import java.util.*;
 
 import org.junit.Before;
+import org.junit.Test;
 
 import db.Transaction;
+import generic.Unique;
+import ghidra.app.plugin.core.debug.gui.breakpoint.DebuggerBreakpointsPlugin;
+import ghidra.app.plugin.core.debug.gui.model.DebuggerModelPlugin;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiTarget;
+import ghidra.app.services.DebuggerControlService;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.*;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceStaticMapping;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.time.TraceSnapshot;
 
 public class DebuggerRmiLogicalBreakpointServiceTest extends
-		AbstractDebuggerLogicalBreakpointServiceTest<TraceRmiTarget, TraceObjectMemoryRegion> {
+		AbstractDebuggerLogicalBreakpointServiceTest<TraceRmiTarget, TraceMemoryRegion> {
 
 	ToyDBTraceBuilder tb3;
 
@@ -83,6 +95,9 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 		}
 		waitForDomainObject(trace);
 		rmiCx.setLastSnapshot(trace, snapshot.getKey());
+		TraceObject thread1 = Objects.requireNonNull(trace.getObjectManager()
+				.getObjectByCanonicalPath(KeyPath.parse("Processes[1].Threads[1]")));
+		rmiCx.synthActivate(thread1);
 	}
 
 	@Override
@@ -96,47 +111,49 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 	}
 
 	@Override
-	protected TraceObjectMemoryRegion addTargetTextRegion(TraceRmiTarget target, long offset)
+	protected TraceMemoryRegion addTargetTextRegion(TraceRmiTarget target, long offset)
 			throws Throwable {
 		Trace trace = target.getTrace();
-		TraceObjectMemoryRegion result;
+		TraceMemoryRegion result;
 		try (Transaction tx = trace.openTransaction("Add .text")) {
 			result = Objects.requireNonNull(
 				addMemoryRegion(trace.getObjectManager(), Lifespan.nowOn(target.getSnap()),
 					tb.range(offset, offset + 0x0fff), "bin:.text", "rx")
-							.queryInterface(TraceObjectMemoryRegion.class));
+							.queryInterface(TraceMemoryRegion.class));
 		}
 		waitForDomainObject(trace);
 		return result;
 	}
 
 	@Override
-	protected TraceObjectMemoryRegion addTargetTextRegion(TraceRmiTarget target) throws Throwable {
+	protected TraceMemoryRegion addTargetTextRegion(TraceRmiTarget target) throws Throwable {
 		return addTargetTextRegion(target, 0x55550000);
 	}
 
 	@Override
-	protected TraceObjectMemoryRegion addTargetDataRegion(TraceRmiTarget target) throws Throwable {
+	protected TraceMemoryRegion addTargetDataRegion(TraceRmiTarget target) throws Throwable {
 		Trace trace = target.getTrace();
 		long offset = 0x56550000;
-		TraceObjectMemoryRegion result;
+		TraceMemoryRegion result;
 		try (Transaction tx = trace.openTransaction("Add .data")) {
 			result = Objects.requireNonNull(
 				addMemoryRegion(trace.getObjectManager(), Lifespan.nowOn(target.getSnap()),
 					tb.range(offset, offset + 0x0fff), "bin:.data", "rw")
-							.queryInterface(TraceObjectMemoryRegion.class));
+							.queryInterface(TraceMemoryRegion.class));
 		}
 		waitForDomainObject(trace);
 		return result;
 	}
 
 	@Override
-	protected void addTextMapping(TraceRmiTarget target, TraceObjectMemoryRegion text,
+	protected void addTextMapping(TraceRmiTarget target, TraceMemoryRegion text,
 			Program program) throws Throwable {
 		Trace trace = target.getTrace();
+		long snap = getSnap(target);
 		try (Transaction tx = trace.openTransaction("Add .text mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
-				new DefaultTraceLocation(trace, null, text.getLifespan(), text.getMinAddress()),
+				new DefaultTraceLocation(trace, null, Lifespan.nowOn(snap),
+					text.getMinAddress(snap)),
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x1000,
 				false);
 		}
@@ -155,25 +172,25 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 	}
 
 	@Override
-	protected void addTargetAccessBreakpoint(TraceRmiTarget target, TraceObjectMemoryRegion region)
+	protected void addTargetAccessBreakpoint(TraceRmiTarget target, TraceMemoryRegion region)
 			throws Throwable {
-		Address min = region.getMinAddress().add(0x0123);
+		Address min = region.getMinAddress(getSnap(target)).add(0x0123);
 		Trace trace = target.getTrace();
 		try (Transaction tx = trace.openTransaction("Add access breakpoint")) {
 			addBreakpointAndLoc(trace.getObjectManager(), Lifespan.nowOn(target.getSnap()),
-				tb.range(min, min), TraceBreakpointKindSet.ACCESS);
+				tb.range(min, min), CommonSet.ACCESS.kinds());
 		}
 		waitForDomainObject(trace);
 	}
 
 	@Override
 	protected void addTargetSoftwareBreakpoint(TraceRmiTarget target,
-			TraceObjectMemoryRegion region) throws Throwable {
-		Address min = region.getMinAddress().add(0x0123);
+			TraceMemoryRegion region, int offset, Integer id) throws Throwable {
+		Address min = region.getMinAddress(getSnap(target)).add(offset);
 		Trace trace = target.getTrace();
 		try (Transaction tx = trace.openTransaction("Add software breakpoint")) {
 			addBreakpointAndLoc(trace.getObjectManager(), Lifespan.nowOn(target.getSnap()),
-				tb.range(min, min), TraceBreakpointKindSet.SW_EXECUTE);
+				tb.range(min, min), CommonSet.SWX.kinds(), id);
 		}
 		waitForDomainObject(trace);
 	}
@@ -181,21 +198,20 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 	@Override
 	protected void removeTargetSoftwareBreakpoint(TraceRmiTarget target) throws Throwable {
 		Trace trace = target.getTrace();
-		Lifespan nowOn = Lifespan.nowOn(target.getSnap());
-		List<TraceObjectBreakpointLocation> locsToDel = trace.getBreakpointManager()
-				.getAllBreakpoints()
+		long snap = target.getSnap();
+		Lifespan nowOn = Lifespan.nowOn(snap);
+		List<? extends TraceBreakpointLocation> locsToDel = trace.getBreakpointManager()
+				.getAllBreakpointLocations()
 				.stream()
-				.filter(bp -> bp.getKinds().equals(TraceBreakpointKindSet.SW_EXECUTE))
-				.filter(bp -> bp instanceof TraceObjectBreakpointLocation)
-				.map(bp -> (TraceObjectBreakpointLocation) bp)
+				.filter(loc -> loc.getKinds(snap).equals(CommonSet.SWX.kinds()))
 				.toList();
-		List<TraceObjectBreakpointSpec> specsToDel =
+		List<TraceBreakpointSpec> specsToDel =
 			locsToDel.stream().map(bp -> bp.getSpecification()).distinct().toList();
 		try (Transaction tx = trace.openTransaction("Delete software breakpoints")) {
-			for (TraceObjectBreakpointLocation loc : locsToDel) {
+			for (TraceBreakpointLocation loc : locsToDel) {
 				loc.getObject().remove(nowOn);
 			}
-			for (TraceObjectBreakpointSpec spec : specsToDel) {
+			for (TraceBreakpointSpec spec : specsToDel) {
 				spec.getObject().remove(nowOn);
 			}
 		}
@@ -208,43 +224,237 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 	}
 
 	@Override
-	protected TraceBreakpoint findLoc(Set<TraceBreakpoint> locs, int index) {
+	protected TraceBreakpointLocation findLoc(long snap, Set<TraceBreakpointLocation> locs,
+			int index) {
 		return locs.stream()
-				.filter(b -> b.getName().equals(Integer.toString(index + 1)))
+				.filter(b -> b.getName(snap).equals(Integer.toString(index + 1)))
 				.findAny()
 				.orElseThrow();
 	}
 
 	@Override
 	protected void handleToggleBreakpointInvocation(TraceRmiTarget target,
-			TraceBreakpoint expectedBreakpoint, boolean expectedEn) throws Throwable {
-		if (!(expectedBreakpoint instanceof TraceObjectBreakpointLocation loc)) {
-			throw new AssertionError("Unexpected trace breakpoint type: " + expectedBreakpoint);
-		}
+			TraceBreakpointLocation expectedLoc, boolean expectedEn) throws Throwable {
 		Map<String, Object> args = rmiMethodToggleBreak.expect();
 		try (Transaction tx = tb.startTransaction()) {
-			loc.setEnabled(Lifespan.nowOn(0), expectedEn);
+			expectedLoc.setEnabled(Lifespan.nowOn(target.getSnap()), expectedEn);
 		}
 		waitForDomainObject(tb.trace);
 		rmiMethodToggleBreak.result(null);
 		assertEquals(Map.ofEntries(
-			Map.entry("breakpoint", loc.getSpecification().getObject()),
+			Map.entry("breakpoint", expectedLoc.getSpecification().getObject()),
 			Map.entry("enabled", expectedEn)), args);
 	}
 
 	@Override
 	protected void handleDeleteBreakpointInvocation(TraceRmiTarget target,
-			TraceBreakpoint expectedBreakpoint) throws Throwable {
-		if (!(expectedBreakpoint instanceof TraceObjectBreakpointLocation loc)) {
-			throw new AssertionError("Unexpected trace breakpoint type: " + expectedBreakpoint);
-		}
+			TraceBreakpointLocation expectedLoc) throws Throwable {
 		Map<String, Object> args = rmiMethodDeleteBreak.expect();
 		try (Transaction tx = tb.startTransaction()) {
-			loc.getObject().remove(Lifespan.nowOn(0));
+			expectedLoc.getObject().removeTree(Lifespan.nowOn(target.getSnap()));
 		}
 		waitForDomainObject(tb.trace);
 		rmiMethodDeleteBreak.result(null);
 		assertEquals(Map.ofEntries(
-			Map.entry("breakpoint", loc.getSpecification().getObject())), args);
+			Map.entry("breakpoint", expectedLoc.getSpecification().getObject())), args);
+	}
+
+	@Test
+	public void testAddTraceBreakpointThenModifyRange_Lone() throws Throwable {
+		// These are for interactive debugging
+		//addPlugin(tool, DebuggerModelPlugin.class);
+		//addPlugin(tool, DebuggerBreakpointsPlugin.class);
+
+		DebuggerControlService controlService =
+			addPlugin(tool, DebuggerControlServicePlugin.class);
+
+		createTrace();
+		traceManager.openTrace(tb.trace);
+		traceManager.activate(DebuggerCoordinates.NOWHERE.trace(tb.trace).snap(1));
+		// Needs to have a target or be emulated for the breakpoint service to care
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+
+		TraceBreakpointLocation bpt;
+		try (Transaction tid = tb.startTransaction()) {
+			tb.createRootObject(SCHEMA_CTX);
+			bpt = tb.trace.getBreakpointManager()
+					.addBreakpoint("Processes[1].Breakpoints[0][0]", Lifespan.nowOn(0),
+						tb.addr(0x55550123), Set.of(), CommonSet.SWX.kinds(),
+						false, "");
+		}
+		waitForDomainObject(tb.trace);
+		waitOn(breakpointService.changesSettled());
+		changeListener.assertAgreesWithService();
+
+		LogicalBreakpoint lbBefore =
+			Unique.assertOne(breakpointService.getBreakpointsAt(tb.trace, tb.addr(0x55550123)));
+
+		try (Transaction tid = tb.startTransaction()) {
+			bpt.setRange(Lifespan.nowOn(1), tb.range(0x56660123));
+		}
+		waitForDomainObject(tb.trace);
+		waitOn(breakpointService.changesSettled());
+		changeListener.assertAgreesWithService();
+
+		LogicalBreakpoint lbAfter =
+			Unique.assertOne(breakpointService.getBreakpointsAt(tb.trace, tb.addr(0x56660123)));
+		assertNotSame(lbBefore, lbAfter);
+		assertEquals(Set.of(lbAfter), breakpointService.getAllBreakpoints());
+		assertEquals(Set.of(bpt), lbAfter.getTraceBreakpoints());
+	}
+
+	@Test
+	public void testAddTraceBreakpointThenModifyRange_LoneThenNullAndBack() throws Throwable {
+		// These are for interactive debugging
+		addPlugin(tool, DebuggerModelPlugin.class);
+		addPlugin(tool, DebuggerBreakpointsPlugin.class);
+
+		DebuggerControlService controlService =
+			addPlugin(tool, DebuggerControlServicePlugin.class);
+
+		createTrace();
+		traceManager.openTrace(tb.trace);
+		traceManager.activate(DebuggerCoordinates.NOWHERE.trace(tb.trace).snap(1));
+		// Needs to have a target or be emulated for the breakpoint service to care
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+
+		TraceBreakpointLocation bpt;
+		try (Transaction tid = tb.startTransaction()) {
+			tb.createRootObject(SCHEMA_CTX);
+			bpt = tb.trace.getBreakpointManager()
+					.addBreakpoint("Processes[1].Breakpoints[0][0]", Lifespan.nowOn(0),
+						tb.addr(0x55550123), Set.of(), CommonSet.SWX.kinds(),
+						false, "");
+		}
+		waitForDomainObject(tb.trace);
+		waitOn(breakpointService.changesSettled());
+		changeListener.assertAgreesWithService();
+
+		Unique.assertOne(breakpointService.getBreakpointsAt(tb.trace, tb.addr(0x55550123)));
+
+		try (Transaction tid = tb.startTransaction()) {
+			bpt.getObject()
+					.setAttribute(Lifespan.nowOn(1), TraceBreakpointLocation.KEY_RANGE, null);
+		}
+		waitForDomainObject(tb.trace);
+		waitOn(breakpointService.changesSettled());
+		changeListener.assertAgreesWithService();
+
+		assertEquals(Set.of(), breakpointService.getAllBreakpoints());
+
+		try (Transaction tid = tb.startTransaction()) {
+			bpt.setRange(Lifespan.nowOn(1), tb.range(0x56660123));
+		}
+		waitForDomainObject(tb.trace);
+		waitOn(breakpointService.changesSettled());
+		changeListener.assertAgreesWithService();
+
+		LogicalBreakpoint lbAfter =
+			Unique.assertOne(breakpointService.getBreakpointsAt(tb.trace, tb.addr(0x56660123)));
+		assertEquals(Set.of(lbAfter), breakpointService.getAllBreakpoints());
+		assertEquals(Set.of(bpt), lbAfter.getTraceBreakpoints());
+	}
+
+	@Test
+	public void testAddTraceBreakpointThenModifyRange_MappedThenLone() throws Throwable {
+		// These are for interactive debugging
+		//addPlugin(tool, DebuggerModelPlugin.class);
+		//addPlugin(tool, DebuggerBreakpointsPlugin.class);
+
+		DebuggerControlService controlService =
+			addPlugin(tool, DebuggerControlServicePlugin.class);
+
+		createTrace();
+		traceManager.openTrace(tb.trace);
+		traceManager.activate(DebuggerCoordinates.NOWHERE.trace(tb.trace).snap(1));
+		// Needs to have a target or be emulated for the breakpoint service to care
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+
+		createProgramFromTrace();
+		intoProject(program);
+		programManager.openProgram(program);
+
+		TraceBreakpointLocation bpt;
+		try (Transaction tid = tb.startTransaction()) {
+			tb.createRootObject(SCHEMA_CTX);
+			bpt = tb.trace.getBreakpointManager()
+					.addBreakpoint("Processes[1].Breakpoints[0][0]", Lifespan.nowOn(0),
+						tb.addr(0x55550123), Set.of(), CommonSet.SWX.kinds(),
+						false, "");
+			addTextMappingDead(0, program, tb);
+		}
+		waitForDomainObject(tb.trace);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
+		changeListener.assertAgreesWithService();
+
+		LogicalBreakpoint lbBefore =
+			Unique.assertOne(breakpointService.getBreakpointsAt(tb.trace, tb.addr(0x55550123)));
+
+		try (Transaction tid = tb.startTransaction()) {
+			bpt.setRange(Lifespan.nowOn(1), tb.range(0x56660123));
+			// NOTE: New address is not mapped
+		}
+		waitForDomainObject(tb.trace);
+		waitOn(breakpointService.changesSettled());
+		changeListener.assertAgreesWithService();
+
+		LogicalBreakpoint lbAfter =
+			Unique.assertOne(breakpointService.getBreakpointsAt(tb.trace, tb.addr(0x56660123)));
+		assertNotSame(lbBefore, lbAfter);
+		assertEquals(Set.of(lbBefore, lbAfter), breakpointService.getAllBreakpoints());
+		assertEquals(Set.of(), lbBefore.getTraceBreakpoints());
+		assertEquals(Set.of(bpt), lbAfter.getTraceBreakpoints());
+	}
+
+	@Test
+	public void testAddTraceBreakpointThenModifyRange_Mapped() throws Throwable {
+		// These are for interactive debugging
+		//addPlugin(tool, DebuggerModelPlugin.class);
+		//addPlugin(tool, DebuggerBreakpointsPlugin.class);
+
+		DebuggerControlService controlService =
+			addPlugin(tool, DebuggerControlServicePlugin.class);
+
+		createTrace();
+		traceManager.openTrace(tb.trace);
+		traceManager.activate(DebuggerCoordinates.NOWHERE.trace(tb.trace).snap(1));
+		// Needs to have a target or be emulated for the breakpoint service to care
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+
+		createProgramFromTrace();
+		intoProject(program);
+		programManager.openProgram(program);
+
+		TraceBreakpointLocation bpt;
+		try (Transaction tid = tb.startTransaction()) {
+			tb.createRootObject(SCHEMA_CTX);
+			bpt = tb.trace.getBreakpointManager()
+					.addBreakpoint("Processes[1].Breakpoints[0][0]", Lifespan.nowOn(0),
+						tb.addr(0x55550123), Set.of(), CommonSet.SWX.kinds(),
+						false, "");
+			addTextMappingDead(0, program, tb);
+		}
+		waitForDomainObject(tb.trace);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
+		changeListener.assertAgreesWithService();
+
+		LogicalBreakpoint lbBefore =
+			Unique.assertOne(breakpointService.getBreakpointsAt(tb.trace, tb.addr(0x55550123)));
+
+		try (Transaction tid = tb.startTransaction()) {
+			bpt.setRange(Lifespan.nowOn(1), tb.range(0x55550124));
+		}
+		waitForDomainObject(tb.trace);
+		waitOn(breakpointService.changesSettled());
+		changeListener.assertAgreesWithService();
+
+		LogicalBreakpoint lbAfter =
+			Unique.assertOne(breakpointService.getBreakpointsAt(tb.trace, tb.addr(0x55550124)));
+		assertNotSame(lbBefore, lbAfter);
+		assertEquals(Set.of(lbBefore, lbAfter), breakpointService.getAllBreakpoints());
+		assertEquals(Set.of(), lbBefore.getTraceBreakpoints());
+		assertEquals(Set.of(bpt), lbAfter.getTraceBreakpoints());
 	}
 }

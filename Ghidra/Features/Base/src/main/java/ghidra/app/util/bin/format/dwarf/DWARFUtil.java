@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 package ghidra.app.util.bin.format.dwarf;
 
 import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 
 import generic.jar.ResourceFile;
 import ghidra.app.cmd.comments.AppendCommentCmd;
+import ghidra.app.plugin.processors.sleigh.SleighLanguageDescription;
 import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeValue;
 import ghidra.app.util.bin.format.dwarf.attribs.DWARFNumericAttribute;
 import ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionException;
@@ -57,11 +58,11 @@ public class DWARFUtil {
 	 * Returns the field name of a final static variable in class <code>clazz</code>
 	 * which holds a specific value.
 	 * <p>
-	 * Can be thought of as an enum numeric value to to name lookup.
-	 * <p>
-	 * @param clazz
-	 * @param value
-	 * @return
+	 * Can be thought of as an enum numeric value to do a name lookup.
+	 * 
+	 * @param clazz 'enum' class that contains the "public static final" values
+	 * @param value value to lookup
+	 * @return string name of value 'enum'
 	 */
 	public static String toString(Class<?> clazz, long value) {
 		Field field = getStaticFinalFieldWithValue(clazz, value);
@@ -78,15 +79,15 @@ public class DWARFUtil {
 	 */
 	public static Field getStaticFinalFieldWithValue(Class<?> clazz, long value) {
 		Field[] fields = clazz.getDeclaredFields();
-		for (int i = 0; i < fields.length; i++) {
-			if ((!Modifier.isFinal(fields[i].getModifiers())) ||
-				(!Modifier.isStatic(fields[i].getModifiers()))) {
+		for (Field field : fields) {
+			if ((!Modifier.isFinal(field.getModifiers())) ||
+				(!Modifier.isStatic(field.getModifiers()))) {
 				continue;
 			}
 			try {
-				long fieldValue = fields[i].getLong(null);
+				long fieldValue = field.getLong(null);
 				if (fieldValue == value) {
-					return fields[i];
+					return field;
 				}
 			}
 			catch (IllegalArgumentException | IllegalAccessException e) {
@@ -98,10 +99,6 @@ public class DWARFUtil {
 
 	//--------------------------------------
 
-
-
-
-
 	private static Pattern MANGLED_NESTING_REGEX = Pattern.compile("(.*_Z)?N([0-9]+.*)");
 
 	/**
@@ -110,9 +107,9 @@ public class DWARFUtil {
 	 * <p>
 	 * For example, "_ZN19class1_inline_funcs3fooEv" -&gt;
 	 * [19 chars]'class1_inline_funcs', [3 chars]'foo'
-	 * <p>
-	 * @param s
-	 * @return
+	 * 
+	 * @param s mangled string
+	 * @return list of elements extracted from mangled string
 	 */
 	public static List<String> parseMangledNestings(String s) {
 		List<String> results = new ArrayList<>();
@@ -143,15 +140,14 @@ public class DWARFUtil {
 
 	/**
 	 * Try to find gnu mangled name nesting info in a DIE's children's linkage strings.
-	 * <p>
-	 * @param die
+	 * 
+	 * @param die {@link DebugInfoEntry} record
 	 * @return a list of string of nesting names, ending with what should be the DIE parameter's
 	 * name.
 	 */
 	public static List<String> findLinkageNameInChildren(DebugInfoEntry die) {
-		DWARFProgram prog = die.getProgram();
 		for (DebugInfoEntry childDIE : die.getChildren(DWARFTag.DW_TAG_subprogram)) {
-			DIEAggregate childDIEA = prog.getAggregate(childDIE);
+			DIEAggregate childDIEA = die.getContainer().getAggregate(childDIE);
 			String linkage = childDIEA.getString(DW_AT_linkage_name, null);
 			if (linkage == null) {
 				linkage = childDIEA.getString(DW_AT_MIPS_linkage_name, null);
@@ -175,7 +171,7 @@ public class DWARFUtil {
 	 * <p>
 	 * operator&lt;() and operator&lt;&lt;() are handled so their angle brackets
 	 * don't trigger the template start/end angle bracket incorrectly.
-	 * <p>
+	 * 
 	 * @param name symbol name with C++ template portions
 	 * @return base portion of the symbol name without template portion
 	 */
@@ -193,7 +189,7 @@ public class DWARFUtil {
 
 	/**
 	 * Creates a name for anon types based on their position in their parent's childList.
-	 * <p>
+	 * 
 	 * @param diea the die aggregate.
 	 * @return the anonymous name of the die aggregate.
 	 */
@@ -206,7 +202,7 @@ public class DWARFUtil {
 		DWARFProgram prog = diea.getProgram();
 		int typeDefCount = 0;
 		for (DebugInfoEntry childDIE : parent.getChildren()) {
-			DIEAggregate childDIEA = prog.getAggregate(childDIE);
+			DIEAggregate childDIEA = diea.getDIEContainer().getAggregate(childDIE);
 			if (diea == childDIEA || diea.getOffset() == childDIEA.getOffset()) {
 				return "anon_%s_%d".formatted(childDIEA.getTag().getContainerTypeName(),
 					typeDefCount);
@@ -234,10 +230,9 @@ public class DWARFUtil {
 			return null;
 		}
 
-		DWARFProgram prog = diea.getProgram();
 		List<String> users = new ArrayList<>();
 		for (DebugInfoEntry childDIE : parent.getChildren()) {
-			DIEAggregate childDIEA = prog.getAggregate(childDIE);
+			DIEAggregate childDIEA = diea.getDIEContainer().getAggregate(childDIE);
 
 			String childName = childDIEA.getName();
 			DIEAggregate type = childDIEA.getTypeRef();
@@ -277,7 +272,7 @@ public class DWARFUtil {
 				childEntry.getTag() == DWARFTag.DW_TAG_inheritance)) {
 				continue;
 			}
-			DIEAggregate childDIEA = diea.getProgram().getAggregate(childEntry);
+			DIEAggregate childDIEA = diea.getDIEContainer().getAggregate(childEntry);
 			if (childDIEA.hasAttribute(DW_AT_external)) {
 				continue;
 			}
@@ -286,8 +281,7 @@ public class DWARFUtil {
 			String memberName = childDIEA.getName();
 			int memberOffset = 0;
 			try {
-				memberOffset =
-					childDIEA.parseDataMemberOffset(DW_AT_data_member_location, 0);
+				memberOffset = childDIEA.parseDataMemberOffset(DW_AT_data_member_location, 0);
 			}
 			catch (DWARFExpressionException | IOException e) {
 				// ignore, leave as default value 0
@@ -346,7 +340,7 @@ public class DWARFUtil {
 		dtc.setComment(prev + description);
 	}
 
-	public static void appendComment(Program program, Address address, int commentType,
+	public static void appendComment(Program program, Address address, CommentType commentType,
 			String prefix, String comment, String sep) {
 		if (comment == null || comment.isBlank()) {
 			return;
@@ -398,8 +392,7 @@ public class DWARFUtil {
 		}
 
 		DIEAggregate funcDIEA = paramDIEA.getParent();
-		DWARFAttributeValue dwATObjectPointer =
-			funcDIEA.getAttribute(DW_AT_object_pointer);
+		DWARFAttributeValue dwATObjectPointer = funcDIEA.findValue(DW_AT_object_pointer);
 		if (dwATObjectPointer != null && dwATObjectPointer instanceof DWARFNumericAttribute dnum &&
 			paramDIEA.hasOffset(dnum.getUnsignedValue())) {
 			return true;
@@ -442,8 +435,7 @@ public class DWARFUtil {
 	public static ResourceFile getLanguageExternalFile(Language lang, String name)
 			throws IOException {
 		String filename = getLanguageExternalNameValue(lang, name);
-		return filename != null
-				? new ResourceFile(getLanguageDefinitionDirectory(lang), filename)
+		return filename != null ? new ResourceFile(getLanguageDefinitionDirectory(lang), filename)
 				: null;
 	}
 
@@ -468,11 +460,11 @@ public class DWARFUtil {
 	 * Returns a value specified in a {@link Language} definition via a
 	 * <pre>&lt;external_name tool="<b>name</b>" name="<b>value</b>"/&gt;</pre>
 	 * entry.
-	 * <p>
+	 * 
 	 * @param lang {@link Language} to query
 	 * @param name name of the value
 	 * @return String value
-	 * @throws IOException
+	 * @throws IOException if invalid language or multiple values with same name
 	 */
 	public static String getLanguageExternalNameValue(Language lang, String name)
 			throws IOException {
@@ -493,7 +485,7 @@ public class DWARFUtil {
 	}
 
 	public static void packCompositeIfPossible(Composite original, DataTypeManager dtm) {
-		if (original.isZeroLength() || original.getNumComponents() == 0) {
+		if (original.isZeroLength() || original.getNumDefinedComponents() == 0) {
 			// don't try to pack empty structs, this would throw off conflicthandler logic.
 			// also don't pack sized structs with no fields because when packed down to 0 bytes they
 			// cause errors when used as a param type
@@ -559,8 +551,8 @@ public class DWARFUtil {
 		if (VoidDataType.dataType.isEquivalent(dt)) {
 			return true;
 		}
-		if (!dt.isZeroLength() && dt instanceof Array) {
-			dt = DataTypeUtilities.getArrayBaseDataType((Array) dt);
+		if (!dt.isZeroLength() && dt instanceof Array array) {
+			dt = DataTypeUtilities.getArrayBaseDataType(array);
 		}
 		return dt.isZeroLength();
 	}
@@ -574,4 +566,8 @@ public class DWARFUtil {
 			varnode.getAddress().getAddressSpace().getType() == AddressSpace.TYPE_STACK;
 	}
 
+	public static boolean isConstVarnode(Varnode varnode) {
+		return varnode != null &&
+			varnode.getAddress().getAddressSpace().getType() == AddressSpace.TYPE_CONSTANT;
+	}
 }

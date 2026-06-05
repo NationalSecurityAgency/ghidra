@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.core.analysis.AnalysisBackgroundCommand;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.framework.cmd.Command;
@@ -30,7 +29,6 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 
@@ -78,7 +76,7 @@ public class CreateFunctionCmdWithFlowTest extends AbstractGhidraHeadedIntegrati
 		AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
 		analysisMgr.reAnalyzeAll(null);
 
-		Command cmd = new AnalysisBackgroundCommand(analysisMgr, false);
+		Command<Program> cmd = new AnalysisBackgroundCommand(analysisMgr, false);
 		tool.execute(cmd, program);
 		waitForBusyTool(tool);
 	}

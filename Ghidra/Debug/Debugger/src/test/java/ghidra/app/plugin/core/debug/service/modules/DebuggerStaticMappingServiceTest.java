@@ -27,10 +27,7 @@ import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProviderTest;
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
+import ghidra.debug.api.modules.MappedAddressRange;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -44,7 +41,10 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.util.Msg;
 
 // Not technically a GUI test, but must be carried out in the context of a plugin tool
@@ -635,13 +635,14 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		TraceMemoryRegion echoText, echoData, libText, libData;
 		DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 		try (Transaction tx = tb.startTransaction()) {
-			echoText = mm.createRegion("Memory.Regions[/bin/echo (0x00400000)]",
+			tb.createRootObject("Target");
+			echoText = mm.createRegion("Memory[/bin/echo (0x00400000)]",
 				0, tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			echoData = mm.createRegion("Memory.Regions[/bin/echo (0x00600000)]",
+			echoData = mm.createRegion("Memory[/bin/echo (0x00600000)]",
 				0, tb.range(0x00600000, 0x00600fff), TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
-			libText = mm.createRegion("Memory.Regions[/lib/libc.so (0x7ff00000)]",
+			libText = mm.createRegion("Memory[/lib/libc.so (0x7ff00000)]",
 				0, tb.range(0x7ff00000, 0x7ff0ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			libData = mm.createRegion("Memory.Regions[/lib/libc.so (0x7ff20000)]",
+			libData = mm.createRegion("Memory[/lib/libc.so (0x7ff20000)]",
 				0, tb.range(0x7ff20000, 0x7ff20fff), TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 		}
 
@@ -684,12 +685,12 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 			DBTraceObjectManager objects = tb.trace.getObjectManager();
 			objects.createRootObject(ctx.getSchema(new SchemaName("Session")));
 			objModBash =
-				objects.createObject(TraceObjectKeyPath.parse("Processes[1].Modules[/bin/bash]"));
+				objects.createObject(KeyPath.parse("Processes[1].Modules[/bin/bash]"));
 			objModBash.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 		}
 
-		TraceModule modBash = objModBash.queryInterface(TraceObjectModule.class);
+		TraceModule modBash = objModBash.queryInterface(TraceModule.class);
 		assertEquals(Map.of(),
-			mappingService.proposeModuleMaps(List.of(modBash), List.of(program)));
+			mappingService.proposeModuleMaps(List.of(modBash), 0, List.of(program)));
 	}
 }

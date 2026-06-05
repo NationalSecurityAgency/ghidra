@@ -28,13 +28,13 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
+import org.jdom2.JDOMException;
+
 import db.DBHandle;
 import db.Transaction;
 import generic.test.AbstractGenericTest;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.framework.data.OpenMode;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
@@ -57,11 +57,19 @@ import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.model.memory.TraceRegister;
 import ghidra.trace.model.symbol.TraceReferenceManager;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter;
+import ghidra.trace.model.target.schema.*;
+import ghidra.trace.model.target.schema.DefaultTraceObjectSchema.DefaultAttributeSchema;
+import ghidra.trace.model.target.schema.TraceObjectSchema.Hidden;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.ConsoleTaskMonitor;
@@ -83,6 +91,149 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public final DBTrace trace;
 	public final TracePlatform host;
 	public final LanguageService languageService = DefaultLanguageService.getLanguageService();
+
+	public static final String CTX_XML_DEFAULT = """
+			<context>
+			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='curTarget' schema='Target' />
+			        <attribute name='Targets' schema='TargetContainer' />
+			    </schema>
+			    <schema name='TargetContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Target' />
+			    </schema>
+			    <schema name='Target' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='EventScope' />
+			        <interface name='Process' />
+			        <attribute name='self' schema='Target' />
+			        <attribute name='Threads' schema='ThreadContainer' />
+			        <attribute name='Memory' schema='Memory' />
+			        <attribute name='Modules' schema='ModuleContainer' />
+			        <attribute name='Breakpoints' schema='BreakpointContainer' />
+			    </schema>
+			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
+			        <element schema='Thread' />
+			    </schema>
+			    <schema name='RegisterContainer' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='RegisterContainer' />
+			        <attribute name='User' schema='RegisterGroup' />
+			        <attribute name='Float' schema='RegisterGroup' />
+			    </schema>
+			    <schema name='RegisterGroup' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
+			        <element schema='Register' />
+			    </schema>
+			    <schema name='Register' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Register' />
+			    </schema>
+			    <schema name='Memory' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
+			        <element schema='Region' />
+			    </schema>
+			    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='MemoryRegion' />
+			        <attribute-alias from="_range" to="Range" />
+			    </schema>
+			    <schema name='Stack' canonical='yes' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Stack' />
+			        <element schema='Frame' />
+			    </schema>
+			    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Thread' />
+			        <interface name='Aggregate' />
+			        <attribute name='Stack' schema='Stack' />
+			        <attribute name='Registers' schema='RegisterContainer' />
+			    </schema>
+			    <schema name='Frame' elementResync='NEVER' attributeResync='ONCE'>
+			        <interface name='StackFrame' />
+			        <interface name='Aggregate' />
+			    </schema>
+			    <schema name='ModuleContainer' canonical='yes'>
+			        <element schema='Module' />
+			    </schema>
+			    <schema name='Module'>
+			        <interface name='Module' />
+			        <attribute name='Sections' schema='SectionContainer' />
+			    </schema>
+			    <schema name='SectionContainer' canonical='yes'>
+			        <element schema='Section' />
+			    </schema>
+			    <schema name='Section'>
+			        <interface name='Section' />
+			    </schema>
+			    <schema name='BreakpointContainer' canonical='yes'>
+			        <element schema='Breakpoint' />
+			    </schema>
+			    <schema name='Breakpoint'>
+			        <interface name='BreakpointSpec' />
+			        <interface name='BreakpointLocation' />
+			    </schema>
+			</context>
+			""";
+
+	public static final SchemaContext CTX_DEFAULT;
+
+	public static class ToySchemaBuilder {
+		private final DefaultSchemaContext ctx = new DefaultSchemaContext(CTX_DEFAULT);
+
+		public ToySchemaBuilder useRegistersPerThread() {
+			ctx.modify(new SchemaName("Thread"))
+					.addAttributeSchema(new DefaultAttributeSchema("Registers",
+						new SchemaName("RegisterContainer"), false, false, Hidden.FALSE), this)
+					.buildAndReplace();
+			ctx.modify(new SchemaName("Frame"))
+					.removeAttributeSchema("Registers")
+					.buildAndReplace();
+			return this;
+		}
+
+		public ToySchemaBuilder useRegistersPerFrame() {
+			ctx.modify(new SchemaName("Frame"))
+					.addAttributeSchema(new DefaultAttributeSchema("Registers",
+						new SchemaName("RegisterContainer"), false, false, Hidden.FALSE), this)
+					.buildAndReplace();
+			ctx.modify(new SchemaName("Thread"))
+					.removeAttributeSchema("Registers")
+					.buildAndReplace();
+			return this;
+		}
+
+		public ToySchemaBuilder useRegisterGroups() {
+			ctx.modify(new SchemaName("RegisterContainer"))
+					.addAttributeSchema(new DefaultAttributeSchema("User",
+						new SchemaName("RegisterGroup"), false, false, Hidden.FALSE), this)
+					.addAttributeSchema(new DefaultAttributeSchema("Float",
+						new SchemaName("RegisterGroup"), false, false, Hidden.FALSE), this)
+					.removeElementSchema("")
+					.setCanonicalContainer(false)
+					.buildAndReplace();
+			return this;
+		}
+
+		public ToySchemaBuilder noRegisterGroups() {
+			ctx.modify(new SchemaName("RegisterContainer"))
+					.addElementSchema("", new SchemaName("Register"), this)
+					.setCanonicalContainer(true)
+					.removeAttributeSchema("User")
+					.removeAttributeSchema("Float")
+					.buildAndReplace();
+			return this;
+		}
+
+		public SchemaContext build() {
+			return ctx;
+		}
+	}
+
+	static {
+		try {
+			CTX_DEFAULT = XmlSchemaContext.deserialize(CTX_XML_DEFAULT);
+		}
+		catch (JDOMException e) {
+			throw new AssertionError(e);
+		}
+	}
 
 	/**
 	 * Open a .gzf compressed trace
@@ -316,15 +467,15 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	/**
-	 * Create an address-span box in the trace's default space with a singleton snap
+	 * Create an address-span box in the trace's default space with a span
 	 * 
-	 * @param snap the snap
+	 * @param span the span
 	 * @param start the start address offset
 	 * @param end the end address offset
 	 * @return the box
 	 */
-	public TraceAddressSnapRange srange(long snap, long start, long end) {
-		return new ImmutableTraceAddressSnapRange(addr(start), addr(end), snap, snap);
+	public TraceAddressSnapRange srange(Lifespan span, long start, long end) {
+		return new ImmutableTraceAddressSnapRange(addr(start), addr(end), span);
 	}
 
 	/**
@@ -432,6 +583,17 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		return result.flip();
 	}
 
+	public class EventSuspension implements AutoCloseable {
+		public EventSuspension() {
+			trace.setEventsEnabled(false);
+		}
+
+		@Override
+		public void close() {
+			trace.setEventsEnabled(true);
+		}
+	}
+
 	/**
 	 * Start a transaction on the trace
 	 * 
@@ -442,6 +604,18 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 */
 	public Transaction startTransaction() {
 		return trace.openTransaction("Testing");
+	}
+
+	/**
+	 * Suspend events for the trace
+	 * 
+	 * <p>
+	 * Use this in a {@code try-with-resources} block
+	 * 
+	 * @return the suspension handle
+	 */
+	public EventSuspension suspendEvents() {
+		return new EventSuspension();
 	}
 
 	/**
@@ -496,6 +670,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		Register register = language.getRegister(registerName);
 		assertNotNull(register);
 		TraceThread thread = getOrAddThread(threadName, snap);
+		createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), host, 1);
 		DBTraceBookmarkType type = getOrAddBookmarkType(typeName);
 		DBTraceBookmarkManager manager = trace.getBookmarkManager();
 		DBTraceBookmarkSpace space = manager.getBookmarkRegisterSpace(thread, true);
@@ -503,7 +678,9 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 			type, category, comment);
 		assertSame(thread, bm.getThread());
 		assertEquals(snap, bm.getLifespan().lmin());
-		assertEquals(register.getAddress(), bm.getAddress());
+		AddressSpace spaceT = TraceRegisterUtils.getRegisterAddressSpace(thread, 0, false);
+		AddressRange range = host.getConventionalRegisterRange(spaceT, register);
+		assertEquals(range.getMinAddress(), bm.getAddress());
 		assertEquals(typeName, bm.getTypeString());
 		assertEquals(category, bm.getCategory());
 		return bm;
@@ -526,6 +703,23 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	/**
+	 * Create a data unit
+	 * 
+	 * @param snap the starting snap
+	 * @param start the min address
+	 * @param platform the platform for data organization
+	 * @param type the data type of the unit
+	 * @param length the length, or -1 for the type's default
+	 * @return the new data unit
+	 * @throws CodeUnitInsertionException if the unit cannot be created
+	 */
+	public DBTraceDataAdapter addData(long snap, Address start, TracePlatform platform,
+			DataType type, int length) throws CodeUnitInsertionException {
+		DBTraceCodeManager code = trace.getCodeManager();
+		return code.definedData().create(Lifespan.nowOn(snap), start, platform, type, length);
+	}
+
+	/**
 	 * Create a data unit, first placing the given bytes
 	 * 
 	 * @param snap the starting snap
@@ -541,6 +735,27 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		DBTraceMemoryManager memory = trace.getMemoryManager();
 		memory.putBytes(snap, start, buf);
 		DBTraceDataAdapter data = addData(snap, start, type, length);
+		assertEquals(length, data.getLength());
+		return data;
+	}
+
+	/**
+	 * Create a data unit, first placing the given bytes
+	 * 
+	 * @param snap the starting snap
+	 * @param start the min address
+	 * @param platform the platform for data organization
+	 * @param type the data type of the unit
+	 * @param buf the bytes to place, which will become the unit's bytes
+	 * @return the new data unit
+	 * @throws CodeUnitInsertionException if the unit cannot be created
+	 */
+	public DBTraceDataAdapter addData(long snap, Address start, TracePlatform platform,
+			DataType type, ByteBuffer buf) throws CodeUnitInsertionException {
+		int length = buf.remaining();
+		DBTraceMemoryManager memory = trace.getMemoryManager();
+		memory.putBytes(snap, start, buf);
+		DBTraceDataAdapter data = addData(snap, start, platform, type, length);
 		assertEquals(length, data.getLength());
 		return data;
 	}
@@ -622,7 +837,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * @param to the to address
 	 * @return the reference
 	 */
-	public DBTraceReference addMemoryReference(long creationSnap, Address from, Address to) {
+	public DBTraceReference addMemoryReference(long creationSnap, Address from, AddressRange to) {
 		return addMemoryReference(creationSnap, from, to, -1);
 	}
 
@@ -635,7 +850,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * @param operandIndex the operand index, or -1 for mnemonic
 	 * @return the reference
 	 */
-	public DBTraceReference addMemoryReference(long creationSnap, Address from, Address to,
+	public DBTraceReference addMemoryReference(long creationSnap, Address from, AddressRange to,
 			int operandIndex) {
 		return trace.getReferenceManager()
 				.addMemoryReference(Lifespan.nowOn(creationSnap), from, to, RefType.DATA,
@@ -760,9 +975,9 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		return getLanguage(langID).getCompilerSpecByID(new CompilerSpecID(compID));
 	}
 
-	public TraceObjectThread createObjectsProcessAndThreads() {
+	public TraceThread createObjectsProcessAndThreads() {
 		DBTraceObjectManager objs = trace.getObjectManager();
-		TraceObjectKeyPath pathProc1 = TraceObjectKeyPath.parse("Processes[1]");
+		KeyPath pathProc1 = KeyPath.parse("Processes[1]");
 		TraceObject proc1 = objs.createObject(pathProc1);
 		Lifespan zeroOn = Lifespan.nowOn(0);
 		proc1.insert(zeroOn, ConflictResolution.DENY);
@@ -771,22 +986,55 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		TraceObject t2 = objs.createObject(pathProc1.key("Threads").index(2));
 		t2.insert(zeroOn, ConflictResolution.DENY);
 
-		proc1.setAttribute(zeroOn, "_state", TargetExecutionState.STOPPED.name());
+		proc1.setAttribute(zeroOn, "_state", TraceExecutionState.STOPPED.name());
 
-		return t1.queryInterface(TraceObjectThread.class);
+		return t1.queryInterface(TraceThread.class);
 	}
 
-	public void createObjectsFramesAndRegs(TraceObjectThread thread, Lifespan lifespan,
+	public void createObjectsFramesAndRegs(TraceThread thread, Lifespan lifespan,
 			TracePlatform platform, int n) {
 		DBTraceObjectManager objs = trace.getObjectManager();
-		TraceObjectKeyPath pathThread = thread.getObject().getCanonicalPath();
+		KeyPath pathThread = thread.getObject().getCanonicalPath();
 		for (int i = 0; i < n; i++) {
-			TraceObjectKeyPath pathContainer = pathThread.key("Stack").index(i).key("Registers");
+			KeyPath pathContainer = pathThread.key("Stack").index(i).key("Registers");
 			for (Register reg : platform.getLanguage().getRegisters()) {
 				TraceObject regObj = objs.createObject(pathContainer.index(reg.getName()));
+				assertNotNull("Registers not at the expected path in schema",
+					regObj.queryInterface(TraceRegister.class));
 				regObj.insert(lifespan, ConflictResolution.DENY);
 			}
 		}
+	}
+
+	public void createObjectsRegsForThread(TraceThread thread, Lifespan lifespan,
+			TracePlatform platform) {
+		DBTraceObjectManager objs = trace.getObjectManager();
+		KeyPath pathThread = thread.getObject().getCanonicalPath();
+		KeyPath pathContainer = pathThread.key("Registers");
+		for (Register reg : platform.getLanguage().getRegisters()) {
+			TraceObject regObj = objs.createObject(pathContainer.index(reg.getName()));
+			assertNotNull("Registers not at the expected path in schema",
+				regObj.queryInterface(TraceRegister.class));
+			regObj.insert(lifespan, ConflictResolution.DENY);
+		}
+	}
+
+	public TraceObject createRootObject(SchemaContext ctx, String schemaName) {
+		return trace.getObjectManager()
+				.createRootObject(ctx.getSchema(new SchemaName(schemaName)))
+				.getChild();
+	}
+
+	public TraceObject createRootObject(SchemaContext ctx) {
+		return createRootObject(ctx, "Session");
+	}
+
+	public TraceObject createRootObject(String schemaName) {
+		return createRootObject(CTX_DEFAULT, schemaName);
+	}
+
+	public TraceObject createRootObject() {
+		return createRootObject(CTX_DEFAULT);
 	}
 
 	/**
@@ -797,7 +1045,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 */
 	public TraceObject obj(String canonicalPath) {
 		return trace.getObjectManager()
-				.getObjectByCanonicalPath(TraceObjectKeyPath.parse(canonicalPath));
+				.getObjectByCanonicalPath(KeyPath.parse(canonicalPath));
 	}
 
 	/**
@@ -814,11 +1062,12 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * Get an object by its path pattern intersecting the given lifespan
 	 * 
 	 * @param path the path pattern
+	 * @param span the lifespan to search
 	 * @return the object or null
 	 */
 	public TraceObject objAny(String path, Lifespan span) {
 		return trace.getObjectManager()
-				.getObjectsByPath(span, TraceObjectKeyPath.parse(path))
+				.getObjectsByPath(span, KeyPath.parse(path))
 				.findFirst()
 				.orElse(null);
 	}
@@ -845,7 +1094,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 */
 	public List<Object> objValues(long snap, String pattern) {
 		return trace.getObjectManager()
-				.getValuePaths(Lifespan.at(snap), PathPredicates.parse(pattern))
+				.getValuePaths(Lifespan.at(snap), PathFilter.parse(pattern))
 				.map(p -> p.getDestinationValue(trace.getObjectManager().getRootObject()))
 				.toList();
 	}

@@ -20,8 +20,7 @@ import java.nio.file.Path;
 
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
-import ghidra.app.script.GhidraScript;
-import ghidra.app.script.GhidraState;
+import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
@@ -56,7 +55,7 @@ public class RunPCodeExportScriptTask extends Task {
 
 			ToolOptions options = tool.getOptions("Decompiler");
 			String facts_directory =
-				options.getString(TaintOptions.OP_KEY_TAINT_FACTS_DIR, "/tmp/export");
+				options.getString(TaintOptions.OP_KEY_TAINT_FACTS_DIR, "/tmp/export").trim();
 			Path facts_path = Path.of(facts_directory);
 			if (!facts_path.toFile().exists() || !facts_path.toFile().isDirectory()) {
 				Msg.info(this, "Facts Path: " + facts_path.toString() + " does not exists.");
@@ -72,7 +71,8 @@ public class RunPCodeExportScriptTask extends Task {
 			script.setScriptArgs(new String[] { facts_directory });
 
 			console.addMessage(scriptName, "Running...");
-			script.execute(currentState, monitor, console.getStdOut());
+			script.execute(currentState,
+				new ScriptControls(console.getStdOut(), console.getStdErr(), false, monitor));
 			console.addMessage(scriptName, "Finished!");
 		}
 		catch (CancelledException e) {

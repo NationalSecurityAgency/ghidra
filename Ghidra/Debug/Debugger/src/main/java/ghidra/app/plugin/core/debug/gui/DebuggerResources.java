@@ -355,6 +355,23 @@ public interface DebuggerResources {
 		}
 	}
 
+	interface SaveTraceAsAction {
+		String NAME = "Save Trace As";
+		String DESCRIPTION = "Rename and save the selected trace";
+		Icon ICON = DebuggerResources.ICON_SAVE;
+		String GROUP = DebuggerResources.GROUP_TRACE;
+		String HELP_ANCHOR = "save_trace_as";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.menuIcon(ICON)
+					.menuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
 	abstract class AbstractConnectAction extends DockingAction {
 		public static final String NAME = "Connect";
 		public static final Icon ICON = ICON_CONNECTION;
@@ -724,65 +741,6 @@ public interface DebuggerResources {
 		}
 	}
 
-	interface AutoSyncCursorWithStaticListingAction {
-		String NAME = "Auto-Sync Cursor with Static Listing";
-		String DESCRIPTION = "Automatically synchronize the static and dynamic listings' cursors";
-		String HELP_ANCHOR = "auto_sync_cursor_static";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(NAME)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface AutoSyncSelectionWithStaticListingAction {
-		String NAME = "Auto-Sync Selection with Static Listing";
-		String DESCRIPTION =
-			"Automatically synchronize the static and dynamic listings' selections";
-		String HELP_ANCHOR = "auto_sync_selection_static";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(NAME)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface SyncSelectionIntoStaticListingAction {
-		String NAME = "Sync Selection into Static Listing";
-		String DESCRIPTION =
-			"Change the static listing's selection to synchronize with this component's selection";
-		String HELP_ANCHOR = "sync_selection_into_static";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(NAME)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface SyncSelectionFromStaticListingAction {
-		String NAME = "Sync Selection from Static Listing";
-		String DESCRIPTION =
-			"Change this component's selection to synchronize with the static listing's selection";
-		String HELP_ANCHOR = "sync_selection_from_static";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(NAME)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
 	interface FollowsCurrentThreadAction {
 		String NAME = "Follows Selected Thread";
 		String DESCRIPTION = "Register tracking follows selected thread (and contents" +
@@ -1034,21 +992,6 @@ public interface DebuggerResources {
 					.description(DESCRIPTION)
 					.menuGroup(GROUP)
 					.menuPath(DebuggerPluginPackage.NAME, NAME)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface OpenProgramAction {
-		String NAME = "Open Program";
-		Icon ICON = ICON_PROGRAM;
-		String DESCRIPTION = "Open the program";
-		String HELP_ANCHOR = "open_program";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
@@ -1726,8 +1669,7 @@ public interface DebuggerResources {
 			String ownerName = owner.getName();
 			return new ToggleActionBuilder(NAME, ownerName)
 					.description(DESCRIPTION)
-					.menuGroup(GROUP_GENERAL)
-					.menuPath(NAME)
+					.toolBarIcon(ICON_FILTER)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}

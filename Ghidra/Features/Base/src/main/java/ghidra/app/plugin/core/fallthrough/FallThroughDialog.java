@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -117,15 +117,14 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		}
 	}
 
-	private void addressChanged() {
+	private void addressChanged(Address address) {
 		if (changing) {
 			return;
 		}
 
 		Runnable r = () -> {
-			Address addr = addrField.getAddress();
-			if (addr != null || addrField.getValue().length() == 0) {
-				model.setCurrentFallthrough(addr);
+			if (address != null || addrField.getText().length() == 0) {
+				model.setCurrentFallthrough(address);
 			}
 			else {
 				setStatusText("Invalid Address");
@@ -139,12 +138,11 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 	private JPanel create() {
 		JPanel panel = new JPanel(new BorderLayout(0, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
-		addrField = new AddressInput();
-		addrField.setAddressFactory(model.getProgram().getAddressFactory());
-		addrField.addChangeListener(e -> addressChanged());
+		addrField = new AddressInput(model.getProgram(), this::addressChanged);
 		addrField.addActionListener(e -> model.setCurrentFallthrough(addrField.getAddress()));
 		panel.add(createHomePanel(), BorderLayout.NORTH);
 		panel.add(createAddressPanel(), BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Override Fallthrough");
 		return panel;
 	}
 
@@ -154,6 +152,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 
 		panel.add(addrField, BorderLayout.NORTH);
 		panel.add(createRadioButtonPanel(), BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Address");
 		return panel;
 	}
 
@@ -171,7 +170,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 
 		homeButton = createButton("Home");
 		homeButton.addActionListener(e -> plugin.goTo(model.getAddress()));
-
+		homeButton.getAccessibleContext().setAccessibleName("Home");
 		JPanel innerPanel = new JPanel();
 		BoxLayout bl = new BoxLayout(innerPanel, BoxLayout.X_AXIS);
 		innerPanel.setLayout(bl);
@@ -183,7 +182,9 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		innerPanel.add(Box.createHorizontalStrut(20));
 		innerPanel.add(instLabel);
 		innerPanel.add(Box.createHorizontalStrut(10));
+		innerPanel.getAccessibleContext().setAccessibleName("Home Content");
 		panel.add(innerPanel, BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Home");
 		return panel;
 	}
 
@@ -197,19 +198,21 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		defaultRB = new GRadioButton("Default", true);
 		defaultRB.addActionListener(ev -> model.defaultSelected());
 		defaultRB.setToolTipText("Use default fallthrough address");
+		defaultRB.getAccessibleContext().setAccessibleName("Default");
 
 		userRB = new GRadioButton("User", false);
 		userRB.addActionListener(ev -> model.userSelected());
 		userRB.setToolTipText("Override default fallthrough address");
-
+		userRB.getAccessibleContext().setAccessibleName("User");
 		group.add(defaultRB);
 		group.add(userRB);
 
 		panel.add(defaultRB);
 		panel.add(userRB);
-
+		panel.getAccessibleContext().setAccessibleName("Radio Buttons");
 		JPanel outerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		outerPanel.add(panel);
+		outerPanel.getAccessibleContext().setAccessibleName("Radio Button");
 		return outerPanel;
 	}
 
@@ -221,6 +224,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		button.setMargin(noInsets);
 
 		button.setToolTipText("Go back to home address");
+		button.getAccessibleContext().setAccessibleName("Home");
 		return button;
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -222,7 +222,7 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 				keyToRecordMap.remove(key);
 			}
 
-			// Add any remaing overlay which are missing from factory
+			// Add any remaining overlays which are missing from factory
 			for (long key : keyToRecordMap.keySet()) {
 				DBTraceOverlaySpaceEntry ent = keyToRecordMap.get(key);
 				String spaceName = ent.name;
@@ -268,7 +268,7 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 		ent.set(space.getName(), base.getName());
 		trace.updateViewsAddSpaceBlock(space);
 		trace.setChanged(
-			new TraceChangeRecord<>(TraceEvents.OVERLAY_ADDED, null, trace, null, space));
+			new TraceChangeRecord<>(TraceEvents.OVERLAY_ADDED, space, trace, null, space));
 		return space;
 	}
 
@@ -315,7 +315,7 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 			factory.removeOverlaySpace(name);
 			trace.updateViewsDeleteSpaceBlock(space);
 			trace.setChanged(
-				new TraceChangeRecord<>(TraceEvents.OVERLAY_DELETED, null, trace, space, null));
+				new TraceChangeRecord<>(TraceEvents.OVERLAY_DELETED, space, trace, space, null));
 			invalidateCache(true);
 		}
 	}

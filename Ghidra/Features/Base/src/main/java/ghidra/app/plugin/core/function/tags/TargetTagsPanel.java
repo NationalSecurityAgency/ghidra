@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,7 @@ import java.util.Set;
 import ghidra.app.cmd.function.RemoveFunctionTagCmd;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.FunctionTag;
+import ghidra.program.model.listing.*;
 
 /**
  * Displays a list of tags that have been assigned to the current function
@@ -73,7 +72,8 @@ public class TargetTagsPanel extends TagListPanel {
 	public void removeSelectedTags() {
 		Set<FunctionTag> selectedTags = getSelectedTags();
 		for (FunctionTag tag : selectedTags) {
-			Command cmd = new RemoveFunctionTagCmd(tag.getName(), function.getEntryPoint());
+			Command<Program> cmd =
+				new RemoveFunctionTagCmd(tag.getName(), function.getEntryPoint());
 			tool.execute(cmd, program);
 		}
 	}

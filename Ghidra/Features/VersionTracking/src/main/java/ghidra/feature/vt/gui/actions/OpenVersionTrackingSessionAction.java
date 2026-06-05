@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,8 @@ import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.model.DefaultDomainFileFilter;
 import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainFileFilter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 
@@ -48,7 +48,7 @@ public class OpenVersionTrackingSessionAction extends DockingAction {
 		PluginTool tool = controller.getTool();
 		DataTreeDialog dialog =
 			new DataTreeDialog(tool.getToolFrame(), "Open Version Tracking Session", OPEN,
-				new VTDomainFileFilter());
+				new DefaultDomainFileFilter(VTSession.class, true));
 
 		tool.showDialog(dialog);
 		if (!dialog.wasCancelled()) {
@@ -57,16 +57,4 @@ public class OpenVersionTrackingSessionAction extends DockingAction {
 		}
 	}
 
-	class VTDomainFileFilter implements DomainFileFilter {
-		@Override
-		public boolean accept(DomainFile f) {
-			Class<?> c = f.getDomainObjectClass();
-			return VTSession.class.isAssignableFrom(c);
-		}
-
-		@Override
-		public boolean followLinkedFolders() {
-			return false;
-		}
-	}
 }

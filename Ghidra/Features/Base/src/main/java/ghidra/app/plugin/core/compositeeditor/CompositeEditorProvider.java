@@ -17,7 +17,8 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.event.MouseEvent;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JTable;
 
 import docking.*;
 import docking.widgets.OptionDialog;
@@ -41,16 +42,19 @@ import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Editor provider for a Composite Data Type.
+ *
+ * @param <T> Specific {@link Composite} type being edited
+ * @param <M> Specific {@link CompositeEditorModel} implementation which supports editing T
  */
-public abstract class CompositeEditorProvider extends ComponentProviderAdapter
-		implements EditorProvider, EditorActionListener {
+public abstract class CompositeEditorProvider<T extends Composite, M extends CompositeEditorModel<T>>
+		extends ComponentProviderAdapter implements EditorProvider, EditorActionListener {
 
 	protected static final Icon EDITOR_ICON = new GIcon("icon.plugin.composite.editor.provider");
 
 	protected Plugin plugin;
 	protected Category category;
-	protected CompositeEditorPanel editorPanel;
-	protected CompositeEditorModel editorModel;
+	protected CompositeEditorPanel<T, M> editorPanel;
+	protected CompositeEditorModel<T> editorModel;
 	protected WeakSet<EditorListener> listeners; // listeners for the editor closing.
 
 	protected DataTypeManagerService dtmService;
@@ -67,6 +71,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		setTransient();
 		listeners = WeakDataStructureFactory.createSingleThreadAccessWeakSet();
 		initializeServices();
+
 	}
 
 	protected String getProviderSubTitle(DataType dataType) {
@@ -90,7 +95,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		setTitle(getName() + " - " + getProviderSubTitle(editorModel.originalComposite));
 	}
 
-	protected CompositeEditorModel getModel() {
+	protected CompositeEditorModel<T> getModel() {
 		return this.editorModel;
 	}
 
@@ -178,7 +183,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public JComponent getComponent() {
+	public CompositeEditorPanel<T, M> getComponent() {
 		return editorPanel;
 	}
 
@@ -212,6 +217,12 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 			return new ComponentStandAloneActionContext(this, componentAt);
 		}
 		return new DefaultActionContext(this, null);
+	}
+
+	public void selectField(String fieldName) {
+		if (fieldName != null) {
+			editorPanel.selectField(fieldName);
+		}
 	}
 
 	@Override
@@ -306,7 +317,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		// Check for changes and prompt user to check if saving them.
 		if (editorModel.isValidName() && editorModel.hasChanges()) {
 			String question = "The " + editorModel.getTypeName() + " Editor is closing.\n" +
-				"Save the changes to " + getDtPath() + "?";
+				"Save the changes to " + getDisplayName() + "?";
 			String title = "Save " + editorModel.getTypeName() + " Editor Changes?";
 			int response;
 			if (allowCancel) {
@@ -324,6 +335,10 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 			return response;
 		}
 		return 2;
+	}
+
+	protected String getDisplayName() {
+		return getDtPath().toString();
 	}
 
 	@Override

@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,6 +58,7 @@ public class MemReferenceImpl implements Reference {
 	/**
 	 * @see ghidra.program.model.symbol.Reference#getFromAddress()
 	 */
+	@Override
 	public Address getFromAddress() {
 		return fromAddr;
 	}
@@ -66,6 +66,7 @@ public class MemReferenceImpl implements Reference {
 	/**
 	 * @see ghidra.program.model.symbol.Reference#getToAddress()
 	 */
+	@Override
 	public Address getToAddress() {
 		return toAddr;
 	}
@@ -73,6 +74,7 @@ public class MemReferenceImpl implements Reference {
 	/**
 	 * @see ghidra.program.model.symbol.Reference#isPrimary()
 	 */
+	@Override
 	public boolean isPrimary() {
 		return isPrimary;
 	}
@@ -80,6 +82,7 @@ public class MemReferenceImpl implements Reference {
 	/**
 	 * @see ghidra.program.model.symbol.Reference#getSymbolID()
 	 */
+	@Override
 	public long getSymbolID() {
 		return symbolID;
 	}
@@ -87,6 +90,7 @@ public class MemReferenceImpl implements Reference {
 	/**
 	 * @see ghidra.program.model.symbol.Reference#getReferenceType()
 	 */
+	@Override
 	public RefType getReferenceType() {
 		return refType;
 	}
@@ -94,6 +98,7 @@ public class MemReferenceImpl implements Reference {
 	/**
 	 * @see ghidra.program.model.symbol.Reference#getOperandIndex()
 	 */
+	@Override
 	public int getOperandIndex() {
 		return opIndex;
 	}
@@ -101,6 +106,7 @@ public class MemReferenceImpl implements Reference {
 	/**
 	 * @see ghidra.program.model.symbol.Reference#isMnemonicReference()
 	 */
+	@Override
 	public boolean isMnemonicReference() {
 		return !isOperandReference();
 	}
@@ -108,6 +114,7 @@ public class MemReferenceImpl implements Reference {
 	/**
 	 * @see ghidra.program.model.symbol.Reference#isOperandReference()
 	 */
+	@Override
 	public boolean isOperandReference() {
 		return opIndex >= 0;
 	}
@@ -115,6 +122,7 @@ public class MemReferenceImpl implements Reference {
 	/**
 	 * @see java.lang.Comparable#compareTo(Object)
 	 */
+	@Override
 	public int compareTo(Reference ref) {
 		int result = fromAddr.compareTo(ref.getFromAddress());
 		if (result == 0) {
@@ -156,6 +164,7 @@ public class MemReferenceImpl implements Reference {
 	/**
 	 * @see ghidra.program.model.symbol.Reference#isExternalReference()
 	 */
+	@Override
 	public boolean isExternalReference() {
 		return false;
 	}
@@ -163,6 +172,7 @@ public class MemReferenceImpl implements Reference {
 	/**
 	 * @see ghidra.program.model.symbol.Reference#isOffsetReference()
 	 */
+	@Override
 	public boolean isOffsetReference() {
 		return false;
 	}
@@ -170,6 +180,7 @@ public class MemReferenceImpl implements Reference {
 	/**
 	 * @see ghidra.program.model.symbol.Reference#isShiftedReference()
 	 */
+	@Override
 	public boolean isShiftedReference() {
 		return false;
 	}
@@ -177,13 +188,15 @@ public class MemReferenceImpl implements Reference {
 	/**
 	 * @see ghidra.program.model.symbol.Reference#isEntryPointReference()
 	 */
-    public boolean isEntryPointReference() {
+    @Override
+	public boolean isEntryPointReference() {
         return false;
     }
 
 	/**
 	 * @see ghidra.program.model.symbol.Reference#isMemoryReference()
 	 */
+	@Override
 	public boolean isMemoryReference() {
 		return true;
 	}
@@ -191,6 +204,7 @@ public class MemReferenceImpl implements Reference {
 	/**
 	 * @see ghidra.program.model.symbol.Reference#isRegisterReference()
 	 */
+	@Override
 	public boolean isRegisterReference() {
 		return false;
 	}
@@ -198,10 +212,12 @@ public class MemReferenceImpl implements Reference {
 	/**
 	 * @see ghidra.program.model.symbol.Reference#isStackReference()
 	 */
+	@Override
 	public boolean isStackReference() {
 		return false;
 	}
 
+	@Override
 	public SourceType getSource() {
 		return sourceType;
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,62 +18,114 @@
 
 namespace ghidra {
 
-/// The original parent must either be a union, a partial union, a structure with a single field,
+/// The original data-type must either be a union, a partial union, a structure with a single field,
 /// an array with a single element, or a pointer to one of these data-types.
 /// The object is set up initially to resolve to the parent.
-/// \param parent is the original parent data-type
-ResolvedUnion::ResolvedUnion(Datatype *parent)
+/// \param unresType is the original unresolved data-type
+ResolvedUnion::ResolvedUnion(Datatype *unresType)
 
 {
-  baseType = parent;
+  baseType = unresType;
   if (baseType->getMetatype() == TYPE_PTR)
     baseType = ((TypePointer *)baseType)->getPtrTo();
-  resolve = parent;
+  else if (baseType->getMetatype() == TYPE_PARTIALUNION)
+    baseType = ((TypePartialUnion *)baseType)->getParentUnion();
+  resolve = unresType;
   fieldNum = -1;
   lock = false;
 }
 
-/// The original parent must be a union or structure.
-/// \param parent is the original parent
-/// \param fldNum is the index of the particular field to resolve to (or -1 to resolve to parent)
+/// \param unresType is the data-type that needs resolution
+/// \param fldNum is the index of the particular field to resolve to (or -1 to resolve to \b unresType)
 /// \param typegrp is a TypeFactory used to construct the resolved data-type of the field
-ResolvedUnion::ResolvedUnion(Datatype *parent,int4 fldNum,TypeFactory &typegrp)
+ResolvedUnion::ResolvedUnion(Datatype *unresType,int4 fldNum,TypeFactory &typegrp)
 
 {
-  if (parent->getMetatype() == TYPE_PARTIALUNION)
-    parent = ((TypePartialUnion *)parent)->getParentUnion();
-  baseType = parent;
+  baseType = unresType;
   fieldNum = fldNum;
   lock = false;
-  if (fldNum < 0)
-    resolve = parent;
-  else {
-    if (parent->getMetatype() == TYPE_PTR) {
-      TypePointer *pointer = (TypePointer *)parent;
-      Datatype *field = pointer->getPtrTo()->getDepend(fldNum);
-      resolve = typegrp.getTypePointer(parent->getSize(),field,pointer->getWordSize());
+  if (unresType->getMetatype() == TYPE_PARTIALUNION) {
+    TypePartialUnion *partial = (TypePartialUnion *)unresType;
+    baseType = partial->getParentUnion();
+    if (fldNum < 0)
+      resolve = unresType->getStripped();
+    else {
+      const TypeField *field = partial->getParentUnion()->getField(fldNum);
+      resolve = typegrp.getExactPiece(field->type, partial->getOffset(), partial->getSize());
+      if (resolve == (Datatype *)0)
+	resolve = partial->getStripped();
     }
+  }
+  else if (unresType->getMetatype() == TYPE_PTR) {
+    TypePointer *pointer = (TypePointer *)unresType;
+    baseType = pointer->getPtrTo();
+    if (fldNum < 0)
+      resolve = unresType;
+    else {
+      Datatype *field = pointer->getPtrTo()->getDepend(fldNum);
+      resolve = typegrp.getTypePointerStripArray(unresType->getSize(),field,pointer->getWordSize());
+    }
+  }
+  else {
+    if (fldNum < 0)
+      resolve = unresType;
     else
-      resolve = parent->getDepend(fldNum);
+      resolve = unresType->getDepend(fldNum);
   }
 }
 
-/// \param parent is a parent data-type that needs to be resolved
-/// \param op is the PcodeOp reading/writing the \b parent data-type
-/// \param slot is the slot (>=0 for input, -1 for output) accessing the \b parent
-ResolveEdge::ResolveEdge(const Datatype *parent,const PcodeOp *op,int4 slot)
+ResolvedUnion::ResolvedUnion(const ResolvedUnion &op,Datatype *res)
+
+{
+  baseType = op.baseType;
+  fieldNum = op.fieldNum;
+  lock = op.lock;
+  resolve = res;
+}
+
+/// \param op is the new resolution
+/// \return \b true if any change is made
+bool ResolvedUnion::update(const ResolvedUnion &op)
+
+{
+  if (lock && fieldNum != op.fieldNum)
+    return false;		// Lock protects the fieldNum resolution not the resolved data-type
+  if (fieldNum == op.fieldNum && resolve == op.resolve)
+    return false;
+  fieldNum = op.fieldNum;
+  resolve = op.resolve;
+  return true;
+}
+
+/// \param unresType is the data-type that needs to be resolved
+/// \param op is the PcodeOp reading/writing the data-type
+/// \param slot is the slot (>=0 for input, -1 for output) accessing the data-type
+ResolveEdge::ResolveEdge(const Datatype *unresType,const PcodeOp *op,int4 slot)
 
 {
   opTime = op->getTime();
   encoding = slot;
-  if (parent->getMetatype() == TYPE_PTR) {
-    typeId = ((TypePointer *)parent)->getPtrTo()->getId();	// Strip pointer
+  if (unresType->getMetatype() == TYPE_PTR) {
+    typeId = ((TypePointer *)unresType)->getPtrTo()->getId();	// Strip pointer
     encoding += 0x1000;		// Encode the fact that a pointer is getting accessed
   }
-  else if (parent->getMetatype() == TYPE_PARTIALUNION)
-    typeId = ((TypePartialUnion *)parent)->getParentUnion()->getId();
+  else if (unresType->getMetatype() == TYPE_PARTIALUNION)
+    typeId = ((TypePartialUnion *)unresType)->getParentUnion()->getId();
   else
-    typeId = parent->getId();
+    typeId = unresType->getId();
+}
+
+ResolveEdge::ResolveEdge(const Datatype *unresType,const Address &addr,int4 slot)
+
+{
+  opTime = addr.getOffset();
+  encoding = 0x2000;
+  if (unresType->getMetatype() == TYPE_PTR)
+    typeId = ((TypePointer *)unresType)->getPtrTo()->getId();	// Strip pointer
+  else if (unresType->getMetatype() == TYPE_PARTIALUNION)
+    typeId = ((TypePartialUnion *)unresType)->getParentUnion()->getId();
+  else
+    typeId = unresType->getId();
 }
 
 const int4 ScoreUnionFields::threshold = 256;
@@ -119,7 +171,7 @@ bool ScoreUnionFields::testArrayArithmetic(PcodeOp *op,int4 inslot)
 bool ScoreUnionFields::testSimpleCases(PcodeOp *op,int4 inslot,Datatype *parent)
 
 {
-  if (op->isMarker())
+  if (op->isMarker() && inslot < 0)
     return true;		// Propagate raw union across MULTIEQUAL and INDIRECT
   if (parent->getMetatype() == TYPE_PTR) {
     if (inslot < 0)
@@ -127,13 +179,7 @@ bool ScoreUnionFields::testSimpleCases(PcodeOp *op,int4 inslot,Datatype *parent)
     if (testArrayArithmetic(op, inslot))
       return true;
   }
-  if (op->code() != CPUI_COPY)
-    return false;		// A more complicated case
-  if (inslot < 0)
-    return false;		// Generally we don't want to propagate union backward thru COPY
-  if (op->getOut()->isTypeLock())
-    return false;		// Do the full scoring
-  return true;			// Assume we don't have to extract a field if copying
+  return false;
 }
 
 /// A trial that encounters a locked data-type does not propagate through it but scores
@@ -175,20 +221,17 @@ int4 ScoreUnionFields::scoreLockedType(Datatype *ct,Datatype *lockType)
   return score;
 }
 
-/// Look up the call-specs for the given CALL.  If the inputs are locked, find the corresponding
+/// For the given function prototype, if the inputs are locked, find the corresponding
 /// parameter and score the trial data-type against it.
 /// \param ct is the trial data-type
-/// \param callOp is the CALL
+/// \param proto is the function prototype (may be null)
 /// \param paramSlot is the input slot of the trial data-type
 /// \return the score
-int4 ScoreUnionFields::scoreParameter(Datatype *ct,const PcodeOp *callOp,int4 paramSlot)
+int4 ScoreUnionFields::scoreParameter(Datatype *ct,const FuncProto *proto,int4 paramSlot)
 
 {
-  const Funcdata *fd = callOp->getParent()->getFuncdata();
-
-  FuncCallSpecs *fc = fd->getCallSpecs(callOp);
-  if (fc != (FuncCallSpecs *)0 && fc->isInputLocked() && fc->numParams() > paramSlot) {
-    return scoreLockedType(ct,fc->getParam(paramSlot)->getType());
+  if (proto != (const FuncProto *)0 && proto->isInputLocked() && proto->numParams() > paramSlot) {
+    return scoreLockedType(ct,proto->getParam(paramSlot)->getType());
   }
   type_metatype meta = ct->getMetatype();
   if (meta == TYPE_ARRAY || meta == TYPE_STRUCT || meta == TYPE_UNION || meta == TYPE_CODE)
@@ -196,19 +239,15 @@ int4 ScoreUnionFields::scoreParameter(Datatype *ct,const PcodeOp *callOp,int4 pa
   return 0;
 }
 
-/// Look up the call-specs for the given CALL.  If the output is locked,
-/// score the trial data-type against it.
+/// For the given function prototype, if the output is locked, score the trial data-type against it.
 /// \param ct is the trial data-type
-/// \param callOp is the CALL
+/// \param proto is the function prototype (may be null)
 /// \return the score
-int4 ScoreUnionFields::scoreReturnType(Datatype *ct,const PcodeOp *callOp)
+int4 ScoreUnionFields::scoreReturnType(Datatype *ct,const FuncProto *proto)
 
 {
-  const Funcdata *fd = callOp->getParent()->getFuncdata();
-
-  FuncCallSpecs *fc = fd->getCallSpecs(callOp);
-  if (fc != (FuncCallSpecs *)0 && fc->isOutputLocked()) {
-    return scoreLockedType(ct,fc->getOutputType());
+  if (proto != (FuncProto *)0 && proto->isOutputLocked()) {
+    return scoreLockedType(ct,proto->getOutputType());
   }
   type_metatype meta = ct->getMetatype();
   if (meta == TYPE_ARRAY || meta == TYPE_STRUCT || meta == TYPE_UNION || meta == TYPE_CODE)
@@ -224,46 +263,54 @@ int4 ScoreUnionFields::scoreReturnType(Datatype *ct,const PcodeOp *callOp)
 /// \param vn is the Varnode holding the value being loaded or stored
 /// \param score is used to pass back the score
 /// \return the data-type of the value or null
-Datatype *ScoreUnionFields::derefPointer(Datatype *ct,Varnode *vn,int4 &score)
+Datatype *ScoreUnionFields::derefPointer(const Trial &trial,Varnode *vn,int4 &score)
 
 {
-  Datatype *resType = (Datatype *)0;
   score = 0;
-  if (ct->getMetatype() == TYPE_PTR) {
-    Datatype *ptrto = ((TypePointer *)ct)->getPtrTo();
-    while(ptrto != (Datatype *)0 && ptrto->getSize() > vn->getSize()) {
+  if (trial.fitType->getMetatype() == TYPE_PTR) {
+    Datatype *ptrto = ((TypePointer *)trial.fitType)->getPtrTo();
+    Datatype *subType = ptrto;
+    while(subType != (Datatype *)0 && subType->getSize() > vn->getSize()) {
       int8 newoff;
-      ptrto = ptrto->getSubType(0, &newoff);
+      subType = subType->getSubType(0, &newoff);
     }
-    if (ptrto != (Datatype *)0 && ptrto->getSize() == vn->getSize()) {
+    if (subType != (Datatype *)0 && subType->getSize() == vn->getSize()) {
       score = 10;
-      resType = ptrto;
+      return subType;
     }
+    if (trial.maxLength != 0 && (vn->getSize() % ptrto->getSize()) == 0) {
+      score = -4;	// Doesn't fit but could be multiple values at once
+      return typegrp.getTypeArray(vn->getSize() / ptrto->getSize(), ptrto);
+    }
+    score = -5;		// Score to something but it doesn't fit
   }
   else
-    score = -10;
-  return resType;
+    score = -10;	// Derefencing something that isn't even a pointer
+  return (Datatype *)0;
 }
 
 /// If the Varnode has already been visited, no new trials are created
 /// \param vn is the given Varnode
 /// \param ct is the data-type to associate with the trial
 /// \param scoreIndex is the field index to score the trial against
-/// \param isArray is \b true if the data-type to fit is a pointer to an array
-void ScoreUnionFields::newTrialsDown(Varnode *vn,Datatype *ct,int4 scoreIndex,bool isArray)
+/// \param max is the biggest offset that can be added to the data-type as a pointer
+void ScoreUnionFields::newTrialsDown(Varnode *vn,Datatype *ct,int4 scoreIndex,int4 max)
 
 {
   VisitMark mark(vn,scoreIndex);
   if (!visited.insert(mark).second)
     return;				// Already visited this Varnode
   if (vn->isTypeLock()) {
-    scores[scoreIndex] += scoreLockedType(ct, vn->getType());
-    return;				// Don't propagate through locked Varnode
+    Datatype *lockType = vn->getTypeDefFacing();
+    if (!lockType->needsResolution()) {
+      scores[scoreIndex] += scoreLockedType(ct, lockType);
+      return;				// Don't propagate through locked Varnode
+    }
   }
   list<PcodeOp*>::const_iterator piter;
   for(piter = vn->beginDescend();piter != vn->endDescend();++piter) {
     PcodeOp *op = *piter;
-    trialNext.emplace_back(op,op->getSlot(vn),ct,scoreIndex,isArray);
+    trialNext.emplace_back(op,op->getSlot(vn),ct,scoreIndex,max);
   }
 }
 
@@ -272,8 +319,8 @@ void ScoreUnionFields::newTrialsDown(Varnode *vn,Datatype *ct,int4 scoreIndex,bo
 /// \param slot is the index of the given input slot
 /// \param ct is the data-type to associate with the trial
 /// \param scoreIndex is the field index to score the trial against
-/// \param isArray is \b true if the data-type to fit is a pointer to an array
-void ScoreUnionFields::newTrials(PcodeOp *op,int4 slot,Datatype *ct,int4 scoreIndex,bool isArray)
+/// \param max is the biggest offset that can be added to the data-type as a pointer
+void ScoreUnionFields::newTrials(PcodeOp *op,int4 slot,Datatype *ct,int4 scoreIndex,int4 max)
 
 {
   Varnode *vn = op->getIn(slot);
@@ -281,17 +328,20 @@ void ScoreUnionFields::newTrials(PcodeOp *op,int4 slot,Datatype *ct,int4 scoreIn
   if (!visited.insert(mark).second)
     return;				// Already visited this Varnode
   if (vn->isTypeLock()) {
-    scores[scoreIndex] += scoreLockedType(ct, vn->getType());
-    return;				// Don't propagate through locked Varnode
+    Datatype *lockType = vn->getTypeReadFacing(op);
+    if (!lockType->needsResolution()) {
+      scores[scoreIndex] += scoreLockedType(ct, lockType);
+      return;				// Don't propagate through locked Varnode
+    }
   }
-  trialNext.emplace_back(vn,ct,scoreIndex,isArray);	// Try to fit up
+  trialNext.emplace_back(vn,ct,scoreIndex,max);	// Try to fit up
   list<PcodeOp *>::const_iterator iter;
   for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
     PcodeOp *readOp = *iter;
     int4 inslot = readOp->getSlot(vn);
     if (readOp == op && inslot == slot)
       continue;			// Don't go down PcodeOp we came from
-    trialNext.emplace_back(readOp,inslot,ct, scoreIndex,isArray);
+    trialNext.emplace_back(readOp,inslot,ct, scoreIndex,max);
   }
 }
 
@@ -308,6 +358,7 @@ void ScoreUnionFields::scoreTrialDown(const Trial &trial,bool lastLevel)
   if (trial.direction == Trial::fit_up)
     return;				// Trial doesn't push in this direction
   Datatype *resType = (Datatype *)0;	// Assume by default we don't propagate
+  int4 maxLength = 0;
   type_metatype meta = trial.fitType->getMetatype();
   int4 score = 0;
   switch(trial.op->code()) {
@@ -315,23 +366,30 @@ void ScoreUnionFields::scoreTrialDown(const Trial &trial,bool lastLevel)
     case CPUI_MULTIEQUAL:
     case CPUI_INDIRECT:
       resType = trial.fitType;		// No score, but we can propagate
+      maxLength = trial.maxLength;
       break;
     case CPUI_LOAD:
-      resType = derefPointer(trial.fitType, trial.op->getOut(), score);
+      resType = derefPointer(trial, trial.op->getOut(), score);
       break;
     case CPUI_STORE:
       if (trial.inslot == 1) {
-	Datatype *ptrto = derefPointer(trial.fitType,trial.op->getIn(2),score);
+	Datatype *ptrto = derefPointer(trial,trial.op->getIn(2),score);
 	if (ptrto != (Datatype*)0) {
 	  if (!lastLevel)
-	    newTrials(trial.op,2,ptrto,trial.scoreIndex,trial.array);	// Propagate to value being STOREd
+	    newTrials(trial.op,2,ptrto,trial.scoreIndex,0);	// Propagate to value being STOREd
 	}
       }
       else if (trial.inslot == 2) {
 	if (meta == TYPE_CODE)
 	  score = -5;
-	else
+	else {
+	  Datatype *storePtr = trial.op->getIn(1)->getTypeReadFacing(trial.op);
+	  if (!lastLevel && storePtr->getMetatype() == TYPE_PTR) {
+	    Datatype *ptr = typegrp.getTypePointerStripArray(storePtr->getSize(), trial.fitType, ((TypePointer *)storePtr)->getWordSize());
+	    newTrials(trial.op,1,ptr,trial.scoreIndex,trial.fitType->getSize());
+	  }
 	  score = 1;
+	}
       }
      break;
     case CPUI_CBRANCH:
@@ -350,7 +408,7 @@ void ScoreUnionFields::scoreTrialDown(const Trial &trial,bool lastLevel)
     case CPUI_CALL:
     case CPUI_CALLOTHER:
       if (trial.inslot > 0)
-	score = scoreParameter(trial.fitType, trial.op, trial.inslot-1);
+	score = scoreParameter(trial.fitType, data.getCallSpecs(trial.op), trial.inslot-1);
       break;
     case CPUI_CALLIND:
       if (trial.inslot == 0) {
@@ -365,13 +423,11 @@ void ScoreUnionFields::scoreTrialDown(const Trial &trial,bool lastLevel)
 	}
       }
       else {
-	score = scoreParameter(trial.fitType, trial.op, trial.inslot-1);
+	score = scoreParameter(trial.fitType, data.getCallSpecs(trial.op), trial.inslot-1);
       }
       break;
     case CPUI_RETURN:
-      // We could check for locked return data-type
-      if (meta == TYPE_ARRAY || meta == TYPE_STRUCT || meta == TYPE_UNION || meta == TYPE_CODE)
-      	score = -1;
+      score = scoreReturnType(trial.fitType, &data.getFuncProto());
       break;
     case CPUI_INT_EQUAL:
     case CPUI_INT_NOTEQUAL:
@@ -429,15 +485,28 @@ void ScoreUnionFields::scoreTrialDown(const Trial &trial,bool lastLevel)
 	  Varnode *vn = trial.op->getIn(1-trial.inslot);
 	  if (vn->isConstant()) {
 	    TypePointer *baseType = (TypePointer *)trial.fitType;
-	    int8 off = vn->getOffset();
-	    int8 parOff;
-	    TypePointer *par;
-	    resType = baseType->downChain(off,par,parOff,trial.array,typegrp);
-	    if (resType != (Datatype*)0)
+	    int8 off = sign_extend(vn->getOffset(),vn->getSize()*8-1);
+	    if  (trial.maxLength != 0) {
+	      if (off < 0 || off >= trial.maxLength) {
+		baseType = (TypePointer *)0;
+		score = -1;		// Offset doesn't land in allowed range
+	      }
+	      else
+		maxLength = trial.maxLength;
+	    }
+	    while(off != 0 && baseType != (Datatype *)0) {
+	      int8 parOff;
+	      TypePointer *par;
+	      baseType = baseType->downChain(off,par,parOff,true,typegrp);
+	    }
+	    if (baseType != (Datatype*)0) {
+	      resType = baseType;
+	      maxLength = baseType->getPtrTo()->getSize();
 	      score = 5;
+	    }
 	  }
 	  else {
-	    if (trial.array) {
+	    if (trial.maxLength != 0) {
 	      score = 1;
 	      int4 elSize = 1;
 	      if (vn->isWritten()) {
@@ -450,8 +519,12 @@ void ScoreUnionFields::scoreTrialDown(const Trial &trial,bool lastLevel)
 	      }
 	      TypePointer *baseType = (TypePointer *)trial.fitType;
 	      if (baseType->getPtrTo()->getAlignSize() == elSize) {
-		score = 5;
+		if (elSize == trial.maxLength)
+		  score = 2;		// Only one element available, but variable index
+		else
+		  score = 5;
 		resType = trial.fitType;
+		maxLength = trial.maxLength;
 	      }
 	    }
 	    else
@@ -459,10 +532,14 @@ void ScoreUnionFields::scoreTrialDown(const Trial &trial,bool lastLevel)
 	  }
 	}
       }
-      else if (meta == TYPE_ARRAY || meta == TYPE_STRUCT || meta == TYPE_UNION || meta == TYPE_CODE || meta == TYPE_FLOAT)
-	score = -5;
-      else
+      else if (meta == TYPE_INT || meta == TYPE_UINT || meta == TYPE_UNKNOWN) {
 	score = 1;
+	resType = trial.fitType;
+      }
+      else if (meta == TYPE_BOOL)
+	score = -3;
+      else	// TYPE_ARRAY TYPE_STRUCT TYPE_UNION TYPE_CODE TYPE_FLOAT
+	score = -5;
       break;
     case CPUI_INT_2COMP:
       if (meta == TYPE_ARRAY || meta == TYPE_STRUCT || meta == TYPE_UNION || meta == TYPE_CODE || meta == TYPE_FLOAT)
@@ -636,7 +713,7 @@ void ScoreUnionFields::scoreTrialDown(const Trial &trial,bool lastLevel)
   }
   scores[trial.scoreIndex] += score;
   if (resType != (Datatype *)0 && !lastLevel)
-    newTrialsDown(trial.op->getOut(), resType, trial.scoreIndex, trial.array);
+    newTrialsDown(trial.op->getOut(), resType, trial.scoreIndex, maxLength);
 }
 
 void ScoreUnionFields::scoreTrialUp(const Trial &trial,bool lastLevel)
@@ -651,6 +728,7 @@ void ScoreUnionFields::scoreTrialUp(const Trial &trial,bool lastLevel)
     return;		// Nothing to propagate up through
   }
   Datatype *resType = (Datatype *)0;	// Assume by default we don't propagate
+  int4 maxLength = 0;
   int4 newslot = 0;
   type_metatype meta = trial.fitType->getMetatype();
   PcodeOp *def = trial.vn->getDef();
@@ -659,16 +737,18 @@ void ScoreUnionFields::scoreTrialUp(const Trial &trial,bool lastLevel)
     case CPUI_MULTIEQUAL:
     case CPUI_INDIRECT:
       resType = trial.fitType;		// No score, but we can propagate
+      maxLength = trial.maxLength;
       newslot = 0;
       break;
     case CPUI_LOAD:
-      resType = typegrp.getTypePointer(def->getIn(1)->getSize(),trial.fitType,1);
+      resType = typegrp.getTypePointerStripArray(def->getIn(1)->getSize(),trial.fitType,1);
+      maxLength = trial.fitType->getSize();
       newslot = 1;	// No score, but we can propagate
       break;
     case CPUI_CALL:
     case CPUI_CALLOTHER:
     case CPUI_CALLIND:
-      score = scoreReturnType(trial.fitType, def);
+      score = scoreReturnType(trial.fitType, data.getCallSpecs(def));
       break;
     case CPUI_INT_EQUAL:
     case CPUI_INT_NOTEQUAL:
@@ -699,11 +779,19 @@ void ScoreUnionFields::scoreTrialUp(const Trial &trial,bool lastLevel)
     case CPUI_INT_SUB:
     case CPUI_PTRSUB:
       if (meta == TYPE_PTR) {
+	score = 5;
+	if (trial.maxLength == 0 && def->getIn(1)->isConstant()) {
+	  Datatype *ptrto = ((TypePointer *)trial.fitType)->getPtrTo();
+	  if (ptrto->getAlignSize() == (int4)def->getIn(1)->getOffset())
+	    score += 1;
+	}
+      }
+      else if (meta == TYPE_INT || meta == TYPE_UINT) {
 	score = 5;	// Don't try to back up further
       }
       else if (meta == TYPE_ARRAY || meta == TYPE_STRUCT || meta == TYPE_UNION || meta == TYPE_CODE || meta == TYPE_FLOAT)
 	score = -5;
-      else
+      else	// BOOL UNKNOWN
 	score = 1;
       break;
     case CPUI_INT_2COMP:
@@ -828,7 +916,7 @@ void ScoreUnionFields::scoreTrialUp(const Trial &trial,bool lastLevel)
   }
   scores[trial.scoreIndex] += score;
   if (resType != (Datatype *)0 && !lastLevel) {
-    newTrials(def, newslot, resType, trial.scoreIndex, trial.array);
+    newTrials(def, newslot, resType, trial.scoreIndex, maxLength);
   }
 }
 
@@ -869,6 +957,16 @@ Datatype *ScoreUnionFields::scoreTruncation(Datatype *ct,Varnode *vn,int4 offset
 	  break;
 	}
       }
+      else if (ct->getMetatype() == TYPE_ARRAY) {
+	Datatype *elType = ct->getDepend(0);
+	if (elType->getAlignSize() < vn->getSize()) {
+	  if ((curOff + vn->getSize()) % elType->getAlignSize() != 0)
+	    score = -5;		// Varnode is unaligned with array elements
+	  else
+	    score = 1;		// Varnode covers array elements
+	  break;
+	}
+      }
       ct = ct->getSubType(curOff,&curOff);
     }
     if (ct == (Datatype *)0)
@@ -895,9 +993,14 @@ void ScoreUnionFields::scoreConstantFit(const Trial &trial)
     score = -1;
     const FloatFormat *format = typegrp.getArch()->translate->getFloatFormat(size);
     if (format != (const FloatFormat *)0) {
-      int4 exp = format->extractExponentCode(val);
-      if (exp < 7 && exp > -4)		// Check for common exponent range
+      FloatFormat::floatclass fClass = format->getClass(val);
+      if (fClass == FloatFormat::zero)
 	score = 2;
+      else if (fClass == FloatFormat::normalized) {
+	int4 exp = format->getExponent(val);
+	if (exp < 7 && exp > -4)		// Check for common exponent range
+	  score = 2;
+      }
     }
   }
   else if (meta == TYPE_INT || meta == TYPE_UINT || meta == TYPE_PTR) {
@@ -920,6 +1023,8 @@ void ScoreUnionFields::scoreConstantFit(const Trial &trial)
       }
     }
   }
+  else if (meta == TYPE_ARRAY)
+    score = 0;		// Could be multiple values from an array
   else
     score = -2;
   scores[trial.scoreIndex] += score;
@@ -983,12 +1088,12 @@ void ScoreUnionFields::run(void)
 ///
 /// The data-type must either be a union or a pointer to union.
 /// Set up the initial set of trials based on the given data-flow edge (PcodeOp and slot).
-/// \param tgrp is the TypeFactory owning the data-types
+/// \param fd is the function containing the data-flow
 /// \param parentType is the given data-type to score
 /// \param op is PcodeOp of the given data-flow edge
 /// \param slot is slot of the given data-flow edge
-ScoreUnionFields::ScoreUnionFields(TypeFactory &tgrp,Datatype *parentType,PcodeOp *op,int4 slot)
-  : typegrp(tgrp), result(parentType)
+ScoreUnionFields::ScoreUnionFields(Funcdata &fd,Datatype *parentType,PcodeOp *op,int4 slot)
+  : data(fd), typegrp(*fd.getArch()->types), result(parentType)
 {
   if (testSimpleCases(op, slot, parentType))
     return;
@@ -1002,32 +1107,38 @@ ScoreUnionFields::ScoreUnionFields(TypeFactory &tgrp,Datatype *parentType,PcodeO
     if (vn->getSize() != parentType->getSize())
       scores[0] -= 10;		// Data-type does not even match size of Varnode
     else
-      trialCurrent.emplace_back(vn,parentType,0,false);
+      trialCurrent.emplace_back(vn,parentType,0,0);
   }
   else {
     vn = op->getIn(slot);
     if (vn->getSize() != parentType->getSize())
       scores[0] -= 10;
     else
-      trialCurrent.emplace_back(op,slot,parentType,0,false);
+      trialCurrent.emplace_back(op,slot,parentType,0,0);
   }
   fields[0] = parentType;
+  OpCode opc = op->code();
+  // If the varnode is not a pointer or is not used in pointer arithmetic
+  if (wordSize == 0 || opc == CPUI_INT_ADD || opc == CPUI_PTRADD || opc == CPUI_PTRSUB || opc == CPUI_STORE || opc == CPUI_LOAD)
+    scores[0] -= 1;		// Without any other information, prefer a resolution from a specific field
   visited.insert(VisitMark(vn,0));
   for(int4 i=0;i<numFields;++i) {
     Datatype *fieldType = result.baseType->getDepend(i);
-    bool isArray = false;
-    if (wordSize != 0) {
-      if (fieldType->getMetatype() == TYPE_ARRAY)
-	isArray = true;
-      fieldType = typegrp.getTypePointerStripArray(parentType->getSize(),fieldType,wordSize);
+    int4 maxLength = 0;
+    if (wordSize != 0) {				// If this is a pointer
+      if (fieldType->getMetatype() == TYPE_ARRAY)	// Array gets stripped
+	maxLength = fieldType->getSize();		// Keep track of original array size
+      else if (fieldType->getSize() < result.baseType->getSize())
+	maxLength = fieldType->getSize();
+      fieldType = typegrp.getTypePointerStripArray(parentType->getSize(),fieldType,wordSize);	// Create pointer to field type
     }
     if (vn->getSize() != fieldType->getSize())
       scores[i+1] -= 10;	// Data-type does not even match size of Varnode, don't create trial
     else if (slot < 0) {
-      trialCurrent.emplace_back(vn,fieldType,i+1,isArray);
+      trialCurrent.emplace_back(vn,fieldType,i+1,maxLength);
     }
     else {
-      trialCurrent.emplace_back(op,slot,fieldType,i+1,isArray);
+      trialCurrent.emplace_back(op,slot,fieldType,i+1,maxLength);
     }
     fields[i+1] = fieldType;
     visited.insert(VisitMark(vn,i+1));
@@ -1043,12 +1154,12 @@ ScoreUnionFields::ScoreUnionFields(TypeFactory &tgrp,Datatype *parentType,PcodeO
 /// If there is a good fit, the scoring for that field recurses into the given data-flow edge.
 /// This is only used where there is a SUBPIECE and the base scoring indicates the whole union is
 /// the best match for the input.
-/// \param tgrp is the TypeFactory owning the data-types
+/// \param fd is the function containing the data-flow
 /// \param unionType is the data-type to score, which must be a TypeUnion
 /// \param offset is the given starting offset of the truncation
 /// \param op is the SUBPIECE op
-ScoreUnionFields::ScoreUnionFields(TypeFactory &tgrp,TypeUnion *unionType,int4 offset,PcodeOp *op)
-  :typegrp(tgrp), result(unionType)
+ScoreUnionFields::ScoreUnionFields(Funcdata &fd,TypeUnion *unionType,int4 offset,PcodeOp *op)
+  : data(fd), typegrp(*fd.getArch()->types), result(unionType)
 {
   Varnode *vn = op->getOut();
   int numFields = unionType->numDepend();
@@ -1063,26 +1174,29 @@ ScoreUnionFields::ScoreUnionFields(TypeFactory &tgrp,TypeUnion *unionType,int4 o
       scores[i+1] = -10;
       continue;
     }
-    newTrialsDown(vn, unionField->type, i+1, false);
+    newTrialsDown(vn, unionField->type, i+1, 0);
   }
   trialCurrent.swap(trialNext);
   if (trialCurrent.size() > 1)
     run();
   computeBestIndex();
+  result.resolve = typegrp.getExactPiece(result.resolve, offset, vn->getSize());
 }
 
 /// \brief Score a union data-type against data-flow, where there is an implied truncation
 ///
 /// A truncation is fit to each union field before doing the fit against data-flow, starting with
 /// the given PcodeOp and input slot.
-/// \param tgrp is the TypeFactory owning the data-types
+/// \param fd is the function containing the data-flow
 /// \param unionType is the data-type to score, which must be a TypeUnion
 /// \param offset is the given starting offset of the truncation
 /// \param op is the PcodeOp initially reading/writing the union
 /// \param slot is the -1 if the op is writing, >= 0 if reading
-ScoreUnionFields::ScoreUnionFields(TypeFactory &tgrp,TypeUnion *unionType,int4 offset,PcodeOp *op,int4 slot)
-  :typegrp(tgrp), result(unionType)
+ScoreUnionFields::ScoreUnionFields(Funcdata &fd,TypeUnion *unionType,int4 offset,PcodeOp *op,int4 slot)
+  :data(fd), typegrp(*fd.getArch()->types), result(unionType)
 {
+  if (testSimpleCases(op, slot, unionType))
+    return;
   Varnode *vn = (slot < 0) ? op->getOut() : op->getIn(slot);
   int numFields = unionType->numDepend();
   scores.resize(numFields + 1, 0);
@@ -1096,15 +1210,84 @@ ScoreUnionFields::ScoreUnionFields(TypeFactory &tgrp,TypeUnion *unionType,int4 o
     Datatype *ct = scoreTruncation(unionField->type,vn,offset-unionField->offset,i+1);
     if (ct != (Datatype *)0) {
       if (slot < 0)
-	trialCurrent.emplace_back(vn,ct,i+1,false);		// Try to flow backward
+	trialCurrent.emplace_back(vn,ct,i+1,0);		// Try to flow backward
       else
-	trialCurrent.emplace_back(op,slot,ct,i+1,false);	// Flow downward
+	trialCurrent.emplace_back(op,slot,ct,i+1,0);	// Flow downward
       visited.insert(VisitMark(vn,i+1));
     }
   }
   if (trialCurrent.size() > 1)
     run();
   computeBestIndex();
+  result.resolve = typegrp.getExactPiece(result.resolve, offset, vn->getSize());
+}
+
+/// If a resolution for the data-type exists along the given edge, it is cached.  Otherwise there is no change.
+/// \param key is the context id associated with the resolution
+/// \param dt is the data-type needing resolution
+/// \param op is the PcodeOp reading/writing the resolved data-type
+/// \param slot is the edge index of the resolution
+void ResolveCache::addResolution(int4 key,Datatype *dt,PcodeOp *op,int4 slot)
+
+{
+  if (!dt->needsResolution()) return;
+  const ResolvedUnion *res = data.getUnionResolution(dt, op, slot);
+  if (res == (const ResolvedUnion *)0) return;
+  Datatype *parent = res->getBase();
+  resolveList.emplace_back(key,parent,res->getFieldNum());
+}
+
+/// If the resolved data-type is in \b this cache, it is returned.
+/// Otherwise the original data-type is returned.
+/// \param key is the context id
+/// \param dt is the given data-type needing resolution
+/// \return the resolved form of the data-type
+Datatype *ResolveCache::resolve(int4 key,Datatype *dt) const
+
+{
+  list<Record>::const_iterator iter;
+  for(iter=resolveList.begin();iter!=resolveList.end();++iter) {
+    if ((*iter).match(key,dt)) {
+      if ((*iter).fieldNum < 0)
+	return dt;
+      return dt->getDepend((*iter).fieldNum);
+    }
+  }
+  return dt;
+}
+
+/// \brief Associate a cached resolution with a new Varnode and read/write edge
+///
+/// The data-type \b dt can either be the current data-type of the Varnode or it
+/// can be a parent data-type, with \b off corresponding to the offset of the Varnode within the parent.
+/// \param key is the context id
+/// \param dt is the data-type needing resolution
+/// \param off is the offset within the data-type of the Varnode
+/// \param vn is the new Varnode inheriting the resolution
+/// \param op is the PcodeOp reading/writing the Varnode
+/// \param slot is the read/write edge
+void ResolveCache::inheritResolution(int4 key,Datatype *dt,int4 off,Varnode *vn,PcodeOp *op,int4 slot) const
+
+{
+  if (!dt->needsResolution()) return;
+  Datatype *parent = dt;
+  if (parent->getMetatype() == TYPE_PARTIALUNION)
+    parent = ((TypePartialUnion *)parent)->getParentUnion();
+  else if (parent->getMetatype() == TYPE_PTR)
+    parent = ((TypePointer *)parent)->getPtrTo();
+  list<Record>::const_iterator iter;
+  for(iter=resolveList.begin();iter!=resolveList.end();++iter) {
+    if ((*iter).match(key,parent)) {
+      TypeFactory *typegrp = data.getArch()->types;
+      dt = typegrp->getExactPiece(dt, off, vn->getSize());
+      if (dt != (Datatype *)0) {
+	ResolvedUnion newRes(dt,(*iter).fieldNum,*typegrp);
+	data.setUnionField(dt, op, slot, newRes);
+	vn->updateType(dt);
+      }
+      return;
+    }
+  }
 }
 
 } // End namespace ghidra

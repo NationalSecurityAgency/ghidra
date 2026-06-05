@@ -32,7 +32,7 @@ public class RedoChangeAction extends CompositeEditorTableAction {
 	private final static Icon ICON = new GIcon("icon.redo");
 	private final static String[] POPUP_PATH = new String[] { DESCRIPTION };
 
-	public RedoChangeAction(CompositeEditorProvider provider) {
+	public RedoChangeAction(CompositeEditorProvider<?, ?> provider) {
 		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 		setKeyBindingData(new KeyBindingData("ctrl shift Z"));
 		setDescription("Redo editor change");
@@ -43,8 +43,10 @@ public class RedoChangeAction extends CompositeEditorTableAction {
 		if (!isEnabledForContext(context)) {
 			return;
 		}
-		CompositeViewerDataTypeManager viewDTM = model.getViewDataTypeManager();
+		CompositeViewerDataTypeManager<?> viewDTM = model.getViewDataTypeManager();
 		viewDTM.redo();
+
+		model.clearStatus();
 	}
 
 	@Override
@@ -52,7 +54,7 @@ public class RedoChangeAction extends CompositeEditorTableAction {
 		if (hasIncompleteFieldEntry()) {
 			return false;
 		}
-		CompositeViewerDataTypeManager viewDTM = model.getViewDataTypeManager();
+		CompositeViewerDataTypeManager<?> viewDTM = model.getViewDataTypeManager();
 		boolean canRedo = viewDTM.canRedo();
 		setEnabled(canRedo);
 		String description = DESCRIPTION + (canRedo ? (": " + viewDTM.getRedoName()) : "");

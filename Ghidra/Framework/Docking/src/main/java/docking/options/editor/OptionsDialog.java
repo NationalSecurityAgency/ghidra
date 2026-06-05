@@ -54,7 +54,7 @@ public class OptionsDialog extends ReusableDialogComponentProvider {
 			new OptionsPropertyChangeListener());
 
 		setTitle(title);
-
+		panel.getAccessibleContext().setAccessibleName("Options");
 		addWorkPanel(panel);
 		addOKButton();
 		addCancelButton();

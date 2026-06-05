@@ -139,6 +139,7 @@ public class SarifPlugin extends ProgramPlugin implements SarifService, OptionsC
 		return io.readSarif(sarif);
 	}
 
+	@Override
 	public SarifController getController() {
 		currentProgram = getCurrentProgram();
 		if (currentProgram != null) {
@@ -156,9 +157,10 @@ public class SarifPlugin extends ProgramPlugin implements SarifService, OptionsC
 	 * Ultimately both selections end up calling this to actually show something on
 	 * the Ghidra gui
 	 *
-	 * @param logName
-	 * @param sarif
+	 * @param logName display name
+	 * @param sarif the raw sarif
 	 */
+	@Override
 	public void showSarif(String logName, SarifSchema210 sarif) {
 		SarifController currentController = getController();
 		if (currentController != null) {

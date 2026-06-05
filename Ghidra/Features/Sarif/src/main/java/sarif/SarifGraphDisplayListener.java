@@ -37,7 +37,7 @@ import ghidra.service.graph.GraphDisplay;
 import ghidra.service.graph.GraphDisplayListener;
 
 /**
- * {@link GraphDisplayListener} that handle events back and from from program
+ * {@link GraphDisplayListener} that handle events back and from program
  * graphs.
  */
 public class SarifGraphDisplayListener extends AddressBasedGraphDisplayListener {

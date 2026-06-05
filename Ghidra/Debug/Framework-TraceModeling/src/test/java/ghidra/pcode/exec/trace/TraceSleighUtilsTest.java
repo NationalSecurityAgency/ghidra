@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,8 @@
  */
 package ghidra.pcode.exec.trace;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -26,13 +27,15 @@ import org.junit.Test;
 import db.Transaction;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
-import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 
 public class TraceSleighUtilsTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -62,12 +65,21 @@ public class TraceSleighUtilsTest extends AbstractGhidraHeadlessIntegrationTest 
 		}
 	}
 
+	protected SchemaContext buildContext() {
+		return new ToySchemaBuilder()
+				.useRegistersPerFrame()
+				.noRegisterGroups()
+				.build();
+	}
+
 	@Test
 	public void testRegister() throws Exception {
 		try (ToyDBTraceBuilder b = new ToyDBTraceBuilder("test", TOY_BE_64_HARVARD)) {
 			TraceThread thread;
 			try (Transaction tx = b.startTransaction()) {
-				thread = b.getOrAddThread("Thread1", 0);
+				b.createRootObject(buildContext(), "Target");
+				thread = b.getOrAddThread("Threads[1]", 0);
+				b.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), b.host, 1);
 
 				Register r0 = language.getRegister("r0");
 				TraceMemorySpace regs =
@@ -111,7 +123,9 @@ public class TraceSleighUtilsTest extends AbstractGhidraHeadlessIntegrationTest 
 		try (ToyDBTraceBuilder b = new ToyDBTraceBuilder("test", TOY_BE_64_HARVARD)) {
 			TraceThread thread;
 			try (Transaction tx = b.startTransaction()) {
-				thread = b.getOrAddThread("Thread1", 0);
+				b.createRootObject(buildContext(), "Target");
+				thread = b.getOrAddThread("Threads[1]", 0);
+				b.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), b.host, 1);
 
 				Register r0 = language.getRegister("r0");
 				TraceMemorySpace regs =
@@ -131,7 +145,9 @@ public class TraceSleighUtilsTest extends AbstractGhidraHeadlessIntegrationTest 
 		try (ToyDBTraceBuilder b = new ToyDBTraceBuilder("test", TOY_BE_64_HARVARD)) {
 			TraceThread thread;
 			try (Transaction tx = b.startTransaction()) {
-				thread = b.getOrAddThread("Thread1", 0);
+				b.createRootObject(buildContext(), "Target");
+				thread = b.getOrAddThread("Threads[1]", 0);
+				b.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), b.host, 1);
 
 				Register r0 = language.getRegister("r0");
 				TraceMemorySpace regs =
@@ -154,7 +170,9 @@ public class TraceSleighUtilsTest extends AbstractGhidraHeadlessIntegrationTest 
 		try (ToyDBTraceBuilder b = new ToyDBTraceBuilder("test", TOY_BE_64_HARVARD)) {
 			TraceThread thread;
 			try (Transaction tx = b.startTransaction()) {
-				thread = b.getOrAddThread("Thread1", 0);
+				b.createRootObject(buildContext(), "Target");
+				thread = b.getOrAddThread("Threads[1]", 0);
+				b.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), b.host, 1);
 
 				Register r0 = language.getRegister("r0");
 				TraceMemorySpace regs =
@@ -184,7 +202,9 @@ public class TraceSleighUtilsTest extends AbstractGhidraHeadlessIntegrationTest 
 		try (ToyDBTraceBuilder b = new ToyDBTraceBuilder("test", TOY_BE_64_HARVARD)) {
 			TraceThread thread;
 			try (Transaction tx = b.startTransaction()) {
-				thread = b.getOrAddThread("Thread1", 0);
+				b.createRootObject(buildContext(), "Target");
+				thread = b.getOrAddThread("Threads[1]", 0);
+				b.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), b.host, 1);
 
 				Register r0 = language.getRegister("r0");
 				TraceMemorySpace regs =
@@ -216,12 +236,11 @@ public class TraceSleighUtilsTest extends AbstractGhidraHeadlessIntegrationTest 
 						""", PcodeUseropLibrary.NIL);
 			TraceThread thread;
 			try (Transaction tx = b.startTransaction()) {
-				thread = b.getOrAddThread("Thread1", 0);
+				b.createRootObject(buildContext(), "Target");
+				thread = b.getOrAddThread("Threads[1]", 0);
+				b.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), b.host, 1);
 				PcodeExecutor<byte[]> executor =
-					new PcodeExecutor<>(sp.getLanguage(),
-						BytesPcodeArithmetic.forLanguage(b.language),
-						new DirectBytesTracePcodeExecutorState(b.host, 0, thread, 0),
-						Reason.EXECUTE_READ);
+					TraceSleighUtils.buildByteExecutor(b.host, 0, thread, 0);
 				sp.execute(executor, PcodeUseropLibrary.nil());
 			}
 

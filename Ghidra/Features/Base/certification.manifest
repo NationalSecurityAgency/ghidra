@@ -91,6 +91,18 @@ data/symbols/win64/mfc90u.exports||GHIDRA||||END|
 data/symbols/win64/msvcrt.hints||GHIDRA||||END|
 data/typeinfo/generic/generic_clib.gdt||GHIDRA||||END|
 data/typeinfo/generic/generic_clib_64.gdt||GHIDRA||||END|
+data/typeinfo/golang/go1.15.0.json||GHIDRA||||END|
+data/typeinfo/golang/go1.16.0.json||GHIDRA||||END|
+data/typeinfo/golang/go1.17.0.json||GHIDRA||||END|
+data/typeinfo/golang/go1.18.0.json||GHIDRA||||END|
+data/typeinfo/golang/go1.19.0.json||GHIDRA||||END|
+data/typeinfo/golang/go1.20.0.json||GHIDRA||||END|
+data/typeinfo/golang/go1.21.0.json||GHIDRA||||END|
+data/typeinfo/golang/go1.22.0.json||GHIDRA||||END|
+data/typeinfo/golang/go1.23.0.json||GHIDRA||||END|
+data/typeinfo/golang/go1.24.0.json||GHIDRA||||END|
+data/typeinfo/golang/go1.25.0.json||GHIDRA||||END|
+data/typeinfo/golang/go1.26.0.json||GHIDRA||||END|
 data/typeinfo/golang/golang_1.15_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.16_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.17_anybit_any.gdt||GHIDRA||||END|
@@ -99,9 +111,131 @@ data/typeinfo/golang/golang_1.19_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.20_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.21_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.22_anybit_any.gdt||GHIDRA||||END|
-data/typeinfo/golang/runtimesnapshot.go||GHIDRA||||END|
+data/typeinfo/golang/golang_1.23_anybit_any.gdt||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.15.1.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.15.10.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.15.11.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.15.12.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.15.13.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.15.14.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.15.15.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.15.2.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.15.3.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.15.4.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.15.5.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.15.6.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.15.7.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.15.8.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.15.9.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.16.1.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.16.10.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.16.11.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.16.12.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.16.13.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.16.14.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.16.15.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.16.2.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.16.3.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.16.4.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.16.5.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.16.6.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.16.7.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.16.8.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.16.9.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.17.1.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.17.10.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.17.11.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.17.12.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.17.13.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.17.2.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.17.3.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.17.4.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.17.5.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.17.6.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.17.7.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.17.8.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.17.9.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.18.1.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.18.10.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.18.2.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.18.3.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.18.4.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.18.5.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.18.6.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.18.7.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.18.8.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.18.9.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.19.1.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.19.10.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.19.11.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.19.12.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.19.13.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.19.2.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.19.3.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.19.4.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.19.5.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.19.6.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.19.7.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.19.8.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.19.9.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.20.1.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.20.10.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.20.11.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.20.12.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.20.13.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.20.14.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.20.2.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.20.3.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.20.4.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.20.5.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.20.6.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.20.7.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.20.8.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.20.9.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.21.1.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.21.10.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.21.11.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.21.12.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.21.13.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.21.2.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.21.3.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.21.4.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.21.5.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.21.6.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.21.7.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.21.8.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.21.9.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.22.1.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.22.10.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.22.11.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.22.12.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.22.2.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.22.3.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.22.4.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.22.5.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.22.6.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.22.7.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.22.8.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.22.9.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.1.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.10.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.11.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.12.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.2.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.3.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.4.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.5.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.6.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.7.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.8.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.9.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.1.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.2.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.3.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.4.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.5.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.6.json.diff||GHIDRA||||END|
 data/typeinfo/mac_10.9/mac_osx.gdt||GHIDRA||||END|
-data/typeinfo/rust/rust-common.gdt||GHIDRA||||END|
 data/typeinfo/win32/msvcrt/clsids.txt||GHIDRA||reviewed||END|
 data/typeinfo/win32/msvcrt/guids.txt||GHIDRA||reviewed||END|
 data/typeinfo/win32/msvcrt/iids.txt||GHIDRA||||END|
@@ -145,6 +279,8 @@ src/main/help/help/topics/CParserPlugin/images/UseOpenArchives.png||GHIDRA||||EN
 src/main/help/help/topics/CallTreePlugin/Call_Tree_Plugin.html||GHIDRA||||END|
 src/main/help/help/topics/CallTreePlugin/images/CallTreeWindow.png||GHIDRA||||END|
 src/main/help/help/topics/CallTreePlugin/images/depth-input.png||GHIDRA||reviewed||END|
+src/main/help/help/topics/Charsets/Charsets.htm||GHIDRA||||END|
+src/main/help/help/topics/Charsets/images/CharsetPickerDialog.png||GHIDRA||||END|
 src/main/help/help/topics/ClearPlugin/Clear.htm||GHIDRA||||END|
 src/main/help/help/topics/ClearPlugin/images/ClearFlow.png||GHIDRA||||END|
 src/main/help/help/topics/ClearPlugin/images/ClearWithOptions.png||GHIDRA||||END|
@@ -182,11 +318,13 @@ src/main/help/help/topics/ComputeChecksumsPlugin/images/Dialog_Blank.png||GHIDRA
 src/main/help/help/topics/ConsolePlugin/console.html||GHIDRA||||END|
 src/main/help/help/topics/ConsolePlugin/images/Console.png||GHIDRA||||END|
 src/main/help/help/topics/DWARFExternalDebugFilesPlugin/DWARFExternalDebugFilesPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DWARFExternalDebugFilesPlugin/images/ExternalDebugFilesConfigDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataPlugin/Data.htm||GHIDRA||||END|
 src/main/help/help/topics/DataPlugin/images/CreateStructureDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataPlugin/images/CreateStructureDialogWithTableSelection.png||GHIDRA||||END|
 src/main/help/help/topics/DataPlugin/images/DataSelectionSettings.png||GHIDRA||||END|
 src/main/help/help/topics/DataPlugin/images/DefaultSettings.png||GHIDRA||||END|
+src/main/help/help/topics/DataPlugin/images/EditFieldDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataPlugin/images/InstanceSettings.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/DataTypeSelectionDialog.htm||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/EnumEditor.htm||GHIDRA||||END|
@@ -195,6 +333,7 @@ src/main/help/help/topics/DataTypeEditors/images/BytesNumberInputDialog.png||GHI
 src/main/help/help/topics/DataTypeEditors/images/Dialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/Dialog_Create_Pointer.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/Dialog_Multiple_Match.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeEditors/images/Dialog_SearchMode.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/Dialog_Select_Tree.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/Dialog_Single_Match.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/EnumEditor.png||GHIDRA||||END|
@@ -211,14 +350,18 @@ src/main/help/help/topics/DataTypeManagerPlugin/data_type_manager_description.ht
 src/main/help/help/topics/DataTypeManagerPlugin/data_type_manager_window.html||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/CommitDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/DataTypeManager.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeManagerPlugin/images/DataTypeTreeWithAssociations.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/DisassociateDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/EditPaths.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/FavoriteDts.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/FindDataTypes.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/FindDataTypesBySize.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeManagerPlugin/images/MergeConfirmationDialog.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeManagerPlugin/images/MergeErrorDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/PreviewWindow.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/RevertDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/SearchResults.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeManagerPlugin/images/StructureMergeDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/UpdateDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/lockoverlay.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/help/help/topics/DataTypePreviewPlugin/DataTypePreviewPlugin.html||GHIDRA||||END|
@@ -228,6 +371,8 @@ src/main/help/help/topics/DataWindowPlugin/images/DataWindow.png||GHIDRA||||END|
 src/main/help/help/topics/DataWindowPlugin/images/DataWindowFilter.png||GHIDRA||||END|
 src/main/help/help/topics/DbViewerPlugin/DbViewer.htm||GHIDRA||||END|
 src/main/help/help/topics/DbViewerPlugin/images/DatabaseViewer.png||GHIDRA||||END|
+src/main/help/help/topics/DefinedStringsPlugin/DefinedStringsPlugin.htm||GHIDRA||||END|
+src/main/help/help/topics/DefinedStringsPlugin/images/Defined_String_Table.png||GHIDRA||||END|
 src/main/help/help/topics/DisassembledViewPlugin/DisassembledViewPlugin.htm||GHIDRA||||END|
 src/main/help/help/topics/DisassembledViewPlugin/images/DisassembledViewPluginMain.png||GHIDRA||||END|
 src/main/help/help/topics/DisassemblerPlugin/Disassembly.htm||GHIDRA||||END|
@@ -276,6 +421,10 @@ src/main/help/help/topics/FrontEndPlugin/Project_Info.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Re-opening_a_Project.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Restore_Project.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Saving_a_Ghidra_Project.htm||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/AbsoluteBrokenFileLinkIcon.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/AbsoluteBrokenFolderLinkIcon.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/AbsoluteFileLinkIcon.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/AbsoluteFolderLinkIcon.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ArchiveFileExists.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ArchiveProject.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ChangeAccessList.png||GHIDRA||||END|
@@ -311,12 +460,13 @@ src/main/help/help/topics/FrontEndPlugin/images/SelectSharedProjectType.png||GHI
 src/main/help/help/topics/FrontEndPlugin/images/ServerInfo.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/SharedProjectInfo.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/UsersPanel.png||GHIDRA||||END|
-src/main/help/help/topics/FrontEndPlugin/images/UsersPanelMini.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/VersionedFileCOnoServer.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/VersionedFileCOwithServer.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/VersionedFileIcon.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ViewOtherProjects.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/ViewProjectAccessPanel.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/hijack_file.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/start-here_16.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/FunctionComparison.htm||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/AddFunctionsPanel.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/AddToComparisonIcon.png||GHIDRA||||END|
@@ -375,6 +525,7 @@ src/main/help/help/topics/Intro/images/Simple_err_dialog.png||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/FieldNames.htm||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/Labels.htm||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/images/AddLabel.png||GHIDRA||||END|
+src/main/help/help/topics/LabelMgrPlugin/images/ChooseNamespace.png||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/images/EditFieldNameDialog.png||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/images/LabelHistoryInputDialog.png||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/images/SetLabel.png||GHIDRA||||END|
@@ -398,6 +549,7 @@ src/main/help/help/topics/MemoryMapPlugin/images/MemoryMap.png||GHIDRA||||END|
 src/main/help/help/topics/MemoryMapPlugin/images/MoveMemory.png||GHIDRA||||END|
 src/main/help/help/topics/MemoryMapPlugin/images/SetImageBaseDialog.png||GHIDRA||||END|
 src/main/help/help/topics/MemoryMapPlugin/images/SplitMemoryBlock.png||GHIDRA||||END|
+src/main/help/help/topics/Misc/AddressExpressions.htm||GHIDRA||||END|
 src/main/help/help/topics/Misc/Appendix.htm||GHIDRA||||END|
 src/main/help/help/topics/Misc/Welcome_to_Ghidra_Help.htm||GHIDRA||||END|
 src/main/help/help/topics/Navigation/Navigation.htm||GHIDRA||||END|
@@ -514,7 +666,7 @@ src/main/help/help/topics/ScalarSearchPlugin/images/ScalarWindow.png||GHIDRA||||
 src/main/help/help/topics/ScalarSearchPlugin/images/SearchAllScalarsDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Search/Instruction_Mnemonic_Search.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Query_Results_Dialog.htm||GHIDRA||||END|
-src/main/help/help/topics/Search/Regular_Expressions.htm||GHIDRA||||END|
+src/main/help/help/topics/Search/SearchAndReplace.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_Formats.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_Instruction_Patterns.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_Memory.htm||GHIDRA||||END|
@@ -531,6 +683,8 @@ src/main/help/help/topics/Search/images/MemorySearchProviderWithOptionsOn.png||G
 src/main/help/help/topics/Search/images/MemorySearchProviderWithScanPanelOn.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/MultipleSelectionError.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/QueryResultsSearch.png||GHIDRA||||END|
+src/main/help/help/topics/Search/images/SearchAndReplaceDialog.png||GHIDRA||||END|
+src/main/help/help/topics/Search/images/SearchAndReplaceResults.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchForAddressTables.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchInstructionPatterns.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchInstructionPatternsControlPanel.png||GHIDRA||||END|
@@ -549,9 +703,9 @@ src/main/help/help/topics/Search/images/SearchMemoryRegex.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchText.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/StringSearchDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/StringSearchResults.png||GHIDRA||||END|
-src/main/help/help/topics/SelectBlockPlugin/Select_Block_Help.html||GHIDRA||||END|
-src/main/help/help/topics/SelectBlockPlugin/images/Dialog.png||GHIDRA||||END|
-src/main/help/help/topics/SelectBlockPlugin/images/ToBadAddr.png||GHIDRA||||END|
+src/main/help/help/topics/SelectBytesPlugin/Select_Bytes_Help.html||GHIDRA||||END|
+src/main/help/help/topics/SelectBytesPlugin/images/Dialog.png||GHIDRA||||END|
+src/main/help/help/topics/SelectBytesPlugin/images/ToBadAddr.png||GHIDRA||||END|
 src/main/help/help/topics/Selection/Selecting.htm||GHIDRA||||END|
 src/main/help/help/topics/SetHighlightPlugin/Highlighting.htm||GHIDRA||||END|
 src/main/help/help/topics/ShowInstructionInfoPlugin/ShowInstructionInfo.htm||GHIDRA||||END|
@@ -560,6 +714,7 @@ src/main/help/help/topics/ShowInstructionInfoPlugin/images/RawInstructionDisplay
 src/main/help/help/topics/ShowInstructionInfoPlugin/images/ShowInstructionInfo.png||GHIDRA||||END|
 src/main/help/help/topics/ShowInstructionInfoPlugin/images/UnableToLaunch.png||GHIDRA||||END|
 src/main/help/help/topics/Snapshots/Snapshots.html||GHIDRA||||END|
+src/main/help/help/topics/SourceFilesTablePlugin/SourceFilesTable.html||GHIDRA||||END|
 src/main/help/help/topics/StackEditor/StackEditor.html||GHIDRA||||END|
 src/main/help/help/topics/StackEditor/images/NumElementsPrompt.png||GHIDRA||||END|
 src/main/help/help/topics/StackEditor/images/StackEditor.png||GHIDRA||||END|
@@ -576,10 +731,6 @@ src/main/help/help/topics/SymbolTreePlugin/SymbolTree.htm||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/images/CreateExternalLocation.png||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/images/EditExternalLocation.png||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/images/SymbolTree.png||GHIDRA||||END|
-src/main/help/help/topics/Tables/GhidraTableHeaders.html||GHIDRA||||END|
-src/main/help/help/topics/Tables/images/BytesSettingsDialog.png||GHIDRA||reviewed||END|
-src/main/help/help/topics/Tables/images/MultipleColumnSortDialog.png||GHIDRA||||END|
-src/main/help/help/topics/Tables/images/SelectColumnsDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Tool/Configure_Tool.htm||GHIDRA||||END|
 src/main/help/help/topics/Tool/Ghidra_Tool_Administration.htm||GHIDRA||||END|
 src/main/help/help/topics/Tool/ShowLog.htm||GHIDRA|||References wcbiema in screen snapshot|END|
@@ -601,13 +752,6 @@ src/main/help/help/topics/Tool/images/SetToolAssociations.png||GHIDRA||||END|
 src/main/help/help/topics/Tool/images/ShowLog.png||GHIDRA||||END|
 src/main/help/help/topics/Tool/images/Tip.png||GHIDRA||||END|
 src/main/help/help/topics/TranslateStringsPlugin/TranslateStringsPlugin.htm||GHIDRA||||END|
-src/main/help/help/topics/Trees/GhidraTreeFilter.html||GHIDRA||||END|
-src/main/help/help/topics/Trees/images/Filter.png||GHIDRA||||END|
-src/main/help/help/topics/Trees/images/FilterClearButton.png||GHIDRA||||END|
-src/main/help/help/topics/Trees/images/FilterOptions.png||GHIDRA||||END|
-src/main/help/help/topics/Trees/images/TableColumnFilter.png||GHIDRA||||END|
-src/main/help/help/topics/Trees/images/TableColumnFilterAfterFilterApplied.png||GHIDRA||||END|
-src/main/help/help/topics/Trees/images/TableColumnFilterDialog.png||GHIDRA||||END|
 src/main/help/help/topics/VSCodeIntegration/VSCodeIntegration.htm||GHIDRA||||END|
 src/main/help/help/topics/ValidateProgram/ValidateProgram.html||GHIDRA||||END|
 src/main/help/help/topics/ValidateProgram/images/ValidateProgram.png||GHIDRA||||END|
@@ -622,8 +766,6 @@ src/main/help/help/topics/VersionControl/images/UndoHijack.png||GHIDRA||||END|
 src/main/help/help/topics/VersionControl/images/VersionHistory.png||GHIDRA||||END|
 src/main/help/help/topics/VersionControl/images/ViewCheckouts.png||GHIDRA||||END|
 src/main/help/help/topics/VersionControl/project_repository.htm||GHIDRA||||END|
-src/main/help/help/topics/ViewStringsPlugin/ViewStringsPlugin.htm||GHIDRA||||END|
-src/main/help/help/topics/ViewStringsPlugin/images/Defined_String_Table.png||GHIDRA||||END|
 src/main/java/ghidra/app/cmd/comments/package.html||GHIDRA||reviewed||END|
 src/main/java/ghidra/app/cmd/data/package.html||GHIDRA||||END|
 src/main/java/ghidra/app/cmd/disassemble/package.html||GHIDRA||||END|
@@ -687,6 +829,7 @@ src/main/resources/defaultTools/images/tar.png||Nuvola Icons - LGPL 2.1|||Nuvola
 src/main/resources/defaultTools/images/tools.png||Oxygen Icons - LGPL 3.0|||originally configure.png from tango|END|
 src/main/resources/defaultTools/images/video-x-generic.png||Tango Icons - Public Domain|||tango|END|
 src/main/resources/defaultTools/images/viewedCode.gif||GHIDRA||||END|
+src/main/resources/ghidra/app/plugin/core/analysis/rust/demangler/early-recursion-limit.txt||Apache License 2.0||||END|
 src/main/resources/ghidra/app/plugin/core/totd/tips.txt||GHIDRA||||END|
 src/main/resources/help/Dummy_HelpSet.hs||GHIDRA||reviewed||END|
 src/main/resources/help/empty.htm||GHIDRA||||END|
@@ -837,7 +980,6 @@ src/main/resources/images/hoverOff.gif||GHIDRA||||END|
 src/main/resources/images/hoverOn.gif||GHIDRA||||END|
 src/main/resources/images/icon_link.gif||FAMFAMFAM Mini Icons - Public Domain|||famfamfam mini icon set|END|
 src/main/resources/images/imported_bookmark.gif||GHIDRA||||END|
-src/main/resources/images/katomic.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/key.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
 src/main/resources/images/kmessedwords.png||Nuvola Icons - LGPL 2.1||||END|
 src/main/resources/images/label.png||GHIDRA||||END|
@@ -898,6 +1040,7 @@ src/main/resources/images/pencil16.png||GHIDRA||||END|
 src/main/resources/images/pin.png||GHIDRA||||END|
 src/main/resources/images/play_again.png||GHIDRA||||END|
 src/main/resources/images/preferences-system.png||Tango Icons - Public Domain|||tango|END|
+src/main/resources/images/python.png||GHIDRA||||END|
 src/main/resources/images/question_zero.png||GHIDRA||||END|
 src/main/resources/images/red-cross.png||GHIDRA||||END|
 src/main/resources/images/redQuestionMark.png||GHIDRA||||END|
@@ -917,7 +1060,6 @@ src/main/resources/images/small_minus.png||GHIDRA||||END|
 src/main/resources/images/small_plus.png||GHIDRA||||END|
 src/main/resources/images/stopNode.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/sync_enabled.png||GHIDRA||||END|
-src/main/resources/images/table_delete.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/table_go.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/table_row_delete.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
 src/main/resources/images/tag_blue.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
@@ -951,4 +1093,5 @@ src/test.slow/resources/filterTestDirList.txt||GHIDRA||||END|
 src/test.slow/resources/ghidra/app/plugin/core/datamgr/TestDataType.txt||GHIDRA||||END|
 src/test.slow/resources/ghidra/app/script/GhidraScriptAsk.properties||GHIDRA||||END|
 src/test/resources/defaultTools/TestCodeBrowser.tool||GHIDRA||||END|
+src/test/resources/ghidra/app/util/opinion/decompile_debug_test.xml||GHIDRA||||END|
 src/test/resources/ghidra/app/util/opinion/test.ord||GHIDRA||||END|

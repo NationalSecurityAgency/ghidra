@@ -4,4 +4,6 @@ README.md||GHIDRA||||END|
 data/debugger-launchers/attach-java.jsh||GHIDRA||||END|
 data/debugger-launchers/bypid-java.jsh||GHIDRA||||END|
 data/debugger-launchers/local-java.jsh||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/jpda/jpda.html||GHIDRA||||END|
 src/main/resources/ghidra/app/plugin/core/debug/client/tracermi/jdi_schema.xml||GHIDRA||||END|

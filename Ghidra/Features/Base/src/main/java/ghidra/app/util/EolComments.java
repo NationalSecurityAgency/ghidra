@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,7 @@ import java.util.*;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.fieldpanel.support.RowColLocation;
-import ghidra.app.util.viewer.field.EolEnablement;
-import ghidra.app.util.viewer.field.EolExtraCommentsOption;
+import ghidra.app.util.viewer.field.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -41,6 +40,28 @@ import util.CollectionUtils;
  * Repeatable comment for the code unit, any repeatable comments for the code units that this code
  * unit has references to, and possibly a comment indicating the data at a code unit that is
  * referenced by this code unit.
+ * 
+ *		 	 This section describes the various EOL comment types that may appear.  The user can 
+ *		 	 toggle which types are enabled.  The comments are displayed in the order listed below.
+ *		 	 
+ *		 	 EOL Types:
+ *		 	 
+ *		 	 	- EOL			- user end of line comment
+ *		 	 	
+ *		 	 	- Repeatable 	- user repeatable source comment *at the code unit* 
+ *		 	 	- Ref Repeatable- for every reference *from a code unit*, show the target: 
+ *		 	 					  	- address repeatable, 
+ *		 	 					  	- function repeatable, 
+ *		 	 					  	- code unit repeatable  
+ *		 	 					  	
+ * 		 	 	- Auto			- fabricated reference preview: 
+ *		 	 						- function, 
+ *		 	 						- indirect data pointer, 
+ *		 	 						- direct data access preview
+ *		 	 					*depending on the options, this typically do not appear when 
+ *		 	 					 repeatable comments exist
+ *		 	 					 
+ *		 	 	- Offcut 		- comments at addresses inside of a code unit
  */
 public class EolComments {
 
@@ -53,6 +74,7 @@ public class EolComments {
 	private List<RefRepeatComment> refRepeatables = new ArrayList<>();
 	private List<String> autos = new ArrayList<>();
 	private List<Reference> references = new ArrayList<>();
+	private List<String> offcuts = new ArrayList<>();
 
 	// used to signal the operand is already displaying a pointer reference, so there is no need for
 	// this class to create a comment to do the same
@@ -67,6 +89,7 @@ public class EolComments {
 		this.operandsShowReferences = operandsShowReferences;
 		this.maxDisplayComments = maxDisplayComments;
 		this.extraCommentsOption = extraCommentsOption;
+
 		loadComments();
 	}
 
@@ -75,6 +98,7 @@ public class EolComments {
 		loadRepeatables();
 		loadRefRepeatables();
 		loadAutos();
+		loadOffcutEols();
 	}
 
 	/**
@@ -100,9 +124,13 @@ public class EolComments {
 	}
 
 	private void loadEols() {
-		Collection<String> comments =
-			Arrays.asList(codeUnit.getCommentAsArray(CodeUnit.EOL_COMMENT));
+		Collection<String> comments = Arrays.asList(codeUnit.getCommentAsArray(CommentType.EOL));
 		addStrings(comments, eols);
+	}
+
+	private void loadOffcutEols() {
+		Collection<String> comments = CommentUtils.getOffcutComments(codeUnit, CommentType.EOL);
+		addStrings(comments, offcuts);
 	}
 
 	private void loadRepeatables() {
@@ -112,7 +140,7 @@ public class EolComments {
 		}
 
 		Collection<String> comments =
-			Arrays.asList(codeUnit.getCommentAsArray(CodeUnit.REPEATABLE_COMMENT));
+			Arrays.asList(codeUnit.getCommentAsArray(CommentType.REPEATABLE));
 		addStrings(comments, repeatables);
 	}
 
@@ -193,6 +221,10 @@ public class EolComments {
 
 	public boolean isShowingAutoComments() {
 		return !autos.isEmpty();
+	}
+
+	public boolean isShowingOffcutComments() {
+		return !offcuts.isEmpty();
 	}
 
 	private Collection<String> getReferencePreviews() {
@@ -572,7 +604,7 @@ public class EolComments {
 		Listing listing = program.getListing();
 
 		// prefer listing comments first since there may not be a code unit at this address
-		String repeatable = listing.getComment(CodeUnit.REPEATABLE_COMMENT, address);
+		String repeatable = listing.getComment(CommentType.REPEATABLE, address);
 		if (repeatable != null) {
 			return StringUtilities.toLines(repeatable);
 		}
@@ -587,7 +619,7 @@ public class EolComments {
 			return f.getRepeatableCommentAsArray();
 		}
 
-		return cu.getCommentAsArray(CodeUnit.REPEATABLE_COMMENT);
+		return cu.getCommentAsArray(CommentType.REPEATABLE);
 	}
 
 	/**
@@ -640,6 +672,10 @@ public class EolComments {
 	 */
 	public List<String> getAutomaticComment() {
 		return Collections.unmodifiableList(autos);
+	}
+
+	public List<String> getOffcutEolComments() {
+		return Collections.unmodifiableList(offcuts);
 	}
 
 	@Override

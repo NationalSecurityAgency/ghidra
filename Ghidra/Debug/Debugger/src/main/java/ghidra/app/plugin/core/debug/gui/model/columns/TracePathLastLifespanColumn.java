@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,20 +20,34 @@ import java.awt.Component;
 import docking.widgets.table.AbstractDynamicTableColumn;
 import docking.widgets.table.GTableCellRenderingData;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
+import ghidra.app.plugin.core.debug.gui.model.columns.TracePathLastLifespanColumn.SpanAndRadix;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 
 public class TracePathLastLifespanColumn
-		extends AbstractDynamicTableColumn<PathRow, Lifespan, Trace> {
+		extends AbstractDynamicTableColumn<PathRow, SpanAndRadix, Trace> {
 
-	private final class LastLifespanRenderer extends AbstractGColumnRenderer<Lifespan> {
+	record SpanAndRadix(Lifespan span, TimeRadix radix) implements Comparable<SpanAndRadix> {
 		@Override
-		public String getFilterString(Lifespan t, Settings settings) {
+		public final String toString() {
+			return span.toString(radix::format);
+		}
+
+		@Override
+		public int compareTo(SpanAndRadix that) {
+			return this.span.compareTo(that.span);
+		}
+	}
+
+	private final class LastLifespanRenderer extends AbstractGColumnRenderer<SpanAndRadix> {
+		@Override
+		public String getFilterString(SpanAndRadix t, Settings settings) {
 			return t == null ? "<null>" : t.toString();
 		}
 
@@ -56,17 +70,18 @@ public class TracePathLastLifespanColumn
 	}
 
 	@Override
-	public GColumnRenderer<Lifespan> getColumnRenderer() {
+	public GColumnRenderer<SpanAndRadix> getColumnRenderer() {
 		return renderer;
 	}
 
 	@Override
-	public Lifespan getValue(PathRow rowObject, Settings settings, Trace data,
+	public SpanAndRadix getValue(PathRow rowObject, Settings settings, Trace data,
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
 		TraceObjectValue lastEntry = rowObject.getPath().getLastEntry();
+		TimeRadix radix = data == null ? TimeRadix.DEFAULT : data.getTimeManager().getTimeRadix();
 		if (lastEntry == null) {
-			return Lifespan.ALL;
+			return new SpanAndRadix(Lifespan.ALL, radix);
 		}
-		return lastEntry.getLifespan();
+		return new SpanAndRadix(lastEntry.getLifespan(), radix);
 	}
 }

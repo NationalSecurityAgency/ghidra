@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -91,7 +91,7 @@ public class PreProcessorTest extends AbstractGenericTest {
 		System.out.println(parser.getParseMessages());
 
 		// Uncomment to print out parse results
-		// System.err.println(baos.toString());
+		//System.err.println(baos.toString());
 
 		dtMgr = new StandAloneDataTypeManager("parsed");
 		parser.getDefinitions().populateDefineEquates(null, dtMgr);
@@ -129,13 +129,29 @@ public class PreProcessorTest extends AbstractGenericTest {
 				"\" fourth line\")") != -1);
 
 		assertTrue("multi line #pragma failed ", results
-			.indexOf("#pragma  multiple lines pragma") != -1);
+			.indexOf("#pragma multiple lines pragma") != -1);
 		
 		assertTrue("#pragma with comment failed ", results
-			.indexOf("#pragma  no comment here") != -1);
+			.indexOf("#pragma no comment here") != -1);
 		
 		assertTrue("#pragma with EOL comment failed ", results
-			.indexOf("#pragma  with no EOL comment here") != -1);
+			.indexOf("#pragma with no EOL comment here") != -1);
+	}
+	
+	@Test
+	public void testCommenting() throws Exception {
+
+		String results = baos.toString("ASCII");
+		
+		assertTrue("IntShouldBeCommented", results
+				.indexOf("///- int IntShouldBeCommented;") != -1);
+		assertTrue("PragmaShouldBeCommented", results
+			.indexOf("///- #pragma PragmaShouldBeCommented") != -1);
+		
+		assertTrue("IntShouldNotBeCommented", results
+			.indexOf("int IntShouldBeCommented;") != -1);
+		assertTrue("PragmaShouldNotBeCommented", results
+			.indexOf("#pragma PragmaShouldNotBeCommented") != -1);
 	}
 
 	@Test

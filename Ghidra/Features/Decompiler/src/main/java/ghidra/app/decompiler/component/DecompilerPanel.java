@@ -29,7 +29,6 @@ import docking.DockingUtils;
 import docking.util.AnimationUtils;
 import docking.util.SwingAnimationCallback;
 import docking.widgets.EventTrigger;
-import docking.widgets.SearchLocation;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.field.Field;
@@ -41,13 +40,15 @@ import generic.theme.GColor;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
 import ghidra.app.decompiler.component.margin.*;
+import ghidra.app.decompiler.location.*;
 import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
 import ghidra.app.plugin.core.decompile.actions.DecompilerSearchLocation;
+import ghidra.app.plugin.core.decompile.actions.DecompilerSearchResults;
 import ghidra.app.util.viewer.util.ScrollpaneAlignedHorizontalLayout;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.*;
@@ -79,7 +80,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private final VerticalLayoutPixelIndexMap pixmap = new VerticalLayoutPixelIndexMap();
 
 	private FieldHighlightFactory hlFactory;
-	private ClangHighlightController highlightController;
+	private ClangHighlightController highlightController =
+		ClangHighlightController.dummyIfNull(null);
 	private Map<String, DecompilerHighlighter> highlightersById = new HashMap<>();
 	private PendingHighlightUpdate pendingHighlightUpdate;
 	private SwingUpdateManager highlighCursorUpdater = new SwingUpdateManager(() -> {
@@ -89,19 +91,23 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 	});
 
+	private Set<String> ignoredMiddleMouseTokens = Set.of("{", "}", ";");
 	private ActiveMiddleMouse activeMiddleMouse;
 	private int middleMouseHighlightButton;
 	private Color middleMouseHighlightColor;
 	private Color currentVariableHighlightColor;
+
+	private Color activeSearchHighlightColor;
 	private Color searchHighlightColor;
-	private SearchLocation currentSearchLocation;
+
+	private DecompilerSearchResults currentSearchResults;
 
 	private DecompileData decompileData = new EmptyDecompileData("No Function");
 	private final DecompilerClipboardProvider clipboard;
 
 	private Color originalBackgroundColor;
 	private boolean useNonFunctionColor = false;
-	private boolean navitationEnabled = true;
+	private boolean navigationEnabled = true;
 
 	private DecompilerHoverProvider decompilerHoverProvider;
 
@@ -119,7 +125,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		layoutController = new ClangLayoutController(options, this, metrics, hlFactory);
 		fieldPanel = new DecompilerFieldPanel(layoutController);
-		setBackground(options.getBackgroundColor());
 
 		scroller = new IndexedScrollPane(fieldPanel);
 		fieldPanel.addFieldSelectionListener(this);
@@ -140,8 +145,11 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			}
 		});
 
+		setBackground(options.getBackgroundColor());
+
 		decompilerHoverProvider = new DecompilerHoverProvider();
 
+		activeSearchHighlightColor = options.getActiveSearchHighlightColor();
 		searchHighlightColor = options.getSearchHighlightColor();
 		currentVariableHighlightColor = options.getCurrentVariableHighlightColor();
 		middleMouseHighlightColor = options.getMiddleMouseHighlightColor();
@@ -261,9 +269,37 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			}
 		}
 
+		// exclude tokens that users do not want to highlight
+		if (shouldIgnoreOpToken(token)) {
+			return;
+		}
+		if (shouldIgnoreSyntaxTokenHighlight(token)) {
+			return;
+		}
+
 		ActiveMiddleMouse newMiddleMouse = new ActiveMiddleMouse(token.getText());
 		newMiddleMouse.apply();
 		activeMiddleMouse = newMiddleMouse;
+	}
+
+	private boolean shouldIgnoreOpToken(ClangToken token) {
+		if (!(token instanceof ClangOpToken)) {
+			return false;
+		}
+
+		// users would like to be able to highlight return statements
+		String text = token.toString();
+		return !text.equals("return");
+	}
+
+	private boolean shouldIgnoreSyntaxTokenHighlight(ClangToken token) {
+
+		if (!(token instanceof ClangSyntaxToken syntaxToken)) {
+			return false;
+		}
+
+		String string = syntaxToken.toString();
+		return ignoredMiddleMouseTokens.contains(string);
 	}
 
 	void addHighlighterHighlights(ClangDecompilerHighlighter highlighter,
@@ -275,19 +311,25 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		highlightController.removeHighlighterHighlights(highlighter);
 	}
 
-	public DecompilerHighlighter createHighlighter(CTokenHighlightMatcher tm) {
-		UUID uuId = UUID.randomUUID();
-		String id = uuId.toString();
-		return createHighlighter(id, tm);
+	private DecompilerHighlighter createHighlighter(CTokenHighlightMatcher tm) {
+		Function function = decompileData.getFunction();
+		return createHighlighter(function, tm);
 	}
 
-	public DecompilerHighlighter createHighlighter(String id, CTokenHighlightMatcher tm) {
+	public DecompilerHighlighter createHighlighter(Function f, CTokenHighlightMatcher tm) {
+		UUID uuId = UUID.randomUUID();
+		String id = uuId.toString();
+		return createHighlighter(id, f, tm);
+	}
+
+	public DecompilerHighlighter createHighlighter(String id, Function f,
+			CTokenHighlightMatcher tm) {
 		DecompilerHighlighter currentHighlighter = highlightersById.get(id);
 		if (currentHighlighter != null) {
 			currentHighlighter.dispose();
 		}
 
-		ClangDecompilerHighlighter newHighlighter = new ClangDecompilerHighlighter(id, this, tm);
+		ClangDecompilerHighlighter newHighlighter = new ClangDecompilerHighlighter(id, this, f, tm);
 		highlightersById.put(id, newHighlighter);
 		highlightController.addHighlighter(newHighlighter);
 		return newHighlighter;
@@ -378,15 +420,18 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		// Apply the new middle-mouse highlighter when we have rebuilt the token
 		controller.doWhenNotBusy(() -> {
-			activeMiddleMouse.apply();
+			if (activeMiddleMouse != null) {
+				activeMiddleMouse.apply();
+			}
 		});
 	}
 
-	private void cloneGlobalHighlighters(DecompilerPanel sourcePanel) {
+	private void cloneServiceHiglighters(DecompilerPanel sourcePanel) {
 
-		Set<DecompilerHighlighter> globalHighlighters =
-			sourcePanel.highlightController.getGlobalHighlighters();
-		for (DecompilerHighlighter otherHighlighter : globalHighlighters) {
+		Set<DecompilerHighlighter> serviceHighlighters =
+			sourcePanel.highlightController.getServiceHighlighters();
+
+		for (DecompilerHighlighter otherHighlighter : serviceHighlighters) {
 
 			if (!(otherHighlighter instanceof ClangDecompilerHighlighter clangHighlighter)) {
 				continue;
@@ -416,13 +461,13 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 */
 	public void cloneHighlights(DecompilerPanel sourcePanel) {
 
-		cloneGlobalHighlighters(sourcePanel);
+		Function function = decompileData.getFunction();
+		cloneServiceHiglighters(sourcePanel);
 
 		//
 		// Keep only those secondary highlighters for the current function.  This ensures that the
 		// clone will match the cloned decompiler.
 		//
-		Function function = decompileData.getFunction();
 		Set<DecompilerHighlighter> secondaryHighlighters =
 			sourcePanel.getSecondaryHighlihgtersByFunction(function);
 
@@ -454,6 +499,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 		if (fieldPanel != null) {
 			fieldPanel.setBackgroundColor(bg);
+			scroller.setBackground(bg);
 		}
 		super.setBackground(bg);
 	}
@@ -467,6 +513,11 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (layoutController == null) {
 			// we've been disposed!
 			return;
+		}
+
+		if (activeMiddleMouse != null) {
+			activeMiddleMouse.clear();
+			activeMiddleMouse = null;
 		}
 
 		DecompileData oldData = this.decompileData;
@@ -496,38 +547,13 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 
 		// don't highlight search results across functions
-		currentSearchLocation = null;
-
-		reapplySecondaryHighlights();
-		reapplyGlobalHighlights();
-	}
-
-	private void reapplyGlobalHighlights() {
-
-		Function function = decompileData.getFunction();
-		if (function == null) {
-			return;
+		if (currentSearchResults != null) {
+			currentSearchResults.decompilerUpdated();
+			currentSearchResults = null;
 		}
 
-		Set<DecompilerHighlighter> globalHighlighters = highlightController.getGlobalHighlighters();
-		for (DecompilerHighlighter highlighter : globalHighlighters) {
-			highlighter.clearHighlights();
-			highlighter.applyHighlights();
-		}
-	}
-
-	private void reapplySecondaryHighlights() {
-
-		Function function = decompileData.getFunction();
-		if (function == null) {
-			return;
-		}
-
-		Set<DecompilerHighlighter> secondaryHighlighters =
-			getSecondaryHighlihgtersByFunction(function);
-		for (DecompilerHighlighter highlighter : secondaryHighlighters) {
-			highlighter.clearHighlights();
-			highlighter.applyHighlights();
+		if (function != null) {
+			highlightController.reapplyAllHighlights(function);
 		}
 	}
 
@@ -747,7 +773,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 * @param enabled false disabled mouse function navigation
 	 */
 	void setMouseNavigationEnabled(boolean enabled) {
-		navitationEnabled = enabled;
+		navigationEnabled = enabled;
 	}
 
 	@Override
@@ -758,7 +784,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		int clickCount = ev.getClickCount();
 		int buttonState = ev.getButton();
-
 		if (buttonState == MouseEvent.BUTTON1) {
 			if (DockingUtils.isControlModifier(ev) && clickCount == 2) {
 				tryToGoto(location, field, ev, true);
@@ -778,7 +803,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	private void tryToGoto(FieldLocation location, Field field, MouseEvent event,
 			boolean newWindow) {
-		if (!navitationEnabled) {
+		if (!navigationEnabled) {
 			return;
 		}
 
@@ -877,6 +902,13 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			if (addr.isMemoryAddress()) {
 				controller.goToAddress(vn.getAddress(), newWindow);
 			}
+		}
+		else if (highVar.getSymbol() != null) {
+			VariableStorage storage = highVar.getSymbol().getStorage();
+			if (storage.isMemoryStorage()) {
+				controller.goToAddress(storage.getMinAddress(), newWindow);
+			}
+			return;		// Don't goto if symbol is on the stack or in a register
 		}
 		else if (vn.isConstant()) {
 			controller.goToScalar(vn.getOffset(), newWindow);
@@ -993,26 +1025,134 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (token == null) {
 			return null;
 		}
+
 		Address address = DecompilerUtils.getClosestAddress(getProgram(), token);
 		if (address == null) {
 			address = DecompilerUtils.findAddressBefore(layoutController.getFields(), token);
 		}
+
+		Function function = decompileData.getFunction();
 		if (address == null) {
-			address = decompileData.getFunction().getEntryPoint();
+			address = function.getEntryPoint();
 		}
 
-		return new DecompilerLocation(decompileData.getProgram(), address,
-			decompileData.getFunction().getEntryPoint(), decompileData.getDecompileResults(), token,
-			location.getIndex().intValue(), location.col);
+		Address entryPoint = function.getEntryPoint();
+		DecompileResults results = decompileData.getDecompileResults();
+		int lineNumber = location.getIndex().intValue();
+		int charPos = location.col;
+		DecompilerLocationInfo info =
+			new DecompilerLocationInfo(entryPoint, results, token, lineNumber, charPos);
+		Program program = decompileData.getProgram();
+		ProgramLocation signatureLocation = createFunctionSignatureLocation(token, address, info);
+		if (signatureLocation != null) {
+			return signatureLocation;
+		}
+
+		return new DefaultDecompilerLocation(program, address, info);
 	}
 
-	public void setSearchResults(SearchLocation searchLocation) {
-		currentSearchLocation = searchLocation;
+	private ProgramLocation createFunctionSignatureLocation(ClangToken token, Address address,
+			DecompilerLocationInfo info) {
+
+		Function function = decompileData.getFunction();
+		Address entryPoint = function.getEntryPoint();
+		if (!entryPoint.equals(address)) {
+			// Another address implies that we are not on the function signature
+			return null;
+		}
+
+		if (token instanceof ClangFuncNameToken ft) {
+			// if the token address is the entry point of this function, then create a location that
+			// will place the cursor on the function signature in the listing
+			Program program = decompileData.getProgram();
+			String functionName = ft.getText();
+			return new FunctionNameDecompilerLocation(program, entryPoint, functionName, info);
+		}
+		else if (token instanceof ClangVariableToken cvt) {
+			return createVariableDeclarationLocation(cvt, address, info);
+		}
+		return null;
+	}
+
+	private ProgramLocation createVariableDeclarationLocation(ClangVariableToken cvt,
+			Address address, DecompilerLocationInfo info) {
+
+		Function function = decompileData.getFunction();
+		Address entryPoint = function.getEntryPoint();
+		Program program = decompileData.getProgram();
+		Variable variable = getVariable(cvt);
+		if (variable != null) {
+			return new VariableDecompilerLocation(program, entryPoint, variable, info);
+		}
+
+		HighVariable highVar = cvt.getHighVariable();
+		if (highVar == null) {
+			// decomp param that is not in the listing; put on signature
+			return new FunctionNameDecompilerLocation(program, entryPoint, cvt.getText(), info);
+		}
+
+		HighSymbol highSymbol = highVar.getSymbol();
+		if (highSymbol != null && highSymbol.isParameter()) {
+			// decomp param that is not in the listing; put on signature
+			return new FunctionNameDecompilerLocation(program, entryPoint, cvt.getText(), info);
+		}
+
+		return null;
+	}
+
+	private Variable getVariable(ClangVariableToken token) {
+
+		HighVariable highVar = token.getHighVariable();
+		if (highVar == null) {
+			return null;
+		}
+		HighSymbol highSymbol = highVar.getSymbol();
+		if (highSymbol == null) {
+			return null;
+		}
+		Variable variable = HighFunctionDBUtil.getFunctionVariable(highSymbol);
+		if (variable != null) {
+			return variable;
+		}
+
+		Function function = decompileData.getFunction();
+		Symbol symbol = highSymbol.getSymbol();
+		Variable[] locals = function.getLocalVariables();
+		for (Variable local : locals) {
+			Symbol localSymbol = local.getSymbol();
+			if (symbol == localSymbol) {
+				return local;
+			}
+		}
+		return null;
+	}
+
+	public void clearSearchResults(DecompilerSearchResults searchResults) {
+		if (currentSearchResults == searchResults) {
+			currentSearchResults = null;
+			repaint();
+		}
+	}
+
+	public void setSearchResults(DecompilerSearchResults searchResults) {
+		currentSearchResults = searchResults;
+
+		if (currentSearchResults != null) {
+			DecompilerSearchLocation location = currentSearchResults.getActiveLocation();
+			if (location != null) {
+				setCursorPosition(location.getFieldLocation());
+			}
+		}
+
 		repaint();
 	}
 
-	public DecompilerSearchLocation getSearchResults() {
-		return (DecompilerSearchLocation) currentSearchLocation;
+	public DecompilerSearchLocation getActiveSearchLocation() {
+		if (currentSearchResults == null) {
+			return null;
+		}
+		DecompilerSearchLocation location = currentSearchResults.getActiveLocation();
+		return location;
 	}
 
 	public Color getCurrentVariableHighlightColor() {
@@ -1248,6 +1388,23 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		fieldPanel.removeFocusListener(l);
 	}
 
+	/**
+	 * {@return the bounds of the content area of this decompiler panel. This includes the main
+	 * decompiler content panel and the line numbers panel}
+	 */
+	public Rectangle getViewContentBounds() {
+		// The bounds we want includes both the extent size of the main decompiler view + the
+		// area that displays the line numbers which is not inside the IndexedScrollPane. The width
+		// of the line numbers panel can be found by looking at the x position of the scroller as
+		// it is offset by the line number panel's width. We are also assuming there are no borders
+		// internal to the DecompilerPanel. If that changes, we would also need to factor in the
+		// insets.
+		Rectangle bounds = scroller.getBounds();
+		Dimension scrollerSize = scroller.getViewExtentSize();
+		int lineNumberWidth = bounds.x;
+		return new Rectangle(0, 0, scrollerSize.width + lineNumberWidth, scrollerSize.height);
+	}
+
 	private void buildPanels() {
 		removeAll();
 		add(buildLeftComponent(), BorderLayout.WEST);
@@ -1271,23 +1428,30 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		@Override
 		public Highlight[] createHighlights(Field field, String text, int cursorTextOffset) {
-			if (currentSearchLocation == null) {
+			if (currentSearchResults == null) {
 				return new Highlight[0];
 			}
 
 			ClangTextField cField = (ClangTextField) field;
-			int highlightLine = cField.getLineNumber();
-
-			FieldLocation searchCursorLocation =
-				((DecompilerSearchLocation) currentSearchLocation).getFieldLocation();
-			int searchLineNumber = searchCursorLocation.getIndex().intValue() + 1;
-			if (highlightLine != searchLineNumber) {
-				// only highlight the match on the actual line
+			int lineNumber = cField.getLineNumber();
+			Map<Integer, List<DecompilerSearchLocation>> locationsByLine =
+				currentSearchResults.getLocationsByLine();
+			List<DecompilerSearchLocation> locationsOnLine = locationsByLine.get(lineNumber);
+			if (locationsOnLine == null) {
 				return new Highlight[0];
 			}
 
-			return new Highlight[] { new Highlight(currentSearchLocation.getStartIndexInclusive(),
-				currentSearchLocation.getEndIndexInclusive(), searchHighlightColor) };
+			DecompilerSearchLocation activeLocation = currentSearchResults.getActiveLocation();
+			List<Highlight> highlights = new ArrayList<>();
+			for (DecompilerSearchLocation location : locationsOnLine) {
+				Color c =
+					location == activeLocation ? activeSearchHighlightColor : searchHighlightColor;
+				int start = location.getStartIndexInclusive();
+				int end = location.getEndIndexInclusive();
+				highlights.add(new Highlight(start, end, c));
+			}
+
+			return highlights.toArray(Highlight[]::new);
 		}
 	}
 

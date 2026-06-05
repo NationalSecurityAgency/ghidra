@@ -127,13 +127,16 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 		mainPanel.setLayout(new BorderLayout());
 
 		detailsPanel = new PluginDetailsPanel(tool, model);
+		detailsPanel.getAccessibleContext().setAccessibleName("Plugin Details");
 		JPanel pluginTablePanel = createPluginTablePanel(detailsPanel);
+		pluginTablePanel.getAccessibleContext().setAccessibleName("Plugins");
 
 		final JSplitPane splitPane =
 			new JSplitPane(JSplitPane.VERTICAL_SPLIT, pluginTablePanel, detailsPanel);
+		splitPane.getAccessibleContext().setAccessibleName("Plugin Table and Details");
 		splitPane.setResizeWeight(.75);
 		mainPanel.add(splitPane, BorderLayout.CENTER);
-
+		mainPanel.getAccessibleContext().setAccessibleName("Plugin Installer");
 		return mainPanel;
 	}
 
@@ -148,10 +151,13 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 		PluginInstallerTableModel tableModel =
 			new PluginInstallerTableModel(tool, getComponent(), pluginDescriptions, model);
 		table = new GTable(tableModel);
+		table.getAccessibleContext().setAccessibleName("Plugin");
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tableFilterPanel = new GTableFilterPanel<>(table, tableModel);
+		tableFilterPanel.getAccessibleContext().setAccessibleName("Plugin Filter");
 
 		JScrollPane sp = new JScrollPane(table);
+		sp.getAccessibleContext().setAccessibleName("Plugin Table");
 		pluginTablePanel.add(sp, BorderLayout.CENTER);
 		pluginTablePanel.add(tableFilterPanel, BorderLayout.SOUTH);
 
@@ -188,7 +194,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 			PluginDescription desc = tableFilterPanel.getRowObject(row);
 			pluginDetailsPanel.setPluginDescription(desc);
 		});
-
+		pluginTablePanel.getAccessibleContext().setAccessibleName("Plugins");
 		return pluginTablePanel;
 	}
 

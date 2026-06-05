@@ -545,7 +545,7 @@ public class PdbResearch {
 			members.add(member);
 			size += extra.getLength();
 		}
-		if (!DefaultCompositeMember.applyDataTypeMembers(composite, false, size, members,
+		if (!DefaultCompositeMember.applyDataTypeMembers(composite, false, false, size, members,
 			msg -> reconstructionWarn(msg), monitor)) {
 			((Structure) composite).deleteAll();
 		}

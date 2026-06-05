@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,11 +18,11 @@ package ghidra.app.util.bin.format.dwarf;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionNames;
+import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionId;
 
 /**
  * Header found at the start of a set of DWARFLocationList entries, which are stored sequentially
- * in the {@link DWARFSectionNames#DEBUG_LOCLISTS .debug_loclists} section.
+ * in the {@link DWARFSectionId#DEBUG_LOCLISTS .debug_loclists} section.
  */
 public class DWARFLocationListHeader extends DWARFIndirectTableHeader {
 
@@ -33,7 +33,7 @@ public class DWARFLocationListHeader extends DWARFIndirectTableHeader {
 		// address_size : 1 byte
 		// segment_selector_size : 1 byte
 		// offset entry count: 4 bytes
-		// offsets : array of elements are are dwarf_format_int sized
+		// offsets : array of elements that are dwarf_format_int sized
 
 		long startOffset = reader.getPointerIndex();
 		DWARFLengthValue lengthInfo = DWARFLengthValue.read(reader, defaultIntSize);

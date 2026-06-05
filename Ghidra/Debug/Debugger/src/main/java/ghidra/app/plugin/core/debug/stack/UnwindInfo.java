@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,12 +31,28 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Information for interpreting the current stack frame and unwinding to the next
+ * 
+ * @param function see {@link #function()}
+ * @param depth see {@link #depth()}
+ * @param adjust see {@link #adjust()}
+ * @param ofReturn see {@link #ofReturn()}
+ * @param maskOfReturn see {@link #maskOfReturn()}
+ * @param saved see {@link #saved()}
+ * @param warnings see {@link #warnings()}
+ * @param error see {@link #error()}
  */
 public record UnwindInfo(Function function, Long depth, Long adjust, Address ofReturn,
-		Map<Register, Address> saved, StackUnwindWarningSet warnings, Exception error) {
+		long maskOfReturn, Map<Register, Address> saved, StackUnwindWarningSet warnings,
+		Exception error) {
 
+	/**
+	 * Construct an error-only info
+	 * 
+	 * @param error the error
+	 * @return the info containing only the error
+	 */
 	public static UnwindInfo errorOnly(Exception error) {
-		return new UnwindInfo(null, null, null, null, null, new StackUnwindWarningSet(), error);
+		return new UnwindInfo(null, null, null, null, -1, null, new StackUnwindWarningSet(), error);
 	}
 
 	/**
@@ -86,6 +102,29 @@ public record UnwindInfo(Function function, Long depth, Long adjust, Address ofR
 	 */
 	public Address ofReturn() {
 		return ofReturn;
+	}
+
+	/**
+	 * The mask applied to the return address
+	 * 
+	 * <p>
+	 * This is to handle ISAs that use the low bits of addresses in jumps to indicate an ISA switch.
+	 * Often, the code that returns from a function will apply a mask. If that is the case, this
+	 * returns that mask. In most cases, this returns -1, which when applied as a mask has no
+	 * effect.
+	 * 
+	 * <p>
+	 * <b>NOTE</b>: There is currently no tracking of the ISA mode by the stack unwinder. First, the
+	 * conventions for tracking that in the Sleigh specification varies from processor to processor.
+	 * There is often custom-made handling of that bit programmed in Java for the emulator, but it's
+	 * not generally accessible for static analysis. Second, for stack unwinding purposes, we use
+	 * the statically disassembled code at the return address, anyway. That should already be of the
+	 * correct ISA; if not, then we are already lost.
+	 * 
+	 * @return the mask, often -1
+	 */
+	public long maskOfReturn() {
+		return maskOfReturn;
 	}
 
 	/**
@@ -172,7 +211,7 @@ public record UnwindInfo(Function function, Long depth, Long adjust, Address ofR
 	 * Add register map entries for the saved registers in this frame
 	 * 
 	 * @param base the current frame's base pointer, as in {@link #computeBase(Address)}
-	 * @param registerMap the register map of the stack to this point, to be modified
+	 * @param map the register map of the stack to this point, to be modified
 	 */
 	public void mapSavedRegisters(Address base, SavedRegisterMap map) {
 		for (Entry<Register, Address> ent : saved.entrySet()) {
@@ -221,7 +260,8 @@ public record UnwindInfo(Function function, Long depth, Long adjust, Address ofR
 			AddressSpace codeSpace, Register pc) {
 		T value = computeNextPc(base, state, pc);
 		long concrete = state.getArithmetic().toLong(value, Purpose.INSPECT);
-		return codeSpace.getAddress(concrete);
+		long masked = concrete & maskOfReturn;
+		return codeSpace.getAddress(masked);
 	}
 
 	/**

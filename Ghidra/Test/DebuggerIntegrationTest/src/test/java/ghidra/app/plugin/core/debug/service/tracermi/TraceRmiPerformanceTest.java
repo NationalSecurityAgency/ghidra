@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,6 @@ import generic.Unique;
 import generic.test.rule.Repeated;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerIntegrationTest;
 import ghidra.app.services.TraceRmiService;
-import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.debug.api.tracermi.TraceRmiAcceptor;
 import ghidra.debug.api.tracermi.TraceRmiConnection;
 import ghidra.framework.data.OpenMode;
@@ -47,7 +46,8 @@ import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
 import ghidra.util.database.*;
@@ -120,7 +120,7 @@ public class TraceRmiPerformanceTest extends AbstractGhidraHeadedDebuggerIntegra
 		@Override
 		public void addRegion(String key, AddressRange range, String perms) {
 			DBTraceObject region = tb.trace.getObjectManager()
-					.createObject(TraceObjectKeyPath.parse("Processes[0].Memory[" + key + "]"));
+					.createObject(KeyPath.parse("Processes[0].Memory[" + key + "]"));
 			region.setValue(Lifespan.nowOn(0), "Range", range);
 			region.setValue(Lifespan.nowOn(0), "R", perms.contains("r"));
 			region.setValue(Lifespan.nowOn(0), "W", perms.contains("w"));

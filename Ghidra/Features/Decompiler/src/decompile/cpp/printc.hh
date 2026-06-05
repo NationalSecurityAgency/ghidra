@@ -177,6 +177,7 @@ protected:
   virtual bool doEmitWideCharPrefix(void) const;
   
   bool checkArrayDeref(const Varnode *vn) const;	///< Determine whether a LOAD/STORE expression requires pointer '*' syntax
+  bool checkBitFieldMember(const Varnode *vn,const TypeBitField *field) const;	///< Determine whether a ZPULL/SPULL/INSERT should use '->' or '.' notation
   bool checkAddressOfCast(const PcodeOp *op) const;	///< Check if CAST can be printed as an '&'
   void emitStructDefinition(const TypeStruct *ct);	///< Emit the definition of a \e structure data-type
   void emitEnumDefinition(const TypeEnum *ct);		///< Emit the definition of an \e enumeration data-type
@@ -203,7 +204,7 @@ protected:
   int4 getHiddenThisSlot(const PcodeOp *op,FuncProto *fc);	///< Get position of "this" pointer needing to be hidden
   void resetDefaultsPrintC(void);			///< Set default values for options specific to PrintC
   virtual void pushConstant(uintb val,const Datatype *ct,tagtype tag,
-			    const Varnode *vn,const PcodeOp *op);
+			    const Varnode *vn,const PcodeOp *op,uint4 displayFormat);
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,
 			  const Varnode *vn,const PcodeOp *op);
   virtual void pushAnnotation(const Varnode *vn,const PcodeOp *op);
@@ -211,13 +212,12 @@ protected:
   virtual void pushUnnamedLocation(const Address &addr,
 				   const Varnode *vn,const PcodeOp *op);
   virtual void pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
-				 const Varnode *vn,const PcodeOp *op,int4 inslot);
+				 const Varnode *vn,const PcodeOp *op,int4 slot,bool allowCast);
   virtual void pushMismatchSymbol(const Symbol *sym,int4 off,int4 sz,
 				  const Varnode *vn,const PcodeOp *op);
   virtual void pushImpliedField(const Varnode *vn,const PcodeOp *op);
   virtual void push_integer(uintb val,int4 sz,bool sign,tagtype tag,
-			    const Varnode *vn,
-			    const PcodeOp *op);
+			    const Varnode *vn,const PcodeOp *op,uint4 displayFormat);
   virtual void push_float(uintb val,int4 sz,tagtype tag,const Varnode *vn,
 			  const PcodeOp *op);
   virtual void printUnicode(ostream &s,int4 onechar) const;
@@ -226,6 +226,9 @@ protected:
   virtual string genericTypeName(const Datatype *ct);
 
   virtual void emitExpression(const PcodeOp *op);
+  virtual void emitConstructor(const PcodeOp *op);
+  virtual void emitBitFieldStore(const PcodeOp *op);
+  virtual void emitBitFieldExpression(const PcodeOp *op);
   virtual void emitVarDecl(const Symbol *sym);
   virtual void emitVarDeclStatement(const Symbol *sym);
   virtual bool emitScopeVarDecls(const Scope *symScope,int4 cat);
@@ -339,7 +342,8 @@ public:
   virtual void opCpoolRefOp(const PcodeOp *op);
   virtual void opNewOp(const PcodeOp *op);
   virtual void opInsertOp(const PcodeOp *op);
-  virtual void opExtractOp(const PcodeOp *op);
+  virtual void opZpullOp(const PcodeOp *op);
+  virtual void opSpullOp(const PcodeOp *op);
   virtual void opPopcountOp(const PcodeOp *op) { opFunc(op); }
   virtual void opLzcountOp(const PcodeOp *op) { opFunc(op); }
 };
@@ -361,7 +365,7 @@ public:
 ///
 /// When a variable has TypePointerRel as its data-type, PTRSUB acts relative to the \e parent
 /// data-type.  We print a specific token to indicate this relative shift is happening.
-/// \param op is is the PTRSUB op
+/// \param op is the PTRSUB op
 inline void PrintC::pushTypePointerRel(const PcodeOp *op)
 
 {

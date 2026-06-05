@@ -85,6 +85,14 @@ public class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject
 			DiscoverableTableUtils.adaptColumForModel(this,
 				new IsFunctionCustomStorageTableColumn()));
 
+		descriptor.addHiddenColumn(
+			DiscoverableTableUtils.adaptColumForModel(this,
+				new FunctionLocalStackSizeColumn()));
+
+		descriptor.addHiddenColumn(
+			DiscoverableTableUtils.adaptColumForModel(this,
+				new FunctionParameterStackSizeColumn()));
+
 		return descriptor;
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,10 +33,11 @@ public interface ClientAuthenticator extends KeyStorePasswordProvider {
 	public Authenticator getAuthenticator();
 
 	/**
-	 * Process Ghidra Server password authentication callbacks.
+	 * Process password authentication callbacks.
 	 * @param title password prompt title if GUI is used
 	 * @param serverType type of server (label associated with serverName)
 	 * @param serverName name of server
+	 * @param allowUserNameEntry if true user ID entry will be supported if nameCb is not null.
 	 * @param nameCb provides storage for user login name.  A null indicates
 	 * that the default user name will be used, @see ClientUtil#getUserName()
 	 * @param passCb provides storage for user password, @see PasswordCallback#setPassword(char[])
@@ -51,8 +52,8 @@ public interface ClientAuthenticator extends KeyStorePasswordProvider {
 	 * @return true if password provided, false if entry cancelled
 	 */
 	public boolean processPasswordCallbacks(String title, String serverType, String serverName,
-			NameCallback nameCb, PasswordCallback passCb, ChoiceCallback choiceCb,
-			AnonymousCallback anonymousCb, String loginError);
+			boolean allowUserNameEntry, NameCallback nameCb, PasswordCallback passCb,
+			ChoiceCallback choiceCb, AnonymousCallback anonymousCb, String loginError);
 
 	/**
 	 * Prompt user for reconnect

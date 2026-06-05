@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,21 +67,21 @@ public class ReadTextDialog extends DialogComponentProvider {
 		close();
 	}
 
-	/**
-	 *
-	 */
 	private JPanel createWorkPanel(String text) {
 		workPanel = new JPanel(new BorderLayout());
 
 		textArea = new JTextArea(10, 80);
 		textArea.setText(text);
 		textArea.setEditable(false);
+		textArea.getAccessibleContext().setAccessibleName("Text");
 		textArea.setMargin(new Insets(5, 5, 5, 5));
 //        textArea.setFont(font);
 		DockingUtils.setTransparent(textArea);
 		textArea.setCaretPosition(0);
 		JScrollPane scrolledDetails = new JScrollPane(textArea);
+		scrolledDetails.getAccessibleContext().setAccessibleName("Details");
 		workPanel.add(scrolledDetails, BorderLayout.CENTER);
+		workPanel.getAccessibleContext().setAccessibleName("Read Text");
 		return workPanel;
 	}
 }

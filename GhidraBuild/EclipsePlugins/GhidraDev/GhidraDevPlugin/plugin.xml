@@ -378,6 +378,16 @@
             id="GhidraHeadlessLaunchConfigurationType"
             name="Ghidra Headless">
       </launchConfigurationType>
+      <launchConfigurationType
+            delegate="ghidradev.ghidraprojectcreator.launchers.PyGhidraLaunchDelegate"
+            id="PyGhidraGuiLaunchConfigurationType"
+            name="PyGhidra">
+      </launchConfigurationType>
+      <launchConfigurationType
+            delegate="ghidradev.ghidraprojectcreator.launchers.PyGhidraLaunchDelegate"
+            id="PyGhidraHeadlessLaunchConfigurationType"
+            name="PyGhidra Headless">
+      </launchConfigurationType>
    </extension>
    <extension
          point="org.eclipse.debug.ui.launchConfigurationTypeImages">
@@ -390,6 +400,16 @@
             configTypeID="GhidraHeadlessLaunchConfigurationType"
             icon="icons/GhidraIcon16_bw.png"
             id="GhidraHeadlessLaunchConfigurationTypeImage">
+      </launchConfigurationTypeImage>
+      <launchConfigurationTypeImage
+            configTypeID="PyGhidraGuiLaunchConfigurationType"
+            icon="icons/python.png"
+            id="PyGhidraGuiLaunchConfigurationTypeImage">
+      </launchConfigurationTypeImage>
+      <launchConfigurationTypeImage
+            configTypeID="PyGhidraHeadlessLaunchConfigurationType"
+            icon="icons/python_bw.png"
+            id="PyGhidraHeadlessLaunchConfigurationTypeImage">
       </launchConfigurationTypeImage>
    </extension>
    <extension
@@ -408,6 +428,20 @@
             name="Ghidra Headless"
             type="GhidraHeadlessLaunchConfigurationType">
       </launchDelegate>
+      <launchDelegate
+            delegate="ghidradev.ghidraprojectcreator.launchers.PyGhidraLaunchDelegate"
+            id="PyGhidraGuiLaunchDelegate"
+            modes="run, debug"
+            name="PyGhidra GUI"
+            type="PyGhidraGuiLaunchConfigurationType">
+      </launchDelegate>
+      <launchDelegate
+            delegate="ghidradev.ghidraprojectcreator.launchers.PyGhidraLaunchDelegate"
+            id="PyGhidraHeadlessLaunchDelegate"
+            modes="run, debug"
+            name="PyGhidra Headless"
+            type="PyGhidraHeadlessLaunchConfigurationType">
+      </launchDelegate>
    </extension>
    <extension
          point="org.eclipse.debug.ui.launchConfigurationTabGroups">
@@ -422,6 +456,18 @@
             description="Run and debug Ghidra modules and scripts in headless mode"
             id="GhidraHeadlessLaunchConfigurationTabGroup"
             type="GhidraHeadlessLaunchConfigurationType">
+      </launchConfigurationTabGroup>
+      <launchConfigurationTabGroup
+            class="ghidradev.ghidraprojectcreator.launchers.PyGhidraLaunchTabGroup"
+            description="Run and debug PyGhidra modules and scripts"
+            id="PyGhidraGuiLaunchConfigurationTabGroup"
+            type="PyGhidraGuiLaunchConfigurationType">
+      </launchConfigurationTabGroup>
+      <launchConfigurationTabGroup
+            class="ghidradev.ghidraprojectcreator.launchers.PyGhidraLaunchTabGroup"
+            description="Run and debug PyGhidra modules and scripts in headless mode"
+            id="PyGhidraHeadlessLaunchConfigurationTabGroup"
+            type="PyGhidraHeadlessLaunchConfigurationType">
       </launchConfigurationTabGroup>
    </extension>
    <extension
@@ -474,6 +520,54 @@
             </enablement>
          </contextualLaunch>
       </shortcut>
+      <shortcut
+            class="ghidradev.ghidraprojectcreator.launchers.PyGhidraGuiLaunchShortcut"
+            icon="icons/python.png"
+            id="PyGhidraGuiLaunchShortcut"
+            label="PyGhidra"
+            modes="run, debug">
+         <contextualLaunch>
+            <enablement>
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate
+                        ifEmpty="false">
+                     <test
+                           property="ghidradev.ghidraprojectcreator.testers.isPyGhidraProject"
+                           value="true">
+                     </test>
+                  </iterate>
+               </with>
+            </enablement>
+         </contextualLaunch>
+      </shortcut>
+      <shortcut
+            class="ghidradev.ghidraprojectcreator.launchers.PyGhidraHeadlessLaunchShortcut"
+            icon="icons/python_bw.png"
+            id="PyGhidraHeadlessLaunchShortcut"
+            label="PyGhidra Headless"
+            modes="run, debug">
+         <contextualLaunch>
+            <enablement>
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate
+                        ifEmpty="false">
+                     <test
+                           property="ghidradev.ghidraprojectcreator.testers.isPyGhidraProject"
+                           value="true">
+                     </test>
+                  </iterate>
+               </with>
+            </enablement>
+         </contextualLaunch>
+      </shortcut>
    </extension>
    <extension
          point="org.eclipse.core.expressions.propertyTesters">
@@ -503,6 +597,13 @@
             id="GhidraModuleProjectPropertyTester"
             namespace="ghidradev.ghidraprojectcreator.testers"
             properties="isGhidraModuleProject"
+            type="java.lang.Object">
+      </propertyTester>
+      <propertyTester
+            class="ghidradev.ghidraprojectcreator.testers.PyGhidraProjectPropertyTester"
+            id="PyGhidraProjectPropertyTester"
+            namespace="ghidradev.ghidraprojectcreator.testers"
+            properties="isPyGhidraProject"
             type="java.lang.Object">
       </propertyTester>
    </extension>

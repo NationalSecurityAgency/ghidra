@@ -18,6 +18,7 @@ package ghidra.graph.viewer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -101,7 +102,7 @@ public class VisualGraphView<V extends VisualVertex,
 		return result.get();
 	};
 
-	private Optional<GraphSatelliteListener> clientSatelliteListener = Optional.empty();
+	private List<GraphSatelliteListener> satelliteListeners = new ArrayList<>();
 
 	// this internal listener is the way we manage keeping our state in sync with the
 	// graph component, as well as how we notify the client listener
@@ -110,7 +111,7 @@ public class VisualGraphView<V extends VisualVertex,
 		// keep our internal state in-sync
 		showSatellite = visible;
 		satelliteDocked = docked;
-		clientSatelliteListener.ifPresent(l -> l.satelliteVisibilityChanged(docked, visible));
+		satelliteListeners.forEach(l -> l.satelliteVisibilityChanged(docked, visible));
 	};
 
 	private boolean satelliteDocked = true;
@@ -186,8 +187,10 @@ public class VisualGraphView<V extends VisualVertex,
 		installGraphViewer();
 	}
 
-	public void setSatelliteListener(GraphSatelliteListener l) {
-		clientSatelliteListener = Optional.ofNullable(l);
+	public void addSatelliteListener(GraphSatelliteListener l) {
+		if (l != null) {
+			satelliteListeners.add(l);
+		}
 	}
 
 	public void setVertexFocusListener(VertexFocusListener<V> l) {
@@ -454,8 +457,12 @@ public class VisualGraphView<V extends VisualVertex,
 		}
 	}
 
-	public boolean arePopupsEnabled() {
+	public boolean arePopupsVisible() {
 		return showPopups;
+	}
+
+	public boolean arePopupsEnabled() {
+		return arePopupsVisible();
 	}
 
 	public JComponent getUndockedSatelliteComponent() {

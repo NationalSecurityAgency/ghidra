@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,17 +19,16 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.function.Predicate;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.coff.*;
 import ghidra.app.util.bin.format.coff.archive.CoffArchiveHeader;
 import ghidra.app.util.bin.format.coff.archive.CoffArchiveMemberHeader;
-import ghidra.app.util.importer.*;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.ProgramLoader;
 import ghidra.app.util.opinion.*;
 import ghidra.framework.model.DomainFolder;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.program.model.lang.LanguageDescription;
 import ghidra.program.model.listing.Program;
@@ -39,8 +38,6 @@ import ghidra.util.task.CancelOnlyWrappingTaskMonitor;
 import ghidra.util.task.TaskMonitor;
 
 public class ImportMSLibs extends GhidraScript {
-	final static Predicate<Loader> LOADER_FILTER = new SingleLoaderFilter(MSCoffLoader.class);
-	final static LoadSpecChooser LOADSPEC_CHOOSER = new CsHintLoadSpecChooser("windows");
 
 	@Override
 	protected void run() throws Exception {
@@ -103,31 +100,31 @@ public class ImportMSLibs extends GhidraScript {
 						if (CoffMachineType.isMachineTypeDefined(header.getMagic())) {
 							String[] splits = splitPreferredName(preferredName);
 
-							LoadResults<? extends DomainObject> loadResults =
-								AutoImporter.importFresh(
-									coffProvider,
-									state.getProject(),
-									root.getPathname(),
-									this,
-									log,
-									new CancelOnlyWrappingTaskMonitor(monitor),
-									LOADER_FILTER,
-									LOADSPEC_CHOOSER,
-									mangleNameBecauseDomainFoldersAreSoRetro(splits[splits.length - 1]),
-									OptionChooser.DEFAULT_OPTIONS);
-
-							try {
-								for (Loaded<? extends DomainObject> loaded : loadResults) {
-									if (loaded.getDomainObject() instanceof Program program) {
-										loaded.save(state.getProject(), log, monitor);
+							try (LoadResults<Program> loadResults =
+								ProgramLoader.builder()
+										.source(coffProvider)
+										.project(state.getProject())
+										.projectFolderPath(root.getPathname())
+										.loaders(MSCoffLoader.class)
+										.compiler("windows")
+										.name(
+											mangleNameBecauseDomainFoldersAreSoRetro(
+												splits[splits.length - 1]))
+										.log(log)
+										.monitor(new CancelOnlyWrappingTaskMonitor(monitor))
+										.load()) {
+								for (Loaded<Program> loaded : loadResults) {
+									Program program = loaded.getDomainObject(this);
+									try {
+										loaded.save(monitor);
 										DomainFolder destination =
 											establishFolder(root, file, program, isDebug, splits);
 										program.getDomainFile().moveTo(destination);
 									}
+									finally {
+										program.release(this);
+									}
 								}
-							}
-							finally {
-								loadResults.release(this);
 							}
 						}
 					}

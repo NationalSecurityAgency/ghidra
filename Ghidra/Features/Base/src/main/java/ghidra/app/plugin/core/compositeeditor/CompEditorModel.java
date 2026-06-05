@@ -21,7 +21,7 @@ import javax.help.UnsupportedOperationException;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.*;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.InsufficientBytesException;
@@ -29,7 +29,7 @@ import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public abstract class CompEditorModel extends CompositeEditorModel {
+public abstract class CompEditorModel<T extends Composite> extends CompositeEditorModel<T> {
 
 	private volatile boolean consideringReplacedDataType = false;
 
@@ -37,7 +37,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * Creates a model for editing a composite data type.
 	 * @param provider the provider that is using this model for editing.
 	 */
-	CompEditorModel(CompositeEditorProvider provider) {
+	CompEditorModel(CompositeEditorProvider<T, ? extends CompEditorModel<T>> provider) {
 		super(provider);
 	}
 
@@ -54,7 +54,19 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * @param dataType the composite data type being edited.
 	 */
 	@Override
-	public void load(Composite dataType) {
+	public void load(T dataType) {
+
+		if (dataType.isDeleted()) {
+			// This can occur when mayny events get lumped together and a change event triggers
+			// a delayed reload prior to datatype removal and its event
+			if (dataType == originalComposite) {
+				// Re-route to dataTypeRemoved callback after restoring listener.
+				originalDTM.addDataTypeManagerListener(this);
+				dataTypeRemoved(originalDTM, originalDataTypePath);
+			}
+			return;
+		}
+
 		super.load(dataType);
 		fixSelection();
 		selectionChanged();
@@ -75,8 +87,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			endFieldEditing();
 		}
 
-		FieldSelection saveSelection = new FieldSelection(selection);
-		Composite originalDt = getOriginalComposite();
+		T originalDt = getOriginalComposite();
 		if (originalDt == null || originalDTM == null) {
 			throw new IllegalStateException(
 				"Can't apply edits without a data type or data type manager.");
@@ -94,6 +105,9 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 		int transactionID = originalDTM.startTransaction(action + " " + getTypeName());
 		try {
+			// Disable change listener - will be re-enable during re-load
+			originalDTM.removeDataTypeManagerListener(this);
+
 			if (originalDtExists) {
 				// Update the original structure.
 				if (renamed) {
@@ -115,17 +129,18 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 				originalDt.setDescription(getDescription());
 				replaceOriginalComponents();
 				updateOriginalComponentSettings(viewComposite, originalDt);
-				load(originalDt);
+				originalDTM.flushEvents();
+				Swing.runLater(() -> load(originalDt));
 			}
 			else {
-				Composite dt = (Composite) originalDTM.resolve(viewComposite, null);
-				load(dt);
+				@SuppressWarnings("unchecked")
+				T dt = (T) originalDTM.resolve(viewComposite, null);
+				originalDTM.flushEvents();
+				Swing.runLater(() -> load(dt));
 			}
 			return true;
 		}
 		finally {
-			provider.updateTitle();
-			setSelection(saveSelection);
 			originalDTM.endTransaction(transactionID, true);
 		}
 	}
@@ -247,17 +262,17 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		return true;
 	}
 
-	@Override
-	public DataTypeInstance validateComponentDataType(int rowIndex, String dtString)
-			throws UsrException {
-		dtString = DataTypeHelper.stripWhiteSpace(dtString);
-		if ((dtString == null) || (dtString.length() < 1)) {
-			if (rowIndex == getNumComponents()) {
-				return null;
-			}
-		}
-		return super.validateComponentDataType(rowIndex, dtString);
-	}
+//	@Override
+//	public DataTypeInstance validateComponentDataType(int rowIndex, String dtString)
+//			throws UsrException {
+//		dtString = DataTypeHelper.stripWhiteSpace(dtString);
+//		if ((dtString == null) || (dtString.length() < 1)) {
+//			if (rowIndex == getNumComponents()) {
+//				return null;
+//			}
+//		}
+//		return super.validateComponentDataType(rowIndex, dtString);
+//	}
 
 	@Override
 	public boolean isAddAllowed(DataType dataType) {
@@ -376,7 +391,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		int componentOrdinal = convertRowToOrdinal(rowIndex);
 		delete(componentOrdinal);
 		fixSelection();
-		componentEdited();
 		selectionChanged();
 	}
 
@@ -411,8 +425,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 		viewDTM.withTransaction("Delete Components", () -> viewComposite.delete(ordinals));
 		fixSelection();
-		componentEdited();
-		notifyCompositeChanged();
 		selectionChanged();
 	}
 
@@ -427,12 +439,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 		int[] selectedComponents = getSelectedComponentRows();
 		int firstRowIndex = !selection.isEmpty() ? selectedComponents[0] : getRowCount();
-		try {
-			delete(selectedComponents);
-		}
-		finally {
-			componentEdited();
-		}
+		delete(selectedComponents);
 		selection.addRange(firstRowIndex, firstRowIndex + 1);
 		fixSelection();
 		selectionChanged();
@@ -532,7 +539,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 		DataTypeComponent dtc = insert(rowIndex, datatype, length, null, null);
 		fixSelection();
-		componentEdited();
 		selectionChanged();
 		return dtc;
 	}
@@ -562,7 +568,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		checkIsAllowableDataType(dataType);
 		insertMultiple(rowIndex, dataType, dtLen, multiple, monitor);
 		fixSelection();
-		componentEdited();
 		selectionChanged();
 	}
 
@@ -601,7 +606,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		});
 
 		fixSelection();
-		componentEdited();
+//		componentEdited();
 		selectionChanged();
 		return dtc;
 	}
@@ -637,7 +642,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 
 		fixSelection();
-		componentEdited();
+		//componentEdited();
 		selectionChanged();
 		return dtc;
 	}
@@ -753,7 +758,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			replace(rowIndex, datatype, newCompSize, oldDtc.getFieldName(), oldDtc.getComment());
 
 		fixSelection();
-		componentEdited();
 		selectionChanged();
 		return dtc;
 	}
@@ -798,15 +802,10 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		DataTypeComponent dtc = getComponent(startRowIndex);
 
 		// Set the field name and comment the same as before
-		try {
-			dtc.setFieldName(oldDtc.getFieldName());
-		}
-		catch (DuplicateNameException e) {
-			Msg.showError(this, null, "Unexcected Exception", "Exception applying field name", e);
-		}
+		dtc.setFieldName(oldDtc.getFieldName());
 		dtc.setComment(oldDtc.getComment());
+
 		fixSelection();
-		componentEdited();
 		selectionChanged();
 		return dtc;
 	}
@@ -905,18 +904,18 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	protected abstract void replaceOriginalComponents();
 
 	@Override
-	protected void checkIsAllowableDataType(DataType datatype) throws InvalidDataTypeException {
+	protected void checkIsAllowableDataType(DataType dataType) throws InvalidDataTypeException {
 
-		super.checkIsAllowableDataType(datatype);
+		super.checkIsAllowableDataType(dataType);
 
 		// Verify that we aren't adding this structure or anything that it is
 		// part of to this editable structure.
-		if (datatype.equals(viewComposite)) {
-			String msg = "Data type \"" + datatype.getDisplayName() + "\" can't contain itself.";
+		if (dataType.equals(viewComposite)) {
+			String msg = "Data type \"" + dataType.getDisplayName() + "\" can't contain itself.";
 			throw new InvalidDataTypeException(msg);
 		}
-		else if (DataTypeUtilities.isSecondPartOfFirst(datatype, viewComposite)) {
-			String msg = "Data type \"" + datatype.getDisplayName() + "\" has \"" +
+		else if (DataTypeUtilities.isSecondPartOfFirst(dataType, viewComposite)) {
+			String msg = "Data type \"" + dataType.getDisplayName() + "\" has \"" +
 				viewComposite.getDisplayName() + "\" within it.";
 			throw new InvalidDataTypeException(msg);
 		}
@@ -936,16 +935,18 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			endRowIndex <= 0 || endRowIndex >= numComps) {
 			return false;
 		}
-		DataTypeComponent comp = getComponent(startRowIndex - 1);
-		deleteComponent(startRowIndex - 1);
-		try {
-			insert(endRowIndex, comp.getDataType(), comp.getLength(), comp.getFieldName(),
-				comp.getComment());
-		}
-		catch (InvalidDataTypeException e) {
-			return false;
-		}
-		return true;
+		return viewDTM.withTransaction("Shift Up", () -> {
+			DataTypeComponent comp = getComponent(startRowIndex - 1);
+			deleteComponent(startRowIndex - 1);
+			try {
+				insert(endRowIndex, comp.getDataType(), comp.getLength(), comp.getFieldName(),
+					comp.getComment());
+			}
+			catch (InvalidDataTypeException e) {
+				return false;
+			}
+			return true;
+		});
 	}
 
 	/**
@@ -962,16 +963,18 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			endRowIndex < 0 || endRowIndex >= numComps - 1) {
 			return false;
 		}
-		DataTypeComponent comp = getComponent(endRowIndex + 1);
-		deleteComponent(endRowIndex + 1);
-		try {
-			insert(startRowIndex, comp.getDataType(), comp.getLength(), comp.getFieldName(),
-				comp.getComment());
-		}
-		catch (InvalidDataTypeException e) {
-			return false;
-		}
-		return true;
+		return viewDTM.withTransaction("Shift Down", () -> {
+			DataTypeComponent comp = getComponent(endRowIndex + 1);
+			deleteComponent(endRowIndex + 1);
+			try {
+				insert(startRowIndex, comp.getDataType(), comp.getLength(), comp.getFieldName(),
+					comp.getComment());
+			}
+			catch (InvalidDataTypeException e) {
+				return false;
+			}
+			return true;
+		});
 	}
 
 	@Override
@@ -990,7 +993,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		int newIndex = startIndex - 1;
 		moved = shiftComponentsUp(startIndex, endIndex);
 		if (moved) {
-			componentEdited();
 			FieldSelection tmpFieldSelection = new FieldSelection();
 			tmpFieldSelection.addRange(newIndex, newIndex + numSelected);
 			setSelection(tmpFieldSelection);
@@ -1014,7 +1016,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		int newIndex = startIndex + 1;
 		moved = shiftComponentsDown(startIndex, endIndex);
 		if (moved) {
-			componentEdited();
 			FieldSelection tmpFieldSelection = new FieldSelection();
 			tmpFieldSelection.addRange(newIndex, newIndex + numSelected);
 			setSelection(tmpFieldSelection);
@@ -1034,7 +1035,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		// Adjust the selection since we added some components. Select last component added.
 		setSelection(new int[] { rowIndex + multiple });
 
-		componentEdited();
 		lastNumDuplicates = multiple;
 	}
 
@@ -1066,6 +1066,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 				replace(rowIndex, array, array.getLength()); // Can throw UsrException.
 			}
 		});
+		componentEdited();
 	}
 
 	/**
@@ -1138,9 +1139,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	public void setValueAt(Object aValue, int rowIndex, int modelColumnIndex) {
 		try {
 			settingValueAt = true;
-			if (fieldEdited(aValue, rowIndex, modelColumnIndex)) {
-				componentEdited();
-			}
+			fieldEdited(aValue, rowIndex, modelColumnIndex);
 		}
 		finally {
 			settingValueAt = false;
@@ -1163,31 +1162,31 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
-	public void validateComponentName(int rowIndex, String name) throws UsrException {
-		if (nameExistsElsewhere(name, rowIndex)) {
-			throw new InvalidNameException("Name \"" + name + "\" already exists.");
-		}
-	}
-
-	@Override
 	public boolean setComponentName(int rowIndex, String name) throws InvalidNameException {
 
-		String oldName = getComponent(rowIndex).getFieldName();
-		if (Objects.equals(oldName, name)) {
+		name = InternalDataTypeComponent.cleanupFieldName(name); // will trim name if needed
+		DataTypeComponent component = getComponent(rowIndex);
+		if (Objects.equals(name, component.getDefaultFieldName())) {
+			name = null;
+		}
+		if (Objects.equals(name, component.getFieldName())) {
 			return false;
 		}
 
-		if (nameExistsElsewhere(name, rowIndex)) {
-			throw new InvalidNameException("Name \"" + name + "\" already exists.");
+		if (viewComposite.findComponent(name) != null) {
+			// Warn user and confirm rename when duplicate name is used
+			if (OptionDialog.OPTION_ONE != OptionDialog.showOptionDialog(null,
+				"Duplicate Field Name",
+				"Duplicate field name. Proceed with rename?",
+				"Rename!", OptionDialog.WARNING_MESSAGE)) {
+				return false;
+			}
 		}
-		return viewDTM.withTransaction("Set Component Name", () -> {
-			try {
-				getComponent(rowIndex).setFieldName(name); // setFieldName handles trimming
-				return true;
-			}
-			catch (DuplicateNameException exc) {
-				throw new InvalidNameException(exc.getMessage());
-			}
+
+		String newName = name;
+		return viewDTM.withTransaction("Set Field Name", () -> {
+			getComponent(rowIndex).setFieldName(newName);
+			return true;
 		});
 	}
 
@@ -1279,7 +1278,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			return;
 		}
 
-		Composite composite = getOriginalComposite();
+		T composite = getOriginalComposite();
 		boolean reload = true;
 		if (hasChanges || !viewComposite.isEquivalent(composite)) {
 			hasChanges = true;
@@ -1298,7 +1297,10 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			}
 		}
 		if (reload) {
-			load(composite); // reload the structure
+			// reload the structure
+			originalDTM.removeDataTypeManagerListener(this);
+			originalDTM.flushEvents();
+			Swing.runLater(() -> load(composite));
 			setStatus("Editor reloaded");
 			return;
 		}
@@ -1318,28 +1320,45 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	public void dataTypeRemoved(DataTypeManager dtm, DataTypePath path) {
 
 		if (dtm != originalDTM) {
-			return; // Different DTM than the one for this data type.
+			throw new AssertException("Listener only supports original DTM");
 		}
 
-		DataType dataType = viewDTM.getDataType(path.getCategoryPath(), path.getDataTypeName());
-		if (dataType == null) {
+		if (!isLoaded()) {
 			return;
 		}
 
 		if (!path.equals(originalDataTypePath)) {
-			DataType dt = viewDTM.getDataType(path);
-			if (dt != null) {
-				if (hasSubDt(viewComposite, path)) {
-					String msg = "Removed sub-component data type \"" + path;
-					setStatus(msg, true);
-				}
-				viewDTM.withTransaction("Removed Dependency", () -> {
-					viewDTM.clearUndoOnChange();
-					viewDTM.remove(dt, TaskMonitor.DUMMY);
-				});
-				fireTableDataChanged();
-				componentDataChanged();
+
+			DataType dataType = viewDTM.getDataType(path);
+			if (dataType == null) {
+				return;
 			}
+
+			if (!viewDTM.isViewDataTypeFromOriginalDTM(dataType)) {
+				return;
+			}
+
+			// Preserve pointers to edited composite
+			DataType basePtrDt = dataType;
+			if (basePtrDt instanceof Pointer ptr) {
+				basePtrDt = ptr.getDataType();
+			}
+			if (basePtrDt == viewComposite) {
+				// ignore removal of pointers to edited composite so that they persist if
+				// reloadFromView is used.
+				return;
+			}
+
+			if (hasSubDt(viewComposite, path)) {
+				String msg = "Removed sub-component data type \"" + path + "\"";
+				setStatus(msg, true);
+			}
+			viewDTM.withTransaction("Removed Dependency", () -> {
+				viewDTM.clearUndoOnChange();
+				viewDTM.remove(dataType);
+			});
+			fireTableDataChanged();
+			componentDataChanged();
 			return;
 		}
 
@@ -1365,6 +1384,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			}
 
 			reloadFromView();
+
+			setStatus("The original " + getTypeName() + " has been deleted");
 		}
 		finally {
 			consideringReplacedDataType = false;
@@ -1373,108 +1394,90 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 	@Override
 	public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
-
-		if (dtm != originalDTM) {
-			return; // Different DTM than the one for this data type.
-		}
-
-		if (!isLoaded()) {
-			return;
-		}
-
-		if (oldPath.getDataTypeName().equals(newPath.getDataTypeName())) {
-			return;
-		}
-
-		String newName = newPath.getDataTypeName();
-		String oldName = oldPath.getDataTypeName();
-
-		// Does the old name match our original name.
-		// Check originalCompositeId to ensure original type is managed
-		if (originalCompositeId != DataTypeManager.NULL_DATATYPE_ID &&
-			oldPath.equals(originalDataTypePath)) {
-			originalDataTypePath = newPath;
-			try {
-				if (viewComposite.getName().equals(oldName)) {
-					setName(newName);
-				}
-			}
-			catch (InvalidNameException | DuplicateNameException e) {
-				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-			}
-			return;
-		}
-
-		// Check for managed datatype changing
-		DataType dt = viewDTM.getDataType(oldPath);
-		if (dt == null) {
-			return;
-		}
-
-		viewDTM.withTransaction("Renamed Dependency", () -> {
-			viewDTM.clearUndoOnChange();
-			try {
-				dt.setName(newPath.getDataTypeName());
-			}
-			catch (InvalidNameException | DuplicateNameException e) {
-				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-			}
-		});
-
-		fireTableDataChanged();
-		componentDataChanged();
+		dataTypeMoved(dtm, oldPath, newPath);
 	}
 
 	@Override
 	public void dataTypeMoved(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
 
 		if (dtm != originalDTM) {
-			return; // Different DTM than the one for this data type.
+			throw new AssertException("Listener only supports original DTM");
 		}
 
-		DataType dt = viewDTM.getDataType(oldPath);
-		if (dt == null) {
+		if (!isLoaded()) {
 			return;
 		}
 
-		try {
-			viewDTM.withTransaction("Moved " + oldPath, () -> {
-				viewDTM.clearUndoOnChange();
-				Category newDtCat = viewDTM.createCategory(newPath.getCategoryPath());
-				newDtCat.moveDataType(dt, null);
-			});
-		}
-		catch (DataTypeDependencyException e) {
-			throw new AssertException(e);
+		if (oldPath.equals(newPath)) {
+			return;
 		}
 
-		if (originalDataTypePath.getDataTypeName().equals(newPath.getDataTypeName()) &&
-			originalDataTypePath.getCategoryPath().equals(oldPath.getCategoryPath())) {
-			originalDataTypePath = newPath;
+		String newName = newPath.getDataTypeName();
+		String oldName = oldPath.getDataTypeName();
+
+		CategoryPath newCategoryPath = newPath.getCategoryPath();
+		CategoryPath oldCategoryPath = oldPath.getCategoryPath();
+
+		// Does the old name match our original name.
+		// Check originalCompositeId to ensure original type is managed
+		if (originalCompositeId != DataTypeManager.NULL_DATATYPE_ID &&
+			oldPath.equals(originalDataTypePath)) {
+
+			viewDTM.withTransaction("Name Changed", () -> {
+				viewDTM.clearUndoOnChange();
+				originalDataTypePath = newPath;
+				try {
+					if (viewComposite.getName().equals(oldName)) {
+						setName(newName);
+					}
+					if (!newCategoryPath.equals(oldCategoryPath)) {
+						viewComposite.setCategoryPath(newCategoryPath);
+					}
+				}
+				catch (InvalidNameException | DuplicateNameException e) {
+					Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+				}
+			});
 			compositeInfoChanged();
 		}
 		else {
-			fireTableDataChanged();
-			componentDataChanged();
+			// Check for managed datatype changing
+			DataType originalDt = originalDTM.getDataType(newPath);
+			if (!(originalDt instanceof DbObject)) {
+				return;
+			}
+			DataType dt = viewDTM.findMyDataTypeFromOriginalID(originalDTM.getID(originalDt));
+			if (dt == null) {
+				return;
+			}
+			viewDTM.withTransaction("Renamed Dependency", () -> {
+				viewDTM.clearUndoOnChange();
+				try {
+					dt.setName(newName);
+					if (!newCategoryPath.equals(oldCategoryPath)) {
+						dt.setCategoryPath(newCategoryPath);
+					}
+				}
+				catch (InvalidNameException | DuplicateNameException e) {
+					Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+				}
+			});
 		}
+
+		fireTableDataChanged();
+		componentDataChanged();
 	}
 
 	@Override
 	public void dataTypeChanged(DataTypeManager dtm, DataTypePath path) {
 		try {
 
+			if (dtm != originalDTM) {
+				throw new AssertException("Listener only supports original DTM");
+			}
+
 			if (!isLoaded()) {
 				return;
-			}
-
-			if (dtm instanceof CompositeViewerDataTypeManager) {
-				// required to detect settings changes
-				componentEdited();
-				return;
-			}
-
-			if (dtm != originalDTM) {
-				return; // Different DTM than the one for this data type.
 			}
 
 			// If we don't currently have any modifications that need applying and
@@ -1503,14 +1506,18 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 						int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(
 							provider.getComponent(), title, message);
 						if (response == OptionDialog.OPTION_ONE) {
-							load(getOriginalComposite());
+							originalDTM.removeDataTypeManagerListener(this);
+							originalDTM.flushEvents();
+							Swing.runLater(() -> load(getOriginalComposite()));
 						}
 					}
 					else {
 						Composite changedComposite = getOriginalComposite();
 						if ((changedComposite != null) &&
 							!viewComposite.isEquivalent(changedComposite)) {
-							load(getOriginalComposite());
+							originalDTM.removeDataTypeManagerListener(this);
+							originalDTM.flushEvents();
+							Swing.runLater(() -> load(getOriginalComposite()));
 							setStatus(viewComposite.getPathName() + " changed outside the editor.",
 								false);
 						}
@@ -1525,12 +1532,11 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 				// undo transactions for the viewDTM.  An editor save could generate quite a few with
 				// potentially many types getting changed by one change.
 				DataType changedDt = originalDTM.getDataType(path);
-				if (!(changedDt instanceof DatabaseObject)) {
-					// NOTE: viewDTM only maps view-to-original IDs for DataTypeDB
+				if (!(changedDt instanceof DbObject)) {
 					return;
 				}
-				long originalId = originalDTM.getID(changedDt);
-				DataType viewDt = viewDTM.findMyDataTypeFromOriginalID(originalId);
+				DataType viewDt =
+					viewDTM.findMyDataTypeFromOriginalID(originalDTM.getID(changedDt));
 				if (viewDt == null) {
 					return;
 				}
@@ -1561,7 +1567,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			DataType newDataType) {
 
 		if (dtm != originalDTM) {
-			return; // Different DTM than the one for this data type.
+			throw new AssertException("Listener only supports original DTM");
 		}
 
 		if (!isLoaded()) {
@@ -1571,30 +1577,32 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		if (!oldPath.equals(originalDataTypePath)) {
 			// Check for type which may be referenced by viewComposite
 			DataType dt = viewDTM.getDataType(oldPath);
-			if (dt != null) {
-				if (hasSubDt(viewComposite, oldPath)) {
-					String msg = "Replaced data type \"" + oldPath +
-						"\", which is a sub-component of \"" + getOriginalDataTypeName() + "\".";
-					setStatus(msg, true);
-				}
-				// NOTE: depending upon event sequence and handling a
-				// re-load may have occurred and replacement may be unnecessary
-				try {
-					viewDTM.withTransaction("Replaced Dependency", () -> {
-						viewDTM.clearUndoOnChange();
-						viewDTM.replaceDataType(dt, newDataType, true);
-					});
-				}
-				catch (DataTypeDependencyException e) {
-					throw new AssertException(e);
-				}
-
-				// Clear undo/redo stack to avoid inconsistency with originalDTM
-				viewDTM.clearUndo();
-
-				fireTableDataChanged();
-				componentDataChanged();
+			if (dt == null || !viewDTM.isViewDataTypeFromOriginalDTM(dt)) {
+				return;
 			}
+
+			if (hasSubDt(viewComposite, oldPath)) {
+				String msg = "Replaced data type \"" + oldPath +
+					"\", which is a sub-component of \"" + getOriginalDataTypeName() + "\".";
+				setStatus(msg, true);
+			}
+			// NOTE: depending upon event sequence and handling a
+			// re-load may have occurred and replacement may be unnecessary
+			try {
+				viewDTM.withTransaction("Replaced Dependency", () -> {
+					viewDTM.clearUndoOnChange();
+					viewDTM.replaceDataType(dt, newDataType, true);
+				});
+			}
+			catch (DataTypeDependencyException e) {
+				throw new AssertException(e);
+			}
+
+			// Clear undo/redo stack to avoid inconsistency with originalDTM
+			viewDTM.clearUndo();
+
+			fireTableDataChanged();
+			componentDataChanged();
 			return;
 		}
 
@@ -1629,15 +1637,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	/**
-	 * Removes the indicated data type from any components to prevent a cycle
-	 * being created by this component being updated. Structures will actually
-	 * clear any components containing the indicated data type.
-	 * Unions will delete their components that contain the data type.
-	 * @param comp the composite data type that contains the data type being edited.
-	 */
-	abstract void removeDtFromComponents(Composite comp);
-
 //==================================================================================================
 // End of Override CompositeViewerModel CategoryChangeListener methods
 //==================================================================================================
@@ -1669,15 +1668,16 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 		DataTypeComponent dtc = getComponent(rowIndex);
 		DataType dt = dtc.getDataType();
-		int dtcLen = dt.getLength();
-		if (dtcLen < 0) {
-			dtcLen = dtc.getLength();
-		}
-		int maxDups = (Integer.MAX_VALUE - getLength()) / dtcLen;
-		if (dt != DataType.DEFAULT && isShowingUndefinedBytes() && !isAtEnd(rowIndex)) {
-			// If editModel is showing undefined bytes (non-packed)
-			// then constrain by number of undefined bytes that follow.
-			maxDups = getNumUndefinedBytesAfter(dtc) / dtcLen;
+		int dtcLen = dtc.getLength();
+
+		int maxDups = (Integer.MAX_VALUE - getLength());
+		if (dtcLen > 0) {
+			maxDups /= dtcLen;
+			if (dt != DataType.DEFAULT && isShowingUndefinedBytes() && !isAtEnd(rowIndex)) {
+				// If editModel is showing undefined bytes (non-packed)
+				// then constrain by number of undefined bytes that follow.
+				maxDups = getNumUndefinedBytesAfter(dtc) / dtcLen;
+			}
 		}
 		return maxDups;
 	}
@@ -1725,15 +1725,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	@Override
 	public int getLastNumDuplicates() {
 		return lastNumDuplicates;
-	}
-
-	/**
-	 * Called whenever the data structure's modification state changes.
-	 */
-	void componentEdited() {
-		updateAndCheckChangeState(); // Update the composite's change state information.
-		fireTableDataChanged();
-		componentDataChanged();
 	}
 
 	protected int convertRowToOrdinal(int rowIndex) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -115,8 +115,9 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		intoProject(program);
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			tb.trace.getMemoryManager()
-					.addRegion(".text", Lifespan.nowOn(0),
+					.addRegion("Memory[.text]", Lifespan.nowOn(0),
 						tb.range(0xdeadbeefL, 0xdeadbeefL + 0xff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}

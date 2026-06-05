@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.program.model.data.*;
  * Other CompositeEditorActions can be added for it to manage.
  */
 public class CompositeEditorActionManager {
-	private CompositeEditorProvider provider;
+	private CompositeEditorProvider<?, ?> provider;
 	private ArrayList<CompositeEditorTableAction> editorActions =
 		new ArrayList<CompositeEditorTableAction>();
 	private ArrayList<CompositeEditorTableAction> favoritesActions =
@@ -45,7 +45,7 @@ public class CompositeEditorActionManager {
 	 * @param provider the provider that owns this composite editor action manager
 	 * favorites and cycle groups.
 	 */
-	public CompositeEditorActionManager(CompositeEditorProvider provider) {
+	public CompositeEditorActionManager(CompositeEditorProvider<?, ?> provider) {
 		this.provider = provider;
 		this.dataTypeMgrService = provider.dtmService;
 		adapter = new DataTypeManagerChangeListenerAdapter() {

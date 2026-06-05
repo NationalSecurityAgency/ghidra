@@ -32,16 +32,19 @@ import docking.event.mouse.GMouseListenerAdapter;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeTask;
 import docking.widgets.tree.support.GTreeSelectionEvent;
 import docking.widgets.tree.support.GTreeSelectionListener;
-import ghidra.framework.main.datatree.DialogProjectTreeContext;
-import ghidra.framework.main.datatree.ProjectDataTreePanel;
+import ghidra.framework.main.datatree.*;
 import ghidra.framework.main.projectdata.actions.*;
 import ghidra.framework.model.*;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.layout.PairLayout;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Base dialog for choosing DomainFiles. Provides and manages the base data tree panel. Subclasses
@@ -68,7 +71,6 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 	private DataTreeDialogType type;
 	private Component parent;
 
-	private String searchString;
 	private boolean cancelled = false;
 
 	private ProjectDataExpandAction<DialogProjectTreeContext> expandAction;
@@ -164,11 +166,7 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 			return super.getActionContext(event);
 		}
 
-		ActionContext actionContext = treePanel.getActionContext(null, event);
-		if (actionContext instanceof DialogActionContext dac) {
-			dac.setDialogComponentProvider(this);
-		}
-		return actionContext;
+		return treePanel.getActionContext(null, event);
 	}
 
 	public void show() {
@@ -183,13 +181,24 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 		show();
 	}
 
+	public GTree getTree() {
+		return treePanel.getDataTree();
+	}
+
 	public String getNameText() {
 		return nameField.getText();
 	}
 
+	public String getFolderText() {
+		return folderNameLabel.getText();
+	}
+
 	public void setNameText(String name) {
-		nameField.setText(name.trim());
-		nameField.selectAll();
+		// We need to run this code in a task since the tree may already be processing other tasks
+		// that would override this setting when they are run.  But putting this task in the queue, 
+		// we get the correct UI update ordering.
+		DataTree tree = treePanel.getDataTree();
+		tree.runTask(new SetNameTextTask(tree, name));
 	}
 
 	/**
@@ -237,75 +246,122 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 		return domainFolder;
 	}
 
-	/**
-	 * TreeSelectionListener method that is called whenever the value of the selection changes.
-	 * @param e the event that characterizes the change.
-	 */
 	@Override
 	public void valueChanged(GTreeSelectionEvent e) {
 		clearStatusText();
 
 		if (type == CHOOSE_FOLDER) {
-			domainFolder = treePanel.getSelectedDomainFolder();
-			if (domainFolder != null) {
-				DomainFolder folderParent = domainFolder.getParent();
-				if (folderParent != null) {
-					folderNameLabel.setText(folderParent.getPathname());
-				}
-				else {
-					folderNameLabel.setText("    ");
-				}
-
-				nameField.setText(domainFolder.getName());
-			}
-			else {
-				domainFile = treePanel.getSelectedDomainFile();
-				if (domainFile != null) {
-					domainFolder = domainFile.getParent();
-					DomainFolder grandParent = domainFolder.getParent();
-					if (grandParent != null) {
-						folderNameLabel.setText(grandParent.getPathname());
-					}
-					else {
-						folderNameLabel.setText("");
-					}
-
-					nameField.setText(domainFolder.getName());
-				}
-				else {
-					domainFolder = project.getProjectData().getRootFolder();
-					folderNameLabel.setText(domainFolder.getPathname());
-					nameField.setText(domainFolder.getName());
-				}
-			}
+			updateFromTreeSelectionInFolderMode();
 		}
 		else {
-			domainFile = treePanel.getSelectedDomainFile();
-			if (domainFile != null) {
-				folderNameLabel.setText(domainFile.getParent().getPathname());
-				nameField.setText(domainFile.getName());
-				domainFolder = domainFile.getParent();
-			}
-			else {
-				domainFolder = treePanel.getSelectedDomainFolder();
-				if (domainFolder == null) {
-					domainFolder = project.getProjectData().getRootFolder();
-				}
-
-				folderNameLabel.setText(domainFolder.getPathname());
-				if (nameField.isEditable()) {
-					if (nameField.getText().length() > 0) {
-						nameField.selectAll();
-					}
-				}
-				else {
-					nameField.setText("");
-				}
-			}
+			updateFromTreeSelectionInFileMode();
 		}
 
 		String text = nameField.getText();
 		setOkEnabled((text != null) && !text.isEmpty());
+	}
+
+	private void updateFromTreeSelectionInFileMode() {
+		DomainFile newFile = treePanel.getSelectedDomainFile();
+		if (isFolderLink(newFile)) {
+			updateFromFolderLink(newFile);
+			return;
+		}
+
+		// not a folder link; see if we have a new file selected
+		if (newFile != null) {
+			domainFile = newFile;
+			domainFolder = domainFile.getParent();
+			String pathname = domainFolder.getPathname();
+			folderNameLabel.setText(pathname);
+			String filename = domainFile.getName();
+			nameField.setText(filename);
+			return;
+		}
+
+		// No selected domain file
+		domainFile = null;
+		domainFolder = getSelectedFolder();
+		String pathname = domainFolder.getPathname();
+		folderNameLabel.setText(pathname);
+		updateNameFieldTextForNoFileSelected();
+	}
+
+	private void updateNameFieldTextForNoFileSelected() {
+		if (!nameField.isEditable()) {
+			nameField.setText("");
+			return;
+		}
+
+		if (nameField.getText().length() > 0) {
+			nameField.selectAll();
+		}
+	}
+
+	private void updateFromFolderLink(DomainFile newFile) {
+
+		LinkFileInfo linkInfo = newFile.getLinkInfo();
+		DomainFolder folder = newFile.getParent();
+		String filename = newFile.getName();
+
+		// Ensure we don't have a folder name conflict
+		if (folder.getFolder(filename) == null) {
+			domainFolder = linkInfo.getLinkedFolder();
+			if (domainFolder == null) {
+				domainFolder = getSelectedFolder();
+			}
+
+			domainFile = null;
+			folderNameLabel.setText(domainFolder.getPathname());
+			updateNameFieldTextForNoFileSelected();
+			return;
+		}
+
+		domainFile = newFile;
+		folderNameLabel.setText(folder.getPathname());
+		nameField.setText(filename);
+		domainFolder = folder;
+	}
+
+	private boolean isFolderLink(DomainFile file) {
+		if (file == null) {
+			return false;
+		}
+		LinkFileInfo linkInfo = file.getLinkInfo();
+		return linkInfo != null && linkInfo.isFolderLink();
+	}
+
+	private void updateFromTreeSelectionInFolderMode() {
+
+		// The tree selection has changed and we are in FOLDER mode.  Update the folder selection
+		// based on type of node selected.
+		domainFolder = getSelectedFolder();
+		DomainFolder folderParent = domainFolder.getParent();
+		if (folderParent == null) {
+			folderParent = domainFolder; // root folder; no parent
+		}
+
+		folderNameLabel.setText(folderParent.getPathname());
+		nameField.setText(domainFolder.getName());
+
+	}
+
+	/**
+	 * Returns the selected folder, or the selected file's parent or the root folder.
+	 * @return the folder
+	 */
+	private DomainFolder getSelectedFolder() {
+		DomainFolder folder = treePanel.getSelectedDomainFolder();
+		if (folder != null) {
+			return folder;
+		}
+
+		DomainFile file = treePanel.getSelectedDomainFile();
+		if (file != null) {
+			return file.getParent();
+		}
+
+		return project.getProjectData().getRootFolder();
 	}
 
 	@Override
@@ -328,13 +384,6 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 	}
 
 	/**
-	 * Select the root folder in the tree.
-	 */
-	public void selectRootDataFolder() {
-		Swing.runLater(() -> treePanel.selectRootDataFolder());
-	}
-
-	/**
 	 * Select a folder in the tree.
 	 * @param folder the folder to select
 	 */
@@ -347,7 +396,9 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 	 * @param file the file
 	 */
 	public void selectDomainFile(DomainFile file) {
-		Swing.runLater(() -> treePanel.selectDomainFile(file));
+		if (file != null) {
+			Swing.runLater(() -> treePanel.selectDomainFile(file));
+		}
 	}
 
 	@Override
@@ -369,13 +420,12 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 
 		// data tree panel must be created before the combo box
 		JPanel dataTreePanel = createDataTreePanel();
-		ProjectData pd = project.getProjectData();
-		treePanel.setProjectData(project.getName(), pd);
+
+		// this allows users to press the OK button to choose the root folder
 		treePanel.selectRootDataFolder();
 
 		if (type == OPEN) {
 			JPanel comboPanel = createComboBoxPanel();
-
 			panel.add(comboPanel, BorderLayout.NORTH);
 			populateProjectModel();
 		}
@@ -578,23 +628,9 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 	}
 
 	public void setSearchText(String s) {
-		if (searchString != null) {
+		if (s != null) {
 			treePanel.findAndSelect(s);
 		}
-	}
-
-	protected static DomainFileFilter getDefaultFilter(DataTreeDialogType type) {
-		if (type == CHOOSE_FOLDER || type == OPEN) {
-			// return filter which forces folder selection and allow navigation into linked-folders
-			return new DomainFileFilter() {
-
-				@Override
-				public boolean accept(DomainFile df) {
-					return true; // show all files (legacy behavior)
-				}
-			};
-		}
-		return null;
 	}
 
 	private class FieldKeyListener extends KeyAdapter {
@@ -604,4 +640,21 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 		}
 	}
 
+	private class SetNameTextTask extends GTreeTask {
+
+		private String text;
+
+		SetNameTextTask(GTree gTree, String text) {
+			super(gTree);
+			this.text = text;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+			runOnSwingThread(() -> {
+				nameField.setText(text.trim());
+				nameField.selectAll();
+			});
+		}
+	}
 }

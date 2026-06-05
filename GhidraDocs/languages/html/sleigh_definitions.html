@@ -86,7 +86,7 @@ and <span class="emphasis"><em>attributes</em></span> looks like zero or more of
 following lines:
 </p>
 <div class="informalexample"><pre class="programlisting">
-type=(ram_space|rom_space|register_space)
+type=(ram_space|register_space)
 size=<span class="bold"><strong>integer</strong></span>
 default
 wordsize=<span class="bold"><strong>integer</strong></span>
@@ -146,11 +146,6 @@ with <span class="bold"><strong>register_space</strong></span>.
   </li>
 </ul></div></div>
 <p>
-</p>
-<p>
-A space of type <span class="bold"><strong>rom_space</strong></span> has seen
-little use so far but is intended to be the same as
-a <span class="bold"><strong>ram_space</strong></span> that is not writable.
 </p>
 <p>
 At least one space needs to be labeled with

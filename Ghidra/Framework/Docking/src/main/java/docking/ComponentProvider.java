@@ -22,6 +22,7 @@ import java.util.*;
 import javax.swing.*;
 
 import docking.action.*;
+import docking.util.AnimationUtils;
 import generic.theme.*;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -486,40 +487,66 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Returns the context object which corresponds to the
-	 * area of focus within this provider's component.  Null
-	 * is returned when there is no context.
-	 * @param event popup event which corresponds to this request.
-	 * May be null for key-stroke or other non-mouse event.
+	 * Returns the context object which corresponds to the area of focus within this provider's 
+	 * component.  Null is returned when there is no context.
+	 * <p>
+	 * Subclasses should override this method to provider more specific context objects or 
+	 * information.
+	 * 
+	 * @param event popup event which corresponds to this request. Will be null for key-stroke or 
+	 * other non-mouse uses.
 	 */
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
+		Component c = getContextSourceComponent();
+
+		// Note: this call is deprecated.  It shall remain here to handle cases where the subclasses
+		// have overridden createContext().  Eventually we will remove this call and create the 
+		// default context directly.
+		return createContext(c, null);
+	}
+
+	/**
+	 * Returns a component to use as the {@code sourceComponent} when creating an action context.
+	 * The focused component is preferred when it is inside of this provider's 
+	 * {@link #getComponent() component}.  Otherwise, this provider's component is returned.
+	 * 
+	 * @return the component
+	 */
+	protected Component getContextSourceComponent() {
 		Component c = getComponent();
 		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 		Component focusedComponent = kfm.getFocusOwner();
 		if (focusedComponent != null && SwingUtilities.isDescendingFrom(focusedComponent, c)) {
 			c = focusedComponent;
 		}
-		return createContext(c, null);
+		return c;
+	}
+
+	/**
+	 * A default method for creating an action context for this provider, using the given
+	 * {@link ActionContext#getContextObject() context object}.   If the given context object is a
+	 * component, then it will be used to initialize the {@code sourceComponent} of the created 
+	 * context.  
+	 *
+	 * @param contextObject the provider-specific context object
+	 * @return the new context
+	 * @deprecated instead use 
+	 *  {@code new DefaultActionContext(ComponentProvider.this).setContextObject(contextObject)} 
+	 */
+	@Deprecated(since = "12.2", forRemoval = true)
+	protected ActionContext createContext(Object contextObject) {
+		return new DefaultActionContext(this).setContextObject(contextObject);
 	}
 
 	/**
 	 * A default method for creating an action context for this provider
 	 * @return the new context
+	 * @deprecated instead use {@code new DefaultActionContext(ComponentProvider.this)}
 	 */
+	@Deprecated(since = "12.2", forRemoval = true)
 	protected ActionContext createContext() {
 		return new DefaultActionContext(this);
-	}
-
-	/**
-	 * A default method for creating an action context for this provider, using the given
-	 * {@link ActionContext#getContextObject() context object}
-	 *
-	 * @param contextObject the provider-specific context object
-	 * @return the new context
-	 */
-	protected ActionContext createContext(Object contextObject) {
-		return new DefaultActionContext(this).setContextObject(contextObject);
 	}
 
 	/**
@@ -529,7 +556,11 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @param sourceComponent the component that is the target of the context being created
 	 * @param contextObject the provider-specific context object
 	 * @return the new context
+	 * @deprecated this method is still called from {@link #getActionContext(MouseEvent)}, but this
+	 *  will change in a future release.  Clients calling this method can replace that call with 
+	 *	{@code new DefaultActionContext(this, sourceComponent).setContextObject(contextObject)}.
 	 */
+	@Deprecated(since = "12.2", forRemoval = true)
 	protected ActionContext createContext(Component sourceComponent, Object contextObject) {
 		return new DefaultActionContext(this, sourceComponent).setContextObject(contextObject);
 	}
@@ -774,7 +805,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Returns the name of a cascading sub-menu name to use when when showing this provider in the
+	 * Returns the name of a cascading sub-menu name to use when showing this provider in the
 	 * "Window" menu. If the group name is null, the item will appear in the top-level menu.
 	 * @return the menu group for this provider or null if this provider should appear in the
 	 * top-level menu.
@@ -922,7 +953,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 *
 	 * @param group the group for this provider.
 	 */
-	protected void setWindowGroup(String group) {
+	public void setWindowGroup(String group) {
 		this.group = group;
 	}
 
@@ -1104,21 +1135,33 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		@Override
 		public void actionPerformed(ActionContext context) {
 
+			Tool tool = getTool();
+			DockingWindowManager myDwm = tool.getWindowManager();
 			boolean isFrustrated = isFrustrated();
 			boolean isFocused = isFocused();
 			if (isFocused && !isFrustrated) {
-				// the user has decided to hide this component and is not madly clicking
-				setVisible(false);
+				// the user has decided to hide this component and is not madly clicking; also, we
+				// don't allow the last component in a window to be closed in order to prevent an
+				// empty window.
+				if (!myDwm.isLastComponentInWindow(ComponentProvider.this)) {
+					setVisible(false);
+				}
 				return;
 			}
 
 			boolean emphasize = getComponent().isShowing() && isFrustrated;
-			Tool tool = getTool();
-			DockingWindowManager myDwm = tool.getWindowManager();
 			myDwm.showComponent(ComponentProvider.this, true, emphasize);
 		}
 
 		private boolean isFrustrated() {
+
+			if (!AnimationUtils.isAnimationEnabled()) {
+				// The use of being frustrated is to emphasize (animate) the window for the user in
+				// order to draw attention to the window.  If animation is off, then no need to 
+				// check for frustration.
+				return false;
+			}
+
 			long time = System.currentTimeMillis();
 			clickTimes.add(time);
 

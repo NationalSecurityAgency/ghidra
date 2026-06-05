@@ -21,7 +21,7 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.stream.*;
 
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 import org.junit.*;
 
 import db.Transaction;
@@ -38,16 +38,17 @@ import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.AbstractNode;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
-import ghidra.dbg.target.TargetEventScope;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.trace.database.ToyDBTraceBuilder.EventSuspension;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.target.iface.TraceEventScope;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 
 public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest {
@@ -150,7 +151,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 	protected TraceObject createThread(long i, TraceObject prevThread) {
 		TraceObjectManager objects = tb.trace.getObjectManager();
-		TraceObjectKeyPath threadContainerPath = TraceObjectKeyPath.parse("Processes[0].Threads");
+		KeyPath threadContainerPath = KeyPath.parse("Processes[0].Threads");
 		TraceObject thread = objects.createObject(threadContainerPath.index(i));
 		thread.insert(Lifespan.span(i, 10), ConflictResolution.DENY);
 		thread.insert(Lifespan.nowOn(10 + i), ConflictResolution.DENY);
@@ -162,14 +163,14 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 			prevThread.setAttribute(Lifespan.nowOn(i), "_next", thread);
 		}
 		objects.getRootObject()
-				.setAttribute(Lifespan.nowOn(i), TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME,
+				.setAttribute(Lifespan.nowOn(i), TraceEventScope.KEY_EVENT_THREAD,
 					thread);
 		return thread;
 	}
 
 	protected TraceObject createStack(TraceObject thread) {
 		try (Transaction tx = tb.startTransaction()) {
-			TraceObjectKeyPath stackPath = thread.getCanonicalPath().key("Stack");
+			KeyPath stackPath = thread.getCanonicalPath().key("Stack");
 			TraceObjectManager objects = tb.trace.getObjectManager();
 			TraceObject stack = objects.createObject(stackPath);
 			objects.createObject(stackPath.index(0))
@@ -194,7 +195,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		TraceObjectManager objects = tb.trace.getObjectManager();
 		try (Transaction tx = tb.startTransaction()) {
 			createThread(10, objects.getObjectByCanonicalPath(
-				TraceObjectKeyPath.parse("Processes[0].Threads[9]")));
+				KeyPath.parse("Processes[0].Threads[9]")));
 		}
 	}
 
@@ -202,7 +203,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		TraceObjectManager objects = tb.trace.getObjectManager();
 		try (Transaction tx = tb.startTransaction()) {
 			TraceObject handleContainer =
-				objects.createObject(TraceObjectKeyPath.parse("Processes[0].Handles"));
+				objects.createObject(KeyPath.parse("Processes[0].Handles"));
 			handleContainer.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 			for (int i = 0; i < 10; i++) {
 				handleContainer.setElement(Lifespan.nowOn(-i), i,
@@ -213,10 +214,10 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 	protected void populateLinks() throws Throwable {
 		TraceObjectManager objects = tb.trace.getObjectManager();
-		TraceObjectKeyPath threadContainerPath = TraceObjectKeyPath.parse("Processes[0].Threads");
+		KeyPath threadContainerPath = KeyPath.parse("Processes[0].Threads");
 		try (Transaction tx = tb.startTransaction()) {
 			TraceObject linkContainer =
-				objects.createObject(TraceObjectKeyPath.parse("Processes[0].Links"));
+				objects.createObject(KeyPath.parse("Processes[0].Links"));
 			linkContainer.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 			for (int i = 0; i < 10; i++) {
 				linkContainer.setElement(Lifespan.nowOn(0), i,
@@ -229,10 +230,10 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		TraceObjectManager objects = tb.trace.getObjectManager();
 		try (Transaction tx = tb.startTransaction()) {
 			TraceObject boxed =
-				objects.createObject(TraceObjectKeyPath.parse("Processes[0].Boxed"));
+				objects.createObject(KeyPath.parse("Processes[0].Boxed"));
 			boxed.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
-			boxed.setAttribute(Lifespan.nowOn(2), TargetObject.DISPLAY_ATTRIBUTE_NAME, "2");
-			boxed.setAttribute(Lifespan.nowOn(4), TargetObject.DISPLAY_ATTRIBUTE_NAME, "4");
+			boxed.setAttribute(Lifespan.nowOn(2), TraceObjectInterface.KEY_DISPLAY, "2");
+			boxed.setAttribute(Lifespan.nowOn(4), TraceObjectInterface.KEY_DISPLAY, "4");
 		}
 	}
 
@@ -246,7 +247,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		populateBoxedPrimitive();
 	}
 
-	protected void assertPathIs(TraceObjectKeyPath path, int elemCount, int attrCount) {
+	protected void assertPathIs(KeyPath path, int elemCount, int attrCount) {
 		assertEquals(path, modelProvider.getPath());
 		assertEquals(path.toString(), modelProvider.pathField.getText());
 		// Table model is threaded
@@ -257,22 +258,22 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	}
 
 	protected void assertPathIsThreadsContainer() {
-		assertPathIs(TraceObjectKeyPath.parse("Processes[0].Threads"), 10, 0);
+		assertPathIs(KeyPath.parse("Processes[0].Threads"), 10, 0);
 	}
 
 	@Test
 	public void testSetPathWOutTrace() throws Throwable {
-		modelProvider.setPath(TraceObjectKeyPath.parse(""));
+		modelProvider.setPath(KeyPath.parse(""));
 		waitForSwing();
-		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].Threads"));
+		modelProvider.setPath(KeyPath.parse("Processes[0].Threads"));
 		waitForSwing();
-		modelProvider.setPath(TraceObjectKeyPath.parse(""));
+		modelProvider.setPath(KeyPath.parse(""));
 		waitForSwing();
 	}
 
 	@Test
 	public void testSelectRootWOutTrace() throws Throwable {
-		modelProvider.objectsTreePanel.setSelectedKeyPaths(Set.of(TraceObjectKeyPath.parse("")));
+		modelProvider.objectsTreePanel.setSelectedKeyPaths(Set.of(KeyPath.parse("")));
 		waitForSwing();
 	}
 
@@ -283,7 +284,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		modelProvider.objectsTreePanel.setSelectedKeyPaths(Set.of(TraceObjectKeyPath.parse("")));
+		modelProvider.objectsTreePanel.setSelectedKeyPaths(Set.of(KeyPath.parse("")));
 		waitForSwing();
 	}
 
@@ -293,7 +294,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].Threads"));
+		modelProvider.setPath(KeyPath.parse("Processes[0].Threads"));
 		waitForSwing();
 
 		assertPathIsThreadsContainer();
@@ -319,7 +320,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		traceManager.activateTrace(tb.trace);
 		waitForTasks();
 		modelProvider.objectsTreePanel
-				.setSelectedKeyPaths(List.of(TraceObjectKeyPath.parse("Processes[0].Threads")));
+				.setSelectedKeyPaths(List.of(KeyPath.parse("Processes[0].Threads")));
 		waitForSwing();
 
 		waitForPass(() -> assertPathIsThreadsContainer());
@@ -331,7 +332,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].Threads"));
+		modelProvider.setPath(KeyPath.parse("Processes[0].Threads"));
 		waitForTasks();
 
 		ValueRow selElem = waitForValue(() -> {
@@ -354,7 +355,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		modelProvider.activatePath(TraceObjectKeyPath.parse("Processes[0].NoSuch"));
+		modelProvider.activatePath(KeyPath.parse("Processes[0].NoSuch"));
 		waitForTasks();
 
 		assertEquals("No such object at path Processes[0].NoSuch", tool.getStatusInfo());
@@ -366,7 +367,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].Handles"));
+		modelProvider.setPath(KeyPath.parse("Processes[0].Handles"));
 		waitForTasks();
 
 		int keyColIndex =
@@ -397,7 +398,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].Threads"));
+		modelProvider.setPath(KeyPath.parse("Processes[0].Threads"));
 		waitForTasks();
 
 		modelProvider.pathField.setText("SomeNonsenseToBeCancelled");
@@ -413,7 +414,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		TraceObjectManager objects = tb.trace.getObjectManager();
 		TraceObject root = objects.getRootObject();
-		TraceObjectKeyPath process0Path = TraceObjectKeyPath.parse("Processes[0]");
+		KeyPath process0Path = KeyPath.parse("Processes[0]");
 		TraceObject process0 = objects.getObjectByCanonicalPath(process0Path);
 		traceManager.activateObject(root);
 		waitForTasks();
@@ -441,7 +442,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		TraceObjectKeyPath pathLinks = TraceObjectKeyPath.parse("Processes[0].Links");
+		KeyPath pathLinks = KeyPath.parse("Processes[0].Links");
 		modelProvider.setPath(pathLinks);
 		waitForTasks();
 
@@ -463,7 +464,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		});
 		clickTableCell(modelProvider.elementsTablePanel.table, rowIndex, 0, 2);
 
-		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads[7]"),
+		assertEquals(KeyPath.parse("Processes[0].Threads[7]"),
 			traceManager.getCurrentObject().getCanonicalPath());
 	}
 
@@ -473,7 +474,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].Threads"));
+		modelProvider.setPath(KeyPath.parse("Processes[0].Threads"));
 		waitForTasks();
 
 		ValueRow row2 = waitForValue(() -> {
@@ -494,7 +495,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		});
 		clickTableCell(modelProvider.elementsTablePanel.table, rowIndex, 0, 2);
 
-		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads[2]"),
+		assertEquals(KeyPath.parse("Processes[0].Threads[2]"),
 			traceManager.getCurrentObject().getCanonicalPath());
 	}
 
@@ -522,7 +523,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].Threads[2]"));
+		modelProvider.setPath(KeyPath.parse("Processes[0].Threads[2]"));
 		waitForTasks();
 		selectAttribute("_next");
 		waitForTasks();
@@ -536,7 +537,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		});
 		clickTableCell(modelProvider.attributesTablePanel.table, rowIndex, 0, 2);
 
-		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads[3]"),
+		assertEquals(KeyPath.parse("Processes[0].Threads[3]"),
 			traceManager.getCurrentObject().getCanonicalPath());
 	}
 
@@ -546,7 +547,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0]"));
+		modelProvider.setPath(KeyPath.parse("Processes[0]"));
 		waitForTasks();
 
 		PathRow rowNext = waitForValue(() -> {
@@ -574,7 +575,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		clickTableCell(modelProvider.attributesTablePanel.table, rowIndex, 0, 2);
 
 		// ThreadContainer is not activatable, so only changes provider's path
-		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads"), modelProvider.getPath());
+		assertEquals(KeyPath.parse("Processes[0].Threads"), modelProvider.getPath());
 	}
 
 	@Test
@@ -585,23 +586,23 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].Threads"));
+		modelProvider.setPath(KeyPath.parse("Processes[0].Threads"));
 		waitForTasks();
 
-		assertPathIs(TraceObjectKeyPath.parse("Processes[0].Threads"), 10, 0);
+		assertPathIs(KeyPath.parse("Processes[0].Threads"), 10, 0);
 
 		performAction(modelProvider.actionLimitToCurrentSnap);
 		assertTrue(modelProvider.isLimitToCurrentSnap());
 		assertTrue(modelProvider.actionLimitToCurrentSnap.isSelected());
-		assertPathIs(TraceObjectKeyPath.parse("Processes[0].Threads"), 1, 0);
+		assertPathIs(KeyPath.parse("Processes[0].Threads"), 1, 0);
 
 		traceManager.activateSnap(5);
-		assertPathIs(TraceObjectKeyPath.parse("Processes[0].Threads"), 6, 0);
+		assertPathIs(KeyPath.parse("Processes[0].Threads"), 6, 0);
 
 		performAction(modelProvider.actionLimitToCurrentSnap);
 		assertFalse(modelProvider.isLimitToCurrentSnap());
 		assertFalse(modelProvider.actionLimitToCurrentSnap.isSelected());
-		assertPathIs(TraceObjectKeyPath.parse("Processes[0].Threads"), 10, 0);
+		assertPathIs(KeyPath.parse("Processes[0].Threads"), 10, 0);
 	}
 
 	@Test
@@ -611,7 +612,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		TraceObjectKeyPath thread2Path = TraceObjectKeyPath.parse("Processes[0].Threads[2]");
+		KeyPath thread2Path = KeyPath.parse("Processes[0].Threads[2]");
 		modelProvider.setPath(thread2Path);
 		modelProvider.setTreeSelection(thread2Path);
 		waitForTasks();
@@ -641,7 +642,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].Threads[2]"));
+		modelProvider.setPath(KeyPath.parse("Processes[0].Threads[2]"));
 		waitForTasks();
 		selectAttribute("_next");
 		waitForSwing();
@@ -651,7 +652,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		assertTrue(runSwing(() -> modelProvider.actionFollowLink.isEnabledForContext(ctx)));
 		performAction(modelProvider.actionFollowLink, ctx, true);
 
-		TraceObjectKeyPath thread3Path = TraceObjectKeyPath.parse("Processes[0].Threads[3]");
+		KeyPath thread3Path = KeyPath.parse("Processes[0].Threads[3]");
 		assertPathIs(thread3Path, 0, 5);
 	}
 
@@ -661,24 +662,24 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].Threads[2]"));
+		modelProvider.setPath(KeyPath.parse("Processes[0].Threads[2]"));
 		waitForTasks();
 
 		// Pre-check
-		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads[2]"), modelProvider.path);
+		assertEquals(KeyPath.parse("Processes[0].Threads[2]"), modelProvider.path);
 
 		performAction(modelProvider.actionCloneWindow);
 
 		DebuggerModelProvider clone = Unique.assertOne(modelPlugin.getDisconnectedProviders());
 
 		assertEquals(tb.trace, clone.current.getTrace());
-		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads[2]"), clone.path);
+		assertEquals(KeyPath.parse("Processes[0].Threads[2]"), clone.path);
 	}
 
 	@Test
 	public void testPanesTrackAddElement() throws Throwable {
 		createTraceAndPopulateObjects();
-		TraceObjectKeyPath path = TraceObjectKeyPath.parse("Processes[0].Threads");
+		KeyPath path = KeyPath.parse("Processes[0].Threads");
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
@@ -693,10 +694,53 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		assertPathIs(path, 11, 0);
 	}
 
+	/**
+	 * The trace-rmi handler suspends trace events during a remote transaction. Also, if there are
+	 * sufficient events to overload the queue, the event support with clear them and just issue an
+	 * OBJ_RESTORED event instead. This test ensures we update attributes in the tree when that
+	 * happens.
+	 * 
+	 * @throws Throwable because
+	 */
+	@Test
+	public void testTreeTracksChangeAttributeWithEventsSuspended() throws Throwable {
+		createTraceAndPopulateObjects();
+		KeyPath path = KeyPath.parse("Processes[0].Threads[2].Bytes");
+		try (Transaction tx = tb.startTransaction()) {
+			TraceObject thread =
+				tb.trace.getObjectManager().getObjectByCanonicalPath(path.parent());
+			thread.setAttribute(Lifespan.nowOn(0), "Bytes", tb.arr(1, 2, 3, 4));
+		}
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+		runSwing(() -> modelProvider.setShowPrimitivesInTree(true));
+		waitForTasks();
+		modelProvider.setPath(path);
+		waitForTasks();
+
+		waitForPass(() -> {
+			AbstractNode node = modelProvider.objectsTreePanel.treeModel.getNode(path);
+			assertEquals("<html>Bytes:&nbsp;01:02:03:04", node.getDisplayText());
+		});
+
+		try (Transaction tx = tb.startTransaction(); EventSuspension es = tb.suspendEvents()) {
+			TraceObject thread =
+				tb.trace.getObjectManager().getObjectByCanonicalPath(path.parent());
+			thread.setAttribute(Lifespan.nowOn(0), "Bytes", tb.arr(5, 6, 7, 8));
+		}
+		waitForTasks();
+
+		waitForPass(() -> {
+			AbstractNode node = modelProvider.objectsTreePanel.treeModel.getNode(path);
+			assertEquals("<html>Bytes:&nbsp;05:06:07:08", node.getDisplayText());
+		});
+	}
+
 	@Test
 	public void testPanesTrackAddAttribute() throws Throwable {
 		createTraceAndPopulateObjects();
-		TraceObjectKeyPath path = TraceObjectKeyPath.parse("Processes[0].Threads[2]");
+		KeyPath path = KeyPath.parse("Processes[0].Threads[2]");
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
@@ -717,7 +761,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	@Test
 	public void testPanesTrackRemoveElement() throws Throwable {
 		createTraceAndPopulateObjects();
-		TraceObjectKeyPath path = TraceObjectKeyPath.parse("Processes[0].Threads");
+		KeyPath path = KeyPath.parse("Processes[0].Threads");
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
@@ -738,7 +782,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	@Test
 	public void testPanesTrackRemoveAttribute() throws Throwable {
 		createTraceAndPopulateObjects();
-		TraceObjectKeyPath path = TraceObjectKeyPath.parse("Processes[0].Threads[2]");
+		KeyPath path = KeyPath.parse("Processes[0].Threads[2]");
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
@@ -760,7 +804,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testPanesTrackLifespanChangedElement() throws Throwable {
 		modelProvider.setLimitToCurrentSnap(true);
 		createTraceAndPopulateObjects();
-		TraceObjectKeyPath path = TraceObjectKeyPath.parse("Processes[0].Threads");
+		KeyPath path = KeyPath.parse("Processes[0].Threads");
 		TraceObject threads = tb.trace.getObjectManager().getObjectByCanonicalPath(path);
 		TraceObjectValue element2 = threads.getElement(2, 2);
 
@@ -792,7 +836,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		modelProvider.setLimitToCurrentSnap(true);
 		modelProvider.setShowHidden(true);
 		createTraceAndPopulateObjects();
-		TraceObjectKeyPath path = TraceObjectKeyPath.parse("Processes[0].Threads[2]");
+		KeyPath path = KeyPath.parse("Processes[0].Threads[2]");
 		TraceObject thread = tb.trace.getObjectManager().getObjectByCanonicalPath(path);
 		TraceObjectValue attrSelf = thread.getAttribute(2, "_self");
 
@@ -822,7 +866,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	@Test
 	public void testTreeTracksDisplayChange() throws Throwable {
 		createTraceAndPopulateObjects();
-		TraceObjectKeyPath path = TraceObjectKeyPath.parse("Processes[0].Threads[2]");
+		KeyPath path = KeyPath.parse("Processes[0].Threads[2]");
 		TraceObject thread = tb.trace.getObjectManager().getObjectByCanonicalPath(path);
 
 		traceManager.activateTrace(tb.trace);
@@ -848,7 +892,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		TraceObjectManager objects = tb.trace.getObjectManager();
 		TraceObject root = objects.getRootObject();
 		TraceObject process0 =
-			objects.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Processes[0]"));
+			objects.getObjectByCanonicalPath(KeyPath.parse("Processes[0]"));
 
 		traceManager.activateObject(root);
 		waitForTasks();
@@ -885,20 +929,20 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		createTraceAndPopulateObjects();
 		TraceObjectManager objects = tb.trace.getObjectManager();
 		TraceObject thread0 =
-			objects.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Processes[0].Threads[0]"));
+			objects.getObjectByCanonicalPath(KeyPath.parse("Processes[0].Threads[0]"));
 		TraceObject thread1 =
-			objects.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Processes[0].Threads[1]"));
+			objects.getObjectByCanonicalPath(KeyPath.parse("Processes[0].Threads[1]"));
 
 		modelProvider.setShowHidden(true);
 		traceManager.activateObject(thread0);
 		traceManager.activateSnap(1);
 		waitForTasks();
-		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].Threads[0]._self"));
+		modelProvider.setPath(KeyPath.parse("Processes[0].Threads[0]._self"));
 		waitForTasks();
 
 		traceManager.activateObject(thread1);
 		waitForSwing();
-		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads[0]._next"),
+		assertEquals(KeyPath.parse("Processes[0].Threads[0]._next"),
 			modelProvider.getPath());
 	}
 
@@ -906,7 +950,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testObjectActivationSelectsElement() throws Throwable {
 		createTraceAndPopulateObjects();
 		TraceObjectManager objects = tb.trace.getObjectManager();
-		TraceObjectKeyPath processesPath = TraceObjectKeyPath.parse("Processes");
+		KeyPath processesPath = KeyPath.parse("Processes");
 		TraceObject processes = objects.getObjectByCanonicalPath(processesPath);
 		TraceObject process0 = processes.getElement(0, 0).getChild();
 		traceManager.activateObject(processes);
@@ -947,15 +991,15 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		traceManager.activateObject(processes);
 		waitForTasks();
 
-		assertEquals(TraceObjectKeyPath.of(), modelProvider.getPath());
+		assertEquals(KeyPath.of(), modelProvider.getPath());
 		assertEquals(processes, modelProvider.attributesTablePanel.getSelectedItem().getValue());
 	}
 
 	protected TraceThread populateThread0Stack() {
 		TraceObjectManager objects = tb.trace.getObjectManager();
 		TraceObject threadObj0 =
-			objects.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Processes[0].Threads[0]"));
-		TraceThread thread0 = threadObj0.queryInterface(TraceObjectThread.class);
+			objects.getObjectByCanonicalPath(KeyPath.parse("Processes[0].Threads[0]"));
+		TraceThread thread0 = threadObj0.queryInterface(TraceThread.class);
 		createStack(threadObj0);
 		return thread0;
 	}
@@ -967,12 +1011,12 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		traceManager.activate(DebuggerCoordinates.NOWHERE.thread(thread0).frame(0));
 		waitForSwing();
-		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads[0].Stack[0]"),
+		assertEquals(KeyPath.parse("Processes[0].Threads[0].Stack[0]"),
 			modelProvider.getPath());
 
 		traceManager.activateFrame(1);
 		waitForSwing();
-		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads[0].Stack[1]"),
+		assertEquals(KeyPath.parse("Processes[0].Threads[0].Stack[1]"),
 			modelProvider.getPath());
 	}
 
@@ -980,7 +1024,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testFrameActivationSelectsElement() throws Throwable {
 		createTraceAndPopulateObjects();
 		TraceThread thread0 = populateThread0Stack();
-		TraceObjectKeyPath stackPath = TraceObjectKeyPath.parse("Processes[0].Threads[0].Stack");
+		KeyPath stackPath = KeyPath.parse("Processes[0].Threads[0].Stack");
 
 		traceManager.activateThread(thread0);
 		waitForSwing();
@@ -1012,11 +1056,11 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		traceManager.activateThread(thread0);
 		traceManager.activateSnap(1);
 		waitForSwing();
-		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads[0]"), modelProvider.getPath());
+		assertEquals(KeyPath.parse("Processes[0].Threads[0]"), modelProvider.getPath());
 
 		traceManager.activateThread(thread1);
 		waitForSwing();
-		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads[1]"), modelProvider.getPath());
+		assertEquals(KeyPath.parse("Processes[0].Threads[1]"), modelProvider.getPath());
 	}
 
 	@Test
@@ -1026,7 +1070,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 			tb.trace.getThreadManager().getLiveThreadByPath(1, "Processes[0].Threads[0]");
 		TraceThread thread1 =
 			tb.trace.getThreadManager().getLiveThreadByPath(1, "Processes[0].Threads[1]");
-		TraceObjectKeyPath threadsPath = TraceObjectKeyPath.parse("Processes[0].Threads");
+		KeyPath threadsPath = KeyPath.parse("Processes[0].Threads");
 
 		traceManager.activateTrace(tb.trace);
 		traceManager.activateSnap(1);
@@ -1053,7 +1097,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void testSetValueAffectsTree() throws Throwable {
 		createTraceAndPopulateObjects();
 
-		TraceObjectKeyPath threadsPath = TraceObjectKeyPath.parse("Processes[0].Threads");
+		KeyPath threadsPath = KeyPath.parse("Processes[0].Threads");
 		TraceObject threads = tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath);
 		TraceObject thread0 =
 			tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath.index(0));
@@ -1080,7 +1124,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 	public void testDuplicateNameInSameParentDoesntCorruptTree() throws Throwable {
 		createTraceAndPopulateObjects();
-		TraceObjectKeyPath threadsPath = TraceObjectKeyPath.parse("Processes[0].Threads");
+		KeyPath threadsPath = KeyPath.parse("Processes[0].Threads");
 		TraceObject threads = tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath);
 		TraceObject thread0 =
 			tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath.index(0));
@@ -1123,7 +1167,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	@Test
 	public void testDuplicateNameDifferentLifespanAppearInAttributesTable() throws Throwable {
 		createTraceAndPopulateObjects();
-		TraceObjectKeyPath threadsPath = TraceObjectKeyPath.parse("Processes[0].Threads");
+		KeyPath threadsPath = KeyPath.parse("Processes[0].Threads");
 		TraceObject threads = tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath);
 		TraceObject thread0 =
 			tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath.index(0));
@@ -1151,7 +1195,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	@Test
 	public void testDuplicateNameDifferentLifespanAppearInElementsTable() throws Throwable {
 		createTraceAndPopulateObjects();
-		TraceObjectKeyPath threadsPath = TraceObjectKeyPath.parse("Processes[0].Threads");
+		KeyPath threadsPath = KeyPath.parse("Processes[0].Threads");
 		TraceObject threads = tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath);
 		TraceObject thread0 =
 			tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath.index(0));
@@ -1238,11 +1282,9 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		tb.trace.setEventsEnabled(false);
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction(); EventSuspension es = tb.suspendEvents()) {
 			tb.trace.getTimeManager().getSnapshot(30, true);
 		}
-		tb.trace.setEventsEnabled(true);
 		waitForDomainObject(tb.trace);
 
 		// NB. The plot adds a margin of 1

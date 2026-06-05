@@ -6,6 +6,7 @@ package mobiledevices.dmg.reader;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.InflaterInputStream;
 
 import org.catacombae.dmgextractor.encodings.encrypted.ReadableCEncryptedEncodingStream;
 import org.catacombae.hfsexplorer.FileSystemRecognizer;
@@ -27,7 +28,6 @@ import mobiledevices.dmg.decmpfs.DecmpfsCompressionTypes;
 import mobiledevices.dmg.decmpfs.DecmpfsHeader;
 import mobiledevices.dmg.ghidra.*;
 import mobiledevices.dmg.hfsplus.AttributesFileParser;
-import mobiledevices.dmg.zlib.ZLIB;
 
 public class DmgFileReader implements Closeable {
 	private final static GDataConverter ledc = new GDataConverterLE();
@@ -191,24 +191,16 @@ public class DmgFileReader implements Closeable {
 				if ( decmpfsHeader.getCompressionType() == DecmpfsCompressionTypes.CMP_Type3 ) {
 
 					if ( decmpfsHeader.getAttrBytes()[ 0 ] == -1 ) {
-						return new ByteArrayInputStream( decmpfsHeader.getAttrBytes(), 1, decmpfsHeader.getAttrBytes().length - 1 );
+						return new ByteArrayInputStream(decmpfsHeader.getAttrBytes(), 1,
+							decmpfsHeader.getAttrBytes().length - 1);
 					}
 
-					ZLIB zlib = new ZLIB();
-
-					InputStream inputStream =
-						new ByteArrayInputStream(decmpfsHeader.getAttrBytes());
-
-					ByteArrayOutputStream uncompressedBytes =
-						zlib.decompress(inputStream, (int) decmpfsHeader.getUncompressedSize());
-
-					File tempDecompressedFile = GFileUtilityMethods.writeTemporaryFile(
-						uncompressedBytes.toByteArray(), entry.getName());
-					return new FileInputStream(tempDecompressedFile);
+					return new RestrictedInflaterInputStream(decmpfsHeader.getAttrBytes(),
+						(int) decmpfsHeader.getUncompressedSize());
 				}
 				else if ( decmpfsHeader.getCompressionType() == DecmpfsCompressionTypes.CMP_Type4 ) {
-
-					return decompressResourceFork( entry, resourceForkStream, (int)decmpfsHeader.getUncompressedSize() );
+					return decompressResourceFork(entry, resourceForkStream,
+						(int) decmpfsHeader.getUncompressedSize());
 				}
 			}
 		}
@@ -223,34 +215,102 @@ public class DmgFileReader implements Closeable {
 		System.err.println(
 			"dmg resource fork for " + entry.getName() + ": " + tempFile.getAbsolutePath());
 
-		InputStream input = new FileInputStream( tempFile );
+		// Copy compressed portion of tempFile to tempCompressedFile
+		File tempCompressedFile;
+		try (InputStream input = new FileInputStream(tempFile)) {
 
-		for ( int i = 0 ; i < 0x100 ; ++i ) {
-			input.read();
+			for (int i = 0; i < 0x100; ++i) {
+				input.read();
+			}
+
+			byte[] sizeBytes = new byte[4];
+			input.read(sizeBytes);
+			int size = sizeBytes[0] == 0 ? bedc.getInt(sizeBytes) : ledc.getInt(sizeBytes);
+
+			byte[] flagsBytes = new byte[4];
+			input.read(flagsBytes);
+
+			byte[] startDistanceBytes = new byte[4];
+			input.read(startDistanceBytes);
+			int startDistance = ledc.getInt(startDistanceBytes);
+
+			input.skip(startDistance - 8);//skip to the start of the zlib compressed file
+
+			tempCompressedFile =
+				GFileUtilityMethods.writeTemporaryFile(input, size - startDistance);
+		}
+		finally {
+			tempFile.delete();
 		}
 
-		byte [] sizeBytes = new byte[ 4 ];
-		input.read( sizeBytes );
-		int size = sizeBytes[ 0 ] == 0 ? 
-							bedc.getInt( sizeBytes ) : 
-							ledc.getInt( sizeBytes );
+		return new RestrictedInflaterInputStream(tempCompressedFile, expectedLength);
+	}
 
-		byte [] flagsBytes = new byte[ 4 ];
-		input.read( flagsBytes );
+	private class RestrictedInflaterInputStream extends InflaterInputStream {
 
-		byte [] startDistanceBytes = new byte[ 4 ];
-		input.read( startDistanceBytes );
-		int startDistance = ledc.getInt( startDistanceBytes );
+		private File tempCompressedFile;
+		private int readLimit;
+		private int readCount = 0;
 
-		input.skip( startDistance - 8 );//skip to the start of the zlib compressed file
+		/**
+		 * Creates a new Inflater input stream with a default decompressor and buffer size.
+		 * NOTE: The default Inflater instance will be ended when this stream closes.
+		 * @param tempCompressedFile the temporary file containing compressed data.  File will be
+		 * removed when this stream is closed.
+		 * @param readLimit maximum data read count.  Exceeding this limit will result in an
+		 * IOException.
+		 * @throws FileNotFoundException if tempCompressedFile does not exist
+		 */
+		RestrictedInflaterInputStream(File tempCompressedFile, int readLimit)
+				throws FileNotFoundException {
+			super(new FileInputStream(tempCompressedFile));
+			this.tempCompressedFile = tempCompressedFile;
+			this.readLimit = readLimit;
+		}
 
-		File tempCompressedFile = GFileUtilityMethods.writeTemporaryFile( input, size - startDistance );
-		InputStream inputStream = new FileInputStream( tempCompressedFile );
+		/**
+		 * Creates a new Inflater input stream with a default decompressor and buffer size.
+		 * NOTE: The default Inflater instance will be ended when this stream closes.
+		 * @param compressedData the byte array containing compressed data.
+		 * @param readLimit maximum data read count.  Exceeding this limit will result in an
+		 * IOException.
+		 */
+		RestrictedInflaterInputStream(byte[] compressedData, int readLimit) {
+			super(new ByteArrayInputStream(compressedData));
+			this.tempCompressedFile = null;
+			this.readLimit = readLimit;
+		}
 
-		ZLIB zlib = new ZLIB( );
-		ByteArrayOutputStream uncompressedByteStream = zlib.decompress( inputStream, expectedLength );
+		@Override
+		public void close() throws IOException {
+			try {
+				super.close();
+			}
+			finally {
+				// Cleanup temporary file input stream and remove file
+				in.close();
+				if (tempCompressedFile != null) {
+					tempCompressedFile.delete();
+				}
+			}
+		}
 
-		return new ByteArrayInputStream( uncompressedByteStream.toByteArray() );
+		@Override
+		public int read(byte[] b, int off, int length) throws IOException {
+			if (length == 0) {
+				return 0;
+			}
+			if (readCount >= readLimit) {
+				throw new IOException("Decompression limit exceeded: " + readLimit);
+			}
+			// Limit read length to avoid exceeding readLimit
+			int limit = Math.min(readLimit - readCount, length);
+			int count = super.read(b, off, limit);
+			if (count > 0) {
+				readCount += count;
+			}
+			return count;
+		}
 	}
 
 	public List<String> getInfo( String path ) {
@@ -287,7 +347,7 @@ public class DmgFileReader implements Closeable {
 	 * If the entry is actually a directory, then -1 is returned.
 	 */
 	public long getLength( FSEntry entry ) {
-		if ( entry != null & entry.isFile() ) {
+		if (entry != null && entry.isFile()) {
 			FSFork mainFork = entry.asFile().getMainFork();
 			if ( mainFork.getLength() > 0 ) {
 				return mainFork.getLength();

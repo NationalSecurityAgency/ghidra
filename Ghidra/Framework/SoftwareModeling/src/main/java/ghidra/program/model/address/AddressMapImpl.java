@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,6 +58,7 @@ public class AddressMapImpl {
 	/**
 	 * Creates a new AddressMapImpl with the specified mapID
 	 * @param mapID the 8-bit value is placed in the upper 8 bits of every address encoding.
+	 * @param addrFactory the address factory
 	 */
 	public AddressMapImpl(byte mapID, AddressFactory addrFactory) {
 		this.addrFactory = addrFactory;

@@ -15,19 +15,19 @@
  */
 package ghidra.app.plugin.core.debug.client.tracermi;
 
-import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.rmi.trace.TraceRmi.*;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 
 public class RmiRemoteMethodParameter {
 
 	private final String name;
-	private final TargetObjectSchema schema;
+	private final TraceObjectSchema schema;
 	private final boolean required;
 	private final Object defaultValue;
 	private final String display;
 	private final String description;
 
-	public RmiRemoteMethodParameter(String name, TargetObjectSchema schema, boolean required,
+	public RmiRemoteMethodParameter(String name, TraceObjectSchema schema, boolean required,
 			Object defaultValue, String display, String description) {
 		this.name = name;
 		this.schema = schema;

@@ -19,7 +19,6 @@ import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -119,6 +118,8 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 	private JLabel dataMatchDataTypeLabel;
 	private JLabel functionNameLabel;
 	private JLabel functionSignatureLabel;
+	private JLabel useFunctionNamespaceLabel;
+	private JLabel useEmptyCompositesLabel;
 	private JLabel returnTypeLabel;
 	private JLabel inlineLabel;
 	private JLabel noReturnLabel;
@@ -138,6 +139,8 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 	private JComboBox<Enum<?>> dataMatchDataTypeComboBox;
 	private JComboBox<Enum<?>> functionNameComboBox;
 	private JComboBox<Enum<?>> functionSignatureComboBox;
+	private JCheckBox useFunctionNamespaceCheckBox;
+	private JCheckBox useEmptyCompositesCheckBox;
 	private JComboBox<Enum<?>> returnTypeComboBox;
 	private JComboBox<Enum<?>> callingConventionComboBox;
 	private JComboBox<Enum<?>> inlineComboBox;
@@ -159,8 +162,6 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 	private JComboBox<Enum<?>> repeatableCommentsComboBox;
 	private JCheckBox ignoreExcludedCheckBox;
 	private JCheckBox ignoreIncompleteCheckBox;
-
-	private ActionListener defaultActionListener;
 
 	private ToolOptions originalOptions;
 	private PropertyChangeListener listener;
@@ -206,7 +207,6 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		panel.add(createSeparator());
 		panel.add(createIgnoreCheckBoxPanel());
 
-		// TODO More needs to be done with the layout here.
 		panel.setBorder(BorderFactory.createTitledBorder("Apply Markup Options"));
 		JScrollPane scrollPane = new JScrollPane(panel);
 
@@ -223,7 +223,6 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 
 	private Component createIgnoreCheckBoxPanel() {
 		createIgnoreCheckBoxes();
-		setupIgnoreMarkupItemsListeners();
 
 		JPanel panel = new JPanel();
 		panel.add(ignoreExcludedCheckBox);
@@ -239,16 +238,10 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		ignoreExcludedCheckBox.setToolTipText(IGNORE_EXCLUDED_TOOLTIP);
 	}
 
-	private void setupIgnoreMarkupItemsListeners() {
-		ignoreExcludedCheckBox.addActionListener(defaultActionListener);
-		ignoreIncompleteCheckBox.addActionListener(defaultActionListener);
-	}
-
 	private JPanel createFunctionSignatureSubPanel() {
 
 		createFunctionSignatureDetailLabels();
 		createFunctionSignatureDetailChoices();
-		setupFunctionSignatureDetailChoiceListeners();
 
 		JPanel outerPanel = new JPanel();
 		outerPanel.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
@@ -325,19 +318,9 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		varArgsComboBox.setToolTipText(VAR_ARGS_TOOLTIP);
 	}
 
-	private void setupFunctionSignatureDetailChoiceListeners() {
-		returnTypeComboBox.addActionListener(defaultActionListener);
-		inlineComboBox.addActionListener(defaultActionListener);
-		noReturnComboBox.addActionListener(defaultActionListener);
-		callingConventionComboBox.addActionListener(defaultActionListener);
-		callFixupComboBox.addActionListener(defaultActionListener);
-		varArgsComboBox.addActionListener(defaultActionListener);
-	}
-
 	private JPanel createParametersSubPanel() {
 		createParameterLabels();
 		createParameterChoices();
-		setupParameterChoiceListeners();
 
 		JPanel outerPanel = new JPanel();
 		outerPanel.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
@@ -402,15 +385,6 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 			PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY_TOOLTIP);
 	}
 
-	private void setupParameterChoiceListeners() {
-		parameterDataTypesComboBox.addActionListener(defaultActionListener);
-		parameterNamesComboBox.addActionListener(defaultActionListener);
-		userHighestPriorityRB.addActionListener(defaultActionListener);
-		importHighestPriorityRB.addActionListener(defaultActionListener);
-		replaceIfSameSourceCheckBox.addActionListener(defaultActionListener);
-		parameterCommentsComboBox.addActionListener(defaultActionListener);
-	}
-
 	private JPanel createPrioritySubPanel() {
 		JPanel outerPanel = new JPanel();
 		JPanel panel = new JPanel();
@@ -436,7 +410,6 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 
 		createNonCommentMarkupLabels();
 		createNonCommentMarkupChoices();
-		setupNonCommentMarkupChoiceListeners();
 
 		JPanel outerPanel = new JPanel();
 		outerPanel.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
@@ -451,6 +424,12 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		panel.add(functionNameComboBox);
 		panel.add(functionSignatureLabel);
 		panel.add(functionSignatureComboBox);
+
+		panel.add(useFunctionNamespaceLabel);
+		panel.add(useFunctionNamespaceCheckBox);
+
+		panel.add(useEmptyCompositesLabel);
+		panel.add(useEmptyCompositesCheckBox);
 
 		outerPanel.add(panel);
 		return outerPanel;
@@ -468,6 +447,12 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 
 		functionSignatureLabel = new GDLabel("Function Signature", SwingConstants.RIGHT);
 		functionSignatureLabel.setToolTipText(FUNCTION_SIGNATURE_TOOLTIP);
+
+		useFunctionNamespaceLabel = new GDLabel("Replace Namespace", SwingConstants.RIGHT);
+		useFunctionNamespaceLabel.setToolTipText(USE_NAMESPACE_TOOLTIP);
+
+		useEmptyCompositesLabel = new GDLabel("Use Emtpy Composite Types", SwingConstants.RIGHT);
+		useEmptyCompositesLabel.setToolTipText(USE_EMPTY_COMPOSITES_TOOLTIP);
 	}
 
 	private void createNonCommentMarkupChoices() {
@@ -485,19 +470,14 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		functionSignatureComboBox = createComboBox(VTOptionDefines.FUNCTION_SIGNATURE,
 			DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE);
 		functionSignatureComboBox.setToolTipText(FUNCTION_SIGNATURE_TOOLTIP);
-	}
 
-	private void setupNonCommentMarkupChoiceListeners() {
-		dataMatchDataTypeComboBox.addActionListener(defaultActionListener);
-		labelsComboBox.addActionListener(defaultActionListener);
-		functionNameComboBox.addActionListener(defaultActionListener);
-		functionSignatureComboBox.addActionListener(defaultActionListener);
+		useFunctionNamespaceCheckBox = createCheckBox("");
+		useEmptyCompositesCheckBox = createCheckBox("");
 	}
 
 	private JPanel createCommentsSubPanel() {
 		createCommentLabels();
 		createCommentChoices();
-		setupCommentChoiceListeners();
 
 		JPanel outerPanel = new JPanel();
 		outerPanel.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
@@ -562,14 +542,6 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		postCommentsComboBox.setToolTipText(POST_COMMENT_TOOLTIP);
 	}
 
-	private void setupCommentChoiceListeners() {
-		plateCommentsComboBox.addActionListener(defaultActionListener);
-		preCommentsComboBox.addActionListener(defaultActionListener);
-		endOfLineCommentsComboBox.addActionListener(defaultActionListener);
-		repeatableCommentsComboBox.addActionListener(defaultActionListener);
-		postCommentsComboBox.addActionListener(defaultActionListener);
-	}
-
 	private void updateOptions(ToolOptions options) {
 		updateNonCommentMarkupOptions(options);
 		updateCommentOptions(options);
@@ -594,6 +566,12 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		FunctionSignatureChoices functionSignatureChoice =
 			(FunctionSignatureChoices) functionSignatureComboBox.getSelectedItem();
 		options.setEnum(FUNCTION_SIGNATURE, functionSignatureChoice);
+
+		boolean useNamespaces = useFunctionNamespaceCheckBox.isSelected();
+		options.setBoolean(USE_NAMESPACE_FUNCTIONS, useNamespaces);
+
+		boolean useEmptyComposites = useEmptyCompositesCheckBox.isSelected();
+		options.setBoolean(USE_EMPTY_COMPOSITES, useEmptyComposites);
 	}
 
 	private void updateCommentOptions(ToolOptions options) {
@@ -703,6 +681,18 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 			options.getEnum(FUNCTION_SIGNATURE, DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE);
 		if (functionSignatureChoice != functionSignatureComboBox.getSelectedItem()) {
 			functionSignatureComboBox.setSelectedItem(functionSignatureChoice);
+		}
+
+		boolean useNamespace =
+			options.getBoolean(USE_NAMESPACE_FUNCTIONS, DEFAULT_OPTION_FOR_NAMESPACE_FUNCTIONS);
+		if (useFunctionNamespaceCheckBox.isSelected() != useNamespace) {
+			useFunctionNamespaceCheckBox.setSelected(useNamespace);
+		}
+
+		boolean useEmtpyStructures =
+			options.getBoolean(USE_EMPTY_COMPOSITES, DEFAULT_OPTION_FOR_USE_EMPTY_STRUCTURES);
+		if (useEmptyCompositesCheckBox.isSelected() != useEmtpyStructures) {
+			useEmptyCompositesCheckBox.setSelected(useEmtpyStructures);
 		}
 	}
 
@@ -831,7 +821,7 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		Enum<?>[] enums = editor.getEnums();
 
 		final JComboBox<Enum<?>> applyComboBox = new GComboBox<>(enums);
-		applyComboBox.addActionListener(e -> changesMade(true));
+		applyComboBox.addItemListener(e -> changesMade(true));
 
 		return applyComboBox;
 	}
@@ -852,7 +842,6 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 
 	// signals that there are unapplied changes
 	private void changesMade(boolean changes) {
-		// FIXME Is this ok? complete?
 		if (listener != null) {
 			listener.propertyChange(new PropertyChangeEvent(this, GhidraOptions.APPLY_ENABLED,
 				unappliedChanges, changes));

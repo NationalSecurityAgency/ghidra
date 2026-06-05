@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.app.util.bin.format.dwarf.attribs.*;
 /**
  * Represents an identifier of a value in a DWARFLine/DWARFFile object.
  * <p>
- * Similar to the {@link DWARFAttribute} enum, both are identifiers of an attribute value 
+ * Similar to the {@link DWARFAttributeId} enum, both are identifiers of an attribute value 
  * that is serialized by a DWARFForm.
  * <p>
  * Users of this enum should be tolerant of unknown values.
@@ -70,7 +70,7 @@ public enum DWARFLineContentType {
 		 * Reads a {@link DWARFLineContentType.Def} instance from the {@link BinaryReader reader}.
 		 * <p>
 		 * Returns a null if its a end-of-list marker.
-		 * <p>
+		 * 
 		 * @param reader {@link BinaryReader} stream
 		 * @return {@link DWARFLineContentType.Def}, or null if stream was at a end-of-list marker
 		 * (which isn't really a thing for line content defs, but is a thing for attribute defs)

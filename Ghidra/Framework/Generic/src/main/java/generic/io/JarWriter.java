@@ -15,13 +15,12 @@
  */
 package generic.io;
 
-import ghidra.util.Msg;
-import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
-
 import java.io.*;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
+
+import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * JarWriter is a class for writing to a jar output stream.

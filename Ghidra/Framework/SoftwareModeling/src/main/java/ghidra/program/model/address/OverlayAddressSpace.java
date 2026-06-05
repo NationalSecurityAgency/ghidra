@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -148,7 +148,7 @@ public abstract class OverlayAddressSpace extends AbstractAddressSpace {
 	}
 
 	/**
-	 * If the given address is outside the overlay block, then the address is tranlated to an
+	 * If the given address is outside the overlay block, then the address is translated to an
 	 * address in the base space with the same offset, otherwise (if the address exists in the
 	 * overlay block), it is returned
 	 * 
@@ -161,7 +161,7 @@ public abstract class OverlayAddressSpace extends AbstractAddressSpace {
 	}
 
 	/**
-	 * Tranlated an overlay-space address (addr, which may exceed the bounds of the overlay space)
+	 * Translated an overlay-space address (addr, which may exceed the bounds of the overlay space)
 	 * to an address in the base space with the same offset. If forceTranslation is false and addr
 	 * is contained within the overlay-space the original addr is returned.
 	 * 
@@ -221,8 +221,8 @@ public abstract class OverlayAddressSpace extends AbstractAddressSpace {
 	}
 
 	/**
-	 * Compare this overlay to the spacified overlay.
-	 * @param overlay other overlay to be checked for eqauality
+	 * Compare this overlay to the specified overlay.
+	 * @param overlay other overlay to be checked for equality
 	 * @return see {@link Comparable#compareTo(Object)}
 	 */
 	int compareOverlay(OverlayAddressSpace overlay) {

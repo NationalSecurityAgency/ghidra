@@ -417,7 +417,7 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
 	}
 	// Is the small variable getting zero padded into something that is fully consumed
 	if ((!aggressive)&&((outvn->getConsume() & rvn->mask) != outvn->getConsume())) {
-	  addSuggestedPatch(rvn,op,-1);
+	  addExtensionPatch(rvn,op,-1);
 	  hcount += 1;		// Dealt with this descendant
 	  break;
 	}
@@ -473,13 +473,14 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       }
       if (!op->getIn(1)->isConstant()) return false; // Dynamic shift
       sa = (int4)op->getIn(1)->getOffset();
+      if (sa >= sizeof(uintb)*8) return false;	// Beyond precision of mask
       newmask = (rvn->mask << sa) & calc_mask( outvn->getSize() );
       if (newmask == 0) break;	// Subvar is cleared, truncate flow
       if (rvn->mask != (newmask >> sa)) return false; // subvar is clipped
-	// Is the small variable getting zero padded into something that is fully consumed
+	// Is the small variable getting zero padded into something that is consumed beyond the variable
       if (((rvn->mask & 1)!=0)&&(sa + bitsize == 8*outvn->getSize())
-	  &&(calc_mask(outvn->getSize()) == outvn->getConsume())) {
-	addSuggestedPatch(rvn,op,sa);
+	  &&((outvn->getConsume() & ~newmask) != 0)) {
+	addExtensionPatch(rvn,op,sa);
 	hcount += 1;
 	break;
       }
@@ -498,9 +499,12 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       }
       if (!op->getIn(1)->isConstant()) return false;
       sa = (int4)op->getIn(1)->getOffset();
-      newmask = rvn->mask >> sa;
+      if (sa >= sizeof(uintb)*8)
+	newmask = 0;
+      else
+	newmask = rvn->mask >> sa;
       if (newmask == 0) {
-	if (op->code()==CPUI_INT_RIGHT) break; // subvar is set to zero, truncate flow
+	if (op->code()==CPUI_INT_RIGHT) break; // subvar does not pass thru, truncate flow
 	return false;
       }
       if (rvn->mask != (newmask << sa)) return false;
@@ -510,10 +514,10 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
 	hcount += 1;		// Dealt with this descendant
 	break;
       }
-	// Is the small variable getting zero padded into something that is fully consumed
+	// Is the small variable getting zero padded into something that is consumed beyond the variable
       if (((newmask&1)==1)&&(sa + bitsize == 8*outvn->getSize())
-	  &&(calc_mask(outvn->getSize()) == outvn->getConsume())) {
-	addSuggestedPatch(rvn,op,0);
+	  &&((outvn->getConsume() & ~newmask) != 0)) {
+	addExtensionPatch(rvn,op,0);
 	hcount += 1;
 	break;
       }
@@ -523,6 +527,7 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       break;
     case CPUI_SUBPIECE:
       sa = (int4)op->getIn(1)->getOffset() * 8;
+      if (sa >= sizeof(uintb)*8) break;
       newmask = (rvn->mask >> sa) & calc_mask(outvn->getSize());
       if (newmask == 0) break;	// subvar is set to zero, truncate flow
       if (rvn->mask != (newmask << sa)) {	// Some kind of truncation of the logical value
@@ -725,20 +730,30 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
   case CPUI_INT_LEFT:
     if (!op->getIn(1)->isConstant()) break; // Dynamic shift
     sa = (int4)op->getIn(1)->getOffset();
-    newmask = rvn->mask >> sa;	// What mask looks like before shift
+    if (sa >= sizeof(uintb)*8)
+      newmask = 0;
+    else
+      newmask = rvn->mask >> sa;	// What mask looks like before shift
     if (newmask == 0) {		// Subvariable filled with shifted zero
       rop = createOp(CPUI_COPY,1,rvn);
       addNewConstant(rop,0,(uintb)0);
       return true;
     }
-    if ((newmask<<sa) != rvn->mask)
-      break;			// subvariable is truncated by shift
-    rop = createOp(CPUI_COPY,1,rvn);
-    if (!createLink(rop,newmask,0,op->getIn(0))) return false;
+    if ((newmask<<sa) == rvn->mask) {
+      rop = createOp(CPUI_COPY,1,rvn);
+      if (!createLink(rop,newmask,0,op->getIn(0))) return false;
+      return true;
+    }
+    if ((rvn->mask & 1)==0) return false; // Can't assume zeroes are shifted into least sig bits
+    rop = createOp(CPUI_INT_LEFT,2,rvn);
+    if (!createLink(rop,rvn->mask,0,op->getIn(0))) return false;
+    addConstant(rop,calc_mask(op->getIn(1)->getSize()),1,op->getIn(1)); // Preserve the shift amount
     return true;
   case CPUI_INT_RIGHT:
     if (!op->getIn(1)->isConstant()) break; // Dynamic shift
     sa = (int4)op->getIn(1)->getOffset();
+    if (sa >= sizeof(uintb)*8)
+      break;			// Beyond precision of mask
     newmask = (rvn->mask << sa) & calc_mask(op->getIn(0)->getSize());
     if (newmask == 0) {		// Subvariable filled with shifted zero
       rop = createOp(CPUI_COPY,1,rvn);
@@ -753,6 +768,8 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
   case CPUI_INT_SRIGHT:
     if (!op->getIn(1)->isConstant()) break; // Dynamic shift
     sa = (int4)op->getIn(1)->getOffset();
+    if (sa >= sizeof(uintb)*8)
+      break;			// Beyond precision of mask
     newmask = (rvn->mask << sa) & calc_mask(op->getIn(0)->getSize());
     if ((newmask>>sa) != rvn->mask)
       break;			// subvariable is truncated by shift
@@ -1194,14 +1211,14 @@ void SubvariableFlow::addBooleanPatch(PcodeOp *pullop,ReplaceVarnode *rvn,int4 s
   // this is not a true modification
 }
 
-/// \brief Mark a subgraph variable flowing to an operation that expands it by padding with zero bits.
+/// \brief Mark a subgraph variable flowing to an operation that extends it by padding with zero bits.
 ///
 /// Data-flow along the specified edge within the logical subgraph is terminated by added a PatchRecord.
 /// This doesn't count as a logical value that needs to be patched (by itself).
 /// \param rvn is the given subgraph variable
 /// \param pushop is the operation that pads the variable
 /// \param sa is the amount the logical value is shifted to the left
-void SubvariableFlow::addSuggestedPatch(ReplaceVarnode *rvn,PcodeOp *pushop,int4 sa)
+void SubvariableFlow::addExtensionPatch(ReplaceVarnode *rvn,PcodeOp *pushop,int4 sa)
 
 {
   patchlist.emplace_back();
@@ -1576,8 +1593,11 @@ int4 RuleSubvarSubpiece::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *vn = op->getIn(0);
   Varnode *outvn = op->getOut();
   int4 flowsize = outvn->getSize();
+  int4 sa = op->getIn(1)->getOffset();
+  if (flowsize + sa > sizeof(uintb))	// Mask must fit in precision
+    return 0;
   uintb mask = calc_mask( flowsize );
-  mask <<= 8*((int4)op->getIn(1)->getOffset());
+  mask <<= 8*sa;
   bool aggressive = outvn->isPtrFlow();
   if (!aggressive) {
     if ((vn->getConsume() & mask) != vn->getConsume()) return 0;
@@ -2121,7 +2141,7 @@ bool SplitDatatype::RootPointer::backUpPointer(Datatype *impliedBase)
 /// \param op is the LOAD or STORE
 /// \param valueType is the specific data-type to match
 /// \return \b true if the root pointer is found
-bool SplitDatatype::RootPointer::find(PcodeOp *op,Datatype *valueType)
+bool SplitDatatype::RootPointer::find(PcodeOp *op,Datatype *valueType,ResolveCache &resolver)
 
 {
   Datatype *impliedBase = (Datatype *)0;
@@ -2131,12 +2151,14 @@ bool SplitDatatype::RootPointer::find(PcodeOp *op,Datatype *valueType)
     valueType = ((TypeArray *)valueType)->getBase();
     impliedBase = valueType;				// we allow an implied array (pointer to element) as a match
   }
+  int4 key = (op->code() == CPUI_LOAD) ? 0 : 1;
   loadStore = op;
   baseOffset = 0;
   firstPointer = pointer = op->getIn(1);
   Datatype *ct = pointer->getTypeReadFacing(op);
   if (ct->getMetatype() != TYPE_PTR)
     return false;
+  resolver.addResolution(key, pointer->getType(), op, 1);
   ptrType = (TypePointer *)ct;
   if (ptrType->getPtrTo() != valueType) {
     if (impliedBase != (Datatype *)0)
@@ -2149,8 +2171,10 @@ bool SplitDatatype::RootPointer::find(PcodeOp *op,Datatype *valueType)
   // The required pointer is found.  We try to back up to pointers to containing structures or arrays
   for(int4 i=0;i<3;++i) {
     if (pointer->isAddrTied() || pointer->loneDescend() == (PcodeOp *)0) break;
+    Varnode *lastVn = pointer;
     if (!backUpPointer(impliedBase))
       break;
+    resolver.addResolution(key, pointer->getType(), lastVn->getDef(), 0);
   }
   return true;
 }
@@ -2582,7 +2606,7 @@ void SplitDatatype::buildOutConcats(Varnode *rootVn,PcodeOp *previousOp,vector<V
     data.getMerge().registerProtoPartialRoot(rootVn);
 }
 
-/// \brief Build a a series of PTRSUB ops at different offsets, given a root pointer
+/// \brief Build a series of PTRSUB ops at different offsets, given a root pointer
 ///
 /// Offsets and data-types are based on \b dataTypePieces, taking input data-types if \b isInput is \b true,
 /// output data-types otherwise.  The data-types, relative to the root pointer, are assumed to start at
@@ -2619,9 +2643,15 @@ void SplitDatatype::buildPointers(Varnode *rootVn,TypePointer *ptrType,int4 base
 	  newOff = 0;
 	}
       }
-      if (tmpType == newType || tmpType->getMetatype() == TYPE_ARRAY) {
+      Datatype *resType;
+      if (newType->needsResolution())
+	resType = resolver.resolve(isInput ? 0 : 1, newType);
+      else
+	resType = newType;
+
+      if (tmpType == resType || tmpType->getMetatype() == TYPE_ARRAY) {
 	int8 finalOffset = curOff - newOff;
-	int4 sz = newType->getSize();		// Element size in bytes
+	int4 sz = resType->getSize();		// Element size in bytes
 	finalOffset = finalOffset / sz;		// Number of elements
 	sz = AddrSpace::byteToAddressInt(sz, ptrType->getWordSize());
 	newOp = data.newOp(3,followOp->getAddr());
@@ -2640,11 +2670,12 @@ void SplitDatatype::buildPointers(Varnode *rootVn,TypePointer *ptrType,int4 base
 	data.opSetInput(newOp, inPtr, 0);
 	data.opSetInput(newOp, data.newConstant(inPtr->getSize(), finalOffset), 1);
       }
+      resolver.inheritResolution(isInput ? 0 : 1, inPtr, newOp, 0);
       inPtr = data.newUniqueOut(inPtr->getSize(), newOp);
       Datatype *tmpPtr = types->getTypePointerStripArray(ptrType->getSize(), newType, ptrType->getWordSize());
       inPtr->updateType(tmpPtr);
       data.opInsertBefore(newOp, followOp);
-      tmpType = newType;
+      tmpType = resType;
       curOff = newOff;
     } while(tmpType->getSize() > matchType->getSize());
     ptrVarnodes.push_back(inPtr);
@@ -2679,7 +2710,7 @@ bool SplitDatatype::isArithmeticOutput(Varnode *vn)
 }
 
 SplitDatatype::SplitDatatype(Funcdata &func)
-  : data(func)
+  : data(func), resolver(func)
 {
   Architecture *glb = func.getArch();
   types = glb->types;
@@ -2709,6 +2740,8 @@ bool SplitDatatype::splitCopy(PcodeOp *copyOp,Datatype *inType,Datatype *outType
     return false;
   vector<Varnode *> inVarnodes;
   vector<Varnode *> outVarnodes;
+  Datatype *unresOutType = outVn->getType();
+  resolver.addResolution(0,unresOutType, copyOp, -1);
   if (inVn->isConstant())
     buildInConstants(inVn,inVarnodes,outVn->getSpace()->isBigEndian());
   else
@@ -2721,6 +2754,7 @@ bool SplitDatatype::splitCopy(PcodeOp *copyOp,Datatype *inType,Datatype *outType
     data.opSetInput(newCopyOp,inVarnodes[i],0);
     data.opSetOutput(newCopyOp,outVarnodes[i]);
     data.opInsertBefore(newCopyOp, copyOp);
+    resolver.inheritResolution(0,unresOutType, dataTypePieces[i].offset, outVarnodes[i], newCopyOp, -1);
   }
   data.opDestroy(copyOp);
   return true;
@@ -2744,6 +2778,7 @@ bool SplitDatatype::splitLoad(PcodeOp *loadOp,Datatype *inType)
   if (copyOp != (PcodeOp *)0) {
     OpCode opc = copyOp->code();
     if (opc == CPUI_STORE) return false;	// Handled by RuleSplitStore
+    if (opc == CPUI_ZPULL || opc == CPUI_SPULL) return false;
     if (opc != CPUI_COPY)
       copyOp = (PcodeOp *)0;
   }
@@ -2755,7 +2790,7 @@ bool SplitDatatype::splitLoad(PcodeOp *loadOp,Datatype *inType)
   if (isArithmeticInput(outVn))			// Sanity check on output
     return false;
   RootPointer root;
-  if (!root.find(loadOp,inType))
+  if (!root.find(loadOp,inType,resolver))
     return false;
   vector<Varnode *> ptrVarnodes;
   vector<Varnode *> outVarnodes;
@@ -2818,12 +2853,12 @@ bool SplitDatatype::splitStore(PcodeOp *storeOp,Datatype *outType)
     return false;
 
   RootPointer storeRoot;
-  if (!storeRoot.find(storeOp,outType))
+  if (!storeRoot.find(storeOp,outType,resolver))
     return false;
 
   RootPointer loadRoot;
   if (loadOp != (PcodeOp *)0) {
-    if (!loadRoot.find(loadOp,inType))
+    if (!loadRoot.find(loadOp,inType,resolver))
       return false;
   }
 
@@ -2981,6 +3016,70 @@ int4 RuleSplitStore::applyOp(PcodeOp *op,Funcdata &data)
   if (splitter.splitStore(op, outType))
     return 1;
   return 0;
+}
+
+void RuleDumptyHumpLate::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_SUBPIECE);
+}
+
+int4 RuleDumptyHumpLate::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *vn = op->getIn(0);
+  if (!vn->isWritten()) return 0;
+  PcodeOp *pieceOp = vn->getDef();
+  if (pieceOp->code() != CPUI_PIECE) return 0;
+  Varnode *out = op->getOut();
+  int4 outSize = out->getSize();
+  int4 trunc = (int4)op->getIn(1)->getOffset();
+  for(;;) {
+    // Try to backtrack thru PIECE to the component vn is being truncated from
+    Varnode *trialVn = pieceOp->getIn(1);	// Assume the least significant component
+    int4 trialTrunc = trunc;
+    if (trunc >= trialVn->getSize()) {	// Test for truncation from the most significant part
+      trialTrunc -= trialVn->getSize();		// How much is truncated
+      trialVn = pieceOp->getIn(0);
+    }
+    if (outSize + trialTrunc > trialVn->getSize())
+      break;				// vn crosses both components
+    vn = trialVn;				// Commit to this component
+    trunc = trialTrunc;
+    if (vn->getSize() == outSize)
+      break;				// Found matching component
+    if (!vn->isWritten())
+      break;
+    pieceOp = vn->getDef();
+    if (pieceOp->code() != CPUI_PIECE)
+      break;
+  }
+  if (vn == op->getIn(0))
+    return 0;				// Didn't backtrack thru any PIECE
+  if (vn->isWritten() && vn->getDef()->code() == CPUI_COPY)
+    vn = vn->getDef()->getIn(0);
+  PcodeOp *removeOp;
+  if (outSize != vn->getSize()) {	// Component does not match size exactly. Preserve SUBPIECE.
+    removeOp = op->getIn(0)->getDef();
+    if (op->getIn(1)->getOffset() != trunc)
+      data.opSetInput(op, data.newConstant(4, trunc), 1);
+    data.opSetInput(op, vn, 0);
+  }
+  else if (out->isAutoLive()) {		// Exact match but output address fixed. Change SUBPIECE to COPY.
+    removeOp = op->getIn(0)->getDef();
+    data.opRemoveInput(op, 1);
+    data.opSetOpcode(op, CPUI_COPY);
+    data.opSetInput(op, vn, 0);
+  }
+  else {				// Exact match. Completely replace output with component.
+    removeOp = op;
+    data.totalReplace(out, vn);
+  }
+  if (removeOp->getOut()->hasNoDescend() && !removeOp->getOut()->isAutoLive()) {
+    vector<PcodeOp *> scratch;
+    data.opDestroyRecursive(removeOp, scratch);
+  }
+  return 1;
 }
 
 /// This method distinguishes between a floating-point variable with \e full precision, where all the
@@ -3631,13 +3730,11 @@ bool LaneDivide::buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes)
   }
   TransformVar *basePtr = getPreexistingVarnode(origPtr);
   int4 ptrSize = origPtr->getSize();
-  Varnode *valueVn = op->getIn(2);
-  for(int4 i=0;i<numLanes;++i) {
+  // Order lanes by pointer offset.  Least significant to most for little endian, or most significant to least for big endian.
+  int8 bytePos = 0;	// Smallest pointer offset
+  for(int4 count=0;count<numLanes;++count) {
+    int4 i = spc->isBigEndian() ? numLanes -1 - count: count;	// little = least to most, big = most to least
     TransformOp *ropStore = newOpReplace(3, CPUI_STORE, op);
-    int4 bytePos = description.getPosition(skipLanes + i);
-    int4 sz = description.getSize(skipLanes + i);
-    if (spc->isBigEndian())
-      bytePos = valueVn->getSize() - (bytePos + sz);	// Convert position to address order
 
     // Construct the pointer
     TransformVar *ptrVn;
@@ -3654,6 +3751,7 @@ bool LaneDivide::buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes)
     opSetInput(ropStore,newConstant(spaceConstSize,0,spaceConst),0);
     opSetInput(ropStore,ptrVn,1);
     opSetInput(ropStore,inVars+i,2);
+    bytePos += description.getSize(skipLanes + i);
   }
   return true;
 }
@@ -3679,13 +3777,11 @@ bool LaneDivide::buildLoad(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 
   }
   TransformVar *basePtr = getPreexistingVarnode(origPtr);
   int4 ptrSize = origPtr->getSize();
-  int4 outSize = op->getOut()->getSize();
-  for(int4 i=0;i<numLanes;++i) {
+  // Order lanes by pointer offset.  Least significant to most for little endian, or most significant to least for big endian.
+  int8 bytePos = 0;	// Smallest pointer offset
+  for(int4 count=0;count<numLanes;++count) {
     TransformOp *ropLoad = newOpReplace(2, CPUI_LOAD, op);
-    int4 bytePos = description.getPosition(skipLanes + i);
-    int4 sz = description.getSize(skipLanes + i);
-    if (spc->isBigEndian())
-      bytePos = outSize - (bytePos + sz);	// Convert position to address order
+    int4 i = spc->isBigEndian() ? numLanes - 1 - count : count;	// little = least to most, big = most to least
 
     // Construct the pointer
     TransformVar *ptrVn;
@@ -3702,6 +3798,7 @@ bool LaneDivide::buildLoad(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 
     opSetInput(ropLoad,newConstant(spaceConstSize,0,spaceConst),0);
     opSetInput(ropLoad,ptrVn,1);
     opSetOutput(ropLoad,outVars+i);
+    bytePos += description.getSize(skipLanes + i);
   }
   return true;
 }

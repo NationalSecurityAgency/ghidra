@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,6 +84,25 @@ string GhidraTranslate::getRegisterName(AddrSpace *base,uintb off,int4 size) con
   if (res.size()!=0)		// Cause this register to be cached if not already
     getRegister(res);		// but make sure we get full register, vndata may be truncated
   return res;
+}
+
+string GhidraTranslate::getExactRegisterName(AddrSpace *base,uintb off,int4 size) const
+
+{
+  if (base->getType() != IPTR_PROCESSOR) return "";
+  VarnodeData vndata;
+  vndata.space = base;
+  vndata.offset = off;
+  vndata.size = size;
+  map<VarnodeData,string>::const_iterator iter = addr2nm.find(vndata);
+  if (iter != addr2nm.end())
+    return (*iter).second;
+  string res = glb->getRegisterName(vndata);
+  if (res.size()!=0) {		// Cause this register to be cached if not already
+    if (getRegister(res).size == size)
+      return res;
+  }
+  return "";
 }
 
 void GhidraTranslate::getUserOpNames(vector<string> &res) const

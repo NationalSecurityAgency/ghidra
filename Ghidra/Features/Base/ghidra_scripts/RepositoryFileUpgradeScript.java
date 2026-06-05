@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@
 // the script will optionally list any existing checkouts prior to starting
 // the batch upgrade.
 //
-//@category Upgrade
+//@category Program
 import java.io.IOException;
 
 import ghidra.app.script.GhidraScript;
@@ -102,6 +102,8 @@ public class RepositoryFileUpgradeScript extends GhidraScript {
 	}
 
 	private int listCheckouts(DomainFolder folder) throws IOException, CancelledException {
+		// Avoid following folder-links so we don't count the same file more than once.
+		// Link-files will never be in a checked-out state.
 		int count = 0;
 		for (DomainFile df : folder.getFiles()) {
 			monitor.checkCancelled();
@@ -115,8 +117,8 @@ public class RepositoryFileUpgradeScript extends GhidraScript {
 	}
 
 	private int listCheckouts(DomainFile df) throws IOException {
-		if (!df.isVersioned()) {
-			return 0;
+		if (!df.isVersioned() || df.isLink()) {
+			return 0; // ignore non-versioned files and link-files
 		}
 		int count = 0;
 		for (ItemCheckoutStatus checkout : df.getCheckouts()) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,13 @@ import ghidra.util.exception.NotFoundException;
 public class DBTraceProgramViewFragment implements ProgramFragment {
 	protected final AbstractDBTraceProgramViewListing listing;
 	protected final TraceMemoryRegion region;
+	protected final long snap; // From viewport, not necessarily current
 
 	public DBTraceProgramViewFragment(AbstractDBTraceProgramViewListing listing,
-			TraceMemoryRegion region) {
+			TraceMemoryRegion region, long snap) {
 		this.listing = listing;
 		this.region = region;
+		this.snap = snap;
 	}
 
 	@Override
@@ -46,7 +48,7 @@ public class DBTraceProgramViewFragment implements ProgramFragment {
 
 	@Override
 	public String getName() {
-		return region.getName();
+		return region.getName(snap);
 	}
 
 	@Override
@@ -76,25 +78,20 @@ public class DBTraceProgramViewFragment implements ProgramFragment {
 
 	@Override
 	public boolean contains(Address addr) {
-		return region.getRange().contains(addr) &&
-			region.getLifespan().contains(listing.program.snap);
+		return region.getRange(snap).contains(addr);
 	}
 
 	@Override
 	public boolean contains(Address start, Address end) {
 		// Regions are contiguous
-		AddressRange range = region.getRange();
-		return range.contains(start) && range.contains(end) &&
-			region.getLifespan().contains(listing.program.snap);
+		AddressRange range = region.getRange(snap);
+		return range.contains(start) && range.contains(end);
 	}
 
 	@Override
 	public boolean contains(AddressSetView rangeSet) {
-		if (!region.getLifespan().contains(listing.program.snap)) {
-			return false;
-		}
 		for (AddressRange range : rangeSet) {
-			AddressRange regionRange = region.getRange();
+			AddressRange regionRange = region.getRange(snap);
 			if (!regionRange.contains(range.getMinAddress()) ||
 				!regionRange.contains(range.getMaxAddress())) {
 				return false;
@@ -104,7 +101,7 @@ public class DBTraceProgramViewFragment implements ProgramFragment {
 	}
 
 	protected AddressSet toAddressSet() {
-		return new AddressSet(region.getMinAddress(), region.getMaxAddress());
+		return new AddressSet(region.getMinAddress(snap), region.getMaxAddress(snap));
 	}
 
 	@Override
@@ -114,12 +111,12 @@ public class DBTraceProgramViewFragment implements ProgramFragment {
 
 	@Override
 	public Address getMinAddress() {
-		return region.getMinAddress();
+		return region.getMinAddress(snap);
 	}
 
 	@Override
 	public Address getMaxAddress() {
-		return region.getMaxAddress();
+		return region.getMaxAddress(snap);
 	}
 
 	@Override
@@ -214,12 +211,12 @@ public class DBTraceProgramViewFragment implements ProgramFragment {
 
 	@Override
 	public AddressRange getFirstRange() {
-		return new AddressRangeImpl(region.getMinAddress(), region.getMaxAddress());
+		return new AddressRangeImpl(region.getMinAddress(snap), region.getMaxAddress(snap));
 	}
 
 	@Override
 	public AddressRange getLastRange() {
-		return new AddressRangeImpl(region.getMinAddress(), region.getMaxAddress());
+		return new AddressRangeImpl(region.getMinAddress(snap), region.getMaxAddress(snap));
 	}
 
 	@Override
@@ -248,5 +245,10 @@ public class DBTraceProgramViewFragment implements ProgramFragment {
 	@Override
 	public void move(Address min, Address max) throws NotFoundException {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isDeleted() {
+		return false;
 	}
 }

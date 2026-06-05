@@ -31,7 +31,6 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.test.*;
-import ghidra.util.task.TaskMonitor;
 
 public class GhidraScriptRealProgramTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -399,7 +398,7 @@ public class GhidraScriptRealProgramTest extends AbstractGhidraHeadedIntegration
 				// test stub
 			}
 		};
-		script.set(state, TaskMonitor.DUMMY, null);
+		script.set(state, ScriptControls.NONE);
 		return script;
 	}
 

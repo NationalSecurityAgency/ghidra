@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -87,7 +87,7 @@ public class GenericApplicationLayout extends ApplicationLayout {
 	 * @param applicationProperties The properties object that will be read system properties.
 	 * @throws IOException if there was a problem getting a user directory.
 	 */
-	public GenericApplicationLayout(Collection<ResourceFile> applicationRootDirs,
+	public GenericApplicationLayout(SequencedCollection<ResourceFile> applicationRootDirs,
 			ApplicationProperties applicationProperties) throws IOException {
 
 		this.applicationProperties = Objects.requireNonNull(applicationProperties);
@@ -96,7 +96,7 @@ public class GenericApplicationLayout extends ApplicationLayout {
 
 		// Application installation directory
 		applicationInstallationDir = applicationRootDirs.iterator().next().getParentFile();
-		if (SystemUtilities.isInDevelopmentMode()) {
+		if (SystemUtilities.isInDevelopmentMode() && applicationRootDirs.size() > 1) {
 			applicationInstallationDir = applicationInstallationDir.getParentFile();
 		}
 
@@ -179,9 +179,9 @@ public class GenericApplicationLayout extends ApplicationLayout {
 	 * first entry will be the primary root in both cases.
 	 * @return root directories
 	 */
-	public static Collection<ResourceFile> getDefaultApplicationRootDirs() {
+	public static SequencedCollection<ResourceFile> getDefaultApplicationRootDirs() {
 
-		Set<ResourceFile> results = new HashSet<>();
+		List<ResourceFile> results = new ArrayList<>();
 		String additionalRootsProperty = System.getProperty(ADDITIONAL_APPLICATION_ROOT_DIRS);
 		if (!StringUtils.isBlank(additionalRootsProperty)) {
 			String[] paths = additionalRootsProperty.split(File.pathSeparator);

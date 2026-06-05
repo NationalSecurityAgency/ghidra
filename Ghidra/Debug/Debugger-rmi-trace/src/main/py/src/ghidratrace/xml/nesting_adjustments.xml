@@ -1,0 +1,47 @@
+<!-- These are adjustment common to the Windows agents -->
+<context>
+	<schema name="Thread" elementResync="NEVER" attributeResync="NEVER">
+		<attribute name="Stack" schema="StackFramesContainer" required="yes" fixed="yes" />
+		<attribute name="Registers" schema="RegisterValueContainer" required="yes" fixed="yes" />
+		<attribute name="Environment" schema="ANY" fixed="yes" />
+		<attribute name="Id" schema="STRING" fixed="yes" />
+		<attribute name="Advance" schema="Method" required="yes" fixed="yes" hidden="yes" />
+	</schema>
+	<schema name="Method" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Method" />
+		<element schema="VOID" />
+		<attribute name="_display" schema="STRING" required="yes" fixed="yes" hidden="yes" />
+		<attribute name="_return_type" schema="TYPE" required="yes" fixed="yes" hidden="yes" />
+		<attribute name="_parameters" schema="MAP_PARAMETERS" required="yes" fixed="yes" hidden="yes" />
+		<attribute schema="VOID" fixed="yes" hidden="yes" />
+	</schema>
+	<schema name="StackFramesContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Aggregate" />
+		<element schema="VOID" />
+		<attribute name="Frames" schema="Stack" required="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="StackFrame" elementResync="NEVER" attributeResync="NEVER">
+		<attribute name="Instruction Offset" schema="ADDRESS" required="yes" />
+		<attribute-alias from="_pc" to="Instruction Offset" />
+		<attribute name="Stack Offset" schema="ADDRESS" />
+		<attribute name="Return Offset" schema="ADDRESS" />
+		<attribute name="Frame Offset" schema="ADDRESS" />
+		<attribute schema="ANY" />
+	</schema>
+	<schema name="RegisterValueContainer" attributeResync="ONCE">
+		<attribute name="General Purpose Registers" schema="RegisterBank" />
+		<attribute name="Floating Point Registers" schema="RegisterBank" />
+		<attribute name="Advanced Vector Extensions" schema="RegisterBank" />
+		<attribute name="Memory Protection Extensions" schema="RegisterBank" />
+		<attribute name="FloatingPoint" schema="RegisterBank" />
+		<attribute name="SIMD" schema="RegisterBank" />
+		<attribute name="User" schema="RegisterBank" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="RegisterBank" canonical="yes" elementResync="ONCE" attributeResync="NEVER">
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="Register" />
+	</schema>
+</context>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -257,6 +257,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		panel.setLayout(new BorderLayout());
 		panel.add(buildControlPanel(), BorderLayout.NORTH);
 		panel.add(buildTabedTables());
+		panel.getAccessibleContext().setAccessibleName("Theme Editor");
 		return panel;
 	}
 
@@ -265,6 +266,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(buildThemeCombo(), BorderLayout.WEST);
 		panel.setName("gthemePanel");
+		panel.getAccessibleContext().setAccessibleName("Theme");
 		return panel;
 	}
 
@@ -278,6 +280,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		panel.add(new JLabel("Look And Feel: "), BorderLayout.WEST);
 		panel.add(combo);
 		panel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+		panel.getAccessibleContext().setAccessibleName("Themes");
 		return panel;
 	}
 
@@ -294,17 +297,22 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		valuesCache = new GThemeValuesCache(themeManager);
 
 		colorTable = new ThemeColorTable(themeManager, valuesCache);
+		colorTable.getAccessibleContext().setAccessibleName("Colors");
 		iconTable = new ThemeIconTable(themeManager, valuesCache);
+		iconTable.getAccessibleContext().setAccessibleName("Icons");
 		fontTable = new ThemeFontTable(themeManager, valuesCache);
+		fontTable.getAccessibleContext().setAccessibleName("Fonts");
 		colorTree = new ThemeColorTree(themeManager);
+		colorTree.getAccessibleContext().setAccessibleName("Color");
 		paletteTable = new ThemeColorPaletteTable(themeManager, valuesCache);
+		paletteTable.getAccessibleContext().setAccessibleName("Color Palette");
 
 		tabbedPane.add("Colors", colorTable);
 		tabbedPane.add("Fonts", fontTable);
 		tabbedPane.add("Icons", iconTable);
 		tabbedPane.add("Color Tree", colorTree);
 		tabbedPane.add("Palette", paletteTable);
-
+		tabbedPane.getAccessibleContext().setAccessibleName("Theme Details");
 		return tabbedPane;
 	}
 
@@ -312,6 +320,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		saveButton = new JButton("Save");
 		saveButton.setMnemonic('S');
 		saveButton.setName("Save");
+		saveButton.getAccessibleContext().setAccessibleName("Save");
 		saveButton.addActionListener(e -> saveCallback());
 		saveButton.setToolTipText("Saves changed values to a new Theme");
 		return saveButton;

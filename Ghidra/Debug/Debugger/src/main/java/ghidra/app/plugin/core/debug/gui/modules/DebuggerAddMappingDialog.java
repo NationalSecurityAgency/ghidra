@@ -59,22 +59,28 @@ public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
 		panel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
 		panel.add(new JLabel("Program: "));
+		labelProg.getAccessibleContext().setAccessibleName("Program");
 		panel.add(labelProg);
 
 		panel.add(new JLabel("Static Range: "));
+		fieldProgRange.getAccessibleContext().setAccessibleName("Program Static Range");
 		panel.add(fieldProgRange);
 
 		panel.add(new JLabel("Trace: "));
+		labelTrace.getAccessibleContext().setAccessibleName("Trace");
 		panel.add(labelTrace);
 
 		panel.add(new JLabel("Dynamic Range: "));
+		fieldTraceRange.getAccessibleContext().setAccessibleName("Program Dynamic Range");
 		panel.add(fieldTraceRange);
 
 		panel.add(new JLabel("Length: "));
 		fieldLength.setFont(Font.decode("monospaced"));
+		fieldLength.getAccessibleContext().setAccessibleName("Length");
 		panel.add(fieldLength);
 
 		panel.add(new JLabel("Lifespan: "));
+		fieldSpan.getAccessibleContext().setAccessibleName("Lifespan");
 		panel.add(fieldSpan);
 
 		MiscellaneousUtils.rigFocusAndEnter(fieldProgRange, this::progRangeChanged);
@@ -83,7 +89,7 @@ public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
 		MiscellaneousUtils.rigFocusAndEnter(fieldSpan, this::spanChanged);
 
 		fieldSpan.setLifespan(Lifespan.nowOn(0));
-
+		panel.getAccessibleContext().setAccessibleName("Debugger Mapping Addition");
 		addWorkPanel(panel);
 
 		addApplyButton();
@@ -215,8 +221,8 @@ public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
 	protected void applyCallback() {
 		TraceLocation from = new DefaultTraceLocation(trace, null, fieldSpan.getLifespan(),
 			fieldTraceRange.getRange().getMinAddress());
-		ProgramLocation to = new ProgramLocation(program,
-			fieldProgRange.getRange().getMinAddress());
+		ProgramLocation to =
+			new ProgramLocation(program, fieldProgRange.getRange().getMinAddress());
 
 		try {
 			mappingService.addMapping(from, to, getLength(), false);
@@ -244,8 +250,8 @@ public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
 	 * @param lifespan the lifespan
 	 * @throws AddressOverflowException if the length is too large for either space
 	 */
-	public void setValues(Program program, Trace trace, Address progStart,
-			Address traceStart, long length, Lifespan lifespan) throws AddressOverflowException {
+	public void setValues(Program program, Trace trace, Address progStart, Address traceStart,
+			long length, Lifespan lifespan) throws AddressOverflowException {
 		// NB. This dialog will not validate these. The caller is responsible.
 		this.program = program;
 		this.trace = trace;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.dwarf;
 
 import java.util.Arrays;
 
-import ghidra.app.util.bin.format.dwarf.expression.*;
+import ghidra.program.model.pcode.Varnode;
 
 /**
  * Represents the location of an item that is only valid for a certain range of program-counter
@@ -28,6 +28,7 @@ import ghidra.app.util.bin.format.dwarf.expression.*;
 public class DWARFLocation {
 	private DWARFRange addressRange;
 	private byte[] expr;
+	private Varnode resolvedValue;
 
 	/**
 	 * Create a Location given an address range and location expression.
@@ -65,13 +66,17 @@ public class DWARFLocation {
 		return isWildcard() || addressRange.contains(addr);
 	}
 
-	public DWARFExpressionResult evaluate(DWARFCompilationUnit cu) throws DWARFExpressionException {
-		DWARFExpressionEvaluator evaluator = new DWARFExpressionEvaluator(cu);
-		return evaluator.evaluate(evaluator.readExpr(this.expr));
+	public Varnode getResolvedValue() {
+		return resolvedValue;
+	}
+
+	public void setResolvedValue(Varnode resolvedValue) {
+		this.resolvedValue = resolvedValue;
 	}
 
 	@Override
 	public String toString() {
 		return "DWARFLocation: range: %s, expr: %s".formatted(addressRange, Arrays.toString(expr));
 	}
+
 }

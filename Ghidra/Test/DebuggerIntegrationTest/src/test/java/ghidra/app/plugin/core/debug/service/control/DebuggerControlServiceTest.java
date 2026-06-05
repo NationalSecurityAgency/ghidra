@@ -40,9 +40,8 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryFlag;
-import ghidra.trace.model.stack.TraceObjectStackFrame;
+import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 
@@ -173,7 +172,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		createAndOpenTrace();
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
 
-		TraceObjectThread thread;
+		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
 			thread = tb.createObjectsProcessAndThreads();
@@ -203,7 +202,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		createAndOpenTrace();
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
-		TraceObjectThread thread;
+		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
 			thread = tb.createObjectsProcessAndThreads();
@@ -243,7 +242,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		createAndOpenTrace();
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
-		TraceObjectThread thread;
+		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
 			thread = tb.createObjectsProcessAndThreads();
@@ -286,7 +285,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 
 		try (Transaction tx = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
-			TraceObjectThread thread = tb.createObjectsProcessAndThreads();
+			TraceThread thread = tb.createObjectsProcessAndThreads();
 			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), getPlatform(), 1);
 		}
 		activateTrace();
@@ -314,7 +313,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		createAndOpenTrace();
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
 
-		TraceObjectThread thread;
+		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
 			thread = tb.createObjectsProcessAndThreads();
@@ -385,7 +384,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		createAndOpenTrace();
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
-		TraceObjectThread thread;
+		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
 			thread = tb.createObjectsProcessAndThreads();
@@ -417,8 +416,8 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 
 		try (Transaction tx = tb.startTransaction()) {
 			tb.createObjectsProcessAndThreads();
-			TraceObjectThread thread =
-				tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class);
+			TraceThread thread =
+				tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class);
 			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), getPlatform(), 1);
 			tb.trace.getMemoryManager()
 					.addRegion("Processes[1].Memory[exe:.text]", Lifespan.nowOn(0),
@@ -436,7 +435,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 
 		TraceObject process = tb.obj("Processes[1]");
 		TraceThread thread =
-			tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class);
+			tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class);
 		activateTrace(); // platform
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -456,7 +455,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		addTarget();
 
 		TraceThread thread =
-			tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class);
+			tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class);
 		activateTrace(); // platform
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -466,7 +465,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		assertTrue(editor.isRegisterEditable(r0));
 		CompletableFuture<Void> future = editor.setRegister(rv1234);
 		handleWriteRegInvocation(
-			tb.obj("Processes[1].Threads[1].Stack[0]").queryInterface(TraceObjectStackFrame.class),
+			tb.obj("Processes[1].Threads[1].Stack[0]").queryInterface(TraceStackFrame.class),
 			"r0", 1234);
 		waitOn(future);
 	}
@@ -477,7 +476,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		addTarget();
 
 		TraceThread thread =
-			tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class);
+			tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class);
 		activateTrace(); // platform
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -487,14 +486,14 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		assertTrue(editor.isRegisterEditable(r0));
 		CompletableFuture<Void> future = editor.setRegister(rv1234);
 		handleWriteRegInvocation(
-			tb.obj("Processes[1].Threads[1].Stack[0]").queryInterface(TraceObjectStackFrame.class),
+			tb.obj("Processes[1].Threads[1].Stack[0]").queryInterface(TraceStackFrame.class),
 			"r0", 1234);
 		waitOn(future);
 
 		assertTrue(editor.isRegisterEditable(r0h));
 		CompletableFuture<Void> future2 = editor.setRegister(rvHigh1234);
 		handleWriteRegInvocation(
-			tb.obj("Processes[1].Threads[1].Stack[0]").queryInterface(TraceObjectStackFrame.class),
+			tb.obj("Processes[1].Threads[1].Stack[0]").queryInterface(TraceStackFrame.class),
 			"r0h", 1234);
 		waitOn(future2);
 	}
@@ -505,7 +504,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		Target target = addTarget();
 
 		TraceThread thread =
-			tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class);
+			tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class);
 		activateTrace(); // platform
 		traceManager.activateThread(thread);
 		waitForSwing();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,9 @@ package ghidra.feature.fid.db;
 import java.io.IOException;
 
 import db.*;
-import ghidra.program.database.DBObjectCache;
+import ghidra.program.database.DbFactory;
+import ghidra.program.database.DbCache;
+import ghidra.util.Lock;
 import ghidra.util.UniversalIdGenerator;
 
 /**
@@ -43,17 +45,16 @@ public class StringsTable {
 	static int[] INDEXED_COLUMNS = new int[] { STRING_VALUE_COL };
 
 	Table table;
-	DBObjectCache<StringRecord> stringCache;
+	DbCache<StringRecord> stringCache;
 
 	/**
 	 * Creates or attaches the string table.
 	 * @param handle the database handle
-	 * @param create whether to create or attach
 	 * @throws IOException if the database has a problem
 	 */
 	public StringsTable(DBHandle handle) throws IOException {
 		table = handle.getTable(STRINGS_TABLE);
-		stringCache = new DBObjectCache<>(CACHE_SIZE);
+		stringCache = new DbCache<>(new StringRecordFactory(), new Lock("Fid"), CACHE_SIZE);
 	}
 
 	public static void createTable(DBHandle handle) throws IOException {
@@ -99,20 +100,25 @@ public class StringsTable {
 	 * @return the string record, or null if no such key
 	 */
 	StringRecord lookupString(long stringID) {
-		StringRecord stringRecord = stringCache.get(stringID);
-		if (stringRecord == null) {
-			DBRecord record;
+		return stringCache.getCachedInstance(stringID);
+	}
+
+	class StringRecordFactory implements DbFactory<StringRecord> {
+
+		@Override
+		public StringRecord instantiate(long key) {
 			try {
-				record = table.getRecord(stringID);
-				if (record != null) {
-					stringRecord =
-						new StringRecord(stringCache, stringID, record.getString(STRING_VALUE_COL));
-				}
+				DBRecord record = table.getRecord(key);
+				return record == null ? null : instantiate(record);
 			}
 			catch (IOException e) {
 				throw new RuntimeException("serious delayed database access error", e);
 			}
 		}
-		return stringRecord;
+
+		@Override
+		public StringRecord instantiate(DBRecord record) {
+			return new StringRecord(record.getKey(), record.getString(STRING_VALUE_COL));
+		}
 	}
 }

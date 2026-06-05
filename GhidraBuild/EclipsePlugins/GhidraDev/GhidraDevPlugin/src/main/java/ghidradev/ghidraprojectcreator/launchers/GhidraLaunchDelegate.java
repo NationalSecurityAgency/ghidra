@@ -21,11 +21,11 @@ import java.text.ParseException;
 
 import javax.naming.OperationNotSupportedException;
 
-import org.eclipse.core.resources.*;
+import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.*;
 import org.eclipse.debug.core.*;
 import org.eclipse.debug.ui.IDebugUIConstants;
-import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
@@ -33,7 +33,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IPerspectiveDescriptor;
 import org.eclipse.ui.PlatformUI;
 
-import ghidra.launch.JavaConfig;
+import ghidra.launch.AppConfig;
 import ghidradev.EclipseMessageUtils;
 import ghidradev.ghidraprojectcreator.utils.*;
 
@@ -62,10 +62,10 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 		}
 		IFolder ghidraFolder =
 			javaProject.getProject().getFolder(GhidraProjectUtils.GHIDRA_FOLDER_NAME);
-		JavaConfig javaConfig;
+		AppConfig appConfig;
 		String ghidraInstallPath = ghidraFolder.getLocation().toOSString();
 		try {
-			javaConfig = new JavaConfig(new File(ghidraInstallPath));
+			appConfig = new AppConfig(new File(ghidraInstallPath));
 		}
 		catch (ParseException | IOException e) {
 			EclipseMessageUtils.showErrorDialog(
@@ -90,19 +90,15 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 		programArgs += " " + customProgramArgs;
 		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_PROGRAM_ARGUMENTS, programArgs);
 		if (isHeadless && customProgramArgs.isEmpty()) {
-			EclipseMessageUtils.showInfoDialog("Ghidra Run Configuration",
-				"Headless launch is being performed without any command line arguments!\n\n" +
-					"Edit the \"" + configuration.getName() +
-					"\" run configuration's program arguments to customize headless behavior. " +
-					"See support/analyzeHeadlessREADME.html for more information.");
+			GhidraLaunchUtils.notifyAboutHeadlessWithNoArgs(configuration);
 		}
 
 		// Set VM arguments
-		String vmArgs = javaConfig.getLaunchProperties().getVmArgs();
+		String vmArgs = appConfig.getLaunchProperties().getVmArgs();
 		vmArgs += " " + configuration.getAttribute(GhidraLaunchUtils.ATTR_VM_ARGUMENTS, "").trim();
 		vmArgs += " -Dghidra.external.modules=\"%s%s%s\"".formatted(
 			javaProject.getProject().getLocation(), File.pathSeparator,
-			getProjectDependencyDirs(javaProject));
+			GhidraProjectUtils.getProjectDependencyDirs(javaProject));
 		File pyDevSrcDir = PyDevUtils.getPyDevSrcDir();
 		if (pyDevSrcDir != null) {
 			vmArgs += " " + "-Declipse.pysrc.dir=\"" + pyDevSrcDir + "\"";
@@ -115,7 +111,7 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 			ResourcesPlugin.getWorkspace().getRoot().getLocation() + "\"";
 		vmArgs += " " + "-Declipse.project.dir=\"" + javaProject.getProject().getLocation() + "\"";
 		vmArgs += " " + "-Declipse.project.dependencies=\"" +
-			getProjectDependencyDirs(javaProject) + "\"";
+			GhidraProjectUtils.getProjectDependencyDirs(javaProject) + "\"";
 		//----------------------------------------
 		
 		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_VM_ARGUMENTS, vmArgs);
@@ -126,34 +122,6 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 		}
 
 		super.launch(wc.doSave(), mode, launch, monitor);
-	}
-
-	/**
-	 * For the given Java project, gets all of its classpath dependencies that are themselves 
-	 * projects.  The result is formatted as a string of paths separated by 
-	 * {@link File#pathSeparator}.
-	 *   
-	 * @param javaProject The Java project whose project dependencies we are getting.
-	 * @return A string of paths separated by {@link File#pathSeparator} that represents the given
-	 *   Java project's dependencies that are projects.  Could be empty if there are no 
-	 *   dependencies.
-	 * @throws CoreException if there was an Eclipse-related problem with getting the dependencies.
-	 */
-	private static String getProjectDependencyDirs(IJavaProject javaProject) throws CoreException {
-		String paths = "";
-		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
-			if (entry.getEntryKind() == IClasspathEntry.CPE_PROJECT) {
-				if (!paths.isEmpty()) {
-					paths += File.pathSeparator;
-				}
-				IResource resource =
-					ResourcesPlugin.getWorkspace().getRoot().findMember(entry.getPath());
-				if (resource != null) {
-					paths += resource.getLocation();
-				}
-			}
-		}
-		return paths;
 	}
 
 	/**
@@ -171,7 +139,7 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 			}
 
 			// Start PyDev debugger
-			if (PyDevUtils.isSupportedPyDevInstalled()) {
+			if (PyDevUtils.isSupportedJythonPyDevInstalled()) {
 				try {
 					PyDevUtils.startPyDevRemoteDebugger();
 				}

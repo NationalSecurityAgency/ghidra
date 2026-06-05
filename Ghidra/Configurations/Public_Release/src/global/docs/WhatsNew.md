@@ -1,37 +1,53 @@
-# What's New in Ghidra 11.2
+# Ghidra: NSA Reverse Engineering Software
+Ghidra is a software reverse engineering (SRE) framework developed by NSA's Research Directorate.
+This framework includes a suite of full-featured, high-end software analysis tools that enable users
+to analyze compiled code on a variety of platforms including Windows, MacOS, and Linux. Capabilities
+include disassembly, assembly, decompilation, debugging, emulation, graphing, and scripting, along
+with hundreds of other features.  Ghidra supports a wide variety of processor instruction sets and
+executable formats and can be run in both user-interactive and automated modes.  Users may also
+develop their own Ghidra plug-in components and/or scripts using the exposed API.  In addition, there
+are numerous ways to extend Ghidra such as new processors, loaders/exporters, automated analyzers,
+and new visualizations.
+
+In support of NSA's Cybersecurity mission, Ghidra was built to solve scaling and teaming problems on
+complex SRE efforts and to provide a customizable and extensible SRE research platform.  NSA has
+applied Ghidra SRE capabilities to a variety of problems that involve analyzing malicious code and
+generating deep insights for NSA analysts who seek a better understanding of potential
+vulnerabilities in networks and systems.
+
+# What's New in Ghidra 12.1
 This release includes new features, enhancements, performance improvements, quite a few bug fixes,
 and many pull-request contributions. Thanks to all those who have contributed their time, thoughts,
 and code. The Ghidra user community thanks you too!
-	
+
 ### The not-so-fine print: Please Read!
-Ghidra 11.2 is fully backward compatible with project data from previous releases. However, programs
-and data type archives which are created or modified in 11.2 will not be usable by an earlier Ghidra
+Ghidra 12.1 is fully backward compatible with project data from previous releases. However, programs
+and data type archives which are created or modified in 12.1 will not be usable by an earlier Ghidra
 version.
 
-__IMPORTANT:__ Ghidra 11.2 requires at minimum JDK 21 to run.
+**IMPORTANT:** Jython support is not supported by default but is included with the release as an extension.
+An extra step is required to install it.  If you have Ghidra Jython scripts, you must either install the
+Jython Extension, convert your scripts to Python and run with PyGhidra, or convert your scripts to JAVA.
 
-__IMPORTANT:__ To use the Debugger or do a full source distribution build, you will need Python3
-(3.9 to 3.12 supported) installed on your system.
+**IMPORTANT:** Ghidra 12.1 requires, at minimum, JDK 21 to run.
 
-__NOTE:__ There have been reports of certain features causing the XWindows server to crash. A fix
+**IMPORTANT:** To use the Debugger or do a full source distribution build, you will need Python3
+(3.9 to 3.14 supported) installed on your system.
+
+**NOTE:** There have been reports of certain features causing the XWindows server to crash. A fix
 for `CVE-2024-31083` in X.org software in April 2024 introduced a regression, which has been fixed
 in xwayland 23.2.6 and xorg-server 21.1.13.  If you experience any crashing of Ghidra, most likely
 causing a full logout, check if your xorg-server has been updated to at least the noted version.
 
-__NOTE:__ Each build distribution will include native components (e.g., decompiler) for at least one
+**NOTE:** Each build distribution will include native components (e.g., Decompiler) for at least one
 platform (e.g., Windows x86-64). If you have another platform that is not included in the build
 distribution, you can build native components for your platform directly from the distribution.
-See the `Installation Guide` for additional information. Users running with older shared libraries
-and operating systems (e.g., CentOS 7.x) may also run into compatibility errors when launching 
-native executables such as the Decompiler and GNU Demangler which may necessitate a rebuild of 
-native components.
+See the *Getting Started* document for additional information. Users running with older shared 
+libraries and operating systems (e.g., CentOS 7.x) may also run into compatibility errors when 
+launching native executables such as the Decompiler and GNU Demangler which may necessitate a 
+rebuild of native components.
 
-__NOTE:__ Ghidra Server: The Ghidra 11.x server is compatible with Ghidra 9.2 and later Ghidra
-clients. Ghidra 11.x clients are compatible with all 10.x and 9.x servers.  Although, due to
-potential Java version differences, it is recommended that Ghidra Server installations older than 
-10.2 be upgraded.  Those using 10.2 and newer should not need a server upgrade.
-	
-__NOTE:__ Any programs imported with a Ghidra beta version or code built directly from source code
+**NOTE:** Programs imported with a Ghidra beta version or code built directly from source code
 outside of a release tag may not be compatible, and may have flaws that won't be corrected by using
 this new release.  Any programs analyzed from a beta or other local master source build should be
 considered experimental and re-imported and analyzed with a release version.
@@ -42,77 +58,96 @@ process that will provide better results than prior Ghidra versions.  You might 
 fresh import of any program you will continue to reverse engineer to see if the latest Ghidra 
 provides better results.
 
-## Memory Search
-The __Search Memory__ feature in Ghidra has been updated substantially to provide two new features:
-* The ability to perform set operations on successive searches
-* The ability to (re)scan memory for changes in value
+**NOTE:** Ghidra Server: The Ghidra 12.1 server is compatible with older Ghidra 11.3.2 clients and 
+later, although the presence of any newer link-files within a repository may not be handled properly
+by client versions prior to 12.0, which lack support for the newer storage format.  Ghidra 12.1 clients
+require Ghidra Server version 12.1/12.0.5 or newer compatible version. 
 
-Set operations, accessible from the pull-down menu under `Search`, allow you to augment results by
-performing boolean operations on an existing search. For example, you might search for the hex
-pattern `DE AD` using `Search`, add `BE EF` to the pattern field, and then select `A-B` to retrieve
-a list of byte sequences that begin with `DE AD` but do not include `DE AD BE EF`. Scanning for 
-changes is	most useful in a dynamic environment, such as the Debugger. Given an existing search,
-you can look for values that have changed, increased, decreased, or remained the same. Simple
-examples might include looking for counters while a process is running, checking for areas of 
-decompressed memory, or identifying active areas of the heap.
+**NOTE:** Ghidra Server: Due to security fixes made to Ghidra and the Ghidra Server it is highly
+recommended that older installation versions be updated to this latest release.
 	
-## PDB
-The `PDB Symbol Server Search Config` dialog has been changed, allowing the user to mark symbol 
-servers as trusted or untrusted. This is an improvement over the previous mechanism that based trust
-on the symbol server's connection type.
-	
-## Debugger
-__ATTENTION:__ Please either delete and re-import the default `Emulator` tool, or manually remove
-the `TraceRmiPlugin` from your EmulatorTool!
+## Security Related Fixes
 
-There are new launchers/features for the traceRMI version of dbgeng, including extended launch
-options, kernel debugging, and remote process server connections.
-	
-## Decompiler
-* The Decompiler can now automatically recover strings built on the stack and initial support for 
-  optimized heap strings has been added. Stack strings are typically found in optimized code and
-  obfuscated malware.
+### RMI Serialization Filter Improvements
+RMI Serialization filters for the Ghidra Server have been tightened and similar filters have been
+added to Ghidra client applications which may communicate with a Ghidra Server.  Please report
+any unexpected *InvalidClassException* errors, which may occur, to the Ghidra team.  If this does occur,
+please check your Ghidra Server or application log files for entries which indicate any filter
+rejections and the name of the offending class.
 
-* A new Search All action has been added which displays a table containing the results found within 
-  the current function.
+### Ghidra Server - PKI Authentication Vulnerability
+For those Ghidra Server deployments which utilize PKI Authentication mode (-a2), a logic bug 
+within the authentication callback to the server could allow an attacker to  authenticate as a 
+different user without having access to their private key.  Prior to completing the forged 
+authentication callback, the attacker would still need to successfully complete a fully authenticated 
+TLS connection with the Ghidra Server based on the installed Certificate Authorities (CAs).
 
-## Programming Languages
-Golang support for versions `1.15` and `1.16` have been added. This brings the supported Golang
-versions to `1.15` through `1.22`.
+## Bitfields
+The Decompiler now recovers and displays the names of **bitfield** components in structured 
+data-types, when analyzing code that manipulates them.
+
+Low-level details of how code isolates an individual bitfield are simplified away in Decompiler 
+output. Instead, the bitfield is displayed as a single logical value, by name, using standard field
+access notation. Both expressions that *read from* or *write to* a bitfield can be recovered.
+
+Many optimized expressions that read, write, or compare multiple bitfields at once can also be
+broken out so that the individual bitfields are visible.
+
+## Objective-C
+The old Objective-C analyzers:
+* Objective-C 2 Class
+* Objective-C 2 Decompiler Message
+* Objective-C Message (Prototype)
+
+have been been reworked and replaced with versions that are more compatible with modern 
+Objective-C binaries:
+* Objective-C Type Metadata Analyzer
+* Objective-C Message Analyzer
+
+Where possible, calls to `_objc_msgSend()` and its variations (including `_objc_msgSend$` stubs) 
+have been overridden to reference the actual target method (if discoverable), which results in a
+much more user-friendly decompilation.
+
+Additionally, a variety of AARCH64 call-fixups have been implemented which further clean up 
+decompilation, hiding much of the noise that things like Automatic Reference Counting (ARC) can 
+generate.
+
+## Debuginfod
+We've added support for downloading DWARF debug files from HTTP[s] debuginfod servers, as well as 
+searching the user's `$HOME/.cache/debuginfod_client` directory. You can configure these options in
+the Code Browser tool's **Edit | DWARF External Debug Config** menu.
+
+## Microsoft Demangler
+We've added **Output Options** to the Microsoft Demangler to control the demangled output 
+presentation, changing it from the standard form.
+
+One option controls the inclusion of user-defined-type tags (e.g., "struct") when the type is used
+as a function or template argument. When the tags are not applied, it can reduce the bifurcation
+of symbols within namespaces where some namespaces have the tags and others do not.  This can happen
+when non-mangled symbols do not include the tag and demangled symbols do.
+
+Another option controls whether the standard **\`anonymous namespace'** is presented in a
+**_anon_ABCD01234** form using its encoded anonymous namespace number.  When the new form is used,
+it can reduce the commingling of symbols from two distinct anonymous namespaces into one generic
+**\`anonymous namespace'**.  Note, however, that non-mangled symbols with the generic
+**\`anonymous namespace'** (or one of its variants) can still be found in a program, coming from
+other sources, such as PDB.  There is currently no simple way to try to match these with the new
+encoded form; thus, using the encoded form can also create bifurcation in the namespace.
 
 ## Processors
-* There have been quite a few improvements to the `Sparc` processor specification, including
-  additional instructions, 64-bit relocation support, and better handling of call/return detection
-  through tracking of the `o7` link register.  In addition, the calling convention for both 
-  sparc 32 and 64 bit binaries have had an overhaul to support hidden structure return and much
-  improved parameter allocation of floating point and general data types.
-    
-* The `Intel M16C/60/80` sleigh processor specifications have been added.  In addition, there have
-  been numerous fixes to the `ARM`, `RX`, `M68000`, `PIC16`, `PPC`, and `x86` processor 
-  specifications.
+Added the Hexagon Processor module.  The instruction syntax is modified from the Hexagon manual to better
+fit Ghidra's mnemonic and operand Listing API.  This processor also introduces the first use of Ghidra's
+Sleigh **crossbuild** feature which is used for weaving pcode for parallel processor architectures such
+as the Hexagon.
 
-## Other Improvements
-* Actions have been added to compare functions directly from the Listing, Decompiler, or Functions
-  Table via popup menu items. If there is already a Function Comparison window showing, there are
-  two actions: one to add the selected function(s) to the existing comparison, and one to create a
-  new Function Comparison Window. This allows a workflow where users can build up a set of functions
-  to compare as they browse around instead of having to select them all at once.
-  
-* For Ghidra script and plugin developers who would prefer to use Visual Studio Code, a new script
-  `VSCodeProjectScript.java` will create a new Visual Studio Code project that is setup to do Ghidra 
-  scripting and module development.  The capabilities are similar to the Eclipse GhidraDev plugin.
-	
-* There have been major speed improvements when creating or modifying large structures within the
-  structure editor.  In general large structure manipulation should perform fluidly no matter the
-  size of the structure.  If the structure contains a large number of defined data, there could
-  still be some degradation in speed. Some fixed performance issues include: resizing a structure
-  smaller or larger, clicking on an item to select a row, and defining a data type either with
-  keyboard actions or dragging and dropping from the data type manager.  In addition, the behavior
-  of automatically growing the size of a structure has been made consistent.  Defining data on the
-  last element of a structure is allowed to automatically grow the structure to fit the data type.
-  Defining data anywhere other than the last element isn't allowed if the data type does not fit
-  because of defined data that would need to be cleared, or there are not enough undefined bytes.
+There have been a significant number of missing/extension instructions added to the ARM, AARCH64,
+and X86 processors.  Additionally since 12.0 there a myriad of processor specification bugs have been fixed.
+
+## Jython Extension
+Jython support is now delivered as a Ghidra Extension, which means an extra step is required to 
+install it. If you require Jython, simply go to `File -> Install Extensions` in the Ghidra
+Front End GUI and check "Jython". Restart Ghidra and Jython support will be enabled.
 
 ## Additional Bug Fixes and Enhancements
 Numerous other new features, improvements, and bug fixes are fully listed in the 
-[Change History](ChangeHistory.html) file.
+[Change History](ChangeHistory.md) file.

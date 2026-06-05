@@ -40,7 +40,7 @@ This is perhaps the easiest use case, assuming you already have started a live s
 *Extrapolation* is predicting execution of the target into the future, without allowing the actual target to execute.
 Instead, we will allow an emulator to step forward, while reading its initial state from the live target.
 This allows you, e.g., to experiment with various patches, or to force execution down a certain path.
-If you devise a patch, you can then apply it the live target and allow it to execute for real.
+If you devise a patch, you can then apply it to the live target and allow it to execute for real.
 *Interpolation* is similar, but from a snapshot that is in the past.
 It can help answer the question, "How did I get here?"
 It is more limited, because missing state for snapshots in the past cannot be recovered.
@@ -73,12 +73,12 @@ If the emulated target reads a variable that Ghidra has not yet captured into th
 
 ### Stepping Schedules
 
-If you had not noticed before, the subtitle of the Threads window gives the current snapshot number.
+If you had not noticed before, the trace tabs include the current snapshot number.
 If you have stepped in the emulator, it will also contain the sequence of steps emulated.
 Recall the *time* element of the Debugger's *coordinates*.
 (See the [Navigation](A5-Navigation.md) module if you need a refresher.)
 The time element, called the *schedule*, consists of both the current snapshot and the sequence of steps to emulate.
-The subtitle displays that schedule.
+The tab displays that schedule.
 If you have done any patching of the emulator's state, you may notice some more complicated "steps" in the schedule.
 The syntax is:
 
@@ -251,7 +251,7 @@ It is possible we may only need to initialize `argc`, since the parser may not a
 Use the Watches window to set `RDI` to 1, then click ![resume button](images/resume.png) **Resume**.
 Like before, the emulator will crash, but this time you should see "pc = 00000000" in red.
 This probably indicates success.
-In the Threads window, you should see a schedule similar to `0:t0-{RDI=0x1);t0-16`.
+In the trace tab, you should see a schedule similar to `0:t0-{RDI=0x1);t0-16`.
 This tells us we first patched RDI, then emulated 16 machine instructions before crashing.
 When the parser function returned, it probably read a stale 0 as the return address, so we would expect a decode error at `00000000`.
 Step backward once to confirm this hypothesis.
@@ -377,7 +377,7 @@ After you have written your Sleigh code:
 1. Click ![resume button](images/resume.png) **Resume**.
 
 Stubbing any remaining external calls is left as an exercise.
-You are successful when the emulator crashes with `pc = 00000000`.
+You are successful when the emulator crashes with "pc = 00000000".
 
 Clear or disable your breakpoint and invalidate the emulator cache again before proceeding to the next technique.
 
@@ -412,7 +412,7 @@ return [RIP];
 Notice that we cannot just write `RET`, but instead must write the Sleigh code to mimic a `RET`.
 As with the `CALL` override technique, you must now invalidate the emulator cache and resume.
 Stubbing any remaining external functions is left as an exercise.
-You are successful when the emulator crashes with `pc = 00000000`.
+You are successful when the emulator crashes with "pc = 00000000".
 
 ### Wrapping Up
 
@@ -475,9 +475,9 @@ The columns are:
 * The **Repr** column gives the variable's value according to the assigned type.
 
 As you step, you may notice the schedule changes.
-It is displayed in the stepper's subtitle as well as the Threads panel's subtitle.
+It is displayed in the stepper's subtitle as well as in the trace tab.
 P-code stepping is denoted by the portion of the schedule following the dot.
 **NOTE**: You cannot mix instruction steps with p-code op steps.
-The instruction steps always precede the p-code ops.
+The instruction steps always precede the p-code op steps.
 If you click **Step Into** from the global toolbar in the middle of an instruction, the trailing p-code op steps will be removed and replaced with a single instruction step.
 In most cases, this intuitively "finishes" the partial instruction.

@@ -15,7 +15,7 @@
  */
 package docking.actions;
 
-import static org.apache.commons.lang3.StringUtils.*;
+import static org.apache.commons.lang3.Strings.*;
 
 import java.awt.Component;
 import java.awt.KeyboardFocusManager;
@@ -30,9 +30,9 @@ import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.XMLOutputter;
 
 import docking.DockingUtils;
 import docking.Tool;
@@ -94,7 +94,7 @@ public class KeyBindingUtils {
 	public static ToolOptions importKeyBindings() {
 		// show a filechooser for the user to choose a location
 		InputStream inputStream = getInputStreamForFile(getStartingDir());
-		return createOptionsforKeybindings(inputStream);
+		return createOptionsforKeyBindings(inputStream);
 	}
 
 	/**
@@ -107,7 +107,7 @@ public class KeyBindingUtils {
 	 * @return An options object that is composed of key binding names and their
 	 *         associated keystrokes.
 	 */
-	public static ToolOptions createOptionsforKeybindings(InputStream inputStream) {
+	public static ToolOptions createOptionsforKeyBindings(InputStream inputStream) {
 		if (inputStream == null) {
 			return null;
 		}
@@ -157,7 +157,7 @@ public class KeyBindingUtils {
 		// create the xml structure, the outputter and then write the data
 		Element rootElement = keyBindingOptions.getXmlRoot(true);
 		Document document = new Document(rootElement);
-		XMLOutputter xmlOutputter = new GenericXMLOutputter();
+		XMLOutputter xmlOutputter = GenericXMLOutputter.getInstance();
 
 		try {
 			xmlOutputter.output(document, outputStream);
@@ -674,19 +674,19 @@ public class KeyBindingUtils {
 		StringBuilder buffy = new StringBuilder();
 		if (isShift(modifiers)) {
 			buffy.insert(0, SHIFT + MODIFIER_SEPARATOR);
-			keyString = removeIgnoreCase(keyString, SHIFT);
+			keyString = remove(keyString, SHIFT);
 		}
 		if (isAlt(modifiers)) {
 			buffy.insert(0, ALT + MODIFIER_SEPARATOR);
-			keyString = removeIgnoreCase(keyString, ALT);
+			keyString = remove(keyString, ALT);
 		}
 		if (isControl(modifiers)) {
 			buffy.insert(0, CTRL + MODIFIER_SEPARATOR);
-			keyString = removeIgnoreCase(keyString, CONTROL);
+			keyString = remove(keyString, CONTROL);
 		}
 		if (isMeta(modifiers)) {
 			buffy.insert(0, META + MODIFIER_SEPARATOR);
-			keyString = removeIgnoreCase(keyString, META);
+			keyString = remove(keyString, META);
 		}
 		buffy.append(keyString);
 
@@ -698,7 +698,15 @@ public class KeyBindingUtils {
 	}
 
 	private static int indexOf(String source, String search, int offset) {
-		return StringUtils.indexOfIgnoreCase(source, search, offset);
+		return CI.indexOf(source, search, offset);
+	}
+
+	private static int indexOf(String source, String search) {
+		return CI.indexOf(source, search);
+	}
+
+	private static String remove(String source, String toRemove) {
+		return CI.remove(source, toRemove);
 	}
 
 	// ignore the deprecated; remove when we are confident that all tool actions no longer use the
@@ -719,7 +727,8 @@ public class KeyBindingUtils {
 	// deprecated InputEvent mask types
 	@SuppressWarnings("deprecation")
 	private static boolean isControl(int mask) {
-		return (mask & InputEvent.CTRL_DOWN_MASK) != 0 || (mask & InputEvent.CTRL_MASK) != 0;
+		return (mask & InputEvent.CTRL_DOWN_MASK) != 0 || (mask & InputEvent.CTRL_MASK) != 0 ||
+			(mask & DockingUtils.CONTROL_KEY_MODIFIER_MASK) != 0;
 	}
 
 	// ignore the deprecated; remove when we are confident that all tool actions no longer use the
@@ -766,33 +775,33 @@ public class KeyBindingUtils {
 		StringBuilder buffy = new StringBuilder();
 		for (Iterator<String> iterator = pieces.iterator(); iterator.hasNext();) {
 			String piece = iterator.next();
-			if (indexOfIgnoreCase(piece, SHIFT) != -1) {
+			if (indexOf(piece, SHIFT) != -1) {
 				buffy.append("shift ");
 				iterator.remove();
 			}
-			else if (indexOfIgnoreCase(piece, CTRL) != -1) {
+			else if (indexOf(piece, CTRL) != -1) {
 				buffy.append("ctrl ");
 				iterator.remove();
 			}
-			else if (indexOfIgnoreCase(piece, CONTROL) != -1) {
+			else if (indexOf(piece, CONTROL) != -1) {
 				buffy.append("ctrl ");
 				iterator.remove();
 			}
-			else if (indexOfIgnoreCase(piece, ALT) != -1) {
+			else if (indexOf(piece, ALT) != -1) {
 				buffy.append("alt ");
 				iterator.remove();
 			}
-			else if (indexOfIgnoreCase(piece, META) != -1) {
+			else if (indexOf(piece, META) != -1) {
 				buffy.append("meta ");
 				iterator.remove();
 			}
-			else if (indexOfIgnoreCase(piece, PRESSED) != -1) {
+			else if (indexOf(piece, PRESSED) != -1) {
 				iterator.remove();
 			}
-			else if (indexOfIgnoreCase(piece, TYPED) != -1) {
+			else if (indexOf(piece, TYPED) != -1) {
 				iterator.remove();
 			}
-			else if (indexOfIgnoreCase(piece, RELEASED) != -1) {
+			else if (indexOf(piece, RELEASED) != -1) {
 				iterator.remove();
 			}
 

@@ -57,7 +57,7 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 			return false;
 		}
 
-		return !containsInvalidNodes(selectionPaths);
+		return hasAnyEnumTypes(selectionPaths);
 	}
 
 	@Override
@@ -90,8 +90,13 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 		TreePath[] paths = gTree.getSelectionPaths();
 		List<Enum> enums = new ArrayList<>();
 		for (TreePath path : paths) {
-			DataTypeNode dtNode = (DataTypeNode) path.getLastPathComponent();
-			enums.add((Enum) dtNode.getDataType());
+			GTreeNode node = (GTreeNode) path.getLastPathComponent();
+			if (node instanceof DataTypeNode dtNode) {
+				DataType dt = dtNode.getDataType();
+				if (dt instanceof Enum e) {
+					enums.add(e);
+				}
+			}
 		}
 		return enums;
 	}
@@ -135,20 +140,18 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 			return false;
 		}
 
-		return !containsInvalidNodes(selectionPaths);
+		return hasAnyEnumTypes(selectionPaths);
 	}
 
-	private boolean containsInvalidNodes(TreePath[] selectionPaths) {
-
+	private boolean hasAnyEnumTypes(TreePath[] selectionPaths) {
 		// determine if all selected nodes are Enums
 		for (TreePath path : selectionPaths) {
 			GTreeNode node = (GTreeNode) path.getLastPathComponent();
-			if (!(node instanceof DataTypeNode)) {
-				return true;
+			if (!(node instanceof DataTypeNode dtNode)) {
+				continue; // ignore folders and other non-data type nodes
 			}
-			DataTypeNode dataTypeNode = (DataTypeNode) node;
-			DataType dataType = dataTypeNode.getDataType();
-			if (!(dataType instanceof Enum)) {
+			DataType dataType = dtNode.getDataType();
+			if (dataType instanceof Enum) {
 				return true;
 			}
 		}

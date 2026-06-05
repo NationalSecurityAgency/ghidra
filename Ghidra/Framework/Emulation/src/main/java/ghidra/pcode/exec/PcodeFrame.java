@@ -331,7 +331,7 @@ public class PcodeFrame {
 	 * instruction) completed with fall-through, then this will return -1. If it completed on a
 	 * branch, then this will return the index of that branch.
 	 * 
-	 * @return
+	 * @return the last index executed
 	 */
 	public int getBranched() {
 		return branched;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +16,10 @@
 package ghidra.trace.database.target;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-import ghidra.dbg.util.PathUtils.PathComparator;
 import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.KeyPath.PathComparator;
 
 public class DBTraceObjectValPath implements TraceObjectValPath {
 	public static final DBTraceObjectValPath EMPTY = new DBTraceObjectValPath(List.of());
@@ -37,15 +37,15 @@ public class DBTraceObjectValPath implements TraceObjectValPath {
 	}
 
 	private final List<DBTraceObjectValue> entryList;
-	private List<String> keyList; // lazily computed
+	private KeyPath path; // lazily computed
 
 	private DBTraceObjectValPath(List<DBTraceObjectValue> entryList) {
 		this.entryList = entryList;
 	}
 
 	@Override
-	public int compareTo(TraceObjectValPath o) {
-		return PathComparator.KEYED.compare(getKeyList(), o.getKeyList());
+	public int compareTo(TraceObjectValPath that) {
+		return PathComparator.KEYED.compare(this.getPath(), that.getPath());
 	}
 
 	@Override
@@ -53,18 +53,16 @@ public class DBTraceObjectValPath implements TraceObjectValPath {
 		return entryList;
 	}
 
-	protected List<String> computeKeyList() {
-		return entryList.stream()
-				.map(e -> e.getEntryKey())
-				.collect(Collectors.toUnmodifiableList());
+	protected KeyPath computePath() {
+		return KeyPath.of(entryList.stream().map(e -> e.getEntryKey()));
 	}
 
 	@Override
-	public List<String> getKeyList() {
-		if (keyList == null) {
-			keyList = computeKeyList();
+	public KeyPath getPath() {
+		if (path == null) {
+			path = computePath();
 		}
-		return keyList;
+		return path;
 	}
 
 	@Override

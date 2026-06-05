@@ -15,9 +15,6 @@
  */
 package ghidra.app.util.bin.format.pe;
 
-/**
- * 
- */
 class MachineName {
 
 	static String getName(short machine) {

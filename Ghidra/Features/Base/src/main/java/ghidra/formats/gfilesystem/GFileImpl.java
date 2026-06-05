@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,6 @@ public class GFileImpl implements GFile {
 	 * to create GFile instances if you can supply the parent value as that will
 	 * allow reuse of the parent objects instead of duplicates of them being created
 	 * for each file with the same parent path.
-	 * <p>
 	 *
 	 * @param fileSystem the {@link GFileSystem} that owns this file
 	 * @param path forward slash '/' separated path and filename string.
@@ -63,7 +62,6 @@ public class GFileImpl implements GFile {
 	 * to create GFile instances if you can supply the parent value as that will
 	 * allow reuse of the parent objects instead of duplicates of them being created
 	 * for each file with the same parent path.
-	 * <p>
 	 *
 	 * @param fileSystem the {@link GFileSystem} that owns this file
 	 * @param parent the parent of the new GFile or null if child-of-root.
@@ -114,7 +112,7 @@ public class GFileImpl implements GFile {
 	 * and as a child of the specified parent.
 	 * <p>
 	 * The filename is accepted without checking or validation.
-	 * <p>
+	 * 
 	 * @param fileSystem the {@link GFileSystem} that owns this file
 	 * @param parent the parent of the new GFile or null if child-of-root.
 	 * @param filename the file's name, not used if FSRL param specified.
@@ -134,7 +132,7 @@ public class GFileImpl implements GFile {
 	/**
 	 * Creates a GFile for a filesystem using the information in a FSRL as the file's name
 	 * and as a child of the specified parent.
-	 * <p>
+	 * 
 	 * @param fileSystem the {@link GFileSystem} that owns this file
 	 * @param parent the parent of the new GFile or null if child-of-root.
 	 * @param fsrl {@link FSRL} to assign to the file.
@@ -157,7 +155,6 @@ public class GFileImpl implements GFile {
 	 * Protected constructor, use static helper methods to create new instances.
 	 * <p>
 	 * Creates a new GFile instance without any name parsing.
-	 * <p>
 	 *
 	 * @param fileSystem the {@link GFileSystem} that owns this file
 	 * @param parentFile the parent of the new GFile or null if child-of-root.

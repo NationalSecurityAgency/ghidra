@@ -18,26 +18,45 @@ import os
 import sys
 
 
-home = os.getenv('GHIDRA_HOME')
+cxn = os.getenv('GHIDRA_TRACE_RMI_ADDR')
+target = os.getenv('OPT_TARGET_PID')
+args = os.getenv('OPT_ATTACH_FLAGS')
 
-if os.path.isdir(f'{home}\\ghidra\\.git'):
+
+def parse_parameters():
+    global cxn, target, args
+    os.environ['OPT_OS_WINDOWS'] = "true"
+    argc = len(sys.argv)
+    if argc == 1:
+        return True
+    if argc >= 4:
+        cxn = sys.argv[1]
+        os.environ['OPT_USE_DBGMODEL'] = sys.argv[2]
+        target = sys.argv[3]
+        if argc > 4:
+            args = sys.argv[4]
+        return True
+    print("Error: expected (cxn, use_dbgmodel, target, ...)")
+    return False
+    
+def append_paths():
     sys.path.append(
-        f'{home}\\ghidra\\Ghidra\\Debug\\Debugger-agent-dbgeng\\build\\pypkg\\src')
-    sys.path.append(
-        f'{home}\\ghidra\\Ghidra\\Debug\\Debugger-rmi-trace\\build\\pypkg\\src')
-elif os.path.isdir(f'{home}\\.git'):
-    sys.path.append(
-        f'{home}\\Ghidra\\Debug\\Debugger-agent-dbgeng\\build\\pypkg\\src')
-    sys.path.append(
-        f'{home}\\Ghidra\\Debug\\Debugger-rmi-trace\\build\\pypkg\\src')
-else:
-    sys.path.append(
-        f'{home}\\Ghidra\\Debug\\Debugger-agent-dbgeng\\pypkg\\src')
-    sys.path.append(f'{home}\\Ghidra\\Debug\\Debugger-rmi-trace\\pypkg\\src')
+        f"{os.getenv('MODULE_Debugger_rmi_trace_HOME')}/data/support")
+    try:
+        from gmodutils import ghidra_module_pypath
+        sys.path.append(ghidra_module_pypath("Debugger-rmi-trace"))
+        sys.path.append(ghidra_module_pypath())
+    except Exception as e:
+        pass
 
 
 def main():
+    append_paths()
     # Delay these imports until sys.path is patched
+    try:
+        import ghidradbg
+    except Exception as e:
+        exit(253)
     from ghidradbg import commands as cmd
     from pybag.dbgeng import core as DbgEng
     from ghidradbg.hooks import on_state_changed
@@ -47,23 +66,28 @@ def main():
     global repl
     repl = cmd.repl
 
-    cmd.ghidra_trace_connect(os.getenv('GHIDRA_TRACE_RMI_ADDR'))
-    flags = os.getenv('OPT_ATTACH_FLAGS')
-    cmd.ghidra_trace_attach(
-        os.getenv('OPT_TARGET_PID'), flags, start_trace=False)
-    
+    cmd.ghidra_trace_connect(cxn)
+    cmd.ghidra_trace_attach(target, args, start_trace=False)
+
     # TODO: HACK
     try:
         dbg.wait()
     except KeyboardInterrupt as ki:
         dbg.interrupt()
 
-    cmd.ghidra_trace_start(os.getenv('OPT_TARGET_IMG'))
+    cmd.ghidra_trace_start(target)
     cmd.ghidra_trace_sync_enable()
-    
-    on_state_changed(DbgEng.DEBUG_CES_EXECUTION_STATUS, DbgEng.DEBUG_STATUS_BREAK)
+
+    on_state_changed(DbgEng.DEBUG_CES_EXECUTION_STATUS,
+                     DbgEng.DEBUG_STATUS_BREAK)
     cmd.repl()
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except SystemExit as x:
+        if x.code == 253:
+            exit(253)
+        if x.code != 0:
+            print(f"Exited with code {x.code}")

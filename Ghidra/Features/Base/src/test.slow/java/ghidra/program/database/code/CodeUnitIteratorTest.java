@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -783,13 +783,12 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testIteratorForComments() throws Exception {
 		startTransaction();
-		mem.createInitializedBlock("test", addr(0), 100, (byte) 0, TaskMonitor.DUMMY,
-			false);
+		mem.createInitializedBlock("test", addr(0), 100, (byte) 0, TaskMonitor.DUMMY, false);
 
 		for (int i = 0; i < 20; i++) {
 			CodeUnit cu = listing.getCodeUnitAt(addr(i + 10));
-			cu.setComment(CodeUnit.PLATE_COMMENT, "comment for plate " + i);
-			assertEquals("comment for plate " + i, cu.getComment(CodeUnit.PLATE_COMMENT));
+			cu.setComment(CommentType.PLATE, "comment for plate " + i);
+			assertEquals("comment for plate " + i, cu.getComment(CommentType.PLATE));
 		}
 		endTransaction();
 
@@ -802,8 +801,8 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 			CodeUnit cu = iter.next();
 			expectedAddr = addr(n + 10);
 			assertEquals(expectedAddr, cu.getMinAddress());
-			assertNotNull(cu.getComment(CodeUnit.PLATE_COMMENT));
-			assertNull(cu.getComment(CodeUnit.EOL_COMMENT));
+			assertNotNull(cu.getComment(CommentType.PLATE));
+			assertNull(cu.getComment(CommentType.EOL));
 			++n;
 		}
 	}
@@ -811,26 +810,24 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testIteratorForCommentType() throws Exception {
 		startTransaction();
-		mem.createInitializedBlock("test", addr(0), 100, (byte) 0, TaskMonitor.DUMMY,
-			false);
-		mem.createInitializedBlock("test2", addr(5000), 100, (byte) 0,
-			TaskMonitor.DUMMY, false);
+		mem.createInitializedBlock("test", addr(0), 100, (byte) 0, TaskMonitor.DUMMY, false);
+		mem.createInitializedBlock("test2", addr(5000), 100, (byte) 0, TaskMonitor.DUMMY, false);
 
 		for (int i = 0; i < 20; i++) {
 			CodeUnit cu = listing.getCodeUnitAt(addr(i + 10));
-			cu.setComment(CodeUnit.PLATE_COMMENT, "comment for plate " + i);
-			cu.setComment(CodeUnit.EOL_COMMENT, "comment for eol " + i);
+			cu.setComment(CommentType.PLATE, "comment for plate " + i);
+			cu.setComment(CommentType.EOL, "comment for eol " + i);
 		}
 
 		for (int i = 20; i < 30; i++) {
 			CodeUnit cu = listing.getCodeUnitAt(addr(i + 5000));
-			cu.setComment(CodeUnit.PLATE_COMMENT, "comment for plate " + i);
-			cu.setComment(CodeUnit.EOL_COMMENT, "comment for eol " + i);
+			cu.setComment(CommentType.PLATE, "comment for plate " + i);
+			cu.setComment(CommentType.EOL, "comment for eol " + i);
 		}
 		endTransaction();
 
-		CodeUnitIterator iter = ((ProgramDB) program).getCodeManager().getCommentCodeUnitIterator(
-			CodeUnit.PLATE_COMMENT, mem);
+		CodeUnitIterator iter = ((ProgramDB) program).getCodeManager()
+				.getCommentCodeUnitIterator(CommentType.PLATE, mem);
 		int n = 0;
 		Address expectedAddr = null;
 		while (iter.hasNext()) {
@@ -851,20 +848,19 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testIteratorForCommentsBackwards() throws Exception {
 		startTransaction();
-		mem.createInitializedBlock("test", addr(0), 100, (byte) 0, TaskMonitor.DUMMY,
-			false);
+		mem.createInitializedBlock("test", addr(0), 100, (byte) 0, TaskMonitor.DUMMY, false);
 
 		CodeUnit cu = listing.getCodeUnitAt(addr(90));
-		cu.setComment(CodeUnit.PLATE_COMMENT, "comment for plate " + addr(90));
+		cu.setComment(CommentType.PLATE, "comment for plate " + addr(90));
 
 		cu = listing.getCodeUnitAt(addr(80));
-		cu.setComment(CodeUnit.PLATE_COMMENT, "comment for plate " + addr(80));
+		cu.setComment(CommentType.PLATE, "comment for plate " + addr(80));
 
 		cu = listing.getCodeUnitAt(addr(70));
-		cu.setComment(CodeUnit.PLATE_COMMENT, "comment for plate " + addr(70));
+		cu.setComment(CommentType.PLATE, "comment for plate " + addr(70));
 
 		cu = listing.getCodeUnitAt(addr(10));
-		cu.setComment(CodeUnit.PLATE_COMMENT, "comment for plate " + addr(10));
+		cu.setComment(CommentType.PLATE, "comment for plate " + addr(10));
 
 		endTransaction();
 		CodeUnitIterator iter =
@@ -892,8 +888,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetPropertyCodeUnitIterator() throws Exception {
 		startTransaction();
-		mem.createInitializedBlock("test", addr(0), 100, (byte) 0, TaskMonitor.DUMMY,
-			false);
+		mem.createInitializedBlock("test", addr(0), 100, (byte) 0, TaskMonitor.DUMMY, false);
 		for (int i = 0; i < 20; i++) {
 			CodeUnit cu = listing.getCodeUnitAt(addr(i + 10));
 			cu.setProperty("Numbers", i);
@@ -915,8 +910,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetPropertyCuIteratorBackwards() throws Exception {
 		startTransaction();
-		mem.createInitializedBlock("test", addr(0), 100, (byte) 0, TaskMonitor.DUMMY,
-			false);
+		mem.createInitializedBlock("test", addr(0), 100, (byte) 0, TaskMonitor.DUMMY, false);
 		for (int i = 0; i < 20; i++) {
 			CodeUnit cu = listing.getCodeUnitAt(addr(i));
 			cu.setProperty("Numbers", i);
@@ -937,8 +931,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetPropertCUIteratorSet() throws Exception {
 		startTransaction();
-		mem.createInitializedBlock("bk1", addr(0), 200, (byte) 0, TaskMonitor.DUMMY,
-			false);
+		mem.createInitializedBlock("bk1", addr(0), 200, (byte) 0, TaskMonitor.DUMMY, false);
 		// addresses 10-19
 		for (int i = 0; i < 20; i++) {
 			CodeUnit cu = listing.getCodeUnitAt(addr(i + 10));
@@ -973,16 +966,15 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testPropertyCommentIterator() throws Exception {
 		startTransaction();
 // 		mem.createUninitializedBlock("Test", addr(0), 200);
-		mem.createInitializedBlock("bk1", addr(0), 200, (byte) 0, TaskMonitor.DUMMY,
-			false);
+		mem.createInitializedBlock("bk1", addr(0), 200, (byte) 0, TaskMonitor.DUMMY, false);
 		for (int i = 0; i < 20; i++) {
 			CodeUnit cu = listing.getCodeUnitAt(addr(i + 10));
-			cu.setComment(CodeUnit.EOL_COMMENT, "This is an eol comment " + i);
-			assertNotNull(cu.getComment(CodeUnit.EOL_COMMENT));
+			cu.setComment(CommentType.EOL, "This is an eol comment " + i);
+			assertNotNull(cu.getComment(CommentType.EOL));
 		}
 		for (int i = 100; i < 120; i++) {
 			CodeUnit cu = listing.getCodeUnitAt(addr(i));
-			cu.setComment(CodeUnit.PRE_COMMENT, "This is pre comment " + i);
+			cu.setComment(CommentType.PRE, "This is pre comment " + i);
 		}
 		endTransaction();
 		AddressSet set = new AddressSet(addr(0), addr(5));
@@ -1196,8 +1188,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetDataBackwards() throws Exception {
 		startTransaction();
-		mem.createInitializedBlock("test", addr(0), 1000, (byte) 0,
-			TaskMonitor.DUMMY, false);
+		mem.createInitializedBlock("test", addr(0), 1000, (byte) 0, TaskMonitor.DUMMY, false);
 
 		for (int i = 0; i < 10; i++) {
 			listing.createData(addr(i), DataType.DEFAULT, 1);
@@ -1249,177 +1240,10 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testGetCompositeData() throws Exception {
-		startTransaction();
-		mem.createInitializedBlock("test", addr(0), 1000, (byte) 0,
-			TaskMonitor.DUMMY, false);
-
-		Structure struct = new StructureDataType("struct_1", 100);
-		Structure struct2 = new StructureDataType("struct_2", 0);
-		Structure struct3 = new StructureDataType("struct_3", 0);
-		DataTypeManager dtm = new StandAloneDataTypeManager("dummyDTM");
-		int id = dtm.startTransaction("");
-
-		struct = (Structure) dtm.resolve(struct, null);
-		struct2 = (Structure) dtm.resolve(struct2, null);
-		struct3 = (Structure) dtm.resolve(struct3, null);
-
-		struct2.add(new ByteDataType());
-		struct2.add(new StringDataType(), 20);
-		struct2.add(new QWordDataType());
-		struct3.add(struct2);
-
-		struct.replace(0, struct2, struct2.getLength());
-		struct.replace(1, new StringDataType(), 10);
-
-		listing.createData(addr(0), struct, 0);
-
-		listing.createData(addr(300), struct2, 0);
-
-		listing.createData(addr(250), struct3, 0);
-		endTransaction();
-
-		DataIterator iter = listing.getCompositeData(true);
-		assertTrue(iter.hasNext());
-		Data d = iter.next();
-		assertNotNull(d);
-		assertEquals(addr(0), d.getMinAddress());
-		assertEquals(addr(99), d.getMaxAddress());
-
-		d = iter.next();
-		assertNotNull(d);
-		assertEquals(addr(250), d.getMinAddress());
-		assertEquals("struct_3", d.getDataType().getName());
-
-		d = iter.next();
-		assertNotNull(d);
-		assertEquals(addr(300), d.getMinAddress());
-		assertEquals(3, d.getNumComponents());
-
-		assertTrue(!iter.hasNext());
-		d = iter.next();
-		assertNull(d);
-		dtm.endTransaction(id, true);
-		dtm.close();
-	}
-
-	@Test
-	public void testGetCompositeDataStartingAt() throws Exception {
-		startTransaction();
-		mem.createInitializedBlock("test", addr(0), 1000, (byte) 0,
-			TaskMonitor.DUMMY, false);
-
-		Structure struct = new StructureDataType("struct_1", 100);
-		Structure struct2 = new StructureDataType("struct_2", 0);
-		Structure struct3 = new StructureDataType("struct_3", 0);
-		DataTypeManager dtm = new StandAloneDataTypeManager("dummyDTM");
-		int id = dtm.startTransaction("");
-		struct = (Structure) dtm.resolve(struct, null);
-		struct2 = (Structure) dtm.resolve(struct2, null);
-		struct3 = (Structure) dtm.resolve(struct3, null);
-
-		struct2.add(new ByteDataType());
-		struct2.add(new StringDataType(), 20);
-		struct2.add(new QWordDataType());
-		struct3.add(struct2);
-
-		struct.replace(0, struct2, struct2.getLength());
-		struct.replace(1, new StringDataType(), 10);
-
-		listing.createData(addr(0), struct, 0);
-
-		listing.createData(addr(300), struct2, 0);
-
-		listing.createData(addr(250), struct3, 0);
-
-		Union union = new UnionDataType("union_1");
-		union.add(struct3);
-		union.add(struct2);
-
-		listing.createData(addr(600), union, 0);
-		endTransaction();
-
-		DataIterator iter = listing.getCompositeData(addr(275), true);
-		assertTrue(iter.hasNext());
-
-		Data d = iter.next();
-		assertNotNull(d);
-		assertEquals(addr(300), d.getMinAddress());
-
-		d = iter.next();
-		assertNotNull(d);
-		assertEquals(addr(600), d.getMinAddress());
-
-		assertTrue(!iter.hasNext());
-		assertNull(iter.next());
-		dtm.endTransaction(id, true);
-		dtm.close();
-
-	}
-
-	@Test
-	public void testGetCompositeDataInSet() throws Exception {
-		startTransaction();
-		mem.createInitializedBlock("test", addr(0), 1000, (byte) 0,
-			TaskMonitor.DUMMY, false);
-
-		Structure struct = new StructureDataType("struct_1", 100);
-		Structure struct2 = new StructureDataType("struct_2", 0);
-		Structure struct3 = new StructureDataType("struct_3", 0);
-		DataTypeManager dtm = new StandAloneDataTypeManager("dummyDTM");
-		int id = dtm.startTransaction("");
-		struct = (Structure) dtm.resolve(struct, null);
-		struct2 = (Structure) dtm.resolve(struct2, null);
-		struct3 = (Structure) dtm.resolve(struct3, null);
-
-		struct2.add(new ByteDataType());
-		struct2.add(new StringDataType(), 20);
-		struct2.add(new QWordDataType());
-		struct3.add(struct2);
-
-		struct.replace(0, struct2, struct2.getLength());
-		struct.replace(1, new StringDataType(), 10);
-
-		listing.createData(addr(0), struct, 0);
-
-		listing.createData(addr(300), struct2, 0);
-
-		listing.createData(addr(450), struct3, 0);
-
-		Union union = new UnionDataType("union_1");
-		union.add(struct3);
-		union.add(struct2);
-
-		listing.createData(addr(800), union, 0);
-		endTransaction();
-
-		AddressSet set = new AddressSet();
-		set.addRange(addr(5), addr(10));
-		set.addRange(addr(100), addr(200));
-		set.addRange(addr(300), addr(320));
-		set.addRange(addr(400), addr(500));
-
-		DataIterator iter = listing.getCompositeData(set, true);
-		Data d = iter.next();
-		assertNotNull(d);
-		assertEquals(addr(300), d.getMinAddress());
-		d = iter.next();
-		assertNotNull(d);
-		assertEquals(addr(450), d.getMinAddress());
-
-		d = iter.next();
-		assertNull(d);
-		dtm.endTransaction(id, true);
-		dtm.close();
-
-	}
-
-	@Test
 	public void testGetDefinedDataIterator() throws Exception {
 		startTransaction();
 		mem.removeBlock(mem.getBlock(addr(1000)), monitor);
-		mem.createInitializedBlock("test", addr(0), 1000, (byte) 0,
-			TaskMonitor.DUMMY, false);
+		mem.createInitializedBlock("test", addr(0), 1000, (byte) 0, TaskMonitor.DUMMY, false);
 
 		for (int i = 0; i < 10; i++) {
 			listing.createData(addr(i), new ByteDataType(), 1);
@@ -1491,8 +1315,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testGetDefinedDataAtIterator() throws Exception {
 		startTransaction();
 		mem.removeBlock(mem.getBlock(addr(1000)), monitor);
-		mem.createInitializedBlock("test", addr(0), 1000, (byte) 0,
-			TaskMonitor.DUMMY, false);
+		mem.createInitializedBlock("test", addr(0), 1000, (byte) 0, TaskMonitor.DUMMY, false);
 
 		for (int i = 0; i < 10; i++) {
 			listing.createData(addr(i), DataType.DEFAULT, 1);
@@ -1553,8 +1376,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetDefinedDataSetIterator() throws Exception {
 		startTransaction();
-		mem.createInitializedBlock("test", addr(0), 1000, (byte) 0,
-			TaskMonitor.DUMMY, false);
+		mem.createInitializedBlock("test", addr(0), 1000, (byte) 0, TaskMonitor.DUMMY, false);
 
 		for (int i = 0; i < 10; i++) {
 			listing.createData(addr(i), new ByteDataType(), 0);

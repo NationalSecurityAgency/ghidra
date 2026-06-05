@@ -5,6 +5,9 @@ FieldFactory
 FieldMouseHandler
 StringHandler
 Loader
+SourceLanguage
+SourceLanguageDataArchive
+SourceLanguageSpecExtension
 TableRowMapper
 ScriptProvider
 Recognizer
@@ -14,7 +17,7 @@ MachoRelocationHandler
 ElfRelocationHandler
 ElfExtension
 RelocationFixupHandler
-CodeComparisonPanel
+CodeComparisonView
 InstructionSkipper
 DataTypeReferenceFinder
 ChecksumAlgorithm
@@ -22,3 +25,4 @@ OverviewColorService
 DWARFFunctionFixup
 ElfInfoProducer
 FSBFileHandler
+SearchAndReplaceHandler

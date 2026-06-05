@@ -52,7 +52,7 @@ public class DiffApplyMergeTest extends DiffApplyTestAdapter {
 		assertEquals(origDiffs.subtract(as), diffPlugin.getDiffHighlightSelection());
 		Listing listing = program.getListing();
 		CodeUnit cu = listing.getCodeUnitAt(addr("100415a"));
-		assertEquals("This is my function for testing diff", cu.getComment(CodeUnit.PLATE_COMMENT));
+		assertEquals("This is my function for testing diff", cu.getComment(CommentType.PLATE));
 	}
 
 	@Test
@@ -68,7 +68,7 @@ public class DiffApplyMergeTest extends DiffApplyTestAdapter {
 		assertEquals(origDiffs, diffPlugin.getDiffHighlightSelection());
 		Listing listing = program.getListing();
 		CodeUnit cu = listing.getCodeUnitAt(addr("1002395"));
-		assertEquals("Pre: Program1\nPre: Program2", cu.getComment(CodeUnit.PRE_COMMENT));
+		assertEquals("Pre: Program1\nPre: Program2", cu.getComment(CommentType.PRE));
 	}
 
 	@Test
@@ -84,7 +84,7 @@ public class DiffApplyMergeTest extends DiffApplyTestAdapter {
 		assertEquals(origDiffs, diffPlugin.getDiffHighlightSelection());
 		Listing listing = program.getListing();
 		CodeUnit cu = listing.getCodeUnitAt(addr("100238f"));
-		assertEquals("EOL: Program1\nEOL: Program2", cu.getComment(CodeUnit.EOL_COMMENT));
+		assertEquals("EOL: Program1\nEOL: Program2", cu.getComment(CommentType.EOL));
 	}
 
 	@Test
@@ -101,7 +101,7 @@ public class DiffApplyMergeTest extends DiffApplyTestAdapter {
 		Listing listing = program.getListing();
 		CodeUnit cu = listing.getCodeUnitAt(addr("1002336"));
 		assertEquals("ONE: Repeatable comment.\nTWO: Repeatable comment.",
-			cu.getComment(CodeUnit.REPEATABLE_COMMENT));
+			cu.getComment(CommentType.REPEATABLE));
 	}
 
 	@Test
@@ -117,7 +117,7 @@ public class DiffApplyMergeTest extends DiffApplyTestAdapter {
 		assertEquals(origDiffs, diffPlugin.getDiffHighlightSelection());
 		Listing listing = program.getListing();
 		CodeUnit cu = listing.getCodeUnitAt(addr("100239d"));
-		assertEquals("Post: Program1\nPost: Program2", cu.getComment(CodeUnit.POST_COMMENT));
+		assertEquals("Post: Program1\nPost: Program2", cu.getComment(CommentType.POST));
 	}
 
 	/**
@@ -173,13 +173,8 @@ public class DiffApplyMergeTest extends DiffApplyTestAdapter {
 			setDiffSelection(as);
 			apply();
 
-			// Check the results. We should have both tags now in the target program
-			// (Program 1), so check the number of tags and make sure the names are
-			// correct.
-			Iterator<FunctionTag> iter = f1.getTags().iterator();
 			List<String> tagNames = new ArrayList<>();
-			while (iter.hasNext()) {
-				FunctionTag tag = iter.next();
+			for (FunctionTag tag : f1.getTags()) {
 				tagNames.add(tag.getName());
 			}
 			assertEquals(tagNames.size(), 2);

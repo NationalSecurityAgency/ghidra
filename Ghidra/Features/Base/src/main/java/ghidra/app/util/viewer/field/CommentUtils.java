@@ -16,9 +16,8 @@
 package ghidra.app.util.viewer.field;
 
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,53 +27,56 @@ import org.apache.commons.lang3.StringUtils;
 import docking.widgets.fieldpanel.field.*;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.Gui;
-import ghidra.program.model.listing.Program;
+import ghidra.app.util.NamespaceUtils;
+import ghidra.program.model.address.*;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.StringUtilities;
 import ghidra.util.WordLocation;
+import ghidra.util.bean.field.AnnotatedTextFieldElement;
+import ghidra.util.classfinder.ClassSearcher;
 
 public class CommentUtils {
 
 	// looks like: {@sym|symbol|...
 	private static final Pattern ANNOTATION_START_PATTERN = createAnnotationStartPattern();
 
+	private static List<AnnotatedStringHandler> ANNOTATED_STRING_HANDLERS;
+	private static Map<String, AnnotatedStringHandler> ANNOTATED_STRING_MAP;
+
 	/**
 	 * Makes adjustments as necessary to any annotations in the given text.
 	 * 
 	 * @param rawCommentText the text to be updated
 	 * @param program the program associated with the comment
+	 * @param addr address of comment in program
 	 * @return the updated string
 	 */
-	public static String fixupAnnotations(String rawCommentText, Program program) {
+	public static String fixupAnnotations(String rawCommentText, Program program, Address addr) {
 
 		if (rawCommentText == null) {
 			return null;
 		}
 
-		AttributedString prototype = createPrototype();
-
-		// this function will take any given Symbol annotations and change the text, replacing
-		// the symbol name with the address of the symbol
-		Function<Annotation, Annotation> symbolFixer = annotation -> {
-
-			AnnotatedStringHandler handler = annotation.getHandler();
-			if (!(handler instanceof SymbolAnnotatedStringHandler)) {
-				return annotation; // nothing to change
-			}
-
-			String rawText = annotation.getAnnotationText();
+		// this function will take any annotation and call the annotation to perform updates to the 
+		// input text as needed.   An example is the Symbol annotation, which will replace any 
+		// symbol name with that symbol's address.  This allows future renames of that symbol to 
+		// appear in the comment text containing the annotation. 
+		Function<Annotation, Annotation> fixer = annotation -> {
 			String[] annotationParts = annotation.getAnnotationParts();
-			String updatedText = SymbolAnnotatedStringHandler.convertAnnotationSymbolToAddress(
-				annotationParts, rawText, program);
-			if (updatedText == null) {
+			AnnotatedStringHandler handler = getAnnotationHandler(annotationParts);
+
+			String[] updatedParts = handler.modify(annotationParts, program, addr);
+			if (updatedParts == null) {
 				return annotation; // nothing to change
 			}
 
-			return new Annotation(updatedText, prototype, program);
+			return new Annotation(updatedParts);
 		};
 
 		StringBuilder buffy = new StringBuilder();
-		List<CommentPart> parts =
-			doParseTextIntoTextAndAnnotations(rawCommentText, symbolFixer, program, prototype);
+		List<CommentPart> parts = doParseTextIntoParts(rawCommentText, fixer, program);
 		for (CommentPart part : parts) {
 			buffy.append(part.getRawText());
 		}
@@ -121,7 +123,7 @@ public class CommentUtils {
 			AttributedString prototypeString, int row) {
 
 		Function<Annotation, Annotation> noFixing = Function.identity();
-		return doParseTextForAnnotations(text, noFixing, program, prototypeString, row);
+		return createFieldElementForAnnotations(text, noFixing, program, prototypeString, row);
 	}
 
 	/**
@@ -154,7 +156,7 @@ public class CommentUtils {
 	 * @param row the row of the newly created FieldElement
 	 * @return A field element containing {@link AttributedString}s
 	 */
-	private static FieldElement doParseTextForAnnotations(String text,
+	private static FieldElement createFieldElementForAnnotations(String text,
 			Function<Annotation, Annotation> fixerUpper, Program program,
 			AttributedString prototype, int row) {
 
@@ -162,15 +164,28 @@ public class CommentUtils {
 		text = StringUtilities.convertTabsToSpaces(text);
 
 		int column = 0;
-		List<CommentPart> parts =
-			doParseTextIntoTextAndAnnotations(text, fixerUpper, program, prototype);
+		List<CommentPart> parts = doParseTextIntoParts(text, fixerUpper, program);
 		List<FieldElement> fields = new ArrayList<>();
 		for (CommentPart part : parts) {
-			fields.add(part.createElement(row, column));
+
+			FieldElement f = createElement(part, prototype, program, row, column);
+			fields.add(f);
 			column += part.getDisplayText().length();
 		}
 
 		return new CompositeFieldElement(fields.toArray(new FieldElement[fields.size()]));
+	}
+
+	private static FieldElement createElement(CommentPart part, AttributedString prototype,
+			Program p, int row, int column) {
+
+		if (part instanceof AnnotationCommentPart annotationPart) {
+			Annotation annotation = annotationPart.getAnnotation();
+			return new AnnotatedTextFieldElement(annotation, prototype, p, row, column);
+		}
+
+		AttributedString as = prototype.deriveAttributedString(part.getDisplayText());
+		return new TextFieldElement(as, row, column);
 	}
 
 	/**
@@ -180,18 +195,16 @@ public class CommentUtils {
 	 * @param text the text to parse
 	 * @param fixerUpper a function that is given a chance to convert an Annotation into a new one
 	 * @param program the program
-	 * @param prototype the prototype string that contains decoration attributes
 	 * @return a list that contains a mixture String or an Annotation entries
 	 */
-	private static List<CommentPart> doParseTextIntoTextAndAnnotations(String text,
-			Function<Annotation, Annotation> fixerUpper, Program program,
-			AttributedString prototype) {
+	private static List<CommentPart> doParseTextIntoParts(String text,
+			Function<Annotation, Annotation> fixerUpper, Program program) {
 
 		List<CommentPart> results = new ArrayList<>();
 
 		List<WordLocation> annotations = getCommentAnnotations(text);
 		if (annotations.isEmpty()) {
-			results.add(new StringCommentPart(text, prototype));
+			results.add(new StringCommentPart(text));
 			return results;
 		}
 
@@ -203,11 +216,11 @@ public class CommentUtils {
 			if (offset != start) {
 				// text between annotations
 				String preceding = text.substring(offset, start);
-				results.add(new StringCommentPart(preceding, prototype));
+				results.add(new StringCommentPart(preceding));
 			}
 
 			String annotationText = word.getWord();
-			Annotation annotation = new Annotation(annotationText, prototype, program);
+			Annotation annotation = new Annotation(annotationText);
 			annotation = fixerUpper.apply(annotation);
 			results.add(new AnnotationCommentPart(annotationText, annotation));
 
@@ -216,7 +229,7 @@ public class CommentUtils {
 
 		if (offset != text.length()) { // trailing text
 			String trailing = text.substring(offset);
-			results.add(new StringCommentPart(trailing, prototype));
+			results.add(new StringCommentPart(trailing));
 		}
 
 		return results;
@@ -249,7 +262,7 @@ public class CommentUtils {
 
 	private static Pattern createAnnotationStartPattern() {
 
-		Set<String> names = Annotation.getAnnotationNames();
+		Set<String> names = getAnnotationNames();
 		String namePatternString = StringUtils.join(names, "|");
 
 		//@formatter:off
@@ -273,35 +286,167 @@ public class CommentUtils {
 	 */
 	private static int findAnnotationEnd(String comment, int start) {
 
-		boolean escaped = false;
-		boolean inQuote = false;
+		boolean escape = false;
+		boolean quote = false;
 		for (int i = start; i < comment.length(); i++) {
-
-			boolean wasEscaped = escaped;
-			escaped = false;
-			char prev = '\0';
-			if (i != 0 && !wasEscaped) {
-				prev = comment.charAt(i - 1);
+			char c = comment.charAt(i);
+			if (escape) {
+				escape = false;
+				continue;
 			}
 
-			char c = comment.charAt(i);
-			if (prev == '\\') {
-				if (Annotation.ESCAPABLE_CHARS.indexOf(c) != -1) {
-					escaped = true;
-					continue;
-				}
+			if (c == '\\') {
+				escape = true;
+				continue;
 			}
 
 			if (c == '"') {
-				inQuote = !inQuote;
+				quote = !quote;
 			}
 			else if (c == '}') {
-				if (!inQuote) {
+				if (!quote) {
 					return i + 1;
 				}
 			}
 		}
-
 		return -1;
 	}
+
+	/**
+	 * Returns all symbols that match the given text or an empty list.
+	 * @param rawText the raw symbol text
+	 * @param program the program
+	 * @return the symbols
+	 */
+	public static List<Symbol> getSymbols(String rawText, Program program) {
+		List<Symbol> list = NamespaceUtils.getSymbols(rawText, program);
+		if (!list.isEmpty()) {
+			return list;
+		}
+
+		// if we get here, then see if the value is an address
+		Address address = program.getAddressFactory().getAddress(rawText);
+		if (address != null) {
+			SymbolTable symbolTable = program.getSymbolTable();
+			Symbol symbol = symbolTable.getPrimarySymbol(address);
+			if (symbol != null) {
+				return Arrays.asList(symbol);
+			}
+		}
+
+		return Collections.emptyList();
+	}
+
+	/**
+	 * Returns the annotation handler for the given annotation parts.   If no handler can be found,
+	 * then the {@link InvalidAnnotatedStringHandler} will be returned with n error message.
+	 * @param annotationParts the annotation parts
+	 * @return the handler
+	 */
+	public static AnnotatedStringHandler getAnnotationHandler(String[] annotationParts) {
+
+		if (annotationParts.length <= 1) {
+			return new InvalidAnnotatedStringHandler(
+				"Invalid annotation format." + " Expected at least two strings.");
+		}
+
+		// the first part is the annotation (@xxx)
+		String keyword = annotationParts[0];
+		AnnotatedStringHandler handler = getAnnotatedStringHandlerMap().get(keyword);
+
+		if (handler == null) {
+			return new InvalidAnnotatedStringHandler("Invalid annotation keyword: " + keyword);
+		}
+		return handler;
+	}
+
+	/**
+	 * Returns all known annotation handlers
+	 * @return the handlers
+	 */
+	public static List<AnnotatedStringHandler> getAnnotatedStringHandlers() {
+		if (ANNOTATED_STRING_HANDLERS == null) {
+			ANNOTATED_STRING_HANDLERS = getSupportedAnnotationHandlers();
+		}
+		return ANNOTATED_STRING_HANDLERS;
+	}
+
+	private static Map<String, AnnotatedStringHandler> getAnnotatedStringHandlerMap() {
+		if (ANNOTATED_STRING_MAP == null) { // lazy init due to our use of ClassSearcher
+			ANNOTATED_STRING_MAP = createAnnotatedStringHandlerMap();
+		}
+		return ANNOTATED_STRING_MAP;
+	}
+
+	private static Map<String, AnnotatedStringHandler> createAnnotatedStringHandlerMap() {
+		Map<String, AnnotatedStringHandler> map = new HashMap<>();
+		for (AnnotatedStringHandler instance : getAnnotatedStringHandlers()) {
+			String[] supportedAnnotations = instance.getSupportedAnnotations();
+			for (String supportedAnnotation : supportedAnnotations) {
+				map.put(supportedAnnotation, instance);
+			}
+		}
+		return Collections.unmodifiableMap(map);
+	}
+
+	// locates AnnotatedStringHandler implementations to handle annotations
+	private static List<AnnotatedStringHandler> getSupportedAnnotationHandlers() {
+		List<AnnotatedStringHandler> list = new ArrayList<>();
+		for (AnnotatedStringHandler h : ClassSearcher.getInstances(AnnotatedStringHandler.class)) {
+			if (h.getSupportedAnnotations().length != 0) {
+				list.add(h);
+			}
+		}
+		return Collections.unmodifiableList(list);
+	}
+
+	/*package*/ static Set<String> getAnnotationNames() {
+		return Collections.unmodifiableSet(getAnnotatedStringHandlerMap().keySet());
+	}
+
+	/**
+	 * Returns a list of offcut comments for the given code unit. All the offcut comments from 
+	 * possibly multiple addresses will be combined into a single list of comment lines.
+	 * @param cu the code unit to get offcut comments for
+	 * @param type the type of comment to retrieve (EOL, PRE, PLATE, POST)
+	 * @return a list of all offcut comments for the given code unit.
+	 */
+	public static List<String> getOffcutComments(CodeUnit cu, CommentType type) {
+		// internal data items handle EOL comments, so ignore EOL comments on items that
+		// have sub-components
+		if (type == CommentType.EOL && cu instanceof Data data) {
+			if (data.getNumComponents() > 0) {
+				return Collections.emptyList();
+			}
+		}
+
+		Address start = cu.getMinAddress().next();
+		Address end = cu.getMaxAddress();
+		if (start == null || start.compareTo(end) > 0) {
+			return Collections.emptyList();
+		}
+
+		Listing listing = cu.getProgram().getListing();
+		AddressSet addrSet = new AddressSet(start, cu.getMaxAddress());
+		AddressIterator it = listing.getCommentAddressIterator(type, addrSet, true);
+
+		if (!it.hasNext()) {
+			return Collections.emptyList();
+		}
+
+		List<String> offcutComments = new ArrayList<>();
+
+		while (it.hasNext()) {
+			Address next = it.next();
+			String comment = listing.getComment(type, next);
+			if (comment != null) {
+				String[] lines = StringUtilities.toLines(comment);
+				for (String line : lines) {
+					offcutComments.add(line);
+				}
+			}
+		}
+		return offcutComments;
+	}
+
 }

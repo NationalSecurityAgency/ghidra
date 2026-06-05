@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import ghidra.util.Msg;
 	packageName = CorePluginPackage.NAME,
 	shortDescription = "Listens for new GhidraURL's to launch using FrontEndTool's" +
 		" accept method",
-	description = "Polls the ghidraGo directory for any url files written by the " +
+	description = "Polls the ghidraGo directory for any URL files written by the " +
 		"GhidraGoSender and processes them in Ghidra",
 	eventsConsumed = {ProjectPluginEvent.class})
 //@formatter:on
@@ -88,6 +88,7 @@ public class GhidraGoPlugin extends Plugin implements ApplicationLevelOnlyPlugin
 	 * @param url a {@link GhidraURL}
 	 * @return true if handled successfully, false otherwise.
 	 */
+	@Override
 	public boolean accept(URL url) {
 		Msg.info(this, "GhidraGo accepting the resource at " + GhidraURL.getProjectURL(url));
 		FrontEndTool frontEndTool = AppInfo.getFrontEndTool();

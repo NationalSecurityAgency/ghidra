@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -74,7 +74,8 @@ public class MachoFileSetExtractor {
 	 * @throws IOException If there was an IO-related issue with extracting the segment
 	 * @throws CancelledException If the user cancelled the operation
 	 */
-	public static ByteProvider extractSegment(ByteProvider provider, SegmentCommand segment, FSRL fsrl, TaskMonitor monitor) throws IOException, MachException, CancelledException {
+	public static ByteProvider extractSegment(ByteProvider provider, SegmentCommand segment,
+			FSRL fsrl, TaskMonitor monitor) throws IOException, MachException, CancelledException {
 
 		int magic = MachConstants.MH_MAGIC_64;
 		int allSegmentsSize = SegmentCommand.size(magic);
@@ -87,7 +88,7 @@ public class MachoFileSetExtractor {
 		byte[] segmentCommandBytes =
 			SegmentCommand.create(magic, segment.getSegmentName(), segment.getVMaddress(),
 				segment.getVMsize(), header.length + allSegmentsSize, segment.getFileSize(),
-				segment.getMaxProtection(), segment.getInitProtection(), 0, segment.getFlags());
+				segment.getMaxProtection(), segment.getInitProtection(), segment.getFlags());
 
 		// Segment data
 		byte[] segmentDataBytes =

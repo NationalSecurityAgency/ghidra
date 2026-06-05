@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -104,24 +104,29 @@ public class TEBAnalyzer extends AbstractAnalyzer {
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
+		if (!program.hasExclusiveAccess()) {
+			log.appendMsg(
+				"WARNING: Unable to perform Thread Environment Block (TEB) analysis - exclusive checkout required");
+			return false;
+		}
+
 		MemoryBlock block = program.getMemory().getBlock(ThreadEnvironmentBlock.BLOCK_NAME);
 		if (block != null) {
 			return true;
 		}
-		ThreadEnvironmentBlock teb = new ThreadEnvironmentBlock(program, winVersion);
-		setTEBAddress(program, teb);
-		boolean commit = true;
-		int transactionID = program.startTransaction("Thread Environment Block");
+
 		try {
+			ThreadEnvironmentBlock teb = new ThreadEnvironmentBlock(program, winVersion);
+			setTEBAddress(program, teb);
 			teb.createBlocksAndSymbols();
 			teb.setRegisterValue();
+			return true;
 		}
 		catch (Exception e) {
-			Msg.error(this, "Unable to create the Thread Environment Block");
-			commit = false;
+			log.appendMsg("Failed to create the Thread Environment Block (TEB) - see console log");
+			Msg.error(this, "Failed to create the Thread Environment Block (TEB)", e);
 		}
-		program.endTransaction(transactionID, commit);
-		return true;
+		return false;
 	}
 
 	@Override

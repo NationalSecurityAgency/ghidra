@@ -1,7 +1,7 @@
 # GhidraDev Eclipse Plugin
 GhidraDev provides support for developing and debugging Ghidra scripts and modules in Eclipse.
 
-The information provided in this document is effective as of GhidraDev 4.0.0 and is subject to
+The information provided in this document is effective as of GhidraDev 5.1.0 and is subject to
 change with future releases.
 
 ## Table of Contents
@@ -31,6 +31,17 @@ change with future releases.
  12. [Building](#building)
 
 ## Change History
+__5.1.0:__
+* Added a PyGhidra Headless run configuration.
+* New Ghidra module projects now contain a default .gitignore file (requires Ghidra 12.2 or later).
+
+__5.0.1:__
+* Fixed a bug that prevented Ghidra from discovering the Ghidra module project when launched with
+  the PyGhidra run configuration. 
+
+__5.0.0:__
+* Added support for PyGhidra.
+
 __4.0.1:__
 * New Ghidra module projects now contain a default `README.md` file.
 * Fixed a bug that prevented an imported module source project from being discovered by Ghidra when
@@ -132,7 +143,7 @@ __1.0.1:__
 * Ghidra 11.2 or later
 
 ## Optional Requirements
-* PyDev 6.3.1 - 9.3.0 ([more info](#pydev-support))
+* PyDev 9.3.0 or later ([more info](#pydev-support))
 * Gradle - required version(s) specified by linked Ghidra release 
   ([more info](#export-ghidra-module-extension))
 
@@ -268,7 +279,10 @@ Ghidra from Eclipse independent of a project is not supported.
 
 ## PyDev Support
 GhidraDev is able to integrate with PyDev to conveniently configure Python support into Ghidra
-script and module projects.
+script and module projects. GhidraDev supports both Jython and PyGhidra Python implementations.
+
+__NOTE:__ PyDev discontinued Jython 2 support in version 10.0.0. If you want to use GhidraDev with
+Jython, you must use __PyDev 9.3.0__.  The latest vesions of PyDev support PyGhidra.
 
 ### Installing PyDev
 From Eclipse:
@@ -292,14 +306,33 @@ GhidraDev can add Python support to a Ghidra project when:
 * Creating a new Ghidra module project
 * Creating a new Ghidra script project
 * Linking a Ghidra installation to an existing Java project
+* Launching Ghidra in PyGhidra mode
 
-In order for GhidraDev to add in Python support, PyDev must have a Jython interpreter configured.
-GhidraDev will present a list of detected Jython interpreters that it found in PyDev's preferences.
-If no Jython interpreters were found, one can be added from GhidraDev by clicking the `+` icon.
-When the `+` icon is clicked, GhidraDev will attempt to find the Jython interpreter bundled with the
-selected Ghidra installation and automatically configure PyDev to use it.  If for some reason 
-GhidraDev was unable to find a Jython interpreter in the Ghidra installation, one will have to be 
-added manually in the PyDev preferences.
+In order for GhidraDev to add in Python support, PyDev must have a PyGhidra or Jython interpreter 
+configured. GhidraDev will present a list of detected PyGhidra/Jython interpreters that it found in 
+PyDev's preferences. If no interpreters were found, one can be added from GhidraDev by clicking 
+the `+` icons.
+
+When the Jython `+` icon is clicked, GhidraDev will attempt to find the Jython interpreter bundled 
+with the selected Ghidra installation and automatically configure PyDev to use it.  If for some 
+reason GhidraDev was unable to find a Jython interpreter in the Ghidra installation, one will have 
+to be added manually in the PyDev preferences.
+
+When the PyGhidra `+` icon is clicked, GhidraDev will attempt to find the PyGhidra interpreter
+that was last used to launch PyGhidra.  If it cannot find it, you will have to launch PyGhidra
+and try again.
+
+### Launching and Debugging PyGhidra
+When PyDev is installed, GhidraDev introduces two new run configurations to Eclipse which are
+capable of launching the installation of Ghidra (in PyGhidra mode) that an Eclipse Ghidra project is
+linked to:
+* __PyGhidra:__ Launches the PyGhidra GUI.
+* __PyGhidra Headless:__ Launches PyGhidra in headless mode. By default, this run configuration will
+  not have any program arguments associated with it, which are required to tell headless PyGhidra
+  what project to open, what scripts to run, etc.  Newly created `PyGhidra Headless` run 
+  configurations will have to be modified with the desired headless program arguments. For more 
+  information on headless command line arguments, see 
+  `<GhidraInstallDir>/support/analyzeHeadlessREADME.html`.
 
 ## Upgrading
 GhidraDev is upgraded differently depending on how it was installed.  If GhidraDev was
@@ -347,9 +380,10 @@ installation directory.
       to your Ghidra module project, which automatically happens when the project is created.
       Simply [relink](#link-ghidra) your Ghidra installation to the project, and your project will 
       pick up any newly discovered Ghidra extensions.
-* __Why doesn't GhidraDev support PyDev 10.0 or later?__
-    * PyDev dropped support for Python 2 in their 10.0 release. Ghidra currently does not support 
-      Python 3.
+* __How do I launch/debug PyGhidra from Eclipse?__
+    * In order to launch and debug Ghidra in PyGhidra mode, PyDev must be installed and your project
+      must be configured with PyGhidra support. When these conditions are met, a __PyGhidra__ run 
+      configuration will become available to use.
 
 ## Additional Resources
 For more information on the GhidraDev plugin and developing for Ghidra in an Eclipse environment,
@@ -358,14 +392,14 @@ at `<GhidraInstallDir>/docs/GhidraClass/Intermediate/Scripting.html`.
 
 ## Building
 GhidraDev is currently built from Eclipse and distributed with Ghidra manually. Ideally we will use
-Gradle one day, but we aren't there yet. We do rely on `gradle prepDev` to generate the Eclipse 
-project and build GhidraDev's dependencies though.
+Gradle one day, but we aren't there yet. We do rely on Gradle to generate the Eclipse project and 
+build GhidraDev's dependencies though.
 
 __NOTE:__ Only "Eclipse for RCP and RAP Developers" has the ability to do the below instructions. 
 The following instructions assume that you are using this version of Eclipse.
 
 #### Importing GhidraDev Eclipse projects (they are deactivated by default):
-1. Run `gradle eclipse -PeclipsePDE`
+1. Run `gradle prepGhidraDev eclipse -PeclipsePDE`
 2. From Eclipse, `File -> Import -> General -> Existing Projects into Workspace`
 3. From the ghidra repo, import `Eclipse GhidraDevFeature` and `Eclipse GhidraDevPlugin`
 

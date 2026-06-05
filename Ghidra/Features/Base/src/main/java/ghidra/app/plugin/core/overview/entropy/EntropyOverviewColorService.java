@@ -76,6 +76,7 @@ public class EntropyOverviewColorService implements OverviewColorService {
 	@Override
 	public void setOverviewComponent(OverviewColorComponent component) {
 		this.overviewComponent = component;
+		this.overviewComponent.getAccessibleContext().setAccessibleName("Overview Component");
 	}
 
 	@Override

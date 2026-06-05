@@ -66,12 +66,18 @@ public class VSCodeIntegrationOptionsPlugin extends Plugin implements Applicatio
 	 */
 	private static File getDefaultVSCodeExecutable() {
 		return switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
-			case WINDOWS -> new File(System.getenv("LOCALAPPDATA"),
-				"Programs/Microsoft VS Code/bin/code.cmd");
-			case MAC_OS_X -> new File(
-				"/Applications/Visual Studio Code.app/Contents/MacOS/Electron");
-			case LINUX -> new File("/usr/bin/code");
-			default -> null;
+			case WINDOWS:
+				File local = new File(System.getenv("LOCALAPPDATA"),
+					"Programs/Microsoft VS Code/bin/code.cmd");
+				File admin =
+					new File(System.getenv("PROGRAMFILES"), "Microsoft VS Code/bin/code.cmd");
+				yield admin.exists() ? admin : local;
+			case MAC_OS_X:
+				yield new File("/Applications/Visual Studio Code.app/Contents/MacOS/Electron");
+			case LINUX:
+				yield new File("/usr/bin/code");
+			default:
+				yield null;
 		};
 	}
 }

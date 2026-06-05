@@ -58,6 +58,7 @@ public final class GoToServicePlugin extends ProgramPlugin {
 
 	/**
 	 * Creates a new instance of the <CODE>GoToServicePlugin</CODE>
+	 * 
 	 * @param tool the tool
 	 */
 	public GoToServicePlugin(PluginTool tool) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,7 @@ public interface TraceRmiAcceptor {
 	 * 
 	 * @return the connection, if successful
 	 * @throws IOException if there was an error
+	 * @throws CancelledException if {@link #cancel()} is called, usually from the user canceling
 	 */
 	TraceRmiConnection accept() throws IOException, CancelledException;
 
@@ -64,8 +65,8 @@ public interface TraceRmiAcceptor {
 	 * 
 	 * <p>
 	 * If a different thread has called {@link #accept()}, it will fail. In this case, both
-	 * {@linkplain TraceRmiServiceListener#acceptCancelled(TraceRmiAcceptor)} and
-	 * {@linkplain TraceRmiServiceListener#acceptFailed(Exception)} may be invoked.
+	 * {@link TraceRmiServiceListener#acceptCancelled(TraceRmiAcceptor)} and
+	 * {@link TraceRmiServiceListener#acceptFailed(TraceRmiAcceptor, Exception)} may be invoked.
 	 */
 	void cancel();
 }

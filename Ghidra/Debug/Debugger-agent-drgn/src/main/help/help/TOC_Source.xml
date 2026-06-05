@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<!-- See Base's TOC_Source.xml for help -->
+<tocroot>
+	<tocref id="TraceRmiLauncherServicePlugin">
+		<tocdef id="drgn" text="drgn Integration"
+			target="help/topics/drgn/drgn.html">
+
+			<tocdef id="drgn_attach" text="Attach"
+				target="help/topics/drgn/drgn.html#attach" />
+
+			<tocdef id="drgn_core" text="Core Dump"
+				target="help/topics/drgn/drgn.html#attach" />
+
+			<tocdef id="linux_kernel" text="Linux Kernel"
+				target="help/topics/drgn/drgn.html#attach" />
+
+		</tocdef>
+	</tocref>
+</tocroot>

@@ -76,12 +76,14 @@ public class FilterDialog extends DialogComponentProvider {
 			JPanel vertexPanel = new JPanel(new VerticalLayout(5));
 			vertexPanel.setBorder(BorderFactory.createTitledBorder(VERTEX_TITLE));
 			vertexButtons.forEach(vertexPanel::add);
+			vertexPanel.getAccessibleContext().setAccessibleName("Vertex");
 			panel.add(vertexPanel);
 		}
 		if (!edgeButtons.isEmpty()) {
 			JPanel edgePanel = new JPanel(new VerticalLayout(5));
 			edgePanel.setBorder(BorderFactory.createTitledBorder(EDGE_TITLE));
 			edgeButtons.forEach(edgePanel::add);
+			edgePanel.getAccessibleContext().setAccessibleName("Edge");
 			panel.add(edgePanel);
 		}
 
@@ -89,8 +91,10 @@ public class FilterDialog extends DialogComponentProvider {
 
 			JLabel label = new JLabel("No Filters available for this graph!");
 			label.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+			label.getAccessibleContext().setAccessibleName("No Filter");
 			panel.add(label);
 		}
+		panel.getAccessibleContext().setAccessibleName("Filter");
 		return panel;
 	}
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Sets the current selection based on source file and line number parameters
-//@category SourceMapping
+//@category Source Mapping
 import java.util.*;
 
 import ghidra.app.script.GhidraScript;

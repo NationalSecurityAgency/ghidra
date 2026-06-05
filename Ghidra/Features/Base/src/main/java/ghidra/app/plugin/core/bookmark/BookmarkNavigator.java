@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,6 @@ public class BookmarkNavigator {
 	final static Icon WARNING_ICON = new GIcon("icon.plugin.bookmark.type.warning");
 	final static Icon ERROR_ICON = new GIcon("icon.plugin.bookmark.type.error");
 	final static Icon ANALYSIS_ICON = new GIcon("icon.plugin.bookmark.type.analysis");
-	final static Icon DEFAULT_ICON = new GIcon("icon.plugin.bookmark.type.default");
 
 	final static int NOTE_PRIORITY = MarkerService.BOOKMARK_PRIORITY;
 	final static int ERROR_PRIORITY = MarkerService.BOOKMARK_PRIORITY + BIG_CHANGE;
@@ -81,17 +80,28 @@ public class BookmarkNavigator {
 		}
 
 		Icon icon = bmt.getIcon();
-		if (icon == null) {
-			icon = DEFAULT_ICON;
-		}
-
 		Color color = bmt.getMarkerColor();
 		if (color == null) {
 			color = DEFAULT_COLOR;
 		}
 
-		markerSet = markerService.createPointMarker(type + " Bookmarks", type + " Bookmarks",
-			bookmarkMgr.getProgram(), priority, true, true, false, color, icon);
+		//
+		// Be default, bookmarks appear with an icon on the left side of the Listing.  If there is
+		// no icon, then skip the icon and instead add a color marker on the right side of the 
+		// Listing so the user can see the bookmark.   As long as clients call BookmarkManager's 
+		// defineType() method with a valid icon, then we will show the icon, which is the expected
+		// behavior.
+		//
+		String markerName = type + " Bookmarks";
+		if (icon != null) {
+			markerSet = markerService.createPointMarker(markerName, markerName,
+				bookmarkMgr.getProgram(), priority, true, true, false, color, icon);
+		}
+		else {
+			markerSet =
+				markerService.createAreaMarker(markerName, markerName, bookmarkMgr.getProgram(),
+					priority, false, true, false, color);
+		}
 
 		markerSet.setMarkerDescriptor(new MarkerDescriptor() {
 

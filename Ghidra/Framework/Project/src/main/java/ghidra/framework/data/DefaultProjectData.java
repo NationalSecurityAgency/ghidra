@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,8 @@ package ghidra.framework.data;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.OptionDialog;
 import generic.timer.GhidraSwinglessTimer;
@@ -31,8 +33,7 @@ import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.framework.store.local.LocalFolderItem;
 import ghidra.framework.store.remote.RemoteFileSystem;
 import ghidra.util.*;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateFileException;
+import ghidra.util.exception.*;
 import ghidra.util.task.*;
 import utilities.util.FileUtilities;
 
@@ -103,14 +104,16 @@ public class DefaultProjectData implements ProjectData {
 	 * @param isInWritableProject true if project content is writable, false if project is read-only
 	 * @param resetOwner true to reset the project owner
 	 * @throws IOException if an i/o error occurs
+	 * @throws NotFoundException if project does not exist
 	 * @throws NotOwnerException if inProject is true and user is not owner
 	 * @throws LockException if {@code isInWritableProject} is true and unable to establish project 
 	 * write lock (i.e., project in-use)
 	 * @throws FileNotFoundException if project directory not found
 	 */
 	public DefaultProjectData(ProjectLocator localStorageLocator, boolean isInWritableProject,
-			boolean resetOwner) throws NotOwnerException, IOException, LockException {
-
+			boolean resetOwner)
+			throws NotFoundException, NotOwnerException, IOException, LockException {
+		localStorageLocator.checkProjectExistence();
 		this.localStorageLocator = localStorageLocator;
 		boolean success = false;
 		try {
@@ -156,6 +159,7 @@ public class DefaultProjectData implements ProjectData {
 	 */
 	public DefaultProjectData(ProjectLocator localStorageLocator, RepositoryAdapter repository,
 			boolean isInWritableProject) throws IOException, LockException {
+		localStorageLocator.checkLocationExistence();
 		this.localStorageLocator = localStorageLocator;
 		this.repository = repository;
 		boolean success = false;
@@ -246,15 +250,14 @@ public class DefaultProjectData implements ProjectData {
 	}
 
 	/**
-	 * Read the contents of the project properties file to include the following values if relavent:
+	 * Read the contents of the project properties file to include the following values if relevant:
 	 * {@value #OWNER}, {@value #SERVER_NAME}, {@value #REPOSITORY_NAME}, {@value #PORT_NUMBER}
 	 * @param projectDir project directory (*.rep)
 	 * @return project properties or null if invalid project directory specified
 	 */
 	public static Properties readProjectProperties(File projectDir) {
 		try {
-			PropertyFile pf =
-				new PropertyFile(projectDir, PROPERTY_FILENAME, "/", PROPERTY_FILENAME);
+			PropertyFile pf = new PropertyFile(projectDir, PROPERTY_FILENAME);
 			if (pf.exists()) {
 				Properties properties = new Properties();
 
@@ -281,7 +284,7 @@ public class DefaultProjectData implements ProjectData {
 			throws IOException, LockException {
 
 		projectDir = localStorageLocator.getProjectDir();
-		properties = new PropertyFile(projectDir, PROPERTY_FILENAME, "/", PROPERTY_FILENAME);
+		properties = new PropertyFile(projectDir, PROPERTY_FILENAME);
 		if (create) {
 			if (projectDir.exists()) {
 				throw new DuplicateFileException(
@@ -296,9 +299,6 @@ public class DefaultProjectData implements ProjectData {
 			localStorageLocator.getMarkerFile().createNewFile();
 		}
 		else {
-			if (!projectDir.isDirectory()) {
-				throw new FileNotFoundException("Project directory not found: " + projectDir);
-			}
 			if (properties.exists()) {
 				if (isInWritableProject && properties.isReadOnly()) {
 					throw new ReadOnlyException(
@@ -321,9 +321,6 @@ public class DefaultProjectData implements ProjectData {
 
 	private void initLock(boolean creatingProject) throws LockException, IOException {
 		this.projectLock = getProjectLock(localStorageLocator, !creatingProject);
-		if (projectLock == null) {
-			throw new LockException("Unable to lock project! " + localStorageLocator);
-		}
 
 		if (!properties.exists()) {
 			owner = getUserName();
@@ -339,28 +336,31 @@ public class DefaultProjectData implements ProjectData {
 	 * @param locator the project locator
 	 * @param allowInteractiveForce if true, when a lock cannot be obtained, the
 	 *            user will be prompted
-	 * @return A locked ProjectLock or null if lock fails
+	 * @return A locked ProjectLock
+	 * @throws LockException if the lock fails
 	 */
-	private ProjectLock getProjectLock(ProjectLocator locator, boolean allowInteractiveForce) {
+	private ProjectLock getProjectLock(ProjectLocator locator, boolean allowInteractiveForce)
+			throws LockException {
 		ProjectLock lock = new ProjectLock(locator);
 		if (lock.lock()) {
 			return lock;
 		}
 
+		String defaultMsg = "Unable to lock project! " + locator;
+
 		// in headless mode, just spit out an error
 		if (!allowInteractiveForce || SystemUtilities.isInHeadlessMode()) {
-			return null;
+			throw new LockException(defaultMsg);
 		}
 
 		String projectStr = "Project: " + HTMLUtilities.escapeHTML(locator.getLocation()) +
 			System.getProperty("file.separator") + HTMLUtilities.escapeHTML(locator.getName());
 		String lockInformation = lock.getExistingLockFileInformation();
 		if (!lock.canForceLock()) {
-			Msg.showInfo(getClass(), null, "Project Locked",
-				"<html>Project is locked. You have another instance of Ghidra<br>" +
-					"already running with this project open (locally or remotely).<br><br>" +
-					projectStr + "<br><br>" + "Lock information: " + lockInformation);
-			return null;
+			String msg = "<html>Project is locked. You have another instance of Ghidra<br>" +
+				"already running with this project open (locally or remotely).<br><br>" +
+				projectStr + "<br><br>" + "Lock information: " + lockInformation;
+			throw new LockException(msg);
 		}
 
 		int userChoice = OptionDialog.showOptionDialog(null, "Project Locked - Delete Lock?",
@@ -377,7 +377,8 @@ public class DefaultProjectData implements ProjectData {
 
 			Msg.showError(this, null, "Error", "Attempt to force lock failed! " + locator);
 		}
-		return null;
+
+		throw new LockException(defaultMsg);
 	}
 
 	/**
@@ -585,35 +586,12 @@ public class DefaultProjectData implements ProjectData {
 
 	@Override
 	public DomainFolder getFolder(String path) {
-		int len = path.length();
-		if (len == 0 || path.charAt(0) != FileSystem.SEPARATOR_CHAR) {
-			throw new IllegalArgumentException(
-				"Absolute path must begin with '" + FileSystem.SEPARATOR_CHAR + "'");
-		}
+		return getFolder(path, DomainFolderFilter.ALL_INTERNAL_FOLDERS_FILTER);
+	}
 
-		DomainFolder folder = getRootFolder();
-		String[] split = path.split(FileSystem.SEPARATOR);
-		if (split.length == 0) {
-			return folder;
-		}
-
-		for (int i = 1; i < split.length; i++) {
-			DomainFolder subFolder = folder.getFolder(split[i]);
-			if (subFolder == null) {
-				// Check for folder link-file if folder not found
-				// NOTE: if real folder name matches link-file name it will block
-				// use of folder link-file.
-				DomainFile file = folder.getFile(split[i]);
-				if (file != null && file.isLinkFile()) {
-					subFolder = file.followLink();
-				}
-				if (subFolder == null) {
-					return null;
-				}
-			}
-			folder = subFolder;
-		}
-		return folder;
+	@Override
+	public DomainFolder getFolder(String path, DomainFolderFilter filter) {
+		return ProjectDataUtils.getDomainFolder(getRootFolder(), path, filter);
 	}
 
 	@Override
@@ -657,25 +635,32 @@ public class DefaultProjectData implements ProjectData {
 
 	@Override
 	public DomainFile getFile(String path) {
-		int len = path.length();
-		if (len == 0 || path.charAt(0) != FileSystem.SEPARATOR_CHAR) {
+		return getFile(path, DomainFileFilter.ALL_INTERNAL_FILES_FILTER);
+	}
+
+	@Override
+	public DomainFile getFile(String path, DomainFileFilter filter) {
+		if (StringUtils.isBlank(path) || path.charAt(0) != FileSystem.SEPARATOR_CHAR) {
 			throw new IllegalArgumentException(
 				"Absolute path must begin with '" + FileSystem.SEPARATOR_CHAR + "'");
 		}
-		else if (path.charAt(len - 1) == FileSystem.SEPARATOR_CHAR) {
+		else if (path.charAt(path.length() - 1) == FileSystem.SEPARATOR_CHAR) {
 			throw new IllegalArgumentException("Missing file name in path");
 		}
 		int ix = path.lastIndexOf(FileSystem.SEPARATOR);
 
 		DomainFolder folder;
 		if (ix > 0) {
-			folder = getFolder(path.substring(0, ix));
+			folder = getFolder(path.substring(0, ix), filter);
 		}
 		else {
 			folder = getRootFolder();
 		}
 		if (folder != null) {
-			return folder.getFile(path.substring(ix + 1));
+			DomainFile file = folder.getFile(path.substring(ix + 1));
+			if (file != null && filter.accept(file)) {
+				return file;
+			}
 		}
 		return null;
 	}
@@ -743,6 +728,10 @@ public class DefaultProjectData implements ProjectData {
 
 	@Override
 	public void refresh(boolean force) {
+		// FIXME: We ignore force.  We are forcing full recursive refresh on non-visited folders
+		//   only - seems inconsistent!!
+		//   Underlying method fails if recursive and force is false.
+		// NOTE: Refresh really does nothing if force is false and folder already visited
 		try {
 			rootFolderData.refresh(true, true, projectDisposalMonitor);
 		}
@@ -810,7 +799,9 @@ public class DefaultProjectData implements ProjectData {
 
 			ItemCheckoutStatus otherCheckoutStatus =
 				newRepository.getCheckout(df.getParent().getPathname(), df.getName(), checkoutId);
-
+			if (otherCheckoutStatus == null) {
+				return true;
+			}
 			if (!newRepository.getUser().getName().equals(otherCheckoutStatus.getUser())) {
 				return true;
 			}
@@ -1069,7 +1060,8 @@ public class DefaultProjectData implements ProjectData {
 		@Override
 		public void folderCreated(final String parentPath, final String name) {
 			synchronized (fileSystem) {
-				GhidraFolderData folderData = rootFolderData.getFolderPathData(parentPath, true);
+				boolean lazy = !rootFolderData.mustVisit(parentPath);
+				GhidraFolderData folderData = rootFolderData.getFolderPathData(parentPath, lazy);
 				if (folderData != null) {
 					try {
 						folderData.folderChanged(name);
@@ -1123,7 +1115,9 @@ public class DefaultProjectData implements ProjectData {
 						// ignore
 					}
 				}
-				folderData = rootFolderData.getFolderPathData(newParentPath, true);
+
+				boolean lazy = !rootFolderData.mustVisit(newParentPath);
+				folderData = rootFolderData.getFolderPathData(newParentPath, lazy);
 				if (folderData != null) {
 					try {
 						folderData.folderChanged(folderName);
@@ -1350,7 +1344,7 @@ public class DefaultProjectData implements ProjectData {
 		}
 	}
 
-	GhidraFolderData getRootFolderData() {
+	RootGhidraFolderData getRootFolderData() {
 		return rootFolderData;
 	}
 

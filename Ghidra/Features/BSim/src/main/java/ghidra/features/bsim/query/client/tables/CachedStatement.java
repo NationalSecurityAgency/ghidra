@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,7 +62,7 @@ public class CachedStatement<S extends Statement> {
 	 * can result in replacement of one previously established.  The {@link #getStatement()}
 	 * should be used first to ensure one was not previously set.  An error will be logged
 	 * if the invocation replaces an existing statement which will be forced closed.
-	 * <B>
+	 * <P>
 	 * The owner thread for the statement will be established based on the 
 	 * {@link Thread#currentThread()}.
 	 * 

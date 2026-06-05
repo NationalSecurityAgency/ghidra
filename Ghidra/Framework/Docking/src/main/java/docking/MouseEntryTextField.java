@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package docking;
 
 import java.awt.event.*;
+import java.awt.event.FocusEvent.Cause;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -36,6 +37,12 @@ public class MouseEntryTextField extends HintTextField {
 		setName("Mouse Entry Text Field");
 		getAccessibleContext().setAccessibleName(getName());
 		this.listener = Objects.requireNonNull(listener);
+
+		// remove the default mouse listeners to prevent pasting
+		MouseListener[] oldListeners1 = getMouseListeners();
+		for (MouseListener l : oldListeners1) {
+			removeMouseListener(l);
+		}
 
 		addMouseListener(new MyMouseListener());
 		addKeyListener(new MyKeyListener());
@@ -63,8 +70,21 @@ public class MouseEntryTextField extends HintTextField {
 		processMouseBinding(mb, false);
 	}
 
+	/**
+	 * Clears the state of this class, but does not notify listeners.  This allows clients to 
+	 * control the state of the field without having a callback change the client state.
+	 */
 	public void clearField() {
 		processMouseBinding(null, false);
+	}
+
+	/**
+	 * Clears the state of this class and notifies this client.  This effectively allows for the
+	 * programmatic setting of the mouse binding in use to be null, or in the 'no mouse binding set'
+	 * state.
+	 */
+	public void clearMouseBinding() {
+		processMouseBinding(null, true);
 	}
 
 	private void processMouseBinding(MouseBinding mb, boolean notify) {
@@ -90,6 +110,8 @@ public class MouseEntryTextField extends HintTextField {
 				return;
 			}
 
+			requestFocusInWindow(Cause.MOUSE_EVENT);
+
 			int modifiersEx = e.getModifiersEx();
 			int button = e.getButton();
 
@@ -102,6 +124,7 @@ public class MouseEntryTextField extends HintTextField {
 			}
 
 			processMouseBinding(new MouseBinding(button, modifiersEx), true);
+
 			e.consume();
 		}
 

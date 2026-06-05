@@ -198,6 +198,19 @@ PcodeOp *FlowInfo::branchTarget(PcodeOp *op) const
   return target(addr);	// Otherwise a normal address target
 }
 
+/// Replace any reference to the op being inlined with the first op of the inlined sequence.
+/// \param oldOp is the p-code op being inlined
+/// \param newOp is the first p-code op in the inlined sequence
+void FlowInfo::updateTarget(PcodeOp *oldOp,PcodeOp *newOp)
+
+{
+  map<Address,VisitStat>::iterator viter = visited.find(oldOp->getAddr());
+  if (viter != visited.end()) {				// Check if -oldOp- is a possible branch target
+    if ((*viter).second.seqnum == oldOp->getSeqNum())	// (if injection op is the first op for its address)
+      (*viter).second.seqnum = newOp->getSeqNum();	//    change the seqnum to the newOp
+  }
+}
+
 /// Check to see if the new target has been seen before. Otherwise
 /// add it to the list of addresses that need to be processed.
 /// Also check range bounds and update basic block information.
@@ -669,8 +682,8 @@ bool FlowInfo::setupCallSpecs(PcodeOp *op,FuncCallSpecs *fc)
 {
   FuncCallSpecs *res;
   res = new FuncCallSpecs(op);
-  data.opSetInput(op,data.newVarnodeCallSpecs(res),0);
   qlst.push_back(res);
+  data.opSetInput(op,data.newVarnodeCallSpecs(res),0);
 
   data.getOverride().applyPrototype(data,*res);
   queryCall(*res);
@@ -755,25 +768,10 @@ void FlowInfo::truncateIndirectJump(PcodeOp *op,JumpTable::RecoveryMode mode)
   }
 }
 
-/// \brief Test if the given p-code op is a member of an array
-///
-/// \param array is the array of p-code ops to search
-/// \param op is the given p-code op to search for
-/// \return \b true if the op is a member of the array
-bool FlowInfo::isInArray(vector<PcodeOp *> &array,PcodeOp *op)
-
-{
-  for(int4 i=0;i<array.size();++i) {
-    if (array[i] == op) return true;
-  }
-  return false;
-}
-
 void FlowInfo::generateOps(void)
 
 {
   vector<PcodeOp *> notreached;	// indirect ops that are not reachable
-  int4 notreachcnt = 0;
   clearProperties();
   addrlist.push_back(data.getAddress());
   while(!addrlist.empty())	// Recovering as much as possible except jumptables
@@ -799,10 +797,9 @@ void FlowInfo::generateOps(void)
     
     checkContainedCall();	// Check for PIC constructions
     checkMultistageJumptables();
-    while(notreachcnt < notreached.size()) {
-      tablelist.push_back(notreached[notreachcnt]);
-      notreachcnt += 1;
-    }
+    for(int4 i=0;i<notreached.size();++i)
+      tablelist.push_back(notreached[i]);
+    notreached.clear();
     if (hasInject())
       injectPcode();
   } while(!tablelist.empty());	// Inlining or multistage may have added new indirect branches
@@ -1046,7 +1043,7 @@ void FlowInfo::xrefInlinedBranch(PcodeOp *op)
     setupCallindSpecs(op,(FuncCallSpecs *)0);
   else if (op->code() == CPUI_BRANCHIND) {
     JumpTable *jt = data.linkJumpTable(op);
-    if (jt == (JumpTable *)0)
+    if (jt == (JumpTable *)0 || jt->numEntries() == 0)
       tablelist.push_back(op); // Didn't recover a jumptable
   }
 }
@@ -1189,11 +1186,7 @@ void FlowInfo::doInjection(InjectPayload *payload,InjectContext &icontext,PcodeO
     obank.markIncidentalCopy(firstop, lastop);
   obank.moveSequenceDead(firstop,lastop,op); // Move the injection to right after the call
 
-  map<Address,VisitStat>::iterator viter = visited.find(op->getAddr());
-  if (viter != visited.end()) {				// Check if -op- is a possible branch target
-    if ((*viter).second.seqnum == op->getSeqNum())	// (if injection op is the first op for its address)
-      (*viter).second.seqnum = firstop->getSeqNum();	//    change the seqnum to the first injected op
-  }
+  updateTarget(op,firstop);		// Replace -op- with -firstop- in the target map
   // Get rid of the original call
   data.opDestroyRaw(op);
 }
@@ -1436,7 +1429,7 @@ void FlowInfo::recoverJumpTables(vector<JumpTable *> &newTables,vector<PcodeOp *
 	truncateIndirectJump(op,mode); // Treat the indirect jump as a call
     }
     else if (jt->isPartial()) {
-      if (tablelist.size() > 1 && !isInArray(notreached,op)) {
+      if (tablelist.size() > 1 && jt->getRecoverCount() <= 1) {
 	// If the recovery is incomplete with current flow AND there is more flow to generate,
 	//     AND we haven't tried to recover this table before
 	notreached.push_back(op); // Save this op so we can try to recover the table again later

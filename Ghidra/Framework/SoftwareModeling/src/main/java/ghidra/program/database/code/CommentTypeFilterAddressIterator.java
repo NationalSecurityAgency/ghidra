@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,11 @@
  */
 package ghidra.program.database.code;
 
+import java.util.Iterator;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressIterator;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.listing.Program;
-
-import java.util.Iterator;
+import ghidra.program.model.listing.*;
 
 /**
  * Filters the given address iterator to only return addresses that have a comment of the given type
@@ -28,7 +27,7 @@ import java.util.Iterator;
 public class CommentTypeFilterAddressIterator implements AddressIterator {
 	private AddressIterator it;
 	private Listing listing;
-	private int commentType;
+	private CommentType commentType;
 	private Address nextAddr;
 
 	/**
@@ -36,7 +35,8 @@ public class CommentTypeFilterAddressIterator implements AddressIterator {
 	 * @param it an address iterator whose items are tested for the comment type.
 	 * @param commentType the type of comment to search for.
 	 */
-	public CommentTypeFilterAddressIterator(Program program, AddressIterator it, int commentType) {
+	public CommentTypeFilterAddressIterator(Program program, AddressIterator it,
+			CommentType commentType) {
 		this.listing = program.getListing();
 		this.it = it;
 		this.commentType = commentType;

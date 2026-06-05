@@ -19,7 +19,7 @@ import java.util.function.Predicate;
 
 import ghidra.features.base.memsearch.format.SearchFormat;
 import ghidra.features.base.memsearch.gui.SearchSettings;
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 
 /**
@@ -37,10 +37,10 @@ public enum Scanner {
 	DECREASED("Decreased", mm -> compareBytes(mm) < 0, "Keep results whose values decreased");
 
 	private final String name;
-	private final Predicate<MemoryMatch> acceptCondition;
+	private final Predicate<MemoryMatch<SearchData>> acceptCondition;
 	private final String description;
 
-	private Scanner(String name, Predicate<MemoryMatch> condition, String description) {
+	private Scanner(String name, Predicate<MemoryMatch<SearchData>> condition, String description) {
 		this.name = name;
 		this.acceptCondition = condition;
 		this.description = description;
@@ -54,16 +54,16 @@ public enum Scanner {
 		return description;
 	}
 
-	public boolean accept(MemoryMatch match) {
+	public boolean accept(MemoryMatch<SearchData> match) {
 		return acceptCondition.test(match);
 	}
 
-	private static int compareBytes(MemoryMatch match) {
+	private static int compareBytes(MemoryMatch<SearchData> match) {
 		byte[] bytes = match.getBytes();
 		byte[] originalBytes = match.getPreviousBytes();
 
-		ByteMatcher matcher = match.getByteMatcher();
-		SearchSettings settings = matcher.getSettings();
+		SearchData matchInfo = match.getPattern();
+		SearchSettings settings = matchInfo.getSettings();
 		SearchFormat searchFormat = settings.getSearchFormat();
 		return searchFormat.compareValues(bytes, originalBytes, settings);
 	}

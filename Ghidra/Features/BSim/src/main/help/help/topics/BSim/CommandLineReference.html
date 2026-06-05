@@ -267,7 +267,9 @@
 <PRE>
 <CODE class&nbsp;"computeroutput">
     bsim createdatabase  &lt;bsimURL&gt; &lt;config_template&gt; [--name|-n&nbsp;"&lt;name&gt;"] [--owner|-o&nbsp;"&lt;owner&gt;"] [--description|-d&nbsp;"&lt;text&gt;"] [--nocallgraph]
-    bsim setmetadata     &lt;bsimURL&gt; [--name|-n&nbsp;"&lt;name&gt;"] [--owner|-o&nbsp;"&lt;owner&gt;"] [--description|-d&nbsp;"&lt;text&gt;"]\n" + 
+    bsim setmetadata     &lt;bsimURL&gt; [--name|-n&nbsp;"&lt;name&gt;"] [--owner|-o&nbsp;"&lt;owner&gt;"] [--description|-d&nbsp;"&lt;text&gt;"]
+    bsim getmetadata     &lt;bsimURL&gt;
+    bsim dropdatabase    &lt;bsimURL&gt; [--force]
     bsim addexecategory  &lt;bsimURL&gt; &lt;category_name&gt; [--date]
     bsim addfunctiontag  &lt;bsimURL&gt; &lt;tag_name&gt;
     bsim dropindex       &lt;bsimURL&gt;
@@ -354,6 +356,17 @@
               </DD>
 
               <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>dropdatabase</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Deletes the specified repository. A BSim server URL is required. The database name
+                is taken from the path element of the URL.
+				
+				<P><SPAN class="command"><STRONG>--force</STRONG></SPAN> - skips the confirmation 
+				dialog and deletes the database. Default is to ask for confirmation.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
               "bold"><STRONG>setmetadata</STRONG></SPAN></SPAN></DT>
 
               <DD>
@@ -374,6 +387,16 @@
               </DD>
 
               <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>getmetadata</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Show the global <SPAN class="emphasis"><EM>name</EM></SPAN>, <SPAN class=
+                "emphasis"><EM>owner</EM></SPAN>, and <SPAN class=
+                "emphasis"><EM>description</EM></SPAN> metadata associated with a BSim server. A
+                BSim server URL is required.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
               "bold"><STRONG>addexecategory</STRONG></SPAN></SPAN></DT>
 
               <DD>
@@ -381,7 +404,7 @@
                 server URL and the name of the new category are required. This only affects future
                 ingest commands. Executables that have already been ingested are unaffected,
                 although they can be adjusted with an <SPAN class=
-                "command"><STRONG>updaterepo</STRONG></SPAN> command.</P>
+                "command"><STRONG>generateupdates</STRONG></SPAN> command.</P>
 
                 <P><SPAN class="command"><STRONG>date</STRONG></SPAN> - indicates the new category
                 holds date/time information.</P>
@@ -394,7 +417,7 @@
                 <P>Specify a new function tag to be included with generated metadata. A BSim server
                 URL and the name of the new tag are required. This only affects future ingest
                 commands. Functions that have already been ingested are unaffected, although they
-                can be adjusted with an <SPAN class="command"><STRONG>updaterepo</STRONG></SPAN>
+                can be adjusted with an <SPAN class="command"><STRONG>generateupdates</STRONG></SPAN>
                 command.</P>
               </DD>
 
@@ -748,7 +771,7 @@
           </TABLE>
         </DIV>
 
-        <P>If the default Ghidra Server port (1111) is in use it need not be specified with URL.
+        <P>If the default Ghidra Server base port (13100) is in use it need not be specified with URL.
         The <EM>hostname</EM> may specify either a Fully Qualified Domain Name (FQDN, e.g.,
         <EM>host.abc.com</EM>) or IP v4 Address (e.g., <EM>1.2.3.4</EM>).</P>
         <STRONG>Local Ghidra Project</STRONG><BR>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,9 +25,9 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.bookmark.TraceBookmarkSpace;
 import ghidra.trace.model.bookmark.TraceBookmarkType;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
@@ -39,26 +39,21 @@ public class DBTraceBookmarkSpace implements TraceBookmarkSpace, DBTraceSpaceBas
 	protected final ReadWriteLock lock;
 	protected final DBTrace trace;
 	protected final AddressSpace space;
-	protected final TraceThread thread;
-	protected final int frameLevel;
 
 	protected final DBTraceAddressSnapRangePropertyMapSpace<DBTraceBookmark, DBTraceBookmark> bookmarkMapSpace;
 	protected final DBCachedObjectIndex<String, DBTraceBookmark> bookmarksByTypeName;
 	protected final Collection<DBTraceBookmark> bookmarkView;
 
-	public DBTraceBookmarkSpace(DBTraceBookmarkManager manager, AddressSpace space,
-			TraceThread thread, int frameLevel)
+	public DBTraceBookmarkSpace(DBTraceBookmarkManager manager, AddressSpace space)
 			throws VersionException, IOException {
 		this.manager = manager;
 		this.lock = manager.getLock();
 		this.trace = manager.getTrace();
 		this.space = space;
-		this.thread = thread;
-		this.frameLevel = frameLevel;
 
 		this.bookmarkMapSpace =
-			new DBTraceAddressSnapRangePropertyMapSpace<>(DBTraceBookmark.tableName(space, -1, 0),
-				trace.getStoreFactory(), lock, space, null, 0, DBTraceBookmark.class,
+			new DBTraceAddressSnapRangePropertyMapSpace<>(DBTraceBookmark.tableName(space), trace,
+				trace.getStoreFactory(), lock, space, DBTraceBookmark.class,
 				(t, s, r) -> new DBTraceBookmark(this, t, s, r));
 		this.bookmarksByTypeName =
 			bookmarkMapSpace.getUserIndex(String.class, DBTraceBookmark.TYPE_COLUMN);
@@ -66,18 +61,13 @@ public class DBTraceBookmarkSpace implements TraceBookmarkSpace, DBTraceSpaceBas
 	}
 
 	@Override
+	public Trace getTrace() {
+		return trace;
+	}
+
+	@Override
 	public AddressSpace getAddressSpace() {
 		return space;
-	}
-
-	@Override
-	public TraceThread getThread() {
-		return thread;
-	}
-
-	@Override
-	public int getFrameLevel() {
-		return frameLevel;
 	}
 
 	protected DBTraceBookmarkType assertInTrace(TraceBookmarkType type) {
@@ -110,7 +100,7 @@ public class DBTraceBookmarkSpace implements TraceBookmarkSpace, DBTraceSpaceBas
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			DBTraceBookmark bookmark = bookmarkMapSpace.put(address, lifespan, null);
 			bookmark.set(type.getTypeString(), category, comment);
-			trace.setChanged(new TraceChangeRecord<>(TraceEvents.BOOKMARK_ADDED, this, bookmark));
+			trace.setChanged(new TraceChangeRecord<>(TraceEvents.BOOKMARK_ADDED, space, bookmark));
 			return bookmark;
 		}
 	}

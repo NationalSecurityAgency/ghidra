@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,10 @@ import ghidra.graph.*;
  * <p>
  * A-->B-->D, A-->C-->D yields either [A, B, C, D] or [A, C, B, D]
  * 
- * @see {@link https://en.wikipedia.org/wiki/Topological_sorting}
+ * @see <a href="https://en.wikipedia.org/wiki/Topological_sorting">Wikipedia: Topological
+ *      Sorting</a>
+ * @param <V> the type of vector
+ * @param <E> the type of edge
  */
 public class TopologicalSorter<V, E extends GEdge<V>> {
 	private final GDirectedGraph<V, E> graph;
@@ -53,8 +56,8 @@ public class TopologicalSorter<V, E extends GEdge<V>> {
 	 * 
 	 * @param graph the graph
 	 * @param requireTotal true to require a unique solution
-	 * @note if a unique solution is not requested, this algorithm will choose a solution
-	 *       arbitrarily. It does not yield all possible solutions.
+	 * @implNote if a unique solution is not requested, this algorithm will choose a solution
+	 *           arbitrarily. It does not yield all possible solutions.
 	 */
 	public TopologicalSorter(GDirectedGraph<V, E> graph, boolean requireTotal) {
 		this.graph = graph;

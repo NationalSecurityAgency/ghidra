@@ -15,12 +15,13 @@
  */
 package docking;
 
-import java.awt.BorderLayout;
 import java.util.Objects;
 
 import javax.swing.*;
 
-import docking.widgets.checkbox.GCheckBox;
+import docking.widgets.EmptyBorderButton;
+import docking.widgets.label.GLabel;
+import generic.theme.GIcon;
 import gui.event.MouseBinding;
 
 /**
@@ -31,9 +32,7 @@ public class ActionBindingPanel extends JPanel {
 	private static final String DISABLED_HINT = "Select an action";
 
 	private KeyEntryPanel keyEntryPanel;
-	private JCheckBox useMouseBindingCheckBox;
 	private MouseEntryTextField mouseEntryField;
-	private JPanel textFieldPanel;
 
 	private DockingActionInputBindingListener listener;
 
@@ -47,42 +46,31 @@ public class ActionBindingPanel extends JPanel {
 
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 
-		textFieldPanel = new JPanel(new BorderLayout());
-
 		keyEntryPanel = new KeyEntryPanel(20, ks -> listener.keyStrokeChanged(ks));
 		keyEntryPanel.setDisabledHint(DISABLED_HINT);
 		keyEntryPanel.setEnabled(false); // enabled on action selection
+
 		mouseEntryField = new MouseEntryTextField(20, mb -> listener.mouseBindingChanged(mb));
 		mouseEntryField.setDisabledHint(DISABLED_HINT);
-		mouseEntryField.setEnabled(false); // enabled on action selection
 
-		textFieldPanel.add(keyEntryPanel, BorderLayout.NORTH);
+		JButton clearMouseButton = new EmptyBorderButton(new GIcon("icon.text.field.clear"));
+		clearMouseButton.setName("Clear Mouse Binding");
+		clearMouseButton.addActionListener(e -> mouseEntryField.clearMouseBinding());
 
-		String checkBoxText = "Enter Mouse Binding";
-		useMouseBindingCheckBox = new GCheckBox(checkBoxText);
-		useMouseBindingCheckBox
-				.setToolTipText("When checked, the text field accepts mouse buttons");
-		useMouseBindingCheckBox.setName(checkBoxText);
-		useMouseBindingCheckBox.addItemListener(e -> updateTextField());
+		GLabel keyBindingLabel = new GLabel("Key Binding: ");
+		JTextField tf = keyEntryPanel.getTextField();
+		keyBindingLabel.setLabelFor(tf);
 
-		add(textFieldPanel);
-		add(Box.createHorizontalStrut(5));
-		add(useMouseBindingCheckBox);
-	}
+		GLabel mouseBindingLabel = new GLabel("Mouse Binding: ");
+		mouseBindingLabel.setLabelFor(mouseBindingLabel);
 
-	private void updateTextField() {
-
-		if (useMouseBindingCheckBox.isSelected()) {
-			textFieldPanel.remove(keyEntryPanel);
-			textFieldPanel.add(mouseEntryField, BorderLayout.NORTH);
-		}
-		else {
-			textFieldPanel.remove(mouseEntryField);
-			textFieldPanel.add(keyEntryPanel, BorderLayout.NORTH);
-		}
-
-		validate();
-		repaint();
+		add(keyBindingLabel);
+		add(keyEntryPanel);
+		add(Box.createHorizontalStrut(30));
+		add(mouseBindingLabel);
+		add(mouseEntryField);
+		add(Box.createHorizontalStrut(2));
+		add(clearMouseButton);
 	}
 
 	public void setKeyBindingData(KeyStroke ks, MouseBinding mb) {
@@ -113,11 +101,6 @@ public class ActionBindingPanel extends JPanel {
 	}
 
 	public void clearMouseBinding() {
-		mouseEntryField.clearField();
+		mouseEntryField.clearMouseBinding();
 	}
-
-	public boolean isMouseBinding() {
-		return useMouseBindingCheckBox.isSelected();
-	}
-
 }

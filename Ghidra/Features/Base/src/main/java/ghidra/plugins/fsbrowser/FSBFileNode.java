@@ -41,6 +41,7 @@ public class FSBFileNode extends FSBNode {
 	protected String filenameExtOverride;
 
 	FSBFileNode(GFile file) {
+		super(file.getFSRL().getName());
 		this.file = file;
 	}
 

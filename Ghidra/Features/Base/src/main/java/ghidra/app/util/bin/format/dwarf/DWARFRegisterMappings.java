@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.dwarf;
 
-import ghidra.program.model.lang.Register;
-
-import java.util.Collections;
 import java.util.Map;
+
+import ghidra.program.model.lang.Register;
 
 /**
  * Immutable mapping information between DWARF and Ghidra.
@@ -30,7 +29,7 @@ import java.util.Map;
  * in xml files referenced from the language *.ldefs file in an
  * &lt;external_name tool="DWARF.register.mapping.file" name="register_mapping_filename_here"/&gt; 
  * <p>
- * The format is:<p>
+ * The format is:
  * <pre>
  * &lt;dwarf&gt;
  *   &lt;register_mappings&gt;
@@ -75,37 +74,66 @@ import java.util.Map;
 public class DWARFRegisterMappings {
 
 	public static final DWARFRegisterMappings DUMMY =
-		new DWARFRegisterMappings(Collections.emptyMap(), 0, -1, false);
+		new DWARFRegisterMappings(Map.of(), null, -1, null, 0, false);
 
 	/*
 	 * Maps DWARF register number to Ghidra architecture registers.
 	 */
 	private final Map<Integer, Register> dwarfRegisterMap;
 
-	private final long callFrameCFA;
+	private final Integer callFrameCFA;
 
 	private final int stackPointerIndex;
 
 	private final boolean useFormalParameterStorage;
 
-	public DWARFRegisterMappings(Map<Integer, Register> regmap, long callFrameCFA,
-			int stackPointerIndex, boolean useFPS) {
+	private Register stackFrameRegister;
+
+	private int stackFrameRegisterOffset;
+
+	public DWARFRegisterMappings(Map<Integer, Register> regmap, Integer callFrameCFA,
+			int stackPointerIndex, Register stackFrameRegister, int stackFrameRegisterOffset,
+			boolean useFPS) {
 		this.dwarfRegisterMap = regmap;
 		this.callFrameCFA = callFrameCFA;
 		this.stackPointerIndex = stackPointerIndex;
+		this.stackFrameRegister = stackFrameRegister;
 		this.useFormalParameterStorage = useFPS;
+		this.stackFrameRegisterOffset = stackFrameRegisterOffset;
 	}
 
 	public Register getGhidraReg(int dwarfRegNum) {
 		return dwarfRegisterMap.get(dwarfRegNum);
 	}
 
-	public long getCallFrameCFA() {
+	/**
+	 * 'Static' value for a function's CFA value (instead of trying to extract it from the func's
+	 * CIE metadata).
+	 * 
+	 * @return cfa static stack offset
+	 */
+	public int getCallFrameCFA() {
 		return callFrameCFA;
+	}
+
+	public boolean hasStaticCFA() {
+		return callFrameCFA != null;
 	}
 
 	public int getDWARFStackPointerRegNum() {
 		return stackPointerIndex;
+	}
+
+	public Register getStackRegister() {
+		return stackPointerIndex != -1 ? getGhidraReg(stackPointerIndex) : null;
+	}
+
+	public Register getStackFrameRegister() {
+		return stackFrameRegister;
+	}
+
+	public int getStackFrameRegisterOffset() {
+		return stackFrameRegisterOffset;
 	}
 
 	public boolean isUseFormalParameterStorage() {

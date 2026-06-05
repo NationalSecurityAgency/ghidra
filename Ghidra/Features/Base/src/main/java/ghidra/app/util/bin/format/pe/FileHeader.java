@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -204,6 +204,33 @@ public class FileHeader implements StructConverter {
 	 */
 	public String getMachineName() {
 		return MachineName.getName(machine);
+	}
+
+	/**
+	 * {@return whether or not the machine is an X86 variant}
+	 */
+	public boolean isX86() {
+		return switch (machine & IMAGE_FILE_MACHINE_MASK) {
+			case IMAGE_FILE_MACHINE_I386:
+			case IMAGE_FILE_MACHINE_AMD64:
+				yield true;
+			default:
+				yield false;
+		};
+	}
+
+	/**
+	 * {@return whether or not the machine is an ARM variant}
+	 */
+	public boolean isArm() {
+		return switch (machine & IMAGE_FILE_MACHINE_MASK) {
+			case IMAGE_FILE_MACHINE_ARM:
+			case IMAGE_FILE_MACHINE_ARM64:
+			case IMAGE_FILE_MACHINE_ARMNT:
+				yield true;
+			default:
+				yield false;
+		};
 	}
 
 	/**

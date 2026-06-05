@@ -27,7 +27,7 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.table.AbstractTableModel;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.DropDownMenuIcon;
 import docking.widgets.button.GButton;
@@ -191,7 +191,8 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 	}
 
 	private void initializeToAddressField(Address toAddr) {
-		toAddressField.setAddressFactory(fromCodeUnit.getProgram().getAddressFactory(), (s) -> {
+		Program program = fromCodeUnit.getProgram();
+		toAddressField.setProgram(program, (s) -> {
 			if (s.isLoadedMemorySpace()) {
 				return true;
 			}

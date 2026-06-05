@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,7 +78,7 @@ public abstract class AbstractNextPreviousAction extends NavigatableContextActio
 	protected abstract KeyStroke getKeyStroke();
 
 	@Override
-	public void actionPerformed(final NavigatableActionContext context) {
+	public void actionPerformed(NavigatableActionContext context) {
 		Task t = new Task("Searching for " + doGetNavigationTypeName(), true, false, true) {
 			@Override
 			public void run(TaskMonitor monitor) {
@@ -88,7 +88,7 @@ public abstract class AbstractNextPreviousAction extends NavigatableContextActio
 		new TaskLauncher(t);
 	}
 
-	void gotoNextPrevious(TaskMonitor monitor, final NavigatableActionContext context) {
+	private void gotoNextPrevious(TaskMonitor monitor, NavigatableActionContext context) {
 
 		try {
 			boolean direction = isForward;
@@ -97,8 +97,8 @@ public abstract class AbstractNextPreviousAction extends NavigatableContextActio
 			}
 
 			Address address = direction
-					? getNextAddress(monitor, context.getProgram(), context.getAddress())
-					: getPreviousAddress(monitor, context.getProgram(), context.getAddress());
+					? getNextAddress(monitor, context)
+					: getPreviousAddress(monitor, context);
 
 			Swing.runLater(() -> gotoAddress(context, address));
 		}
@@ -106,6 +106,32 @@ public abstract class AbstractNextPreviousAction extends NavigatableContextActio
 			// cancelled
 		}
 	}
+
+	protected Address getNextAddress(TaskMonitor monitor, NavigatableActionContext context)
+			throws CancelledException {
+
+		// default for clients that do not need the context
+		Program program = context.getProgram();
+		Address address = context.getAddress();
+		return getNextAddress(monitor, program, address);
+	}
+
+	protected Address getPreviousAddress(TaskMonitor monitor, NavigatableActionContext context)
+			throws CancelledException {
+
+		// default for clients that do not need the context
+		Program program = context.getProgram();
+		Address address = context.getAddress();
+		return getPreviousAddress(monitor, program, address);
+	}
+
+	abstract protected Address getNextAddress(TaskMonitor monitor, Program program, Address address)
+			throws CancelledException;
+
+	abstract protected Address getPreviousAddress(TaskMonitor monitor, Program program,
+			Address address) throws CancelledException;
+
+	abstract protected String getNavigationTypeName();
 
 	private void gotoAddress(NavigatableActionContext actionContext, Address address) {
 		if (address == null) {
@@ -120,7 +146,6 @@ public abstract class AbstractNextPreviousAction extends NavigatableContextActio
 			Navigatable navigatable = actionContext.getNavigatable();
 			gotoAddress(service, navigatable, address);
 		}
-
 	}
 
 	protected void gotoAddress(GoToService service, Navigatable navigatable, Address address) {
@@ -145,16 +170,8 @@ public abstract class AbstractNextPreviousAction extends NavigatableContextActio
 		return getNavigationTypeName();
 	}
 
-	abstract protected String getNavigationTypeName();
-
 	protected String getInvertedNavigationTypeName() {
 		return "Non-" + getNavigationTypeName();
 	}
-
-	abstract protected Address getNextAddress(TaskMonitor monitor, Program program, Address address)
-			throws CancelledException;
-
-	abstract protected Address getPreviousAddress(TaskMonitor monitor, Program program,
-			Address address) throws CancelledException;
 
 }

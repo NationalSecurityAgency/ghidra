@@ -62,7 +62,7 @@ public class OneToOneAutoMapSpec implements AutoMapSpec {
 	}
 
 	@Override
-	public String getInfoForObjects(Trace trace) {
+	public String getInfoForObjects(Trace trace, long snap) {
 		return "";
 	}
 
@@ -77,12 +77,11 @@ public class OneToOneAutoMapSpec implements AutoMapSpec {
 
 	@Override
 	public boolean performMapping(DebuggerStaticMappingService mappingService, Trace trace,
-			List<Program> programs, TaskMonitor monitor) throws CancelledException {
+			long snap, List<Program> programs, TaskMonitor monitor) throws CancelledException {
 		boolean result = false;
 		for (Program program : programs) {
 			try {
-				mappingService.addIdentityMapping(trace, program,
-					Lifespan.nowOn(trace.getProgramView().getSnap()), false);
+				mappingService.addIdentityMapping(trace, program, Lifespan.nowOn(snap), false);
 				result = true;
 			}
 			catch (TraceConflictedMappingException e) {

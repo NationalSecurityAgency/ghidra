@@ -4402,8 +4402,8 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "SomeOverlay::01001630"),
 				addr(p1, "SomeOverlay::0100182f"));
-			setToDiff.addRange(addr(p2, "SomeOverlay::01001830"),
-				addr(p2, "SomeOverlay::0100192f"));
+			setToDiff.addRange(addr(p1, "SomeOverlay::01001830"),
+				addr(p1, "SomeOverlay::0100192f"));
 			setToDiff.addRange(addr(p1, "OtherOverlay::01001630"),
 				addr(p1, "OtherOverlay::0100192f"));
 			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
@@ -4511,8 +4511,8 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "SomeOverlay::01001630"),
 				addr(p1, "SomeOverlay::0100182f"));
-			setToDiff.addRange(addr(p2, "SomeOverlay::01001830"),
-				addr(p2, "SomeOverlay::0100192f"));
+			setToDiff.addRange(addr(p1, "SomeOverlay::01001830"),
+				addr(p1, "SomeOverlay::0100192f"));
 			setToDiff.addRange(addr(p1, "OtherOverlay::01001630"),
 				addr(p1, "OtherOverlay::0100192f"));
 			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
@@ -4617,8 +4617,8 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "SomeOverlay::01001630"),
 				addr(p1, "SomeOverlay::0100182f"));
-			setToDiff.addRange(addr(p2, "SomeOverlay::01001830"),
-				addr(p2, "SomeOverlay::0100192f"));
+			setToDiff.addRange(addr(p1, "SomeOverlay::01001830"),
+				addr(p1, "SomeOverlay::0100192f"));
 			setToDiff.addRange(addr(p1, "OtherOverlay::01001630"),
 				addr(p1, "OtherOverlay::0100192f"));
 			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
@@ -4721,8 +4721,8 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "SomeOverlay::01001630"),
 				addr(p1, "SomeOverlay::0100182f"));
-			setToDiff.addRange(addr(p2, "SomeOverlay::01001830"),
-				addr(p2, "SomeOverlay::0100192f"));
+			setToDiff.addRange(addr(p1, "SomeOverlay::01001830"),
+				addr(p1, "SomeOverlay::0100192f"));
 			setToDiff.addRange(addr(p1, "OtherOverlay::01001630"),
 				addr(p1, "OtherOverlay::0100192f"));
 			programMerge = new ProgramMergeManager(p1, p2, setToDiff);

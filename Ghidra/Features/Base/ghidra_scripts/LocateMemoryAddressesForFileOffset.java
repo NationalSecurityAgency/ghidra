@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import java.util.List;
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.mem.Memory;
 import ghidra.util.exception.CancelledException;
 
@@ -72,14 +73,14 @@ public class LocateMemoryAddressesForFileOffset extends GhidraScript {
 		println("File offset " + Long.toHexString(fileOffset) +
 			" is associated with memory block:address " + memBlockName + ":" + addr.toString());
 		CodeUnit myCodeUnit = currentProgram.getListing().getCodeUnitContaining(addr);
-		String comment = myCodeUnit.getComment(0);
+		String comment = myCodeUnit.getComment(CommentType.EOL);
 		if (comment == null) {
-			myCodeUnit.setComment(0,
+			myCodeUnit.setComment(CommentType.EOL,
 				this.getScriptName() + ": File offset: " + Long.toHexString(fileOffset) +
 					", Memory block:address " + memBlockName + ":" + addr.toString());
 		}
 		else {
-			myCodeUnit.setComment(0,
+			myCodeUnit.setComment(CommentType.EOL,
 				comment + ", " + this.getScriptName() + ": File offset: " +
 					Long.toHexString(fileOffset) + ", Memory block:address " + memBlockName + ":" +
 					addr.toString());

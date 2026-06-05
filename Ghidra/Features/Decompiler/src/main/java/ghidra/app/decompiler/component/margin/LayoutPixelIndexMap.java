@@ -49,7 +49,7 @@ public interface LayoutPixelIndexMap {
 	 * coordinate. In essence, this maps from vertical position, relative to the main panel's
 	 * viewport, to layout index. This accounts for scrolling and non-uniform height among the
 	 * layouts.
-	 * <p>
+	 * 
 	 * @implNote Clients should avoid frequent calls to this method. Even though it can be
 	 *           implemented easily in log time, an invocation for every pixel or line of pixels
 	 *           painted could still be unnecessarily expensive. It should only be necessary to call

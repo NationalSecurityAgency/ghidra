@@ -27,7 +27,6 @@
 @include "riscv.rv64m.sinc"
 @include "riscv.rv64b.sinc"
 @include "riscv.rv64p.sinc"
-@include "riscv.rv64k.sinc"
 
 @if FPSIZE == "32" || FPSIZE == "64" || FPSIZE == "128"
 @include "riscv.rv64f.sinc"
@@ -47,8 +46,6 @@
 @include "riscv.rvc.sinc"
 @include "riscv.rvv.sinc"
 @include "riscv.zi.sinc"
-
-@include "riscv.custom.sinc"
 
 # todos that may be possible, mostly just artifacts from my
 # script to generate the initial SELIGH

@@ -21,12 +21,12 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import ghidra.app.plugin.core.debug.client.tracermi.RmiClient.RequestResult;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.rmi.trace.TraceRmi.*;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
 
@@ -181,7 +181,7 @@ public class RmiTrace {
 			RmiTraceObject parent = proxyObject(d.getParent());
 			Lifespan span = Lifespan.span(d.getSpan().getMin(), d.getSpan().getMax());
 			Object value = client.argToObject(id, d.getValue());
-			TargetObjectSchema schema = client.getSchema(client.argToType(d.getValue()));
+			TraceObjectSchema schema = client.getSchema(client.argToType(d.getValue()));
 			result.add(new RmiTraceObjectValue(parent, span, d.getKey(), value, schema));
 		}
 		return result;

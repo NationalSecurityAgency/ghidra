@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,11 +26,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.*;
 import javax.swing.text.*;
 
+import org.apache.commons.io.output.WriterOutputStream;
+
 import docking.DockingUtils;
 import docking.actions.KeyBindingUtils;
 import generic.theme.*;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.core.console.CodeCompletion;
+import ghidra.app.script.DecoratingPrintWriter;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
@@ -69,15 +72,18 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 	/* junit */ IPStdin stdin;
 	private OutputStream stdout;
 	private OutputStream stderr;
-	private PrintWriter outWriter;
-	private PrintWriter errWriter;
+	private InterpreterPrintWriter outWriter;
+	private InterpreterPrintWriter errWriter;
+
+	private AnsiRenderer stdErrRenderer = new AnsiRenderer();
+	private AnsiRenderer stdInRenderer = new AnsiRenderer();
+	private AnsiRenderer stdOutRenderer = new AnsiRenderer();
 
 	private SimpleAttributeSet STDOUT_SET;
 	private SimpleAttributeSet STDERR_SET;
 	private SimpleAttributeSet STDIN_SET;
 
 	private CompletionWindowTrigger completionWindowTrigger = CompletionWindowTrigger.TAB;
-	private boolean highlightCompletion = false;
 	private int completionInsertionPosition;
 
 	private boolean caretGuard = true;
@@ -130,11 +136,12 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		outputScrollPane.setFocusable(false);
 		promptTextPane.setFocusable(false);
 
+		outWriter = new InterpreterPrintWriter(TextType.STDOUT);
+		errWriter = new InterpreterPrintWriter(TextType.STDERR);
+
 		stdin = new IPStdin();
-		stdout = new IPOut(TextType.STDOUT);
-		stderr = new IPOut(TextType.STDERR);
-		outWriter = new PrintWriter(stdout, true);
-		errWriter = new PrintWriter(stderr, true);
+		stdout = outWriter.asOutputStream();
+		stderr = errWriter.asOutputStream();
 
 		outputTextPane.setEditable(false);
 		promptTextPane.setEditable(false);
@@ -272,7 +279,6 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		Font boldFont = font.deriveFont(Font.BOLD);
 
 		STDOUT_SET = new GAttributes(font, NORMAL_COLOR);
-		STDOUT_SET = new GAttributes(font, NORMAL_COLOR);
 		STDERR_SET = new GAttributes(font, ERROR_COLOR);
 		STDIN_SET = new GAttributes(boldFont, NORMAL_COLOR);
 
@@ -298,12 +304,6 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		completionWindowTrigger =
 			options.getEnum(COMPLETION_WINDOW_TRIGGER_LABEL, CompletionWindowTrigger.TAB);
 
-// TODO
-//		highlightCompletion =
-//			options.getBoolean(HIGHLIGHT_COMPLETION_OPTION_LABEL, DEFAULT_HIGHLIGHT_COMPLETION);
-//		options.setDescription(HIGHLIGHT_COMPLETION_OPTION_LABEL, HIGHLIGHT_COMPLETION_DESCRIPTION);
-//		options.addOptionsChangeListener(this);
-
 		options.addOptionsChangeListener(this);
 	}
 
@@ -317,10 +317,6 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		else if (optionName.equals(COMPLETION_WINDOW_TRIGGER_LABEL)) {
 			completionWindowTrigger = (CompletionWindowTrigger) newValue;
 		}
-// TODO
-//		else if (optionName.equals(HIGHLIGHT_COMPLETION_OPTION_LABEL)) {
-//			highlightCompletion = ((Boolean) newValue).booleanValue();
-//		}
 	}
 
 	@Override
@@ -421,11 +417,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		outputTextPane.setCaretPosition(Math.max(0, outputTextPane.getDocument().getLength()));
 	}
 
-	AnsiRenderer stdErrRenderer = new AnsiRenderer();
-	AnsiRenderer stdInRenderer = new AnsiRenderer();
-	AnsiRenderer stdOutRenderer = new AnsiRenderer();
-
-	void addText(String text, TextType type) {
+	private void addText(String text, TextType type) {
 		SimpleAttributeSet attributes;
 		AnsiRenderer renderer;
 		switch (type) {
@@ -449,35 +441,33 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 			repositionScrollpane();
 		}
 		catch (BadLocationException e) {
-			Msg.error(this, "internal document positioning error", e);
+			// shouldn't happen
+			Msg.error(this, "Document positioning error", e);
 		}
 	}
 
-	private class IPOut extends OutputStream {
-		TextType type;
-		byte[] buffer = new byte[1];
+	private void addText(String text, Color c) {
 
-		IPOut(TextType type) {
-			this.type = type;
+		SimpleAttributeSet attributes = new GAttributes(getFont(), c);
+
+		try {
+			StyledDocument document = outputTextPane.getStyledDocument();
+			stdOutRenderer.renderString(document, text, attributes);
+			repositionScrollpane();
 		}
-
-		@Override
-		public void write(int b) throws IOException {
-			buffer[0] = (byte) b;
-			String text = new String(buffer);
-			addText(text, type);
-		}
-
-		@Override
-		public void write(byte[] b, int off, int len) throws IOException {
-			String text = new String(b, off, len);
-			addText(text, type);
+		catch (BadLocationException e) {
+			// shouldn't happen
+			Msg.error(this, "Document positioning error", e);
 		}
 	}
 
 	public void clear() {
 		outputTextPane.setText("");
 		stdin.resetStream();
+	}
+
+	public JTextPane getOutputTextPane() {
+		return outputTextPane;
 	}
 
 	public String getOutputText() {
@@ -535,16 +525,8 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 			text.substring(0, insertedTextStart) + insertion + text.substring(position);
 		setInputTextPaneText(inputText);
 
-		/* Select what we inserted so that the user can easily
-		 * get rid of what they did (in case of a mistake). */
-		if (highlightCompletion) {
-			inputTextPane.setSelectionStart(insertedTextStart);
-			inputTextPane.moveCaretPosition(insertedTextEnd);
-		}
-		else {
-			/* Then put the caret right after what we inserted. */
-			inputTextPane.setCaretPosition(insertedTextEnd);
-		}
+		/* Then put the caret right after what we inserted. */
+		inputTextPane.setCaretPosition(insertedTextEnd);
 
 		updateCompletionList();
 	}
@@ -579,6 +561,102 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
+
+	private class InterpreterPrintWriter extends DecoratingPrintWriter {
+
+		private InterpreterConsoleWriter writer;
+
+		InterpreterPrintWriter(TextType type) {
+			this(new InterpreterConsoleWriter(type));
+		}
+
+		private InterpreterPrintWriter(InterpreterConsoleWriter writer) {
+			super(writer);
+			this.writer = writer;
+		}
+
+		OutputStream asOutputStream() {
+			try {
+				return WriterOutputStream.builder().setWriter(writer).getOutputStream();
+			}
+			catch (IOException e) {
+				Msg.error(this, "Unable to create output stream", e);
+				return null;
+			}
+		}
+
+		@Override
+		public void println(String s, Color c) {
+			try {
+				writer.setColor(c);
+				print(s);
+				println();
+			}
+			finally {
+				writer.setColor(null);
+			}
+		}
+
+		@Override
+		public void print(String s, Color c) {
+			try {
+				writer.setColor(c);
+				print(s);
+			}
+			finally {
+				writer.setColor(null);
+			}
+		}
+	}
+
+	private class InterpreterConsoleWriter extends Writer {
+
+		private Color color;
+
+		TextType type;
+		byte[] buffer = new byte[1];
+
+		public InterpreterConsoleWriter(TextType type) {
+			this.type = type;
+		}
+
+		void setColor(Color color) {
+			this.color = color;
+		}
+
+		@Override
+		public void write(int b) throws IOException {
+			buffer[0] = (byte) b;
+			String text = new String(buffer);
+			if (color != null) {
+				addText(text, color);
+				return;
+			}
+
+			addText(text, type);
+		}
+
+		@Override
+		public void write(char[] b, int off, int len) throws IOException {
+			String text = new String(b, off, len);
+			if (color != null) {
+				addText(text, color);
+				return;
+			}
+
+			addText(text, type);
+		}
+
+		@Override
+		public void flush() throws IOException {
+			// stub
+		}
+
+		@Override
+		public void close() throws IOException {
+			clear();
+		}
+	}
 
 	/**
 	 * An {@link InputStream} that has as its source text strings being pushed into

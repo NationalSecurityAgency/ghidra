@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ import java.util.Map;
  *     WORD  reserved : 1;
  *     WORD  cbFrame : 2;
  *   } FPO_DATA, *PFPO_DATA;
- *   
+ *
  *   where...
  *   ulOffStart = The offset of the first byte of the function code.
  *   cbProcSize = The number of bytes in the function.
@@ -52,7 +52,7 @@ import java.util.Map;
  *   cbFrame = A variable that indicates the frame type, where...
  *     FRAME_FPO (0) = FPO frame
  *     FRAME_TRAP (1) = Trap frame
- *     FRAME_TSS (2) = TSS frame 
+ *     FRAME_TSS (2) = TSS frame
  *     FRAME_NONFPO (3) = non-FPO frame
  * </PRE>
  */
@@ -198,8 +198,7 @@ public class FramePointerOmissionRecord {
 	void dump(Writer writer) throws IOException {
 		writer.write("FramePointerOmissionRecord----------------------------------\n");
 		writer.write(String.format("firstFunctionByteOffset: 0X%08X\n", firstFunctionByteOffset));
-		writer.write(String.format("firstFunctionByteOffset: 0X%08X\n", firstFunctionByteOffset));
-		writer.write(String.format("numFunctionBytes: 0X%08XX\n", numFunctionBytes));
+		writer.write(String.format("numFunctionBytes: 0X%08X\n", numFunctionBytes));
 		writer.write(String.format("numLocalVariables: 0X%08X\n", numLocalVariables));
 		writer.write(String.format("sizeOfParametersInDwords: 0X%08X\n", sizeOfParametersInDwords));
 		writer.write(String.format("numFunctionPrologBytes: 0X%04X\n", numFunctionPrologBytes));

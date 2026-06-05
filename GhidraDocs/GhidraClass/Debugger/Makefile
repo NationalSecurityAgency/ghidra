@@ -17,6 +17,7 @@ all: \
 		B2-Emulation.html \
 		B3-Scripting.html \
 		B4-Modeling.html \
+		B5-AddingDebuggers.html \
 		README.html
 
 clean:

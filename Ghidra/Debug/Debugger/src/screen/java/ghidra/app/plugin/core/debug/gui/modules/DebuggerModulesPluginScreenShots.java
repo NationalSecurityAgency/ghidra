@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,17 +78,17 @@ public class DebuggerModulesPluginScreenShots extends GhidraScreenShotGenerator 
 			TraceModule bin = tb.trace.getModuleManager()
 					.addLoadedModule("Modules[/bin/bash]", "/bin/bash",
 						tb.range(0x00400000, 0x0060ffff), snap);
-			bin.addSection("Modules[/bin/bash].Sections[.text]", ".text",
+			bin.addSection(snap, "Modules[/bin/bash].Sections[.text]", ".text",
 				tb.range(0x00400000, 0x0040ffff));
-			bin.addSection("Modules[/bin/bash].Sections[.data]", ".data",
+			bin.addSection(snap, "Modules[/bin/bash].Sections[.data]", ".data",
 				tb.range(0x00600000, 0x0060ffff));
 
 			TraceModule lib = tb.trace.getModuleManager()
 					.addLoadedModule("Modules[/lib/libc.so.6]", "/lib/libc.so.6",
 						tb.range(0x7fac0000, 0x7faeffff), snap);
-			lib.addSection("Modules[/lib/libc.so.6].Sections[.text]", ".text",
+			lib.addSection(snap, "Modules[/lib/libc.so.6].Sections[.text]", ".text",
 				tb.range(0x7fac0000, 0x7facffff));
-			lib.addSection("Modules[/lib/libc.so.6].Sections[.data]", ".data",
+			lib.addSection(snap, "Modules[/lib/libc.so.6].Sections[.data]", ".data",
 				tb.range(0x7fae0000, 0x7faeffff));
 
 			traceManager.openTrace(tb.trace);
@@ -111,19 +111,18 @@ public class DebuggerModulesPluginScreenShots extends GhidraScreenShotGenerator 
 			TraceModule bin = tb.trace.getModuleManager()
 					.addLoadedModule("Modules[/bin/bash]", "/bin/bash",
 						tb.range(0x00400000, 0x0060ffff), snap);
-			bin.addSection("Modules[/bin/bash].Sections[.text]", ".text",
+			bin.addSection(snap, "Modules[/bin/bash].Sections[.text]", ".text",
 				tb.range(0x00400000, 0x0040ffff));
-			bin.addSection("Modules[/bin/bash].Sections[.data]", ".data",
+			bin.addSection(snap, "Modules[/bin/bash].Sections[.data]", ".data",
 				tb.range(0x00600000, 0x0060ffff));
 
 			TraceModule lib = tb.trace.getModuleManager()
 					.addLoadedModule("Modules[/lib/libc.so.6]", "/lib/libc.so.6",
 						tb.range(0x7fac0000, 0x7faeffff), snap);
-			lib.addSection("Modules[/lib/libc.so.6].Sections[.text]", ".text",
+			lib.addSection(snap, "Modules[/lib/libc.so.6].Sections[.text]", ".text",
 				tb.range(0x7fac0000, 0x7facffff));
-			lib.addSection("Modules[/lib/libc.so.6].Sections[.data]", ".data",
+			lib.addSection(snap, "Modules[/lib/libc.so.6].Sections[.data]", ".data",
 				tb.range(0x7fae0000, 0x7faeffff));
-
 		}
 
 		progBash = createDefaultProgram("bash", ProgramBuilder._X64, this);

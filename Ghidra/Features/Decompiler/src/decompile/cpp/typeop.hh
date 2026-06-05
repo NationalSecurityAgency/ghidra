@@ -91,6 +91,17 @@ public:
   uintb evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const {
     return behave->evaluateBinary(sizeout,sizein,in1,in2); }
 
+  /// \brief Emulate the ternary op-code on an input value
+  ///
+  /// \param sizeout is the size of the output in bytes
+  /// \param sizein is the size of the inputs in bytes
+  /// \param in1 is the first input value
+  /// \param in2 is the second input value
+  /// \param in3 is the third input value
+  /// \return the output value
+  uintb evaluateTernary(int4 sizeout,int4 sizein,uintb in1,uintb in2,uintb in3) const {
+    return behave->evaluateTernary(sizeout,sizein,in1,in2,in3); }
+
   /// \brief Reverse the binary op-code operation, recovering a constant input value
   ///
   /// If the output value and one of the input values is known, recover the value
@@ -876,15 +887,29 @@ class TypeOpInsert : public TypeOpFunc {
 public:
   TypeOpInsert(TypeFactory *t);			///< Constructor
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
+  virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
+  virtual Datatype *getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const;
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opInsertOp(op); }
 };
 
-/// \brief Information about the EXTRACT op-code
-class TypeOpExtract : public TypeOpFunc {
+/// \brief Information about the ZPULL op-code
+class TypeOpZpull : public TypeOpFunc {
 public:
-  TypeOpExtract(TypeFactory *t);			///< Constructor
+  TypeOpZpull(TypeFactory *t);			///< Constructor
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
-  virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opExtractOp(op); }
+  virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
+  virtual Datatype *getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const;
+  virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opZpullOp(op); }
+};
+
+/// \brief Information about the SPULL op-code
+class TypeOpSpull : public TypeOpFunc {
+public:
+  TypeOpSpull(TypeFactory *t);			///< Constructor
+  virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
+  virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
+  virtual Datatype *getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const;
+  virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opSpullOp(op); }
 };
 
 /// \brief Information about the POPCOUNT op-code

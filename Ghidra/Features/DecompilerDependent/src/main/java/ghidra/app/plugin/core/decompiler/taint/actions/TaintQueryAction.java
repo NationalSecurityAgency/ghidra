@@ -27,19 +27,20 @@ import ghidra.app.plugin.core.decompiler.taint.TaintState.QueryType;
 
 public class TaintQueryAction extends TaintAbstractQueryAction {
 
-	public TaintQueryAction(TaintPlugin plugin, TaintState state) {
-		super(plugin, state, "Query", "Run taint query");
+	public TaintQueryAction(TaintPlugin plugin) {
+		super(plugin, "Query", "Source-Sink Taint Query", "Run taint query");
 		executeTaintQueryIconString = "icon.graph.default.display.program.graph";
 		executeTaintQueryIcon = new GIcon(executeTaintQueryIconString);
 		queryType = QueryType.SRCSINK;
 		
 		setToolBarData(new ToolBarData(executeTaintQueryIcon));
-		setKeyBindingData(new KeyBindingData(KeyEvent.VK_Q, 0));
+		setKeyBindingData(new KeyBindingData(KeyEvent.VK_Y, 0));
 	}
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		return state.isValid();
+		TaintState state = plugin.getTaintState();
+		return state == null ? false : state.isValid();
 	}
 
 }

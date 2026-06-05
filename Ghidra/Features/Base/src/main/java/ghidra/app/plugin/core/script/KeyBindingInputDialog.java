@@ -47,7 +47,7 @@ class KeyBindingInputDialog extends DialogComponentProvider implements KeyEntryL
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(new GLabel(scriptName), BorderLayout.NORTH);
 		panel.add(kbPanel, BorderLayout.CENTER);
-
+		panel.getAccessibleContext().setAccessibleName("Key Binding Input");
 		addWorkPanel(panel);
 		addOKButton();
 		addCancelButton();

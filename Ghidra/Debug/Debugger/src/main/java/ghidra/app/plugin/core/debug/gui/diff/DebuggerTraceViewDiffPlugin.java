@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,8 @@ import docking.action.ToggleDockingAction;
 import generic.theme.GColor;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
-import ghidra.app.plugin.core.debug.*;
+import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
+import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.action.DebuggerTrackLocationTrait;
@@ -54,16 +55,26 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Msg;
 
-@PluginInfo(shortDescription = "Compare memory state between times in a trace", description = "Provides a side-by-side diff view between snapshots (points in time) in a " +
-	"trace. The comparison is limited to raw bytes.", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.RELEASED, eventsConsumed = {
+@PluginInfo(
+	shortDescription = "Compare memory state between times in a trace",
+	description = "Provides a side-by-side diff view between snapshots (points in time) in a " +
+		"trace. The comparison is limited to raw bytes.",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
 		TraceClosedPluginEvent.class,
-	}, eventsProduced = {}, servicesRequired = {
+	},
+	eventsProduced = {},
+	servicesRequired = {
 		DebuggerListingService.class,
-	}, servicesProvided = {})
+	},
+	servicesProvided = {})
 public class DebuggerTraceViewDiffPlugin extends AbstractDebuggerPlugin {
 	static final Color COLOR_DIFF = new GColor("color.bg.highlight.listing.diff");
 
@@ -529,8 +540,8 @@ public class DebuggerTraceViewDiffPlugin extends AbstractDebuggerPlugin {
 
 		TraceMemoryManager mm = trace.getMemoryManager();
 
-		AddressSetView known1 = mm.getAddressesWithState(snap1, s -> s == TraceMemoryState.KNOWN);
-		AddressSetView known2 = mm.getAddressesWithState(snap2, s -> s == TraceMemoryState.KNOWN);
+		AddressSetView known1 = mm.getAddressesWithState(snap1, StatePredicate.IS_KNOWN);
+		AddressSetView known2 = mm.getAddressesWithState(snap2, StatePredicate.IS_KNOWN);
 
 		//AddressSet knownEither = known1.union(known2);
 		AddressSet knownBoth = known1.intersect(known2); // Will need byte-by-byte examination

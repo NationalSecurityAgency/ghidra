@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.util.datastruct;
 
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * An ordered set-like data structure.   
@@ -51,6 +51,13 @@ public class LRUSet<T> extends LRUMap<T, T> implements Iterable<T> {
 
 	@Override
 	public String toString() {
-		return map.keySet().toString();
+		return keySet().toString();
+	}
+
+	/**
+	 * {@return a List of elements in this set}
+	 */
+	public List<T> toList() {
+		return new ArrayList<>(keySet());
 	}
 }

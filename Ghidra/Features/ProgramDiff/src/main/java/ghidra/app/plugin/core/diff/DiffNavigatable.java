@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,9 +27,8 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 
 /**
- * This is a navigatable for use by the right-hand listing of the Diff.
- * It should navigate within the Diff's listing, which would then reposition 
- * the CodeViewer's listing.
+ * This is a navigatable for use by the right-hand listing of the Diff. It should navigate within
+ * the Diff's listing, which would then reposition the CodeViewer's listing.
  */
 class DiffNavigatable implements Navigatable {
 
@@ -40,8 +39,11 @@ class DiffNavigatable implements Navigatable {
 		WeakDataStructureFactory.createCopyOnWriteWeakSet();
 
 	/**
-	 * The navigatable for the Diff. The CodeViewerService provides Diff with a listing,
-	 * so where appropriate this navigatable will defer to the CodeViewerService navigatable.
+	 * The navigatable for the Diff.
+	 * <p>
+	 * The CodeViewerService provides Diff with a listing, so where appropriate this navigatable
+	 * will defer to the CodeViewerService navigatable.
+	 * 
 	 * @param diffPlugin the plugin for the Diff which can be used to obtain needed info.
 	 * @param navigatable navigatable that the CodeViewerService provides.
 	 */
@@ -179,7 +181,8 @@ class DiffNavigatable implements Navigatable {
 	}
 
 	@Override
-	public void removeHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider,
+			Program program) {
 		// CodeViewerProvider handles the other listing (the Diff listing) highlights.
 		navigatable.removeHighlightProvider(highlightProvider, program);
 	}

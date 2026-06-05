@@ -154,8 +154,9 @@ RJMPdisp: disp is disp4_8 & sdisp0_2
 # 0101 1101 0001 dddd
 
 :ICALL rd0 is op4_12=0x5d1 & rd0 {
+        tmp:4 = rd0;
         LR = inst_next;
-        call [rd0];
+        call [tmp];
 }
 
 #---------------------------------------------------------------------

@@ -198,10 +198,9 @@ public class DialogComponentProvider
 		DockingAction closeAction = new ActionBuilder(CLOSE_ACTION_NAME, owner)
 				.sharedKeyBinding()
 				.keyBinding(ESC_KEYSTROKE)
-				.withContext(DialogActionContext.class)
-				.enabledWhen(c -> c.getDialogComponentProvider() != null)
+				.enabledWhen(c -> c.getContextProvider() instanceof DialogComponentProvider)
 				.onAction(c -> {
-					DialogComponentProvider dcp = c.getDialogComponentProvider();
+					DialogComponentProvider dcp = (DialogComponentProvider) c.getContextProvider();
 					dcp.escapeCallback();
 				})
 				.build();
@@ -488,6 +487,7 @@ public class DialogComponentProvider
 		okButton = new JButton("OK");
 		okButton.setMnemonic('K');
 		okButton.setName("OK");
+		okButton.getAccessibleContext().setAccessibleName("OK");
 		okButton.addActionListener(e -> okCallback());
 		addButton(okButton);
 	}
@@ -500,6 +500,7 @@ public class DialogComponentProvider
 		cancelButton = new JButton("Cancel");
 		cancelButton.setMnemonic('C');
 		cancelButton.setName("Cancel");
+		cancelButton.getAccessibleContext().setAccessibleName("Cancel");
 		cancelButton.addActionListener(e -> cancelCallback());
 		addButton(cancelButton);
 	}
@@ -512,6 +513,7 @@ public class DialogComponentProvider
 		dismissButton = new JButton("Dismiss");
 		dismissButton.setMnemonic('D');
 		dismissButton.setName("Dismiss");
+		dismissButton.getAccessibleContext().setAccessibleName("Dismiss");
 		dismissButton.addActionListener(e -> dismissCallback());
 		addButton(dismissButton);
 	}
@@ -524,6 +526,7 @@ public class DialogComponentProvider
 		applyButton = new JButton("Apply");
 		applyButton.setMnemonic('A');
 		applyButton.setName("Apply");
+		applyButton.getAccessibleContext().setAccessibleName("Apply");
 		applyButton.addActionListener(e -> applyCallback());
 		addButton(applyButton);
 	}
@@ -725,6 +728,12 @@ public class DialogComponentProvider
 			return;
 		}
 
+		Callback animatorFinishedCallback = () -> {
+			statusLabel.setVisible(true);
+			alertFinishedCallback.call();
+			isAlerting = false;
+		};
+
 		isAlerting = true;
 
 		// Note: manually call validate() so the 'statusLabel' updates its bounds after
@@ -733,14 +742,17 @@ public class DialogComponentProvider
 		mainPanel.validate();
 		statusLabel.setVisible(false); // disable painting in this dialog so we don't see double
 		Animator animator = AnimationUtils.pulseComponent(statusLabel, 1);
-		animator.addTarget(new TimingTargetAdapter() {
-			@Override
-			public void end() {
-				statusLabel.setVisible(true);
-				alertFinishedCallback.call();
-				isAlerting = false;
-			}
-		});
+		if (animator == null) {
+			animatorFinishedCallback.call();
+		}
+		else {
+			animator.addTarget(new TimingTargetAdapter() {
+				@Override
+				public void end() {
+					animatorFinishedCallback.call();
+				}
+			});
+		}
 	}
 
 	protected Color getStatusColor(MessageType type) {
@@ -1240,7 +1252,7 @@ public class DialogComponentProvider
 	/**
 	 * An optional extension point for subclasses to provider action context for the actions used by
 	 * this provider.
-	 *
+	 * 
 	 * @param event The mouse event used (may be null) to generate a popup menu
 	 */
 	@Override
@@ -1261,7 +1273,10 @@ public class DialogComponentProvider
 		if (sourceComponent != null) {
 			c = sourceComponent;
 		}
-		return new DialogActionContext(this, c).setSourceObject(event.getSource());
+
+		DialogActionContext context = new DialogActionContext(this, c);
+		context.setSourceObject(event.getSource());
+		return context;
 	}
 
 	/**
@@ -1273,6 +1288,9 @@ public class DialogComponentProvider
 		if (context == null) {
 			context = new DefaultActionContext();
 		}
+
+		context.setContextProvider(this);
+
 		Set<DockingActionIf> keySet = toolbarButtonsByAction.keySet();
 		for (DockingActionIf action : keySet) {
 			action.setEnabled(action.isEnabledForContext(context));
@@ -1314,7 +1332,7 @@ public class DialogComponentProvider
 
 	private void addKeyBindingAction(DockingActionIf action) {
 
-		DialogActionProxy proxy = new DialogActionProxy(action);
+		DialogActionProxy proxy = new DialogActionProxy(this, action);
 		keyBindingProxyActions.add(proxy);
 
 		// The tool will be null when clients add actions to this dialog before it has been shown.
@@ -1447,8 +1465,11 @@ public class DialogComponentProvider
 
 		@Override
 		public void popupTriggered(MouseEvent e) {
-			ActionContext actionContext = getActionContext(e);
-			popupManager.popupMenu(actionContext, e);
+			ActionContext context = getActionContext(e);
+			if (context != null) {
+				context.setContextProvider(DialogComponentProvider.this);
+			}
+			popupManager.popupMenu(context, e);
 		}
 
 		@Override
@@ -1468,8 +1489,11 @@ public class DialogComponentProvider
 	 */
 	private class DialogActionProxy extends DockingActionProxy {
 
-		public DialogActionProxy(DockingActionIf dockingAction) {
+		private DialogComponentProvider provider;
+
+		public DialogActionProxy(DialogComponentProvider provider, DockingActionIf dockingAction) {
 			super(dockingAction);
+			this.provider = provider;
 		}
 
 		@Override
@@ -1480,6 +1504,12 @@ public class DialogComponentProvider
 		@Override
 		public ToolBarData getToolBarData() {
 			return null;
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			ActionContextProvider contextProvider = context.getContextProvider();
+			return provider == contextProvider;
 		}
 	}
 }

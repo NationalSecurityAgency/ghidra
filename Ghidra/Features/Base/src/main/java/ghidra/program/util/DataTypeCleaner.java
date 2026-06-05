@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,8 @@ import ghidra.util.task.TaskMonitor;
  * {@link DataTypeManager}.  The cleaning process entails clearing all details associated with
  * all composites other than their description which may be present.  There is also an option
  * to retain those composites which are already defined within the target.
- * <br>
+ * 
+ * <P>
  * All datatypes and their referenced datatypes will be accumulated and possibly re-used across
  * multiple invocations of the {@link #clean(DataType)} method.  It is important that this instance 
  * be {@link #close() closed} when instance and any resulting {@link DataType} is no longer in use.
@@ -44,7 +45,7 @@ public class DataTypeCleaner implements Closeable {
 	private int txId;
 
 	/**
-	 * Consruct a {@link DataTypeCleaner} instance.  The caller must ensure that this instance
+	 * Construct a {@link DataTypeCleaner} instance.  The caller must ensure that this instance
 	 * is {@link #close() closed} when instance and any resulting {@link DataType} is no longer in
 	 * use.
 	 * @param targetDtm target datatype manager
@@ -95,11 +96,11 @@ public class DataTypeCleaner implements Closeable {
 				continue;
 			}
 			Composite replacement = null;
-			if (c instanceof Structure s) {
+			if (c instanceof Structure) {
 				replacement =
 					new StructureDataType(c.getCategoryPath(), c.getName(), 0, cleanerDtm);
 			}
-			else if (c instanceof Union u) {
+			else if (c instanceof Union) {
 				replacement = new UnionDataType(c.getCategoryPath(), c.getName(), cleanerDtm);
 			}
 			if (replacement != null) {

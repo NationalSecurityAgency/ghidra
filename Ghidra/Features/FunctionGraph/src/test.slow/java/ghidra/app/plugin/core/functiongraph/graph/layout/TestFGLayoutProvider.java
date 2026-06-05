@@ -30,6 +30,7 @@ import ghidra.graph.VisualGraph;
 import ghidra.graph.viewer.layout.*;
 import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
 import ghidra.program.model.address.Address;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -373,5 +374,10 @@ public class TestFGLayoutProvider extends FGLayoutProvider {
 			"}";
 			//@formatter:on
 		}
+	}
+
+	@Override
+	public HelpLocation getHelpLocation() {
+		return null;
 	}
 }

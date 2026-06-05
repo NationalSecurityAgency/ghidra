@@ -35,6 +35,7 @@ public class OverviewColorLegendDialog extends DialogComponentProvider {
 	 */
 	public OverviewColorLegendDialog(String title, JComponent component, HelpLocation help) {
 		super(title, false);
+		component.getAccessibleContext().setAccessibleName("Overview Color Legend");
 		addWorkPanel(component);
 		addDismissButton();
 		setHelpLocation(help);

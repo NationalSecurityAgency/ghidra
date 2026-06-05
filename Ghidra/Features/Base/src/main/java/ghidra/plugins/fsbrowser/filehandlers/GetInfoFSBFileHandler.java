@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -105,7 +105,8 @@ public class GetInfoFSBFileHandler implements FSBFileHandler {
 			}
 			fattrs = fattrs.clone();
 
-			DomainFile associatedDomainFile = context.projectIndex().findFirstByFSRL(fsrl);
+			DomainFile associatedDomainFile =
+				context.fsbComponent().getProjectIndex().findFirstByFSRL(fsrl);
 			if (associatedDomainFile != null) {
 				fattrs.add(PROJECT_FILE_ATTR, associatedDomainFile.getPathname());
 			}
@@ -114,7 +115,7 @@ public class GetInfoFSBFileHandler implements FSBFileHandler {
 				fattrs.add(NAME_ATTR, file.getName());
 			}
 			if (!fattrs.contains(PATH_ATTR)) {
-				fattrs.add(PATH_ATTR, FilenameUtils.getFullPath(file.getPath()));
+				fattrs.add(PATH_ATTR, FilenameUtils.getFullPathNoEndSeparator(file.getPath()));
 			}
 			if (!fattrs.contains(FSRL_ATTR)) {
 				fattrs.add(FSRL_ATTR, file.getFSRL());
@@ -167,17 +168,25 @@ public class GetInfoFSBFileHandler implements FSBFileHandler {
 	//---------------------------------------------------------------------------------------------
 	private static final Function<Object, String> PLAIN_TOSTRING = o -> o.toString();
 	private static final Function<Object, String> SIZE_TOSTRING =
-		o -> (o instanceof Long) ? FSUtilities.formatSize((Long) o) : o.toString();
+		o -> (o instanceof Long l) ? FSUtilities.formatSize(l) : o.toString();
 	private static final Function<Object, String> UNIX_ACL_TOSTRING =
-		o -> (o instanceof Number) ? String.format("%05o", (Number) o) : o.toString();
+		o -> (o instanceof Number num) ? String.format("%05o", num) : o.toString();
 	private static final Function<Object, String> DATE_TOSTRING =
-		o -> (o instanceof Date) ? FSUtilities.formatFSTimestamp((Date) o) : o.toString();
+		o -> (o instanceof Date date) ? FSUtilities.formatFSTimestamp(date) : o.toString();
 	private static final Function<Object, String> FSRL_TOSTRING =
-		o -> (o instanceof FSRL) ? ((FSRL) o).toPrettyString().replace("|", "|\n\t") : o.toString();
+		o -> (o instanceof FSRL fsrl) ? fsrl.toPrettyString().replace("|", "|\n\t") : o.toString();
 
+	//@formatter:off
+	// predefined type-to-string mappings
 	private static final Map<FileAttributeType, Function<Object, String>> FAT_TOSTRING_FUNCS =
-		Map.ofEntries(entry(FSRL_ATTR, FSRL_TOSTRING), entry(SIZE_ATTR, SIZE_TOSTRING),
-			entry(COMPRESSED_SIZE_ATTR, SIZE_TOSTRING), entry(CREATE_DATE_ATTR, DATE_TOSTRING),
-			entry(MODIFIED_DATE_ATTR, DATE_TOSTRING), entry(ACCESSED_DATE_ATTR, DATE_TOSTRING),
-			entry(UNIX_ACL_ATTR, UNIX_ACL_TOSTRING));
+		Map.ofEntries(
+			entry(FSRL_ATTR, FSRL_TOSTRING),
+			entry(SIZE_ATTR, SIZE_TOSTRING),
+			entry(COMPRESSED_SIZE_ATTR, SIZE_TOSTRING),
+			entry(CREATE_DATE_ATTR, DATE_TOSTRING),
+			entry(MODIFIED_DATE_ATTR, DATE_TOSTRING),
+			entry(ACCESSED_DATE_ATTR, DATE_TOSTRING),
+			entry(UNIX_ACL_ATTR, UNIX_ACL_TOSTRING)
+		);
+	//@formatter:on
 }

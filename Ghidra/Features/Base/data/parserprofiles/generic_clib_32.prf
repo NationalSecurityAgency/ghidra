@@ -2,7 +2,7 @@ sys/types.h
 types.h
 stddef.h
 stddef.h
-openssl/opensslconf-x86_64.h
+openssl/opensslconf.h
 openssl/bn.h
 openssl/ssl.h
 openssl/asn1_mac.h
@@ -107,7 +107,6 @@ stdint.h
 stdio.h
 stdlib.h
 string.h
-tgmath.h
 time.h
 wchar.h
 wctype.h
@@ -220,6 +219,7 @@ arpa/telnet.h
 arpa/tftp.h
 
 -D_X86_
+-D__i386__
 -D__STDC__
 -D_GNU_SOURCE
 -D__WORDSIZE=32
@@ -236,6 +236,7 @@ arpa/tftp.h
 /data/HeaderFiles/linux/include
 /data/HeaderFiles/linux/include/sys
 /data/HeaderFiles/linux/gcc/include
+/data/HeaderFiles/linux/include/openssl
 /data/HeaderFiles/linux/x86_64-redhat-linux5E/include
 /data/HeaderFiles/linux/x86_64-redhat-linux5E/include/sys
 

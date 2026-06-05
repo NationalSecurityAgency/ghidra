@@ -180,6 +180,7 @@ public abstract class AbstractEditFunctionSignatureDialog extends DialogComponen
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 2));
 		mainPanel.add(buildSignaturePanel());
 		mainPanel.add(buildAttributePanel());
+		mainPanel.getAccessibleContext().setAccessibleName("Edit Function Signature");
 		if (allowCallFixup) {
 			JPanel callFixupPanel = buildCallFixupPanel();
 			mainPanel.add(callFixupPanel != null ? callFixupPanel : buildSpacerPanel());
@@ -197,6 +198,8 @@ public abstract class AbstractEditFunctionSignatureDialog extends DialogComponen
 		signaturePanel.add(signatureField);
 
 		signaturePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+		signaturePanel.getAccessibleContext().setAccessibleName("Signature");
 
 		return signaturePanel;
 	}
@@ -223,6 +226,8 @@ public abstract class AbstractEditFunctionSignatureDialog extends DialogComponen
 			installNoReturnWidget(attributePanel);
 		}
 		attributePanel.add(Box.createGlue());
+
+		attributePanel.getAccessibleContext().setAccessibleName("Attribute");
 
 		return attributePanel;
 	}
@@ -394,8 +399,8 @@ public abstract class AbstractEditFunctionSignatureDialog extends DialogComponen
 	 */
 	protected final FunctionDefinitionDataType parseSignature() throws CancelledException {
 		setFunctionInfo(); // needed for testing which never shows dialog
-		FunctionSignatureParser parser = new FunctionSignatureParser(
-			getDataTypeManager(), tool.getService(DataTypeManagerService.class));
+		FunctionSignatureParser parser = new FunctionSignatureParser(getDataTypeManager(),
+			tool.getService(DataTypeManagerService.class));
 		try {
 			return parser.parse(getFunctionSignature(), getSignature());
 		}

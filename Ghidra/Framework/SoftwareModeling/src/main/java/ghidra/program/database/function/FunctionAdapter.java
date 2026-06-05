@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,9 +46,11 @@ abstract class FunctionAdapter {
 	static final byte FUNCTION_INLINE_FLAG = (byte) 0x2; // Bit 1 is flag for "is inline".
 	static final byte FUNCTION_NO_RETURN_FLAG = (byte) 0x4; // Bit 2 is flag for "has no return".
 	static final byte FUNCTION_CUSTOM_PARAM_STORAGE_FLAG = (byte) 0x8; // Bit 3 is flag for "has custom storage"
-	static final byte FUNCTION_SIGNATURE_SOURCE = (byte) 0x30; // Bits 4-5 are storage for "signature SourceType"
+	static final byte FUNCTION_SIGNATURE_SOURCE = (byte) 0x70; // Bits 4-6 are storage for "signature SourceType"
 
 	static final int FUNCTION_SIGNATURE_SOURCE_SHIFT = 4; // bit shift for flag storage of "signature SourceType"
+
+	private static final int MAX_SOURCE_VALUE = 7; // value limit based upon 3-bit storage capacity
 
 	final static Schema FUNCTION_SCHEMA = new Schema(CURRENT_VERSION, "ID",
 		new Field[] { LongField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE,
@@ -94,8 +96,11 @@ abstract class FunctionAdapter {
 	}
 
 	static byte getSignatureSourceFlagBits(SourceType signatureSource) {
-		return (byte) (signatureSource
-				.ordinal() << FunctionAdapter.FUNCTION_SIGNATURE_SOURCE_SHIFT);
+		int sourceTypeId = signatureSource.getStorageId();
+		if (sourceTypeId > MAX_SOURCE_VALUE) {
+			throw new RuntimeException("Unsupported SourceType storage ID: " + sourceTypeId);
+		}
+		return (byte) (sourceTypeId << FunctionAdapter.FUNCTION_SIGNATURE_SOURCE_SHIFT);
 	}
 
 	static FunctionAdapter findReadOnlyAdapter(DBHandle handle, AddressMap map)

@@ -211,7 +211,7 @@ public class MDObjectCPP extends MDObject {
 
 		/**
 		 * Constructor for {@link MDHashedObject}
-		 * @param dmang The {@link MDMang} for which the work is performed and from from which
+		 * @param dmang The {@link MDMang} for which the work is performed and from which
 		 *  the information is parsed.
 		 */
 		public MDHashedObject(MDMang dmang) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.regex.Pattern;
 
 import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleException;
 
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.osgi.*;
@@ -105,6 +106,9 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 				"Ghidra scripts in Java must extend " + GhidraScript.class.getName() + ". " +
 					sourceFile.getName() + " does not.");
 		}
+		catch (BundleException e) {
+			throw new GhidraScriptLoadException("BundleException: " + e.getMessage(), e);
+		}
 		catch (ClassNotFoundException e) {
 			throw new GhidraScriptLoadException("The class could not be found. " +
 				"It must be the public class of the .java file: " + e.getMessage(), e);
@@ -158,8 +162,15 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			throw new ClassNotFoundException(
 				"Failed to get OSGi bundle containing script: " + sourceFile.toString());
 		}
-		Class<?> clazz = osgiBundle.loadClass(classname); // throws ClassNotFoundException
-		return clazz;
+		try {
+			return osgiBundle.loadClass(classname); // throws ClassNotFoundException
+		}
+		catch (ClassNotFoundException e) {
+			if (e.getCause() instanceof BundleException be) {
+				throw be;
+			}
+			throw e;
+		}
 	}
 
 	@Override

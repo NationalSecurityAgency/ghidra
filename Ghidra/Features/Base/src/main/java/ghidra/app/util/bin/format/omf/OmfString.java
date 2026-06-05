@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,9 +28,10 @@ public class OmfString implements StructConverter {
 
 	private int length;
 	private String str;
+	private boolean big;
 
 	/**
-	 * Creates a new {@link OmfString}
+	 * Creates a new small {@link OmfString}
 	 * 
 	 * @param length The length of the string
 	 * @param str The string
@@ -38,6 +39,19 @@ public class OmfString implements StructConverter {
 	public OmfString(int length, String str) {
 		this.length = length;
 		this.str = str;
+	}
+
+	/**
+	 * Creates a new {@link OmfString}
+	 * 
+	 * @param length The length of the string
+	 * @param str The string
+	 * @param isBig True if this is a big string; otherwise, false
+	 */
+	public OmfString(int length, String str, boolean isBig) {
+		this.length = length;
+		this.str = str;
+		this.big = isBig;
 	}
 
 	/**
@@ -54,6 +68,20 @@ public class OmfString implements StructConverter {
 		return str;
 	}
 
+	/**
+	 * {@return whether or not this is a "big" string}
+	 */
+	public boolean isBig() {
+		return big;
+	}
+
+	/**
+	 * {@return the length (in bytes) of this data type}
+	 */
+	public int getDataTypeSize() {
+		return (big ? WORD.getLength() : BYTE.getLength()) + length;
+	}
+
 	@Override
 	public String toString() {
 		return str;
@@ -65,10 +93,6 @@ public class OmfString implements StructConverter {
 			return BYTE;
 		}
 
-		StructureDataType struct = new StructureDataType("OmfString", 0);
-		struct.add(BYTE, "length", "");
-		struct.add(new StringDataType(), length, "str", null);
-		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
-		return struct;
+		return big ? new PascalStringDataType() : new PascalString255DataType();
 	}
 }

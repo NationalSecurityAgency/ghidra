@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,9 +29,6 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 
-/**
- * 
- */
 public class CreateDataInStructureBackgroundCmdTest extends AbstractGenericTest {
 
 	private static final long UNDEFINED_AREA = 0x0100;
@@ -72,7 +69,7 @@ public class CreateDataInStructureBackgroundCmdTest extends AbstractGenericTest 
 
 		int structLen = (2 * defaultPtrLen) + 2;
 
-		Command cmd = new CreateStructureCmd(addr(startOffset), structLen);
+		Command<Program> cmd = new CreateStructureCmd(addr(startOffset), structLen);
 		cmd.applyTo(program);
 
 		cmd = new CreateDataInStructureBackgroundCmd(addr(startOffset), new int[] { 0 }, 2,
@@ -129,7 +126,7 @@ public class CreateDataInStructureBackgroundCmdTest extends AbstractGenericTest 
 
 		int structLen = (2 * defaultPtrLen) + (2 * structA.getLength());
 
-		Command cmd = new CreateStructureCmd(addr(startOffset), structLen);
+		Command<Program> cmd = new CreateStructureCmd(addr(startOffset), structLen);
 		cmd.applyTo(program);
 
 		cmd = new CreateDataInStructureBackgroundCmd(addr(startOffset), new int[] { 0 },
@@ -178,7 +175,7 @@ public class CreateDataInStructureBackgroundCmdTest extends AbstractGenericTest 
 		long startOffset = UNDEFINED_AREA;
 
 		int structLen = 4;
-		Command cmd = new CreateStructureCmd(addr(startOffset), structLen);
+		Command<Program> cmd = new CreateStructureCmd(addr(startOffset), structLen);
 		cmd.applyTo(program);
 
 		cmd = new CreateDataInStructureBackgroundCmd(addr(startOffset), new int[] { 0 }, 4,

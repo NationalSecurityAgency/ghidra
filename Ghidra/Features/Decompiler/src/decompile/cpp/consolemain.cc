@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -206,43 +206,38 @@ int main(int argc,char **argv)
     startDecompilerLibrary(ghidraroot.c_str(), extrapaths);
   }
 
-  IfaceStatus *status;
+  int4 retval = 2;
   try {
-    status = new IfaceTerm("[decomp]> ",cin,cout); // Set up interface
-  } catch(IfaceError &err) {
-    cerr << "Interface error during setup: " << err.explain << endl;
-    exit(1);
-  }
-  IfaceCapability::registerAllCommands(status);	// Register commands for decompiler and all modules
+    unique_ptr<IfaceStatus> status(new IfaceTerm("[decomp]> ",cin,cout)); // Set up interface
+    IfaceCapability::registerAllCommands(status.get());	// Register commands for decompiler and all modules
 
-  // Extra commands specific to the console application
-  status->registerCom(new IfcLoadFile(),"load","file");
-  status->registerCom(new IfcAddpath(),"addpath");
-  status->registerCom(new IfcSave(),"save");
-  status->registerCom(new IfcRestore(),"restore");
+    // Extra commands specific to the console application
+    status->registerCom(new IfcLoadFile(),"load","file");
+    status->registerCom(new IfcAddpath(),"addpath");
+    status->registerCom(new IfcSave(),"save");
+    status->registerCom(new IfcRestore(),"restore");
 
-  if (initscript != (const char *)0) {
-    try {
-      status->pushScript(initscript,"init> ");
-    } catch(IfaceParseError &err) {
-      *status->optr << err.explain << endl;
-      status->done = true;
+    if (initscript != (const char *)0) {
+      try {
+	status->pushScript(initscript,"init> ");
+      } catch(IfaceParseError &err) {
+	*status->optr << err.explain << endl;
+	status->done = true;
+      }
     }
-  }
 
-  if (!status->done)
-    mainloop(status);
-  int4 retval = status->isInError() ? 1 : 0;
+    if (!status->done)
+      mainloop(status.get());
+    retval = status->isInError() ? 1 : 0;
 
 #ifdef CPUI_STATISTICS
-  IfaceDecompData *decompdata = (IfaceDecompData *)status->getData("decompile");
-  decompdata->conf->stats->printResults(cout);
+    IfaceDecompData *decompdata = (IfaceDecompData *)status->getData("decompile");
+    decompdata->conf->stats->printResults(cout);
 #endif
 
-  try {
-    delete status;
   } catch(IfaceError &err) {
-    cerr << err.explain << endl;
+    cerr << "Interface error: " << err.explain << endl;
+    retval = 2;
   }
 
   shutdownDecompilerLibrary();

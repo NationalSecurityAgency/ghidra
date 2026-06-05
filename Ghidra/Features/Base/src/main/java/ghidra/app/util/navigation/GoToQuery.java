@@ -224,7 +224,7 @@ public class GoToQuery {
 
 		TableService service = tool.getService(TableService.class);
 		TableComponentProvider<?> provider = service.showTable(
-			"Goto " + queryData.getQueryString(), "Goto", model, "Go To", navigatable);
+			"Goto " + queryData.getQueryString(), "Go To Results", model, "Go To", navigatable);
 		provider.requestFocus();
 
 	}

@@ -62,6 +62,7 @@ public class ActiveFidConfigureDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(buildCheckboxPanelScroller(), BorderLayout.CENTER);
 		panel.add(buildButtonPanel(), BorderLayout.SOUTH);
+		panel.getAccessibleContext().setAccessibleName("Active Fid Configuration");
 		return panel;
 	}
 
@@ -71,8 +72,11 @@ public class ActiveFidConfigureDialog extends DialogComponentProvider {
 		JButton noneButton = new JButton("Select None");
 		allButton.addActionListener(e -> selectAllCheckboxes(true));
 		noneButton.addActionListener(e -> selectAllCheckboxes(false));
+		allButton.getAccessibleContext().setAccessibleName("All");
+		noneButton.getAccessibleContext().setAccessibleName("None");
 		panel.add(allButton);
 		panel.add(noneButton);
+		panel.getAccessibleContext().setAccessibleName("Select All or None");
 		return panel;
 	}
 
@@ -84,6 +88,7 @@ public class ActiveFidConfigureDialog extends DialogComponentProvider {
 
 	private Component buildCheckboxPanelScroller() {
 		JScrollPane scrollPane = new JScrollPane(buildCheckBoxPanel());
+		scrollPane.getAccessibleContext().setAccessibleName("Checkbox Scroll");
 		return scrollPane;
 	}
 
@@ -95,10 +100,12 @@ public class ActiveFidConfigureDialog extends DialogComponentProvider {
 		for (FidFile fidFile : fidFiles) {
 			GCheckBox checkbox = new GCheckBox(fidFile.getName(), fidFile.isActive());
 			checkbox.setToolTipText(fidFile.getPath());
+			checkbox.getAccessibleContext().setAccessibleName(fidFile.getBaseName());
 			checkboxes.add(checkbox);
 			checkbox.addItemListener(e -> fidFile.setActive(checkbox.isSelected()));
 			panel.add(checkbox);
 		}
+		panel.getAccessibleContext().setAccessibleName("Checkboxes");
 		return panel;
 	}
 }

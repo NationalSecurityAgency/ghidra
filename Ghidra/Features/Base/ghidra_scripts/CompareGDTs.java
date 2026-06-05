@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,11 @@
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.util.Iterator;
+import java.util.*;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.Enum;
 import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
 import ghidra.util.UniversalID;
 
@@ -162,7 +163,22 @@ public class CompareGDTs extends GhidraScript {
 				return dtmArchive.findDataTypeForID(universalID);
 			}
 		}
-		return dtmArchive.getDataType(dataType.getCategoryPath(), dataType.getName());
+
+		// find by exact path
+		DataType fdt = dtmArchive.getDataType(dataType.getCategoryPath(), dataType.getName());
+		if (fdt != null) {
+			return fdt;
+		}
+
+		// find by name
+		List<DataType> list = new ArrayList<DataType>();
+		dtmArchive.findDataTypes(dataType.getName(), list );
+		for (DataType dtc : list) {
+			if (dataType.getCategoryPath().getPath().toLowerCase().equals(dtc.getCategoryPath().getPath().toLowerCase())) {
+				return dtc;
+			}
+		}
+		return null;
 	}
 
 	private long outputWhereTypesDiffer(FileDataTypeManager dtmArchive1,
@@ -247,6 +263,10 @@ public class CompareGDTs extends GhidraScript {
 			Class<?> dtClass = dataType.getClass();
 			Class<?> sameNamedDtClass = matchingDataType.getClass();
 			if (dtClass == sameNamedDtClass) {
+				if (dataType instanceof Enum && (((Enum) dataType).getCount()==1)) {
+					// don't check single entry enums.  Size will vary, and they are extracted defines
+					return checkEnum((Enum) dataType, (Enum) matchingDataType);
+				}
 				if (!dataType.isEquivalent(matchingDataType)) {
 					String message =
 						dataType.getPathName() + "   (" + dtClass.getSimpleName() + ")";
@@ -255,6 +275,22 @@ public class CompareGDTs extends GhidraScript {
 				}
 			}
 		}
+		return false;
+	}
+
+	private boolean checkEnum(Enum e1, Enum e2) {
+		if (e1.getCount() != e2.getCount()) {
+			return true;
+		}
+		// Check that the name is the same
+		if (! e1.getNames()[0].equals(e2.getNames()[0])) {
+			return true;
+		}
+		// Check the value is the same
+		if (e1.getValues()[0] != e2.getValues()[0]) {
+			return true;
+		}		
+		
 		return false;
 	}
 
@@ -273,6 +309,10 @@ public class CompareGDTs extends GhidraScript {
 			Class<?> dtClass = dataType.getClass();
 			Class<?> sameNamedDtClass = matchingDataType.getClass();
 			if (dtClass == sameNamedDtClass) {
+				if (dataType instanceof Enum && (((Enum) dataType).getCount()==1)) {
+					// don't check single entry enums.  Size will vary, and they are extracted defines
+					return checkEnum((Enum) dataType, (Enum) matchingDataType);
+				}
 				if (dataType.getLength() != matchingDataType.getLength()) {
 					String message = dataType.getPathName() + "   (" + dtClass.getSimpleName() +
 						") " + dataType.getLength() + " !=  " + matchingDataType.getLength();

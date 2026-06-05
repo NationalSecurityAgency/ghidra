@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,8 +46,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.ByteMemBufferImpl;
-import ghidra.util.Msg;
-import ghidra.util.NumericUtilities;
+import ghidra.util.*;
+import help.Help;
 
 /**
  * A pair of text fields suitable for guided assembly
@@ -69,7 +69,7 @@ public class AssemblyDualTextField {
 	private static final String FONT_ID = "font.plugin.assembly.dual.text.field";
 	private static final Color FG_PREFERENCE_MOST =
 		new GColor("color.fg.plugin.assembler.completion.most");
-	private static final Color FG_PREFERENCE_MIDDLE =
+	private static final Color FG_PREFERENCE_MIDDLE = 
 		new GColor("color.fg.plugin.assembler.completion.middle");
 	private static final Color FG_PREFERENCE_LEAST =
 		new GColor("color.fg.plugin.assembler.completion.least");
@@ -402,13 +402,14 @@ public class AssemblyDualTextField {
 		private static final String CMD_ZERO = "Zero undefined bits";
 
 		private JLabel hints;
+		private EmptyBorderToggleButton button;
 
 		@Override
 		protected void addContent(JPanel content) {
 			JPanel panel = new JPanel(new BorderLayout());
 			Box controls = Box.createHorizontalBox();
 			Icon icon = new GIcon("icon.plugin.assembler.question");
-			EmptyBorderToggleButton button = new EmptyBorderToggleButton(icon);
+			button = new EmptyBorderToggleButton(icon);
 			button.setToolTipText("Exhaust unspecified bits, otherwise zero them");
 			button.addActionListener((e) -> {
 				exhaustUndefined = CMD_EXHAUST.equals(e.getActionCommand());
@@ -426,8 +427,9 @@ public class AssemblyDualTextField {
 			hints = new JLabel();
 			panel.add(hints);
 			content.add(panel, BorderLayout.SOUTH);
-
+			
 			addAutocompletionListener(this);
+			
 		}
 
 		@Override
@@ -631,6 +633,15 @@ public class AssemblyDualTextField {
 	 */
 	public JTextField getOperandsField() {
 		return operands;
+	}
+	
+	/**
+	 * Get the button that toggles bit exhaustion
+	 * 
+	 * @return the button
+	 */
+	public JButton getExhaustButton() {
+		return auto.button;
 	}
 
 	/**

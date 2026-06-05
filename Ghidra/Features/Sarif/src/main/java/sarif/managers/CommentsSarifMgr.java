@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,23 +16,14 @@
 package sarif.managers;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.google.gson.JsonArray;
 
 import generic.stl.Pair;
-import ghidra.app.util.CommentTypes;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFormatException;
-import ghidra.program.model.address.AddressIterator;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.CodeUnitIterator;
-import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.address.*;
+import ghidra.program.model.listing.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
@@ -48,34 +39,38 @@ public class CommentsSarifMgr extends SarifMgr {
 	public static String KEY = "COMMENTS";
 	public static String SUBKEY = "Comment";
 
-	public static int[] COMMENT_TYPES;
-	public static String[] COMMENT_TAGS;
-
-	public static String[] COMMENT_TAGS2 = { "end-of-line", "pre", "post", "plate", "repeatable" };
+	static String[] commentTags;
+	static Map<String, CommentType> commentTypeMap;
 
 	static {
-		COMMENT_TYPES = CommentTypes.getTypes();
 
-		COMMENT_TAGS = new String[COMMENT_TYPES.length];
-		for (int i = 0; i < COMMENT_TAGS.length; i++) {
+		CommentType[] commentTypes = CommentType.values();
+		commentTags = new String[commentTypes.length];
+		commentTypeMap = new HashMap<>();
 
-			switch (COMMENT_TYPES[i]) {
-			case CodeUnit.PRE_COMMENT:
-				COMMENT_TAGS[i] = "pre";
-				break;
-			case CodeUnit.POST_COMMENT:
-				COMMENT_TAGS[i] = "post";
-				break;
-			case CodeUnit.EOL_COMMENT:
-				COMMENT_TAGS[i] = "end-of-line";
-				break;
-			case CodeUnit.PLATE_COMMENT:
-				COMMENT_TAGS[i] = "plate";
-				break;
-			case CodeUnit.REPEATABLE_COMMENT:
-				COMMENT_TAGS[i] = "repeatable";
-				break;
+		for (CommentType type : commentTypes) {
+			String tag;
+			switch (type) {
+				case PRE:
+					tag = "pre";
+					break;
+				case POST:
+					tag = "post";
+					break;
+				case EOL:
+					tag = "end-of-line";
+					break;
+				case PLATE:
+					tag = "plate";
+					break;
+				case REPEATABLE:
+					tag = "repeatable";
+					break;
+				default:
+					throw new RuntimeException("Missing comment type support: " + type.name());
 			}
+			commentTags[type.ordinal()] = tag;
+			commentTypeMap.put(tag, type);
 		}
 	}
 
@@ -88,8 +83,8 @@ public class CommentsSarifMgr extends SarifMgr {
 	////////////////////////////
 
 	@Override
-	public boolean read(Map<String, Object> result, SarifProgramOptions options, TaskMonitor monitor)
-			throws AddressFormatException, CancelledException {
+	public boolean read(Map<String, Object> result, SarifProgramOptions options,
+			TaskMonitor monitor) throws AddressFormatException, CancelledException {
 		processComment(result);
 		return true;
 	}
@@ -100,8 +95,8 @@ public class CommentsSarifMgr extends SarifMgr {
 			String typeStr = (String) result.get("kind");
 			String comment = (String) result.get("value");
 			boolean standard = (boolean) result.get("standard");
-			int commentType = getCommentType(typeStr);
-			if (commentType < 0) {
+			CommentType commentType = getCommentType(typeStr);
+			if (commentType == null) {
 				log.appendMsg("Unknown comment type: " + typeStr);
 				return;
 			}
@@ -113,32 +108,35 @@ public class CommentsSarifMgr extends SarifMgr {
 					String currCmt = cu.getComment(commentType);
 					if (currCmt == null || currCmt.length() == 0) {
 						cu.setComment(commentType, comment);
-					} else if (currCmt.indexOf(comment) < 0) {
+					}
+					else if (currCmt.indexOf(comment) < 0) {
 						log.appendMsg("Merged " + typeStr + " comment at " + addr);
 						cu.setComment(commentType, currCmt + "\n" + comment);
 					}
 				}
-			} else {
+			}
+			else {
 				String currCmt = listing.getComment(commentType, addr);
 				if (currCmt == null || currCmt.length() == 0) {
 					listing.setComment(addr, commentType, comment);
-				} else if (currCmt.indexOf(comment) < 0) {
+				}
+				else if (currCmt.indexOf(comment) < 0) {
 					log.appendMsg("Merged " + typeStr + " comment at " + addr);
 					listing.setComment(addr, commentType, currCmt + "\n" + comment);
 				}
 			}
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			log.appendException(e);
 		}
 	}
 
-	private int getCommentType(String typeStr) {
-		for (int i = 0; i < COMMENT_TAGS.length; i++) {
-			if (COMMENT_TAGS[i].equals(typeStr)) {
-				return COMMENT_TYPES[i];
-			}
-		}
-		return -1; // unknown comment
+	public static CommentType getCommentType(String typeTagStr) {
+		return commentTypeMap.get(typeTagStr);
+	}
+
+	public static String getCommentTypeString(CommentType type) {
+		return commentTags[type.ordinal()];
 	}
 
 	/////////////////////////////
@@ -152,8 +150,10 @@ public class CommentsSarifMgr extends SarifMgr {
 	 * @param set     address set that is either the entire program or a selection
 	 * @param monitor monitor that can be canceled should be written
 	 * @throws IOException
+	 * @throws CancelledException 
 	 */
-	void write(JsonArray results, AddressSetView set, TaskMonitor monitor) throws IOException, CancelledException {
+	void write(JsonArray results, AddressSetView set, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		monitor.setMessage("Writing COMMENTS ...");
 
 		if (set == null) {
@@ -166,10 +166,11 @@ public class CommentsSarifMgr extends SarifMgr {
 		while (iter.hasNext()) {
 			monitor.checkCancelled();
 			CodeUnit cu = iter.next();
-			for (int i = 0; i < COMMENT_TYPES.length; i++) {
-				String[] comments = cu.getCommentAsArray(COMMENT_TYPES[i]);
+			for (CommentType type : CommentType.values()) {
+				String[] comments = cu.getCommentAsArray(type);
+				String typeStr = getCommentTypeString(type);
 				for (String c : comments) {
-					Pair<String, String> pair = new Pair<>(COMMENT_TAGS[i], c);
+					Pair<String, String> pair = new Pair<>(typeStr, c);
 					request0.add(new Pair<CodeUnit, Pair<String, String>>(cu, pair));
 				}
 			}
@@ -178,15 +179,15 @@ public class CommentsSarifMgr extends SarifMgr {
 		writeAsSARIF0(request0, results);
 
 		List<Pair<Address, Pair<String, String>>> request1 = new ArrayList<>();
-		for (int i = 0; i < COMMENT_TAGS2.length; i++) {
-			AddressIterator aiter = listing.getCommentAddressIterator(i, set, true);
+		for (CommentType type : CommentType.values()) {
+			AddressIterator aiter = listing.getCommentAddressIterator(type, set, true);
 			while (aiter.hasNext()) {
 				monitor.checkCancelled();
 				Address a = aiter.next();
 				CodeUnit cu = listing.getCodeUnitContaining(a);
 				if (cu instanceof Instruction && !a.equals(cu.getMinAddress())) {
-					String c = listing.getComment(i, a);
-					Pair<String, String> pair = new Pair<>(COMMENT_TAGS2[i], c);
+					String c = listing.getComment(type, a);
+					Pair<String, String> pair = new Pair<>(getCommentTypeString(type), c);
 					request1.add(new Pair<Address, Pair<String, String>>(a, pair));
 				}
 			}
@@ -196,14 +197,14 @@ public class CommentsSarifMgr extends SarifMgr {
 
 	}
 
-	public static void writeAsSARIF0(List<Pair<CodeUnit, Pair<String, String>>> request, JsonArray results)
-			throws IOException {
+	public static void writeAsSARIF0(List<Pair<CodeUnit, Pair<String, String>>> request,
+			JsonArray results) throws IOException {
 		SarifCommentWriter writer = new SarifCommentWriter(request, null);
 		new TaskLauncher(new SarifWriterTask(SUBKEY, writer, results), null);
 	}
 
-	public static void writeAsSARIF1(List<Pair<Address, Pair<String, String>>> request, JsonArray results)
-			throws IOException {
+	public static void writeAsSARIF1(List<Pair<Address, Pair<String, String>>> request,
+			JsonArray results) throws IOException {
 		SarifCommentWriter writer = new SarifCommentWriter(null, request);
 		new TaskLauncher(new SarifWriterTask(SUBKEY, writer, results), null);
 	}

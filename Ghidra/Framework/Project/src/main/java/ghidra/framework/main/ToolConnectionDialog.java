@@ -49,9 +49,11 @@ class ToolConnectionDialog extends ReusableDialogComponentProvider
 		addWorkPanel(buildMainPanel());
 
 		connectAllButton = new JButton(CONNECTALL);
+		connectAllButton.getAccessibleContext().setAccessibleName("Connect All");
 		connectAllButton.addActionListener(ev -> connectCallback());
 		addButton(connectAllButton);
 		disconnectAllButton = new JButton(DISCONNECTALL);
+		disconnectAllButton.getAccessibleContext().setAccessibleName("Disconnect All");
 		disconnectAllButton.addActionListener(ev -> disconnectCallback());
 		addButton(disconnectAllButton);
 		addOKButton();
@@ -142,6 +144,7 @@ class ToolConnectionDialog extends ReusableDialogComponentProvider
 	 */
 	protected JPanel buildMainPanel() {
 		panel = new ToolConnectionPanel(this, toolManager);
+		panel.getAccessibleContext().setAccessibleName("Tool Connection");
 		return panel;
 	}
 

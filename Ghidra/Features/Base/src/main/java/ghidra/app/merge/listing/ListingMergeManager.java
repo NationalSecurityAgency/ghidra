@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -130,7 +130,6 @@ public class ListingMergeManager implements MergeResolver, ListingMergeConstants
 
 	private int totalConflictsInPhase; // Total number of conflicts for current phase of listing.
 	private int conflictNum; // Current conflict number being resolved.
-	private boolean showListingPanel = true;
 
 	/**
 	 * Manages listing changes and conflicts between the latest versioned
@@ -158,14 +157,6 @@ public class ListingMergeManager implements MergeResolver, ListingMergeConstants
 
 	public FunctionTagListingMerger getFunctionTagListingMerger() {
 		return functionTagMerger;
-	}
-
-	/**
-	 * True signals to show the listing panel (default); false signals to show an empty listing (faster)
-	 * @param showListingPanel
-	 */
-	public void setShowListingPanel(boolean showListingPanel) {
-		this.showListingPanel = showListingPanel;
 	}
 
 	/* (non-Javadoc)
@@ -512,7 +503,8 @@ public class ListingMergeManager implements MergeResolver, ListingMergeConstants
 	 * determine conflicts. The conflicts are handled later by calling manualMerge().
 	 */
 	private void initializeMergers() {
-		externalFunctionMerger = new ExternalFunctionMerger(this, showListingPanel);
+		externalFunctionMerger =
+			new ExternalFunctionMerger(this, mergeManager.isShowListingPanel());
 		cuMerge = new CodeUnitMerger(this);
 		functionMerger = new FunctionMerger(this);
 		symbolMerger = new SymbolMerger(this);
@@ -632,8 +624,8 @@ public class ListingMergeManager implements MergeResolver, ListingMergeConstants
 	 */
 	public AddressSet getMergedCodeUnits() {
 		if (mergeManager != null) {
-			return (AddressSet) mergeManager.getResolveInformation(
-				MergeConstants.RESOLVED_CODE_UNITS);
+			return (AddressSet) mergeManager
+					.getResolveInformation(MergeConstants.RESOLVED_CODE_UNITS);
 		}
 		return new AddressSet();
 	}

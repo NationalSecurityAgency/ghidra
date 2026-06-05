@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -241,7 +241,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	private void loadKeyBindingFromOptions(DockingActionIf action, ActionTrigger actionTrigger) {
 
 		String fullName = action.getFullName();
-		String description = "Keybinding for " + fullName;
+		String description = "Key Binding for " + fullName;
 		options.registerOption(fullName, OptionType.ACTION_TRIGGER, actionTrigger, null,
 			description);
 
@@ -394,7 +394,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	}
 
 	/*
-	 * An odd method that really shoulnd't be on the interface.  This is a call that allows the 
+	 * An odd method that really shouldn't be on the interface.  This is a call that allows the 
 	 * framework to signal that the ToolOptions have been rebuilt, such as when restoring from xml.
 	 * During a rebuild, ToolOptions does not send out events, so this class does not get any of the
 	 * values from the new options.  This method tells us to get the new version of the options from

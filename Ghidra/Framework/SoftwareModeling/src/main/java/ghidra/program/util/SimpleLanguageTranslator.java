@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,8 @@ import java.util.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 
@@ -33,6 +33,7 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.IncompatibleLanguageException;
 import ghidra.program.model.listing.Program;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.XmlUtilities;
@@ -386,18 +387,18 @@ class SimpleLanguageTranslator extends LanguageTranslatorAdapter {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private static Class<? extends LanguagePostUpgradeInstructionHandler> parsePostUpgradeHandlerEntry(
 			Element element) throws SAXException {
-
 		String className = element.getAttributeValue("class");
 		if (className == null) {
 			throw new SAXException(element.getName() + " must specify 'class' attribute");
 		}
 		try {
-			Class<?> clazz = Class.forName(className);
+			Class<? extends LanguagePostUpgradeInstructionHandler> clazz =
+				ClassSearcher.forNameSafe(className, LanguagePostUpgradeInstructionHandler.class,
+					SimpleLanguageTranslator.class.getClassLoader());
 			getPostUpgradeInstructionHandler((Program) null, clazz); // test construction
-			return (Class<? extends LanguagePostUpgradeInstructionHandler>) clazz;
+			return clazz;
 		}
 		catch (Exception e) {
 			if (e instanceof SAXException) {
@@ -469,11 +470,6 @@ class SimpleLanguageTranslator extends LanguageTranslatorAdapter {
 				"invalid set_context attribute value: " + name + "=\"" + valStr + "\"");
 		}
 		contextSettings.put(name, val);
-	}
-
-	public CompilerSpec getCompilerSpec() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }

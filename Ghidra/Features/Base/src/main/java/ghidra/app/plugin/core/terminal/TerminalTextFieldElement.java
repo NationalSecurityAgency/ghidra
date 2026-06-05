@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,8 @@ import javax.swing.JComponent;
 
 import docking.widgets.fieldpanel.field.FieldElement;
 import docking.widgets.fieldpanel.support.RowColLocation;
+import generic.theme.Gui;
 import ghidra.app.plugin.core.terminal.vt.*;
-import ghidra.app.plugin.core.terminal.vt.VtHandler.Intensity;
 
 /**
  * A text field element for rendering a full line of terminal text
@@ -41,6 +41,7 @@ public class TerminalTextFieldElement implements FieldElement {
 
 	protected final VtLine line;
 	protected final FontMetrics metrics;
+	protected final float fontSizeAdjustment;
 	protected final AnsiColorResolver colors;
 
 	protected final int em;
@@ -50,11 +51,14 @@ public class TerminalTextFieldElement implements FieldElement {
 	 * 
 	 * @param line the line of text from the {@link VtBuffer}
 	 * @param metrics the font metrics
+	 * @param fontSizeAdjustment the font size adjustment
 	 * @param colors the color resolver
 	 */
-	public TerminalTextFieldElement(VtLine line, FontMetrics metrics, AnsiColorResolver colors) {
+	public TerminalTextFieldElement(VtLine line, FontMetrics metrics, float fontSizeAdjustment,
+			AnsiColorResolver colors) {
 		this.line = line;
 		this.metrics = metrics;
+		this.fontSizeAdjustment = fontSizeAdjustment;
 		this.colors = colors;
 
 		this.em = metrics.charWidth('M');
@@ -163,22 +167,34 @@ public class TerminalTextFieldElement implements FieldElement {
 		int height = metrics.getHeight();
 		int left = x + start * em;
 		int width = em * (end - start);
-		Font font = metrics.getFont();
 		Color bg = attrs.resolveBackground(colors);
 		if (bg != null) {
 			g.setColor(bg);
 			g.fillRect(left, descent - height, width, height);
 		}
 		g.setColor(attrs.resolveForeground(colors));
-		// NB. I don't really intend to implement blinking.
-		// TODO: AnsiFont mapping?
-		if (attrs.intensity() == Intensity.DIM) {
-			g.setFont(font.deriveFont(Font.PLAIN));
-		}
-		else {
-			// Normal will use bold font, but standard color
-			g.setFont(font.deriveFont(Font.BOLD));
-		}
+		// I don't really intend to implement blinking.
+		// We still use metrics from DEFAULT_FONT_ID
+		Font font = Gui.getFont(switch (attrs.intensity()) {
+			case NORMAL -> switch (attrs.font()) {
+				case NORMAL -> TerminalPanel.DEFAULT_FONT_ID;
+				case ITALIC -> TerminalPanel.DEFAULT_ITALIC_FONT_ID;
+				case BLACK_LETTER -> TerminalPanel.DEFAULT_FRAKTUR_FONT_ID;
+			};
+			case BOLD -> switch (attrs.font()) {
+				case NORMAL -> TerminalPanel.BRIGHT_FONT_ID;
+				case ITALIC -> TerminalPanel.BRIGHT_ITALIC_FONT_ID;
+				case BLACK_LETTER -> TerminalPanel.BRIGHT_FRAKTUR_FONT_ID;
+			};
+			case DIM -> switch (attrs.font()) {
+				case NORMAL -> TerminalPanel.DIM_FONT_ID;
+				case ITALIC -> TerminalPanel.DIM_ITALIC_FONT_ID;
+				case BLACK_LETTER -> TerminalPanel.DIM_FRAKTUR_FONT_ID;
+			};
+		});
+		font = font.deriveFont(font.getSize2D() + fontSizeAdjustment);
+		g.setFont(font);
+
 		if (!attrs.hidden()) {
 			switch (attrs.underline()) {
 				case DOUBLE:

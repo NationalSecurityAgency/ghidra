@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,13 +33,13 @@ import ghidra.util.task.TaskMonitor;
  */
 public class PreboundDynamicLibraryCommand extends LoadCommand {
 	private LoadCommandString name;
-	private int nmodules;
+	private long nmodules;
 	private LoadCommandString linkedModules;
 
 	PreboundDynamicLibraryCommand(BinaryReader reader) throws IOException {
 		super(reader);
 		name = new LoadCommandString(reader, this);
-		nmodules = reader.readNextInt();
+		nmodules = checkCount(reader.readNextUnsignedInt());
 		linkedModules = new LoadCommandString(reader, this);
 	}
 
@@ -67,7 +67,7 @@ public class PreboundDynamicLibraryCommand extends LoadCommand {
 	 * Returns number of modules in library.
 	 * @return number of modules in library
 	 */
-	public int getNumberOfModules() {
+	public long getNumberOfModules() {
 		return nmodules;
 	}
 

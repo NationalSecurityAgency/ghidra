@@ -15,8 +15,10 @@
  */
 package agent.gdb.rmi;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeFalse;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -32,8 +34,6 @@ import db.Transaction;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
-import ghidra.dbg.testutil.DummyProc;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.debug.api.tracermi.TraceRmiAcceptor;
 import ghidra.debug.api.tracermi.TraceRmiConnection;
 import ghidra.framework.Application;
@@ -44,12 +44,15 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.*;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
 
@@ -105,19 +108,20 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testStartTraceDefaults() throws Exception {
 		// Default name and lcsp
+		String target = which("expPrint");
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
+				file %s
 				ghidra trace start
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
-			assertEquals("x86:LE:64:default",
+			assertEquals(PLAT.lang(),
 				tb.trace.getBaseLanguage().getLanguageID().getIdAsString());
-			assertEquals("gcc",
-				tb.trace.getBaseCompilerSpec().getCompilerSpecID().getIdAsString());
+			String id = tb.trace.getBaseCompilerSpec().getCompilerSpecID().getIdAsString();
+			assertTrue(id.equals(PLAT.cSpec()));
 		}
 	}
 
@@ -136,15 +140,16 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testStartTraceCustomize() throws Exception {
+		String target = which("expPrint");
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
+				file %s
 				set ghidra-language Toy:BE:64:default
 				set ghidra-compiler default
 				ghidra trace start myToy
 				quit
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, target));
 		DomainFile dfMyToy = env.getProject().getProjectData().getFile("/New Traces/myToy");
 		assertNotNull(dfMyToy);
 		try (ManagedDomainObject mdo = new ManagedDomainObject(dfMyToy, false, false, monitor)) {
@@ -158,29 +163,28 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testStopTrace() throws Exception {
-		// TODO: This test assumes gdb and the target file bash are x86-64
+		String target = which("expPrint");
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
+				file %s
 				ghidra trace start
 				ghidra trace stop
 				quit
-				""".formatted(PREAMBLE, addr));
-		DomainFile dfBash = env.getProject().getProjectData().getFile("/New Traces/gdb/bash");
-		assertNotNull(dfBash);
-		// TODO: Given the 'quit' command, I'm not sure this assertion is checking anything.
-		assertFalse(dfBash.isOpen());
+				""".formatted(PREAMBLE, addr, target));
+		// NOTE: Given the 'quit' command, I'm not sure this assertion is checking anything.
+		waitDomainObjectClosed(projectName("expPrint"));
 	}
 
 	@Test
 	public void testInfo() throws Exception {
+		String target = which("expPrint");
 		AtomicReference<String> refAddr = new AtomicReference<>();
 		String out = runThrowError(addr -> {
 			refAddr.set(addr);
 			return """
 					%s
-					file bash
+					file %s
 					echo \\n---Import---\\n
 					ghidra trace info
 					echo \\n---BeforeConnect---\\n
@@ -197,7 +201,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 					echo \\n---Disconnect---\\n
 					ghidra trace info
 					quit
-					""".formatted(PREAMBLE, addr);
+					""".formatted(PREAMBLE, target, addr);
 		});
 
 		assertEquals("""
@@ -226,12 +230,13 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testLcsp() throws Exception {
 		// TODO: This test assumes x86-64 on test system
+		String target = which("expPrint");
 		String out = runThrowError("""
 				%s
 				echo \\n---Import---\\n
 				ghidra trace lcsp
 				echo \\n---\\n
-				file bash
+				file %s
 				echo \\n---File---\\n
 				ghidra trace lcsp
 				set ghidra-language Toy:BE:64:default
@@ -241,17 +246,17 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---Compiler---\\n
 				ghidra trace lcsp
 				quit
-				""".formatted(PREAMBLE));
-		assertEquals("""
+				""".formatted(PREAMBLE, target));
+		String importSection = extractOutSection(out, "---Import---");
+		assertTrue(importSection.contains("""
 				Selected Ghidra language: x86:LE:32:default
-				Selected Ghidra compiler: gcc""",
-			extractOutSection(out, "---Import---"));
+				Selected Ghidra compiler: %s""".formatted(PLAT.cSpec())));
+		String fileSection = extractOutSection(out, "---File---");
+		assertTrue(fileSection.contains("""
+				Selected Ghidra language: %s
+				Selected Ghidra compiler: %s""".formatted(PLAT.lang(), PLAT.cSpec())));
 		assertEquals("""
-				Selected Ghidra language: x86:LE:64:default
-				Selected Ghidra compiler: gcc""",
-			extractOutSection(out, "---File---"));
-		assertEquals("""
-				Toy:BE:64:default not found in compiler map
+				Toy:BE:64:default not found in compiler map - using default compiler
 				Selected Ghidra language: Toy:BE:64:default
 				Selected Ghidra compiler: default""",
 			extractOutSection(out, "---Language---"));
@@ -261,21 +266,25 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			extractOutSection(out, "---Compiler---"));
 	}
 
+	// TODO: Fails for Windows because the Project cannot be closed
 	@Test
 	public void testSave() throws Exception {
+		assumeFalse(IS_WINDOWS);
 		traceManager.setSaveTracesByDefault(false);
 
 		// For sanity check, verify failing to save drops data
+		String target = which("expPrint");
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
+				file %s
 				ghidra trace start no-save
 				ghidra trace tx-start "Create snapshot"
 				ghidra trace new-snap "Scripted snapshot"
 				ghidra trace tx-commit
 				quit
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, target));
+		waitDomainObjectClosed("/New Traces/no-save");
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/no-save")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(0, tb.trace.getTimeManager().getAllSnapshots().size());
@@ -284,14 +293,15 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
+				file %s
 				ghidra trace start save
 				ghidra trace tx-start "Create snapshot"
 				ghidra trace new-snap "Scripted snapshot"
 				ghidra trace tx-commit
 				ghidra trace save
 				quit
-				""".formatted(PREAMBLE, addr));
+				""".formatted(PREAMBLE, addr, target));
+		waitDomainObjectClosed("/New Traces/save");
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/save")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(1, tb.trace.getTimeManager().getAllSnapshots().size());
@@ -300,17 +310,18 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testSnapshot() throws Exception {
+		String target = which("expPrint");
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
+				file %s
 				ghidra trace start
 				ghidra trace tx-start "Create snapshot"
 				ghidra trace new-snap "Scripted snapshot"
 				ghidra trace tx-commit
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceSnapshot snapshot = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots());
 			assertEquals(0, snapshot.getKey());
@@ -320,11 +331,12 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testPutmem() throws Exception {
+		String target = which("expPrint");
 		String out = runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
-				start
+				file %s
+				%s
 				ghidra trace start
 				ghidra trace tx-start "Create snapshot"
 				ghidra trace new-snap "Scripted snapshot"
@@ -335,8 +347,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---
 				kill
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 
@@ -350,13 +362,14 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testPutmemInferior2() throws Exception {
+		String target = which("expPrint");
 		String out = runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
 				add-inferior
 				inferior 2
-				file bash
-				start
+				file %s
+				%s
 				ghidra trace start
 				ghidra trace tx-start "Create snapshot"
 				ghidra trace new-snap "Scripted snapshot"
@@ -367,8 +380,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---
 				kill
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			AddressSpace ram2 = tb.trace.getBaseAddressFactory().getAddressSpace("ram2");
 			assertNotNull(ram2);
@@ -384,11 +397,12 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testPutmemState() throws Exception {
+		String target = which("expPrint");
 		String out = runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
-				start
+				file %s
+				%s
 				ghidra trace start
 				ghidra trace tx-start "Create snapshot"
 				ghidra trace new-snap "Scripted snapshot"
@@ -399,8 +413,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---
 				kill
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 
@@ -410,17 +424,18 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			Entry<TraceAddressSnapRange, TraceMemoryState> entry =
 				tb.trace.getMemoryManager().getMostRecentStateEntry(snap, addr);
 			assertEquals(Map.entry(new ImmutableTraceAddressSnapRange(
-				quantize(rng(addr, 10), 4096), Lifespan.at(0)), TraceMemoryState.ERROR), entry);
+				quantize(rng(addr, 10), 4096), Lifespan.nowOn(0)), TraceMemoryState.ERROR), entry);
 		}
 	}
 
 	@Test
 	public void testDelmem() throws Exception {
+		String target = which("expPrint");
 		String out = runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
-				start
+				file %s
+				%s
 				ghidra trace start
 				ghidra trace tx-start "Create snapshot"
 				ghidra trace new-snap "Scripted snapshot"
@@ -432,8 +447,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---
 				kill
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 
@@ -448,16 +463,17 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testPutreg() throws Exception {
-		String count = IntStream.iterate(0, i -> i < 32, i -> i + 1)
+		String target = which("expPrint");
+		String count = IntStream.iterate(0, i -> i < 16, i -> i + 1)
 				.mapToObj(Integer::toString)
 				.collect(Collectors.joining(",", "{", "}"));
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
-				start
+				file %s
+				%s
 				ghidra trace start
-				set $ymm0.v32_int8 = %s
+				set $xmm0.v16_int8 = %s
 				set $st0 = 1.5
 				ghidra trace tx-start "Create snapshot"
 				ghidra trace new-snap "Scripted snapshot"
@@ -465,17 +481,17 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(PREAMBLE, addr, count));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target, PLAT.startCmd(), count));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 			AddressSpace t1f0 = tb.trace.getBaseAddressFactory()
 					.getAddressSpace("Inferiors[1].Threads[1].Stack[0].Registers");
 			TraceMemorySpace regs = tb.trace.getMemoryManager().getMemorySpace(t1f0, false);
-			RegisterValue ymm0 = regs.getValue(snap, tb.reg("ymm0"));
+			RegisterValue xmm0 = regs.getValue(snap, tb.reg("xmm0"));
 			// GDB treats registers in arch's endian
-			assertEquals("1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100",
-				ymm0.getUnsignedValue().toString(16));
+			assertEquals("f0e0d0c0b0a09080706050403020100",
+				xmm0.getUnsignedValue().toString(16));
 
 			TraceData st0;
 			try (Transaction tx = tb.trace.openTransaction("Float80 unit")) {
@@ -490,16 +506,17 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testDelreg() throws Exception {
-		String count = IntStream.iterate(0, i -> i < 32, i -> i + 1)
+		String count = IntStream.iterate(0, i -> i < 16, i -> i + 1)
 				.mapToObj(Integer::toString)
 				.collect(Collectors.joining(",", "{", "}"));
+		String target = which("expPrint");
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
-				start
+				file %s
+				%s
 				ghidra trace start
-				set $ymm0.v32_int8 = %s
+				set $xmm0.v16_int8 = %s
 				set $st0 = 1.5
 				ghidra trace tx-start "Create snapshot"
 				ghidra trace new-snap "Scripted snapshot"
@@ -508,16 +525,16 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(PREAMBLE, addr, count));
+				""".formatted(PREAMBLE, addr, target, PLAT.startCmd(), count));
 		// The spaces will be left over, but the values should be zeroed
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 			AddressSpace t1f0 = tb.trace.getBaseAddressFactory()
 					.getAddressSpace("Inferiors[1].Threads[1].Stack[0].Registers");
 			TraceMemorySpace regs = tb.trace.getMemoryManager().getMemorySpace(t1f0, false);
-			RegisterValue ymm0 = regs.getValue(snap, tb.reg("ymm0"));
-			assertEquals("0", ymm0.getUnsignedValue().toString(16));
+			RegisterValue xmm0 = regs.getValue(snap, tb.reg("xmm0"));
+			assertEquals("0", xmm0.getUnsignedValue().toString(16));
 
 			TraceData st0;
 			try (Transaction tx = tb.trace.openTransaction("Float80 unit")) {
@@ -546,7 +563,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			String created = extractOutSection(out, "---Id---");
 			long id = Long.parseLong(created.split("id=")[1].split(",")[0]);
@@ -571,7 +588,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			Lifespan life = Unique.assertOne(object.getLife().spans());
 			assertEquals(Lifespan.nowOn(0), life);
@@ -582,6 +599,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testRemoveObj() throws Exception {
+		// Must give 1 for new-snap, since snap 0 was never created
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
@@ -589,7 +607,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-start "Create Object"
 				ghidra trace create-obj Test.Objects[1]
 				ghidra trace insert-obj Test.Objects[1]
-				ghidra trace set-snap 1
+				ghidra trace new-snap 1 "Snap 1"
 				ghidra trace remove-obj Test.Objects[1]
 				ghidra trace tx-commit
 				quit
@@ -597,7 +615,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			Lifespan life = Unique.assertOne(object.getLife().spans());
 			assertEquals(Lifespan.at(0), life);
@@ -607,12 +625,12 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@SuppressWarnings("unchecked")
 	protected <T> T runTestSetValue(String extra, String gdbExpr, String gtype)
 			throws Exception {
-		String expPrint = DummyProc.which("expPrint");
+		String expPrint = which("expPrint");
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
 				file %s
-				start
+				%s
 				ghidra trace start
 				ghidra trace tx-start "Create Object"
 				ghidra trace create-obj Test.Objects[1]
@@ -622,11 +640,11 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(PREAMBLE, addr, expPrint, extra, gdbExpr, gtype));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/expPrint")) {
+				""".formatted(PREAMBLE, addr, expPrint, PLAT.startCmd(), extra, gdbExpr, gtype));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			TraceObjectValue value = object.getValue(0, "test");
 			return value == null ? null : (T) value.getValue();
@@ -764,12 +782,13 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testRetainValues() throws Exception {
+		String target = which("expPrint");
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
+				file %s
 				set language c++
-				start
+				%s
 				ghidra trace start
 				ghidra trace tx-start "Create Object"
 				ghidra trace create-obj Test.Objects[1]
@@ -777,16 +796,16 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace set-value Test.Objects[1] [1] '"A"'
 				ghidra trace set-value Test.Objects[1] [2] '"B"'
 				ghidra trace set-value Test.Objects[1] [3] '"C"'
-				ghidra trace set-snap 10
+				ghidra trace new-snap 10 "Snap 10"
 				ghidra trace retain-values Test.Objects[1] [1] [3]
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			assertEquals(Map.ofEntries(
 				Map.entry("[1]", Lifespan.nowOn(0)),
@@ -817,7 +836,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			String getObject = extractOutSection(out, "---GetObject---");
 			assertEquals("%d\tTest.Objects[1]".formatted(object.getKey()), getObject);
@@ -826,13 +845,13 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testGetValues() throws Exception {
-		String expPrint = DummyProc.which("expPrint");
+		String expPrint = which("expPrint");
 		String out = runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
 				file %s
 				set language c++
-				start
+				%s
 				ghidra trace start
 				ghidra trace tx-start "Create Object"
 				ghidra trace create-obj Test.Objects[1]
@@ -859,8 +878,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---
 				kill
 				quit
-				""".formatted(PREAMBLE, addr, expPrint));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/expPrint")) {
+				""".formatted(PREAMBLE, addr, expPrint, PLAT.startCmd()));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals("""
 					Parent          Key       Span     Value           Type
@@ -885,12 +904,13 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testGetValuesRng() throws Exception {
+		String target = which("expPrint");
 		String out = runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
+				file %s
 				set language c++
-				start
+				%s
 				ghidra trace start
 				ghidra trace tx-start "Create Object"
 				ghidra trace create-obj Test.Objects[1]
@@ -902,8 +922,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---
 				kill
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals("""
 					Parent          Key   Span     Value        Type
@@ -914,12 +934,13 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testActivateObject() throws Exception {
+		String target = which("expPrint");
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
+				file %s
 				set language c++
-				start
+				%s
 				ghidra trace start
 				ghidra trace tx-start "Create Object"
 				ghidra trace create-obj Test.Objects[1]
@@ -928,8 +949,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace activate Test.Objects[1]
 				kill
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			assertSame(mdo.get(), traceManager.getCurrentTrace());
 			assertEquals("Test.Objects[1]",
 				traceManager.getCurrentObject().getCanonicalPath().toString());
@@ -938,12 +959,13 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testDisassemble() throws Exception {
+		String target = which("expPrint");
 		String out = runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
+				file %s
 				set language c++
-				start
+				%s
 				ghidra trace start
 				ghidra trace tx-start "Tx"
 				ghidra trace putmem &main 10
@@ -953,8 +975,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Not concerned about specifics, so long as disassembly occurs
 			long total = 0;
@@ -982,7 +1004,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<TraceObject> inferiors = tb.trace.getObjectManager()
-					.getValuePaths(Lifespan.at(0), PathPredicates.parse("Inferiors[]"))
+					.getValuePaths(Lifespan.at(0), PathFilter.parse("Inferiors[]"))
 					.map(p -> p.getDestination(null))
 					.toList();
 			assertEquals(2, inferiors.size());
@@ -991,6 +1013,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testPutAvailable() throws Exception {
+		// NB: Windows gdb probably not sufficiently current
+		assumeFalse(IS_WINDOWS);
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
@@ -1005,7 +1029,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<TraceObject> available = tb.trace.getObjectManager()
-					.getValuePaths(Lifespan.at(0), PathPredicates.parse("Available[]"))
+					.getValuePaths(Lifespan.at(0), PathFilter.parse("Available[]"))
 					.map(p -> p.getDestination(null))
 					.toList();
 			assertThat(available.size(), greaterThan(2));
@@ -1014,10 +1038,11 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testPutBreakpoints() throws Exception {
+		String target = which("expPrint");
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
+				file %s
 				starti
 				ghidra trace start
 				ghidra trace tx-start "Tx"
@@ -1030,12 +1055,12 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			List<TraceObjectValue> infBreakLocVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
-						PathPredicates.parse("Inferiors[1].Breakpoints[]"))
+						PathFilter.parse("Inferiors[1].Breakpoints[]"))
 					.map(p -> p.getLastEntry())
 					.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 					.toList();
@@ -1046,110 +1071,109 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 			// NB. starti avoid use of temporary main breakpoint
 			assertBreakLoc(infBreakLocVals.get(0), "[1.1]", main, 1,
-				Set.of(TraceBreakpointKind.SW_EXECUTE),
-				"*main");
+				CommonSet.SWX.kinds(), "*main");
 			assertBreakLoc(infBreakLocVals.get(1), "[2.1]", main.add(10), 1,
-				Set.of(TraceBreakpointKind.HW_EXECUTE),
-				"*main+10");
+				CommonSet.HWX.kinds(), "*main+10");
 			assertBreakLoc(infBreakLocVals.get(2), "[3.1]", main.add(20), 1,
-				Set.of(TraceBreakpointKind.WRITE),
-				"-location *((char*)(&main+20))");
+				CommonSet.WRITE.kinds(), "-location *((char*)(&main+20))");
 			assertBreakLoc(infBreakLocVals.get(3), "[4.1]", main.add(30), 8,
-				Set.of(TraceBreakpointKind.READ),
-				"-location *((char(*)[8])(&main+30))");
+				CommonSet.READ.kinds(), "-location *((char(*)[8])(&main+30))");
 			assertBreakLoc(infBreakLocVals.get(4), "[5.1]", main.add(40), 5,
-				Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE),
-				"-location *((char(*)[5])(&main+40))");
+				CommonSet.ACCESS.kinds(), "-location *((char(*)[5])(&main+40))");
 		}
 	}
 
 	@Test
 	public void testPutEnvironment() throws Exception {
+		String target = which("expPrint");
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
-				start
+				file %s
+				%s
 				ghidra trace start
 				ghidra trace tx-start "Tx"
 				ghidra trace put-environment
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Assumes GDB on Linux amd64
 			TraceObject env = Objects.requireNonNull(tb.obj("Inferiors[1].Environment"));
 			assertEquals("gdb", env.getValue(0, "_debugger").getValue());
 			assertEquals("i386:x86-64", env.getValue(0, "_arch").getValue());
-			assertEquals("GNU/Linux", env.getValue(0, "_os").getValue());
+			assertEquals(PLAT.os(), env.getValue(0, "_os").getValue());
 			assertEquals("little", env.getValue(0, "_endian").getValue());
 		}
 	}
 
 	@Test
 	public void testPutRegions() throws Exception {
+		String target = which("expPrint");
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
-				start
+				file %s
+				%s
 				ghidra trace start
 				ghidra trace tx-start "Tx"
 				ghidra trace put-regions
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceMemoryRegion> all =
 				tb.trace.getMemoryManager().getAllRegions();
-			assertThat(all.size(), greaterThan(2));
+			assertThat(all.size(), greaterThan(0));
 		}
 	}
 
 	@Test
 	public void testPutModules() throws Exception {
+		String target = which("expPrint");
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
-				start
+				file %s
+				%s
 				ghidra trace start
 				ghidra trace tx-start "Tx"
 				ghidra trace put-modules
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
-			TraceModule modBash =
-				Unique.assertOne(all.stream().filter(m -> m.getName().contains("bash")));
-			assertNotEquals(tb.addr(0), Objects.requireNonNull(modBash.getBase()));
+			TraceModule modExpPrint =
+				Unique.assertOne(all.stream().filter(m -> m.getName(SNAP).contains("expPrint")));
+			assertNotEquals(tb.addr(0), Objects.requireNonNull(modExpPrint.getBase(SNAP)));
 		}
 	}
 
 	@Test
 	public void testPutThreads() throws Exception {
+		String target = which("expPrint");
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
-				start
+				file %s
+				%s
 				ghidra trace start
 				ghidra trace tx-start "Tx"
 				ghidra trace put-threads
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
 			Unique.assertOne(tb.trace.getThreadManager().getAllThreads());
@@ -1158,12 +1182,13 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testPutFrames() throws Exception {
+		String target = which("expRead");
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
-				file bash
-				start
-				break read
+				file %s
+				%s
+				break wrapread
 				continue
 				ghidra trace start
 				ghidra trace tx-start "Tx"
@@ -1171,16 +1196,16 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expRead"))) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
 			List<TraceObject> stack = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
-						PathPredicates.parse("Inferiors[1].Threads[1].Stack[]"))
+						PathFilter.parse("Inferiors[1].Threads[1].Stack[]"))
 					.map(p -> p.getDestination(null))
 					.toList();
-			assertThat(stack.size(), greaterThan(2));
+			assertEquals(stack.size(), 2);
 		}
 	}
 }

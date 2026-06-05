@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -116,6 +116,50 @@ public class DataTypeTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertEquals("abc", resolvedStruct1.getName());
 		assertEquals("abc.conflict", resolvedStruct2.getName());
+
+		program.endTransaction(txId, true);
+
+	}
+
+	@Test
+	public void testReplaceWith() {
+		int txId = program.startTransaction("Pointer Test");
+
+		Structure struct1 =
+			(Structure) dtm.resolve(createStruct("abc", new ByteDataType(), 10), null);
+
+		Structure struct2 =
+			(Structure) dtm.resolve(createStruct("xyz", new ByteDataType(), 10), null);
+
+		Pointer ptr1 = (Pointer) dtm.resolve(new PointerDataType(struct1), null); // ptr1 -> struct1
+
+		Pointer ptr2 = (Pointer) dtm.resolve(new PointerDataType(struct2), null); // ptr2 -> struct2
+
+		struct1.add(ptr2);
+		struct2.add(ptr1);
+
+		// ptr1 -> struct1 { ptr2 -> struct2 { ptr1 } }
+
+		try {
+			DataType dt = dtm.replaceDataType(struct2, ptr2, false);
+			// ptr2 cannot exist without struct2
+			fail("Expected dependency exception");
+		}
+		catch (DataTypeDependencyException e) {
+			// expected - ignore
+		}
+
+		DataTypeComponent dtc = struct1.getComponent(10);
+		assertEquals(ptr2, dtc.getDataType());
+		try {
+			struct1 = (Structure) dtm.replaceDataType(ptr2, struct1, false);
+			// Replacement will trip on dependency and force replacement with undefined component
+			dtc = struct1.getComponent(10);
+			assertEquals(DataType.DEFAULT, dtc.getDataType());
+		}
+		catch (DataTypeDependencyException e) {
+			fail("Unexpected dependsOn error");
+		}
 
 		program.endTransaction(txId, true);
 

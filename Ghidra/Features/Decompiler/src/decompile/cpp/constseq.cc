@@ -177,8 +177,8 @@ uint4 ArraySequence::selectStringCopyFunction(int4 &index)
 /// \brief Set-up for recovering COPY ops into a memory range, given a Symbol and an Address being COPYed into
 ///
 /// The SymbolEntry and Address are passed in, with an expected data-type.  Check if there is an array
-/// of the data-type within the Symbol, and if so, initialize the memory range for the the sequence.
-/// Follow on with gathering PcodeOps and testing if the sequence is viable.  If not, the the size the memory
+/// of the data-type within the Symbol, and if so, initialize the memory range for the sequence.
+/// Follow on with gathering PcodeOps and testing if the sequence is viable.  If not, the size of the memory
 /// range will be set to zero.
 /// \param fdata is the function containing the root COPY
 /// \param ct is the specific data-type for which there should be an array
@@ -205,7 +205,13 @@ StringSequence::StringSequence(Funcdata &fdata,Datatype *ct,SymbolEntry *ent,Pco
       break;
     arrayType = parentType;
     lastOff = off;
-    parentType = parentType->getSubType(off, &off);
+    if (parentType->needsResolution()) {
+      const TypeField *field = parentType->resolveTruncation(off, root, -1, off);	// Resolve thru the specific COPY
+      if (field == (const TypeField *)0) break;
+      parentType = field->type;
+    }
+    else
+      parentType = parentType->getSubType(off, &off);
   } while(parentType != (Datatype *)0);
   if (parentType != ct || arrayType == (Datatype *)0 || arrayType->getMetatype() != TYPE_ARRAY)
     return;
@@ -296,8 +302,20 @@ Varnode *StringSequence::constructTypedPointer(PcodeOp *insertPoint)
     if (baseType->getMetatype() == TYPE_ARRAY)
       elSize = ((TypeArray *)baseType)->getBase()->getAlignSize();
     int8 newOff;
-    baseType = baseType->getSubType(curOff, &newOff );
-    if (baseType == (Datatype *)0) break;
+    if (baseType->needsResolution()) {
+      const TypeField *field = baseType->resolveTruncation(curOff, insertPoint, -1, newOff);
+      if (field != (const TypeField *)0) {
+	baseType = field->type;
+	curOff = newOff;
+	continue;		// Do not create PTRSUB for union resolution here
+      }
+      else
+	break;
+    }
+    else {
+      baseType = baseType->getSubType(curOff, &newOff );
+      if (baseType == (Datatype *)0) break;
+    }
     curOff -= newOff;
     baseOff = AddrSpace::byteToAddress(curOff, spc->getWordSize());
     if (elSize >= 0) {
@@ -318,6 +336,8 @@ Varnode *StringSequence::constructTypedPointer(PcodeOp *insertPoint)
       data.opSetInput(ptrsub,data.newConstant(spacePtr->getSize(), baseOff), 1);
     }
     data.opSetInput(ptrsub,spacePtr,0);
+    if (curType->needsResolution())
+      data.inheritUnionFieldPtr(curType, ptrsub, 0, insertPoint, -1);
     spacePtr = data.newUniqueOut(spacePtr->getSize(), ptrsub);
     data.opInsertBefore(ptrsub, insertPoint);
     curType = types->getTypePointerStripArray(spacePtr->getSize(), baseType, spc->getWordSize());
@@ -364,6 +384,8 @@ PcodeOp *StringSequence::buildStringCopy(void)
   Varnode *destPtr = constructTypedPointer(insertPoint);
   data.opSetInput(copyOp, destPtr, 1);
   data.opSetInput(copyOp, srcPtr, 2);
+  if (destPtr->getType()->needsResolution())
+    data.inheritUnionFieldPtr(destPtr->getType(), copyOp, 1, insertPoint, -1);
   Varnode *lenVn = data.newConstant(4,index);
   lenVn->updateType(copyOp->inputTypeLocal(3));
   data.opSetInput(copyOp, lenVn, 3);
@@ -460,12 +482,12 @@ bool StringSequence::transform(void)
   return true;
 }
 
-/// From a starting pointer, backtrack through PTRADDs and COPYs to a putative root Varnode pointer.
-/// \param initPtr is pointer Varnode into the root STORE
-void HeapSequence::findBasePointer(Varnode *initPtr)
+/// From a starting pointer to \b rootOp, backtrack through PTRADDs and COPYs to a putative root Varnode pointer.
+void HeapSequence::findBasePointer(void)
 
 {
-  basePointer = initPtr;
+  basePointer = rootOp->getIn(1);
+  immedRead = rootOp;
   while(basePointer->isWritten()) {
     PcodeOp *op = basePointer->getDef();
     OpCode opc = op->code();
@@ -476,6 +498,7 @@ void HeapSequence::findBasePointer(Varnode *initPtr)
     else if (opc != CPUI_COPY)
       break;
     basePointer = op->getIn(0);
+    immedRead = op;
   }
 }
 
@@ -507,7 +530,7 @@ void HeapSequence::findDuplicateBases(vector<Varnode *> &duplist)
     if (!copyRoot->isWritten()) break;
     op = copyRoot->getDef();
     opc = op->code();
-    if (opc != CPUI_PTRSUB && opc != CPUI_INT_ADD && opc != CPUI_PTRSUB)
+    if (opc != CPUI_PTRSUB && opc != CPUI_INT_ADD && opc != CPUI_PTRADD)
       break;
   } while(op->getIn(1)->isConstant());
 
@@ -523,7 +546,7 @@ void HeapSequence::findDuplicateBases(vector<Varnode *> &duplist)
 	op = *iter;
 	++iter;
 	opc = op->code();
-	if (opc != CPUI_PTRSUB && opc != CPUI_INT_ADD && opc != CPUI_PTRSUB)
+	if (opc != CPUI_PTRSUB && opc != CPUI_INT_ADD && opc != CPUI_PTRADD)
 	  continue;
 	if (op->getIn(0) != vn || !op->getIn(1)->isConstant())
 	  continue;
@@ -745,6 +768,8 @@ PcodeOp *HeapSequence::buildStringCopy(void)
     data.opSetInput(ptrAdd,data.newConstant(basePointer->getSize(), charType->getAlignSize()),2);
     destPtr->updateType(charPtrType);
     data.opInsertBefore(ptrAdd, insertPoint);
+    if (basePointer->getType()->needsResolution())
+      data.inheritUnionField(basePointer->getType(), ptrAdd, 0, immedRead, immedRead->getSlot(basePointer));
   }
   int4 index;
   uint4 builtInId = selectStringCopyFunction(index);
@@ -758,6 +783,8 @@ PcodeOp *HeapSequence::buildStringCopy(void)
   lenVn->updateType(copyOp->inputTypeLocal(3));
   data.opSetInput(copyOp, lenVn, 3);
   data.opInsertBefore(copyOp, insertPoint);
+  if (destPtr->getType()->needsResolution())
+    data.inheritUnionField(destPtr->getType(), copyOp, 1, immedRead, immedRead->getSlot(destPtr));
   return copyOp;
 }
 
@@ -767,7 +794,7 @@ PcodeOp *HeapSequence::buildStringCopy(void)
 /// the initial input and final output are gathered.
 /// \param indirects will hold the INDIRECT ops attached to sequence STOREs
 /// \param pairs will hold Varnode pairs where the first in the pair is the input and the second is the output
-void HeapSequence::gatherIndirectPairs(vector<PcodeOp *> &indirects,vector<Varnode *> &pairs)
+void HeapSequence::gatherIndirectPairs(vector<PcodeOp *> &indirects,vector<IndirectPair> &pairs)
 
 {
   for(int4 i=0;i<moveOps.size();++i) {
@@ -798,67 +825,96 @@ void HeapSequence::gatherIndirectPairs(vector<PcodeOp *> &indirects,vector<Varno
 	if (!defOp->isMark()) break;
 	invn = defOp->getIn(0);
       }
-      pairs.push_back(invn);
-      pairs.push_back(outvn);
-      data.opUnsetOutput(op);
+      pairs.emplace_back(invn,outvn);
     }
   }
   for(int4 i=0;i<indirects.size();++i)
     indirects[i]->clearMark();
 }
 
-/// \brief Remove the given PcodeOp and any other ops that uniquely produce its inputs
-///
-/// The given PcodeOp is always removed.  PcodeOps are recursively removed, if the only data-flow
-/// path of their output is to the given op, and they are not a CALL or are otherwise special.
-/// \param op is the given PcodeOp to remove
-/// \param scratch is scratch space for holding
-void HeapSequence::removeRecursive(PcodeOp *op,vector<PcodeOp *> &scratch)
+bool HeapSequence::IndirectPair::compareOutput(const IndirectPair *a,const IndirectPair *b)
 
 {
-  scratch.clear();
-  scratch.push_back(op);
-  int4 pos = 0;
-  while(pos < scratch.size()) {
-    op = scratch[pos];
-    pos += 1;
-    for(int4 i=0;i<op->numInput();++i) {
-      Varnode *vn = op->getIn(i);
-      if (!vn->isWritten() || vn->isAutoLive()) continue;
-      if (vn->loneDescend() == (PcodeOp *)0) continue;
-      PcodeOp *defOp = vn->getDef();
-      if (defOp->isCall() || defOp->isIndirectSource()) continue;
-      scratch.push_back(defOp);
-    }
-    data.opDestroy(op);
-  }
+  Varnode *vn1 = a->outVn;
+  Varnode *vn2 = b->outVn;
+  if (vn1->getSpace() != vn2->getSpace())
+    return vn1->getSpace()->getIndex() < vn2->getSpace()->getIndex();
+  if (vn1->getOffset() != vn2->getOffset())
+    return vn1->getOffset() < vn2->getOffset();
+  if (vn1->getSize() != vn2->getSize())
+    return vn1->getSize() < vn2->getSize();
+  return false;
 }
 
+/// Its possible that INDIRECTs collected from different \e effect ops may share
+/// the same output storage.  Find any output Varnodes that share storage and
+/// replace all their reads with a single representative Varnode.
+/// \param pairs is the list of INDIRECT pairs
+/// \return \b true if the deduplication succeeded
+bool HeapSequence::deduplicatePairs(vector<IndirectPair> &pairs)
+
+{
+  if (pairs.empty()) return true;
+  vector<IndirectPair *> copy(pairs.size(),(IndirectPair *)0);
+  for(int4 i=0;i<pairs.size();++i)
+    copy[i] = &pairs[i];
+  sort(copy.begin(),copy.end(),IndirectPair::compareOutput);
+
+  IndirectPair *head = copy[0];
+  int4 dupCount = 0;
+  for(int4 i=1;i<copy.size();++i) {
+    Varnode *vn = copy[i]->outVn;
+    int4 overlap = head->outVn->characterizeOverlap(*vn);
+    if (overlap == 1)
+      return false;		// Partial overlap
+    if (overlap == 2) {
+      if (copy[i]->inVn != head->inVn) {
+	return false;		// Same storage coming from different sources
+      }
+      copy[i]->markDuplicate();
+      dupCount += 1;		// Found a duplicate,  keep the same head for next iteration
+    }
+    else			// No overlap, move to next headVn
+      head = copy[i];
+  }
+  if (dupCount > 0) {
+    head = copy[0];
+    for(int4 i=1;i<copy.size();++i) {
+      if (copy[i]->isDuplicate()) {
+	data.totalReplace(copy[i]->outVn, head->outVn);
+      }
+      else
+	head = copy[i];
+    }
+  }
+  return true;
+}
 /// If the STORE pointer no longer has any other uses, remove the PTRADD producing it, recursively,
 /// up to the base pointer.  INDIRECT ops surrounding any STORE that is removed are replaced with
 /// INDIRECTs around the user-op replacing the STOREs.
+/// \param indirects are the list of INDIRECTs cause by the STOREs
+/// \param indirectPairs are the flow pairs across the STOREs that need to be preserved
 /// \param replaceOp is the user-op replacement for the STOREs
-void HeapSequence::removeStoreOps(PcodeOp *replaceOp)
+void HeapSequence::removeStoreOps(vector<PcodeOp *> &indirects,vector<IndirectPair> &indirectPairs,PcodeOp *replaceOp)
 
 {
-  vector<PcodeOp *> indirects;
-  vector<Varnode *> indirectPairs;
   vector<PcodeOp *> scratch;
-  gatherIndirectPairs(indirects, indirectPairs);
+  for(int4 i=0;i<indirectPairs.size();++i) {		// Unhook Varnodes we don't want destroyed
+    data.opUnsetOutput(indirectPairs[i].outVn->getDef());
+  }
   for(int4 i=0;i<moveOps.size();++i) {
     PcodeOp *op = moveOps[i].op;
-    removeRecursive(op, scratch);
+    data.opDestroyRecursive(op, scratch);
   }
   for(int4 i=0;i<indirects.size();++i) {
     data.opDestroy(indirects[i]);
   }
-  for(int4 i=0;i<indirectPairs.size();i+=2) {
-    Varnode *invn = indirectPairs[i];
-    Varnode *outvn = indirectPairs[i+1];
+  for(int4 i=0;i<indirectPairs.size();++i) {
+    if (indirectPairs[i].isDuplicate()) continue;
     PcodeOp *newInd = data.newOp(2,replaceOp->getAddr());
     data.opSetOpcode(newInd, CPUI_INDIRECT);
-    data.opSetOutput(newInd,outvn);
-    data.opSetInput(newInd,invn,0);
+    data.opSetOutput(newInd,indirectPairs[i].outVn);
+    data.opSetInput(newInd,indirectPairs[i].inVn,0);
     data.opSetInput(newInd,data.newVarnodeIop(replaceOp),1);
     data.opInsertBefore(newInd, replaceOp);
   }
@@ -881,7 +937,7 @@ HeapSequence::HeapSequence(Funcdata &fdata,Datatype *ct,PcodeOp *root)
   baseOffset = 0;
   storeSpace = root->getIn(0)->getSpaceFromConst();
   ptrAddMult = AddrSpace::byteToAddressInt(charType->getAlignSize(), storeSpace->getWordSize());
-  findBasePointer(rootOp->getIn(1));
+  findBasePointer();
   if (!collectStoreOps())
     return;
   if (!checkInterference())
@@ -898,10 +954,15 @@ HeapSequence::HeapSequence(Funcdata &fdata,Datatype *ct,PcodeOp *root)
 bool HeapSequence::transform(void)
 
 {
+  vector<PcodeOp *> indirects;
+  vector<IndirectPair> indirectPairs;
+  gatherIndirectPairs(indirects, indirectPairs);
+  if (!deduplicatePairs(indirectPairs))
+    return false;
   PcodeOp *memCpyOp = buildStringCopy();
   if (memCpyOp == (PcodeOp *)0)
     return false;
-  removeStoreOps(memCpyOp);
+  removeStoreOps(indirects,indirectPairs,memCpyOp);
   return true;
 }
 
@@ -922,7 +983,7 @@ int4 RuleStringCopy::applyOp(PcodeOp *op,Funcdata &data)
 {
   if (!op->getIn(0)->isConstant()) return 0;		// Constant
   Varnode *outvn = op->getOut();
-  Datatype *ct = outvn->getType();
+  Datatype *ct = outvn->getTypeDefFacing();
   if (!ct->isCharPrint()) return 0;			// Copied to a "char" data-type Varnode
   if (ct->isOpaqueString()) return 0;
   if (!outvn->isAddrTied()) return 0;

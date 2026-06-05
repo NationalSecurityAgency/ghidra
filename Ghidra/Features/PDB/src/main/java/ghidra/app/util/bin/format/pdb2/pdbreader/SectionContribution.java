@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,8 @@
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
 import java.io.*;
+
+import ghidra.app.util.bin.format.pe.SectionFlags;
 
 /**
  * This class represents Section Contribution component of a PDB file.  This class is only
@@ -60,6 +62,16 @@ public abstract class SectionContribution {
 
 	public int getModule() {
 		return imod;
+	}
+
+	/**
+	 * Returns the characteristics.  Believe these to be documented at:
+	 * https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-image_section_header
+	 * User can likely get interpretation from {@link SectionFlags#resolveFlags(int value)}
+	 * @return the characteristics
+	 */
+	public long getCharacteristics() {
+		return characteristics;
 	}
 
 	@Override

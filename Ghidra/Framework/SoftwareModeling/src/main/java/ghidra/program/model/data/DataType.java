@@ -15,7 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import java.net.URL;
 import java.util.Collection;
 
 import ghidra.docking.settings.Settings;
@@ -244,10 +243,10 @@ public interface DataType {
 	 * (i.e., {@code sizeof(long double)} ).
 	 * <p>
 	 * NOTE: Other than the {@link VoidDataType}, no datatype should ever return 0, even if 
-	 * {@link #isZeroLength()}, and only {@link Dynamic}/{@link FactoryDataType} datatypes 
-	 * should return -1.  If {@link #isZeroLength()} is true a length of 1 should be returned. 
+	 * {@link #isZeroLength()}, and {@link Dynamic}/{@link FactoryDataType} datatypes 
+	 * must return -1.  If {@link #isZeroLength()} is true a length of 1 should be returned. 
 	 * Where a zero-length datatype can be handled (e.g., {@link Composite}) the 
-	 * {@link #isZeroLength()} method should be used.
+	 * {@link #isZeroLength()} method should be checked for this condition.
 	 *
 	 * @return the length of this DataType
 	 */
@@ -315,17 +314,6 @@ public interface DataType {
 	 *             datatype.
 	 */
 	public void setDescription(String description) throws UnsupportedOperationException;
-
-	/**
-	 * The getDocs method should provide a URL pointing to extended documentation for this DataType
-	 * if it exists.
-	 * <p>
-	 * A typical use would be to return a URL pointing to the programmers reference for this
-	 * instruction or a page describing this data structure.
-	 *
-	 * @return null - there is no URL documentation for this prototype.
-	 */
-	public URL getDocs();
 
 	/**
 	 * Returns the interpreted data value as an instance of the 
@@ -517,7 +505,9 @@ public interface DataType {
 	public void dataTypeDeleted(DataType dt);
 
 	/**
-	 * Informs this datatype that the given oldDT has been replaced with newDT
+	 * Informs this datatype that the given oldDT has been replaced with newDT.
+	 * Both datatype must be a fixed-length datatype and must avoid any circular 
+	 * dependency on this datatype.
 	 * <p>
 	 * TODO: This method is reserved for internal DB use. <br>
 	 *
@@ -571,7 +561,8 @@ public interface DataType {
 	public int getAlignment();
 
 	/**
-	 * Check if this datatype depends on the existence of the given datatype.
+	 * Check if this datatype depends on the existence of the given datatype
+	 * (i.e., if the specified datatype is removed this datatype must also be removed).
 	 * <p>
 	 * For example byte[] depends on byte. If byte were deleted, then byte[] would also be deleted.
 	 *

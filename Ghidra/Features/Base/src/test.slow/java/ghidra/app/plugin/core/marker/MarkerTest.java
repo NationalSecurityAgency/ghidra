@@ -44,16 +44,15 @@ import ghidra.app.plugin.core.clear.ClearPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.highlight.SetHighlightPlugin;
 import ghidra.app.services.*;
-import ghidra.app.util.viewer.listingpanel.OverviewProvider;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
+import ghidra.program.model.listing.BookmarkType;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
-import ghidra.util.Msg;
+import ghidra.util.datastruct.WeakSet;
 
 public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -161,8 +160,13 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 		setSelection(fp, sel);
 
 		MarkerManager mm = (MarkerManager) markerService;
-		OverviewProvider op = mm.getOverviewProvider();
-		JPanel navPanel = (JPanel) op.getComponent();
+
+		@SuppressWarnings("unchecked")
+		WeakSet<MarkerOverviewProvider> overviewProviders =
+			(WeakSet<MarkerOverviewProvider>) getInstanceField("overviewProviders", mm);
+		MarkerOverviewProvider provider = overviewProviders.iterator().next();
+
+		JPanel navPanel = (JPanel) provider.getComponent();
 
 		waitForProgram(program);
 
@@ -223,8 +227,13 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(addrSet.contains(addr("0xf000131b")));
 
 		MarkerManager mm = (MarkerManager) markerService;
-		OverviewProvider op = mm.getOverviewProvider();
-		JPanel navPanel = (JPanel) op.getComponent();
+
+		@SuppressWarnings("unchecked")
+		WeakSet<MarkerOverviewProvider> overviewProviders =
+			(WeakSet<MarkerOverviewProvider>) getInstanceField("overviewProviders", mm);
+		MarkerOverviewProvider provider = overviewProviders.iterator().next();
+
+		JPanel navPanel = (JPanel) provider.getComponent();
 
 		waitForProgram(program);
 
@@ -277,7 +286,12 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 		MouseEvent dummyEvent =
 			new MouseEvent(cb.getFieldPanel(), (int) time, time, 0, x, y, 1, false);
 		MarkerManager mm = (MarkerManager) markerService;
-		String tooltip = runSwing(() -> mm.generateToolTip(dummyEvent));
+
+		@SuppressWarnings("unchecked")
+		WeakSet<MarkerMarginProvider> marginProviders =
+			(WeakSet<MarkerMarginProvider>) getInstanceField("marginProviders", mm);
+		MarkerMarginProvider provider = marginProviders.iterator().next();
+		String tooltip = runSwing(() -> provider.generateToolTip(dummyEvent));
 		assertEquals(
 			"<html><font size=\"4\">Cursor<BR>Note [TEST]: comment<BR>Changes: Unsaved<BR>",
 			tooltip);
@@ -287,10 +301,10 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testToolTipMaxLines() throws Exception {
 		tool.addPlugin(BookmarkPlugin.class.getName());
-		CompoundCmd addCmd = new CompoundCmd("Add Bookmarks");
+		CompoundCmd<Program> addCmd = new CompoundCmd<>("Add Bookmarks");
 		Address a = addr("0x0100b6db");
 		for (int i = 0; i < 20; i++) {
-			addCmd.add(new BookmarkEditCmd(a, "Type1", "Cat1a", "Cmt1A_" + (i + 1)));
+			addCmd.add(new BookmarkEditCmd(a, BookmarkType.NOTE, "Cat1a", "Cmt1A_" + (i + 1)));
 			a = a.add(1);
 		}
 
@@ -315,20 +329,20 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 		MouseEvent dummyEvent = new MouseEvent(cb.getFieldPanel(), (int) System.currentTimeMillis(),
 			System.currentTimeMillis(), 0, x, y, 1, false);
 
-		// debug
-		ProgramLocation location = cb.getListingPanel().getProgramLocation(dummyEvent.getPoint());
-		Msg.debug(this, "location for point: " + location + "; at " + location.getAddress());
-
-		String tooltip = runSwing(() -> mm.generateToolTip(dummyEvent));
+		@SuppressWarnings("unchecked")
+		WeakSet<MarkerMarginProvider> marginProviders =
+			(WeakSet<MarkerMarginProvider>) getInstanceField("marginProviders", mm);
+		MarkerMarginProvider provider = marginProviders.iterator().next();
+		String tooltip = runSwing(() -> provider.generateToolTip(dummyEvent));
 		assertNotNull("No tooltip for field: " + cb.getCurrentField() + "\n\tat address: " +
 			cb.getCurrentAddress(), tooltip);
 
 		// should have a line for "Cursor" and comments 1 through 9 for a max of 10 lines
-		String expected = "<html><font size=\"4\">Cursor<BR>Type1 [Cat1a]: Cmt1A_1<BR>";
+		String expected = "<html><font size=\"4\">Cursor<BR>Note [Cat1a]: Cmt1A_1<BR>";
 		assertTrue("Expected text to start with:\n\t" + expected + "\nfound:\n\t" + tooltip,
 			tooltip.startsWith(expected));
 
-		expected = "Type1 [Cat1a]: Cmt1A_9<BR>...<BR>";
+		expected = "Note [Cat1a]: Cmt1A_9<BR>...<BR>";
 		assertTrue("Expected text to end with:\n\t" + expected + "\nfound:\n\t" + tooltip,
 			tooltip.endsWith(expected));
 	}
@@ -481,7 +495,7 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void clearSelection(Program p) {
-		ProgramSelection emptySelection = new ProgramSelection(p.getAddressFactory());
+		ProgramSelection emptySelection = new ProgramSelection();
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", emptySelection, p));
 	}
 

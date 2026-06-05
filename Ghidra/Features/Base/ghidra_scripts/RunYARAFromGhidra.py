@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 # This Ghidra script runs YARA on the file associated with the current program in the Ghidra Code Browser.
 # The user supplies a YARA rule file.  Upon a match, the YARA rule name is reported in the comment at
@@ -23,7 +23,7 @@
 # 2. The user has imported the file into Ghidra and the user has since deleted the file.  This Ghidra script attempts to
 # generate the original bytes of the imported file and asks the user to provide a filename to store the bytes.  YARA then runs on that file.
 
-#@category Memory.YARA
+#@category Search.YARA
 #@runtime Jython
 
 import os.path

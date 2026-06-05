@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.trace.database.target;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeFalse;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -28,74 +29,28 @@ import org.junit.Test;
 
 import db.Transaction;
 import generic.Unique;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.dbg.util.PathPredicates;
-import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.target.iface.TraceAggregate;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.thread.TraceThreadManager;
+import ghidra.util.SystemUtilities;
 import ghidra.util.database.DBAnnotatedObject;
 import ghidra.util.database.DBCachedObjectStore;
 
 public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationTest {
-	public static final String XML_CTX = """
-			<context>
-			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
-			        <attribute name='curTarget' schema='Target' />
-			        <attribute name='Targets' schema='TargetContainer' />
-			        <attribute schema='VOID' />
-			    </schema>
-			    <schema name='TargetContainer' canonical='yes' elementResync='NEVER'
-			            attributeResync='ONCE'>
-			        <element schema='Target' />
-			    </schema>
-			    <schema name='Target' elementResync='NEVER' attributeResync='NEVER'>
-			        <interface name='Process' />
-			        <attribute name='self' schema='Target' />
-			        <attribute name='Threads' schema='ThreadContainer' />
-			        <attribute name='Memory' schema='Memory' />
-			    </schema>
-			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
-			            attributeResync='NEVER'>
-			        <element schema='Thread' />
-			    </schema>
-			    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
-			        <interface name='Thread' />
-			        <interface name='Aggregate' />
-			        <attribute name='Registers' schema='RegisterContainer' />
-			    </schema>
-			    <schema name='RegisterContainer' elementResync='NEVER' attributeResync='NEVER'>
-			        <interface name='RegisterContainer' />
-			        <attribute name='User' schema='RegisterGroup' />
-			        <attribute name='Float' schema='RegisterGroup' />
-			    </schema>
-			    <schema name='RegisterGroup' canonical='yes' elementResync='NEVER'
-			            attributeResync='NEVER'>
-			        <element schema='Register' />
-			    </schema>
-			    <schema name='Register' elementResync='NEVER' attributeResync='NEVER'>
-			        <interface name='Register' />
-			    </schema>
-			    <schema name='Memory' canonical='yes' elementResync='NEVER'
-			            attributeResync='NEVER'>
-			        <element schema='Region' />
-			    </schema>
-			    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
-			        <interface name='MemoryRegion' />
-			        <attribute-alias from="_range" to="Range" />
-			    </schema>
-			</context>
-			""";
 	protected ToyDBTraceBuilder b;
 	protected DBTraceObjectManager manager;
 
-	protected SchemaContext ctx;
+	protected SchemaContext ctx = ToyDBTraceBuilder.CTX_DEFAULT;
 
 	protected TraceObject root;
 	protected TraceObject targetContainer;
@@ -105,14 +60,12 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void setUpObjectManagerTest() throws Exception {
 		b = new ToyDBTraceBuilder("Testing", "Toy:BE:64:default");
 		manager = b.trace.getObjectManager();
-
-		ctx = XmlSchemaContext.deserialize(XML_CTX);
 	}
 
 	protected void populateModel(int targetCount) {
 		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
-			TraceObjectKeyPath pathTargets = TraceObjectKeyPath.of("Targets");
+			KeyPath pathTargets = KeyPath.of("Targets");
 			targetContainer = manager.createObject(pathTargets);
 			root.setAttribute(Lifespan.nowOn(0), "Targets", targetContainer);
 			dumpStore(manager.valueTree.getDataStore());
@@ -146,7 +99,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	@Test(expected = IllegalStateException.class)
 	public void testCreateObjectWithoutRootErr() {
 		try (Transaction tx = b.startTransaction()) {
-			manager.createObject(TraceObjectKeyPath.of("Test"));
+			manager.createObject(KeyPath.of("Test"));
 		}
 	}
 
@@ -157,7 +110,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	@Test(expected = IllegalArgumentException.class)
 	public void testCreateObjectAsRootErrNoSchema() {
 		try (Transaction tx = b.startTransaction()) {
-			manager.createObject(TraceObjectKeyPath.of());
+			manager.createObject(KeyPath.of());
 		}
 	}
 
@@ -169,7 +122,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testCreateObjectAsRootErrRootExists() {
 		try (Transaction tx = b.startTransaction()) {
 			manager.createRootObject(ctx.getSchema(new SchemaName("Session")));
-			manager.createObject(TraceObjectKeyPath.of());
+			manager.createObject(KeyPath.of());
 		}
 	}
 
@@ -208,32 +161,32 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		TraceObject obj;
 		try (Transaction tx = b.startTransaction()) {
 			manager.createRootObject(ctx.getSchema(new SchemaName("Session")));
-			obj = manager.createObject(TraceObjectKeyPath.of("Targets"));
+			obj = manager.createObject(KeyPath.of("Targets"));
 		}
-		assertEquals(TraceObjectKeyPath.of("Targets"), obj.getCanonicalPath());
+		assertEquals(KeyPath.of("Targets"), obj.getCanonicalPath());
 	}
 
 	@Test
 	public void testGetObjectsByCanonicalPath() {
 		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
-			targetContainer = manager.createObject(TraceObjectKeyPath.of("Targets"));
+			targetContainer = manager.createObject(KeyPath.of("Targets"));
 		}
 
-		assertNull(manager.getObjectByCanonicalPath(TraceObjectKeyPath.of("Nothing")));
-		assertEquals(root, manager.getObjectByCanonicalPath(TraceObjectKeyPath.of()));
+		assertNull(manager.getObjectByCanonicalPath(KeyPath.of("Nothing")));
+		assertEquals(root, manager.getObjectByCanonicalPath(KeyPath.of()));
 		assertEquals(targetContainer,
-			manager.getObjectByCanonicalPath(TraceObjectKeyPath.of("Targets")));
+			manager.getObjectByCanonicalPath(KeyPath.of("Targets")));
 	}
 
 	@Test
 	public void testGetValuesByPathRootOnly() {
-		assertEquals(0, manager.getValuePaths(Lifespan.ALL, PathPredicates.pattern()).count());
+		assertEquals(0, manager.getValuePaths(Lifespan.ALL, PathFilter.pattern()).count());
 
 		try (Transaction tx = b.startTransaction()) {
 			manager.createRootObject(ctx.getSchema(new SchemaName("Session")));
 		}
-		assertEquals(1, manager.getValuePaths(Lifespan.ALL, PathPredicates.pattern()).count());
+		assertEquals(1, manager.getValuePaths(Lifespan.ALL, PathFilter.pattern()).count());
 	}
 
 	@Test
@@ -241,23 +194,23 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		populateModel(2);
 
 		assertEquals(1,
-			manager.getObjectsByPath(Lifespan.at(0), TraceObjectKeyPath.parse("Targets[0]"))
+			manager.getObjectsByPath(Lifespan.at(0), KeyPath.parse("Targets[0]"))
 					.count());
 		assertEquals(0,
-			manager.getObjectsByPath(Lifespan.at(0), TraceObjectKeyPath.parse("Targets[1]"))
+			manager.getObjectsByPath(Lifespan.at(0), KeyPath.parse("Targets[1]"))
 					.count());
 		assertEquals(1,
-			manager.getObjectsByPath(Lifespan.at(1), TraceObjectKeyPath.parse("Targets[1]"))
+			manager.getObjectsByPath(Lifespan.at(1), KeyPath.parse("Targets[1]"))
 					.count());
 		assertEquals(2,
-			manager.getObjectsByPath(Lifespan.ALL, TraceObjectKeyPath.parse("curTarget")).count());
+			manager.getObjectsByPath(Lifespan.ALL, KeyPath.parse("curTarget")).count());
 
 		TraceObject target1 =
-			manager.getObjectsByPath(Lifespan.ALL, TraceObjectKeyPath.parse("Targets[1]"))
+			manager.getObjectsByPath(Lifespan.ALL, KeyPath.parse("Targets[1]"))
 					.findAny()
 					.get();
 		assertEquals(target1,
-			manager.getObjectsByPath(Lifespan.at(1), TraceObjectKeyPath.parse("curTarget"))
+			manager.getObjectsByPath(Lifespan.at(1), KeyPath.parse("curTarget"))
 					.findAny()
 					.get());
 	}
@@ -266,7 +219,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testGetRangeValues() {
 		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
-			targetContainer = manager.createObject(TraceObjectKeyPath.parse("Targets"));
+			targetContainer = manager.createObject(KeyPath.parse("Targets"));
 			root.setAttribute(Lifespan.ALL, "Targets", targetContainer);
 
 			TraceObjectValue rangeVal =
@@ -278,19 +231,19 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			assertNull(root.getValue(0, "b"));
 
 			assertEquals(Set.of(rangeVal),
-				root.getSuccessors(Lifespan.ALL, PathPredicates.parse("a"))
+				root.getSuccessors(Lifespan.ALL, PathFilter.parse("a"))
 						.map(p -> p.getLastEntry())
 						.collect(Collectors.toSet()));
 			assertEquals(Set.of(),
-				root.getSuccessors(Lifespan.toNow(-1), PathPredicates.parse("a"))
+				root.getSuccessors(Lifespan.toNow(-1), PathFilter.parse("a"))
 						.map(p -> p.getLastEntry())
 						.collect(Collectors.toSet()));
 			assertEquals(Set.of(),
-				root.getSuccessors(Lifespan.ALL, PathPredicates.parse("b"))
+				root.getSuccessors(Lifespan.ALL, PathFilter.parse("b"))
 						.map(p -> p.getLastEntry())
 						.collect(Collectors.toSet()));
 			assertEquals(Set.of(),
-				targetContainer.getSuccessors(Lifespan.ALL, PathPredicates.parse("a"))
+				targetContainer.getSuccessors(Lifespan.ALL, PathFilter.parse("a"))
 						.map(p -> p.getLastEntry())
 						.collect(Collectors.toSet()));
 
@@ -312,15 +265,15 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		populateModel(3);
 		TraceObject thread;
 		try (Transaction tx = b.startTransaction()) {
-			thread = manager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
+			thread = manager.createObject(KeyPath.parse("Targets[0].Threads[0]"));
 			thread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 		}
 
 		assertEquals(Set.of(),
-			manager.queryAllInterface(Lifespan.toNow(-1), TraceObjectThread.class)
+			manager.queryAllInterface(Lifespan.toNow(-1), TraceThread.class)
 					.collect(Collectors.toSet()));
-		assertEquals(Set.of(thread.queryInterface(TraceObjectThread.class)),
-			manager.queryAllInterface(Lifespan.ALL, TraceObjectThread.class)
+		assertEquals(Set.of(thread.queryInterface(TraceThread.class)),
+			manager.queryAllInterface(Lifespan.ALL, TraceThread.class)
 					.collect(Collectors.toSet()));
 	}
 
@@ -377,7 +330,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testIsRoot() {
 		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
-			targetContainer = manager.createObject(TraceObjectKeyPath.of("Targets"));
+			targetContainer = manager.createObject(KeyPath.of("Targets"));
 		}
 
 		assertTrue(root.isRoot());
@@ -389,7 +342,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		populateModel(3);
 
 		TraceObject object = Unique.assertOne(
-			manager.getObjectsByPath(Lifespan.at(0), TraceObjectKeyPath.parse("curTarget")));
+			manager.getObjectsByPath(Lifespan.at(0), KeyPath.parse("curTarget")));
 
 		List<TraceObjectValPath> paths =
 			object.getAllPaths(Lifespan.at(0)).collect(Collectors.toList());
@@ -400,19 +353,19 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 
 		path = paths.get(0);
 		assertEquals(object, path.getDestination(root));
-		assertEquals(PathUtils.parse("Targets[0]"), path.getKeyList());
+		assertEquals(KeyPath.parse("Targets[0]"), path.getPath());
 
 		path = paths.get(1);
 		assertEquals(object, path.getDestination(root));
-		assertEquals(PathUtils.parse("Targets[0].self"), path.getKeyList());
+		assertEquals(KeyPath.parse("Targets[0].self"), path.getPath());
 
 		path = paths.get(2);
 		assertEquals(object, path.getDestination(root));
-		assertEquals(List.of("curTarget"), path.getKeyList());
+		assertEquals(KeyPath.of("curTarget"), path.getPath());
 
 		path = paths.get(3);
 		assertEquals(object, path.getDestination(root));
-		assertEquals(PathUtils.parse("curTarget.self"), path.getKeyList());
+		assertEquals(KeyPath.parse("curTarget.self"), path.getPath());
 
 		paths = root.getAllPaths(Lifespan.ALL).collect(Collectors.toList());
 		assertEquals(1, paths.size());
@@ -426,11 +379,14 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 
-			thread = manager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
+			thread = manager.createObject(KeyPath.parse("Targets[0].Threads[0]"));
 			thread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 		}
 		assertEquals(Set.of(), root.getInterfaces());
-		assertEquals(Set.of(TraceObjectThread.class), thread.getInterfaces());
+		assertEquals(Set.of(
+			TraceAggregate.class,
+			TraceThread.class),
+			thread.getInterfaces());
 	}
 
 	@Test
@@ -439,13 +395,13 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 
-			thread = manager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
+			thread = manager.createObject(KeyPath.parse("Targets[0].Threads[0]"));
 			thread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 		}
-		assertNull(root.queryInterface(TraceObjectThread.class));
-		TraceObjectThread threadIf = thread.queryInterface(TraceObjectThread.class);
+		assertNull(root.queryInterface(TraceThread.class));
+		TraceThread threadIf = thread.queryInterface(TraceThread.class);
 		assertNotNull(threadIf);
-		assertSame(threadIf, thread.queryInterface(TraceObjectThread.class));
+		assertSame(threadIf, thread.queryInterface(TraceThread.class));
 	}
 
 	@Test
@@ -517,30 +473,30 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testGetSuccessors() {
 		populateModel(3);
 
-		assertEquals(1, root.getSuccessors(Lifespan.ALL, PathPredicates.parse("")).count());
+		assertEquals(1, root.getSuccessors(Lifespan.ALL, PathFilter.parse("")).count());
 
-		assertEquals(1, root.getSuccessors(Lifespan.ALL, PathPredicates.parse("Targets")).count());
+		assertEquals(1, root.getSuccessors(Lifespan.ALL, PathFilter.parse("Targets")).count());
 
 		assertEquals(1,
-			root.getSuccessors(Lifespan.at(0), PathPredicates.parse("Targets[]")).count());
+			root.getSuccessors(Lifespan.at(0), PathFilter.parse("Targets[]")).count());
 		assertEquals(1,
-			targetContainer.getSuccessors(Lifespan.at(0), PathPredicates.parse("[]")).count());
+			targetContainer.getSuccessors(Lifespan.at(0), PathFilter.parse("[]")).count());
 		assertEquals(3,
-			targetContainer.getSuccessors(Lifespan.ALL, PathPredicates.parse("[]")).count());
+			targetContainer.getSuccessors(Lifespan.ALL, PathFilter.parse("[]")).count());
 
 		assertEquals(3,
-			root.getSuccessors(Lifespan.ALL, PathPredicates.parse("curTarget")).count());
+			root.getSuccessors(Lifespan.ALL, PathFilter.parse("curTarget")).count());
 		assertEquals(2,
-			root.getSuccessors(Lifespan.span(0, 1), PathPredicates.parse("curTarget")).count());
+			root.getSuccessors(Lifespan.span(0, 1), PathFilter.parse("curTarget")).count());
 		assertEquals(1,
-			root.getSuccessors(Lifespan.at(1), PathPredicates.parse("curTarget")).count());
+			root.getSuccessors(Lifespan.at(1), PathFilter.parse("curTarget")).count());
 		assertEquals(0,
-			root.getSuccessors(Lifespan.toNow(-1), PathPredicates.parse("curTarget")).count());
+			root.getSuccessors(Lifespan.toNow(-1), PathFilter.parse("curTarget")).count());
 
 		assertEquals(1,
-			root.getSuccessors(Lifespan.ALL, PathPredicates.parse("anAttribute")).count());
+			root.getSuccessors(Lifespan.ALL, PathFilter.parse("anAttribute")).count());
 		assertEquals(0,
-			root.getSuccessors(Lifespan.ALL, PathPredicates.parse("anAttribute.nope")).count());
+			root.getSuccessors(Lifespan.ALL, PathFilter.parse("anAttribute.nope")).count());
 	}
 
 	@Test
@@ -548,22 +504,29 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		populateModel(3);
 
 		assertEquals(List.of(root),
-			root.getOrderedSuccessors(Lifespan.ALL, TraceObjectKeyPath.parse(""), true)
+			root.getOrderedSuccessors(Lifespan.ALL, KeyPath.parse(""), true)
 					.map(p -> p.getDestination(root))
 					.collect(Collectors.toList()));
 		assertEquals(List.of(root),
-			root.getOrderedSuccessors(Lifespan.ALL, TraceObjectKeyPath.parse(""), false)
+			root.getOrderedSuccessors(Lifespan.ALL, KeyPath.parse(""), false)
 					.map(p -> p.getDestination(root))
 					.collect(Collectors.toList()));
 
 		assertEquals(List.of(targets.get(0), targets.get(1), targets.get(2)),
-			root.getOrderedSuccessors(Lifespan.ALL, TraceObjectKeyPath.parse("curTarget"), true)
+			root.getOrderedSuccessors(Lifespan.ALL, KeyPath.parse("curTarget"), true)
 					.map(p -> p.getDestination(root))
 					.collect(Collectors.toList()));
 		assertEquals(List.of(targets.get(2), targets.get(1), targets.get(0)),
-			root.getOrderedSuccessors(Lifespan.ALL, TraceObjectKeyPath.parse("curTarget"), false)
+			root.getOrderedSuccessors(Lifespan.ALL, KeyPath.parse("curTarget"), false)
 					.map(p -> p.getDestination(root))
 					.collect(Collectors.toList()));
+	}
+
+	@Test
+	public void testGetCanonicalSuccessors() {
+		populateModel(3);
+		assertEquals(3, root.getCanonicalSuccessors(PathFilter.parse("Targets[]")).count());
+		assertEquals(0, root.getCanonicalSuccessors(PathFilter.parse("anAttribute")).count());
 	}
 
 	@Test
@@ -890,7 +853,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertFalse(t1.isDeleted());
 		assertEquals(3, targetContainer.getValues(Lifespan.ALL).size());
 		assertEquals(t1, Unique.assertOne(
-			manager.getObjectsByPath(Lifespan.ALL, TraceObjectKeyPath.parse("Targets[1]"))));
+			manager.getObjectsByPath(Lifespan.ALL, KeyPath.parse("Targets[1]"))));
 		assertEquals(t1, t1.getAttribute(1, "self").getValue());
 		assertEquals(t1, root.getValue(1, "curTarget").getValue());
 
@@ -902,14 +865,14 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertTrue(t1.getParents(Lifespan.ALL).isEmpty());
 		assertEquals(2, targetContainer.getValues(Lifespan.ALL).size());
 		assertEquals(0,
-			manager.getObjectsByPath(Lifespan.ALL, TraceObjectKeyPath.parse("Targets[1]")).count());
+			manager.getObjectsByPath(Lifespan.ALL, KeyPath.parse("Targets[1]")).count());
 		assertNull(t1.getAttribute(2, "self"));
 		assertNull(root.getValue(1, "curTarget"));
 
 		// Delete a branch (leaves stay, but detached)
 		TraceObject t0 = targets.get(0);
 		assertEquals(2,
-			manager.getObjectsByPath(Lifespan.ALL, TraceObjectKeyPath.parse("Targets[]")).count());
+			manager.getObjectsByPath(Lifespan.ALL, KeyPath.parse("Targets[]")).count());
 		assertTrue(
 			t0.getParents(Lifespan.ALL).stream().anyMatch(v -> v.getParent() == targetContainer));
 		assertEquals(2, targetContainer.getValues(Lifespan.ALL).size());
@@ -924,7 +887,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		}
 
 		assertEquals(0,
-			manager.getObjectsByPath(Lifespan.ALL, TraceObjectKeyPath.parse("Targets[]")).count());
+			manager.getObjectsByPath(Lifespan.ALL, KeyPath.parse("Targets[]")).count());
 		assertFalse(t0.isDeleted());
 		assertFalse(
 			t0.getParents(Lifespan.ALL).stream().anyMatch(v -> v.getParent() == targetContainer));
@@ -1009,7 +972,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			TraceObjectValue primVal = root.setValue(Lifespan.ALL, "primitive", "A string");
 			assertFalse(primVal.isCanonical());
 
-			TraceObject child = manager.createObject(TraceObjectKeyPath.parse("child"));
+			TraceObject child = manager.createObject(KeyPath.parse("child"));
 
 			TraceObjectValue objVal = root.setValue(Lifespan.ALL, "child", child);
 			assertTrue(objVal.isCanonical());
@@ -1083,23 +1046,23 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 				manager.createRootObject(ctx.getSchema(new SchemaName("Session")));
 			root = rootVal.getChild();
 
-			TraceObject object = manager.createObject(TraceObjectKeyPath.parse("OutsideSchema"));
+			TraceObject object = manager.createObject(KeyPath.parse("OutsideSchema"));
 			object.insert(Lifespan.ALL, ConflictResolution.DENY);
 			assertFalse(object.getCanonicalParent(0).isHidden());
 
 			TraceObject elemOutside =
-				manager.createObject(TraceObjectKeyPath.parse("OutsideSchema[0]"));
+				manager.createObject(KeyPath.parse("OutsideSchema[0]"));
 			elemOutside.insert(Lifespan.ALL, ConflictResolution.DENY);
 			assertFalse(elemOutside.getCanonicalParent(0).isHidden());
 
 			TraceObject attrOutside =
-				manager.createObject(TraceObjectKeyPath.parse("OutsideSchema.Attr"));
+				manager.createObject(KeyPath.parse("OutsideSchema.Attr"));
 			attrOutside.insert(Lifespan.ALL, ConflictResolution.DENY);
 			assertFalse(attrOutside.getCanonicalParent(0).isHidden());
 
 			// TODO: This underscore convention is deprecated, but still in use
 			TraceObject hiddenOutside =
-				manager.createObject(TraceObjectKeyPath.parse("OutsideSchema._Attr"));
+				manager.createObject(KeyPath.parse("OutsideSchema._Attr"));
 			hiddenOutside.insert(Lifespan.ALL, ConflictResolution.DENY);
 			assertTrue(hiddenOutside.getCanonicalParent(0).isHidden());
 		}
@@ -1186,13 +1149,13 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			root = rootVal.getChild();
 
 			regionText =
-				manager.createObject(TraceObjectKeyPath.parse("Targets[0].Memory[bin:.text]"));
+				manager.createObject(KeyPath.parse("Targets[0].Memory[bin:.text]"));
 			regionText.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 			regionText.setAttribute(Lifespan.nowOn(0), "_range", b.range(0x00400000, 0x00401000));
 			regionText.setAttribute(Lifespan.nowOn(0), "Range", b.range(0x00400000, 0x00402000));
 		}
 
-		assertEquals(ctx.getSchema(new SchemaName("Region")), regionText.getTargetSchema());
+		assertEquals(ctx.getSchema(new SchemaName("Region")), regionText.getSchema());
 		assertEquals(Set.of(
 			regionText.getAttribute(0, "Range")),
 			Set.copyOf(regionText.getAttributes(Lifespan.ALL)));
@@ -1201,5 +1164,34 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertEquals(b.range(0x00400000, 0x00402000),
 			regionText.getAttribute(0, "Range").getValue());
 		assertEquals("Range", regionText.getAttribute(0, "_range").getEntryKey());
+	}
+
+	@Test
+	public void testReplicateClassCastExceptionScenario() throws Exception {
+		final int TICKS = 100_000;
+
+		assumeFalse(SystemUtilities.isInTestingBatchMode());
+		TraceThreadManager threads = b.trace.getThreadManager();
+
+		try (Transaction tx = b.startTransaction()) {
+			b.createRootObject();
+			TraceThread th = threads.addThread("Targets[0].Threads[0]", Lifespan.nowOn(1));
+			DBTraceObject objThread = (DBTraceObject) th.getObject();
+
+			long start = System.currentTimeMillis();
+			// For each tick, write PC with a dummy value
+			for (int tick = 0; tick < TICKS; tick++) {
+				/**
+				 * NOTE: This puts the manager out of sync, since it won't have the corresponding
+				 * wrapper objects, but that shouldn't be any matter, as the point of this is to
+				 * test the underlying R*-Tree.
+				 */
+				b.trace.getObjectManager()
+						.doCreateValueData(Lifespan.nowOn(tick), objThread, "_pc", b.addr(tick));
+			}
+			long current = System.currentTimeMillis();
+			double ticksPerSecond = 1000.0 * TICKS / (current - start);
+			System.err.println("%f/s".formatted(ticksPerSecond));
+		}
 	}
 }

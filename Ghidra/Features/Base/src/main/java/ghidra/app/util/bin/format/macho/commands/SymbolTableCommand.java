@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,10 +37,10 @@ import ghidra.util.task.TaskMonitor;
  * Represents a symtab_command structure
  */
 public class SymbolTableCommand extends LoadCommand {
-	private int symoff;
-	private int nsyms;
-	private int stroff;
-	private int strsize;
+	private long symoff;
+	private long nsyms;
+	private long stroff;
+	private long strsize;
 
 	private List<NList> symbols = new ArrayList<NList>();
 
@@ -58,12 +58,12 @@ public class SymbolTableCommand extends LoadCommand {
 			MachHeader header) throws IOException {
 		super(loadCommandReader);
 
-		symoff = loadCommandReader.readNextInt();
-		nsyms = loadCommandReader.readNextInt();
-		stroff = loadCommandReader.readNextInt();
-		strsize = loadCommandReader.readNextInt();
+		symoff = loadCommandReader.readNextUnsignedInt();
+		nsyms = checkCount(loadCommandReader.readNextUnsignedInt());
+		stroff = loadCommandReader.readNextUnsignedInt();
+		strsize = loadCommandReader.readNextUnsignedInt();
 
-		List<NList> nlistList = new ArrayList<>(nsyms);
+		List<NList> nlistList = new ArrayList<>((int) nsyms);
 		dataReader.setPointerIndex(header.getStartIndex() + symoff);
 		for (int i = 0; i < nsyms; ++i) {
 			nlistList.add(new NList(dataReader, header.is32bit()));
@@ -90,7 +90,7 @@ public class SymbolTableCommand extends LoadCommand {
 	 * The symbol table is an array of nlist data structures.
 	 * @return symbol table offset
 	 */
-	public int getSymbolOffset() {
+	public long getSymbolOffset() {
 		return symoff;
 	}
 
@@ -98,7 +98,7 @@ public class SymbolTableCommand extends LoadCommand {
 	 * An integer indicating the number of entries in the symbol table.
 	 * @return the number of entries in the symbol table
 	 */
-	public int getNumberOfSymbols() {
+	public long getNumberOfSymbols() {
 		return nsyms;
 	}
 
@@ -107,7 +107,7 @@ public class SymbolTableCommand extends LoadCommand {
 	 * location of the string table.
 	 * @return string table offset
 	 */
-	public int getStringTableOffset() {
+	public long getStringTableOffset() {
 		return stroff;
 	}
 
@@ -115,7 +115,7 @@ public class SymbolTableCommand extends LoadCommand {
 	 * An integer indicating the size (in bytes) of the string table.
 	 * @return string table size in bytes
 	 */
-	public int getStringTableSize() {
+	public long getStringTableSize() {
 		return strsize;
 	}
 
@@ -169,12 +169,12 @@ public class SymbolTableCommand extends LoadCommand {
 	}
 
 	@Override
-	public int getLinkerDataOffset() {
+	public long getLinkerDataOffset() {
 		return symoff;
 	}
 
 	@Override
-	public int getLinkerDataSize() {
+	public long getLinkerDataSize() {
 		return NList.getSize(symbols);
 	}
 

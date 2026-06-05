@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.decompiler.taint;
 import java.util.Map;
 import java.util.Set;
 
+import ghidra.app.plugin.core.decompiler.taint.TaintState.TaskType;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -56,8 +57,9 @@ public interface TaintService {
 	 * 
 	 * @param vmap tainted addresses
 	 * @param clear before setting
+	 * @param taskType operation to be performed
 	 */
-	public void setVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap, boolean clear);
+	public void setVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap, boolean clear, TaskType taskType);
 
 	/**
 	 * Clear existing taint

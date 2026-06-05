@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,14 +17,13 @@ package ghidra.app.merge.listing;
 
 import static org.junit.Assert.*;
 
-import java.util.List;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import ghidra.app.cmd.function.AddRegisterParameterCommand;
 import ghidra.program.database.*;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
@@ -1604,33 +1603,16 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		waitForMergeCompletion();
 
 		ExternalManager externalManager = resultProgram.getExternalManager();
-		List<ExternalLocation> externalLocations =
+		Set<ExternalLocation> externalLocations =
 			externalManager.getExternalLocations("user32.dll", "BETTY");
 		assertEquals(2, externalLocations.size());
-		assertHasDifferentAddresses(externalLocations, "1002239", "10063b4");
+		assertHasExtAddresses(externalLocations, "1002239", "10063b4");
 
-		List<ExternalLocation> externalLocations2 =
+		Set<ExternalLocation> externalLocations2 =
 			externalManager.getExternalLocations("user32.dll", "BARNEY");
 		assertEquals(2, externalLocations2.size());
-		assertHasDifferentAddresses(externalLocations2, "77db1020", "77db1130");
+		assertHasExtAddresses(externalLocations2, "77db1020", "77db1130");
 
-	}
-
-	private void assertHasDifferentAddresses(List<ExternalLocation> externalLocations,
-			String addrString1, String addrString2) {
-		Address addr1 = addr(resultProgram, addrString1);
-		Address addr2 = addr(resultProgram, addrString2);
-
-		Address extAddr1 = externalLocations.get(0).getAddress();
-		Address extAddr2 = externalLocations.get(1).getAddress();
-		if (addr1.equals(extAddr1) && addr2.equals(extAddr2)) {
-			return;
-		}
-		if (addr1.equals(extAddr2) && addr2.equals(extAddr1)) {
-			return;
-		}
-		fail("Expected addresses: " + addr1 + ", " + addr2 + " but got " + extAddr1 + ", " +
-			extAddr2);
 	}
 
 	@Test
@@ -1641,11 +1623,11 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function bettyFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "BETTY" }, addr(program, "1002239"));
+					createExternalFunction(program, new String[] { "user32.dll", "BETTY" },
+						addr(program, "1002239"));
 
-					Function barneyFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "BARNEY" }, addr(program, "77db1020"));
+					createExternalFunction(program, new String[] { "user32.dll", "BARNEY" },
+						addr(program, "77db1020"));
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
@@ -1655,11 +1637,11 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function bettyFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "BETTY" }, addr(program, "77db1020"));
+					createExternalFunction(program, new String[] { "user32.dll", "BETTY" },
+						addr(program, "77db1020"));
 
-					Function barneyFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "BARNEY" }, addr(program, "1002239"));
+					createExternalFunction(program, new String[] { "user32.dll", "BARNEY" },
+						addr(program, "1002239"));
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
@@ -1668,17 +1650,20 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		});
 
 		executeMerge(ASK_USER);
-		chooseButtonAndApply("Resolve External Add Conflict", LATEST_BUTTON);
-		chooseButtonAndApply("Resolve External Add Conflict", MY_BUTTON);
+		chooseButtonAndApply("Resolve External Add Conflict", LATEST_BUTTON); // BETTY has address conflict
+		chooseButtonAndApply("Resolve External Add Conflict", KEEP_BOTH_BUTTON); // BARNEY has address conflict
 
 		waitForMergeCompletion();
 
 		ExternalManager externalManager = resultProgram.getExternalManager();
-		List<ExternalLocation> externalLocations =
+		Set<ExternalLocation> externalLocations =
 			externalManager.getExternalLocations("user32.dll", "BARNEY");
 		assertEquals(2, externalLocations.size());
-		assertHasDifferentAddresses(externalLocations, "1002239", "77db1020");
+		assertHasExtAddresses(externalLocations, "1002239", "77db1020");
 
+		externalLocations = externalManager.getExternalLocations("user32.dll", "BETTY");
+		assertEquals(1, externalLocations.size());
+		assertHasExtAddresses(externalLocations, "01002239");
 	}
 
 	@Test

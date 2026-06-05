@@ -99,7 +99,8 @@
  class="advanced" href="B1-RemoteTargets.html">Remote Targets</a><a
  class="advanced" href="B2-Emulation.html">Emulation</a><a
  class="advanced" href="B3-Scripting.html">Scripting</a><a
- class="advanced" href="B4-Modeling.html">Modeling</a>
+ class="advanced" href="B4-Modeling.html">Modeling</a><a
+ class="advanced" href="B5-AddingDebuggers.html">Adding Debuggers</a>
 </header>
 <header id="title-block-header">
 <h1 class="title">Ghidra Debugger</h1>
@@ -189,8 +190,8 @@ of the target into the future, without allowing the actual target to
 execute. Instead, we will allow an emulator to step forward, while
 reading its initial state from the live target. This allows you, e.g.,
 to experiment with various patches, or to force execution down a certain
-path. If you devise a patch, you can then apply it the live target and
-allow it to execute for real. <em>Interpolation</em> is similar, but
+path. If you devise a patch, you can then apply it to the live target
+and allow it to execute for real. <em>Interpolation</em> is similar, but
 from a snapshot that is in the past. It can help answer the question,
 “How did I get here?” It is more limited, because missing state for
 snapshots in the past cannot be recovered.</p>
@@ -237,16 +238,16 @@ snapshot, Ghidra will read that variable from the live target, capture
 it, and provide its value to the emulator.</p>
 <section id="stepping-schedules" class="level3">
 <h3>Stepping Schedules</h3>
-<p>If you had not noticed before, the subtitle of the Threads window
-gives the current snapshot number. If you have stepped in the emulator,
-it will also contain the sequence of steps emulated. Recall the
-<em>time</em> element of the Debugger’s <em>coordinates</em>. (See the
-<a href="A5-Navigation.html">Navigation</a> module if you need a
+<p>If you had not noticed before, the trace tabs include the current
+snapshot number. If you have stepped in the emulator, it will also
+contain the sequence of steps emulated. Recall the <em>time</em> element
+of the Debugger’s <em>coordinates</em>. (See the <a
+href="A5-Navigation.html">Navigation</a> module if you need a
 refresher.) The time element, called the <em>schedule</em>, consists of
-both the current snapshot and the sequence of steps to emulate. The
-subtitle displays that schedule. If you have done any patching of the
-emulator’s state, you may notice some more complicated “steps” in the
-schedule. The syntax is:</p>
+both the current snapshot and the sequence of steps to emulate. The tab
+displays that schedule. If you have done any patching of the emulator’s
+state, you may notice some more complicated “steps” in the schedule. The
+syntax is:</p>
 <ul>
 <li><em>Schedule</em> → <em>Snapshot</em> [ <code>:</code> [
 <em>Step</em> ( <code>;</code> <em>Step</em> ) * ] [ <code>.</code>
@@ -494,13 +495,13 @@ parser may not actually <em>use</em> the value of
 <p>Use the Watches window to set <code>RDI</code> to 1, then click <img
 src="images/resume.png" alt="resume button" /> <strong>Resume</strong>.
 Like before, the emulator will crash, but this time you should see “pc =
-00000000” in red. This probably indicates success. In the Threads
-window, you should see a schedule similar to
-<code>0:t0-{RDI=0x1);t0-16</code>. This tells us we first patched RDI,
-then emulated 16 machine instructions before crashing. When the parser
-function returned, it probably read a stale 0 as the return address, so
-we would expect a decode error at <code>00000000</code>. Step backward
-once to confirm this hypothesis.</p>
+00000000” in red. This probably indicates success. In the trace tab, you
+should see a schedule similar to <code>0:t0-{RDI=0x1);t0-16</code>. This
+tells us we first patched RDI, then emulated 16 machine instructions
+before crashing. When the parser function returned, it probably read a
+stale 0 as the return address, so we would expect a decode error at
+<code>00000000</code>. Step backward once to confirm this
+hypothesis.</p>
 </section>
 <section id="stubbing-external-calls" class="level3">
 <h3>Stubbing External Calls</h3>
@@ -676,8 +677,7 @@ Invalidate Emulator Cache</strong>.</li>
 <strong>Resume</strong>.</li>
 </ol>
 <p>Stubbing any remaining external calls is left as an exercise. You are
-successful when the emulator crashes with
-<code>pc = 00000000</code>.</p>
+successful when the emulator crashes with “pc = 00000000”.</p>
 <p>Clear or disable your breakpoint and invalidate the emulator cache
 again before proceeding to the next technique.</p>
 </section>
@@ -718,7 +718,7 @@ write the Sleigh code to mimic a <code>RET</code>. As with the
 <code>CALL</code> override technique, you must now invalidate the
 emulator cache and resume. Stubbing any remaining external functions is
 left as an exercise. You are successful when the emulator crashes with
-<code>pc = 00000000</code>.</p>
+“pc = 00000000”.</p>
 </section>
 </section>
 <section id="wrapping-up" class="level3">
@@ -803,13 +803,13 @@ is ephemeral.</li>
 according to the assigned type.</li>
 </ul>
 <p>As you step, you may notice the schedule changes. It is displayed in
-the stepper’s subtitle as well as the Threads panel’s subtitle. P-code
-stepping is denoted by the portion of the schedule following the dot.
+the stepper’s subtitle as well as in the trace tab. P-code stepping is
+denoted by the portion of the schedule following the dot.
 <strong>NOTE</strong>: You cannot mix instruction steps with p-code op
-steps. The instruction steps always precede the p-code ops. If you click
-<strong>Step Into</strong> from the global toolbar in the middle of an
-instruction, the trailing p-code op steps will be removed and replaced
-with a single instruction step. In most cases, this intuitively
+steps. The instruction steps always precede the p-code op steps. If you
+click <strong>Step Into</strong> from the global toolbar in the middle
+of an instruction, the trailing p-code op steps will be removed and
+replaced with a single instruction step. In most cases, this intuitively
 “finishes” the partial instruction.</p>
 </section>
 </section>

@@ -20,17 +20,20 @@ import static org.junit.Assert.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 import org.junit.*;
 import org.junit.rules.TestName;
 
@@ -42,8 +45,11 @@ import docking.action.DockingActionIf;
 import docking.widgets.table.DynamicTableColumn;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import generic.Unique;
+import generic.jar.ResourceFile;
+import ghidra.GhidraTestApplicationLayout;
 import ghidra.app.nav.Navigatable;
-import ghidra.app.plugin.core.debug.gui.action.*;
+import ghidra.app.plugin.core.debug.gui.action.BasicAutoReadMemorySpec;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueObjectPropertyColumn;
 import ghidra.app.plugin.core.debug.service.target.DebuggerTargetServicePlugin;
@@ -51,11 +57,9 @@ import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerService
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.AsyncTestUtils;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.debug.api.action.LocationTrackingSpec;
-import ghidra.debug.api.action.LocationTrackingSpecFactory;
+import ghidra.debug.api.action.*;
 import ghidra.docking.settings.SettingsImpl;
+import ghidra.framework.Application;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramDB;
@@ -68,16 +72,102 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Trace;
-import ghidra.util.InvalidNameException;
-import ghidra.util.NumericUtilities;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
+import ghidra.util.*;
 import ghidra.util.datastruct.TestDataStructureErrorHandlerInstaller;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.ConsoleTaskMonitor;
+import utility.application.ApplicationLayout;
 
 public abstract class AbstractGhidraHeadedDebuggerTest
 		extends AbstractGhidraHeadedIntegrationTest implements AsyncTestUtils {
 
+	/**
+	 * Any test that uses staticall-initialized variables with any real complexity runs the risk of
+	 * invoking the logger before said logger has been initialized. The abstract test case is
+	 * responsible for initializing it, and it affords its subclasses the opportunity to override
+	 * things like the application layout and configuration. Thus, we cannot initialize the
+	 * application in the static initializer here. What will happen, then, is the logger will be
+	 * partially initialized, and the XML config files refer to system properties that will not have
+	 * been set yet. This manifests in strange files being created in the tests' working
+	 * directories, e.g., <code>${sys:logFilename}</code>.
+	 * 
+	 * <p>
+	 * A cheap hack to avoid this issue is to just initialize those system properties to some temp
+	 * file. Once the logging system is initialized, the variables will be overwritten by the
+	 * application config and the logger re- and fully-initialized. For what it's worth, the logging
+	 * config for the test case is going to be a file in a temp directory, anyway. As long as it's
+	 * cleaned up by the JVM or the OS, we should be happy. I just want to ensure they're not
+	 * showing up in git commits.
+	 * 
+	 * <p>
+	 * TODO: Should this hack be moved up into the super classes of the Ghidra Test framework?
+	 */
+	static {
+		try {
+			System.setProperty("logFilename",
+				Files.createTempFile("ghidraTest", ".log").toString());
+			System.setProperty("scriptLogFilename",
+				Files.createTempFile("ghidraTestScript", ".log").toString());
+		}
+		catch (IOException e) {
+			throw new AssertionError(e);
+		}
+	}
+
+	@Override
+	protected ApplicationLayout createApplicationLayout() throws IOException {
+		return new GhidraTestApplicationLayout(new File(getTestDirectoryPath())) {
+			@Override
+			protected Set<String> getDependentModulePatterns() {
+				Set<String> patterns = super.getDependentModulePatterns();
+				patterns.add("Debugger-agent");
+				return patterns;
+			}
+		};
+	}
+
 	public static final String LANGID_TOYBE64 = "Toy:BE:64:default";
+
+	public static void assertVersionMatchesApplication(String version) {
+		String applicationVersion = Application.getApplicationVersion();
+		List<String> partsExp = List.of(applicationVersion.split("\\."));
+		List<String> partsAct = List.of(version.split("\\."));
+		assertTrue("Version %s cannot be more specific than application version %s".formatted(
+			version, applicationVersion), partsExp.size() >= partsAct.size());
+		assertEquals("Version %s is not consistent with application version %s".formatted(version,
+			applicationVersion), partsAct, partsExp.subList(0, partsAct.size()));
+	}
+
+	public static List<String> readToml(String module) throws IOException {
+		ResourceFile toml = Application.getModuleFile(module, "src/main/py/pyproject.toml");
+		try (BufferedReader reader = new BufferedReader(new FileReader(toml.getFile(false)))) {
+			return reader.lines().toList();
+		}
+	}
+
+	private static String group(CharSequence seq, Pattern pat) {
+		Matcher matcher = pat.matcher(seq);
+		assertTrue(matcher.matches());
+		return matcher.group(1);
+	}
+
+	public static String parseVersionFromToml(List<String> toml) throws IOException {
+		Pattern versionEq = Pattern.compile("version = \"(.*)\"");
+		return Unique.assertOne(toml.stream()
+				.filter(versionEq.asMatchPredicate())
+				.map(l -> group(l, versionEq)));
+	}
+
+	public static String parseGhidraTraceDepFromToml(List<String> toml) throws IOException {
+		Pattern ghidraTraceDep = Pattern.compile("\\s+\"ghidratrace==(.*)\",?");
+		return Unique.assertOne(toml.stream()
+				.dropWhile(l -> !"dependencies = [".equals(l))
+				.takeWhile(l -> !"]".equals(l))
+				.filter(ghidraTraceDep.asMatchPredicate())
+				.map(l -> group(l, ghidraTraceDep)));
+	}
 
 	protected static byte[] arr(String hex) {
 		return NumericUtilities.convertStringToBytes(hex);
@@ -261,6 +351,25 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 				return false;
 			}
 		}, () -> lastError.get().getMessage());
+	}
+
+	public static void waitForPass(Object originator, Runnable runnable, long duration,
+			TimeUnit unit) {
+		long start = System.currentTimeMillis();
+		while (System.currentTimeMillis() - start < unit.toMillis(duration)) {
+			try {
+				waitForPass(runnable);
+				break;
+			}
+			catch (Throwable e) {
+				Msg.warn(originator, "Long wait: " + e);
+				try {
+					Thread.sleep(500);
+				}
+				catch (InterruptedException e1) {
+				}
+			}
+		}
 	}
 
 	public static <T> T waitForPass(Supplier<T> supplier) {
@@ -473,20 +582,29 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 	}
 
 	protected static void assertDisabled(ActionContextProvider provider, DockingActionIf action) {
-		ActionContext context = provider.getActionContext(null);
+		ActionContext context = createActionContext(provider);
 		assertFalse(action.isEnabledForContext(context));
 	}
 
 	protected static void assertEnabled(ActionContextProvider provider, DockingActionIf action) {
-		ActionContext context = provider.getActionContext(null);
+		ActionContext context = createActionContext(provider);
 		assertTrue(action.isEnabledForContext(context));
 	}
 
 	protected static void performEnabledAction(ActionContextProvider provider,
 			DockingActionIf action, boolean wait) {
 		ActionContext context = waitForValue(() -> {
-			ActionContext ctx =
-				provider == null ? new DefaultActionContext() : provider.getActionContext(null);
+
+			ActionContext ctx = null;
+			if (provider == null) {
+				ctx = new DefaultActionContext();
+			}
+			else {
+				ctx = provider.getActionContext(null);
+			}
+
+			ctx.setContextProvider(provider);
+
 			if (!action.isEnabledForContext(ctx)) {
 				return null;
 			}
@@ -534,15 +652,15 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 	}
 
 	protected static AutoReadMemorySpec getAutoReadMemorySpec(String name) {
-		return AutoReadMemorySpec.fromConfigName(name);
+		return AutoReadMemorySpecFactory.fromConfigName(name);
 	}
 
 	protected final AutoReadMemorySpec readNone =
-		getAutoReadMemorySpec(NoneAutoReadMemorySpec.CONFIG_NAME);
+		getAutoReadMemorySpec(BasicAutoReadMemorySpec.NONE.getConfigName());
 	protected final AutoReadMemorySpec readVisible =
-		getAutoReadMemorySpec(VisibleAutoReadMemorySpec.CONFIG_NAME);
+		getAutoReadMemorySpec(BasicAutoReadMemorySpec.VISIBLE.getConfigName());
 	protected final AutoReadMemorySpec readVisROOnce =
-		getAutoReadMemorySpec(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
+		getAutoReadMemorySpec(BasicAutoReadMemorySpec.VIS_RO_ONCE.getConfigName());
 
 	protected TestEnv env;
 	protected PluginTool tool;

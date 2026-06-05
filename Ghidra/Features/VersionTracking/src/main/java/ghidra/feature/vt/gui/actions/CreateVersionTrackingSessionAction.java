@@ -21,11 +21,11 @@ import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
-import docking.wizard.WizardManager;
+import docking.wizard.WizardDialog;
 import generic.theme.GIcon;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
-import ghidra.feature.vt.gui.wizard.VTNewSessionWizardManager;
+import ghidra.feature.vt.gui.wizard.session.VTNewSessionWizardModel;
 import ghidra.util.HelpLocation;
 
 public class CreateVersionTrackingSessionAction extends DockingAction {
@@ -58,10 +58,9 @@ public class CreateVersionTrackingSessionAction extends DockingAction {
 		if (!controller.closeVersionTrackingSession()) {
 			return; // user cancelled  during save dialog
 		}
-		VTNewSessionWizardManager vtWizardManager = new VTNewSessionWizardManager(controller);
-		WizardManager wizardManager =
-			new WizardManager("Version Tracking Wizard", true, vtWizardManager);
-		wizardManager.showWizard(controller.getParentComponent());
+		VTNewSessionWizardModel model = new VTNewSessionWizardModel(controller);
+		WizardDialog wizardDialog = new WizardDialog(model);
+		wizardDialog.show(controller.getParentComponent());
 	}
 
 }

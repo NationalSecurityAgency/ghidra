@@ -20,6 +20,7 @@
 
 #include "ruleaction.hh"
 #include "transform.hh"
+#include "unionresolve.hh"
 
 namespace ghidra {
 
@@ -114,7 +115,7 @@ class SubvariableFlow {
   void addTerminalPatch(PcodeOp *pullop,ReplaceVarnode *rvn);
   void addTerminalPatchSameOp(PcodeOp *pullop,ReplaceVarnode *rvn,int4 slot);
   void addBooleanPatch(PcodeOp *pullop,ReplaceVarnode *rvn,int4 slot);
-  void addSuggestedPatch(ReplaceVarnode *rvn,PcodeOp *pushop,int4 sa);
+  void addExtensionPatch(ReplaceVarnode *rvn,PcodeOp *pushop,int4 sa);
   void addComparePatch(ReplaceVarnode *in1,ReplaceVarnode *in2,PcodeOp *op);
   ReplaceVarnode *addConstant(ReplaceOp *rop,uintb mask,uint4 slot,Varnode *constvn);
   ReplaceVarnode *addNewConstant(ReplaceOp *rop,uint4 slot,uintb val);
@@ -277,13 +278,14 @@ class SplitDatatype {
     int4 baseOffset;			///< Offset of the LOAD or STORE relative to root pointer
     bool backUpPointer(Datatype *impliedBase);		///< Follow flow of \b pointer back thru INT_ADD or PTRSUB
   public:
-    bool find(PcodeOp *op,Datatype *valueType);	///< Locate root pointer for underlying LOAD or STORE
+    bool find(PcodeOp *op,Datatype *valueType,ResolveCache &resolver);	///< Locate root pointer for underlying LOAD or STORE
     void duplicateToTemp(Funcdata &data,PcodeOp *followOp);	///< COPY the root varnode into a temp register
     void freePointerChain(Funcdata &data);	///< Remove unused pointer calculations
   };
   Funcdata &data;			///< The containing function
   TypeFactory *types;			///< The data-type container
   vector<Component> dataTypePieces;	///< Sequence of all data-type pairs being copied
+  ResolveCache resolver;		///< Resolved data-types encountered
   bool splitStructures;			///< Whether or not structures should be split
   bool splitArrays;			///< Whether or not arrays should be split
   bool isLoadStore;			///< True if trying to split LOAD or STORE
@@ -348,6 +350,24 @@ public:
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleSplitStore(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+/// \brief Simplify join and break apart based on data-types
+///
+/// Simplify expressions like:
+///  - `sub( concat(V,W), 0)  =>  W`
+///  - `sub( concat(V,W), c)  =>  V`
+///
+/// preserving the data-types and removing the SUBPIECE and PIECE operations that are discarded.
+class RuleDumptyHumpLate : public Rule {
+public:
+  RuleDumptyHumpLate(const string &g) : Rule( g, 0, "dumptyhumplate") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleDumptyHumpLate(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);

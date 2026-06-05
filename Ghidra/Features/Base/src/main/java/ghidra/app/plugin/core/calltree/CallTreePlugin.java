@@ -20,6 +20,7 @@ import java.util.*;
 import javax.swing.Icon;
 
 import docking.ActionContext;
+import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import ghidra.app.CorePluginPackage;
@@ -203,6 +204,11 @@ public class CallTreePlugin extends ProgramPlugin {
 				Set<Function> functions = functionContext.getFunctions();
 				return CollectionUtils.any(functions);
 			}
+		}
+
+		ComponentProvider provider = context.getComponentProvider();
+		if (!(provider instanceof CallTreeProvider)) {
+			return null; // only use the current location when in our provider
 		}
 
 		return getFunction(currentLocation);

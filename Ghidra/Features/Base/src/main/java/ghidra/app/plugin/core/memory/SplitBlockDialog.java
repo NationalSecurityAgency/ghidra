@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,9 @@ import docking.widgets.label.GLabel;
 import ghidra.app.plugin.core.misc.RegisterField;
 import ghidra.app.util.AddressInput;
 import ghidra.app.util.HelpTopics;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.HelpLocation;
@@ -50,16 +52,14 @@ class SplitBlockDialog extends DialogComponentProvider {
 	private JTextField blockTwoEndField;
 	private RegisterField blockTwoLengthField;
 	private MemoryBlock block;
-	private AddressFactory addrFactory;
 	private MemoryMapPlugin plugin;
 
-	SplitBlockDialog(MemoryMapPlugin plugin, MemoryBlock block, AddressFactory af) {
+	SplitBlockDialog(MemoryMapPlugin plugin, MemoryBlock block, Program program) {
 		super("Split Block");
 		this.plugin = plugin;
 		this.block = block;
-		addrFactory = af;
 		setHelpLocation(new HelpLocation(HelpTopics.MEMORY_MAP, "Split Block"));
-		addWorkPanel(create());
+		addWorkPanel(create(program));
 		addOKButton();
 		addCancelButton();
 		setOkEnabled(false);
@@ -89,8 +89,8 @@ class SplitBlockDialog extends DialogComponentProvider {
 	 * Create the work panel.
 	 * @return JPanel
 	 */
-	private JPanel create() {
-		JPanel panelOne = new JPanel(new PairLayout(5, 5, 150));
+	private JPanel create(Program program) {
+		JPanel panelOne = new JPanel(new PairLayout(5, 10, 150));
 		panelOne.setBorder(BorderFactory.createTitledBorder("Block to Split"));
 		blockOneNameField = new JTextField(10);
 		blockOneNameField.setName("BlockOneName");
@@ -99,7 +99,7 @@ class SplitBlockDialog extends DialogComponentProvider {
 		blockOneStartField.setName("BlockOneStart");
 		blockOneStartField.getAccessibleContext().setAccessibleName("Address of Block To Split");
 
-		blockOneEnd = new AddressInput();
+		blockOneEnd = new AddressInput(program, this::blockOneEndChanged);
 		blockOneEnd.setName("BlockOneEnd");
 		blockOneEnd.setAccessibleName("New Block End Adddress");
 
@@ -121,7 +121,7 @@ class SplitBlockDialog extends DialogComponentProvider {
 		blockTwoNameField = new JTextField(10);
 		blockTwoNameField.setName("BlockTwoName");
 		blockTwoNameField.getAccessibleContext().setAccessibleName("Name of New Block");
-		blockTwoStart = new AddressInput();
+		blockTwoStart = new AddressInput(program, this::blockTwoStartChanged);
 		blockTwoStart.setName("BlockTwoStart");
 		blockTwoStart.setAccessibleName("New Block Start Address");
 		blockTwoEndField = new JTextField(10);
@@ -141,11 +141,11 @@ class SplitBlockDialog extends DialogComponentProvider {
 		panelTwo.add(blockTwoLengthField);
 
 		JPanel mainPanel = new JPanel();
+		mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 		BoxLayout bl = new BoxLayout(mainPanel, BoxLayout.Y_AXIS);
 		mainPanel.setLayout(bl);
-		mainPanel.add(Box.createVerticalStrut(5));
 		mainPanel.add(panelOne);
-		mainPanel.add(Box.createVerticalStrut(10));
+		mainPanel.add(Box.createVerticalStrut(20));
 		mainPanel.add(panelTwo);
 
 		return mainPanel;
@@ -166,7 +166,6 @@ class SplitBlockDialog extends DialogComponentProvider {
 		blockOneStartField.setText(startAddr.toString());
 		blockOneStartField.setEnabled(false);
 
-		blockOneEnd.setAddressFactory(addrFactory);
 		blockOneEnd.setAddress(endAddr);
 		blockOneEnd.setAddressSpaceEditable(false);
 
@@ -174,7 +173,6 @@ class SplitBlockDialog extends DialogComponentProvider {
 
 		blockTwoNameField.setText(name + ".split");
 
-		blockTwoStart.setAddressFactory(addrFactory);
 		blockTwoStart.setAddress(startAddr);
 		blockTwoStart.setAddressSpaceEditable(false);
 
@@ -189,8 +187,6 @@ class SplitBlockDialog extends DialogComponentProvider {
 
 		blockOneLengthField.setChangeListener(new LengthChangeListener(blockOneLengthField));
 		blockTwoLengthField.setChangeListener(new LengthChangeListener(blockTwoLengthField));
-		blockOneEnd.addChangeListener(new AddressChangeListener(blockOneEnd));
-		blockTwoStart.addChangeListener(new AddressChangeListener(blockTwoStart));
 
 		ActionListener al = e -> setStatusText("");
 		blockOneLengthField.addActionListener(al);
@@ -307,135 +303,101 @@ class SplitBlockDialog extends DialogComponentProvider {
 		}
 	}
 
-	/**
-	 * Listener on the AddressInput fields; update other fields when either
-	 * of these fields change.
-	 */
-	private class AddressChangeListener implements ChangeListener {
+	private void blockOneEndChanged(Address end) {
+		setStatusText("");
+		boolean isValid = checkBlockOneEndAddress(end);
+		setOkEnabled(isValid);
+	}
 
-		AddressInput source;
+	private void blockTwoStartChanged(Address start) {
+		setStatusText("");
+		boolean isValid = checkBlockTwoStartChanged(start);
+		setOkEnabled(isValid);
+	}
 
-		public AddressChangeListener(AddressInput source) {
-			this.source = source;
+	private boolean checkBlockOneEndAddress(Address end) {
+
+		if (end == null) {
+			setStatusText("Invalid Address");
+			return false;
 		}
 
-		@Override
-		public void stateChanged(ChangeEvent event) {
-			setStatusText("");
-			boolean ok = false;
-			if (source == blockOneEnd) {
-				ok = blockOneEndChanged();
-			}
-			else if (source == blockTwoStart) {
-				ok = blockTwoStartChanged();
-			}
-			setOkEnabled(ok);
+		Address start = block.getStart();
+
+		if (end.compareTo(start) < 0) {
+			setStatusText("End address must be greater than start");
+			return false;
 		}
-
-		private Address getAddress() throws InvalidInputException {
-
-			AddressInput field = source;
-			Address addr = field.getAddress();
-			if (addr == null && field.hasInput()) {
-				throw new InvalidInputException();
-			}
-			return addr;
+		if (end.compareTo(block.getEnd()) == 0) {
+			return false;
 		}
-
-		private boolean blockOneEndChanged() {
-			Address start = block.getStart();
-			Address end = null;
-			try {
-				end = getAddress();
-			}
-			catch (InvalidInputException e) {
-				setStatusText("Invalid Address");
-				return false;
-			}
-
-			if (end == null) {
-				return false;
-			}
-			if (end.compareTo(start) < 0) {
-				setStatusText("End address must be greater than start");
-				return false;
-			}
-			if (end.compareTo(block.getEnd()) == 0) {
-				return false;
-			}
-			// change block One length and blockTwoStart, blockTwoLength
-			long length = 0;
-			try {
-				length = end.subtract(start) + 1;
-			}
-			catch (IllegalArgumentException e) {
-				setStatusText(e.getMessage());
-				return false;
-			}
-			long blockSize = block.getSize();
-			if (length > blockSize) {
-				setStatusText(
-					"End address must be less than original block end (" + block.getEnd() + ")");
-				return false;
-			}
-			blockOneLengthField.setValue(Long.valueOf(length));
-
-			try {
-				Address b2Start = end.addNoWrap(1);
-				blockTwoStart.setAddress(b2Start);
-				length = block.getEnd().subtract(b2Start) + 1;
-				blockTwoLengthField.setValue(Long.valueOf(length));
-			}
-			catch (Exception e) {
-				if (e instanceof AddressOverflowException) {
-					setStatusText("Could not create new start address");
-				}
-				return false;
-			}
-			return true;
+		// change block One length and blockTwoStart, blockTwoLength
+		long length = 0;
+		try {
+			length = end.subtract(start) + 1;
 		}
+		catch (IllegalArgumentException e) {
+			setStatusText(e.getMessage());
+			return false;
+		}
+		long blockSize = block.getSize();
+		if (length > blockSize) {
+			setStatusText(
+				"End address must be less than original block end (" + block.getEnd() + ")");
+			return false;
+		}
+		blockOneLengthField.setValue(Long.valueOf(length));
 
-		private boolean blockTwoStartChanged() {
-			Address start = null;
-			try {
-				start = getAddress();
-			}
-			catch (InvalidInputException e) {
-				setStatusText("Invalid Address");
-				return false;
-			}
-			Address end = block.getEnd();
-			if (start == null) {
-				return false;
-			}
-			else if (start.compareTo(end) > 0) {
-				setStatusText("Start address must not be greater than end");
-				return false;
-			}
-			else if (start.compareTo(block.getStart()) <= 0) {
-				setStatusText("Start address must be greater than original block start (" +
-					block.getStart() + ")");
-				return false;
-			}
-
-			// change block Two length, blockOneEnd, block One length
-			long length = end.subtract(start) + 1;
+		try {
+			Address b2Start = end.addNoWrap(1);
+			blockTwoStart.setAddress(b2Start);
+			length = block.getEnd().subtract(b2Start) + 1;
 			blockTwoLengthField.setValue(Long.valueOf(length));
-			try {
-				Address b1End = start.subtractNoWrap(1);
-				blockOneEnd.setAddress(b1End);
-				length = b1End.subtract(block.getStart()) + 1;
-				blockOneLengthField.setValue(Long.valueOf(length));
-			}
-			catch (Exception e) {
-				if (e instanceof AddressOverflowException) {
-					setStatusText("Could not create end address for split block");
-				}
-				return false;
-			}
-			return true;
 		}
+		catch (Exception e) {
+			if (e instanceof AddressOverflowException) {
+				setStatusText("Could not create new start address");
+			}
+			return false;
+		}
+		return true;
 
 	}
 
+	private boolean checkBlockTwoStartChanged(Address start) {
+		if (start == null) {
+			setStatusText("Invalid Address");
+			return false;
+		}
+		Address end = block.getEnd();
+		if (start == null) {
+			return false;
+		}
+		else if (start.compareTo(end) > 0) {
+			setStatusText("Start address must not be greater than end");
+			return false;
+		}
+		else if (start.compareTo(block.getStart()) <= 0) {
+			setStatusText("Start address must be greater than original block start (" +
+				block.getStart() + ")");
+			return false;
+		}
+
+		// change block Two length, blockOneEnd, block One length
+		long length = end.subtract(start) + 1;
+		blockTwoLengthField.setValue(Long.valueOf(length));
+		try {
+			Address b1End = start.subtractNoWrap(1);
+			blockOneEnd.setAddress(b1End);
+			length = b1End.subtract(block.getStart()) + 1;
+			blockOneLengthField.setValue(Long.valueOf(length));
+		}
+		catch (Exception e) {
+			if (e instanceof AddressOverflowException) {
+				setStatusText("Could not create end address for split block");
+			}
+			return false;
+		}
+		return true;
+	}
 }

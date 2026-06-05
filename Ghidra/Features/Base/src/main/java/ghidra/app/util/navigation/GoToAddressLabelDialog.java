@@ -55,11 +55,11 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 	private static final String FILE_OFFSET_ANCHOR_NAME = "GoTo_File_Offset";
 	private static final int DEFAULT_MAX_GOTO_ENTRIES = 10;
 
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 	//                                                                  //
 	// Instance fields                                                  //
 	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 
 	private Plugin plugin;
 	private JPanel mainPanel;
@@ -79,11 +79,11 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 
 	private JCheckBox includeDynamicBox;
 
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 	//                                                                  //
 	// Constructor                                                      //
 	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 
 	public GoToAddressLabelDialog(GoToService gotoService, Plugin plugin) {
 		super(DIALOG_TITLE, true, true, true, true);
@@ -199,7 +199,7 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 
 		comboBox = new GhidraComboBox<>();
 		comboBox.setEditable(true);
-		comboBox.addActionListener(evt -> okCallback());
+
 		String comboName = "Go To Address or Label Text Field / Combobox";
 		comboBox.setName(comboName);
 		comboBox.getAccessibleContext().setAccessibleName(comboName);
@@ -243,9 +243,9 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 	private void readHistory(SaveState saveState) {
 		String[] strs = saveState.getStrings("GO_TO_HISTORY", null);
 		if (strs != null) {
-			for (int i = 0; i < strs.length; i++) {
-				if (!history.contains(strs[i])) {
-					history.add(strs[i]);
+			for (String str : strs) {
+				if (!history.contains(str)) {
+					history.add(str);
 				}
 			}
 			truncateHistoryAsNeeded();
@@ -268,11 +268,11 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		saveState.putBoolean("INCLUDE_DYNAMIC", includeDynamicBox.isSelected());
 	}
 
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 	//                                                                  //
 	// Overridden GhidraDialog methods                                  //
 	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 
 	@Override
 	public final void okCallback() {
@@ -325,7 +325,7 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		}
 	}
 
-	//////////////////////////////////////////////////////////////////////
+	//-------------------------------------------------------------------------------------
 
 	public void maxEntrysChanged() {
 		truncateHistoryAsNeeded();
@@ -347,7 +347,7 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		}
 	}
 
-	//////////////////////////////////////////////////////////////////////
+	//-------------------------------------------------------------------------------------
 
 	private void addToHistory(String input) {
 		history.remove(input);

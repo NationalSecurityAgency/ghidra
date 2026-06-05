@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,9 +41,10 @@ public interface TraceMemorySpace extends TraceMemoryOperations {
 	 * Get the code space for this memory space
 	 * 
 	 * <p>
-	 * This is a convenience for {@link TraceCodeManager#getCodeSpace(AddressSpace, boolean) on this
-	 * same address space.
+	 * This is a convenience for {@link TraceCodeManager#getCodeSpace(AddressSpace, boolean)} on
+	 * this same address space.
 	 * 
+	 * @param createIfAbsent true to create the space if it's not already present
 	 * @return the code space
 	 */
 	TraceCodeSpace getCodeSpace(boolean createIfAbsent);

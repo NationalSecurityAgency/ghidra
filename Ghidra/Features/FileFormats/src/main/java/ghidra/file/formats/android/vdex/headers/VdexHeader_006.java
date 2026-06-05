@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,6 +52,7 @@ public class VdexHeader_006 extends VdexHeader {
 		dex_checksums_ = reader.readNextIntArray(number_of_dex_files_);
 	}
 
+	@Override
 	public void parse(BinaryReader reader, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		monitor.setMessage("Parsing DEX files inside VDEX (oreo)...");
@@ -69,12 +70,16 @@ public class VdexHeader_006 extends VdexHeader {
 			dexHeaderList.add(DexHeaderFactory.getDexHeader(tmpReader));
 			tmpReader.setPointerIndex(0);
 			int length = DexHeaderQuickMethods.getDexLength(tmpReader);
+			if (length <= 0) {
+				throw new IOException("Bad Dex length: " + length);
+			}
 			dexHeaderStartsList.add(index);
 			reader.setPointerIndex(index + length);
 		}
 		//stringTable = new VdexStringTable( reader );
 	}
 
+	@Override
 	public String getVersion() {
 		return version_;
 	}

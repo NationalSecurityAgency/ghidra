@@ -27,6 +27,7 @@ import ghidra.pcode.exec.DebuggerPcodeUtils.PrettyBytes;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
 import ghidra.pcode.exec.ValueLocation;
 import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
@@ -35,8 +36,7 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceCodeUnit;
-import ghidra.trace.model.memory.*;
-import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
@@ -366,17 +366,9 @@ public interface VariableValueRow {
 	 * @param snap the snapshot key
 	 * @return the composite state
 	 */
-	static TraceMemoryState computeState(Trace trace, TraceAddressSpace space, AddressRange range,
+	static TraceMemoryState computeState(Trace trace, AddressSpace space, AddressRange range,
 			long snap) {
-		TraceMemoryManager mem = trace.getMemoryManager();
-		TraceMemoryOperations ops;
-		if (space != null && space.getAddressSpace().isRegisterSpace()) {
-			ops = mem.getMemoryRegisterSpace(space.getThread(), space.getFrameLevel(), false);
-		}
-		else {
-			ops = mem;
-		}
-		return ops != null && ops.isKnown(snap, range)
+		return trace.getMemoryManager().isKnown(snap, range)
 				? TraceMemoryState.KNOWN
 				: TraceMemoryState.UNKNOWN;
 	}
@@ -387,10 +379,11 @@ public interface VariableValueRow {
 	 * @param unit the code unit
 	 * @param snap the snapshot key
 	 * @return the composite state.
-	 * @see #computeState(Trace, TraceAddressSpace, AddressRange, long)
+	 * @see #computeState(Trace, AddressSpace, AddressRange, long)
 	 */
 	static TraceMemoryState computeState(TraceCodeUnit unit, long snap) {
-		return computeState(unit.getTrace(), unit.getTraceSpace(), unit.getRange(), snap);
+		return computeState(unit.getTrace(), unit.getAddress().getAddressSpace(), unit.getRange(),
+			snap);
 	}
 
 	/**

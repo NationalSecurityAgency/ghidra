@@ -4,7 +4,7 @@
 <title>Decompiler Window</title>
 <link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="../../shared/languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="Decompiler.html" title="Decompiler">
 <link rel="up" href="Decompiler.html" title="Decompiler">
 <link rel="prev" href="DecompilerOptions.html" title="Decompiler Options">
@@ -101,7 +101,7 @@
     tokens (see <a class="xref" href="DecompilerWindow.html#MouseActions" title="Mouse Actions">Mouse Actions</a>).
   </p>
 
-  <div class="sect2">
+  	<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="CrossHighlighting"></a>Cross-Highlighting</h3></div></div></div>
     
@@ -147,6 +147,23 @@
 
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="LockDisplay"></a>Disabling Auto Refresh</h2></div></div></div>
+  
+  <p>
+  	For very large functions, the decompile window can take a significant amount of time to re-decompile
+  	and update the display as changes are made to the program. This makes using some actions
+  	frustrating, such as renaming or retyping variables. 
+  </p>
+  <p>
+  	As a work around, you may use the lock toggle action 
+  	<img src="images/lock.gif" width="16" height="16">. When selected, this action will prevent
+  	the decompiler from auto refreshing for each change. This may make the display appear to be
+  	broken since any changes will not appear to take effect until the display is manually refreshed.
+	</p>
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="Snapshot"></a>Snapshot Windows</h2></div></div></div>
   
   <p>
@@ -187,6 +204,14 @@
     Double-clicking on specific tokens within the Snapshot window may also cause it to navigate
     to a new location (see <a class="xref" href="DecompilerWindow.html#MouseDouble" title="Double-Click">Double-Click</a>).
   </p>
+  <a name="EventsOut"></a>
+  <p>
+  	Normally, snapshot windows are completely disconnected from the location and selection 
+  	events that synchronize the main components in the tool. To allow the snapshot window
+  	to export its location and selection, select the 
+  	<img src="images/locationOut.gif" width="16" height="16"> toolbar action.
+  </p>
+  	
 </div>
 
 <div class="section">
@@ -536,7 +561,6 @@
     token, within the Decompiler window.   There are actions available from the popup menu and from
     the keyboard to navigate to each highlighted token.
   </p>
-
 </div>
 
 </div>
@@ -553,7 +577,7 @@
     variable or operation affected.
   </p>
   <p>
-    Many of the actions have have a key binding, which, if it exists, will be listed in the pop-up menu.
+    Many of the actions have a key binding, which, if it exists, will be listed in the pop-up menu.
     If the key binding is used to activate the action, local context is determined by the current cursor
     position.  Key bindings can be reassigned from the
     <a class="ulink" href="help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option" target="_top">Key Bindings</a>
@@ -965,10 +989,10 @@
 <a name="GoToMiddleMouseHighlight"></a>Go To Next/Previous Highlight</h3></div></div></div>
   
   <p>
-  	These actions are available from the popup menu and keyboard.   Only tokens highlighted from the
-    middle-mouse will be navigated.   <span class="bold"><strong>Shift-Comma</strong></span> will 
-    go to the previous highlighted token.    <span class="bold"><strong>Shift-Period</strong></span>
-    will go to the next highlighted token.   These key bindings can be changed via the
+    These actions are available from the popup menu and keyboard.   Only tokens highlighted from the
+    middle-mouse will be navigated.  <span class="bold"><strong>Shift-Comma</strong></span> will go to the 
+    previous highlighted token.   <span class="bold"><strong>Shift-Period</strong></span> will go to the
+    next highlighted token.   These key bindings can be changed via the
     <a class="ulink" href="help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option" target="_top">Tool Options Dialog</a>.
   </p>
 </div>
@@ -1134,9 +1158,9 @@
     Edit the overriding function prototype applied previously to the called function under the cursor.
   </p>
   <p>
-  	This action can only be triggered at call sites with an existing signature override. As with the Override 
-  	Signature command, users must select either the token representing the called function's name or the 
-  	tokens representing the function pointer at the call site. The action brings up a dialog where the user 
+	This action can only be triggered at call sites with an existing signature override. As with the Override 
+	Signature command, users must select either the token representing the called function's name or the 
+	tokens representing the function pointer at the call site. The action brings up a dialog where the user 
   	can edit the current overriding function prototype. 
   </p>
 </div>

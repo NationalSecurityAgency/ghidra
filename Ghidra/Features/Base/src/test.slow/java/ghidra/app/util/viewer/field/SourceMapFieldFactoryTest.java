@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -179,20 +179,32 @@ public class SourceMapFieldFactoryTest extends AbstractGhidraHeadedIntegrationTe
 		try {
 			sourceManager.addSourceMapEntry(source1, 1, entryPoint, 1);
 			sourceManager.addSourceMapEntry(source2, 2, entryPoint, 1);
+			sourceManager.addSourceMapEntry(source2, 22, entryPoint, 1);
 		}
 		finally {
 			program.endTransaction(txID, true);
 		}
 		ListingTextField textField = getTextField(entryPoint);
-		assertEquals(2, textField.getNumRows());
+		assertEquals(3, textField.getNumRows());
 
-		SwingUtilities.invokeAndWait(() -> fieldOptions
+		runSwing(() -> fieldOptions
+				.setInt(SourceMapFieldFactory.MAX_ENTRIES_PER_ADDRESS_OPTION_NAME, 2));
+		waitForSwing();
+		cb.updateNow();
+
+		textField = getTextField(entryPoint);
+		assertEquals(3, textField.getNumRows());
+		assertTrue(textField.getText().contains("-- 1 entry omitted --"));
+
+		runSwing(() -> fieldOptions
 				.setInt(SourceMapFieldFactory.MAX_ENTRIES_PER_ADDRESS_OPTION_NAME, 1));
 		waitForSwing();
 		cb.updateNow();
 
 		textField = getTextField(entryPoint);
-		assertEquals(1, textField.getNumRows());
+		assertEquals(2, textField.getNumRows());
+		assertTrue(textField.getText().contains("-- 2 entries omitted --"));
+
 	}
 
 	@Test

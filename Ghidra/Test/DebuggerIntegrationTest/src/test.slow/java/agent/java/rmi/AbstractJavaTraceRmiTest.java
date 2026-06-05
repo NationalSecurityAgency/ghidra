@@ -35,7 +35,6 @@ import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiPlugin;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.app.plugin.core.misc.RecoverySnapshotMgrPlugin;
 import ghidra.app.services.TraceRmiService;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.debug.api.tracermi.*;
 import ghidra.framework.Application;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
@@ -48,6 +47,7 @@ import ghidra.program.model.address.Address;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.PathFilter;
 import ghidra.util.Msg;
 import junit.framework.AssertionFailedError;
 
@@ -89,6 +89,9 @@ public abstract class AbstractJavaTraceRmiTest extends AbstractGhidraHeadedDebug
 	protected static final int QUIT_TIMEOUT_MS = 1000;
 	protected static final long EXT_TIMEOUT_MS = 5000;
 	protected static final long EXT_RETRY_MS = 500;
+
+	/** Some snapshot likely to exceed the latest */
+	protected static final long SNAP = 100;
 
 	protected TraceRmiService traceRmi;
 	private Path jshellPath;
@@ -515,7 +518,7 @@ public abstract class AbstractJavaTraceRmiTest extends AbstractGhidraHeadedDebug
 
 	protected List<TraceObjectValue> getValues(String path) {
 		return tb.trace.getObjectManager()
-				.getValuePaths(Lifespan.at(getMaxSnap()), PathPredicates.parse(path))
+				.getValuePaths(Lifespan.at(getMaxSnap()), PathFilter.parse(path))
 				.map(p -> p.getLastEntry())
 				.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 				.toList();
@@ -550,7 +553,7 @@ public abstract class AbstractJavaTraceRmiTest extends AbstractGhidraHeadedDebug
 	public static void assertMatches(String expectedPattern, TraceObject object) {
 		assertTrue("Expected matches " + expectedPattern + " but was " +
 			object.getCanonicalPath().toString(),
-			PathPredicates.parse(expectedPattern).matches(object.getCanonicalPath().getKeyList()));
+			PathFilter.parse(expectedPattern).matches(object.getCanonicalPath()));
 	}
 
 	protected void waitForLocation(String clsName, String methodName, long codeIndex) {

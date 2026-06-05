@@ -32,8 +32,8 @@ import java.lang.annotation.Target;
  * <p>
  * Supported java primitive types:
  * <ul>
- * 	<li>long, int, short, byte
- * 	<li>char
+ * 	<li>long, int, short, byte</li>
+ * 	<li>char</li>
  * </ul>
  * 
  */

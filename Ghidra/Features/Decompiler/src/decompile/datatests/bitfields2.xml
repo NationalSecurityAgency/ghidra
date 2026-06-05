@@ -1,0 +1,148 @@
+<decompilertest>
+<binaryimage arch="MIPS:BE:32:default:default">
+  <bytechunk space="ram" offset="0x100000" readonly="true">
+    0005110028a3000a3442000400431025
+    a082000024a5001430a5001f000529c0
+    94820008000000003042f00000451025
+    3442006403e00008a482000800000000
+  </bytechunk>
+  <bytechunk space="ram" offset="0x100100" readonly="true">
+    2402000110a2000f2402000210a20012
+    00000000808200000000000028420030
+    14400015000000008082000000000000
+    30420001144000150000000003e00008
+    240203e8808200000000000000021042
+    03e00008304200078483000800000000
+    000311c23042001f00031b0230630003
+    03e00008004310218482000800000000
+    0002130203e000083042000303e00008
+    24020064
+  </bytechunk>
+  <bytechunk space="ram" offset="0x100200" readonly="true">
+    27bdffd0afbf002c2483000100031900
+    93a200182884000a3042000e00431025
+    0044102530a50007000528402403fff1
+    0043102400451025a3a2001897a20020
+    000000003042c00030c6007f34421500
+    00461025a7a2002027a400180c100000
+    000000008fbf002c0000000003e00008
+    27bd0030
+  </bytechunk>
+  <bytechunk space="ram" offset="0x100300" readonly="true">
+    27bdffd0afbf002c27a400180c100000
+    0000000083a200180000000030420001
+    1040000e0000000083a2001800000000
+    000210423042000787a3002000000000
+    000319c23063001f004310218fbf002c
+    0000000003e0000827bd003083a20018
+    00000000044000040000000087a20020
+    1000fff63042007f87a2002000000000
+    000213021000fff13042000300000000
+  </bytechunk>
+  <bytechunk space="ram" offset="0x100400" readonly="true">
+    90820000000000003045000e2403000a
+    10a30015240300d0304200f010430014
+    00000000808200000000000030420001
+    1440001124030d809482000800000000
+    30440f801083000e304330001060000e
+    240300423042007f1043000d00000000
+    03e000082402000603e0000824020001
+    03e000082402000203e0000824020003
+    03e000082402000403e0000824020005
+    03e0000824020007
+  </bytechunk>
+  <bytechunk space="ram" offset="0x100500" readonly="true">
+    27bdffd0afbf002c27a400180c100000
+    0000000083a2001800000000304200fe
+    240300ba1043000b2403002187a20020
+    000000003042307f1043000224020003
+    240200028fbf002c0000000003e00008
+    27bd00301000fffb2402000100000000
+  </bytechunk>
+  <bytechunk space="ram" offset="0x100600" readonly="true">
+    8082000000000000000211038c830004
+    03e0000800431021
+  </bytechunk>
+  <bytechunk space="ram" offset="0x100700" readonly="true">
+    8482000800000000000211c224420001
+    3042001f000211c09483000800000000
+    3063f07f0062102503e00008a4820008
+  </bytechunk>
+<symbol space="ram" offset="0x100000" name="dosomething"/>
+<symbol space="ram" offset="0x100100" name="doload"/>
+<symbol space="ram" offset="0x100200" name="dostackinsert"/>
+<symbol space="ram" offset="0x100300" name="dostackextract"/>
+<symbol space="ram" offset="0x100400" name="docompare"/>
+<symbol space="ram" offset="0x100500" name="doublecompare"/>
+<symbol space="ram" offset="0x100600" name="addsigned"/>
+<symbol space="ram" offset="0x100700" name="increment"/>
+</binaryimage>
+<script>
+  <com>map fun r0x400000 receive</com>
+  <com>parse line struct myfoo { bool fieldb:1; uint4 field3:3; int4 sfield4:4; char a; char b; char c; int4 d; uint4 field7:7; uint4 field5:5; uint4 field2:2;  };</com>
+  <com>parse line extern void receive(myfoo *ptr);</com>
+  <com>parse line extern void dosomething(myfoo *ptr,int4 val);</com>
+  <com>parse line extern int4 doload(myfoo *lp,int4 lval);</com>
+  <com>parse line extern void dostackinsert(int4 stki_a,uint4 stki_b,uint4 stki_c);</com>
+  <com>parse line extern int4 docompare(myfoo *ptrcomp);</com>
+  <com>parse line extern int4 addsigned(myfoo *ap);</com>
+  <com>parse line extern int4 addsigned(myfoo *ap);</com>
+  <com>parse line extern void increment(myfoo *ip);</com>
+  <com>lo fu dosomething</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu doload</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu dostackinsert</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu dostackextract</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu docompare</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu doublecompare</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu addsigned</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu increment</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="MIPS Bitfields #1" min="1" max="1">ptr-&gt;field3 = 2;</stringmatch>
+<stringmatch name="MIPS Bitfields #2" min="1" max="1">ptr-&gt;sfield4 = val;</stringmatch>
+<stringmatch name="MIPS Bitfields #3" min="1" max="1">ptr-&gt;fieldb = val &lt; 10;</stringmatch>
+<stringmatch name="MIPS Bitfields #4" min="1" max="1">ptr-&gt;field5 = val \+ 0x14;</stringmatch>
+<stringmatch name="MIPS Bitfields #5" min="1" max="1">ptr-&gt;field7 = 100;</stringmatch>
+<stringmatch name="MIPS Bitfields #6" min="1" max="1">return lp-&gt;field3;</stringmatch>
+<stringmatch name="MIPS Bitfields #7" min="1" max="1">return lp-&gt;field5 \+ lp-&gt;field2;</stringmatch>
+<stringmatch name="MIPS Bitfields #8" min="1" max="1">if \(lp-&gt;sfield4 &lt; .*3.*\)</stringmatch>
+<stringmatch name="MIPS Bitfields #9" min="1" max="1">return lp-&gt;field2;</stringmatch>
+<stringmatch name="MIPS Bitfields #10" min="1" max="1">if \(!+lp-&gt;fieldb\)</stringmatch>
+<stringmatch name="MIPS Bitfields #11" min="1" max="1">mStack_18\.sfield4 = \(char\)stki_a \+ .*1.*;</stringmatch>
+<stringmatch name="MIPS Bitfields #12" min="1" max="1">mStack_18\.field3 = stki_b;</stringmatch>
+<stringmatch name="MIPS Bitfields #13" min="1" max="1">mStack_18\.fieldb = stki_a &lt; 10;</stringmatch>
+<stringmatch name="MIPS Bitfields #14" min="1" max="1">mStack_18\.field2 = 1;</stringmatch>
+<stringmatch name="MIPS Bitfields #15" min="1" max="1">mStack_18\.field5 = 10;</stringmatch>
+<stringmatch name="MIPS Bitfields #16" min="1" max="1">mStack_18\.field7 = stki_c;</stringmatch>
+<stringmatch name="MIPS Bitfields #17" min="1" max="1">if \(mStack_18\.fieldb\)</stringmatch>
+<stringmatch name="MIPS Bitfields #18" min="1" max="1">uVar1 = mStack_18\.field3 \+ mStack_18\.field5;</stringmatch>
+<stringmatch name="MIPS Bitfields #19" min="1" max="1">if \(mStack_18\.sfield4 &lt; '\\0'\)</stringmatch>
+<stringmatch name="MIPS Bitfields #20" min="1" max="1">uVar1 = mStack_18\.field2;</stringmatch>
+<stringmatch name="MIPS Bitfields #21" min="1" max="1">uVar1 = mStack_18\.field7;</stringmatch>
+<stringmatch name="MIPS Bitfields #22" min="1" max="1">ptrcomp-&gt;field3 .= 5\)</stringmatch>
+<stringmatch name="MIPS Bitfields #23" min="1" max="1">ptrcomp-&gt;sfield4 .= -3\)</stringmatch>
+<stringmatch name="MIPS Bitfields #24" min="1" max="1">ptrcomp-&gt;fieldb\)</stringmatch>
+<stringmatch name="MIPS Bitfields #25" min="1" max="1">ptrcomp-&gt;field5 .= 0x1b\)</stringmatch>
+<stringmatch name="MIPS Bitfields #26" min="1" max="1">ptrcomp-&gt;field2 .= 0\)</stringmatch>
+<stringmatch name="MIPS Bitfields #27" min="1" max="1">ptrcomp-&gt;field7 .= 0x42\)</stringmatch>
+<stringmatch name="MIPS Bitfields #28" min="1" max="1">\(mStack_18\.field3 .= 5 .. mStack_18\.sfield4 .= -5\)</stringmatch>
+<stringmatch name="MIPS Bitfields #29" min="1" max="1">\(mStack_18\.field7 .= 0x21 .. mStack_18\.field2 .= 0\)</stringmatch>
+<stringmatch name="MIPS Bitfields #30" min="1" max="1">return ap-&gt;sfield4 \+ ap-&gt;d;</stringmatch>
+<stringmatch name="MIPS Bitfields #31" min="1" max="1">ip-&gt;field5 = ip-&gt;field5 \+ 1;</stringmatch>
+</decompilertest>

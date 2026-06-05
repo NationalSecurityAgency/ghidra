@@ -43,9 +43,5 @@ public class FlatLookAndFeelManager extends LookAndFeelManager {
 		// if "Tree.showDefaultIcons" is false.  We want the tree to display folder icons.
 		//
 		UIManager.put("Tree.showDefaultIcons", Boolean.TRUE);
-
-		// This fixes a bug in FlatScrollPaneUI at line 189 (version 3.2.1).  This can be removed
-		// in a future update if that code is fixed.
-		UIManager.put("ScrollPane.smoothScrolling", Boolean.FALSE);
 	}
 }

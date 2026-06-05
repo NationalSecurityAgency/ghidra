@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.graph.DeterministicDependencyGraph;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -43,9 +44,11 @@ public class DataTypeWriter {
 
 	private Set<DataType> resolved = new HashSet<>();
 	private Map<String, DataType> resolvedTypeMap = new HashMap<>();
-	private Set<Composite> deferredCompositeDeclarations = new HashSet<>();
-	private ArrayDeque<DataType> deferredTypeFIFO = new ArrayDeque<>();
-	private Set<DataType> deferredTypes = new HashSet<>();
+
+	private DeterministicDependencyGraph<CompositeNode> compositeDependencyGraph =
+		new DeterministicDependencyGraph<>();
+	private LinkedHashSet<DataType> deferredCompositeInternalTypes = new LinkedHashSet<>();
+
 	private int writerDepth = 0;
 	private Writer writer;
 	private DataTypeManager dtm;
@@ -126,14 +129,13 @@ public class DataTypeWriter {
 
 	/**
 	 * Converts all data types in the data type manager into ANSI-C code.
-	 * @param dataTypeManager the manager containing the data types to write
 	 * @param monitor the task monitor
 	 * @throws IOException if there is an exception writing the output
 	 * @throws CancelledException if the action is cancelled by the user
 	 */
-	public void write(DataTypeManager dataTypeManager, TaskMonitor monitor)
+	public void write(TaskMonitor monitor)
 			throws IOException, CancelledException {
-		write(dataTypeManager.getRootCategory(), monitor);
+		write(dtm.getRootCategory(), monitor);
 	}
 
 	/**
@@ -199,9 +201,8 @@ public class DataTypeWriter {
 	}
 
 	private void deferWrite(DataType dt) {
-		if (!resolved.contains(dt) && !deferredTypes.contains(dt)) {
-			deferredTypes.add(dt);
-			deferredTypeFIFO.addLast(dt);
+		if (!resolved.contains(dt)) {
+			deferredCompositeInternalTypes.add(dt);
 		}
 	}
 
@@ -222,6 +223,9 @@ public class DataTypeWriter {
 	 */
 	private void doWrite(DataType dt, TaskMonitor monitor, boolean throwExceptionOnInvalidType)
 			throws IOException, CancelledException {
+
+		monitor.checkCancelled();
+
 		if (dt == null) {
 			return;
 		}
@@ -280,27 +284,25 @@ public class DataTypeWriter {
 			writer.write(EOL);
 			writer.write(EOL);
 		}
-		else if (dt instanceof Dynamic) {
-			writeDynamicBuiltIn((Dynamic) dt, monitor);
+		else if (dt instanceof Dynamic dynamic) {
+			writeDynamicBuiltIn(dynamic, monitor);
 		}
-		else if (dt instanceof Structure) {
-			Structure struct = (Structure) dt;
+		else if (dt instanceof Structure struct) {
 			writeCompositePreDeclaration(struct, monitor);
-			deferredCompositeDeclarations.add(struct);
+			addCompositeToDependencyGraph(struct, monitor);
 		}
-		else if (dt instanceof Union) {
-			Union union = (Union) dt;
+		else if (dt instanceof Union union) {
 			writeCompositePreDeclaration(union, monitor);
-			deferredCompositeDeclarations.add(union);
+			addCompositeToDependencyGraph(union, monitor);
 		}
-		else if (dt instanceof Enum) {
-			writeEnum((Enum) dt, monitor);
+		else if (dt instanceof Enum enumm) {
+			writeEnum(enumm, monitor);
 		}
-		else if (dt instanceof TypeDef) {
-			writeTypeDef((TypeDef) dt, monitor);
+		else if (dt instanceof TypeDef typeDef) {
+			writeTypeDef(typeDef, monitor);
 		}
-		else if (dt instanceof BuiltInDataType) {
-			writeBuiltIn((BuiltInDataType) dt, monitor);
+		else if (dt instanceof BuiltInDataType bidt) {
+			writeBuiltIn(bidt, monitor);
 		}
 		else if (dt instanceof BitFieldDataType) {
 			// skip
@@ -319,15 +321,34 @@ public class DataTypeWriter {
 		--writerDepth;
 	}
 
+	private void addCompositeToDependencyGraph(Composite composite, TaskMonitor monitor)
+			throws CancelledException {
+
+		// Each composite will be a node in the graph. Composite dependencies are added below.
+		compositeDependencyGraph.addValue(new CompositeNode(composite));
+
+		for (DataTypeComponent component : composite.getDefinedComponents()) {
+
+			monitor.checkCancelled();
+
+			DataType dt = component.getDataType();
+			if (dt instanceof Composite childComposite) {
+				CompositeNode start = new CompositeNode(composite);
+				CompositeNode end = new CompositeNode(childComposite);
+				compositeDependencyGraph.addDependency(start, end);
+			}
+		}
+	}
+
 	private void writeDeferredDeclarations(TaskMonitor monitor)
 			throws IOException, CancelledException {
-		while (!deferredTypes.isEmpty()) {
-			DataType dt = deferredTypeFIFO.removeFirst();
-			deferredTypes.remove(dt);
+
+		while (!deferredCompositeInternalTypes.isEmpty()) {
+			DataType dt = deferredCompositeInternalTypes.removeFirst();
 			write(dt, monitor);
 		}
+
 		writeDeferredCompositeDeclarations(monitor);
-		deferredCompositeDeclarations.clear();
 	}
 
 	private DataType getBaseArrayTypedefType(DataType dt) {
@@ -345,81 +366,38 @@ public class DataTypeWriter {
 		return dt;
 	}
 
-	private boolean containsComposite(Composite container, Composite contained) {
-		for (DataTypeComponent component : container.getDefinedComponents()) {
-			DataType dt = getBaseArrayTypedefType(component.getDataType());
-			if (dt instanceof Composite && dt.getName().equals(contained.getName()) &&
-				dt.isEquivalent(contained)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	private void writeDeferredCompositeDeclarations(TaskMonitor monitor)
 			throws IOException, CancelledException {
-		int cnt = deferredCompositeDeclarations.size();
-		if (cnt == 0) {
-			return;
-		}
 
-		LinkedList<Composite> list = new LinkedList<>(deferredCompositeDeclarations);
-		if (list.size() > 1) {
-			// Establish dependency ordering
-			int sortChange = 1;
-			while (sortChange != 0) {
-				sortChange = 0;
-				for (int i = cnt - 1; i > 0; i--) {
-					if (resortComposites(list, i)) {
-						++sortChange;
-					}
-				}
-			}
+		CompositeNode node = compositeDependencyGraph.pop();
+		while (node != null) {
+			writeCompositeBody(node.composite, monitor);
+			node = compositeDependencyGraph.pop();
 		}
-
-		for (Composite composite : list) {
-			writeCompositeBody(composite, monitor);
-		}
-	}
-
-	private boolean resortComposites(List<Composite> list, int index) {
-		int listSize = list.size();
-		if (listSize <= 0) {
-			return false;
-		}
-		Composite composite = list.get(index);
-		for (int i = 0; i < index; i++) {
-			Composite other = list.get(i);
-			if (containsComposite(other, composite)) {
-				list.remove(index);
-				list.add(i, composite);
-				composite = null;
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private String getDynamicComponentString(Dynamic dynamicType, String fieldName, int length) {
-		if (dynamicType.canSpecifyLength()) {
-			DataType replacementBaseType = dynamicType.getReplacementBaseType();
-			if (replacementBaseType != null) {
-				replacementBaseType = replacementBaseType.clone(dtm);
-				int elementLen = replacementBaseType.getLength();
-				if (elementLen <= 0) {
-					Msg.error(this,
-						dynamicType.getClass().getSimpleName() +
-							" returned bad replacementBaseType: " +
-							replacementBaseType.getClass().getSimpleName());
-				}
-				else {
-					int elementCnt = (length + elementLen - 1) / elementLen;
-					return replacementBaseType.getDisplayName() + " " + fieldName + "[" +
-						elementCnt + "]";
-				}
-			}
+		if (!dynamicType.canSpecifyLength()) {
+			return null;
 		}
-		return null;
+
+		DataType replacementBaseType = dynamicType.getReplacementBaseType();
+		if (replacementBaseType == null) {
+			return null;
+		}
+
+		replacementBaseType = replacementBaseType.clone(dtm);
+		int elementLen = replacementBaseType.getLength();
+		if (elementLen <= 0) {
+			String dynamicName = dynamicType.getClass().getSimpleName();
+			String replacementName = replacementBaseType.getClass().getSimpleName();
+			Msg.error(this, dynamicName + " returned bad replacementBaseType: " + replacementName);
+			return null;
+		}
+
+		int elementCnt = (length + elementLen - 1) / elementLen;
+		return replacementBaseType.getDisplayName() + " " + fieldName + "[" +
+			elementCnt + "]";
 	}
 
 	private void writeCompositePreDeclaration(Composite composite, TaskMonitor monitor)
@@ -433,16 +411,12 @@ public class DataTypeWriter {
 		writer.write(EOL);
 		writer.write(EOL);
 
-		for (DataTypeComponent component : composite.getComponents()) {
-			if (monitor.isCancelled()) {
-				break;
-			}
+		for (DataTypeComponent component : composite.getDefinedComponents()) {
+			monitor.checkCancelled();
+
 			// force resolution of field datatype
 			DataType componentType = component.getDataType();
 			deferWrite(componentType);
-
-			// TODO the return value of this is not used--delete?
-			getTypeDeclaration(null, componentType, component.getLength(), true, monitor);
 		}
 	}
 
@@ -642,7 +616,8 @@ public class DataTypeWriter {
 					return;
 				}
 			}
-			// TODO: A comment explaining the special 'P' case would be helpful!!  Smells like fish.
+
+			// auto-pointer-typedef generated with composite
 			else if (baseType instanceof Pointer && typedefName.startsWith("P")) {
 				DataType dt = ((Pointer) baseType).getDataType();
 				if (dt instanceof TypeDef) {
@@ -890,5 +865,48 @@ public class DataTypeWriter {
 		}
 		buf.append(")");
 		return buf.toString();
+	}
+
+	// A simple Composite class to use in the dependency graph to speed up the equals() call
+	private class CompositeNode implements Comparable<CompositeNode> {
+
+		private Composite composite;
+
+		CompositeNode(Composite composite) {
+			this.composite = composite;
+		}
+
+		@Override
+		public int compareTo(CompositeNode o) {
+			String pn1 = composite.getPathName();
+			String pn2 = o.composite.getPathName();
+			return pn1.compareTo(pn2);
+		}
+
+		@Override
+		public int hashCode() {
+			return composite.hashCode();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+
+			CompositeNode other = (CompositeNode) obj;
+			return composite.getUniversalID().equals(other.composite.getUniversalID());
+		}
+
+		@Override
+		public String toString() {
+			return composite.toString();
+		}
 	}
 }

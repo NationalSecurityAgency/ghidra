@@ -23,9 +23,6 @@ import com.google.common.collect.Sets;
 
 import generic.test.AbstractGenericTest;
 
-/**
- *
- */
 public class UnionDataTypeTest extends AbstractGenericTest {
 
 	private Union union;
@@ -593,6 +590,61 @@ public class UnionDataTypeTest extends AbstractGenericTest {
 			Assert.fail(
 				"Should be able to insert a union typedef array pointer into the pointer's union.");
 		}
+	}
+
+	@Test
+	public void testFieldNameWhitespaceConvertedToUnderscores() {
+		UnionDataType newUnion = new UnionDataType("Test");
+		DataTypeComponent component = newUnion.add(new ByteDataType(), " name with spaces", null);
+		assertEquals("name_with_spaces", component.getFieldName());
+
+		component = newUnion.getComponent(0);
+		component.setFieldName(" name in db with spaces ");
+		assertEquals("name_in_db_with_spaces", component.getFieldName());
+
+		component = newUnion.add(new ByteDataType(), " another test ", null);
+		assertEquals("another_test", component.getFieldName());
+
+		newUnion.insert(0, new ByteDataType(), 1, " insert test ", "");
+		component = newUnion.getComponent(0);
+		assertEquals("insert_test", component.getFieldName());
+
+		newUnion.insert(1, new ByteDataType(), 1, " insert test ", "");
+		component = newUnion.getComponent(1);
+		assertEquals("insert_test", component.getFieldName());
+	}
+
+	@Test
+	public void testDefaultFieldNames() {
+		UnionDataType newUnion = new UnionDataType("Test");
+		DataTypeComponent component = newUnion.add(new ByteDataType(), " ", null);
+		assertNull(component.getFieldName());
+		assertEquals("field0", component.getDefaultFieldName());
+
+		component = newUnion.add(new ByteDataType(), null, null);
+		assertNull(component.getFieldName());
+		assertEquals("field1", component.getDefaultFieldName());
+
+		component = newUnion.getComponent(0);
+		assertNull(component.getFieldName());
+		assertEquals("field0", component.getDefaultFieldName());
+
+		component.setFieldName(" ");
+		assertNull(component.getFieldName());
+		assertEquals("field0", component.getDefaultFieldName());
+
+		component = newUnion.add(new ByteDataType(), null, null);
+		assertNull(component.getFieldName());
+		assertEquals("field2", component.getDefaultFieldName());
+
+		component = newUnion.add(new ByteDataType(), " ", null);
+		assertNull(component.getFieldName());
+		assertEquals("field3", component.getDefaultFieldName());
+
+		newUnion.insert(0, new ByteDataType(), 1, null, "");
+		component = newUnion.getComponent(0);
+		assertNull(component.getFieldName());
+		assertEquals("field0", component.getDefaultFieldName());
 	}
 
 	protected DataTypeManager createBigEndianDataTypeManager() {

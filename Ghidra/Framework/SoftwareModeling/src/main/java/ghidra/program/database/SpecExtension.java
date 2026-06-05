@@ -308,6 +308,16 @@ public class SpecExtension {
 	}
 
 	/**
+	 * Get the raw string making up an extension, given its {@link DocInfo}
+	 * @param program is the program to extract the extension from
+	 * @param docInfo is extension's {@link DocInfo}
+	 * @return the extension string or null
+	 */
+	public static String getCompilerSpecExtension(Program program, DocInfo docInfo) {
+		return getCompilerSpecExtension(program, docInfo.getType(), docInfo.getFormalName());
+	}
+
+	/**
 	 * Check the format version for spec extensions for a given program.
 	 * If the program reports a version that does not match the current
 	 * number attached to the running tool (FORMAT_VERSION), a VersionException is thrown

@@ -18,30 +18,34 @@ package ghidra.app.plugin.core.debug.client.tracermi;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
-import ghidra.dbg.target.TargetMethod;
-import ghidra.dbg.target.TargetMethod.ParameterDescription;
-import ghidra.dbg.target.schema.*;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.trace.model.target.iface.TraceMethod.ParameterDescription;
+import ghidra.trace.model.target.schema.*;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 
 public class RmiRemoteMethod {
 
 	private final SchemaContext schemaContext;
-	private String name;
-	private String action;
-	private String display;
-	private String description;
-	private RmiRemoteMethodParameter[] params;
-	private TargetObjectSchema schema;
-	private RmiMethods instance;
-	private Method m;
+	private final String name;
+	private final String action;
+	private final String display;
+	private final String description;
+	private final String okText;
+	private final String icon;
+	private final RmiRemoteMethodParameter[] params;
+	private final TraceObjectSchema schema;
+	private final RmiMethods instance;
+	private final Method m;
 
 	public RmiRemoteMethod(SchemaContext schemaContext, String name, String action, String display,
-			String description, TargetObjectSchema schema, RmiMethods instance, Method m) {
+			String description, String okText, String icon, TraceObjectSchema schema,
+			RmiMethods instance, Method m) {
 		this.schemaContext = schemaContext;
 		this.name = name;
 		this.action = action;
 		this.display = display;
 		this.description = description;
+		this.okText = okText;
+		this.icon = icon;
 		this.params = new RmiRemoteMethodParameter[m.getParameterCount()];
 		this.schema = schema;
 		this.instance = instance;
@@ -49,10 +53,10 @@ public class RmiRemoteMethod {
 
 		int i = 0;
 		for (Parameter p : m.getParameters()) {
-			ParameterDescription<?> desc = TargetMethod.ParameterDescription.annotated(p);
-			TargetObjectSchema pschema;
+			ParameterDescription<?> desc = ParameterDescription.annotated(p);
+			TraceObjectSchema pschema;
 			if (desc.type != RmiTraceObject.class) {
-				pschema = EnumerableTargetObjectSchema.schemaForPrimitive(desc.type);
+				pschema = PrimitiveTraceObjectSchema.schemaForPrimitive(desc.type);
 			}
 			else {
 				pschema = schemaContext.getSchema(new SchemaName(desc.schema));
@@ -68,6 +72,14 @@ public class RmiRemoteMethod {
 
 	public String getDescription() {
 		return description;
+	}
+
+	public String getOkText() {
+		return okText;
+	}
+
+	public String getIcon() {
+		return icon;
 	}
 
 	public String getAction() {
@@ -86,7 +98,7 @@ public class RmiRemoteMethod {
 		return m;
 	}
 
-	public TargetObjectSchema getSchema() {
+	public TraceObjectSchema getSchema() {
 		return schema;
 	}
 

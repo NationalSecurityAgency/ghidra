@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.app.util.AddressInput;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
+import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
 import ghidra.util.layout.PairLayout;
@@ -82,9 +82,9 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 		setOkEnabled(false);
 		changing = true;
 		if (!isVisible()) {
-			AddressFactory factory = model.getAddressFactory();
-			newStartField.setAddressFactory(factory);
-			newEndField.setAddressFactory(factory);
+			Program program = model.getProgram();
+			newStartField.setProgram(program);
+			newEndField.setProgram(program);
 		}
 		Address newStart = model.getNewStartAddress();
 		if (newStart != null) {
@@ -136,8 +136,8 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 	}
 
 	private JPanel buildMainPanel() {
-		JPanel panel = new JPanel(new PairLayout(5, 20, 150));
-		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+		JPanel panel = new JPanel(new PairLayout(2, 10, 150));
+		panel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 		blockNameLabel = new GDLabel(".text");
 		blockNameLabel.setName("blockName"); // name components for junits
 
@@ -150,14 +150,11 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 		lengthLabel = new GDLabel("4096 (0x1000)");
 		lengthLabel.setName("length");
 
-		newStartField = new AddressInput();
+		newStartField = new AddressInput(model.getProgram(), this::startChanged);
 		newStartField.setName("newStart");
 
-		newEndField = new AddressInput();
+		newEndField = new AddressInput(model.getProgram(), this::endChanged);
 		newEndField.setName("newEnd");
-
-		newStartField.addChangeListener(e -> startChanged());
-		newEndField.addChangeListener(e -> endChanged());
 
 		panel.add(new GLabel("Name:", SwingConstants.RIGHT));
 		panel.add(blockNameLabel);
@@ -174,13 +171,12 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 		return panel;
 	}
 
-	private void startChanged() {
+	private void startChanged(Address address) {
 		if (changing) {
 			return;
 		}
-		Address newStart = newStartField.getAddress();
-		if (newStart != null) {
-			model.setNewStartAddress(newStart);
+		if (address != null) {
+			model.setNewStartAddress(address);
 		}
 		else {
 			setStatusText("Invalid Address");
@@ -188,13 +184,12 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 		}
 	}
 
-	private void endChanged() {
+	private void endChanged(Address address) {
 		if (changing) {
 			return;
 		}
-		Address newEnd = newEndField.getAddress();
-		if (newEnd != null) {
-			model.setNewEndAddress(newEnd);
+		if (address != null) {
+			model.setNewEndAddress(address);
 		}
 		else {
 			setStatusText("Invalid Address");

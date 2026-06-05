@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,6 +77,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		addWorkPanel(buildMainPanel());
 
 		saveButton = new JButton("Save");
+		saveButton.getAccessibleContext().setAccessibleName("Save");
 		saveButton.addActionListener(ev -> save());
 		addButton(saveButton);
 		addCancelButton();
@@ -102,6 +103,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		panel.add(iconPanel, BorderLayout.CENTER);
 		panel.add(iconFieldPanel, BorderLayout.SOUTH);
 		panel.setPreferredSize(new Dimension(400, 300));
+		panel.getAccessibleContext().setAccessibleName("Save Tool Configuration");
 		return panel;
 	}
 
@@ -205,13 +207,20 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 			return;
 		}
 
+		// Impose same naming restrictions as Project uses - other than the blank space
 		if (newName.indexOf(" ") >= 0) {
-			setStatusText("Name cannot have spaces.");
+			setStatusText("Name cannot have spaces");
 			nameField.requestFocus();
 			return;
 		}
-		if (!NamingUtilities.isValidName(newName)) {
-			setStatusText("Invalid character in name: " + NamingUtilities.findInvalidChar(newName));
+		if (newName.startsWith(".")) {
+			setStatusText("Name cannot start with a '.'");
+			nameField.requestFocus();
+			return;
+		}
+		String invalidChar = NamingUtilities.findInvalidChar(newName);
+		if (invalidChar != null) {
+			setStatusText("Invalid character in name: '" + invalidChar + "'");
 			nameField.requestFocus();
 			return;
 		}
@@ -272,10 +281,11 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 
 		nameField = new JTextField(11);
 		nameField.setName("ToolName");
+		nameField.getAccessibleContext().setAccessibleName("Tool Name");
 
 		namePanel.add(new GLabel("Tool Name:", SwingConstants.RIGHT));
 		namePanel.add(nameField);
-
+		namePanel.getAccessibleContext().setAccessibleName("Tool Field");
 		return namePanel;
 	}
 
@@ -286,6 +296,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		iconList = new JList<>(iconListModel);
 		iconList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
 		iconList.setName("IconList");
+		iconList.getAccessibleContext().setAccessibleName("Icon");
 		iconList.setCellRenderer(new ToolIconUrlRenderer());
 		iconList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		iconList.setSelectedIndex(0);
@@ -297,20 +308,23 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(new TitledBorder("Choose Icon"));
 		panel.add(iconListScrollPane, BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Icon");
 		return panel;
 	}
 
 	private JPanel createIconFieldPanel() {
 		iconField = new JTextField(12);
 		iconField.setName("IconName");
+		iconField.getAccessibleContext().setAccessibleName("Icon Name");
 
 		browseButton = new BrowseButton();
-
+		browseButton.getAccessibleContext().setAccessibleName("Browse");
 		JPanel panel = new JPanel(new BorderLayout(5, 0));
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		panel.add(new GLabel("Icon Name:"), BorderLayout.WEST);
 		panel.add(iconField, BorderLayout.CENTER);
 		panel.add(browseButton, BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("Icon Field");
 		return panel;
 	}
 

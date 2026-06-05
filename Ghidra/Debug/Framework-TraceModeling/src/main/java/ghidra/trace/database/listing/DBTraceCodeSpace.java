@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package ghidra.trace.database.listing;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
@@ -28,8 +27,8 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.data.DBTraceDataTypeManager;
 import ghidra.trace.database.guest.DBTraceGuestPlatform;
+import ghidra.trace.database.guest.DBTracePlatformManager;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
@@ -55,19 +54,20 @@ import ghidra.util.task.TaskMonitor;
  * {@link TraceCodeManager#getCodeRegisterSpace(TraceThread, int, boolean)}.
  */
 public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
+	protected final static int CHUNK_SIZE = DBTrace.CHUNK_SIZE;
+
 	protected final DBTraceCodeManager manager;
 	protected final DBHandle dbh;
 	protected final AddressSpace space;
-	protected final TraceThread thread;
-	protected final int frameLevel;
 	protected final ReadWriteLock lock;
 	protected final Language baseLanguage;
 	protected final DBTrace trace;
-	protected final DBTraceDataTypeManager dataTypeManager;
+	protected final DBTracePlatformManager platformManager;
 	protected final DBTraceReferenceManager referenceManager;
 	protected final AddressRange all;
 
-	protected final DBTraceAddressSnapRangePropertyMapSpace<DBTraceInstruction, DBTraceInstruction> instructionMapSpace;
+	protected final DBTraceAddressSnapRangePropertyMapSpace<DBTraceInstruction,
+		DBTraceInstruction> instructionMapSpace;
 	protected final DBTraceAddressSnapRangePropertyMapSpace<DBTraceData, DBTraceData> dataMapSpace;
 
 	// NOTE: All combinations except () and (INSTRUCTIONS,UNDEFINED)
@@ -85,34 +85,28 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 	 * @param dbh the database handle
 	 * @param space the address space
 	 * @param ent an entry describing this space
-	 * @param thread a thread, if applicable, for a per-thread/frame space
 	 * @throws VersionException if there is already a table of a different version
 	 * @throws IOException if there is trouble accessing the database
 	 */
 	public DBTraceCodeSpace(DBTraceCodeManager manager, DBHandle dbh, AddressSpace space,
-			DBTraceSpaceEntry ent, TraceThread thread) throws VersionException, IOException {
+			DBTraceSpaceEntry ent) throws VersionException, IOException {
 		this.manager = manager;
 		this.dbh = dbh;
 		this.space = space;
-		this.thread = thread;
-		this.frameLevel = ent.getFrameLevel();
 		this.lock = manager.getLock();
 		this.baseLanguage = manager.getBaseLanguage();
 		this.trace = manager.getTrace();
-		this.dataTypeManager = manager.dataTypeManager;
+		this.platformManager = manager.platformManager;
 		this.referenceManager = manager.referenceManager;
 		this.all = new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress());
 
 		DBCachedObjectStoreFactory factory = trace.getStoreFactory();
 
-		long threadKey = ent.getThreadKey();
-		int frameLevel = ent.getFrameLevel();
-
 		instructionMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
-			DBTraceInstruction.tableName(space, threadKey), factory, lock, space, null, 0,
+			DBTraceInstruction.tableName(space), trace, factory, lock, space,
 			DBTraceInstruction.class, (t, s, r) -> new DBTraceInstruction(this, t, s, r));
 		dataMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
-			DBTraceData.tableName(space, threadKey, frameLevel), factory, lock, space, null, 0,
+			DBTraceData.tableName(space), trace, factory, lock, space,
 			DBTraceData.class, (t, s, r) -> new DBTraceData(this, t, s, r));
 
 		instructions = createInstructionsView();
@@ -186,44 +180,53 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 		definedData.invalidateCache();
 		undefinedData.invalidateCache();
 
-		for (DBTraceInstruction instruction : instructionMapSpace.reduce(
-			TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
-			monitor.checkCancelled();
-			monitor.incrementProgress(1);
-			if (instruction.platform != guest) {
-				continue;
+		TraceAddressSnapRangeQuery query = TraceAddressSnapRangeQuery.intersecting(range, span);
+		var instructionSubmap = instructionMapSpace.reduce(query);
+		while (true) {
+			List<DBTraceInstruction> chunk =
+				instructionSubmap.values().stream().limit(CHUNK_SIZE).toList();
+			for (DBTraceInstruction instruction : chunk) {
+				monitor.checkCancelled();
+				monitor.incrementProgress(1);
+				if (instruction.platform != guest) {
+					continue;
+				}
+				instructionMapSpace.deleteData(instruction);
+				instructions.unitRemoved(instruction);
 			}
-			instructionMapSpace.deleteData(instruction);
-			instructions.unitRemoved(instruction);
+			if (chunk.size() < CHUNK_SIZE) {
+				break;
+			}
 		}
+
 		monitor.setMessage("Clearing data");
 		monitor.setMaximum(dataMapSpace.size()); // This is OK
-		for (DBTraceData dataUnit : dataMapSpace.reduce(
-			TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
-			monitor.checkCancelled();
-			monitor.incrementProgress(1);
-			if (dataUnit.platform != guest) {
-				continue;
+		var dataSubmap = dataMapSpace.reduce(query);
+		while (true) {
+			List<DBTraceData> chunk = dataSubmap.values().stream().limit(CHUNK_SIZE).toList();
+			for (DBTraceData dataUnit : chunk) {
+				monitor.checkCancelled();
+				monitor.incrementProgress(1);
+				if (dataUnit.platform != guest) {
+					continue;
+				}
+				dataMapSpace.deleteData(dataUnit);
+				definedData.unitRemoved(dataUnit);
 			}
-			// TODO: I don't yet have guest-language data units.
-			dataMapSpace.deleteData(dataUnit);
-			definedData.unitRemoved(dataUnit);
+			if (chunk.size() < CHUNK_SIZE) {
+				break;
+			}
 		}
+	}
+
+	@Override
+	public DBTrace getTrace() {
+		return trace;
 	}
 
 	@Override
 	public AddressSpace getAddressSpace() {
 		return space;
-	}
-
-	@Override
-	public TraceThread getThread() {
-		return thread;
-	}
-
-	@Override
-	public int getFrameLevel() {
-		return frameLevel;
 	}
 
 	@Override
@@ -335,7 +338,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 				if (reApply) {
 					try {
 						definedData.create(Lifespan.span(unitStartSnap, unitEndSnap),
-							unit.getAddress(), dataType, unit.getLength());
+							unit.getAddress(), unit.getPlatform(), dataType, unit.getLength());
 					}
 					catch (CodeUnitInsertionException e) {
 						throw new AssertionError(e);

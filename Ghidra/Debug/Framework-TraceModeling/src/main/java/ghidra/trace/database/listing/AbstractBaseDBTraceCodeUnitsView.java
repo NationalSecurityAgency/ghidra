@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,10 @@
  */
 package ghidra.trace.database.listing;
 
-import generic.NestedIterator;
+import generic.util.FlattenedIterator;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.*;
 import ghidra.trace.model.listing.TraceBaseCodeUnitsView;
-import ghidra.trace.model.thread.TraceThread;
 
 /**
  * An abstract implementation of a {@link TraceBaseCodeUnitsView} for a specific address space
@@ -62,20 +61,6 @@ public abstract class AbstractBaseDBTraceCodeUnitsView<T extends DBTraceCodeUnit
 	 */
 	public Trace getTrace() {
 		return space.manager.getTrace();
-	}
-
-	/**
-	 * @see TraceBaseCodeUnitsView#getThread()
-	 */
-	public TraceThread getThread() {
-		return space.getThread();
-	}
-
-	/**
-	 * @see TraceBaseCodeUnitsView#getFrameLevel()
-	 */
-	public int getFrameLevel() {
-		return space.getFrameLevel();
 	}
 
 	/**
@@ -139,7 +124,7 @@ public abstract class AbstractBaseDBTraceCodeUnitsView<T extends DBTraceCodeUnit
 	 * @see TraceBaseCodeUnitsView#get(long, AddressSetView, boolean)
 	 */
 	public Iterable<? extends T> get(long snap, AddressSetView set, boolean forward) {
-		return () -> NestedIterator.start(set.iterator(forward),
+		return () -> FlattenedIterator.start(set.iterator(forward),
 			r -> this.get(snap, r, forward).iterator());
 	}
 

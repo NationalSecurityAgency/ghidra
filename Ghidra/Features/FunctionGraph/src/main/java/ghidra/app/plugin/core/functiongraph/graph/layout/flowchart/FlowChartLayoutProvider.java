@@ -21,6 +21,7 @@ import generic.theme.GIcon;
 import ghidra.app.plugin.core.functiongraph.graph.FunctionGraph;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayout;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutProviderExtensionPoint;
+import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -49,6 +50,11 @@ public class FlowChartLayoutProvider extends FGLayoutProviderExtensionPoint {
 	public FGLayout getFGLayout(FunctionGraph graph, TaskMonitor monitor)
 			throws CancelledException {
 		return new FGFlowChartLayout(graph, false);
+	}
+
+	@Override
+	public HelpLocation getHelpLocation() {
+		return new HelpLocation("FunctionGraphPlugin", "Flow_Chart_Layout");
 	}
 
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,8 @@
 package ghidra.app.plugin.core.debug.gui.breakpoint;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
@@ -34,7 +35,7 @@ import ghidra.debug.api.breakpoint.LogicalBreakpoint;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 
 public class BreakpointsDecompilerMarginProvider extends JPanel
 		implements DecompilerMarginProvider, LayoutModelListener {
@@ -131,7 +132,7 @@ public class BreakpointsDecompilerMarginProvider extends JPanel
 			Set<LogicalBreakpoint> col = plugin.collectBreakpoints(locs);
 			plugin.breakpointService.toggleBreakpointsAt(col, locs.get(0), () -> {
 				plugin.placeBreakpointDialog.prompt(plugin.getTool(), plugin.breakpointService,
-					"Set breakpoint", locs.get(0), 1, Set.of(TraceBreakpointKind.SW_EXECUTE), "");
+					"Set breakpoint", locs.get(0), 1, CommonSet.SWX, "");
 				// Not great, but I'm not sticking around for the dialog
 				return CompletableFuture.completedFuture(Set.of());
 			});

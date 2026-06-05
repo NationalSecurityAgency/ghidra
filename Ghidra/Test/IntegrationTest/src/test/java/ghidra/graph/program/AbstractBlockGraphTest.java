@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,7 +76,7 @@ public class AbstractBlockGraphTest extends AbstractGhidraHeadedIntegrationTest 
 
 	protected void openProgram() throws Exception {
 
-		builder = new ToyProgramBuilder("sample", true);
+		builder = new ToyProgramBuilder();
 		builder.createMemory("caller", "0x01002200", 8);
 		builder.createMemory("simple", "0x01002239", 8);
 		builder.createMemory("not_graphed", "0x01002300", 8);

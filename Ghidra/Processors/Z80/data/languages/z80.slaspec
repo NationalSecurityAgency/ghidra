@@ -847,7 +847,7 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 	subtractionFlags(a_temp, r_temp);
 	a_temp = a_temp - r_temp;
 	setResultFlags(a_temp);
-	a_temp = A;
+	A = a_temp;
 }
 
 :SUB imm8           is op0_8=0xd6; imm8 {

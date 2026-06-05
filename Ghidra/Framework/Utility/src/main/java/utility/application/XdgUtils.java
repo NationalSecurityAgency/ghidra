@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,6 +66,8 @@ public class XdgUtils {
 	 */
 	public static final String XDG_CACHE_HOME = "XDG_CACHE_HOME";
 
+	public static final String XDG_CACHE_HOME_DEFAULT_SUBDIRNAME = ".cache";
+
 	/**
 	 * $XDG_RUNTIME_DIR defines the base directory relative to which user-specific non-essential 
 	 * runtime files and other file objects (such as sockets, named pipes, ...) should be stored. 
@@ -73,4 +75,5 @@ public class XdgUtils {
 	 * access to it. Its Unix access mode MUST be 0700.
 	 */
 	public static final String XDG_RUNTIME_DIR = "XDG_RUNTIME_DIR";
+
 }

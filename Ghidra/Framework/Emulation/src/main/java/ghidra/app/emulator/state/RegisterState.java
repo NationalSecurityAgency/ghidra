@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.app.emulator.state;
 import java.util.List;
 import java.util.Set;
 
+@Deprecated(since = "12.1", forRemoval = true)
 public interface RegisterState {
 
 	public Set<String> getKeys();
@@ -35,7 +36,7 @@ public interface RegisterState {
 	 * Check if the register is initialized
 	 * 
 	 * @param key the register name
-	 * @return a list (used an an optional) containing at most the one initialization state. True if
+	 * @return a list (used as an optional) containing at most the one initialization state. True if
 	 *         initialized, false if not. Empty if unspecified.
 	 */
 	public List<Boolean> isInitialized(String key);
