@@ -367,7 +367,7 @@ public abstract class LocalFolderItem implements FolderItem {
 			File dataDir = getDataDir();
 			File chkDir = new File(dataDir.getParentFile(), dataDir.getName() + ".delete");
 			FileUtilities.deleteDir(chkDir);
-			if (useDataDir && dataDir.exists() && !dataDir.renameTo(chkDir)) {
+			if (dataDir.exists() && !dataDir.renameTo(chkDir)) {
 				throw new FileInUseException(getName() + " is in use");
 			}
 			boolean success = false;
@@ -380,15 +380,13 @@ public abstract class LocalFolderItem implements FolderItem {
 			}
 			finally {
 				if (!success) {
-					if (useDataDir && !dataDir.exists() && chkDir.exists() &&
+					if (!dataDir.exists() && chkDir.exists() &&
 						propertyFile.exists()) {
 						chkDir.renameTo(dataDir);
 					}
 				}
 				else {
-					if (useDataDir) {
-						FileUtilities.deleteDir(chkDir);
-					}
+					FileUtilities.deleteDir(chkDir);
 					log("file deleted", user);
 				}
 			}
@@ -785,13 +783,16 @@ public abstract class LocalFolderItem implements FolderItem {
 	 * Returns the appropriate instantiation of a LocalFolderItem 
 	 * based upon a specified property file which resides within a
 	 * LocalFileSystem.
+	 * <p>
+	 * {@link LocalUnknownFolderItem} will be returned for unknown/unsupported content.
+	 * 
 	 * @param fileSystem local file system which contains property file
 	 * @param propertyFile property file which identifies the folder item.
-	 * @return folder item
+	 * @return folder item or null if invalid item.
 	 */
 	static LocalFolderItem getFolderItem(LocalFileSystem fileSystem,
 			ItemPropertyFile propertyFile) {
-		int fileType = propertyFile.getInt(FILE_TYPE, UNKNOWN_FILE_TYPE);
+		int fileType = propertyFile.getInt(FILE_TYPE, Integer.MIN_VALUE);
 		try {
 			if (fileType == DATAFILE_FILE_TYPE) {
 				return new LocalDataFileItem(fileSystem, propertyFile);
@@ -802,9 +803,15 @@ public abstract class LocalFolderItem implements FolderItem {
 			else if (fileType == LINK_FILE_TYPE) {
 				return new LocalTextDataItem(fileSystem, propertyFile);
 			}
-			else if (fileType == UNKNOWN_FILE_TYPE) {
-				log.error("Folder item has unspecified file type: " + new File(
+			else if (fileType == Integer.MIN_VALUE) {
+				// Item not properly created and in bad state
+				// Use badItem instance to remove all related storage
+				LocalUnknownFolderItem badItem =
+					new LocalUnknownFolderItem(fileSystem, propertyFile);
+				badItem.delete(LATEST_VERSION, "REPAIR");
+				log.error("Removing folder item with unspecified file type: " + new File(
 					propertyFile.getParentStorageDirectory(), propertyFile.getStorageName()));
+				return null; // triggers storage deallocation
 			}
 			else {
 				log.error("Folder item has unsupported file type (" + fileType + "): " + new File(

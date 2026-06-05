@@ -26,8 +26,8 @@ def protobufVersion = getProperty("ghidra.protobuf.java.version")
 dependencies {
 	api project(':Base')
 
-    api "com.oracle.labs.olcut:olcut-config-protobuf:5.2.0" //{exclude group: "com.google.protobuf", module: "protobuf-java"}
-    api ("com.oracle.labs.olcut:olcut-core:5.2.0") {exclude group: "org.jline"}
+    api "com.oracle.labs.olcut:olcut-config-protobuf:5.3.1" //{exclude group: "com.google.protobuf", module: "protobuf-java"}
+    api ("com.oracle.labs.olcut:olcut-core:5.3.1") {exclude group: "org.jline"}
     api "org.tribuo:tribuo-classification-core:4.3.2"
     api "org.tribuo:tribuo-classification-tree:4.3.2"
     api "org.tribuo:tribuo-common-tree:4.3.2"

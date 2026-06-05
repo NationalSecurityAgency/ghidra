@@ -1806,18 +1806,16 @@ void RuleDoubleSub::getOpList(vector<uint4> &oplist) const
 int4 RuleDoubleSub::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  PcodeOp *op2;
-  Varnode *vn;
-  int4 offset1,offset2;
-
-  vn = op->getIn(0);
+  Varnode *vn = op->getIn(0);
   if (!vn->isWritten()) return 0;
-  op2 = vn->getDef();
+  PcodeOp *op2 = vn->getDef();
   if (op2->code() != CPUI_SUBPIECE) return 0;
-  offset1 = op->getIn(1)->getOffset();
-  offset2 = op2->getIn(1)->getOffset();
+  Varnode *inVn = op2->getIn(0);
+  if (inVn->isFree()) return 0;
+  int4 offset1 = op->getIn(1)->getOffset();
+  int4 offset2 = op2->getIn(1)->getOffset();
 
-  data.opSetInput(op,op2->getIn(0),0);	// Skip middleman
+  data.opSetInput(op,inVn,0);	// Skip middleman
   data.opSetInput(op,data.newConstant(4,offset1+offset2), 1);
   return 1;
 }

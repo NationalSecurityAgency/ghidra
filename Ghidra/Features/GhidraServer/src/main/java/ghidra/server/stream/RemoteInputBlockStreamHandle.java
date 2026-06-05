@@ -141,8 +141,14 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 		try (OutputStream out = getBlockInputStream(socket)) {
 
 			copyBlockData(inputBlockStream, out);
+			
+			// Done with compressed stream, force compressed data to flush
+			// before final handshake occurs
+			if (out instanceof RemoteDeflaterOutputStream deflatorOut) {
+				deflatorOut.finish();
+			}
 
-			// perform final handshake before close (uncompressed)
+			// Perform final handshake before close (uncompressed)
 			writeStreamEnd(socket);
 			readStreamEnd(socket, false);
 		}

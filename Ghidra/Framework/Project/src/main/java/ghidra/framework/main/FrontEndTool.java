@@ -95,9 +95,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	private static final String SHOW_TOOLTIPS_OPTION_NAME = "Show Tooltips";
 	private static final String BLINKING_CURSORS_OPTION_NAME = "Allow Blinking Cursors";
 
-	// TODO: Experimental Option !!
 	private static final String ENABLE_COMPRESSED_DATABUFFER_OUTPUT =
 		"Use DataBuffer Output Compression";
+	private static final Boolean ENABLE_COMPRESSED_DATABUFFER_OUTPUT_DEFAULT = true;
 
 	private static final String RESTORE_PREVIOUS_PROJECT_NAME = "Restore Previous Project";
 	private boolean shouldRestorePreviousProject;
@@ -356,7 +356,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 		options.registerOption(SHOW_TOOLTIPS_OPTION_NAME, true, help,
 			"Controls the display of tooltip popup windows.");
-		options.registerOption(ENABLE_COMPRESSED_DATABUFFER_OUTPUT, false, help,
+		options.registerOption(ENABLE_COMPRESSED_DATABUFFER_OUTPUT,
+			ENABLE_COMPRESSED_DATABUFFER_OUTPUT_DEFAULT, help,
 			"When enabled data buffers sent to Ghidra Server are compressed (see server " +
 				"configuration for other direction)");
 
@@ -381,7 +382,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		DockingUtils.setGlobalTooltipEnabledOption(showToolTips);
 
 		boolean compressDataBuffers =
-			options.getBoolean(ENABLE_COMPRESSED_DATABUFFER_OUTPUT, false);
+			options.getBoolean(ENABLE_COMPRESSED_DATABUFFER_OUTPUT,
+				ENABLE_COMPRESSED_DATABUFFER_OUTPUT_DEFAULT);
 		DataBuffer.enableCompressedSerializationOutput(compressDataBuffers);
 
 		shouldRestorePreviousProject = options.getBoolean(RESTORE_PREVIOUS_PROJECT_NAME, true);
