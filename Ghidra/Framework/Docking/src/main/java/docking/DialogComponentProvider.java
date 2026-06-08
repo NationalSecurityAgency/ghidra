@@ -682,6 +682,9 @@ public class DialogComponentProvider
 	 */
 	public void setAccessibleDescription(String description) {
 		this.accessibleDescription = description;
+		if (dialog != null) {
+			dialog.getAccessibleContext().setAccessibleDescription(description);
+		}
 	}
 
 	private void doSetStatusText(String text, MessageType type, boolean alert) {
