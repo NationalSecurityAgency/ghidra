@@ -12,6 +12,7 @@ data/languages/bmi1.sinc||GHIDRA||||END|
 data/languages/bmi2.sinc||GHIDRA||||END|
 data/languages/cet.sinc||GHIDRA||||END|
 data/languages/clwb.sinc||GHIDRA||||END|
+data/languages/cmpccxadd.sinc||GHIDRA||||END|
 data/languages/fma.sinc||GHIDRA||||END|
 data/languages/ia.sinc||GHIDRA||||END|
 data/languages/lockable.sinc||GHIDRA||||END|
@@ -51,6 +52,7 @@ data/languages/old/x86smmV2.trans||GHIDRA||||END|
 data/languages/old/x86smmV3.lang||GHIDRA||||END|
 data/languages/old/x86smmV3.trans||GHIDRA||||END|
 data/languages/pclmulqdq.sinc||GHIDRA||||END|
+data/languages/rao.sinc||GHIDRA||||END|
 data/languages/rdrand.sinc||GHIDRA||||END|
 data/languages/sgx.sinc||GHIDRA||||END|
 data/languages/sha.sinc||GHIDRA||||END|
