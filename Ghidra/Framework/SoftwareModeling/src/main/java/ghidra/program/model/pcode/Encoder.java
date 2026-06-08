@@ -138,4 +138,12 @@ public interface Encoder {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	void writeOpcode(AttributeId attribId, OpCode opcode) throws IOException;
+
+	/**
+	 * Write a p-code operation opcode into the encoding, given the opcode ordinal, defined in {@link PcodeOp}
+	 * @param attribId is the attribute to associate with the opcode
+	 * @param opcode is the opcode ordinal
+	 * @throws IOException for errors in the underlying stream
+	 */
+	void writeOpcode(AttributeId attribId, int opcode) throws IOException;
 }
