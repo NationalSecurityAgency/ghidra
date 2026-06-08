@@ -210,12 +210,10 @@ protected:
 protected:
   static int4 calcAlignSize(int4 sz,int4 align);	///< Calculate aligned size, given size and alignment of data-type
 public:
-  /// Construct the base data-type copying low-level properties of another
+  /// \brief Construct the base data-type copying low-level properties of another
   Datatype(const Datatype &op) { size = op.size; name=op.name; displayName=op.displayName; metatype=op.metatype;
     submeta=op.submeta; flags=op.flags; id=op.id; typedefImm=op.typedefImm; alignment=op.alignment; alignSize=op.alignSize; }
-  /// Construct the base data-type providing size and meta-type
-  Datatype(int4 s,int4 align,type_metatype m) {
-    size=s; metatype=m; submeta=base2sub[m]; flags=0; id=0; typedefImm=(Datatype *)0; alignment=align; alignSize=s; }
+  Datatype(int4 s,int4 align,type_metatype m);		///< Constructor
   virtual ~Datatype(void) {}	///< Destructor
   bool isCoreType(void) const { return ((flags&coretype)!=0); }	///< Is this a core data-type
   bool isCharPrint(void) const { return ((flags&(chartype|utf16|utf32|opaque_string))!=0); }	///< Does this print as a 'char'
