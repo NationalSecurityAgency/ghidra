@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,7 @@ package ghidra.app.util.bin.format.elf.relocation;
 import java.util.HashMap;
 import java.util.Map;
 
-import ghidra.app.util.bin.format.elf.ElfRelocation;
-import ghidra.app.util.bin.format.elf.ElfSymbol;
+import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.BookmarkType;
@@ -103,6 +102,7 @@ abstract public class AbstractElfRelocationHandler<T extends ElfRelocationType, 
 		Address symbolAddr = elfRelocationContext.getSymbolAddress(sym); // may be null
 		long symbolValue = elfRelocationContext.getSymbolValue(sym);
 		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
+		symbolName = ElfSymbolNameUtils.replaceInvalidChars(symbolName);
 
 		int typeId = relocation.getType();
 		if (typeId == 0) {
@@ -170,6 +170,7 @@ abstract public class AbstractElfRelocationHandler<T extends ElfRelocationType, 
 			T type = getRelocationType(typeId);
 			
 			String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
+			symbolName = ElfSymbolNameUtils.replaceInvalidChars(symbolName);
 			
 			Program program = elfRelocationContext.getProgram();
 			

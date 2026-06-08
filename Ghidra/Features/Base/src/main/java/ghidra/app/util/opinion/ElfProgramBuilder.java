@@ -996,9 +996,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			int symbolIndex = reloc.getSymbolIndex();
 			String symbolName = symbolTable != null ? symbolTable.getSymbolName(symbolIndex) : "";
-			if (symbolName != null && SymbolUtilities.containsInvalidChars(symbolName)) {
-				symbolName = getEscapedSymbolName(symbolName);
-			}
+			symbolName = ElfSymbolNameUtils.replaceInvalidChars(symbolName);
 
 			Address baseAddress = relocationSpace.getTruncatedAddress(baseWordOffset, true);
 
@@ -2119,10 +2117,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					isPrimary = (existingSym == null);
 				}
 
-				if (SymbolUtilities.containsInvalidChars(name)) {
-					String escapedName = getEscapedSymbolName(name);
-					log("Unsupported symbol name has been escaped: \"" + escapedName + "\"");
-					name = escapedName;
+				String validatedName = ElfSymbolNameUtils.replaceInvalidChars(name);
+				if (name != validatedName) {
+					log("Unsupported symbol name has been escaped: \"" + validatedName + "\"");
+					name = validatedName;
 				}
 
 				createSymbol(address, name, isPrimary, elfSymbol.isAbsolute(), null);
@@ -2159,27 +2157,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 	}
 
-	private String getEscapedSymbolName(String name) {
-		// Do not preclude use of UTF8 strings
-		StringBuilder escapedBuf = new StringBuilder();
-		name.codePoints().forEach(cp -> {
-			if (cp < 0x20) {
-				// Format as ^Control character for consistency with readelf
-				cp += 0x40; // get ASCII control character, starts with ^@
-				escapedBuf.append('^');
-				escapedBuf.appendCodePoint(cp);
-			}
-			else if (cp == 0x7F) {
-				// Format as ^? character for consistency with readelf
-				escapedBuf.append("^?");
-			}
-			else {
-				// Assume valid code point
-				escapedBuf.appendCodePoint(cp);
-			}
-		});
-		return escapedBuf.toString();
-	}
 
 	@Override
 	public void setElfSymbolAddress(ElfSymbol elfSymbol, Address address) {
