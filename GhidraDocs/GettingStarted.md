@@ -203,8 +203,8 @@ Ghidra supports running on the following additional platforms with user-built na
 * Linux ARM 64-bit
 * FreeBSD x86 64-bit (no debugger support)
 * FreeBSD ARM 64-bit (no debugger support)
-* OpenBSD x86 64-bit (no debugger support)
-* OpenBSD ARM 64-bit (no debugger support)
+* OpenBSD x86 64-bit
+* OpenBSD ARM 64-bit
 
 For supported systems where native binaries have not been supplied, or those that are supplied fail
 to run properly, it may be necessary to build the native Ghidra binaries. In order to build native
