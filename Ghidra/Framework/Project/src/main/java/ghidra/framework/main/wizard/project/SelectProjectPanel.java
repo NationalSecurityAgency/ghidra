@@ -97,6 +97,7 @@ public class SelectProjectPanel extends JPanel {
 	private JTextField createProjectNameField(DocumentListener documentListener) {
 		projectNameField = new JTextField(10);
 		projectNameField.setName("Project Name");
+		projectNameField.getAccessibleContext().setAccessibleName("Project Name Field");
 		projectNameField.addActionListener(e -> statusChangedCallback.call());
 		projectNameField.getDocument().addDocumentListener(documentListener);
 		return projectNameField;
@@ -108,6 +109,7 @@ public class SelectProjectPanel extends JPanel {
 		directoryField.setColumns(10);
 		directoryField.getDocument().addDocumentListener(listener);
 		directoryField.setName("Project Directory");
+		directoryField.getAccessibleContext().setAccessibleName("Project Directory Field");
 
 		File projectDirectory = null;
 		String projectDirPath = Preferences.getProperty(Preferences.LAST_NEW_PROJECT_DIRECTORY);
@@ -128,6 +130,7 @@ public class SelectProjectPanel extends JPanel {
 
 		browseButton = new BrowseButton();
 		browseButton.addActionListener(e -> displayFileChooser());
+		browseButton.getAccessibleContext().setAccessibleName("Browse project tree");
 		JPanel buttonPanel = new JPanel(new BorderLayout());
 		buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 		buttonPanel.add(browseButton, BorderLayout.CENTER);

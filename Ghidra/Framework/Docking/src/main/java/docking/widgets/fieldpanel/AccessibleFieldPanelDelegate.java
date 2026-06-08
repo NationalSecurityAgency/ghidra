@@ -104,6 +104,11 @@ public class AccessibleFieldPanelDelegate {
 	 * @param trigger the event trigger
 	 */
 	public void setCaret(FieldLocation newCursorLoc, EventTrigger trigger) {
+
+		if (!panel.hasFocus()) {
+			return;
+		}
+
 		if (cursorField == null || !isSameField(cursorLoc, newCursorLoc)) {
 			AccessibleTextSequence oldSequence = getAccessibleTextSequence(cursorField);
 			cursorLoc = newCursorLoc;

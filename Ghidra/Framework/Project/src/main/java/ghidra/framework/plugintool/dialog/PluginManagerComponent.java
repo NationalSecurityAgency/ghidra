@@ -19,6 +19,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 
 import docking.EmptyBorderToggleButton;
@@ -124,7 +125,7 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 			setBackground(BG);
 
 			this.pluginPackage = pluginPackage;
-			this.checkBox = new GCheckBox();
+			this.checkBox =createCheckbox();
 
 			initizalizeCheckBoxSection();
 			initializeLabelSection();
@@ -132,6 +133,14 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 
 			setBorder(BorderFactory.createLineBorder(Colors.BORDER));
 			updateCheckBoxState();
+		}
+
+		private GCheckBox createCheckbox() {
+			 GCheckBox checkbox = new GCheckBox();
+			 AccessibleContext ac = checkbox.getAccessibleContext();
+			 ac.setAccessibleName(pluginPackage.getName() + " plugin package");
+			 ac.setAccessibleDescription(pluginPackage.getDescription());
+			 return checkbox;
 		}
 
 		private void initizalizeCheckBoxSection() {
@@ -190,7 +199,7 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 		private GHyperlinkComponent createConfigureHyperlink() {
 			GHyperlinkComponent configureHyperlink =
 				new GHyperlinkComponent();
-			configureHyperlink.addLink("Configure", () -> {
+			configureHyperlink.addLink("Configure", "Configure Plugins", () -> {
 				managePlugins(PluginPackageComponent.this.pluginPackage);
 			});
 
