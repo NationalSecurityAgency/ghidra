@@ -47,6 +47,7 @@ class AddTreeState {
   Varnode *ptr;			///< The pointer varnode
   const TypePointer *ct;	///< The pointer data-type
   const Datatype *baseType;	///< The base data-type being pointed at
+  mutable Datatype *lastMatchedType = nullptr;  ///< when hasMatchingSubType returns true, this is the last type it successfully found. Used for heuristics for shifted structure offset detection
   const TypePointerRel *pRelType;	///< A copy of \b ct, if it is a relative pointer
   int4 ptrsize;			///< Size of the pointer
   int4 size;			///< Size of data-type being pointed to (in address units) or 0 for open ended pointer
@@ -82,10 +83,51 @@ class AddTreeState {
   void clear(void);			///< Reset for a new ADD tree traversal
   bool inspectMultiequals(void);        ///< Check all potential CPUI_MULTIEQUALs in an attempt to transform the expression and find the multiple
   intb greatestCommonDivisor(intb val1, intb val2);  ///< Euclid's algorithm for finding the greatest common divisor of two integers
+  bool pushExtraNode(Varnode *extraNode);
+  bool tryPropagateAddedConst(PcodeOp *op, bool ignoreCounterIncrementCheck);
+  bool tryShiftedSpacebaseUsedAsCounter(PcodeOp *op);
+  struct tryShiftedSpacebaseUsedAsCounter_check_result {
+    Datatype *type;
+    intb offset;
+  };
+  bool tryShiftedSpacebaseUsedAsCounter_check(tryShiftedSpacebaseUsedAsCounter_check_result *result, PcodeOp *op, int slot);
+  bool tryShiftedSpacebaseUsedAsCounterFromMultiEq(PcodeOp *multiEq);
+  struct ClonedTree {
+    vector<Varnode *> vars;
+    intb coeff;
+    void addVar(Varnode *vn);
+  };
+  void clonedTreeAddResult(vector<ClonedTree> &result, const ClonedTree& newElem);
+  void cloneTree(Varnode *tree, const ClonedTree& outer, vector<ClonedTree> &result);
+  Varnode *clonedTreeToActualPcode(const vector<ClonedTree> &inTree, PcodeOp *follow);
+  static bool isSpacebaseConst(Varnode *vn, intb *val);
+  static bool noOneActuallyWroteVarSinceMultiEq(Varnode *start, PcodeOp *startMultiEq);
+  static bool noOneActuallyWroteVarSinceMultiEqHelper(Varnode *vn, Varnode *start, set<PcodeOp *>& scouted);
+  struct CollectedDescend {
+    PcodeOp *op;
+    int slot;
+    inline bool operator==(const CollectedDescend &other) {
+      return op == other.op
+        && slot == other.slot;
+    }
+    inline bool operator!=(const CollectedDescend &other) {
+      return op != other.op
+        || slot != other.slot;
+    }
+  };
+  struct CollectedDescendCompare {
+    inline bool operator()(const CollectedDescend &left, const CollectedDescend &right) const {
+      return left.op < right.op || left.op == right.op && left.slot < right.slot;
+    }
+  };
+  static void collectDescends(Varnode *start, vector<CollectedDescend>& allDescends, set<CollectedDescend, CollectedDescendCompare>& scouted);
 public:
   AddTreeState(Funcdata &d,PcodeOp *op,int4 slot);	///< Construct given root of ADD tree and pointer
+  AddTreeState(Funcdata &d);	///< Construct for calling function that only require \e data and some cached results
   bool apply(void);		///< Attempt to transform the pointer expression
   bool initAlternateForm(void);		///< Prepare analysis if there is an alternate form of the base pointer
+  bool tryPropagateAddedConstFromMultiEq(PcodeOp *multiEq, int assignmentSlot, bool ignoreCounterIncrementCheck);
+  static int getAssignmentPtrSlotOfMultiequalLoopWithShiftedStructureOffset(PcodeOp *multiEq, int assignmentSlot = 0);  // returns -1 if not found
 };
 
 class RuleEarlyRemoval : public Rule {

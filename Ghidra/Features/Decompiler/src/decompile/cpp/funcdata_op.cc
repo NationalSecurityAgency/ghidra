@@ -1159,6 +1159,13 @@ bool Funcdata::collapseIntMultMult(Varnode *vn)
     constVnSecondVal = 1ULL << constVnSecondVal;
   }
   uintb val = (constVnFirstVal * constVnSecondVal) & calc_mask(sz);
+  if (op->code() == CPUI_INT_LEFT) {
+    if (popcount(val) == 1) {
+      val = mostsigbit_set(val);
+    } else {
+      opSetOpcode(op, CPUI_INT_MULT);
+    }
+  }
   Varnode *newvn = newConstant(sz,val);
   opSetInput(op,newvn,1);
   opSetInput(op,invn,0);
