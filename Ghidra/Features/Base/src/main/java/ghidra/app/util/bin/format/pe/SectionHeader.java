@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.pe;
 import java.io.*;
 
 import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.format.pe.NTHeader;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.*;
 import ghidra.util.DataConverter;
@@ -257,11 +258,11 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 		if (result.name.startsWith("/") && stringTableOffset != -1) {
 			try {
 				int nameOffset = Integer.parseInt(result.name.substring(1));
-				result.name = reader.readAsciiString(stringTableOffset + nameOffset);
+				result.name = reader.readAsciiStringWithMaxLen(stringTableOffset + nameOffset, NTHeader.MAX_SANE_SYMBOL_NAME_LENGTH);
 			}
-			catch (NumberFormatException nfe) {
-				// ignore error, section name will remain as it was
-			}
+			// ignore errors, section name will remain as it was
+			catch (NumberFormatException nfe) { }
+			catch (IOException ioe) { }
 		}
 
 		// we need to skip IMAGE_SIZEOF_SHORT_NAME chars no matter what,

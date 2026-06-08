@@ -46,6 +46,7 @@ public class NTHeader implements StructConverter, OffsetValidator {
 	 */
 	public final static int SIZEOF_SIGNATURE = BinaryReader.SIZEOF_INT;
 	public final static int MAX_SANE_COUNT = 0x10000;
+	public final static int MAX_SANE_SYMBOL_NAME_LENGTH = 0x2000;
 
 	private int signature;
 	private FileHeader fileHeader;
