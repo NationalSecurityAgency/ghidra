@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,6 +82,14 @@ public enum SleighUtils {
 		T apply(SleighParser parser) throws RecognitionException;
 	}
 
+	public static SleighLexer lexerFor(LitIdMode mode, CharStream input) {
+		return switch (mode) {
+			case NORMAL -> new SleighLexer(input);
+			case HEX -> new SleighLexer(input, new SemanticLexerHex(input));
+			case ID_HEX -> new SleighLexer(input, new SemanticLexerIdHex(input));
+		};
+	}
+
 	/**
 	 * Parse a non-terminal symbol from the Sleigh semantic grammar
 	 * 
@@ -97,10 +105,12 @@ public enum SleighUtils {
 	 * @param nt the function from the parser implementing the non-terminal symbol
 	 * @param text the text to parse
 	 * @param follow a token that would ordinarily follow the non-terminal symbol, or empty for EOF
+	 * @param mode the mode for parsing integer literals and ids
 	 * @return the parsed result
 	 */
 	public static <T extends RuleReturnScope> T parseSleigh(ParseFunction<T> nt,
-			String text, String follow) {
+			String text, String follow, LitIdMode mode) {
+
 		LineArrayListWriter writer = new LineArrayListWriter();
 		ParsingEnvironment env = new ParsingEnvironment(writer);
 
@@ -122,7 +132,7 @@ public enum SleighUtils {
 
 		env.getLocator().registerLocation(0, new Location("sleigh", 0));
 
-		SleighLexer lex = new SleighLexer(input);
+		SleighLexer lex = lexerFor(mode, input);
 		lex.setEnv(env);
 		UnbufferedTokenStream tokens = new UnbufferedTokenStream(lex);
 		List<SleighParseErrorEntry> errors = new ArrayList<>();
@@ -185,11 +195,48 @@ public enum SleighUtils {
 			}
 		}
 
+		validateIntegersObj(t.getTree(), mode, errors);
+
 		if (!errors.isEmpty()) {
 			throw new SleighParseError(errors);
 		}
 
 		return t;
+	}
+
+	protected static void validateIntegersObj(Object t, LitIdMode mode,
+			List<SleighParseErrorEntry> errors) {
+		if (!(t instanceof Tree tree)) {
+			throw new AssertionError();
+		}
+		validateIntegers(tree, mode, errors);
+	}
+
+	protected static void validateIntegers(Tree t, LitIdMode mode,
+			List<SleighParseErrorEntry> errors) {
+		switch (t.getType()) {
+			case SleighParser.DEF_INT -> {
+				new RadixBigInteger(null, t.getText(), mode.radix);
+			}
+			case SleighParser.BIN_INT -> {
+				switch (mode) {
+					case NORMAL -> {
+						new RadixBigInteger(null, t.getText().substring(2), 2);
+					}
+					default -> {
+						new RadixBigInteger(null, t.getText(), mode.radix);
+					}
+				}
+			}
+			case SleighParser.HEX_INT -> {
+				new RadixBigInteger(null, t.getText().substring(2), 16);
+			}
+			default -> {
+				for (int i = 0; i < t.getChildCount(); i++) {
+					validateIntegers(t.getChild(i), mode, errors);
+				}
+			}
+		}
 	}
 
 	/**
@@ -199,17 +246,64 @@ public enum SleighUtils {
 	 * @return the parse tree
 	 */
 	public static Tree parseSleighSemantic(String sleigh) {
-		return parseSleigh(SleighParser::semantic, sleigh, "").getTree();
+		return parseSleigh(SleighParser::semantic, sleigh, "", LitIdMode.NORMAL).getTree();
+	}
+
+	/**
+	 * Modes for resolving integer literals and labels
+	 * <p>
+	 * Because Sleigh expressions are often used for address input, we want to allow the default
+	 * radix to be 16, rather than requiring the user to type 0x.... This complicates things,
+	 * however, in that the literal 'face' could be a label or the integer value in base 16. Parsers
+	 * that need to permit this should take this enum as a parameter.
+	 */
+	public enum LitIdMode {
+		/**
+		 * The normal mode. Un-prefixed integers are in base 10. Labels start with an alpha.
+		 */
+		NORMAL("Normal", 10, true),
+		/**
+		 * Hex mode preferring integer values. Un-prefixed are in base 16. Any literal that could be
+		 * a hex integer is taken for its integer value. '0b'-prefixed literals are no longer
+		 * allowed. They are instead taken as hex literals. Identifiers/labels consisting only of
+		 * hex digits are also taken as hex literals. Note that explicit prefixes are still allowed,
+		 * except for '0b' (binary). Also note that only the "value" portion of a literal is
+		 * implicitly hex. The size, bitranges, etc., are still base 10 by default.
+		 */
+		HEX("Hex", 16, false),
+		/**
+		 * Hex mode preferring ids. This works the same as {@link #HEX}, except that a literal that
+		 * could be an identifier/label is taken as that id instead of its integer value. To avoid
+		 * interpreting a value as a label, prefix it with a 0.
+		 */
+		ID_HEX("Hex, prefer ids", 16, true);
+
+		public static final List<LitIdMode> VALUES = List.of(values());
+
+		public final String description;
+		public final int radix;
+		public final boolean preferId;
+
+		private LitIdMode(String description, int radix, boolean preferId) {
+			this.description = description;
+			this.radix = radix;
+			this.preferId = preferId;
+		}
 	}
 
 	/**
 	 * Parse a semantic expression
 	 * 
 	 * @param expression the expression as a string
+	 * @param mode the mode for parsing integer literals and ids
 	 * @return the parse tree
 	 */
+	public static Tree parseSleighExpression(String expression, LitIdMode mode) {
+		return parseSleigh(SleighParser::expr, expression, ";", mode).getTree();
+	}
+
 	public static Tree parseSleighExpression(String expression) {
-		return parseSleigh(SleighParser::expr, expression, ";").getTree();
+		return parseSleighExpression(expression, LitIdMode.NORMAL);
 	}
 
 	/**
@@ -308,8 +402,8 @@ public enum SleighUtils {
 						match(tree, SleighParser.OP_DEREFERENCE, onSpace, onOffset);
 						return;
 					case SleighParser.OP_BIN_CONSTANT:
-					case SleighParser.OP_DEC_CONSTANT:
 					case SleighParser.OP_HEX_CONSTANT:
+					case SleighParser.OP_DEF_CONSTANT:
 						match(tree, SleighParser.OP_DEREFERENCE, onSize, onOffset);
 						return;
 					default:
@@ -431,8 +525,7 @@ public enum SleighUtils {
 		}
 	}
 
-	public record AddressOf(String space, Tree offset) {
-	}
+	public record AddressOf(String space, Tree offset) {}
 
 	public static AddressOf recoverAddressOf(String defaultSpace, Tree tree) {
 		var l = new Object() {
@@ -489,15 +582,15 @@ public enum SleighUtils {
 	private static void generateSleighExpression(Tree tree, StringBuilder sb) {
 		switch (tree.getType()) {
 			case SleighParser.BIN_INT:
-			case SleighParser.DEC_INT:
 			case SleighParser.HEX_INT:
+			case SleighParser.DEF_INT:
 			case SleighParser.IDENTIFIER:
 				sb.append(tree.getText());
 				break;
 
 			case SleighParser.OP_BIN_CONSTANT:
-			case SleighParser.OP_DEC_CONSTANT:
 			case SleighParser.OP_HEX_CONSTANT:
+			case SleighParser.OP_DEF_CONSTANT:
 			case SleighParser.OP_IDENTIFIER:
 				generateSleighExpression(tree.getChild(0), sb);
 				break;
@@ -655,8 +748,8 @@ public enum SleighUtils {
 							generateSleighExpression(tree.getChild(1), sb);
 							break;
 						case SleighParser.OP_BIN_CONSTANT:
-						case SleighParser.OP_DEC_CONSTANT:
 						case SleighParser.OP_HEX_CONSTANT:
+						case SleighParser.OP_DEF_CONSTANT:
 							sb.append("*:");
 							generateSleighExpression(child0, sb);
 							sb.append(" ");

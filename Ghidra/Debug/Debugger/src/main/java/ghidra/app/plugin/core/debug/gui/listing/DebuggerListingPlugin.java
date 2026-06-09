@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.gui.listing;
 
 import static ghidra.app.plugin.core.debug.gui.DebuggerResources.GROUP_TRANSIENT_VIEWS;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -43,8 +44,10 @@ import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.pcode.exec.SleighUtils.LitIdMode;
 import ghidra.program.model.address.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -85,6 +88,10 @@ import ghidra.trace.model.program.TraceProgramView;
 	})
 public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerListingProvider>
 		implements DebuggerListingService {
+
+	private static final AutoConfigState.ClassHandler<DebuggerListingPlugin> CONFIG_STATE_HANDLER =
+		AutoConfigState.wireHandler(DebuggerListingPlugin.class, MethodHandles.lookup());
+
 	private static final String KEY_CONNECTED_PROVIDER = "connectedProvider";
 	private static final String KEY_DISCONNECTED_COUNT = "disconnectedCount";
 	private static final String PREFIX_DISCONNECTED_PROVIDER = "disconnectedProvider";
@@ -120,6 +127,9 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	// NOTE: This plugin doesn't extend AbstractDebuggerPlugin
 	@SuppressWarnings("unused")
 	private AutoService.Wiring autoServiceWiring;
+
+	@AutoConfigStateField
+	protected LitIdMode goToSleighMode = LitIdMode.HEX;
 
 	private DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 
@@ -352,6 +362,16 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 		return goTo(loc, centerOnScreen);
 	}
 
+	@Override
+	public void setGoToSleighMode(LitIdMode mode) {
+		goToSleighMode = mode;
+	}
+
+	@Override
+	public LitIdMode getGoToSleighMode() {
+		return goToSleighMode;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * 
@@ -452,6 +472,8 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	@Override
 	public void writeConfigState(SaveState saveState) {
 		super.writeConfigState(saveState);
+		CONFIG_STATE_HANDLER.writeConfigState(this, saveState);
+
 		SaveState connectedProviderState = new SaveState();
 		connectedProvider.writeConfigState(connectedProviderState);
 		saveState.putXmlElement(KEY_CONNECTED_PROVIDER, connectedProviderState.saveToXml());
@@ -473,6 +495,8 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	@Override
 	public void readConfigState(SaveState saveState) {
 		super.readConfigState(saveState);
+		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
+
 		Element connectedProviderElement = saveState.getXmlElement(KEY_CONNECTED_PROVIDER);
 		if (connectedProviderElement != null) {
 			SaveState connectedProviderState = new SaveState(connectedProviderElement);

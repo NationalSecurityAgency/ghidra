@@ -67,9 +67,10 @@ import ghidra.trace.util.TraceEvents;
 import ghidra.util.Swing;
 
 public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvider {
-	private static final AutoConfigState.ClassHandler<ProgramByteViewerComponentProvider> CONFIG_STATE_HANDLER =
-		AutoConfigState.wireHandler(ProgramByteViewerComponentProvider.class,
-			MethodHandles.lookup());
+	private static final AutoConfigState.ClassHandler<
+		ProgramByteViewerComponentProvider> CONFIG_STATE_HANDLER =
+			AutoConfigState.wireHandler(ProgramByteViewerComponentProvider.class,
+				MethodHandles.lookup());
 	private static final String KEY_DEBUGGER_COORDINATES = "DebuggerCoordinates";
 
 	protected static boolean sameCoordinates(DebuggerCoordinates a, DebuggerCoordinates b) {
@@ -122,6 +123,12 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 				return false;
 			}
 			return DebuggerMemoryBytesProvider.this.goTo(view, new ProgramLocation(view, address));
+		}
+
+		@Override
+		protected Address getCurrentAddress() {
+			ProgramLocation location = DebuggerMemoryBytesProvider.this.getLocation();
+			return location == null ? null : location.getByteAddress();
 		}
 	}
 
