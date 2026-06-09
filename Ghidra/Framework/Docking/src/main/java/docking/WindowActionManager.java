@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -116,6 +116,7 @@ public class WindowActionManager {
 
 	void contextChanged(Map<Class<? extends ActionContext>, ActionContext> defaultContextMap,
 			ActionContext localContext, Set<DockingActionIf> excluded) {
+
 		/**
 		 * We need the guard against reentrant changes to the actionToProxyMap, lest the iterator
 		 * throw a ConcurrentModificationException. If the guard finds a violation, i.e., the map
@@ -145,8 +146,8 @@ public class WindowActionManager {
 				ActionContext context =
 					getContextForAction(action, localContext, defaultContextMap);
 				// Reentry point 2
-				boolean enabled =
-					context == null ? false : proxyAction.isEnabledForContext(context);
+
+				boolean enabled = proxyAction.isEnabledForContext(context);
 				// Reentry point 3, which we check
 				proxyAction.setEnabled(enabled);
 				if (reentryGuard.isViolated()) {
@@ -168,14 +169,14 @@ public class WindowActionManager {
 				return context;
 			}
 		}
-		return null;
+		return new DefaultActionContext();
 	}
 
 	/**
 	 * Returns the set of actions for this window.
 	 * 
 	 * <p>
-	 * Note this returns the the original passed-in actions and not the proxy actions that the
+	 * Note this returns the original passed-in actions and not the proxy actions that the
 	 * window uses.
 	 * 
 	 * @return the set of actions for this window

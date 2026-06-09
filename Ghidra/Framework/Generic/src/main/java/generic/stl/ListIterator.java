@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,25 +28,30 @@ public class ListIterator<T> implements IteratorSTL<T> {
 		this.node = node;
 	}
 	
+	@Override
 	public void assign( IteratorSTL<T> otherIterator ) {
 		ListIterator<T> other = (ListIterator<T>)otherIterator;
 		this.list = other.list;
 		this.root = other.root;
 		this.node = other.node;
 	}
+	@Override
 	public IteratorSTL<T> copy() {
 		return new ListIterator<T>( list, root, node );
 	}
 
+	@Override
 	public boolean isBegin() {
 		return node == root.next;
 	}
 
+	@Override
 	public boolean isEnd() {
 		return node == root;
 	}
 	
 	
+	@Override
 	public IteratorSTL<T> decrement() {
 		if (node.prev == root) {
 			throw new IndexOutOfBoundsException();
@@ -55,6 +60,7 @@ public class ListIterator<T> implements IteratorSTL<T> {
 		return this;
 	}
 
+	@Override
 	public T get() {
 		if (node == root) {
 			throw new IndexOutOfBoundsException();
@@ -62,20 +68,24 @@ public class ListIterator<T> implements IteratorSTL<T> {
 		return node.value;
 	}
 
+	@Override
 	public IteratorSTL<T> increment() {
 		node = node.next;
 		return this;
 	}
 
+	@Override
 	public IteratorSTL<T> increment(int count) {
 		for(int i=0;i<count;i++) {
 			increment();
 		}
 		return this;
 	}
+	@Override
 	public IteratorSTL<T> decrement( int n ) {
 		throw new UnsupportedOperationException();
 	}
+	@Override
 	public void insert(T value) {
 		ListNodeSTL<T> newNode = new ListNodeSTL<T>(node.prev, node, value);
 		node.prev.next = newNode;
@@ -84,6 +94,7 @@ public class ListIterator<T> implements IteratorSTL<T> {
 		list.adjustSize(1);
 	}
 
+	@Override
 	public void set(T value) {
 		if (root == node) {
 			throw new IndexOutOfBoundsException();

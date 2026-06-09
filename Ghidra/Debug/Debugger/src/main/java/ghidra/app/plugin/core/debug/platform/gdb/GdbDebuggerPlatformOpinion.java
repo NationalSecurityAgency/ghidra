@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,21 +30,32 @@ import ghidra.trace.model.target.TraceObject;
 
 public class GdbDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion {
 	public static final String EXTERNAL_TOOL = "gnu";
-	public static final CompilerSpecID PREFERRED_CSPEC_ID = new CompilerSpecID("gcc");
+	public static final CompilerSpecID GCC_CSPEC_ID = new CompilerSpecID("gcc");
+	public static final CompilerSpecID WINDOWS_CSPEC_ID = new CompilerSpecID("windows");
 
 	private static final Map<Pair<String, Endian>, List<LanguageCompilerSpecPair>> CACHE =
 		new HashMap<>();
 
-	public static List<LanguageCompilerSpecPair> getCompilerSpecsForGnu(String arch,
+	public static List<LanguageCompilerSpecPair> getCompilerSpecsForGnu(String arch, String os,
 			Endian endian) {
+		CompilerSpecID prefferedCspecId = computePreferredSpecId(os);
 		synchronized (CACHE) {
 			return CACHE.computeIfAbsent(Pair.of(arch, endian), p -> {
 				LanguageService langServ = DefaultLanguageService.getLanguageService();
 				return langServ.getLanguageCompilerSpecPairs(
 					new ExternalLanguageCompilerSpecQuery(arch, EXTERNAL_TOOL,
-						endian, null, PREFERRED_CSPEC_ID));
+						endian, null, prefferedCspecId));
 			});
 		}
+	}
+
+	protected static CompilerSpecID computePreferredSpecId(String os) {
+		String lower = os.toLowerCase();
+		if (lower.contains("windows")) {
+			return WINDOWS_CSPEC_ID;
+		}
+		// Just assume Linux (really AMD64 System V ABI)
+		return GCC_CSPEC_ID;
 	}
 
 	protected static class GdbDebuggerPlatformOffer extends AbstractDebuggerPlatformOffer {
@@ -60,7 +71,7 @@ public class GdbDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion 
 
 		@Override
 		public int getConfidence() {
-			return 10;
+			return 100;
 		}
 
 		@Override
@@ -93,7 +104,7 @@ public class GdbDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion 
 		if (debugger == null || !"gdb".equals(debugger.toLowerCase())) {
 			return Set.of();
 		}
-		return getCompilerSpecsForGnu(arch, endian).stream().flatMap(lcsp -> {
+		return getCompilerSpecsForGnu(arch, os, endian).stream().flatMap(lcsp -> {
 			try {
 				return offersForLanguageAndCSpec(arch, endian, lcsp).stream();
 			}

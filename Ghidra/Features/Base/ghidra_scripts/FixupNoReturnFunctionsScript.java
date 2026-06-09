@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,6 +41,7 @@ import ghidra.app.script.GhidraScript;
 import ghidra.app.tablechooser.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.*;
+import ghidra.program.model.lang.Processor;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
@@ -48,10 +49,15 @@ import ghidra.util.exception.CancelledException;
 public class FixupNoReturnFunctionsScript extends GhidraScript {
 
 	IssueEntries entryList = null;
+	
+	private final static String X86_NAME = "x86";
+	boolean isX86;
 
 	@Override
 	public void run() throws Exception {
 		Program cp = currentProgram;
+		
+		isX86 = checkForX86(cp);
 
 		TableChooserExecutor executor = createTableExecutor();
 
@@ -87,6 +93,11 @@ public class FixupNoReturnFunctionsScript extends GhidraScript {
 		else {
 			entryList.setMessage("Choose entries to be made Non-Returning functions");
 		}
+	}
+
+	private boolean checkForX86(Program cp) {
+		return cp.getLanguage().getProcessor().equals(
+			Processor.findOrPossiblyCreateProcessor(X86_NAME));
 	}
 
 	private void configureTableColumns(TableChooserDialog dialog) {
@@ -373,10 +384,22 @@ public class FixupNoReturnFunctionsScript extends GhidraScript {
 		//  
 		//  
 		FunctionManager functionManager = currentProgram.getFunctionManager();
-		FunctionIterator functionIter = functionManager.getFunctions(true);
+		
 		AddressSet set = new AddressSet();
 		HashSet<Function> suspectNoReturnFunctions = new HashSet<Function>();
 
+		FunctionIterator functionIter = functionManager.getFunctions(true);
+		checkFunctions(cp, functionIter, noReturnEntries, set, suspectNoReturnFunctions);
+
+		FunctionIterator externalFunctionIter = functionManager.getExternalFunctions();
+		checkFunctions(cp, externalFunctionIter, noReturnEntries, set, suspectNoReturnFunctions);
+		
+		return set;
+	}
+
+	public void checkFunctions(Program cp, FunctionIterator functionIter,
+			IssueEntries noReturnEntries, AddressSet set,
+			HashSet<Function> suspectNoReturnFunctions) throws CancelledException {
 		while (functionIter.hasNext()) {
 			Function candidateNoReturnfunction = functionIter.next();
 			noReturnEntries.setMessage("Checking function: " + candidateNoReturnfunction.getName());
@@ -428,8 +451,6 @@ public class FixupNoReturnFunctionsScript extends GhidraScript {
 				suspectNoReturnFunctions.add(candidateNoReturnfunction);
 			}
 		}
-
-		return set;
 	}
 
 	private boolean testCalledFunctionsNonReturning(Function candidateNonReturningFunction,
@@ -462,8 +483,8 @@ public class FixupNoReturnFunctionsScript extends GhidraScript {
 		FunctionManager funcManager = currentProgram.getFunctionManager();
 		Listing listing = currentProgram.getListing();
 		while (fallThru != null) {
-			if (funcManager.getFunctionAt(fallThru) != null) {
-
+			Function fallThruFunction = funcManager.getFunctionAt(fallThru);
+			if (fallThruFunction != null) {
 				NoReturnLocations location = new NoReturnLocations(currentProgram,
 					ref.getToAddress(), ref.getFromAddress(), "Function defined after call");
 				dialog.add(location);
@@ -490,11 +511,15 @@ public class FixupNoReturnFunctionsScript extends GhidraScript {
 					// or references.  This is especially true if there is only one
 					// example for a calling reference.
 					if (callingFunc != null) {
+						Address fromAddress = reference.getFromAddress();
 						Function function =
-							funcManager.getFunctionContaining(reference.getFromAddress());
-						if (callingFunc.equals(function)) {
+							funcManager.getFunctionContaining(fromAddress);
+						// The reference must come from an address within this function
+						// before this function call (reference fromAddress)
+						// this should get rid of spurious data references from other functions
+						if ((fromAddress.compareTo(fallThru) < 0) && callingFunc.equals(function)) {
 							NoReturnLocations location = new NoReturnLocations(currentProgram,
-								ref.getToAddress(), ref.getFromAddress(),
+								ref.getToAddress(), fromAddress,
 								"Data Reference from same function after call");
 							dialog.add(location);
 							return true;
@@ -516,6 +541,15 @@ public class FixupNoReturnFunctionsScript extends GhidraScript {
 					ref.getToAddress(), ref.getFromAddress(), "Data after call");
 				dialog.add(location);
 				return true;
+			}
+			if (isX86) {
+				Instruction fallInstr = listing.getInstructionContaining(fallThru);
+				if (fallInstr != null && fallInstr.getMnemonicString().equals("INT3")) {
+					NoReturnLocations location = new NoReturnLocations(currentProgram,
+						ref.getToAddress(), ref.getFromAddress(), "INT3 interrupt after call");
+					dialog.add(location);
+					return true;
+				}
 			}
 			fallThru = null;
 			if (block.getFlowType().isFallthrough()) {

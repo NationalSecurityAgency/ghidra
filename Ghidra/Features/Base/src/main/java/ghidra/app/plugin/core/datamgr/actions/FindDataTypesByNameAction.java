@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,9 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import java.awt.event.KeyEvent;
-
 import docking.ActionContext;
-import docking.DockingUtils;
-import docking.action.*;
+import docking.action.DockingAction;
+import docking.action.MenuData;
 import docking.widgets.dialogs.InputDialog;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
@@ -38,8 +36,6 @@ public class FindDataTypesByNameAction extends DockingAction {
 
 		setMenuBarData(new MenuData(new String[] { NAME + "..." }, null,
 			"VeryLast", -1, menuSubGroup));
-		setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_F, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 		setHelpLocation(new HelpLocation("DataTypeManagerPlugin", "Find_Data_Types_By_Name"));
 	}
 

@@ -25,6 +25,13 @@ import ghidra.trace.model.Trace;
 @ServiceInfo(defaultProviderName = "ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesPlugin")
 public interface DebuggerAutoMappingService {
 	/**
+	 * Set the current auto-map specification in the Modules provider
+	 * 
+	 * @param spec the new setting
+	 */
+	void setAutoMapSpec(AutoMapSpec spec);
+
+	/**
 	 * Get the auto-map setting currently active in the Modules provider
 	 * 
 	 * @return the current setting

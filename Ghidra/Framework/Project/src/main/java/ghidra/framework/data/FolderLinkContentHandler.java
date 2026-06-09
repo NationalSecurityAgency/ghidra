@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,18 +15,15 @@
  */
 package ghidra.framework.data;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.Icon;
 
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
-import ghidra.framework.store.FileSystem;
-import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * {@code FolderLinkContentHandler} provide folder-link support.  
@@ -38,16 +35,6 @@ public class FolderLinkContentHandler extends LinkHandler<NullFolderDomainObject
 	public static FolderLinkContentHandler INSTANCE = new FolderLinkContentHandler();
 
 	public static final String FOLDER_LINK_CONTENT_TYPE = "FolderLink";
-
-	@Override
-	public long createFile(FileSystem fs, FileSystem userfs, String path, String name,
-			DomainObject obj, TaskMonitor monitor)
-			throws IOException, InvalidNameException, CancelledException {
-		if (!(obj instanceof URLLinkObject)) {
-			throw new IOException("Unsupported domain object: " + obj.getClass().getName());
-		}
-		return createFile((URLLinkObject) obj, FOLDER_LINK_CONTENT_TYPE, fs, path, name, monitor);
-	}
 
 	@Override
 	public String getContentType() {
@@ -75,50 +62,81 @@ public class FolderLinkContentHandler extends LinkHandler<NullFolderDomainObject
 	}
 
 	/**
-	 * Get linked domain folder
+	 * Get linked domain folder.  
+	 * <P>
+	 * IMPORTANT: The use of external GhidraURL-based links is only supported in the context
+	 * of a an active project which is used to manage the associated project view.
+	 * <P>
+	 * If the link refers to a folder within the active project (i.e., path based), the resulting 
+	 * linked folder will be treated as part of that project, otherwise content will be treated
+	 * as read-only.
+	 *  
 	 * @param folderLinkFile folder-link file.
 	 * @return {@link LinkedGhidraFolder} referenced by specified folder-link file or null if 
 	 * folderLinkFile content type is not {@value #FOLDER_LINK_CONTENT_TYPE}.
-	 * @throws IOException if an IO or folder item access error occurs
+	 * @throws IOException if an IO or folder item access error occurs or a linkage error
+	 * exists.
 	 */
-	public static LinkedGhidraFolder getReadOnlyLinkedFolder(DomainFile folderLinkFile)
-			throws IOException {
+	public static LinkedGhidraFolder getLinkedFolder(DomainFile folderLinkFile) throws IOException {
 
-		if (!FOLDER_LINK_CONTENT_TYPE.equals(folderLinkFile.getContentType())) {
+		LinkFileInfo linkInfo = folderLinkFile.getLinkInfo();
+		if (linkInfo == null || !linkInfo.isFolderLink()) {
 			return null;
 		}
 
-		URL url = getURL(folderLinkFile);
+		AtomicReference<LinkStatus> linkStatus = new AtomicReference<>();
+		AtomicReference<String> errMsg = new AtomicReference<>();
 
-		Project activeProject = AppInfo.getActiveProject();
-		if (activeProject == null) {
-			Msg.error(FolderLinkContentHandler.class,
-				"Use of Linked Folders requires active project.");
-			return null;
+		// Following internal linkage will catch circular internal linkage
+		DomainFile folderLink = LinkHandler.followInternalLinkage(folderLinkFile,
+			s -> linkStatus.set(s), err -> errMsg.set(err));
+
+		LinkStatus s = linkStatus.get();
+		if (s == LinkStatus.BROKEN) {
+			String msg = errMsg.get();
+			if (msg == null) {
+				msg = "Unable to follow broken link";
+			}
+			// TODO: Should we just log warning instead?
+			throw new IOException(msg + ": " + folderLink);
 		}
-		GhidraFolder parent = ((GhidraFile) folderLinkFile).getParent();
-		return new LinkedGhidraFolder(activeProject, parent, folderLinkFile.getName(), url);
+
+		if (s == LinkStatus.EXTERNAL) {
+			Project activeProject = AppInfo.getActiveProject();
+			if (activeProject == null) {
+				Msg.error(FolderLinkContentHandler.class,
+					"Use of Linked Folders requires an active project.");
+				return null;
+			}
+			return new LinkedGhidraFolder(folderLink, getLinkURL(folderLink));
+		}
+
+		if (folderLink != null) {
+
+			ProjectData projectData;
+			DomainFolder parent = folderLink.getParent();
+			if (parent instanceof LinkedDomainFolder lf) {
+				try {
+					projectData = lf.getLinkedProjectData();
+				}
+				catch (IOException e) {
+					throw new RuntimeException("Unexpected", e);
+				}
+			}
+			else {
+				projectData = parent.getProjectData();
+			}
+
+			String linkPath = LinkHandler.getAbsoluteLinkPath(folderLink);
+
+			DomainFolder linkedFolder = projectData.getFolder(linkPath);
+			if (linkedFolder != null) {
+				return new LinkedGhidraFolder(folderLinkFile, linkedFolder);
+			}
+		}
+
+		// TODO: Not sure if this can ever occur
+		throw new FileNotFoundException("Invalid folder-link: " + folderLinkFile);
 	}
 
-}
-
-/**
- * Dummy domain object to satisfy {@link FolderLinkContentHandler#getDomainObjectClass()}
- */
-final class NullFolderDomainObject extends DomainObjectAdapterDB {
-	private NullFolderDomainObject() {
-		// this object may not be instantiated
-		super(null, null, 0, NullFolderDomainObject.class);
-		throw new RuntimeException("Object may not be instantiated");
-	}
-
-	@Override
-	public boolean isChangeable() {
-		return false;
-	}
-
-	@Override
-	public String getDescription() {
-		return "Dummy FolderLink Domain Object";
-	}
 }

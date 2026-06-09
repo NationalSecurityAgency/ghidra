@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -463,7 +463,7 @@ public class DebuggerTraceRegistersProviderTest extends AbstractDebuggerRegister
 		assertFalse(registersProvider.actionCreateSnapshot.isEnabled());
 
 		TraceThread thread1 = addThread();
-		TraceThread thread2 = addThread("Thread2");
+		TraceThread thread2 = addThread("Processes[1].Threads[2]");
 		addRegisterValues(thread1);
 		addRegisterTypes(thread1);
 		traceManager.openTrace(tb.trace);
@@ -483,7 +483,7 @@ public class DebuggerTraceRegistersProviderTest extends AbstractDebuggerRegister
 		DebuggerRegistersProvider cloned =
 			(DebuggerRegistersProvider) tool.getActiveComponentProvider();
 		assertEquals("[Registers]", cloned.getTitle());
-		assertEquals("Thread1", cloned.getSubTitle());
+		assertEquals("Processes[1].Threads[1]", cloned.getSubTitle());
 
 		activateThread(thread2);
 		waitForSwing();
@@ -518,7 +518,8 @@ public class DebuggerTraceRegistersProviderTest extends AbstractDebuggerRegister
 		try (Transaction tx = tb.startTransaction()) {
 			// Unconventional start, to ensure goto PC is actually the cause, not just min of view
 			tb.trace.getMemoryManager()
-					.addRegion("bin:.text", Lifespan.nowOn(0), tb.range(0x00300000, 0x00500000),
+					.addRegion("Processes[1].Memory[bin:.text]", Lifespan.nowOn(0),
+						tb.range(0x00300000, 0x00500000),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 		addRegisterValues(thread);
@@ -563,7 +564,7 @@ public class DebuggerTraceRegistersProviderTest extends AbstractDebuggerRegister
 			waitForDialogComponent(DebuggerAvailableRegistersDialog.class);
 
 		List<AvailableRegisterRow> modelData = dialog.availableTableModel.getModelData();
-		assertEquals(52, modelData.size());
+		assertEquals(getPlatform().getLanguage().getRegisters().size(), modelData.size());
 		AvailableRegisterRow pcAvail =
 			modelData.stream().filter(r -> r.getRegister() == pc).findFirst().orElse(null);
 		assertNotNull(pcAvail);
@@ -589,7 +590,7 @@ public class DebuggerTraceRegistersProviderTest extends AbstractDebuggerRegister
 	public void testTraceThreadActivation() throws Exception {
 		traceManager.openTrace(tb.trace);
 		TraceThread thread1 = addThread();
-		TraceThread thread2 = addThread("Thread2");
+		TraceThread thread2 = addThread("Processes[1].Threads[2]");
 		addRegisterValues(thread1);
 		activateThread(thread2);
 		waitForSwing();
@@ -625,7 +626,8 @@ public class DebuggerTraceRegistersProviderTest extends AbstractDebuggerRegister
 
 			TraceThread thread3;
 			try (Transaction tx = ub.startTransaction()) {
-				thread3 = ub.trace.getThreadManager().createThread("Thread3", 0);
+				ub.createRootObject("Target"); // Different schema from first, because why not?
+				thread3 = ub.trace.getThreadManager().createThread("Threads[3]", 0);
 			}
 			traceManager.activateTrace(ub.trace);
 			waitForDomainObject(ub.trace);
@@ -701,6 +703,7 @@ public class DebuggerTraceRegistersProviderTest extends AbstractDebuggerRegister
 		assertR0RowTypePopulated();
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 2);
 			TraceMemorySpace regVals =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, 1, true);
 			regVals.putBytes(getPlatform(), 0, pc, tb.buf(0, 0, 0, 0, 0, 0x50, 0, 0));

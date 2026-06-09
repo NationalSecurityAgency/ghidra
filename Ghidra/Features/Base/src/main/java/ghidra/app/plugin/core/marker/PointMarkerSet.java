@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,7 +95,7 @@ class PointMarkerSet extends MarkerSetImpl {
 	}
 
 	@Override
-	protected void doPaintMarkers(Graphics g, VerticalPixelAddressMap pixmap, int index,
+	protected void doPaintMarkers(Graphics g, VerticalPixelAddressMap pixMap, int index,
 			AddressIndexMap map, List<Integer> layouts) {
 
 		if (layouts == null) {
@@ -105,20 +105,20 @@ class PointMarkerSet extends MarkerSetImpl {
 		Iterator<Integer> it = layouts.iterator();
 		while (it.hasNext()) {
 			int i = it.next().intValue();
-			int yStart = pixmap.getMarkPosition(i);
+			int yStart = pixMap.getMarkPosition(i);
 
-			Image curImage = getMarkerImage(pixmap, i, yStart);
+			Image curImage = getMarkerImage(pixMap, i, yStart);
 
 			g.drawImage(curImage, 0, yStart, imageObserver);
 		}
 	}
 
-	private Image getMarkerImage(VerticalPixelAddressMap pixmap, int i, int yStart) {
+	private Image getMarkerImage(VerticalPixelAddressMap pixMap, int i, int yStart) {
 		if (markerDescriptor == null) {
 			return image;
 		}
 
-		Address address = pixmap.getLayoutAddress(i);
+		Address address = pixMap.getLayoutAddress(i);
 		MarkerLocation loc = new MarkerLocation(this, program, address, 0, yStart);
 		ImageIcon icon = markerDescriptor.getIcon(loc);
 		if (icon != null) {

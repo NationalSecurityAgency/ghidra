@@ -19,7 +19,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public
-License along with this library (see the the license.txt file); if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+License along with this library (see the license.txt file); if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #######**** NOTE THIS ADD-ON ****#######
 The GNU Lesser General Public License or LGPL is written for software libraries
 in the first place. The LGPL has to be considered valid for this artwork

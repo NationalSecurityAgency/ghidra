@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ public class LookAndFeelUtils {
 	 * @return true if the UI is using Aqua
 	 */
 	public static boolean isUsingAquaUI(ComponentUI UI) {
-		return ThemeManager.getInstance().isUsingAquaUI(UI);
+		return ThemeManager.getInstance().isUsingAquaUI();
 	}
 
 	/**
@@ -77,4 +77,11 @@ public class LookAndFeelUtils {
 		return ThemeManager.getInstance().isUsingNimbusUI();
 	}
 
+	/**
+	 * Returns true if the current UI is the FlatLaf Dark or FlatLaf Light Look and Feel.
+	 * @return true if the current UI is the FlatLaf Dark or FlatLaf Light Look and Feel 
+	 */
+	public static boolean isUsingFlatUI() {
+		return ThemeManager.getInstance().isUsingFlatUI();
+	}
 }

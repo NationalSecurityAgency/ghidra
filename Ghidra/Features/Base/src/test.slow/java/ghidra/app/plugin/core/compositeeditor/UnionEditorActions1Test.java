@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -345,6 +345,12 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		invoke(floatAction);
 		assertEquals(1, model.getNumComponents());
 		assertTrue(getDataType(0).isEquivalent(new DoubleDataType()));
+		assertEquals(8, getLength(0));
+		checkSelection(new int[] { 0 });
+
+		invoke(floatAction);
+		assertEquals(1, model.getNumComponents());
+		assertTrue(getDataType(0).isEquivalent(new LongDoubleDataType()));
 		assertEquals(8, getLength(0));
 		checkSelection(new int[] { 0 });
 
@@ -804,7 +810,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 	public void testApplyWithInvalidName() throws Exception {
 		init(complexUnion, pgmTestCat, false);
 
-		CompEditorPanel panel = (CompEditorPanel) getPanel();
+		UnionEditorPanel panel = (UnionEditorPanel) getPanel();
 		JTextField nameField = panel.nameTextField;
 		assertTrue(model.isValidName());
 
@@ -869,7 +875,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 	public void testShowNumbersInHex() {
 		init(complexUnion, pgmTestCat, false);
 		assertEquals("", model.getStatus());
-		CompEditorPanel panel = (CompEditorPanel) provider.getComponent();
+		UnionEditorPanel panel = (UnionEditorPanel) provider.getComponent();
 
 		assertEquals(false, model.isShowingNumbersInHex());
 		assertEquals("45", model.getValueAt(11, model.getLengthColumn()));

@@ -952,7 +952,7 @@ cc: "E"    is cond=15 { tmp:1 = ($(Z) == 1); export tmp; }
 :POPF                               is op8=0xf3 {
 	local result:2 = 0;
 	pop(result);
-	PSW = result:1;
+	PSW = zext(result:1);
 	local resultHi = result >> 8;
 	INT_MASK = resultHi:1;
 }

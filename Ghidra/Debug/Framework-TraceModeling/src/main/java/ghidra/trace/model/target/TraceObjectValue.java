@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,11 @@
  */
 package ghidra.trace.model.target;
 
-import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 
 public interface TraceObjectValue {
 
@@ -54,7 +55,7 @@ public interface TraceObjectValue {
 		if (parent == null) {
 			return getEntryKey().equals(keyOrAlias);
 		}
-		return getEntryKey().equals(parent.getTargetSchema().checkAliasedAttribute(keyOrAlias));
+		return getEntryKey().equals(parent.getSchema().checkAliasedAttribute(keyOrAlias));
 	}
 
 	/**
@@ -66,7 +67,7 @@ public interface TraceObjectValue {
 	 * 
 	 * @return the canonical path
 	 */
-	TraceObjectKeyPath getCanonicalPath();
+	KeyPath getCanonicalPath();
 
 	/**
 	 * Get the value
@@ -117,8 +118,8 @@ public interface TraceObjectValue {
 	 * 
 	 * @return the schema
 	 */
-	default TargetObjectSchema getTargetSchema() {
-		return getParent().getTargetSchema().getChildSchema(getEntryKey());
+	default TraceObjectSchema getTargetSchema() {
+		return getParent().getSchema().getChildSchema(getEntryKey());
 	}
 
 	/**
@@ -220,6 +221,6 @@ public interface TraceObjectValue {
 		if (parent == null) {
 			return false;
 		}
-		return parent.getTargetSchema().isHidden(getEntryKey());
+		return parent.getSchema().isHidden(getEntryKey());
 	}
 }

@@ -28,8 +28,8 @@ import ghidra.debug.api.modules.MapProposal;
 import ghidra.debug.api.modules.SectionMapProposal;
 import ghidra.debug.api.modules.SectionMapProposal.SectionMapEntry;
 import ghidra.program.model.listing.Program;
-import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.util.TraceEvent;
 import ghidra.trace.util.TraceEvents;
@@ -61,15 +61,16 @@ public class BySectionAutoMapSpec implements AutoMapSpec {
 
 	@Override
 	public boolean objectHasType(TraceObjectValue value) {
-		return value.getParent().queryInterface(TraceObjectSection.class) != null;
+		return value.getParent().queryInterface(TraceSection.class) != null;
 	}
 
 	@Override
-	public String getInfoForObjects(Trace trace) {
+	public String getInfoForObjects(Trace trace, long snap) {
 		return trace.getModuleManager()
 				.getAllSections()
 				.stream()
-				.map(s -> s.getName() + ":" + s.getStart())
+				.filter(s -> s.isValid(snap))
+				.map(s -> s.getName(snap) + ":" + s.getStart(snap))
 				.sorted()
 				.collect(Collectors.joining(","));
 	}
@@ -81,9 +82,9 @@ public class BySectionAutoMapSpec implements AutoMapSpec {
 
 	@Override
 	public boolean performMapping(DebuggerStaticMappingService mappingService, Trace trace,
-			List<Program> programs, TaskMonitor monitor) throws CancelledException {
-		Map<?, SectionMapProposal> maps = mappingService
-				.proposeSectionMaps(trace.getModuleManager().getAllModules(), programs);
+			long snap, List<Program> programs, TaskMonitor monitor) throws CancelledException {
+		Map<?, SectionMapProposal> maps = mappingService.proposeSectionMaps(
+			trace.getModuleManager().getLoadedModules(snap), snap, programs);
 		Collection<SectionMapEntry> entries = MapProposal.flatten(maps.values());
 		entries = MapProposal.removeOverlapping(entries);
 		mappingService.addSectionMappings(entries, monitor, false);

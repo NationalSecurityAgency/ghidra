@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
-import ghidra.program.database.*;
+import ghidra.program.database.ProgramBuilder;
+import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
 
@@ -81,14 +82,14 @@ public class FormatStringParserTest extends AbstractGenericTest {
 		runFormatTest("%d%hi", expectedTypes2, false);
 
 		DataType[] expectedTypes3 =
-			{ program.getDataTypeManager().getPointer(new PointerDataType(DataType.VOID)),
+			{ program.getDataTypeManager().getPointer(new PointerDataType(VoidDataType.dataType)),
 				program.getDataTypeManager().getPointer(new CharDataType()) };
 		runFormatTest("%p%*d%s", expectedTypes3, false);
 
-		DataType[] expectedTypes4 =
-			{ program.getDataTypeManager().getPointer(new LongDoubleDataType()),
-				program.getDataTypeManager().getPointer(new CharDataType()),
-				program.getDataTypeManager().getPointer(new PointerDataType(DataType.VOID)) };
+		DataType[] expectedTypes4 = {
+			program.getDataTypeManager().getPointer(new LongDoubleDataType()),
+			program.getDataTypeManager().getPointer(new CharDataType()),
+			program.getDataTypeManager().getPointer(new PointerDataType(VoidDataType.dataType)) };
 
 		runFormatTest("!:%12La%*d+=%2s%3p%*20d", expectedTypes4, false);
 
@@ -106,8 +107,8 @@ public class FormatStringParserTest extends AbstractGenericTest {
 			{ program.getDataTypeManager().getPointer(new CharDataType()), new LongDataType() };
 		runFormatTest("#thisisatest%+-4.12s%#.1lin\nd2", expectedTypes2, true);
 
-		DataType[] expectedTypes3 = { new PointerDataType(DataType.VOID), new LongDoubleDataType(),
-			new UnsignedCharDataType() };
+		DataType[] expectedTypes3 = { new PointerDataType(VoidDataType.dataType),
+			new LongDoubleDataType(), new UnsignedCharDataType() };
 		runFormatTest("%01.3pp%%%#1.2Lg%%%%%hhXxn2", expectedTypes3, true);
 
 		DataType[] expectedTypes4 = { new IntegerDataType(), new IntegerDataType(),

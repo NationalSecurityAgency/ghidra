@@ -64,6 +64,7 @@ public class SequenceMiningParamsInputDialog extends InputDialogComponentProvide
 	public SequenceMiningParamsInputDialog(String title, Component parent) {
 		super(title);
 		JPanel panel = createPanel();
+		panel.getAccessibleContext().setAccessibleName("Sequence Mining Parameter Input");
 		addWorkPanel(panel);
 		addOKButton();
 		okButton.setText("OK");
@@ -83,6 +84,7 @@ public class SequenceMiningParamsInputDialog extends InputDialogComponentProvide
 
 		mainPanel.add(new GLabel(PERCENTAGE_BOX_TEXT));
 		percentageBox = new JTextField(16);
+		percentageBox.getAccessibleContext().setAccessibleName("Percentage");
 		double percentage =
 			Double.parseDouble(Preferences.getProperty(PERCENTAGE_PROPERTY, DEFAULT_PERCENTAGE));
 		percentageBox.setText(Double.toString(percentage));
@@ -91,16 +93,21 @@ public class SequenceMiningParamsInputDialog extends InputDialogComponentProvide
 
 		mainPanel.add(new GLabel(MIN_FIXED_BITS_BOX_TEXT));
 		minFixedBitsBox = new IntegerTextField();
-		int minFixBits = Integer.parseInt(
-			Preferences.getProperty(MIN_FIXED_BITS_PROPERTY, DEFAULT_MIN_FIXED_BITS));
+		minFixedBitsBox.getComponent()
+				.getAccessibleContext()
+				.setAccessibleName("Minimum Fixed Bits");
+		int minFixBits = Integer
+				.parseInt(Preferences.getProperty(MIN_FIXED_BITS_PROPERTY, DEFAULT_MIN_FIXED_BITS));
 		minFixedBitsBox.setValue(minFixBits);
 		mainPanel.add(minFixedBitsBox.getComponent());
 
 		boolean useBinary = Boolean.parseBoolean(
 			Preferences.getProperty(BINARY_SEQUENCES_PROPERTY, BINARY_SEQUENCES_DEFAULT));
 		binaryButton = new GRadioButton(BINARY_BUTTON_TEXT, useBinary);
+		binaryButton.getAccessibleContext().setAccessibleName("Use Binary");
 		binaryButton.setMnemonic(BINARY_MNEMONIC);
 		nibbleButton = new GRadioButton(NIBBLE_BUTTON_TEXT, !useBinary);
+		nibbleButton.getAccessibleContext().setAccessibleName("Use Nibble");
 		nibbleButton.setMnemonic(NIBBLE_MNEMONIC);
 		mainPanel.add(binaryButton);
 		mainPanel.add(nibbleButton);
@@ -108,7 +115,7 @@ public class SequenceMiningParamsInputDialog extends InputDialogComponentProvide
 		bGroup = new ButtonGroup();
 		bGroup.add(binaryButton);
 		bGroup.add(nibbleButton);
-
+		mainPanel.getAccessibleContext().setAccessibleName("Sequenc Mining Parameter Input");
 		return mainPanel;
 	}
 

@@ -72,6 +72,7 @@ public class PrintOptionsDialog extends ReusableDialogComponentProvider {
 		JPanel rangePanel = new JPanel();
 		rangePanel.setLayout(new BoxLayout(rangePanel, BoxLayout.Y_AXIS));
 		rangePanel.setBorder(BorderFactory.createTitledBorder("Print Range"));
+		rangePanel.getAccessibleContext().setAccessibleName("Print Range");
 
 		KeyListener key = new KeyAdapter() {
 			@Override
@@ -87,41 +88,50 @@ public class PrintOptionsDialog extends ReusableDialogComponentProvider {
 
 		selection = new GRadioButton("Selected area(s)");
 		selection.addKeyListener(key);
+		selection.getAccessibleContext().setAccessibleName("Selected Area");
 		rangePanel.add(selection);
 		group.add(selection);
 		selection.setEnabled(selectionEnabled);
 		visible = new GRadioButton("Code visible on screen");
 		visible.addKeyListener(key);
+		visible.getAccessibleContext().setAccessibleName("Visible Code");
 		rangePanel.add(visible);
 		group.add(visible);
 		view = new GRadioButton("Current view");
 		view.addKeyListener(key);
+		view.getAccessibleContext().setAccessibleName("Current View");
 		rangePanel.add(view);
 		group.add(view);
 
 		JPanel headerPanel = new JPanel();
 		headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.X_AXIS));
 		headerPanel.setBorder(BorderFactory.createTitledBorder("Header and Footer"));
+		headerPanel.getAccessibleContext().setAccessibleName("Info");
 
 		title = new GCheckBox("Title");
 		title.setSelected(true);
 		title.addKeyListener(key);
+		title.getAccessibleContext().setAccessibleName("Title");
 		headerPanel.add(title);
 		date = new GCheckBox("Date/Time");
 		date.setSelected(true);
 		date.addKeyListener(key);
+		date.getAccessibleContext().setAccessibleName("Date/Time");
 		headerPanel.add(date);
 		pageNum = new GCheckBox("Page Numbers");
 		pageNum.setSelected(true);
 		pageNum.addKeyListener(key);
+		pageNum.getAccessibleContext().setAccessibleName("Page Numbers");
 		headerPanel.add(pageNum);
 
 		JPanel optionsPanel = new JPanel();
 		optionsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 		optionsPanel.setBorder(BorderFactory.createTitledBorder("Other Print Options"));
+		optionsPanel.getAccessibleContext().setAccessibleName("Other Options");
 
 		monochrome = new GCheckBox("Use Monochrome", true);
 		monochrome.addKeyListener(key);
+		monochrome.getAccessibleContext().setAccessibleName("Monochrome");
 		optionsPanel.add(monochrome);
 
 		outerPanel.add(rangePanel, BorderLayout.NORTH);
@@ -129,7 +139,7 @@ public class PrintOptionsDialog extends ReusableDialogComponentProvider {
 		outerPanel.add(optionsPanel, BorderLayout.SOUTH);
 
 		setFocusComponent();
-
+		outerPanel.getAccessibleContext().setAccessibleName("Print Options");
 		return outerPanel;
 	}
 

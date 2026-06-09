@@ -3,6 +3,7 @@
 ##MODULE IP: LGPL 2.1
 ##MODULE IP: Public Domain
 Module.manifest||Public Domain||||END|
+README.md||GHIDRA||||END|
 data/lib/csframework.jar||LGPL 2.1||||END|
 data/lib/hfsexplorer-0_21-src.zip||GPL 3||||END|
 data/lib/hfsx.jar||GPL 3||||END|

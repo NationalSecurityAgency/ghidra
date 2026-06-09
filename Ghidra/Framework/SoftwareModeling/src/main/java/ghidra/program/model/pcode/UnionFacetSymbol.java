@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,11 +35,13 @@ import ghidra.program.model.data.*;
 public class UnionFacetSymbol extends HighSymbol {
 	public static String BASENAME = "unionfacet";
 	private int fieldNumber;		// Ordinal of field within union being selected
+	private boolean isAddrBased;		// Controls facets for any op at the address
 
-	public UnionFacetSymbol(long uniqueId, String nm, DataType dt, int fldNum, HighFunction func) {
+	public UnionFacetSymbol(long uniqueId, String nm, DataType dt, HighFunction func) {
 		super(uniqueId, nm, dt, func);
 		category = 2;
-		fieldNumber = fldNum;
+		fieldNumber = extractFieldNumber(nm);
+		isAddrBased = extractAddressBased(nm);
 	}
 
 	@Override
@@ -47,6 +49,7 @@ public class UnionFacetSymbol extends HighSymbol {
 		encoder.openElement(ELEM_FACETSYMBOL);
 		encodeHeader(encoder);
 		encoder.writeSignedInteger(ATTRIB_FIELD, fieldNumber);
+		encoder.writeBool(ATTRIB_ADDRTIED, isAddrBased);
 		dtmanage.encodeTypeRef(encoder, type, getSize());
 		encoder.closeElement(ELEM_FACETSYMBOL);
 	}
@@ -55,11 +58,16 @@ public class UnionFacetSymbol extends HighSymbol {
 	 * Generate an automatic symbol name, given a field number and address
 	 * @param fldNum is the field number
 	 * @param addr is the Address
+	 * @param isAddr is true if the facet should be address based
 	 * @return the name
 	 */
-	public static String buildSymbolName(int fldNum, Address addr) {
+	public static String buildSymbolName(int fldNum, Address addr, boolean isAddr) {
 		StringBuilder buffer = new StringBuilder();
-		buffer.append(BASENAME).append(fldNum + 1).append('_');
+		buffer.append(BASENAME);
+		if (isAddr) {
+			buffer.append('a');
+		}
+		buffer.append(fldNum + 1).append('_');
 		buffer.append(Long.toHexString(addr.getOffset()));
 		return buffer.toString();
 	}
@@ -74,11 +82,28 @@ public class UnionFacetSymbol extends HighSymbol {
 		if (pos < 0) {
 			return -1;
 		}
+		pos += BASENAME.length();
+		if (nm.length() > pos && nm.charAt(pos) == 'a') {
+			pos = pos + 1;
+		}
 		int endpos = nm.indexOf('_', pos);
 		if (endpos < 0) {
 			return -1;
 		}
-		return Integer.decode(nm.substring(pos + BASENAME.length(), endpos)) - 1;
+		return Integer.decode(nm.substring(pos, endpos)) - 1;
+	}
+
+	/**
+	 * First character of 'a' after BASENAME indicates an address based facet
+	 * @param nm is the symbol name
+	 * @return true if the facet is address based
+	 */
+	public static boolean extractAddressBased(String nm) {
+		int pos = nm.indexOf(BASENAME);
+		if (pos < 0 || nm.length() <= pos) {
+			return false;
+		}
+		return nm.charAt(pos + BASENAME.length()) == 'a';
 	}
 
 	/**

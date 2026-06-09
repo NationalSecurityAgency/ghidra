@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,11 @@ import java.util.*;
 
 import javax.swing.Icon;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
+import docking.ComponentProvider;
+import docking.DockingWindowManager;
+import docking.action.builder.ActionBuilder;
 import docking.options.OptionsService;
 import docking.tool.ToolConstants;
 import generic.theme.GIcon;
@@ -36,6 +39,7 @@ import ghidra.app.plugin.core.functiongraph.mvc.FunctionGraphOptions;
 import ghidra.app.plugin.core.marker.MarginProviderSupplier;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
+import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginInfo;
@@ -54,7 +58,7 @@ import ghidra.util.exception.AssertException;
 	category = PluginCategoryNames.GRAPH,
 	shortDescription = FunctionGraphPlugin.FUNCTION_GRAPH_NAME,
 	description = "Plugin for show a graphical representation of the code blocks of a function",
-	servicesRequired = { GoToService.class, BlockModelService.class, CodeViewerService.class, ProgramManager.class },
+	servicesRequired = { GoToService.class, CodeViewerService.class, ProgramManager.class },
 	servicesProvided = { FunctionGraphMarginService.class }
 )
 //@formatter:on
@@ -86,6 +90,29 @@ public class FunctionGraphPlugin extends ProgramPlugin
 		super(tool);
 
 		colorProvider = new IndependentColorProvider(tool);
+
+		new ActionBuilder("Toggle Listing and Function Graph", getName())
+				.keyBinding("control space")
+				.onAction(c -> toggleView())
+				.buildAndInstall(tool);
+	}
+
+	private void toggleView() {
+
+		CodeViewerService cvService = tool.getService(CodeViewerService.class);
+
+		ListingPanel lp = cvService.getListingPanel();
+		DockingWindowManager dwm = DockingWindowManager.getInstance(lp);
+		ComponentProvider cvProvider = dwm.getComponentProvider(lp);
+		if (cvProvider.isFocusedProvider()) {
+			connectedProvider.setVisible(true);
+		}
+		else {
+			// Either the Function Graph is focused or some other provider has focus.  Just jump to
+			// the code viewer in this case.  The user can perform the action again to get to the
+			// graph.
+			cvProvider.setVisible(true);
+		}
 	}
 
 	@Override
@@ -99,7 +126,8 @@ public class FunctionGraphPlugin extends ProgramPlugin
 
 		ColorizingService colorizingService = tool.getService(ColorizingService.class);
 		if (colorizingService != null) {
-			colorProvider = new ToolBasedColorProvider(this, colorizingService);
+			colorProvider =
+				new ToolBasedColorProvider(() -> getCurrentProgram(), colorizingService);
 		}
 	}
 
@@ -112,7 +140,8 @@ public class FunctionGraphPlugin extends ProgramPlugin
 			}
 		}
 		else if (interfaceClass == ColorizingService.class) {
-			colorProvider = new ToolBasedColorProvider(this, (ColorizingService) service);
+			colorProvider =
+				new ToolBasedColorProvider(() -> getCurrentProgram(), (ColorizingService) service);
 			connectedProvider.refreshAndKeepPerspective();
 		}
 		else if (interfaceClass == MarkerService.class) {
@@ -144,6 +173,8 @@ public class FunctionGraphPlugin extends ProgramPlugin
 	}
 
 	private List<FGLayoutProvider> loadLayoutProviders() {
+
+		// Shared Code Note: This code is mirrored in the FgDisplay for the Code Comparison API
 
 		FGLayoutFinder layoutFinder = new DiscoverableFGLayoutFinder();
 		List<FGLayoutProvider> instances = layoutFinder.findLayouts();
@@ -186,6 +217,8 @@ public class FunctionGraphPlugin extends ProgramPlugin
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
+
+		// Shared Code Note: This code is mirrored in the FgDisplay for the Code Comparison API
 
 		// Graph -> Function Graph
 		Options fgOptions = options.getOptions(FUNCTION_GRAPH_NAME);

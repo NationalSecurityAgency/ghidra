@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent.EventType;
 
 import docking.EmptyBorderToggleButton;
-import docking.widgets.HyperlinkComponent;
+import docking.widgets.GHyperlinkComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.*;
 import generic.theme.*;
@@ -176,11 +175,11 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 			labelPanel.setBackground(BG);
 
 			GLabel nameLabel = new GLabel(pluginPackage.getName());
-			Gui.registerFont(nameLabel, "font.pluginpanel.name");
-			nameLabel.setForeground(new GColor("color.fg.pluginpanel.name"));
+			Gui.registerFont(nameLabel, "font.plugin.package.panel.name");
+			nameLabel.setForeground(new GColor("color.fg.plugin.package.panel.name"));
 			labelPanel.add(nameLabel);
 
-			HyperlinkComponent configureHyperlink = createConfigureHyperlink();
+			GHyperlinkComponent configureHyperlink = createConfigureHyperlink();
 			labelPanel.add(configureHyperlink);
 
 			labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 25, 0, 40));
@@ -188,14 +187,13 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 			add(centerPanel);
 		}
 
-		private HyperlinkComponent createConfigureHyperlink() {
-			HyperlinkComponent configureHyperlink =
-				new HyperlinkComponent("<html> <a href=\"Configure\">Configure</a>");
-			configureHyperlink.addHyperlinkListener("Configure", e -> {
-				if (e.getEventType() == EventType.ACTIVATED) {
-					managePlugins(PluginPackageComponent.this.pluginPackage);
-				}
+		private GHyperlinkComponent createConfigureHyperlink() {
+			GHyperlinkComponent configureHyperlink =
+				new GHyperlinkComponent();
+			configureHyperlink.addLink("Configure", () -> {
+				managePlugins(PluginPackageComponent.this.pluginPackage);
 			});
+
 			configureHyperlink.setBackground(BG);
 			return configureHyperlink;
 		}
@@ -208,7 +206,7 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 			String htmlDescription = enchanceDescription(pluginPackage.getDescription());
 
 			JLabel descriptionlabel = new GHtmlLabel(htmlDescription);
-			descriptionlabel.setForeground(new GColor("color.fg.pluginpanel.description"));
+			descriptionlabel.setForeground(new GColor("color.fg.plugin.package.panel.description"));
 			descriptionlabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 			descriptionlabel.setVerticalAlignment(SwingConstants.TOP);
 			descriptionlabel.setToolTipText(

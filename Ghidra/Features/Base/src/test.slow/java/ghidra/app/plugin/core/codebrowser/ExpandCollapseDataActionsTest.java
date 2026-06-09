@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,13 @@
  */
 package ghidra.app.plugin.core.codebrowser;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
 import docking.ActionContext;
 import docking.action.DockingActionIf;
+import docking.action.MenuData;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.viewer.listingpanel.ListingModel;
@@ -217,13 +217,18 @@ public class ExpandCollapseDataActionsTest extends AbstractGhidraHeadedIntegrati
 	public void testExpandAllInSelectionEnablement() {
 		// Expand All In Selection is enabled whenever there is a selection
 		ProgramSelection selection = new ProgramSelection(addr(0), addr(10));
-		assertTrue(!expandAll.isEnabledForContext(getContext(addr(0x0), null)));
-		assertEquals("Expand All Data", expandAll.getPopupMenuData().getMenuPath()[0]);
+		ActionContext context = getContext(addr(0x0), null);
+		assertTrue(!expandAll.isEnabledForContext(context));
+		MenuData menuData = expandAll.getPopupMenuData();
+		String[] menuPath = menuData.getMenuPath();
+		assertArrayEquals(menuPath, new String[] { "Data", "Expand All Data" });
 
-		assertTrue(
-			expandAll.isEnabledForContext(getContextWithSelection(addr(STRUCT_1), selection)));
+		context = getContextWithSelection(addr(STRUCT_1), selection);
+		assertTrue(expandAll.isEnabledForContext(context));
 		// When there is a selection, the pop-up menu changes
-		assertEquals("Expand All Data In Selection", expandAll.getPopupMenuData().getMenuPath()[0]);
+		menuData = expandAll.getPopupMenuData();
+		menuPath = menuData.getMenuPath();
+		assertArrayEquals(menuPath, new String[] { "Data", "Expand All Data In Selection" });
 	}
 
 	@Test

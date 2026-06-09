@@ -498,14 +498,9 @@
         <P>Use the following options to customize <A href=
         "CodeBrowser.htm#cursorTextHighlight">Cursor Text Highlighting</A>:</P>
 
-        <P><B>Alternate Highlight Color -</B> Sets the alternate color used for cursor text
-        highlighting. Double click on the color bar to bring up a color chooser dialog.</P>
+        <P><B>Enabled - </B> Select this checkbox to enable cursor text highlighting.</P>
 
-        <P><B>Enabled -</B> Select this checkbox to enable cursor text highlighting.</P>
-
-        <P><B>Highlight Color -</B> Sets the color used for cursor text highlighting. Double click
-        on the color bar to bring up a color chooser dialog.<BR>
-         <B><BR>
+         <P><B>
          Mouse Button To Activate</B> - Use the combo box to select which mouse button will be used
         to highlight text (Left, Right, Middle).</P>
 
@@ -513,6 +508,24 @@
         enable <A href="CodeBrowser.htm#Scope">Scoped highlighting</A> of registers within the
         operand field. If turned off, cursor highlighted text within an operand field is treated
         the same as text in other fields.</P>
+		
+		<P><B>Scoped Default Color -</B> Sets the color used for cursor text highlighting via 
+			middle-mouse. Double-click on the color bar to bring up a color chooser dialog.
+		</P>
+			
+		<P><B>Scoped Read Highlight Color -</B> Sets the color used for cursor text highlighting a
+			register when the register value is read.  The <I>Scope Register Operand</I> option
+			above must be on for this value to be used.
+			Double-click on the color bar to bring up a color chooser dialog.
+		</P>
+			
+		<P><B>Scoped Write Highlight Color -</B> Sets the color used for cursor text highlighting a
+			register when the register value is written to.  The <I>Scope Register Operand</I> option
+			above must be on for this value to be used.
+			Double-click on the color bar to bring up a color chooser dialog.
+		</P>
+		
+		
       </BLOCKQUOTE>
 
       <H3><A name="EOL_Comments_Field"></A>EOL Comments Field</H3>
@@ -835,6 +848,10 @@
         this off, the function name will only appear in the function signature. If it's on, the
         function name will also appear as a label below the function header.</P>
 
+		<P><B>Maximum Number of Labels to Display -</B> Sets the maximum number of labels to 
+		display.  If the max is reached, a '[more]' field will appear.  You can double-click that 
+		field to see all labels at that address.</P>
+		
         <P><B>Display Non-local Namespace -</B> Select this option to prepend the namespace to all
         labels that are not in the current Function's namespace.&nbsp; Currently, this would only
         affect a label that is not global, but is in a namespace other than the function that
@@ -897,7 +914,7 @@
         contains the prefix to use for local labels.</P>
 
         <P><B>Enable Word Wrapping -</B> Option to wrap strings in operand lines that are too long
-        to fit in the operand field. Note that that word wrapping can only occur where spaces exist
+        to fit in the operand field. Note that word wrapping can only occur where spaces exist
         in the string.<BR>
         </P>
         
@@ -993,7 +1010,7 @@
         Option to display the raw PCode directly in the Code Browser (i.e., detailed varnode 
         specifications are provided).</P>
 
-        <P><B>Maximum Lines to Display -</B> The maximum number of lines used to display PCode. Any
+        <P><B>Maximum Lines to Display</B> - The maximum number of lines used to display PCode. Any
         additional lines of PCode will not be shown.</P>
       </BLOCKQUOTE>
 
@@ -1008,6 +1025,24 @@
 
         <P><B>Selection Color</B> - Set the Browser <A href=
         "CodeBrowser.htm#Selection">Selection</A> color.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Source_Map_Field"></A>Source Map Field</H3>
+      <BLOCKQUOTE>
+        <P><B>Show Filename Only</B> -
+        If selected, only the file name will be shown in the Listing field (rather than the full 
+        path).</P>
+
+        <P><B>Show Source Info at Every Address</B> - If selected, source map information will be 
+        displayed for each address in the Listing. Otherwise the source information for a given
+        source map entry will only be displayed at the minimum address of the corresponding  
+        range.</P>
+        
+        <P><B>Maximum Number of Source Map Entries to Display</B> - Maximum number of source
+        map entries to display per address.</P>
+        
+        <P><B>Show Identifier</B> - If selected, the source file identifier (md5, sha1,...) will
+        be shown in the Listing.  Note that a source file might not have an identifier.</P>
       </BLOCKQUOTE>
       
       <H3><A name="Template_Display_Options"></A>Template Display Options</H3>

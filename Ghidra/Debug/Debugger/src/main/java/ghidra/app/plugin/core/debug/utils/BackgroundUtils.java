@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -233,7 +233,8 @@ public enum BackgroundUtils {
 		}
 
 		protected void executeBackground(Runnable command) {
-			BackgroundCommand cmd = new BackgroundCommand(name, opts.contains(TaskOpt.HAS_PROGRESS),
+			BackgroundCommand<DomainObject> cmd =
+				new BackgroundCommand<>(name, opts.contains(TaskOpt.HAS_PROGRESS),
 				opts.contains(TaskOpt.CAN_CANCEL), opts.contains(TaskOpt.IS_MODAL)) {
 				@Override
 				public boolean applyTo(DomainObject obj, TaskMonitor monitor) {

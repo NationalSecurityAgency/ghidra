@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,6 @@
 package ghidra.program.database.symbol;
 
 import db.DBRecord;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -31,16 +30,15 @@ public class GlobalVariableSymbolDB extends VariableSymbolDB {
 	/**
 	 * Constructs a new GlobalVariableSymbolDB which are restricted to the global namespace
 	 * @param symbolMgr the symbol manager
-	 * @param cache symbol object cache
 	 * @param variableMgr variable storage manager
 	 * @param address the address of the symbol (stack address)
 	 * @param record the record for the symbol
 	 */
-	public GlobalVariableSymbolDB(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache,
-			VariableStorageManagerDB variableMgr, Address address, DBRecord record) {
-		super(symbolMgr, cache, SymbolType.GLOBAL_VAR, variableMgr, address, record);
+	public GlobalVariableSymbolDB(SymbolManager symbolMgr, VariableStorageManagerDB variableMgr,
+			Address address, DBRecord record) {
+		super(symbolMgr, SymbolType.GLOBAL_VAR, variableMgr, address, record);
 		if (record.getLongValue(
-			SymbolDatabaseAdapter.SYMBOL_PARENT_COL) != Namespace.GLOBAL_NAMESPACE_ID) {
+			SymbolDatabaseAdapter.SYMBOL_PARENT_ID_COL) != Namespace.GLOBAL_NAMESPACE_ID) {
 			throw new AssertException();
 		}
 	}
@@ -57,20 +55,13 @@ public class GlobalVariableSymbolDB extends VariableSymbolDB {
 	}
 
 	@Override
-	public Object getObject() {
-		if (!checkIsValid()) {
-			return null;
-		}
-		VariableStorage storage = getVariableStorage();
-		if (storage == null) {
-			return null;
-		}
-		return storage;
+	public Variable getObject() {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	protected String doGetName() {
-		if (!checkIsValid()) {
+		if (!refreshIfNeeded()) {
 			// TODO: SCR
 			return "[Invalid Global Variable Symbol - Deleted!]";
 		}

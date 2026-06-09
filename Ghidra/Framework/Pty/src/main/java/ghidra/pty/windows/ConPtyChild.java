@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,8 @@ import com.sun.jna.platform.win32.WinBase.PROCESS_INFORMATION;
 import com.sun.jna.platform.win32.WinDef.*;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 
-import ghidra.dbg.util.ShellUtils;
 import ghidra.pty.PtyChild;
+import ghidra.pty.ShellUtils;
 import ghidra.pty.local.LocalWindowsNativeProcessPtySession;
 import ghidra.pty.windows.jna.ConsoleApiNative;
 import ghidra.pty.windows.jna.ConsoleApiNative.STARTUPINFOEX;
@@ -92,9 +92,11 @@ public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
 		STARTUPINFOEX si = prepareStartupInfo();
 		PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
 
+		String commandLine = ShellUtils.generateLine(Arrays.asList(args));
+
 		if (!ConsoleApiNative.INSTANCE.CreateProcessW(
 			null /*lpApplicationName*/,
-			new WString(ShellUtils.generateLine(Arrays.asList(args))),
+			new WString(commandLine),
 			null /*lpProcessAttributes*/,
 			null /*lpThreadAttributes*/,
 			false /*bInheritHandles*/,

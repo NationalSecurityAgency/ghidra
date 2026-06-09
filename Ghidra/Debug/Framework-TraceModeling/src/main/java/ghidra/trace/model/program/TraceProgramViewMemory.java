@@ -15,7 +15,6 @@
  */
 package ghidra.trace.model.program;
 
-import ghidra.program.model.mem.LiveMemoryHandler;
 import ghidra.program.model.mem.Memory;
 
 public interface TraceProgramViewMemory extends Memory, SnapSpecificTraceView {
@@ -25,13 +24,4 @@ public interface TraceProgramViewMemory extends Memory, SnapSpecificTraceView {
 	void setForceFullView(boolean forceFullView);
 
 	boolean isForceFullView();
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * <p>
-	 * For trace views, this only redirects memory writes.
-	 */
-	@Override
-	void setLiveMemoryHandler(LiveMemoryHandler handler);
 }

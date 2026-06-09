@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,16 +39,19 @@ namespace ghidra {
 class ResolvedUnion {
   friend class ScoreUnionFields;
   Datatype *resolve;		///< The resolved data-type
-  Datatype *baseType;		///< Union or Structure being resolved
+  Datatype *baseType;		///< Union or Structure being resolved (pointers and partials stripped)
   int4 fieldNum;		///< Index of field referenced by \b resolve
   bool lock;			///< If \b true, resolution cannot be overridden
 public:
-  ResolvedUnion(Datatype *parent);		///< Construct a data-type that resolves to itself
-  ResolvedUnion(Datatype *parent,int4 fldNum,TypeFactory &typegrp);	///< Construct a reference to a field
+  ResolvedUnion(Datatype *unresType);		///< Construct a data-type that resolves to itself
+  ResolvedUnion(Datatype *unresType,int4 fldNum,TypeFactory &typegrp);	///< Construct a resolution with a specific field number
+  ResolvedUnion(const ResolvedUnion &op,Datatype *res);		///< Copy constructor with updated resolve data-type
   Datatype *getDatatype(void) const { return resolve; }		///< Get the resolved data-type
   Datatype *getBase(void) const { return baseType; }		///< Get the union or structure being referenced
   int4 getFieldNum(void) const { return fieldNum; }		///< Get the index of the resolved field or -1
-  bool isLocked(void) const { return lock; }	///< Is \b this locked against overrides
+  bool isLocked(void) const { return lock; }			///< Return \b true if the field resolution is locked
+  bool update(const ResolvedUnion &op);				///< Update a resolution with a new data-type
+  void setResolve(Datatype *res) { resolve = res; }		///< Update the resolution data-type (without changing field resolution)
   void setLock(bool val) { lock = val; }	///< Set whether \b this resolution is locked against overrides
 };
 
@@ -62,7 +65,8 @@ class ResolveEdge {
   uintm opTime;			///< Id of PcodeOp edge
   int4 encoding;		///< Encoding of the slot and pointer-ness
 public:
-  ResolveEdge(const Datatype *parent,const PcodeOp *op,int4 slot);	///< Construct from components
+  ResolveEdge(const Datatype *unresType,const PcodeOp *op,int4 slot);	///< Construct from components
+  ResolveEdge(const Datatype *unresType,const Address &addr,int4 slot);	///< Construct address based resolve
   bool operator<(const ResolveEdge &op2) const;			///< Compare two edges
 };
 
@@ -92,7 +96,7 @@ class ScoreUnionFields {
     PcodeOp *op;		///< The PcodeOp reading the Varnode (or null)
     int4 inslot;		///< The slot reading the Varnode (or -1)
     dir_type direction;		///< Direction to push fit.  0=down 1=up
-    bool array;			///< Field can be accessed as an array
+    int4 maxLength;		///< Maximum byte offset that can be added to \b fitType as a pointer
     Datatype *fitType;		///< The putative data-type of the Varnode
     int4 scoreIndex;		///< The original field being scored by \b this trial
   public:
@@ -102,18 +106,18 @@ class ScoreUnionFields {
     /// \param slot is the input slot being read
     /// \param ct is the trial data-type to fit
     /// \param index is the scoring index
-    /// \param isArray is \b true if the data-type to fit is a pointer to an array
-   Trial(PcodeOp *o,int4 slot,Datatype *ct,int4 index,bool isArray) {
-      op = o; inslot = slot; direction = fit_down; fitType = ct; scoreIndex = index; vn = o->getIn(slot); array=isArray; }
+    /// \param max is the biggest offset that can be added to this data-type as a pointer (or 0 if there is no known restriction)
+   Trial(PcodeOp *o,int4 slot,Datatype *ct,int4 index,int4 max) {
+      op = o; inslot = slot; direction = fit_down; fitType = ct; scoreIndex = index; vn = o->getIn(slot); maxLength = max; }
 
     /// \brief Construct an upward trial for a Varnode
     ///
     /// \param v is the Varnode to fit
     /// \param ct is the trial data-type to fit
     /// \param index is the scoring index
-    /// \param isArray is \b true if the data-type to fit is a pointer to an array
-    Trial(Varnode *v,Datatype *ct,int4 index,bool isArray) {
-      vn = v; op = (PcodeOp *)0; inslot=-1; direction = fit_up; fitType = ct; scoreIndex = index; array=isArray; }
+    /// \param max is the biggest offset that can be added to this data-type as a pointer (or 0 if there is no known restriction)
+    Trial(Varnode *v,Datatype *ct,int4 index,int4 max) {
+      vn = v; op = (PcodeOp *)0; inslot=-1; direction = fit_up; fitType = ct; scoreIndex = index; maxLength = max; }
   };
 
   /// \brief A mark accumulated when a given Varnode is visited with a specific field index
@@ -133,6 +137,7 @@ class ScoreUnionFields {
       return (index < op2.index);
     }
   };
+  Funcdata &data;		///< Function containing data-flow being scored
   TypeFactory &typegrp;		///< The factory containing data-types
   vector<int4> scores;		///< Score for each field, indexed by fieldNum + 1 (whole union is index=0)
   vector<Datatype *> fields;	///< Field corresponding to each score
@@ -147,11 +152,11 @@ class ScoreUnionFields {
   bool testArrayArithmetic(PcodeOp *op,int4 inslot);	///< Check if given PcodeOp is operating on array with union elements
   bool testSimpleCases(PcodeOp *op,int4 inslot,Datatype *parent);	///< Preliminary checks before doing full scoring
   int4 scoreLockedType(Datatype *ct,Datatype *lockType);	///< Score trial data-type against a locked data-type
-  int4 scoreParameter(Datatype *ct,const PcodeOp *callOp,int4 paramSlot);	///< Score trial data-type against a parameter
-  int4 scoreReturnType(Datatype *ct,const PcodeOp *callOp);	///< Score trial data-type against return data-type of function
-  Datatype *derefPointer(Datatype *ct,Varnode *vn,int4 &score);	///< Score trial data-type as a pointer to LOAD/STORE
-  void newTrialsDown(Varnode *vn,Datatype *ct,int4 scoreIndex,bool isArray);	///< Create new trials based an reads of given Varnode
-  void newTrials(PcodeOp *op,int4 slot,Datatype *ct,int4 scoreIndex,bool isArray);	///< Create new trials based on given input slot
+  int4 scoreParameter(Datatype *ct,const FuncProto *proto,int4 paramSlot);	///< Score trial data-type against a parameter
+  int4 scoreReturnType(Datatype *ct,const FuncProto *proto);	///< Score trial data-type against return data-type of function
+  Datatype *derefPointer(const Trial &trial,Varnode *vn,int4 &score);	///< Score trial as a pointer to LOAD/STORE
+  void newTrialsDown(Varnode *vn,Datatype *ct,int4 scoreIndex,int4 max);	///< Create new trials based an reads of given Varnode
+  void newTrials(PcodeOp *op,int4 slot,Datatype *ct,int4 scoreIndex,int4 max);	///< Create new trials based on given input slot
   void scoreTrialDown(const Trial &trial,bool lastLevel);	///< Try to fit the given trial following data-flow down
   void scoreTrialUp(const Trial &trial,bool lastLevel);		///< Try to fit the given trial following data-flow up
   Datatype *scoreTruncation(Datatype *ct,Varnode *vn,int4 offset,int4 scoreIndex);	///< Score a truncation in the data-flow
@@ -160,10 +165,45 @@ class ScoreUnionFields {
   void computeBestIndex(void);		///< Assuming scoring is complete, compute the best index
   void run(void);	///< Calculate best fitting field
 public:
-  ScoreUnionFields(TypeFactory &tgrp,Datatype *parentType,PcodeOp *op,int4 slot);
-  ScoreUnionFields(TypeFactory &tgrp,TypeUnion *unionType,int4 offset,PcodeOp *op);
-  ScoreUnionFields(TypeFactory &tgrp,TypeUnion *unionType,int4 offset,PcodeOp *op,int4 slot);
+  ScoreUnionFields(Funcdata &fd,Datatype *parentType,PcodeOp *op,int4 slot);
+  ScoreUnionFields(Funcdata &fd,TypeUnion *unionType,int4 offset,PcodeOp *op);
+  ScoreUnionFields(Funcdata &fd,TypeUnion *unionType,int4 offset,PcodeOp *op,int4 slot);
   const ResolvedUnion &getResult(void) const { return result; }		///< Get the resulting best field resolution
+};
+
+/// \brief A collection of specific union data-type and how they resolve in a given context
+///
+/// Union resolutions are collected before a transform via addResolution(). Then afterwards Varnodes
+/// can inherit the the same resolutions via the inheritResolution() methods.
+/// Resolutions for multiple contexts can stored and retrieved by providing an id for the context
+/// in the \b key parameter.
+class ResolveCache {
+  /// \brief A specific resolution of a union data-type
+  class Record {
+  public:
+    Datatype *baseType;	///< The union or structure needing resolution (pointers and partials stripped)
+    int4 fieldNum;	///< Index of the specific resolution
+    int4 key;		///< Context key
+    Record(int4 k,Datatype *dt,int4 fldNum) { baseType = dt; fieldNum = fldNum; key = k; }	///< Constructor
+    bool match(int4 k,Datatype *dt) const { return (key == k && baseType == dt); }	///< Does the given data-type match \b this record
+  };
+  Funcdata &data;		///< Function to which resolutions apply
+  list<Record> resolveList;	///< List of known resolutions
+public:
+  ResolveCache(Funcdata &fd) : data(fd) {}	///< Constructor
+  void addResolution(int4 key,Datatype *dt,PcodeOp *op,int4 slot);	///< Add a specific resolution to the cache
+  Datatype *resolve(int4 key,Datatype *dt) const;			///< Look up the in context resolution for the given data-type
+  void inheritResolution(int4 key,Datatype *dt,int4 off,Varnode *vn,PcodeOp *op,int4 slot) const;
+
+  /// \brief Associate a cached resolution with a Varnode and its new read/write edge
+  ///
+  /// \param key is the context id
+  /// \param vn is the new Varnode inheriting the resolution
+  /// \param op is the PcodeOp reading/writing the Varnode
+  /// \param slot is the read/write edge
+  void inheritResolution(int4 key,Varnode *vn,PcodeOp *op,int4 slot) const {
+    inheritResolution(key,vn->getType(),0,vn,op,slot);
+  }
 };
 
 /// Compare based on the data-type, the \b slot, and the PcodeOp's unique id.

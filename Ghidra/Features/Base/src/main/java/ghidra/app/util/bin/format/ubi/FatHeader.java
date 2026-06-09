@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,8 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Represents a fat_header structure.
  * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/fat.h.auto.html">mach-o/fat.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/xnu/blob/main/EXTERNAL_HEADERS/mach-o/fat.h">mach-o/fat.h</a>
+ * @see <a href="https://github.com/apple-oss-distributions/xnu/blob/main/osfmk/mach/machine.h">mach/machine.h</a> 
  */
 public class FatHeader {
 	public final static int FAT_MAGIC = 0xcafebabe;
@@ -38,8 +39,10 @@ public class FatHeader {
 
     private int magic;
 	private int nfat_arch;
-	private List<FatArch> architectures = new ArrayList<FatArch>();
-	private List<MachHeader> machHeaders = new ArrayList<MachHeader>();
+	private List<FatArch> architectures = new ArrayList<>();
+	private List<MachHeader> machHeaders = new ArrayList<>();
+	private List<Long> machStarts = new ArrayList<>();
+	private List<Long> machSizes = new ArrayList<>();
 
 	public FatHeader(ByteProvider provider)
             throws IOException, UbiException, MachException {
@@ -78,6 +81,8 @@ public class FatHeader {
 						fatarch.getOffset() + camh.getPayloadOffset(), camh.getSize());
 					try {
 						machHeaders.add(new MachHeader(wrapper));
+						machStarts.add(fatarch.getOffset() + camh.getPayloadOffset());
+						machSizes.add(camh.getSize());
 					}
 					catch (MachException e) {
 						// Could be __.SYMDEF archive member instead of a Mach-O
@@ -86,6 +91,8 @@ public class FatHeader {
 			}
 			else {
 				machHeaders.add(new MachHeader(wrapper));
+				machStarts.add(Integer.toUnsignedLong(fatarch.getOffset()));
+				machSizes.add(Integer.toUnsignedLong(fatarch.getSize()));
 			}
 		}
 	}
@@ -104,5 +111,13 @@ public class FatHeader {
 
 	public List<MachHeader> getMachHeaders() {
 		return machHeaders;
+	}
+
+	public List<Long> getMachStarts() {
+		return machStarts;
+	}
+
+	public List<Long> getMachSizes() {
+		return machSizes;
 	}
 }

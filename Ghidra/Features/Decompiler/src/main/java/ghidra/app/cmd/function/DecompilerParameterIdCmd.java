@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,6 @@ import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
@@ -152,12 +150,12 @@ public class DecompilerParameterIdCmd extends BackgroundCommand<Program> {
 				// since decompile could fail and leave the source types changed.
 				Parameter retParam = func.getReturn();
 				if (retParam != null) {
-					if (!retParam.getSource().isHigherPriorityThan(sourceTypeClearLevel)) {
+					if (retParam.getSource().isLowerOrEqualPriorityThan(sourceTypeClearLevel)) {
 						func.setReturn(retParam.getDataType(), retParam.getVariableStorage(),
 							SourceType.DEFAULT);
 					}
 				}
-				if (!func.getSignatureSource().isHigherPriorityThan(sourceTypeClearLevel)) {
+				if (func.getSignatureSource().isLowerOrEqualPriorityThan(sourceTypeClearLevel)) {
 					func.setSignatureSource(SourceType.DEFAULT);
 				}
 			}
@@ -314,8 +312,8 @@ public class DecompilerParameterIdCmd extends BackgroundCommand<Program> {
 				func.setCallingConvention(CompilerSpec.CALLING_CONVENTION_cdecl);
 			}
 			catch (InvalidInputException e) {
-				setStatusMsg("Invalid Calling Convention " + CompilerSpec.CALLING_CONVENTION_cdecl +
-					" : " + e);
+				setStatusMsg(
+					"Unknown calling convention: " + CompilerSpec.CALLING_CONVENTION_cdecl);
 			}
 		}
 	}

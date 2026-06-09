@@ -36,7 +36,7 @@ import ghidra.util.task.TaskMonitor;
  * </ol>
  * <p>
  * Not all the update functions are performed on a run of a TableUpdateJob.  If the reloadData flag is
- * not set, the the data is just copied from the model's current list, instead of calling the model's
+ * not set, then the data is just copied from the model's current list, instead of calling the model's
  * loadData() method. If the sortComparator is null,
  * then the data is not sorted (for example, when only filtering needs to be done).  If there
  * are no add/removes in the list, then that step does nothing.

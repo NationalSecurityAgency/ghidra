@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,16 @@
  */
 package ghidra.feature.vt.gui.provider.markuptable;
 
+import javax.swing.*;
+
 import ghidra.feature.vt.api.main.VTMarkupItem;
 import ghidra.feature.vt.gui.filters.AncillaryFilterDialogComponentProvider;
 import ghidra.feature.vt.gui.filters.FilterDialogModel;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.util.HelpLocation;
 
-import javax.swing.*;
-
-public class MarkupItemFilterDialogComponentProvider extends
-		AncillaryFilterDialogComponentProvider<VTMarkupItem> {
+public class MarkupItemFilterDialogComponentProvider
+		extends AncillaryFilterDialogComponentProvider<VTMarkupItem> {
 
 	MarkupItemFilterDialogComponentProvider(VTController controller,
 			FilterDialogModel<VTMarkupItem> dialogModel) {
@@ -44,18 +43,20 @@ public class MarkupItemFilterDialogComponentProvider extends
 
 		// status filter
 		MarkupStatusFilter statusFilter = new MarkupStatusFilter();
+		statusFilter.getComponent().getAccessibleContext().setAccessibleName("Status");
 		addFilter(statusFilter);
 		rowOnePanel.add(statusFilter.getComponent());
 
 		// markup type
 		MarkupTypeFilter typeFilter = new MarkupTypeFilter();
+		typeFilter.getComponent().getAccessibleContext().setAccessibleName("Markup");
 		addFilter(typeFilter);
 		rowOnePanel.add(typeFilter.getComponent());
 
 		// These are currently handled by the text field filter on the provider
 		// source value        
 		// destination value
-
+		rowOnePanel.getAccessibleContext().setAccessibleName("Markup Item Filter");
 		return rowOnePanel;
 	}
 }

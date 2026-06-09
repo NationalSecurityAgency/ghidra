@@ -22,7 +22,7 @@ from types import CodeType, FunctionType, MappingProxyType, MethodType, ModuleTy
 from docking.widgets.label import GLabel
 from generic.theme import GColor
 from ghidra.app.plugin.core.console import CodeCompletion
-from java.util import Arrays, Collections
+from java.util import Arrays, Collections  # type:ignore @UnresolvedImport
 from jpype import JPackage
 from jpype.types import JDouble, JFloat, JInt, JLong, JShort
 
@@ -80,9 +80,10 @@ class PythonCodeCompleter(Completer):
         if attr is PythonCodeCompleter._BUILTIN_ATTRIBUTE:
             if iskeyword(match.rstrip()):
                 return label
-            attr = builtins.__dict__.get(match, PythonCodeCompleter._BUILTIN_ATTRIBUTE)
+            builtins_dict = builtins.__dict__      
+            attr = builtins_dict.get(match, PythonCodeCompleter._BUILTIN_ATTRIBUTE)
             if attr is not PythonCodeCompleter._BUILTIN_ATTRIBUTE and not match.startswith("__"):
-                attr = builtins.__dict__[match]
+                attr = builtins_dict[match]
             else:
                 return label
         color = _TYPE_COLORS.get(type(attr), PythonCodeCompleter._BUILTIN_ATTRIBUTE)

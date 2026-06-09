@@ -15,6 +15,7 @@
  */
 package ghidra.app.context;
 
+import java.awt.Component;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,7 +25,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 
 public class ProgramLocationActionContext extends ProgramActionContext
-		implements FunctionSupplierContext {
+		implements FunctionSupplierContext, ProgramLocationSupplierContext {
 
 	private final ProgramLocation location;
 	private final ProgramSelection selection;
@@ -41,9 +42,15 @@ public class ProgramLocationActionContext extends ProgramActionContext
 		this.highlight = highlight;
 	}
 
-	/**
-	 * @return Returns the program location.
-	 */
+	public ProgramLocationActionContext(ComponentProvider provider, Program program,
+			Component sourceComponent, ProgramLocation location) {
+		super(provider, program, sourceComponent);
+		this.location = location;
+		this.selection = null;
+		this.highlight = null;
+	}
+
+	@Override
 	public ProgramLocation getLocation() {
 		return location;
 	}
@@ -124,7 +131,7 @@ public class ProgramLocationActionContext extends ProgramActionContext
 		return functions;
 	}
 
-	private Function getFunctionForLocation() {
+	protected Function getFunctionForLocation() {
 		if (location instanceof FunctionLocation functionLocation) {
 			Address functionAddress = functionLocation.getFunctionAddress();
 			return program.getFunctionManager().getFunctionAt(functionAddress);

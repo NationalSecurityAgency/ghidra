@@ -17,7 +17,7 @@ package ghidra.dbg.jdi.manager.impl;
 
 import static ghidra.lifecycle.Unfinished.TODO;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -29,6 +29,7 @@ import com.sun.jdi.event.Event;
 
 import ghidra.dbg.jdi.manager.*;
 import ghidra.dbg.jdi.manager.JdiCause.Causes;
+import ghidra.dbg.jdi.rmi.jpda.JdiArguments;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
 
@@ -61,21 +62,38 @@ public class JdiManagerImpl implements JdiManager {
 		virtualMachineManager = Bootstrap.virtualMachineManager();
 	}
 
+	private static void pumpStream(InputStream in, OutputStream out) {
+		try {
+			in.transferTo(out);
+		}
+		catch (IOException e) {
+			// We're done!
+		}
+	}
+
 	public VirtualMachine connectVM(Connector cx, Map<String, Connector.Argument> arguments)
 			throws Exception {
-		if (cx instanceof LaunchingConnector) {
-			LaunchingConnector lcx = (LaunchingConnector) cx;
-			return lcx.launch(arguments);
+		if (cx instanceof LaunchingConnector lcx) {
+			VirtualMachine vm = lcx.launch(arguments);
+			new Thread(() -> pumpStream(vm.process().getErrorStream(), System.err)).start();
+			new Thread(() -> pumpStream(vm.process().getInputStream(), System.out)).start();
+			return vm;
 		}
-		if (cx instanceof AttachingConnector) {
-			AttachingConnector acx = (AttachingConnector) cx;
+		if (cx instanceof AttachingConnector acx) {
 			return acx.attach(arguments);
 		}
-		if (cx instanceof ListeningConnector) {
-			ListeningConnector lcx = (ListeningConnector) cx;
+		if (cx instanceof ListeningConnector lcx) {
 			return lcx.accept(arguments);
 		}
 		throw new Exception("Unknown connector type");
+	}
+
+	public VirtualMachine createVM(Map<String, String> env) {
+		JdiArguments args = new JdiArguments(env);
+		Connector cx = args.getConnector(virtualMachineManager);
+		Map<String, Connector.Argument> defaultArguments = cx.defaultArguments();
+		args.putArguments(defaultArguments);
+		return addVM(cx, defaultArguments);
 	}
 
 	@Override

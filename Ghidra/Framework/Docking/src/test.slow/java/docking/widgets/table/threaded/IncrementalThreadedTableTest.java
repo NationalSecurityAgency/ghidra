@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -176,7 +176,7 @@ public class IncrementalThreadedTableTest extends AbstractThreadedTableTest {
 	@Test
 	public void testNoShowPendingWhileLoading() throws Exception {
 		//
-		// Tests that the the pending panel is not shown while we are in the middle of an 
+		// Tests that the pending panel is not shown while we are in the middle of an 
 		// incremental load.  In non-incremental models this is not an issue, as the model 
 		// itself will not send out pending events while a load is taking place (the data is 
 		// just added to the current load process).  However, in the incremental case, the model's

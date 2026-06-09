@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,10 +19,11 @@ import java.awt.Component;
 import java.io.*;
 import java.util.*;
 
-import org.jdom.Document;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.Document;
+import org.jdom2.output.XMLOutputter;
 
 import docking.ActionContext;
+import docking.DockingWindowManager;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
@@ -59,6 +60,7 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.xml.GenericXMLOutputter;
 
 public class VTSubToolManager implements VTControllerListener, OptionsChangeListener {
+	private final static String SAVED_MARKER_NAME = "HAS_BEEN_SAVED";
 	private final static String SOURCE_TOOL_NAME = "Version Tracking (SOURCE TOOL)";
 	private final static String DESTINATION_TOOL_NAME = "Version Tracking (DESTINATION TOOL)";
 
@@ -74,6 +76,46 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 		this.plugin = plugin;
 		this.controller = plugin.getController();
 		controller.addListener(this);
+
+		refreshTools();
+
+	}
+
+	/**
+	 * Checks to see if the primary Version Tracking tool is new (meaning that it has not yet been
+	 * saved).  If the tool is new, we will delete any saved sub-tools.  This behavior allows users
+	 * to have the sub-tools also reset to the default state after the re-import their default 
+	 * Version Tracking tool. 
+	 */
+	private void refreshTools() {
+
+		// We add a PreferenceState to the tool that will get saved to the tool's xml.   This value
+		// is not part of the default Version Tracking tool.  Thus, if we preference exists, then
+		// we know the tool has previously been saved.
+		PluginTool tool = plugin.getTool();
+		DockingWindowManager dwm = tool.getWindowManager();
+		PreferenceState state = dwm.getPreferenceState(SAVED_MARKER_NAME);
+		if (state != null) {
+			Msg.trace(this, "Found a saved Version Tracking tool.");
+			return;
+		}
+
+		Msg.trace(this, "Found a new Version Tracking tool.  Deleting saved sub-tools.");
+		deleteSubTool(SOURCE_TOOL_NAME);
+		deleteSubTool(DESTINATION_TOOL_NAME);
+
+		PreferenceState newState = new PreferenceState();
+		dwm.putPreferenceState(SAVED_MARKER_NAME, newState);
+	}
+
+	private void deleteSubTool(String name) {
+
+		String toolFileName = name + ".tool";
+		File toolFile = new File(ToolUtils.getApplicationToolDirPath(), toolFileName);
+		if (toolFile.exists()) {
+			Msg.trace(this, "Deleting sub-tool: " + toolFile);
+			toolFile.delete();
+		}
 	}
 
 	Program openDestinationProgram(DomainFile domainFile, Component parent) {
@@ -386,7 +428,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 		try {
 			OutputStream os = new FileOutputStream(toolFile);
 			Document doc = new Document(t.getToolTemplate(true).saveToXml());
-			XMLOutputter xmlOut = new GenericXMLOutputter();
+			XMLOutputter xmlOut = GenericXMLOutputter.getInstance();
 			xmlOut.output(doc, os);
 			os.close();
 		}
@@ -762,7 +804,8 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 	}
 
 	private boolean isCursorOnScreen(CodeViewerService service) {
-		FieldPanel fieldPanel = service.getFieldPanel();
+		ListingPanel listingPanel = service.getListingPanel();
+		FieldPanel fieldPanel = listingPanel.getFieldPanel();
 		int cursorOffset = fieldPanel.getCursorOffset();
 		return cursorOffset >= 0; // negative offset means offscreen
 	}
@@ -779,7 +822,10 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 		if (service == null) {
 			return null;
 		}
-		FieldSelection selection = service.getFieldPanel().getSelection();
+
+		ListingPanel listingPanel = service.getListingPanel();
+		FieldPanel fieldPanel = listingPanel.getFieldPanel();
+		FieldSelection selection = fieldPanel.getSelection();
 		AddressIndexMap addressIndexMap = service.getListingPanel().getAddressIndexMap();
 		AddressSet addressSet = addressIndexMap.getAddressSet(selection);
 		return addressSet;
@@ -788,13 +834,11 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 	/**
 	 * Sets the address set to be the selection in the tool.
 	 * 
-	 * @param tool
-	 *            the tool
-	 * @param set
-	 *            the addressSet to use for the selection
+	 * @param tool the tool
+	 * @param addresses the addressSet to use for the selection
 	 */
-	private void setSelectionInTool(PluginTool tool, AddressSetView addressSet) {
-		ProgramSelection programSelection = new ProgramSelection(addressSet);
+	private void setSelectionInTool(PluginTool tool, AddressSetView addresses) {
+		ProgramSelection programSelection = new ProgramSelection(addresses);
 		CodeViewerService service = tool.getService(CodeViewerService.class);
 		if (service == null) {
 			return;

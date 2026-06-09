@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,11 +46,11 @@ import ghidra.util.data.DataTypeParser.AllowedDataTypes;
  */
 public abstract class AbstractDecompilerAction extends DockingAction {
 
-	AbstractDecompilerAction(String name) {
+	protected AbstractDecompilerAction(String name) {
 		super(name, DecompilePlugin.class.getSimpleName());
 	}
 
-	AbstractDecompilerAction(String name, KeyBindingType kbType) {
+	protected AbstractDecompilerAction(String name, KeyBindingType kbType) {
 		super(name, DecompilePlugin.class.getSimpleName(), kbType);
 	}
 
@@ -62,17 +62,16 @@ public abstract class AbstractDecompilerAction extends DockingAction {
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
-		return decompilerContext.checkActionEnablement(() -> {
-			return isEnabledForDecompilerContext(decompilerContext);
-		});
+		if (decompilerContext.isDecompiling()) {
+			return false;
+		}
+		return isEnabledForDecompilerContext(decompilerContext);
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
 		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
-		decompilerContext.performAction(() -> {
-			decompilerActionPerformed(decompilerContext);
-		});
+		decompilerActionPerformed(decompilerContext);
 	}
 
 	/**
@@ -168,10 +167,10 @@ public abstract class AbstractDecompilerAction extends DockingAction {
 		ClangToken token = context.getTokenAtCursor();
 
 		Function f = null;
-		if (token instanceof ClangFuncNameToken) {
-			f = DecompilerUtils.getFunction(context.getProgram(), (ClangFuncNameToken) token);
+		if (token instanceof ClangFuncNameToken funcNameToken) {
+			f = DecompilerUtils.getFunction(context.getProgram(), funcNameToken);
 		}
-		else {
+		else if (token != null) {
 			HighSymbol highSymbol = token.getHighSymbol(context.getHighFunction());
 			if (highSymbol instanceof HighFunctionShellSymbol) {
 				f = (Function) highSymbol.getSymbol().getObject();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,9 +44,9 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 	@Test
 	public void testGetSources() {
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
 
 		g.addVertex(v1);
 		g.addVertex(v2);
@@ -55,15 +55,15 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		Set<TestV> sources = GraphAlgorithms.getSources(g);
 		assertEquals(3, sources.size());
 
-		g.addEdge(edge(v1, v2));
-		g.addEdge(edge(v1, v3));
+		g.addEdge(e(v1, v2));
+		g.addEdge(e(v1, v3));
 
 		sources = GraphAlgorithms.getSources(g);
 		assertEquals(1, sources.size());
 		assertEquals("1", id(sources.iterator().next()));
 
-		g.addEdge(edge(v2, v1));
-		g.addEdge(edge(v3, v1));
+		g.addEdge(e(v2, v1));
+		g.addEdge(e(v3, v1));
 
 		sources = GraphAlgorithms.getSources(g);
 		assertEquals(0, sources.size());
@@ -75,17 +75,17 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//    |
 		//   v4 -> v5 -> v6
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v1, v4);
-		edge(v4, v5);
-		edge(v5, v6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		e(v1, v2);
+		e(v2, v3);
+		e(v1, v4);
+		e(v4, v5);
+		e(v5, v6);
 
 		Set<TestV> descendants = GraphAlgorithms.getDescendants(g, set(v1));
 		assertContainsExactly(descendants, v1, v2, v3, v4, v5, v6);
@@ -105,19 +105,19 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//    |                  |
 		//    |->---->----->-----|
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v1, v4);
-		edge(v4, v5);
-		edge(v5, v6);
-		edge(v4, v3);
+		e(v1, v2);
+		e(v2, v3);
+		e(v1, v4);
+		e(v4, v5);
+		e(v5, v6);
+		e(v4, v3);
 
 		GDirectedGraph<TestV, TestE> subGraph = GraphAlgorithms.createSubGraph(g, set(v1, v2, v3));
 		Collection<TestV> vertices = subGraph.getVertices();
@@ -134,22 +134,22 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//
 		//   V7
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		TestV v7 = vertex(7);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		TestV v7 = v(7);
 		g.addVertex(v7);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v3, v4);
-		edge(v3, v5);
-		edge(v5, v6);
-		edge(v6, v5);
-		edge(v4, v1);
+		e(v1, v2);
+		e(v2, v3);
+		e(v3, v4);
+		e(v3, v5);
+		e(v5, v6);
+		e(v6, v5);
+		e(v4, v1);
 
 		Set<Set<TestV>> stronglyConnectedComponents =
 			GraphAlgorithms.getStronglyConnectedComponents(g);
@@ -167,20 +167,20 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//    v     |          |
 		//   V2 -> V3 -> V5 -> V6
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v3, v4);
-		edge(v3, v5);
-		edge(v5, v6);
-		edge(v6, v4);
-		edge(v4, v1);
+		e(v1, v2);
+		e(v2, v3);
+		e(v3, v4);
+		e(v3, v5);
+		e(v5, v6);
+		e(v6, v4);
+		e(v4, v1);
 
 		Set<Set<TestV>> stronglyConnectedComponents =
 			GraphAlgorithms.getStronglyConnectedComponents(g);
@@ -203,10 +203,10 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 	@Test
 	public void testDominance_GetDominators_NoSources() {
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		edge(v1, v2);
-		edge(v2, v1);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		e(v1, v2);
+		e(v2, v1);
 
 		try {
 			new ChkDominanceAlgorithm<>(g, TaskMonitor.DUMMY);
@@ -230,15 +230,15 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		 		 |  |
 		 		v4--<
 		 */
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v3, v4);
-		edge(v1, v4);
+		e(v1, v2);
+		e(v2, v3);
+		e(v3, v4);
+		e(v1, v4);
 
 		ChkDominanceAlgorithm<TestV, TestE> algo =
 			new ChkDominanceAlgorithm<>(g, TaskMonitor.DUMMY);
@@ -263,15 +263,15 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//          v4--<
 		//
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v3, v4);
-		edge(v1, v4);
+		e(v1, v2);
+		e(v2, v3);
+		e(v3, v4);
+		e(v1, v4);
 
 		ChkDominanceAlgorithm<TestV, TestE> dominanceAlgorithm =
 			new ChkDominanceAlgorithm<>(g, TaskMonitor.DUMMY);
@@ -297,15 +297,15 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//          v4--<
 		//
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v3, v4);
-		edge(v1, v4);
+		e(v1, v2);
+		e(v2, v3);
+		e(v3, v4);
+		e(v1, v4);
 
 		GDirectedGraph<TestV, GEdge<TestV>> dg =
 			GraphAlgorithms.findDominanceTree(g, TaskMonitor.DUMMY);
@@ -324,10 +324,10 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	@Test
 	public void testDominance_GetDominatorGraph_WithDummySource() throws CancelledException {
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
 
 		//
 		// 3 sources; 1 sink
@@ -335,9 +335,9 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		// This will trigger the algorithm to use a unifying dummy node for the source.  This used
 		// to lead to a NullPointerException when trying to process the dummy as a dominator.
 		// 
-		edge(v2, v1);
-		edge(v3, v1);
-		edge(v4, v1);
+		e(v2, v1);
+		e(v3, v1);
+		e(v4, v1);
 
 		GDirectedGraph<TestV, GEdge<TestV>> dg =
 			GraphAlgorithms.findDominanceTree(g, TaskMonitor.DUMMY);
@@ -371,33 +371,33 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		*/
 		//@formatter:on
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		TestV v7 = vertex(7);
-		TestV v8 = vertex(8);
-		TestV v9 = vertex(9);
-		TestV v10 = vertex(10);
-		TestV v11 = vertex(11);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		TestV v7 = v(7);
+		TestV v8 = v(8);
+		TestV v9 = v(9);
+		TestV v10 = v(10);
+		TestV v11 = v(11);
 
-		edge(v1, v2);
-		edge(v2, v4);
-		edge(v4, v3);
-		edge(v4, v5);
+		e(v1, v2);
+		e(v2, v4);
+		e(v4, v3);
+		e(v4, v5);
 
-		edge(v5, v6);
-		edge(v5, v7);
-		edge(v6, v8);
-		edge(v6, v9);
-		edge(v7, v9);
-		edge(v8, v9);
-		edge(v9, v10);
-		edge(v9, v11);
-		edge(v11, v3);
-		edge(v11, v10);
+		e(v5, v6);
+		e(v5, v7);
+		e(v6, v8);
+		e(v6, v9);
+		e(v7, v9);
+		e(v8, v9);
+		e(v9, v10);
+		e(v9, v11);
+		e(v11, v3);
+		e(v11, v10);
 
 		ChkDominanceAlgorithm<TestV, TestE> dominanceAlgorithm =
 			new ChkDominanceAlgorithm<>(g, TaskMonitor.DUMMY);
@@ -433,19 +433,19 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//
 		//
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v2, v4);
-		edge(v3, v5);
-		edge(v4, v5);
-		edge(v5, v6);
+		e(v1, v2);
+		e(v2, v3);
+		e(v2, v4);
+		e(v3, v5);
+		e(v4, v5);
+		e(v5, v6);
 
 		ChkDominanceAlgorithm<TestV, TestE> algo =
 			new ChkDominanceAlgorithm<>(g, TaskMonitor.DUMMY);
@@ -476,19 +476,19 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//
 		//
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v2, v4);
-		edge(v3, v5);
-		edge(v4, v5);
-		edge(v5, v6);
+		e(v1, v2);
+		e(v2, v3);
+		e(v2, v4);
+		e(v3, v5);
+		e(v4, v5);
+		e(v5, v6);
 
 		ChkDominanceAlgorithm<TestV, TestE> algo =
 			new ChkDominanceAlgorithm<>(g, TaskMonitor.DUMMY);
@@ -496,22 +496,22 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		// all paths go through v1
 		//@formatter:off
 		Collection<TestE> dominated = findDominance(v1, algo);
-		assertContainsExactly(dominated, edge(v1, v2),
-									  	 edge(v2, v3),
-									  	 edge(v2, v4),
-									  	 edge(v3, v5),
-									  	 edge(v4, v5),
-									  	 edge(v5, v6));
+		assertContainsExactly(dominated, e(v1, v2),
+									  	 e(v2, v3),
+									  	 e(v2, v4),
+									  	 e(v3, v5),
+									  	 e(v4, v5),
+									  	 e(v5, v6));
 		//@formatter:on
 
 		// all paths, but v1, are dominated by v2
 		//@formatter:off
 		dominated = findDominance(v2, algo);
-		assertContainsExactly(dominated, edge(v2, v3),
-									  	 edge(v2, v4),
-									  	 edge(v3, v5),
-									  	 edge(v4, v5),
-									  	 edge(v5, v6));
+		assertContainsExactly(dominated, e(v2, v3),
+									  	 e(v2, v4),
+									  	 e(v3, v5),
+									  	 e(v4, v5),
+									  	 e(v5, v6));
 		//@formatter:on
 
 		// v3/v4 are two ways through the graph; they do not dominate
@@ -521,7 +521,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		assertTrue(dominated.isEmpty());
 
 		dominated = findDominance(v5, algo);
-		assertContainsExactly(dominated, edge(v5, v6));
+		assertContainsExactly(dominated, e(v5, v6));
 
 		// v6 is the exit; it dominates nothing
 		dominated = findDominance(v6, algo);
@@ -540,15 +540,15 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		 		 |  |
 		 		v4--<
 		 */
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v3, v4);
-		edge(v1, v4);
+		e(v1, v2);
+		e(v2, v3);
+		e(v3, v4);
+		e(v1, v4);
 
 		ChkPostDominanceAlgorithm<TestV, TestE> algo =
 			new ChkPostDominanceAlgorithm<>(g, TaskMonitor.DUMMY);
@@ -574,17 +574,17 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 		 */
 		//@formatter:on
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v3, v4);
-		edge(v3, v5);
-		edge(v5, v2);
+		e(v1, v2);
+		e(v2, v3);
+		e(v3, v4);
+		e(v3, v5);
+		e(v5, v2);
 
 		ChkPostDominanceAlgorithm<TestV, TestE> algo =
 			new ChkPostDominanceAlgorithm<>(g, TaskMonitor.DUMMY);
@@ -615,19 +615,19 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//
 		//
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v2, v4);
-		edge(v3, v5);
-		edge(v4, v5);
-		edge(v5, v6);
+		e(v1, v2);
+		e(v2, v3);
+		e(v2, v4);
+		e(v3, v5);
+		e(v4, v5);
+		e(v5, v6);
 
 		ChkPostDominanceAlgorithm<TestV, TestE> algo =
 			new ChkPostDominanceAlgorithm<>(g, TaskMonitor.DUMMY);
@@ -638,7 +638,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			"Found: " + dominated, dominated.isEmpty());
 
 		dominated = findPostDominance(v2, algo);
-		assertContainsExactly(dominated, edge(v1, v2));
+		assertContainsExactly(dominated, e(v1, v2));
 
 		// v3/v4 are two ways through the graph; they do not post-dominate
 		dominated = findPostDominance(v3, algo);
@@ -648,22 +648,22 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 		//@formatter:off
 		dominated = findPostDominance(v5, algo);
-		assertContainsExactly(dominated, edge(v1, v2),
-									  	 edge(v2, v3),
-									  	 edge(v2, v4),
-									  	 edge(v3, v5),
-									  	 edge(v4, v5));
+		assertContainsExactly(dominated, e(v1, v2),
+									  	 e(v2, v3),
+									  	 e(v2, v4),
+									  	 e(v3, v5),
+									  	 e(v4, v5));
 		//@formatter:on
 
 		// all paths go through v6
 		//@formatter:off
 		dominated = findPostDominance(v6, algo);
-		assertContainsExactly(dominated, edge(v1, v2),
-									  	 edge(v2, v3),
-									  	 edge(v2, v4),
-									  	 edge(v3, v5),
-									  	 edge(v4, v5),
-									  	 edge(v5, v6));
+		assertContainsExactly(dominated, e(v1, v2),
+									  	 e(v2, v3),
+									  	 e(v2, v4),
+									  	 e(v3, v5),
+									  	 e(v4, v5),
+									  	 e(v5, v6));
 		//@formatter:on
 
 	}
@@ -687,19 +687,19 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//
 		//
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v2, v4);
-		edge(v3, v5);
-		edge(v4, v5);
-		edge(v5, v6);
+		e(v1, v2);
+		e(v2, v3);
+		e(v2, v4);
+		e(v3, v5);
+		e(v4, v5);
+		e(v5, v6);
 
 		// v1 is the entry; it is not post-dominated by anything
 		Collection<TestE> dominated = findPostDominance(v1);
@@ -707,7 +707,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			"Found: " + dominated, dominated.isEmpty());
 
 		dominated = findPostDominance(v2);
-		assertContainsExactly(dominated, edge(v1, v2));
+		assertContainsExactly(dominated, e(v1, v2));
 
 		// v3/v4 are two ways through the graph; they do not post-dominate
 		dominated = findPostDominance(v3);
@@ -717,22 +717,22 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 		//@formatter:off
 		dominated = findPostDominance(v5);
-		assertContainsExactly(dominated, edge(v1, v2),
-									  	 edge(v2, v3),
-									  	 edge(v2, v4),
-									  	 edge(v3, v5),
-									  	 edge(v4, v5));
+		assertContainsExactly(dominated, e(v1, v2),
+									  	 e(v2, v3),
+									  	 e(v2, v4),
+									  	 e(v3, v5),
+									  	 e(v4, v5));
 		//@formatter:on
 
 		// all paths go through v6
 		//@formatter:off
 		dominated = findPostDominance(v6);
-		assertContainsExactly(dominated, edge(v1, v2),
-									  	 edge(v2, v3),
-									  	 edge(v2, v4),
-									  	 edge(v3, v5),
-									  	 edge(v4, v5),
-									  	 edge(v5, v6));
+		assertContainsExactly(dominated, e(v1, v2),
+									  	 e(v2, v3),
+									  	 e(v2, v4),
+									  	 e(v3, v5),
+									  	 e(v4, v5),
+									  	 e(v5, v6));
 		//@formatter:on
 
 	}
@@ -762,46 +762,46 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		
 		*/
 
-		TestV v1 = vertex(1);  // Root
-		TestV v2 = vertex(2);  // Root
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		TestV v7 = vertex(7);
-		TestV v8 = vertex(8);
-		TestV v9 = vertex(9);
-		TestV v10 = vertex(10);
-		TestV v11 = vertex(11);
+		TestV v1 = v(1);  // Root
+		TestV v2 = v(2);  // Root
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		TestV v7 = v(7);
+		TestV v8 = v(8);
+		TestV v9 = v(9);
+		TestV v10 = v(10);
+		TestV v11 = v(11);
 
-		edge(v1, v3);
-		edge(v3, v5);
-		edge(v5, v6);
+		e(v1, v3);
+		e(v3, v5);
+		e(v5, v6);
 
-		edge(v2, v4);
-		edge(v4, v6);
+		e(v2, v4);
+		e(v4, v6);
 
-		edge(v6, v7);
-		edge(v7, v8);
-		edge(v7, v9);
-		edge(v8, v10);
-		edge(v9, v10);
-		edge(v10, v11);
+		e(v6, v7);
+		e(v7, v8);
+		e(v7, v9);
+		e(v8, v10);
+		e(v9, v10);
+		e(v10, v11);
 
 		ChkDominanceAlgorithm<TestV, TestE> algo =
 			new ChkDominanceAlgorithm<>(g, TaskMonitor.DUMMY);
 
 		//@formatter:off
 		Collection<TestE> dominated = findDominance(v1, algo);
-		assertContainsExactly(dominated, edge(v1, v3),
-									  	 edge(v3, v5));
+		assertContainsExactly(dominated, e(v1, v3),
+									  	 e(v3, v5));
 		//@formatter:on
 
 		dominated = findDominance(v2, algo);
-		assertContainsExactly(dominated, edge(v2, v4));
+		assertContainsExactly(dominated, e(v2, v4));
 
 		dominated = findDominance(v3, algo);
-		assertContainsExactly(dominated, edge(v3, v5));
+		assertContainsExactly(dominated, e(v3, v5));
 
 		dominated = findDominance(v4, algo);
 		assertTrue(dominated.isEmpty());
@@ -811,19 +811,19 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 		//@formatter:off
 		dominated = findDominance(v6, algo);
-		assertContainsExactly(dominated, edge(v6, v7),
-									  	 edge(v7, v8),
-									  	 edge(v7, v9),
-									  	 edge(v8, v10),
-									  	 edge(v9, v10),
-									  	 edge(v10, v11));
+		assertContainsExactly(dominated, e(v6, v7),
+									  	 e(v7, v8),
+									  	 e(v7, v9),
+									  	 e(v8, v10),
+									  	 e(v9, v10),
+									  	 e(v10, v11));
 
 		dominated = findDominance(v7, algo);
-		assertContainsExactly(dominated, edge(v7, v8),
-									  	 edge(v7, v9),
-									  	 edge(v8, v10),
-									  	 edge(v9, v10),
-									  	 edge(v10, v11));
+		assertContainsExactly(dominated, e(v7, v8),
+									  	 e(v7, v9),
+									  	 e(v8, v10),
+									  	 e(v9, v10),
+									  	 e(v10, v11));
 		//@formatter:on
 
 		dominated = findDominance(v8, algo);
@@ -833,7 +833,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		assertTrue(dominated.isEmpty());
 
 		dominated = findDominance(v10, algo);
-		assertContainsExactly(dominated, edge(v10, v11));
+		assertContainsExactly(dominated, e(v10, v11));
 
 	}
 
@@ -862,31 +862,31 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		
 		*/
 
-		TestV v1 = vertex(1);  // Root
-		TestV v2 = vertex(2);  // Root
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		TestV v7 = vertex(7);
-		TestV v8 = vertex(8);
-		TestV v9 = vertex(9);
-		TestV v10 = vertex(10);
-		TestV v11 = vertex(11);
+		TestV v1 = v(1);  // Root
+		TestV v2 = v(2);  // Root
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		TestV v7 = v(7);
+		TestV v8 = v(8);
+		TestV v9 = v(9);
+		TestV v10 = v(10);
+		TestV v11 = v(11);
 
-		edge(v1, v3);
-		edge(v3, v5);
-		edge(v5, v6);
+		e(v1, v3);
+		e(v3, v5);
+		e(v5, v6);
 
-		edge(v2, v4);
-		edge(v4, v6);
+		e(v2, v4);
+		e(v4, v6);
 
-		edge(v6, v7);
-		edge(v7, v8);
-		edge(v7, v9);
-		edge(v8, v10);
-		edge(v9, v10);
-		edge(v10, v11);
+		e(v6, v7);
+		e(v7, v8);
+		e(v7, v9);
+		e(v8, v10);
+		e(v9, v10);
+		e(v10, v11);
 
 		Collection<TestE> dominated = findPostDominance(v1);
 		assertTrue("The start vertex is the root--it should not post dominate any nodes.  " +
@@ -897,30 +897,30 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			"Found: " + dominated, dominated.isEmpty());
 
 		dominated = findPostDominance(v3);
-		assertContainsExactly(dominated, edge(v1, v3));
+		assertContainsExactly(dominated, e(v1, v3));
 
 		dominated = findPostDominance(v4);
-		assertContainsExactly(dominated, edge(v2, v4));
+		assertContainsExactly(dominated, e(v2, v4));
 
 		//@formatter:off
 		dominated = findPostDominance(v5);
-		assertContainsExactly(dominated, edge(v1, v3),
-										 edge(v3, v5));
+		assertContainsExactly(dominated, e(v1, v3),
+										 e(v3, v5));
 
 		dominated = findPostDominance(v6);
-		assertContainsExactly(dominated, edge(v1, v3),
-										 edge(v3, v5),
-										 edge(v5, v6),
-										 edge(v2, v4),
-										 edge(v4, v6));
+		assertContainsExactly(dominated, e(v1, v3),
+										 e(v3, v5),
+										 e(v5, v6),
+										 e(v2, v4),
+										 e(v4, v6));
 
 		dominated = findPostDominance(v7);
-		assertContainsExactly(dominated, edge(v1, v3),
-										 edge(v3, v5),
-										 edge(v5, v6),
-										 edge(v2, v4),
-										 edge(v4, v6),
-										 edge(v6, v7));
+		assertContainsExactly(dominated, e(v1, v3),
+										 e(v3, v5),
+										 e(v5, v6),
+										 e(v2, v4),
+										 e(v4, v6),
+										 e(v6, v7));
 
 		dominated = findPostDominance(v8);
 		assertTrue(dominated.isEmpty());
@@ -929,29 +929,29 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		assertTrue(dominated.isEmpty());
 
 		dominated = findPostDominance(v10);
-		assertContainsExactly(dominated, edge(v1, v3),
-										 edge(v3, v5),
-										 edge(v5, v6),
-										 edge(v2, v4),
-										 edge(v4, v6),
-										 edge(v6, v7),
-										 edge(v7, v8),
-										 edge(v7, v9),
-										 edge(v8, v10),
-										 edge(v9, v10));
+		assertContainsExactly(dominated, e(v1, v3),
+										 e(v3, v5),
+										 e(v5, v6),
+										 e(v2, v4),
+										 e(v4, v6),
+										 e(v6, v7),
+										 e(v7, v8),
+										 e(v7, v9),
+										 e(v8, v10),
+										 e(v9, v10));
 
 		dominated = findPostDominance(v11);
-		assertContainsExactly(dominated, edge(v1, v3),
-										 edge(v3, v5),
-										 edge(v5, v6),
-										 edge(v2, v4),
-										 edge(v4, v6),
-										 edge(v6, v7),
-										 edge(v7, v8),
-										 edge(v7, v9),
-										 edge(v8, v10),
-										 edge(v9, v10),
-										 edge(v10, v11));
+		assertContainsExactly(dominated, e(v1, v3),
+										 e(v3, v5),
+										 e(v5, v6),
+										 e(v2, v4),
+										 e(v4, v6),
+										 e(v6, v7),
+										 e(v7, v8),
+										 e(v7, v9),
+										 e(v8, v10),
+										 e(v9, v10),
+										 e(v10, v11));
 		//@formatter:on
 	}
 
@@ -975,25 +975,25 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		
 		*/
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);  // sink
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		TestV v7 = vertex(7);  // sink
-		TestV v8 = vertex(8);
-		TestV v9 = vertex(9);  // sink
+		TestV v1 = v(1);
+		TestV v2 = v(2);  // sink
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		TestV v7 = v(7);  // sink
+		TestV v8 = v(8);
+		TestV v9 = v(9);  // sink
 
-		edge(v1, v2);
-		edge(v1, v3);
-		edge(v3, v4);
-		edge(v4, v5);
-		edge(v4, v6);
-		edge(v4, v7);
-		edge(v5, v8);
-		edge(v6, v8);
-		edge(v8, v9);
+		e(v1, v2);
+		e(v1, v3);
+		e(v3, v4);
+		e(v4, v5);
+		e(v4, v6);
+		e(v4, v7);
+		e(v5, v8);
+		e(v6, v8);
+		e(v8, v9);
 
 		Collection<TestE> dominated = findPostDominance(v1);
 		assertTrue("The start vertex is the root--it should not post dominate any nodes.  " +
@@ -1007,7 +1007,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 		//@formatter:off
 		dominated = findPostDominance(v4);
-		assertContainsExactly(dominated, edge(v3, v4));
+		assertContainsExactly(dominated, e(v3, v4));
 
 		dominated = findPostDominance(v5);
 		assertTrue(dominated.isEmpty()); // there are 3 paths at this level
@@ -1019,13 +1019,13 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		assertTrue(dominated.isEmpty());  // there are 3 paths at this level
 
 		dominated = findPostDominance(v8);
-		assertContainsExactly(dominated, edge(v5, v8),
-			 							 edge(v6, v8));
+		assertContainsExactly(dominated, e(v5, v8),
+			 							 e(v6, v8));
 
 		dominated = findPostDominance(v9);
-		assertContainsExactly(dominated, edge(v5, v8),
-			 							 edge(v6, v8),
-			 							 edge(v8, v9));
+		assertContainsExactly(dominated, e(v5, v8),
+			 							 e(v6, v8),
+			 							 e(v8, v9));
 		//@formatter:on
 	}
 
@@ -1040,8 +1040,8 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//       With this change duplicate nodes are acceptable as long as the client correctly
 		//       implements equals().
 		//
-		edge(vertex(1), vertex(2));
-		edge(vertex(1), vertex(3));
+		e(v(1), v(2));
+		e(v(1), v(3));
 
 		GraphAlgorithms.findDominanceTree(g, TaskMonitor.DUMMY);
 	}
@@ -1053,19 +1053,19 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//    v     v
 		//   V2 -> V4 -> V5
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
 
-		edge(v1, v2);
-		edge(v1, v3);
-		edge(v2, v6);
-		edge(v2, v4);
-		edge(v4, v5);
-		edge(v3, v4);
+		e(v1, v2);
+		e(v1, v3);
+		e(v2, v6);
+		e(v2, v4);
+		e(v4, v5);
+		e(v3, v4);
 
 		List<TestV> postOrder = DepthFirstSorter.postOrder(g);
 		assertEquals(6, postOrder.size());
@@ -1085,19 +1085,19 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//    v     v
 		//   V2 -> V4 -> V5
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
 
-		edge(v1, v2);
-		edge(v1, v3);
-		edge(v2, v6);
-		edge(v2, v4);
-		edge(v4, v5);
-		edge(v3, v4);
+		e(v1, v2);
+		e(v1, v3);
+		e(v2, v6);
+		e(v2, v4);
+		e(v4, v5);
+		e(v3, v4);
 
 		List<TestV> preOrder = DepthFirstSorter.preOrder(g);
 		assertEquals(6, preOrder.size());
@@ -1128,19 +1128,19 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		
 		 */
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v2, v4);
-		edge(v3, v5);
-		edge(v4, v5);
-		edge(v5, v6);
+		e(v1, v2);
+		e(v2, v3);
+		e(v2, v4);
+		e(v3, v5);
+		e(v4, v5);
+		e(v5, v6);
 
 		List<TestV> preOrder = DepthFirstSorter.preOrder(g);
 		assertEquals(6, preOrder.size());
@@ -1166,19 +1166,19 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		
 		 */
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v2, v4);
-		edge(v3, v5);
-		edge(v4, v5);
-		edge(v5, v6);
+		e(v1, v2);
+		e(v2, v3);
+		e(v2, v4);
+		e(v3, v5);
+		e(v4, v5);
+		e(v5, v6);
 
 		List<TestV> postOrder = DepthFirstSorter.postOrder(g);
 		assertEquals(6, postOrder.size());
@@ -1193,20 +1193,20 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//    |     |
 		//    v     v
 		//   V2 -> V4 -> V5
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
 
-		edge(v1, v2);
-		edge(v1, v3);
-		edge(v2, v6);
-		edge(v2, v4);
-		edge(v4, v5);
-		edge(v3, v4);
-		edge(v5, v6);
+		e(v1, v2);
+		e(v1, v3);
+		e(v2, v6);
+		e(v2, v4);
+		e(v4, v5);
+		e(v3, v4);
+		e(v5, v6);
 
 		List<TestV> postOrder = DepthFirstSorter.postOrder(g);
 		assertEquals(6, postOrder.size());
@@ -1220,14 +1220,14 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 	@Test
 	public void testDepthFirstPostOrderMultipleSources() {
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
 
-		edge(v1, v3);
-		edge(v2, v3);
-		edge(v2, v4);
+		e(v1, v3);
+		e(v2, v3);
+		e(v2, v4);
 
 		List<TestV> postOrder = DepthFirstSorter.postOrder(g);
 		assertEquals(4, postOrder.size());
@@ -1247,17 +1247,17 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//    v
 		//   V4 <-> V5
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v3, v4);
-		edge(v4, v5);
-		edge(v5, v4);
+		e(v1, v2);
+		e(v2, v3);
+		e(v3, v4);
+		e(v4, v5);
+		e(v5, v4);
 
 		List<TestV> postOrder = DepthFirstSorter.postOrder(g);
 		assertEquals(5, postOrder.size());
@@ -1299,23 +1299,23 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//
 		//
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		TestV v7 = vertex(7);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		TestV v7 = v(7);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v2, v5);
-		edge(v3, v4);
-		edge(v3, v5);
-		edge(v4, v2);
-		edge(v5, v7);
-		edge(v5, v6);
-		edge(v7, v3);
+		e(v1, v2);
+		e(v2, v3);
+		e(v2, v5);
+		e(v3, v4);
+		e(v3, v5);
+		e(v4, v2);
+		e(v5, v7);
+		e(v5, v6);
+		e(v7, v3);
 
 		List<List<TestV>> circuits = GraphAlgorithms.findCircuits(g, TaskMonitor.DUMMY);
 		assertEquals(3, circuits.size());
@@ -1359,23 +1359,23 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//
 		//
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		TestV v7 = vertex(7);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		TestV v7 = v(7);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v2, v5);
-		edge(v3, v4);
-		edge(v3, v5);
-		edge(v4, v2);
-		edge(v5, v7);
-		edge(v5, v6);
-		edge(v7, v3);
+		e(v1, v2);
+		e(v2, v3);
+		e(v2, v5);
+		e(v3, v4);
+		e(v3, v5);
+		e(v4, v2);
+		e(v5, v7);
+		e(v5, v6);
+		e(v7, v3);
 
 		ListAccumulator<List<TestV>> accumulator = new ListAccumulator<>();
 		GraphAlgorithms.findPaths(g, v2, v4, accumulator, TaskMonitor.DUMMY);
@@ -1391,18 +1391,18 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	@Test
 	public void testFindPaths_FullyConnected() throws CancelledException {
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
 
-		edge(v1, v2);
-		edge(v1, v3);
+		e(v1, v2);
+		e(v1, v3);
 
-		edge(v2, v3);
-		edge(v2, v1);
+		e(v2, v3);
+		e(v2, v1);
 
-		edge(v3, v2);
-		edge(v3, v1);
+		e(v3, v2);
+		e(v3, v1);
 
 		ListAccumulator<List<TestV>> accumulator = new ListAccumulator<>();
 		GraphAlgorithms.findPaths(g, v1, v2, accumulator, TaskMonitor.DUMMY);
@@ -1415,36 +1415,36 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	@Test
 	public void testFindPaths_FullyConnected2() throws CancelledException {
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
 
-		edge(v1, v2);
-		edge(v1, v3);
-		edge(v1, v4);
-		edge(v1, v5);
+		e(v1, v2);
+		e(v1, v3);
+		e(v1, v4);
+		e(v1, v5);
 
-		edge(v2, v1);
-		edge(v2, v3);
-		edge(v2, v4);
-		edge(v2, v5);
+		e(v2, v1);
+		e(v2, v3);
+		e(v2, v4);
+		e(v2, v5);
 
-		edge(v3, v1);
-		edge(v3, v2);
-		edge(v3, v4);
-		edge(v3, v5);
+		e(v3, v1);
+		e(v3, v2);
+		e(v3, v4);
+		e(v3, v5);
 
-		edge(v4, v1);
-		edge(v4, v2);
-		edge(v4, v3);
-		edge(v4, v5);
+		e(v4, v1);
+		e(v4, v2);
+		e(v4, v3);
+		e(v4, v5);
 
-		edge(v5, v1);
-		edge(v5, v2);
-		edge(v5, v3);
-		edge(v5, v4);
+		e(v5, v1);
+		e(v5, v2);
+		e(v5, v3);
+		e(v5, v4);
 
 		ListAccumulator<List<TestV>> accumulator = new ListAccumulator<>();
 		GraphAlgorithms.findPaths(g, v1, v5, accumulator, TaskMonitor.DUMMY);
@@ -1498,33 +1498,33 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			 	v1, v3, v6, v7, v9, v10
 		 */
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		TestV v7 = vertex(7);
-		TestV v8 = vertex(8);
-		TestV v9 = vertex(9);
-		TestV v10 = vertex(10);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		TestV v7 = v(7);
+		TestV v8 = v(8);
+		TestV v9 = v(9);
+		TestV v10 = v(10);
 
-		edge(v1, v2);
-		edge(v1, v3);
+		e(v1, v2);
+		e(v1, v3);
 
-		edge(v2, v10);
+		e(v2, v10);
 
-		edge(v3, v4);
-		edge(v3, v5);
-		edge(v3, v6);
+		e(v3, v4);
+		e(v3, v5);
+		e(v3, v6);
 
-		edge(v5, v10);
+		e(v5, v10);
 
-		edge(v6, v7);
-		edge(v7, v8);
-		edge(v7, v9);
+		e(v6, v7);
+		e(v7, v8);
+		e(v7, v9);
 
-		edge(v9, v10);
+		e(v9, v10);
 
 		ListAccumulator<List<TestV>> accumulator = new ListAccumulator<>();
 		GraphAlgorithms.findPaths(g, v1, v10, accumulator, TaskMonitor.DUMMY);
@@ -1561,34 +1561,34 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			Paths: v1, v3, v5, v10
 		*/
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		TestV v7 = vertex(7);
-		TestV v8 = vertex(8);
-		TestV v9 = vertex(9);
-		TestV v10 = vertex(10);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		TestV v7 = v(7);
+		TestV v8 = v(8);
+		TestV v9 = v(9);
+		TestV v10 = v(10);
 
-		edge(v1, v2);
-		edge(v1, v3);
+		e(v1, v2);
+		e(v1, v3);
 
-		edge(v2, v1); // back edge
+		e(v2, v1); // back edge
 
-		edge(v3, v4);
-		edge(v3, v5);
-		edge(v3, v6);
+		e(v3, v4);
+		e(v3, v5);
+		e(v3, v6);
 
-		edge(v5, v10);
+		e(v5, v10);
 
-		edge(v6, v7);
+		e(v6, v7);
 
-		edge(v7, v8);
-		edge(v7, v9);
+		e(v7, v8);
+		e(v7, v9);
 
-		edge(v9, v6); // back edge
+		e(v9, v6); // back edge
 
 		ListAccumulator<List<TestV>> accumulator = new ListAccumulator<>();
 
@@ -1625,39 +1625,39 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			v1, v3, v6, v7, v9, v10
 		*/
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		TestV v7 = vertex(7);
-		TestV v8 = vertex(8);
-		TestV v9 = vertex(9);
-		TestV v10 = vertex(10);
-		TestV v11 = vertex(11);
-		TestV v12 = vertex(12);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		TestV v7 = v(7);
+		TestV v8 = v(8);
+		TestV v9 = v(9);
+		TestV v10 = v(10);
+		TestV v11 = v(11);
+		TestV v12 = v(12);
 
-		edge(v1, v2);
-		edge(v1, v3);
+		e(v1, v2);
+		e(v1, v3);
 
-		edge(v2, v10);
+		e(v2, v10);
 
-		edge(v3, v4);
-		edge(v3, v5);
-		edge(v3, v6);
+		e(v3, v4);
+		e(v3, v5);
+		e(v3, v6);
 
-		edge(v4, v11);
+		e(v4, v11);
 
-		edge(v11, v12);
+		e(v11, v12);
 
-		edge(v5, v10);
+		e(v5, v10);
 
-		edge(v6, v7);
-		edge(v7, v8);
-		edge(v7, v9);
+		e(v6, v7);
+		e(v7, v8);
+		e(v7, v9);
 
-		edge(v9, v10);
+		e(v9, v10);
 
 		ListAccumulator<List<TestV>> accumulator = new ListAccumulator<>();
 
@@ -1696,33 +1696,33 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			 	v1, v3, v6, v7, v9, v10
 		 */
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		TestV v7 = vertex(7);
-		TestV v8 = vertex(8);
-		TestV v9 = vertex(9);
-		TestV v10 = vertex(10);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		TestV v7 = v(7);
+		TestV v8 = v(8);
+		TestV v9 = v(9);
+		TestV v10 = v(10);
 
-		edge(v1, v2);
-		edge(v1, v3);
+		e(v1, v2);
+		e(v1, v3);
 
-		edge(v2, v10);
+		e(v2, v10);
 
-		edge(v3, v4);
-		edge(v3, v5);
-		edge(v3, v6);
+		e(v3, v4);
+		e(v3, v5);
+		e(v3, v6);
 
-		edge(v5, v10);
+		e(v5, v10);
 
-		edge(v6, v7);
-		edge(v7, v8);
-		edge(v7, v9);
+		e(v6, v7);
+		e(v7, v8);
+		e(v7, v9);
 
-		edge(v9, v10);
+		e(v9, v10);
 
 		ListAccumulator<List<TestV>> accumulator = new ListAccumulator<>();
 
@@ -1773,25 +1773,25 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//          |
 		//         v4 -> v5 -> v6
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v2, v4);
-		edge(v4, v5);
-		edge(v5, v6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		e(v1, v2);
+		e(v2, v3);
+		e(v2, v4);
+		e(v4, v5);
+		e(v5, v6);
 
 		//@formatter:off
 		Set<TestE> edges = GraphAlgorithms.getEdgesFrom(g, v1, true);
-		assertContainsExactly(edges, edge(v1, v2),
-									 edge(v2, v3),
-									 edge(v2, v4),
-									 edge(v4, v5),
-									 edge(v5, v6));
+		assertContainsExactly(edges, e(v1, v2),
+									 e(v2, v3),
+									 e(v2, v4),
+									 e(v4, v5),
+									 e(v5, v6));
 		//@formatter:on
 
 		edges = GraphAlgorithms.getEdgesFrom(g, v6, true);
@@ -1804,24 +1804,24 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//          |
 		//         v4 -> v5 -> v6
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v2, v4);
-		edge(v4, v5);
-		edge(v5, v6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		e(v1, v2);
+		e(v2, v3);
+		e(v2, v4);
+		e(v4, v5);
+		e(v5, v6);
 
 		//@formatter:off
 		Set<TestE> edges = GraphAlgorithms.getEdgesFrom(g, v6, false);
-		assertContainsExactly(edges, edge(v5, v6),
-									 edge(v4, v5),
-									 edge(v2, v4),
-									 edge(v1, v2));
+		assertContainsExactly(edges, e(v5, v6),
+									 e(v4, v5),
+									 e(v2, v4),
+									 e(v1, v2));
 		//@formatter:on
 
 		edges = GraphAlgorithms.getEdgesFrom(g, v1, false);
@@ -1834,31 +1834,31 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//          |
 		//         v4 -> v5 -> v6
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v2, v4);
-		edge(v4, v5);
-		edge(v5, v6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		e(v1, v2);
+		e(v2, v3);
+		e(v2, v4);
+		e(v4, v5);
+		e(v5, v6);
 
 		//@formatter:off
 		Set<TestE> edges = GraphAlgorithms.getEdgesFrom(g, v5, false);
-		assertContainsExactly(edges, edge(v4, v5),
-									 edge(v2, v4),
-									 edge(v1, v2));
+		assertContainsExactly(edges, e(v4, v5),
+									 e(v2, v4),
+									 e(v1, v2));
 
 		edges = GraphAlgorithms.getEdgesFrom(g, v4, false);
-		assertContainsExactly(edges, edge(v2, v4),
-									 edge(v1, v2));
+		assertContainsExactly(edges, e(v2, v4),
+									 e(v1, v2));
 
 		edges = GraphAlgorithms.getEdgesFrom(g, v3, false);
-		assertContainsExactly(edges, edge(v2, v3),
-									 edge(v1, v2));
+		assertContainsExactly(edges, e(v2, v3),
+									 e(v1, v2));
 		//@formatter:on
 
 		edges = GraphAlgorithms.getEdgesFrom(g, v1, false);
@@ -1871,31 +1871,31 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//          |
 		//         v4 -> v5 -> v6
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v2, v4);
-		edge(v4, v5);
-		edge(v5, v6);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		e(v1, v2);
+		e(v2, v3);
+		e(v2, v4);
+		e(v4, v5);
+		e(v5, v6);
 
 		//@formatter:off
 		Set<TestE> edges = GraphAlgorithms.getEdgesFrom(g, v2, true);
-		assertContainsExactly(edges, edge(v2, v4),
-									 edge(v2, v3),
-									 edge(v4, v5),
-									 edge(v5, v6));
+		assertContainsExactly(edges, e(v2, v4),
+									 e(v2, v3),
+									 e(v4, v5),
+									 e(v5, v6));
 
 		edges = GraphAlgorithms.getEdgesFrom(g, v4, true);
-		assertContainsExactly(edges, edge(v4, v5),
-									 edge(v5, v6));
+		assertContainsExactly(edges, e(v4, v5),
+									 e(v5, v6));
 
 		edges = GraphAlgorithms.getEdgesFrom(g, v5, true);
-		assertContainsExactly(edges, edge(v5, v6));
+		assertContainsExactly(edges, e(v5, v6));
 		//@formatter:on
 
 		edges = GraphAlgorithms.getEdgesFrom(g, v3, true);
@@ -1922,28 +1922,28 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		
 		 */
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		TestV v7 = vertex(7);
-		TestV v8 = vertex(8);
-		TestV v9 = vertex(9);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		TestV v7 = v(7);
+		TestV v8 = v(8);
+		TestV v9 = v(9);
 
-		edge(v1, v2);
-		edge(v2, v3);
+		e(v1, v2);
+		e(v2, v3);
 
 		g.addVertex(v4);
 
-		edge(v5, v6);
-		edge(v6, v7);
-		edge(v7, v5);
+		e(v5, v6);
+		e(v6, v7);
+		e(v7, v5);
 
-		edge(v6, v8);
-		edge(v8, v9);
-		edge(v9, v8);
+		e(v6, v8);
+		e(v8, v9);
+		e(v9, v8);
 
 		Set<TestV> entries = GraphAlgorithms.getEntryPoints(g);
 
@@ -1965,26 +1965,26 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//
 		//   V7
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		TestV v7 = vertex(7);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		TestV v7 = v(7);
 		g.addVertex(v7);
 
-		edge(v1, v2);
-		edge(v2, v3);
-		edge(v3, v4);
-		edge(v3, v5);
-		edge(v5, v6);
-		edge(v6, v5);
-		edge(v4, v1);
+		e(v1, v2);
+		e(v2, v3);
+		e(v3, v4);
+		e(v3, v5);
+		e(v5, v6);
+		e(v6, v5);
+		e(v4, v1);
 
 		// make an arbitrary root
-		TestV root = vertex("root");
-		g.addEdge(edge(root, v1));
+		TestV root = v("root");
+		g.addEdge(e(root, v1));
 
 		Map<TestV, Integer> depths = GraphAlgorithms.getComplexityDepth(g);
 		assertEquals(g.getVertexCount(), depths.size());

@@ -205,14 +205,15 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 	@Override
 	public Address getAddress(String addrString) {
 		Address addr = null;
-		if (addrString.startsWith("Stack[") && addrString.endsWith("]")) {
+		if (addrString.startsWith(GenericAddress.STACK_ADDRESS_PREFIX) &&
+			addrString.endsWith(GenericAddress.STACK_ADDRESS_SUFFIX)) {
 			try {
 				long stackOffset =
 					NumericUtilities.parseHexLong(addrString.substring(6, addrString.length() - 1));
 				addr = stackSpace.getAddress(stackOffset);
 			}
-			catch (NumberFormatException e) {
-				// bad string
+			catch (AddressOutOfBoundsException | NumberFormatException e) {
+				// bad stack address string
 			}
 		}
 		else {

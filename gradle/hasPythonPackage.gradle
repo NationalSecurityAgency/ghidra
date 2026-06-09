@@ -24,21 +24,41 @@ eclipse.project {
 }
 
 ext.findPyDep = { name ->
-    File inDeps = file("${DEPS_DIR}/${project.name}/${name}")
-    File inRepo = file("${BIN_REPO}/ExternalPyWheels/${name}")
-    if (inDeps.exists()) {
-        return inDeps
-    }
-    if (inRepo.exists()) {
-        return inRepo
-    }
-    println("Warning: Could not find '${name}' for ${project.name}")
-    return inDeps
+	File inDeps = file("${DEPS_DIR}/${project.name}/${name}")
+	File inRepo = file("${BIN_REPO}/ExternalPyWheels/${name}")
+	if (inDeps.exists()) {
+		return inDeps
+	}
+	if (inRepo.exists()) {
+		return inRepo
+	}
+	println("Warning: Could not find '${name}' for ${project.name}")
+	return inDeps
 }
 
 task assemblePyPackage(type: Copy) {
 	from "src/main/py"
 	into "build/pypkg/"
+}
+
+task typeCheckPyPackage(type: Exec) {
+	dependsOn assemblePyPackage
+	inputs.files(assemblePyPackage)
+
+	doFirst {
+		if (rootProject.PYTHON3 == null) {
+			throw new GradleException("A supported version of Python [${PYTHON_SUPPORTED}] was not found!")
+		}
+		file("build/pypkg/src").listFiles().each { pkg ->
+			if (pkg.isDirectory() && new File(pkg, "__init__.py").isFile()) {
+				args "-p", pkg.name
+			}
+		}
+	}
+
+	workingDir { file("build/pypkg/src") }
+	commandLine rootProject.PYTHON3
+	args "-m", "mypy"
 }
 
 task buildPyPackage {
@@ -47,14 +67,26 @@ task buildPyPackage {
 	inputs.files(assemblePyPackage)
 	outputs.dir(dist)
 
+	def debuggerRmiTraceProject = project(":Debugger-rmi-trace")
+
 	doLast {
-		File setuptools = project(":Debugger-rmi-trace").findPyDep(".")
-		exec {
-			workingDir { "build/pypkg" }
-			commandLine	rootProject.PYTHON3, "-m", "pip"
-			args "wheel", "-w", "dist/", "--no-index", "--no-deps"
-			args "-f", setuptools
-			args "."
+		if (rootProject.PYTHON3 == null) {
+			throw new GradleException("A supported version of Python [${PYTHON_SUPPORTED}] was not found!")
+		}
+	
+		File setuptools = debuggerRmiTraceProject.findPyDep(".")
+		
+		def exec = providers.exec {
+			workingDir { file("build/pypkg") }
+			ignoreExitValue = true
+			commandLine rootProject.PYTHON3
+			args "-m", "pip", "wheel", "-w", "dist/", "--no-index", "--no-deps", "-f", setuptools, "."
+		}
+		if (exec.result.get().exitValue != 0) {
+			throw new GradleException(exec.standardError.asText.get().strip())
+		}
+		if (exec.standardOutput.asText.get().contains("Successfully built UNKNOWN")) {
+			throw new GradleException("UNKNOWN wheel built...upgrade pip")
 		}
 	}
 }
@@ -78,12 +110,48 @@ rootProject.assembleDistribution {
 }
 
 ext.distributePyDep = { name ->
-    File dep = findPyDep(name)
-    PYTHON_DEPS.add(dep)
-    def zipPath = getZipPath(project) 
-    rootProject.assembleDistribution {
-        into ("${zipPath}/pypkg/dist") {
-            from dep
-        }
-    }
+	Set<File> wheelFiles = PYTHON_DEPS.get(project)
+	if (wheelFiles == null) {
+		wheelFiles = new HashSet<>()
+		PYTHON_DEPS.put(project, wheelFiles)
+	}
+	File dep = findPyDep(name)
+	wheelFiles.add(dep)
+	def zipPath = getZipPath(project) 
+	rootProject.assembleDistribution {
+		into ("${zipPath}/pypkg/dist") {
+			from dep
+		}
+	}
 }
+
+// This task composes debugger schema files from their subpieces
+
+def foundFiles = fileTree("src/main/py/src").matching {
+    include "**/build_xml.py"
+}
+
+task buildXmlSchema {
+	doLast {
+		if (rootProject.PYTHON3 == null) {
+			throw new GradleException("A supported version of Python [${PYTHON_SUPPORTED}] was not found!")
+		}
+
+		File buildScript = foundFiles.isEmpty() ? null : foundFiles.singleFile 
+		if (buildScript == null || !buildScript.exists()) {
+		    println "Warning: Could not find build_xml.py for ${project.name}"
+		    return
+		}
+		
+		def exec = providers.exec {
+			workingDir { buildScript.parentFile }
+			ignoreExitValue = true
+			commandLine rootProject.PYTHON3
+			args "build_xml.py"
+		}
+		if (exec.result.get().exitValue != 0) {
+			throw new GradleException(exec.standardError.asText.get().strip())
+		}
+	}
+}
+

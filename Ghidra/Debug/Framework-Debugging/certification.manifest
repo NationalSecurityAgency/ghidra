@@ -1,8 +1,0 @@
-##VERSION: 2.0
-##MODULE IP: Apache License 2.0
-Module.manifest||GHIDRA||||END|
-data/ExtensionPoint.manifest||GHIDRA||||END|
-src/main/resources/agent.log4j.xml||GHIDRA||||END|
-src/main/resources/log4j-appender-console.xml||GHIDRA||||END|
-src/main/resources/log4j-appender-logpanel.xml||GHIDRA||||END|
-src/test/resources/ghidra/dbg/model/test_schema.xml||GHIDRA||||END|

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,14 +24,12 @@ import javax.swing.JLabel;
 
 import org.junit.Test;
 
+import docking.test.AbstractDockingTest;
 import docking.widgets.label.GDLabel;
-import generic.test.AbstractGenericTest;
 
-public class PlaceholderSetTest extends AbstractGenericTest {
+public class PlaceholderSetTest extends AbstractDockingTest {
 
-	public PlaceholderSetTest() {
-		super();
-	}
+	private Tool tool = new FakeDockingTool();
 
 	@Test
 	public void testDedupingRestoredPlaceholders_OnlyOneHidden() {
@@ -118,7 +116,7 @@ public class PlaceholderSetTest extends AbstractGenericTest {
 		JLabel label = new GDLabel();
 
 		public TestProvider() {
-			super(null, null, null);
+			super(PlaceholderSetTest.this.tool, null, null);
 		}
 
 		@Override

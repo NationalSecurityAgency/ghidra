@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,19 +45,18 @@ public class DataTypeGraphComparator {
 		 * This callback can choose to abort traversing the tree of child types if it returns
 		 * false.  (ie. if this was a Pointer DataType, returning false would stop
 		 * the graph comparator from comparing the DataType pointed to by this Pointer)
-		 * <p>
 		 *
 		 * @param dt1 element from the first/left/src DataType graph
 		 * @param dt2 matching element from the second/right/dest DataType graph
 		 * @return false if abort this subtree, true if continue
 		 */
-		public boolean observe(DataType dt1, DataType dt2);
+		boolean observe(DataType dt1, DataType dt2);
 	}
 
 	/**
 	 * Compares two {@link DataType datatypes} graphs, calling the observer callback
 	 * for each paired DataType that occupy equivalent positions in each graph.
-	 * <p>
+	 * 
 	 * @param preDT - Original (impl) DataType from before submitting to DataTypeManager.
 	 * @param postDT - Result DataType from the DataTypeManager
 	 * @param observer - Callback called for each position in the preDT graph that has a matching
@@ -157,7 +156,7 @@ public class DataTypeGraphComparator {
 	}
 
 	private void compare(Structure pre, Structure post) {
-		for (DataTypeComponent dtc : pre.getComponents()) {
+		for (DataTypeComponent dtc : pre.getDefinedComponents()) {
 			DataType preDTCType = dtc.getDataType();
 			DataTypeComponent postDTC = post.getComponentAt(dtc.getOffset());
 			if (postDTC == null) {
@@ -174,12 +173,12 @@ public class DataTypeGraphComparator {
 
 	private void compare(Union pre, Union post) {
 		Map<String, DataTypeComponent> postCompsByName = new HashMap<>();
-		for (DataTypeComponent dtc : post.getComponents()) {
+		for (DataTypeComponent dtc : post.getDefinedComponents()) {
 			if (dtc.getFieldName() != null) {
 				postCompsByName.put(dtc.getFieldName(), dtc);
 			}
 		}
-		for (DataTypeComponent preDTC : pre.getComponents()) {
+		for (DataTypeComponent preDTC : pre.getDefinedComponents()) {
 			DataTypeComponent postDTC = postCompsByName.get(preDTC.getFieldName());
 			if (postDTC != null) {
 				compare(preDTC.getDataType(), postDTC.getDataType());

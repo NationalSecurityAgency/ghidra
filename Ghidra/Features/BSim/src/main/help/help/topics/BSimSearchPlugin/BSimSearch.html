@@ -53,9 +53,23 @@
       <BR>
        
 
-      <P>The dialog displays a table showing all the currently defined BSim databases/servers. Each
-      entry shows a name for the BSim database, its type (postgres, elastic, or file), a host ip
-      and port (if applicable), and finally the number of active connections.</P>
+      <P>The dialog displays a table showing all the currently defined BSim databases/servers. 
+      Table columns displayed include:</P>
+      
+      <UL>
+        <LI><B>Name</B> - Indicates the name of the BSim database.  In the cases of an H2 <I>file</I>
+        database this represents the name of the file (hovering on this will show the full absolute path).</LI>
+        <LI><B>Type</B> - The type of database (<I>postgres</I>, <I>elastic</I> or <I>file</I>).</LI>
+        <LI><B>Host</B> - The network host name or IP address for a <I>postgres</I> or 
+                          <I>elastic</I> database.</LI>
+        <LI><B>Port</B> - The TCP port for a <I>postgres</I> or <I>elastic</I> database.</LI>
+        <LI><B>User</B> - The non-default user name to be used when connecting to a <I>postgres</I> or 
+                          <I>elastic</I> database.  When actively connected to a <I>postgres</I> database
+                          the actual name used for authentication will be shown.</LI>
+        <LI><B>Active/Idle Connections</B> - The active/idle database connections for the 
+                          connection pool associated with a <I>postgres</I> or <I>file</I> database.
+                          This field will be blank for these databases when in a disconnected state.</LI>
+      </UL>
 
       <P>There are four primary actions for this dialog:</P>
       <A name="Manage_Servers_Actions"></A> 
@@ -68,8 +82,8 @@
         selected entry will be deleted.  This action will force an immediate disconnect for an
         active/idle connection and should be used with care.</LI>
         
-        <LI><IMG alt="" src="icon.bsim.disconnected"><IMG alt="" src="icon.bsim.connected">&nbsp;
-        Connect or disconnect an inactive database/server connection.  This action is not supported
+        <LI><IMG alt="" src="icon.bsim.disconnected"><IMG alt="" src="icon.bsim.connected">&nbsp;Connect
+        or disconnect an inactive database/server connection which has been selected.  This action is not supported
         by Elastic database servers.</LI>
 
         <LI><IMG alt="" src="icon.bsim.change.password">&nbsp;Change password - A change password
@@ -91,9 +105,11 @@
          
 
         <P>Choose the type of BSim database first as that will affect the type of information that
-        needs to be specified. For postgres and elastic, you need to enter host and port. For file,
-        you see a button for using a filechooser to pick the file that is the local BSim H2
-        database.</P>
+        needs to be specified. For <I>postgres</I> and <I>elastic</I>, you must enter a database name, 
+        hostname/address, and port.  Specify a host name of "localhost" for a server running on the local system.
+        Invalid or missing entries are shown in red.  For a <I>file</I> database,
+        the "..." button is used to launch a filechooser for selecting an existing H2 database file 
+        (*.mv.db).</P>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
 

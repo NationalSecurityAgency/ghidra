@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -136,7 +136,7 @@ public:
 
 /// \brief A group of actions (generally) applied in sequence
 ///
-/// This is a a list of Action objects, which are usually applied in sequence.
+/// This is a list of Action objects, which are usually applied in sequence.
 /// But the behavior properties of each individual Action may affect this.
 /// Properties (like rule_repeatapply) may be put directly to this group
 /// that also affect how the Actions are applied.

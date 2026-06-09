@@ -29,7 +29,6 @@ import ghidra.util.exception.DuplicateNameException;
  * A class to represent the 
  * <code>IMAGE_BOUND_IMPORT_DESCRIPTOR</code>
  * data structure defined in <b><code>winnt.h</code></b>.
- * <p>
  * <pre>
  * typedef struct _IMAGE_BOUND_IMPORT_DESCRIPTOR {
  *     DWORD   TimeDateStamp;

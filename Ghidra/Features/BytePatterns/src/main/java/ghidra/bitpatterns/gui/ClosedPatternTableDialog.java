@@ -80,6 +80,7 @@ public class ClosedPatternTableDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 		tablePanel = new GThreadedTablePanel<>(closedPatternTableModel);
 		panel.add(tablePanel, BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Closed Pattern Table");
 		return panel;
 	}
 
@@ -117,8 +118,8 @@ public class ClosedPatternTableDialog extends DialogComponentProvider {
 		Icon icon = new GIcon("icon.bytepatterns.send.to.clipboard");
 		sendToClipboardAction.setPopupMenuData(
 			new MenuData(new String[] { "Send Selected Sequences to Clipboard" }, icon));
-		sendToClipboardAction.setDescription(
-			"Sends the currently selected sequences to the clipboard");
+		sendToClipboardAction
+				.setDescription("Sends the currently selected sequences to the clipboard");
 		this.addAction(sendToClipboardAction);
 	}
 

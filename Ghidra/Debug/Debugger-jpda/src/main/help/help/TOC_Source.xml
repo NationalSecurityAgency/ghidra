@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<!-- See Base's TOC_Source.xml for help -->
+<tocroot>
+	<tocref id="TraceRmiLauncherServicePlugin">
+		<tocdef id="jpda" text="Java Debugger Integration"
+			target="help/topics/jpda/jpda.html">
+
+			<tocdef id="jpda_local" text="Local"
+				target="help/topics/jpda/jpda.html#local" />
+
+			<tocdef id="jpda_attach_port" text="Attach by JDWP"
+				target="help/topics/jpda/jpda.html#attach_port" />
+
+			<tocdef id="jpda_attach_pid" text="Attach b PID"
+				target="help/topics/jpda/jpda.html#attach_pid" />
+
+		</tocdef>
+	</tocref>
+</tocroot>

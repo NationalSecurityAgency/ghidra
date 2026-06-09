@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +20,10 @@ import ghidra.app.util.bin.format.dwarf.DWARFCompilationUnit;
 /**
  * DWARF string attribute.
  */
-public class DWARFStringAttribute extends DWARFAttributeValue {
+public class DWARFStringAttribute implements DWARFAttributeValue {
 	protected String value;
 
-	public DWARFStringAttribute(String value, DWARFAttributeDef<?> def) {
-		super(def);
+	public DWARFStringAttribute(String value) {
 		this.value = value;
 	}
 
@@ -33,7 +32,13 @@ public class DWARFStringAttribute extends DWARFAttributeValue {
 	}
 
 	@Override
-	public String toString() {
-		return "%s : %s = \"%s\"".formatted(getAttributeName(), getAttributeForm(), value);
+	public String getValueString(DWARFCompilationUnit cu, DWARFAttributeDef<?> def) {
+		return "\"%s\"".formatted(getValue(cu));
 	}
+
+	@Override
+	public String toString() {
+		return value;
+	}
+
 }

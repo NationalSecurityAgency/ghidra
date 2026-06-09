@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,12 +35,15 @@ import ghidra.util.task.TaskMonitor;
  * NOTE: referenced thunk-functions should be created prior to this command
  */
 public class FunctionStackAnalysisCmd extends BackgroundCommand<Program> {
+
+	private boolean dontCreateNewVariables = false;
+
+	private final boolean forceProcessing;
+	private final boolean createStackParams;
+	private final boolean createLocalStackVars;
+
 	private AddressSet entryPoints = new AddressSet();
 	private Program program;
-	private boolean forceProcessing = false;
-	private boolean dontCreateNewVariables = false;
-	private boolean doParams = false;
-	private boolean doLocals = false;
 
 	static String DEFAULT_FUNCTION_COMMENT = " FUNCTION";
 
@@ -52,7 +55,7 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 	 *           has already been defined.
 	 */
 	public FunctionStackAnalysisCmd(AddressSetView entries, boolean forceProcessing) {
-		this(entries, true, true, forceProcessing);
+		this(entries, false, true, forceProcessing);
 	}
 
 	/**
@@ -63,7 +66,7 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 	 *           has already been defined.
 	 */
 	public FunctionStackAnalysisCmd(Address entry, boolean forceProcessing) {
-		this(new AddressSet(entry, entry), true, true, forceProcessing);
+		this(new AddressSet(entry, entry), false, true, forceProcessing);
 	}
 
 	public FunctionStackAnalysisCmd(AddressSetView entries, boolean doParameterAnalysis,
@@ -71,8 +74,8 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 		super("Create Function Stack Variables", true, true, false);
 		entryPoints.add(entries);
 		this.forceProcessing = forceProcessing;
-		doParams = doParameterAnalysis;
-		doLocals = doLocalAnalysis;
+		createStackParams = doParameterAnalysis;
+		createLocalStackVars = doLocalAnalysis;
 	}
 
 	@Override
@@ -354,10 +357,10 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 		Variable var = frame.getVariableContaining(frameLoc);
 		if (var == null) {
 			try {
-				if (!doLocals && frameLoc <= 0) {
+				if (!createLocalStackVars && frameLoc <= 0) {
 					return null;
 				}
-				if (!doParams && frameLoc > 0) {
+				if (!createStackParams && frameLoc > 0) {
 					return null;
 				}
 				// only create variables at locations where a variable doesn't exist

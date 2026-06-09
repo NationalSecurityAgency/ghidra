@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ public interface TraceTimeViewport {
 				if (found == object) {
 					continue;
 				}
-				if (itemOccludes(range, found)) {
+				if (itemOccludes(range, found, span.lmax())) {
 					return true;
 				}
 			}
@@ -53,7 +53,7 @@ public interface TraceTimeViewport {
 				if (found == object) {
 					continue;
 				}
-				removeItem(remains, found);
+				removeItem(remains, found, span.lmax());
 				if (remains.isEmpty()) {
 					return;
 				}
@@ -62,34 +62,34 @@ public interface TraceTimeViewport {
 
 		Iterable<? extends T> query(AddressRange range, Lifespan span);
 
-		boolean itemOccludes(AddressRange range, T t);
+		boolean itemOccludes(AddressRange range, T t, long snap);
 
-		void removeItem(AddressSet remains, T t);
+		void removeItem(AddressSet remains, T t, long snap);
 	}
 
 	public interface RangeQueryOcclusion<T> extends QueryOcclusion<T> {
 		@Override
-		default boolean itemOccludes(AddressRange range, T t) {
-			return range(t).intersects(range);
+		default boolean itemOccludes(AddressRange range, T t, long snap) {
+			return range(t, snap).intersects(range);
 		}
 
 		@Override
-		default void removeItem(AddressSet remains, T t) {
-			remains.delete(range(t));
+		default void removeItem(AddressSet remains, T t, long snap) {
+			remains.delete(range(t, snap));
 		}
 
-		AddressRange range(T t);
+		AddressRange range(T t, long snap);
 	}
 
 	public interface SetQueryOcclusion<T> extends QueryOcclusion<T> {
 		@Override
-		default boolean itemOccludes(AddressRange range, T t) {
-			return set(t).intersects(range.getMinAddress(), range.getMaxAddress());
+		default boolean itemOccludes(AddressRange range, T t, long snap) {
+			return set(t, snap).intersects(range.getMinAddress(), range.getMaxAddress());
 		}
 
 		@Override
-		default void removeItem(AddressSet remains, T t) {
-			for (AddressRange range : set(t)) {
+		default void removeItem(AddressSet remains, T t, long snap) {
+			for (AddressRange range : set(t, snap)) {
 				remains.delete(range);
 				if (remains.isEmpty()) {
 					return;
@@ -97,7 +97,7 @@ public interface TraceTimeViewport {
 			}
 		}
 
-		AddressSetView set(T t);
+		AddressSetView set(T t, long snap);
 	}
 
 	/**
@@ -171,9 +171,20 @@ public interface TraceTimeViewport {
 	<T> AddressSet computeVisibleParts(AddressSetView set, Lifespan lifespan, T object,
 			Occlusion<T> occlusion);
 
-
+	/**
+	 * Get the spans involved in the view in most-recent-first order
+	 * 
+	 * @return the list of spans
+	 */
 	List<Lifespan> getOrderedSpans();
-	
+
+	/**
+	 * Get the spans involved in the view in least-recent-first order
+	 * 
+	 * @return the list of spans
+	 */
+	List<Lifespan> getReversedSpans();
+
 	/**
 	 * Get the snaps involved in the view in most-recent-first order
 	 * 

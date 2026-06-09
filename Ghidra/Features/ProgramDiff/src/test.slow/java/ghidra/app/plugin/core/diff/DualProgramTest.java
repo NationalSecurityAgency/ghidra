@@ -76,7 +76,7 @@ public class DualProgramTest extends DiffTestAdapter {
 	}
 
 	@Test
-	public void testEscapeOpenSecondProgram() throws Exception {
+	public void testOpenSecondProgram_Escape() throws Exception {
 
 		restoreProgram(diffTestP2);
 		loadProgram(diffTestP1);
@@ -230,9 +230,6 @@ public class DualProgramTest extends DiffTestAdapter {
 		ProgramDB otherProgram = otherBuilder.getProgram();
 		otherBuilder.createMemory(".stuff", "0x1004000", 0x300);
 
-		Window win;
-		Component comp;
-		//InfoWindow.showSplashScreen(); 
 		showTool(frontEndTool);
 		env.showTool();
 
@@ -241,9 +238,9 @@ public class DualProgramTest extends DiffTestAdapter {
 
 		launchDiffByAction();
 		waitForSwing();
-		win = waitForWindow("Select Other Program");
+		Window win = waitForWindow("Select Other Program");
 		assertNotNull(win);
-		comp = getComponentOfType(win, JComboBox.class);
+		Component comp = getComponentOfType(win, JComboBox.class);
 		assertNotNull(comp);
 
 		JTree tree = findComponent(win, JTree.class);
@@ -402,7 +399,7 @@ public class DualProgramTest extends DiffTestAdapter {
 		setView();
 		selectTreeNodeByText(tree, ".rsrc");
 
-		ActionContext context = runSwing(() -> programTreeProvider.getActionContext(null));
+		ActionContext context = runSwing(() -> createActionContext(programTreeProvider));
 		performAction(goToView, context, true);
 
 		topOfFile(fp1);
@@ -416,7 +413,7 @@ public class DualProgramTest extends DiffTestAdapter {
 		openSecondProgram(diffTestP1, diffTestP2);
 		JTree tree = findComponent(tool.getToolFrame(), JTree.class);
 		selectTreeNodeByText(tree, "DiffTestPgm1");
-		ActionContext context = runSwing(() -> programTreeProvider.getActionContext(null));
+		ActionContext context = runSwing(() -> createActionContext(programTreeProvider));
 		performAction(removeView, context, true);
 		topOfFile(fp1);
 		assertNull(cb.getCurrentAddress());

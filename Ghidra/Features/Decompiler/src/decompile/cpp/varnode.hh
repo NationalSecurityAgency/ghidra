@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -137,7 +137,6 @@ private:
   uint4 create_index;		///< A unique one-up index assigned to Varnode at its creation
   int2 mergegroup;		///< Which group of forced merges does this Varnode belong to
   uint2 addlflags;		///< Additional flags
-  int4 enumShiftLength;          ///< (For constants of enum type only) This enum must be bitshifted right by this many bits before printing
   Address loc;			///< Storage location (or constant value) of the Varnode
 
 				// Heritage fields
@@ -158,6 +157,7 @@ private:
   friend class VarnodeBank;
   friend class Merge;
   friend class Funcdata;
+  friend class CloneBlockOps;
   void updateCover(void) const;	///< Internal function for update coverage information
   void calcCover(void) const;	///< Turn on the Cover object for this Varnode
   void clearCover(void) const; ///< Turn off any coverage information
@@ -174,6 +174,7 @@ private:
   void addDescend(PcodeOp *op);	///< Add a descendant (reading) PcodeOp to this Varnode's list
   void eraseDescend(PcodeOp *op); ///< Erase a descendant (reading) PcodeOp from this Varnode's list
   void destroyDescend(void);	///< Clear all descendant (reading) PcodeOps
+  void replaceInHigh(Varnode *replacevn);	///< Swap the given Varnode into the HighVariable for \b this
 public:
   // only to be used by HighVariable
   void setHigh(HighVariable *tv,int2 mg) { high = tv; mergegroup = mg; } ///< Set the HighVariable owning this Varnode
@@ -262,7 +263,6 @@ public:
   bool hasNoLocalAlias(void) const { return ((flags&Varnode::nolocalalias)!=0); } ///< Are there (not) any local pointers that might affect \b this?
   bool isMark(void) const { return ((flags&Varnode::mark)!=0); } ///< Has \b this been visited by the current algorithm?
   bool isActiveHeritage(void) const { return ((addlflags&Varnode::activeheritage)!=0); } ///< Is \b this currently being traced by the Heritage algorithm?
-  int getEnumShiftDistance(void) const { return enumShiftLength; } ///< (Only for constants of enum type) returns number of bits to bitshift right by before printing
   bool isStackStore(void) const { return ((addlflags&Varnode::stack_store)!=0); } ///< Was this originally produced by an explicit STORE
   bool isLockedInput(void) const { return ((addlflags&Varnode::locked_input)!=0); }	///< Is always an input, even if unused
   bool stopsUpPropagation(void) const { return ((addlflags&Varnode::stop_uppropagation)!=0); }	///< Is data-type propagation stopped
@@ -302,7 +302,6 @@ public:
   void setActiveHeritage(void) { addlflags |= Varnode::activeheritage; } ///< Mark \b this as currently being linked into the SSA tree
   void clearActiveHeritage(void) { addlflags &= ~Varnode::activeheritage; }	///< Mark \b this as not (actively) being linked into the SSA tree
   ///< (Only for constants of enum type) specify by how many bits this needs to be shifted right before printing
-  void setEnumShiftDistance(int shiftDistance) { enumShiftLength = shiftDistance; }
   void setMark(void) const { flags |= Varnode::mark; } ///< Mark this Varnode for breadcrumb algorithms
   void clearMark(void) const { flags &= ~Varnode::mark; } ///< Clear the mark on this Varnode
   void setDirectWrite(void) { flags |= Varnode::directwrite; } ///< Mark \b this as directly affected by a legal input
@@ -336,13 +335,15 @@ public:
   void setStopUpPropagation(void) { addlflags |= Varnode::stop_uppropagation; }	///< Stop up-propagation thru \b this
   void clearStopUpPropagation(void) { addlflags &= ~Varnode::stop_uppropagation; }	///< Stop up-propagation thru \b this
   void setImpliedField(void) { addlflags |= Varnode::has_implied_field; }	///< Mark \b this as having an implied field
-  bool updateType(Datatype *ct,bool lock,bool override); ///< (Possibly) set the Datatype given various restrictions
+  bool updateType(Datatype *ct);	///< Set the Datatype if not locked
+  bool updateType(Datatype *ct,bool lock,bool over); ///< (Possibly) set the Datatype given various restrictions
   void setStackStore(void) { addlflags |= Varnode::stack_store; } ///< Mark as produced by explicit CPUI_STORE
   void setLockedInput(void) { addlflags |= Varnode::locked_input; }	///< Mark as existing input, even if unused
   void copySymbol(const Varnode *vn); ///< Copy symbol info from \b vn
   void copySymbolIfValid(const Varnode *vn);	///< Copy symbol info from \b vn if constant value matches
   Datatype *getLocalType(bool &blockup) const; ///< Calculate type of Varnode based on local information
   bool isBooleanValue(bool useAnnotation) const;	///< Does \b this Varnode hold a formal boolean value
+  bool isZeroExtended(int4 baseSize) const;	///< Is \b this zero extended from something of the given size
   bool copyShadow(const Varnode *op2) const; ///< Are \b this and \b op2 copied from the same source?
   bool findSubpieceShadow(int4 leastByte,const Varnode *whole,int4 recurse) const;
   bool findPieceShadow(int4 leastByte,const Varnode *piece) const;
@@ -391,6 +392,7 @@ public:
   Varnode *findInput(int4 s,const Address &loc) const;		///< Find an input Varnode
   Varnode *findCoveredInput(int4 s,const Address &loc) const;	///< Find an input Varnode contained within this range
   Varnode *findCoveringInput(int4 s,const Address &loc) const;	///< Find an input Varnode covering a range
+  bool hasInputIntersection(int4 s,const Address &loc) const;	///< Check for input Varnode that overlaps the given range
   uint4 getCreateIndex(void) const { return create_index; }	///< Get the next creation index to be assigned
   VarnodeLocSet::const_iterator beginLoc(void) const { return loc_tree.begin(); }	///< Beginning of location list
   VarnodeLocSet::const_iterator endLoc(void) const { return loc_tree.end(); }		///< End of location list
@@ -414,21 +416,6 @@ public:
 #ifdef VARBANK_DEBUG
   void verifyIntegrity(void) const;		///< Verify the integrity of the container
 #endif
-};
-
-/// \brief Node for a forward traversal of a Varnode expression
-struct TraverseNode {
-  enum {
-    actionalt = 1,	///< Alternate path traverses a solid action or \e non-incidental COPY
-    indirect = 2,	///< Main path traverses an INDIRECT
-    indirectalt = 4,	///< Alternate path traverses an INDIRECT
-    lsb_truncated = 8,	///< Least significant byte(s) of original value have been truncated
-    concat_high = 0x10	///< Original value has been concatented as \e most significant portion
-  };
-  const Varnode *vn;		///< Varnode at the point of traversal
-  uint4 flags;			///< Flags associated with the node
-  TraverseNode(const Varnode *v,uint4 f) { vn = v; flags = f; }		///< Constructor
-  static bool isAlternatePathValid(const Varnode *vn,uint4 flags);
 };
 
 bool contiguous_test(Varnode *vn1,Varnode *vn2);	///< Test if Varnodes are pieces of a whole

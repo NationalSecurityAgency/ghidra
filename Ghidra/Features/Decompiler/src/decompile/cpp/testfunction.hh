@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,6 +77,7 @@ class FunctionTestCollection {
   mutable int4 numTestsApplied;		///< Count of tests that were executed
   mutable int4 numTestsSucceeded;	///< Count of tests that passed
   void clear(void);		///< Clear any previous architecture and function
+  static string stripNewlines(const string &ref);	///< Convert any \e newline character to a \e space
   void restoreXmlCommands(const Element *el);	///< Reconstruct commands from an XML tag
   void buildProgram(DocumentStorage &store);	///< Build program (Architecture) from \<binaryimage> tag
   void startTests(void) const;	///< Initialize each FunctionTestProperty

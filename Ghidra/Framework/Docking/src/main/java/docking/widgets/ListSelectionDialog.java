@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.widgets.DropDownTextFieldDataModel.SearchMode;
 import docking.widgets.button.BrowseButton;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.AbstractGTableModel;
@@ -112,6 +113,10 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 		return null;
 	}
 
+	public void setSearchMode(SearchMode mode) {
+		field.setSearchMode(mode);
+	}
+
 	protected JComponent buildWorkPanel(String label, DropDownTextFieldDataModel<T> model) {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(40, 40, 30, 40));
@@ -134,12 +139,15 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 
 		JLabel jLabel = new GLabel(label);
 		jLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
+		jLabel.getAccessibleContext().setAccessibleName(label);
 		panel.add(jLabel, BorderLayout.WEST);
 		panel.add(field, BorderLayout.CENTER);
 
 		JButton browseButton = new BrowseButton();
 		browseButton.addActionListener(e -> browse());
+		browseButton.getAccessibleContext().setAccessibleName("Browse");
 		panel.add(browseButton, BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("List Selection");
 		return panel;
 	}
 

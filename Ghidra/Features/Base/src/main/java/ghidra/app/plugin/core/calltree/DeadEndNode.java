@@ -32,7 +32,9 @@ import ghidra.util.task.TaskMonitor;
 
 public class DeadEndNode extends CallNode {
 
-	private static final Icon ICON = new GIcon("icon.plugin.calltree.node.dead.end");
+	private static final Icon DEAD_END_ICON = new GIcon("icon.plugin.calltree.node.dead.end");
+	private static final Icon CALL_REFERENCE_ICON = createIcon(DEAD_END_ICON, true);
+	private static final Icon NON_CALL_REFERENCE_ICON = createIcon(DEAD_END_ICON, false);
 
 	private final Reference reference;
 	private String name;
@@ -43,6 +45,7 @@ public class DeadEndNode extends CallNode {
 		super(callTreeOptions);
 		this.program = program;
 		this.reference = reference;
+		this.isCallReference = reference.getReferenceType().isCall();
 	}
 
 	@Override
@@ -71,7 +74,7 @@ public class DeadEndNode extends CallNode {
 
 	@Override
 	public Icon getIcon(boolean expanded) {
-		return ICON;
+		return isCallReference ? CALL_REFERENCE_ICON : NON_CALL_REFERENCE_ICON;
 	}
 
 	@Override
@@ -88,11 +91,6 @@ public class DeadEndNode extends CallNode {
 			}
 		}
 		return name;
-	}
-
-	@Override
-	public String getToolTip() {
-		return "Called from " + reference.getFromAddress();
 	}
 
 	@Override

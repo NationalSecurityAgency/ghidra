@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -198,7 +198,7 @@ public class DescriptorDecoder {
 
 		}
 
-		//now add the the name of the return type
+		//now add the name of the return type
 		String returnType =
 			methodDescriptor.substring(closeParenIndex + 1, methodDescriptor.length());
 		typeNames.add(getTypeNameFromDescriptor(returnType, fullyQualifiedName, replaceSlash));
@@ -272,7 +272,7 @@ public class DescriptorDecoder {
 		}
 		DataTypePath dataPath = new DataTypePath(sb.toString(), parts[parts.length - 1]);
 		DataType referencedType = dtManager.getDataType(dataPath);
-		return new PointerDataType(referencedType);
+		return dtManager.getPointer(referencedType);
 	}
 
 	/**
@@ -321,7 +321,7 @@ public class DescriptorDecoder {
 	 */
 	public static DataType getPointerType(String descriptor, DataTypeManager dtManager) {
 		int lastBracket = descriptor.lastIndexOf("[");
-		String baseTypeOfArray = descriptor.substring(lastBracket + 1, lastBracket + 2);
+		String baseTypeOfArray = descriptor.substring(lastBracket + 1);
 		DataType baseType = null;
 		switch (baseTypeOfArray.charAt(0)) {
 			case BASE_TYPE_BYTE:
@@ -349,7 +349,8 @@ public class DescriptorDecoder {
 				baseType = ArrayMethods.getArrayBaseType(JavaClassConstants.T_SHORT, dtManager);
 				break;
 			case BASE_TYPE_REFERENCE:
-				return dtManager.getPointer(DWordDataType.dataType);
+				baseType = getDataTypeOfDescriptor(baseTypeOfArray, dtManager);
+				break;
 
 			default:
 				throw new IllegalArgumentException(
@@ -469,7 +470,7 @@ public class DescriptorDecoder {
 	}
 
 	/**
-	 * Given an invocation type and an element in the constant pool, follows references in the the constant
+	 * Given an invocation type and an element in the constant pool, follows references in the constant
 	 * pool and returns the appropriate method descriptor.
 	 * @param offset
 	 * @param constantPool

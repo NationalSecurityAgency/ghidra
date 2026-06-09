@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -146,6 +146,7 @@ public:
   int4 getSlot(const Address &addr,int4 skip) const;
   AddrSpace *getSpace(void) const { return spaceid; }	///< Get the address space containing \b this entry
   uintb getBase(void) const { return addressbase; }	///< Get the starting offset of \b this entry
+  Address getAddrBySlot(int4 &slot, int4 sz, int4 typeAlign, bool justifyRight) const;
   Address getAddrBySlot(int4 &slot,int4 sz,int4 typeAlign) const;
   void decode(Decoder &decoder,bool normalstack,bool grouped,list<ParamEntry> &curList);
   bool isParamCheckHigh(void) const { return ((flags & extracheck_high)!=0); }	///< Return \b true if there is a high overlap
@@ -290,6 +291,7 @@ class ParamActive {
   bool isfullychecked;		///< True if all trials are fully examined (and no new trials are expected)
   bool needsfinalcheck;		///< Should a final pass be made on trials (to take into account control-flow changes)
   bool recoversubcall;		///< True if \b this is being used to recover prototypes of a sub-function call
+  bool joinReverse;		///< True if varnodes should be joined in reverse order
 public:
   ParamActive(bool recoversub);	///< Construct an empty container
   void clear(void);		///< Reset to an empty container
@@ -300,6 +302,8 @@ public:
   int4 whichTrial(const Address &addr,int4 sz) const;		///< Get the trial overlapping with the given memory range
   bool needsFinalCheck(void) const { return needsfinalcheck; }	///< Is a final check required
   void markNeedsFinalCheck(void) { needsfinalcheck = true; }	///< Mark that a final check is required
+  bool isJoinReverse(void) const { return joinReverse; }	///< Do Varnodes need to be joined in reverse order
+  void setJoinReverse(void) { joinReverse = true; }		///< Mark that varnodes need to be joined in reverse order
   bool isRecoverSubcall(void) const { return recoversubcall; }	///< Are these trials for a call to a sub-function
   bool isFullyChecked(void) const { return isfullychecked; }	///< Are all trials checked with no new trials expected
   void markFullyChecked(void) { isfullychecked = true; }	///< Mark that all trials are checked
@@ -310,6 +314,7 @@ public:
   void setMaxPass(int4 val) { maxpass = val; }			///< Set the maximum number of passes
   void finishPass(void) { numpasses += 1; }			///< Mark that an analysis pass has completed
   void sortTrials(void) { sort(trial.begin(),trial.end()); }	///< Sort the trials in formal parameter order
+  void sortFixedPosition(void) {sort(trial.begin(),trial.end(),ParamTrial::fixedPositionCompare);}  ///< sort the trials by fixed position then <
   void deleteUnusedTrials(void);				///< Remove trials that were found not to be parameters
   void splitTrial(int4 i,int4 sz);				///< Split the given trial in two
   void joinTrial(int4 slot,const Address &addr,int4 sz);	///< Join adjacent parameter trials
@@ -329,8 +334,6 @@ public:
   /// \param addr is the new range's starting address
   /// \param sz is the new range's size in bytes
   void shrink(int4 i,const Address &addr,int4 sz) { trial[i].setAddress(addr,sz); }
-
-  void sortFixedPosition(void) {sort(trial.begin(),trial.end(),ParamTrial::fixedPositionCompare);}  ///< sort the trials by fixed position then <
 };
 
 /// \brief A special space for encoding FuncCallSpecs
@@ -367,6 +370,7 @@ struct ParameterPieces {
   Datatype *type;		///< The datatype of the parameter
   uint4 flags;			///< additional attributes of the parameter
   void swapMarkup(ParameterPieces &op);	///< Swap data-type markup between \b this and another parameter
+  void assignAddressFromPieces(vector<VarnodeData> &pieces,bool mostToLeast,Architecture *glb);
 };
 
 /// \brief Raw components of a function prototype (obtained from parsing source code)
@@ -560,8 +564,8 @@ public:
 
   /// \brief Return \b true if ParamEntry locations should automatically be considered killed by call
   ///
-  /// \return \b true if automatically assume killbycall
-  virtual bool isAutoKillByCall(void) const=0;
+  /// \return \b true if automatically assume \e killedbycall
+  virtual bool isAutoKilledByCall(void) const=0;
 
   /// \brief Restore the model from an \<input> or \<output> element in the stream
   ///
@@ -587,6 +591,7 @@ protected:
   int4 numgroup;			///< Number of \e groups in this parameter convention
   int4 maxdelay;			///< Maximum heritage delay across all parameters
   bool thisbeforeret;			///< Does a \b this parameter come before a hidden return parameter
+  bool autoKilledByCall;		///< Are storage locations in \b this list automatically \e killed \e by \e call
   vector<int4> resourceStart;		///< The starting group for each resource section
   list<ParamEntry> entry;		///< The ordered list of parameter entries
   vector<ParamEntryResolver *> resolverMap;	///< Map from space id to resolver
@@ -605,15 +610,16 @@ protected:
   void addResolverRange(AddrSpace *spc,uintb first,uintb last,ParamEntry *paramEntry,int4 position);
   void populateResolver(void);	///< Build the ParamEntry resolver maps
   void parsePentry(Decoder &decoder,vector<EffectRecord> &effectlist,
-		   int4 groupid,bool normalstack,bool autokill,bool splitFloat,bool grouped);
+		   int4 groupid,bool normalstack,bool splitFloat,bool grouped);
   void parseGroup(Decoder &decoder,vector<EffectRecord> &effectlist,
-		  int4 groupid,bool normalstack,bool autokill,bool splitFloat);
+		  int4 groupid,bool normalstack,bool splitFloat);
 public:
   ParamListStandard(void) {}						///< Construct for use with decode()
   ParamListStandard(const ParamListStandard &op2);			///< Copy constructor
   virtual ~ParamListStandard(void);
   const list<ParamEntry> &getEntry(void) const { return entry; }	///< Get the list of parameter entries
-  list<ParamEntry>::const_iterator getFirstIter(type_class type) const;	///< Get iterator to first entry in a storage class
+  bool isBigEndian(void) const { return entry.front().getSpace()->isBigEndian(); }	///< Return \b true if resources are big endian
+  void extractTiles(vector<const ParamEntry *> &tiles,type_class type) const;	///< Get registers of given storage class
   const ParamEntry *getStackEntry(void) const;	///< Get the stack entry
   uint4 assignAddressFallback(type_class resource,Datatype *tp,bool matchExact,vector<int4> &status,
 			      ParameterPieces &param) const;
@@ -634,7 +640,7 @@ public:
   virtual bool isThisBeforeRetPointer(void) const { return thisbeforeret; }
   virtual void getRangeList(AddrSpace *spc,RangeList &res) const;
   virtual int4 getMaxDelay(void) const { return maxdelay; }
-  virtual bool isAutoKillByCall(void) const { return false; }
+  virtual bool isAutoKilledByCall(void) const { return autoKilledByCall; }
   virtual void decode(Decoder &decoder,vector<EffectRecord> &effectlist,bool normalstack);
   virtual ParamList *clone(void) const;
 };
@@ -659,7 +665,6 @@ public:
   virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const;
   virtual void fillinMap(ParamActive *active) const;
   virtual bool possibleParam(const Address &loc,int4 size) const;
-  virtual bool isAutoKillByCall(void) const { return useFillinFallback; }
   virtual void decode(Decoder &decoder,vector<EffectRecord> &effectlist,bool normalstack);
   virtual ParamList *clone(void) const;
 };
@@ -995,7 +1000,7 @@ public:
   /// \brief Does \b this model automatically consider potential output locations as killed by call
   ///
   /// \return \b true if output locations should be considered killed by call
-  bool isAutoKillByCall(void) const { return output->isAutoKillByCall(); }
+  bool isAutoKilledByCall(void) const { return output->isAutoKilledByCall(); }
 
   /// \brief Is \b this a merged prototype model
   ///
@@ -1350,7 +1355,7 @@ class FuncProto {
     is_destructor = 0x400,	///< Function is an (object-oriented) destructor
     has_thisptr= 0x800,		///< Function is a method with a 'this' pointer as an argument
     is_override = 0x1000,	///< Set if \b this prototype is created to override a single call site
-    auto_killbycall = 0x2000	///< Potential output storage should always be considered \e killed \e by \e call
+    auto_killedbycall = 0x2000	///< Potential output storage should always be considered \e killed \e by \e call
   };
   ProtoModel *model;		///< Model of for \b this prototype
   ProtoStore *store;		///< Storage interface for parameters
@@ -1612,7 +1617,7 @@ public:
   /// \return the active set of flags for \b this prototype
   uint4 getComparableFlags(void) const { return (flags & (dotdotdot | is_constructor | is_destructor | has_thisptr )); }
 
-  bool isAutoKillByCall(void) const;	///< Is a potential output automatically considered \e killed \e by \e call
+  bool isAutoKilledByCall(void) const;	///< Is a potential output automatically considered \e killed \e by \e call
 
   void encode(Encoder &encoder) const;
   void decode(Decoder &decoder,Architecture *glb);
@@ -1641,7 +1646,7 @@ class FuncCallSpecs : public FuncProto {
   PcodeOp *op;			///< Pointer to CALL or CALLIND instruction
   string name;			///< Name of function if present
   Address entryaddress;		///< First executing address of function
-  Funcdata *fd;			///< The Funcdata object for the called functon (if known)
+  Funcdata *fd;			///< The Funcdata object for the called function (if known)
   int4 effective_extrapop;	///< Working extrapop for the CALL
   uintb stackoffset;		///< Relative offset of stack-pointer at time of this call
   int4 stackPlaceholderSlot;	///< Slot containing temporary stack tracing placeholder (-1 means unused)

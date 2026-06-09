@@ -64,9 +64,26 @@ public class MicrosoftDemangler implements Demangler {
 		demangler.setDemangleOnlyKnownPatterns(options.demangleOnlyKnownPatterns());
 		demangler.setArchitectureSize(mContext.getArchitectureSize());
 		demangler.setIsFunction(mContext.shouldInterpretAsFunction());
+
 		try {
 			item = demangler.demangle();
-			object = MicrosoftDemanglerUtil.convertToDemangledObject(item, mangled);
+			if (item == null) {
+				return null;
+			}
+			// The item.toString() method is influenced by the demangler output options, so we get
+			// the originalDemangled string before we change the output options to what we desire
+			// for Ghidra processing.
+			String originalDemangled = item.toString();
+			// Now we set the particular output options that we didt't want to affect what was
+			// in the originalDemangled string above.  Once set, then when
+			// MicrosoftDemanglerUtil.convertToDemangledObject() method is called, the newly
+			// set output options affect the object result.
+			demangler.getOutputOptions()
+					.setUseEncodedAnonymousNamespace(options.getUseEncodedAnonymousNamespace());
+			demangler.getOutputOptions()
+					.setApplyUdtArgumentTypeTag(options.getApplyUdtArgumentTypeTag());
+			object =
+				MicrosoftDemanglerUtil.convertToDemangledObject(item, mangled, originalDemangled);
 			if (object != null) {
 				object.setMangledContext(context);
 			}
@@ -103,7 +120,23 @@ public class MicrosoftDemangler implements Demangler {
 		demangler.setIsFunction(mContext.shouldInterpretAsFunction());
 		try {
 			mdType = demangler.demangleType();
-			dataType = MicrosoftDemanglerUtil.convertToDemangledDataType(mdType, mangled);
+			if (mdType == null) {
+				return null;
+			}
+			// The item.toString() method is influenced by the demangler output options, so we get
+			// the originalDemangled string before we change the output options to what we desire
+			// for Ghidra processing.
+			String originalDemangled = mdType.toString();
+			// Now we set the particular output options that we didt't want to affect what was
+			// in the originalDemangled string above.  Once set, then when
+			// MicrosoftDemanglerUtil.convertToDemangledObject() method is called, the newly
+			// set output options affect the object result.
+			demangler.getOutputOptions()
+					.setUseEncodedAnonymousNamespace(options.getUseEncodedAnonymousNamespace());
+			demangler.getOutputOptions()
+					.setApplyUdtArgumentTypeTag(options.getApplyUdtArgumentTypeTag());
+			dataType = MicrosoftDemanglerUtil.convertToDemangledDataType(mdType, mangled,
+				originalDemangled);
 			if (dataType != null) {
 				dataType.setMangledContext(context);
 			}

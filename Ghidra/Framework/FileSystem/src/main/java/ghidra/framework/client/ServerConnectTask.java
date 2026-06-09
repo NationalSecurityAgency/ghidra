@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ import javax.security.auth.login.LoginException;
 import ghidra.framework.Application;
 import ghidra.framework.model.ServerInfo;
 import ghidra.framework.remote.*;
-import ghidra.net.ApplicationKeyManagerFactory;
+import ghidra.net.DefaultKeyManagerFactory;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -130,7 +130,7 @@ class ServerConnectTask extends Task {
 
 	private static boolean isSSLHandshakeCancelled(SSLHandshakeException e) throws IOException {
 		if (e.getMessage().indexOf("bad_certificate") > 0) {
-			if (ApplicationKeyManagerFactory.getPreferredKeyStore() == null) {
+			if (DefaultKeyManagerFactory.getPreferredKeyStore() == null) {
 				throw new IOException("User PKI Certificate not installed", e);
 			}
 			// assume user cancelled connect attempt when prompted for cert password
@@ -168,13 +168,14 @@ class ServerConnectTask extends Task {
 			monitor.setCancelEnabled(false);
 			monitor.setMessage("Connecting...");
 
-			Registry reg =
-				LocateRegistry.getRegistry(server.getServerName(), server.getPortNumber(),
-					new SslRMIClientSocketFactory());
+			Registry reg = LocateRegistry.getRegistry(server.getServerName(),
+				server.getPortNumber(), new SslRMIClientSocketFactory());
 			checkServerBindNames(reg);
 
 			gsh = (GhidraServerHandle) reg.lookup(GhidraServerHandle.BIND_NAME);
-			gsh.checkCompatibility(GhidraServerHandle.INTERFACE_VERSION);
+
+			// Check interface compatibility with the minimum supported version
+			gsh.checkCompatibility(GhidraServerHandle.MIN_CLIENT_INTERFACE_VERSION);
 		}
 		catch (NotBoundException e) {
 			throw new IOException(e.getMessage());
@@ -237,8 +238,7 @@ class ServerConnectTask extends Task {
 	 * @throws LoginException  login failure
 	 */
 	private RemoteRepositoryServerHandle getRepositoryServerHandle(String defaultUserID,
-			TaskMonitor monitor)
-			throws IOException, LoginException, CancelledException {
+			TaskMonitor monitor) throws IOException, LoginException, CancelledException {
 
 		GhidraServerHandle gsh = getGhidraServerHandle(server, monitor);
 
@@ -291,12 +291,12 @@ class ServerConnectTask extends Task {
 							// if anonymous access allowed, let server validate certificate
 							// first and assume anonymous access if user unknown but cert is valid
 
-							if (!ApplicationKeyManagerFactory.initialize()) {
+							if (!DefaultKeyManagerFactory.initialize()) {
 								throw new IOException(
 									"Client PKI certificate has not been installed");
 							}
 
-							if (ApplicationKeyManagerFactory.usingGeneratedSelfSignedCertificate()) {
+							if (DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate()) {
 								Msg.warn(this,
 									"Server connect - client is using self-signed PKI certificate");
 							}
@@ -368,6 +368,7 @@ class ServerConnectTask extends Task {
 			super(host, port);
 		}
 
+		@Override
 		public void connect(SocketAddress endpoint) throws IOException {
 			connect(endpoint, LIVENESS_CHECK_TIMEOUT_MS);
 		}
@@ -393,7 +394,7 @@ class ServerConnectTask extends Task {
 
 		monitor.setCancelEnabled(true);
 		monitor.setMessage("Checking Server Liveness...");
-		
+
 		// Perform simple socket test connection with short timeout to verify connectivity.
 		try (Socket socket = new FastConnectionFailSocket(serverName, sslRmiPort);
 				ConnectCancelledListener cancelListener =
@@ -419,29 +420,32 @@ class ServerConnectTask extends Task {
 		}
 	}
 
-	private static void checkServerBindNames(Registry reg) throws RemoteException {
+	private static void checkServerBindNames(Registry reg) throws IOException {
 
-		String requiredVersion = GhidraServerHandle.MIN_GHIDRA_VERSION;
+		String requiredVersion = GhidraServerHandle.GHIDRA_BIND_VERSION;
 		if (!Application.getApplicationVersion().startsWith(requiredVersion)) {
 			requiredVersion = requiredVersion + " - " + Application.getApplicationVersion();
 		}
+		requiredVersion += " (or possibly newer)";
 
 		String[] regList = reg.list();
-		RemoteException exc = null;
+		IOException exc = null;
 		int badVerCount = 0;
 
+		String version = null;
 		for (String name : regList) {
 			if (name.equals(GhidraServerHandle.BIND_NAME)) {
 				return; // found it
 			}
 			else if (name.startsWith(GhidraServerHandle.BIND_NAME_PREFIX)) {
-				String version = name.substring(GhidraServerHandle.BIND_NAME_PREFIX.length());
+				// NOTE: We only report one version even if server has multiple bindings
+				version = name.substring(GhidraServerHandle.BIND_NAME_PREFIX.length());
 				if (version.length() == 0) {
 					version = "4.3.x (or older)";
 				}
-				exc = new RemoteException(
-					"Incompatible Ghidra Server interface, detected interface version " + version +
-						",\nthis client requires server version " + requiredVersion);
+				exc = new IOException(
+					"Incompatible Ghidra Server - detected interface version " + version +
+						".\nThis client requires server version " + requiredVersion);
 				++badVerCount;
 			}
 		}
@@ -449,11 +453,11 @@ class ServerConnectTask extends Task {
 			if (badVerCount == 1) {
 				throw exc;
 			}
-			throw new RemoteException("Incompatible Ghidra Server interface, detected " +
-				badVerCount + " incompatible server versions" +
-				",\nthis client requires server version " + requiredVersion);
+			throw new IOException("Incompatible Ghidra Server - detected " +
+				badVerCount + " incompatible server versions." +
+				"\nThis client requires server version " + requiredVersion);
 		}
-		throw new RemoteException("Ghidra Server not found.");
+		throw new IOException("Ghidra Server not found.");
 	}
 
 }

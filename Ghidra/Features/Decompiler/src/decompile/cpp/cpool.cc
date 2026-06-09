@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,7 +79,7 @@ void CPoolRecord::encode(Encoder &encoder) const
     encoder.writeString(ATTRIB_CONTENT, token);
     encoder.closeElement(ELEM_TOKEN);
   }
-  type->encode(encoder);
+  type->encodeRef(encoder);
   encoder.closeElement(ELEM_CPOOLREC);
 }
 
@@ -132,7 +132,10 @@ void CPoolRecord::decode(Decoder &decoder,TypeFactory &typegrp)
   if (subId == ELEM_TOKEN)
     token = decoder.readString(ATTRIB_CONTENT);
   else {
-    byteDataLen = decoder.readSignedInteger(ATTRIB_LENGTH);
+    int8 val = decoder.readSignedInteger(ATTRIB_LENGTH);
+    if (val < 0 || val >= MAX_STRING_SIZE)
+      throw LowlevelError("Bad constant pool record: bad <data> size");
+    byteDataLen = val;
     istringstream s3(decoder.readString(ATTRIB_CONTENT));
     byteData = new uint1[byteDataLen];
     for(int4 i=0;i<byteDataLen;++i) {

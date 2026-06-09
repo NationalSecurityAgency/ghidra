@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,6 @@ import javax.swing.*;
 import docking.DialogComponentProvider;
 import docking.widgets.table.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOffer;
 import ghidra.framework.plugintool.PluginTool;
@@ -39,7 +38,8 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 
 	protected enum OfferTableColumns
 		implements EnumeratedTableColumn<OfferTableColumns, DebuggerPlatformOffer> {
-		CONFIDENCE("Confidence", Integer.class, DebuggerPlatformOffer::getConfidence, SortDirection.DESCENDING),
+		CONFIDENCE("Confidence", Integer.class, DebuggerPlatformOffer::getConfidence,
+				SortDirection.DESCENDING),
 		PROCESSOR("Processor", String.class, OfferTableColumns::getProcessor),
 		VARIANT("Variant", String.class, OfferTableColumns::getVariant),
 		SIZE("Size", Integer.class, OfferTableColumns::getSize),
@@ -112,6 +112,11 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 		}
 
 		@Override
+		public String getHeader() {
+			return header;
+		}
+
+		@Override
 		public Class<?> getValueClass() {
 			return cls;
 		}
@@ -119,11 +124,6 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 		@Override
 		public Object getValueOf(DebuggerPlatformOffer row) {
 			return getter.apply(row);
-		}
-
-		@Override
-		public String getHeader() {
-			return header;
 		}
 
 		@Override
@@ -183,18 +183,24 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 			offerTable = new GhidraTable(offerTableModel);
 			offerTableFilterPanel = new GhidraTableFilterPanel<>(offerTable, offerTableModel);
 			scrollPane.setViewportView(offerTable);
+			scrollPane.getAccessibleContext().setAccessibleName("Scroll");
+			offerTableFilterPanel.getAccessibleContext().setAccessibleName("Offer Table Filter");
 
 			JPanel descPanel = new JPanel(new BorderLayout());
 			descPanel.setBorder(BorderFactory.createTitledBorder("Description"));
+			descLabel.getAccessibleContext().setAccessibleName("Description");
 			descPanel.add(descLabel, BorderLayout.CENTER);
+			descPanel.getAccessibleContext().setAccessibleName("Description");
 
 			JPanel nested1 = new JPanel(new BorderLayout());
 			nested1.add(scrollPane, BorderLayout.CENTER);
 			nested1.add(offerTableFilterPanel, BorderLayout.SOUTH);
+			nested1.getAccessibleContext().setAccessibleName("Offer Table Filter");
 
 			JPanel nested2 = new JPanel(new BorderLayout());
 			nested2.add(nested1, BorderLayout.CENTER);
 			nested2.add(descPanel, BorderLayout.SOUTH);
+			nested2.getAccessibleContext().setAccessibleName("Table Filter and Description");
 
 			setLayout(new BorderLayout());
 			add(nested2, BorderLayout.CENTER);
@@ -209,6 +215,7 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 			overrideCheckBox.addActionListener(evt -> {
 				setFilterRecommended(overrideCheckBox.isSelected());
 			});
+			overrideCheckBox.getAccessibleContext().setAccessibleName("Override Checkbox");
 		}
 
 		public void setPreferredIDs(LanguageID langID, CompilerSpecID csID) {
@@ -276,6 +283,7 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 		super(DebuggerResources.NAME_CHOOSE_PLATFORM, true, false, true, false);
 
 		offerPanel = new OfferPanel(tool);
+		offerPanel.getAccessibleContext().setAccessibleName("Debugger Select Platform Offer");
 		populateComponents();
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,8 +39,8 @@ public class MethodRecordMs extends AbstractMethodRecordMs {
 		// API says optional offset "if intro virtual" but we have seen it for 6=<intro.pure>, so
 		//  it could be that we need to also include 2=virtual here; i.e., each 2, 4, and 6
 		//  (virtual, <intro>, and <intro,pure>) could have this optional field.
-		if ((attributes.getProperty() == ClassFieldMsAttributes.Property.INTRO) ||
-			(attributes.getProperty() == ClassFieldMsAttributes.Property.INTRO_PURE)) {
+		if (attributes.getProperty() == ClassFieldMsAttributes.Property.INTRO ||
+			attributes.getProperty() == ClassFieldMsAttributes.Property.INTRO_PURE) {
 			optionalOffset = reader.parseUnsignedIntVal();
 		}
 		else {

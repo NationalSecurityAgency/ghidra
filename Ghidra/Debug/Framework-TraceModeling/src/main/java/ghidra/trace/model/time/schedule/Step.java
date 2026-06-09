@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import ghidra.pcode.emu.PcodeThread;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -40,21 +41,22 @@ public interface Step extends Comparable<Step> {
 	 * applies to the last thread or the event thread.
 	 * 
 	 * @param stepSpec the string specification
+	 * @param radix the radix
 	 * @return the parsed step
 	 * @throws IllegalArgumentException if the specification is of the wrong form
 	 */
-	static Step parse(String stepSpec) {
+	static Step parse(String stepSpec, TimeRadix radix) {
 		if ("".equals(stepSpec)) {
 			return nop();
 		}
 		String[] parts = stepSpec.split("-");
 		if (parts.length == 1) {
-			return parse(-1, parts[0].trim());
+			return parse(-1, parts[0].trim(), radix);
 		}
 		if (parts.length == 2) {
 			String tPart = parts[0].trim();
 			if (tPart.startsWith("t")) {
-				return parse(Long.parseLong(tPart.substring(1)), parts[1].trim());
+				return parse(Long.parseLong(tPart.substring(1)), parts[1].trim(), radix);
 			}
 		}
 		throw new IllegalArgumentException("Cannot parse step: '" + stepSpec + "'");
@@ -70,22 +72,25 @@ public interface Step extends Comparable<Step> {
 	 * 
 	 * @param threadKey the thread to step, or -1 for the last thread or event thread
 	 * @param stepSpec the string specification
+	 * @param radix the radix
 	 * @return the parsed step
 	 * @throws IllegalArgumentException if the specification is of the wrong form
 	 */
-	static Step parse(long threadKey, String stepSpec) {
+	static Step parse(long threadKey, String stepSpec, TimeRadix radix) {
 		if (stepSpec.startsWith("s")) {
-			return SkipStep.parse(threadKey, stepSpec);
+			return SkipStep.parse(threadKey, stepSpec, radix);
 		}
 		if (stepSpec.startsWith("{")) {
 			return PatchStep.parse(threadKey, stepSpec);
 		}
-		return TickStep.parse(threadKey, stepSpec);
+		return TickStep.parse(threadKey, stepSpec, radix);
 	}
 
 	static TickStep nop() {
 		return new TickStep(-1, 0);
 	}
+
+	String toString(TimeRadix radix);
 
 	StepType getType();
 
@@ -101,20 +106,26 @@ public interface Step extends Comparable<Step> {
 		return getThreadKey() == -1;
 	}
 
-	default TraceThread getThread(TraceThreadManager tm, TraceThread eventThread) {
-		TraceThread thread = isEventThread() ? eventThread : tm.getThread(getThreadKey());
+	static TraceThread requireThread(TraceThread thread, long key) {
 		if (thread == null) {
-			if (isEventThread()) {
+			if (key == -1) {
 				throw new IllegalArgumentException("Thread must be given, e.g., 0:t1-3, " +
 					"since the last thread or snapshot event thread is not given.");
 			}
 			throw new IllegalArgumentException(
-				"Thread with key " + getThreadKey() + " does not exist in given trace");
+				"Thread with key %d does not exist in given trace".formatted(key));
 		}
 		return thread;
 	}
 
+	default TraceThread getThread(TraceThreadManager tm, TraceThread eventThread) {
+		long key = getThreadKey();
+		return requireThread(isEventThread() ? eventThread : tm.getThread(key), key);
+	}
+
 	long getTickCount();
+
+	long getSkipCount();
 
 	long getPatchCount();
 
@@ -147,7 +158,7 @@ public interface Step extends Comparable<Step> {
 	 * method sets the count to 0 and returns the (positive) difference, indicating this step should
 	 * be removed from the sequence, and the remaining steps rewound from the preceding step.
 	 * 
-	 * @param steps the count to rewind
+	 * @param count the count to rewind
 	 * @return the number of steps remaining
 	 */
 	long rewind(long count);
@@ -155,7 +166,7 @@ public interface Step extends Comparable<Step> {
 	/**
 	 * Richly compare this step to another
 	 * 
-	 * @param step the object of comparison (this being the subject)
+	 * @param that the object of comparison (this being the subject)
 	 * @return a result describing the relationship from subject to object
 	 */
 	CompareResult compareStep(Step that);
@@ -183,7 +194,7 @@ public interface Step extends Comparable<Step> {
 		return thread;
 	}
 
-	<T> void execute(PcodeThread<T> emuThread, Stepper stepper, TaskMonitor monitor)
+	void execute(PcodeThread<?> emuThread, Stepper stepper, TaskMonitor monitor)
 			throws CancelledException;
 
 	long coalescePatches(Language language, List<Step> steps);

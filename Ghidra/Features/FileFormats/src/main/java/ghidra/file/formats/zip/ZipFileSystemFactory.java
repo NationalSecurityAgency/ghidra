@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,8 @@ public class ZipFileSystemFactory
 	 * Use "-Dghidra.file.formats.zip.ZipFileSystemFactory.USE_BUILTIN_ZIP_SUPPORT=true" jvm
 	 * startup option to disable use of 7zip libraries when opening zip filesystems.
 	 */
-	private static boolean USE_BUILTIN_ZIP_SUPPORT = Boolean
-			.getBoolean("ghidra.file.formats.zip.ZipFileSystemFactory.USE_BUILTIN_ZIP_SUPPORT");
+	private static boolean USE_BUILTIN_ZIP_SUPPORT =
+		Boolean.getBoolean("ghidra.file.formats.zip.ZipFileSystemFactory.USE_BUILTIN_ZIP_SUPPORT");
 
 	private static final int START_BYTES_REQUIRED = 2;
 
@@ -84,6 +84,7 @@ public class ZipFileSystemFactory
 					ZipFileSystemBuiltin.TEMPFILE_PREFIX, monitor);
 				deleteZipFileWhenDone = true;
 			}
+			FSUtilities.uncheckedClose(byteProvider, null);
 			ZipFileSystemBuiltin fs = new ZipFileSystemBuiltin(targetFSRL, fsService);
 			try {
 				fs.mount(zipFile, deleteZipFileWhenDone, monitor);

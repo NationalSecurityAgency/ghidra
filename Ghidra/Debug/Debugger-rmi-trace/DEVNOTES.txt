@@ -117,8 +117,6 @@ That said, for unit testing, I've had to incorporate package installation as a @
 There's probably a better way, and that way may also help with out-of-the-box support.
 Something like setting PYTHON_PATH before invoking the debugger?
 There's still the issue of installing protobuf, though.
-And the version we use is not the latest, which may put users who already have protobuf in dependency hell.
-We use version 3.20, while the latest is 4.something.
 According to protobuf docs, major versions are not guaranteed backward compatible.
 To upgrade, we'd also have to upgrade the Java side.
 
@@ -134,7 +132,7 @@ I instead just use a fixed 32-bit int now.
 
 # How-To?
 
-For now, I'd say just the the gdb implementation as a template / guide.
+For now, I'd say just take the gdb implementation as a template / guide.
 Just beware, the whole thing is a bit unstable, so the code may change, but still, I don't expect it to change so drastically that integration work would be scrapped.
 
 If you're writing Python, create a Python package following the template for gdb's.
@@ -312,3 +310,16 @@ The process parameter, if accepted, is technically redundant.
 Because all address spaces among all targets must be unique, the address space encodes the process (or other target object).
 If taken, the back end must validate that the address space belongs to the given process.
 Otherwise, the back end must figure out the applicable target based on the space name.
+
+
+# Regarding the composition of schema
+
+Schema are now composable, i.e. the schema.xml files used by each debugger-agent may be reconstituted from smaller
+fragments, typically stored in a combination of each agent's python src directory and the common store, "ghidratrace/xml",
+in "Debugger-rmi-trace".  The "gradle buildXmlSchema" task will build all of the schema, but individual schema may be 
+built by executing "python build_xml.py" from the python src directory.  Each build_xml python file calls the "merge_xml"
+python file in the rmi store, which uses either the powershell "merge.ps1" (Windows) or direct calls from "lxml" (Linux).
+Both methods rely on XSLT to transform the base XML (typically agentname_base.xml) by adding new schema from the subpieces
+or replacing attributes in common schema. There is currently no method for subtracting schema, so the entries in build_xml
+must be sequential with later entries overriding earlier ones.
+

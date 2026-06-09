@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,6 +42,7 @@ public class DefaultFidPopulateResultReporter implements FidPopulateResultReport
 		buffer.append(result.getTotalExcluded() + " total functions excluded");
 		buffer.append("\n");
 		buffer.append("Breakdown of exclusions:");
+		buffer.append("\n");
 		for (Entry<Disposition, Integer> entry : result.getFailures().entrySet()) {
 			if (entry.getKey() != Disposition.INCLUDED) {
 				buffer.append("    " + entry.getKey() + ": " + entry.getValue());

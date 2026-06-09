@@ -128,6 +128,8 @@ public class DmgServer {
 
 										sendResponse(temporaryFile.getAbsolutePath());
 
+										// TODO: When can we remove temporaryFile
+
 										if (expectedFileLength != temporaryFile.length()) {
 											log("file sizes do not match!");
 										}

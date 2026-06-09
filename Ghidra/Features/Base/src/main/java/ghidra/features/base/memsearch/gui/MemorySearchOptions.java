@@ -15,7 +15,6 @@
  */
 package ghidra.features.base.memsearch.gui;
 
-import static ghidra.GhidraOptions.*;
 import static ghidra.app.util.SearchConstants.*;
 
 import ghidra.GhidraOptions;
@@ -113,7 +112,7 @@ public class MemorySearchOptions {
 	private void searchOptionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
 
-		if (optionName.equals(OPTION_SEARCH_LIMIT)) {
+		if (optionName.equals(SEARCH_LIMIT_NAME)) {
 			int limit = (int) newValue;
 			if (limit <= 0) {
 				throw new OptionsVetoException("Search limit must be greater than 0");
@@ -125,7 +124,7 @@ public class MemorySearchOptions {
 	}
 
 	private void loadSearchOptions(ToolOptions options) {
-		searchLimit = options.getInt(OPTION_SEARCH_LIMIT, DEFAULT_SEARCH_LIMIT);
+		searchLimit = options.getInt(SEARCH_LIMIT_NAME, DEFAULT_SEARCH_LIMIT);
 		highlightMatches = options.getBoolean(SEARCH_HIGHLIGHT_NAME, true);
 		autoRestrictSelection = options.getBoolean(AUTO_RESTRICT_SELECTION, true);
 		prepopulateSearch = options.getBoolean(PRE_POPULATE_MEM_SEARCH, true);

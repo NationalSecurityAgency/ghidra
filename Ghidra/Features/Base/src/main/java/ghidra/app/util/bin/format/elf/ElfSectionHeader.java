@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -146,7 +146,7 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 				ElfCompressedSectionHeader.read(getRawSectionReader(), header);
 			if (!isSupportedCompressionType(result.getCh_type())) {
 				throw new IOException("Unknown ELF section compression type 0x%x for section %s"
-						.formatted(compressedHeader.getCh_type(), getNameAsString()));
+						.formatted(result.getCh_type(), getNameAsString()));
 			}
 			return result;
 		}
@@ -465,7 +465,7 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 		return new ByteProviderWrapper(reader.getByteProvider(), sh_offset, sh_size);
 	}
 
-	private BinaryReader getRawSectionReader() throws IOException {
+	private BinaryReader getRawSectionReader() {
 		return new BinaryReader(getRawSectionByteProvider(), header.isLittleEndian());
 	}
 

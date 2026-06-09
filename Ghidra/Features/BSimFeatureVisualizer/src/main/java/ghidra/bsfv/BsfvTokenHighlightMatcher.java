@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -118,7 +118,10 @@ class BsfvTokenHighlightMatcher implements CTokenHighlightMatcher {
 			List<ClangToken> opTokens =
 				DecompilerUtils.getTokens(root, pcodeOp.getSeqnum().getTarget());
 			for (ClangToken token : opTokens) {
-				lineHighlights.add(token.getLineParent().getLineNumber());
+				ClangLine line = token.getLineParent();
+				if (line != null) {
+					lineHighlights.add(line.getLineNumber());
+				}
 			}
 		}
 
@@ -126,7 +129,10 @@ class BsfvTokenHighlightMatcher implements CTokenHighlightMatcher {
 			List<ClangToken> secondaryOpTokens =
 				DecompilerUtils.getTokens(root, previousPcodeOp.getSeqnum().getTarget());
 			for (ClangToken token : secondaryOpTokens) {
-				secondaryLineHighlights.add(token.getLineParent().getLineNumber());
+				ClangLine line = token.getLineParent();
+				if (line != null) {
+					secondaryLineHighlights.add(line.getLineNumber());
+				}
 			}
 		}
 
@@ -191,14 +197,15 @@ class BsfvTokenHighlightMatcher implements CTokenHighlightMatcher {
 				}
 			}
 		}
-		if (token.getLineParent() != null) {
-			if (lineHighlights.contains(token.getLineParent().getLineNumber())) {
+		ClangLine line = token.getLineParent();
+		if (line != null) {
+			if (lineHighlights.contains(line.getLineNumber())) {
 				return LINE_HIGHLIGHT_COLOR;
 			}
-			if (secondaryLineHighlights.contains(token.getLineParent().getLineNumber())) {
+			if (secondaryLineHighlights.contains(line.getLineNumber())) {
 				return SECONDARY_LINE_HIGHLIGHT_COLOR;
 			}
-			if (blockHighlights.contains(token.getLineParent().getLineNumber())) {
+			if (blockHighlights.contains(line.getLineNumber())) {
 				return options.getColor(BSimFeatureGraphType.BASE_BLOCK_VERTEX, DEFAULT_HIGHLIGHT);
 			}
 		}

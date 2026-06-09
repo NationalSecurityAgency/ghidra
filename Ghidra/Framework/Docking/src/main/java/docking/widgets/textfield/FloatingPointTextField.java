@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import javax.swing.JTextField;
 import javax.swing.text.*;
 
 /**
- * A simple text field for inputing floating point numbers. The field is continuously validated so 
+ * A simple text field for inputting floating point numbers. The field is continuously validated so 
  * that only valid characters and values can be entered. If the text is blank or contains only "-",
  * ".", or "-.", the value is considered to be 0. You can optionally set a min and max value. In 
  * order for the continuous validation to work, the max must be a non-negative number and the min 
@@ -41,7 +41,8 @@ public class FloatingPointTextField extends JTextField {
 
 	/**
 	 * Constructs a new FloatingPointTextField initialized with the given value.
-	 * @param columns  the number of columns for determining the preferred width
+	 * @param columns the number of columns for determining the preferred width
+	 * @param initialValue the initial value
 	 */
 	public FloatingPointTextField(int columns, double initialValue) {
 		this(columns);

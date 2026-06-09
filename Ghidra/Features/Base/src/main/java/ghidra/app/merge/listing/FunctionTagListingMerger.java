@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import ghidra.app.merge.MergeManager;
 import ghidra.app.merge.tool.ListingMergePanel;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.program.database.function.FunctionManagerDB;
@@ -82,7 +83,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	// the same address, they will still require separate conflict
 	// panels. This keeps track of which one we're currently resolving.
 	private Long currentlyMergingTagID = null;
-	
+
 	private int tagChoice = ASK_USER;
 
 	/**
@@ -249,14 +250,12 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 		// in these change sets.
 		AddressSetView myChangedAddresses =
 			listingMergeMgr.diffOriginalMy.getDifferences(new ProgramDiffFilter(diffType), monitor);
-		AddressSetView latestChangedAddresses = listingMergeMgr.diffOriginalLatest.getDifferences(
-			new ProgramDiffFilter(diffType), monitor);
+		AddressSetView latestChangedAddresses = listingMergeMgr.diffOriginalLatest
+				.getDifferences(new ProgramDiffFilter(diffType), monitor);
 
 		// Get a list of all deleted tags in My and Latest.
-		Collection<? extends FunctionTag> myDeletedTags =
-			getDeletedTags(myPgm, monitor);
-		Collection<? extends FunctionTag> latestDeletedTags =
-			getDeletedTags(latestPgm, monitor);
+		Collection<? extends FunctionTag> myDeletedTags = getDeletedTags(myPgm, monitor);
+		Collection<? extends FunctionTag> latestDeletedTags = getDeletedTags(latestPgm, monitor);
 
 		// Loop over all changed addresses in My and see if any added tags are in the 
 		// Latest delete list. If so, conflict panel!
@@ -292,7 +291,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 			if (function == null) {
 				continue;
 			}
-			
+
 			// Get all the tags added to the function and compare against
 			// the delete list.
 			Collection<FunctionTag> tags = getTagsAddedToFunction(programAddedTo, addr);
@@ -419,9 +418,10 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 
 			FunctionTag myTag = getTag(tagID, myPgm);
 			String my = myTag == null ? "<tag deleted>" : myTag.getName();
-			
+
 			conflictPanel.setRowHeader(new String[] { "Option", "Function Tags" });
-			String text = "Function Tag conflict @ address :" + ConflictUtility.getAddressString(addr);
+			String text =
+				"Function Tag conflict @ address :" + ConflictUtility.getAddressString(addr);
 			conflictPanel.setHeader(text);
 
 			conflictPanel.setRowHeader(getFunctionTagInfo(-1, null));
@@ -474,8 +474,8 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	 * @param monitor
 	 * @throws CancelledException
 	 */
-	private void mergeConflictingTag(Address addr, int chosenConflictOption,
-			TaskMonitor monitor) throws CancelledException {
+	private void mergeConflictingTag(Address addr, int chosenConflictOption, TaskMonitor monitor)
+			throws CancelledException {
 
 		int resolutionType = ProgramMergeFilter.MERGE;
 
@@ -595,8 +595,8 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 			SwingUtilities.invokeAndWait(new Runnable() {
 				@Override
 				public void run() {
-					setupConflictsPanel(listingPanel, FunctionTagListingMerger.this.currentAddress, tagID,
-						changeListener);
+					setupConflictsPanel(listingPanel, FunctionTagListingMerger.this.currentAddress,
+						tagID, changeListener);
 					listingPanel.setBottomComponent(conflictPanel);
 				}
 			});
@@ -613,7 +613,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 			});
 		}
 		catch (InterruptedException | InvocationTargetException e) {
-			Msg.showError(this, null, "Merge Error", "Error displaying merge panel", e);
+			MergeManager.showBlockingError("Merge Error", "Error displaying merge panel", e);
 			return;
 		}
 

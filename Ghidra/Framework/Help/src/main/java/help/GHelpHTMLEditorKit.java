@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.net.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,7 +37,6 @@ import javax.swing.text.html.HTML.Tag;
 import generic.jar.ResourceFile;
 import generic.theme.GColor;
 import generic.theme.Gui;
-import ghidra.framework.Application;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
 import resources.*;
@@ -183,6 +183,10 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 	 */
 	private HyperlinkEvent validateURL(HyperlinkEvent event) {
 		URL url = event.getURL();
+		if (url == null) {
+			Msg.trace(this, "No URL for link: " + event);
+			return maybeCreateNewHyperlinkEventWithUpdatedURL(event);
+		}
 		try {
 			url.openStream();// assume that this will fail if the file does not exist
 		}
@@ -239,7 +243,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		// directory).  See if it may be a relative link to a build's installation root (like
 		// a file in <install dir>/docs).
 		//
-		newUrl = findApplicationfile(HREF);
+		newUrl = HelpBuildUtils.findApplicationUrl(HREF);
 		return newUrl;
 	}
 
@@ -385,37 +389,15 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 			return url;
 		}
 
-		return findModuleFile("help/shared/" + name);
-	}
-
-	private URL findApplicationfile(String relativePath) {
-		ResourceFile installDir = Application.getInstallationDirectory();
-		ResourceFile file = new ResourceFile(installDir, relativePath);
-		if (file.exists()) {
+		ResourceFile file = HelpBuildUtils.findModuleFile("help/shared/" + name);
+		if (file != null) {
 			try {
 				return file.toURL();
 			}
 			catch (MalformedURLException e) {
 				Msg.showError(this, null, "Unexpected Error",
 					"Unexpected error parsing file to URL: " + file);
-			}
-		}
-		return null;
-	}
-
-	private URL findModuleFile(String relativePath) {
-		Collection<ResourceFile> moduleDirs = Application.getModuleRootDirectories();
-		for (ResourceFile dir : moduleDirs) {
-			ResourceFile file = new ResourceFile(dir, relativePath);
-			if (file.exists()) {
-				try {
-					return file.toURL();
-				}
-				catch (MalformedURLException e) {
-					Msg.showError(this, null, "Unexpected Error",
-						"Unexpected error parsing file to URL: " + file);
-					return null;
-				}
+				return null;
 			}
 		}
 		return null;

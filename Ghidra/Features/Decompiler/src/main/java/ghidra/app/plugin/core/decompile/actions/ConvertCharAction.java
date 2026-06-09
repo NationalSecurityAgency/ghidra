@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import ghidra.program.model.data.ByteDataType;
 import ghidra.program.model.data.StringDataInstance;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.EquateSymbol;
+import ghidra.program.model.scalar.Scalar;
 import ghidra.util.BigEndianDataConverter;
 import ghidra.util.HelpLocation;
 
@@ -63,9 +64,9 @@ public class ConvertCharAction extends ConvertConstantAction {
 	}
 
 	@Override
-	public String getEquateName(long value, int size, boolean isSigned, Program program) {
-		byte[] bytes = new byte[size];
-		BigEndianDataConverter.INSTANCE.putValue(value, size, bytes, 0);
+	public String getEquateName(Scalar scalar, Program program) {
+		byte[] bytes = new byte[scalar.bitLength() / 8];
+		BigEndianDataConverter.INSTANCE.putValue(scalar.getValue(), bytes.length, bytes, 0);
 		return StringDataInstance.getCharRepresentation(ByteDataType.dataType, bytes, null);
 	}
 
@@ -98,13 +99,14 @@ public class ConvertCharAction extends ConvertConstantAction {
 	}
 
 	@Override
-	public String getMenuDisplay(long value, int size, boolean isSigned, Program program) {
+	public String getMenuDisplay(Scalar scalar, Program program) {
 		StringBuilder buffer = new StringBuilder();
-		if (size > 1) {
+		if (scalar.bitLength() > 8) {
 			buffer.append('L');
 		}
-		if ((size == 1 && value >= 0x7f) || codePointNeedsEscape((int) value)) {
-			switch ((int) value) {
+		if ((scalar.bitLength() == 8 && scalar.getUnsignedValue() >= 0x7f) ||
+			codePointNeedsEscape((int) scalar.getUnsignedValue())) {
+			switch ((int) scalar.getValue()) {
 				case 0:
 					buffer.append("'\\0'");
 					break;
@@ -140,12 +142,12 @@ public class ConvertCharAction extends ConvertConstantAction {
 					break;
 				default:
 					// Generic unicode escape
-					generateHexEscape(buffer, (int) value);
+					generateHexEscape(buffer, (int) scalar.getUnsignedValue());
 					break;
 			}
 		}
 		else {
-			buffer.append('\'').append((char) value).append('\'');
+			buffer.append('\'').append((char) scalar.getUnsignedValue()).append('\'');
 		}
 		return buffer.toString();
 	}

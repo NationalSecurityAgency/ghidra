@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,9 +80,12 @@ public class ListSelectionTableDialog<T> extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 		gTable = new GTable();
+		gTable.getAccessibleContext().setAccessibleName("List Selection");
 		gTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		JScrollPane scroll = new JScrollPane(gTable);
+		scroll.getAccessibleContext().setAccessibleName("List Selection");
 		filterPanel = new GTableFilterPanel<>(gTable, model);
+		filterPanel.getAccessibleContext().setAccessibleName("Filter");
 		panel.add(scroll, BorderLayout.CENTER);
 		panel.add(filterPanel, BorderLayout.SOUTH);
 		gTable.addKeyListener(new KeyAdapter() {
@@ -103,6 +106,7 @@ public class ListSelectionTableDialog<T> extends DialogComponentProvider {
 				}
 			}
 		});
+		panel.getAccessibleContext().setAccessibleName("List Selection Table");
 		return panel;
 	}
 
@@ -131,7 +135,7 @@ public class ListSelectionTableDialog<T> extends DialogComponentProvider {
 	}
 
 	/**
-	 * Calling this method does does not work correctly when used with 
+	 * Calling this method does not work correctly when used with 
 	 * {@link #show(Component)} or {@link #showSelectMultiple(Component)}.   To use this method, you
 	 * must show the dialog by calling: 
 	 * <pre>

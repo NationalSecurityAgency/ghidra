@@ -17,7 +17,6 @@ package ghidra.dbg.jdi.rmi.jpda;
 
 import java.util.Map;
 
-import com.sun.jdi.connect.AttachingConnector;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.Connector.Argument;
 
@@ -26,70 +25,31 @@ import ghidra.dbg.jdi.manager.impl.JdiManagerImpl;
 import ghidra.util.Msg;
 
 public class JdiClientThread extends Thread {
-	enum Mode {
-		ATTACH_PORT, ATTACH_PID, LAUNCH;
-	}
 
 	private final Map<String, String> env;
-	private final Mode mode;
+	private final JdiArguments arguments;
 
 	private JdiManagerImpl manager;
-	private TraceJdiManager traceJdiManager;
+	private JdiConnector connector;
 
 	public JdiClientThread(Map<String, String> env) {
 		this.env = env;
-		this.mode = computeMode();
-	}
-
-	/**
-	 * Compute/detect the launch mode using the environment map.
-	 * 
-	 * <p>
-	 * It'd be nice if this were selected/specified in the script body, rather than by what options
-	 * are present in its header. The reason we can't, though, is that the JDI client thread needs
-	 * to also work within Ghidra's JVM, i.e., without launching a jshell subprocess. By far, the
-	 * simplest way to accomplish this is to keep all the logic here, and just pass the environment
-	 * map in. For the jshell-subprocess case, it's the environment map proper. For the
-	 * in-Ghidra's-VM case, it's the map we would have passed when creating the subprocess.
-	 * 
-	 * @return the mode.
-	 */
-	Mode computeMode() {
-		if (env.containsKey("OPT_PORT")) {
-			return Mode.ATTACH_PORT;
-		}
-		if (env.containsKey("OPT_PID")) {
-			return Mode.ATTACH_PID;
-		}
-		return Mode.LAUNCH;
-	}
-
-	AttachingConnector findConnectorByArgKey(String key) {
-		return manager.getVirtualMachineManager()
-				.attachingConnectors()
-				.stream()
-				.filter(ac -> ac.defaultArguments().containsKey(key))
-				.findFirst()
-				.orElseThrow();
+		this.arguments = new JdiArguments(env);
 	}
 
 	@Override
 	public void run() {
 		try {
 			manager = new JdiManagerImpl();
-			traceJdiManager = new TraceJdiManager(manager, env);
+			connector = new JdiConnector(manager, env);
 
-			Connector cx = switch (mode) {
-				case ATTACH_PORT -> findConnectorByArgKey("port");
-				case ATTACH_PID -> findConnectorByArgKey("pid");
-				case LAUNCH -> manager.getVirtualMachineManager().defaultConnector();
-			};
+			Connector cx = arguments.getConnector(manager.getVirtualMachineManager());
 
 			Map<String, Argument> args = cx.defaultArguments();
-			putArguments(args);
+			arguments.putArguments(args);
 			if (manager.addVM(cx, args) != null) {
-				traceJdiManager.getCommands().ghidraTraceSyncEnable();
-				traceJdiManager.getHooks().vmStarted(null, Causes.UNCLAIMED);
+				connector.getCommands().ghidraTraceSyncEnable();
+				connector.getHooks().vmStarted(null, Causes.UNCLAIMED);
 			}
 			else {
 				// Nothing. addVM should already have reported the error.
@@ -100,30 +60,11 @@ public class JdiClientThread extends Thread {
 		}
 	}
 
-	protected void putArguments(Map<String, Argument> args) {
-		switch (mode) {
-			case ATTACH_PORT -> {
-				args.get("hostname").setValue(env.get("OPT_HOST").toString());
-				args.get("port").setValue(env.get("OPT_PORT").toString());
-				args.get("timeout").setValue(env.get("OPT_TIMEOUT").toString());
-			}
-			case ATTACH_PID -> {
-				args.get("pid").setValue(env.get("OPT_PID").toString());
-				args.get("timeout").setValue(env.get("OPT_TIMEOUT").toString());
-			}
-			case LAUNCH -> {
-				args.get("main").setValue(env.get("OPT_TARGET_CLASS"));
-				//args.get("suspend").setValue(env.get("OPT_SUSPEND"));
-				args.get("includevirtualthreads").setValue(env.get("OPT_INCLUDE"));
-			}
-		}
+	public JdiConnector connector() {
+		return connector;
 	}
 
-	public TraceJdiManager mgr() {
-		return traceJdiManager;
-	}
-
-	public TraceJdiCommands cmds() {
-		return traceJdiManager.getCommands();
+	public JdiCommands cmds() {
+		return connector.getCommands();
 	}
 }

@@ -31,6 +31,7 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.dnd.GenericDataFlavor;
 import docking.dnd.StringTransferable;
+import docking.tool.ToolConstants;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.internal.*;
 import generic.text.TextLayoutGraphics;
@@ -43,10 +44,10 @@ import ghidra.app.services.ClipboardContentProviderService;
 import ghidra.app.util.*;
 import ghidra.app.util.viewer.listingpanel.ListingModel;
 import ghidra.framework.model.DomainFile;
+import ghidra.framework.options.OptionsChangeListener;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.mem.AddressSourceInfo;
-import ghidra.program.database.symbol.CodeSymbol;
-import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
@@ -54,15 +55,15 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.Msg;
+import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.task.CancellableIterator;
 import ghidra.util.task.TaskMonitor;
 import util.CollectionUtils;
 
 public class CodeBrowserClipboardProvider extends ByteCopier
-		implements ClipboardContentProviderService {
+		implements ClipboardContentProviderService, OptionsChangeListener {
 
 	protected static final PaintContext PAINT_CONTEXT = new PaintContext();
-	private static int[] COMMENT_TYPES = CommentTypes.getTypes();
 
 	public static final ClipboardType ADDRESS_TEXT_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Address");
@@ -89,6 +90,11 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	public static final ClipboardType GHIDRA_SHARED_URL_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Shared GhidraURL");
 
+	public static final ClipboardType GHIDRA_DATA_TEXT_TYPE =
+		new ClipboardType(DataFlavor.stringFlavor, "Data");
+	public static final ClipboardType GHIDRA_DEREFERENCED_DATA_TEXT_TYPE =
+		new ClipboardType(DataFlavor.stringFlavor, "Dereferenced Data");
+
 	private static final List<ClipboardType> COPY_TYPES = createCopyTypesList();
 
 	private static List<ClipboardType> createCopyTypesList() {
@@ -100,6 +106,8 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		list.add(COMMENTS_TYPE);
 		list.add(BYTE_STRING_TYPE);
 		list.add(BYTE_STRING_NO_SPACE_TYPE);
+		list.add(GHIDRA_DATA_TEXT_TYPE);
+		list.add(GHIDRA_DEREFERENCED_DATA_TEXT_TYPE);
 		list.add(PYTHON_BYTE_STRING_TYPE);
 		list.add(PYTHON_LIST_TYPE);
 		list.add(CPP_BYTE_ARRAY_TYPE);
@@ -119,12 +127,18 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 	private Set<ChangeListener> listeners = new CopyOnWriteArraySet<>();
 	private String stringContent;
+	private boolean includeQuotesForStringData;
 
-	public CodeBrowserClipboardProvider(PluginTool tool, ComponentProvider codeViewerProvider) {
+	public CodeBrowserClipboardProvider(PluginTool tool, ComponentProvider componentProvider) {
 		this.tool = tool;
-		this.componentProvider = codeViewerProvider;
+		this.componentProvider = componentProvider;
 
 		PAINT_CONTEXT.setTextCopying(true);
+
+		ToolOptions options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
+		includeQuotesForStringData =
+			!options.getBoolean(ClipboardPlugin.REMOVE_QUOTES_OPTION, false);
+		options.addOptionsChangeListener(this);
 	}
 
 	@Override
@@ -265,6 +279,12 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		}
 		else if (copyType == GHIDRA_SHARED_URL_TYPE) {
 			return copySharedGhidraURL();
+		}
+		else if (copyType == GHIDRA_DATA_TEXT_TYPE) {
+			return copyDataText();
+		}
+		else if (copyType == GHIDRA_DEREFERENCED_DATA_TEXT_TYPE) {
+			return copyReferencedDataText();
 		}
 
 		return copyBytes(copyType, monitor);
@@ -472,6 +492,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	protected Transferable copyCode(TaskMonitor monitor) {
 
 		AddressSetView addressSet = getSelectedAddresses();
+
 		ListingModel listingModel = getListingModel();
 		TextLayoutGraphics g = new TextLayoutGraphics();
 		LayoutBackgroundColorManager colorMap =
@@ -532,6 +553,111 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		String address = currentLocation.getAddress().toString();
 		URL url = currentProgram.getDomainFile().getSharedProjectURL(address);
 		return createStringTransferable(url.toString());
+	}
+
+	private Transferable copyDataText() {
+		return copyDataText(false);
+	}
+
+	private Transferable copyReferencedDataText() {
+		return copyDataText(true);
+	}
+
+	private Transferable copyDataText(boolean followPointers) {
+		AddressSetView addrs = getSelectedAddresses();
+		List<String> strings = new ArrayList<>();
+		Listing listing = currentProgram.getListing();
+		if (addrs instanceof ProgramSelection programSelection &&
+			programSelection.getInteriorSelection() != null) {
+			InteriorSelection interiorSelection = programSelection.getInteriorSelection();
+			copyInteriorDataText(strings, listing, interiorSelection, followPointers);
+		}
+		else {
+			for (Data data : listing.getData(addrs, true)) {
+				String string = getString(data, followPointers);
+				if (string != null) {
+					strings.add(string);
+				}
+			}
+		}
+		return createStringTransferable(String.join("\n", strings));
+	}
+
+	private void copyInteriorDataText(List<String> strings, Listing listing,
+			InteriorSelection interior, boolean followPointers) {
+
+		Data outer = listing.getDataContaining(interior.getStartAddress());
+		ProgramLocation from = interior.getFrom();
+		ProgramLocation to = interior.getTo();
+		Data first = outer.getComponent(from.getComponentPath());
+		Data last = outer.getComponent(to.getComponentPath());
+		if (first == null || last == null) {
+			return;
+		}
+
+		// We have a selection inside a data that has child elements. This may be several levels
+		// deep. The first and last data retrieved above are children in the same parent. So
+		// get the index of the first and last data in that parent and add string data for each
+		// selected element in that parent.
+		Data parent = first.getParent();
+		int startIndex = first.getComponentIndex();
+		int endIndex = last.getComponentIndex();
+		for (int i = startIndex; i <= endIndex; i++) {
+			Data child = parent.getComponent(i);
+			String string = getString(child, followPointers);
+			if (string != null) {
+				strings.add(string);
+			}
+		}
+	}
+
+	private Data getReferencedData(Data data, Set<Address> visited) {
+		Object value = data.getValue();
+		if (!(value instanceof Address address)) {
+			return null;
+		}
+		if (visited.contains(address)) {
+			return null;
+		}
+		visited.add(address);
+		Data referenced = currentProgram.getListing().getDataAt(address);
+		if (referenced == null) {
+			return null;
+		}
+		if (referenced.isPointer()) {
+			return getReferencedData(referenced, visited);
+		}
+		return referenced;
+	}
+
+	private String getString(Data data, boolean followPointers) {
+		if (!followPointers) {
+			return getString(data);
+		}
+		// if following pointers and data is not a pointer, then nothing to do
+		if (!data.isPointer()) {
+			return null;
+		}
+
+		// otherwise follow pointers to non-pointer data and return its string
+		Set<Address> visited = new HashSet<>();
+		Data referenced = getReferencedData(data, visited);
+		return getString(referenced);
+	}
+
+	private String getString(Data data) {
+		// For now, don't get string data for compound object such as structures, unions, or arrays
+		if (data == null || data.getNumComponents() > 0) {
+			return null;
+		}
+		Object value = data.getValue();
+		if (value instanceof String s) {
+			if (includeQuotesForStringData) {
+				return "\"" + s + "\"";
+			}
+			return s;
+		}
+		return data.getDefaultValueRepresentation();
 	}
 
 	private boolean pasteLabelsComments(Transferable pasteData, boolean pasteLabels,
@@ -607,7 +733,11 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
 		Symbol symbol = symbolTable.getSymbol(reference);
-		if ((symbol instanceof CodeSymbol) || (symbol instanceof FunctionSymbol)) {
+		if (symbol == null) {
+			return false;
+		}
+		SymbolType type = symbol.getSymbolType();
+		if ((type == SymbolType.LABEL) || (type == SymbolType.FUNCTION)) {
 			RenameLabelCmd cmd = new RenameLabelCmd(symbol, labelName, SourceType.USER_DEFINED);
 			return tool.execute(cmd, currentProgram);
 		}
@@ -628,9 +758,11 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		if (currentLocation instanceof CommentFieldLocation) {
 			CommentFieldLocation commentFieldLocation = (CommentFieldLocation) currentLocation;
 			Address address = commentFieldLocation.getAddress();
-			int commentType = commentFieldLocation.getCommentType();
-			SetCommentCmd cmd = new SetCommentCmd(address, commentType, string);
-			return tool.execute(cmd, currentProgram);
+			CommentType commentType = commentFieldLocation.getCommentType();
+			if (commentType != null) {
+				SetCommentCmd cmd = new SetCommentCmd(address, commentType, string);
+				return tool.execute(cmd, currentProgram);
+			}
 		}
 		return false;
 	}
@@ -673,11 +805,10 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	}
 
 	private void setCommentInfo(CodeUnit cu, CodeUnitInfo info) {
-
-		for (int element : COMMENT_TYPES) {
-			String[] comments = cu.getCommentAsArray(element);
+		for (CommentType type : CommentType.values()) {
+			String[] comments = cu.getCommentAsArray(type);
 			if (comments != null && comments.length > 0) {
-				info.setComment(element, comments);
+				info.setComment(type, comments);
 			}
 		}
 	}
@@ -895,6 +1026,15 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		@Override
 		public boolean isDataFlavorSupported(DataFlavor flavor) {
 			return flavorList.contains(flavor);
+		}
+	}
+
+	@Override
+	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
+			Object newValue) throws OptionsVetoException {
+		if (optionName.equals(ClipboardPlugin.REMOVE_QUOTES_OPTION)) {
+			includeQuotesForStringData =
+				!options.getBoolean(ClipboardPlugin.REMOVE_QUOTES_OPTION, false);
 		}
 	}
 }

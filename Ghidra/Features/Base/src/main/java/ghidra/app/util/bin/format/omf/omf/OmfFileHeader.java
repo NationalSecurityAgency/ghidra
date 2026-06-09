@@ -519,7 +519,7 @@ public class OmfFileHeader extends OmfRecord {
 		StructureDataType struct = new StructureDataType(OmfRecordTypes.getName(recordType), 0);
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
-		struct.add(objectName.toDataType(), "name", null);
+		struct.add(objectName.toDataType(), objectName.getDataTypeSize(), "name", null);
 		struct.add(BYTE, "checksum", null);
 
 		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));

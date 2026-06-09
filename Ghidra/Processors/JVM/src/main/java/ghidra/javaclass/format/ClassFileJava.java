@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -136,7 +136,7 @@ public class ClassFileJava implements StructConverter {
 	 * <p>
 	 * A Java virtual machine implementation can support a class file format of
 	 * version v if and only if v lies in some contiguous range Mi.0 ? v ? Mj.m.
-	 * <p>
+	 * 
 	 * @return the minor version number of this class.
 	 */
 	public short getMinorVersion() {
@@ -153,7 +153,7 @@ public class ClassFileJava implements StructConverter {
 	 * <p>
 	 * A Java virtual machine implementation can support a class file format of
 	 * version v if and only if v lies in some contiguous range Mi.0 ? v ? Mj.m.
-	 * <p>
+	 * 
 	 * @return the major version number of this class.
 	 */
 	public short getMajorVersion() {

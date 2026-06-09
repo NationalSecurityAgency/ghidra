@@ -16,12 +16,13 @@
 package docking;
 
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
 
 import docking.action.*;
+import docking.util.AnimationUtils;
 import generic.theme.*;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -123,6 +124,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	private ThemeListener themeListener = this::themeChanged;
 
+	private HierarchyListener hierarchyListener;
+
 	/**
 	 * Creates a new component provider with a default location of {@link WindowPosition#WINDOW}.
 	 * @param tool The tool will manage and show this provider
@@ -144,7 +147,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 *        {@link #getContextType()}
 	 */
 	public ComponentProvider(Tool tool, String name, String owner, Class<?> contextType) {
-		this.dockingTool = tool;
+		this.dockingTool = Objects.requireNonNull(tool);
 		this.name = name;
 		this.owner = owner;
 		this.title = name;
@@ -153,7 +156,24 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		recordInception();
 
 		Gui.addThemeListener(themeListener);
+
 	}
+
+	// gets this provider's component to install it into GUI hierarchy
+	JComponent doGetComponent() {
+		JComponent component = getComponent();
+		if (hierarchyListener == null) {
+			hierarchyListener = new ComponentProviderHierachyListener();
+			component.addHierarchyListener(hierarchyListener);
+		}
+		return component;
+	}
+
+	/**
+	 * Returns the component to be displayed
+	 * @return the component to be displayed
+	 */
+	public abstract JComponent getComponent();
 
 	/**
 	 * Returns the action used to show this provider
@@ -198,12 +218,6 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Returns the component to be displayed
-	 * @return the component to be displayed
-	 */
-	public abstract JComponent getComponent();
-
-	/**
 	 * A method that allows children to set the <code>instanceID</code> to a desired value (useful for
 	 * restoring saved IDs).
 	 * <p>
@@ -235,6 +249,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			return;
 		}
 
+		// this call is needed to bring tabbed providers to the front
+		toFront();
 		if (defaultFocusComponent != null) {
 			DockingWindowManager.requestFocus(defaultFocusComponent);
 			return;
@@ -393,6 +409,14 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
+	 * Returns true if this provider is visible and is showing.  See {@link Component#isShowing()}.
+	 * @return true if this provider is visible and is showing.
+	 */
+	public boolean isShowing() {
+		return isVisible() && getComponent().isShowing();
+	}
+
+	/**
 	 * Convenience method to indicate if this provider is the active provider (has focus)
 	 * @return true if this provider is active.
 	 */
@@ -442,47 +466,87 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Notifies the provider that the component is being shown.
+	 * Notifies the provider that the component is being shown.   This method will be called as the
+	 * component hierarchy is being created, which means that this provider may not actually be 
+	 * visible to the user at the time of this call.
+	 * @see #componentMadeDisplayable()
 	 */
 	public void componentShown() {
 		// subclasses implement as needed
 	}
 
 	/**
-	 * Returns the context object which corresponds to the
-	 * area of focus within this provider's component.  Null
-	 * is returned when there is no context.
-	 * @param event popup event which corresponds to this request.
-	 * May be null for key-stroke or other non-mouse event.
+	 * Notifies the provider that the component has been made displayable.  When this method is 
+	 * called, the component is part of the visible GUI hierarchy.  This is in contrast to 
+	 * {@link #componentShown()}, which is called when the provider is part of the Docking 
+	 * framework's hierarchy, but not necessarily visible to the user.
+	 * @see #componentShown()
+	 */
+	public void componentMadeDisplayable() {
+		// subclasses implement as needed
+	}
+
+	/**
+	 * Returns the context object which corresponds to the area of focus within this provider's 
+	 * component.  Null is returned when there is no context.
+	 * <p>
+	 * Subclasses should override this method to provider more specific context objects or 
+	 * information.
+	 * 
+	 * @param event popup event which corresponds to this request. Will be null for key-stroke or 
+	 * other non-mouse uses.
 	 */
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
+		Component c = getContextSourceComponent();
+
+		// Note: this call is deprecated.  It shall remain here to handle cases where the subclasses
+		// have overridden createContext().  Eventually we will remove this call and create the 
+		// default context directly.
+		return createContext(c, null);
+	}
+
+	/**
+	 * Returns a component to use as the {@code sourceComponent} when creating an action context.
+	 * The focused component is preferred when it is inside of this provider's 
+	 * {@link #getComponent() component}.  Otherwise, this provider's component is returned.
+	 * 
+	 * @return the component
+	 */
+	protected Component getContextSourceComponent() {
 		Component c = getComponent();
 		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 		Component focusedComponent = kfm.getFocusOwner();
 		if (focusedComponent != null && SwingUtilities.isDescendingFrom(focusedComponent, c)) {
 			c = focusedComponent;
 		}
-		return createContext(c, null);
+		return c;
+	}
+
+	/**
+	 * A default method for creating an action context for this provider, using the given
+	 * {@link ActionContext#getContextObject() context object}.   If the given context object is a
+	 * component, then it will be used to initialize the {@code sourceComponent} of the created 
+	 * context.  
+	 *
+	 * @param contextObject the provider-specific context object
+	 * @return the new context
+	 * @deprecated instead use 
+	 *  {@code new DefaultActionContext(ComponentProvider.this).setContextObject(contextObject)} 
+	 */
+	@Deprecated(since = "12.2", forRemoval = true)
+	protected ActionContext createContext(Object contextObject) {
+		return new DefaultActionContext(this).setContextObject(contextObject);
 	}
 
 	/**
 	 * A default method for creating an action context for this provider
 	 * @return the new context
+	 * @deprecated instead use {@code new DefaultActionContext(ComponentProvider.this)}
 	 */
+	@Deprecated(since = "12.2", forRemoval = true)
 	protected ActionContext createContext() {
 		return new DefaultActionContext(this);
-	}
-
-	/**
-	 * A default method for creating an action context for this provider, using the given
-	 * {@link ActionContext#getContextObject() context object}
-	 *
-	 * @param contextObject the provider-specific context object
-	 * @return the new context
-	 */
-	protected ActionContext createContext(Object contextObject) {
-		return new DefaultActionContext(this).setContextObject(contextObject);
 	}
 
 	/**
@@ -492,7 +556,11 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @param sourceComponent the component that is the target of the context being created
 	 * @param contextObject the provider-specific context object
 	 * @return the new context
+	 * @deprecated this method is still called from {@link #getActionContext(MouseEvent)}, but this
+	 *  will change in a future release.  Clients calling this method can replace that call with 
+	 *	{@code new DefaultActionContext(this, sourceComponent).setContextObject(contextObject)}.
 	 */
+	@Deprecated(since = "12.2", forRemoval = true)
 	protected ActionContext createContext(Component sourceComponent, Object contextObject) {
 		return new DefaultActionContext(this, sourceComponent).setContextObject(contextObject);
 	}
@@ -737,7 +805,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Returns the name of a cascading sub-menu name to use when when showing this provider in the
+	 * Returns the name of a cascading sub-menu name to use when showing this provider in the
 	 * "Window" menu. If the group name is null, the item will appear in the top-level menu.
 	 * @return the menu group for this provider or null if this provider should appear in the
 	 * top-level menu.
@@ -885,7 +953,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 *
 	 * @param group the group for this provider.
 	 */
-	protected void setWindowGroup(String group) {
+	public void setWindowGroup(String group) {
 		this.group = group;
 	}
 
@@ -1018,7 +1086,30 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		return "owner=" + oldOwner + "name=" + oldName;
 	}
 
+	private class ComponentProviderHierachyListener implements HierarchyListener {
+
+		@Override
+		public void hierarchyChanged(HierarchyEvent e) {
+			long changeFlags = e.getChangeFlags();
+			if (HierarchyEvent.DISPLAYABILITY_CHANGED != (changeFlags &
+				HierarchyEvent.DISPLAYABILITY_CHANGED)) {
+				return;
+			}
+
+			// check for the first time we are put together
+			Component component = e.getChanged();
+			boolean isDisplayable = component.isDisplayable();
+			if (isDisplayable) {
+				componentMadeDisplayable();
+			}
+		}
+	}
+
 	private class ShowProviderAction extends DockingAction {
+
+		/** Number of milliseconds to track user requests */
+		private static final int TIME_WINDOW = 2000;
+		private SortedSet<Long> clickTimes = new TreeSet<>();
 
 		ShowProviderAction(boolean supportsKeyBindings) {
 			super(name, owner,
@@ -1044,14 +1135,49 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		@Override
 		public void actionPerformed(ActionContext context) {
 
-			DockingWindowManager myDwm = DockingWindowManager.getInstance(getComponent());
-			if (myDwm == null) {
-				// this can happen when the tool loses focus
-				dockingTool.showComponentProvider(ComponentProvider.this, true);
+			Tool tool = getTool();
+			DockingWindowManager myDwm = tool.getWindowManager();
+			boolean isFrustrated = isFrustrated();
+			boolean isFocused = isFocused();
+			if (isFocused && !isFrustrated) {
+				// the user has decided to hide this component and is not madly clicking; also, we
+				// don't allow the last component in a window to be closed in order to prevent an
+				// empty window.
+				if (!myDwm.isLastComponentInWindow(ComponentProvider.this)) {
+					setVisible(false);
+				}
 				return;
 			}
 
-			myDwm.showComponent(ComponentProvider.this, true, true);
+			boolean emphasize = getComponent().isShowing() && isFrustrated;
+			myDwm.showComponent(ComponentProvider.this, true, emphasize);
+		}
+
+		private boolean isFrustrated() {
+
+			if (!AnimationUtils.isAnimationEnabled()) {
+				// The use of being frustrated is to emphasize (animate) the window for the user in
+				// order to draw attention to the window.  If animation is off, then no need to 
+				// check for frustration.
+				return false;
+			}
+
+			long time = System.currentTimeMillis();
+			clickTimes.add(time);
+
+			// grab all click times within the time window
+			long secondsAgo = time - TIME_WINDOW;
+			SortedSet<Long> recentClicks = clickTimes.tailSet(secondsAgo);
+			clickTimes.retainAll(recentClicks); // drop old click times
+			int clickCount = recentClicks.size();
+			return clickCount > 2; // rapid clicking within the time window
+		}
+
+		private boolean isFocused() {
+			KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+			Component focusOwner = kfm.getFocusOwner();
+			JComponent myComponent = getComponent();
+			return focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, myComponent);
 		}
 
 		@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,16 +28,16 @@ public class SquashDirectoryTableEntry {
 	private final short inodeNumberOffset;
 
 	// Stores the basic inode type (i.e. if it's an "extended file" inode, it will be a "basic file" here)
-	private final short inodeType;
+	private final int inodeType;
 
 	// The number of bytes that will represent the name of this sub-entry
-	private final short nameSize;
+	private final int nameSize;
 
 	// The result of the addition of the base inode and the offset
 	private final int inodeNumber;
 
 	// Upon creation, this is just the name of this sub-entry, but will be expanded to the full path
-	private String path;
+	private final String path;
 
 	/**
 	 * Represents an entry in the directory table
@@ -51,12 +51,12 @@ public class SquashDirectoryTableEntry {
 
 		addressOffset = reader.readNextUnsignedShort();
 		inodeNumberOffset = reader.readNextShort(); // NOTE: Signed
-		inodeType = reader.readNextShort();
-		nameSize = reader.readNextShort();
+		inodeType = reader.readNextUnsignedShort();
+		nameSize = reader.readNextUnsignedShort();
 
 		// The stored filename doesn't include the terminating null byte
 		// Note: Though technically 16 bits, Linux caps name size at 256 chars
-		path = reader.readNextAsciiString(nameSize + 1);
+		path = reader.readNextUtf8String(nameSize + 1);
 
 		// Find the inode number using the base in the table entry header and the offset
 		inodeNumber = (int) (baseInode + inodeNumberOffset);
@@ -67,7 +67,7 @@ public class SquashDirectoryTableEntry {
 		return addressOffset;
 	}
 
-	public short getInodeType() {
+	public int getInodeType() {
 		return inodeType;
 	}
 

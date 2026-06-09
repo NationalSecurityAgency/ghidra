@@ -15,14 +15,21 @@
  */
 package ghidra.app.plugin.core.debug.client.tracermi;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
-public class RmiBatch  {
+import ghidra.app.plugin.core.debug.client.tracermi.RmiClient.RequestResult;
 
+public class RmiBatch implements AutoCloseable {
 
-	private int refCount = 0;
-	private Set<Object> futures = new HashSet<>();
+	private final RmiClient client;
+	private volatile int refCount = 0;
+	private final List<RequestResult> futures = new ArrayList<>();
+
+	public RmiBatch(RmiClient client) {
+		this.client = client;
+	}
 
 	public void inc() {
 		refCount++;
@@ -31,14 +38,35 @@ public class RmiBatch  {
 	public int dec() {
 		return --refCount;
 	}
-	
-	public void append(Object f) {
-		futures.add(f);
+
+	@Override
+	public void close() {
+		try {
+			client.endBatch(this);
+		}
+		catch (InterruptedException | ExecutionException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
-	public Object results() {
-		return null;
+	public void append(RequestResult f) {
+		synchronized (futures) {
+			futures.add(f);
+		}
 	}
 
+	public List<Object> results() throws InterruptedException, ExecutionException {
+		List<RequestResult> futures = futures();
+		List<Object> results = new ArrayList<>(futures.size());
+		for (RequestResult r : futures) {
+			results.add(r.get());
+		}
+		return results;
+	}
 
+	public List<RequestResult> futures() {
+		synchronized (futures) {
+			return List.copyOf(futures);
+		}
+	}
 }

@@ -23,6 +23,10 @@ import ghidra.app.cmd.data.TypeDescriptorModel;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.datatype.microsoft.MSDataTypeUtils;
+import ghidra.app.util.demangler.DemangledException;
+import ghidra.app.util.demangler.DemangledObject;
+import ghidra.app.util.demangler.microsoft.MicrosoftDemangler;
+import ghidra.app.util.demangler.microsoft.MicrosoftMangledContext;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
@@ -54,11 +58,11 @@ public class RttiUtil {
 	}
 
 	/**
-	 * Function that will create a symbol based on the <code>rttiSuffix</code>, which is in the 
+	 * Function that will create a symbol based on the <code>rttiSuffix</code>, which is in the
 	 * class or namespace that is indicated by the <code>demangledType</code> string.
-	 * 
+	 *
 	 * @param program the program where the symbol is being created
-	 * @param rttiAddress Address of the RTTI datatype 
+	 * @param rttiAddress Address of the RTTI datatype
 	 * @param typeDescriptorModel the model for the type descriptor structure
 	 * @param rttiSuffix suffix name indicating which type of RTTI structure
 	 * @return true if a symbol was created, false otherwise
@@ -73,24 +77,77 @@ public class RttiUtil {
 
 		SymbolTable symbolTable = program.getSymbolTable();
 
-		// See if the symbol already exists for the RTTI data.
+		// See if the symbol already exists for the RTTI data
 		Symbol matchingSymbol = symbolTable.getSymbol(rttiSuffix, rttiAddress, classNamespace);
 		if (matchingSymbol != null) {
 			return false;
 		}
-		// Don't create it if a similar symbol already exists at the address of the data.
+
+		// check for similar symbol
+		MicrosoftDemangler demangler = new MicrosoftDemangler();
+		DemangledObject matchingDemangledObject = null;
 		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(rttiAddress);
 		for (Symbol symbol : symbols) {
 			String name = symbol.getName();
+			try {
+				MicrosoftMangledContext mangledContext =
+					demangler.createMangledContext(name, null, program, symbol.getAddress());
+				DemangledObject demangledObject = demangler.demangle(mangledContext);
+				if (demangledObject != null && demangledObject.getName().contains(rttiSuffix)) {
+					matchingDemangledObject = demangledObject;
+					continue;
+				}
+			}
+			catch (DemangledException e) {
+				// Couldn't demangle.
+				continue;
+			}
+
+			// Similar symbol already exists - more checking/fixing needed
 			if (name.contains(rttiSuffix)) {
-				return false; // Similar symbol already exists.
+
+				// check for differing namespace to correct pdb in rare cases
+				Namespace currentNamespace = symbol.getParentNamespace();
+				if (!currentNamespace.equals(classNamespace)) {
+					Msg.warn(program, "Removed incorrect pdb symbol: " + symbol.getName(true));
+					symbol.delete();
+					continue;
+				}
+				// if symbol contains the matching string and ticks, remove the ticks
+				if (replaceSymbolWithNoTicks(symbol)) {
+					return true;
+				}
 			}
 		}
-		try {
 
-			// Ignore imported mangled symbol because demangling would add tick marks into the name.  
-			// The name created here is better. Set the symbol to be primary so that the demangler 
-			// won't demangle.
+		// if it gets here then there were no demangled symbols that contained the rttisuffix
+		// indicating that the mangled matching symbol has not been demangled yet and needs to be
+		// demangled
+		if (matchingDemangledObject != null) {
+
+			String name = matchingDemangledObject.getName();
+			if (name.contains(rttiSuffix)) {
+
+				try {
+					Symbol symbol = symbolTable.createLabel(rttiAddress, name, classNamespace,
+						SourceType.IMPORTED);
+					// Set the symbol to be primary so that the demangler
+					// won't demangle again
+					symbol.setPrimary();
+					if (replaceSymbolWithNoTicks(symbol)) {
+						return true;
+					}
+
+				}
+				catch (InvalidInputException e) {
+					//fall through and make a symbol using the rttiSuffix string even though
+					// it might really be one with extra information
+				}
+
+			}
+		}
+		// if code gets here then no pdb info so have to make the symbol here
+		try {
 			Symbol symbol = symbolTable.createLabel(rttiAddress, rttiSuffix, classNamespace,
 				SourceType.IMPORTED);
 			symbol.setPrimary();
@@ -101,6 +158,34 @@ public class RttiUtil {
 				"Unable to create label for " + rttiSuffix + " at " + rttiAddress + ".", e);
 			return false;
 		}
+	}
+
+	/**
+	 * Method to remove all ' and ` from symbol if it starts with `
+	 * @param symbol the symbol
+	 * @return true if the symbol has been replaced, false otherwise
+	 */
+	private static boolean replaceSymbolWithNoTicks(Symbol symbol) {
+
+		String name = symbol.getName();
+		if (name.startsWith("`")) {
+			name = name.replace("'", "").replace("`", "");
+			try {
+				symbol.setName(name, symbol.getSource());
+
+				//do this in case the mangled name is currently primary which will cause demangler
+				//to replace the ticks again once demangled since demangler only demangles primary
+				symbol.setPrimary();
+				return true;
+			}
+			catch (DuplicateNameException e) {
+				return false;
+			}
+			catch (InvalidInputException e) {
+				return false;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -124,7 +209,7 @@ public class RttiUtil {
 	}
 
 	/**
-	 * Determines the number of vf addresses in the vf table that begins at the specified base 
+	 * Determines the number of vf addresses in the vf table that begins at the specified base
 	 * address.
 	 * @param program the program whose memory is providing their addresses
 	 * @param vfTableBaseAddress the base address in the program for the vf table
@@ -141,7 +226,7 @@ public class RttiUtil {
 		PseudoDisassembler pseudoDisassembler = new PseudoDisassembler(program);
 
 		// Create pointers starting at the address until reaching a 0 pointer.
-		// Terminate the possible table at any entry containing a cross reference that 
+		// Terminate the possible table at any entry containing a cross reference that
 		// is beyond the first table entry and don't include it.
 		int tableSize = 0;
 		Address currentVfPointerAddress = vfTableBaseAddress;
@@ -195,10 +280,10 @@ public class RttiUtil {
 	 * indicate the end of a vftable
 	 * @param address the address of a possible pointer in a vftable
 	 * @return true if there are references to the given address and any of the references are
-	 * types that would indicate the given pointer should not be in the vftable preceding it. In 
+	 * types that would indicate the given pointer should not be in the vftable preceding it. In
 	 * general most references would fall into this category such as ones created by user, importer,
-	 * disassembler. Returns false if no references or if the only references are ones not 
-	 * indicative of the end of a vftable. 
+	 * disassembler. Returns false if no references or if the only references are ones not
+	 * indicative of the end of a vftable.
 	 */
 	private static boolean referenceIndicatesEndOfTable(ReferenceManager referenceManager,
 			Address address) {
@@ -219,7 +304,7 @@ public class RttiUtil {
 			// if it is analysis source type but reference is data that is not read this indicates
 			// it is not the kind of reference that should end a vftable
 			// For example something could be getting this address to figure out the address pointed
-			// to so that that address can be referenced. 
+			// to so that that address can be referenced.
 			if (ref.getReferenceType().isData() && !ref.getReferenceType().isRead()) {
 				return true;
 			}
@@ -228,7 +313,7 @@ public class RttiUtil {
 	}
 
 	/**
-	 * Gets the namespace referred to by the type descriptor model if it can determine the 
+	 * Gets the namespace referred to by the type descriptor model if it can determine the
 	 * namespace. Otherwise it returns the empty string.
 	 * @param rtti0Model the model for the type descriptor whose namespace is to be returned.
 	 * @return the namespace or the empty string.
@@ -236,7 +321,31 @@ public class RttiUtil {
 	public static String getDescriptorTypeNamespace(TypeDescriptorModel rtti0Model) {
 		String descriptorTypeNamespace = rtti0Model.getDescriptorTypeNamespace(); // Can be null.
 		if (descriptorTypeNamespace == null) {
-			descriptorTypeNamespace = ""; // Couldn't get namespace so leave it off.
+
+			descriptorTypeNamespace = rtti0Model.getOriginalTypename();
+
+			Msg.warn(RttiUtil.class, rtti0Model.getAddress().toString() +
+				": Could not demangle TypeDescriptor namespace so using the mangled string as the namespace.");
+		}
+		return descriptorTypeNamespace;
+	}
+
+	/**
+	 * Gets the "original" namespace referred to by the type descriptor model if it can determine
+	 * the namespace. Otherwise it returns the empty string.  The "original" namespace is
+	 * the namespace without any changes to the demangler output options.  This is suitable
+	 * for applying to a plate comment
+	 * @param rtti0Model the model for the type descriptor whose namespace is to be returned.
+	 * @return the "original" namespace or the empty string.
+	 */
+	public static String getOriginalDescriptorTypeNamespace(TypeDescriptorModel rtti0Model) {
+		String descriptorTypeNamespace = rtti0Model.getOriginalDescriptorTypeNamespace();
+		if (descriptorTypeNamespace == null) {
+
+			descriptorTypeNamespace = rtti0Model.getOriginalTypename();
+
+			Msg.warn(RttiUtil.class, rtti0Model.getAddress().toString() +
+				": Could not demangle TypeDescriptor namespace so using the mangled string as the namespace.");
 		}
 		return descriptorTypeNamespace;
 	}

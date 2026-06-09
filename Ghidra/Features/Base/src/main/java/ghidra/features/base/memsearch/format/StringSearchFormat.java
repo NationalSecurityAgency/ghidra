@@ -36,7 +36,7 @@ class StringSearchFormat extends SearchFormat {
 	}
 
 	@Override
-	public ByteMatcher parse(String input, SearchSettings settings) {
+	public UserInputByteMatcher parse(String input, SearchSettings settings) {
 		input = input.trim();
 		if (input.isBlank()) {
 			return new InvalidByteMatcher("");
@@ -48,12 +48,12 @@ class StringSearchFormat extends SearchFormat {
 		if (charset == StandardCharsets.UTF_16) {
 			charset = isBigEndian ? StandardCharsets.UTF_16BE : StandardCharsets.UTF_16LE;
 		}
-
 		// Escape sequences in the "input" are 2 Characters long.
+		String converted = input;
 		if (settings.useEscapeSequences() && inputLength >= 2) {
-			input = StringUtilities.convertEscapeSequences(input);
+			converted = StringUtilities.convertEscapeSequences(input);
 		}
-		byte[] bytes = input.getBytes(charset);
+		byte[] bytes = converted.getBytes(charset);
 		byte[] maskArray = new byte[bytes.length];
 		Arrays.fill(maskArray, (byte) 0xff);
 

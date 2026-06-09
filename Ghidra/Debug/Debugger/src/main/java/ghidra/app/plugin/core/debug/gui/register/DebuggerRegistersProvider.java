@@ -25,8 +25,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableModel;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
@@ -35,9 +35,9 @@ import docking.*;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.actions.PopupActionProvider;
+import docking.widgets.AbstractGCellRenderer;
 import docking.widgets.table.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import generic.theme.GColor;
 import ghidra.app.plugin.core.data.DataSettingsDialog;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
@@ -48,8 +48,7 @@ import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.async.AsyncLazyValue;
 import ghidra.async.AsyncUtils;
-import ghidra.base.widgets.table.DataTypeTableCellEditor;
-import ghidra.dbg.error.DebuggerModelAccessException;
+import ghidra.base.widgets.table.AbstractDataTypeTableCellEditor;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.*;
@@ -69,10 +68,11 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.*;
+import ghidra.trace.util.TraceEvents;
+import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
@@ -140,33 +140,48 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 	}
 
+	protected static final RegisterValueCellRenderer VALUE_RENDERER =
+		new RegisterValueCellRenderer();
+	protected static final RegisterValueCellEditor VALUE_EDITOR =
+		new RegisterValueCellEditor();
+	protected static final SettingsDefinition[] VALUE_DEFS =
+		new SettingsDefinition[] { FormatSettingsDefinition.DEF_HEX, };
+	protected static final RegisterDataTypeEditor TYPE_EDITOR = new RegisterDataTypeEditor();
+
 	protected enum RegisterTableColumns
 		implements EnumeratedTableColumn<RegisterTableColumns, RegisterRow> {
-		FAV("Fav", 1, Boolean.class, RegisterRow::isFavorite, RegisterRow::setFavorite, //
-				r -> true, SortDirection.DESCENDING),
+		FAV("Fav", 1, Boolean.class, RegisterRow::isFavorite, RegisterRow::setFavorite, r -> true,
+				SortDirection.DESCENDING),
 		NUMBER("#", 1, Integer.class, RegisterRow::getNumber),
 		NAME("Name", 40, String.class, RegisterRow::getName),
-		VALUE("Value", 100, BigInteger.class, RegisterRow::getValue, RegisterRow::setValue, //
+		VALUE("Value", 100, BigInteger.class, RegisterRow::getValue, RegisterRow::setValue,
 				RegisterRow::isValueEditable, SortDirection.ASCENDING) {
-			private static final RegisterValueCellRenderer RENDERER =
-				new RegisterValueCellRenderer();
-			private static final SettingsDefinition[] DEFS =
-				new SettingsDefinition[] { FormatSettingsDefinition.DEF_HEX, };
 
 			@Override
 			public GColumnRenderer<BigInteger> getRenderer() {
-				return RENDERER;
+				return VALUE_RENDERER;
+			}
+
+			@Override
+			public TableCellEditor getEditor() {
+				return VALUE_EDITOR;
 			}
 
 			@Override
 			public SettingsDefinition[] getSettingsDefinitions() {
-				return DEFS;
+				return VALUE_DEFS;
 			}
 		},
-		TYPE("Type", 40, DataType.class, RegisterRow::getDataType, RegisterRow::setDataType, //
-				r -> true, SortDirection.ASCENDING),
-		REPR("Repr", 100, String.class, RegisterRow::getRepresentation, RegisterRow::setRepresentation, //
-				RegisterRow::isRepresentationEditable, SortDirection.ASCENDING);
+		TYPE("Type", 40, DataType.class, RegisterRow::getDataType, RegisterRow::setDataType,
+				r -> true, SortDirection.ASCENDING) {
+			@Override
+			public TableCellEditor getEditor() {
+				return TYPE_EDITOR;
+			}
+		},
+		REPR("Repr", 100, String.class, RegisterRow::getRepresentation,
+				RegisterRow::setRepresentation, RegisterRow::isRepresentationEditable,
+				SortDirection.ASCENDING);
 
 		private final String header;
 		private final int width;
@@ -195,6 +210,11 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 
 		@Override
+		public String getHeader() {
+			return header;
+		}
+
+		@Override
 		public Class<?> getValueClass() {
 			return cls;
 		}
@@ -202,11 +222,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		@Override
 		public Object getValueOf(RegisterRow row) {
 			return getter.apply(row);
-		}
-
-		@Override
-		public String getHeader() {
-			return header;
 		}
 
 		@Override
@@ -230,7 +245,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 	}
 
-	protected static class RegistersTableModel
+	protected class RegistersTableModel
 			extends DefaultEnumeratedColumnTableModel<RegisterTableColumns, RegisterRow> {
 		public RegistersTableModel(PluginTool tool) {
 			super(tool, "Registers", RegisterTableColumns.class);
@@ -249,6 +264,14 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				descriptor.addHiddenColumn(factory.create());
 			}
 			return descriptor;
+		}
+
+		ServiceProvider getServiceProvider() {
+			return serviceProvider;
+		}
+
+		Trace getTrace() {
+			return currentTrace;
 		}
 	}
 
@@ -284,37 +307,28 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			listenFor(TraceEvents.THREAD_LIFESPAN_CHANGED, this::threadDestroyed);
 		}
 
-		private boolean isVisibleObjectsMode(AddressSpace space) {
-			TraceObject container = current.getRegisterContainer();
-			return container != null &&
-				container.getCanonicalPath().toString().equals(space.getName());
-		}
-
-		private boolean isVisible(TraceAddressSpace space) {
+		private boolean isVisible(AddressSpace space) {
+			if (!space.isRegisterSpace()) {
+				return true; // Memory-mapped, visible no matter the active thread
+			}
 			TraceThread curThread = current.getThread();
 			if (curThread == null) {
 				return false;
 			}
-			if (space.getAddressSpace().isOverlaySpace()) {
-				return isVisibleObjectsMode(space.getAddressSpace());
+			if (space.isOverlaySpace()) {
+				return current.isRegisterSpace(space);
 			}
-			if (!space.getAddressSpace().isRegisterSpace()) {
-				return true; // Memory-mapped, visible no matter the active thread
+			if (space.isRegisterSpace()) {
+				throw new AssertionError();
 			}
-			if (space.getThread() != curThread) {
-				return false;
-			}
-			if (space.getFrameLevel() != current.getFrame()) {
-				return false;
-			}
-			return true;
+			return false;
 		}
 
-		private boolean isVisible(TraceAddressSpace space, TraceAddressSnapRange range) {
+		private boolean isVisible(AddressSpace space, TraceAddressSnapRange range) {
 			if (!isVisible(space)) {
 				return false;
 			}
-			if (space.getAddressSpace().isMemorySpace()) {
+			if (space.isMemorySpace()) {
 				return current.getPlatform()
 						.getLanguage()
 						.getRegisterAddresses()
@@ -338,10 +352,21 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 
 		private void objectRestored(DomainObjectChangeRecord rec) {
-			coordinatesActivated(current.reFindThread());
+			/**
+			 * It's possible an "undo" or other transaction rollback will cause the current thread
+			 * to be replaced by another object. If that's the case, we need to adjust our
+			 * coordinates.
+			 * <p>
+			 * If that adjustment does not otherwise cause the table to update, we have to fire that
+			 * event, since the register values may have changed, esp., if this "restored" event is
+			 * the result of many events being coalesced.
+			 */
+			if (!coordinatesActivated(current.reFindThread())) {
+				regsTableModel.fireTableDataChanged();
+			}
 		}
 
-		private void registerValueChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void registerValueChanged(AddressSpace space, TraceAddressSnapRange range,
 				byte[] oldIsNull, byte[] newVal) {
 			if (!isVisible(space, range)) {
 				return;
@@ -349,7 +374,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			refreshRange(range.getRange());
 		}
 
-		private void registerStateChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void registerStateChanged(AddressSpace space, TraceAddressSnapRange range,
 				TraceMemoryState oldState, TraceMemoryState newState) {
 			if (!isVisible(space, range)) {
 				return;
@@ -358,7 +383,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			refreshRange(range.getRange());
 		}
 
-		private void registerTypeAdded(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void registerTypeAdded(AddressSpace space, TraceAddressSnapRange range,
 				TraceCodeUnit oldIsNull, TraceCodeUnit newUnit) {
 			if (!isVisible(space, range)) {
 				return;
@@ -366,7 +391,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			refreshRange(range.getRange());
 		}
 
-		private void registerTypeReplaced(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void registerTypeReplaced(AddressSpace space, TraceAddressSnapRange range,
 				long oldTypeID, long newTypeID) {
 			if (!isVisible(space, range)) {
 				return;
@@ -374,7 +399,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			refreshRange(range.getRange());
 		}
 
-		private void registerTypeLifespanChanged(TraceAddressSpace space, TraceCodeUnit unit,
+		private void registerTypeLifespanChanged(AddressSpace space, TraceCodeUnit unit,
 				Lifespan oldSpan, Lifespan newSpan) {
 			if (!isVisible(space)) {
 				return;
@@ -392,7 +417,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			refreshRange(range); // Slightly wasteful, as we already have the data unit
 		}
 
-		private void registerTypeRemoved(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void registerTypeRemoved(AddressSpace space, TraceAddressSnapRange range,
 				TraceCodeUnit oldUnit, TraceCodeUnit newIsNull) {
 			if (!isVisible(space)) {
 				return;
@@ -409,44 +434,60 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 	}
 
+	public static void applyStateColors(AbstractGCellRenderer renderer,
+			GTableCellRenderingData data, Predicate<RegisterRow> isChanged) {
+		RegisterRow row = (RegisterRow) data.getRowObject();
+		if (!row.isKnown()) {
+			if (data.isSelected()) {
+				renderer.setForeground(COLOR_FOREGROUND_STALE_SEL);
+			}
+			else {
+				renderer.setForeground(COLOR_FOREGROUND_STALE);
+			}
+		}
+		else if (isChanged.test(row)) {
+			if (data.isSelected()) {
+				renderer.setForeground(COLOR_FOREGROUND_CHANGED_SEL);
+			}
+			else {
+				renderer.setForeground(COLOR_FOREGROUND_CHANGED);
+			}
+		}
+	}
+
 	static class RegisterValueCellRenderer extends HexDefaultGColumnRenderer<BigInteger> {
 		@Override
 		public final Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			super.getTableCellRendererComponent(data);
-			RegisterRow row = (RegisterRow) data.getRowObject();
-			if (!row.isKnown()) {
-				if (data.isSelected()) {
-					setForeground(COLOR_FOREGROUND_STALE_SEL);
-				}
-				else {
-					setForeground(COLOR_FOREGROUND_STALE);
-				}
-			}
-			else if (row.isChanged()) {
-				if (data.isSelected()) {
-					setForeground(COLOR_FOREGROUND_CHANGED_SEL);
-				}
-				else {
-					setForeground(COLOR_FOREGROUND_CHANGED);
-				}
-			}
+			applyStateColors(this, data, RegisterRow::isChanged);
+			setFont(fixedWidthFont);
 			return this;
 		}
 	}
 
-	class RegisterDataTypeEditor extends DataTypeTableCellEditor {
-		public RegisterDataTypeEditor() {
-			super(plugin.getTool());
+	static class RegisterValueCellEditor extends HexBigIntegerTableCellEditor {
+		@Override
+		public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
+				int row, int column) {
+			super.getTableCellEditorComponent(table, value, isSelected, row, column);
+			JComponent component = input.getComponent();
+			component.setFont(VALUE_RENDERER.getFixedWidthFont());
+			return component;
 		}
+	}
 
+	static class RegisterDataTypeEditor extends AbstractDataTypeTableCellEditor {
 		@Override
 		protected AllowedDataTypes getAllowed(int row, int column) {
 			return AllowedDataTypes.FIXED_LENGTH;
 		}
 
 		@Override
-		protected boolean validateSelection(DataType dataType) {
-			RegisterRow row = regsTableModel.getModelData().get(regsTable.getEditingRow());
+		protected boolean validateSelection(DataType dataType, TableModel model) {
+			if (!(model instanceof RegistersTableModel rModel)) {
+				return false;
+			}
+			RegisterRow row = rModel.getModelData().get(table.getEditingRow());
 			if (row == null) {
 				return false;
 			}
@@ -454,12 +495,21 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 
 		@Override
-		protected DataType resolveSelection(DataType dataType) {
-			if (dataType == null) {
+		protected DataTypeManagerService getService(TableModel model) {
+			if (!(model instanceof RegistersTableModel rModel)) {
 				return null;
 			}
-			try (Transaction tx = currentTrace.openTransaction("Resolve DataType")) {
-				return currentTrace.getDataTypeManager().resolve(dataType, null);
+			return rModel.getServiceProvider().getService(DataTypeManagerService.class);
+		}
+
+		@Override
+		protected DataType resolveSelection(DataType dataType, TableModel model) {
+			if (dataType == null || !(model instanceof RegistersTableModel rModel)) {
+				return null;
+			}
+			Trace trace = rModel.getTrace();
+			try (Transaction tx = trace.openTransaction("Resolve DataType")) {
+				return trace.getDataTypeManager().resolve(dataType, null);
 			}
 		}
 	}
@@ -498,7 +548,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	final RegistersTableModel regsTableModel;
 	GhidraTable regsTable;
 	GhidraTableFilterPanel<RegisterRow> regsFilterPanel;
-	Map<Register, RegisterRow> regMap = new HashMap<>();
+	Map<Register, RegisterRow> regMap = new IdentityHashMap<>();
 
 	private final DebuggerAvailableRegistersDialog availableRegsDialog;
 
@@ -567,7 +617,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	protected void buildMainPanel() {
 		regsTable = new GhidraTable(regsTableModel);
-		// TODO: Allow multiple selection for copy, etc.?
+		// LATER: Allow multiple selection for copy, etc.?
 		mainPanel.add(new JScrollPane(regsTable));
 		regsFilterPanel = new GhidraTableFilterPanel<>(regsTable, regsTableModel);
 		mainPanel.add(regsFilterPanel, BorderLayout.SOUTH);
@@ -600,12 +650,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				}
 			}
 		});
-
-		TableColumnModel columnModel = regsTable.getColumnModel();
-		TableColumn valCol = columnModel.getColumn(RegisterTableColumns.VALUE.ordinal());
-		valCol.setCellEditor(new HexBigIntegerTableCellEditor());
-		TableColumn typeCol = columnModel.getColumn(RegisterTableColumns.TYPE.ordinal());
-		typeCol.setCellEditor(new RegisterDataTypeEditor());
 	}
 
 	@Override
@@ -773,7 +817,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	protected String computeSubTitle() {
 		TraceThread curThread = current.getThread();
-		return curThread == null ? "" : curThread.getName();
+		return curThread == null ? "" : curThread.getName(current.getSnap());
 	}
 
 	protected void updateSubTitle() {
@@ -804,10 +848,16 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		addNewTraceListener();
 	}
 
-	public void coordinatesActivated(DebuggerCoordinates coordinates) {
+	/**
+	 * Notify this provider of new coordinates
+	 * 
+	 * @param coordinates the new coordinates
+	 * @return true if the new coordinates caused the table to update
+	 */
+	public boolean coordinatesActivated(DebuggerCoordinates coordinates) {
 		if (sameCoordinates(current, coordinates)) {
 			current = coordinates;
-			return;
+			return false;
 		}
 
 		previous = current;
@@ -819,8 +869,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 		prepareRegisterSpace();
 		recomputeViewKnown();
-		loadRegistersAndValues();
+		loadRegistersAndValues(previous.getLanguage() != current.getLanguage());
 		contextChanged();
+		return true;
 	}
 
 	protected void traceClosed(Trace trace) {
@@ -844,7 +895,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	BigInteger getRegisterValue(Register register) {
-		TraceMemorySpace regs = getRegisterMemorySpace(register.getAddressSpace(), false);
+		Address hostReg = current.getPlatform().mapGuestToHost(register.getAddress());
+		TraceMemorySpace regs = getRegisterMemorySpace(hostReg.getAddressSpace(), false);
 		if (regs == null) {
 			return BigInteger.ZERO;
 		}
@@ -871,7 +923,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		CompletableFuture<Void> future = editor.setRegister(rv);
 		future.exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
-			reportError("Edit Register", "Could not write target register", ex);
+			reportError(null, "Could not write target register", ex);
 			return null;
 		});
 		return;
@@ -920,7 +972,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	TraceData getRegisterData(Register register) {
-		TraceCodeSpace space = getRegisterCodeSpace(register.getAddressSpace(), false);
+		Address hostReg = current.getPlatform().mapGuestToHost(register.getAddress());
+		TraceCodeSpace space = getRegisterCodeSpace(hostReg.getAddressSpace(), false);
 		if (space == null) {
 			return null;
 		}
@@ -976,7 +1029,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	/**
 	 * Ensure the register space exists and has been populated from register object values.
-	 * 
 	 * <p>
 	 * TODO: I wish this were not necessary. Maybe I should create the space when register object
 	 * values are populated.
@@ -1008,8 +1060,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		AddressSetView guestRegs = platform.getLanguage().getRegisterAddresses();
 		AddressSetView hostRegs = platform.mapGuestToHost(guestRegs);
 		AddressSetView viewKnownMem = view.getViewport()
-				.unionedAddresses(snap -> mem.getAddressesWithState(snap, hostRegs,
-					state -> state == TraceMemoryState.KNOWN));
+				.unionedAddresses(
+					snap -> mem.getAddressesWithState(snap, hostRegs, StatePredicate.IS_KNOWN));
 		AddressSpace regSpace = platform.getAddressFactory().getRegisterSpace();
 		if (regSpace == null) {
 			viewKnown = new AddressSet(viewKnownMem);
@@ -1023,8 +1075,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		AddressSetView overlayRegs =
 			TraceRegisterUtils.getOverlaySet(regs.getAddressSpace(), hostRegs);
 		AddressSetView viewKnownRegs = view.getViewport()
-				.unionedAddresses(snap -> regs.getAddressesWithState(snap, overlayRegs,
-					state -> state == TraceMemoryState.KNOWN));
+				.unionedAddresses(
+					snap -> regs.getAddressesWithState(snap, overlayRegs, StatePredicate.IS_KNOWN));
 		viewKnown = viewKnownRegs.union(viewKnownMem);
 	}
 
@@ -1032,8 +1084,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (viewKnown == null) {
 			return false;
 		}
-		TraceMemorySpace regs = getRegisterMemorySpace(current, register.getAddressSpace(), false);
-		if (regs == null && register.getAddressSpace().isRegisterSpace()) {
+		Address hostReg = current.getPlatform().mapGuestToHost(register.getAddress());
+		TraceMemorySpace regs = getRegisterMemorySpace(current, hostReg.getAddressSpace(), false);
+		if (regs == null && hostReg.getAddressSpace().isRegisterSpace()) {
 			return false;
 		}
 		AddressRange range = current.getPlatform()
@@ -1046,16 +1099,17 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (previous.getThread() == null || current.getThread() == null) {
 			return false;
 		}
-		if (previous.getPlatform().getLanguage() != current.getPlatform().getLanguage()) {
+		if (previous.getLanguage() != current.getLanguage()) {
 			return false;
 		}
 		if (!isRegisterKnown(register)) {
 			return false;
 		}
+		Address hostReg = current.getPlatform().mapGuestToHost(register.getAddress());
 		TraceMemorySpace curSpace =
-			getRegisterMemorySpace(current, register.getAddressSpace(), false);
+			getRegisterMemorySpace(current, hostReg.getAddressSpace(), false);
 		TraceMemorySpace prevSpace =
-			getRegisterMemorySpace(previous, register.getAddressSpace(), false);
+			getRegisterMemorySpace(previous, hostReg.getAddressSpace(), false);
 		if (prevSpace == null) {
 			return false;
 		}
@@ -1072,10 +1126,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	/**
 	 * Gather general registers, the program counter, and the stack pointer
-	 * 
 	 * <p>
 	 * This excludes the context register
-	 * 
 	 * <p>
 	 * TODO: Several pspec files need adjustment to clean up "common registers"
 	 * 
@@ -1094,9 +1146,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			result.add(pc);
 		}
 		for (Register reg : lang.getRegisters()) {
-			//if (reg.getGroup() != null) {
-			//	continue;
-			//}
 			if (reg.isProcessorContext()) {
 				continue;
 			}
@@ -1226,7 +1275,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		Set<Register> selection = getSelectionFor(current.getPlatform());
 		selection.clear();
 		selection.addAll(new TreeSet<>(selectedRegisters));
-		return loadRegistersAndValues();
+		return loadRegistersAndValues(false);
 	}
 
 	public RegisterRow getRegisterRow(Register register) {
@@ -1245,29 +1294,37 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	protected void displaySelectedRegisters(Set<Register> selected) {
 		List<Register> regs = current.getPlatform().getLanguage().getRegisters();
+		List<RegisterRow> toDelete = new ArrayList<>();
 		for (Iterator<Entry<Register, RegisterRow>> it = regMap.entrySet().iterator(); it
 				.hasNext();) {
 			Map.Entry<Register, RegisterRow> ent = it.next();
 			if (!selected.contains(ent.getKey())) {
-				regsTableModel.delete(ent.getValue());
+				toDelete.add(ent.getValue());
 				it.remove();
 			}
 		}
+		regsTableModel.deleteWith(toDelete::contains);
 
+		List<RegisterRow> toAdd = new ArrayList<>();
 		for (Register reg : selected) {
 			regMap.computeIfAbsent(reg, r -> {
 				RegisterRow row = new RegisterRow(this, regs.indexOf(reg), reg);
-				regsTableModel.add(row);
+				toAdd.add(row);
 				return row;
 			});
 		}
+		regsTableModel.addAll(toAdd);
 	}
 
-	protected CompletableFuture<Void> loadRegistersAndValues() {
+	protected CompletableFuture<Void> loadRegistersAndValues(boolean changeLanguage) {
 		if (current.getThread() == null) {
 			regsTableModel.clear();
 			regMap.clear();
 			return AsyncUtils.nil();
+		}
+		if (changeLanguage) {
+			regsTableModel.clear();
+			regMap.clear();
 		}
 		Set<Register> selected = getSelectionFor(current.getPlatform());
 		displaySelectedRegisters(selected);
@@ -1316,9 +1373,13 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		return current;
 	}
 
+	public DebuggerCoordinates getPrevious() {
+		return previous;
+	}
+
 	private void reportError(String title, String message, Throwable ex) {
 		plugin.getTool().setStatusInfo(message + ": " + ex.getMessage());
-		if (title != null && !(ex instanceof DebuggerModelAccessException)) {
+		if (title != null) {
 			Msg.showError(this, getComponent(), title, message, ex);
 		}
 		else if (consoleService != null) {

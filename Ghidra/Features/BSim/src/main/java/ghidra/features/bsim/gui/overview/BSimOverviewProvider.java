@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 package ghidra.features.bsim.gui.overview;
+
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -36,6 +39,7 @@ import ghidra.features.bsim.gui.search.dialog.BSimSearchSettings;
 import ghidra.features.bsim.gui.search.results.BSimSearchInfoDisplayDialog;
 import ghidra.features.bsim.query.BSimServerInfo;
 import ghidra.features.bsim.query.protocol.ResponseNearestVector;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -62,6 +66,7 @@ public class BSimOverviewProvider extends ComponentProviderAdapter {
 	private BSimServerInfo serverInfo;
 
 	private BSimSearchSettings settings;
+	private DomainObjectListener listener;
 
 	public BSimOverviewProvider(BSimSearchPlugin plugin, BSimServerInfo serverInfo, Program program,
 			LSHVectorFactory vFactory, BSimSearchSettings settings) {
@@ -87,6 +92,13 @@ public class BSimOverviewProvider extends ComponentProviderAdapter {
 
 		createActions();
 		updateSubTitle();
+		listener = ev -> {
+			if (ev.contains(SYMBOL_RENAMED, RESTORED)) {
+				overviewModel.fireTableDataChanged();
+			}
+		};
+		program.addListener(listener);
+
 	}
 
 	public Program getProgram() {
@@ -102,12 +114,14 @@ public class BSimOverviewProvider extends ComponentProviderAdapter {
 		addLocalAction(new SelectionNavigationAction(plugin, table));
 		HelpLocation help =
 			new HelpLocation(BSimSearchPlugin.HELP_TOPIC, "Overview_Search_Info_Action");
-		new ActionBuilder("Search Info", getName()).toolBarIcon(Icons.INFO_ICON)
+		new ActionBuilder("Search Info", getOwner())
+				.toolBarIcon(Icons.INFO_ICON)
 				.helpLocation(help)
 				.onAction(c -> showSearchInfo())
 				.buildAndInstallLocal(this);
 
-		new ActionBuilder("Make Selection", getOwner()).popupMenuPath("Make Selection")
+		new ActionBuilder("Make Selection", getOwner())
+				.popupMenuPath("Make Selection")
 				.description("Make a selection using selected rows")
 				.helpLocation(
 					new HelpLocation(BSimSearchPlugin.HELP_TOPIC, "Overview_Make_Selection"))
@@ -215,6 +229,7 @@ public class BSimOverviewProvider extends ComponentProviderAdapter {
 	public void componentHidden() {
 		super.componentHidden();
 		if (plugin != null) {
+			program.removeListener(listener);
 			plugin.providerClosed(this);
 		}
 	}

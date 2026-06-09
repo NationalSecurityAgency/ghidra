@@ -38,7 +38,7 @@ public class ArrayAction extends CompositeEditorTableAction {
 	private final static KeyStroke KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_OPEN_BRACKET, 0);
 	private static String[] POPUP_PATH = new String[] { ACTION_NAME };
 
-	public ArrayAction(CompositeEditorProvider provider) {
+	public ArrayAction(CompositeEditorProvider<?, ?> provider) {
 		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 		setDescription(DESCRIPTION);
 		setKeyBindingData(new KeyBindingData(KEY_STROKE));

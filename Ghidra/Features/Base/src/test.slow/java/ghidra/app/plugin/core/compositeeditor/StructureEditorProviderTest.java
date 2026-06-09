@@ -299,14 +299,26 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		dialog = getWindow("Close Structure Editor?");
 		assertNull(dialog);
 
+		// Verify the editor provider remains visible with myStructure use converted to BadDataType.
+		assertEquals(1, model.viewComposite.getNumComponents());
+		assertEquals(1, model.viewComposite.getNumDefinedComponents());
+		DataTypeComponent dtc = model.viewComposite.getComponent(0);
+		assertTrue(BadDataType.dataType.isEquivalent(dtc.getDataType()));
+		assertEquals(2, dtc.getLength());
+
+		runSwing(() -> {
+			model.deleteComponent(0);
+		});
+		waitForSwing();
+
 		assertTrue(
 			isProviderShown(tool.getToolFrame(), "Structure Editor", "emptyStructure (Test)"));
 
-		// Verify the editor provider remains visible with myStructure use cleared.
-		assertFalse(emptyStructure.isEquivalent(model.viewComposite));
+		// Verify the editor provider remains visible with BadDataType use cleared.
+		assertTrue(emptyStructure.isEquivalent(model.viewComposite));
 		assertFalse(dtCopy.isEquivalent(model.viewComposite));
-		assertEquals(dtCopy.getLength(), model.viewComposite.getLength());
-		assertEquals(2, model.viewComposite.getNumComponents());
+		assertTrue(model.viewComposite.isZeroLength());
+		assertEquals(0, model.viewComposite.getNumComponents());
 		assertEquals(0, model.viewComposite.getNumDefinedComponents());
 	}
 

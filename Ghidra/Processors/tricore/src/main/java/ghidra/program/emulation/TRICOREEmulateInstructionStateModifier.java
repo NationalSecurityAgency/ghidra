@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.pcode.Varnode;
 
+@Deprecated(forRemoval = true, since = "12.1")
 public class TRICOREEmulateInstructionStateModifier extends EmulateInstructionStateModifier {
 	 Register FCX,PCXI,LCX,PSW,a10,a11,d8,a12,d12;
 	
@@ -43,7 +44,7 @@ public class TRICOREEmulateInstructionStateModifier extends EmulateInstructionSt
 	private class tricore_SaveCallerState implements OpBehaviorOther {
 		@Override
 		public void evaluate(Emulate emu, Varnode outputVarnode, Varnode[] inputs) {
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs != 3) throw new LowlevelError(this.getClass().getName() + ": requires 3 inputs (FCX, LCX, PCXI), got " + numArgs);
 
 			MemoryState memoryState = emu.getMemoryState();
@@ -100,7 +101,7 @@ public class TRICOREEmulateInstructionStateModifier extends EmulateInstructionSt
 	private class tricore_RestoreCallerState implements OpBehaviorOther {
 		@Override
 		public void evaluate(Emulate emu, Varnode outputVarnode, Varnode[] inputs) {
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs != 3) throw new LowlevelError(this.getClass().getName() + ": requires 3 inputs (FCX, LCX, PCXI), got " + numArgs);
 
 			MemoryState memoryState = emu.getMemoryState();

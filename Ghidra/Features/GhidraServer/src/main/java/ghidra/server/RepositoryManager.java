@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -119,10 +119,12 @@ public class RepositoryManager {
 	 * given name
 	 * @throws UserAccessException if the user does not exist in
 	 * the list of known users for this manager
+	 * @throws UserAccessException if the currentUser does not have
+	 * ability to create a repository
 	 * @throws IOException if there was an error creating the repository
 	 */
 	public synchronized Repository createRepository(String currentUser, String name)
-			throws IOException, DuplicateFileException {
+			throws UserAccessException, IOException, DuplicateFileException {
 
 		if (isAnonymousUser(currentUser)) {
 			throw new UserAccessException("Anonymous user not permitted to create repository");
@@ -130,9 +132,13 @@ public class RepositoryManager {
 
 		validateUser(currentUser);
 
-		if (!NamingUtilities.isValidProjectName(name)) {
-			throw new IOException("Invalid repository name: " + name);
+		try {
+			NamingUtilities.checkName(name, "Repository name");
 		}
+		catch (IllegalArgumentException e) {
+			throw new IOException(e.getMessage());
+		}
+
 		if (repositoryMap.containsKey(name)) {
 			throw new DuplicateFileException("Repository named " + name + " already exists");
 		}
@@ -143,7 +149,6 @@ public class RepositoryManager {
 		}
 
 		Repository rep = new Repository(this, currentUser, f, name);
-		log(name, null, "repository created", currentUser);
 		repositoryMap.put(name, rep);
 		return rep;
 	}
@@ -183,9 +188,11 @@ public class RepositoryManager {
 	 * Delete a specified repository.
 	 * @param currentUser current user
 	 * @param name repository name
+	 * @throws UserAccessException if currentUser does not have Admin priviledge
 	 * @throws IOException if error occurs while removing repository
 	 */
-	public synchronized void deleteRepository(String currentUser, String name) throws IOException {
+	public synchronized void deleteRepository(String currentUser, String name)
+			throws UserAccessException, IOException {
 
 		if (isAnonymousUser(currentUser)) {
 			throw new UserAccessException("Anonymous user not permitted to delete repository");
@@ -429,22 +436,12 @@ public class RepositoryManager {
 		return host;
 	}
 
-	public static void log(String repositoryName, String path, String msg, String user) {
+	static void log(String repositoryName, String path, String msg) {
 		StringBuffer buf = new StringBuffer();
 		if (repositoryName != null) {
 			buf.append("[");
 			buf.append(repositoryName);
 			buf.append("]");
-		}
-		String host = RepositoryManager.getRMIClient();
-		String userStr = user;
-		if (userStr != null) {
-			if (host != null) {
-				userStr += "@" + host;
-			}
-		}
-		else {
-			userStr = host;
 		}
 		if (path != null) {
 			buf.append(path);
@@ -453,11 +450,6 @@ public class RepositoryManager {
 			buf.append(": ");
 		}
 		buf.append(msg);
-		if (userStr != null) {
-			buf.append(" (");
-			buf.append(userStr);
-			buf.append(")");
-		}
 		log.info(buf.toString());
 	}
 

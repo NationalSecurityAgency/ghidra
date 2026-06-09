@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import ghidra.framework.store.*;
-import ghidra.util.*;
+import ghidra.util.ReadOnlyException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
@@ -49,7 +49,7 @@ public abstract class LocalFolderItem implements FolderItem {
 
 	static final String DATA_DIR_EXTENSION = ".db";
 
-	final PropertyFile propertyFile;
+	final ItemPropertyFile propertyFile;
 	final CheckoutManager checkoutMgr;
 	final HistoryManager historyMgr;
 	final LocalFileSystem fileSystem;
@@ -69,7 +69,7 @@ public abstract class LocalFolderItem implements FolderItem {
 	 * @param fileSystem file system
 	 * @param propertyFile property file
 	 */
-	LocalFolderItem(LocalFileSystem fileSystem, PropertyFile propertyFile) {
+	LocalFolderItem(LocalFileSystem fileSystem, ItemPropertyFile propertyFile) {
 		this.fileSystem = fileSystem;
 		this.propertyFile = propertyFile;
 		this.isVersioned = fileSystem.isVersioned();
@@ -88,14 +88,14 @@ public abstract class LocalFolderItem implements FolderItem {
 	 * @param useDataDir if true the getDataDir() method must return an appropriate 
 	 * directory for data storage.
 	 * @param create if true the data directory will be created
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
-	LocalFolderItem(LocalFileSystem fileSystem, PropertyFile propertyFile, boolean useDataDir,
+	LocalFolderItem(LocalFileSystem fileSystem, ItemPropertyFile propertyFile, boolean useDataDir,
 			boolean create) throws IOException {
 		this.fileSystem = fileSystem;
 		this.propertyFile = propertyFile;
 		this.isVersioned = fileSystem.isVersioned();
-		this.useDataDir = useDataDir || isVersioned;
+		this.useDataDir = useDataDir;
 
 		boolean success = false;
 		try {
@@ -121,7 +121,7 @@ public abstract class LocalFolderItem implements FolderItem {
 				throw new FileNotFoundException(getName() + " not found");
 			}
 
-			if (isVersioned) {
+			if (isVersioned && useDataDir) {
 				checkoutMgr = new CheckoutManager(this, create);
 				historyMgr = new HistoryManager(this, create);
 			}
@@ -154,12 +154,14 @@ public abstract class LocalFolderItem implements FolderItem {
 	}
 
 	/**
-	 * Returns hidden database directory
+	 * {@return data storage directory}
+	 * NOTE: Even if a data directory is not required this method will still return one to 
+	 * allow removal of an unknown item type that may or may not use it.
 	 */
-	File getDataDir() {
+	final File getDataDir() {
 		synchronized (fileSystem) {
 			// Use hidden DB directory
-			return new File(propertyFile.getFolder(),
+			return new File(propertyFile.getParentStorageDirectory(),
 				LocalFileSystem.HIDDEN_DIR_PREFIX +
 					LocalFileSystem.escapeHiddenDirPrefixChars(propertyFile.getStorageName()) +
 					DATA_DIR_EXTENSION);
@@ -167,7 +169,7 @@ public abstract class LocalFolderItem implements FolderItem {
 	}
 
 	/**
-	 * Return the oldest/minimum version.
+	 * {@return the oldest/minimum version}
 	 * @throws IOException thrown if an IO error occurs.
 	 */
 	abstract int getMinimumVersion() throws IOException;
@@ -175,7 +177,7 @@ public abstract class LocalFolderItem implements FolderItem {
 	/**
 	 * Verify that the specified version of this item is not in use.
 	 * @param version the specific version to check for versioned items.
-	 * @throws FileInUseException
+	 * @throws FileInUseException if specified item version is in use or unable to determine
 	 */
 	void checkInUse(int version) throws FileInUseException {
 		synchronized (fileSystem) {
@@ -185,7 +187,7 @@ public abstract class LocalFolderItem implements FolderItem {
 					isCheckedOut = checkoutMgr.isCheckedOut(version);
 				}
 				catch (IOException e) {
-					throw new FileInUseException(getName() + " versioning error", e);
+					throw new FileInUseException(getName() + " versioning error");
 				}
 				if (isCheckedOut) {
 					throw new FileInUseException(
@@ -200,7 +202,7 @@ public abstract class LocalFolderItem implements FolderItem {
 
 	/**
 	 * Verify that this item is not in use.
-	 * @throws FileInUseException
+	 * @throws FileInUseException if item is in use or unable to determine
 	 */
 	void checkInUse() throws FileInUseException {
 		synchronized (fileSystem) {
@@ -213,7 +215,8 @@ public abstract class LocalFolderItem implements FolderItem {
 					isCheckedOut = checkoutMgr.isCheckedOut();
 				}
 				catch (IOException e) {
-					throw new FileInUseException(getName() + " versioning error", e);
+					// A bad checkouts file can cause this (check log)
+					throw new FileInUseException(getName() + " versioning error");
 				}
 				if (isCheckedOut) {
 					throw new FileInUseException(getName() + " is checked out");
@@ -228,17 +231,20 @@ public abstract class LocalFolderItem implements FolderItem {
 	/**
 	 * Begin the check-in process for a versioned item.
 	 * @param checkoutId assigned at time of checkout, becomes the check-in ID.
-	 * @throws FileInUseException
+	 * @throws FileInUseException if specified item version is in use or unable to determine
 	 */
 	void beginCheckin(long checkoutId) throws FileInUseException {
 		synchronized (fileSystem) {
+			if (checkoutMgr == null) {
+				throw new UnsupportedOperationException("item does not support checkin/checkout");
+			}
 			if (checkinId != DEFAULT_CHECKOUT_ID) {
 				ItemCheckoutStatus status;
 				try {
 					status = checkoutMgr.getCheckout(checkinId);
 				}
 				catch (IOException e) {
-					throw new FileInUseException(getName() + " versioning error", e);
+					throw new FileInUseException(getName() + " versioning error");
 				}
 				String byMsg = status != null ? (" by: " + status.getUser()) : "";
 				throw new FileInUseException("Another checkin is in progress" + byMsg);
@@ -356,7 +362,7 @@ public abstract class LocalFolderItem implements FolderItem {
 	 * Files are restored to there original state if unable to remove
 	 * all files.
 	 */
-	void deleteContent(String user) throws IOException {
+	final void deleteContent(String user) throws IOException {
 		synchronized (fileSystem) {
 			File dataDir = getDataDir();
 			File chkDir = new File(dataDir.getParentFile(), dataDir.getName() + ".delete");
@@ -395,7 +401,7 @@ public abstract class LocalFolderItem implements FolderItem {
 	 * never be the only version (i.e., minVersion will always be less
 	 * than the currentVersion).
 	 * @param user user name
-	 * @throws IOException
+	 * @throws IOException if item update failure occurs
 	 */
 	abstract void deleteMinimumVersion(String user) throws IOException;
 
@@ -405,7 +411,7 @@ public abstract class LocalFolderItem implements FolderItem {
 	 * never be the only version (i.e., minVersion will always be less
 	 * than the currentVersion).
 	 * @param user user name
-	 * @throws IOException
+	 * @throws IOException if item update failure occurs
 	 */
 	abstract void deleteCurrentVersion(String user) throws IOException;
 
@@ -413,10 +419,11 @@ public abstract class LocalFolderItem implements FolderItem {
 	 * Move this item into a newFolder which has a path of newPath.
 	 * @param newFolder new parent directory/folder 
 	 * @param newStorageName new storage name
-	 * @param newPath new parent path
-	 * @throws DuplicateFileException
-	 * @throws FileInUseException
-	 * @throws IOException
+	 * @param newFolderPath new parent path
+	 * @param newName new item name
+	 * @throws DuplicateFileException if detsination item already exists
+	 * @throws FileInUseException if items appears to be in use
+	 * @throws IOException if item update failure occurs
 	 * @see ghidra.framework.store.FileSystem#moveItem
 	 */
 	void moveTo(File newFolder, String newStorageName, String newFolderPath, String newName)
@@ -424,7 +431,7 @@ public abstract class LocalFolderItem implements FolderItem {
 		synchronized (fileSystem) {
 			checkInUse();
 
-			File oldFolder = propertyFile.getFolder();
+			File oldFolder = propertyFile.getParentStorageDirectory();
 			String oldStorageName = propertyFile.getStorageName();
 			String oldPath = propertyFile.getParentPath();
 			File oldDbDir = getDataDir();
@@ -457,7 +464,7 @@ public abstract class LocalFolderItem implements FolderItem {
 	 */
 	@Override
 	public String getContentType() {
-		return propertyFile.getString(CONTENT_TYPE, null);
+		return propertyFile.getString(CONTENT_TYPE, UnknownFolderItem.UNKNOWN_CONTENT_TYPE);
 	}
 
 	/**
@@ -488,41 +495,6 @@ public abstract class LocalFolderItem implements FolderItem {
 	public String getName() {
 		return propertyFile.getName();
 	}
-
-//	/**
-//	 * Change the name of this item's property file and hidden data directory
-//	 * based upon the new item name.
-//	 * If in-use files prevent renaming a FileInUseException will be thrown.
-//	 * @param name new name for this item
-//	 * @throws InvalidNameException invalid name was specified
-//	 * @throws IOException an error occurred
-//	 */
-//	void doSetName(String name) throws InvalidNameException, IOException {
-//		synchronized (fileSystem) {
-//			File oldDbDir = getDataDir();
-//			String oldName = getName();
-//
-//			boolean success = false;
-//			try {
-//				propertyFile.setName(name);
-//				File newDbDir = getDataDir();
-//				if (useDataDir) {
-//					if (newDbDir.exists()) {
-//						throw new DuplicateFileException(getName() + " already exists");
-//					}
-//					else if (!oldDbDir.renameTo(newDbDir)) {
-//						throw new FileInUseException(oldName + " is in use");
-//					}
-//				}
-//				success = true;
-//			}
-//			finally {
-//				if (!success && !propertyFile.getName().equals(oldName)) {
-//					propertyFile.setName(oldName);
-//				}
-//			}
-//		}
-//	}
 
 	/**
 	 * @see ghidra.framework.store.FolderItem#getParentPath()
@@ -588,6 +560,10 @@ public abstract class LocalFolderItem implements FolderItem {
 				throw new UnsupportedOperationException(
 					"Non-versioned item does not support getVersions");
 			}
+			if (historyMgr == null) {
+				throw new UnsupportedOperationException(
+					"getVersions not supported without history manager");
+			}
 			return historyMgr.getVersions();
 		}
 	}
@@ -650,12 +626,16 @@ public abstract class LocalFolderItem implements FolderItem {
 	@Override
 	public ItemCheckoutStatus checkout(CheckoutType checkoutType, String user, String projectPath)
 			throws IOException {
+		if (checkoutMgr == null) {
+			throw new UnsupportedOperationException("item does not support checkin/checkout");
+		}
 		if (!isVersioned) {
 			throw new UnsupportedOperationException("Non-versioned item does not support checkout");
 		}
 		if (fileSystem.isReadOnly()) {
 			throw new ReadOnlyException();
 		}
+
 		synchronized (fileSystem) {
 
 			ItemCheckoutStatus coStatus =
@@ -670,6 +650,9 @@ public abstract class LocalFolderItem implements FolderItem {
 
 	@Override
 	public void terminateCheckout(long checkoutId, boolean notify) throws IOException {
+		if (checkoutMgr == null) {
+			throw new UnsupportedOperationException("item does not support checkin/checkout");
+		}
 		if (!isVersioned) {
 			throw new UnsupportedOperationException("Non-versioned item does not support checkout");
 		}
@@ -698,6 +681,9 @@ public abstract class LocalFolderItem implements FolderItem {
 				throw new UnsupportedOperationException(
 					"Non-versioned item does not support checkout");
 			}
+			if (checkoutMgr == null) {
+				return null;
+			}
 			return checkoutMgr.getCheckout(checkoutId);
 		}
 	}
@@ -708,6 +694,9 @@ public abstract class LocalFolderItem implements FolderItem {
 			if (!isVersioned) {
 				throw new UnsupportedOperationException(
 					"Non-versioned item does not support checkout");
+			}
+			if (checkoutMgr == null) {
+				return new ItemCheckoutStatus[0];
 			}
 			return checkoutMgr.getAllCheckouts();
 		}
@@ -800,29 +789,39 @@ public abstract class LocalFolderItem implements FolderItem {
 	 * @param propertyFile property file which identifies the folder item.
 	 * @return folder item
 	 */
-	static LocalFolderItem getFolderItem(LocalFileSystem fileSystem, PropertyFile propertyFile) {
+	static LocalFolderItem getFolderItem(LocalFileSystem fileSystem,
+			ItemPropertyFile propertyFile) {
 		int fileType = propertyFile.getInt(FILE_TYPE, UNKNOWN_FILE_TYPE);
 		try {
 			if (fileType == DATAFILE_FILE_TYPE) {
-				return new LocalDataFile(fileSystem, propertyFile);
+				return new LocalDataFileItem(fileSystem, propertyFile);
 			}
 			else if (fileType == DATABASE_FILE_TYPE) {
 				return new LocalDatabaseItem(fileSystem, propertyFile);
 			}
+			else if (fileType == LINK_FILE_TYPE) {
+				return new LocalTextDataItem(fileSystem, propertyFile);
+			}
+			else if (fileType == UNKNOWN_FILE_TYPE) {
+				log.error("Folder item has unspecified file type: " + new File(
+					propertyFile.getParentStorageDirectory(), propertyFile.getStorageName()));
+			}
 			else {
-				log.error("Item has unknown content type: " +
-					new File(propertyFile.getFolder(), propertyFile.getStorageName()));
+				log.error("Folder item has unsupported file type (" + fileType + "): " + new File(
+					propertyFile.getParentStorageDirectory(), propertyFile.getStorageName()));
 			}
 		}
 		catch (FileNotFoundException e) {
-			log.error("Item may be corrupt due to missing file: " +
-				new File(propertyFile.getFolder(), propertyFile.getStorageName()), e);
+			log.error("Folder item may be corrupt due to missing file: " +
+				new File(propertyFile.getParentStorageDirectory(), propertyFile.getStorageName()),
+				e);
 		}
 		catch (IOException e) {
-			log.error("Item may be corrupt: " +
-				new File(propertyFile.getFolder(), propertyFile.getStorageName()), e);
+			log.error("Folder item may be corrupt: " +
+				new File(propertyFile.getParentStorageDirectory(), propertyFile.getStorageName()),
+				e);
 		}
-		return new UnknownFolderItem(fileSystem, propertyFile);
+		return new LocalUnknownFolderItem(fileSystem, propertyFile);
 	}
 
 	@Override
@@ -830,11 +829,10 @@ public abstract class LocalFolderItem implements FolderItem {
 		synchronized (fileSystem) {
 			if (isVersioned) {
 				try {
-					return checkoutMgr.isCheckedOut();
+					return checkoutMgr != null && checkoutMgr.isCheckedOut();
 				}
 				catch (IOException e) {
-					Msg.error(getName() + " versioning error", e);
-					return true;
+					return true; // error already logged
 				}
 			}
 			return false;
@@ -859,6 +857,11 @@ public abstract class LocalFolderItem implements FolderItem {
 		return false;
 	}
 
+	@Override
+	public int hashCode() {
+		return propertyFile.hashCode();
+	}
+
 	/**
 	 * Update this non-versioned item with the latest version of the specified versioned item.
 	 * @param versionedFolderItem versioned item which corresponds to this
@@ -876,8 +879,8 @@ public abstract class LocalFolderItem implements FolderItem {
 	 * Update this non-versioned item with the contents of the specified item which must be 
 	 * within the same non-versioned fileSystem.  If successful, the specified item will be 
 	 * removed after its content has been moved into this item.
-	 * @param item
-	 * @param checkoutVersion
+	 * @param item source item for update of this item
+	 * @param checkoutVersion version of current checkout
 	 * @throws IOException if this file is not a checked-out non-versioned file 
 	 * or an IO error occurs.
 	 */
@@ -886,6 +889,9 @@ public abstract class LocalFolderItem implements FolderItem {
 	@Override
 	public void updateCheckoutVersion(long checkoutId, int checkoutVersion, String user)
 			throws IOException {
+		if (checkoutMgr == null) {
+			throw new UnsupportedOperationException("item does not support checkin/checkout");
+		}
 		if (!isVersioned) {
 			throw new UnsupportedOperationException(
 				"updateCheckoutVersion is not applicable to non-versioned item");
@@ -901,4 +907,5 @@ public abstract class LocalFolderItem implements FolderItem {
 			checkoutMgr.updateCheckout(checkoutId, checkoutVersion);
 		}
 	}
+
 }

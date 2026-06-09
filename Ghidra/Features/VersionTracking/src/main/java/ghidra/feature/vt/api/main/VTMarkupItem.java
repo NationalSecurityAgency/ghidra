@@ -82,7 +82,7 @@ public interface VTMarkupItem {
 	 * The {@link #getDestinationAddressSource()} will return {@link #USER_DEFINED_ADDRESS_SOURCE}
 	 * when a valid destination address is set via this method.
 	 * <p>
-	 * To clear the destination address you may pass <tt>null</tt> to this method.
+	 * To clear the destination address you may pass {@code null} to this method.
 	 * 
 	 * @param address the new destination address for the item.
 	 * @throws IllegalStateException if this method is called on an applied markup item (you 

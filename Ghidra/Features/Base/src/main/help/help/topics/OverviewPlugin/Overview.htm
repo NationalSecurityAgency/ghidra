@@ -13,7 +13,7 @@
   <BODY lang="EN-US">
     <H1><A name="OverviewPlugin"></A>Overview Bars</H1>
 
-	<P>Ghidra supports multiple margin bars on the left side of the Listing
+	<P>Ghidra supports multiple margin bars on the right side of the Listing
 	that present various overviews for a program. 
   
     <P>&nbsp;</P>
@@ -70,7 +70,7 @@
 
       <P><IMG border="0" src="help/shared/note.png">Note that the overview panel only provides an
       approximation of the contents of a program. Although the level of detail can be increased by
-      selected a more restricted view, there may still be imprecise summaries. For instance, if a region of memory
+      selecting a more restricted view, there may still be imprecise summaries. For instance, if a region of memory
       contains mostly defined data, but the particular address that is rendered in the overview
       panel falls on an undefined block, the color for that pixel is set to undefined. In practice,
       however, this gives a good general sense of the various regions.</P>
@@ -176,7 +176,7 @@
           waste of the high bit in each byte and other biases for English letter frequency, null
           terminators, etc.</LI>
 
-          <LI><I><B>Unicode</B></I>: The <I>wide character</I> format typically used to encode
+          <LI><I><B>Unicode UTF16</B></I>: The <I>wide character</I> format often used to encode
           Unicode characters is particularly wasteful, with every other byte encoded as 0 for
           typical English strings. This shows up as a characteristic range of low entropy
           values.</LI>

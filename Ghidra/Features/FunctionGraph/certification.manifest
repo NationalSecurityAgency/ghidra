@@ -4,6 +4,7 @@
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/functiongraph.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
@@ -43,6 +44,8 @@ src/main/resources/images/fgpaths.png||GHIDRA||reviewed||END|
 src/main/resources/images/fgrevblock.png||GHIDRA||reviewed||END|
 src/main/resources/images/field.header.png||GHIDRA||reviewed|Custom icon|END|
 src/main/resources/images/fullscreen_view.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/resources/images/function_graph_flowchart.png||GHIDRA||||END|
+src/main/resources/images/function_graph_flowchart_left.png||GHIDRA||||END|
 src/main/resources/images/graph_view.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/id.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/paintbrush.png||FAMFAMFAM Icons - CC 2.5||||END|

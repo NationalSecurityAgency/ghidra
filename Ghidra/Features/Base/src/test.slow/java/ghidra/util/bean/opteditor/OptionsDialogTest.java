@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,8 +35,9 @@ import javax.swing.tree.TreePath;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.*;
 
-import docking.DialogComponentProvider;
+import docking.*;
 import docking.action.DockingActionIf;
+import docking.actions.ActionBindingsDescriptor;
 import docking.actions.KeyBindingUtils;
 import docking.options.editor.*;
 import docking.tool.ToolConstants;
@@ -467,7 +468,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		MouseBinding newMouseBinding = setMouseBinding(actionName, actionOwner, modifiers, button);
 
 		int keyCode = KeyEvent.VK_Q;
-		modifiers = InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK;
+		modifiers = DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK;
 		KeyStroke newKeyStroke = setKeyBinding(actionName, actionOwner, modifiers, keyCode, 'Q');
 
 		apply();
@@ -497,7 +498,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNull(defaultMouseBinding);
 
 		int keyCode = KeyEvent.VK_Q;
-		int modifiers = InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK;
+		int modifiers = DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK;
 		KeyStroke newKeyStroke = setKeyBinding(actionName, actionOwner, modifiers, keyCode, 'Q');
 
 		int button = 4;
@@ -559,7 +560,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertOptionsKeyStroke(tool, actionName, actionOwner, defaultKeyStroke);
 
 		int keyCode = KeyEvent.VK_Q;
-		int modifiers = InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK;
+		int modifiers = DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK;
 		KeyStroke newKeyStroke = setKeyBinding(actionName, actionOwner, modifiers, keyCode, 'Q');
 
 		apply();
@@ -586,7 +587,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertOptionsKeyStroke(frontEndTool, actionName, actionOwner, defaultKeyStroke);
 
 		int keyCode = KeyEvent.VK_Q;
-		int modifiers = InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK;
+		int modifiers = DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK;
 		KeyStroke newKeyStroke = setKeyBinding(actionName, actionOwner, modifiers, keyCode, 'Q');
 
 		apply();
@@ -887,10 +888,10 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		JTable table = (JTable) getInstanceField("actionTable", panel);
 		@SuppressWarnings("unchecked")
-		RowObjectFilterModel<DockingActionIf> model =
-			(RowObjectFilterModel<DockingActionIf>) table.getModel();
+		RowObjectFilterModel<ActionBindingsDescriptor> model =
+			(RowObjectFilterModel<ActionBindingsDescriptor>) table.getModel();
 
-		DockingActionIf rowValue = model.getModelData().get(row);
+		ActionBindingsDescriptor rowValue = model.getModelData().get(row);
 
 		String keyBindingColumnValue =
 			(String) model.getColumnValueForRow(rowValue, 1 /* key binding column */);
@@ -917,10 +918,10 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		JTable table = (JTable) getInstanceField("actionTable", panel);
 		@SuppressWarnings("unchecked")
-		RowObjectFilterModel<DockingActionIf> model =
-			(RowObjectFilterModel<DockingActionIf>) table.getModel();
+		RowObjectFilterModel<ActionBindingsDescriptor> model =
+			(RowObjectFilterModel<ActionBindingsDescriptor>) table.getModel();
 
-		DockingActionIf rowValue = model.getModelData().get(row);
+		ActionBindingsDescriptor rowValue = model.getModelData().get(row);
 
 		String keyBindingColumnValue =
 			(String) model.getColumnValueForRow(rowValue, 1 /* key binding column */);
@@ -979,8 +980,6 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		selectRowForAction(panel, actionName, actionOwner);
 
-		setToggleButtonSelected(panel, "Enter Mouse Binding", true);
-
 		JPanel actionBindingPanel = (JPanel) getInstanceField("actionBindingPanel", panel);
 		JTextField textField = (JTextField) getInstanceField("mouseEntryField", actionBindingPanel);
 
@@ -1007,10 +1006,10 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		selectRowForAction(panel, actionName, actionOwner);
 
-		setToggleButtonSelected(panel, "Enter Mouse Binding", false);
-
 		JPanel actionBindingPanel = (JPanel) getInstanceField("actionBindingPanel", panel);
-		JTextField textField = (JTextField) getInstanceField("keyEntryField", actionBindingPanel);
+		KeyEntryPanel keyEntryPanel =
+			(KeyEntryPanel) getInstanceField("keyEntryPanel", actionBindingPanel);
+		JTextField textField = keyEntryPanel.getTextField();
 
 		triggerKey(textField, modifiers, keyCode, keyChar);
 		waitForSwing();
@@ -1028,12 +1027,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		selectRowForAction(panel, actionName, actionOwner);
 
-		setToggleButtonSelected(panel, "Enter Mouse Binding", false);
-
-		JPanel actionBindingPanel = (JPanel) getInstanceField("actionBindingPanel", panel);
-		JTextField textField = (JTextField) getInstanceField("keyEntryField", actionBindingPanel);
-
-		triggerBackspaceKey(textField);
+		pressButtonByName(panel, "Clear Key Binding");
 		waitForSwing();
 
 		KeyStroke currentBinding = getKeyBindingFromTable(actionName, actionOwner);
@@ -1043,14 +1037,14 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	private int selectRowForAction(KeyBindingsPanel panel, String actionName, String actionOwner) {
 		final JTable table = (JTable) getInstanceField("actionTable", panel);
 		@SuppressWarnings("unchecked")
-		final RowObjectFilterModel<DockingActionIf> model =
-			(RowObjectFilterModel<DockingActionIf>) table.getModel();
+		final RowObjectFilterModel<ActionBindingsDescriptor> model =
+			(RowObjectFilterModel<ActionBindingsDescriptor>) table.getModel();
 
 		int actionRow = -1;
-		List<DockingActionIf> modelData = model.getModelData();
+		List<ActionBindingsDescriptor> modelData = model.getModelData();
 		int rowCount = modelData.size();
 		for (int i = 0; i < rowCount; i++) {
-			DockingActionIf rowData = modelData.get(i);
+			ActionBindingsDescriptor rowData = modelData.get(i);
 			String rowActionName =
 				(String) model.getColumnValueForRow(rowData, 0 /* action name column */);
 			if (rowActionName.equals(actionName)) {

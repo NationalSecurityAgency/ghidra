@@ -17,45 +17,65 @@ package ghidra.app.plugin.core.debug.client.tracermi;
 
 import java.util.Set;
 
-import ghidra.rmi.trace.TraceRmi.*;
+import ghidra.app.plugin.core.debug.client.tracermi.RmiClient.RequestResult;
+import ghidra.rmi.trace.TraceRmi.Resolution;
+import ghidra.rmi.trace.TraceRmi.ValueKinds;
 import ghidra.trace.model.Lifespan;
 
 public class RmiTraceObject {
-	
-	private RmiTrace trace;
-	private ObjSpec spec;
-	private String path;
 
-	public RmiTraceObject(RmiTrace trace, ObjSpec spec) {
-		this.trace = trace;
-		this.spec = spec;
-		this.path = spec.getPath().getPath();
-	}
-	
-	public RmiTraceObject(RmiTrace trace, Long id, String path) {
+	private final RmiTrace trace;
+	private final String path;
+	private volatile Long id;
+
+	public RmiTraceObject(RmiTrace trace, String path) {
 		this.trace = trace;
 		this.path = path;
 	}
-	
+
+	RmiTraceObject(RmiTrace trace, String path, RequestResult result) {
+		this.trace = trace;
+		this.path = path;
+		result.thenAccept(id -> this.id = (Long) id);
+	}
+
+	public RmiTraceObject(RmiTrace trace, Long id, String path) {
+		this.trace = trace;
+		this.id = id;
+		this.path = path;
+	}
+
 	public static RmiTraceObject fromId(RmiTrace trace, long id) {
 		return new RmiTraceObject(trace, id, null);
 	}
-	
+
 	public static RmiTraceObject fromPath(RmiTrace trace, String path) {
 		return new RmiTraceObject(trace, null, path);
 	}
-	
-	public void insert(long snap, Resolution resolution) {
+
+	public Lifespan insert(long snap, Resolution resolution) {
 		if (resolution == null) {
 			resolution = Resolution.CR_ADJUST;
 		}
 		Lifespan span = Lifespan.nowOn(snap);
-		trace.client.insertObject(trace.getId(), spec, span, resolution);
+		if (id != null) {
+			trace.client.insertObject(trace.getId(), id, span, resolution);
+		}
+		else {
+			trace.client.insertObject(trace.getId(), path, span, resolution);
+		}
+		return span;
 	}
 
-	public void remove(long snap, boolean tree) {
+	public Lifespan remove(long snap, boolean tree) {
 		Lifespan span = Lifespan.nowOn(snap);
-		trace.client.removeObject(trace.getId(), spec, span, tree);
+		if (id != null) {
+			trace.client.removeObject(trace.getId(), id, span, tree);
+		}
+		else {
+			trace.client.removeObject(trace.getId(), path, span, tree);
+		}
+		return span;
 	}
 
 	public void setValue(String key, Object value, long snap, String resolution) {
@@ -71,7 +91,7 @@ public class RmiTraceObject {
 	public void activate() {
 		trace.client.activate(trace.getId(), path);
 	}
-	
+
 	public String getPath() {
 		return path;
 	}

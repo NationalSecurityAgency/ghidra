@@ -429,7 +429,7 @@ copy_literal_and_match:
   PTR_LEN_INC(dst_ptr, dst_len, L);
   PTR_LEN_INC(src_ptr, src_len, L);
   //  Check if the match distance is valid; matches must not reference
-  //  bytes that preceed the start of the output buffer, nor can the match
+  //  bytes that precede the start of the output buffer, nor can the match
   //  distance be zero.
   if (D > dst_ptr - state->dst_begin || D == 0)
     goto invalid_match_distance;

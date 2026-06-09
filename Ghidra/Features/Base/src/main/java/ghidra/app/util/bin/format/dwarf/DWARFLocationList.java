@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ public class DWARFLocationList {
 
 	/**
 	 * Read a v4 {@link DWARFLocationList} from the debug_loc section.
-	 * <p>
+	 * 
 	 * @param reader stream positioned at the start of a .debug_loc location list 
 	 * @param cu the compUnit that refers to the location list
 	 * @return list of DWARF locations (address range and location expression)
@@ -102,7 +102,7 @@ public class DWARFLocationList {
 	public static DWARFLocationList readV5(BinaryReader reader, DWARFCompilationUnit cu)
 			throws IOException {
 		long baseAddr = cu.getPCRange().getFrom();
-		DWARFProgram dprog = cu.getProgram();
+		DIEContainer dieContainer = cu.getDIEContainer();
 
 		List<DWARFLocation> list = new ArrayList<>();
 		while (reader.hasNext()) {
@@ -113,15 +113,15 @@ public class DWARFLocationList {
 			switch (lleId) {
 				case DW_LLE_base_addressx: {
 					int addrIndex = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
-					baseAddr = dprog.getAddress(DW_FORM_addrx, addrIndex, cu);
+					baseAddr = dieContainer.getAddress(DW_FORM_addrx, addrIndex, cu);
 					break;
 				}
 				case DW_LLE_startx_endx: {
 					int startAddrIndex = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					int endAddrIndex = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					byte[] expr = reader.readNext(DWARFLocationList::uleb128SizedByteArray);
-					long start = dprog.getAddress(DW_FORM_addrx, startAddrIndex, cu);
-					long end = dprog.getAddress(DW_FORM_addrx, endAddrIndex, cu);
+					long start = dieContainer.getAddress(DW_FORM_addrx, startAddrIndex, cu);
+					long end = dieContainer.getAddress(DW_FORM_addrx, endAddrIndex, cu);
 					list.add(new DWARFLocation(start, end, expr));
 					break;
 				}
@@ -129,7 +129,7 @@ public class DWARFLocationList {
 					int startAddrIndex = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					int len = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					byte[] expr = reader.readNext(DWARFLocationList::uleb128SizedByteArray);
-					long start = dprog.getAddress(DW_FORM_addrx, startAddrIndex, cu);
+					long start = dieContainer.getAddress(DW_FORM_addrx, startAddrIndex, cu);
 					list.add(new DWARFLocation(start, start + len, expr));
 					break;
 				}

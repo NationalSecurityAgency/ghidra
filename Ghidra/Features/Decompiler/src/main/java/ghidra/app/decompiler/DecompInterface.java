@@ -25,8 +25,7 @@ import java.util.ArrayList;
 import generic.jar.ResourceFile;
 import ghidra.app.decompiler.signature.DebugSignature;
 import ghidra.app.decompiler.signature.SignatureResult;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.app.plugin.processors.sleigh.UniqueLayout;
+import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Function;
@@ -59,7 +58,7 @@ import ghidra.util.task.TaskMonitor;
  *   
  *   // Setup up the actual decompiler process for a
  *   // particular program, using all the above initialization
- *   ifc.openProgram(program,language);
+ *   ifc.openProgram(program);
  *   
  *   // Make calls to the decompiler:
  *   DecompileResults res = ifc.decompileFunction(func,0,taskmonitor);
@@ -278,8 +277,7 @@ public class DecompInterface {
 		xmlEncode.clear();
 		dtmanage.encodeCoreTypes(xmlEncode);
 		String coretypes = xmlEncode.toString();
-		SleighLanguageDescription sleighdescription =
-			(SleighLanguageDescription) pcodelanguage.getLanguageDescription();
+		SleighLanguageDescription sleighdescription = pcodelanguage.getLanguageDescription();
 		ResourceFile pspecfile = sleighdescription.getSpecFile();
 		String pspecxml = fileToString(pspecfile);
 		xmlEncode.clear();

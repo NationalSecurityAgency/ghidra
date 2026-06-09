@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,6 +56,7 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
@@ -85,8 +86,6 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		Msg.debug(this, "\n\nsetUp() - " + testName.getMethodName());
 
 		setErrorGUIEnabled(false);
-
-		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
 		env = new TestEnv();
 
@@ -123,9 +122,9 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 			dialog = new DataTypeSelectionDialog(tool, program.getDataTypeManager(), -1,
 				AllowedDataTypes.ALL) {
 				@Override
-				protected DataTypeSelectionEditor createEditor(PluginTool pluginTool,
+				protected DataTypeSelectionEditor createEditor(ServiceProvider sp,
 						AllowedDataTypes allowedDataTypes) {
-					return new DataTypeSelectionEditor(pluginTool, allowedDataTypes) {
+					return new DataTypeSelectionEditor(null, sp, allowedDataTypes) {
 
 						@Override
 						protected DropDownSelectionTextField<DataType> createDropDownSelectionTextField(
@@ -595,7 +594,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		// We are trying to test that the user can type the name of a type (not pick it from the
 		// list) that exists in an open archive *that is not set on the dialog*.  The intent is
 		// that if we have to parse the text provided by the user, that we don't automatically
-		// pick one when it is an an archive that we didn't specify (like the program archive).
+		// pick one when it is an archive that we didn't specify (like the program archive).
 		//
 		// To test this, start with 3 types in a file archive: foo and a typedef to foo
 		// (foo_typedef) and a pointer to the typedef.
@@ -1147,13 +1146,6 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 
 	public static void main(String[] args) throws Exception {
 
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-
 		JFrame frame = new JFrame(DropDownSelectionTextField.class.getName());
 		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
@@ -1207,8 +1199,8 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 			new DefaultHighlighter.DefaultHighlightPainter(Palette.YELLOW));
 
 		JPanel editorPanel = new JPanel(new BorderLayout());
-		DataTypeSelectionEditor editor = new DataTypeSelectionEditor(tool, AllowedDataTypes.ALL);
-		editor.setPreferredDataTypeManager(program.getDataTypeManager());
+		DataTypeSelectionEditor editor =
+			new DataTypeSelectionEditor(program.getDataTypeManager(), tool, AllowedDataTypes.ALL);
 
 		editorPanel.add(panelUpdateField, BorderLayout.SOUTH);
 		editorPanel.add(editor.getEditorComponent(), BorderLayout.NORTH);

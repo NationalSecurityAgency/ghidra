@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -96,25 +96,26 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
 		List<LoadSpec> loadSpecs = new ArrayList<>();
 
-		if (!CoffFileHeader.isValid(provider)) {
-			return loadSpecs;
-		}
+		try {
+			CoffFileHeader header = new CoffFileHeader(provider);
+			header.parseSectionHeaders();
 
-		CoffFileHeader header = new CoffFileHeader(provider);
-		header.parseSectionHeaders(provider);
-
-		if (isVisualStudio(header) != isMicrosoftFormat()) {
-			// Only one of the CoffLoader/MSCoffLoader will survive this check
-			return loadSpecs;
+			if (isVisualStudio(header) != isMicrosoftFormat()) {
+				// Only one of the CoffLoader/MSCoffLoader will survive this check
+				return loadSpecs;
+			}
+			String secondary = isCLI(header) ? "cli" : Integer.toString(header.getFlags() & 0xffff);
+			List<QueryResult> results =
+				QueryOpinionService.query(getName(), header.getMachineName(), secondary);
+			for (QueryResult result : results) {
+				loadSpecs.add(new LoadSpec(this, header.getImageBase(isMicrosoftFormat()), result));
+			}
+			if (loadSpecs.isEmpty()) {
+				loadSpecs.add(new LoadSpec(this, header.getImageBase(false), true));
+			}
 		}
-		String secondary = isCLI(header) ? "cli" : Integer.toString(header.getFlags() & 0xffff);
-		List<QueryResult> results =
-			QueryOpinionService.query(getName(), header.getMachineName(), secondary);
-		for (QueryResult result : results) {
-			loadSpecs.add(new LoadSpec(this, header.getImageBase(isMicrosoftFormat()), result));
-		}
-		if (loadSpecs.isEmpty()) {
-			loadSpecs.add(new LoadSpec(this, header.getImageBase(false), true));
+		catch (CoffException e) {
+			// that's ok, probably not a COFF
 		}
 
 		return loadSpecs;
@@ -122,11 +123,13 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
-		List<Option> list =
-			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
+		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
+			loadIntoProgram, mirrorFsLayout);
 		if (!loadIntoProgram) {
-			list.add(new Option(FAKE_LINK_OPTION_NAME, FAKE_LINK_OPTION_DEFAULT));
+			list.add(Option.newBoolean(FAKE_LINK_OPTION_NAME)
+					.value(FAKE_LINK_OPTION_DEFAULT)
+					.build());
 		}
 		return list;
 	}
@@ -161,29 +164,29 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
-	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log)
+	protected void load(Program program, ImporterSettings settings)
 			throws IOException, CancelledException {
 
-		boolean performFakeLinking = performFakeLinking(options);
-
-		CoffFileHeader header = new CoffFileHeader(provider);
-		header.parse(provider, monitor);
-
-		Map<CoffSectionHeader, Address> sectionsMap = new HashMap<>();
-		Map<CoffSymbol, Symbol> symbolsMap = new HashMap<>();
-
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
 
 		try {
-			processSectionHeaders(provider, header, program, fileBytes, monitor, log, sectionsMap,
-				performFakeLinking);
+			CoffFileHeader header = new CoffFileHeader(settings.provider());
+			header.parse(monitor);
+
+			Map<CoffSectionHeader, Address> sectionsMap = new HashMap<>();
+			Map<CoffSymbol, Symbol> symbolsMap = new HashMap<>();
+
+			FileBytes fileBytes =
+				MemoryBlockUtils.createFileBytes(program, settings.provider(), monitor);
+			processSectionHeaders(settings.provider(), header, program, fileBytes, monitor, log,
+				sectionsMap, performFakeLinking(settings.options()));
 			processSymbols(header, program, monitor, log, sectionsMap, symbolsMap);
 			processEntryPoint(header, program, monitor, log);
 			processRelocations(header, program, sectionsMap, symbolsMap, log, monitor);
 			markupHeaders(header, program, fileBytes, log, monitor);
 		}
-		catch (AddressOverflowException e) {
+		catch (CoffException | AddressOverflowException e) {
 			throw new IOException(e);
 		}
 	}
@@ -538,7 +541,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 			Map<CoffSectionHeader, Address> map) {
 		// 1. loop over all sections
 		//    put all sections not at 0 into address set
-		//    put all sections at 0 into "totals" map
+		//    put all sections at 0 into "totals" map, accounting for later alignment needs
 		// 2. look for space before minimum of taken addresses
 		// 3. or, look for space after maximum of taken addresses
 
@@ -548,24 +551,22 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 
 		AddressSet nonZeroSet = new AddressSet();
 
-		int totalSize = 0;
-		TreeMap<String, Integer> zeroSectionSizes = new TreeMap<>();
-		TreeMap<String, Integer> zeroSectionOffsets = new TreeMap<>();
+		int totalZeroSectionSize = 0;
+		Map<String, Integer> zeroSectionSizes = new TreeMap<>();
+		Map<String, Integer> zeroSectionOffsets = new TreeMap<>();
 
 		List<CoffSectionHeader> sections = header.getSections();
 		for (CoffSectionHeader section : sections) {
 			int physicalAddress = section.getPhysicalAddress();
 			int size = section.getSize(language);
 			if (physicalAddress == 0) {
+				// We don't know the exact offset now, so assume worst-case alignment penalty
+				int alignedSize = size + getSectionAlignment(section) - 1;
 				String name = section.getName();
-				Integer s = zeroSectionSizes.get(name);
-				if (s == null) {
-					zeroSectionSizes.put(name, size);
-				}
-				else {
-					zeroSectionSizes.put(name, s + size);
-				}
-				totalSize += size;
+				zeroSectionSizes.compute(name,
+					(k, v) -> (v == null ? alignedSize : v + alignedSize));
+
+				totalZeroSectionSize += alignedSize;
 			}
 			else {
 				if (size > 0) {
@@ -579,35 +580,47 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 				}
 			}
 		}
+
 		Address maxAddress = nonZeroSet.getMaxAddress();
 		int offset = (maxAddress == null ? EMPTY_START_OFFSET - 1
 				: (int) (maxAddress.getOffset() & 0xffffffff));
 		long sum = offset;
-		sum += totalSize;
+		sum += totalZeroSectionSize;
 		if (sum <= 0x100000000L) {
-			int start = align(offset + 1);
+			offset += 1;
+			// Each group of sections with the same name should be aligned at least at 256 bytes
 			for (Entry<String, Integer> entry : zeroSectionSizes.entrySet()) {
-				zeroSectionOffsets.put(entry.getKey(), start);
-				start = align(start + entry.getValue());
+				offset = (offset + DEFAULT_ALIGNMENT - 1) / DEFAULT_ALIGNMENT * DEFAULT_ALIGNMENT;
+				zeroSectionOffsets.put(entry.getKey(), offset);
+				offset += zeroSectionSizes.get(entry.getKey());
 			}
 			int sectionNumber = 1;
 			for (CoffSectionHeader section : sections) {
 				int physicalAddress = section.getPhysicalAddress();
 				if (physicalAddress == 0) {
 					String name = section.getName();
-					start = zeroSectionOffsets.get(name);
-					relocateSection(header, section, sectionNumber, start);
-					zeroSectionOffsets.put(name, start + section.getSize(language));
+					int alignment = getSectionAlignment(section);
+					offset = (zeroSectionOffsets.get(name) + alignment - 1) / alignment * alignment;
+					relocateSection(header, section, sectionNumber, offset);
+					zeroSectionOffsets.put(name, offset + section.getSize(language));
 				}
 				++sectionNumber;
 			}
 		}
 	}
 
-	private static final int ALIGNMENT = 0x100;
+	private static final int DEFAULT_ALIGNMENT = 0x100;
 
-	private int align(int i) {
-		return (i + ALIGNMENT - 1) / ALIGNMENT * ALIGNMENT;
+	/**
+	 * Query a section header for alignment information. The base version of this method assumes 
+	 * no alignment information is stored in the section header. Subclasses may implement a 
+	 * platform-specific check for alignment information.
+	 * 
+	 * @param section header object for the section 
+	 * @return the alignment requested by the section
+	 */
+	protected int getSectionAlignment(CoffSectionHeader section) {
+		return 1;
 	}
 
 	private void relocateSection(CoffFileHeader header, CoffSectionHeader section,

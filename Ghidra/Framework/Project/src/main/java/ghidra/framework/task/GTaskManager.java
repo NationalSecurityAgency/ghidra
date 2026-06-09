@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ import ghidra.util.exception.CancelledException;
  * <P>
  * <U>Yielding to Other Tasks:</U><BR>
  * While running, a GTask can call the method {@link #waitForHigherPriorityTasks()} on the GTaskManager, 
- * which will cause the the GTaskManager to run scheduled tasks (within the same group) that are 
+ * which will cause the GTaskManager to run scheduled tasks (within the same group) that are 
  * a higher priority than the running task, effectively allowing the running task to yield until all
  * higher priority tasks are executed.
  * 

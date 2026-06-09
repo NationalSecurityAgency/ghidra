@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.*;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -238,16 +239,14 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 			return null;
 		}
 
-		URL url = new File(filename).toURI().toURL();
-
+		URI uri = new File(filename).toURI();
 		String pageNumber = entry.getPageNumber();
 		if (pageNumber != null) {
 			// include manual page as query string (respected by PDF readers)
-			String fileNameAndPage = url.getFile() + "#page=" + pageNumber;
-			url = new URL(url.getProtocol(), null, fileNameAndPage);
+			String pageRef = "#page=" + pageNumber;
+			uri = uri.resolve(pageRef);
 		}
-
-		return url;
+		return uri.toURL();
 	}
 
 	ManualEntry locateManualEntry(ProgramActionContext context, Language language) {
@@ -344,8 +343,8 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 	}
 
 	/**
-	 * Subclass should override this method if it is interested in
-	 * program location events.
+	 * Subclass should override this method if it is interested in program location events.
+	 * 
 	 * @param loc location could be null
 	 */
 	@Override
@@ -463,7 +462,7 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 		}
 		else if (provider != connectedProvider && isDynamic) {
 			if (connectedProvider != null) {
-				connectedProvider.setNonDynamic();
+				connectedProvider.setDynamic(false);
 			}
 			disconnectedProviders.remove(provider);
 			connectedProvider = provider;

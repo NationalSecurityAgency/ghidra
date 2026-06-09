@@ -24,9 +24,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.Msg;
 
-/**
- * 
- */
 class MaskGenerator {
 
 	/**
@@ -45,9 +42,6 @@ class MaskGenerator {
 	 */
 	private List<LinkedHashMap<MaskValue, OperandMaskValue>> ops = new ArrayList<>();
 
-	/**
-	 * 
-	 */
 	private SLMaskControl maskControl;
 
 	/**
@@ -297,9 +291,6 @@ class MaskGenerator {
 		return combineInstructionMasks(masks, values, totalLength);
 	}
 
-	/**
-	 * 
-	 */
 	private class MnemonicMaskValue extends MaskValue {
 
 		/**
@@ -313,9 +304,6 @@ class MaskGenerator {
 		}
 	}
 
-	/**
-	 * 
-	 */
 	private class OperandMaskValue extends MaskValue {
 		private boolean constant = false;
 

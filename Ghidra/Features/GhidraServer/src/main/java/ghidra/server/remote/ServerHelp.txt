@@ -1,7 +1,8 @@
 Ghidra server startup parameters.
 Command line parameters:
 						[-ip <hostname>] [-i #.#.#.#] [-p#] [-n]
-						[-a#] [-d<ad_domain>] [-e<days>] [-jaas <config_file>] [-u] [-autoProvision] [-anonymous] [-ssh]
+						[-a#] [-d<ad_domain>] [-e<days>] [-jaas <config_file>] [-u] [-autoProvision] 
+						[-anonymous] [-ssh]
 						<repository_path>
 						
  

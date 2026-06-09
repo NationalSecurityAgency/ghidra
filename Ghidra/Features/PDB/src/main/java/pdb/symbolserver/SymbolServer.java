@@ -124,7 +124,6 @@ public interface SymbolServer {
 
 	/**
 	 * Returns a location description string of a specific file contained in this symbol server.
-	 * <p>
 	 * 
 	 * @param filename raw path and name of a file in this server
 	 *  (typically from {@link SymbolFileLocation#getPath()}

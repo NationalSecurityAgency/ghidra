@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelListener;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import generic.theme.GIcon;
@@ -73,7 +74,7 @@ public class PropertyManagerProvider extends ComponentProviderAdapter {
 					String propName = (String) model.getValueAt(row,
 						PropertyManagerTableModel.PROPERTY_NAME_COLUMN);
 					model.removeRow(row);
-					Command cmd = new PropertyDeleteCmd(propName, restrictedView);
+					Command<Program> cmd = new PropertyDeleteCmd(propName, restrictedView);
 					PropertyManagerProvider.this.plugin.getTool().execute(cmd, currentProgram);
 				}
 			}
@@ -217,7 +218,7 @@ public class PropertyManagerProvider extends ComponentProviderAdapter {
 				Rectangle rowBounds =
 					table.getCellRect(row, PropertyManagerTableModel.PROPERTY_NAME_COLUMN, true);
 				if (rowBounds.contains(event.getPoint())) {
-					return createContext(rowBounds);
+					return new DefaultActionContext(this).setContextObject(rowBounds);
 				}
 			}
 		}

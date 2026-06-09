@@ -15,6 +15,8 @@
  */
 package ghidra.program.flatapi;
 
+import static ghidra.app.plugin.core.clear.ClearOptions.ClearType.*;
+
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -33,8 +35,7 @@ import ghidra.app.script.GhidraScript;
 import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
 import ghidra.features.base.memsearch.bytesource.ProgramByteSource;
 import ghidra.features.base.memsearch.gui.SearchSettings;
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
-import ghidra.features.base.memsearch.matcher.RegExByteMatcher;
+import ghidra.features.base.memsearch.matcher.*;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.features.base.memsearch.searcher.MemorySearcher;
 import ghidra.framework.main.AppInfo;
@@ -52,7 +53,6 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.AddressEvaluator;
 import ghidra.program.util.string.*;
 import ghidra.util.ascii.AsciiCharSetRecognizer;
-import ghidra.util.datastruct.Accumulator;
 import ghidra.util.datastruct.ListAccumulator;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -69,7 +69,6 @@ import ghidra.util.task.TaskMonitor;
  * This class is used by GhidraScript.
  * <p>
  * Changing this class will break user scripts.
- * <p>
  */
 public class FlatProgramAPI {
 	public static final int MAX_REFERENCES_TO = 0x1000;
@@ -206,6 +205,7 @@ public class FlatProgramAPI {
 
 		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 
+		mgr.initializeOptions();
 		mgr.reAnalyzeAll(null);
 
 		analyzeChanges(program);
@@ -295,19 +295,48 @@ public class FlatProgramAPI {
 			boolean equates, boolean userReferences, boolean analysisReferences,
 			boolean importReferences, boolean defaultReferences, boolean bookmarks) {
 
+		return this.clearListing(set, code, code, symbols, comments, properties, functions,
+			registers, equates, userReferences, analysisReferences, importReferences,
+			defaultReferences, bookmarks);
+	}
+
+	/**
+	 * Clears the listing in the specified address set.
+	 * @param set  the address set where to clear
+	 * @param instructions true if instructions should be cleared
+	 * @param data true if defined data should be cleared
+	 * @param symbols true if symbols should be cleared
+	 * @param comments true if comments should be cleared
+	 * @param properties true if properties should be cleared
+	 * @param functions true if functions should be cleared
+	 * @param registers true if registers should be cleared
+	 * @param equates true if equates should be cleared
+	 * @param userReferences true if user references should be cleared
+	 * @param analysisReferences true if analysis references should be cleared
+	 * @param importReferences true if import references should be cleared
+	 * @param defaultReferences true if default references should be cleared
+	 * @param bookmarks true if bookmarks should be cleared
+	 * @return true if the address set was successfully cleared
+	 */
+	public final boolean clearListing(AddressSetView set, boolean instructions, boolean data,
+			boolean symbols, boolean comments, boolean properties, boolean functions,
+			boolean registers, boolean equates, boolean userReferences, boolean analysisReferences,
+			boolean importReferences, boolean defaultReferences, boolean bookmarks) {
+
 		ClearOptions options = new ClearOptions();
-		options.setClearCode(code);
-		options.setClearSymbols(symbols);
-		options.setClearComments(comments);
-		options.setClearProperties(properties);
-		options.setClearFunctions(functions);
-		options.setClearRegisters(registers);
-		options.setClearEquates(equates);
-		options.setClearUserReferences(userReferences);
-		options.setClearAnalysisReferences(analysisReferences);
-		options.setClearImportReferences(importReferences);
-		options.setClearDefaultReferences(defaultReferences);
-		options.setClearBookmarks(bookmarks);
+		options.setShouldClear(INSTRUCTIONS, instructions);
+		options.setShouldClear(DATA, data);
+		options.setShouldClear(SYMBOLS, symbols);
+		options.setShouldClear(COMMENTS, comments);
+		options.setShouldClear(PROPERTIES, properties);
+		options.setShouldClear(FUNCTIONS, functions);
+		options.setShouldClear(REGISTERS, registers);
+		options.setShouldClear(EQUATES, equates);
+		options.setShouldClear(USER_REFERENCES, userReferences);
+		options.setShouldClear(ANALYSIS_REFERENCES, analysisReferences);
+		options.setShouldClear(IMPORT_REFERENCES, importReferences);
+		options.setShouldClear(DEFAULT_REFERENCES, defaultReferences);
+		options.setShouldClear(BOOKMARKS, bookmarks);
 
 		ClearCmd cmd = new ClearCmd(set, options);
 		return cmd.applyTo(currentProgram, monitor);
@@ -328,12 +357,10 @@ public class FlatProgramAPI {
 			long length, boolean overlay) throws Exception {
 		if (input == null) {
 			return currentProgram.getMemory()
-					.createUninitializedBlock(name, start, length,
-						overlay);
+					.createUninitializedBlock(name, start, length, overlay);
 		}
 		return currentProgram.getMemory()
-				.createInitializedBlock(name, start, input, length,
-					monitor, overlay);
+				.createInitializedBlock(name, start, input, length, monitor, overlay);
 	}
 
 	/**
@@ -349,8 +376,7 @@ public class FlatProgramAPI {
 			boolean overlay) throws Exception {
 		ByteArrayInputStream input = new ByteArrayInputStream(bytes);
 		return currentProgram.getMemory()
-				.createInitializedBlock(name, start, input, bytes.length,
-					monitor, overlay);
+				.createInitializedBlock(name, start, input, bytes.length, monitor, overlay);
 	}
 
 	/**
@@ -358,7 +384,7 @@ public class FlatProgramAPI {
 	 * NOTE: if more than block exists with the same name, the first
 	 * block with that name will be returned.
 	 * @param name the name of the requested block
-	 * @return the the memory block with the specified name
+	 * @return the memory block with the specified name
 	 */
 	public final MemoryBlock getMemoryBlock(String name) {
 		return currentProgram.getMemory().getBlock(name);
@@ -409,8 +435,14 @@ public class FlatProgramAPI {
 	}
 
 	/**
+	 * Creates a label at the specified address in the global namespace.
+	 * If makePrimary==true, then the new label is made primary.
+	 * @param address the address to create the symbol
+	 * @param name the name of the symbol
+	 * @param makePrimary true if the symbol should be made primary
+	 * @return the newly created code or function symbol
+	 * @throws Exception if there is any exception
 	 * @deprecated use {@link #createLabel(Address, String, boolean)} instead.
-	 * Deprecated in Ghidra 7.4
 	 */
 	@Deprecated(since = "7.4", forRemoval = true)
 	public final Symbol createSymbol(Address address, String name, boolean makePrimary)
@@ -462,7 +494,18 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * @deprecated use {@link #createLabel(Address, String, boolean, SourceType)} instead. Deprecated in Ghidra 7.4
+	 * Creates a label at the specified address in the global namespace.
+	 * If makePrimary==true, then the new label is made primary.
+	 * If makeUnique==true, then if the name is a duplicate, the address
+	 * will be concatenated to name to make it unique.
+	 * @param address the address to create the symbol
+	 * @param name the name of the symbol
+	 * @param makePrimary true if the symbol should be made primary
+	 * @param makeUnique ignored
+	 * @param sourceType the source type.
+	 * @return the newly created code or function symbol
+	 * @throws Exception if there is any exception
+	 * @deprecated use {@link #createLabel(Address, String, boolean, SourceType)} instead
 	 */
 	@Deprecated(since = "7.4", forRemoval = true)
 	public final Symbol createSymbol(Address address, String name, boolean makePrimary,
@@ -504,7 +547,7 @@ public class FlatProgramAPI {
 	 * @return true if the PLATE comment was successfully set
 	 */
 	public final boolean setPlateComment(Address address, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(address, CodeUnit.PLATE_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(address, CommentType.PLATE, comment);
 		return cmd.applyTo(currentProgram);
 	}
 
@@ -515,7 +558,7 @@ public class FlatProgramAPI {
 	 * @return true if the PRE comment was successfully set
 	 */
 	public final boolean setPreComment(Address address, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(address, CodeUnit.PRE_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(address, CommentType.PRE, comment);
 		return cmd.applyTo(currentProgram);
 	}
 
@@ -526,7 +569,7 @@ public class FlatProgramAPI {
 	 * @return true if the POST comment was successfully set
 	 */
 	public final boolean setPostComment(Address address, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(address, CodeUnit.POST_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(address, CommentType.POST, comment);
 		return cmd.applyTo(currentProgram);
 	}
 
@@ -537,7 +580,7 @@ public class FlatProgramAPI {
 	 * @return true if the EOL comment was successfully set
 	 */
 	public final boolean setEOLComment(Address address, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(address, CodeUnit.EOL_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(address, CommentType.EOL, comment);
 		return cmd.applyTo(currentProgram);
 	}
 
@@ -548,7 +591,7 @@ public class FlatProgramAPI {
 	 * @return true if the repeatable comment was successfully set
 	 */
 	public final boolean setRepeatableComment(Address address, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(address, CodeUnit.REPEATABLE_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(address, CommentType.REPEATABLE, comment);
 		return cmd.applyTo(currentProgram);
 	}
 
@@ -563,7 +606,7 @@ public class FlatProgramAPI {
 	 * @see GhidraScript#getPlateCommentAsRendered(Address)
 	 */
 	public final String getPlateComment(Address address) {
-		return currentProgram.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
+		return currentProgram.getListing().getComment(CommentType.PLATE, address);
 	}
 
 	/**
@@ -577,7 +620,7 @@ public class FlatProgramAPI {
 	 * @see GhidraScript#getPreCommentAsRendered(Address)
 	 */
 	public final String getPreComment(Address address) {
-		return currentProgram.getListing().getComment(CodeUnit.PRE_COMMENT, address);
+		return currentProgram.getListing().getComment(CommentType.PRE, address);
 	}
 
 	/**
@@ -591,7 +634,7 @@ public class FlatProgramAPI {
 	 * @see GhidraScript#getPostCommentAsRendered(Address)
 	 */
 	public final String getPostComment(Address address) {
-		return currentProgram.getListing().getComment(CodeUnit.POST_COMMENT, address);
+		return currentProgram.getListing().getComment(CommentType.POST, address);
 	}
 
 	/**
@@ -604,7 +647,7 @@ public class FlatProgramAPI {
 	 * @see GhidraScript#getEOLCommentAsRendered(Address)
 	 */
 	public final String getEOLComment(Address address) {
-		return currentProgram.getListing().getComment(CodeUnit.EOL_COMMENT, address);
+		return currentProgram.getListing().getComment(CommentType.EOL, address);
 	}
 
 	/**
@@ -617,7 +660,7 @@ public class FlatProgramAPI {
 	 * @see GhidraScript#getRepeatableCommentAsRendered(Address)
 	 */
 	public final String getRepeatableComment(Address address) {
-		return currentProgram.getListing().getComment(CodeUnit.REPEATABLE_COMMENT, address);
+		return currentProgram.getListing().getComment(CommentType.REPEATABLE, address);
 	}
 
 	/**
@@ -651,12 +694,13 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Finds the first occurrence of the byte array sequence that matches the given byte string,
+	 * Finds the first occurrence of the byte array sequence that matches the given byte regex,
 	 * starting from the address. If the start address is null, then the find will start
 	 * from the minimum address of the program.
 	 * <p>
-	 * The <code>byteString</code> may contain regular expressions.  The following
-	 * highlights some example search strings (note the use of double backslashes ("\\")):
+	 * The {@code byteRegex} may contain special regular expression characters that need to be
+	 * escaped accordingly.  The following highlights some example search strings (note the use of 
+	 * double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
 	 * "\\x50.{0,10}\\x55" - A regular expression string that searches for the byte 0x50
@@ -666,13 +710,13 @@ public class FlatProgramAPI {
 	 *
 	 * @param start the address to start searching.  If null, then the start of the program
 	 *        will be used.
-	 * @param byteString the byte pattern for which to search
+	 * @param byteRegex the byte pattern regex for which to search
 	 * @return the first address where the byte was found, or null if the bytes were not found
-	 * @throws IllegalArgumentException if the byteString is not a valid regular expression
+	 * @throws IllegalArgumentException if {@code byteRegex} is not a valid regular expression
 	 * @see #findBytes(Address, String, int)
 	 */
-	public final Address findBytes(Address start, String byteString) {
-		Address[] matchingAddresses = findBytes(start, byteString, 1);
+	public final Address findBytes(Address start, String byteRegex) {
+		Address[] matchingAddresses = findBytes(start, byteRegex, 1);
 		if (matchingAddresses.length == 0) {
 			return null;
 		}
@@ -681,11 +725,12 @@ public class FlatProgramAPI {
 
 	/**
 	 * Finds the first {@code <matchLimit>} occurrences of the byte array sequence that matches
-	 * the given byte string, starting from the address. If the start address is null, then the
+	 * the given byte regex, starting from the address. If the start address is null, then the
 	 * find will start from the minimum address of the program.
 	 * <p>
-	 * The <code>byteString</code> may contain regular expressions.  The following
-	 * highlights some example search strings (note the use of double backslashes ("\\")):
+	 * The {@code byteRegex} may contain special regular expression characters that need to be
+	 * escaped accordingly.  The following highlights some example search strings (note the use of 
+	 * double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
 	 * "\\x50.{0,10}\\x55" - A regular expression string that searches for the byte 0x50
@@ -695,23 +740,24 @@ public class FlatProgramAPI {
 	 *
 	 * @param start the address to start searching.  If null, then the start of the program
 	 *        will be used.
-	 * @param byteString the byte pattern for which to search
+	 * @param byteRegex the byte pattern regex for which to search
 	 * @param matchLimit The number of matches to which the search should be restricted
-	 * @return the start addresses that contain byte patterns that match the given byteString
-	 * @throws IllegalArgumentException if the byteString is not a valid regular expression
+	 * @return the start addresses that contain byte patterns that match the given byte regex
+	 * @throws IllegalArgumentException if {@code byteRegex} is not a valid regular expression
 	 * @see #findBytes(Address, String)
 	 */
-	public final Address[] findBytes(Address start, String byteString, int matchLimit) {
-		return findBytes(start, byteString, matchLimit, 1);
+	public final Address[] findBytes(Address start, String byteRegex, int matchLimit) {
+		return findBytes(start, byteRegex, matchLimit, 1);
 	}
 
 	/**
 	 * Finds the first {@code <matchLimit>} occurrences of the byte array sequence that matches
-	 * the given byte string, starting from the address. If the start address is null, then the
+	 * the given byte regex, starting from the address. If the start address is null, then the
 	 * find will start from the minimum address of the program.
 	 * <p>
-	 * The <code>byteString</code> may contain regular expressions.  The following
-	 * highlights some example search strings (note the use of double backslashes ("\\")):
+	 * The {@code byteRegex} may contain special regular expression characters that need to be
+	 * escaped accordingly.  The following highlights some example search strings (note the use of 
+	 * double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
 	 * "\\x50.{0,10}\\x55" - A regular expression string that searches for the byte 0x50
@@ -721,16 +767,16 @@ public class FlatProgramAPI {
 	 *
 	 * @param start the address to start searching.  If null, then the start of the program
 	 *        will be used.
-	 * @param byteString the byte pattern for which to search
+	 * @param byteRegex the byte regex pattern for which to search
 	 * @param matchLimit The number of matches to which the search should be restricted
 	 * @param alignment byte alignment to use for search starts. For example, a value of
 	 *    1 searches from every byte.  A value of 2 only matches runs that begin on a even
 	 *    address boundary.
-	 * @return the start addresses that contain byte patterns that match the given byteString
-	 * @throws IllegalArgumentException if the byteString is not a valid regular expression
+	 * @return the start addresses that contain byte patterns that match the given byte regex
+	 * @throws IllegalArgumentException if {@code byteRegex} is not a valid regular expression
 	 * @see #findBytes(Address, String)
 	 */
-	public final Address[] findBytes(Address start, String byteString, int matchLimit,
+	public final Address[] findBytes(Address start, String byteRegex, int matchLimit,
 			int alignment) {
 
 		if (start == null) {
@@ -745,17 +791,18 @@ public class FlatProgramAPI {
 		AddressFactory factory = currentProgram.getAddressFactory();
 		AddressSet addressRange = factory.getAddressSet(start, memory.getMaxAddress());
 
-		Address[] bytes = findBytes(addressRange, byteString, matchLimit, alignment, false);
+		Address[] bytes = findBytes(addressRange, byteRegex, matchLimit, alignment, false);
 		return bytes;
 	}
 
 	/**
-	 * Finds a byte pattern within an addressSet.
+	 * Finds a byte regex pattern within an addressSet.
 	 *
 	 * Note: The ranges within the addressSet are NOT treated as a contiguous set when searching
 	 * <p>
-	 * The <code>byteString</code> may contain regular expressions.  The following
-	 * highlights some example search strings (note the use of double backslashes ("\\")):
+	 * The {@code byteRegex} may contain special regular expression characters that need to be
+	 * escaped accordingly.  The following highlights some example search strings (note the use of 
+	 * double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
 	 * "\\x50.{0,10}\\x55" - A regular expression string that searches for the byte 0x50
@@ -764,16 +811,16 @@ public class FlatProgramAPI {
 	 * </pre>
 	 *
 	 * @param set the addressSet specifying which addresses to search.
-	 * @param byteString the byte pattern for which to search
+	 * @param byteRegex the byte regex pattern for which to search
 	 * @param matchLimit The number of matches to which the search should be restricted
 	 * @param alignment byte alignment to use for search starts. For example, a value of
 	 *    1 searches from every byte.  A value of 2 only matches runs that begin on a even
 	 *    address boundary.
 	 * @return the start addresses that contain byte patterns that match the given byteString
-	 * @throws IllegalArgumentException if the byteString is not a valid regular expression
+	 * @throws IllegalArgumentException if {@code byteRegex} is not a valid regular expression
 	 * @see #findBytes(Address, String)
 	 */
-	public final Address[] findBytes(AddressSetView set, String byteString, int matchLimit,
+	public final Address[] findBytes(AddressSetView set, String byteRegex, int matchLimit,
 			int alignment) {
 
 		if (matchLimit <= 0) {
@@ -781,13 +828,14 @@ public class FlatProgramAPI {
 		}
 
 		SearchSettings settings = new SearchSettings().withAlignment(alignment);
-		ByteMatcher matcher = new RegExByteMatcher(byteString, settings);
+		ByteMatcher<SearchData> matcher = new RegExByteMatcher(byteRegex, settings);
 		AddressableByteSource byteSource = new ProgramByteSource(currentProgram);
 		Memory memory = currentProgram.getMemory();
 		AddressSet intersection = memory.getLoadedAndInitializedAddressSet().intersect(set);
 
-		MemorySearcher searcher = new MemorySearcher(byteSource, matcher, intersection, matchLimit);
-		Accumulator<MemoryMatch> accumulator = new ListAccumulator<>();
+		MemorySearcher<SearchData> searcher =
+			new MemorySearcher<>(byteSource, matcher, intersection, matchLimit);
+		ListAccumulator<MemoryMatch<SearchData>> accumulator = new ListAccumulator<>();
 		searcher.findAll(accumulator, monitor);
 
 		//@formatter:off
@@ -805,12 +853,13 @@ public class FlatProgramAPI {
 	 * blocks have been defined), is no longer supported. If this capability has value to anyone, 
 	 * please contact the Ghidra team and let us know.
 	 * <P>
-	 * Finds a byte pattern within an addressSet.
+	 * Finds a byte regex pattern within an addressSet.
 	 *
 	 * Note: The ranges within the addressSet are NOT treated as a contiguous set when searching
 	 * <p>
-	 * The <code>byteString</code> may contain regular expressions.  The following
-	 * highlights some example search strings (note the use of double backslashes ("\\")):
+	 * The {@code byteRegex} may contain special regular expression characters that need to be
+	 * escaped accordingly.  The following highlights some example search strings (note the use of 
+	 * double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
 	 * "\\x50.{0,10}\\x55" - A regular expression string that searches for the byte 0x50
@@ -819,7 +868,7 @@ public class FlatProgramAPI {
 	 * </pre>
 	 *
 	 * @param set the addressSet specifying which addresses to search.
-	 * @param byteString the byte pattern for which to search
+	 * @param byteRegex the byte regex pattern for which to search
 	 * @param matchLimit The number of matches to which the search should be restricted
 	 * @param alignment byte alignment to use for search starts. For example, a value of
 	 *    1 searches from every byte.  A value of 2 only matches runs that begin on a even
@@ -827,16 +876,16 @@ public class FlatProgramAPI {
 	 * @param searchAcrossAddressGaps This parameter is no longer supported and its value is
 	 * ignored. Previously, if true, match results were allowed to span non-continguous memory
 	 * ranges. 
-	 * @return the start addresses that contain byte patterns that match the given byteString
-	 * @throws IllegalArgumentException if the byteString is not a valid regular expression
+	 * @return the start addresses that contain byte patterns that match the given byte regex
+	 * @throws IllegalArgumentException if {@code byteRegex} is not a valid regular expression
 	 * @see #findBytes(Address, String)
 	 * 
 	 * @deprecated see description for details.
 	 */
 	@Deprecated(since = "11.3", forRemoval = true)
-	public final Address[] findBytes(AddressSetView set, String byteString, int matchLimit,
+	public final Address[] findBytes(AddressSetView set, String byteRegex, int matchLimit,
 			int alignment, boolean searchAcrossAddressGaps) {
-		return findBytes(set, byteString, matchLimit, alignment);
+		return findBytes(set, byteRegex, matchLimit, alignment);
 	}
 
 	/**
@@ -859,13 +908,13 @@ public class FlatProgramAPI {
 		Address addr = null;
 
 		monitor.setMessage("Searching plate comments...");
-		addr = findComment(CodeUnit.PLATE_COMMENT, text);
+		addr = findComment(CommentType.PLATE, text);
 		if (addr != null) {
 			return addr;
 		}
 
 		monitor.setMessage("Searching pre comments...");
-		addr = findComment(CodeUnit.PRE_COMMENT, text);
+		addr = findComment(CommentType.PRE, text);
 		if (addr != null) {
 			return addr;
 		}
@@ -914,19 +963,19 @@ public class FlatProgramAPI {
 		}
 
 		monitor.setMessage("Searching eol comments...");
-		addr = findComment(CodeUnit.EOL_COMMENT, text);
+		addr = findComment(CommentType.EOL, text);
 		if (addr != null) {
 			return addr;
 		}
 
 		monitor.setMessage("Searching repeatable comments...");
-		addr = findComment(CodeUnit.REPEATABLE_COMMENT, text);
+		addr = findComment(CommentType.REPEATABLE, text);
 		if (addr != null) {
 			return addr;
 		}
 
 		monitor.setMessage("Searching post comments...");
-		addr = findComment(CodeUnit.POST_COMMENT, text);
+		addr = findComment(CommentType.POST, text);
 		if (addr != null) {
 			return addr;
 		}
@@ -1331,7 +1380,7 @@ public class FlatProgramAPI {
 
 	/**
 	 * Returns the defined data after the specified data or null if no data exists.
-	 * @param data preceeding data
+	 * @param data preceding data
 	 * @return the defined data after the specified data or null if no data exists
 	 */
 	public final Data getDataAfter(Data data) {
@@ -1904,8 +1953,7 @@ public class FlatProgramAPI {
 	public final Reference addInstructionXref(Address from, Address to, int opIndex,
 			FlowType type) {
 		return currentProgram.getReferenceManager()
-				.addMemoryReference(from, to, type,
-					SourceType.USER_DEFINED, opIndex);
+				.addMemoryReference(from, to, type, SourceType.USER_DEFINED, opIndex);
 	}
 
 	/**
@@ -2365,8 +2413,7 @@ public class FlatProgramAPI {
 	 */
 	public final Equate getEquate(Instruction instruction, int operandIndex, long value) {
 		return currentProgram.getEquateTable()
-				.getEquate(instruction.getMinAddress(), operandIndex,
-					value);
+				.getEquate(instruction.getMinAddress(), operandIndex, value);
 	}
 
 	/**
@@ -2377,8 +2424,7 @@ public class FlatProgramAPI {
 	 */
 	public final List<Equate> getEquates(Instruction instruction, int operandIndex) {
 		return currentProgram.getEquateTable()
-				.getEquates(instruction.getMinAddress(),
-					operandIndex);
+				.getEquates(instruction.getMinAddress(), operandIndex);
 	}
 
 	/**
@@ -2390,8 +2436,7 @@ public class FlatProgramAPI {
 		Object obj = data.getValue();
 		if (obj instanceof Scalar) {
 			return currentProgram.getEquateTable()
-					.getEquate(data.getMinAddress(), 0,
-						((Scalar) obj).getValue());
+					.getEquate(data.getMinAddress(), 0, ((Scalar) obj).getValue());
 		}
 		return null;
 	}
@@ -2532,7 +2577,7 @@ public class FlatProgramAPI {
 	 * <p>
 	 * If a program already exists with the specified name, then a time stamp will be appended
 	 * to the name to make it unique.
-	 * <p>
+	 * 
 	 * @param program the program to save
 	 * @param path list of string path elements (starting at the root of the project) that specify
 	 * the project folder to save the program info.  Example: { "folder1", "subfolder2",
@@ -2604,7 +2649,7 @@ public class FlatProgramAPI {
 		return folder;
 	}
 
-	private Address findComment(int type, String text) {
+	private Address findComment(CommentType type, String text) {
 		Listing listing = currentProgram.getListing();
 		Memory memory = currentProgram.getMemory();
 		AddressIterator iter = listing.getCommentAddressIterator(type, memory, true);

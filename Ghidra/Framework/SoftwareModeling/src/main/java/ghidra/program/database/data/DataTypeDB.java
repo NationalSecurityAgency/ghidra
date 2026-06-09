@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,25 +16,24 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Collection;
+
+import org.apache.commons.lang3.StringUtils;
 
 import db.DBRecord;
 import ghidra.docking.settings.*;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.*;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.NotYetImplementedException;
 
 /**
  * Base class for data types that are Database objects.
- *
- *
  */
-abstract class DataTypeDB extends DatabaseObject implements DataType {
+abstract class DataTypeDB extends DbObject implements DataType {
 
 	protected DBRecord record;
 	protected final DataTypeManagerDB dataMgr;
@@ -43,22 +42,39 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	private final static TypeDefSettingsDefinition[] EMPTY_TYPEDEF_DEFINITIONS =
 		new TypeDefSettingsDefinition[0];
 	protected boolean resolving;
+	protected boolean deleting;
 	protected boolean pointerPostResolveRequired;
 	protected Lock lock;
 	private volatile String name;
 	private volatile Category category;
 
-	protected DataTypeDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
-			DBRecord record) {
-		super(cache, record.getKey());
+	protected DataTypeDB(DataTypeManagerDB dataMgr, DBRecord record) {
+		super(record.getKey());
 		this.dataMgr = dataMgr;
 		this.record = record;
 		this.lock = dataMgr.lock;
-		refreshName();
 	}
 
+	/**
+	 * Invoked by {@link DataTypeManagerDB} when operation has started to delete this datatype.
+	 * In this state any invocation of other datatype changes should be ignored as reflected
+	 * by {@code deleting} variable.  Once this state is changed and cannot be reverted for this 
+	 * instance.
+	 */
+	protected final void deleteStarted() {
+		deleting = true;
+	}
+
+	/**
+	 * Clears the current name so that the next invocation of {@link #getName()} will
+	 * force its update via {@link #doGetName()}.  It is important that {@link #doGetName()}
+	 * does not get invoked during a {@link #refresh()} to avoid problematic recursion during the
+	 * refresh caused by recursive use of {@link #refreshIfNeeded()} on the same object.
+	 * <P>
+	 * NOTE: This must only be invoked while in a locked-state
+	 */
 	protected void refreshName() {
-		name = doGetName();
+		name = null;
 	}
 
 	/**
@@ -112,12 +128,10 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 		super.setDeleted();
 	}
 
-	@Override
-	protected boolean refresh() {
+	protected final void completeRefresh() {
 		category = null;
 		defaultSettings = null;
 		refreshName();
-		return true;
 	}
 
 	@Override
@@ -142,8 +156,17 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 
 	@Override
 	public final String getName() {
-		validate(lock);
-		return name;
+		String n = name;
+		if (n != null && !needsRefreshing()) {
+			return n;
+		}
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
+			if (name == null) {
+				name = doGetName();
+			}
+			return name;
+		}
 	}
 
 	@Override
@@ -168,12 +191,11 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	@Override
 	public Settings getDefaultSettings() {
 		Settings localDefaultSettings = defaultSettings;
-		if (localDefaultSettings != null && !isInvalid()) {
+		if (localDefaultSettings != null && !needsRefreshing()) {
 			return localDefaultSettings;
 		}
-		lock.acquire();
-		try {
-			if (checkIsValid()) {
+		try (Closeable c = lock.read()) {
+			if (refreshIfNeeded()) {
 				defaultSettings = doGetDefaultSettings();
 			}
 			else {
@@ -181,14 +203,6 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 			}
 			return defaultSettings;
 		}
-		finally {
-			lock.release();
-		}
-	}
-
-	@Override
-	public URL getDocs() {
-		return null;
 	}
 
 	/**
@@ -275,12 +289,11 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	@Override
 	public CategoryPath getCategoryPath() {
 		Category cat = category;
-		if (cat != null && !isInvalid()) {
+		if (cat != null && !needsRefreshing()) {
 			return cat.getCategoryPath();
 		}
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (category == null) {
 				category = dataMgr.getCategory(doGetCategoryID());
 			}
@@ -288,9 +301,6 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 				category = dataMgr.getRootCategory();
 			}
 			return category.getCategoryPath();
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -301,8 +311,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 
 	@Override
 	public void setName(String newName) throws InvalidNameException, DuplicateNameException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (getName().equals(newName)) {
 				return;
@@ -313,9 +322,6 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 					" already exists in category " + categoryPath.getPath());
 			}
 			doSetName(newName);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -338,8 +344,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 
 	@Override
 	public void setCategoryPath(CategoryPath path) throws DuplicateNameException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (getCategoryPath().equals(path)) {
 				return;
@@ -350,9 +355,6 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 					" already exists in category " + path.getPath());
 			}
 			doSetCategoryPath(path);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -377,8 +379,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	@Override
 	public void setNameAndCategory(CategoryPath path, String name)
 			throws InvalidNameException, DuplicateNameException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			DataType dt = dataMgr.getDataType(path, name);
 			if (dt != null) {
@@ -404,9 +405,6 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 			if (!uniqueName.equals(name)) {
 				doSetName(name);
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -612,6 +610,14 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 			return existingDataTypeDB.isEquivalent(otherDataType, handler);
 		}
 		return existingDataType.isEquivalent(otherDataType);
+	}
+
+	static String prependComment(String additionalComment, String oldComment) {
+		String comment = additionalComment;
+		if (!StringUtils.isBlank(oldComment)) {
+			comment += "; " + oldComment;
+		}
+		return comment;
 	}
 
 }

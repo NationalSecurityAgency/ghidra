@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,14 +39,16 @@ public class BooleanExpressionTest extends AbstractGenericTest {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         parser = new BooleanExpressionParser(tokenStream);
         parser.env = new ExpressionEnvironment() {
-            public boolean equals(String lhs, String rhs) {
+            @Override
+			public boolean equals(String lhs, String rhs) {
                 if (lhs == null || rhs == null) {
                     return false;
                 }
                 return lhs.equals(rhs);
             }
 
-            public String lookup(String variable) {
+            @Override
+			public String lookup(String variable) {
                 return variable;
             }
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import javax.swing.JPanel;
 import javax.swing.event.*;
 
 import docking.DialogComponentProvider;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.util.HelpLocation;
@@ -36,17 +36,17 @@ import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 public class DataTypeSelectionDialog extends DialogComponentProvider {
 
 	private DataTypeSelectionEditor editor;
-	private PluginTool pluginTool;
+	private ServiceProvider serviceProvider;
 	private DataType userChoice;
 	private int maxSize = -1;
 	private DataTypeManager dtm;
 	private final AllowedDataTypes allowedTypes;
 
-	public DataTypeSelectionDialog(PluginTool pluginTool, DataTypeManager dtm, int maxSize,
-			DataTypeParser.AllowedDataTypes allowedTypes) {
+	public DataTypeSelectionDialog(ServiceProvider serviceProvider, DataTypeManager dtm,
+			int maxSize, DataTypeParser.AllowedDataTypes allowedTypes) {
 		super("Data Type Chooser Dialog", true, true, true, false);
 
-		this.pluginTool = pluginTool;
+		this.serviceProvider = serviceProvider;
 		this.dtm = dtm;
 		this.maxSize = maxSize;
 		this.allowedTypes = allowedTypes;
@@ -65,8 +65,7 @@ public class DataTypeSelectionDialog extends DialogComponentProvider {
 	private void buildEditor() {
 		removeWorkPanel();
 
-		editor = createEditor(pluginTool, allowedTypes);
-		editor.setPreferredDataTypeManager(dtm);
+		editor = createEditor(serviceProvider, allowedTypes);
 		editor.setConsumeEnterKeyPress(false); // we want to handle Enter key presses
 		editor.addCellEditorListener(new CellEditorListener() {
 			@Override
@@ -103,14 +102,15 @@ public class DataTypeSelectionDialog extends DialogComponentProvider {
 		});
 
 		JComponent mainPanel = createEditorPanel(editor);
+		mainPanel.getAccessibleContext().setAccessibleName("Data Type Selection");
 		addWorkPanel(mainPanel);
 
 		rootPanel.validate();
 	}
 
-	protected DataTypeSelectionEditor createEditor(PluginTool tool,
+	protected DataTypeSelectionEditor createEditor(ServiceProvider sp,
 			AllowedDataTypes allowedDataTypes) {
-		return new DataTypeSelectionEditor(tool, allowedDataTypes);
+		return new DataTypeSelectionEditor(dtm, sp, allowedDataTypes);
 	}
 
 	protected JComponent createEditorPanel(DataTypeSelectionEditor dtEditor) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,14 @@ package ghidra.app.plugin.assembler.sleigh.sem;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 
 import ghidra.app.plugin.assembler.sleigh.expr.MaskedLong;
 import ghidra.app.plugin.assembler.sleigh.expr.SolverException;
 import ghidra.app.plugin.assembler.sleigh.util.AsmUtil;
+import ghidra.app.plugin.processors.sleigh.ContextCommit;
 import ghidra.app.plugin.processors.sleigh.ContextOp;
 import ghidra.app.plugin.processors.sleigh.expression.ContextField;
 import ghidra.app.plugin.processors.sleigh.expression.TokenField;
@@ -403,6 +405,60 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 		return new AssemblyPatternBlock(newOffset, newMask, newVals);
 	}
 
+	/**
+	 * Combine this pattern block with another given block
+	 * 
+	 * <p>
+	 * The two blocks are combined regardless if their corresponding defined bits agree. When blocks
+	 * are combined, their bytes are aligned according to their shifts, and the defined bits are
+	 * taken from either block. If neither block defines a bit (i.e., the mask bit at that position
+	 * is 0 for both input blocks), then the output has an undefined bit in the corresponding
+	 * position. If both blocks define the bit, but they have opposite values, then the value from
+	 * <code>that</code> takes precedence.
+	 * 
+	 * @see RegisterValue#combineValues(RegisterValue)
+	 * 
+	 * @param that the other block
+	 * @return the new combined block
+	 */
+	public AssemblyPatternBlock assign(AssemblyPatternBlock that) {
+		int newOffset = Math.min(this.offset, that.offset);
+		int bufLen = Math.max(this.length(), that.length()) - newOffset;
+
+		byte[] newMask = new byte[bufLen];
+		byte[] newVals = new byte[bufLen];
+
+		int diff = this.offset - newOffset;
+		for (int i = 0; i < this.mask.length; i++) {
+			newMask[diff + i] = this.mask[i];
+			newVals[diff + i] = this.vals[i];
+		}
+		diff = that.offset - newOffset;
+		for (int i = 0; i < that.mask.length; i++) {
+			byte mask = that.mask[i];
+			byte clearMask = (byte) ~mask;
+			newMask[diff + i] |= mask;
+			newVals[diff + i] = (byte) ((that.vals[i] & mask) | (newVals[diff + i] & clearMask));
+		}
+		return new AssemblyPatternBlock(newOffset, newMask, newVals);
+	}
+
+	/**
+	 * Invert the mask bits of this pattern block
+	 * 
+	 * @return a copy of this pattern block with mask bits inverted
+	 */
+	public AssemblyPatternBlock invertMask() {
+		int maskLen = this.mask.length;
+		byte[] newMask = new byte[maskLen];
+
+		for (int i = 0; i < maskLen; i++) {
+			newMask[i] = (byte) ~this.mask[i];
+		}
+
+		return new AssemblyPatternBlock(this.offset, newMask, this.vals);
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -573,6 +629,30 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 		}
 		// Shift the two separately to spare an object instantiation.
 		return MaskedLong.fromMaskAndValue(rmsk >>> cop.getShift(), rval >>> cop.getShift());
+	}
+
+	/**
+	 * Write mask bits from context commit to mask array of block
+	 * 
+	 * @implNote This is used when scraping for valid input contexts to determine which context variables
+	 *           are passed to the <code>globalset</code> directive.
+	 * 
+	 * @param cc the context commit
+	 * @return the result
+	 */
+	public AssemblyPatternBlock writeContextCommitMask(ContextCommit cc) {
+		byte[] newMask = Arrays.copyOf(this.mask, this.mask.length);
+		int idx = cc.getWordIndex();
+		int imsk = cc.getMask();
+		for (int i = 3; i >= 0; i--) {
+			int index = idx * 4 + i - this.offset;
+
+			if (index < newMask.length && index >= 0) {
+				newMask[index] |= imsk;
+			}
+			imsk >>= 8;
+		}
+		return new AssemblyPatternBlock(this.offset, newMask, this.vals);
 	}
 
 	/**

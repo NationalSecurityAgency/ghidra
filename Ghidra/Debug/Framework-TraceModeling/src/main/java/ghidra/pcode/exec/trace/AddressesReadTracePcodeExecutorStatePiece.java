@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,6 @@
 package ghidra.pcode.exec.trace;
 
 import java.util.*;
-
-import javax.help.UnsupportedOperationException;
 
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
@@ -40,10 +38,18 @@ import ghidra.program.model.mem.MemBuffer;
  */
 public class AddressesReadTracePcodeExecutorStatePiece
 		extends AbstractLongOffsetPcodeExecutorStatePiece<byte[], AddressSetView, AddressSpace>
-		implements TracePcodeExecutorStatePiece<byte[], AddressSetView> {
+		implements PcodeExecutorStatePiece<byte[], AddressSetView> {
 
 	protected final PcodeTraceDataAccess data;
 	private final Map<Long, AddressSetView> unique;
+
+	protected AddressesReadTracePcodeExecutorStatePiece(PcodeTraceDataAccess data,
+			Map<Long, AddressSetView> unique) {
+		super(data.getLanguage(), BytesPcodeArithmetic.forLanguage(data.getLanguage()),
+			AddressesReadPcodeArithmetic.INSTANCE, PcodeStateCallbacks.NONE);
+		this.data = data;
+		this.unique = unique;
+	}
 
 	/**
 	 * Construct the state piece
@@ -51,18 +57,12 @@ public class AddressesReadTracePcodeExecutorStatePiece
 	 * @param data the trace data access shim
 	 */
 	public AddressesReadTracePcodeExecutorStatePiece(PcodeTraceDataAccess data) {
-		super(data.getLanguage(), BytesPcodeArithmetic.forLanguage(data.getLanguage()),
-			AddressesReadPcodeArithmetic.INSTANCE);
-		this.data = data;
-		this.unique = new HashMap<>();
+		this(data, new HashMap<>());
 	}
 
-	protected AddressesReadTracePcodeExecutorStatePiece(PcodeTraceDataAccess data,
-			Map<Long, AddressSetView> unique) {
-		super(data.getLanguage(), BytesPcodeArithmetic.forLanguage(data.getLanguage()),
-			AddressesReadPcodeArithmetic.INSTANCE);
-		this.data = data;
-		this.unique = unique;
+	@Override
+	protected AddressSetView checkSize(int size, AddressSetView val) {
+		return val;
 	}
 
 	@Override
@@ -71,18 +71,8 @@ public class AddressesReadTracePcodeExecutorStatePiece
 	}
 
 	@Override
-	public PcodeTraceDataAccess getData() {
-		return data;
-	}
-
-	@Override
-	public AddressesReadTracePcodeExecutorStatePiece fork() {
+	public AddressesReadTracePcodeExecutorStatePiece fork(PcodeStateCallbacks cb) {
 		return new AddressesReadTracePcodeExecutorStatePiece(data, new HashMap<>(unique));
-	}
-
-	@Override
-	public void writeDown(PcodeTraceDataAccess into) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -102,7 +92,8 @@ public class AddressesReadTracePcodeExecutorStatePiece
 	}
 
 	@Override
-	protected void setInSpace(AddressSpace space, long offset, int size, AddressSetView val) {
+	protected void setInSpace(AddressSpace space, long offset, int size, AddressSetView val,
+			PcodeStateCallbacks cb) {
 		if (!space.isUniqueSpace()) {
 			return;
 		}
@@ -112,7 +103,7 @@ public class AddressesReadTracePcodeExecutorStatePiece
 
 	@Override
 	protected AddressSetView getFromSpace(AddressSpace space, long offset, int size,
-			Reason reason) {
+			Reason reason, PcodeStateCallbacks cb) {
 		if (space.isUniqueSpace()) {
 			AddressSetView result = unique.get(offset);
 			if (result == null) {
@@ -122,7 +113,8 @@ public class AddressesReadTracePcodeExecutorStatePiece
 		}
 		Address start = data.translate(space.getAddress(offset));
 		if (start == null) {
-			return new AddressSet();
+			// This can happen if the register space for the thread doesn't exist
+			return null;
 		}
 		try {
 			return new AddressSet(new AddressRangeImpl(start, size));

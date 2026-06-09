@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -88,34 +88,34 @@ public class GraphAlgorithmsVisualDebugger extends AbstractGraphAlgorithmsTest {
 			Paths: v1, v3, v5, v10
 		*/
 
-		TestV v1 = vertex(1);
-		TestV v2 = vertex(2);
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
-		TestV v7 = vertex(7);
-		TestV v8 = vertex(8);
-		TestV v9 = vertex(9);
-		TestV v10 = vertex(10);
+		TestV v1 = v(1);
+		TestV v2 = v(2);
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
+		TestV v7 = v(7);
+		TestV v8 = v(8);
+		TestV v9 = v(9);
+		TestV v10 = v(10);
 
-		edge(v1, v2);
-		edge(v1, v3);
+		e(v1, v2);
+		e(v1, v3);
 
-		edge(v2, v1); // back edge
+		e(v2, v1); // back edge
 
-		edge(v3, v4);
-		edge(v3, v5);
-		edge(v3, v6);
+		e(v3, v4);
+		e(v3, v5);
+		e(v3, v6);
 
-		edge(v5, v10);
+		e(v5, v10);
 
-		edge(v6, v7);
+		e(v6, v7);
 
-		edge(v7, v8);
-		edge(v7, v9);
+		e(v7, v8);
+		e(v7, v9);
 
-		edge(v9, v6); // back edge
+		e(v9, v6); // back edge
 
 		AlgorithmSteppingTaskMonitor steppingMonitor = new AlgorithmSteppingTaskMonitor();
 		steppingMonitor = new AlgorithmSelfSteppingTaskMonitor(500);

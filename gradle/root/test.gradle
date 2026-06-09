@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,6 +62,7 @@ if (!project.hasProperty('srcTreeName')) {
 
 project.ext.testRootDirName = "JunitTest_" + srcTreeName
 project.ext.pcodeTestRootDirName = "PCodeTest_" + srcTreeName
+project.ext.cspecTestRootDirName = "CSpecTest_" + srcTreeName
 
 project.ext.shareDir = System.properties.get('share.dir')
 if (project.ext.shareDir != null) {
@@ -310,8 +311,10 @@ def initTestJVM(Task task, String rootDirName) {
     task.minHeapSize xms
     task.maxHeapSize xmx
     	
-    task.doFirst {	    
-		task.jvmArgs '-DupgradeProgramErrorMessage=' + upgradeProgramErrorMessage,
+    task.doFirst {	
+        	 
+		def args = [
+		 	'-DupgradeProgramErrorMessage=' + upgradeProgramErrorMessage,
 			'-DupgradeTimeErrorMessage=' + upgradeTimeErrorMessage,
 			'-Dlog4j.configurationFile=' + logPropertiesUrl,
 			'-Dghidra.test.property.batch.mode=true',
@@ -332,8 +335,10 @@ def initTestJVM(Task task, String rootDirName) {
 			'-Duser.language=en',
 			'-Djdk.attach.allowAttachSelf',
 			'-XX:TieredStopAtLevel=1',
-			'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=' + debugPort,
-
+			
+			// Note: this following arg is needed to enable remote debug.
+			//'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:' + debugPort,
+			
 			// Allow illegal reflective accesses
 			'--add-opens=java.base/java.util.concurrent=ALL-UNNAMED',
 			'--add-opens=java.desktop/sun.awt=ALL-UNNAMED',
@@ -342,18 +347,19 @@ def initTestJVM(Task task, String rootDirName) {
 			'--add-opens=java.desktop/javax.swing=ALL-UNNAMED',			
 			'--add-opens=java.desktop/javax.swing.text=ALL-UNNAMED'
 			
-			// Note: this args are used to speed-up the tests, but are not safe for production code
-			// -noverify and -XX:TieredStopAtLevel=1			
+			// Note: these args are used to speed-up the tests, but are not safe for production code
+			// -noverify and -XX:TieredStopAtLevel=1
+		]
+		
+		if (hasApiProjectDependency(project, ":FileSystem")) {
+			// If project has a FileSystem dependency we must assume there may be a
+			// Ghidra ApplicationConfiguration that will attempt to configure a
+			// serial filter factory which must be done in a lazy fashion when gradle
+			// test workers are used.
+			args << '-Djdk.serialFilterFactory=ghidra.framework.remote.GhidraSerialFilterFactory'	
+		}
 			
-			// Note: modern remote debug invocation;
-			// 	-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
-			
-			// 
-			// We removed these lines, which should not be needed in modern JVMs
-			//  -Xdebug
-			//  -Xnoagent
-			//  -Djava.compiler=NONE
-			//  -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000
+		task.jvmArgs args			
 	}
 }
 
@@ -368,7 +374,7 @@ def initTestJVM(Task task, String rootDirName) {
  *
 *********************************************************************************/
 task parallelCombinedTestReport(type: TestReport) { t ->
-		group "test"
+		group = "test"
 		destinationDirectory = file("$reportDir")
 		logger.debug("parallelCombinedTestReport: Using destinationDir = $reportDir")
 		dependsOn ":deleteTestTempAndReportDirs"
@@ -383,8 +389,8 @@ task parallelCombinedTestReport(type: TestReport) { t ->
  *
  *********************************************************************************/
 task unitTestReport(type: TestReport) { t ->
-	group "test"
-    description "Run unit tests and save HTML report."
+	group = "test"
+    description = "Run unit tests and save HTML report."
     destinationDirectory = file("$reportDir/unitTests")
 	outputs.upToDateWhen {false}
 }
@@ -396,8 +402,8 @@ task unitTestReport(type: TestReport) { t ->
  *
  *********************************************************************************/
 task integrationTestReport(type: TestReport) { t ->
-	group "test"
-    description "Run integration tests and save HTML report."
+	group = "test"
+    description = "Run integration tests and save HTML report."
     destinationDirectory = file("$reportDir/integrationTests")
 	outputs.upToDateWhen {false}
 }
@@ -414,8 +420,8 @@ task integrationTestReport(type: TestReport) { t ->
  *
  *********************************************************************************/
 task targetedTestReport(type: TestReport) { t -> 
-    group "test"
-    description "Run unit tests against a specific set of projects."
+    group = "test"
+    description = "Run unit tests against a specific set of projects."
     destinationDirectory = file("$reportDir/unitTests")
     outputs.upToDateWhen {false}
     dependsOn ":deleteTestTempAndReportDirs"
@@ -451,7 +457,7 @@ def createTestTask(Project subproject, String testType, String bucketName, int t
 	int classesListPosition, int numMaxParallelForks) {
 
 	subproject.task(testType+"_$taskNameCounter"+"_$bucketName", type: Test) { t ->
-		group "test"
+		group = "test"
 		testClassesDirs = files subproject.sourceSets["$testType"].output.classesDirs
 		classpath = subproject.sourceSets["$testType"].runtimeClasspath
 		
@@ -559,7 +565,7 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
  *
  *********************************************************************************/
 task combinedTestReport(type: TestReport) { t ->
-	group "test"
+	group = "test"
 	destinationDirectory = file("$reportDir")
 
 	dependsOn ":deleteTestTempAndReportDirs"
@@ -573,7 +579,7 @@ task combinedTestReport(type: TestReport) { t ->
  *
  *********************************************************************************/
 task pcodeTestReport(type: TestReport) { t ->
-	group "pcodeTest"
+	group = "pcodeTest"
 	destinationDirectory = file("$pcodeTestShareDir" + "/reports")
 }	
 	
@@ -585,7 +591,7 @@ task pcodeTestReport(type: TestReport) { t ->
  *
  *********************************************************************************/
 task pcodeConsolidatedTestReport(type: Copy) {
-	group "pcodeTest"
+	group = "pcodeTest"
 	dependsOn ':pcodeTestReport'
 	into (pcodeTestShareDir + "/reports")
 	from (testOutputDir + "/test-output") {

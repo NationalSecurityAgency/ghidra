@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 
-import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin.ChangeCollector;
-import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingContext.ChangeCollector;
+import ghidra.debug.api.modules.MappedAddressRange;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectEvent;
 import ghidra.program.model.address.*;
@@ -37,7 +37,7 @@ import ghidra.trace.util.TraceEvents;
 import ghidra.util.Msg;
 
 class InfoPerTrace extends TraceDomainObjectListener {
-	private final DebuggerStaticMappingServicePlugin plugin;
+	private final DebuggerStaticMappingContext ctx;
 	final Trace trace;
 
 	final Map<TraceStaticMapping, MappingEntry> outboundByEntry = new HashMap<>();
@@ -47,8 +47,8 @@ class InfoPerTrace extends TraceDomainObjectListener {
 
 	private volatile boolean needsResync = false;
 
-	InfoPerTrace(DebuggerStaticMappingServicePlugin plugin, Trace trace) {
-		this.plugin = plugin;
+	InfoPerTrace(DebuggerStaticMappingContext ctx, Trace trace) {
+		this.ctx = ctx;
 		this.trace = trace;
 
 		listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
@@ -63,7 +63,7 @@ class InfoPerTrace extends TraceDomainObjectListener {
 		// Now do the actual processing
 		if (needsResync) {
 			needsResync = false;
-			CompletableFuture.runAsync(this::resyncEntries, plugin.executor);
+			CompletableFuture.runAsync(this::resyncEntries, ctx.executor);
 		}
 	}
 
@@ -84,9 +84,9 @@ class InfoPerTrace extends TraceDomainObjectListener {
 	}
 
 	private void resyncEntries() {
-		try (ChangeCollector cc = new ChangeCollector(plugin)) {
+		try (ChangeCollector cc = new ChangeCollector(ctx)) {
 			// Invoke change callbacks without the lock! (try must surround sync)
-			synchronized (plugin.lock) {
+			synchronized (ctx.lock) {
 				resyncEntries(cc);
 			}
 		}
@@ -124,7 +124,7 @@ class InfoPerTrace extends TraceDomainObjectListener {
 		}
 		outboundByRange.remove(me.getTraceAddressSnapRange());
 		outboundByStaticUrl.removeMapping(me.getStaticProgramUrl(), me);
-		plugin.checkAndClearProgram(cc, me);
+		ctx.checkAndClearProgram(cc, me);
 	}
 
 	private void processAddedEntries(ChangeCollector cc, Set<TraceStaticMapping> added) {
@@ -138,7 +138,7 @@ class InfoPerTrace extends TraceDomainObjectListener {
 		outboundByEntry.put(entry, me);
 		outboundByRange.put(me.getTraceAddressSnapRange(), me);
 		outboundByStaticUrl.put(me.getStaticProgramUrl(), me);
-		plugin.checkAndFillProgram(cc, me);
+		ctx.checkAndFillProgram(cc, me);
 	}
 
 	void clearEntriesForProgram(ChangeCollector cc, InfoPerProgram progInfo) {

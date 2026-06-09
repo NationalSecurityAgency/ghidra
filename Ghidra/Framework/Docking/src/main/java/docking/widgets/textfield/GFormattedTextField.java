@@ -97,6 +97,15 @@ public class GFormattedTextField extends JFormattedTextField {
 		update();
 	}
 
+	/**
+	 * Returns the default text.  This is useful to know what the original text is after the user
+	 * has edited the text.
+	 * @return the default text
+	 */
+	public String getDefaultText() {
+		return defaultText;
+	}
+
 	public void disableFocusEventProcessing() {
 		ignoreFocusEditChanges = true;
 	}
@@ -165,6 +174,30 @@ public class GFormattedTextField extends JFormattedTextField {
 		update();
 	}
 
+	/**
+	 * Restores this field to its default text.
+	 */
+	public void reset() {
+		setText(defaultText);
+		update();
+	}
+
+	/**
+	 * Returns true if the contents of this field do not match the default.
+	 * @return true if the contents of this field do not match the default.
+	 */
+	public boolean isChanged() {
+		return getTextEntryStatus() != Status.UNCHANGED;
+	}
+
+	/**
+	 * Returns true if the contents of this field are invalid, as determined by the InputValidator.
+	 * @return true if the contents of this field are invalid, as determined by the InputValidator.
+	 */
+	public boolean isInvalid() {
+		return getTextEntryStatus() == Status.INVALID;
+	}
+
 	public void editingFinished() {
 		update();
 	}
@@ -196,7 +229,6 @@ public class GFormattedTextField extends JFormattedTextField {
 	}
 
 	private void update() {
-
 		updateStatus();
 		if (isError) {
 			setForeground(Colors.FOREGROUND);
@@ -231,5 +263,4 @@ public class GFormattedTextField extends JFormattedTextField {
 			textEntryStatusChanged(currentStatus);
 		}
 	}
-
 }

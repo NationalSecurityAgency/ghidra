@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 apply from: "${rootProject.projectDir}/gradle/javaProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/helpProject.gradle"
 apply from: "${rootProject.projectDir}/gradle/jacocoProject.gradle"
 apply from: "${rootProject.projectDir}/gradle/javaTestProject.gradle"
 apply from: "${rootProject.projectDir}/gradle/distributableGhidraModule.gradle"
@@ -24,10 +25,4 @@ eclipse.project.name = 'Debug Debugger-jpda'
 dependencies {
 	api project(':Debugger-api')
 	api project(':Debugger-rmi-trace')
-	api project(':Framework-AsyncComm')
-	api project(':Framework-Debugging')
-	api project(':ProposedUtils')
-
-	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
-	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
 }

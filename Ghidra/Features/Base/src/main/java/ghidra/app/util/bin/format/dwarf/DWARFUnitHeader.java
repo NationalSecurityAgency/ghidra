@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,6 @@ package ghidra.app.util.bin.format.dwarf;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * The base class for a set of headers that share a common field layout.
@@ -28,23 +26,20 @@ public class DWARFUnitHeader {
 	/**
 	 * Reads the initial fields found in a unit header.
 	 * 
-	 * @param dprog {@link DWARFProgram}
+	 * @param dieContainer {@link DIEContainer}
 	 * @param reader {@link BinaryReader} stream
-	 * @param abbrReader  {@link BinaryReader} .debug_abbr stream
 	 * @param unitNumber ordinal of this item
-	 * @param monitor {@link TaskMonitor}
 	 * @return a unit header (only comp units for now), or null if at end-of-list
 	 * @throws DWARFException if invalid dwarf data
 	 * @throws IOException if error reading data
-	 * @throws CancelledException if cancelled
 	 */
-	public static DWARFUnitHeader read(DWARFProgram dprog, BinaryReader reader,
-			BinaryReader abbrReader, int unitNumber, TaskMonitor monitor)
-			throws DWARFException, IOException, CancelledException {
+	public static DWARFUnitHeader read(DIEContainer dieContainer, BinaryReader reader,
+			int unitNumber) throws DWARFException, IOException {
 		// unit_length : dwarf_length
 		// version : 2 bytes
 		// unit type : 1 byte [ version >= 5 ]
 
+		DWARFProgram dprog = dieContainer.getProgram();
 		long startOffset = reader.getPointerIndex();
 		DWARFLengthValue lengthInfo = DWARFLengthValue.read(reader, dprog.getDefaultIntSize());
 		if (lengthInfo == null) {
@@ -57,16 +52,16 @@ public class DWARFUnitHeader {
 			throw new DWARFException("Unsupported DWARF version [%d]".formatted(version));
 		}
 
-		DWARFUnitHeader partial = new DWARFUnitHeader(dprog, startOffset, endOffset,
+		DWARFUnitHeader partial = new DWARFUnitHeader(dieContainer, startOffset, endOffset,
 			lengthInfo.intSize(), version, unitNumber);
 
 		if (2 <= version && version <= 4) {
-			return DWARFCompilationUnit.readV4(partial, reader, abbrReader, monitor);
+			return DWARFCompilationUnit.readV4(partial, reader);
 		}
 		int unitType = reader.readNextUnsignedByte();
 		switch (unitType) {
 			case DWARFUnitType.DW_UT_compile:
-				return DWARFCompilationUnit.readV5(partial, reader, abbrReader, monitor);
+				return DWARFCompilationUnit.readV5(partial, reader);
 			case DWARFUnitType.DW_UT_type:
 			case DWARFUnitType.DW_UT_partial:
 			case DWARFUnitType.DW_UT_skeleton:
@@ -82,6 +77,8 @@ public class DWARFUnitHeader {
 	 * Reference to the owning {@link DWARFProgram}.
 	 */
 	protected final DWARFProgram dprog;
+
+	protected final DIEContainer dieContainer;
 
 	/**
 	 * Offset in the section of this header
@@ -111,6 +108,7 @@ public class DWARFUnitHeader {
 
 	protected DWARFUnitHeader(DWARFUnitHeader other) {
 		this.dprog = other.dprog;
+		this.dieContainer = other.dieContainer;
 		this.startOffset = other.startOffset;
 		this.endOffset = other.endOffset;
 		this.intSize = other.intSize;
@@ -118,9 +116,10 @@ public class DWARFUnitHeader {
 		this.unitNumber = other.unitNumber;
 	}
 
-	protected DWARFUnitHeader(DWARFProgram dprog, long startOffset, long endOffset, int intSize,
-			short version, int unitNumber) {
-		this.dprog = dprog;
+	protected DWARFUnitHeader(DIEContainer dieContainer, long startOffset, long endOffset,
+			int intSize, short version, int unitNumber) {
+		this.dieContainer = dieContainer;
+		this.dprog = dieContainer.getProgram();
 		this.startOffset = startOffset;
 		this.endOffset = endOffset;
 		this.intSize = intSize;
@@ -130,6 +129,10 @@ public class DWARFUnitHeader {
 
 	public DWARFProgram getProgram() {
 		return dprog;
+	}
+
+	public DIEContainer getDIEContainer() {
+		return dieContainer;
 	}
 
 	public short getDWARFVersion() {

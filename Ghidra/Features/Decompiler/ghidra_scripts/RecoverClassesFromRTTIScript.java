@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,7 +82,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.reloc.Relocation;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
-import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.*;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.service.graph.*;
 import ghidra.util.exception.CancelledException;
@@ -120,8 +120,11 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	// They are either undefined bytes or code that is not in a function. 
 	private static final boolean FIXUP_PROGRAM = true;
 
-	// bookmark all constructor/destructor functions figured out by this script
+	// bookmark all constructor/destructor functions recognized by script
 	private static final boolean BOOKMARK_FOUND_FUNCTIONS = true;
+
+	// make vfunctions this calls
+	private static final boolean MAKE_VFUNCTIONS_THISCALLS = true;
 
 	// show a graph of class hierarchies after script is complete
 	// no parent = blue vertex
@@ -193,7 +196,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			nameVfunctions = !hasDebugSymbols;
 			recoverClassesFromRTTI = new RTTIWindowsClassRecoverer(currentProgram, state.getTool(),
 				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-				nameVfunctions, hasDebugSymbols, monitor);
+				nameVfunctions, MAKE_VFUNCTIONS_THISCALLS, hasDebugSymbols, monitor);
 		}
 		else if (isPE() && isGcc()) {
 
@@ -212,9 +215,11 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 				return;
 			}
 
+			nameVfunctions = true;
+
 			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, state.getTool(),
 				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-				nameVfunctions, hasDebugSymbols, monitor);
+				nameVfunctions, MAKE_VFUNCTIONS_THISCALLS, hasDebugSymbols, monitor);
 		}
 		else if (isGcc()) {
 
@@ -242,7 +247,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			nameVfunctions = !hasDebugSymbols;
 			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, state.getTool(),
 				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-				nameVfunctions, hasDebugSymbols, monitor);
+				nameVfunctions, MAKE_VFUNCTIONS_THISCALLS, hasDebugSymbols, monitor);
 		}
 		else {
 			println("This script will not work on this program type");
@@ -323,12 +328,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			getNumberOfConstructorsOrDestructors(recoveredClasses) +
 			" class member functions to assign.");
 
-		if (!hasDebugSymbols) {
-
-			if (BOOKMARK_FOUND_FUNCTIONS) {
-				bookmarkFunctions(recoveredClasses);
-				println("See Bookmark Manager for a list of functions by type.");
-			}
+		if (BOOKMARK_FOUND_FUNCTIONS) {
+			bookmarkFunctions(recoveredClasses);
+			println("See Bookmark Manager for a list of functions by type.");
 		}
 
 		callOptionalOutputMethods(recoveredClasses, out);
@@ -384,7 +386,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		if (!GhidraProgramUtilities.isAnalyzed(currentProgram)) {
 			return ("The program has not been analyzed. Please run auto-analysis and make sure " +
-				"the RTTI analzer is one of the analyzers enabled.");
+				"the RTTI analyzer is one of the analyzers enabled.");
 		}
 
 		if (isRttiAnalyzed() && !hasRtti()) {
@@ -417,8 +419,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			runScript("FixElfExternalOffsetDataRelocationScript.java");
 
 			// first check that there is even rtti by searching the special string in memory
-			if (!isStringInProgramMemory("class_type_info")) {
-				return ("This program does not contain RTTI.");
+			if (!isStringInProgramMemory("class_type_info") && !containsClassTypeinfoSymbol()) {
+				return ("This program does not appear to contain RTTI.");
 			}
 
 			// then check to see if the special typeinfo namespace is in external space
@@ -468,17 +470,18 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 				if (status == Status.FAILURE) {
 					return true;
 				}
-				
+
 				// if any relocations for special typeinfo class symbols are unsupported then
 				// determine where the symbol is located before determining if it is an issue
-				if(status == Status.UNSUPPORTED) {
+				if (status == Status.UNSUPPORTED) {
 
 					//if relocation symbol is the same as the symbol at the relcation address
 					//then this situation is not an issue - it indicates a copy relocation at the
 					//location of the special typeinfo vtable which is a use case that can be handled
 					Address address = r.getAddress();
-					Symbol symbolAtAddress  = currentProgram.getSymbolTable().getSymbol(symbolName, address, currentProgram.getGlobalNamespace());
-					if(symbolAtAddress != null) {
+					Symbol symbolAtAddress = currentProgram.getSymbolTable()
+							.getSymbol(symbolName, address, currentProgram.getGlobalNamespace());
+					if (symbolAtAddress != null) {
 						continue;
 					}
 					return true;
@@ -488,7 +491,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		}
 		return false;
 	}
-
 
 	private void analyzeProgramChanges(AddressSetView beforeChanges) throws Exception {
 
@@ -1615,9 +1617,25 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		return false;
 	}
 
+	// assume that if there are any symbols containing "class_type_info" there is rtti in program
+	private boolean containsClassTypeinfoSymbol() {
+
+		SymbolTable symbolTable = currentProgram.getSymbolTable();
+		SymbolIterator symbolIterator =
+			symbolTable.getSymbolIterator("*class_type_info*", true);
+		return symbolIterator.hasNext();
+
+	}
+
 	private boolean isExternalNamespace(String path) throws CancelledException {
 
-		List<Symbol> symbols = NamespaceUtils.getSymbols(path, currentProgram, true);
+		// try exact namespace path if there is one
+		List<Symbol> symbols = NamespaceUtils.getSymbols(path, currentProgram, false);
+
+		// if not, try to find path in another namespace
+		if (symbols.isEmpty()) {
+			symbols = NamespaceUtils.getSymbols(path, currentProgram, true);
+		}
 
 		for (Symbol symbol : symbols) {
 			monitor.checkCancelled();

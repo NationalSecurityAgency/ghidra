@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,8 @@
 package ghidra.features.bsim.gui.filters;
 
 import java.sql.SQLException;
+
+import org.postgresql.core.Utils;
 
 import ghidra.features.bsim.query.client.IDSQLResolution;
 import ghidra.features.bsim.query.client.SQLEffects;
@@ -35,23 +37,24 @@ public class PathStartsBSimFilterType extends BSimFilterType {
 
 	@Override
 	public void gatherSQLEffect(SQLEffects effect, FilterAtom atom, IDSQLResolution resolution)
-		throws SQLException {
+			throws SQLException {
 		if (atom.value.length() > 0) {
 			effect.setExeTable();
 			effect.setPathTable();
 			StringBuilder buf = new StringBuilder();
-			buf.append("position( \'").append(atom.value).append("\' in pathtable.val) = 1");
+			buf.append("position( '");
+			Utils.escapeLiteral(buf, atom.value, true);
+			buf.append("' in pathtable.val) = 1");
 			effect.addWhere(this, buf.toString());
 		}
 	}
 
 	@Override
 	public void gatherElasticEffect(ElasticEffects effect, FilterAtom atom,
-		IDElasticResolution resolution) throws ElasticException {
-		effect.addDocValue("String path = doc['path'].value; ");
+			IDElasticResolution resolution) throws ElasticException {
+		effect.addDocValue("String path = doc['path'].size() == 0 ? null : doc['path'].value; ");
 		String argName = effect.assignArgument();
-		effect.addScriptElement(this,
-			"(path != null) && path.startsWith(params." + argName + ')');
+		effect.addScriptElement(this, "(path != null) && path.startsWith(params." + argName + ')');
 		effect.addParam(argName, atom.value);
 	}
 

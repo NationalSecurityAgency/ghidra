@@ -22,13 +22,14 @@
     </TABLE>
 
     <BLOCKQUOTE>
-      <P>The Call Tree Plugin shows all <B>caller functions</B> and all <B>functions called</B> for
+      <P>The Call Tree Plugin shows all <B>callers</B> and all <B>callees</B> for
       the <B>current function</B> (also known as the <B>main function</B>), which is the function
       that contains the cursor location in the <A href=
-      "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A>. You can expand the nodes in each
-      of the trees to show more information about these referenced functions. This plugin can be
-      used to gain a quick context of a given function by seeing incoming and outgoing function
-      calls.</P>
+      "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A>. Functions which reference 
+	  or are referenced by the main function are also shown. You can expand the nodes in each of the
+	  trees to show more information about these other functions. This plugin can be used to 
+	  gain a quick context of a given function by seeing incoming and outgoing function calls and 
+	  references.</P>
 
 	  <P>
 	  You can launch this component by clicking the 
@@ -63,17 +64,21 @@
 	  <BR><BR>
 
 
-      <P><A name="Incoming_Call_Tree"></A>The <B>Incoming Calls</B> tree shows all caller
-      functions. Each node in the tree has the incoming function call icon (<IMG src=
-      "Icons.ARROW_DOWN_RIGHT_ICON" border="0">). Expanding a node in this tree shows all functions that
-      are callers of the expanded node. Nodes may be expanded recursively to any depth desired.</P>
+      <P><A name="Incoming_Call_Tree"></A>The <B>Incoming</B> tree shows all functions calling
+      and/or referencing the main function. Each node in the tree has the incoming function  
+	  icon (<IMG src="Icons.ARROW_UP_LEFT_ICON" border="0">) combined with 
+	  (<IMG src="icon.plugin.calltree.function" border="0">) for calls and 
+	  (<IMG src="images/icon_link.gif" border="0">) for other reference types. Expanding a 
+	  node in this tree shows all functions that call or reference the function corresponding
+	  to the expanded node. Nodes may be expanded recursively to any depth desired.</P>
 
-      <P><A name="Outgoing_Call_Tree"></A>The <B>Outgoing Calls</B> tree shows all functions
-      called. Nodes with the outgoing function call icon 
-      (<IMG src="Icons.ARROW_UP_LEFT_ICON" border="0">) represent functions 
-      called by the current function that <B>also call other
-      functions</B>.  Expanding a node in this tree shows all functions that are called by the 
-      expanded node. Nodes may be expanded recursively to any depth desired.</P>
+      <P><A name="Outgoing_Call_Tree"></A>The <B>Outgoing</B> tree shows all functions
+      called or referenced by the main function. Each node in the tree has the outgoing function 
+	  icon (<IMG src="Icons.ARROW_DOWN_RIGHT_ICON" border="0">) combined with 
+      (<IMG src="icon.plugin.calltree.function" border="0">) for calls and
+	  (<IMG src="images/icon_link.gif" border="0">) for other reference types.  Expanding a node in this 
+	  tree shows all functions that are called or referenced by the expanded node. Nodes may be 
+	  expanded recursively to any depth desired.</P>
       
       <blockquote>
       <P>
@@ -175,14 +180,27 @@
           taken place that <b>may</b> affect the structure of the tree.
           </P>
           
-          <!-- Filter Duplicates -->
-          <P align="left"><A name="Call_Tree_Action_Filter"></A>The 
+          <!-- Unify Functions-->
+          <P align="left"><A name="Call_Tree_Action_Unify_Functions"></A>The 
           <IMG src="images/application_double.png"
-          border="1"> action, when toggled on, will filter out duplicate function calls. 
-          This setting is useful to see the set of all functions called. When
-          toggled off this action will show all function calls, including duplicate calls, in
-          address order. This setting is more useful to see the overall flow of the main
-          function.</P>
+          border="1"> action, when toggled on, will filter out duplicate function calls.  For 
+		  incoming function calls, only one entry will exist in the child nodes for a given 
+		  function, even if that function calls the parent node multiple times.  For outgoing 
+		  function calls, only one entry will exist in the child nodes for a given function, even 
+		  if the parent node calls a given function repeatedly.
+          This setting is useful to see the set of all functions called in order to see the basic
+		  function call graph.   When toggled off this action will show all function calls, 
+		  including duplicate calls, in address order. This setting is more useful to see the 
+		  overall flow of the main function and to navigate each individual call site.</P>
+		  
+		  <!-- Filter References -->
+		  <P align="left"><A name="Call_Tree_Action_Filter_Calls"></A>The 
+		  <IMG src="images/icon_link.gif"
+		  border="1"> action, when toggled on, will filter out function calls that are from 
+		  non-call reference types.  This setting is useful to see the set of all functions called
+		  specifically with a reference type that is considered a call reference.
+		  Toggling this setting off may be useful to see all ways functions are referenced, even 
+		  when they are not considered function calls by Ghidra.
           
           <!-- Recurse Depth -->
           
@@ -207,9 +225,9 @@
           <P align="left"><A name="Call_Tree_Action_Navigation"></A>The <IMG src=
           "images/locationOut.gif" border="1"> button, when toggled on, will cause
           selections in the tree to navigate to the <B>source</B> of the selected
-          function call within the main function. To navigate to the destination of a given
-          function call, you can use the <A href="#Call_Tree_Context_Action_Goto_Destination">Go To
-          Call Destination action</A>. No navigation will happen when toggled off.</P>
+          function within the main function. To navigate to the destination of a given
+          function, you can use the <A href="#Call_Tree_Context_Action_Goto_Destination">Go To
+          Destination action</A>. No navigation will happen when toggled off.</P>
           
           <!-- Filter Thunks -->
           
@@ -254,36 +272,37 @@
         
           <!-- Select Source -->
 
-          <P align="left"><A name="Call_Tree_Context_Action_Select_Source"></A>The <B>Select Call
+          <P align="left"><A name="Call_Tree_Context_Action_Select_Source"></A>The <B>Select 
           Source</B> action will make a <A href="help/topics/Selection/Selecting.htm">program
           selection</A> for the node(s) selected in the tree where the context menu was activated.
-          When activated from the <A href="#Incoming_Call_Tree">incoming call tree</A>, the caller
-          function's entry point will be selected. When activated from the <A href=
-          "#Outgoing_Call_Tree">outgoing call tree</A> the address of the containing the call
-          instruction will be selected.</P>
+          When activated from the <A href="#Incoming_Call_Tree">incoming call tree</A>, the calling
+		  or referencing function's entry point will be selected. When activated from the <A href=
+          "#Outgoing_Call_Tree">outgoing call tree</A> the address of the instruction containing the
+		  call or reference will be selected.</P>
           
           <!-- Select Destination -->
           <P align="left"><A name="Call_Tree_Context_Action_Select_Destination"></A>The <B>Select
-          Call Destination</B> will make a <A href="help/topics/Selection/Selecting.htm">program
+          Destination</B> will make a <A href="help/topics/Selection/Selecting.htm">program
           selection</A> for the node(s) selected in the outgoing tree. The selection will be the
-          called function's entry point.</P>
+          called or referenced function's entry point.</P>
           
           <!-- Navigate to Source -->
-          <P align="left"><A name="Call_Tree_Context_Action_Goto_Source"></A>The <B>Go To Call
+          <P align="left"><A name="Call_Tree_Context_Action_Goto_Source"></A>The <B>Go To 
           Source</B> action will navigate the Listing to the address of the selected node in the
           tree where the context menu was activated. When activated from the <A href=
-          "#Incoming_Call_Tree">incoming call tree</A>, the Listing will be navigated to the caller
-          function's entry point. When activated from the <A href="#Outgoing_Call_Tree">outgoing
-          call tree</A> the Listing will be navigated to the address of the containing the call
-          instruction.</P>
+          "#Incoming_Call_Tree">incoming call tree</A>, the Listing will be navigated to the calling
+          or referencing function's entry point. When activated from the 
+		  <A href="#Outgoing_Call_Tree">outgoing call tree</A> the Listing will be navigated to 
+		  the address of the instruction containg the call or reference.</P>
           
           <!-- Navigate to Destination -->
-          <P align="left"><A name="Call_Tree_Context_Action_Goto_Destination"></A>The <B>Go To Call
-          Destination</B> will navigate the Listing to the entry point of the called function.</P>
+          <P align="left"><A name="Call_Tree_Context_Action_Goto_Destination"></A>The <B>Go To 
+          Destination</B> will navigate the Listing to the entry point of the appropriate function.
+		  </P>
           
           <P align="left"><A name="Call_Tree_Context_Action_Show_Call_Tree_For_Function"></A>The 
-          <B>Show Call Tree For Function</B> will load function for the selected node <b>into 
-          the current Call Tree window</b>.
+          <B>Show Call Tree for (Function Name) </B> will load the function for the selected node 
+		  <b>into the current Call Tree window</b>.
 
           </P>
         </BLOCKQUOTE>

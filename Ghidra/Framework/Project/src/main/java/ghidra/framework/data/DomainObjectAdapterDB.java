@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import java.util.function.Function;
 import db.*;
 import db.util.ErrorHandler;
 import ghidra.framework.model.*;
+import ghidra.framework.model.TransactionInfo.Status;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SubOptions;
 import ghidra.framework.store.LockException;
@@ -42,7 +43,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 
 	protected static final int NUM_UNDOS = 50;
 
-	protected DBHandle dbh;
+	protected final DBHandle dbh;
 
 	protected DomainObjectDBChangeSet changeSet;
 
@@ -81,6 +82,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 	 */
 	protected DomainObjectAdapterDB(DBHandle dbh, String name, int timeInterval, Object consumer) {
 		super(name, timeInterval, consumer);
+		Objects.requireNonNull(dbh, "DBHandle must not be null");
 		this.dbh = dbh;
 		options = new OptionsDB(this);
 		transactionMgr = new DomainObjectTransactionManager(this);
@@ -131,7 +133,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 	 * using a shared transaction manager.  If either or both is already shared,
 	 * a transition to a single shared transaction manager will be
 	 * performed.
-	 * @param domainObj
+	 * @param domainObj the domain object to synchronize with
 	 * @throws LockException if lock or open transaction is active on either
 	 * this or the specified domain object
 	 */
@@ -182,7 +184,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 	}
 
 	/**
-	 * Returns the open handle to the underlying database.
+	 * {@return the open handle to the underlying database}
 	 */
 	public DBHandle getDBHandle() {
 		return dbh;
@@ -257,16 +259,16 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 		return transactionMgr.lock(reason);
 	}
 
-	void prepareToSave() {
-		int txId = transactionMgr.startTransaction(this, "Update Metadata", null, true, true);
-		try {
+	/**
+	 * Prepare to save and store any last minute DB data.  The default behavior is to invoke
+	 * {@link #updateMetadata()}.
+	 */
+	protected void prepareToSave() {
+		try (Transaction tx = openForcedTransaction("Update Metadata")) {
 			updateMetadata();
 		}
 		catch (IOException e) {
 			dbError(e);
-		}
-		finally {
-			transactionMgr.endTransaction(this, txId, true, true);
 		}
 	}
 
@@ -308,24 +310,40 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 		transactionMgr.unlock(handler);
 	}
 
+	private class DomainObjectTransaction extends Transaction {
+		private final int txId;
+
+		DomainObjectTransaction(int txId) {
+			this.txId = txId;
+		}
+
+		@Override
+		protected boolean endTransaction(boolean commit) {
+			DomainObjectAdapterDB.this.endTransaction(txId, commit);
+			return commit;
+		}
+
+		@Override
+		public boolean isSubTransaction() {
+			return true;
+		}
+	}
+
+	/**
+	 * Open forced transaction which bypasses any lock checking, although method should only be
+	 * used in very controlled situations where a save lock is in place.
+	 * @param description transaction description
+	 * @return {@link AutoCloseable} transaction object
+	 */
+	protected Transaction openForcedTransaction(String description) {
+		int txId = transactionMgr.startTransaction(this, description, null, true, true);
+		return new DomainObjectTransaction(txId);
+	}
+
 	@Override
 	public Transaction openTransaction(String description)
 			throws TerminatedTransactionException, IllegalStateException {
-		return new Transaction() {
-
-			int txId = startTransaction(description);
-
-			@Override
-			protected boolean endTransaction(boolean commit) {
-				DomainObjectAdapterDB.this.endTransaction(txId, commit);
-				return commit;
-			}
-
-			@Override
-			public boolean isSubTransaction() {
-				return true;
-			}
-		};
+		return new DomainObjectTransaction(startTransaction(description));
 	}
 
 	@Override
@@ -346,7 +364,8 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 
 		while (true) {
 			try {
-				return transactionMgr.startTransaction(this, description, listener, true);
+				return transactionMgr.startTransactionChecked(this, description, listener,
+					true);
 			}
 			catch (DomainObjectLockedException e) {
 				if (!exceptionHandler.apply(e)) {
@@ -357,8 +376,9 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 	}
 
 	@Override
-	public void endTransaction(int transactionID, boolean commit) throws IllegalStateException {
-		transactionMgr.endTransaction(this, transactionID, commit, true);
+	public boolean endTransaction(int transactionID, boolean commit) throws IllegalStateException {
+		TransactionInfo txInfo = transactionMgr.endTransaction(this, transactionID, commit, true);
+		return txInfo.getStatus() == Status.COMMITTED;
 	}
 
 	/**
@@ -582,12 +602,16 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 		}
 
 		DomainObjectAdapterDB userData = getUserData();
-		if (userData != null && userData.isChanged() && (getDomainFile() instanceof GhidraFile)) {
+		if (canSave() && userData != null && userData.isChanged() &&
+			(getDomainFile() instanceof GhidraFile)) {
+			// Only save user data if this domain object was open for update and the
+			// user data was modified.
 			try {
 				userData.prepareToSave();
 				userData.save(null, TaskMonitor.DUMMY);
 			}
 			catch (CancelledException e) {
+				// ignore
 			}
 			catch (IOException e) {
 				Msg.warn(this, "Failed to save user data for: " + getDomainFile().getName());

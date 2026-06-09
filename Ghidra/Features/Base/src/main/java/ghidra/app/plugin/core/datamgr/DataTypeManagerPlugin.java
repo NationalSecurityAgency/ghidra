@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,6 +44,7 @@ import ghidra.app.plugin.core.datamgr.actions.associate.*;
 import ghidra.app.plugin.core.datamgr.archive.*;
 import ghidra.app.plugin.core.datamgr.editor.DataTypeEditorManager;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
+import ghidra.app.plugin.core.datamgr.tree.DtFilterState;
 import ghidra.app.plugin.core.datamgr.util.DataDropOnBrowserHandler;
 import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
 import ghidra.app.services.*;
@@ -83,7 +84,7 @@ import ghidra.util.task.TaskMonitor;
 	description = "Provides the window for managing and categorizing dataTypes.  " +
 			"The datatype display shows all built-in datatypes, datatypes in the " +
 			"current program, and datatypes in all open archives.",
-	servicesProvided = { DataTypeManagerService.class, DataTypeArchiveService.class }
+	servicesProvided = { DataTypeManagerService.class, DataTypeQueryService.class, DataTypeArchiveService.class }
 )
 //@formatter:on
 public class DataTypeManagerPlugin extends ProgramPlugin
@@ -174,7 +175,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	@Override
 	public void serviceAdded(Class<?> interfaceClass, Object service) {
-		if (interfaceClass == CodeViewerService.class) {
+		if (CodeViewerService.class.isAssignableFrom(interfaceClass)) {
 			CodeViewerService codeViewerService = (CodeViewerService) service;
 			codeViewerService.addProgramDropProvider(new DataDropOnBrowserHandler(this));
 		}
@@ -309,6 +310,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	@Override
 	protected void programActivated(Program program) {
 		program.addListener(this);
+		provider.programActivated(program);
 		dataTypeManagerHandler.programOpened(program);
 		dataTypePropertyManager.programOpened(program);
 	}
@@ -317,7 +319,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	protected void programClosed(Program program) {
 		// assumption: at this point programDeactivated(Program) has been called, so we don't
 		// have to perform any cleanup that is done by that method.
-		provider.programClosed();
+		provider.programClosed(program);
 		editorManager.dismissEditors(program.getDataTypeManager());
 	}
 
@@ -369,8 +371,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 		DataTypesProvider newProvider = new DataTypesProvider(this, SEARCH_PROVIDER_NAME, true);
 		newProvider.setIncludeDataTypeMembersInFilter(provider.isIncludeDataMembersInSearch());
-		newProvider.setFilteringArrays(provider.isFilteringArrays());
-		newProvider.setFilteringPointers(provider.isFilteringPointers());
+		DtFilterState filterState = provider.getFilterState();
+		newProvider.setFilterState(filterState.copy());
 		return newProvider;
 	}
 
@@ -497,8 +499,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	}
 
 	@Override
-	public void edit(Structure dt, String fieldName) {
-		editorManager.edit(dt, fieldName);
+	public void edit(Composite composite, String fieldName) {
+		editorManager.edit(composite, fieldName);
 	}
 
 	@Override
@@ -518,6 +520,59 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	@Override
 	public DataType getDataType(String filterText) {
+		return promptForDataType(filterText);
+	}
+
+	@Override
+	public List<DataType> findDataTypes(String dtName, TaskMonitor monitor) {
+		List<DataType> results = new ArrayList<>();
+		DataTypeManager[] managers = getDataTypeManagers();
+
+		// we put the program's data types at the front of the list so clients can tell if the 
+		// types we have found already exist in the program
+		DataTypeManager pdtm = getProgramDataTypeManager();
+		pdtm.findDataTypes(dtName, results);
+		for (DataTypeManager manager : managers) {
+			if (!(manager instanceof ProgramDataTypeManager)) {
+				manager.findDataTypes(dtName, results);
+			}
+		}
+		return results;
+	}
+
+	@Override
+	public List<DataType> getDataTypesByPath(DataTypePath path) {
+		List<DataType> results = new ArrayList<>();
+		DataTypeManager[] managers = getDataTypeManagers();
+		for (DataTypeManager manager : managers) {
+			DataType dt = manager.getDataType(path);
+			if (dt == null) {
+				continue;
+			}
+
+			if (manager instanceof ProgramDataTypeManager) {
+				// we put the program's data type at the front of the list so clients can tell if 
+				// the types we have found already exist in the program
+				results.add(0, dt);
+			}
+			else {
+				results.add(dt);
+			}
+		}
+		return results;
+	}
+
+	@Override
+	public DataType getProgramDataTypeByPath(DataTypePath path) {
+		DataTypeManager pdtm = getProgramDataTypeManager();
+		if (pdtm == null) {
+			return null;
+		}
+		return pdtm.getDataType(path);
+	}
+
+	@Override
+	public DataType promptForDataType(String filterText) {
 		DataTypeChooserDialog dialog = new DataTypeChooserDialog(this);
 		if (!StringUtils.isBlank(filterText)) {
 			dialog.showPrepopulatedDialog(tool, filterText);
@@ -532,12 +587,24 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	@Override
 	public DataType getDataType(TreePath selectedPath) {
 		DataTypeChooserDialog dialog = new DataTypeChooserDialog(this);
-
 		if (selectedPath != null) {
 			dialog.setSelectedPath(selectedPath);
 		}
 		tool.showDialog(dialog);
 		return dialog.getSelectedDataType();
+	}
+
+	@Override
+	public CategoryPath getCategoryPath(TreePath selectedPath) {
+		DataTypeChooserDialog dialog = new DataTypeChooserDialog(this);
+		dialog.setCategorySelectionMode(true);
+		dialog.setShowProgramArchiveOnly(true);
+
+		if (selectedPath != null) {
+			dialog.setSelectedPath(selectedPath);
+		}
+		tool.showDialog(dialog);
+		return dialog.getSelectedCategoryPath();
 	}
 
 	@Override
@@ -611,11 +678,25 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	}
 
 	@Override
+	public List<CategoryPath> getSortedCategoryPathList() {
+		return dataTypeManagerHandler.getDataTypeIndexer().getSortedCategoryPathList();
+	}
+
+	@Override
 	public void setDataTypeSelected(DataType dataType) {
 		if (provider.isVisible()) {
 			// this is a service method, ensure it is on the Swing thread, since it interacts with
 			// Swing components
 			Swing.runIfSwingOrRunLater(() -> provider.setDataTypeSelected(dataType));
+		}
+	}
+
+	@Override
+	public void setCategorySelected(Category category) {
+		if (provider.isVisible()) {
+			// this is a service method, ensure it is on the Swing thread, since it interacts with
+			// Swing components
+			Swing.runIfSwingOrRunLater(() -> provider.setCategorySelected(category));
 		}
 	}
 

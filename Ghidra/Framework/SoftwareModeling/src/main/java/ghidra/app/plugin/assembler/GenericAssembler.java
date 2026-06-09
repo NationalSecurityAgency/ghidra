@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,7 +76,7 @@ public interface GenericAssembler<RP extends AssemblyResolvedPatterns> {
 	 * @param line the textual assembly code
 	 * @return the binary machine code, suitable for placement at the given address
 	 * @throws AssemblySyntaxException the textual instruction is not well-formed
-	 * @throws AssemblySemanticException the the well-formed instruction cannot be assembled
+	 * @throws AssemblySemanticException the well-formed instruction cannot be assembled
 	 */
 	public byte[] assembleLine(Address at, String line)
 			throws AssemblySyntaxException, AssemblySemanticException;

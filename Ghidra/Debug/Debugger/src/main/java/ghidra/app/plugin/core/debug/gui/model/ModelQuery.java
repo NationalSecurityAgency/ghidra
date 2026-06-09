@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,50 +15,51 @@
  */
 package ghidra.app.plugin.core.debug.gui.model;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
-import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
-import ghidra.dbg.util.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.schema.PrimitiveTraceObjectSchema;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
+import ghidra.trace.model.target.schema.TraceObjectSchema.AttributeSchema;
 
 public class ModelQuery {
-	public static final ModelQuery EMPTY = new ModelQuery(PathPredicates.EMPTY);
+	public static final ModelQuery EMPTY = new ModelQuery(PathFilter.NONE);
 	// TODO: A more capable query language, e.g., with WHERE clauses.
 	// Could also want math expressions for the conditionals... Hmm.
 	// They need to be user enterable, so just a Java API won't suffice.
 
 	public static ModelQuery parse(String queryString) {
-		return new ModelQuery(PathPredicates.parse(queryString));
+		return new ModelQuery(PathFilter.parse(queryString));
 	}
 
-	public static ModelQuery elementsOf(TraceObjectKeyPath path) {
-		return new ModelQuery(new PathPattern(PathUtils.extend(path.getKeyList(), "[]")));
+	public static ModelQuery elementsOf(KeyPath path) {
+		return new ModelQuery(new PathPattern(path.index("")));
 	}
 
-	public static ModelQuery attributesOf(TraceObjectKeyPath path) {
-		return new ModelQuery(new PathPattern(PathUtils.extend(path.getKeyList(), "")));
+	public static ModelQuery attributesOf(KeyPath path) {
+		return new ModelQuery(new PathPattern(path.key("")));
 	}
 
-	private final PathPredicates predicates;
+	private final PathFilter filter;
 
 	/**
 	 * TODO: This should probably be more capable, but for now, just support simple path patterns
 	 * 
-	 * @param predicates the patterns
+	 * @param filter the filter
 	 */
-	public ModelQuery(PathPredicates predicates) {
-		this.predicates = predicates;
+	public ModelQuery(PathFilter filter) {
+		this.filter = filter;
 	}
 
 	@Override
 	public String toString() {
-		return "<ModelQuery: " + predicates.toString() + ">";
+		return "<ModelQuery: " + filter.toString() + ">";
 	}
 
 	@Override
@@ -70,7 +71,7 @@ public class ModelQuery {
 			return false;
 		}
 		ModelQuery that = (ModelQuery) obj;
-		if (!Objects.equals(this.predicates, that.predicates)) {
+		if (!Objects.equals(this.filter, that.filter)) {
 			return false;
 		}
 		return true;
@@ -82,7 +83,7 @@ public class ModelQuery {
 	 * @return the string
 	 */
 	public String toQueryString() {
-		return predicates.getSingletonPattern().toPatternString();
+		return filter.getSingletonPattern().toPatternString();
 	}
 
 	/**
@@ -95,7 +96,7 @@ public class ModelQuery {
 	public Stream<TraceObject> streamObjects(Trace trace, Lifespan span) {
 		TraceObjectManager objects = trace.getObjectManager();
 		TraceObject root = objects.getRootObject();
-		return objects.getValuePaths(span, predicates)
+		return objects.getValuePaths(span, filter)
 				.map(p -> p.getDestinationValue(root))
 				.filter(v -> v instanceof TraceObject)
 				.map(v -> (TraceObject) v);
@@ -103,32 +104,32 @@ public class ModelQuery {
 
 	public Stream<TraceObjectValue> streamValues(Trace trace, Lifespan span) {
 		TraceObjectManager objects = trace.getObjectManager();
-		return objects.getValuePaths(span, predicates).map(p -> {
+		return objects.getValuePaths(span, filter).map(p -> {
 			TraceObjectValue last = p.getLastEntry();
 			return last == null ? objects.getRootObject().getCanonicalParent(0) : last;
 		});
 	}
 
 	public Stream<TraceObjectValPath> streamPaths(Trace trace, Lifespan span) {
-		return trace.getObjectManager().getValuePaths(span, predicates).map(p -> p);
+		return trace.getObjectManager().getValuePaths(span, filter).map(p -> p);
 	}
 
-	public List<TargetObjectSchema> computeSchemas(Trace trace) {
-		TargetObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
+	public List<TraceObjectSchema> computeSchemas(Trace trace) {
+		TraceObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
 		if (rootSchema == null) {
 			return List.of();
 		}
-		return predicates.getPatterns()
+		return filter.getPatterns()
 				.stream()
 				.map(p -> rootSchema.getSuccessorSchema(p.asPath()))
 				.distinct()
 				.collect(Collectors.toList());
 	}
 
-	public TargetObjectSchema computeSingleSchema(Trace trace) {
-		List<TargetObjectSchema> schemas = computeSchemas(trace);
+	public TraceObjectSchema computeSingleSchema(Trace trace) {
+		List<TraceObjectSchema> schemas = computeSchemas(trace);
 		if (schemas.size() != 1) {
-			return EnumerableTargetObjectSchema.OBJECT;
+			return PrimitiveTraceObjectSchema.OBJECT;
 		}
 		return schemas.get(0);
 	}
@@ -143,7 +144,7 @@ public class ModelQuery {
 	 * @return the list of attributes
 	 */
 	public Stream<AttributeSchema> computeAttributes(Trace trace) {
-		TargetObjectSchema schema = computeSingleSchema(trace);
+		TraceObjectSchema schema = computeSingleSchema(trace);
 		return schema.getAttributeSchemas()
 				.entrySet()
 				.stream()
@@ -155,12 +156,12 @@ public class ModelQuery {
 	}
 
 	protected static boolean includes(Lifespan span, PathPattern pattern, TraceObjectValue value) {
-		List<String> asPath = pattern.asPath();
-		if (asPath.isEmpty()) {
+		KeyPath asPath = pattern.asPath();
+		if (asPath.isRoot()) {
 			// If the pattern is the root, then only match the "root value"
 			return value.getParent() == null;
 		}
-		if (!PathPredicates.keyMatches(PathUtils.getKey(asPath), value.getEntryKey())) {
+		if (!PathFilter.keyMatches(asPath.key(), value.getEntryKey())) {
 			return false;
 		}
 		TraceObject parent = value.getParent();
@@ -188,7 +189,7 @@ public class ModelQuery {
 		if (!span.intersects(value.getLifespan())) {
 			return false;
 		}
-		for (PathPattern pattern : predicates.getPatterns()) {
+		for (PathPattern pattern : filter.getPatterns()) {
 			if (includes(span, pattern, value)) {
 				return true;
 			}
@@ -204,16 +205,16 @@ public class ModelQuery {
 		}
 
 		// Check if any of the value's paths could be an ancestor of a result
-		List<String> asPath = new ArrayList<>(pattern.asPath());
+		KeyPath asPath = pattern.asPath();
 		// Destroy the pattern from the right, thus iterating each ancestor
-		while (!asPath.isEmpty()) {
+		while (!asPath.isRoot()) {
 			// The value's key much match somewhere in the pattern to be involved
-			if (!PathPredicates.keyMatches(PathUtils.getKey(asPath), value.getEntryKey())) {
-				asPath.remove(asPath.size() - 1);
+			if (!PathFilter.keyMatches(asPath.key(), value.getEntryKey())) {
+				asPath = asPath.parent();
 				continue;
 			}
 			// If it does, then check if any path to the value's parent matches the rest
-			asPath.remove(asPath.size() - 1);
+			asPath = asPath.parent();
 			if (parent.getAncestors(span, new PathPattern(asPath))
 					.anyMatch(v -> v.getSource(parent).isRoot())) {
 				return true;
@@ -233,11 +234,15 @@ public class ModelQuery {
 		if (!span.intersects(value.getLifespan())) {
 			return false;
 		}
-		for (PathPattern pattern : predicates.getPatterns()) {
+		for (PathPattern pattern : filter.getPatterns()) {
 			if (involves(span, pattern, value)) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	public boolean isEmpty() {
+		return filter.isNone();
 	}
 }

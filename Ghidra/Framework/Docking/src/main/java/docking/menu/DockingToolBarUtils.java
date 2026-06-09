@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import docking.action.DockingActionIf;
 import ghidra.docking.util.LookAndFeelUtils;
 import ghidra.util.StringUtilities;
 
-class DockingToolBarUtils {
+public class DockingToolBarUtils {
 
 	private static final String START_KEYBINDING_TEXT = "<BR><HR><CENTER>(";
 	private static final String END_KEYBINDNIG_TEXT = ")</CENTER>";
@@ -37,16 +37,25 @@ class DockingToolBarUtils {
 	 * @param button the button
 	 * @param action the action
 	 */
-	static void setToolTipText(JButton button, DockingActionIf action) {
+	public static void setToolTipText(JButton button, DockingActionIf action) {
+		String text = createToolTipText(button, action);
+		button.setToolTipText(text);
+	}
 
+	/**
+	 * Creates tooltip text for the given action and button.  This is intended to be used for 
+	 * buttons that represent the given action.
+	 * @param button the button that is the target for the text
+	 * @param action the action that is the source of the button
+	 * @return the text
+	 */
+	public static String createToolTipText(JButton button, DockingActionIf action) {
 		String toolTipText = getToolTipText(action);
 		String keyBindingText = getKeyBindingAcceleratorText(button, action.getKeyBinding());
 		if (keyBindingText != null) {
-			button.setToolTipText(combingToolTipTextWithKeyBinding(toolTipText, keyBindingText));
+			return combingToolTipTextWithKeyBinding(toolTipText, keyBindingText);
 		}
-		else {
-			button.setToolTipText(toolTipText);
-		}
+		return toolTipText;
 	}
 
 	private static String combingToolTipTextWithKeyBinding(String toolTipText,

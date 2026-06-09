@@ -28,6 +28,7 @@ import ghidra.framework.model.ChangeSet;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.*;
 import ghidra.framework.store.local.LocalDatabaseItem;
+import ghidra.program.model.lang.LanguageNotFoundException;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -232,9 +233,25 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 		DBHandle userDbh =
 			openAssociatedUserFile(programItem.getFileID(), PROGRAM_CONTENT_TYPE, userfs, monitor);
 		if (userDbh != null) {
-			return new ProgramUserDataDB(userDbh, program, monitor);
+			boolean success = false;
+			try {
+				ProgramUserDataDB data = new ProgramUserDataDB(userDbh, program, monitor);
+				success = true;
+				return data;
+			}
+			catch (LanguageNotFoundException | IllegalStateException e) {
+				// Ignore - delete to make way for new one
+			}
+			finally {
+				if (!success) {
+					userDbh.close();
+					Msg.debug(this, "Removing incompatible program user data file for " +
+						programItem.getPathName());
+					removeUserDataFile(programItem, userfs);
+				}
+			}
 		}
-		return new ProgramUserDataDB(program);
+		return null; // will be created by ProgramDB when modified
 	}
 
 	private void recoverChangeSet(ProgramDB program, DBHandle dbh) throws IOException {

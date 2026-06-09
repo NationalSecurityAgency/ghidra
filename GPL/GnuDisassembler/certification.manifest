@@ -3,7 +3,7 @@
 ##MODULE IP: Public Domain
 .gitignore||Public Domain||||END|
 Module.manifest||Public Domain||||END|
-README.txt||Public Domain||||END|
+README.md||GHIDRA||||END|
 data/arm_test1.s||Public Domain||||END|
 data/big.elf||Public Domain||||END|
 data/little.elf||Public Domain||||END|

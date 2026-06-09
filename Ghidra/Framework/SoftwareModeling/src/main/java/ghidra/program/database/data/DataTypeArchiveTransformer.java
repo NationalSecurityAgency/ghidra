@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,6 @@ import org.apache.commons.lang3.StringUtils;
 import docking.framework.DockingApplicationConfiguration;
 import docking.widgets.label.GDLabel;
 import generic.theme.GThemeDefaults.Colors.Messages;
-import generic.theme.Gui;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.framework.Application;
@@ -715,7 +714,7 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 		UniversalID universalID = newDataType.getUniversalID();
 		SourceArchive sourceArchive = newDataType.getSourceArchive();
 		if (sourceArchive == newFileArchive.getLocalSourceArchive()) {
-			// Use the the old file archive as the source archive since local.
+			// Use the old file archive as the source archive since local.
 			sourceArchive = oldFileArchive.getLocalSourceArchive();
 		}
 		DataType oldDataType;
@@ -776,8 +775,6 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 		// Perform Class searching so we load data type classes that may have moved or
 		// changed name. This is needed to map a data type's old path name to the new one.
 		performClassSearching(appConfig.getTaskMonitor());
-
-		fixupGUI();
 
 		UniversalIdGenerator.initialize();
 		final JFrame frame = new JFrame("Transform Data Type Archive");
@@ -900,23 +897,4 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 			Msg.debug(this, "Class searching unexpectedly cancelled.");
 		}
 	}
-
-	public static void fixupGUI() {
-		// Make the test look & feel as it would normally.
-		SystemUtilities.runSwingNow(() -> {
-			try {
-				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			}
-			catch (Exception e1) {
-				Msg.debug(DataTypeArchiveTransformer.class,
-					"Unable to install the system Look and Feel");
-			}
-		});
-
-		// Fix up the default fonts that Java 1.5.0 changed to Courier, which looked terrible.
-		Font f = Gui.getFont("font.monospaced");
-		UIManager.put("PasswordField.font", f);
-		UIManager.put("TextArea.font", f);
-	}
-
 }

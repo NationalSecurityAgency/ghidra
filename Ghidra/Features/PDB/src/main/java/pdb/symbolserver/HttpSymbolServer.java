@@ -37,8 +37,6 @@ import pdb.symbolserver.SymbolServer.MutableTrust;
 
 /**
  * A {@link SymbolServer} that is accessed via HTTP.
- * <p>
- * 
  */
 public class HttpSymbolServer extends AbstractSymbolServer implements MutableTrust {
 	private static final String GHIDRA_USER_AGENT = "Ghidra_HttpSymbolServer_client";
@@ -113,7 +111,7 @@ public class HttpSymbolServer extends AbstractSymbolServer implements MutableTru
 	 * Creates a new instance of a HttpSymbolServer.
 	 * 
 	 * @param serverURI URI / URL of the symbol server 
-	 * @param isTrusted flag, if true the the http server can be trusted when querying and downloading
+	 * @param isTrusted flag, if true the http server can be trusted when querying and downloading
 	 */
 	public HttpSymbolServer(URI serverURI, boolean isTrusted) {
 		String path = serverURI.getPath();
@@ -157,10 +155,10 @@ public class HttpSymbolServer extends AbstractSymbolServer implements MutableTru
 	@Override
 	public boolean exists(String filename, TaskMonitor monitor) {
 		try {
-			HttpRequest request = request(filename)
-					.timeout(Duration.ofMillis(HTTP_REQUEST_TIMEOUT_MS))
-					.method("HEAD", BodyPublishers.noBody())
-					.build();
+			HttpRequest request =
+				request(filename).timeout(Duration.ofMillis(HTTP_REQUEST_TIMEOUT_MS))
+						.method("HEAD", BodyPublishers.noBody())
+						.build();
 
 			Msg.debug(this,
 				logPrefix() + ": Checking exist for [" + filename + "]: " + request.toString());
@@ -184,8 +182,7 @@ public class HttpSymbolServer extends AbstractSymbolServer implements MutableTru
 		monitor.setMessage("Connecting to " + serverURI);
 
 		HttpRequest request = request(filename).GET().build();
-		Msg.debug(this,
-			logPrefix() + ": Getting file [" + filename + "]: " + request.toString());
+		Msg.debug(this, logPrefix() + ": Getting file [" + filename + "]: " + request.toString());
 		CompletableFuture<HttpResponse<InputStream>> futureResponse =
 			HttpClients.getHttpClient().sendAsync(request, BodyHandlers.ofInputStream());
 		CancelledListener l = () -> futureResponse.cancel(true);
@@ -217,8 +214,7 @@ public class HttpSymbolServer extends AbstractSymbolServer implements MutableTru
 			// if possible, unwrap the exception that happened inside the future
 			Throwable cause = e.getCause();
 			Msg.error(this, "Error during HTTP get", cause);
-			throw (cause instanceof IOException)
-					? (IOException) cause
+			throw (cause instanceof IOException) ? (IOException) cause
 					: new IOException("Error during HTTP get", cause);
 		}
 		finally {

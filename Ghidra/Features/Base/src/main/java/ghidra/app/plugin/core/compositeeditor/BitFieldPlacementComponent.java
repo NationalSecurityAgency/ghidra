@@ -1105,7 +1105,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 			int allocationEndOffset = offset + allocationBytes - 1;
 
 			int numComponents = struct.getNumComponents();
-			DataTypeComponent component = struct.getDefinedComponentAtOrAfterOffset(offset);
+			DataTypeComponent component = struct.getComponentContaining(offset);
 			while (component != null) {
 				if (component.getOffset() > allocationEndOffset) {
 					break;

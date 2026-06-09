@@ -75,7 +75,7 @@ Did you know you can see where a register is initialized in its current scope by
 You can perform a program memory search using a regular expression (regex).
 If a Windows executable contains Icons or Bitmap Resources, they are displayed in the CodeBrowser. Do a Search->Program Text on Labels for "Rsrc_Icon*" and "Rsrc_Bitmap*" to find them.
 
-The average temperature on Earth is 15 degrees celsius.
+The average temperature on Earth is 15 degrees Celsius.
 
 If you hover on a reference in the XREF or operand fields, a popup with the reference code or data will appear.
 If you hover on a data type in the CodeBrowser or Data Type Manager, a popup with the data type definition will appear.
@@ -100,8 +100,10 @@ Ghidra allows full customization of all colors, fonts and icons via Edit->Theme-
 
 You can quickly change the font size of the Listing, Decompiler or the Bytes windows by pressing Ctrl-+ or Ctrl-- while inside of those windows.
 
-You can quickly control the font size from the Theme Editor dialog via Edit->Theme->Configure.
+You can quickly control the font size from the Theme Editor dialog's toolbar via Edit->Theme->Configure.
 
 You can create a table whose rows correspond to the address ranges in a selection via Select->Create Table From Ranges.
+
+The tab and title of any Search Results window can be renamed by right-clicking and choosing 'Rename'.
 
 This is the last tip.  You can turn them off now.

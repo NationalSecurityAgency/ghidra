@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -114,8 +114,8 @@ public record AttributeId(String name, int id) {
 	public static final AttributeId ATTRIB_ARRAYSIZE = new AttributeId("arraysize", 48);
 	public static final AttributeId ATTRIB_CHAR = new AttributeId("char", 49);
 	public static final AttributeId ATTRIB_CORE = new AttributeId("core", 50);
-	public static final AttributeId ATTRIB_ENUM = new AttributeId("enum", 51);
-//	public static final AttributeId ATTRIB_ENUMSIGNED = new AttributeId("enumsigned", 52);  // deprecated
+//	public static final AttributeId ATTRIB_ENUM = new AttributeId("enum", 51);	// deprecated
+	public static final AttributeId ATTRIB_INCOMPLETE = new AttributeId("incomplete", 52);
 //	public static final AttributeId ATTRIB_ENUMSIZE = new AttributeId("enumsize", 53);  // deprecated
 //	public static final AttributeId ATTRIB_INTSIZE = new AttributeId("intsize", 54);  // deprecated
 //	public static final AttributeId ATTRIB_LONGSIZE = new AttributeId("longsize", 55);  // deprecated
@@ -242,6 +242,18 @@ public record AttributeId(String name, int id) {
 
 // public static final AttributeId ATTRIB_ADDRESS = new AttributeId("address", 148);
 	public static final AttributeId ATTRIB_STORAGE = new AttributeId("storage", 149);
+	public static final AttributeId ATTRIB_STACKSPILL = new AttributeId("stackspill", 150);
 
-	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 150);
+	// modelrules
+	public static final AttributeId ATTRIB_SIZES = new AttributeId("sizes", 151);
+	public static final AttributeId ATTRIB_BACKFILL = new AttributeId("backfill", 152);
+	public static final AttributeId ATTRIB_MAX_PRIMITIVES = new AttributeId("maxprimitives", 153);
+	public static final AttributeId ATTRIB_REVERSESIGNIF = new AttributeId("reversesignif", 154);
+	public static final AttributeId ATTRIB_MATCHSIZE = new AttributeId("matchsize", 155);
+	public static final AttributeId ATTRIB_AFTER_BYTES = new AttributeId("afterbytes", 156);
+	public static final AttributeId ATTRIB_AFTER_STORAGE = new AttributeId("afterstorage", 157);
+	public static final AttributeId ATTRIB_FILL_ALTERNATE = new AttributeId("fillalternate", 158);
+
+	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 159);
+
 }

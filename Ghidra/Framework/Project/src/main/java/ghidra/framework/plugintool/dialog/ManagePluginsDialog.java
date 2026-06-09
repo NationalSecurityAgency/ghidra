@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,6 +56,7 @@ public class ManagePluginsDialog extends ReusableDialogComponentProvider {
 		pluginComponent = new PluginManagerComponent(tool, pluginConfigurationModel);
 		JScrollPane scrollPane = new JScrollPane(pluginComponent);
 		scrollPane.getViewport().setViewPosition(new Point(0, 0));
+		scrollPane.getAccessibleContext().setAccessibleName("Manage Plugins");
 		addWorkPanel(scrollPane);
 		createActions(addSaveActions);
 		if (tool == AppInfo.getFrontEndTool()) {
@@ -68,6 +69,7 @@ public class ManagePluginsDialog extends ReusableDialogComponentProvider {
 
 		JButton doneButton = new JButton("Close");
 		doneButton.addActionListener(e -> close());
+		doneButton.getAccessibleContext().setAccessibleName("Done");
 		addButton(doneButton);
 	}
 
@@ -118,8 +120,13 @@ public class ManagePluginsDialog extends ReusableDialogComponentProvider {
 				public void actionPerformed(ActionContext context) {
 					save();
 				}
+
+				@Override
+				public boolean isEnabledForContext(ActionContext context) {
+					return tool.hasConfigChanged();
+				}
 			};
-			saveAction.setEnabled(tool.hasConfigChanged());
+
 			icon = Icons.SAVE_ICON;
 			String saveGroup = "save";
 			saveAction.setMenuBarData(new MenuData(new String[] { "Save" }, icon, saveGroup));
@@ -133,8 +140,12 @@ public class ManagePluginsDialog extends ReusableDialogComponentProvider {
 				public void actionPerformed(ActionContext context) {
 					saveAs();
 				}
+
+				@Override
+				public boolean isEnabledForContext(ActionContext context) {
+					return true;
+				}
 			};
-			saveAsAction.setEnabled(true);
 			icon = Icons.SAVE_AS_ICON;
 			saveAsAction
 					.setMenuBarData(new MenuData(new String[] { "Save As..." }, icon, saveGroup));
@@ -155,20 +166,18 @@ public class ManagePluginsDialog extends ReusableDialogComponentProvider {
 		}
 		else {
 			tool.getToolServices().saveTool(tool);
-			saveAction.setEnabled(false);
+			tool.contextChanged(null);
 		}
 	}
 
 	private void saveAs() {
 		tool.saveToolAs();
-		saveAction.setEnabled(tool.hasConfigChanged());
+		tool.contextChanged(null);
 		isNewTool = false;
 	}
 
 	public void stateChanged() {
-		if (saveAction != null) {
-			saveAction.setEnabled(tool.hasConfigChanged());
-		}
+		tool.contextChanged(null);
 	}
 
 	int getPackageCount() {

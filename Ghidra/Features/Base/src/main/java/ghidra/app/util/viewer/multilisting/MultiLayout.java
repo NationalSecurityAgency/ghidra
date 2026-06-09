@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,9 +18,9 @@ package ghidra.app.util.viewer.multilisting;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.MultiRowLayout;
+import docking.widgets.fieldpanel.support.MultiRowLayout.RowHeights;
 import docking.widgets.fieldpanel.support.RowLayout;
 import ghidra.app.util.viewer.field.DummyFieldFactory;
-import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.proxy.EmptyProxy;
 
 class MultiLayout {
@@ -29,22 +29,30 @@ class MultiLayout {
 	public MultiLayout() {
 	}
 
-	public MultiLayout(Layout[] layouts, FormatManager formatMgr, DummyFieldFactory factory) {
+	public MultiLayout(Layout[] layouts, DummyFieldFactory factory) {
 		this.layouts = layouts;
-		int[] rowHeights = new int[formatMgr.getMaxNumRows()];
+
+		RowHeights[] allHeights = new RowHeights[layouts.length];
 		int id = getDefaultID(layouts);
 		for (int i = 0; i < layouts.length; i++) {
 			MultiRowLayout layout = (MultiRowLayout) layouts[i];
 			if (layout == null) {
-				layout = new MultiRowLayout(
-					new RowLayout(new Field[] { factory.getField(EmptyProxy.EMPTY_PROXY, 0) }, id),
-					1);
+				Field[] fields = new Field[] { factory.getField(EmptyProxy.EMPTY_PROXY, 0) };
+				layout = new MultiRowLayout(new RowLayout(fields, id), 1);
 				layouts[i] = layout;
 			}
-			layout.fillHeights(rowHeights);
+
+			allHeights[i] = layout.getRowHeights();
 		}
+
+		int n = allHeights.length;
+		RowHeights combinedRowHeights = new RowHeights();
+		for (int i = 0; i < n; i++) {
+			combinedRowHeights.merge(allHeights[i]);
+		}
+
 		for (Layout layout : layouts) {
-			((MultiRowLayout) layout).align(rowHeights);
+			((MultiRowLayout) layout).align(combinedRowHeights);
 		}
 	}
 
@@ -62,12 +70,7 @@ class MultiLayout {
 		return layouts == null;
 	}
 
-	/**
-	 * @param modelID
-	 * @return
-	 */
 	public Layout getLayout(int modelID) {
 		return layouts[modelID];
 	}
-
 }

@@ -18,34 +18,34 @@ package ghidra.features.base.memsearch.searcher;
 import java.util.Arrays;
 import java.util.Objects;
 
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
 import ghidra.program.model.address.Address;
 
 /**
  * A class that represents a memory search hit at an address. Matches can also be updated with
  * new byte values (from a scan or refresh action). The original bytes that matched the original
  * search are maintained in addition to the "refreshed" bytes.
+ * @param <T> The client object type that identifies the matching pattern
  */
-public class MemoryMatch implements Comparable<MemoryMatch> {
+public class MemoryMatch<T> implements Comparable<MemoryMatch<T>> {
 
 	private final Address address;
 	private byte[] bytes;
 	private byte[] previousBytes;
-	private final ByteMatcher matcher;
+	private final T pattern;
 
-	public MemoryMatch(Address address, byte[] bytes, ByteMatcher matcher) {
+	public MemoryMatch(Address address, byte[] bytes, T pattern) {
 		if (bytes == null || bytes.length < 1) {
 			throw new IllegalArgumentException("Must provide at least 1 byte");
 		}
 		this.address = Objects.requireNonNull(address);
 		this.bytes = bytes;
 		this.previousBytes = bytes;
-		this.matcher = matcher;
+		this.pattern = pattern;
 	}
 
 	public MemoryMatch(Address address) {
 		this.address = address;
-		this.matcher = null;
+		this.pattern = null;
 	}
 
 	public void updateBytes(byte[] newBytes) {
@@ -71,12 +71,12 @@ public class MemoryMatch implements Comparable<MemoryMatch> {
 		return previousBytes;
 	}
 
-	public ByteMatcher getByteMatcher() {
-		return matcher;
+	public T getPattern() {
+		return pattern;
 	}
 
 	@Override
-	public int compareTo(MemoryMatch o) {
+	public int compareTo(MemoryMatch<T> o) {
 		return address.compareTo(o.address);
 	}
 
@@ -97,7 +97,7 @@ public class MemoryMatch implements Comparable<MemoryMatch> {
 			return false;
 		}
 
-		MemoryMatch other = (MemoryMatch) obj;
+		MemoryMatch<?> other = (MemoryMatch<?>) obj;
 		// just compare addresses. The bytes are mutable and we want matches to be equal even
 		// if the bytes are different
 		return Objects.equals(address, other.address);

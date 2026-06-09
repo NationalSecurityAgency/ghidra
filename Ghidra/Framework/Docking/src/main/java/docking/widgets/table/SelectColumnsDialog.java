@@ -63,18 +63,20 @@ public class SelectColumnsDialog extends DialogComponentProvider {
 		for (int i = 1; i < ghidraTable.getColumnCount(); i++) {
 			ghidraTable.getColumnModel()
 					.getColumn(i)
-					.setCellRenderer(
-						new ColumnSelectorStringRenderer());
+					.setCellRenderer(new ColumnSelectorStringRenderer());
 		}
 
 		ghidraTable.setBorder(BorderFactory.createEtchedBorder());
+		ghidraTable.getAccessibleContext().setAccessibleName("Table");
 		Dimension size = new Dimension(400, 500);
 		setPreferredSize(size.width, size.height);
 		setRememberSize(true);
 
 		JPanel panel = new JPanel(new BorderLayout());
 		JScrollPane scrollPane = new JScrollPane(ghidraTable);
+		scrollPane.getAccessibleContext().setAccessibleName("Table");
 		panel.add(scrollPane);
+		panel.getAccessibleContext().setAccessibleName("Select Columns");
 		addWorkPanel(panel);
 		addOKButton();
 		addCancelButton();

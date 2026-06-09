@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,13 +51,14 @@ public class TerminalTextField implements TextField {
 	 * 
 	 * @param line the line from the {@link VtBuffer} that will be rendered in this field
 	 * @param metrics the font metrics
+	 * @param fontSizeAdjustment the font size adjustment
 	 * @param colors the color resolver
 	 * @return the field
 	 */
 	public static TerminalTextField create(VtLine line, FontMetrics metrics,
-			AnsiColorResolver colors) {
-		return new TerminalTextField(0, new TerminalTextFieldElement(line, metrics, colors),
-			metrics);
+			float fontSizeAdjustment, AnsiColorResolver colors) {
+		return new TerminalTextField(0,
+			new TerminalTextFieldElement(line, metrics, fontSizeAdjustment, colors), metrics);
 	}
 
 	protected TerminalTextField(int startX, TerminalTextFieldElement element, FontMetrics metrics) {

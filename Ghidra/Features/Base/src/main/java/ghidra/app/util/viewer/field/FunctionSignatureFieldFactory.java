@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
 import ghidra.GhidraOptions;
 import ghidra.app.util.ListingHighlightProvider;
+import ghidra.app.util.SymbolInspector;
 import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.FunctionProxy;
@@ -32,7 +33,8 @@ import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.*;
 
 /**
@@ -44,6 +46,8 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 	public final static String GROUP_TITLE = "Function Signature Field";
 	public final static String DISPLAY_NAMESPACE =
 		GROUP_TITLE + Options.DELIMITER + GhidraOptions.DISPLAY_NAMESPACE;
+
+	private SymbolInspector inspector;
 
 	private boolean displayFunctionScope;
 
@@ -58,12 +62,15 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	public FunctionSignatureFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
+	public FunctionSignatureFieldFactory(FieldFormatModel model,
+			ListingHighlightProvider hlProvider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 
 		fieldOptions.registerOption(DISPLAY_NAMESPACE, false, null,
 			"Prepends namespaces to labels that are not in the global namespace.");
+
+		inspector = new SymbolInspector(displayOptions, null);
 
 		displayFunctionScope = fieldOptions.getBoolean(DISPLAY_NAMESPACE, false);
 	}
@@ -218,27 +225,8 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 	}
 
 	private Color getFunctionNameColor(Function function) {
-		// override function name color for external thunks which are not linked
-		if (function.isThunk()) {
-			Function thunkedFunction = function.getThunkedFunction(true);
-			if (thunkedFunction == null) {
-				return ListingColors.EXT_REF_UNRESOLVED;
-			}
-			else if (thunkedFunction.isExternal()) {
-				ExternalLocation externalLocation = thunkedFunction.getExternalLocation();
-				String libName = externalLocation.getLibraryName();
-				if (Library.UNKNOWN.equals(libName)) {
-					return ListingColors.EXT_REF_UNRESOLVED;
-				}
-				ExternalManager externalManager = function.getProgram().getExternalManager();
-				String path = externalManager.getExternalLibraryPath(libName);
-				if (path == null || path.length() == 0) {
-					return ListingColors.EXT_REF_UNRESOLVED;
-				}
-				return ListingColors.EXT_REF_RESOLVED;
-			}
-		}
-		return FunctionColors.NAME;
+		Symbol s = function.getSymbol();
+		return inspector.getColor(s);
 	}
 
 	@Override

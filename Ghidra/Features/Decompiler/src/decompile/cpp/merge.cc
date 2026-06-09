@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -416,7 +416,7 @@ PcodeOp *Merge::allocateCopyTrim(Varnode *inVn,const Address &addr,PcodeOp *trim
   Datatype *ct = inVn->getType();
   if (ct->needsResolution()) {		// If the data-type needs resolution
     if (inVn->isWritten()) {
-      int4 fieldNum = data.inheritResolution(ct, copyOp, -1, inVn->getDef(), -1);
+      int4 fieldNum = data.inheritUnionField(ct, copyOp, -1, inVn->getDef(), -1);
       data.forceFacingType(ct, fieldNum, copyOp, 0);
     }
     else {
@@ -669,7 +669,7 @@ void Merge::trimOpOutput(PcodeOp *op)
   copyop = data.newOp(1,op->getAddr());
   data.opSetOpcode(copyop,CPUI_COPY);
   if (ct->needsResolution()) {
-    int4 fieldNum = data.inheritResolution(ct, copyop, -1, op, -1);
+    int4 fieldNum = data.inheritUnionField(ct, copyop, -1, op, -1);
     data.forceFacingType(ct, fieldNum, copyop, 0);
     if (ct->getMetatype() == TYPE_PARTIALUNION)
       ct = vn->getTypeDefFacing();
@@ -801,7 +801,7 @@ void Merge::collectInputs(HighVariable *high,vector<PcodeOpNode> &oplist,PcodeOp
   }
 }
 
-/// \brief Snip instances of the output of an INDIRECT that are also inputs to to the underlying PcodeOp
+/// \brief Snip instances of the output of an INDIRECT that are also inputs to the underlying PcodeOp
 ///
 /// Examine the output HighVariable for the given INDIRECT op. Varnode instances (or pieces) that are also
 /// inputs to the underlying PcodeOp causing the INDIRECT are snipped by creating a new COPY op from the
@@ -871,7 +871,7 @@ void Merge::mergeIndirect(PcodeOp *indop)
   PcodeOp *newop = allocateCopyTrim(invn0, indop->getAddr(), indop);
   SymbolEntry *entry = outvn->getSymbolEntry();
   if (entry != (SymbolEntry *)0 && entry->getSymbol()->getType()->needsResolution()) {
-    data.inheritResolution(entry->getSymbol()->getType(), newop, -1, indop, -1);
+    data.inheritUnionField(entry->getSymbol()->getType(), newop, -1, indop, -1);
   }
   data.opSetInput(indop,newop->getOut(),0);
   data.opInsertBefore(newop,indop);
@@ -1586,24 +1586,22 @@ void Merge::clear(void)
   stackAffectingOps.clear();
 }
 
-/// \brief Inflate the Cover of a given Varnode with a HighVariable
+/// \brief Mark the given Varnode as \e implied
 ///
-/// An expression involving a HighVariable can be propagated to all the read sites of the
-/// output Varnode of the expression if the Varnode Cover can be \b inflated to include the
-/// Cover of the HighVariable, even though the Varnode is not part of the HighVariable.
-/// This routine performs the inflation, assuming an intersection test is already performed.
-/// \param a is the given Varnode to inflate
-/// \param high is the HighVariable to inflate with
-void Merge::inflate(Varnode *a,HighVariable *high)
+/// The covers of the immediate Varnodes involved in the expression are marked as dirty.
+/// This assumes covers for the whole expression are ultimately marked because all its internal Varnodes
+/// are passed to this method.
+/// \param vn is the given Varnode being marked as \e implied
+void Merge::markImplied(Varnode *vn)
 
 {
-  testCache.updateHigh(a->getHigh());
-  testCache.updateHigh(high);
-  for(int4 i=0;i<high->numInstances();++i) {
-    Varnode *b = high->getInstance(i);
-    a->cover->merge(*b->cover);
+  vn->setImplied();	// Mark as implied
+  PcodeOp *op = vn->getDef();
+ for(int4 i=0;i<op->numInput();++i) {
+    Varnode *defvn = op->getIn(i);
+    if (!defvn->hasCover()) continue;
+    defvn->setFlags(Varnode::coverdirty);
   }
-  a->getHigh()->coverDirty();
 }
 
 /// \brief Test if we can inflate the Cover of the given Varnode without incurring intersections

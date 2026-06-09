@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ public class ChildAtom extends FilterAtom {
 	public String name = null;		// Name of the child function
 	public String exename = null;		// Name of the executable (or library) containing the child (or null)
 
+	@Override
 	public void saveXml(Writer fwrite) throws IOException {
 		fwrite.append("<childatom");
 		type.saveXml(fwrite);
@@ -49,6 +50,7 @@ public class ChildAtom extends FilterAtom {
 		name = parser.end(el).getText();
 	}
 
+	@Override
 	public FilterAtom clone() {
 		ChildAtom newatom = new ChildAtom();
 		newatom.type = type;
@@ -58,6 +60,7 @@ public class ChildAtom extends FilterAtom {
 		return newatom;
 	}
 
+	@Override
 	public String getInfoString() {
 		if (name == null)
 			return null;

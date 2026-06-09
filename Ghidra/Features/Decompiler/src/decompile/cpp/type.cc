@@ -20,17 +20,18 @@ namespace ghidra {
 
 /// The base propagation ordering associated with each meta-type.
 /// The array elements correspond to the ordering of #type_metatype.
-sub_metatype Datatype::base2sub[15] = {
-    SUB_PARTIALUNION, SUB_PARTIALSTRUCT, SUB_UNION, SUB_STRUCT, SUB_ARRAY, SUB_PTRREL, SUB_PTR, SUB_FLOAT, SUB_CODE,
-    SUB_BOOL, SUB_UINT_PLAIN, SUB_INT_PLAIN, SUB_UNKNOWN, SUB_SPACEBASE, SUB_VOID
+sub_metatype Datatype::base2sub[18] = {
+    SUB_PARTIALUNION, SUB_PARTIALSTRUCT, SUB_UINT_PARTIALENUM, SUB_UNION, SUB_STRUCT, SUB_INT_ENUM, SUB_UINT_ENUM,
+    SUB_ARRAY, SUB_PTRREL, SUB_PTR, SUB_FLOAT, SUB_CODE, SUB_BOOL, SUB_UINT_PLAIN, SUB_INT_PLAIN, SUB_UNKNOWN,
+    SUB_SPACEBASE, SUB_VOID
 };
 
 AttributeId ATTRIB_ALIGNMENT = AttributeId("alignment",47);
 AttributeId ATTRIB_ARRAYSIZE = AttributeId("arraysize",48);
 AttributeId ATTRIB_CHAR = AttributeId("char",49);
 AttributeId ATTRIB_CORE = AttributeId("core",50);
-AttributeId ATTRIB_ENUM = AttributeId("enum",51);
-//AttributeId ATTRIB_ENUMSIGNED = AttributeId("enumsigned",52);  // deprecated
+//AttributeId ATTRIB_ENUM = AttributeId("enum",51);	// deprecated
+AttributeId ATTRIB_INCOMPLETE = AttributeId("incomplete",52);
 //AttributeId ATTRIB_ENUMSIZE = AttributeId("enumsize",53);  // deprecated
 //AttributeId ATTRIB_INTSIZE = AttributeId("intsize",54);  // deprecated
 //AttributeId ATTRIB_LONGSIZE = AttributeId("longsize",55);  // deprecated
@@ -70,6 +71,7 @@ ElementId ELEM_TYPEREF = ElementId("typeref",63);
 //ElementId ELEM_USE_MS_CONVENTION = ElementId("use_MS_convention", 64);
 ElementId ELEM_WCHAR_SIZE = ElementId("wchar_size", 65);
 //ElementId ELEM_ZERO_LENGTH_BOUNDARY = ElementId("zero_length_boundary", 66);
+ElementId ELEM_BITFIELD = ElementId("bitfield", 289);
 
 // Some default routines for displaying data
 
@@ -177,30 +179,33 @@ Datatype *Datatype::getSubType(int8 off,int8 *newoff) const
   return (Datatype *)0;
 }
 
-/// Find the first component data-type that is (or contains) an array starting after the given
-/// offset, and pass back the difference between the component's start and the given offset.
-/// Return the component data-type or null if no array is found.
+/// If \b this data-type is (or contains) an array starting after the given
+/// offset, return the distance in bytes to the start of the array,
+/// and pass back the difference between the component's start and the given offset.
 /// \param off is the given offset into \b this data-type
+/// \param max is the maximum distance, in bytes, to search
 /// \param newoff is used to pass back the offset difference
 /// \param elSize is used to pass back the array element size
-/// \return the component data-type or null
-Datatype *Datatype::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 *elSize) const
+/// \return the distance to the array or -1 otherwise
+int8 Datatype::nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
 
 {
-  return (TypeArray *)0;
+  return -1;
 }
 
-/// Find the last component data-type that is (or contains) an array starting before the given
-/// offset, and pass back the difference between the component's start and the given offset.
+/// If \b this data-type is (or contains) an array starting before the given
+/// offset, return the distance in bytes to the end of the array,
+/// and pass back the difference between the component's start and the given offset.
 /// Return the component data-type or null if no array is found.
 /// \param off is the given offset into \b this data-type
+/// \param max is the maximum distance, in bytes, to search
 /// \param newoff is used to pass back the offset difference
 /// \param elSize is used to pass back the array element size
-/// \return the component data-type or null
-Datatype *Datatype::nearestArrayedComponentBackward(int8 off,int8 *newoff,int8 *elSize) const
+/// \return the distance to the array or -1 otherwise
+int8 Datatype::nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
 
 {
-  return (TypeArray *)0;
+  return -1;
 }
 
 /// Order \b this with another data-type, in a way suitable for the type propagation algorithm.
@@ -250,11 +255,20 @@ void metatype2string(type_metatype metatype,string &res)
   case TYPE_ARRAY:
     res = "array";
     break;
+  case TYPE_PARTIALENUM:
+    res = "partenum";
+    break;
   case TYPE_PARTIALSTRUCT:
     res = "partstruct";
     break;
   case TYPE_PARTIALUNION:
     res = "partunion";
+    break;
+  case TYPE_ENUM_INT:
+    res = "enum_int";
+    break;
+  case TYPE_ENUM_UINT:
+    res = "enum_uint";
     break;
   case TYPE_STRUCT:
     res = "struct";
@@ -308,6 +322,12 @@ type_metatype string2metatype(const string &metastring)
   case 'a':
     if (metastring=="array")
       return TYPE_ARRAY;
+    break;
+  case 'e':
+    if (metastring=="enum_int")
+      return TYPE_ENUM_INT;
+    else if (metastring == "enum_uint")
+      return TYPE_ENUM_UINT;
     break;
   case 's':
     if (metastring=="struct")
@@ -513,16 +533,17 @@ void Datatype::encodeTypedef(Encoder &encoder) const
   encoder.closeElement(ELEM_DEF);
 }
 
-/// Calculate \b size rounded up to be a multiple of \b alignment.
-/// This value is returned by getAlignSize().
-void Datatype::calcAlignSize(void)
+/// Calculate size rounded up to be a multiple of \b align.
+/// \param sz is the number of bytes in the data-type before padding
+/// \param align is the alignment of the data-type
+/// \return the aligned size
+int4 Datatype::calcAlignSize(int4 sz,int4 align)
 
 {
-  int4 mod = size % alignment;
+  int4 mod = sz % align;
   if (mod != 0)
-    alignSize = size + (alignment - mod);
-  else
-    alignSize = size;
+    return sz + (align - mod);
+  return sz;
 }
 
 /// A CPUI_PTRSUB must act on a pointer data-type where the given offset addresses a component.
@@ -645,6 +666,10 @@ void Datatype::decodeBasic(Decoder &decoder)
     }
     else if (attrib == ATTRIB_LABEL) {
       displayName = decoder.readString();
+    }
+    else if (attrib == ATTRIB_INCOMPLETE) {
+      if (decoder.readBool())
+	flags |= type_incomplete;
     }
   }
   if (size < 0)
@@ -772,6 +797,36 @@ TypeField::TypeField(Decoder &decoder,TypeFactory &typegrp)
   decoder.closeElement(elemId);
 }
 
+/// Compare meta-data of the two fields for use with TypeStruct::compare
+/// \param op2 is the other TypeField to compare with \b this
+/// \return -1, 0, or 1 for less than, equal, or greater than ordering
+int4 TypeField::compare(const TypeField &op2) const
+
+{
+  if (offset != op2.offset)
+    return (offset < op2.offset) ? -1:1;
+  if (name != op2.name)
+    return (name < op2.name) ? -1:1;
+  if (type->getMetatype() != op2.type->getMetatype())
+    return (type->getMetatype() < op2.type->getMetatype()) ? -1 : 1;
+  return 0;
+}
+
+/// Compare structure of the two fields for use with TypeStruct::compareDependency.
+/// \param op2 is the other TypeField to compare with \b this
+/// \return -1, 0, or 1 for less than, equal, or greater than ordering
+int4 TypeField::compareDependency(const TypeField &op2) const
+
+{
+  if (offset != op2.offset)
+    return (offset < op2.offset) ? -1:1;
+  if (name != op2.name)
+    return (name < op2.name) ? -1:1;
+  if (type != op2.type)
+    return (type < op2.type) ? -1 : 1; // compare the pointers directly
+  return 0;
+}
+
 /// Encode a formal description of \b this as a \<field> element.
 /// \param encoder is the stream encoder
 void TypeField::encode(Encoder &encoder) const
@@ -784,6 +839,113 @@ void TypeField::encode(Encoder &encoder) const
     encoder.writeSignedInteger(ATTRIB_ID, ident);
   type->encodeRef(encoder);
   encoder.closeElement(ELEM_FIELD);
+}
+
+TypeBitField::TypeBitField(Decoder &decoder,TypeFactory &typegrp)
+
+{
+  ident = -1;
+  uint4 elemId = decoder.openElement(ELEM_BITFIELD);
+  for(;;) {
+    uint4 attrib = decoder.getNextAttributeId();
+    if (attrib == 0) break;
+    if (attrib == ATTRIB_NAME)
+      name = decoder.readString();
+    else if (attrib == ATTRIB_ID)
+      ident = decoder.readSignedInteger();
+    else if (attrib == ATTRIB_OFFSET)
+      bits.byteOffset = decoder.readSignedInteger();
+    else if (attrib == ATTRIB_SIZE)
+      bits.numBits = decoder.readSignedInteger();
+    else if (attrib == ATTRIB_FIRST)
+      bits.leastSigBit = decoder.readSignedInteger();
+  }
+  type = typegrp.decodeType( decoder );
+  if (name.size()==0)
+    throw LowlevelError("<bitfield> name attribute must not be empty");
+  if (ident < 0)
+    throw LowlevelError("<bitfield> id attribute must not be empty");
+  if (bits.byteOffset < 0 || bits.leastSigBit < 0 || bits.numBits < 0)
+    throw LowlevelError("<bitfield> missing offset/size/first attributes");
+  bits.byteSize = (bits.leastSigBit + bits.numBits + 7) / 8;
+
+  decoder.closeElement(elemId);
+  bits.isBigEndian = typegrp.getArch()->getDefaultDataSpace()->isBigEndian();
+}
+
+/// Create the bitfield only knowing the number of bits and the position of the field within the declaration.
+/// The bit offset and byte offset must be calculated later via TypeStruct::assignFieldOffsets
+/// \param id is the position of the bitfield within the declaration, where contiguous bitfields share the same position
+/// \param numBits is the number of bits in the bitfield
+/// \param isBigEndian is \b true if the bitfield is stored in a big endian container
+/// \param nm is the name of the bitfield
+/// \param ct is the integer data-type associated with the bitfield
+TypeBitField::TypeBitField(int4 id,int4 numBits,bool isBigEndian,const string &nm,Datatype *ct)
+  : name(nm), bits(0,(numBits+7)/8,0,numBits,isBigEndian)
+{
+  type = ct;
+  ident = id;
+}
+
+/// Compare meta-data of the two bit-fields for use with TypeStruct::compare
+/// \param op2 is the other TypeBitField to compare with \b this
+/// \return -1, 0, or 1 for less than, equal, or greater than ordering
+int4 TypeBitField::compare(const TypeBitField &op2) const
+
+{
+  int4 res = bits.compare(op2.bits);
+  if (res != 0) return res;
+  if (name != op2.name)
+    return (name < op2.name) ? -1:1;
+  if (type->getMetatype() != op2.type->getMetatype())
+    return (type->getMetatype() < op2.type->getMetatype()) ? -1 : 1;
+  return 0;
+}
+
+/// Compare structure of the two bit-fields for use with TypeStruct::compareDependency.
+/// \param op2 is the other TypeBitField to compare with \b this
+/// \return -1, 0, or 1 for less than, equal, or greater than ordering
+int4 TypeBitField::compareDependency(const TypeBitField &op2) const
+
+{
+  int4 res = bits.compare(op2.bits);
+  if (res != 0) return res;
+  if (name != op2.name)
+    return (name < op2.name) ? -1:1;
+  if (type != op2.type)
+    return (type < op2.type) ? -1 : 1; // compare the pointers directly
+  return 0;
+}
+
+void TypeBitField::encode(Encoder &encoder) const
+
+{
+  encoder.openElement(ELEM_BITFIELD);
+  encoder.writeString(ATTRIB_NAME,name);
+  encoder.writeSignedInteger(ATTRIB_OFFSET, bits.byteOffset);
+  encoder.writeSignedInteger(ATTRIB_SIZE, bits.numBits);
+  encoder.writeSignedInteger(ATTRIB_FIRST, bits.leastSigBit);
+  type->encodeRef(encoder);
+  encoder.closeElement(ELEM_BITFIELD);
+}
+
+bool BitFieldTriple::compare(const BitFieldTriple &op1,const BitFieldTriple &op2)
+
+{
+  bool isBigEndian = op1.bitfield->bits.isBigEndian;
+  int4 byteOff1 = op1.offset + op1.bitfield->bits.byteOffset;
+  int4 byteOff2 = op2.offset + op2.bitfield->bits.byteOffset;
+  if (byteOff1 != byteOff2) {
+    if (isBigEndian)			// Return least significant container
+      return (byteOff1 > byteOff2);	// Bigger byte offset is less significant
+    return (byteOff1 < byteOff2);	// Smaller byte offset is less significant
+  }
+  int4 lsb1 = op1.bitfield->bits.leastSigBit;
+  int4 lsb2 = op2.bitfield->bits.leastSigBit;
+  if (lsb1 != lsb2) {
+    return (lsb1 < lsb2);
+  }
+  return false;	  // fields start at the same bit
 }
 
 /// Parse a \<type> element for attributes of the character data-type
@@ -973,14 +1135,10 @@ bool TypePointer::testForArraySlack(Datatype *dt,int8 off)
   int8 elSize;
   if (dt->getMetatype() == TYPE_ARRAY)
     return true;
-  Datatype *compType;
   if (off < 0) {
-    compType = dt->nearestArrayedComponentForward(off, &newoff, &elSize);
+    return (dt->nearestArrayedComponentForward(off, 128, &newoff, &elSize) >= 0);
   }
-  else {
-    compType = dt->nearestArrayedComponentBackward(off, &newoff, &elSize);
-  }
-  return (compType != (Datatype *)0);
+  return (dt->nearestArrayedComponentBackward(off, 128, &newoff, &elSize) >= 0);
 }
 
 /// Parse a \<type> element with a child describing the data-type being pointed to
@@ -1005,7 +1163,7 @@ void TypePointer::decode(Decoder &decoder,TypeFactory &typegrp)
   ptrto = typegrp.decodeType( decoder );
   calcSubmeta();
   if (name.size() == 0)		// Inherit only if no name
-    flags |= ptrto->getInheritable();
+    flags |= ptrto->inheritForPointer();
   calcTruncate(typegrp);
 //  decoder.closeElement(elemId);
 }
@@ -1016,10 +1174,10 @@ void TypePointer::calcSubmeta(void)
 {
   type_metatype ptrtoMeta = ptrto->getMetatype();
   if (ptrtoMeta == TYPE_STRUCT) {
-    if (ptrto->numDepend() > 1 || ptrto->isIncomplete())
-      submeta = SUB_PTR_STRUCT;
+    if (ptrto->needsResolution())
+      submeta = SUB_PTR;	// Treat as a more generic pointer, allowing pointer to the component to take precedence
     else
-      submeta = SUB_PTR;
+      submeta = SUB_PTR_STRUCT;
   }
   else if (ptrtoMeta == TYPE_UNION) {
     submeta = SUB_PTR_STRUCT;
@@ -1078,6 +1236,12 @@ TypePointer *TypePointer::downChain(int8 &off,TypePointer *&par,int8 &parOff,boo
     }
   }
 
+  if (ptrto->isEnumType()) {
+    // Go "into" the enumeration
+    Datatype *tmp = typegrp.getBase(1, TYPE_UINT);
+    off = 0;
+    return typegrp.getTypePointer(size,tmp,wordsize);
+  }
   type_metatype meta = ptrto->getMetatype();
   bool isArray = (meta == TYPE_ARRAY);
   if (isArray || meta == TYPE_STRUCT) {
@@ -1153,9 +1317,15 @@ Datatype *TypePointer::resolveInFlow(PcodeOp *op,int4 slot)
   if (ptrto->getMetatype() == TYPE_UNION) {
     Funcdata *fd = op->getParent()->getFuncdata();
     const ResolvedUnion *res = fd->getUnionField(this,op,slot);
-    if (res != (ResolvedUnion*)0)
+    if (res != (ResolvedUnion *)0)
       return res->getDatatype();
-    ScoreUnionFields scoreFields(*fd->getArch()->types,this,op,slot);
+    res = fd->getAddressBasedUnionField(this, op->getAddr(), slot);
+    if (res != (ResolvedUnion *)0) {
+      ResolvedUnion resolve(this,res->getFieldNum(),*fd->getArch()->types);
+      fd->setUnionField(this,op,slot,resolve);
+      return resolve.getDatatype();
+    }
+    ScoreUnionFields scoreFields(*fd,this,op,slot);
     fd->setUnionField(this,op,slot,scoreFields.getResult());
     return scoreFields.getResult().getDatatype();
   }
@@ -1172,6 +1342,15 @@ Datatype* TypePointer::findResolve(const PcodeOp *op,int4 slot)
       return res->getDatatype();
   }
   return this;
+}
+
+int4 TypePointer::findCompatibleResolve(Datatype *ct) const
+
+{
+  if (ct->getMetatype() == TYPE_PTR) {
+    return ptrto->findCompatibleResolve(((TypePointer *)ct)->ptrto);
+  }
+  return -1;
 }
 
 void TypeArray::printRaw(ostream &s) const
@@ -1211,6 +1390,26 @@ Datatype *TypeArray::getSubType(int8 off,int8 *newoff) const
     return Datatype::getSubType(off, newoff);
   *newoff = off % arrayof->getAlignSize();
   return arrayof;
+}
+
+int8 TypeArray::nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
+
+{
+  if (off > 0) return -1;	// Skip if we are in the middle of array
+  *newoff = off;
+  *elSize = arrayof->getAlignSize();
+  return -off;
+}
+
+int8 TypeArray::nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
+
+{
+  if (off < 0) return -1;	// Skip if we are before array
+  *newoff = off;
+  *elSize = arrayof->getAlignSize();
+  if (off <= size)
+    return (size - off);
+  return (off - size);
 }
 
 int4 TypeArray::getHoleSize(int4 off) const
@@ -1320,116 +1519,119 @@ TypeEnum::TypeEnum(const TypeEnum &op) : TypeBase(op)
 
 {
   namemap = op.namemap;
-  flags |= (op.flags&poweroftwo)|enumtype;
 }
 
-/// Set the map. Calculate the independent bit-fields within the named values of the enumeration
-/// Two bits are in the same bit-field if there is a name in the map whose value
-/// has those two bits set.  Bit-fields must be a contiguous range of bits.
-void TypeEnum::setNameMap(const map<uintb,string> &nmap)
+/// \param val is the given value to test
+/// \return \b true if \b this enumeration has a name with the value
+bool TypeEnum::hasNamedValue(uintb val) const
 
 {
-
-  namemap = nmap;
-  flags |= poweroftwo;
-
+  return (namemap.find(val) != namemap.end());
 }
 
 /// Given a specific value of the enumeration, calculate the named representation of that value.
 /// The representation is returned as a list of names that must logically ORed and possibly complemented.
 /// If no representation is possible, no names will be returned.
 /// \param val is the value to find the representation for
-/// \param valnames will hold the returned list of names
 /// \param valSize is the size (in bits) of the varnode that was holding \b val or 0 if the size of the enum is implied
 /// \param shiftDistance \b number of bits by which you shifted \b val to the left prior to passing it to this function
-/// \return true if the representation needs to be complemented
-bool TypeEnum::getMatches(uintb val,vector<string> &valnames,int4 valSize,int shiftDistance) const
+/// \param representation will hold the list of names, the unchanged copy of the \b shiftDistance value, and whether the names are for the complement (~) version of the \b val
+void TypeEnum::getMatches(uintb val,int4 valSize,int shiftDistance,Representation &representation) const
 
 {
   map<uintb,string>::const_iterator iter;
-  int4 count;
-  vector<string> valnamesAttempt;
+  int4 attempt;
+  Representation prevAttempt;  // the successful attempt made for the non-complement (non-~) version of val, for comparing with the attempt for the complement (~) (second) version and choosing the best one
   
   uintb shiftDistanceMask = (1U << shiftDistance) - 1;
   int sizeToUse = valSize == 0 ? size * 8 : valSize;
   uintb sizeMask = sizeToUse >= sizeof(uintb) * 8 ? ~0ULL : (1ULL << sizeToUse) - 1;
 
-  map<uintb, string>::const_iterator iterEnd = namemap.end();
+  representation.shiftAmount = shiftDistance;
 
-  for(count=0;count<2;++count) {
+  for(attempt=0;attempt<2;++attempt) {
     bool allmatch = true;
-    iter = namemap.lower_bound(val);
-    if (iter != iterEnd && iter->first == val) {
-      valnames.push_back( (*iter).second );  // an exact match
+    iter = namemap.lower_bound(val);  // iter is either namemap.end(), or iter->first is guaranteed to be >= val
+    if (iter != namemap.end() && iter->first == val) {
+      representation.matchname.push_back(iter->second);  // an exact match
     } else if (val == 0) {
       allmatch = false;  // if this is a zero value, we can't represent it, because all other enum elements would be non-zero
       break;  // not allowing inverted representation for 0 by doing a ~(-1) if this enum has a -1 element
     } else {
-      uintb valRemainingBits = val;
-      map<uintb, string>::const_iterator iterBegin = namemap.begin();
-      if (iter != iterBegin) {  // can't decrement begin iterator
-	for (--iter; ; ) {  // iterate backwards from end to start (from highest value to lowest)
-	  const uintb& key = iter->first;
-	  if (key == 0) break;                    // the zero is handled specially in the code above and this element is probably the last one in the enum so we just break
-	  const uintb& maskedKey = key & valRemainingBits;
-	  const uintb valRemainingBitsTemp = valRemainingBits - maskedKey;
-	  if (valRemainingBitsTemp >= key) {  // the valRemainingBits's most significant bit is not contained in the key.
-	    // None of the remaining enum elements are going to contain that bit, since they're lower than the key,
-	    // so we can exit now
+      uintb bitsleft = val;
+      while (iter != namemap.begin()) {  // iterate backwards from end to start (from highest value to lowest)
+	--iter;
+	// iter->first is guaranteed to be < val
+	const uintb& key = iter->first;
+	// if key is 0, 'bitsleft_temp >= key' condition below is guaranteed to be fulfilled and we will break there
+	const uintb& maskedKey = key & bitsleft;
+	const uintb bitsleft_temp = bitsleft - maskedKey;
+	// Why this works (proof):
+	// Since key is guaranteed to be < bitsleft, it can't have a bit that is higher than bitsleft's most significant bit.
+	// 1)
+	//    Assume key contains the most significant bit of bitsleft.
+	//    maskedKey would include that bit.
+	//    bitsleft_temp would not have that bit.
+	//    bitsleft_temp is guaranteed to be < key, which still has the bit.
+	// 2)
+	//    Assume key does not contain the most significant bit of bitsleft.
+	//    maskedKey would not include that bit.
+	//    bitsleft_temp would still have that bit.
+	//    bitsleft_temp is guaranteed to be >= key, which does not have that bit.
+	if (bitsleft_temp >= key) {
+	  // None of the remaining enum elements are going to contain bitsleft's most significant bit, since they're all lower than the key,
+	  // so we can exit now
+	  break;
+	}
+	// If we are here, that means key contained the most significant bit of bitsleft.
+	if (maskedKey == key) {             // if all bits of the enum value are contained in bitsleft
+	  representation.matchname.push_back(iter->second);
+	  bitsleft = bitsleft_temp;         // remove used bits and continue next search only for the bits that remain
+	  if (bitsleft == 0) {              // no more bits remain, we found all of them in the enum
 	    break;
 	  }
-	  if (maskedKey == key) {                     // if all bits of the enum value are contained in valRemainingBits
-	    valnames.push_back( (*iter).second );
-	    valRemainingBits = valRemainingBitsTemp;  // remove used bits and continue next search only for the bits that remain
-	    if (valRemainingBits == 0) {              // no more bits remain, we found all of them in the enum
-	      break;
-	    }
-	    iter = namemap.lower_bound(valRemainingBits); // this will return a non-end iterator, because
-	    // we removed the highest bit from the val
-	    // and the current key contained that bit, so at most
-	    // this should return the current key again
-	    if (iter->first == valRemainingBits) {  // the iterator->first matches valRemainingBits exactly
-	      valnames.push_back((*iter).second);
-	      valRemainingBits = 0;
-	      break;
-	    } else if (iter == iterBegin) {  // can't decrement begin iterator
-	      break;
-	    } else {
-	      --iter;
-	      continue;
-	    }
+	  iter = namemap.lower_bound(bitsleft); // this will return a non-end iterator, because
+	  // we removed the highest bit from the bitsleft
+	  // and the current key contained that bit, so at most
+	  // this should return the current key again.
+	  // iter->first is guaranteed to be >= bitsleft.
+	  if (iter->first == bitsleft) {  // the iter->first matches bitsleft exactly
+	    representation.matchname.push_back(iter->second);
+	    bitsleft = 0;
+	    break;
 	  }
-	  if (iter == iterBegin) break;
-	  --iter;
+	  // Once we do --iter at the beginning of the next iteration, iter->first will be guaranteed to be < bitsleft
 	}
       }
-      allmatch = (valRemainingBits == 0);  // if not all bits were found then we can't make a representation
+      allmatch = (bitsleft == 0);  // if not all bits were found then we can't make a representation
     }
-    if (count == 1 && !valnamesAttempt.empty() && (             // If we have a previous successful attempt doing a non-~ representation
-      allmatch && valnamesAttempt.size() < valnames.size()  // And this attempt is successful but yields more enum elements than the other one
-      || !allmatch)) {                                      // Or this attempt is just not successful
-      valnames.clear();                                         // Return the previous attempt
-      valnames.insert(valnames.begin(), valnamesAttempt.begin(), valnamesAttempt.end());
-      return false;                                             // Representing the non-complement (original) value
+    if (attempt == 1 && !prevAttempt.matchname.empty() && (                         // If we have a previous successful attempt doing a non-~ representation
+        allmatch && prevAttempt.matchname.size() < representation.matchname.size()  // And this attempt is successful but yields more enum elements than the other one
+        || !allmatch)) {                                                            // Or this attempt is just not successful
+      representation = prevAttempt;                                                 // Return the previous attempt
+      return;
     }
-    if (allmatch                                           // If we have a complete representation
-      && count == 0 && (valnames.size() >= size * 8 / 2    // But it seems to include most of the enum's elements (if each was a single bit flag)
-	                || shiftDistance > 0)) {           // Or when the val was <<32 before being passed, because when that happens
-      // it could include fewer flags than size * 8 / 2, so a double-check (with the complement of the val) is necessary
-      valnamesAttempt = valnames;
-      allmatch = false;                                   // Maybe a complement's (~) representation would've been better?
+    if (allmatch                                                    // If we have a complete representation
+      && attempt == 0 && representation.matchname.size() >= (       // But it seems to include most of the enum's elements (if each was a single bit flag)
+                                  size * 8 - shiftDistance) / 2) {  // Or when the val was <<32 before being passed, because when that happens
+                                                                    // it could include fewer flags than size * 8 / 2, so a double-check (with
+                                                                    // the complement of the val) is necessary
+      prevAttempt = representation;
+      allmatch = false;
     }
-    if (allmatch)                       // If we have a complete representation
-      return (count==1);		// Return whether we represented original value or complement
-    val = val ^ sizeMask;               // Switch value we are trying to represent (to complement)
-    val ^= shiftDistanceMask;           // If the val was for example 0xfffffffe and was <<32 before being passed to this function
-                                        // it would get padded with 0's and end up looking like 0xfffffffe00000000
-                                        // so when getting its complement we would get 0x00000001ffffffff
-					// and still not find the enum values we're looking for. The ^= shiftDistanceMask fixes that
+    if (allmatch)  // We have a complete representation
+      return;
     
-    valnames.clear();			// Clear out old attempt
-  }
-  return false;	// If we reach here, no representation was possible, -valnames- is empty
+    val ^= sizeMask;           // Switch value we are trying to represent (to complement).
+    val ^= shiftDistanceMask;  // If the val was for example 0xfffffffe and was <<32 before being passed to this function
+                               // it would get padded with 0's and end up looking like 0xfffffffe00000000
+                               // so when getting its complement we would get 0x00000001ffffffff
+                               // and still not find the enum values we're looking for. The ^= shiftDistanceMask fixes that
+    
+    representation.matchname.clear();  // Clear out old attempt
+    representation.complement = true;
+  }  // for(attempt=0;attempt<2;++attempt)
+  // If we reach here, no representation was possible, representation.matchname is empty
 }
 
 int4 TypeEnum::compare(const Datatype &op,int4 level) const
@@ -1471,8 +1673,7 @@ void TypeEnum::encode(Encoder &encoder) const
     return;
   }
   encoder.openElement(ELEM_TYPE);
-  encodeBasic(metatype,-1,encoder);
-  encoder.writeString(ATTRIB_ENUM, "true");
+  encodeBasic((metatype == TYPE_INT) ? TYPE_ENUM_INT : TYPE_ENUM_UINT,-1,encoder);
   map<uintb,string>::const_iterator iter;
   for(iter=namemap.begin();iter!=namemap.end();++iter) {
     encoder.openElement(ELEM_VAL);
@@ -1486,13 +1687,15 @@ void TypeEnum::encode(Encoder &encoder) const
 /// Parse a \<type> element with children describing each specific enumeration value.
 /// \param decoder is the stream decoder
 /// \param typegrp is the factory owning \b this data-type
-void TypeEnum::decode(Decoder &decoder,TypeFactory &typegrp)
+/// \return any warning associated with the enum
+string TypeEnum::decode(Decoder &decoder,TypeFactory &typegrp)
 
 {
 //  uint4 elemId = decoder.openElement();
   decodeBasic(decoder);
-  submeta = (metatype == TYPE_INT) ? SUB_INT_ENUM : SUB_UINT_ENUM;
+  metatype = (metatype == TYPE_ENUM_INT) ? TYPE_INT : TYPE_UINT;	// Use TYPE_INT or TYPE_UINT internally
   map<uintb,string> nmap;
+  string warning;
 
   for(;;) {
     uint4 childId = decoder.openElement();
@@ -1511,61 +1714,86 @@ void TypeEnum::decode(Decoder &decoder,TypeFactory &typegrp)
     }
     if (nm.size() == 0)
       throw LowlevelError(name + ": TypeEnum field missing name attribute");
-    nmap[val] = nm;
+    if (nmap.find(val) != nmap.end()) {
+      if (warning.empty())
+	warning = "Enum \"" + name + "\": Some values do not have unique names";
+    }
+    else
+      nmap[val] = nm;
     decoder.closeElement(childId);
   }
   setNameMap(nmap);
 //  decoder.closeElement(elemId);
+  return warning;
+}
+
+/// Establish unique enumeration values for a TypeEnum.
+/// Fill in any values for any names that weren't explicitly assigned and check for duplicates.
+/// \param nmap will contain the map from values to names
+/// \param namelist is the list of names in the enumeration
+/// \param vallist is the corresponding list of values assigned to names in namelist
+/// \param assignlist is true if the corresponding name in namelist has an assigned value
+/// \param te is the TypeEnum that will eventually hold the enumeration values
+void TypeEnum::assignValues(map<uintb,string> &nmap,const vector<string> &namelist,vector<uintb> &vallist,
+			    const vector<bool> &assignlist,const TypeEnum *te)
+{
+  map<uintb,string>::iterator mapiter;
+
+  uintb mask = calc_mask(te->getSize());
+  uintb maxval = 0;
+  for(uint4 i=0;i<namelist.size();++i) {
+    uintb val;
+    if (assignlist[i]) {	// Did the user explicitly set value
+      val = vallist[i];
+      if (val > maxval)
+	maxval = val;
+      val &= mask;
+      mapiter = nmap.find(val);
+      if (mapiter != nmap.end()) {
+	throw LowlevelError("Enum \""+te->name+"\": \""+namelist[i]+"\" is a duplicate value");
+      }
+      nmap[val] = namelist[i];
+    }
+  }
+  for(uint4 i=0;i<namelist.size();++i) {
+    uintb val;
+    if (!assignlist[i]) {
+      do {
+	maxval += 1;
+	val = maxval;
+	val &= mask;
+	mapiter = nmap.find(val);
+      } while(mapiter != nmap.end());
+      nmap[val] = namelist[i];
+    }
+  }
 }
 
 TypeStruct::TypeStruct(const TypeStruct &op)
   : Datatype(op)
 {
-  setFields(op.field,op.size,op.alignment);
+  setFields(op.field,op.bitfield,op.size,op.alignment);
   alignSize = op.alignSize;
 }
 
-/// Copy a list of fields into this structure, establishing its size.
+/// Copy a list of fields into this structure, establishing its size and alignment.
 /// Should only be called once when constructing the type.
-/// Size is calculated from the fields unless a \b fixedSize (>0) is passed in.
-/// Alignment is calculated from fields unless a \b fixedAlign (>0) is passed in.
 /// \param fd is the list of fields to copy in
-/// \param fixedSize (if > 0) indicates an overriding size in bytes
-/// \param fixedAlign (if > 0) indicates an overriding alignment in bytes
-void TypeStruct::setFields(const vector<TypeField> &fd,int4 fixedSize,int4 fixedAlign)
+/// \param bit is the list of fields, not aligned/sized to byte boundaries, to copy in
+/// \param newSize is the final size of the structure in bytes
+/// \param newAlign is the final alignment of the structure
+void TypeStruct::setFields(const vector<TypeField> &fd,const vector<TypeBitField> &bit,int4 newSize,int4 newAlign)
 
 {
-  vector<TypeField>::const_iterator iter;
-  int4 end;
-				// Need to calculate size and alignment
-  int4 calcSize = 0;
-  int4 calcAlign = 1;
-  for(iter=fd.begin();iter!=fd.end();++iter) {
-    field.push_back(*iter);
-    Datatype *fieldType = (*iter).type;
-    end = (*iter).offset + fieldType->getSize();
-    if (end > calcSize)
-      calcSize = end;
-    int4 curAlign = fieldType->getAlignment();
-    if (curAlign > calcAlign)
-      calcAlign = curAlign;
-  }
+  field = fd;
+  bitfield = bit;
+  size = newSize;
+  alignment = newAlign;
   if (field.size() == 1) {			// A single field
-    if (field[0].type->getSize() == calcSize)	// that fills the whole structure
+    if (field[0].type->getSize() == size)	// that fills the whole structure
       flags |= needs_resolution;		// needs special attention
   }
-  if (fixedSize > 0) {		// Try to force a size
-    if (fixedSize < calcSize) // If the forced size is smaller, this is an error
-      throw LowlevelError("Trying to force too small a size on "+name);
-    size = fixedSize;
-  }
-  else
-    size = calcSize;
-  alignment = (fixedAlign < 1) ? calcAlign : fixedAlign;
-  calcAlignSize();
-  if (fixedSize <= 0) {	// Unless specifically overridden
-    size = alignSize;	// pad out structure to with alignment bytes
-  }
+  alignSize = calcAlignSize(size,alignment);
 }
 
 /// Find the proper subfield given an offset. Return the index of that field
@@ -1590,6 +1818,86 @@ int4 TypeStruct::getFieldIter(int4 off) const
     }
   }
   return -1;
+}
+
+/// If the bitfield matches the given range exactly it is returned, otherwise null is returned.
+/// \param range is the given range to match
+/// \return the matching bitfield or null
+const TypeBitField *TypeStruct::findMatchingBitField(const BitRange &range) const
+
+{
+  int4 min = 0;
+  int4 max = bitfield.size()-1;
+
+  while(min <= max) {
+    int4 mid = (min + max)/2;
+    const TypeBitField &curfield( bitfield[mid] );
+    int4 code = range.overlapTest(curfield.bits);
+    if (code == 0)
+      return &curfield;
+    if (code == -1)
+      max = mid - 1;
+    else if (code == 1)
+      min = mid + 1;
+    else
+      break;		// Partial overlap
+  }
+  return (const TypeBitField *)0;
+}
+
+/// The bitfields passed back may not be in order.
+/// \param baseOffset is the byte offset of \b this structure in the root structure
+/// \param res stores references to the overlapping bitfields
+/// \param offset is the byte offset of the given range to find overlaps in
+/// \param sz is the number of bytes in the given range
+void TypeStruct::collectBitFields(int4 baseOffset,vector<BitFieldTriple> &res,int4 offset,int4 sz) const
+
+{
+  vector<TypeBitField>::const_iterator iter = upper_bound(bitfield.begin(),bitfield.end(),offset,TypeBitField::compareMaxByte);
+  if (iter != bitfield.end()) {
+    BitRange range(offset,sz,(*iter).bits.isBigEndian);
+    for(;iter!=bitfield.end();++iter) {
+      const TypeBitField &curBitField(*iter);
+      int4 code = curBitField.bits.overlapTest(range);
+      if (code == 1) break;
+      if (code == -1) continue;
+      res.emplace_back(this,&curBitField,baseOffset);
+    }
+  }
+  vector<TypeField>::const_iterator fiter = upper_bound(field.begin(),field.end(),offset,TypeField::compareMaxByte);
+  for(;fiter!=field.end();++fiter) {
+    const TypeField &curField(*fiter);
+    if (curField.offset >= offset + sz) break;
+    if (curField.type->getMetatype() != TYPE_STRUCT) continue;
+    if (!curField.type->hasBitfields()) continue;
+    ((TypeStruct *)curField.type)->collectBitFields(baseOffset + curField.offset,res,offset-curField.offset,sz);	// Recurse into nested structure
+  }
+}
+
+bool TypeStruct::hasBitFieldsInRange(int4 offset,int4 sz) const
+
+{
+  vector<TypeBitField>::const_iterator iter = upper_bound(bitfield.begin(),bitfield.end(),offset,TypeBitField::compareMaxByte);
+  if (iter != bitfield.end()) {
+    BitRange range(offset,sz,(*iter).bits.isBigEndian);
+    for(;iter!=bitfield.end();++iter) {
+      const TypeBitField &curBitField(*iter);
+      int4 code = curBitField.bits.overlapTest(range);
+      if (code == 1) break;
+      if (code == -1) continue;
+      return true;
+    }
+  }
+  vector<TypeField>::const_iterator fiter = upper_bound(field.begin(),field.end(),offset,TypeField::compareMaxByte);
+  for(;fiter!=field.end();++fiter) {
+    const TypeField &curField(*fiter);
+    if (curField.offset >= offset + sz) break;
+    if (curField.type->getMetatype() != TYPE_STRUCT) continue;
+    if (!curField.type->hasBitfields()) continue;
+    if (((const TypeStruct *)curField.type)->hasBitFieldsInRange(offset - curField.offset, sz))	// Recurse into nested structure
+      return true;
+  }
+  return false;
 }
 
 /// The field returned may or may not contain the offset.  If there are no fields
@@ -1661,7 +1969,7 @@ int4 TypeStruct::getHoleSize(int4 off) const
   return getSize() - off;		// Distance to end of structure
 }
 
-Datatype *TypeStruct::nearestArrayedComponentBackward(int8 off,int8 *newoff,int8 *elSize) const
+int8 TypeStruct::nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
 
 {
   int4 firstIndex = getLowerBoundField(off);
@@ -1669,28 +1977,23 @@ Datatype *TypeStruct::nearestArrayedComponentBackward(int8 off,int8 *newoff,int8
   while(i >= 0) {
     const TypeField &subfield( field[i] );
     int8 diff = off - subfield.offset;
-    if (diff > 128) break;
     Datatype *subtype = subfield.type;
-    if (subtype->getMetatype() == TYPE_ARRAY) {
+    int8 suboff;
+    int8 remain = (i == firstIndex) ? diff : subtype->getSize();
+    if (diff - remain > max) break;
+    int8 distance = subtype->nearestArrayedComponentBackward(remain, max, &suboff, elSize);
+    if (distance >= 0) {
+      distance = (diff - remain) + distance;
+      if (distance > max) break;
       *newoff = diff;
-      *elSize = ((TypeArray *)subtype)->getBase()->getAlignSize();
-      return subtype;
-    }
-    else {
-      int8 suboff;
-      int8 remain = (i == firstIndex) ? diff : subtype->getSize() - 1;
-      Datatype *res = subtype->nearestArrayedComponentBackward(remain, &suboff, elSize);
-      if (res != (Datatype *)0) {
-	*newoff = diff;
-	return subtype;
-      }
+      return distance;
     }
     i -= 1;
   }
-  return (Datatype *)0;
+  return -1;
 }
 
-Datatype *TypeStruct::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 *elSize) const
+int8 TypeStruct::nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
 
 {
   int4 i = getLowerBoundField(off);
@@ -1699,36 +2002,26 @@ Datatype *TypeStruct::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 
     i += 1;		// First component starting after
     remain = 0;
   }
-  else {
-    const TypeField &subfield( field[i] );
-    remain = off - subfield.offset;
-    if (remain != 0 && (subfield.type->getMetatype() != TYPE_STRUCT || remain >= subfield.type->getSize())) {
-      i += 1;		// Middle of non-structure that we must go forward from, skip over it
-      remain = 0;
-    }
-  }
+  else
+    remain = off - field[i].offset;
   while(i<field.size()) {
     const TypeField &subfield( field[i] );
     int8 diff = subfield.offset - off;		// The first struct field examined may have a negative diff
-    if (diff > 128) break;
+    if (diff + remain > max) break;
     Datatype *subtype = subfield.type;
-    if (subtype->getMetatype() == TYPE_ARRAY) {
+    int8 suboff;
+    int8 distance = subtype->nearestArrayedComponentForward(remain, max, &suboff, elSize);
+    if (distance >= 0) {
+      distance = diff + remain + distance;
+      if (distance > max)
+	break;
       *newoff = -diff;
-      *elSize = ((TypeArray *)subtype)->getBase()->getAlignSize();
-      return subtype;
-    }
-    else {
-      int8 suboff;
-      Datatype *res = subtype->nearestArrayedComponentForward(remain, &suboff, elSize);
-      if (res != (Datatype *)0) {
-	*newoff = -diff;
-	return subtype;
-      }
+      return distance;
     }
     i += 1;
     remain = 0;
   }
-  return (Datatype *)0;
+  return -1;
 }
 
 int4 TypeStruct::compare(const Datatype &op,int4 level) const
@@ -1743,14 +2036,20 @@ int4 TypeStruct::compare(const Datatype &op,int4 level) const
   iter2 = ts->field.begin();
   // Test only the name and first level metatype first
   while(iter1 != field.end()) {
-    if ((*iter1).offset != (*iter2).offset)
-      return ((*iter1).offset < (*iter2).offset) ? -1:1;
-    if ((*iter1).name != (*iter2).name)
-      return ((*iter1).name < (*iter2).name) ? -1:1;
-    if ((*iter1).type->getMetatype() != (*iter2).type->getMetatype())
-      return ((*iter1).type->getMetatype() < (*iter2).type->getMetatype()) ? -1 : 1;
+    int4 cmp = (*iter1).compare(*iter2);
+    if (cmp != 0) return cmp;
     ++iter1;
     ++iter2;
+  }
+  if (bitfield.size() != ts->bitfield.size()) return (ts->bitfield.size()-bitfield.size());
+  vector<TypeBitField>::const_iterator iter3,iter4;
+  iter3 = bitfield.begin();
+  iter4 = ts->bitfield.begin();
+  while(iter3 != bitfield.end()) {
+    int4 cmp = (*iter3).compare(*iter4);
+    if (cmp != 0) return cmp;
+    ++iter3;
+    ++iter4;
   }
   level -= 1;
   if (level < 0) {
@@ -1768,6 +2067,16 @@ int4 TypeStruct::compare(const Datatype &op,int4 level) const
     ++iter1;
     ++iter2;
   }
+  iter3 = bitfield.begin();
+  iter4 = ts->bitfield.begin();
+  while(iter3 != bitfield.end()) {
+    if ((*iter3).type != (*iter4).type) {
+      int4 c = (*iter3).type->compare( *(*iter4).type, level );
+      if (c != 0) return c;
+    }
+    ++iter3;
+    ++iter4;
+  }
   return 0;
 }
 
@@ -1784,16 +2093,20 @@ int4 TypeStruct::compareDependency(const Datatype &op) const
   iter2 = ts->field.begin();
   // Test only the name and first level metatype first
   while(iter1 != field.end()) {
-    if ((*iter1).offset != (*iter2).offset)
-      return ((*iter1).offset < (*iter2).offset) ? -1:1;
-    if ((*iter1).name != (*iter2).name)
-      return ((*iter1).name < (*iter2).name) ? -1:1;
-    Datatype *fld1 = (*iter1).type;
-    Datatype *fld2 = (*iter2).type;
-    if (fld1 != fld2)
-      return (fld1 < fld2) ? -1 : 1; // compare the pointers directly
+    int4 cmp = (*iter1).compareDependency(*iter2);
+    if (cmp != 0) return cmp;
     ++iter1;
     ++iter2;
+  }
+  if (bitfield.size() != ts->bitfield.size()) return (ts->bitfield.size()-bitfield.size());
+  vector<TypeBitField>::const_iterator iter3,iter4;
+  iter3 = bitfield.begin();
+  iter4 = ts->bitfield.begin();
+  while(iter3 != bitfield.end()) {
+    int4 cmp = (*iter3).compareDependency(*iter4);
+    if (cmp != 0) return cmp;
+    ++iter3;
+    ++iter4;
   }
   return 0;
 }
@@ -1807,46 +2120,161 @@ void TypeStruct::encode(Encoder &encoder) const
   }
   encoder.openElement(ELEM_TYPE);
   encodeBasic(metatype,alignment,encoder);
-  vector<TypeField>::const_iterator iter;
-  for(iter=field.begin();iter!=field.end();++iter) {
-    (*iter).encode(encoder);
+  vector<TypeField>::const_iterator iter1 = field.begin();
+  vector<TypeBitField>::const_iterator iter2 = bitfield.begin();
+  while(iter1 != field.end() && iter2 != bitfield.end()) {
+    if ((*iter1).offset < (*iter2).bits.byteOffset) {
+      (*iter1).encode(encoder);
+      ++iter1;
+    }
+    else {
+      (*iter2).encode(encoder);
+      ++iter2;
+    }
   }
+  for(;iter1!=field.end();++iter1)
+    (*iter1).encode(encoder);
+  for(;iter2!=bitfield.end();++iter2)
+    (*iter2).encode(encoder);
   encoder.closeElement(ELEM_TYPE);
 }
 
-/// Children of the structure element describe each field.
+/// \brief Decode a single field, check for errors, and accumulate size and alignment
+///
+/// Make sure the field fits, doesn't overlap other fields, and has a sensible name and data-type.
 /// \param decoder is the stream decoder
-/// \param typegrp is the factory owning the new structure
-void TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
+/// \param typegrp is the TypeFactory to decode field data-types
+/// \param accum contains the accumulated size and alignment seen over multiple fields
+void TypeStruct::decodeField(Decoder &decoder,TypeFactory &typegrp,FieldAccum &accum)
 
 {
-  int4 calcAlign = 1;
-  int4 maxoffset = 0;
-  while(decoder.peekElement() != 0) {
-    field.emplace_back(decoder,typegrp);
-    int4 trialmax = field.back().offset + field.back().type->getSize();
-    if (trialmax > maxoffset)
-      maxoffset = trialmax;
-    if (maxoffset > size) {
-      ostringstream s;
-      s << "Field " << field.back().name << " does not fit in structure " + name;
-      throw LowlevelError(s.str());
+  field.emplace_back(decoder,typegrp);
+  TypeField &curField(field.back());
+  if (curField.type == (Datatype *)0 || curField.type->getMetatype() == TYPE_VOID)
+    throw LowlevelError("Bad field data-type for structure: "+getName());
+  if (curField.name.size() == 0)
+    throw LowlevelError("Bad field name for structure: "+getName());
+  if (curField.offset < accum.lastOff)
+    throw LowlevelError("Fields are out of order");
+  if (curField.offset < accum.calcSize) {
+    ostringstream s;
+    if (accum.warning.empty()) {
+	s << "Struct \"" << name << "\": ignoring overlapping field \"" << curField.name << "\"";
     }
-    int4 curAlign = field.back().type->getAlignment();
-    if (curAlign > calcAlign)
-      calcAlign = curAlign;
+    else {
+	s << "Struct \"" << name << "\": ignoring multiple overlapping fields";
+    }
+    accum.warning = s.str();
+    field.pop_back();		// Throw out the overlapping field
+    return;
   }
-  if (size == 0)		// We can decode an incomplete structure, indicated by 0 size
-    flags |=  type_incomplete;
-  else
-    markComplete();		// Otherwise the structure is complete
+  if (curField.type->hasBitfields())
+    flags |= has_bitfields;
+  accum.lastOff = curField.offset;
+  accum.calcSize = curField.offset + curField.type->getSize();
+  if (accum.calcSize > size) {
+    ostringstream s;
+    s << "Field " << curField.name << " does not fit in structure " + name;
+    throw LowlevelError(s.str());
+  }
+  int4 curAlign = curField.type->getAlignment();
+  if (curAlign > accum.calcAlign)
+    accum.calcAlign = curAlign;
+}
+
+/// \brief Decode a single bit-field, check for errors, and accumulate size and alignment
+///
+/// Make sure the bit-field fits, doesn't overlap other fields or bit-fields, and has a sensible name and data-type.
+/// \param decoder is the stream decoder
+/// \param typegrp is the TypeFactory to decode field data-types
+/// \param accum contains the accumulated size and alignment seen over multiple fields
+void TypeStruct::decodeBitField(Decoder &decoder,TypeFactory &typegrp,FieldAccum &accum)
+
+{
+  bitfield.emplace_back(decoder,typegrp);
+  TypeBitField &curBitField(bitfield.back());
+  if (curBitField.name.size() == 0)
+    throw LowlevelError("Bad bitfield name for structure: "+getName());
+  if (curBitField.type == (Datatype *)0)
+    throw LowlevelError("Bad bitfield data-type for bitfield \""+bitfield.back().name+"\" in structure: "+getName());
+  type_metatype meta = curBitField.type->getMetatype();
+  if (meta != TYPE_INT && meta != TYPE_UINT && meta != TYPE_BOOL && meta != TYPE_ENUM_INT && meta != TYPE_ENUM_UINT)
+    throw LowlevelError("Non integer data-type for bitfield \""+bitfield.back().name+"\" in structure: "+getName());
+  if (curBitField.bits.byteOffset < accum.lastOff)
+    throw LowlevelError("Bitfields are out of order in structure: "+getName());
+  if (curBitField.bits.byteOffset < accum.calcSize) {
+    if (bitfield.size() < 2 || bitfield[bitfield.size()-2].bits.overlapTest(curBitField.bits) != -1) {
+      ostringstream s;
+      if (accum.warning.empty()) {
+	s << "Struct \"" << name << "\": ignoring overlapping bit field \"" << curBitField.name << "\"";
+      }
+      else {
+	s << "Struct \"" << name << "\": ignoring multiple overlapping fields";
+      }
+      accum.warning = s.str();
+      bitfield.pop_back();		// Throw out the overlapping field
+      return;
+    }
+  }
+  accum.lastOff = curBitField.bits.byteOffset;
+  accum.calcSize = curBitField.bits.byteOffset + curBitField.bits.byteSize;
+  if (accum.calcSize > size) {
+    ostringstream s;
+    s << "Bitfield " << curBitField.name << " does not fit in structure " + name;
+    throw LowlevelError(s.str());
+  }
+  if (curBitField.bits.isByteRange()) {
+    curBitField.bits.minimizeContainer();
+    Datatype *dt = curBitField.type;
+    if (dt->getSize() != curBitField.bits.byteSize) {
+      type_metatype meta = dt->getMetatype();
+      if (meta != TYPE_INT && meta != TYPE_UINT)
+	meta = TYPE_UNKNOWN;
+      dt = typegrp.getBase(curBitField.bits.byteSize, meta);
+    }
+    field.emplace_back(curBitField.bits.byteOffset,curBitField.bits.byteOffset,curBitField.name,dt);
+    bitfield.pop_back();	// Remove from bitfield list
+  }
+}
+
+/// Read children of the structure element describing each field.  Alignment is calculated from fields unless
+/// the \b alignment field is already >0. The fields must be in order, fit within the \b size field, have a
+/// valid name, and have a valid data-type, or an exception is thrown. Any fields that overlap their previous
+/// field are thrown out and a warning message is returned.
+/// \param decoder is the stream decoder
+/// \param typegrp is the factory owning the new structure
+/// \return any warning associated with the structure
+string TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
+
+{
+  FieldAccum accum;
+  accum.calcAlign = 1;
+  accum.calcSize = 0;
+  accum.lastOff = -1;
+  for(;;) {
+    uint4 el = decoder.peekElement();
+    if (el == 0) break;
+    if (el == ELEM_FIELD)
+      decodeField(decoder,typegrp,accum);
+    else if (el == ELEM_BITFIELD)
+      decodeBitField(decoder,typegrp,accum);
+    else
+      throw DecoderError("Expecting <field> or <bitfield>");
+  }
+  if (size == 0)		// Old way to indicate an incomplete structure
+    flags |= type_incomplete;
+  if (field.size() > 0 || bitfield.size() > 0)
+    markComplete();		// If we have fields, mark as complete
+  if (bitfield.size() > 0)
+    flags |= has_bitfields;
   if (field.size() == 1) {			// A single field
     if (field[0].type->getSize() == size)	// that fills the whole structure
       flags |= needs_resolution;		// needs special resolution
   }
   if (alignment < 1)
-    alignment = calcAlign;
-  calcAlignSize();
+    alignment = accum.calcAlign;
+  alignSize = calcAlignSize(size, alignment);
+  return accum.warning;
 }
 
 /// If this method is called, the given data-type has a single component that fills it entirely
@@ -1931,23 +2359,102 @@ int4 TypeStruct::findCompatibleResolve(Datatype *ct) const
   return -1;
 }
 
-/// Assign an offset to fields in order so that each field starts at an aligned offset within the structure
-/// \param list is the list of fields
-void TypeStruct::assignFieldOffsets(vector<TypeField> &list)
+/// \brief For a subset of bitfields, assign specific positions within \b this structure
+///
+/// The name, data-type, and number of bits must already filled in the bitfield records.
+/// This method fills in the byte offset, byte size, and starting bit.
+/// The subset is determined by the bitfield \b ident, labels fields that are grouped together.
+/// \param bitlist is the list of all bitfield records
+/// \param pos is the first unassigned bitfield and is updated when the subset gets assigned positions
+/// \param offset is the starting byte offset assigned to the subset and is updated when the subset gets assigned
+/// \param newAlign is the alignment for the structure up to the current offset and is updated
+void TypeStruct::assignContiguousBitfields(vector<TypeBitField> &bitlist,int4 &pos,int4 &offset,int4 &newAlign)
 
 {
+  int4 totalSize = 0;
+  int4 startInd = pos;
+  int4 nextBitPos = bitlist[pos].ident;
+  // Calculate total number of bits in contiguous bitfields
+  while(pos < bitlist.size() && bitlist[pos].ident == nextBitPos) {
+    totalSize += bitlist[pos].bits.numBits;
+    pos += 1;
+  }
+  // Align the offset for bitfields
+  int4 align = bitlist[startInd].type->getAlignment();
+  if (align > newAlign)
+    newAlign = align;
+  align -= 1;
+  if (align > 0 && (offset & align)!=0)
+    offset = (offset-(offset & align) + (align+1));
+  totalSize = (totalSize + 7) / 8;		// Calculate number of bytes for this set of bitfields
+  int4 lsb = 0;
+  for(int4 i=startInd;i<pos;++i) {
+    bitlist[i].bits.byteOffset = offset;	// Set byte offset
+    bitlist[i].bits.byteSize = totalSize;
+    bitlist[i].bits.leastSigBit = lsb;	// Establish bit position
+    lsb += bitlist[i].bits.numBits;
+    bitlist[i].ident = i;			// Identifier is position within bitfield list
+  }
+  offset += totalSize;
+  if (bitlist[startInd].bits.isBigEndian && (pos - startInd) > 1) {
+    // Big-endian bitfields are assigned least significant bit to most significant, but the data-type still
+    // expects the fields to be in order from most to least, so after assignment is complete, we reverse the order.
+    std::reverse(bitlist.begin()+startInd,bitlist.begin()+pos);
+  }
+}
+
+/// \brief Assign offsets to a list of fields and bitfields that define a structure
+///
+/// Assign an offset to fields in order so that each field starts at an aligned offset within the structure.
+/// \param list is the list of fields
+/// \param bitlist is the list of bitfields
+/// \param newSize passes back the calculated size of the structure
+/// \param newAlign passes back the calculated alignment
+/// \param flags passes back any additional flags that should be set on the structure
+void TypeStruct::assignFieldOffsets(vector<TypeField> &list,vector<TypeBitField> &bitlist,int4 &newSize,int4 &newAlign,uint4 &flags)
+
+{
+  int4 nextBitPos = -1;
+  int4 curBitInd = -1;
+  if (!bitlist.empty()) {
+    curBitInd = 0;
+    nextBitPos = bitlist[curBitInd].ident;
+  }
   int4 offset = 0;
-  vector<TypeField>::iterator iter;
-  for(iter=list.begin();iter!=list.end();++iter) {
-    if ((*iter).offset != -1) continue;
-    int4 cursize = (*iter).type->getAlignSize();
-    int4 align = (*iter).type->getAlignment() - 1;
+  newAlign = 1;
+  flags = 0;
+  for(int4 pos=0;pos<list.size();++pos) {
+    if (pos == nextBitPos) {
+      assignContiguousBitfields(bitlist, curBitInd, offset, newAlign);
+      // Next set of bitfields start at this offset
+      if (curBitInd < bitlist.size())
+	nextBitPos = bitlist[curBitInd].ident;
+    }
+    TypeField &curField(list[pos]);
+    if (curField.type->getMetatype() == TYPE_VOID)
+      throw LowlevelError("Illegal field data-type: void");
+    if (curField.offset != -1) continue;
+    int4 cursize = curField.type->getAlignSize();
+    int4 align = curField.type->getAlignment();
+    if (align > newAlign)
+      newAlign = align;
+    align -= 1;
     if (align > 0 && (offset & align)!=0)
       offset = (offset-(offset & align) + (align+1));
-    (*iter).offset = offset;
-    (*iter).ident = offset;
+    curField.offset = offset;
+    curField.ident = offset;
     offset += cursize;
+    if (curField.type->hasBitfields())
+      flags |= Datatype::has_bitfields;
   }
+  if (list.size() == nextBitPos) {
+    assignContiguousBitfields(bitlist, curBitInd, offset, newAlign);	// Bitfields after any other fields
+  }
+  if (!bitlist.empty() && curBitInd != bitlist.size())
+    throw LowlevelError("Malformed bitfield description");
+  if (!bitlist.empty())
+    flags |= Datatype::has_bitfields;
+  newSize = calcAlignSize(offset, newAlign);
 }
 
 /// Copy a list of fields into this union, establishing its size.
@@ -1955,34 +2462,15 @@ void TypeStruct::assignFieldOffsets(vector<TypeField> &list)
 /// Size is calculated from the fields unless a \b fixedSize (>0) is passed in.
 /// Alignment is calculated from fields unless a \b fixedAlign (>0) is passed in.
 /// \param fd is the list of fields to copy in
-/// \param fixedSize (if > 0) indicates an overriding size in bytes
-/// \param fixedAlign (if > 0) indicates an overriding alignment in bytes
-void TypeUnion::setFields(const vector<TypeField> &fd,int4 fixedSize,int4 fixedAlign)
+/// \param newSize is new size in bytes of the union
+/// \param newAlign is the new alignment
+void TypeUnion::setFields(const vector<TypeField> &fd,int4 newSize,int4 newAlign)
 
 {
-  vector<TypeField>::const_iterator iter;
- 				// Need to calculate size and alignment
-  int4 calcSize = 0;
-  int4 calcAlign = 1;
-  for(iter=fd.begin();iter!=fd.end();++iter) {
-    field.push_back(*iter);
-    Datatype *fieldType = field.back().type;
-    int4 end = fieldType->getSize();
-    if (end > calcSize)
-      calcSize = end;
-    int4 curAlign = fieldType->getAlignment();
-    if (curAlign > calcAlign)
-      calcAlign = curAlign;
-  }
-  if (fixedSize > 0) {		// If the caller is trying to force a size
-    if (fixedSize < calcSize)	// If the forced size is smaller, this is an error
-      throw LowlevelError("Trying to force too small a size on "+name);
-    size = fixedSize;
-  }
-  else
-    size = calcSize;
-  alignment = (fixedAlign < 1) ? calcAlign : fixedAlign;
-  calcAlignSize();
+  field = fd;
+  size = newSize;
+  alignment = newAlign;
+  alignSize = calcAlignSize(size,alignment);
 }
 
 /// Parse children of the \<type> element describing each field.
@@ -2003,13 +2491,13 @@ void TypeUnion::decodeFields(Decoder &decoder,TypeFactory &typegrp)
     if (curAlign > calcAlign)
       calcAlign = curAlign;
   }
-  if (size == 0)		// We can decode an incomplete structure, indicated by 0 size
-    flags |=  type_incomplete;
-  else
-    markComplete();		// Otherwise the union is complete
+  if (size == 0)		// Old way to indicate union is incomplete
+    flags |= type_incomplete;
+  if (field.size() > 0)
+    markComplete();		// If we have fields, the union is complete
   if (alignment < 1)
     alignment = calcAlign;
-  calcAlignSize();
+  alignSize = calcAlignSize(size,alignment);
 }
 
 TypeUnion::TypeUnion(const TypeUnion &op)
@@ -2106,7 +2594,13 @@ Datatype *TypeUnion::resolveInFlow(PcodeOp *op,int4 slot)
   const ResolvedUnion *res = fd->getUnionField(this, op, slot);
   if (res != (ResolvedUnion *)0)
     return res->getDatatype();
-  ScoreUnionFields scoreFields(*fd->getArch()->types,this,op,slot);
+  res = fd->getAddressBasedUnionField(this, op->getAddr(), slot);
+  if (res != (ResolvedUnion *)0) {
+    ResolvedUnion resolve(this,res->getFieldNum(),*fd->getArch()->types);
+    fd->setUnionField(this, op, slot, *res);
+    return resolve.getDatatype();
+  }
+  ScoreUnionFields scoreFields(*fd,this,op,slot);
   fd->setUnionField(this, op, slot, scoreFields.getResult());
   return scoreFields.getResult().getDatatype();
 }
@@ -2125,7 +2619,13 @@ const TypeField *TypeUnion::resolveTruncation(int8 offset,PcodeOp *op,int4 slot,
 
 {
   Funcdata *fd = op->getParent()->getFuncdata();
-  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  const ResolvedUnion *res = fd->getUnionResolution(this, op, slot);
+  if (res == (ResolvedUnion *)0) {
+    res = fd->getAddressBasedUnionField(this, op->getAddr(), slot);
+    if (res != (ResolvedUnion *)0) {
+      fd->setUnionField(this, op, slot, *res);
+    }
+  }
   if (res != (ResolvedUnion *)0) {
     if (res->getFieldNum() >= 0) {
       const TypeField *field = getField(res->getFieldNum());
@@ -2134,7 +2634,7 @@ const TypeField *TypeUnion::resolveTruncation(int8 offset,PcodeOp *op,int4 slot,
     }
   }
   else if (op->code() == CPUI_SUBPIECE && slot == 1) {	// The slot is artificial in this case
-    ScoreUnionFields scoreFields(*fd->getArch()->types,this,offset,op);
+    ScoreUnionFields scoreFields(*fd,this,offset,op);
     fd->setUnionField(this, op, slot, scoreFields.getResult());
     if (scoreFields.getResult().getFieldNum() >= 0) {
       newoff = 0;
@@ -2142,7 +2642,7 @@ const TypeField *TypeUnion::resolveTruncation(int8 offset,PcodeOp *op,int4 slot,
     }
   }
   else {
-    ScoreUnionFields scoreFields(*fd->getArch()->types,this,offset,op,slot);
+    ScoreUnionFields scoreFields(*fd,this,offset,op,slot);
     fd->setUnionField(this, op, slot, scoreFields.getResult());
     if (scoreFields.getResult().getFieldNum() >= 0) {
       const TypeField *field = getField(scoreFields.getResult().getFieldNum());
@@ -2164,7 +2664,7 @@ const TypeField *TypeUnion::findTruncation(int8 offset,int4 sz,const PcodeOp *op
 {
   // No new scoring is done, but if a cached result is available, return it.
   const Funcdata *fd = op->getParent()->getFuncdata();
-  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  const ResolvedUnion *res = fd->getUnionResolution(this, op, slot);
   if (res != (ResolvedUnion *)0 && res->getFieldNum() >= 0) {
     const TypeField *field = getField(res->getFieldNum());
     newoff = offset - field->offset;
@@ -2197,6 +2697,114 @@ int4 TypeUnion::findCompatibleResolve(Datatype *ct) const
   return -1;
 }
 
+void TypeUnion::assignFieldOffsets(vector<TypeField> &list,int4 &newSize,int4 &newAlign,TypeUnion *tu)
+
+{
+  vector<TypeField>::iterator iter;
+
+  newSize = 0;
+  newAlign = 1;
+  for(iter=list.begin();iter!=list.end();++iter) {
+    Datatype *ct = (*iter).type;
+    // Do some sanity checks on the field
+    if (ct == (Datatype *)0 || ct->getMetatype() == TYPE_VOID)
+      throw LowlevelError("Bad field data-type for union: "+tu->getName());
+    else if ((*iter).name.size() == 0)
+      throw LowlevelError("Bad field name for union: "+tu->getName());
+    (*iter).offset = 0;
+    int4 end = ct->getSize();
+    if (end > newSize)
+      newSize = end;
+    int4 curAlign = ct->getAlignment();
+    if (curAlign > newAlign)
+      newAlign = curAlign;
+  }
+}
+
+TypePartialEnum::TypePartialEnum(const TypePartialEnum &op)
+  : TypeEnum(op)
+{
+  stripped = op.stripped;
+  parent = op.parent;
+  offset = op.offset;
+}
+
+TypePartialEnum::TypePartialEnum(TypeEnum *par,int4 off,int4 sz,Datatype *strip)
+  : TypeEnum(sz, TYPE_PARTIALENUM)
+{
+  flags |= par->inheritForPartial();
+  flags |= has_stripped;
+  stripped = strip;
+  parent = par;
+  offset = off;
+}
+
+void TypePartialEnum::printRaw(ostream &s) const
+
+{
+  parent->printRaw(s);
+  s << "[off=" << dec << offset << ",sz=" << size << ']';
+}
+
+bool TypePartialEnum::hasNamedValue(uintb val) const
+
+{
+  val <<= offset;
+  return parent->hasNamedValue(val);
+}
+
+void TypePartialEnum::getMatches(uintb val,int4 valSize,int shiftDistance,Representation &representation) const
+
+{
+  val <<= offset;
+  valSize += offset;
+  if (valSize > (int4)sizeof(uintb) * 8) {
+    valSize = (int4)sizeof(uintb) * 8;
+  }
+  shiftDistance += offset;
+  if (shiftDistance >= valSize) {
+    shiftDistance = valSize - 1;
+    val = 0;
+  }
+  parent->getMatches(val,valSize,shiftDistance,representation);
+}
+
+int4 TypePartialEnum::compare(const Datatype &op,int4 level) const
+
+{
+  int4 res = Datatype::compare(op,level);
+  if (res != 0) return res;
+  // Both must be partial
+  TypePartialEnum *tp = (TypePartialEnum *) &op;
+  if (offset != tp->offset) return (offset < tp->offset) ? -1 : 1;
+  level -= 1;
+  if (level < 0) {
+    if (id == op.getId()) return 0;
+    return (id < op.getId()) ? -1 : 1;
+  }
+  return parent->compare(*tp->parent,level); // Compare the underlying union
+}
+
+int4 TypePartialEnum::compareDependency(const Datatype &op) const
+
+{
+  if (submeta != op.getSubMeta()) return (submeta < op.getSubMeta()) ? -1 : 1;
+  TypePartialEnum *tp = (TypePartialEnum *) &op;	// Both must be partial
+  if (parent != tp->parent) return (parent < tp->parent) ? -1 : 1;	// Compare absolute pointers
+  if (offset != tp->offset) return (offset < tp->offset) ? -1 : 1;
+  return (op.getSize()-size);
+}
+
+void TypePartialEnum::encode(Encoder &encoder) const
+
+{
+  encoder.openElement(ELEM_TYPE);
+  encodeBasic(TYPE_PARTIALENUM,-1,encoder);
+  encoder.writeSignedInteger(ATTRIB_OFFSET, offset);
+  parent->encodeRef(encoder);
+  encoder.closeElement(ELEM_TYPE);
+}
+
 TypePartialStruct::TypePartialStruct(const TypePartialStruct &op)
   : Datatype(op)
 {
@@ -2208,14 +2816,37 @@ TypePartialStruct::TypePartialStruct(const TypePartialStruct &op)
 TypePartialStruct::TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype *strip)
   : Datatype(sz,1,TYPE_PARTIALSTRUCT)
 {
+  if (contain->getMetatype() == TYPE_PARTIALSTRUCT) {
+    TypePartialStruct *partial = (TypePartialStruct *)contain;
+    contain = partial->getParent();
+    off += partial->getOffset();
+  }
 #ifdef CPUI_DEBUG
   if (contain->getMetatype() != TYPE_STRUCT && contain->getMetatype() != TYPE_ARRAY)
-    throw LowlevelError("Parent of partial struct is not a struture or array");
+    throw LowlevelError("Parent of partial struct is not a structure or array");
 #endif
+  flags |= contain->inheritForPartial();
   flags |= has_stripped;
   stripped = strip;
   container = contain;
   offset = off;
+  if (container->hasBitfields()) {
+    if (((TypeStruct *)container)->hasBitFieldsInRange(offset, sz))
+      flags |= has_bitfields;
+  }
+}
+
+/// If the parent is an array, return the element data-type. Otherwise return the \b stripped data-type.
+/// \return the array element data-type or the \b stripped data-type.
+Datatype *TypePartialStruct::getComponentForPtr(void) const
+
+{
+  if (container->getMetatype() == TYPE_ARRAY) {
+    Datatype *eltype = ((TypeArray *)container)->getBase();
+    if (eltype->getMetatype() != TYPE_UNKNOWN && (offset % eltype->getAlignSize()) == 0)
+      return eltype;
+  }
+  return stripped;
 }
 
 void TypePartialStruct::printRaw(ostream &s) const
@@ -2289,6 +2920,7 @@ TypePartialUnion::TypePartialUnion(const TypePartialUnion &op)
 TypePartialUnion::TypePartialUnion(TypeUnion *contain,int4 off,int4 sz,Datatype *strip)
   : Datatype(sz,1,TYPE_PARTIALUNION)
 {
+  flags |= contain->inheritForPartial();
   flags |= (needs_resolution | has_stripped);
   stripped = strip;
   container = contain;
@@ -2363,38 +2995,50 @@ void TypePartialUnion::encode(Encoder &encoder) const
 Datatype *TypePartialUnion::resolveInFlow(PcodeOp *op,int4 slot)
 
 {
+  Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0)
+    return res->getDatatype();
   Datatype *curType = container;
   int8 curOff = offset;
   while(curType != (Datatype *)0 && curType->getSize() > size) {
-    if (curType->getMetatype() == TYPE_UNION) {
-      const TypeField *field = curType->resolveTruncation(curOff, op, slot, curOff);
-      curType = (field == (const TypeField *)0) ? (Datatype *)0 : field->type;
+    if (curType->getMetatype() == TYPE_PARTIALUNION) {
+      TypePartialUnion *curPartial = (TypePartialUnion *)curType;
+      curOff += curPartial->getOffset();
+      int8 newOff;
+      const TypeField *field = curPartial->getParentUnion()->resolveTruncation(curOff, op, slot, newOff);
+      Architecture *glb = op->getParent()->getFuncdata()->getArch();
+      curType = (Datatype *)0;
+      if (field != (const TypeField *)0)
+	curType = glb->types->getExactPiece(field->type, curOff, size);
+      curOff = 0;
     }
-    else {
-      curType = curType->getSubType(curOff, &curOff);
+    else if (curType->getMetatype() == TYPE_UNION) {
+      const TypeField *field = curType->resolveTruncation(curOff, op, slot, curOff);
+      Architecture *glb = op->getParent()->getFuncdata()->getArch();
+      curType = (Datatype *)0;
+      if (field != (const TypeField *)0)
+	curType = glb->types->getExactPiece(field->type, curOff, size);
+      curOff = 0;
+    }
+    else {		// Should never reach here
+      curType = (Datatype *)0;
+      break;
     }
   }
-  if (curType != (Datatype *)0 && curType->getSize() == size)
-    return curType;
-  return stripped;
+  if (curType == (Datatype *)0 || curType->getSize() != size)
+    curType = stripped;
+  fd->updateUnionField(this, op, slot, curType);
+  return curType;
 }
 
 Datatype* TypePartialUnion::findResolve(const PcodeOp *op,int4 slot)
 
 {
-  Datatype *curType = container;
-  int8 curOff = offset;
-  while(curType != (Datatype *)0 && curType->getSize() > size) {
-    if (curType->getMetatype() == TYPE_UNION) {
-      Datatype *newType = curType->findResolve(op, slot);
-      curType = (newType == curType) ? (Datatype *)0 : newType;
-    }
-    else {
-      curType = curType->getSubType(curOff, &curOff);
-    }
-  }
-  if (curType != (Datatype *)0 && curType->getSize() == size)
-    return curType;
+  const Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0)
+    return res->getDatatype();
   return stripped;
 }
 
@@ -2468,6 +3112,18 @@ void TypePointerRel::printRaw(ostream &s) const
   s << '[' ;
   parent->printRaw(s);
   s << ']';
+}
+
+Datatype *TypePointerRel::getPtrInto(int4 &off) const
+
+{
+  type_metatype meta = ptrto->getMetatype();
+  if (meta == TYPE_STRUCT || meta == TYPE_UNION) {
+    off = 0;
+    return ptrto;
+  }
+  off = offset;
+  return parent;
 }
 
 int4 TypePointerRel::compare(const Datatype &op,int4 level) const
@@ -2833,7 +3489,7 @@ Datatype *TypeSpacebase::getSubType(int8 off,int8 *newoff) const
   return smallest->getSymbol()->getType();
 }
 
-Datatype *TypeSpacebase::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 *elSize) const
+int8 TypeSpacebase::nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
 
 {
   Scope *scope = getMap();
@@ -2850,55 +3506,50 @@ Datatype *TypeSpacebase::nearestArrayedComponentForward(int8 off,int8 *newoff,in
     nextAddr = addr + 32;
   else {
     symbolType = smallest->getSymbol()->getType();
-    if (symbolType->getMetatype() == TYPE_STRUCT) {
-      int8 structOff = addr.getOffset() - smallest->getAddr().getOffset();
-      int8 dummyOff;
-      Datatype *res = symbolType->nearestArrayedComponentForward(structOff, &dummyOff, elSize);
-      if (res != (Datatype *)0) {
-	*newoff = structOff;
-	return symbolType;
-      }
+    int8 structOff = addr.getOffset() - smallest->getAddr().getOffset();
+    int8 dummyOff;
+    int8 distance = symbolType->nearestArrayedComponentForward(structOff, max, &dummyOff, elSize);
+    if (distance >= 0) {
+      if (distance > max)
+	return -1;
+      *newoff = structOff;
+      return distance;
     }
     int8 sz = AddrSpace::byteToAddressInt(smallest->getSize(), spaceid->getWordSize());
     nextAddr = smallest->getAddr() + sz;
   }
   if (nextAddr < addr)
-    return (Datatype *)0;		// Don't let the address wrap
+    return -1;		// Don't let the address wrap
   smallest = scope->queryContainer(nextAddr,1,nullPoint);
   if (smallest == (SymbolEntry *)0 || smallest->getOffset() != 0)
-    return (Datatype *)0;
+    return -1;
   symbolType = smallest->getSymbol()->getType();
   *newoff = addr.getOffset() - smallest->getAddr().getOffset();
-  if (symbolType->getMetatype() == TYPE_ARRAY) {
-    *elSize = ((TypeArray *)symbolType)->getBase()->getAlignSize();
-    return symbolType;
+  int8 dummyOff;
+  int8 distance = symbolType->nearestArrayedComponentForward(0, max, &dummyOff, elSize);
+  if (distance >= 0) {
+    distance = distance - *newoff;
+    if (distance > max)
+      return -1;
+    return distance;
   }
-  if (symbolType->getMetatype() == TYPE_STRUCT) {
-    int8 dummyOff;
-    Datatype *res = symbolType->nearestArrayedComponentForward(0, &dummyOff, elSize);
-    if (res != (Datatype *)0)
-      return symbolType;
-  }
-  return (Datatype *)0;
+  return -1;
 }
 
-Datatype *TypeSpacebase::nearestArrayedComponentBackward(int8 off,int8 *newoff,int8 *elSize) const
+int8 TypeSpacebase::nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
 
 {
   Datatype *subType = getSubType(off, newoff);
   if (subType == (Datatype *)0)
-    return (Datatype *)0;
-  if (subType->getMetatype() == TYPE_ARRAY) {
-    *elSize = ((TypeArray *)subType)->getBase()->getAlignSize();
-    return subType;
+    return -1;
+  int8 dummyOff;
+  int8 distance = subType->nearestArrayedComponentBackward(*newoff,max,&dummyOff,elSize);
+  if (distance >= 0) {
+    if (distance > max)
+      return -1;
+    return distance;
   }
-  if (subType->getMetatype() == TYPE_STRUCT) {
-    int8 dummyOff;
-    Datatype *res = subType->nearestArrayedComponentBackward(*newoff,&dummyOff,elSize);
-    if (res != (Datatype *)0)
-      return subType;
-  }
-  return (Datatype *)0;
+  return -1;
 }
 
 int4 TypeSpacebase::compare(const Datatype &op,int4 level) const
@@ -2961,6 +3612,10 @@ void TypeSpacebase::decode(Decoder &decoder,TypeFactory &typegrp)
   localframe = Address::decode(decoder);
 //  decoder.closeElement(elemId);
 }
+
+#ifdef TYPEPROP_DEBUG
+bool TypeFactory::propagatedbg_on = false;
+#endif
 
 /// Initialize an empty container
 /// \param g is the owning Architecture
@@ -3026,7 +3681,7 @@ void TypeFactory::setupSizes(void)
     setDefaultAlignmentMap();
   if (enumsize == 0) {
     enumsize = glb->getDefaultSize();
-    enumtype = TYPE_UINT;
+    enumtype = TYPE_ENUM_UINT;
   }
 }
 
@@ -3108,6 +3763,25 @@ void TypeFactory::cacheCoreTypes(void)
   }
 }
 
+/// \param dt is the data-type to search for
+/// \return any associated warning string or the empty string otherwise
+string TypeFactory::findWarning(Datatype *dt) const
+
+{
+  while(dt->getMetatype() == TYPE_PTR)
+    dt = ((TypePointer *)dt)->getPtrTo();
+  while(dt->getTypedef() != (Datatype *)0)
+    dt = dt->getTypedef();
+  Datatype *base = dt->getPartialBase();
+  if (base != (Datatype *)0)
+    dt = base;
+  map<Datatype *,string>::const_iterator iter;
+  iter = warnings.find(dt);
+  if (iter != warnings.end())
+    return (*iter).second;
+  return "";
+}
+
 /// Remove all Datatype objects owned by this TypeFactory
 void TypeFactory::clear(void)
 
@@ -3119,6 +3793,8 @@ void TypeFactory::clear(void)
   tree.clear();
   nametree.clear();
   clearCache();
+  warnings.clear();
+  incompleteTypedef.clear();
 }
 
 /// Delete anything that isn't a core type
@@ -3139,6 +3815,8 @@ void TypeFactory::clearNoncore(void)
     tree.erase(iter++);
     delete ct;
   }
+  warnings.clear();
+  incompleteTypedef.clear();
 }
 
 TypeFactory::~TypeFactory(void)
@@ -3326,78 +4004,45 @@ void TypeFactory::setDisplayFormat(Datatype *ct,uint4 format)
   ct->setDisplayFormat(format);
 }
 
-/// Make sure all the offsets are fully established then set fields of the structure
-/// If \b fixedsize is greater than 0, force the final structure to have that size.
+/// \brief Set fields on a TypeStruct
+///
+/// Set fields on a structure data-type, establishing its size, alignment, and other properties.
 /// This method should only be used on an incomplete structure. It will mark the structure as complete.
 /// \param fd is the list of fields to set
+/// \param bit is the list of fields, not aligned/sized to byte boundaries, to set
 /// \param ot is the TypeStruct object to modify
-/// \param fixedsize is -1 or the forced size of the structure
-/// \param fixedalign is -1 or the forced alignment for the structure
+/// \param newSize is the new size of the structure in bytes
+/// \param newAlign is the new alignment of the structure
 /// \param flags are other flags to set on the structure
-void TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,int4 fixedalign,uint4 flags)
-
+void TypeFactory::setFields(const vector<TypeField> &fd,const vector<TypeBitField> &bit,
+			    TypeStruct *ot,int4 newSize,int4 newAlign,uint4 flags)
 {
   if (!ot->isIncomplete())
     throw LowlevelError("Can only set fields on an incomplete structure");
-  int4 offset = 0;
-  vector<TypeField>::iterator iter;
-
-  // Find the maximum offset, from the explicitly set offsets
-  for(iter=fd.begin();iter!=fd.end();++iter) {
-    Datatype *ct = (*iter).type;
-    // Do some sanity checks on the field
-    if (ct == (Datatype *)0 || ct->getMetatype() == TYPE_VOID)
-      throw LowlevelError("Bad field data-type for structure: "+ot->getName());
-    else if ((*iter).name.size() == 0)
-      throw LowlevelError("Bad field name for structure: "+ot->getName());
-
-    if ((*iter).offset != -1) {
-      int4 end = (*iter).offset + ct->getSize();
-      if (end > offset)
-	offset = end;
-    }
-  }
-
-  sort(fd.begin(),fd.end());	// Sort fields by offset
-
-  // We could check field overlapping here
 
   tree.erase(ot);
-  ot->setFields(fd,fixedsize,fixedalign);
+  ot->setFields(fd,bit,newSize,newAlign);
   ot->flags &= ~(uint4)Datatype::type_incomplete;
-  ot->flags |= (flags & (Datatype::opaque_string | Datatype::variable_length | Datatype::type_incomplete));
+  ot->flags |= (flags & (Datatype::opaque_string | Datatype::variable_length | Datatype::type_incomplete | Datatype::has_bitfields));
   tree.insert(ot);
   recalcPointerSubmeta(ot, SUB_PTR);
   recalcPointerSubmeta(ot, SUB_PTR_STRUCT);
 }
 
-/// If \b fixedsize is greater than 0, force the final union to have that size.
 /// This method should only be used on an incomplete union. It will mark the union as complete.
 /// \param fd is the list of fields to set
 /// \param ot is the TypeUnion object to modify
-/// \param fixedsize is -1 or the forced size of the union
-/// \param fixedalign is -1 or the forced alignment for the union
+/// \param newSize is the size to associate with the union in bytes
+/// \param newAlign is the alignment to set
 /// \param flags are other flags to set on the union
-void TypeFactory::setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,int4 fixedalign,uint4 flags)
+void TypeFactory::setFields(const vector<TypeField> &fd,TypeUnion *ot,int4 newSize,int4 newAlign,uint4 flags)
 
 {
   if (!ot->isIncomplete())
     throw LowlevelError("Can only set fields on an incomplete union");
-  vector<TypeField>::iterator iter;
-
-  for(iter=fd.begin();iter!=fd.end();++iter) {
-    Datatype *ct = (*iter).type;
-    // Do some sanity checks on the field
-    if (ct == (Datatype *)0 || ct->getMetatype() == TYPE_VOID)
-      throw LowlevelError("Bad field data-type for union: "+ot->getName());
-    else if ((*iter).offset != 0)
-      throw LowlevelError("Non-zero field offset for union: "+ot->getName());
-    else if ((*iter).name.size() == 0)
-      throw LowlevelError("Bad field name for union: "+ot->getName());
-  }
 
   tree.erase(ot);
-  ot->setFields(fd,fixedsize,fixedalign);
+  ot->setFields(fd,newSize,newAlign);
   ot->flags &= ~(uint4)Datatype::type_incomplete;
   ot->flags |= (flags & (Datatype::variable_length | Datatype::type_incomplete));
   tree.insert(ot);
@@ -3420,52 +4065,14 @@ void TypeFactory::setPrototype(const FuncProto *fp,TypeCode *newCode,uint4 flags
   tree.insert(newCode);
 }
 
-/// Set the list of enumeration values and identifiers for a TypeEnum
-/// Fill in any values for any names that weren't explicitly assigned
-/// and check for duplicates.
-/// \param namelist is the list of names in the enumeration
-/// \param vallist is the corresponding list of values assigned to names in namelist
-/// \param assignlist is true if the corresponding name in namelist has an assigned value
-/// \param te is the enumeration object to modify
-/// \return true if the modification is successful (no duplicate names)
-bool TypeFactory::setEnumValues(const vector<string> &namelist,
-				const vector<uintb> &vallist,
-				const vector<bool> &assignlist,
-				TypeEnum *te)
+/// \param nmap is the mapping from integer value to name string
+/// \param te is the enumeration whose values/names are set
+void TypeFactory::setEnumValues(const map<uintb,string> &nmap,TypeEnum *te)
+
 {
-  map<uintb,string> nmap;
-  map<uintb,string>::iterator mapiter;
-
-  uintb mask = calc_mask(te->getSize());
-  uintb maxval = 0;
-  for(uint4 i=0;i<namelist.size();++i) {
-    uintb val;
-    if (assignlist[i]) {	// Did the user explicitly set value
-      val = vallist[i];
-      if (val > maxval)
-	maxval = val;
-      val &= mask;
-      mapiter = nmap.find(val);
-      if (mapiter != nmap.end()) return false; // Duplicate value
-      nmap[val] = namelist[i];
-    }
-  }
-  for(uint4 i=0;i<namelist.size();++i) {
-    uintb val;
-    if (!assignlist[i]) {
-      val = maxval;
-      maxval += 1;
-      val &= mask;
-      mapiter = nmap.find(val);
-      if (mapiter != nmap.end()) return false;
-      nmap[val] = namelist[i];
-    }
-  }
-
   tree.erase(te);
   te->setNameMap(nmap);
   tree.insert(te);
-  return true;
 }
 
 /// Recursively write out all the components of a data-type in dependency order
@@ -3662,8 +4269,9 @@ void TypeFactory::recalcPointerSubmeta(Datatype *base,sub_metatype sub)
   top.submeta = sub;			// Search on the incorrect submeta
   iter = tree.lower_bound(&top);
   while(iter != tree.end()) {
-    TypePointer *ptr = (TypePointer *)*iter;
-    if (ptr->getMetatype() != TYPE_PTR) break;
+    Datatype *dt = *iter;
+    if (dt->getMetatype() != TYPE_PTR) break;
+    TypePointer *ptr = (TypePointer *)dt;
     if (ptr->ptrto != base) break;
     ++iter;
     if (ptr->submeta == sub) {
@@ -3671,6 +4279,63 @@ void TypeFactory::recalcPointerSubmeta(Datatype *base,sub_metatype sub)
       ptr->submeta = curSub;		// Change to correct submeta
       tree.insert(ptr);			// Reinsert
     }
+  }
+}
+
+/// Add the data-type and string to the \b warnings container.
+/// \param dt is the data-type associated with the warning
+/// \param warn is the warning string to be displayed to the user
+void TypeFactory::insertWarning(Datatype *dt,string warn)
+
+{
+  if (dt->getId() == 0)
+    throw LowlevelError("Can only issue warnings for named data-types");
+  dt->flags |= Datatype::warning_issued;
+  warnings[dt] = warn;
+}
+
+/// Delete any warning matching the given data-type
+/// \param dt is the given data-type
+void TypeFactory::removeWarning(Datatype *dt)
+
+{
+  warnings.erase(dt);
+}
+
+/// Run through typedefs that were initially defined on incomplete data-types.  If the data-type is now complete,
+/// copy the fields or prototype into the typedef and remove it from the list.
+void TypeFactory::resolveIncompleteTypedefs(void)
+
+{
+  list<Datatype *>::iterator iter = incompleteTypedef.begin();
+  while(iter != incompleteTypedef.end()) {
+    Datatype *dt = *iter;
+    Datatype *defedType = dt->getTypedef();
+    if (!defedType->isIncomplete()) {
+      if (dt->getMetatype() == TYPE_STRUCT) {
+  	TypeStruct *prevStruct = (TypeStruct *)dt;
+  	TypeStruct *defedStruct = (TypeStruct *)defedType;
+  	setFields(defedStruct->field,defedStruct->bitfield,prevStruct,defedStruct->size,defedStruct->alignment,
+		  defedStruct->flags);
+  	iter = incompleteTypedef.erase(iter);
+      }
+      else if (dt->getMetatype() == TYPE_UNION) {
+  	TypeUnion *prevUnion = (TypeUnion *)dt;
+  	TypeUnion *defedUnion = (TypeUnion *)defedType;
+  	setFields(defedUnion->field,prevUnion,defedUnion->size,defedUnion->alignment,defedUnion->flags);
+  	iter = incompleteTypedef.erase(iter);
+      }
+      else if (dt->getMetatype() == TYPE_CODE) {
+	TypeCode *prevCode = (TypeCode *)dt;
+	TypeCode *defedCode = (TypeCode *)defedType;
+	setPrototype(defedCode->proto, prevCode, defedCode->flags);
+	iter = incompleteTypedef.erase(iter);
+      }
+      else
+	++iter;
+    }
+    else
+      ++iter;
   }
 }
 
@@ -3700,6 +4365,8 @@ Datatype *TypeFactory::getTypedef(Datatype *ct,const string &name,uint8 id,uint4
   res->typedefImm = ct;
   res->setDisplayFormat(format);
   insert(res);
+  if (res->isIncomplete())
+    incompleteTypedef.push_back(res);
   return res;
 }
 
@@ -3760,21 +4427,6 @@ TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws,const stri
   return res;
 }
 
-/// Don't create more than a depth of 1, i.e. ptr->ptr
-/// \param s is the size of the pointer
-/// \param pt is the pointed-to data-type
-/// \param ws is the wordsize associated with the pointer
-/// \return the TypePointer object
-TypePointer *TypeFactory::getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws)
-
-{
-  if (pt->getMetatype()==TYPE_PTR) {
-    // Make sure that at least we return a pointer to something the size of -pt-
-    pt = getBase(pt->getSize(),TYPE_UNKNOWN);		// Pass back unknown *
-  }
-  return getTypePointer(s,pt,ws);
-}
-
 /// \param as is the number of elements in the desired array
 /// \param ao is the data-type of the array element
 /// \return the TypeArray object
@@ -3800,6 +4452,11 @@ TypeStruct *TypeFactory::getTypeStruct(const string &n)
   return (TypeStruct *) findAdd(tmp);
 }
 
+/// Create a data-type representing storage of part of an \e array or \e structure.
+/// \param contain is the parent \e array or \e structure data-type that we are taking a part of.
+/// \param off is the offset (in bytes) within the parent that the partial data-type starts at
+/// \param sz is the number of bytes in the partial data-type
+/// \return the TypePartialStruct object
 TypePartialStruct *TypeFactory::getTypePartialStruct(Datatype *contain,int4 off,int4 sz)
 
 {
@@ -3821,6 +4478,11 @@ TypeUnion *TypeFactory::getTypeUnion(const string &n)
   return (TypeUnion *) findAdd(tmp);
 }
 
+/// Create a data-type representing storage of part of a \e union data-type.
+/// \param contain is the parent \e union data-type that we are taking a part of.
+/// \param off is the offset (in bytes) within the parent that the partial data-type starts at
+/// \param sz is the number of bytes in the partial data-type
+/// \return the TypePartialUnion object
 TypePartialUnion *TypeFactory::getTypePartialUnion(TypeUnion *contain,int4 off,int4 sz)
 
 {
@@ -3839,6 +4501,19 @@ TypeEnum *TypeFactory::getTypeEnum(const string &n)
   TypeEnum tmp(enumsize,enumtype,n);
   tmp.id = Datatype::hashName(n);
   return (TypeEnum *) findAdd(tmp);
+}
+
+/// Create a data-type representing storage of part of an \e enumeration.
+/// \param contain is the parent \e enumeration data-type that we are taking a part of.
+/// \param off is the offset (in bits) within the parent that the partial data-type starts at
+/// \param sz is the number of bytes in the partial data-type
+/// \return the TypePartialEnum object
+TypePartialEnum *TypeFactory::getTypePartialEnum(TypeEnum *contain,int4 off,int4 sz)
+
+{
+  Datatype *strip = getBase(sz, TYPE_UNKNOWN);
+  TypePartialEnum tpe(contain,off,sz,strip);
+  return (TypePartialEnum *) findAdd(tpe);
 }
 
 /// Creates the special TypeSpacebase with an associated address space and scope
@@ -3934,6 +4609,21 @@ TypePointer *TypeFactory::resizePointer(TypePointer *ptr,int4 newSize)
   return (TypePointer *) findAdd(tmp);
 }
 
+/// \param ct is the integer data-type
+/// \param newSize is the size needed
+/// \return the correctly sized variant of the data-type
+Datatype *TypeFactory::resizeInteger(Datatype *ct,int4 newSize)
+
+{
+  if (newSize == ct->getSize()) return ct;
+  type_metatype meta = ct->getMetatype();
+  if (meta != TYPE_INT && meta != TYPE_UINT)
+    meta = TYPE_UINT;
+  if (ct->isCharPrint())
+    return getBase(newSize, meta);
+  return getBaseNoChar(newSize, meta);
+}
+
 /// Drill down into nested data-types until we get to a data-type that exactly matches the
 /// given offset and size, and return this data-type.  Any \e union data-type encountered
 /// terminates the process and a partial union data-type is constructed and returned.
@@ -3955,19 +4645,55 @@ Datatype *TypeFactory::getExactPiece(Datatype *ct,int4 offset,int4 size)
     }
     if (ct->getSize() == size)
 	return ct;				// Perfect size match
-    if (ct->getMetatype() == TYPE_UNION) {
-      return getTypePartialUnion((TypeUnion *)ct, curOff, size);
-    }
     lastType = ct;
     lastOff = curOff;
     ct = ct->getSubType(curOff,&curOff);
   } while(ct != (Datatype *)0);
   if (lastType != (Datatype *)0) {
     // If we reach here, lastType is bigger than size
-    if (lastType->getMetatype() == TYPE_STRUCT || lastType->getMetatype() == TYPE_ARRAY)
+    type_metatype meta = lastType->getMetatype();
+    if (meta == TYPE_STRUCT || meta == TYPE_ARRAY || meta == TYPE_PARTIALSTRUCT)
       return getTypePartialStruct(lastType, lastOff, size);
+    else if (meta == TYPE_UNION)
+      return getTypePartialUnion((TypeUnion *)lastType, lastOff, size);
+    else if (meta == TYPE_PARTIALUNION) {	// Truncate to smaller partial union
+      TypePartialUnion *partial = (TypePartialUnion *)lastType;
+      return getTypePartialUnion(partial->getParentUnion(),lastOff + partial->getOffset(), size);
+    }
+    else if (lastType->isEnumType() && !lastType->hasStripped())
+      return getTypePartialEnum((TypeEnum *)lastType, lastOff * 8, size);
   }
   return (Datatype *)0;
+}
+
+/// \brief Assign fields to a struct data-type, establishing the size and alignment
+///
+/// Offsets for both fields and bitfields are assigned.  Size and alignment are calculated.
+/// \param ct is the struct data-type
+/// \param fd is the list of fields
+/// \param bit is the list of bitfields
+void TypeFactory::assignRawFields(TypeStruct *ct,vector<TypeField> &fd,vector<TypeBitField> &bit)
+
+{
+  int4 newSize;
+  int4 newAlign;
+  uint4 flags;
+  TypeStruct::assignFieldOffsets(fd,bit,newSize,newAlign,flags);
+  glb->types->setFields(fd,bit,ct,newSize,newAlign,flags);
+}
+
+/// \brief Assign fields to a union data-type, establishing the size and alignment
+///
+/// Field offsets are assigned.  Size and alignment are calculated.
+/// \param ct is the union data-type
+/// \param fd is the list of fields
+void TypeFactory::assignRawFields(TypeUnion *ct,vector<TypeField> &fd)
+
+{
+  int4 newSize;
+  int4 newAlign;
+  TypeUnion::assignFieldOffsets(fd,newSize,newAlign,ct);
+  glb->types->setFields(fd,ct,newSize,newAlign,0);
 }
 
 /// The indicated Datatype object is removed from this container.
@@ -3978,6 +4704,8 @@ void TypeFactory::destroyType(Datatype *ct)
 {
   if (ct->isCoreType())
     throw LowlevelError("Cannot destroy core type");
+  if (ct->hasWarning())
+    removeWarning(ct);
   nametree.erase(ct);
   tree.erase(ct);
   delete ct;
@@ -4150,7 +4878,8 @@ Datatype *TypeFactory::decodeTypedef(Decoder &decoder)
 	TypeStruct *prevStruct = (TypeStruct *)prev;
 	TypeStruct *defedStruct = (TypeStruct *)defedType;
 	if (prevStruct->field.size() != defedStruct->field.size())
-	  setFields(defedStruct->field,prevStruct,defedStruct->size,defedStruct->alignment,defedStruct->flags);
+	  setFields(defedStruct->field,defedStruct->bitfield,prevStruct,defedStruct->size,defedStruct->alignment,
+		    defedStruct->flags);
       }
       else {
 	TypeUnion *prevUnion = (TypeUnion *)prev;
@@ -4162,6 +4891,22 @@ Datatype *TypeFactory::decodeTypedef(Decoder &decoder)
     }
   }
   return getTypedef(defedType, nm, id, format);
+}
+
+/// \param decoder is the stream decoder
+/// \param forcecore is \b true if the data-type is considered core
+/// \return the newly minted enumeration data-type
+Datatype *TypeFactory::decodeEnum(Decoder &decoder,bool forcecore)
+
+{
+  TypeEnum te(1,TYPE_ENUM_INT); // metatype and size are replaced
+  string warning = te.decode(decoder,*this);
+  if (forcecore)
+    te.flags |= Datatype::coretype;
+  Datatype *res = findAdd(te);
+  if (!warning.empty())
+    insertWarning(res, warning);
+  return res;
 }
 
 /// If necessary create a stub object before parsing the field descriptions, to deal with recursive definitions
@@ -4182,14 +4927,17 @@ Datatype* TypeFactory::decodeStruct(Decoder &decoder,bool forcecore)
   }
   else if (ct->getMetatype() != TYPE_STRUCT)
     throw LowlevelError("Trying to redefine type: " + ts.name);
-  ts.decodeFields(decoder,*this);
+  string warning = ts.decodeFields(decoder,*this);
   if (!ct->isIncomplete()) {	// Structure of this name was already present
     if (0 != ct->compareDependency(ts))
       throw LowlevelError("Redefinition of structure: " + ts.name);
   }
   else {		// If structure is a placeholder stub
-    setFields(ts.field,(TypeStruct*)ct,ts.size,ts.alignment,ts.flags);	// Define structure now by copying fields
+    setFields(ts.field,ts.bitfield,(TypeStruct*)ct,ts.size,ts.alignment,ts.flags);	// Define structure now by copying fields
   }
+  if (!warning.empty())
+    insertWarning(ct, warning);
+  resolveIncompleteTypedefs();
 //  decoder.closeElement(elemId);
   return ct;
 }
@@ -4220,6 +4968,7 @@ Datatype* TypeFactory::decodeUnion(Decoder &decoder,bool forcecore)
   else {		// If structure is a placeholder stub
     setFields(tu.field,(TypeUnion*)ct,tu.size,tu.alignment,tu.flags);	// Define structure now by copying fields
   }
+  resolveIncompleteTypedefs();
 //  decoder.closeElement(elemId);
   return ct;
 }
@@ -4255,6 +5004,7 @@ Datatype *TypeFactory::decodeCode(Decoder &decoder,bool isConstructor,bool isDes
   else {	// If there was a placeholder stub
     setPrototype(tc.proto, (TypeCode *)ct, tc.flags);
   }
+  resolveIncompleteTypedefs();
 //  decoder.closeElement(elemId);
   return ct;
 }
@@ -4310,6 +5060,10 @@ Datatype *TypeFactory::decodeTypeNoRef(Decoder &decoder,bool forcecore)
       ct = findAdd(ta);
     }
     break;
+  case TYPE_ENUM_INT:
+  case TYPE_ENUM_UINT:
+    ct = decodeEnum(decoder,forcecore);
+    break;
   case TYPE_STRUCT:
     ct = decodeStruct(decoder,forcecore);
     break;
@@ -4318,7 +5072,7 @@ Datatype *TypeFactory::decodeTypeNoRef(Decoder &decoder,bool forcecore)
     break;
   case TYPE_SPACEBASE:
     {
-      TypeSpacebase tsb((AddrSpace *)0,Address(),glb);
+      TypeSpacebase tsb(glb);
       tsb.decode(decoder,*this);
       if (forcecore)
 	tsb.flags |= Datatype::coretype;
@@ -4346,16 +5100,6 @@ Datatype *TypeFactory::decodeTypeNoRef(Decoder &decoder,bool forcecore)
 	if (forcecore)
 	  tc.flags |= Datatype::coretype;
 	ct = findAdd(tc);
-	decoder.closeElement(elemId);
-	return ct;
-      }
-      else if (attribId == ATTRIB_ENUM && decoder.readBool()) {
-	TypeEnum te(1,TYPE_INT); // size and metatype are replaced
-	decoder.rewindAttributes();
-	te.decode(decoder,*this);
-	if (forcecore)
-	  te.flags |= Datatype::coretype;
-	ct = findAdd(te);
 	decoder.closeElement(elemId);
 	return ct;
       }
@@ -4467,6 +5211,9 @@ void TypeFactory::decodeAlignmentMap(Decoder &decoder)
     alignMap[sz] = val;
     decoder.closeElement(mapId);
   }
+  if (alignMap.empty())
+    throw LowlevelError("Alignment map empty");
+  alignMap[0] = 1;
   int4 curAlign = 1;
   for(int4 sz=1;sz < alignMap.size();++sz) {
     int4 tmpAlign = alignMap[sz];
@@ -4481,7 +5228,7 @@ void TypeFactory::decodeAlignmentMap(Decoder &decoder)
 void TypeFactory::setDefaultAlignmentMap(void)
 
 {
-  alignMap.resize(9,0);
+  alignMap.resize(9,1);
   alignMap[1] = 1;
   alignMap[2] = 2;
   alignMap[3] = 2;
@@ -4502,9 +5249,9 @@ void TypeFactory::parseEnumConfig(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_ENUM);
   enumsize = decoder.readSignedInteger(ATTRIB_SIZE);
   if (decoder.readBool(ATTRIB_SIGNED))
-    enumtype = TYPE_INT;
+    enumtype = TYPE_ENUM_INT;
   else
-    enumtype = TYPE_UINT;
+    enumtype = TYPE_ENUM_UINT;
   decoder.closeElement(elemId);
 }
 

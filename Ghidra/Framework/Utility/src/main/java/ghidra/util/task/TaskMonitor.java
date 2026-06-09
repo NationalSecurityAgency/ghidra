@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -103,7 +103,7 @@ public interface TaskMonitor {
 	 * Set the progress maximum value
 	 * <p><b>
 	 * Note: setting this value will reset the progress to be the max if the progress is currently
-	 * greater than the new new max value.</b>
+	 * greater than the new max value.</b>
 	 * @param max maximum value for progress
 	 */
 	public void setMaximum(long max);

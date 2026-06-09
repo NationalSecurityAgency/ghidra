@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -213,6 +213,28 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("", obj52.getData());
 		assertEquals("0xc", obj62.getData());
 		assertEquals("EAX", obj72.getData());
+	}
+
+	@Test
+	public void testAddInstructions() throws Exception {
+
+		// start selection
+		// loadSelection("0x004065e1", "0x004065f2");
+
+		// sanity check
+		assertEquals(8, instructionTable.getRowCount());
+		assertInstructionValue(0, "INC EDI");
+		assertInstructionValue(7, "MOV dword ptr [EBP + -0x4] EAX");
+
+		// Now create a selection to add an instruction and call 'add'
+		createSelection("0x004065e6", "0x004065e6");
+		pressButtonByName(component, "add");
+		waitForTasks();
+
+		// grab the rebuilt table
+		instructionTable = dialog.getTablePanel().getTable();
+		assertEquals(9, instructionTable.getRowCount());
+		assertInstructionValue(8, "PUSH EAX");
 	}
 
 	/**
@@ -510,7 +532,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the the hex view button correctly switches the preview table to hex, and that
+	 * Tests that the hex view button correctly switches the preview table to hex, and that
 	 * the hex is formatted correctly when masking.
 	 */
 	@Test
@@ -767,6 +789,18 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	/*********************************************************************************************
 	 * PRIVATE METHODS
 	 ********************************************************************************************/
+
+	private void assertInstructionValue(int row, String expectedText) {
+		InstructionTableDataObject cell1 =
+			(InstructionTableDataObject) instructionTable.getModel().getValueAt(row, 0);
+		InstructionTableDataObject cell2 =
+			(InstructionTableDataObject) instructionTable.getModel().getValueAt(row, 1);
+		InstructionTableDataObject cell3 =
+			(InstructionTableDataObject) instructionTable.getModel().getValueAt(row, 2);
+		String actualText = cell1.getData() + " " + cell2.getData() + " " + cell3.getData();
+		assertEquals("Instruction value in table was not as expected", expectedText,
+			actualText.trim());
+	}
 
 	private void closeDialog() {
 		runSwing(() -> dialog.close());

@@ -82,8 +82,10 @@ public class ThemeChooserDialog extends DialogComponentProvider {
 		GTheme activeTheme = themeManager.getActiveTheme();
 		listPanel.setSelectedValue(activeTheme);
 		listPanel.addListSelectionListener(e -> selectionChanged());
+		listPanel.getAccessibleContext().setAccessibleName("Themes");
 		panel.add(listPanel);
 		listPanel.setDoubleClickActionListener(e -> okCallback());
+		panel.getAccessibleContext().setAccessibleName("Theme Chooser");
 		return panel;
 	}
 

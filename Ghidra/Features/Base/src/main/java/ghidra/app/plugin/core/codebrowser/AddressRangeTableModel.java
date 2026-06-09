@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.util.stream.StreamSupport;
 import docking.widgets.table.AbstractDynamicTableColumn;
 import docking.widgets.table.TableColumnDescriptor;
 import ghidra.docking.settings.Settings;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
@@ -39,40 +40,27 @@ import ghidra.util.task.TaskMonitor;
  */
 public class AddressRangeTableModel extends GhidraProgramTableModel<AddressRangeInfo> {
 
-	private ProgramSelection selection;
+	private static final int MIN_ADDRESS_COLUMN_INDEX = 0;
 	private static final int MAX_ADDRESS_COLUMN_INDEX = 1;
-	private int resultsLimit;
-	private long minLength;
 
-	protected AddressRangeTableModel(PluginTool tool, Program program, ProgramSelection selection,
-			int resultsLimit, long minLength) {
+	private ProgramSelection selection;
+	private PluginTool tool;
+
+	protected AddressRangeTableModel(PluginTool tool, Program program, ProgramSelection selection) {
 		super("Selected Ranges in " + program.getName(), tool, program, null);
 		this.selection = selection;
-		this.resultsLimit = resultsLimit;
-		this.minLength = minLength;
-	}
-
-	@Override
-	public ProgramLocation getProgramLocation(int modelRow, int modelColumn) {
-		AddressRangeInfo rangeInfo = getRowObject(modelRow);
-		if (modelColumn == MAX_ADDRESS_COLUMN_INDEX) {
-			return new ProgramLocation(program, rangeInfo.max());
-		}
-		return new ProgramLocation(program, rangeInfo.min());
-	}
-
-	@Override
-	public ProgramSelection getProgramSelection(int[] modelRows) {
-		AddressSet ranges = new AddressSet();
-		for (AddressRangeInfo rangeInfo : getRowObjects(modelRows)) {
-			ranges.addRange(program, rangeInfo.min(), rangeInfo.max());
-		}
-		return new ProgramSelection(program.getAddressFactory(), ranges);
+		this.tool = tool;
 	}
 
 	@Override
 	protected void doLoad(Accumulator<AddressRangeInfo> accumulator, TaskMonitor monitor)
 			throws CancelledException {
+		ToolOptions options = tool.getOptions(CodeBrowserSelectionPlugin.OPTION_CATEGORY_NAME);
+		int resultsLimit = options.getInt(CodeBrowserSelectionPlugin.RANGES_LIMIT_OPTION_NAME,
+			CodeBrowserSelectionPlugin.RANGES_LIMIT_DEFAULT);
+		long minLength = options.getLong(CodeBrowserSelectionPlugin.MIN_RANGE_SIZE_OPTION_NAME,
+			CodeBrowserSelectionPlugin.MIN_RANGE_SIZE_DEFAULT);
+
 		AddressRangeIterator rangeIter = selection.getAddressRanges();
 		ReferenceManager refManager = program.getReferenceManager();
 		while (rangeIter.hasNext()) {
@@ -102,7 +90,7 @@ public class AddressRangeTableModel extends GhidraProgramTableModel<AddressRange
 				range.getMaxAddress(), range.getLength(), isSameByte, numRefsTo, numRefsFrom);
 
 			accumulator.add(info);
-			if (accumulator.size() >= resultsLimit) {
+			if (accumulator.getProgress() >= resultsLimit) {
 				Msg.showWarn(this, null, "Results Truncated",
 					"Results are limited to " + resultsLimit + " address ranges.\n" +
 						"This limit can be changed by the tool option \"" +
@@ -111,17 +99,12 @@ public class AddressRangeTableModel extends GhidraProgramTableModel<AddressRange
 				break;
 			}
 		}
-		if (accumulator.isEmpty()) {
+		if (accumulator.getProgress() == 0) {
 			Msg.showWarn(this, null, "No Ranges to Display",
 				"No ranges to display - consider adjusting \"" +
 					CodeBrowserSelectionPlugin.OPTION_CATEGORY_NAME + " -> " +
 					CodeBrowserSelectionPlugin.MIN_RANGE_SIZE_OPTION_NAME + "\".");
 		}
-	}
-
-	@Override
-	public void refresh() {
-		reload();
 	}
 
 	@Override
@@ -138,6 +121,42 @@ public class AddressRangeTableModel extends GhidraProgramTableModel<AddressRange
 		descriptor.addHiddenColumn(new AddressRangeCodeUnitTableColumn());
 
 		return descriptor;
+	}
+
+	@Override
+	public ProgramLocation getProgramLocation(int modelRow, int modelColumn) {
+		AddressRangeInfo rangeInfo = getRowObject(modelRow);
+		if (modelColumn == MAX_ADDRESS_COLUMN_INDEX) {
+			return new ProgramLocation(program, rangeInfo.max());
+		}
+		return new ProgramLocation(program, rangeInfo.min());
+	}
+
+	@Override
+	public ProgramSelection getProgramSelection(int[] modelRows) {
+		AddressSet ranges = new AddressSet();
+		for (AddressRangeInfo rangeInfo : getRowObjects(modelRows)) {
+			ranges.addRange(program, rangeInfo.min(), rangeInfo.max());
+		}
+		return new ProgramSelection(ranges);
+	}
+
+	@Override
+	public Address getAddress(int modelRow) {
+		AddressRangeInfo rangeInfo = getRowObject(modelRow);
+		return rangeInfo.min();
+	}
+
+	@Override
+	public Address getAddress(int modelRow, int modelColumn) {
+		AddressRangeInfo rangeInfo = getRowObject(modelRow);
+		if (modelColumn == MIN_ADDRESS_COLUMN_INDEX) {
+			return rangeInfo.min();
+		}
+		else if (modelColumn == MAX_ADDRESS_COLUMN_INDEX) {
+			return rangeInfo.max();
+		}
+		return null;
 	}
 
 	private class MinAddressTableColumn
@@ -235,20 +254,19 @@ public class AddressRangeTableModel extends GhidraProgramTableModel<AddressRange
 		}
 	}
 
-		private class NumRefsFromTableColumn
-				extends AbstractDynamicTableColumn<AddressRangeInfo, Integer, Object> {
+	private class NumRefsFromTableColumn
+			extends AbstractDynamicTableColumn<AddressRangeInfo, Integer, Object> {
 
-			@Override
-			public String getColumnName() {
-				return "From References";
-			}
-
-			@Override
-			public Integer getValue(AddressRangeInfo rangeInfo, Settings settings, Object data,
-					ServiceProvider services) throws IllegalArgumentException {
-				return rangeInfo.numRefsFrom();
-			}
+		@Override
+		public String getColumnName() {
+			return "From References";
 		}
 
+		@Override
+		public Integer getValue(AddressRangeInfo rangeInfo, Settings settings, Object data,
+				ServiceProvider services) throws IllegalArgumentException {
+			return rangeInfo.numRefsFrom();
+		}
+	}
 
 }

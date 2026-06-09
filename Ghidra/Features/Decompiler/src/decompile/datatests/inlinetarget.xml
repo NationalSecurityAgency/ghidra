@@ -1,0 +1,35 @@
+<decompilertest>
+<binaryimage arch="PowerPC:BE:32:default:default">
+<!--
+  Function with a BRANCH, overridden as a CALL, to an inlined function.
+  The BRANCH instruction is also a fallthru target.  
+-->
+<bytechunk space="ram" offset="0x100003fc" readonly="true">
+                        3821fff8
+95e10000960100044e800020
+</bytechunk>
+<bytechunk space="ram" offset="0x10000410" readonly="true">
+85e1000086010004382100087c0803a6
+4e8000207c0802a64bffffd539e00000
+2c0f000a4080001c1e0f00047e100214
+7e0903a64e80042139ef00014280ffe4
+4280ffc0
+</bytechunk>
+<symbol space="ram" offset="0x100003fc" name="prologue"/>
+<symbol space="ram" offset="0x10000410" name="epilogue"/>
+</binaryimage>
+<script>
+  <com>option inline prologue</com>
+  <com>option inline epilogue</com>
+  <com>map fun r0x10000424 main</com>
+  <com>override flow r0x10000450 callreturn</com>
+  <com>lo fu main</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Inline target #1" min="1" max="1">Inlined function: prologue</stringmatch>
+<stringmatch name="Inline target #2" min="1" max="1">Inlined function: epilogue</stringmatch>
+<stringmatch name="Inline target #3" min="0" max="0">Could not find op at target</stringmatch>
+<stringmatch name="Inline target #4" min="1" max="1">for \(iVar1 = 0; iVar1 &lt; 10; iVar1 = iVar1 \+ 1\)</stringmatch>
+</decompilertest>

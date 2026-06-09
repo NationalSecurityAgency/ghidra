@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,29 +16,16 @@
 package sarif.managers;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.google.gson.JsonArray;
 
 import generic.stl.Pair;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFormatException;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressRangeIterator;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.DuplicateGroupException;
-import ghidra.program.model.listing.Group;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.ProgramFragment;
-import ghidra.program.model.listing.ProgramModule;
+import ghidra.program.model.address.*;
+import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.NotEmptyException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
 import sarif.SarifProgramOptions;
@@ -53,7 +40,6 @@ public class ProgramTreeSarifMgr extends SarifMgr {
 	public static String KEY = "PROGRAM_TREES";
 	public static String SUBKEY = "ProgramTree";
 
-	private List<String> fragmentNameList;
 	private String treeName;
 	private TaskMonitor monitor;
 
@@ -83,7 +69,6 @@ public class ProgramTreeSarifMgr extends SarifMgr {
 	@SuppressWarnings("unchecked")
 	private void processTree(Map<String, Object> result) throws CancelledException {
 		treeName = (String) result.get("name");
-		fragmentNameList = new ArrayList<>();
 
 		ProgramModule root = listing.getRootModule(treeName);
 		try {
@@ -115,16 +100,21 @@ public class ProgramTreeSarifMgr extends SarifMgr {
 				treeName = root.getTreeName();
 			}
 
-			Group[] orig = root.getChildren();
-			ProgramFragment depot = root.createFragment("depot");
-			for (Group g : orig) {
-				if (g instanceof ProgramFragment frag) {
-					AddressRangeIterator iter = frag.getAddressRanges(true);
-					while (iter.hasNext()) {
-						AddressRange next = iter.next();
-						depot.move(next.getMinAddress(), next.getMaxAddress());
-					}
+			Set<AddressRange> ranges = new HashSet<>();
+			List<Map<String, Object>> fragments =
+				(List<Map<String, Object>>) result.get("fragments");
+			for (Map<String, Object> f : fragments) {
+				try {
+					collectFragmentRanges(ranges, f);
 				}
+				catch (Exception e) {
+					log.appendMsg(e.getMessage());
+				}
+			}
+				
+			ProgramFragment depot = root.createFragment("depot");
+			for (AddressRange r : ranges) {
+				depot.move(r.getMinAddress(), r.getMaxAddress());
 			}
 			removeEmptyFragments(root);
 
@@ -133,13 +123,13 @@ public class ProgramTreeSarifMgr extends SarifMgr {
 				monitor.checkCancelled();
 				processModule(root, m);
 			}
-			List<Map<String, Object>> fragments = (List<Map<String, Object>>) result.get("fragments");
 			for (Map<String, Object> f : fragments) {
 				monitor.checkCancelled();
 				processFragment(root, f);
 			}
-
-		} catch (NotFoundException | DuplicateNameException e) {
+			root.removeChild("depot");
+		}
+		catch (NotFoundException | DuplicateNameException | NotEmptyException e) {
 			log.appendException(e);
 		}
 	}
@@ -175,9 +165,6 @@ public class ProgramTreeSarifMgr extends SarifMgr {
 
 	private void processFragment(ProgramModule parent, Map<String, Object> fragment) {
 		String name = (String) fragment.get("name");
-		if (!fragmentNameList.contains(name)) {
-			fragmentNameList.add(name);
-		}
 		ProgramFragment frag = null;
 		try {
 			frag = parent.createFragment(name);
@@ -223,15 +210,38 @@ public class ProgramTreeSarifMgr extends SarifMgr {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	private void collectFragmentRanges(Set<AddressRange> set, Map<String, Object> fragment)
+			throws AddressFormatException {
+		List<Map<String, Object>> ranges = (List<Map<String, Object>>) fragment.get("ranges");
+		for (Map<String, Object> r : ranges) {
+			if (monitor.isCancelled()) {
+				break;
+			}
+			String startStr = (String) r.get("start");
+			String endStr = (String) r.get("end");
+
+			Address start = parseAddress(factory, startStr);
+			Address end = parseAddress(factory, endStr);
+
+			if (start == null || end == null) {
+				throw new AddressFormatException(
+					"Incompatible Fragment Address Range: [" + startStr + "," + endStr + "]");
+			}
+
+			set.add(new AddressRangeImpl(start, end));
+		}
+	}
+
 	/**
 	 * Method removeEmptyFragments.
 	 */
 	private void removeEmptyFragments(ProgramModule module) {
 		Group[] groups = module.getChildren();
 		for (Group group : groups) {
-			if (group instanceof ProgramFragment) {
+			if (group instanceof ProgramFragment frag) {
 				String name = group.getName();
-				if (!fragmentNameList.contains(name)) {
+				if (frag.isEmpty()) {
 					try {
 						module.removeChild(name);
 					} catch (NotEmptyException e) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import docking.DockingWindowManager;
-import docking.action.ToggleDockingAction;
-import docking.action.ToolBarData;
+import docking.action.*;
 import ghidra.framework.options.PreferenceState;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
@@ -43,7 +42,7 @@ import resources.Icons;
  */
 public abstract class AbstractSelectionNavigationAction extends ToggleDockingAction {
 
-	private static final Icon ICON = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
+	private static final Icon ICON = Icons.NAVIGATE_ON_OUTGOING_EVENT_ICON;
 	private static final String SELECTED_STATE = "SELECTION_NAVIGATION_SELECTED_STATE";
 
 	private SelectionListener selectionListener;
@@ -51,16 +50,18 @@ public abstract class AbstractSelectionNavigationAction extends ToggleDockingAct
 	protected final JTable table;
 
 	protected AbstractSelectionNavigationAction(String name, String owner, JTable table) {
-		super(name, owner, false);
+		super(name, owner, KeyBindingType.SHARED);
 		this.table = table;
 
 		selectionListener = new SelectionListener();
 
 		setToolBarData(new ToolBarData(ICON));
-		setDescription(HTMLUtilities.toHTML("Toggle <b>on</b> means to navigate to the location\n" +
-			"in the program that corresponds to the selected row,\n as the selection changes."));
+		setDescription(HTMLUtilities.toHTML("""
+				Toggle <b>on</b> means to navigate to the location
+				in the program that corresponds to the selected row,
+				as the selection changes.
+				"""));
 		setHelpLocation(new HelpLocation("Search", "Selection_Navigation"));
-		setEnabled(true);
 		setSelected(true); // toggle button; enabled by default
 
 		initialize();
@@ -124,7 +125,7 @@ public abstract class AbstractSelectionNavigationAction extends ToggleDockingAct
 
 	private void initialize() {
 		// We want to load our state after we have been associated with a DockingWindowManager. 
-		// If the table is displayable, then we are are properly setup...
+		// If the table is displayable, then we are properly setup...
 		if (table.isDisplayable()) {
 			restoreState();
 			return;
@@ -162,7 +163,8 @@ public abstract class AbstractSelectionNavigationAction extends ToggleDockingAct
 		PreferenceState preferenceState = new PreferenceState();
 		preferenceState.putBoolean(SELECTED_STATE, isSelected());
 
-		dockingWindowManager.putPreferenceState(getOwner(), preferenceState);
+		String key = getOwner() + '_' + getName();
+		dockingWindowManager.putPreferenceState(key, preferenceState);
 	}
 
 	protected void restoreState() {
@@ -171,7 +173,8 @@ public abstract class AbstractSelectionNavigationAction extends ToggleDockingAct
 			return;
 		}
 
-		PreferenceState preferenceState = dockingWindowManager.getPreferenceState(getOwner());
+		String key = getOwner() + '_' + getName();
+		PreferenceState preferenceState = dockingWindowManager.getPreferenceState(key);
 
 		// restore any previously saved settings
 		if (preferenceState != null) {

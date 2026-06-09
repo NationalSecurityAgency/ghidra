@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -136,6 +136,7 @@ public class DiffSaveSettingsTest extends DiffApplyTestAdapter {
 		isReplace(functionApplyCB);
 		isReplace(bookmarkApplyCB);
 		isReplace(propertiesApplyCB);
+		isIgnore(sourceMapApplyCB);
 
 		// Change the apply settings.
 		ignore(programContextApplyCB);
@@ -151,6 +152,7 @@ public class DiffSaveSettingsTest extends DiffApplyTestAdapter {
 		ignore(functionApplyCB);
 		ignore(bookmarkApplyCB);
 		ignore(propertiesApplyCB);
+		replace(sourceMapApplyCB);
 
 		// Save the settings.
 		DockingActionIf saveApplySettingsAction =
@@ -172,6 +174,7 @@ public class DiffSaveSettingsTest extends DiffApplyTestAdapter {
 		isIgnore(functionApplyCB);
 		isIgnore(bookmarkApplyCB);
 		isIgnore(propertiesApplyCB);
+		isReplace(sourceMapApplyCB);
 
 		ProgramManagerPlugin pm = getPlugin(tool, ProgramManagerPlugin.class);
 		DockingActionIf closeAllProgramAction = getAction(pm, "Close All");
@@ -197,6 +200,7 @@ public class DiffSaveSettingsTest extends DiffApplyTestAdapter {
 		isIgnore(functionApplyCB);
 		isIgnore(bookmarkApplyCB);
 		isIgnore(propertiesApplyCB);
+		isReplace(sourceMapApplyCB);
 
 		DockingActionIf closeToolAction = getToolAction(tool, "Close Tool");
 		performAction(closeToolAction, false);
@@ -226,6 +230,7 @@ public class DiffSaveSettingsTest extends DiffApplyTestAdapter {
 		isIgnore(functionApplyCB);
 		isIgnore(bookmarkApplyCB);
 		isIgnore(propertiesApplyCB);
+		isReplace(sourceMapApplyCB);
 
 		closeOurTool();
 	}

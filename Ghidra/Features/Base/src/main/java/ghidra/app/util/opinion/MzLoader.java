@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import java.math.BigInteger;
 import java.util.*;
 
 import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.mz.*;
@@ -81,18 +80,21 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log)
+	public void load(Program program, ImporterSettings settings)
 			throws IOException, CancelledException {
 
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
+
+		FileBytes fileBytes =
+			MemoryBlockUtils.createFileBytes(program, settings.provider(), monitor);
 		AddressFactory af = program.getAddressFactory();
 		if (!(af.getDefaultAddressSpace() instanceof SegmentedAddressSpace)) {
 			throw new IOException("Selected Language must have a segmented address space.");
 		}
 
 		SegmentedAddressSpace space = (SegmentedAddressSpace) af.getDefaultAddressSpace();
-		MzExecutable mz = new MzExecutable(provider);
+		MzExecutable mz = new MzExecutable(settings.provider());
 
 		try {
 			Set<RelocationFixup> relocationFixups = getRelocationFixups(space, mz, log, monitor);
@@ -122,7 +124,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public int getTierPriority() {
-		return 60; // we are less priority than PE!  Important for AutoImporter
+		return 60; // we are less priority than PE!  Important for ProgramLoader
 	}
 
 	/**

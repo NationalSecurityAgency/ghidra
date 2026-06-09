@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -255,8 +255,8 @@ public class BitFieldEditorPanel extends JPanel {
 
 	private JComponent createDataTypeChoiceEditor() {
 
-		dtChoiceEditor =
-			new DataTypeSelectionEditor(dtmService, AllowedDataTypes.BITFIELD_BASE_TYPE);
+		dtChoiceEditor = new DataTypeSelectionEditor(composite.getDataTypeManager(), dtmService,
+			AllowedDataTypes.BITFIELD_BASE_TYPE);
 		dtChoiceEditor.setConsumeEnterKeyPress(false);
 		dtChoiceEditor.setTabCommitsEdit(true);
 		//dtChoiceEditor.setPreferredDataTypeManager(composite.getDataTypeManager());
@@ -305,8 +305,6 @@ public class BitFieldEditorPanel extends JPanel {
 				}
 			}
 		});
-
-		dtChoiceEditor.getBrowseButton().setFocusable(false);
 
 		JComponent editorComponent = dtChoiceEditor.getEditorComponent();
 		Dimension preferredSize = editorComponent.getPreferredSize();
@@ -751,7 +749,7 @@ public class BitFieldEditorPanel extends JPanel {
 	}
 
 	ActionContext getActionContext(MouseEvent event) {
-		if (placementComponent == event.getSource()) {
+		if (event != null && placementComponent == event.getSource()) {
 			Point p = event.getPoint();
 			return new BitFieldEditorContext(getDataTypeComponent(p),
 				placementComponent.getBitOffset(p));

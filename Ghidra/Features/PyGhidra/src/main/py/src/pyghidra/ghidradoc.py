@@ -21,8 +21,8 @@ import json
 from pathlib import Path
 import zipfile
 
-from java.lang import Class
-from java.io import PrintWriter
+from java.lang import Class # type:ignore @UnresolvedImport
+from java.io import PrintWriter # type:ignore @UnresolvedImport
 from jpype import JMethod, JObject, JClass
 
 from ghidra.framework import Application
@@ -85,7 +85,7 @@ class _Helper:
                     with zipfile.ZipFile(javadoc_zip, "r") as docs:
                         with docs.open(json_path) as f:
                             jsondoc = json.load(f)
-            except (IOError, KeyError) as e:
+            except (IOError, KeyError):
                 pass
             return jsondoc
 
@@ -103,6 +103,8 @@ class _Helper:
             sig = f"{field['type_long']} {field['name']}"
             if field['static']:
                 sig = "static " + sig
+            if field.get("access"):
+                sig = field.get("access") + " " + sig
             if constant_value := field['constant_value']:
                 sig += " = " + constant_value
             sig += "\n"
@@ -124,6 +126,8 @@ class _Helper:
             sig = f"{method['return']['type_short']} {method['name']}({paramsig})\n"
             if method['static']:
                 sig = "static " + sig
+            if method.get("access"):
+                sig = method.get("access") + " " + sig
             if comment := method['comment']:
                 desc = f"  {comment}\n\n"
             else:

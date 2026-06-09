@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,10 +37,13 @@ public class DBTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTe
 
 	@Test
 	public void testEmptyTime() throws Exception {
+		/**
+		 * Even if the initial snapshot 0 does not exist, we now always truncate at 0 as if it did.
+		 */
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			DBTraceTimeViewport viewport = tb.trace.createTimeViewport();
 			viewport.setSnap(10);
-			assertEquals(lifeSetOf(Lifespan.span(Long.MIN_VALUE, 10)), viewport.spanSet);
+			assertEquals(lifeSetOf(Lifespan.span(0, 10)), viewport.spanSet);
 		}
 	}
 
@@ -93,12 +96,14 @@ public class DBTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTe
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			try (Transaction tx = tb.startTransaction()) {
 				DBTraceTimeManager tm = tb.trace.getTimeManager();
-				tm.getSnapshot(Long.MIN_VALUE, true).setSchedule(TraceSchedule.parse("10:4"));
+				tm.getSnapshot(2, true).setSchedule(TraceSchedule.parse("10:4"));
 			}
 
 			DBTraceTimeViewport viewport = tb.trace.createTimeViewport();
-			viewport.setSnap(Long.MIN_VALUE);
-			assertEquals(lifeSetOf(Lifespan.at(Long.MIN_VALUE)), viewport.spanSet);
+			viewport.setSnap(2);
+			assertEquals(lifeSetOf(Lifespan.at(2)), viewport.spanSet);
+			viewport.setSnap(3);
+			assertEquals(lifeSetOf(Lifespan.span(2, 3)), viewport.spanSet);
 		}
 	}
 }

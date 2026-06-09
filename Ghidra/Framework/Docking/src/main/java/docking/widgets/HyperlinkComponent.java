@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,18 +15,20 @@
  */
 package docking.widgets;
 
-import java.awt.BorderLayout;
-import java.awt.Rectangle;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.util.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.DefaultCaret;
 
 import docking.DockingUtils;
+import generic.theme.GColor;
 
 /**
  * A component that acts like a label, but adds the ability to render HTML anchors and the 
@@ -37,7 +39,9 @@ import docking.DockingUtils;
  * this component will display the hyperlinks properly and will notify any registered 
  * listeners ({@link #addHyperlinkListener(String, HyperlinkListener)} that the user has clicked the link
  * by the given name. 
+ * @deprecated Replaced by {@link GHyperlinkComponent}
  */
+@Deprecated(since = "11.3", forRemoval = true)
 public class HyperlinkComponent extends JPanel {
 
 	private JTextPane textPane;
@@ -55,6 +59,7 @@ public class HyperlinkComponent extends JPanel {
 		textPane.setCaret(new NonScrollingCaret());
 
 		textPane.addHyperlinkListener(new HyperlinkListener() {
+
 			@Override
 			public void hyperlinkUpdate(HyperlinkEvent e) {
 				String anchorText = e.getDescription();
@@ -84,6 +89,22 @@ public class HyperlinkComponent extends JPanel {
 		textPane.setPreferredSize(getPreferredSize());
 
 		hyperlinkListeners = new HashMap<String, List<HyperlinkListener>>();
+
+		Color FOCUS_COLOR = new GColor("color.border.button.focused");
+		Border FOCUSED_BORDER = BorderFactory.createLineBorder(FOCUS_COLOR);
+		Border defaultBorder = textPane.getBorder();
+		textPane.addFocusListener(new FocusListener() {
+
+			@Override
+			public void focusLost(FocusEvent e) {
+				textPane.setBorder(defaultBorder);
+			}
+
+			@Override
+			public void focusGained(FocusEvent e) {
+				textPane.setBorder(FOCUSED_BORDER);
+			}
+		});
 	}
 
 	/**
@@ -157,6 +178,11 @@ public class HyperlinkComponent extends JPanel {
 
 		private NonScrollingCaret() {
 			setVisible(false);
+		}
+
+		@Override
+		public void setVisible(boolean e) {
+			super.setVisible(e);
 		}
 
 		@Override

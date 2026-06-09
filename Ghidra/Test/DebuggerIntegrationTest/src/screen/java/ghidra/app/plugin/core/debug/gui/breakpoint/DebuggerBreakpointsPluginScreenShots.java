@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.debug.gui.breakpoint;
 
 import static ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest.waitForPass;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 import java.util.List;
 import java.util.Set;
@@ -25,9 +24,8 @@ import java.util.Set;
 import org.junit.*;
 
 import db.Transaction;
-import generic.Unique;
+import ghidra.app.plugin.core.debug.service.MockTarget;
 import ghidra.app.plugin.core.debug.service.breakpoint.DebuggerLogicalBreakpointServicePlugin;
-import ghidra.app.plugin.core.debug.service.control.MockTarget;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
@@ -35,10 +33,7 @@ import ghidra.app.plugin.core.debug.service.target.DebuggerTargetServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
-import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
-import ghidra.dbg.target.TargetBreakpointSpecContainer;
-import ghidra.dbg.target.TargetTogglable;
-import ghidra.dbg.testutil.DebuggerModelTestUtils;
+import ghidra.async.AsyncTestUtils;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.database.ProgramBuilder;
@@ -49,15 +44,14 @@ import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.breakpoint.DBTraceBreakpointManager;
 import ghidra.trace.model.*;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.breakpoint.*;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenerator
-		implements DebuggerModelTestUtils {
+		implements AsyncTestUtils {
 
 	DebuggerTargetService targetService;
 	DebuggerStaticMappingService mappingService;
@@ -144,12 +138,10 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 			try (Transaction tx = program.openTransaction("Add breakpoint")) {
 				program.getBookmarkManager()
 						.setBookmark(addr(program, 0x00401234),
-							LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
-							"SW_EXECUTE;1", "before connect");
+							LogicalBreakpoint.ENABLED_BOOKMARK_TYPE, "x;1", "before connect");
 				program.getBookmarkManager()
 						.setBookmark(addr(program, 0x00604321),
-							LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
-							"WRITE;4", "write version");
+							LogicalBreakpoint.ENABLED_BOOKMARK_TYPE, "W;4", "write version");
 			}
 
 			try (Transaction tx = tb1.startTransaction()) {
@@ -158,11 +150,20 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 				long snap = tb1.trace.getTimeManager().createSnapshot("First").getKey();
 
 				DBTraceBreakpointManager bm = tb1.trace.getBreakpointManager();
-				bm.placeBreakpoint("Breakpoints[1]", snap, tb1.addr(0x00401234), List.of(),
-					Set.of(TraceBreakpointKind.SW_EXECUTE), true, "ram:00401234");
-				bm.placeBreakpoint("Breakpoints[2]", snap, tb1.range(0x00604321, 0x00604324),
-					List.of(),
-					Set.of(TraceBreakpointKind.WRITE), true, "ram:00604321");
+				TraceBreakpointLocation locCx =
+					bm.placeBreakpoint("Breakpoints[1]", snap, tb1.addr(0x00401234), List.of(),
+						CommonSet.SWX.kinds(), true, "");
+				locCx.getSpecification()
+						.getObject()
+						.setAttribute(Lifespan.nowOn(snap), TraceBreakpointSpec.KEY_EXPRESSION,
+							"*0x00401234");
+				TraceBreakpointLocation locWr =
+					bm.placeBreakpoint("Breakpoints[2]", snap, tb1.range(0x00604321, 0x00604324),
+						List.of(), CommonSet.WRITE.kinds(), true, "");
+				locWr.getSpecification()
+						.getObject()
+						.setAttribute(Lifespan.nowOn(snap), TraceBreakpointSpec.KEY_EXPRESSION,
+							"version");
 			}
 
 			try (Transaction tx = tb2.startTransaction()) {
@@ -171,8 +172,13 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 				long snap = tb2.trace.getTimeManager().createSnapshot("First").getKey();
 
 				DBTraceBreakpointManager bm = tb2.trace.getBreakpointManager();
-				bm.placeBreakpoint("Breakpoints[1]", snap, tb2.addr(0x7fac1234), List.of(),
-					Set.of(TraceBreakpointKind.SW_EXECUTE), false, "ram:7fac1234");
+				TraceBreakpointLocation locCx =
+					bm.placeBreakpoint("Breakpoints[1]", snap, tb2.addr(0x7fac1234), List.of(),
+						CommonSet.SWX.kinds(), false, "");
+				locCx.getSpecification()
+						.getObject()
+						.setAttribute(Lifespan.nowOn(snap), TraceBreakpointSpec.KEY_EXPRESSION,
+							"*0x7fac1234");
 			}
 
 			programManager.openProgram(program);

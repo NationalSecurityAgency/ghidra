@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ import ghidra.util.task.TaskMonitor;
  * A file open for read-only use will be upgraded if needed and is possible.  Once open it is 
  * important that the specified consumer be released from the domain object when done using 
  * the open object (see {@link DomainObject#release(Object)}).
- */ 
+ */
 public class GetDomainObjectTask extends Task {
 
 	private Object consumer;
@@ -46,7 +46,7 @@ public class GetDomainObjectTask extends Task {
 	private boolean immutable;
 
 	private DomainObject versionedObj;
-	
+
 	/**
 	 * Construct task open specified domainFile read only.  
 	 * An upgrade is performed if needed and is possible.
@@ -76,9 +76,9 @@ public class GetDomainObjectTask extends Task {
 		this.versionNumber = versionNumber;
 		this.immutable = immutable;
 	}
-	
+
 	@Override
-    public void run(TaskMonitor monitor) {
+	public void run(TaskMonitor monitor) {
 		String contentType = domainFile.getContentType();
 		try {
 			monitor.setMessage("Getting Version " + versionNumber + " for " + domainFile.getName());
@@ -97,7 +97,8 @@ public class GetDomainObjectTask extends Task {
 		catch (IOException e) {
 			ClientUtil.handleException(AppInfo.getActiveProject().getRepository(), e,
 				contentType + " Open", null);
-		} catch (VersionException e) {
+		}
+		catch (VersionException e) {
 			if (immutable && e.isUpgradable()) {
 				String detailMessage =
 					e.getDetailMessage() == null ? "" : "\n" + e.getDetailMessage();
@@ -115,10 +116,10 @@ public class GetDomainObjectTask extends Task {
 				return;
 			}
 			VersionExceptionHandler.showVersionError(null, domainFile.getName(),
-				domainFile.getContentType(), contentType + " Open", e);
+				domainFile.getContentType(), contentType + " Open", false, e);
 		}
 	}
-	
+
 	/**
 	 * Return the domain object instance.
 	 * @return domain object which was opened or null if task cancelled or failed

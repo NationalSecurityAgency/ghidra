@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,26 @@ import ghidra.util.exception.InvalidInputException;
  * The Namespace interface
  */
 public interface Namespace {
+
+	/**
+	 * Type of {@link Namespace}.
+	 */
+	public enum Type {
+		NAMESPACE("Namespace"), LIBRARY("Library"), CLASS("Class"), FUNCTION("Function");
+
+		private final String friendlyName;
+
+		private Type(String friendlyName) {
+			this.friendlyName = friendlyName;
+		}
+
+		/**
+		 * {@return a friendly name for use in messages}
+		 */
+		public String friendlyName() {
+			return friendlyName;
+		}
+	}
 
 	static final long GLOBAL_NAMESPACE_ID = 0;
 	/**
@@ -48,21 +68,31 @@ public interface Namespace {
 	public Symbol getSymbol();
 
 	/**
+	 * {@return the type of namespace, e.g., Library, Class, Namespace, Function}
+	 */
+	public default Type getType() {
+		return Type.NAMESPACE;
+	}
+
+	/**
 	 * Returns true if this namespace is external (i.e., associated with a Library)
 	 * @return true if this namespace is external (i.e., associated with a Library)
 	 */
 	public boolean isExternal();
 
 	/**
-	 * Get the name of the symbol for this scope
-	 * @return the name of the symbol for this scope
+	 * {@return the simple namespace name (without parent path)}
+	 * <p>
+	 * See {@link #getName(boolean)} for the namespace-qualified variant.
 	 */
 	public String getName();
 
 	/**
-	 * Returns the fully qualified name
-	 * @param includeNamespacePath true to include the namespace in the returned name
-	 * @return the fully qualified name
+	 * Returns the namespace name, optionally prepended with the full parent namespace path.
+	 * @param includeNamespacePath true to include the namespace path
+	 * (using {@link #DELIMITER} as separator) in the returned name
+	 * @return the simple name if {@code includeNamespacePath} is false, or the full
+	 * namespace-qualified name (e.g., {@code "ClassA::InnerClass"}) if true
 	 */
 	public String getName(boolean includeNamespacePath);
 
@@ -110,7 +140,7 @@ public interface Namespace {
 	 * this namespace.
 	 * @throws DuplicateNameException if another symbol exists in the parent namespace with
 	 * the same name as this namespace
-	 * @throws CircularDependencyException if the parent namespace is a descendent of this
+	 * @throws CircularDependencyException if the parent namespace is a descendant of this
 	 * namespace.
 	 */
 	public void setParentNamespace(Namespace parentNamespace)

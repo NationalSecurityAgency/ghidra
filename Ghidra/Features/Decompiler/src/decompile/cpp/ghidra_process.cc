@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -505,6 +505,14 @@ void GhidraDecompCapability::initialize(void)
   commandmap["setOptions"] = new SetOptions();
 }
 
+/// Catch the signal so the OS doesn't pop up a dialog
+/// \param sig is the OS signal (should always be SIGSEGV)
+static void segvHandler(int4 sig)
+
+{
+  _Exit(1);	// Don't do any cleanup, just die - prevents OS from popping-up a dialog
+}
+
 } // End namespace ghidra
 
 int main(int argc,char **argv)
@@ -512,7 +520,7 @@ int main(int argc,char **argv)
 {
   using namespace ghidra;
 
-  signal(SIGSEGV, &ArchitectureGhidra::segvHandler);  // Exit on SEGV errors
+  signal(SIGSEGV, &segvHandler);  // Exit on SEGV errors
 #ifdef _WINDOWS
   // Force i/o streams to be in binary mode
   _setmode(_fileno(stdin), _O_BINARY);

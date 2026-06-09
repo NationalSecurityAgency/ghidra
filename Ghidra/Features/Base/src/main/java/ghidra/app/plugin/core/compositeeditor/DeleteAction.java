@@ -36,7 +36,7 @@ public class DeleteAction extends CompositeEditorTableAction {
 	private final static String[] popupPath = new String[] { "Delete" };
 	private final static KeyStroke KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
 
-	public DeleteAction(CompositeEditorProvider provider) {
+	public DeleteAction(CompositeEditorProvider<?, ?> provider) {
 		super(provider, ACTION_NAME, GROUP_NAME, popupPath, null, ICON);
 
 		setKeyBindingData(new KeyBindingData(KEY_STROKE));

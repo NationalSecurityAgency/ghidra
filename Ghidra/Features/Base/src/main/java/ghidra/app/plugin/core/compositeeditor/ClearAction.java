@@ -33,7 +33,7 @@ public class ClearAction extends CompositeEditorTableAction {
 	private final static String[] POPUP_PATH = new String[] { "Clear" };
 	private final static KeyStroke KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_C, 0);
 
-	public ClearAction(CompositeEditorProvider provider) {
+	public ClearAction(CompositeEditorProvider<?, ?> provider) {
 		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 
 		setDescription("Clear the selected components");

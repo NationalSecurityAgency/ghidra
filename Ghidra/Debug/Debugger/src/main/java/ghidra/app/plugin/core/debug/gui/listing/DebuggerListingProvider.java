@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.ICON_REGISTER_MARKER;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -24,18 +24,16 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.concurrent.CompletableFuture;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jdom.Element;
+import org.jdom2.Element;
 
-import docking.ActionContext;
-import docking.WindowPosition;
+import docking.*;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.action.builder.ToggleActionBuilder;
@@ -51,14 +49,13 @@ import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
 import ghidra.app.plugin.core.debug.disassemble.CurrentPlatformTraceDisassembleCommand;
 import ghidra.app.plugin.core.debug.disassemble.CurrentPlatformTraceDisassembleCommand.Reqs;
 import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin;
+import ghidra.app.plugin.core.debug.event.TrackingChangedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.OpenProgramAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerTraceFileActionContext;
 import ghidra.app.plugin.core.debug.gui.trace.DebuggerTraceTabPanel;
 import ghidra.app.plugin.core.debug.utils.ProgramLocationUtils;
-import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.app.plugin.core.marker.MarkerMarginProvider;
 import ghidra.app.plugin.core.marker.MarkerOverviewProvider;
 import ghidra.app.services.*;
@@ -68,41 +65,37 @@ import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
-import ghidra.debug.api.action.GoToInput;
-import ghidra.debug.api.action.LocationTrackingSpec;
+import ghidra.debug.api.action.*;
 import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.listing.DebuggerListing;
 import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
-import ghidra.debug.api.modules.DebuggerMissingModuleActionContext;
 import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
 import ghidra.features.base.memsearch.bytesource.EmptyByteSource;
-import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.*;
 import ghidra.util.datastruct.ListenerSet;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.*;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
 
-public class DebuggerListingProvider extends CodeViewerProvider {
+public class DebuggerListingProvider extends CodeViewerProvider implements DebuggerListing {
 
-	private static final AutoConfigState.ClassHandler<DebuggerListingProvider> CONFIG_STATE_HANDLER =
-		AutoConfigState.wireHandler(DebuggerListingProvider.class, MethodHandles.lookup());
+	private static final AutoConfigState.ClassHandler<
+		DebuggerListingProvider> CONFIG_STATE_HANDLER =
+			AutoConfigState.wireHandler(DebuggerListingProvider.class, MethodHandles.lookup());
 	private static final String KEY_DEBUGGER_COORDINATES = "DebuggerCoordinates";
 
 	protected static boolean sameCoordinates(DebuggerCoordinates a, DebuggerCoordinates b) {
@@ -138,13 +131,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 	}
 
-	protected class MarkerSetChangeListener implements ChangeListener {
-		@Override
-		public void stateChanged(ChangeEvent e) {
-			getListingPanel().getFieldPanel().repaint();
-		}
-	}
-
 	protected class ForStaticSyncMappingChangeListener
 			implements DebuggerStaticMappingChangeListener {
 		@Override
@@ -157,54 +143,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 					return;
 				}
 				doMarkTrackedLocation();
-				cleanMissingModuleMessages(affectedTraces);
-			});
-		}
-	}
-
-	protected class ForListingSyncTrait extends DebuggerStaticSyncTrait {
-		public ForListingSyncTrait() {
-			super(DebuggerListingProvider.this.tool, DebuggerListingProvider.this.plugin,
-				DebuggerListingProvider.this, isMainListing());
-		}
-
-		@Override
-		protected void staticGoTo(ProgramLocation location) {
-			Swing.runIfSwingOrRunLater(() -> plugin.fireStaticLocationEvent(location));
-		}
-
-		@Override
-		protected void staticSelect(Program program, ProgramSelection selection) {
-			Swing.runIfSwingOrRunLater(() -> plugin.fireStaticSelectionEvent(program, selection));
-			if (selection.isEmpty()) {
-				return;
-			}
-			Optional<CodeViewerService> codeViewer =
-				Stream.of(tool.getServices(CodeViewerService.class))
-						.filter(cv -> cv != plugin)
-						.findFirst();
-			if (codeViewer.isEmpty()) {
-				return;
-			}
-			ListingPanel listingPanel = codeViewer.get().getListingPanel();
-			Swing.runIfSwingOrRunLater(() -> {
-				listingPanel.scrollTo(new ProgramLocation(program, selection.getMinAddress()));
-			});
-		}
-
-		@Override
-		protected void dynamicGoTo(ProgramLocation location) {
-			Swing.runIfSwingOrRunLater(() -> goTo(location.getProgram(), location));
-		}
-
-		@Override
-		protected void dynamicSelect(Program program, ProgramSelection selection) {
-			Swing.runIfSwingOrRunLater(() -> {
-				setSelection(selection);
-				if (!selection.isEmpty()) {
-					getListingPanel()
-							.scrollTo(new ProgramLocation(program, selection.getMinAddress()));
-				}
 			});
 		}
 	}
@@ -222,9 +160,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 		@Override
 		protected boolean goToAddress(Address address) {
-			if (syncTrait.isAutoSyncCursorWithStaticListing()) {
-				syncTrait.doAutoSyncCursorIntoStatic(new ProgramLocation(getProgram(), address));
-			}
 			return getListingPanel().goTo(address);
 		}
 	}
@@ -234,16 +169,19 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 			super(DebuggerListingProvider.this.tool, DebuggerListingProvider.this.plugin,
 				DebuggerListingProvider.this);
 
-			getListingPanel().addIndexMapChangeListener(e -> this.doTrack());
+			getListingPanel().addIndexMapChangeListener(e -> this.doTrack(TrackCause.DB_CHANGE));
 		}
 
 		@Override
-		protected void specChanged(LocationTrackingSpec spec) {
+		protected void specChanged(LocationTrackingSpec lts) {
+			if (isMainListing()) {
+				plugin.firePluginEvent(new TrackingChangedPluginEvent(getName(), lts));
+			}
 			updateTitle();
 			trackingLabel.setText("");
 			trackingLabel.setToolTipText("");
 			trackingLabel.setForeground(Colors.FOREGROUND);
-			trackingSpecChangeListeners.invoke().locationTrackingSpecChanged(spec);
+			trackingSpecChangeListeners.invoke().locationTrackingSpecChanged(lts);
 		}
 
 		@Override
@@ -289,9 +227,61 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 	}
 
+	protected class ForListingClipboardProvider extends CodeBrowserClipboardProvider {
+		protected class PasteIntoTargetCommand extends PasteByteStringCommand
+				implements PasteIntoTargetMixin {
+			protected PasteIntoTargetCommand(String string) {
+				super(string);
+			}
+
+			@Override
+			protected boolean hasEnoughSpace(Program program, Address address, int byteCount) {
+				return doHasEnoughSpace(program, address, byteCount);
+			}
+
+			@Override
+			protected boolean pasteBytes(Program program, byte[] bytes) {
+				return doPasteBytes(tool, controlService, consoleService, current, currentLocation,
+					bytes);
+			}
+		}
+
+		protected ForListingClipboardProvider() {
+			super(DebuggerListingProvider.this.tool, DebuggerListingProvider.this);
+		}
+
+		@Override
+		public boolean isValidContext(ActionContext context) {
+			if (!(context instanceof DebuggerListingActionContext)) {
+				return false;
+			}
+			return context.getComponentProvider() == componentProvider;
+		}
+
+		@Override
+		public boolean canPaste(DataFlavor[] availableFlavors) {
+			if (controlService == null) {
+				return false;
+			}
+			Trace trace = current.getTrace();
+			if (trace == null) {
+				return false;
+			}
+			if (!controlService.getCurrentMode(trace).canEdit(current)) {
+				return false;
+			}
+			return super.canPaste(availableFlavors);
+		}
+
+		@Override
+		protected boolean pasteByteString(String string) {
+			return tool.execute(new PasteIntoTargetCommand(string), currentProgram);
+		}
+	}
+
 	private final DebuggerListingPlugin plugin;
 
-	//@AutoServiceConsumed via method
+	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
 	//@AutoServiceConsumed via method
 	private DebuggerStaticMappingService mappingService;
@@ -299,10 +289,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	private DebuggerConsoleService consoleService;
 	//@AutoServiceConsumed via method
 	private DebuggerControlService controlService;
-	@AutoServiceConsumed
-	private ProgramManager programManager;
-	@AutoServiceConsumed
-	private FileImporterService importerService;
 	//@AutoServiceConsumed via method
 	private MarkerService markerService;
 	@SuppressWarnings("unused")
@@ -317,24 +303,17 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	protected MarkerSet trackingMarker;
 
 	protected DockingAction actionGoTo;
-	protected ToggleDockingAction actionAutoSyncCursorWithStaticListing;
-	protected ToggleDockingAction actionAutoSyncSelectionWithStaticListing;
-	protected DockingAction actionSyncSelectionIntoStaticListing;
-	protected DockingAction actionSyncSelectionFromStaticListing;
 	protected ToggleDockingAction actionFollowsCurrentThread;
 	protected ToggleDockingAction actionAutoDisassemble;
 	protected MultiStateDockingAction<AutoReadMemorySpec> actionAutoReadMemory;
 	protected DockingAction actionRefreshSelectedMemory;
-	protected DockingAction actionOpenProgram;
 	protected MultiStateDockingAction<LocationTrackingSpec> actionTrackLocation;
 
 	@AutoConfigStateField
 	protected boolean followsCurrentThread = true;
-	// TODO: followsCurrentSnap?
 	@AutoConfigStateField
 	protected boolean autoDisassemble = true;
 
-	protected final ForListingSyncTrait syncTrait;
 	protected final ForListingGoToTrait goToTrait;
 	protected final ForListingTrackingTrait trackingTrait;
 	protected final ForListingReadsMemoryTrait readsMemTrait;
@@ -350,12 +329,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	protected final JLabel trackingLabel = new JLabel();
 
 	protected final MultiBlendedListingBackgroundColorModel colorModel;
-	protected final MarkerSetChangeListener markerChangeListener = new MarkerSetChangeListener();
 	protected MarkerServiceBackgroundColorModel markerServiceColorModel;
 	protected MarkerMarginProvider markerMarginProvider;
 	protected MarkerOverviewProvider markerOverviewProvider;
 
-	private SuppressableCallback<ProgramLocation> cbGoTo = new SuppressableCallback<>();
+	private final SuppressableCallback<ProgramLocation> cbGoTo = new SuppressableCallback<>();
 
 	protected final ForStaticSyncMappingChangeListener mappingChangeListener =
 		new ForStaticSyncMappingChangeListener();
@@ -370,15 +348,16 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	private long countAddressesInIndex;
 
+	private TabContextListener contextListener;
+
 	public DebuggerListingProvider(DebuggerListingPlugin plugin, FormatManager formatManager,
 			boolean isConnected) {
 		super(plugin, formatManager, isConnected);
 		this.plugin = plugin;
 		this.isMainListing = isConnected;
 
-		// TODO: An icon to distinguish dynamic from static
+		// LATER: Consider an icon to distinguish dynamic from static
 
-		syncTrait = new ForListingSyncTrait();
 		goToTrait = new ForListingGoToTrait();
 		trackingTrait = new ForListingTrackingTrait();
 		readsMemTrait = new ForListingReadsMemoryTrait();
@@ -402,6 +381,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 		if (isConnected) {
 			traceTabs = new DebuggerTraceTabPanel(plugin);
+			contextListener = new TabContextListener();
+			DockingWindowManager dwm = tool.getWindowManager();
+			dwm.addContextListener(contextListener);
 		}
 		else {
 			traceTabs = null;
@@ -468,6 +450,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	}
 
 	@Override
+	public boolean isPrimary() {
+		return isMainListing();
+	}
+
+	@Override
 	public boolean isReadOnly() {
 		if (controlService == null) {
 			return true;
@@ -514,6 +501,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		CONFIG_STATE_HANDLER.writeConfigState(this, saveState);
 		trackingTrait.writeConfigState(saveState);
 		readsMemTrait.writeConfigState(saveState);
+		if (!isMainListing() && getTitle() != null) {
+			saveState.putString("title", getTitle());
+		}
 	}
 
 	void readConfigState(SaveState saveState) {
@@ -526,10 +516,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 
 		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
-		syncTrait.readConfigState(saveState);
 		trackingTrait.readConfigState(saveState);
 		readsMemTrait.readConfigState(saveState);
-
+		if (!isMainListing() && saveState.hasValue("title")) {
+			setTitle(saveState.getString("title", ""));
+		}
 		if (isMainListing()) {
 			followsCurrentThread = true;
 		}
@@ -542,9 +533,10 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	@Override
 	public void addToTool() {
-		//TODO: This is lame.  AddToTool executes the window placement
-		// logic but is called by the CodeViewer constructor, so we have
-		// no efficient path in
+		/**
+		 * NOTE: This isn't great. addToTool executes the window placement logic but is called by
+		 * the CodeViewer constructor, so we have no efficient path in
+		 */
 		setIntraGroupPosition(WindowPosition.STACK);
 		setDefaultWindowPosition(WindowPosition.STACK);
 		super.addToTool();
@@ -556,11 +548,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 			colorModel.addModel(markerServiceColorModel = new MarkerServiceBackgroundColorModel(
 				markerService, current.getView(), getListingPanel().getAddressIndexMap()));
 		}
-	}
-
-	@AutoServiceConsumed
-	private void setTraceManager(DebuggerTraceManagerService traceManager) {
-		this.traceManager = traceManager;
 	}
 
 	@AutoServiceConsumed
@@ -594,28 +581,13 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	@AutoServiceConsumed
 	private void setMarkerService(MarkerService markerService) {
-		if (this.markerService != null) {
-			this.markerService.removeChangeListener(markerChangeListener);
-			removeMarginProvider(markerMarginProvider);
-			markerMarginProvider = null;
-			removeOverviewProvider(markerOverviewProvider);
-			markerOverviewProvider = null;
-		}
+		ListingPanel listingPanel = getListingPanel();
+		listingPanel.setMarkerService(markerService);
+
 		removeOldStaticTrackingMarker();
 		this.markerService = markerService;
 		createNewStaticTrackingMarker();
 		updateMarkerServiceColorModel();
-
-		if (this.markerService != null && !isMainListing()) {
-			// NOTE: Connected provider marker listener is taken care of by CodeBrowserPlugin
-			this.markerService.addChangeListener(markerChangeListener);
-		}
-		if (this.markerService != null) {
-			markerMarginProvider = markerService.createMarginProvider();
-			addMarginProvider(markerMarginProvider);
-			markerOverviewProvider = markerService.createOverviewProvider();
-			addOverviewProvider(markerOverviewProvider);
-		}
 	}
 
 	@AutoServiceConsumed
@@ -626,15 +598,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		this.controlService = controlService;
 		if (this.controlService != null) {
 			this.controlService.addModeChangeListener(controlModeChangeListener);
-		}
-	}
-
-	@AutoServiceConsumed
-	private void setConsoleService(DebuggerConsoleService consoleService) {
-		if (consoleService != null) {
-			if (actionOpenProgram != null) {
-				consoleService.addResolutionAction(actionOpenProgram);
-			}
 		}
 	}
 
@@ -659,27 +622,12 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		});
 	}
 
-	public void programOpened(Program program) {
-		if (!isMainListing()) {
-			return;
-		}
-		DomainFile df = program.getDomainFile();
-		DebuggerOpenProgramActionContext ctx = new DebuggerOpenProgramActionContext(df);
-		if (consoleService != null) {
-			consoleService.removeFromLog(ctx);
-		}
-	}
-
 	public void programClosed(Program program) {
 		if (program == markedProgram) {
 			removeOldStaticTrackingMarker();
 			markedProgram = null;
 			markedAddress = null;
 		}
-	}
-
-	public void staticProgramActivated(Program program) {
-		syncTrait.staticProgramActivated(program);
 	}
 
 	@Override
@@ -772,40 +720,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	@Override
 	protected CodeBrowserClipboardProvider newClipboardProvider() {
-		return new CodeBrowserClipboardProvider(tool, this) {
-			@Override
-			public boolean isValidContext(ActionContext context) {
-				if (!(context instanceof DebuggerListingActionContext)) {
-					return false;
-				}
-				return context.getComponentProvider() == componentProvider;
-			}
-
-			@Override
-			public boolean canPaste(DataFlavor[] availableFlavors) {
-				if (controlService == null) {
-					return false;
-				}
-				Trace trace = current.getTrace();
-				if (trace == null) {
-					return false;
-				}
-				if (!controlService.getCurrentMode(trace).canEdit(current)) {
-					return false;
-				}
-				return super.canPaste(availableFlavors);
-			}
-		};
+		return new ForListingClipboardProvider();
 	}
 
 	protected void createActions() {
-		if (isMainListing()) {
-			actionAutoSyncCursorWithStaticListing =
-				syncTrait.installAutoSyncCursorWithStaticListingAction();
-			actionAutoSyncSelectionWithStaticListing =
-				syncTrait.installAutoSyncSelectionWithStaticListingAction();
-		}
-		else {
+		if (!isMainListing()) {
 			actionFollowsCurrentThread = FollowsCurrentThreadAction.builder(plugin)
 					.enabled(true)
 					.selected(true)
@@ -820,27 +739,12 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 				.onAction(ctx -> doSetAutoDisassemble(actionAutoDisassemble.isSelected()))
 				.buildAndInstallLocal(this);
 
-		actionSyncSelectionIntoStaticListing =
-			syncTrait.installSyncSelectionIntoStaticListingAction();
-		actionSyncSelectionFromStaticListing =
-			syncTrait.installSyncSelectionFromStaticListingAction();
-
 		actionGoTo = goToTrait.installAction();
 		actionTrackLocation = trackingTrait.installAction();
 		actionAutoReadMemory = readsMemTrait.installAutoReadAction();
 		actionRefreshSelectedMemory = readsMemTrait.installRefreshSelectedAction();
 
-		actionOpenProgram = OpenProgramAction.builder(plugin)
-				.withContext(DebuggerOpenProgramActionContext.class)
-				.onAction(this::activatedOpenProgram)
-				.build();
-
 		contextChanged();
-	}
-
-	private void activatedOpenProgram(DebuggerOpenProgramActionContext context) {
-		programManager.openProgram(context.getDomainFile(), DomainFile.DEFAULT_VERSION,
-			ProgramManager.OPEN_CURRENT);
 	}
 
 	protected boolean isEffectivelyDifferent(ProgramLocation cur, ProgramLocation dest) {
@@ -920,7 +824,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 					!gotoProgram.getMemory().contains(location.getAddress())) {
 					return false;
 				}
-				if (super.goTo(gotoProgram, location)) {
+				if (super.goTo(gotoProgram, location) &&
+					!isEffectivelyDifferent(getLocation(), location)) {
 					return true;
 				}
 				return false;
@@ -935,10 +840,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 			location = ProgramLocationUtils.fixLocation(location, false);
 		}
 		super.programLocationChanged(location, trigger);
-		syncTrait.dynamicProgramLocationChanged(location, trigger);
-		if (trigger == EventTrigger.GUI_ACTION) {
-			doCheckCurrentModuleMissing();
-		}
 	}
 
 	@Override
@@ -955,173 +856,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		return locationLabel.getActionContext(this, event);
 	}
 
-	@Override
-	public void programSelectionChanged(ProgramSelection selection, EventTrigger trigger) {
-		super.programSelectionChanged(selection, trigger);
-		syncTrait.dynamicSelectionChanged(getProgram(), selection, trigger);
-	}
-
-	protected void doTryOpenProgram(DomainFile df, int version, int state) {
-		DebuggerOpenProgramActionContext ctx = new DebuggerOpenProgramActionContext(df);
-		if (consoleService != null && consoleService.logContains(ctx)) {
-			return;
-		}
-		if (df.canRecover()) {
-			if (consoleService != null) {
-				consoleService.log(DebuggerResources.ICON_MODULES, "<html>Program <b>" +
-					HTMLUtilities.escapeHTML(df.getPathname()) +
-					"</b> has recovery data. It must be opened manually.</html>", ctx);
-			}
-			return;
-		}
-		new TaskLauncher(new Task("Open " + df, true, false, false) {
-			@Override
-			public void run(TaskMonitor monitor) throws CancelledException {
-				Program program = null;
-				try {
-					program = (Program) df.getDomainObject(this, false, false, monitor);
-					programManager.openProgram(program, state);
-				}
-				catch (VersionException e) {
-					if (consoleService != null) {
-						consoleService.log(DebuggerResources.ICON_MODULES, "<html>Program <b>" +
-							HTMLUtilities.escapeHTML(df.getPathname()) +
-							"</b> was created with a different version of Ghidra." +
-							" It must be opened manually.</html>", ctx);
-					}
-					return;
-				}
-				catch (Exception e) {
-					if (consoleService != null) {
-						consoleService.log(DebuggerResources.ICON_LOG_ERROR, "<html>Program <b>" +
-							HTMLUtilities.escapeHTML(df.getPathname()) +
-							"</b> could not be opened: " + e + ". Try opening it manually.</html>",
-							ctx);
-					}
-					return;
-				}
-				finally {
-					if (program != null) {
-						program.release(this);
-					}
-				}
-			}
-		}, tool.getToolFrame());
-	}
-
-	protected void doCheckCurrentModuleMissing() {
-		// Is there any reason to try to open the module if we're not syncing listings?
-		// I don't think so.
-		if (!syncTrait.isAutoSyncCursorWithStaticListing()) {
-			return;
-		}
-		Trace trace = current.getTrace();
-		if (trace == null) {
-			return;
-		}
-		ProgramLocation loc = getLocation();
-		if (loc == null) { // Redundant?
-			return;
-		}
-		AddressSpace space = loc.getAddress().getAddressSpace();
-		if (space == null) {
-			return; // Is this NO_ADDRESS or something?
-		}
-		if (mappingService == null) {
-			return;
-		}
-		ProgramLocation mapped = mappingService.getStaticLocationFromDynamic(loc);
-		if (mapped != null) {
-			// No need to import what is already mapped and open
-			return;
-		}
-
-		long snap = current.getSnap();
-		Address address = loc.getAddress();
-		TraceStaticMapping mapping = trace.getStaticMappingManager().findContaining(address, snap);
-		if (mapping != null) {
-			DomainFile df = ProgramURLUtils.getDomainFileFromOpenProject(tool.getProject(),
-				mapping.getStaticProgramURL());
-			if (df != null) {
-				doTryOpenProgram(df, DomainFile.DEFAULT_VERSION, ProgramManager.OPEN_CURRENT);
-			}
-		}
-
-		Set<TraceModule> missing = new HashSet<>();
-		Set<DomainFile> toOpen = new HashSet<>();
-		TraceModuleManager modMan = trace.getModuleManager();
-		Collection<TraceModule> modules = Stream.concat(
-			modMan.getModulesAt(snap, address).stream().filter(m -> m.getSections().isEmpty()),
-			modMan.getSectionsAt(snap, address).stream().map(s -> s.getModule()))
-				.collect(Collectors.toSet());
-
-		// Attempt to open probable matches. All others, list to import
-		for (TraceModule mod : modules) {
-			DomainFile match = mappingService.findBestModuleProgram(space, mod);
-			if (match == null) {
-				missing.add(mod);
-			}
-			else {
-				toOpen.add(match);
-			}
-		}
-		if (programManager != null && !toOpen.isEmpty()) {
-			for (DomainFile df : toOpen) {
-				// Do not presume a goTo is about to happen. There are no mappings, yet.
-				doTryOpenProgram(df, DomainFile.DEFAULT_VERSION, ProgramManager.OPEN_VISIBLE);
-			}
-		}
-
-		if (importerService == null || consoleService == null) {
-			return;
-		}
-
-		for (TraceModule mod : missing) {
-			consoleService.log(DebuggerResources.ICON_LOG_ERROR,
-				"<html>The module <b><tt>" + HTMLUtilities.escapeHTML(mod.getName()) +
-					"</tt></b> was not found in the project</html>",
-				new DebuggerMissingModuleActionContext(mod));
-		}
-		/**
-		 * Once the programs are opened, including those which are successfully imported, the
-		 * automatic mapper should take effect, eventually invoking callbacks to our mapping change
-		 * listener.
-		 */
-	}
-
-	protected boolean isMapped(AddressRange range) {
-		if (range == null) {
-			return false;
-		}
-		return mappingService.getStaticLocationFromDynamic(
-			new ProgramLocation(getProgram(), range.getMinAddress())) != null;
-	}
-
-	protected void cleanMissingModuleMessages(Set<Trace> affectedTraces) {
-		if (consoleService == null) {
-			return;
-		}
-		nextCtx: for (ActionContext ctx : consoleService.getActionContexts()) {
-			if (!(ctx instanceof DebuggerMissingModuleActionContext mmCtx)) {
-				continue;
-			}
-			TraceModule module = mmCtx.getModule();
-			if (!affectedTraces.contains(module.getTrace())) {
-				continue;
-			}
-			if (isMapped(module.getRange())) {
-				consoleService.removeFromLog(mmCtx);
-				continue;
-			}
-			for (TraceSection section : module.getSections()) {
-				if (isMapped(section.getRange())) {
-					consoleService.removeFromLog(mmCtx);
-					continue nextCtx;
-				}
-			}
-		}
-	}
-
 	public void setTrackingSpec(LocationTrackingSpec spec) {
 		trackingTrait.setSpec(spec);
 	}
@@ -1136,22 +870,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	public void removeTrackingSpecChangeListener(LocationTrackingSpecChangeListener listener) {
 		trackingSpecChangeListeners.remove(listener);
-	}
-
-	public void setAutoSyncCursorWithStaticListing(boolean sync) {
-		if (!isMainListing()) {
-			throw new IllegalStateException(
-				"Only the main dynamic listing can be synced to the main static listing");
-		}
-		syncTrait.setAutoSyncCursorWithStaticListing(sync);
-	}
-
-	public void setAutoSyncSelectionWithStaticListing(boolean sync) {
-		if (!isMainListing()) {
-			throw new IllegalStateException(
-				"Only the main dynamic listing can be synced to the main static listing");
-		}
-		syncTrait.setAutoSyncSelectionWithStaticListing(sync);
 	}
 
 	public void setFollowsCurrentThread(boolean follows) {
@@ -1201,8 +919,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		return readsMemTrait.getAutoSpec();
 	}
 
-	public void doAutoSyncCursorIntoStatic(ProgramLocation location) {
-		syncTrait.doAutoSyncCursorIntoStatic(location);
+	/* testing */
+	CompletableFuture<?> getLastAutoRead() {
+		return readsMemTrait.getLastRead();
 	}
 
 	protected ProgramLocation doMarkTrackedLocation() {
@@ -1226,34 +945,23 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 		else {
 			trackingLabel.setForeground(Colors.ERROR);
+			trackingTrait.clearTrackedLocation();
 		}
 	}
 
 	protected void doGoToTracked() {
 		Swing.runIfSwingOrRunLater(() -> {
 			ProgramLocation loc = trackingTrait.getTrackedLocation();
-			ProgramLocation trackedStatic = doMarkTrackedLocation();
+			doMarkTrackedLocation();
 			if (loc == null) {
 				return;
 			}
 			TraceProgramView curView = current.getView();
-			if (!syncTrait.isAutoSyncCursorWithStaticListing() || trackedStatic == null) {
-				if (curView != current.getView()) {
-					// Trace changed before Swing scheduled us
-					return;
-				}
-				goToAndUpdateTrackingLabel(curView, loc);
-				doCheckCurrentModuleMissing();
+			if (curView != current.getView()) {
+				// Trace changed before Swing scheduled us
+				return;
 			}
-			else {
-				if (curView != current.getView()) {
-					// Trace changed before Swing scheduled us
-					return;
-				}
-				goToAndUpdateTrackingLabel(curView, loc);
-				doCheckCurrentModuleMissing();
-				plugin.fireStaticLocationEvent(trackedStatic);
-			}
+			goToAndUpdateTrackingLabel(curView, loc);
 		});
 	}
 
@@ -1288,11 +996,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	@Override
 	public void dispose() {
 		super.dispose();
-		if (consoleService != null) {
-			if (actionOpenProgram != null) {
-				consoleService.removeResolutionAction(actionOpenProgram);
-			}
-		}
 		removeOldStaticTrackingMarker();
 	}
 
@@ -1312,7 +1015,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 		current = coordinates;
 		doSetProgram(current.getView());
-		syncTrait.goToCoordinates(coordinates);
 		goToTrait.goToCoordinates(coordinates);
 		trackingTrait.goToCoordinates(coordinates);
 		readsMemTrait.goToCoordinates(coordinates);
@@ -1334,14 +1036,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		if (current.getTrace() == trace) {
 			goToCoordinates(DebuggerCoordinates.NOWHERE);
 		}
-	}
-
-	public void staticProgramLocationChanged(ProgramLocation location) {
-		syncTrait.staticProgramLocationChanged(location);
-	}
-
-	public void staticProgramSelectionChanged(Program program, ProgramSelection selection) {
-		syncTrait.staticProgramSelectionChanged(program, selection);
 	}
 
 	@Override
@@ -1367,4 +1061,44 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 		return new DebuggerByteSource(tool, current.getView(), current.getTarget(), readsMemTrait);
 	}
+
+	private class TabContextListener implements DockingContextListener {
+
+		@Override
+		public void contextChanged(ActionContext localContext) {
+
+			DockingWindowManager dwm = tool.getWindowManager();
+			DebuggerProgramLocationActionContext defaultContext =
+				(DebuggerProgramLocationActionContext) dwm
+						.getDefaultActionContext(DebuggerProgramLocationActionContext.class);
+			Trace myTrace = null;
+			if (defaultContext != null) {
+				TraceProgramView tpv = defaultContext.getProgram();
+				myTrace = tpv.getTrace();
+			}
+
+			if (!(localContext instanceof DebuggerProgramLocationActionContext dlac)) {
+
+				// Future: We would like to make the debugger be the default context in this case, 
+				// but we need a way to have the static and dynamic views to decide who is in charge.
+				// For now, assume it should always be the static non-debugger listing view, which
+				// means making the trace tabs inactive.
+				traceTabs.setActive(false);
+				return;
+			}
+
+			TraceProgramView localTraceProgramView = dlac.getProgram();
+			Trace localTrace = localTraceProgramView.getTrace();
+			if (myTrace != localTrace || !dlac.isActiveProgram()) {
+				// A different trace is in the local context; deactivate out tabs.
+				traceTabs.setActive(false);
+				return;
+			}
+
+			// Signal that the trace from our default context is the active trace.
+			traceTabs.setActive(true);
+		}
+
+	}
+
 }

@@ -45,6 +45,8 @@ import aQute.bnd.osgi.Clazz.QUERY;
 import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
 import ghidra.app.script.*;
+import ghidra.framework.Application;
+import ghidra.framework.ApplicationProperties;
 import ghidra.util.Msg;
 import util.CollectionUtils;
 import utilities.util.FileUtilities;
@@ -324,14 +326,16 @@ public class GhidraSourceBundle extends GhidraBundle {
 	private static void findPackageDirs(List<String> packages, ResourceFile dir) {
 		boolean added = false;
 		ResourceFile[] files = dir.listFiles(f -> f.isDirectory() || f.getName().endsWith(".java"));
-		for (ResourceFile file : files) {
-			if (!file.getName().matches("internal|private")) {
-				if (file.isDirectory()) {
-					findPackageDirs(packages, file);
-				}
-				else if (!added) {
-					added = true;
-					packages.add(dir.getAbsolutePath());
+		if (files != null) {
+			for (ResourceFile file : files) {
+				if (!file.getName().matches("internal|private")) {
+					if (file.isDirectory()) {
+						findPackageDirs(packages, file);
+					}
+					else if (!added) {
+						added = true;
+						packages.add(dir.getAbsolutePath());
+					}
 				}
 			}
 		}
@@ -412,6 +416,9 @@ public class GhidraSourceBundle extends GhidraBundle {
 				buildErrors.remove(newSourceFile);
 			}
 		}
+
+		// remove errors for missing source files
+		buildErrors.keySet().removeIf(sourceFile -> !sourceFile.exists());
 	}
 
 	private boolean stillHasErrors(ResourceFile newSourceFile) {
@@ -626,7 +633,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 			if (bundle != null) {
 				bundleHost.deactivateSynchronously(bundle);
 			}
-			return anythingChanged | wipeBinDir();
+			return anythingChanged || wipeBinDir();
 		}
 		catch (IOException | GhidraBundleException e) {
 			Msg.showError(this, null, "Source bundle clean error",
@@ -699,14 +706,17 @@ public class GhidraSourceBundle extends GhidraBundle {
 				ClassMapper mapper = new ClassMapper(binarySubdir);
 
 				// for each source file, lookup class files by class name 
-				for (ResourceFile sourceFile : sourceSubdir.listFiles()) {
-					if (sourceFile.isDirectory()) {
-						stack.push(sourceFile);
-					}
-					else {
-						List<Path> classFiles = mapper.findAndRemove(sourceFile);
-						if (classFiles != null) {
-							discrepancy.found(sourceFile, classFiles);
+				ResourceFile[] sourceSubdirs = sourceSubdir.listFiles();
+				if (sourceSubdirs != null) {
+					for (ResourceFile sourceFile : sourceSubdirs) {
+						if (sourceFile.isDirectory()) {
+							stack.push(sourceFile);
+						}
+						else {
+							List<Path> classFiles = mapper.findAndRemove(sourceFile);
+							if (classFiles != null) {
+								discrepancy.found(sourceFile, classFiles);
+							}
 						}
 					}
 				}
@@ -874,6 +884,13 @@ public class GhidraSourceBundle extends GhidraBundle {
 		}
 
 		analyzer.setProperty("Export-Package", "!*.private.*,!*.internal.*,*");
+
+		String minJava =
+			Application.getApplicationProperty(ApplicationProperties.APPLICATION_JAVA_MIN_PROPERTY);
+		if (minJava != null) {
+			analyzer.setProperty("Require-Capability",
+				"osgi.ee;filter:=\"(&(osgi.ee=JavaSE)(version>=%s))\"".formatted(minJava));
+		}
 
 		try {
 			Manifest manifest;

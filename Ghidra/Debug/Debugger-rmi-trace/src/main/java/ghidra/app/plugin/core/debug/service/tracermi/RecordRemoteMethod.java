@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,14 +17,33 @@ package ghidra.app.plugin.core.debug.service.tracermi;
 
 import java.util.Map;
 
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import javax.swing.Icon;
+
 import ghidra.debug.api.target.ActionName;
-import ghidra.debug.api.tracermi.*;
+import ghidra.debug.api.tracermi.RemoteMethod;
+import ghidra.debug.api.tracermi.RemoteParameter;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 
 public record RecordRemoteMethod(TraceRmiHandler handler, String name, ActionName action,
-		String display, String description, Map<String, RemoteParameter> parameters,
-		SchemaName retType) implements RemoteMethod {
+		String display, Icon icon, String okText, String description,
+		Map<String, RemoteParameter> parameters, SchemaName retType) implements RemoteMethod {
+
+	public RecordRemoteMethod {
+		if (display == null || display.isBlank()) {
+			display = action.display();
+		}
+		if (display == null || display.isBlank()) { // still
+			display = name;
+		}
+		if (icon == null) {
+			icon = action.icon();
+		}
+		if (okText.isEmpty() || okText.isBlank()) {
+			okText = action.okText();
+		}
+	}
+
 	@Override
 	public DefaultRemoteAsyncResult invokeAsync(Map<String, Object> arguments) {
 		Trace trace = validate(arguments);

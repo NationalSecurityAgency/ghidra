@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -385,6 +385,44 @@ public class HighFunctionDBUtil {
 		return res;
 	}
 
+	private static Variable getLocalVariable(Function function, VariableStorage storage,
+			Address pcAddr) {
+
+		if (storage.isHashStorage()) {
+
+			long hashVal = storage.getFirstVarnode().getOffset();
+			for (Variable ul : function.getLocalVariables(VariableFilter.UNIQUE_VARIABLE_FILTER)) {
+				// Note: assumes there is only one hash method used for unique locals
+				if (ul.getFirstStorageVarnode().getOffset() == hashVal) {
+					return ul;
+				}
+			}
+			return null;
+		}
+
+		int firstUseOffset = 0;
+		if (pcAddr != null) {
+			firstUseOffset = (int) pcAddr.subtract(function.getEntryPoint());
+		}
+
+		for (Variable otherVar : function.getLocalVariables()) {
+			if (otherVar.getFirstUseOffset() != firstUseOffset) {
+				// other than parameters we will have a hard time identifying
+				// local variable conflicts due to differences in scope (i.e., first-use)
+				continue;
+			}
+
+			VariableStorage otherStorage = otherVar.getVariableStorage();
+			if (otherStorage.intersects(storage)) {
+				if (otherStorage.equals(storage)) {
+					return otherVar;
+				}
+			}
+		}
+
+		return null;
+	}
+
 	/**
 	 * Low-level routine for clearing any variables in the
 	 * database which conflict with this variable and return
@@ -475,6 +513,42 @@ public class HighFunctionDBUtil {
 			}
 		}
 		return parameters[slot];
+	}
+
+	public static Variable getFunctionVariable(HighSymbol highSymbol) {
+
+		if (highSymbol == null) {
+			return null;
+		}
+
+		HighFunction highFunction = highSymbol.getHighFunction();
+		Function function = highFunction.getFunction();
+		HighVariable highVar = highSymbol.getHighVariable();
+		if (highSymbol.isParameter()) {
+
+			int slot = ((HighParam) highVar).getSlot();
+			Parameter parameter = function.getParameter(slot);
+			return parameter;
+		}
+
+		if (highSymbol.isGlobal()) {
+			return null;
+		}
+
+		VariableStorage storage = highSymbol.getStorage();
+		Address pcAddr = highSymbol.getPCAddress();
+		Variable localVariable = getLocalVariable(function, storage, pcAddr);
+
+		if (!storage.isHashStorage() && highVar != null && highVar.requiresDynamicStorage()) {
+			DynamicEntry entry = DynamicEntry.build(highVar.getRepresentative());
+			storage = entry.getStorage();
+			pcAddr = entry.getPCAdress();	// The address may change from original Varnode
+		}
+
+		if (localVariable != null) {
+			return localVariable;
+		}
+		return null;
 	}
 
 	/**
@@ -703,7 +777,8 @@ public class HighFunctionDBUtil {
 			throws InvalidInputException {
 
 		ParameterDefinition[] params = sig.getArguments();
-		FunctionDefinitionDataType fsig = new FunctionDefinitionDataType("tmpname"); // Empty datatype, will get renamed later
+		FunctionDefinitionDataType fsig =
+			new FunctionDefinitionDataType("tmpname", function.getProgram().getDataTypeManager()); // Empty datatype, will get renamed later
 		fsig.setCallingConvention(sig.getCallingConventionName());
 		fsig.setArguments(params);
 		fsig.setReturnType(sig.getReturnType());
@@ -737,6 +812,27 @@ public class HighFunctionDBUtil {
 			return null;
 		}
 		return datsym;
+	}
+
+	/**
+	 * If there is a call to a function at the given address, and the function takes variable arguments,
+	 * return the index of the first variable argument. Return -1 otherwise.
+	 * @param program is the Program
+	 * @param addr is the given address of the call
+	 * @return the index of the first variable argument or -1
+	 */
+	public static int getFirstVarArg(Program program, Address addr) {
+		for (Reference ref : program.getReferenceManager().getReferencesFrom(addr)) {
+			if (ref.isPrimary() && ref.getReferenceType().isCall()) {
+				Address callDestAddr = ref.getToAddress();
+				Function func = program.getFunctionManager().getFunctionAt(callDestAddr);
+				if (func != null && func.hasVarArgs()) {
+					return func.getParameterCount();
+				}
+				break;
+			}
+		}
+		return -1;
 	}
 
 	/**
@@ -781,48 +877,65 @@ public class HighFunctionDBUtil {
 	/**
 	 * Write a union facet to the database (UnionFacetSymbol).  Parameters provide the
 	 * pieces for building the dynamic LocalVariable.  This method clears out any preexisting
-	 * union facet with the same dynamic hash and firstUseOffset.
+	 * union facet with the same dynamic hash and firstUseOffset. The new facet can optionally
+	 * be "address based", meaning that all reads/writes of the union at the address are
+	 * controlled by this single facet.
 	 * @param function is the function affected by the union facet
 	 * @param dt is the parent data-type; a union, a pointer to a union, or a partial union
 	 * @param fieldNum is the ordinal of the desired union field
 	 * @param addr is the first use address of the facet
 	 * @param hash is the dynamic hash
+	 * @param isAddr is true if the new facet is address based
 	 * @param source is the SourceType for the LocalVariable
 	 * @throws InvalidInputException if the LocalVariable cannot be created
 	 * @throws DuplicateNameException if the (auto-generated) name is used elsewhere
 	 */
 	public static void writeUnionFacet(Function function, DataType dt, int fieldNum, Address addr,
-			long hash, SourceType source) throws InvalidInputException, DuplicateNameException {
-		if (dt instanceof PartialUnion) {
-			dt = ((PartialUnion) dt).getParent();
-		}
+			long hash, boolean isAddr, SourceType source)
+			throws InvalidInputException, DuplicateNameException {
 		int firstUseOffset = (int) addr.subtract(function.getEntryPoint());
-		String symbolName = UnionFacetSymbol.buildSymbolName(fieldNum, addr);
 		boolean nameCollision = false;
 		Variable[] localVariables =
 			function.getLocalVariables(VariableFilter.UNIQUE_VARIABLE_FILTER);
-		// Clean out any facet symbols with bad data-types
 		for (int i = 0; i < localVariables.length; ++i) {
 			Variable var = localVariables[i];
 			if (var.getName().startsWith(UnionFacetSymbol.BASENAME)) {
-				if (!UnionFacetSymbol.isUnionType(var.getDataType())) {
+				if (!UnionFacetSymbol.isUnionType(var.getDataType())) {	// Clean out any facet symbols with bad data-types
 					function.removeVariable(var);
 					localVariables[i] = null;
 				}
 			}
+			else {
+				localVariables[i] = null;		// Ignore symbols that aren't facets
+			}
 		}
+		String symbolName = UnionFacetSymbol.buildSymbolName(fieldNum, addr, isAddr);
 		Variable preexistingVar = null;
 		for (Variable var : localVariables) {
 			if (var == null) {
 				continue;
 			}
-			if (var.getFirstUseOffset() == firstUseOffset &&
+			if (isAddr && var.getFirstUseOffset() == firstUseOffset) {
+				if (preexistingVar == null) {
+					preexistingVar = var;
+				}
+				else {
+					function.removeVariable(var);	// Address based facets override all other facets at the same address
+				}
+			}
+			else if (!isAddr && var.getFirstUseOffset() == firstUseOffset &&
 				var.getFirstStorageVarnode().getOffset() == hash) {
 				preexistingVar = var;
 			}
 			else if (var.getName().startsWith(symbolName)) {
 				nameCollision = true;
 			}
+		}
+		if (dt instanceof PartialUnion) {
+			dt = ((PartialUnion) dt).getParent();
+		}
+		if (isAddr && dt instanceof Pointer) {
+			dt = ((Pointer) dt).getDataType();
 		}
 		if (nameCollision) {	// Uniquify the name if necessary
 			symbolName = symbolName + '_' + Integer.toHexString(DynamicHash.getComparable(hash));

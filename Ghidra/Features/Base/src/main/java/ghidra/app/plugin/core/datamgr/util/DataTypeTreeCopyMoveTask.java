@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -132,6 +132,15 @@ public class DataTypeTreeCopyMoveTask extends Task {
 			}
 
 			if (needToCreateAssociation()) {
+
+				// Warning! (See GP-6367): association should not really be made before copy
+				// which may return an equivalent datatype with the same name and category path
+				// and a different UniversalID. This condition results in an ORPHANed association.
+
+				// NOTE: The resulting copied datatype may end up with a different name due to a
+				// conflict (same UniversalID).  This name difference will persist without apparent 
+				// impact to the association or anyway to know this is the case.
+
 				associateDataTypes(monitor);
 			}
 
@@ -156,6 +165,11 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		int n = errors.size();
 		if (n > 1) {
 			message = "Encountered " + n + " errors copying/moving.  See the log for details";
+
+			int max = n < 10 ? n : 10;
+			for (int i = 0; i < max; i++) {
+				Msg.error(this, errors.get(i));
+			}
 		}
 
 		Msg.showError(this, gTree, "Encountered Errors Copying/Moving", message);
@@ -362,7 +376,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		DataTypeManager nodeDtm = dataType.getDataTypeManager();
 		boolean sameManager = (dtm == nodeDtm);
 
-		DataType newDt = !sameManager ? dataType.clone(nodeDtm) : dataType.copy(nodeDtm);
+		DataType newDt = !sameManager ? dataType : dataType.copy(nodeDtm);
 
 		if (!sameManager && toCategory.isRoot()) {
 			// preserve use of source category when copy to root

@@ -1,4 +1,5 @@
 ##VERSION: 2.0
 Doclets/Module.manifest||GHIDRA||||END|
+Doclets/support/GhidraStubs_README.md||GHIDRA||||END|
 sleighDevBuild.template||GHIDRA||||END|
 sleighDistBuild.template||GHIDRA||||END|

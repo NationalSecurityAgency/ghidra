@@ -1,5 +1,6 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/languages/68000.cspec||GHIDRA||||END|
 data/languages/68000.dwarf||GHIDRA||||END|
 data/languages/68000.ldefs||GHIDRA||||END|

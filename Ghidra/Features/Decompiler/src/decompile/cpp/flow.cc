@@ -198,6 +198,19 @@ PcodeOp *FlowInfo::branchTarget(PcodeOp *op) const
   return target(addr);	// Otherwise a normal address target
 }
 
+/// Replace any reference to the op being inlined with the first op of the inlined sequence.
+/// \param oldOp is the p-code op being inlined
+/// \param newOp is the first p-code op in the inlined sequence
+void FlowInfo::updateTarget(PcodeOp *oldOp,PcodeOp *newOp)
+
+{
+  map<Address,VisitStat>::iterator viter = visited.find(oldOp->getAddr());
+  if (viter != visited.end()) {				// Check if -oldOp- is a possible branch target
+    if ((*viter).second.seqnum == oldOp->getSeqNum())	// (if injection op is the first op for its address)
+      (*viter).second.seqnum = newOp->getSeqNum();	//    change the seqnum to the newOp
+  }
+}
+
 /// Check to see if the new target has been seen before. Otherwise
 /// add it to the list of addresses that need to be processed.
 /// Also check range bounds and update basic block information.
@@ -669,8 +682,8 @@ bool FlowInfo::setupCallSpecs(PcodeOp *op,FuncCallSpecs *fc)
 {
   FuncCallSpecs *res;
   res = new FuncCallSpecs(op);
-  data.opSetInput(op,data.newVarnodeCallSpecs(res),0);
   qlst.push_back(res);
+  data.opSetInput(op,data.newVarnodeCallSpecs(res),0);
 
   data.getOverride().applyPrototype(data,*res);
   queryCall(*res);
@@ -755,25 +768,10 @@ void FlowInfo::truncateIndirectJump(PcodeOp *op,JumpTable::RecoveryMode mode)
   }
 }
 
-/// \brief Test if the given p-code op is a member of an array
-///
-/// \param array is the array of p-code ops to search
-/// \param op is the given p-code op to search for
-/// \return \b true if the op is a member of the array
-bool FlowInfo::isInArray(vector<PcodeOp *> &array,PcodeOp *op)
-
-{
-  for(int4 i=0;i<array.size();++i) {
-    if (array[i] == op) return true;
-  }
-  return false;
-}
-
 void FlowInfo::generateOps(void)
 
 {
   vector<PcodeOp *> notreached;	// indirect ops that are not reachable
-  int4 notreachcnt = 0;
   clearProperties();
   addrlist.push_back(data.getAddress());
   while(!addrlist.empty())	// Recovering as much as possible except jumptables
@@ -799,10 +797,9 @@ void FlowInfo::generateOps(void)
     
     checkContainedCall();	// Check for PIC constructions
     checkMultistageJumptables();
-    while(notreachcnt < notreached.size()) {
-      tablelist.push_back(notreached[notreachcnt]);
-      notreachcnt += 1;
-    }
+    for(int4 i=0;i<notreached.size();++i)
+      tablelist.push_back(notreached[i]);
+    notreached.clear();
     if (hasInject())
       injectPcode();
   } while(!tablelist.empty());	// Inlining or multistage may have added new indirect branches
@@ -1046,7 +1043,7 @@ void FlowInfo::xrefInlinedBranch(PcodeOp *op)
     setupCallindSpecs(op,(FuncCallSpecs *)0);
   else if (op->code() == CPUI_BRANCHIND) {
     JumpTable *jt = data.linkJumpTable(op);
-    if (jt == (JumpTable *)0)
+    if (jt == (JumpTable *)0 || jt->numEntries() == 0)
       tablelist.push_back(op); // Didn't recover a jumptable
   }
 }
@@ -1120,12 +1117,6 @@ void FlowInfo::inlineEZClone(const FlowInfo &inlineflow,const Address &calladdr)
 bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address &retaddr)
 
 {
-  if (inline_recursion->find( inlinefd->getAddress() ) != inline_recursion->end()) {
-    // This function has already been included with current inlining
-    inline_head->warning("Could not inline here",op->getAddr());
-    return false;
-  }
-  
   if (!inlinefd->getFuncProto().isNoReturn()) {
     list<PcodeOp *>::iterator iter = op->getInsertIter();
     ++iter;
@@ -1142,8 +1133,6 @@ bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address
     // If the inlining "jumps back" this starts a new basic block
     data.opMarkStartBasic(nextop);
   }
-
-  inline_recursion->insert(inlinefd->getAddress());
   return true;
 }
 
@@ -1197,11 +1186,7 @@ void FlowInfo::doInjection(InjectPayload *payload,InjectContext &icontext,PcodeO
     obank.markIncidentalCopy(firstop, lastop);
   obank.moveSequenceDead(firstop,lastop,op); // Move the injection to right after the call
 
-  map<Address,VisitStat>::iterator viter = visited.find(op->getAddr());
-  if (viter != visited.end()) {				// Check if -op- is a possible branch target
-    if ((*viter).second.seqnum == op->getSeqNum())	// (if injection op is the first op for its address)
-      (*viter).second.seqnum = firstop->getSeqNum();	//    change the seqnum to the first injected op
-  }
+  updateTarget(op,firstop);		// Replace -op- with -firstop- in the target map
   // Get rid of the original call
   data.opDestroyRaw(op);
 }
@@ -1243,11 +1228,31 @@ bool FlowInfo::inlineSubFunction(FuncCallSpecs *fc)
 {
   Funcdata *fd = fc->getFuncdata();
   if (fd == (Funcdata *)0) return false;
-  PcodeOp *op = fc->getOp();
-  Address retaddr;
 
-  if (!data.inlineFlow( fd, *this, op))
+  if (inline_head == (Funcdata *)0) {
+    // This is the top level of inlining
+    inline_head = &data;	// Set up head of inlining
+    inline_recursion = &inline_base;
+  }
+  inline_recursion->insert(data.getAddress()); // Insert current function
+  if (inline_recursion->find( fd->getAddress() ) != inline_recursion->end()) {
+    // This function has already been included with current inlining
+    inline_head->warning("Could not inline here",fc->getOp()->getAddr());
     return false;
+  }
+
+  int4 res = data.inlineFlow( fd, *this, fc->getOp());
+  if (res < 0)
+    return false;
+  else if (res == 0) {	// easy model
+    // Remove inlined function from list so it can be inlined again, even if it also inlines
+    inline_recursion->erase(fd->getAddress());
+  }
+  else if (res == 1) {	// hard model
+    // Add inlined function to recursion list, even if it contains no inlined calls,
+    // to prevent parent from inlining it twice
+    inline_recursion->insert(fd->getAddress());
+  }
 
   // Changing CALL to JUMP may make some original code unreachable
   setPossibleUnreachable();
@@ -1306,17 +1311,6 @@ void FlowInfo::deleteCallSpec(FuncCallSpecs *fc)
 void FlowInfo::injectPcode(void)
 
 {
-  if (inline_head == (Funcdata *)0) {
-    // This is the top level of inlining
-    inline_head = &data;	// Set up head of inlining
-    inline_recursion = &inline_base;
-    inline_recursion->insert(data.getAddress()); // Insert ourselves
-    //    inline_head = (Funcdata *)0;
-  }
-  else {
-    inline_recursion->insert(data.getAddress()); // Insert ourselves
-  }
-
   for(int4 i=0;i<injectlist.size();++i) {
     PcodeOp *op = injectlist[i];
     if (op == (PcodeOp *)0) continue;
@@ -1435,7 +1429,7 @@ void FlowInfo::recoverJumpTables(vector<JumpTable *> &newTables,vector<PcodeOp *
 	truncateIndirectJump(op,mode); // Treat the indirect jump as a call
     }
     else if (jt->isPartial()) {
-      if (tablelist.size() > 1 && !isInArray(notreached,op)) {
+      if (tablelist.size() > 1 && jt->getRecoverCount() <= 1) {
 	// If the recovery is incomplete with current flow AND there is more flow to generate,
 	//     AND we haven't tried to recover this table before
 	notreached.push_back(op); // Save this op so we can try to recover the table again later

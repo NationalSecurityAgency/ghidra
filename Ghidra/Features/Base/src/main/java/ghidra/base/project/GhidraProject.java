@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
-import ghidra.app.util.importer.*;
+import ghidra.app.util.importer.ProgramLoader;
 import ghidra.app.util.opinion.*;
 import ghidra.framework.Application;
 import ghidra.framework.client.*;
@@ -40,7 +40,6 @@ import ghidra.test.ProjectTestUtils;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Helper class for using Ghidra in a "batch" mode. This class provides methods
@@ -67,10 +66,14 @@ public class GhidraProject {
 	 * @param projectsDir the directory containing the Ghidra project.
 	 * @param projectName the name of the ghidra project.
 	 * @return an open ghidra project.
-	 * @throws IOException if there was a problem accessing the project
+	 * @throws NotFoundException if the file for the project was
+	 * not found.
+	 * @throws NotOwnerException if the project owner is not the user
+	 * @throws LockException if the project is already opened by another user
+	 * @throws IOException if an IO-related problem occurred
 	 */
 	public static GhidraProject openProject(String projectsDir, String projectName)
-			throws IOException {
+			throws NotFoundException, NotOwnerException, LockException, IOException {
 		return new GhidraProject(projectsDir, projectName, false);
 	}
 
@@ -82,15 +85,19 @@ public class GhidraProject {
 	 * @param projectName the name of the ghidra project.
 	 * @param restoreProject if true the project tool state is restored
 	 * @return an open ghidra project.
-	 * @throws IOException if there was a problem accessing the project
+	 * @throws NotFoundException if the file for the project was not found.
+	 * @throws NotOwnerException if the project owner is not the user
+	 * @throws LockException if the project is already opened by another user
+	 * @throws IOException if an IO-related problem occurred
 	 */
 	public static GhidraProject openProject(String projectsDir, String projectName,
-			boolean restoreProject) throws IOException {
+			boolean restoreProject)
+			throws NotFoundException, NotOwnerException, LockException, IOException {
 		return new GhidraProject(projectsDir, projectName, restoreProject);
 	}
 
 	private GhidraProject(String projectParentDir, String projectName, boolean restoreProject)
-			throws IOException {
+			throws NotFoundException, NotOwnerException, LockException, IOException {
 		if (!ghidra.framework.Application.isInitialized()) {
 			throw new AssertException("The GhidraProject requires the system to be " +
 				"initialized before usage.  See GhidraApplication.initialize() for more " +
@@ -98,25 +105,8 @@ public class GhidraProject {
 		}
 
 		ProjectLocator projectLocator = new ProjectLocator(projectParentDir, projectName);
-		try {
-			project = projectManager.openProject(projectLocator, restoreProject, false);
-			if (project == null) {
-				throw new IOException("Failed to open project: " + projectName);
-			}
-			projectData = project.getProjectData();
-		}
-		catch (MalformedURLException e) {
-			throw new IOException("Bad Project URL: " + projectLocator, e);
-		}
-		catch (NotFoundException e) {
-			throw new IOException("Project not found: " + projectLocator, e);
-		}
-		catch (NotOwnerException e) {
-			throw new IOException("Not project owner: " + projectName, e);
-		}
-		catch (LockException e) {
-			throw new IOException("Project is locked: " + projectName, e);
-		}
+		project = projectManager.openProject(projectLocator, restoreProject, false);
+		projectData = project.getProjectData();
 	}
 
 	/**
@@ -128,7 +118,7 @@ public class GhidraProject {
 	 *
 	 * @param projectDirPath the directory path to contain the new Ghidra project.
 	 * @param projectName the name of the project to be created.
-	 * @param temporary if true, deletes the the project when it is closed - useful for testing.
+	 * @param temporary if true, deletes the project when it is closed - useful for testing.
 	 * @return an open ghidra project.
 	 * @throws IOException if there was a problem accessing the project
 	 */
@@ -146,9 +136,10 @@ public class GhidraProject {
 	 * 
 	 * @param host Ghidra Server host
 	 * @param port Ghidra Server port (0 = use default port)
-	 * @param repositoryName
+	 * @param repositoryName The repository name
 	 * @param createIfNeeded if true repository will be created if it does not exist
-	 * @throws DuplicateNameException
+	 * @throws DuplicateNameException if the repository name already exists
+	 * @return A {@link RepositoryAdapter handle} to the new repository
 	 */
 	public static RepositoryAdapter getServerRepository(String host, int port,
 			String repositoryName, boolean createIfNeeded) throws DuplicateNameException {
@@ -226,15 +217,15 @@ public class GhidraProject {
 	}
 
 	/**
-	 * Returns the underlying Project instance or null if project was opened for
-	 * READ access only.
+	 * {@return the underlying Project instance or null if project was opened for
+	 * READ access only.}
 	 */
 	public Project getProject() {
 		return project;
 	}
 
 	/**
-	 * Returns the underlying ProjectData instance.
+	 * {@return the underlying ProjectData instance.}
 	 */
 	public ProjectData getProjectData() {
 		return projectData;
@@ -297,7 +288,7 @@ public class GhidraProject {
 	 * Opens a program.
 	 *
 	 * @param folderPath
-	 *            the path of the program within the project. ("\" is root)
+	 *            the path of the program within the project. ("/" is root)
 	 * @param programName
 	 *            the name of the program to open.
 	 * @param readOnly
@@ -376,7 +367,7 @@ public class GhidraProject {
 	}
 
 	/**
-	 * Get the root folder for the Ghidra project.
+	 * {@return the root folder for the Ghidra project.}
 	 */
 	public DomainFolder getRootFolder() {
 		return projectData.getRootFolder();
@@ -490,7 +481,7 @@ public class GhidraProject {
 					throw new DuplicateFileException("File already exists: " + file);
 				}
 			}
-			program.saveToPackedFile(file, TaskMonitorAdapter.DUMMY);
+			program.saveToPackedFile(file, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e1) {
 			throw new IOException("Cancelled");
@@ -563,9 +554,9 @@ public class GhidraProject {
 	}
 
 	/**
-	 * Returns a PropertList containing all the analysis option properties that
+	 * {@return a PropertList containing all the analysis option properties that
 	 * can be set. Changing the value of the analysis properties will affect
-	 * what happens when the analyze call is made.
+	 * what happens when the analyze call is made.}
 	 *
 	 * @param program
 	 *            the program whose analysis options are to be set.
@@ -582,7 +573,7 @@ public class GhidraProject {
 	 * @param program
 	 *            the program on which the command is to be applied.
 	 */
-	public void execute(Command cmd, Program program) {
+	public void execute(Command<Program> cmd, Program program) {
 		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 		cmd.applyTo(program);
 		mgr.initializeOptions();
@@ -602,67 +593,196 @@ public class GhidraProject {
 		openPrograms.put(program, id);
 	}
 
-	public Program importProgram(File file, Language language,
-			CompilerSpec compilerSpec) throws CancelledException, DuplicateNameException,
-			InvalidNameException, VersionException, IOException {
-		MessageLog messageLog = new MessageLog();
-		LoadResults<Program> loadResults = AutoImporter.importByLookingForLcs(file, project, null,
-			language, compilerSpec, this, messageLog, MONITOR);
-		Program program = loadResults.getPrimaryDomainObject();
-		loadResults.releaseNonPrimary(this);
-		initializeProgram(program, false);
-		return program;
+	/**
+	 * Automatically imports the given {@link File} with the best matching {@link Loader} that
+	 * supports the given language and compiler specification.
+	 * <p>
+	 * NOTE: It is the responsibility of the caller to release the returned {@link Program} 
+	 * with {@link Program#release(Object)} when it is no longer needed, with {@code this} 
+	 * {@link GhidraProject} instance as the consumer.
+	 * 
+	 * @param file The {@link File} to import
+	 * @param language The desired {@link Language}
+	 * @param compilerSpec The desired {@link CompilerSpec compiler specification}
+	 * @return The imported {@link Program}
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws LanguageNotFoundException if there was a problem getting the language		
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if there was a problem loading
+	 * @deprecated Use {@link ProgramLoader}
+	 */
+	@Deprecated(since = "12.0", forRemoval = true)
+	public Program importProgram(File file, Language language, CompilerSpec compilerSpec)
+			throws CancelledException, VersionException, LanguageNotFoundException, LoadException,
+			IOException {
+		try (LoadResults<Program> loadResults = ProgramLoader.builder()
+				.source(file)
+				.project(project)
+				.language(language)
+				.compiler(compilerSpec)
+				.monitor(MONITOR)
+				.load()) {
+			Program program = loadResults.getPrimaryDomainObject(this);
+			initializeProgram(program, false);
+			return program;
+		}
 	}
 
+	/**
+	 * Automatically imports the given {@link File} with the best matching {@link Loader} that
+	 * supports the given processor.
+	 * <p>
+	 * NOTE: It is the responsibility of the caller to release the returned {@link Program} 
+	 * with {@link Program#release(Object)} when it is no longer needed, with {@code this} 
+	 * {@link GhidraProject} instance as the consumer.
+	 * 
+	 * @param file The {@link File} to import
+	 * @param processor The desired {@link Processor}
+	 * @return The imported {@link Program}
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws LanguageNotFoundException if there was a problem getting the language		
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if there was a problem loading
+	 * @deprecated Use {@link ProgramLoader}
+	 */
+	@Deprecated(since = "12.0", forRemoval = true)
 	public Program importProgram(File file, Processor processor) throws CancelledException,
-			DuplicateNameException, InvalidNameException, VersionException, IOException {
+			VersionException, LanguageNotFoundException, LoadException, IOException {
 		LanguageService svc = DefaultLanguageService.getLanguageService();
 		Language language = svc.getDefaultLanguage(processor);
 		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
 		return importProgram(file, language, compilerSpec);
 	}
 
+	/**
+	 * Automatically imports the given {@link File} with the given {@link Loader}.
+	 * <p>
+	 * NOTE: It is the responsibility of the caller to release the returned {@link Program} 
+	 * with {@link Program#release(Object)} when it is no longer needed, with {@code this} 
+	 * {@link GhidraProject} instance as the consumer.
+	 * 
+	 * @param file The {@link File} to import
+	 * @param loaderClass The desired {@link Loader}
+	 * @return The imported {@link Program}
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws LanguageNotFoundException if there was a problem getting the language		
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if there was a problem loading
+	 * @deprecated Use {@link ProgramLoader}
+	 */
+	@Deprecated(since = "12.0", forRemoval = true)
 	public Program importProgram(File file, Class<? extends Loader> loaderClass)
-			throws CancelledException, DuplicateNameException, InvalidNameException,
-			VersionException, IOException {
-		MessageLog messageLog = new MessageLog();
-		LoadResults<Program> loadResults = AutoImporter.importByUsingSpecificLoaderClass(file,
-			project, null, loaderClass, null, this, messageLog, MONITOR);
-		Program program = loadResults.getPrimaryDomainObject();
-		loadResults.releaseNonPrimary(this);
-		initializeProgram(program, false);
-		return program;
+			throws CancelledException, VersionException, LanguageNotFoundException, LoadException,
+			IOException {
+		try (LoadResults<Program> loadResults = ProgramLoader.builder()
+				.source(file)
+				.project(project)
+				.loaders(loaderClass)
+				.monitor(MONITOR)
+				.load()) {
+			Program program = loadResults.getPrimaryDomainObject(this);
+			initializeProgram(program, false);
+			return program;
+		}
 	}
 
+	/**
+	 * Automatically imports the given {@link File} with the given {@link Loader}, {@link Language},
+	 * and {@link CompilerSpec compiler specification}.
+	 * <p>
+	 * NOTE: It is the responsibility of the caller to release the returned {@link Program} 
+	 * with {@link Program#release(Object)} when it is no longer needed, with {@code this} 
+	 * {@link GhidraProject} instance as the consumer.
+	 * 
+	 * @param file The {@link File} to import
+	 * @param loaderClass The desired {@link Loader}
+	 * @param language The desired {@link Language}
+	 * @param compilerSpec The desired {@link CompilerSpec compiler specification}
+	 * @return The imported {@link Program}
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws LanguageNotFoundException if there was a problem getting the language		
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if there was a problem loading
+	 * @deprecated Use {@link ProgramLoader}
+	 */
+	@Deprecated(since = "12.0", forRemoval = true)
 	public Program importProgram(File file, Class<? extends Loader> loaderClass, Language language,
-			CompilerSpec compilerSpec) throws CancelledException, DuplicateNameException,
-			InvalidNameException, VersionException, IOException {
-		MessageLog messageLog = new MessageLog();
-		SingleLoaderFilter loaderFilter = new SingleLoaderFilter(loaderClass, null);
-		LcsHintLoadSpecChooser opinionChoose = new LcsHintLoadSpecChooser(language, compilerSpec);
-		LoadResults<Program> loadResults =
-			AutoImporter.importFresh(file, project, null, this, messageLog, MONITOR, loaderFilter,
-				opinionChoose, null, new LoaderArgsOptionChooser(loaderFilter));
-		loadResults.releaseNonPrimary(this);
-		return loadResults.getPrimaryDomainObject();
+			CompilerSpec compilerSpec) throws CancelledException, VersionException,
+			LanguageNotFoundException, LoadException, IOException {
+		try (LoadResults<Program> loadResults = ProgramLoader.builder()
+				.source(file)
+				.project(project)
+				.loaders(loaderClass)
+				.language(language)
+				.compiler(compilerSpec)
+				.monitor(MONITOR)
+				.load()) {
+			Program program = loadResults.getPrimaryDomainObject(this);
+			initializeProgram(program, false);
+			return program;
+		}
 	}
 
-	public Program importProgram(File file) throws CancelledException,
-			DuplicateNameException, InvalidNameException, VersionException, IOException {
-		MessageLog messageLog = new MessageLog();
-		LoadResults<Program> loadResults = AutoImporter.importByUsingBestGuess(file, project,
-			null, this, messageLog, MONITOR);
-		Program program = loadResults.getPrimaryDomainObject();
-		loadResults.releaseNonPrimary(this);
-		initializeProgram(program, false);
-		return program;
+	/**
+	 * Automatically imports the given {@link File}.
+	 * <p>
+	 * NOTE: It is the responsibility of the caller to release the returned {@link Program} 
+	 * with {@link Program#release(Object)} when it is no longer needed, with {@code this} 
+	 * {@link GhidraProject} instance as the consumer.
+	 * 
+	 * @param file The {@link File} to import
+	 * @return The imported {@link Program}
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws LanguageNotFoundException if there was a problem getting the language		
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if there was a problem loading
+	 * @deprecated Use {@link ProgramLoader}
+	 */
+	@Deprecated(since = "12.0", forRemoval = true)
+	public Program importProgram(File file) throws CancelledException, VersionException,
+			LanguageNotFoundException, LoadException, IOException {
+		try (LoadResults<Program> loadResults = ProgramLoader.builder()
+				.source(file)
+				.project(project)
+				.monitor(MONITOR)
+				.load()) {
+			Program program = loadResults.getPrimaryDomainObject(this);
+			initializeProgram(program, false);
+			return program;
+		}
 	}
 
-	public Program importProgramFast(File file) throws CancelledException, DuplicateNameException,
-			InvalidNameException, VersionException, IOException {
-		Program program = importByStealingCodeFromAutoImporterByUsingBestGuess(file);
-		initializeProgram(program, false);
-		return program;
+	/**
+	 * Automatically imports the given {@link File}.
+	 * <p>
+	 * NOTE: It is the responsibility of the caller to release the returned {@link Program} 
+	 * with {@link Program#release(Object)} when it is no longer needed, with {@code this} 
+	 * {@link GhidraProject} instance as the consumer.
+	 * 
+	 * @param file The {@link File} to import
+	 * @return The imported {@link Program}
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws LanguageNotFoundException if there was a problem getting the language		
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if there was a problem loading
+	 * @deprecated Use {@link ProgramLoader}
+	 */
+	@Deprecated(since = "12.0", forRemoval = true)
+	public Program importProgramFast(File file) throws CancelledException, VersionException,
+			LanguageNotFoundException, LoadException, IOException {
+		return importProgram(file);
 	}
 
 //==================================================================================================
@@ -680,21 +800,6 @@ public class GhidraProject {
 		if (!ProjectTestUtils.deleteProject(projectDirectoryPath, projectName)) {
 			throw new IllegalStateException("Unable to delete test project");
 		}
-	}
-
-	private Program importByStealingCodeFromAutoImporterByUsingBestGuess(File file)
-			throws CancelledException, DuplicateNameException, InvalidNameException,
-			VersionException, IOException {
-
-		MessageLog messageLog = new MessageLog();
-
-		String programNameOverride = null;
-		LoadResults<Program> loadResults =
-			AutoImporter.importFresh(file, project, null, this, messageLog, MONITOR,
-				LoaderService.ACCEPT_ALL, LoadSpecChooser.CHOOSE_THE_FIRST_PREFERRED,
-				programNameOverride, OptionChooser.DEFAULT_OPTIONS);
-		loadResults.releaseNonPrimary(this);
-		return loadResults.getPrimaryDomainObject();
 	}
 
 //==================================================================================================

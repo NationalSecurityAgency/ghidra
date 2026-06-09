@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,12 @@
  */
 package docking.widgets.tree;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
+import org.apache.commons.collections4.IteratorUtils;
 
 import docking.widgets.tree.internal.InProgressGTreeNode;
+import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -123,5 +125,15 @@ public abstract class GTreeSlowLoadingNode extends GTreeLazyNode {
 				monitor.setProgress(progressValue);
 			}
 		}
+	}
+
+	@Override
+	public Iterator<GTreeNode> iterator(boolean depthFirst) {
+		if (Swing.isSwingThread()) {
+			Msg.warn(this, "Threaded tree nodes cannot be iterated on the Swing thread. " +
+				"Change the call to this method to be run in a background task");
+			return IteratorUtils.emptyIterator();
+		}
+		return super.iterator(depthFirst);
 	}
 }

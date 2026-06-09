@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import ghidra.app.plugin.exceptionhandlers.gcc.*;
 import ghidra.app.util.bin.LEB128Info;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.SignedLeb128DataType;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.task.TaskMonitor;
@@ -83,7 +83,7 @@ public class LSDAActionRecord extends GccAnalysisClass {
 		addr = createNextActionRef(addr);
 
 		SetCommentCmd commentCmd =
-			new SetCommentCmd(address, CodeUnit.PLATE_COMMENT, "(LSDA) Action Record");
+			new SetCommentCmd(address, CommentType.PLATE, "(LSDA) Action Record");
 		commentCmd.applyTo(program);
 
 		nextAddress = addr;
@@ -98,7 +98,7 @@ public class LSDAActionRecord extends GccAnalysisClass {
 		typeFilter = (int) sleb128.asLong();
 
 		createAndCommentData(program, addr, SignedLeb128DataType.dataType, comment,
-			CodeUnit.EOL_COMMENT);
+			CommentType.EOL);
 
 		size += sleb128.getLength();
 
@@ -120,7 +120,7 @@ public class LSDAActionRecord extends GccAnalysisClass {
 		}
 
 		createAndCommentData(program, addr, SignedLeb128DataType.dataType, comment,
-			CodeUnit.EOL_COMMENT);
+			CommentType.EOL);
 
 		size += sleb128.getLength();
 

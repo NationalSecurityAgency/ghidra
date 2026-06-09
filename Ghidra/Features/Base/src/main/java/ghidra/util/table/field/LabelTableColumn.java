@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,6 +51,10 @@ public class LabelTableColumn
 	@Override
 	public String getValue(ProgramLocation rowObject, Settings settings, Program program,
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
+		if (rowObject == null) {
+			return null; // This can happen when using mapped table columns
+		}
+
 		if (rowObject instanceof LabelFieldLocation) {
 			LabelFieldLocation labelFieldLocation = (LabelFieldLocation) rowObject;
 			return labelFieldLocation.getSymbolPath().getName();
@@ -70,6 +74,12 @@ public class LabelTableColumn
 
 	private Symbol getSymbol(ProgramLocation rowObject, Program program)
 			throws IllegalArgumentException {
+		if (rowObject == null) {
+			// this can happen when a bookmark is deleted and we use a mapping column that can no
+			// longer find the bookmark for the BookmarkRowObject
+			return null;
+		}
+
 		ProgramLocation location = rowObject;
 		if (rowObject instanceof VariableLocation) {
 			Variable var = ((VariableLocation) rowObject).getVariable();

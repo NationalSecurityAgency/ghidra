@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,28 +28,100 @@ import org.junit.Test;
 import db.Transaction;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
+import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRangeImpl;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.TraceWriter;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.target.DBTraceObjectManager;
-import ghidra.trace.database.target.DBTraceObjectManagerTest;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.NumericUtilities;
 
+@SuppressWarnings("javadoc")
 public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest {
+
+	PcodeEmulator createEmulator(TracePlatform platform, Writer writer) {
+		return new PcodeEmulator(platform.getLanguage(), writer.callbacks());
+	}
+
+	@Test
+	public void testSetVarSize0() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			initTrace(tb, """
+					RIP = 0x00400000;
+					""",
+				List.of());
+
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
+
+			emu.getSharedState().setVar(tb.addr(0x00400000), 0, false, tb.arr());
+			TraceWriter tw = (TraceWriter) writer;
+			assertEquals(tb.set(), tw.memWritten);
+		}
+	}
+
+	@Test
+	public void testGetVarSize0Uninit() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			initTrace(tb, """
+					RIP = 0x00400000;
+					""",
+				List.of());
+
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
+			PcodeExecutorState<byte[]> state = emu.getSharedState();
+			Address addr = tb.addr(0x00400000);
+
+			byte[] result = state.getVar(addr, 0, false, Reason.EXECUTE_READ);
+			assertArrayEquals(new byte[0], result);
+
+			assertNull(state.getNextEntryInternal(addr.getAddressSpace(), 0));
+		}
+	}
+
+	@Test
+	public void testGetVarSize0Init() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			// Put some known data in a place likely to show in erroneous "uninitialized" set
+			initTrace(tb, """
+					RIP = 0x00400000;
+					*:8 RIP = 0xdeadbeefcafeface;
+					""",
+				List.of());
+
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
+			PcodeExecutorState<byte[]> state = emu.getSharedState();
+			Address addr = tb.addr(0x00400000);
+			state.setVar(addr, 4, false, tb.arr(1, 2, 3, 4));
+
+			var entry = state.getNextEntryInternal(addr.getAddressSpace(), 0);
+			assertEquals(0x00400000L, entry.getKey().longValue());
+			assertArrayEquals(tb.arr(1, 2, 3, 4), entry.getValue());
+			assertNull(state.getNextEntryInternal(addr.getAddressSpace(), 0x00400004));
+
+			byte[] result = state.getVar(addr, 0, false, Reason.EXECUTE_READ);
+			assertArrayEquals(tb.arr(), result);
+
+			entry = state.getNextEntryInternal(addr.getAddressSpace(), 0);
+			assertEquals(0x00400000L, entry.getKey().longValue());
+			assertArrayEquals(tb.arr(1, 2, 3, 4), entry.getValue());
+			assertNull(state.getNextEntryInternal(addr.getAddressSpace(), 0x00400004));
+		}
+	}
 
 	/**
 	 * Test a single instruction
@@ -69,7 +141,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				List.of(
 					"PUSH 0x0dedbeef"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 
@@ -80,7 +153,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				TraceSleighUtils.evaluate("*:8 0x0010fff8:8", tb.trace, 0, thread, 0));
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x0010fff8),
@@ -108,13 +181,14 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					"PUSH 0x0dedbeef",
 					"PUSH 0x0badf00d"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 			emuThread.stepInstruction();
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x0010fff0),
@@ -148,7 +222,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					"MOV EAX,0x0dedbeef",   // 5 bytes
 					"MOV ECX,0x0badf00d")); // 5 bytes
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 
@@ -159,7 +234,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			emuThread.stepInstruction();
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x00110000),
@@ -209,7 +284,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				asm.patchProgram(mov, tb.addr(0x00401000));
 			}
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 			emuThread.stepInstruction();
@@ -225,7 +301,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			emuThread.stepInstruction();
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x00110000),
@@ -252,12 +328,13 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				List.of(
 					"imm r0, #911")); // decimal
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x00110000),
@@ -285,13 +362,14 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					"imm r0, #860",
 					"imm r1, #861"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction(); // brds and 1st imm executed
 			emuThread.stepInstruction(); // 3rd imm executed
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x00400008),
@@ -300,6 +378,39 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				TraceSleighUtils.evaluate("r0", tb.trace, 1, thread, 0));
 			assertEquals(BigInteger.valueOf(861),
 				TraceSleighUtils.evaluate("r1", tb.trace, 1, thread, 0));
+		}
+	}
+
+	/**
+	 * This tests the inst_next2 symbol
+	 */
+	@Test
+	public void testSK() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "Toy:BE:64:default")) {
+			TraceThread thread = initTrace(tb, """
+					pc = 0x00400000;
+					sp = 0x00110000;
+					""",
+				List.of(
+					"imm r0, #123", // decimal
+					"sk",
+					"imm r0, #911" // decimal
+				));
+
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.stepInstruction(); // imm 123
+			emuThread.stepInstruction(); // sk
+
+			try (Transaction tx = tb.startTransaction()) {
+				writer.writeDown(1);
+			}
+
+			assertEquals(BigInteger.valueOf(0x00400006),
+				TraceSleighUtils.evaluate("pc", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(123),
+				TraceSleighUtils.evaluate("r0", tb.trace, 1, thread, 0));
 		}
 	}
 
@@ -328,14 +439,15 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					"XOR byte ptr [0x00400007], 0xcc",  // 7 bytes
 					"MOV EAX,0x0dedbeef"));            // 5 bytes
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 
 			emuThread.stepInstruction();
 			emuThread.stepInstruction();
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x00110000),
@@ -365,7 +477,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					"PUSH 0x0dedbeef",
 					"PUSH 0x0badf00d"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			assertNull(emuThread.getFrame());
 
@@ -388,7 +501,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			assertNull(emuThread.getFrame());
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x0040000a),
@@ -432,7 +545,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					"PUSH 0x0dedbeef",
 					"PUSH 0x0badf00d"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0) {
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = new PcodeEmulator(tb.language, writer.callbacks()) {
 				@Override
 				protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
 					return hexLib;
@@ -479,7 +593,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					"PUSH 0x0dedbeef",
 					"PUSH 0x0badf00d"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0) {
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = new PcodeEmulator(tb.language, writer.callbacks()) {
 				@Override
 				protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
 					return hexLib;
@@ -512,7 +627,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			dumped.delete(0, dumped.length());
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x0badf00dL),
@@ -535,7 +650,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					"PUSH 0x0dedbeef",
 					"PUSH 0x0badf00d"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			emu.addBreakpoint(tb.addr(0x00400000), "RAX == 1");
 			emu.addBreakpoint(tb.addr(0x00400005), "RAX == 0");
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
@@ -567,12 +683,13 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				List.of(
 					"clz r1, r0"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(16),
@@ -600,7 +717,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				List.of(
 					"MOVAPS XMM0, xmmword ptr [0x00600000]"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 
@@ -609,7 +727,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				emuThread.getState().getVar(pc, Reason.INSPECT));
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(new BigInteger("0123456789abcdeffedcba9876543210", 16),
@@ -637,7 +755,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				List.of(
 					"SAR EAX, CL"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 
@@ -646,7 +765,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				emuThread.getState().getVar(pc, Reason.INSPECT));
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x7ffffff),
@@ -666,13 +785,14 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					"XOR AH, AH",
 					"MOV RCX, RAX"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 			emuThread.stepInstruction();
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x12340078),
@@ -706,7 +826,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			tb.trace.getMemoryManager().getBytes(0, tb.addr(0x00400000), buf);
 			assertArrayEquals(tb.arr(0x48, 0x89, 0xc1), buf.array());
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			// TODO: Seems the Trace-bound thread ought to know to do this in reInitialize()
 			ctxVal = ctxManager.getValueWithDefault(tb.host, ctxReg, 0, tb.addr(0x00400000));
@@ -714,7 +835,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			emuThread.stepInstruction();
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x00400003),
@@ -743,12 +864,13 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				List.of(
 					"MOV EAX, dword ptr [RBP + -0x4]"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x12345678),
@@ -776,7 +898,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				List.of(
 					"MOV EAX, dword ptr [RBP + -0x2]"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 		}
@@ -798,7 +921,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				List.of(
 					"MOV EAX, dword ptr [EBP + -0x2]"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 		}
@@ -820,7 +944,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				List.of(
 					"unimpl"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 		}
@@ -837,7 +962,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					""",
 				List.of()); // An empty, uninitialized program
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 		}
@@ -859,12 +985,13 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				List.of(
 					"mov.w [W1], W0"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x000102),
@@ -891,9 +1018,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			TraceThread thread;
 			TraceGuestPlatform x64;
 			try (Transaction tx = tb.startTransaction()) {
-				SchemaContext ctx = XmlSchemaContext.deserialize(DBTraceObjectManagerTest.XML_CTX);
 				DBTraceObjectManager objects = tb.trace.getObjectManager();
-				objects.createRootObject(ctx.getSchema(new SchemaName("Session")));
+				tb.createRootObject();
 				thread = tb.getOrAddThread("Targets[0].Threads[0]", 0);
 
 				mm.addRegion("Targets[0].Memory[bin:.text]", Lifespan.nowOn(0),
@@ -908,7 +1034,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				x64.addMappedRegisterRange();
 				x64.addMappedRange(tb.addr(0x00000000), tb.addr(x64, 0x00400000), 0x10000);
 				x64.addMappedRange(tb.addr(0x20000000), tb.addr(x64, 0x00100000), 0x10000);
-				objects.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0].Registers"))
+				objects.createObject(KeyPath.parse("Targets[0].Threads[0].Registers"))
 						.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 				tb.exec(x64, 0, thread, 0, """
@@ -922,7 +1048,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				mm.putBytes(0, tb.addr(0x00000000), ByteBuffer.wrap(buf.getBytes()));
 			}
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(x64, 0);
+			Writer writer = createWriter(x64, 0);
+			PcodeEmulator emu = createEmulator(x64, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 
@@ -935,7 +1062,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				TraceSleighUtils.evaluate(changedExpr, tb.trace, 0, thread, 0));
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(x64, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x0010fff8),
@@ -961,7 +1088,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					"mov r0,r7", // Assembler doesn't handle context flow
 					"mov r1,r7"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 			emuThread.stepPcodeOp(); // decode second
@@ -972,7 +1100,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			emuThread.finishInstruction();
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x00400006),
@@ -983,6 +1111,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				TraceSleighUtils.evaluate("r1", tb.trace, 1, thread, 0));
 		}
 	}
+
 	@Test
 	public void testITE_ContextFlow() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "ARM:LE:32:v8T")) {
@@ -1000,7 +1129,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					"mov r1,r7", // "
 					"mov r2,r7"));
 
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 			emuThread.stepPcodeOp(); // decode second
@@ -1014,7 +1144,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			emuThread.finishInstruction();
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 1);
+				writer.writeDown(1);
 			}
 
 			assertEquals(BigInteger.valueOf(0x00400008),
@@ -1025,6 +1155,29 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				TraceSleighUtils.evaluate("r1", tb.trace, 1, thread, 0));
 			assertEquals(BigInteger.valueOf(0xbeef), // r2 Affected
 				TraceSleighUtils.evaluate("r2", tb.trace, 1, thread, 0));
+		}
+	}
+
+	@Test
+	public void testReadUninit() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "Toy:BE:64:default")) {
+			initTrace(tb, """
+					r0 = 0x00600000;
+					*:8 r0 = 0x1122334455667788;
+					""",
+				List.of());
+
+			Writer writer = createWriter(tb.host, 0);
+			PcodeEmulator emu = createEmulator(tb.host, writer);
+
+			AddressSpace space = emu.getLanguage().getDefaultDataSpace();
+
+			// Cause a gap in "known-but-uninitialized"
+			assertArrayEquals(bytes(0x33, 0x44, 0x55, 0x66),
+				emu.getSharedState().getVar(space, 0x00600002, 4, false, Reason.EXECUTE_READ));
+			// Now validate the read across that gap
+			assertArrayEquals(bytes(0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88),
+				emu.getSharedState().getVar(space, 0x00600000, 8, false, Reason.EXECUTE_READ));
 		}
 	}
 }

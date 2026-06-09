@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,7 @@ import com.google.gson.JsonArray;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.symbol.Equate;
-import ghidra.program.model.symbol.EquateReference;
-import ghidra.program.model.symbol.EquateTable;
+import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import sarif.export.AbstractExtWriter;
@@ -52,17 +50,12 @@ public class SarifEquateRefWriter extends AbstractExtWriter {
 
 		Iterator<Equate> iter = equateTable.getEquates();
 		while (iter.hasNext()) {
-			if (monitor.isCancelled()) {
-				throw new CancelledException();
-			}
 			Equate equate = iter.next();
 			String name = equate.getName();
 			long value = equate.getValue();
 			EquateReference[] refs = equate.getReferences();
 			for (int i = 0; i < refs.length; i++) {
-				if (monitor.isCancelled()) {
-					return;
-				}
+				monitor.checkCancelled();
 				Address addr = refs[i].getAddress();
 				if (!set.contains(addr)) {
 					continue;
@@ -74,6 +67,7 @@ public class SarifEquateRefWriter extends AbstractExtWriter {
 		}
 	}
 	
+	@Override
 	public JsonArray getResults() {
 		return objects;
 	}

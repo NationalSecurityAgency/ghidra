@@ -2180,7 +2180,7 @@ public class TypesTest extends AbstractGenericTest {
 		AbstractMsType type = TypeParser.parse(pdb, reader);
 		assertEquals(type instanceof OneMethod16MsType, true);
 		String result = type.toString().trim();
-		assertEquals("<public static<pseudo, noinherit, noconstruct>: DummyMsType,0>", result);
+		assertEquals("<public static<pseudo, noinherit, noconstruct>: DummyMsType>", result);
 	}
 
 	@Test
@@ -2204,7 +2204,7 @@ public class TypesTest extends AbstractGenericTest {
 		AbstractMsType type = TypeParser.parse(pdb, reader);
 		assertEquals(type instanceof OneMethodStMsType, true);
 		String result = type.toString().trim();
-		assertEquals("<public static<pseudo, noinherit, noconstruct>: DummyMsType,0>", result);
+		assertEquals("<public static<pseudo, noinherit, noconstruct>: DummyMsType>", result);
 	}
 
 	@Test
@@ -2228,7 +2228,7 @@ public class TypesTest extends AbstractGenericTest {
 		AbstractMsType type = TypeParser.parse(pdb, reader);
 		assertEquals(type instanceof OneMethodMsType, true);
 		String result = type.toString().trim();
-		assertEquals("<public static<pseudo, noinherit, noconstruct>: DummyMsType,0>", result);
+		assertEquals("<public static<pseudo, noinherit, noconstruct>: DummyMsType>", result);
 	}
 
 	@Test

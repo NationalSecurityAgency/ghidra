@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -159,7 +159,7 @@ public class PcodeFrame {
 	}
 
 	/**
-	 * The number of p-code ops executed
+	 * Get and reset the number of p-code ops executed
 	 * 
 	 * <p>
 	 * Contrast this to {@link #index()}, which marks the next op to be executed. This counts the
@@ -167,7 +167,9 @@ public class PcodeFrame {
 	 * 
 	 * @return the count
 	 */
-	public int count() {
+	public int resetCount() {
+		int count = this.count;
+		this.count = 0;
 		return count;
 	}
 
@@ -329,7 +331,7 @@ public class PcodeFrame {
 	 * instruction) completed with fall-through, then this will return -1. If it completed on a
 	 * branch, then this will return the index of that branch.
 	 * 
-	 * @return
+	 * @return the last index executed
 	 */
 	public int getBranched() {
 		return branched;

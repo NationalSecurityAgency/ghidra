@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,6 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 
@@ -57,11 +56,6 @@ public abstract class AbstractDBTraceCodeUnit<T extends AbstractDBTraceCodeUnit<
 			DBRecord record) {
 		super(tree, store, record);
 		this.space = space;
-	}
-
-	@Override
-	public TraceAddressSpace getTraceSpace() {
-		return space;
 	}
 
 	@Override
@@ -117,7 +111,7 @@ public abstract class AbstractDBTraceCodeUnit<T extends AbstractDBTraceCodeUnit<
 			if (end > byteCache.position()) {
 				byteCache.limit(Math.min(byteCache.capacity(), end));
 				// TODO: Retrieve the memory space at code space construction time
-				DBTraceMemorySpace mem = space.trace.getMemoryManager().get(space, false);
+				DBTraceMemorySpace mem = space.trace.getMemoryManager().get(space.space, false);
 				mem.getViewBytes(getStartSnap(), address.add(byteCache.position()), byteCache);
 			}
 			// Copy from the cache
@@ -135,7 +129,7 @@ public abstract class AbstractDBTraceCodeUnit<T extends AbstractDBTraceCodeUnit<
 			// If needed, copy the rest from DB
 			assert byteCache.position() == byteCache.capacity();
 			int startRemains = Math.max(addressOffset, byteCache.position());
-			DBTraceMemorySpace mem = space.trace.getMemoryManager().get(space, false);
+			DBTraceMemorySpace mem = space.trace.getMemoryManager().get(space.space, false);
 			return toCopyFromCache +
 				mem.getViewBytes(getStartSnap(), address.add(startRemains), buffer);
 		}

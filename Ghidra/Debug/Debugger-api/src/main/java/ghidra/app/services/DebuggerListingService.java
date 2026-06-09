@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,12 @@
  */
 package ghidra.app.services;
 
+import java.util.List;
+
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.debug.api.action.AutoReadMemorySpec;
 import ghidra.debug.api.action.LocationTrackingSpec;
+import ghidra.debug.api.listing.DebuggerListing;
 import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.address.Address;
@@ -50,11 +54,32 @@ public interface DebuggerListingService extends CodeViewerService {
 	void setTrackingSpec(LocationTrackingSpec spec);
 
 	/**
-	 * Get the tracking specification of the listing.
+	 * Get the tracking specification of the main listing.
 	 * 
 	 * @return the current specification
 	 */
 	LocationTrackingSpec getTrackingSpec();
+
+	/**
+	 * Create a new disconnected debugger listing
+	 *
+	 * @return newly created debugger listing
+	 */
+	DebuggerListing createNewListing();
+
+	/**
+	 * Get all debugger listings
+	 *
+	 * @return List of all debugger listings
+	 */
+	List<DebuggerListing> getAllListings();
+
+	/**
+	 * Get the auto-read memory specification of the main listing.
+	 * 
+	 * @return the current specification
+	 */
+	AutoReadMemorySpec getAutoReadMemorySpec();
 
 	/**
 	 * Add a listener for changes to the tracking specification.
@@ -100,4 +125,11 @@ public interface DebuggerListingService extends CodeViewerService {
 	 */
 	MultiBlendedListingBackgroundColorModel createListingBackgroundColorModel(
 			ListingPanel listingPanel);
+
+	/**
+	 * Get the next custom title for a DebuggerListing
+	 *
+	 * @return Next custom title
+	 */
+	String findNextCustomTitle();
 }

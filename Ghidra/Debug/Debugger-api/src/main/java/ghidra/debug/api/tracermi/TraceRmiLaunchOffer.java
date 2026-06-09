@@ -296,9 +296,28 @@ public interface TraceRmiLaunchOffer {
 	Map<String, LaunchParameter<?>> getParameters();
 
 	/**
+	 * If present, get the parameter via which this offer expects to receive the current program
+	 * 
+	 * @return the parameter, or null
+	 */
+	LaunchParameter<?> imageParameter();
+
+	/**
+	 * Check if this offer presents a parameter for the open program
+	 * 
+	 * @return true if present
+	 */
+	default boolean supportsImage() {
+		return imageParameter() != null;
+	}
+
+	/**
 	 * Check if this offer requires an open program
 	 * 
 	 * @return true if required
 	 */
-	boolean requiresImage();
+	default boolean requiresImage() {
+		LaunchParameter<?> param = imageParameter();
+		return param != null && param.required();
+	}
 }

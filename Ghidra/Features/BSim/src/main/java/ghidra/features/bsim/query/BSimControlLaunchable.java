@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ import ghidra.GhidraLaunchable;
 import ghidra.features.bsim.query.ingest.BSimLaunchable;
 import ghidra.framework.*;
 import ghidra.framework.client.ClientUtil;
-import ghidra.net.ApplicationKeyManagerUtils;
+import ghidra.net.PKIUtils;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -52,6 +52,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	// bsim_ctl commands
 	public final static String COMMAND_START = "start";
 	public final static String COMMAND_STOP = "stop";
+	public final static String COMMAND_STATUS = "status";
 	public final static String COMMAND_RESET_PASSWORD = "resetpassword";
 	public final static String COMMAND_CHANGE_PRIVILEGE = "changeprivilege";
 	public final static String COMMAND_ADDUSER = "adduser";
@@ -91,19 +92,21 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			Set.of(AUTH_OPTION, DN_OPTION, NO_LOCAL_AUTH_OPTION, CAFILE_OPTION);
 	private static final Set<String> STOP_OPTIONS = 
 			Set.of(FORCE_OPTION);
+	private static final Set<String> STATUS_OPTIONS = Set.of();
 	private static final Set<String> RESET_PASSWORD_OPTIONS = Set.of();
 	private static final Set<String> CHANGE_PRIVILEGE_OPTIONS = Set.of();
 	private static final Set<String> ADDUSER_OPTIONS = 
 			Set.of(DN_OPTION);
 	private static final Set<String> DROPUSER_OPTIONS = Set.of();
 	private static final Set<String> CHANGEAUTH_OPTIONS = Set.of(
-		AUTH_OPTION, NO_LOCAL_AUTH_OPTION, CAFILE_OPTION);
-	
+		AUTH_OPTION, DN_OPTION, NO_LOCAL_AUTH_OPTION, CAFILE_OPTION);
+
 	//@formatter:on
 	private static final Map<String, Set<String>> ALLOWED_OPTION_MAP = new HashMap<>();
 	static {
 		ALLOWED_OPTION_MAP.put(COMMAND_START, START_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_STOP, STOP_OPTIONS);
+		ALLOWED_OPTION_MAP.put(COMMAND_STATUS, STATUS_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_RESET_PASSWORD, RESET_PASSWORD_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_CHANGE_PRIVILEGE, CHANGE_PRIVILEGE_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_ADDUSER, ADDUSER_OPTIONS);
@@ -112,7 +115,8 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	}
 
 	private final static String POSTGRES = "postgresql";
-	private final static String POSTGRES_BUILD_SCRIPT = "Ghidra/Features/BSim/make-postgres.sh";
+	private final static String POSTGRES_BUILD_SCRIPT =
+		"Ghidra/Features/BSim/support/make-postgres.sh";
 	private final static String POSTGRES_CONFIGFILE = "postgresql.conf";
 	private final static String POSTGRES_CONNECTFILE = "pg_hba.conf";
 	private final static String POSTGRES_IDENTFILE = "pg_ident.conf";
@@ -198,6 +202,9 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 				scanDataDirectory(params, slot++);
 				break;
 			case COMMAND_STOP:
+				scanDataDirectory(params, slot++);
+				break;
+			case COMMAND_STATUS:
 				scanDataDirectory(params, slot++);
 				break;
 			case COMMAND_ADDUSER:
@@ -383,7 +390,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 				if (line == null) {
 					break;
 				}
-				if (line.startsWith(ApplicationKeyManagerUtils.BEGIN_CERT)) {
+				if (line.startsWith(PKIUtils.BEGIN_CERT)) {
 					return true;
 				}
 			}
@@ -550,11 +557,10 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		PasswordProtection pp = new PasswordProtection(password);
 		try {
 			// TODO: should subjectAlternativeNames be supported?
-			KeyStore keyStore = ApplicationKeyManagerUtils.createKeyStore(alias, "CN=BSimServer",
-				365 * 2, null, null, "JKS", null, password);
+			KeyStore keyStore = PKIUtils.createKeyStore(alias, "CN=BSimServer", 365 * 2, null,
+				null, "JKS", null, password);
 
-			ApplicationKeyManagerUtils.exportX509Certificates(keyStore.getCertificateChain(alias),
-				certFile);
+			PKIUtils.exportX509Certificates(keyStore.getCertificateChain(alias), certFile);
 			Key key = keyStore.getKey(alias, password);
 
 			try (FileOutputStream fout = new FileOutputStream(passFile);
@@ -602,7 +608,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	private Connection createLocalConnection() throws SQLException, IOException {
 		Properties properties = new Properties();
 		properties.setProperty("sslmode", "require");
-		properties.setProperty("sslfactory", "ghidra.net.ApplicationSSLSocketFactory");
+		properties.setProperty("sslfactory", "ghidra.net.DefaultSSLSocketFactory");
 		properties.setProperty("user", connectingUserName);
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("jdbc:postgresql://localhost");
@@ -670,8 +676,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 
 	/**
 	 * Invoke an external executable/command, display the output and error streams on the console,
-	 * the exit condition of the command is returned.  If the exit condition indicates and error,
-	 * but a line of the error stream matches a provided String, the error is suppressed 
+	 * and return the exit value of the command.  
 	 * @param directory	 is the working directory for the command
 	 * @param command    is the command-line (including arguments)
 	 * @param envvar     if non-null, is an environment variable to set for the command
@@ -682,6 +687,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	 */
 	private int runCommand(File directory, List<String> command, String envvar, String value)
 			throws IOException, InterruptedException {
+		System.out.println("Command: " + command);
 		ProcessBuilder processBuilder = new ProcessBuilder(command);
 		processBuilder.directory(directory);		// Set the working directory
 		if (envvar != null) {
@@ -691,8 +697,9 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		Process process = processBuilder.start();
 
 		new IOThread(process.getInputStream(), true).start();
-		IOThread errThread = new IOThread(process.getErrorStream(), true);
+		IOThread errThread = new IOThread(process.getErrorStream(), false);
 		errThread.start();
+		errThread.join(); // Ensure all stderr output is processed to avoid mixed-up console output
 
 		int retval = process.waitFor();
 		return retval;
@@ -1060,6 +1067,30 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	}
 
 	/**
+	 * Retrieve the status of a PostgreSQL server.
+	 * @throws IOException if server status can not be retrieved
+	 * @throws InterruptedException if the status command is interrupted
+	 */
+	private void statusCommand() throws IOException, InterruptedException {
+		discoverPostgresInstall();
+		List<String> command = new ArrayList<String>();
+		command.add(postgresControl.getAbsolutePath());
+		command.add("status");
+		command.add("-D");
+		command.add(dataDirectory.getAbsolutePath());
+		int res = runCommand(null, command, loadLibraryVar, loadLibraryValue);
+		if (res == 0) {
+			System.out.println("Server running");
+		}
+		else if (res == 3) {
+			System.out.println("Server down");
+		}
+		else {
+			throw new IOException("Error getting postgres server status");
+		}
+	}
+
+	/**
 	 * Trigger a server running on the local host to rescan its identity file to pickup
 	 * any changes to the user mapping
 	 * @throws IOException if creating a new user fails
@@ -1397,6 +1428,9 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 				case COMMAND_STOP:
 					stopCommand();
 					break;
+				case COMMAND_STATUS:
+					statusCommand();
+					break;
 				case COMMAND_ADDUSER:
 					addUserCommand();
 					break;
@@ -1432,9 +1466,10 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			"USAGE: bsim_ctl [command]  required-args... [OPTIONS...}\n\n" +
 			"                start      </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"] [--dn \"<distinguished-name>\"]\n" +
 			"                stop       </datadir-path> [--force]\n" +
+			"                status     </datadir-path>\n" +
 			"                adduser    </datadir-path> <username> [--dn \"<distinguished-name>\"]\n" +
 			"                dropuser   </datadir-path> <username>\n" +
-			"                changeauth </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"]\n" +
+			"                changeauth </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"] [--dn \"<distinguished-name>\"]\n" +
 			"                resetpassword   <username>\n" +
 			"                changeprivilege <username> admin|user\n" + 
 			"\n" + 
@@ -1520,7 +1555,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			try {
 				while ((line = shellOutput.readLine()) != null) {
 					if (!suppressOutput) {
-						System.out.println(line);
+						System.out.println(" " + line);
 					}
 				}
 			}

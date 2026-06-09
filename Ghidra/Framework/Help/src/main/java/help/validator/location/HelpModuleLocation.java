@@ -55,6 +55,7 @@ public abstract class HelpModuleLocation {
 	public abstract boolean isHelpInputSource();
 
 	protected void loadHelpTopics() {
+
 		Path helpTopicsDir = helpDir.resolve("topics");
 		if (!Files.exists(helpTopicsDir)) {
 			HelpBuildUtils.debug("No topics found in help dir: " + this);

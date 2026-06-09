@@ -35,8 +35,6 @@ import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.tab.GTabPanel;
 import ghidra.app.cmd.data.CreateDataCmd;
-import ghidra.app.events.ProgramLocationPluginEvent;
-import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.progmgr.MultiTabPlugin;
 import ghidra.app.util.viewer.field.OpenCloseField;
 import ghidra.app.util.viewer.listingpanel.ListingModel;
@@ -208,8 +206,7 @@ public class DiffTest extends DiffTestAdapter {
 		assertNotNull(nextDiff);
 		assertTrue(nextDiff.isEnabled());
 
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("1004c61")), program));
+		goTo(tool, program, "1004c61");
 		assertEquals(addr("1004c61"), getDiffAddress());
 		assertEquals(cb.getCurrentSelection(), new ProgramSelection());
 
@@ -230,8 +227,7 @@ public class DiffTest extends DiffTestAdapter {
 		assertNotNull(nextDiff);
 		assertTrue(nextDiff.isEnabled());
 
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("100f3ff")), program));
+		goTo(tool, program, "100f3ff");
 		assertEquals(addr("100f3ff"), getDiffAddress());
 		assertEquals(cb.getCurrentSelection(), new ProgramSelection());
 
@@ -252,8 +248,7 @@ public class DiffTest extends DiffTestAdapter {
 		assertNotNull(nextDiff);
 		assertTrue(nextDiff.isEnabled());
 
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("1004c61")), program));
+		goTo(tool, program, "1004c61");
 		assertEquals(addr("1004c61"), getDiffAddress());
 		assertEquals(cb.getCurrentSelection(), new ProgramSelection());
 
@@ -263,8 +258,7 @@ public class DiffTest extends DiffTestAdapter {
 		assertEquals(cb.getCurrentSelection(),
 			new ProgramSelection(addr("100415a"), addr("100415a")));
 
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("1002055")), program));
+		goTo(tool, program, "1002055");
 		assertEquals(addr("1002055"), getDiffAddress());
 
 		invokeLater(prevDiff);
@@ -284,8 +278,7 @@ public class DiffTest extends DiffTestAdapter {
 		assertNotNull(diffDetails);
 		assertTrue(diffDetails.isEnabled());
 
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("1004c61")), program));
+		goTo(tool, program, "1004c61");
 		assertEquals(addr("1004c61"), getDiffAddress());
 		assertEquals(cb.getCurrentSelection(), new ProgramSelection());
 
@@ -335,8 +328,7 @@ public class DiffTest extends DiffTestAdapter {
 		assertNotNull(diffDetails);
 		assertTrue(diffDetails.isEnabled());
 
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("100")), program));
+		goTo(tool, program, "100");
 		assertEquals(addr("100"), getDiffAddress());
 		invokeLater(diffDetails);
 
@@ -353,11 +345,8 @@ public class DiffTest extends DiffTestAdapter {
 		assertTrue(info.indexOf("Bookmark Diffs") == -1);
 		assertEquals(addr("100"), getDiffAddress());
 
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("1001014")), program));
+		goTo(tool, program, "1001014");
 		assertEquals(addr("1001014"), getDiffAddress());
-		invokeLater(diffDetails);
-		waitForSwing();
 		assertEquals(true, isDiffDetailsDisplayed());
 
 		// Check where there are no differences
@@ -406,10 +395,8 @@ public class DiffTest extends DiffTestAdapter {
 		diffAs.addRange(addr("1002304"), addr("1002304"));
 		diffAs.addRange(addr("1002306"), addr("1002306"));
 
-		tool.firePluginEvent(
-			new ProgramSelectionPluginEvent("test", new ProgramSelection(as), program));
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("1001000")), program));
+		makeSelection(tool, program, as);
+		goTo(tool, program, "1001000");
 		assertTrue(setPgm2Selection.isEnabled());
 
 		invokeLater(setPgm2Selection);
@@ -472,20 +459,22 @@ public class DiffTest extends DiffTestAdapter {
 		programBuilderDiffTest1.createMemory("d4", "0x400", 0x100);
 		programBuilderDiffTest2.createMemory("d2", "0x200", 0x100);
 
-		programBuilderDiffTest2.createComment("0x01008000", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x01008607", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x01008a99", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x0100a001", "My comment", CodeUnit.EOL_COMMENT);
+		programBuilderDiffTest2.createComment("0x01008000", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x01008607", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x01008a99", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x0100a001", "My comment", CommentType.EOL);
 
 		openDiff(diffTestP1, diffTestP2);
 		JTree tree = getProgramTree();
 		selectTreeNodeByText(tree, ".data");
 
-		runSwing(() -> setView.actionPerformed(programTreeProvider.getActionContext(null)));
+		ActionContext context1 = createActionContext(programTreeProvider);
+		runSwing(() -> setView.actionPerformed(context1));
 
 		selectTreeNodeByText(tree, ".rsrc");
 
-		runSwing(() -> goToView.actionPerformed(programTreeProvider.getActionContext(null)));
+		ActionContext context2 = createActionContext(programTreeProvider);
+		runSwing(() -> goToView.actionPerformed(context2));
 
 		topOfFile(fp1);
 		assertEquals(addr("1008000"), cb.getCurrentAddress());
@@ -541,15 +530,15 @@ public class DiffTest extends DiffTestAdapter {
 		programBuilderDiffTest1.createMemory("d4", "0x400", 0x100);
 		programBuilderDiffTest2.createMemory("d2", "0x200", 0x100);
 
-		programBuilderDiffTest2.createComment("0x01008000", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x01008607", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x01009943", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x0100a001", "My comment", CodeUnit.EOL_COMMENT);
+		programBuilderDiffTest2.createComment("0x01008000", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x01008607", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x01009943", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x0100a001", "My comment", CommentType.EOL);
 
 		openDiff(diffTestP1, diffTestP2);
 		JTree tree = getProgramTree();
 		selectTreeNodeByText(tree, "DiffTestPgm1");
-		ActionContext context = runSwing(() -> programTreeProvider.getActionContext(null));
+		ActionContext context = runSwing(() -> createActionContext(programTreeProvider));
 		performAction(removeView, context, true);
 		AddressSet viewSet = new AddressSet();
 		assertEquals(viewSet, cb.getView());

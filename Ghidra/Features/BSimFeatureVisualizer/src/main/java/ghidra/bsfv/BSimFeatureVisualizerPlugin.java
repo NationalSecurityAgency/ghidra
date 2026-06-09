@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.io.IOException;
 import org.xml.sax.SAXException;
 
 import docking.action.builder.ActionBuilder;
+import docking.options.editor.StringWithChoicesEditor;
 import generic.jar.ResourceFile;
 import ghidra.app.decompiler.DecompilerHighlightService;
 import ghidra.app.events.ProgramLocationPluginEvent;
@@ -32,8 +33,7 @@ import ghidra.features.bsim.query.client.Configuration;
 import ghidra.framework.Application;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
-import ghidra.framework.options.OptionsChangeListener;
-import ghidra.framework.options.ToolOptions;
+import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -71,6 +71,9 @@ public class BSimFeatureVisualizerPlugin extends ProgramPlugin
 	public static final String DECOMPILER_TIMEOUT = "Decompiler Timeout";
 	public static final String HIGHLIGHT_BY_ROW = "Highlight by Row";
 	public static final String BSIM_FEATURE_VISUALIZER_ACTION = "Show BSim Feature Visualizer";
+	private static final String[] DATABASE_CONFIGS =
+		{ "medium_nosize.xml", "medium_32.xml", "medium_64.xml", "medium_cpool.xml",
+			"large_32.xml" };
 	private String dbConfigFile = "medium_nosize.xml";
 	private boolean reuseGraph = true;
 	private boolean highlightByRow = true;
@@ -262,10 +265,11 @@ public class BSimFeatureVisualizerPlugin extends ProgramPlugin
 	}
 
 	private void initOptions(ToolOptions options) {
-		options.registerOption(DB_CONFIG_FILE, dbConfigFile,
+		options.registerOption(DB_CONFIG_FILE,OptionType.STRING_TYPE,DATABASE_CONFIGS[0],
 			new HelpLocation(this.getName(), "Config_File"),
-			"Database configuration file to read signature settings from.");
-		dbConfigFile = options.getString(DB_CONFIG_FILE, dbConfigFile);
+			"Database configuration template file.",
+			() -> new StringWithChoicesEditor(DATABASE_CONFIGS));
+		dbConfigFile = options.getString(DB_CONFIG_FILE, DATABASE_CONFIGS[0]);
 		options.registerOption(REUSE_GRAPH, reuseGraph,
 			new HelpLocation(this.getName(), "Reuse_Graph"),
 			"Clear and re-use the graph window or create new graph window when graphing features.");

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,12 +67,15 @@ public class ElfLoaderOptionsFactory {
 
 		// NOTE: add-to-program is not supported
 
-		options.add(new Option(PERFORM_RELOCATIONS_NAME, PERFORM_RELOCATIONS_DEFAULT, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-applyRelocations"));
+		options.add(Option.newBoolean(PERFORM_RELOCATIONS_NAME)
+				.value(PERFORM_RELOCATIONS_DEFAULT)
+				.commandLineArgument(Loader.COMMAND_LINE_ARG_PREFIX + "-applyRelocations")
+				.build());
 
-		options.add(
-			new Option(APPLY_UNDEFINED_SYMBOL_DATA_NAME, APPLY_UNDEFINED_SYMBOL_DATA_DEFAULT,
-				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-applyUndefinedData"));
+		options.add(Option.newBoolean(APPLY_UNDEFINED_SYMBOL_DATA_NAME)
+				.value(APPLY_UNDEFINED_SYMBOL_DATA_DEFAULT)
+				.commandLineArgument(Loader.COMMAND_LINE_ARG_PREFIX + "-applyUndefinedData")
+				.build());
 
 		ElfHeader elf = new ElfHeader(provider, null);
 		ElfLoadAdapter extensionAdapter = ElfExtensionFactory.getLoadAdapter(elf);
@@ -92,23 +95,30 @@ public class ElfLoaderOptionsFactory {
 		AddressSpace defaultSpace = language.getDefaultSpace();
 
 		String hexValueStr = getBaseAddressOffsetString(imageBase, defaultSpace);
-		options.add(new Option(IMAGE_BASE_OPTION_NAME, hexValueStr, String.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-imagebase"));
+		options.add(Option.newString(IMAGE_BASE_OPTION_NAME)
+				.value(hexValueStr)
+				.commandLineArgument(Loader.COMMAND_LINE_ARG_PREFIX + "-imagebase")
+				.build());
 
 		if (includeDataImageBaseOption(elf, language)) {
 			long minDataImageBase = getRecommendedMinimumDataImageBase(elf, language);
 			hexValueStr =
 				getBaseAddressOffsetString(minDataImageBase, language.getDefaultDataSpace());
-			options.add(new Option(IMAGE_DATA_IMAGE_BASE_OPTION_NAME, hexValueStr, String.class,
-				Loader.COMMAND_LINE_ARG_PREFIX + "-dataImageBase"));
+			options.add(Option.newString(IMAGE_DATA_IMAGE_BASE_OPTION_NAME)
+					.value(hexValueStr)
+					.commandLineArgument(Loader.COMMAND_LINE_ARG_PREFIX + "-dataImageBase")
+					.build());
 		}
 
-		options.add(new Option(INCLUDE_OTHER_BLOCKS, INCLUDE_OTHER_BLOCKS_DEFAULT, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-includeOtherBlocks"));
+		options.add(Option.newBoolean(INCLUDE_OTHER_BLOCKS)
+				.value(INCLUDE_OTHER_BLOCKS_DEFAULT)
+				.commandLineArgument(Loader.COMMAND_LINE_ARG_PREFIX + "-includeOtherBlocks")
+				.build());
 
-		options.add(
-			new Option(DISCARDABLE_SEGMENT_SIZE_OPTION_NAME, DEFAULT_DISCARDABLE_SEGMENT_SIZE,
-				Integer.class, Loader.COMMAND_LINE_ARG_PREFIX + "-maxSegmentDiscardSize"));
+		options.add(Option.newInteger(DISCARDABLE_SEGMENT_SIZE_OPTION_NAME)
+					.value(DEFAULT_DISCARDABLE_SEGMENT_SIZE)
+					.commandLineArgument(Loader.COMMAND_LINE_ARG_PREFIX + "-maxSegmentDiscardSize")
+					.build());
 
 		if (extensionAdapter != null) {
 			extensionAdapter.addLoadOptions(elf, options);
@@ -220,9 +230,9 @@ public class ElfLoaderOptionsFactory {
 		if (!String.class.isAssignableFrom(option.getValueClass())) {
 			return "Invalid type for option: " + name + " - " + option.getValueClass();
 		}
-		String value = (String) option.getValue();
+		String value = ((String) option.getValue());
 		try {
-			space.getAddress(Long.parseUnsignedLong(value, 16), true);// verify valid address
+			space.getAddress(NumericUtilities.parseHexLong(value), true);// verify valid address
 		}
 		catch (NumberFormatException e) {
 			return "Invalid " + name + " - expecting hexidecimal address offset";

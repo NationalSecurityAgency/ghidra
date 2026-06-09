@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -135,6 +135,9 @@ public class SymbolRecords {
 		if (debugInfo == null) {
 			return;
 		}
+		if (debugInfo.getModuleInformationList().isEmpty()) {
+			return;
+		}
 		// We are assuming that first in the list is the one to look at for cases 1 and 2.
 		//  If something else like lowest stream number, then need to change the logic.
 		ModuleInformation moduleInfo = debugInfo.getModuleInformationList().get(0);
@@ -189,17 +192,21 @@ public class SymbolRecords {
 		catch (IOException e) {
 			throw new PdbException("PDB Error: Not enough data to read CvSigLength");
 		}
-		if (getSig) {
-			cvSignature = reader.parseInt();
-		}
+		// 20241029: Neutering this for now; msft-intended logic still not quite understood
+//		if (getSig) {
+//			cvSignature = reader.parseInt();
+//		}
+		cvSignature = reader.parseInt(); // 20241029: in place of neutered code
 		int size = 0;
 		switch (cvSignature) {
 			case 1:
 			case 2:
-				if (streamNumber == cvSignatureCase1and2Stream) {
-					size = 4;
-				}
-				// else size remains 0
+				// 20241029: Neutering this for now; msft-intended logic still not quite understood
+//				if (streamNumber == cvSignatureCase1and2Stream) {
+//					size = 4;
+//				}
+//				// else size remains 0
+				size = 4; // 20241029: in place of neutered code
 				break;
 			case 4:
 				size = 4;
@@ -295,7 +302,15 @@ public class SymbolRecords {
 		try {
 			PdbByteReader reader;
 			reader = pdb.getReaderForStreamNumber(streamNumber, offset, 2);
-			int recordLength = reader.parseUnsignedShortVal();
+			int recordLength;
+			try {
+				recordLength = reader.parseUnsignedShortVal();
+			}
+			catch (PdbException pe) {
+				// Catching this PdbException due to not more data, but letting one from parse()
+				//  (below) get passed to caller
+				return null;
+			}
 			// offset + 2 where 2 is sizeof(short)
 			PdbByteReader recordReader =
 				pdb.getReaderForStreamNumber(streamNumber, offset + 2, recordLength);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,30 +27,41 @@ import org.junit.Test;
 
 import db.Transaction;
 import ghidra.app.plugin.assembler.*;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.pcode.emu.PcodeThread;
+import ghidra.pcode.emu.taint.TaintEmulatorFactory;
+import ghidra.pcode.emu.taint.TaintPcodeEmulator;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.trace.AbstractTracePcodeEmulatorTest;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.taint.model.*;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.target.DBTraceObjectManager;
-import ghidra.trace.database.target.DBTraceObjectManagerTest;
 import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.property.TracePropertyMap;
 import ghidra.trace.model.property.TracePropertyMapSpace;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
 
 public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest {
+
+	@Override
+	protected Writer createWriter(TracePlatform platform, long snap) {
+		Writer writer = super.createWriter(platform, snap);
+		TaintEmulatorFactory.addHandlers(writer);
+		return writer;
+	}
+	
+	TaintPcodeEmulator createEmulator(TracePlatform platform, Writer writer) {
+		return new TaintPcodeEmulator(platform.getLanguage(), writer.callbacks());
+	}
 
 	public static Map.Entry<TraceAddressSnapRange, String> makeTaintEntry(Trace trace,
 			Lifespan span, AddressSpace space, long offset, String taint) {
@@ -71,6 +82,8 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 	 * 
 	 * <p>
 	 * We isolate exactly a read by executing sleigh.
+	 * 
+	 * @throws Throwable because
 	 */
 	@Test
 	public void testReadStateMemory() throws Throwable {
@@ -83,7 +96,8 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				taintMap.set(Lifespan.nowOn(0), tb.range(0x00400000, 0x00400003), "test_0");
 			}
 
-			TaintTracePcodeEmulator emu = new TaintTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			TaintPcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<Pair<byte[], TaintVec>> emuThread = emu.newThread(thread.getPath());
 			emuThread.getExecutor().executeSleigh("RAX = *0x00400000:8;");
 
@@ -113,7 +127,8 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				mapSpace.set(Lifespan.nowOn(0), regEBX, "test_0");
 			}
 
-			TaintTracePcodeEmulator emu = new TaintTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			TaintPcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<Pair<byte[], TaintVec>> emuThread = emu.newThread(thread.getPath());
 			emuThread.getExecutor().executeSleigh("RAX = RBX;");
 
@@ -133,7 +148,8 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
 			initTrace(tb, "", List.of());
 
-			TaintTracePcodeEmulator emu = new TaintTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			TaintPcodeEmulator emu = createEmulator(tb.host, writer);
 			TaintVec taintVal = TaintVec.empties(8);
 			TaintSet testTaint = TaintSet.of(new TaintMark("test_0", Set.of()));
 			for (int i = 0; i < 4; i++) {
@@ -144,7 +160,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 						Pair.of(tb.arr(0, 0, 0, 0, 0, 0, 0, 0), taintVal));
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 0);
+				writer.writeDown(1);
 			}
 			TracePropertyMap<String> taintMap =
 				tb.trace.getAddressPropertyManager().getPropertyMap("Taint", String.class);
@@ -157,12 +173,12 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 	@Test
 	public void testWriteStateRegister() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			AddressSpace rs = tb.language.getAddressFactory().getRegisterSpace();
 			TraceThread thread = initTrace(tb, "", List.of());
 
-			TaintTracePcodeEmulator emu = new TaintTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			TaintPcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<Pair<byte[], TaintVec>> emuThread = emu.newThread(thread.getPath());
-			TaintVec taintVal = TaintVec.empties(8);
+			TaintVec taintVal = TaintVec.empties(4);
 			TaintSet testTaint = TaintSet.of(new TaintMark("test_0", Set.of()));
 			for (int i = 0; i < 4; i++) {
 				taintVal.set(i, testTaint);
@@ -170,7 +186,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			emuThread.getState().setVar(tb.reg("EAX"), Pair.of(tb.arr(0, 0, 0, 0), taintVal));
 
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 0);
+				writer.writeDown(1);
 			}
 			TracePropertyMap<String> taintMap =
 				tb.trace.getAddressPropertyManager().getPropertyMap("Taint", String.class);
@@ -179,7 +195,8 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			// TODO: Might be nice to coalesce identical values
 			//   Becomes the 2D cover optimization problem. Still could do some easy cases.
 			assertEquals(
-				makeTaintEntries(tb.trace, Lifespan.nowOn(1), rs, Set.of(0L, 1L, 2L, 3L), "test_0"),
+				makeTaintEntries(tb.trace, Lifespan.nowOn(1), mapSpace.getAddressSpace(),
+					Set.of(0L, 1L, 2L, 3L), "test_0"),
 				Set.copyOf(mapSpace.getEntries(Lifespan.at(1), tb.reg("RAX"))));
 		}
 	}
@@ -195,7 +212,8 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					"MOV qword ptr [0x00600000], RAX",
 					"MOV qword ptr [0x00600000], RBX"));
 
-			TaintTracePcodeEmulator emu = new TaintTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			TaintPcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<Pair<byte[], TaintVec>> emuThread = emu.newThread(thread.getPath());
 			emuThread.getState()
 					.setVar(tb.reg("RAX"), Pair.of(
@@ -204,11 +222,11 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			emuThread.stepInstruction();
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 0);
+				writer.writeDown(1);
 			}
 			emuThread.stepInstruction();
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 2, 0);
+				writer.writeDown(2);
 			}
 
 			TracePropertyMap<String> taintMap =
@@ -217,7 +235,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			assertEquals(makeTaintEntries(tb.trace, Lifespan.at(1), ram, Set.of(
 				0x00600000L, 0x00600001L, 0x00600002L, 0x00600003L,
 				0x00600004L, 0x00600005L, 0x00600006L, 0x00600007L),
-				"test_0"),
+				"test_0@(ram, 0x400000, 0, 0)"),
 				Set.copyOf(taintMap.getEntries(
 					Lifespan.at(1), tb.range(0x00600000, 0x00600007))));
 		}
@@ -232,19 +250,20 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				List.of(
 					"XOR RAX, RAX"));
 
-			TaintTracePcodeEmulator emu = new TaintTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			TaintPcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<Pair<byte[], TaintVec>> emuThread = emu.newThread(thread.getPath());
 			emuThread.getState()
 					.setVar(tb.reg("RAX"), Pair.of(
 						tb.arr(1, 2, 3, 4, 5, 6, 7, 8),
 						TaintVec.copies(TaintSet.parse("test_0"), 8)));
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 0, 0);
+				writer.writeDown(0);
 			}
 
 			emuThread.stepInstruction();
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 0);
+				writer.writeDown(1);
 			}
 
 			TracePropertyMap<String> taintMap =
@@ -266,19 +285,20 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				List.of(
 					"XOR EAX, EAX"));
 
-			TaintTracePcodeEmulator emu = new TaintTracePcodeEmulator(tb.host, 0);
+			Writer writer = createWriter(tb.host, 0);
+			TaintPcodeEmulator emu = createEmulator(tb.host, writer);
 			PcodeThread<Pair<byte[], TaintVec>> emuThread = emu.newThread(thread.getPath());
 			emuThread.getState()
 					.setVar(tb.reg("RAX"), Pair.of(
 						tb.arr(1, 2, 3, 4, 5, 6, 7, 8),
 						TaintVec.copies(TaintSet.parse("test_0"), 8)));
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 0, 0);
+				writer.writeDown(0);
 			}
 
 			emuThread.stepInstruction();
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(tb.host, 1, 0);
+				writer.writeDown(1);
 			}
 
 			TracePropertyMap<String> taintMap =
@@ -299,9 +319,8 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			TraceThread thread;
 			TraceGuestPlatform x64;
 			try (Transaction tx = tb.startTransaction()) {
-				SchemaContext ctx = XmlSchemaContext.deserialize(DBTraceObjectManagerTest.XML_CTX);
 				DBTraceObjectManager objects = tb.trace.getObjectManager();
-				objects.createRootObject(ctx.getSchema(new SchemaName("Session")));
+				tb.createRootObject();
 				thread = tb.getOrAddThread("Targets[0].Threads[0]", 0);
 
 				x64 = tb.trace.getPlatformManager()
@@ -309,7 +328,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				x64.addMappedRegisterRange();
 				x64.addMappedRange(tb.addr(0x00000000), tb.addr(x64, 0x00400000), 0x10000);
 				x64.addMappedRange(tb.addr(0x20000000), tb.addr(x64, 0x00600000), 0x10000);
-				objects.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0].Registers"))
+				objects.createObject(KeyPath.parse("Targets[0].Threads[0].Registers"))
 						.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 				// TODO: Make Sleigh work in the guest platform
 				TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, 0, true);
@@ -323,7 +342,8 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				mm.putBytes(0, tb.addr(0x00000000), ByteBuffer.wrap(buf.getBytes()));
 			}
 
-			TaintTracePcodeEmulator emu = new TaintTracePcodeEmulator(x64, 0);
+			Writer writer = createWriter(x64, 0);
+			TaintPcodeEmulator emu = createEmulator(x64, writer);
 			PcodeThread<Pair<byte[], TaintVec>> emuThread = emu.newThread(thread.getPath());
 			emuThread.getState()
 					.setVar(tb.reg(x64, "RAX"), Pair.of(
@@ -332,11 +352,11 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			emuThread.stepInstruction();
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(x64, 1, 0);
+				writer.writeDown(1);
 			}
 			emuThread.stepInstruction();
 			try (Transaction tx = tb.startTransaction()) {
-				emu.writeDown(x64, 2, 0);
+				writer.writeDown(2);
 			}
 
 			TracePropertyMap<String> taintMap =
@@ -345,7 +365,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			assertEquals(makeTaintEntries(tb.trace, Lifespan.at(1), ram, Set.of(
 				0x20000000L, 0x20000001L, 0x20000002L, 0x20000003L,
 				0x20000004L, 0x20000005L, 0x20000006L, 0x20000007L),
-				"test_0"),
+				"test_0@(ram, 0x400000, 0, 0)"),
 				Set.copyOf(taintMap.getEntries(
 					Lifespan.at(1), tb.range(0x20000000, 0x20000007))));
 		}

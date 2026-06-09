@@ -42,6 +42,7 @@
     <compiler name="default" spec="lp64f.cspec" id="default"/>
     <external_name tool="gnu" name="Loongarch64"/>
     <external_name tool="qemu" name="qemu-mips64el"/>
+    <external_name tool="qemu_system" name="qemu-system-mips64el"/>
   </language>
   
   <language processor="Loongarch"
@@ -57,6 +58,7 @@
     <compiler name="default" spec="lp64d.cspec" id="default"/>
     <external_name tool="gnu" name="Loongarch64"/>
     <external_name tool="qemu" name="qemu-mips64el"/>
+    <external_name tool="qemu_system" name="qemu-system-mips64el"/>
   </language>
 
 </language_definitions>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package mdemangler.naming;
 
 import mdemangler.*;
+import mdemangler.datatype.MDDataType;
 
 /**
  * This class represents a qualified name (wiki page parlance) within a name of a
@@ -85,6 +86,10 @@ public class MDQualifiedBasicName extends MDParsableItem {
 		basicName.setCastTypeString(castTypeString);
 	}
 
+	public void setCastType(MDDataType castType) {
+		basicName.setCastType(castType);
+	}
+
 	public MDBasicName getBasicName() {
 		return basicName;
 	}
@@ -93,7 +98,7 @@ public class MDQualifiedBasicName extends MDParsableItem {
 		return qualification;
 	}
 
-	public void setNameModifier(String nameModifier) {
+	public void setNameModifier(MDNameModifier nameModifier) {
 		basicName.setNameModifier(nameModifier);
 	}
 
@@ -105,12 +110,16 @@ public class MDQualifiedBasicName extends MDParsableItem {
 			StringBuilder builder = new StringBuilder();
 			qualification.insertHeadQualifier(builder);
 			basicName.setName(builder.toString());
+			MDQualifier head = qualification.getHead();
+			basicName.setXtorQual(head);
 		}
 		else if (basicName.isDestructor()) {
 			StringBuilder builder = new StringBuilder();
 			qualification.insertHeadQualifier(builder);
 			dmang.insertString(builder, "~");
 			basicName.setName(builder.toString());
+			MDQualifier head = qualification.getHead();
+			basicName.setXtorQual(head);
 		}
 	}
 }

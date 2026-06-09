@@ -1,0 +1,872 @@
+#
+# Floating Point Instructions
+#   Added with V5x:
+#      convert_sf2d, convert_sf2df, convert_sf2ud, convert_sf2uw, convert_sf2w
+#      convert_d2sf, convert_ud2sf, convert_uw2sf, convert_w2sf
+#      convert_df2d, convert_df2sf, convert_df2ud, convert_df2uw, convert_df2w
+#      convert_d2df, convert_ud2df, convert_uw2df, convert_w2df
+#      sfadd, sfclass, sfcmp.*, sffixupd, sffixupn, sffixupr, sfmake, sfmax, sfmin, sfmpy, sfsub
+#      dfclass, dfcmp.*, dfmake
+#   Added with V65:
+#      sfinvsqrta, sfrecipa
+#   Added with V66:
+#      dfadd, dfsub
+#   Added with V67:   
+#      dfmax, dfmin, dfmpyfix, dfmpyhh, dfmpylh, dfmpyll
+#
+#   See bottom of this file for additional instruction patterns found within QEMU source code.
+#   Use of the undocumented double-precission floating instructions are disabled by default
+#   due to conflicts with V6 instructions.  The option ADD_DP_OPS must be defined to
+#   to enable the use of these undocumented instructions which will disable the use of
+#   corresponding V6 instructions which conflict.
+# 
+
+define pcodeop convertFloat2UInt;
+define pcodeop chopFloat2UInt;
+
+#
+# V5x Floating Point Instructions  
+#
+  
+# (v5,8) convert_sf2d  --  "Rdd = convert_sf2d ( Rs )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  1  0  0  1  +  +  s  s  s  s  s  P  P  +  +  +  +  +  +  1  0  0  d  d  d  d  d
+
+:convert_sf2d Rdd5,rs5 EndPacket	is iclass=8 & op2127=0x24 & op0813=0 & op0507=4 & rs5 & Rdd5 & $(END_PACKET) {
+	# TODO: Rounding mode and other exceptional conditions are not implemented
+	Rdd5 = trunc(rs5);
+	build EndPacket;
+}
+
+# (v5,8) convert_sf2d  --  "Rdd = convert_sf2d ( Rs ) :chop"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  1  0  0  1  +  +  s  s  s  s  s  P  P  +  +  +  +  +  +  1  1  0  d  d  d  d  d
+
+:convert_sf2d^":chop" Rdd5,rs5 EndPacket	is iclass=8 & op2127=0x24 & op0813=0 & op0507=6 & rs5 & Rdd5 & $(END_PACKET) {
+	# TODO: Exceptional conditions are not implemented
+	Rdd5 = trunc(rs5);
+	build EndPacket;
+}
+
+# (v5,8) convert_sf2df  --  "Rdd = convert_sf2df ( Rs )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  1  0  0  1  +  +  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  0  d  d  d  d  d
+
+:convert_sf2df Rdd5,rs5 EndPacket	is iclass=8 & op2127=0x24 & op0813=0 & op0507=0 & rs5 & Rdd5 & $(END_PACKET) {
+	Rdd5 = float2float(rs5);
+	build EndPacket;
+}
+
+# (v5,8) convert_sf2ud  --  "Rdd = convert_sf2ud ( Rs )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  1  0  0  1  +  +  s  s  s  s  s  P  P  +  +  +  +  +  +  0  1  1  d  d  d  d  d
+
+:convert_sf2ud Rdd5,rs5 EndPacket	is iclass=8 & op2127=0x24 & op0813=0 & op0507=3 & rs5 & Rdd5 & $(END_PACKET) {
+	# TODO: Exceptional conditions are not implemented
+	float:4 = float2float(rs5);
+	Rdd5 = convertFloat2UInt(float);
+	build EndPacket;
+}
+
+# (v5,8) convert_sf2ud  --  "Rdd = convert_sf2ud ( Rs ) :chop"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  1  0  0  1  +  +  s  s  s  s  s  P  P  +  +  +  +  +  +  1  0  1  d  d  d  d  d
+
+:convert_sf2ud^":chop" Rdd5,rs5 EndPacket	is iclass=8 & op2127=0x24 & op0813=0 & op0507=5 & rs5 & Rdd5 & $(END_PACKET) {
+	# TODO: Exceptional conditions are not implemented
+	float:4 = float2float(rs5);
+	Rdd5 = chopFloat2UInt(float);
+	build EndPacket;
+}
+
+# (v5,8) convert_sf2uw  --  "Rd = convert_sf2uw ( Rs )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  1  0  1  1  0  1  1  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  0  d  d  d  d  d
+
+:convert_sf2uw Rd5,rs5 EndPacket	is iclass=8 & op2127=0x5b & op0813=0 & op0507=0 & rs5 & Rd5 & $(END_PACKET) {
+	# TODO: Rounding mode and other exceptional conditions are not implemented
+	float:4 = float2float(rs5);
+	Rd5 = convertFloat2UInt(float);
+	build EndPacket;
+}
+
+# (v5,8) convert_sf2uw  --  "Rd = convert_sf2uw ( Rs ) :chop"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  1  0  1  1  0  1  1  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  1  d  d  d  d  d
+
+:convert_sf2uw^":chop" Rd5,rs5 EndPacket	is iclass=8 & op2127=0x5b & op0813=0 & op0507=1 & rs5 & Rd5 & $(END_PACKET) {
+	# TODO: Exceptional conditions are not implemented
+	float:4 = float2float(rs5);
+	Rd5 = chopFloat2UInt(float);
+	build EndPacket;
+}
+
+# (v5,8) convert_sf2w  --  "Rd = convert_sf2w ( Rs )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  1  0  1  1  1  0  0  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  0  d  d  d  d  d
+
+:convert_sf2w Rd5,rs5 EndPacket	is iclass=8 & op2127=0x5c & op0813=0 & op0507=0 & rs5 & Rd5 & $(END_PACKET) {
+	# TODO: Rounding mode and other exceptional conditions are not implemented
+	Rd5 = trunc(rs5);
+	build EndPacket;
+}
+
+# (v5,8) convert_sf2w  --  "Rd = convert_sf2w ( Rs ) :chop"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  1  0  1  1  1  0  0  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  1  d  d  d  d  d
+
+:convert_sf2w^":chop" Rd5,rs5 EndPacket	is iclass=8 & op2127=0x5c & op0813=0 & op0507=1 & rs5 & Rd5 & $(END_PACKET) {
+	# TODO: Exceptional conditions are not implemented
+	Rd5 = trunc(rs5);
+	build EndPacket;
+}
+
+# (v5,8) convert_d2sf  --  "Rd = convert_d2sf ( Rss )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  1  0  0  0  0  1  0  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  1  d  d  d  d  d
+
+:convert_d2sf Rd5,rss5 EndPacket	is iclass=8 & op2127=0x42 & op0813=0 & op0507=1 & rss5 & Rd5 & $(END_PACKET) {
+	Rd5 = int2float(rss5);
+	build EndPacket;
+}
+
+# (v5,8) convert_ud2sf  --  "Rd = convert_ud2sf ( Rss )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  1  0  0  0  0  0  1  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  1  d  d  d  d  d
+
+# TODO: we do not have an unsigned int2float - could zext but not with 8-byte reg if we want to emulate
+define pcodeop convertUInt2float;
+
+:convert_ud2sf Rd5,rss5 EndPacket	is iclass=8 & op2127=0x41 & op0813=0 & op0507=1 & rss5 & Rd5 & $(END_PACKET) {
+	tmp:9 = zext(rss5);
+	Rd5 = int2float(tmp);
+	build EndPacket;
+}
+
+# (v5,8) convert_uw2sf  --  "Rd = convert_uw2sf ( Rs )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  1  0  1  1  0  0  1  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  0  d  d  d  d  d
+
+:convert_uw2sf Rd5,rs5 EndPacket	is iclass=8 & op2127=0x59 & op0813=0 & op0507=0 & rs5 & Rd5 & $(END_PACKET) {
+	tmp:8 = zext(rs5);
+	Rd5 = int2float(tmp);
+	build EndPacket;
+}
+
+# (v5,8) convert_w2sf  --  "Rd = convert_w2sf ( Rs )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  1  0  1  1  0  1  0  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  0  d  d  d  d  d
+
+:convert_w2sf Rd5,rs5 EndPacket	is iclass=8 & op2127=0x5a & op0813=0 & op0507=0 & rs5 & Rd5 & $(END_PACKET) {
+	Rd5 = int2float(rs5);
+	build EndPacket;
+}
+
+# (v5,8) convert_df2d  --  "Rdd = convert_df2d ( Rss )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  0  0  0  1  1  1  s  s  s  s  s  P  P  0  +  +  +  +  +  0  0  0  d  d  d  d  d
+
+:convert_df2d Rdd5,rss5 EndPacket	is iclass=8 & op2127=0x07 & op0813=0 & op0507=0 & rss5 & Rdd5 & $(END_PACKET) {
+	# TODO: Rounding mode and other exceptional conditions are not implemented
+	Rdd5 = trunc(rss5);
+	build EndPacket;
+}
+
+# (v5,8) convert_df2d  --  "Rdd = convert_df2d ( Rss ) :chop"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  0  0  0  1  1  1  s  s  s  s  s  P  P  0  +  +  +  +  +  1  1  0  d  d  d  d  d
+
+:convert_df2d^":chop" Rdd5,rss5 EndPacket	is iclass=8 & op2127=0x07 & op0813=0 & op0507=6 & rss5 & Rdd5 & $(END_PACKET) {
+	# TODO: Exceptional conditions are not implemented
+	Rdd5 = trunc(rss5);
+	build EndPacket;
+}
+
+# (v5,8) convert_df2sf  --  "Rd = convert_df2sf ( Rss )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  1  0  0  0  0  0  0  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  1  d  d  d  d  d
+
+:convert_df2sf Rd5,rss5 EndPacket	is iclass=8 & op2127=0x40 & op0813=0 & op0507=1 & rss5 & Rd5 & $(END_PACKET) {
+	Rd5 = float2float(rss5);
+	build EndPacket;
+}
+
+# (v5,8) convert_df2ud  --  "Rdd = convert_df2ud ( Rss )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  0  0  0  1  1  1  s  s  s  s  s  P  P  0  +  +  +  +  +  0  0  1  d  d  d  d  d
+
+:convert_df2ud Rdd5,rss5 EndPacket	is iclass=8 & op2127=0x07 & op0813=0 & op0507=1 & rss5 & Rdd5 & $(END_PACKET) {
+	# TODO: Exceptional conditions are not implemented
+	float:8 = float2float(rss5);
+	Rdd5 = convertFloat2UInt(float);
+	build EndPacket;
+}
+
+# (v5,8) convert_df2ud  --  "Rdd = convert_df2ud ( Rss ) :chop"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  0  0  0  1  1  1  s  s  s  s  s  P  P  0  +  +  +  +  +  1  1  1  d  d  d  d  d
+
+:convert_df2ud^":chop" Rdd5,rss5 EndPacket	is iclass=8 & op2127=0x07 & op0813=0 & op0507=7 & rss5 & Rdd5 & $(END_PACKET) {
+	# TODO: Exceptional conditions are not implemented
+	float:8 = float2float(rss5);
+	Rdd5 = chopFloat2UInt(float);
+	build EndPacket;
+}
+
+# (v5,8) convert_df2uw  --  "Rd = convert_df2uw ( Rss )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  1  0  0  0  0  1  1  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  1  d  d  d  d  d
+
+:convert_df2uw Rd5,rss5 EndPacket	is iclass=8 & op2127=0x43 & op0813=0 & op0507=1 & rss5 & Rd5 & $(END_PACKET) {
+	# TODO: Rounding mode and other exceptional conditions are not implemented
+	float:8 = float2float(rss5);
+	Rd5 = convertFloat2UInt(float);
+	build EndPacket;
+}
+
+# (v5,8) convert_df2uw  --  "Rd = convert_df2uw ( Rss ) :chop"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  1  0  0  0  1  0  1  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  1  d  d  d  d  d
+
+:convert_df2uw^":chop" Rd5,rss5 EndPacket	is iclass=8 & op2127=0x45 & op0813=0 & op0507=1 & rss5 & Rd5 & $(END_PACKET) {
+	# TODO: Exceptional conditions are not implemented
+	float:8 = float2float(rss5);
+	Rd5 = chopFloat2UInt(float);
+	build EndPacket;
+}
+
+# (v5,8) convert_df2w  --  "Rd = convert_df2w ( Rss )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  1  0  0  0  1  0  0  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  1  d  d  d  d  d
+
+:convert_df2w Rd5,rss5 EndPacket	is iclass=8 & op2127=0x44 & op0813=0 & op0507=1 & rss5 & Rd5 & $(END_PACKET) {
+	# TODO: Rounding mode and other exceptional conditions are not implemented
+	Rd5 = trunc(rss5);
+	build EndPacket;
+}
+
+# (v5,8) convert_df2w  --  "Rd = convert_df2w ( Rss ) :chop"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  1  0  0  0  1  1  1  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  1  d  d  d  d  d
+
+:convert_df2w^":chop" Rd5,rss5 EndPacket	is iclass=8 & op2127=0x47 & op0813=0 & op0507=1 & rss5 & Rd5 & $(END_PACKET) {
+	# TODO: Exceptional conditions are not implemented
+	Rd5 = trunc(rss5);
+	build EndPacket;
+}
+
+# (v5,8) convert_d2df  --  "Rdd = convert_d2df ( Rss )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  0  0  0  1  1  1  s  s  s  s  s  P  P  0  +  +  +  +  +  0  1  1  d  d  d  d  d
+
+:convert_d2df Rdd5,rss5 EndPacket	is iclass=8 & op2127=0x07 & op0813=0 & op0507=3 & rss5 & Rdd5 & $(END_PACKET) {
+	Rdd5 = int2float(rss5);
+	build EndPacket;
+}
+
+# (v5,8) convert_ud2df  --  "Rdd = convert_ud2df ( Rss )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  0  0  0  1  1  1  s  s  s  s  s  P  P  0  +  +  +  +  +  0  1  0  d  d  d  d  d
+
+:convert_ud2df Rdd5,rss5 EndPacket	is iclass=8 & op2127=0x07 & op0813=0 & op0507=2 & rss5 & Rdd5 & $(END_PACKET) {
+	tmp:9 = zext(rss5);
+	Rdd5 = int2float(tmp);
+	build EndPacket;
+}
+
+# (v5,8) convert_uw2df  --  "Rdd = convert_uw2df ( Rs )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  1  0  0  1  +  +  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  1  d  d  d  d  d
+
+:convert_uw2df Rdd5,rs5 EndPacket	is iclass=8 & op2127=0x24 & op0813=0 & op0507=1 & rs5 & Rdd5 & $(END_PACKET) {
+	tmp:9 = zext(rs5);
+	Rdd5 = int2float(tmp);
+	build EndPacket;
+}
+
+# (v5,8) convert_w2df  --  "Rdd = convert_w2df ( Rs )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  1  0  0  1  +  +  s  s  s  s  s  P  P  +  +  +  +  +  +  0  1  0  d  d  d  d  d
+
+:convert_w2df Rdd5,rs5 EndPacket	is iclass=8 & op2127=0x24 & op0813=0 & op0507=2 & rs5 & Rdd5 & $(END_PACKET) {
+	Rdd5 = int2float(rs5);
+	build EndPacket;
+}
+
+# (v5,14) sfadd  --  "Rd = sfadd ( Rs, Rt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  1  0  0  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  0  0  d  d  d  d  d
+
+:sfadd Rd5,rs5,rt5 EndPacket	is iclass=14 & op2127=0x58 & op13=0 & op0507=0 & rs5 & rt5 & Rd5 & $(END_PACKET) {
+	Rd5 = rs5 f+ rt5;
+	build EndPacket;
+}
+
+# (v5,8) sfclass  --  "Pd = sfclass ( Rs, #u5 )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  1  0  1  1  1  1  s  s  s  s  s  P  P  0  i  i  i  i  i  +  +  +  +  +  +  d  d
+
+define pcodeop isClassifiedFloat;
+
+:sfclass Pd2,rs5,Uimm8_0812 EndPacket	is iclass=8 & op2127=0x2f & op13=0 & op0207=0 & Uimm8_0812 & rs5 & Pd2 & $(END_PACKET) {
+	float:4 = float2float(rs5);
+	bool:1 = isClassifiedFloat(float,Uimm8_0812);
+	Pd2 = Pd2 & ((bool != 0) * 0xff);
+	build EndPacket;
+}
+
+# (v5,12) sfcmp.ge  --  "Pd = sfcmp.ge ( Rs, Rt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  0  0  0  1  1  1  1  1  1  s  s  s  s  s  P  P  +  t  t  t  t  t  0  0  0  +  +  +  d  d
+
+:sfcmp.ge Pd2,rs5,rt5 EndPacket	is iclass=12 & op2127=0x3f & op13=0 & op0507=0 & op0204=0 & rs5 & rt5 & Pd2 & $(END_PACKET) {
+	Pd2 = Pd2 & ((rt5 f<= rs5) * 0xff);
+	build EndPacket;
+}
+
+# (v5,12) sfcmp.uo  --  "Pd = sfcmp.uo ( Rs, Rt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  0  0  0  1  1  1  1  1  1  s  s  s  s  s  P  P  +  t  t  t  t  t  0  0  1  +  +  +  d  d
+
+:sfcmp.uo Pd2,rs5,rt5 EndPacket	is iclass=12 & op2127=0x3f & op13=0 & op0507=1 & op0204=0 & rs5 & rt5 & Pd2 & $(END_PACKET) {
+	float1:4 = float2float(rs5);
+	float2:4 = float2float(rt5);
+	bool:1 = nan(float1) || nan(float2);
+	Pd2 = Pd2 & ((bool != 0) * 0xff);
+	build EndPacket;
+}
+
+# (v5,12) sfcmp.eq  --  "Pd = sfcmp.eq ( Rs, Rt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  0  0  0  1  1  1  1  1  1  s  s  s  s  s  P  P  +  t  t  t  t  t  0  1  1  +  +  +  d  d
+
+:sfcmp.eq Pd2,rs5,rt5 EndPacket	is iclass=12 & op2127=0x3f & op13=0 & op0507=3 & op0204=0 & rs5 & rt5 & Pd2 & $(END_PACKET) {
+	Pd2 = Pd2 & ((rt5 f== rs5) * 0xff);
+	build EndPacket;
+}
+
+# (v5,12) sfcmp.gt  --  "Pd = sfcmp.gt ( Rs, Rt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  0  0  0  1  1  1  1  1  1  s  s  s  s  s  P  P  +  t  t  t  t  t  1  0  0  +  +  +  d  d
+
+:sfcmp.gt Pd2,rs5,rt5 EndPacket	is iclass=12 & op2127=0x3f & op13=0 & op0507=4 & op0204=0 & rs5 & rt5 & Pd2 & $(END_PACKET) {
+	Pd2 = Pd2 & ((rs5 f> rt5) * 0xff);
+	build EndPacket;
+}
+
+# (v5,14) sffixupd  --  "Rd = sffixupd ( Rs, Rt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  1  1  1  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  0  1  d  d  d  d  d
+define pcodeop sffixupd;
+:sffixupd Rd5,rs5,rt5 EndPacket	is iclass=14 & op2127=0x5e & op13=0 & op0507=1 & rs5 & rt5 & Rd5 & $(END_PACKET) {
+	Rd5 = sffixupd(rs5, rt5);
+	build EndPacket;
+}
+
+# (v5,14) sffixupn  --  "Rd = sffixupn ( Rs, Rt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  1  1  1  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  0  0  d  d  d  d  d
+define pcodeop sffixupn;
+:sffixupn Rd5,rs5,rt5 EndPacket	is iclass=14 & op2127=0x5e & op13=0 & op0507=0 & rs5 & rt5 & Rd5 & $(END_PACKET) {
+	Rd5 = sffixupn(rs5, rt5);
+	build EndPacket;
+}
+
+# (v5,8) sffixupr  --  "Rd = sffixupr ( Rs )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  1  0  1  1  1  0  1  s  s  s  s  s  P  P  +  +  +  +  +  +  0  0  0  d  d  d  d  d
+define pcodeop sffixupr;
+:sffixupr Rd5,rs5 EndPacket	is iclass=8 & op2127=0x5d & op0813=0 & op0507=0 & rs5 & Rd5 & $(END_PACKET) {
+	Rd5 = sffixupr(rs5);
+	build EndPacket;
+}
+
+# (v5,13) sfmake  --  "Rd = sfmake ( #u10 ) :neg"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  0  1  0  1  1  0  0  1  i  +  +  +  +  +  P  P  i  i  i  i  i  i  i  i  i  d  d  d  d  d
+
+:sfmake^":neg" Rd5,Uimm16_21_0513 EndPacket	is iclass=13 & op2227=0x19 & op1620=0 & Uimm16_21_0513 & Rd5 & $(END_PACKET) {
+	Rd5 = int2float(-Uimm16_21_0513); # TODO: assumed functionality
+	build EndPacket;
+}
+
+# (v5,13) sfmake  --  "Rd = sfmake ( #u10 ) :pos"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  0  1  0  1  1  0  0  0  i  +  +  +  +  +  P  P  i  i  i  i  i  i  i  i  i  d  d  d  d  d
+
+:sfmake^":pos" Rd5,Uimm16_21_0513 EndPacket	is iclass=13 & op2227=0x18 & op1620=0 & Uimm16_21_0513 & Rd5 & $(END_PACKET) {
+	Rd5 = int2float(Uimm16_21_0513); # TODO: assumed functionality
+	build EndPacket;
+}
+
+# (v5,14) sfmax  --  "Rd = sfmax ( Rs, Rt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  1  1  0  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  0  0  d  d  d  d  d
+
+:sfmax Rd5,rs5,rt5 EndPacket	is iclass=14 & op2127=0x5c & op13=0 & op0507=0 & rs5 & rt5 & Rd5 & $(END_PACKET) {
+	if (nan(rs5) || (rs5 f< rt5)) goto <useRt>;
+	Rd5 = rs5;
+	goto <done>;
+ <useRt>
+ 	Rd5 = rt5;
+ <done>
+ 	build EndPacket;
+}
+
+# (v5,14) sfmin  --  "Rd = sfmin ( Rs, Rt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  1  1  0  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  0  1  d  d  d  d  d
+
+:sfmin Rd5,rs5,rt5 EndPacket	is iclass=14 & op2127=0x5c & op13=0 & op0507=1 & rs5 & rt5 & Rd5 & $(END_PACKET) {
+	if (nan(rs5) || (rt5 f< rs5)) goto <useRt>;
+	Rd5 = rs5;
+	goto <done>;
+ <useRt>
+ 	Rd5 = rt5;
+ <done>
+ 	build EndPacket;
+}
+
+# (v5,14) sfmpy  --  "Rd = sfmpy ( Rs, Rt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  1  0  1  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  0  0  d  d  d  d  d
+
+:sfmpy Rd5,rs5,rt5 EndPacket	is iclass=14 & op2127=0x5a & op13=0 & op0507=0 & rs5 & rt5 & Rd5 & $(END_PACKET) {
+	Rd5 = rs5 f* rt5;
+	build EndPacket;
+}
+
+# (v5,14) sfmpy+=  --  "Rx += sfmpy ( Rs, Rt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  1  1  1  0  0  0  s  s  s  s  s  P  P  0  t  t  t  t  t  1  0  0  x  x  x  x  x
+
+:sfmpy+= Rd5,rs5,rt5 EndPacket	is iclass=14 & op2127=0x78 & op13=0 & op0507=4 & rs5 & rt5 & Rd5 & rd5 & $(END_PACKET) {
+	Rd5 = rd5 f+ (rs5 f* rt5);
+	build EndPacket;
+}
+
+# (v5,14) sfmpy+=  --  "Rx += sfmpy ( Rs, Rt, Pu ) :scale"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  1  1  1  0  1  1  s  s  s  s  s  P  P  0  t  t  t  t  t  1  u  u  x  x  x  x  x
+
+:sfmpy+=^":scale" Rd5,rs5,rt5,pu0506 EndPacket	is iclass=14 & op2127=0x7b & op13=0 & op7=1 & pu0506 & rs5 & rt5 & Rd5 & rd5 & $(END_PACKET) {
+	Rd5 = multiplyAddScale(Rd5, rs5, rt5);
+	build EndPacket;
+}
+
+# (v5,14) sfmpy-=  --  "Rx -= sfmpy ( Rs, Rt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  1  1  1  0  0  0  s  s  s  s  s  P  P  0  t  t  t  t  t  1  0  1  x  x  x  x  x
+
+:sfmpy-= Rd5,rs5,rt5 EndPacket	is iclass=14 & op2127=0x78 & op13=0 & op0507=5 & rs5 & rt5 & Rd5 & rd5 & $(END_PACKET) {
+	Rd5 = rd5 f- (rs5 f* rt5);
+	build EndPacket;
+}
+
+
+
+# (v5,14) sfmpy+=  --  "Rx += sfmpy ( Rs, Rt ) :lib"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  1  1  1  0  0  0  s  s  s  s  s  P  P  0  t  t  t  t  t  1  1  0  x  x  x  x  x
+
+:sfmpy+=^":lib" Rd5,rs5,rt5 EndPacket	is iclass=14 & op2127=0x78 & op13=0 & op0507=6 & rs5 & rt5 & Rd5 & rd5 & $(END_PACKET) {
+	Rd5 = rd5 f+ (rs5 f* rt5);
+	build EndPacket;
+}
+
+# (v5,14) sfmpy-=  --  "Rx -= sfmpy ( Rs, Rt ) :lib"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  1  1  1  0  0  0  s  s  s  s  s  P  P  0  t  t  t  t  t  1  1  1  x  x  x  x  x
+
+:sfmpy-=^":lib" Rd5,rs5,rt5 EndPacket	is iclass=14 & op2127=0x78 & op13=0 & op0507=7 & rs5 & rt5 & Rd5 & rd5 & $(END_PACKET) {
+	Rd5 = rd5 f- (rs5 f* rt5);
+	build EndPacket;
+}
+
+
+
+
+# (v5,14) sfsub  --  "Rd = sfsub ( Rs, Rt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  1  0  0  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  0  1  d  d  d  d  d
+
+:sfsub Rd5,rs5,rt5 EndPacket	is iclass=14 & op2127=0x58 & op13=0 & op0507=1 & rs5 & rt5 & Rd5 & $(END_PACKET) {
+	Rd5 = rs5 f- rt5;
+	build EndPacket;
+}
+
+# (v5,13) dfclass  --  "Pd = dfclass ( Rss, #u5 )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  0  1  1  1  0  0  1  0  0  s  s  s  s  s  P  P  +  0  0  0  i  i  i  i  i  1  0  +  d  d
+
+:dfclass Pd2,rss5,Uimm8_0509 EndPacket	is iclass=13 & op2127=0x64 & op1013=0 & op0204=4 & Uimm8_0509 & rss5 & Pd2 & $(END_PACKET) {
+	float:8 = float2float(rss5);
+	result:1 = isClassifiedFloat(float,Uimm8_0509);
+	Pd2 = Pd2 & result;
+	build EndPacket;
+}
+
+# (v5,13) dfcmp.eq  --  "Pd = dfcmp.eq ( Rss, Rtt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  0  1  0  0  1  0  1  1  1  s  s  s  s  s  P  P  +  t  t  t  t  t  0  0  0  +  +  +  d  d
+
+:dfcmp.eq Pd2,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x17 & op13=0 & op0507=0 & op0204=0 & rss5 & rtt5 & Pd2 & $(END_PACKET) {
+	Pd2 = Pd2 & ((rtt5 f== rss5) * 0xff);
+	build EndPacket;
+}
+
+# (v5,13) dfcmp.gt  --  "Pd = dfcmp.gt ( Rss, Rtt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  0  1  0  0  1  0  1  1  1  s  s  s  s  s  P  P  +  t  t  t  t  t  0  0  1  +  +  +  d  d
+
+:dfcmp.gt Pd2,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x17 & op13=0 & op0507=1 & op0204=0 & rss5 & rtt5 & Pd2 & $(END_PACKET) {
+	Pd2 = Pd2 & ((rss5 f> rtt5) * 0xff);
+	build EndPacket;
+}
+
+# (v5,13) dfcmp.ge  --  "Pd = dfcmp.ge ( Rss, Rtt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  0  1  0  0  1  0  1  1  1  s  s  s  s  s  P  P  +  t  t  t  t  t  0  1  0  +  +  +  d  d
+
+:dfcmp.ge Pd2,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x17 & op13=0 & op0507=2 & op0204=0 & rss5 & rtt5 & Pd2 & $(END_PACKET) {
+	Pd2 = Pd2 & ((rtt5 f<= rss5) * 0xff);
+	build EndPacket;
+}
+
+# (v5,13) dfcmp.uo  --  "Pd = dfcmp.uo ( Rss, Rtt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  0  1  0  0  1  0  1  1  1  s  s  s  s  s  P  P  +  t  t  t  t  t  0  1  1  +  +  +  d  d
+
+:dfcmp.uo Pd2,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x17 & op13=0 & op0507=3 & op0204=0 & rss5 & rtt5 & Pd2 & $(END_PACKET) {
+	float1:8 = float2float(rss5);
+	float2:8 = float2float(rtt5);
+	bool:1 = nan(float1) || nan(float2);
+	Pd2 = Pd2 & ((bool != 0) * 0xff);
+	build EndPacket;
+}
+
+# (v5,13) dfmake  --  "Rdd = dfmake ( #u10 ) :neg"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  0  1  1  0  0  1  0  1  i  +  +  +  +  +  P  P  i  i  i  i  i  i  i  i  i  d  d  d  d  d
+
+:dfmake^":neg" Rdd5,Uimm16_21_0513 EndPacket	is iclass=13 & op2227=0x25 & op1620=0 & Uimm16_21_0513 & Rdd5 & $(END_PACKET) {
+	Rdd5 = int2float(-Uimm16_21_0513); # TODO: assumed functionality
+	build EndPacket;
+}
+
+# (v5,13) dfmake  --  "Rdd = dfmake ( #u10 ) :pos"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  0  1  1  0  0  1  0  0  i  +  +  +  +  +  P  P  i  i  i  i  i  i  i  i  i  d  d  d  d  d
+
+:dfmake^":pos" Rdd5,Uimm16_21_0513 EndPacket	is iclass=13 & op2227=0x24 & op1620=0 & Uimm16_21_0513 & Rdd5 & $(END_PACKET) {
+	Rdd5 = int2float(Uimm16_21_0513); # TODO: assumed functionality
+	build EndPacket;
+}
+
+#
+# V65 Floating Point Instructions  
+#
+
+# (v65,8) sfinvsqrta  --  "Rd,Pe = sfinvsqrta ( Rs )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  1  0  1  1  1  1  1  s  s  s  s  s  P  P  +  +  +  +  +  +  0  e  e  d  d  d  d  d
+
+:sfinvsqrta Rd5,pu0506,rs5 EndPacket	is iclass=8 & op2127=0x5f & op0813=0 & op7=0 & pu0506_ & pu0506 & rs5 & Rd5 & $(END_PACKET)
+unimpl
+
+# (v65,14) sfrecipa  --  "Rd,Pe = sfrecipa ( Rs, Rt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  1  1  1  1  s  s  s  s  s  P  P  0  t  t  t  t  t  1  e  e  d  d  d  d  d
+
+:sfrecipa Rd5,Pd0506,rs5,rt5 EndPacket	is iclass=14 & op2127=0x5f & op13=0 & op7=1 & Pd0506 & rs5 & rt5 & Rd5 & $(END_PACKET) {
+	src1:4 = rs5;
+	src2:4 = rt5;
+	Rd5 = reciprocal(src1, src2);
+	Pd0506 = Pd0506 & reciprocalAdjust(src1, src2);
+	build EndPacket;
+}
+
+#
+# V66 Floating Point Instructions  
+#
+
+# (v66,14) dfadd  --  "Rdd = dfadd ( Rss, Rtt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  0  0  0  0  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  d  d  d  d  d
+
+:dfadd Rdd5,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x40 & op13=0 & op0507=3 & rss5 & rtt5 & Rdd5 & $(END_PACKET) {
+	Rdd5 = rss5 f+ rtt5;
+	build EndPacket;
+}
+
+# (v66,14) dfsub  --  "Rdd = dfsub ( Rss, Rtt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  0  0  1  0  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  d  d  d  d  d
+
+:dfsub Rdd5,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x44 & op13=0 & op0507=3 & rss5 & rtt5 & Rdd5 & $(END_PACKET) {
+	Rdd5 = rss5 f- rtt5;
+	build EndPacket;
+}
+
+#
+# V67 Floating Point Instructions  
+#
+
+# (v67,14) dfmax  --  "Rdd = dfmax ( Rss, Rtt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  0  0  0  0  1  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  d  d  d  d  d
+
+:dfmax Rdd5,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x41 & op13=0 & op0507=3 & rss5 & rtt5 & Rdd5 & $(END_PACKET) {
+	if (nan(rss5) || (rss5 f< rtt5)) goto <useRt>;
+	Rdd5 = rss5;
+	goto <done>;
+ <useRt>
+ 	Rdd5 = rtt5;
+ <done>
+ 	build EndPacket;
+}
+
+# (v67,14) dfmin  --  "Rdd = dfmin ( Rss, Rtt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  0  0  1  1  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  d  d  d  d  d
+
+:dfmin Rdd5,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x46 & op13=0 & op0507=3 & rss5 & rtt5 & Rdd5 & $(END_PACKET) {
+	if (nan(rss5) || (rtt5 f< rss5)) goto <useRt>;
+	Rdd5 = rss5;
+	goto <done>;
+ <useRt>
+ 	Rdd5 = rtt5;
+ <done>
+ 	build EndPacket;
+}
+
+# (v5,14) c  --  "Rdd = dfmpyfix ( Rss, Rtt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  0  0  0  1  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  d  d  d  d  d
+
+define pcodeop dfmpyfix;
+:dfmpyfix Rdd5,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x42 & op13=0 & op0507=3 & rss5 & rtt5 & Rdd5 & $(END_PACKET) {
+	Rdd5 = dfmpyfix(rss5, rtt5);
+	build EndPacket;
+}
+
+@ifndef ADD_DP_OPS
+
+# (v67,14) dfmpyhh+=  --  "Rxx += dfmpyhh ( Rss, Rtt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  0  1  0  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  x  x  x  x  x
+
+define pcodeop dfmpyhh;
+:dfmpyhh+= Rdd5,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x54 & op13=0 & op0507=3 & rss5 & rtt5 & Rdd5 & rdd5 & $(END_PACKET) {
+	Rdd5 = dfmpyhh(rdd5, rss5, rtt5);
+	build EndPacket;
+}
+
+# (v67,14) dfmpylh+=  --  "Rxx += dfmpylh ( Rss, Rtt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  0  0  0  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  x  x  x  x  x
+
+define pcodeop dfmpylh;
+:dfmpylh+= Rdd5,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x50 & op13=0 & op0507=3 & rss5 & rtt5 & Rdd5 & rdd5 & $(END_PACKET) {
+	Rdd5 = dfmpylh(rdd5, rss5, rtt5);
+	build EndPacket;
+}
+
+# (v5,14) dfmpyll  --  "Rdd = dfmpyll ( Rss, Rtt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  0  0  1  0  1  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  d  d  d  d  d
+
+define pcodeop dfmpyll;
+:dfmpyll Rdd5,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x45 & op13=0 & op0507=3 & rss5 & rtt5 & Rdd5 & $(END_PACKET) {
+	Rdd5 = dfmpyll(rss5, rtt5);
+	build EndPacket;
+}
+
+@endif # not ADD_DP_OPS
+
+
+#############################################################################################################
+#
+# WARNING: The following instructions were discovered within various QEMU revisions not associated with a
+# specific processor version that we have been able to identify.  These instructions are for experimental
+# use only and may be intended for QEMU development testing only.
+#
+#############################################################################################################
+
+@ifdef ADD_DP_OPS
+
+# (??,14) dffixupn  --  "Rdd = dffixupn ( Rss, Rtt )"
+# NOTE: replaces V67 dfmpyll
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  0  0  1  0  1  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  d  d  d  d  d
+
+define pcodeop dffixupn;
+:dffixupn Rdd5,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x45 & op13=0 & op0507=3 & rss5 & rtt5 & Rdd5 & $(END_PACKET) {
+	Rdd5 = dffixupn(rss5, rtt5);
+	build EndPacket;
+}
+
+# (??,14) dffixupd  --  "Rdd = dffixupd ( Rss, Rtt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  0  0  0  1  1  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  d  d  d  d  d
+
+define pcodeop dffixupd;
+:dffixupd Rdd5,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x43 & op13=0 & op0507=3 & rss5 & rtt5 & Rdd5 & $(END_PACKET){
+	Rdd5 = dffixupd(rss5, rtt5);
+	build EndPacket;
+}
+
+# (??,14) dfrecipa  --  "Rdd,Pe = dfrecipa ( Rss, Rtt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  0  0  1  1  1  s  s  s  s  s  P  P  0  t  t  t  t  t  0  e  e  d  d  d  d  d
+
+:dfrecipa Rdd5,pu0506,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x47 & op13=0 & op7=0 & pu0506_ & pu0506 & rss5 & rtt5 & Rdd5 & $(END_PACKET)
+unimpl
+
+# (??,14) dfmpyhh  --  "Rdd += dfmpyhh ( Rss, Rtt )"
+# NOTE: unexplained redfinition of V67 dfmpyhh +=
+# NOTE: conflicts with dfmpy+= :lib  (see below)
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  0  0  1  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  x  x  x  x  x
+# :dfmpyhh+= Rdd5,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x52 & op13=0 & op0507=3 & rss5 & rtt5 & Rdd5 & rdd5 & $(END_PACKET)
+# unimpl
+
+# (??,14) dfmpy+=  --  "Rxx += dfmpy ( Rss, Rtt )"
+# NOTE: replaces V67 dfmpylh +=
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  0  0  0  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  x  x  x  x  x
+
+:dfmpy+= Rdd5,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x50 & op13=0 & op0507=3 & rss5 & rtt5 & Rdd5 & rdd5 & $(END_PACKET) {
+	Rdd5 = rdd5 f+ (rss5 f* rtt5);
+	build EndPacket;
+}
+
+# (??,14) dfmpy-=  --  "Rxx -= dfmpy ( Rss, Rtt )"
+# NOTE: replaces V67 dfmpyhh +=
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  0  1  0  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  x  x  x  x  x
+
+:dfmpy-= Rdd5,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x54 & op13=0 & op0507=3 & rss5 & rtt5 & Rdd5 & rdd5 & $(END_PACKET) {
+	Rdd5 = rdd5 f- (rss5 f* rtt5);
+	build EndPacket;
+}
+
+# (??,14) dfmpy+=  --  "Rxx += dfmpy ( Rss, Rtt ) :lib"
+# NOTE: conflicts with replacement above for dfmpyhh +=
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  0  0  1  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  x  x  x  x  x
+
+:dfmpy+=^":lib" Rdd5,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x52 & op13=0 & op0507=3 & rss5 & rtt5 & Rdd5 & rdd5 & $(END_PACKET) {
+	Rdd5 = rdd5 f+ (rss5 f* rtt5);
+	build EndPacket;
+}
+
+# (??,14) dfmpy-=  --  "Rxx -= dfmpy ( Rss, Rtt ) :lib"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  0  1  1  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  x  x  x  x  x
+
+:dfmpy-=^":lib" Rdd5,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x56 & op13=0 & op0507=3 & rss5 & rtt5 & Rdd5 & rdd5 & $(END_PACKET) {
+	Rdd5 = rdd5 f- (rss5 f* rtt5);
+	build EndPacket;
+}
+
+# (??,14) dfmpy+=  --  "Rxx += dfmpy ( Rss, Rtt, Pu ) :scale"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  1  1  0  1  0  1  0  1  1  1  s  s  s  s  s  P  P  0  t  t  t  t  t  0  u  u  x  x  x  x  x
+
+:dfmpy+=^":scale" Rdd5,rss5,rtt5,pu0506 EndPacket	is iclass=14 & op2127=0x57 & op13=0 & op7=0 & pu0506 & rss5 & rtt5 & Rdd5 & rdd5 & $(END_PACKET) {
+	Rdd5 = multiplyAddScale(Rdd5, rss5, rtt5);
+	build EndPacket;
+}
+
+# (??,8) dffixupr  --  "Rdd = dffixupr ( Rss )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  0  0  0  1  1  1  s  s  s  s  s  P  P  0  +  +  +  +  +  1  0  0  d  d  d  d  d
+define pcodeop dffixupr;
+:dffixupr Rdd5,rss5 EndPacket	is iclass=8 & op2127=0x07 & op0813=0 & op0507=4 & rss5 & Rdd5 & $(END_PACKET) {
+	Rdd5 = dffixupr(rss5);
+	build EndPacket;
+}
+
+# (??,8) dfinvsqrta  --  "Rdd32 , Pe4 = dfinvsqrta ( Rss32 )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
+#    1  0  0  0  0  0  0  0  1  1  1  s  s  s  s  s  P  P  1  +  +  +  +  +  0  e  e  d  d  d  d  d
+
+:dfinvsqrta Rdd5,pu0506,rss5 EndPacket	is iclass=8 & op2127=0x07 & op0813=0x20 & op7=0 & pu0506_ & pu0506 & rss5 & Rdd5 & $(END_PACKET)
+unimpl
+
+@endif # ADD_DP_OPS

@@ -25,14 +25,15 @@ import java.util.Map.Entry;
 
 import javax.swing.Icon;
 
+import generic.jar.ResourceFile;
 import generic.theme.GIcon;
 import generic.theme.Gui;
-import ghidra.dbg.util.ShellUtils;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.LaunchParameter;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.AutoConfigState.PathIsDir;
 import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
+import ghidra.pty.ShellUtils;
 import ghidra.util.*;
 
 /**
@@ -40,49 +41,53 @@ import ghidra.util.*;
  */
 public abstract class ScriptAttributesParser {
 	public static final String ENV_GHIDRA_HOME = "GHIDRA_HOME";
+	public static final String ENV_MODULE_HOME = "MODULE_HOME";
+	public static final String ENV_MODULE_HOME_PAT = "MODULE_%s_HOME";
 	public static final String ENV_GHIDRA_TRACE_RMI_ADDR = "GHIDRA_TRACE_RMI_ADDR";
 	public static final String ENV_GHIDRA_TRACE_RMI_HOST = "GHIDRA_TRACE_RMI_HOST";
 	public static final String ENV_GHIDRA_TRACE_RMI_PORT = "GHIDRA_TRACE_RMI_PORT";
 
-	public static final String AT_TITLE = "@title";
-	public static final String AT_DESC = "@desc";
-	public static final String AT_MENU_PATH = "@menu-path";
-	public static final String AT_MENU_GROUP = "@menu-group";
-	public static final String AT_MENU_ORDER = "@menu-order";
-	public static final String AT_ICON = "@icon";
-	public static final String AT_HELP = "@help";
-	public static final String AT_ENUM = "@enum";
-	public static final String AT_ENV = "@env";
 	public static final String AT_ARG = "@arg";
 	public static final String AT_ARGS = "@args";
-	public static final String AT_TTY = "@tty";
+	public static final String AT_DEPENDS = "@depends";
+	public static final String AT_DESC = "@desc";
+	public static final String AT_ENUM = "@enum";
+	public static final String AT_ENV = "@env";
+	public static final String AT_HELP = "@help";
+	public static final String AT_ICON = "@icon";
+	public static final String AT_IMAGE_OPT = "@image-opt";
+	public static final String AT_MENU_GROUP = "@menu-group";
+	public static final String AT_MENU_ORDER = "@menu-order";
+	public static final String AT_MENU_PATH = "@menu-path";
+	public static final String AT_TITLE = "@title";
 	public static final String AT_TIMEOUT = "@timeout";
-	public static final String AT_NOIMAGE = "@no-image";
+	public static final String AT_TTY = "@tty";
 
-	public static final String PREFIX_ENV = "env:";
-	public static final String PREFIX_ARG = "arg:";
 	public static final String KEY_ARGS = "args";
+	public static final String PREFIX_ARG = "arg:";
+	public static final String PREFIX_ENV = "env:";
 
-	public static final String MSGPAT_INVALID_HELP_SYNTAX =
-		"%s: Invalid %s syntax. Use Topic#anchor";
-	public static final String MSGPAT_INVALID_ENUM_SYNTAX =
-		"%s: Invalid %s syntax. Use NAME:type Choice1 [ChoiceN...]";
-	public static final String MSGPAT_INVALID_ENV_SYNTAX =
-		"%s: Invalid %s syntax. Use NAME:type=default \"Display\" \"Tool Tip\"";
+	public static final String MSGPAT_DUPLICATE_TAG = "%s: Duplicate %s";
 	public static final String MSGPAT_INVALID_ARG_SYNTAX =
 		"%s: Invalid %s syntax. Use :type \"Display\" \"Tool Tip\"";
 	public static final String MSGPAT_INVALID_ARGS_SYNTAX =
 		"%s: Invalid %s syntax. Use \"Display\" \"Tool Tip\"";
-	public static final String MSGPAT_INVALID_TTY_SYNTAX =
-		"%s: Invalid %s syntax. Use TTY_TARGET [if env:OPT [== VAL]]";
+	public static final String MSGPAT_INVALID_ENUM_SYNTAX =
+		"%s: Invalid %s syntax. Use NAME:type Choice1 [ChoiceN...]";
+	public static final String MSGPAT_INVALID_ENV_SYNTAX =
+		"%s: Invalid %s syntax. Use NAME:type=default \"Display\" \"Tool Tip\"";
+	public static final String MSGPAT_INVALID_HELP_SYNTAX =
+		"%s: Invalid %s syntax. Use Topic#anchor";
+	public static final String MSGPAT_INVALID_TIMEOUT_SYNTAX = "" +
+		"%s: Invalid %s syntax. Use [milliseconds]";
+	public static final String MSGPAT_INVALID_TTY_BAD_VAL =
+		"%s: In %s: Parameter '%s' has type %s, but '%s' cannot be parsed as such";
 	public static final String MSGPAT_INVALID_TTY_NO_PARAM =
 		"%s: In %s: No such parameter '%s'";
 	public static final String MSGPAT_INVALID_TTY_NOT_BOOL =
 		"%s: In %s: Parameter '%s' must have bool type";
-	public static final String MSGPAT_INVALID_TTY_BAD_VAL =
-		"%s: In %s: Parameter '%s' has type %s, but '%s' cannot be parsed as such";
-	public static final String MSGPAT_INVALID_TIMEOUT_SYNTAX = "" +
-		"%s: Invalid %s syntax. Use [milliseconds]";
+	public static final String MSGPAT_INVALID_TTY_SYNTAX =
+		"%s: Invalid %s syntax. Use TTY_TARGET [if env:OPT [== VAL]]";
 
 	public static class ParseException extends Exception {
 		private Location loc;
@@ -289,8 +294,9 @@ public abstract class ScriptAttributesParser {
 			return tac.withCastDefault(new ValStr<>(value, defaultString));
 		}
 
-		public LaunchParameter<T> createParameter(String name, String display, String description) {
-			return type.createParameter(name, display, description, false, defaultValue);
+		public LaunchParameter<T> createParameter(String name, String display, String description,
+				boolean required) {
+			return type.createParameter(name, display, description, required, defaultValue);
 		}
 	}
 
@@ -339,8 +345,9 @@ public abstract class ScriptAttributesParser {
 
 	public record ScriptAttributes(String title, String description, List<String> menuPath,
 			String menuGroup, String menuOrder, Icon icon, HelpLocation helpLocation,
-			Map<String, LaunchParameter<?>> parameters, Map<String, TtyCondition> extraTtys,
-			int timeoutMillis, boolean noImage) {}
+			Map<String, LaunchParameter<?>> parameters, Set<String> dependencies,
+			Map<String, TtyCondition> extraTtys, int timeoutMillis, LaunchParameter<?> imageOpt) {
+	}
 
 	/**
 	 * Convert an arguments map into a command line and environment variables
@@ -352,14 +359,35 @@ public abstract class ScriptAttributesParser {
 	 * @param script the script file
 	 * @param parameters the descriptions of the parameters
 	 * @param args the arguments to process
+	 * @param dependencies a set of module names this script needs
 	 * @param address the address of the listening TraceRmi socket
 	 */
 	public static void processArguments(List<String> commandLine, Map<String, String> env,
 			File script, Map<String, LaunchParameter<?>> parameters, Map<String, ValStr<?>> args,
-			SocketAddress address) {
+			Set<String> dependencies, SocketAddress address) {
 
 		commandLine.add(script.getAbsolutePath());
-		env.put(ENV_GHIDRA_HOME, Application.getInstallationDirectory().getAbsolutePath());
+
+		env.put(ENV_GHIDRA_HOME, Application.getApplicationRootDirectory().getAbsolutePath());
+		ResourceFile myModule =
+			Application.getModuleContainingResourceFile(new ResourceFile(script));
+		if (myModule == null) {
+			Msg.warn(ScriptAttributes.class, "Launch script is not contained in a module");
+		}
+		else {
+			env.put(ENV_MODULE_HOME, myModule.getAbsolutePath());
+		}
+		for (String dep : dependencies) {
+			ResourceFile module = Application.getModuleRootDir(dep);
+			if (module == null) {
+				Msg.warn(ScriptAttributes.class, "Could not find module " + dep);
+			}
+			else {
+				env.put(ENV_MODULE_HOME_PAT.formatted(dep.replace('-', '_')),
+					module.getAbsolutePath());
+			}
+		}
+
 		if (address != null) {
 			env.put(ENV_GHIDRA_TRACE_RMI_ADDR, sockToString(address));
 			if (address instanceof InetSocketAddress tcp) {
@@ -371,7 +399,7 @@ public abstract class ScriptAttributesParser {
 		LaunchParameter<?> param;
 		for (int i = 1; (param = parameters.get("arg:" + i)) != null; i++) {
 			// Don't use ValStr.str here. I'd like the script's input normalized
-			commandLine.add(Objects.toString(param.get(args).val()));
+			commandLine.add(param.get(args).normStr());
 		}
 
 		param = parameters.get("args");
@@ -384,29 +412,25 @@ public abstract class ScriptAttributesParser {
 			if (key.startsWith(PREFIX_ENV)) {
 				String varName = key.substring(PREFIX_ENV.length());
 				ValStr<?> val = ent.getValue().get(args);
-				if (val == null || val.val() == null) {
-					env.put(varName, "");
-				}
-				else {
-					env.put(varName, Objects.toString(val.val()));
-				}
+				env.put(varName, ValStr.normStr(val));
 			}
 		}
 	}
 
-	private int argc = 0;
+	private int argc;
 	private String title;
 	private StringBuilder description;
-	private List<String> menuPath;
-	private String menuGroup;
-	private String menuOrder;
 	private String iconId;
 	private HelpLocation helpLocation;
+	private String menuGroup;
+	private String menuOrder;
+	private List<String> menuPath;
 	private final Map<String, UserType<?>> userTypes = new HashMap<>();
 	private final Map<String, LaunchParameter<?>> parameters = new LinkedHashMap<>();
+	private final Set<String> dependencies = new LinkedHashSet<>();
 	private final Map<String, TtyCondition> extraTtys = new LinkedHashMap<>();
-	private int timeoutMillis = AbstractTraceRmiLaunchOffer.DEFAULT_TIMEOUT_MILLIS;
-	private boolean noImage = false;
+	private int timeoutMillis = AbstractTraceRmiLaunchOffer.DEFAULT_CONNECTION_TIMEOUT_MILLIS;
+	private String imageOptKey;
 
 	/**
 	 * Check if a line should just be ignored, e.g., blank lines, or the "shebang" line on UNIX.
@@ -489,36 +513,74 @@ public abstract class ScriptAttributesParser {
 			return;
 		}
 		if (parts.length == 1) {
-			switch (parts[0].trim()) {
-				case AT_NOIMAGE -> parseNoImage(loc);
-				default -> parseUnrecognized(loc, comment);
-			}
+			parseUnrecognized(loc, comment);
 		}
 		else {
 			switch (parts[0].trim()) {
-				case AT_TITLE -> parseTitle(loc, parts[1]);
-				case AT_DESC -> parseDesc(loc, parts[1]);
-				case AT_MENU_PATH -> parseMenuPath(loc, parts[1]);
-				case AT_MENU_GROUP -> parseMenuGroup(loc, parts[1]);
-				case AT_MENU_ORDER -> parseMenuOrder(loc, parts[1]);
-				case AT_ICON -> parseIcon(loc, parts[1]);
-				case AT_HELP -> parseHelp(loc, parts[1]);
-				case AT_ENUM -> parseEnum(loc, parts[1]);
-				case AT_ENV -> parseEnv(loc, parts[1]);
 				case AT_ARG -> parseArg(loc, parts[1], ++argc);
 				case AT_ARGS -> parseArgs(loc, parts[1]);
-				case AT_TTY -> parseTty(loc, parts[1]);
+				case AT_DEPENDS -> parseDepends(loc, parts[1]);
+				case AT_DESC -> parseDesc(loc, parts[1]);
+				case AT_ENUM -> parseEnum(loc, parts[1]);
+				case AT_ENV -> parseEnv(loc, parts[1]);
+				case AT_HELP -> parseHelp(loc, parts[1]);
+				case AT_ICON -> parseIcon(loc, parts[1]);
+				case AT_IMAGE_OPT -> parseImageOpt(loc, parts[1]);
+				case AT_MENU_GROUP -> parseMenuGroup(loc, parts[1]);
+				case AT_MENU_ORDER -> parseMenuOrder(loc, parts[1]);
+				case AT_MENU_PATH -> parseMenuPath(loc, parts[1]);
 				case AT_TIMEOUT -> parseTimeout(loc, parts[1]);
+				case AT_TITLE -> parseTitle(loc, parts[1]);
+				case AT_TTY -> parseTty(loc, parts[1]);
 				default -> parseUnrecognized(loc, comment);
 			}
 		}
 	}
 
-	protected void parseTitle(Location loc, String str) {
-		if (title != null) {
-			reportWarning("%s: Duplicate %s".formatted(loc, AT_TITLE));
+	protected void parseArg(Location loc, String str, int argNum) {
+		List<String> parts = ShellUtils.parseArgs(str);
+		if (parts.size() != 3) {
+			reportError(MSGPAT_INVALID_ARG_SYNTAX.formatted(loc, AT_ARG));
+			return;
 		}
-		title = str;
+		String colonType = parts.get(0).trim();
+		if (!colonType.startsWith(":")) {
+			reportError(MSGPAT_INVALID_ARG_SYNTAX.formatted(loc, AT_ARG));
+			return;
+		}
+		OptType<?> type;
+		boolean required = colonType.endsWith("!");
+		int endType = required ? colonType.length() - 1 : colonType.length();
+		try {
+			type = OptType.parse(loc, colonType.substring(1, endType), userTypes);
+			String name = PREFIX_ARG + argNum;
+			parameters.put(name, type.createParameter(name, parts.get(1), parts.get(2), required,
+				new ValStr<>(null, "")));
+		}
+		catch (ParseException e) {
+			reportError(e.getMessage());
+		}
+	}
+
+	protected void parseArgs(Location loc, String str) {
+		List<String> parts = ShellUtils.parseArgs(str);
+		if (parts.size() != 2) {
+			reportError(MSGPAT_INVALID_ARGS_SYNTAX.formatted(loc, AT_ARGS));
+			return;
+		}
+
+		LaunchParameter<String> parameter = BaseType.STRING.createParameter(
+			"args", parts.get(0), parts.get(1), false, ValStr.str(""));
+		if (parameters.put(KEY_ARGS, parameter) != null) {
+			reportWarning("%s: Duplicate %s. Replaced".formatted(loc, AT_ARGS));
+		}
+	}
+
+	protected void parseDepends(Location loc, String str) {
+		String moduleName = str.trim();
+		if (!dependencies.add(moduleName)) {
+			reportWarning("%s: Duplicate %s %s. Ignored.".formatted(loc, AT_DEPENDS, str));
+		}
 	}
 
 	protected void parseDesc(Location loc, String str) {
@@ -527,54 +589,6 @@ public abstract class ScriptAttributesParser {
 		}
 		description.append(str);
 		description.append("\n");
-	}
-
-	protected void parseMenuPath(Location loc, String str) {
-		if (menuPath != null) {
-			reportWarning("%s: Duplicate %s".formatted(loc, AT_MENU_PATH));
-		}
-		menuPath = List.of(str.trim().split("\\."));
-		if (menuPath.isEmpty()) {
-			reportError(
-				"%s: Empty %s. Ignoring.".formatted(loc, AT_MENU_PATH));
-		}
-	}
-
-	protected void parseMenuGroup(Location loc, String str) {
-		if (menuGroup != null) {
-			reportWarning("%s: Duplicate %s".formatted(loc, AT_MENU_GROUP));
-		}
-		menuGroup = str;
-	}
-
-	protected void parseMenuOrder(Location loc, String str) {
-		if (menuOrder != null) {
-			reportWarning("%s: Duplicate %s".formatted(loc, AT_MENU_ORDER));
-		}
-		menuOrder = str;
-	}
-
-	protected void parseIcon(Location loc, String str) {
-		if (iconId != null) {
-			reportWarning("%s: Duplicate %s".formatted(loc, AT_ICON));
-		}
-		iconId = str.trim();
-		if (!Gui.hasIcon(iconId)) {
-			reportError(
-				"%s: Icon id %s not registered in the theme".formatted(loc, iconId));
-		}
-	}
-
-	protected void parseHelp(Location loc, String str) {
-		if (helpLocation != null) {
-			reportWarning("%s: Duplicate %s".formatted(loc, AT_HELP));
-		}
-		String[] parts = str.trim().split("#", 2);
-		if (parts.length != 2) {
-			reportError(MSGPAT_INVALID_HELP_SYNTAX.formatted(loc, AT_HELP));
-			return;
-		}
-		helpLocation = new HelpLocation(parts[0].trim(), parts[1].trim());
 	}
 
 	protected <T> UserType<T> parseEnumChoices(Location loc, BaseType<T> baseType,
@@ -642,10 +656,14 @@ public abstract class ScriptAttributesParser {
 			reportError(MSGPAT_INVALID_ENV_SYNTAX.formatted(loc, AT_ENV));
 			return;
 		}
+		String typePart = tadParts[0].trim();
+		boolean required = typePart.endsWith("!");
+		int endType = required ? typePart.length() - 1 : typePart.length();
 		try {
-			TypeAndDefault<?> tad =
-				TypeAndDefault.parse(loc, tadParts[0].trim(), tadParts[1].trim(), userTypes);
-			LaunchParameter<?> param = tad.createParameter(name, parts.get(1), parts.get(2));
+			TypeAndDefault<?> tad = TypeAndDefault.parse(loc, typePart.substring(0, endType),
+				tadParts[1].trim(), userTypes);
+			LaunchParameter<?> param =
+				tad.createParameter(name, parts.get(1), parts.get(2), required);
 			if (parameters.put(name, param) != null) {
 				reportWarning("%s: Duplicate %s %s. Replaced.".formatted(loc, AT_ENV, trimmed));
 			}
@@ -655,42 +673,75 @@ public abstract class ScriptAttributesParser {
 		}
 	}
 
-	protected void parseArg(Location loc, String str, int argNum) {
-		List<String> parts = ShellUtils.parseArgs(str);
-		if (parts.size() != 3) {
-			reportError(MSGPAT_INVALID_ARG_SYNTAX.formatted(loc, AT_ARG));
+	protected void parseHelp(Location loc, String str) {
+		if (helpLocation != null) {
+			reportWarning(MSGPAT_DUPLICATE_TAG.formatted(loc, AT_HELP));
+		}
+		String[] parts = str.trim().split("#", 2);
+		if (parts.length != 2) {
+			reportError(MSGPAT_INVALID_HELP_SYNTAX.formatted(loc, AT_HELP));
 			return;
 		}
-		String colonType = parts.get(0).trim();
-		if (!colonType.startsWith(":")) {
-			reportError(MSGPAT_INVALID_ARG_SYNTAX.formatted(loc, AT_ARG));
-			return;
+		helpLocation = new HelpLocation(parts[0].trim(), parts[1].trim());
+	}
+
+	protected void parseIcon(Location loc, String str) {
+		if (iconId != null) {
+			reportWarning(MSGPAT_DUPLICATE_TAG.formatted(loc, AT_ICON));
 		}
-		OptType<?> type;
-		try {
-			type = OptType.parse(loc, colonType.substring(1), userTypes);
-			String name = PREFIX_ARG + argNum;
-			parameters.put(name,
-				type.createParameter(name, parts.get(1), parts.get(2), true,
-					new ValStr<>(null, "")));
-		}
-		catch (ParseException e) {
-			reportError(e.getMessage());
+		iconId = str.trim();
+		if (!Gui.hasIcon(iconId)) {
+			reportError(
+				"%s: Icon id %s not registered in the theme".formatted(loc, iconId));
 		}
 	}
 
-	protected void parseArgs(Location loc, String str) {
-		List<String> parts = ShellUtils.parseArgs(str);
-		if (parts.size() != 2) {
-			reportError(MSGPAT_INVALID_ARGS_SYNTAX.formatted(loc, AT_ARGS));
-			return;
+	protected void parseImageOpt(Location loc, String str) {
+		if (imageOptKey != null) {
+			reportWarning(MSGPAT_DUPLICATE_TAG.formatted(loc, AT_IMAGE_OPT));
 		}
+		imageOptKey = str.strip();
+	}
 
-		LaunchParameter<String> parameter = BaseType.STRING.createParameter(
-			"args", parts.get(0), parts.get(1), false, ValStr.str(""));
-		if (parameters.put(KEY_ARGS, parameter) != null) {
-			reportWarning("%s: Duplicate %s. Replaced".formatted(loc, AT_ARGS));
+	protected void parseMenuGroup(Location loc, String str) {
+		if (menuGroup != null) {
+			reportWarning(MSGPAT_DUPLICATE_TAG.formatted(loc, AT_MENU_GROUP));
 		}
+		menuGroup = str;
+	}
+
+	protected void parseMenuOrder(Location loc, String str) {
+		if (menuOrder != null) {
+			reportWarning(MSGPAT_DUPLICATE_TAG.formatted(loc, AT_MENU_ORDER));
+		}
+		menuOrder = str;
+	}
+
+	protected void parseMenuPath(Location loc, String str) {
+		if (menuPath != null) {
+			reportWarning(MSGPAT_DUPLICATE_TAG.formatted(loc, AT_MENU_PATH));
+		}
+		menuPath = List.of(str.trim().split("\\."));
+		if (menuPath.isEmpty()) {
+			reportError(
+				"%s: Empty %s. Ignoring.".formatted(loc, AT_MENU_PATH));
+		}
+	}
+
+	protected void parseTimeout(Location loc, String str) {
+		try {
+			timeoutMillis = Integer.parseInt(str);
+		}
+		catch (NumberFormatException e) {
+			reportError(MSGPAT_INVALID_TIMEOUT_SYNTAX.formatted(loc, AT_TIMEOUT));
+		}
+	}
+
+	protected void parseTitle(Location loc, String str) {
+		if (title != null) {
+			reportWarning(MSGPAT_DUPLICATE_TAG.formatted(loc, AT_TITLE));
+		}
+		title = str;
 	}
 
 	protected void putTty(Location loc, String name, TtyCondition condition) {
@@ -749,19 +800,6 @@ public abstract class ScriptAttributesParser {
 		reportError(MSGPAT_INVALID_TTY_SYNTAX.formatted(loc, AT_TTY));
 	}
 
-	protected void parseTimeout(Location loc, String str) {
-		try {
-			timeoutMillis = Integer.parseInt(str);
-		}
-		catch (NumberFormatException e) {
-			reportError(MSGPAT_INVALID_TIMEOUT_SYNTAX.formatted(loc, AT_TIMEOUT));
-		}
-	}
-
-	protected void parseNoImage(Location loc) {
-		noImage = true;
-	}
-
 	protected void parseUnrecognized(Location loc, String line) {
 		reportWarning("%s: Unrecognized metadata: %s".formatted(loc, line));
 	}
@@ -784,10 +822,20 @@ public abstract class ScriptAttributesParser {
 		if (iconId == null) {
 			iconId = "icon.debugger";
 		}
+		LaunchParameter<?> imageOpt = null;
+		if (imageOptKey != null) {
+			imageOpt = parameters.get(imageOptKey);
+			if (imageOpt == null) {
+				reportError("%s: %s refers to %s, which is not a parameter name".formatted(fileName,
+					AT_IMAGE_OPT, imageOptKey));
+			}
+		}
+		// NOTE: Don't use copyOf, or else we lose ordering
 		return new ScriptAttributes(title, getDescription(), List.copyOf(menuPath), menuGroup,
 			menuOrder, new GIcon(iconId), helpLocation,
 			Collections.unmodifiableMap(new LinkedHashMap<>(parameters)),
-			Collections.unmodifiableMap(new LinkedHashMap<>(extraTtys)), timeoutMillis, noImage);
+			Collections.unmodifiableSet(new LinkedHashSet<>(dependencies)),
+			Collections.unmodifiableMap(new LinkedHashMap<>(extraTtys)), timeoutMillis, imageOpt);
 	}
 
 	private String getDescription() {

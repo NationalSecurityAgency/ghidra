@@ -18,8 +18,11 @@ package ghidra.app.plugin.core.function.editor;
 import java.util.*;
 
 import ghidra.app.services.DataTypeManagerService;
+import ghidra.app.util.NamespaceUtils;
+import ghidra.app.util.SymbolPath;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.app.util.parser.FunctionSignatureParser;
+import ghidra.app.util.parser.FunctionSignatureParser.FsParseResult;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
@@ -41,7 +44,7 @@ public class FunctionEditorModel {
 
 	private String signatureFieldText;
 
-	private ModelChangeListener listener;
+	private ModelChangeListener listener = new DummyModelChangedListener();
 
 	private Function function;
 	private Program program;
@@ -61,13 +64,16 @@ public class FunctionEditorModel {
 		this.dataTypeManagerService = service;
 		this.function = function;
 		this.program = function.getProgram();
-		functionData = new FunctionData(function);
+		this.functionData = new FunctionData(function);
 		this.originalFunctionData = new FunctionDataView(functionData);
 		validate();
 	}
 
 	void setModelChangeListener(ModelChangeListener listener) {
 		this.listener = listener;
+		if (listener == null) {
+			this.listener = new DummyModelChangedListener();
+		}
 	}
 
 	boolean hasChanges() {
@@ -99,24 +105,13 @@ public class FunctionEditorModel {
 	}
 
 	void dispose() {
-		listener = new ModelChangeListener() {
-			@Override
-			public void tableRowsChanged() {
-				// do nothing
-			}
-
-			@Override
-			public void dataChanged() {
-				// do nothing
-			}
-		};
+		listener = new DummyModelChangedListener();
 	}
 
 	private void notifyDataChanged() {
 		validate();
-		if (listener != null) {
-			Swing.runLater(() -> listener.dataChanged());
-		}
+
+		Swing.runLater(() -> listener.dataChanged());
 	}
 
 	private void validate() {
@@ -126,6 +121,7 @@ public class FunctionEditorModel {
 				"Signature transformed due to auto-params and/or forced-indirect storage change";
 			isSignatureTransformed = false; // one-shot message
 		}
+
 		isValid =
 			hasValidName() && hasValidReturnType() && hasValidReturnStorage() && hasValidParams();
 		hasSignificantParameterChanges = false;
@@ -264,7 +260,7 @@ public class FunctionEditorModel {
 	 * {@link VariableUtilities#checkVariableConflict(List, Variable, VariableStorage, VariableConflictHandler)}
 	 * @param conflicts parameters whose storage conflicts
 	 * @return return false to indicate conflicts have not been resolved and additional checks
-	 * should be disconctinued.
+	 * should be discontinued.
 	 * @see VariableConflictHandler
 	 */
 	private boolean handleConflicts(List<Variable> conflicts) {
@@ -413,6 +409,18 @@ public class FunctionEditorModel {
 		notifyDataChanged();
 	}
 
+	Namespace getNamespace() {
+		return functionData.getNamespace();
+	}
+
+	void setNamespace(Namespace ns) {
+		if (getNamespace().equals(ns)) {
+			return;
+		}
+		functionData.setNamespace(ns);
+		notifyDataChanged();
+	}
+
 	String getCallingConventionName() {
 		return functionData.getCallingConventionName();
 	}
@@ -496,6 +504,12 @@ public class FunctionEditorModel {
 	}
 
 	public void setSelectedParameterRows(int[] selectedRows) {
+
+		int[] currentRows = getSelectedParameterRows();
+		if (Arrays.equals(currentRows, selectedRows)) {
+			return;
+		}
+
 		selectedParams.clear();
 		List<ParamInfo> parameters = functionData.getParameters();
 		for (int i : selectedRows) {
@@ -535,9 +549,9 @@ public class FunctionEditorModel {
 	}
 
 	void addParameter() {
-		if (listener != null) {
-			listener.tableRowsChanged();
-		}
+
+		listener.tableRowsChanged();
+
 		ParamInfo p = functionData.addNewParameter();
 		setSelectedParam(p);
 		notifyDataChanged();
@@ -547,9 +561,9 @@ public class FunctionEditorModel {
 		if (!canRemoveParameters()) {
 			throw new AssertException("Attempted to remove parameters when not allowed.");
 		}
-		if (listener != null) {
-			listener.tableRowsChanged();
-		}
+
+		listener.tableRowsChanged();
+
 		int ordinal = selectedParams.get(0).getOrdinal();
 		functionData.removeParameters(selectedParams);
 		selectedParams.clear();
@@ -570,9 +584,9 @@ public class FunctionEditorModel {
 		if (!canMoveParameterUp()) {
 			throw new AssertException("Attempted to move parameters up when not allowed.");
 		}
-		if (listener != null) {
-			listener.tableRowsChanged();
-		}
+
+		listener.tableRowsChanged();
+
 		ParamInfo p = getSelectedParam();
 		functionData.moveParameterUp(p.getOrdinal());
 		notifyDataChanged();
@@ -582,9 +596,9 @@ public class FunctionEditorModel {
 		if (!canMoveParameterDown()) {
 			throw new AssertException("Attempted to move parameters down when not allowed.");
 		}
-		if (listener != null) {
-			listener.tableRowsChanged();
-		}
+
+		listener.tableRowsChanged();
+
 		ParamInfo p = getSelectedParam();
 		functionData.moveParameterDown(p.getOrdinal());
 		notifyDataChanged();
@@ -744,9 +758,12 @@ public class FunctionEditorModel {
 		if (b == canUseCustomStorage()) {
 			return;
 		}
+
 		functionData.setUseCustomStorage(b);
-		isSignatureTransformed = !functionData.getFunctionSignatureText()
-				.equals(originalFunctionData.getFunctionSignatureText());
+
+		String signatureText = functionData.getFunctionSignatureText();
+		String originalSignatureText = originalFunctionData.getFunctionSignatureText();
+		isSignatureTransformed = !signatureText.equals(originalSignatureText);
 		notifyDataChanged();
 	}
 
@@ -779,6 +796,12 @@ public class FunctionEditorModel {
 			String name = functionData.getName();
 			if (!name.equals(function.getName())) {
 				function.setName(name, SourceType.USER_DEFINED);
+			}
+
+			Namespace newNamespace = functionData.getNamespace();
+			Namespace currentNamespace = function.getParentNamespace();
+			if (!Objects.equals(newNamespace, currentNamespace)) {
+				function.setParentNamespace(newNamespace);
 			}
 
 			boolean isInline = functionData.isInline();
@@ -824,11 +847,7 @@ public class FunctionEditorModel {
 
 					for (ParamInfo paramInfo : functionData.getParameters()) {
 						Parameter param = function.getParameter(paramInfo.getOrdinal());
-						if (param != null) {
-							if (param.getSymbol().isDeleted()) {
-								// concurrent removal of param - must do full update
-								break;
-							}
+						if (param != null && !param.isAutoParameter()) {
 							param.setName(paramInfo.getName(), SourceType.USER_DEFINED);
 						}
 					}
@@ -862,11 +881,7 @@ public class FunctionEditorModel {
 						: FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS,
 				true, sigSource);
 		}
-		catch (DuplicateNameException e) {
-			Msg.showError(this, null, "Function Edit Error", e.getMessage());
-			return false;
-		}
-		catch (InvalidInputException e) {
+		catch (Exception e) {
 			Msg.showError(this, null, "Function Edit Error", e.getMessage());
 			return false;
 		}
@@ -915,7 +930,7 @@ public class FunctionEditorModel {
 		return dt1.getLength() == dt2.getLength();
 	}
 
-	public void setFunctionData(FunctionDefinitionDataType functionDefinition) {
+	public void setFunctionData(Namespace ns, FunctionDefinitionDataType functionDefinition) {
 
 		setName(functionDefinition.getName());
 
@@ -950,6 +965,8 @@ public class FunctionEditorModel {
 		selectedParams.clear();
 
 		functionData.updateParameterAndReturnStorage();
+
+		functionData.setNamespace(ns);
 
 		notifyDataChanged();
 	}
@@ -1020,7 +1037,9 @@ public class FunctionEditorModel {
 	void parseSignatureFieldText() throws ParseException, CancelledException {
 		FunctionSignatureParser parser =
 			new FunctionSignatureParser(program.getDataTypeManager(), dataTypeManagerService);
-		FunctionDefinitionDataType f = parser.parse(getFunctionSignature(), signatureFieldText);
+		FsParseResult result =
+			parser.parseWithNamespace(getFunctionSignature(), signatureFieldText);
+		FunctionDefinitionDataType f = result.functionDefinition();
 
 		// Preserve calling convention and noreturn flag from current model
 		f.setNoReturn(functionData.hasNoReturn());
@@ -1031,8 +1050,29 @@ public class FunctionEditorModel {
 			// ignore
 		}
 
-		setFunctionData(f);
+		Namespace ns = createNamespace(result.namespace());
+		setFunctionData(ns, f);
 		isInParsingMode = false;
+	}
+
+	private Namespace createNamespace(SymbolPath path) throws ParseException {
+
+		if (path == null) {
+			return program.getGlobalNamespace();
+		}
+
+		String nsText = path.getPath();
+		return program.withTransaction("Create Namespace", () -> {
+			Namespace globalNs = program.getGlobalNamespace();
+			try {
+				return NamespaceUtils.createNamespaceHierarchy(nsText, globalNs, program,
+					SourceType.USER_DEFINED);
+
+			}
+			catch (InvalidInputException e) {
+				throw new ParseException("Invalid Namespace name: " + nsText);
+			}
+		});
 	}
 
 	int getFunctionNameStartPosition() {
@@ -1048,9 +1088,24 @@ public class FunctionEditorModel {
 		originalFunctionData = new FunctionDataView(functionData);
 		resetSignatureTextField();
 		validate();
-		if (listener != null) {
-			Swing.runLater(() -> listener.dataChanged());
-		}
+
+		Swing.runLater(() -> listener.dataChanged());
 	}
 
+	public boolean hasChanged() {
+		return !functionData.equals(originalFunctionData);
+	}
+
+	private class DummyModelChangedListener implements ModelChangeListener {
+
+		@Override
+		public void tableRowsChanged() {
+			// do nothing
+		}
+
+		@Override
+		public void dataChanged() {
+			// do nothing
+		}
+	}
 }

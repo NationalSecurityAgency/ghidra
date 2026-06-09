@@ -55,6 +55,7 @@ public class ChangedFilesDialog extends DialogComponentProvider {
 		JButton saveButton = new JButton("Save");
 		saveButton.addActionListener(e -> save());
 		saveButton.setToolTipText("Save files that have selected check boxes");
+		saveButton.getAccessibleContext().setAccessibleName("Save");
 		addButton(saveButton);
 		addCancelButton();
 	}
@@ -83,8 +84,10 @@ public class ChangedFilesDialog extends DialogComponentProvider {
 		outerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
 
 		filePanel = new DomainFilesPanel(fileList, "Changed Files");
+		filePanel.getAccessibleContext().setAccessibleName("Files");
 		outerPanel.add(filePanel, BorderLayout.CENTER);
 
+		outerPanel.getAccessibleContext().setAccessibleName("Changed Files");
 		return outerPanel;
 	}
 
@@ -109,8 +112,7 @@ public class ChangedFilesDialog extends DialogComponentProvider {
 		private DomainFile[] files;
 
 		SaveTask(DomainFile[] files) {
-			super(files.length > 1 ? "Saving Files..." : "Saving File",
-				true, true, true);
+			super(files.length > 1 ? "Saving Files..." : "Saving File", true, true, true);
 			this.files = files;
 		}
 

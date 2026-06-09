@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,13 +39,17 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetView<T> extends Abstrac
 	private final Predicate<? super T> predicate;
 
 	/**
-	 * TODO Document me
+	 * Construct an {@link AddressSetView} based on the given map of entries and predicate.
 	 * 
-	 * The caller must reduce the map if only a certain range is desired.
+	 * <p>
+	 * The spatial map is a 2-dimensional collection of entries, but only the address dimension is
+	 * considered. This set behaves as the union of address ranges for all entries whose values pass
+	 * the predicate. Typically, the caller reduces the map first.
 	 * 
-	 * @param lock
-	 * @param map
-	 * @param predicate
+	 * @param space the address space of the given map
+	 * @param lock a lock to ensure access to the underlying database is synchronized
+	 * @param map the map whose entries to test
+	 * @param predicate the predicate for testing entry values
 	 */
 	public DBTraceAddressSnapRangePropertyMapAddressSetView(AddressSpace space, ReadWriteLock lock,
 			SpatialMap<TraceAddressSnapRange, T, TraceAddressSnapRangeQuery> map,

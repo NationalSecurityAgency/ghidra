@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,19 +31,24 @@ import ghidra.util.task.TaskMonitor;
  */
 public class MachoExtractProgramBuilder extends MachoProgramBuilder {
 
+	private boolean loadInto;
+
 	/**
 	 * Creates a new {@link MachoExtractProgramBuilder} based on the given information.
 	 * 
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
+	 * @param loadInto True if the Mach-O is being loaded into an existing program; otherwise, false
 	 * @param log The log.
 	 * @param monitor A cancelable task monitor.
 	 * @throws Exception if a problem occurs.
 	 */
 	protected MachoExtractProgramBuilder(Program program, ByteProvider provider,
-			FileBytes fileBytes, MessageLog log, TaskMonitor monitor) throws Exception {
+			FileBytes fileBytes, boolean loadInto, MessageLog log, TaskMonitor monitor)
+			throws Exception {
 		super(program, provider, fileBytes, log, monitor);
+		this.loadInto = loadInto;
 	}
 
 	/**
@@ -52,14 +57,15 @@ public class MachoExtractProgramBuilder extends MachoProgramBuilder {
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
+	 * @param loadInto True if the Mach-O is being loaded into an existing program; otherwise, false
 	 * @param log The log.
 	 * @param monitor A cancelable task monitor.
 	 * @throws Exception if a problem occurs.
 	 */
 	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
-			MessageLog log, TaskMonitor monitor) throws Exception {
+			boolean loadInto, MessageLog log, TaskMonitor monitor) throws Exception {
 		MachoExtractProgramBuilder programBuilder = new MachoExtractProgramBuilder(program,
-			provider, fileBytes, log, monitor);
+			provider, fileBytes, loadInto, log, monitor);
 		programBuilder.build();
 	}
 
@@ -93,10 +99,13 @@ public class MachoExtractProgramBuilder extends MachoProgramBuilder {
 		FunctionManager funcManager = program.getFunctionManager();
 		ExternalManager extManager = program.getExternalManager();
 
-		// Add the new exported symbol like normal
-		super.processNewExport(baseAddr, export, name);
-
+		// Add the new exported symbol, but only make it an entry point if it's from the primary 
+		// thing being loaded
 		Address exportAddr = baseAddr.add(export.address());
+		program.getSymbolTable().createLabel(exportAddr, name, SourceType.IMPORTED);
+		if (!loadInto) {
+			program.getSymbolTable().addExternalEntryPoint(exportAddr);
+		}
 
 		for (Symbol sym : symbolTable.getGlobalSymbols(name)) {
 
@@ -104,7 +113,7 @@ public class MachoExtractProgramBuilder extends MachoProgramBuilder {
 			// location to the newly exported function
 			Function func = funcManager.getFunctionAt(sym.getAddress());
 			if (func != null && func.getThunkedFunction(false) != null) {
-				func.setThunkedFunction(createOneByteFunction(name, exportAddr));
+				func.setThunkedFunction(createOneByteFunction(program, name, exportAddr));
 
 				// Remove the external location associated with the thunk function.
 				// After the first delete, the external location becomes an external label, which

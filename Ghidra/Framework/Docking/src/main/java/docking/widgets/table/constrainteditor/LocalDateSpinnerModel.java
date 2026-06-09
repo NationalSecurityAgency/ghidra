@@ -42,7 +42,6 @@ public class LocalDateSpinnerModel extends AbstractSpinnerModel {
 	 *    <li>{@link Calendar#MONTH}</li>
 	 *    <li>{@link Calendar#DAY_OF_MONTH}</li>
 	 *  </ul>
-	 * <p>
 	 */
 	public LocalDateSpinnerModel(LocalDate value, LocalDate minDate, LocalDate maxDate,
 			int calendarField) {
@@ -132,8 +131,6 @@ public class LocalDateSpinnerModel extends AbstractSpinnerModel {
 	 *    <li>{@link Calendar#MONTH}</li>
 	 *    <li>{@link Calendar#DAY_OF_MONTH}</li>
 	 *  </ul>
-	 * <p>
-	 *
 	 */
 	public void setCalendarField(int calendarField) {
 		checkIsValidCalendarField(calendarField);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,8 +35,8 @@ public class GenericRunInfo {
 
 	/**
 	 * Get all of the applications's settings directories 
-	 * (<tt>.<i>application_name_version</i></tt>) for various versions in descending order by the 
-	 * modification time. In other words, <tt>list.get(0)</tt> will be the directory 
+	 * ({@code .<i>application_name_version</i>}) for various versions in descending order by the 
+	 * modification time. In other words, {@code list.get(0)} will be the directory 
 	 * with the most recent modification time. If two directories have the same time then the 
 	 * directories will simply be sorted based on their pathnames as a string.
 	 * <p>
@@ -47,15 +47,15 @@ public class GenericRunInfo {
 		File userSettingsDirectory = Application.getUserSettingsDirectory();
 
 		List<File> appDirs =
-			collectAllApplicationDirectories(userSettingsDirectory.getParentFile());
+			collectAllApplicationDirectories(userSettingsDirectory.getParentFile(), false);
 
 		// Search "legacy" user setting directory locations in case the user has upgraded from an
 		// older version
 		try {
 			File legacyUserSettingsDirectory = ApplicationUtilities.getLegacyUserSettingsDir(
 				layout.getApplicationProperties(), layout.getApplicationInstallationDir());
-			appDirs.addAll(
-				collectAllApplicationDirectories(legacyUserSettingsDirectory.getParentFile()));
+			appDirs.addAll(collectAllApplicationDirectories(
+				legacyUserSettingsDirectory.getParentFile(), true));
 		}
 		catch (FileNotFoundException e) {
 			// ignore
@@ -92,9 +92,11 @@ public class GenericRunInfo {
 		return appDirs;
 	}
 
-	private static List<File> collectAllApplicationDirectories(File dataDirectoryParentDir) {
+	private static List<File> collectAllApplicationDirectories(File dataDirectoryParentDir,
+			boolean legacy) {
 
-		String settingsDirPrefix = "." + Application.getName().replaceAll("\\s", "").toLowerCase();
+		String appName = Application.getName().replaceAll("\\s", "").toLowerCase();
+		String settingsDirPrefix = (legacy ? "." : "") + appName;
 		FileFilter userDirFilter = f -> {
 			String name = f.getName();
 			return f.isDirectory() && name.startsWith(settingsDirPrefix) &&

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -123,26 +123,33 @@ public class DataTypeEditorManager implements EditorListener {
 	}
 
 	/**
-	 * Displays a data type editor for editing the given Structure. If the structure is is already 
+	 * Displays a data type editor for editing the given Structure. If the structure is already 
 	 * being edited then it is brought to the front. Otherwise, a new editor is created and 
 	 * displayed.
-	 * @param structure the structure.
+	 * @param composite the structure.
 	 * @param fieldName the optional name of the field to select in the editor.
 	 */
-	public void edit(Structure structure, String fieldName) {
+	@SuppressWarnings("rawtypes") // ignore on CompositeEditorProvider
+	public void edit(Composite composite, String fieldName) {
 
-		StructureEditorProvider editor = (StructureEditorProvider) getEditor(structure);
+		CompositeEditorProvider editor = (CompositeEditorProvider) getEditor(composite);
 		if (editor != null) {
-			reuseExistingEditor(structure);
+			reuseExistingEditor(composite);
 			editor.selectField(fieldName);
 			return;
 		}
+		if (composite instanceof Union) {
+			editor = new UnionEditorProvider(plugin, (Union) composite, showUnionNumbersInHex());
+		}
+		else if (composite instanceof Structure) {
+			editor = new StructureEditorProvider(plugin, (Structure) composite,
+				showStructureNumbersInHex());
+		}
 
-		editor = new StructureEditorProvider(plugin, structure,
-			showStructureNumbersInHex());
-		editor.selectField(fieldName);
 		editor.addEditorListener(this);
 		editorList.add(editor);
+
+		editor.selectField(fieldName);
 	}
 
 	private EditorProvider reuseExistingEditor(DataType dataType) {
@@ -622,14 +629,14 @@ public class DataTypeEditorManager implements EditorListener {
 		@Override
 		protected List<String> getCallingConventionNames() {
 			// can't rely on functionDefinition which may be null for new definition
-			DataTypeManager dtMgr = getDataTypeManager();
-			if (dtMgr instanceof CompositeViewerDataTypeManager) {
-				dtMgr = ((CompositeViewerDataTypeManager) dtMgr).getOriginalDataTypeManager();
+			DataTypeManager dtm = getDataTypeManager();
+			if (dtm instanceof CompositeViewerDataTypeManager cvdtm) {
+				dtm = cvdtm.getOriginalDataTypeManager();
 			}
 			ArrayList<String> list = new ArrayList<>();
 			list.add(Function.UNKNOWN_CALLING_CONVENTION_STRING);
 			list.add(Function.DEFAULT_CALLING_CONVENTION_STRING);
-			list.addAll(dtMgr.getDefinedCallingConventionNames());
+			list.addAll(dtm.getDefinedCallingConventionNames());
 			return list;
 		}
 

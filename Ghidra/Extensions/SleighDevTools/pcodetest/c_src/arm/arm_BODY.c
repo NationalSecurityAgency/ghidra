@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,23 +21,35 @@ u4 u4_adc_carry(u4 a, u4 b, u1 carry)
     u4 x = 0xffffffff;
     u4 y = 1;
     if (carry == 1) {
-	    __asm__(
+        __asm__(
             ".syntax unified\n"
+#ifdef THUMB
+            "adds %[x_res],%[y]\n" /* set the carry flag */
+#else
             "adds %[x_res],%[x],%[y]\n" /* set the carry flag */
+#endif
             : [x_res] "=r" (x)
             : [x] "r" (x), [y] "r" (y)
         );
     } else {
 	    __asm__(
             ".syntax unified\n"
+#ifdef THUMB
+            "adds %[x_res],%[y]\n" /* clear the carry flag */
+#else
             "adds %[x_res],%[y],%[y]\n" /* clear the carry flag */
+#endif
             : [x_res] "=r" (x)
             : [y] "r" (y)
         );
     }
     __asm__(
         ".syntax unified\n"
+#ifdef THUMB
+        "adcs %[input_a],%[input_b]\n"
+#else
         "adcs %[input_a],%[input_a],%[input_b]\n"
+#endif
         "bcc  adc_nocarry\n"
         "ldr  %[result], =0x1\n"
         "b adc_end\n"
@@ -58,21 +70,33 @@ u4 u4_adc_overflow(u4 a, u4 b, u1 carry)
     if (carry == 1) {
 	    __asm__(
             ".syntax unified\n"
-            "adds %[x_res],%[x],%[y]\n" /* set the carry flag */
+#ifdef THUMB
+            "adds %[x_res],%[y]\n" /* clear the carry flag */
+#else
+            "adds %[x_res],%[y],%[y]\n" /* clear the carry flag */
+#endif
             : [x_res] "=r" (x)
             : [x] "r" (x), [y] "r" (y)
         );
     } else {
 	    __asm__(
             ".syntax unified\n"
+#ifdef THUMB
+            "adds %[x_res],%[y]\n" /* clear the carry flag */
+#else
             "adds %[x_res],%[y],%[y]\n" /* clear the carry flag */
+#endif
             : [x_res] "=r" (x)
             : [y] "r" (y)
         );
     }
     __asm__(
         ".syntax unified\n"
-        "adcs %[input_a],%[input_a],%[input_b], lsr #1\n"
+#ifdef THUMB
+        "adcs %[input_a],%[input_b]\n"
+#else
+        "adcs %[input_a],%[input_a],%[input_b]\n"
+#endif
         "bvc  adc_noover\n"
         "ldr  %[result], =0x1\n"
         "b adc_o_end\n"

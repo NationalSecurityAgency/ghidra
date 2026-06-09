@@ -36,6 +36,7 @@ public class FontEditor extends PropertyEditorSupport {
 
 	public FontEditor() {
 		previewButton = new JButton(FontPropertyEditor.SAMPLE_STRING);
+		previewButton.getAccessibleContext().setAccessibleName("Preview");
 		previewButton.addActionListener(e -> buttonPushed());
 		fontPropertyEditor = new FontPropertyEditor();
 		fontPropertyEditor.addPropertyChangeListener(ev -> fontChanged());
@@ -94,6 +95,7 @@ public class FontEditor extends PropertyEditorSupport {
 		private JComponent buildWorkPanel() {
 			JPanel panel = new JPanel(new BorderLayout());
 			panel.add(fontPropertyEditor.getCustomEditor());
+			panel.getAccessibleContext().setAccessibleName("Font Editor");
 			return panel;
 		}
 

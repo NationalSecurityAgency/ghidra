@@ -31,25 +31,21 @@ import org.apache.commons.lang3.ArrayUtils;
 import com.google.protobuf.ByteString;
 
 import db.Transaction;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin;
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
 import ghidra.app.services.DebuggerControlService;
 import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathUtils;
 import ghidra.debug.api.progress.CloseableTaskMonitor;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
-import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.tracermi.*;
 import ghidra.framework.Application;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.AutoService.Wiring;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
+import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
@@ -60,15 +56,27 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateFileException;
 
-public class TraceRmiHandler implements TraceRmiConnection {
-	public static final String VERSION = "11.2";
+public class TraceRmiHandler extends AbstractTraceRmiConnection {
+	/**
+	 * NOTE: This can't just be {@link Application#getApplicationVersion()}, because the Python
+	 * client only specifies up to the minor, not patch, release.
+	 */
+	public static final String VERSION = "12.2";
+
+	public static final int MAX_MSG_LENGTH = 1 << 16; // 64K should be plenty and not cause OOM
 
 	protected static class VersionMismatchError extends TraceRmiError {
 		public VersionMismatchError(String remote) {
@@ -92,9 +100,15 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	}
 
 	protected static class InvalidObjPathError extends TraceRmiError {
+		public InvalidObjPathError(String path) {
+			super(path);
+		}
 	}
 
 	protected static class NoSuchAddressSpaceError extends TraceRmiError {
+		public NoSuchAddressSpaceError(String name) {
+			super(name);
+		}
 	}
 
 	protected static class InvalidSchemaError extends TraceRmiError {
@@ -294,8 +308,8 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		synchronized (openTxes) {
 			while (!openTxes.isEmpty()) {
 				Tid nextKey = openTxes.keySet().iterator().next();
-				OpenTx open = openTxes.remove(nextKey);
-				open.tx.close();
+				OpenTx openTx = openTxes.remove(nextKey);
+				openTx.tx.close();
 			}
 		}
 
@@ -311,7 +325,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 					// OK. Move on
 				}
 			}
-			open.trace.release(this);
+			open.dispose(this);
 		}
 		closed.complete(null);
 		plugin.listeners.invoke().disconnected(this);
@@ -405,7 +419,11 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	protected static void sendDelimited(OutputStream out, RootMessage msg, long dbgSeq)
 			throws IOException {
 		ByteBuffer buf = ByteBuffer.allocate(Integer.BYTES);
-		buf.putInt(msg.getSerializedSize());
+		int len = msg.getSerializedSize();
+		if (len > MAX_MSG_LENGTH) {
+			throw new TraceRmiError("Cannot send TraceRmi message with excessive length");
+		}
+		buf.putInt(len);
 		out.write(buf.array());
 		msg.writeTo(out);
 		out.flush();
@@ -430,6 +448,10 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			return null;
 		}
 		int len = ByteBuffer.wrap(lenBuf).getInt();
+		if (len > MAX_MSG_LENGTH) {
+			throw new TraceRmiError(
+				"Cannot receive TraceRmi message with excessive message length");
+		}
 		byte[] datBuf = recvAll(in, len);
 		if (datBuf == null) {
 			return null;
@@ -448,12 +470,13 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			return true;
 		}
 		catch (IOException e) {
-			Msg.error(this, "Cannot send reply", e);
+			Msg.error(this, "Cannot send reply: " + e);
 			return false;
 		}
 	}
 
 	public void receiveLoop() {
+		boolean canSend = true;
 		try {
 			while (true) {
 				RootMessage req = receive();
@@ -468,8 +491,15 @@ public class TraceRmiHandler implements TraceRmiConnection {
 					continue;
 				}
 
-				if (!send(rep)) {
-					return;
+				/**
+				 * The likely cause of this failing is that the remote end has closed the socket.
+				 * However, we don't return, because there may be commands still in the queue, and
+				 * we should process them until we reach the end of input. This will ensure clients
+				 * that brazenly send a bunch of commands and then disconnect before receiving the
+				 * replies will have their commands processed, even if unsuccessfully.
+				 */
+				if (canSend) {
+					canSend = send(rep);
 				}
 			}
 		}
@@ -485,10 +515,10 @@ public class TraceRmiHandler implements TraceRmiConnection {
 
 	protected void negotiate() {
 		RootMessage req = receive();
-		RootMessage rep = dispatchNegotiate.handle(req);
 		if (req == null) {
 			throw new TraceRmiError("Could not receive negotiation request");
 		}
+		RootMessage rep = dispatchNegotiate.handle(req);
 		if (!send(rep)) {
 			throw new TraceRmiError("Could not respond during negotiation");
 		}
@@ -646,12 +676,12 @@ public class TraceRmiHandler implements TraceRmiConnection {
 				.getCompilerSpecByID(new CompilerSpecID(compiler.getId()));
 	}
 
-	protected static TraceObjectKeyPath toKeyPath(ObjPath path) {
-		return TraceObjectKeyPath.parse(path.getPath());
+	protected static KeyPath toKeyPath(ObjPath path) {
+		return KeyPath.parse(path.getPath());
 	}
 
 	protected static PathPattern toPathPattern(ObjPath path) {
-		return new PathPattern(PathUtils.parse(path.getPath()));
+		return PathFilter.parse(path.getPath());
 	}
 
 	protected static Lifespan toLifespan(Span span) {
@@ -680,7 +710,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		return ObjSpec.newBuilder().setId(object.getKey()).build();
 	}
 
-	protected static ObjPath makeObjPath(TraceObjectKeyPath path) {
+	protected static ObjPath makeObjPath(KeyPath path) {
 		return ObjPath.newBuilder().setPath(path.toString()).build();
 	}
 
@@ -728,77 +758,43 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	}
 
 	protected static Value makeValue(Object value) {
-		if (value instanceof Void) {
-			return Value.newBuilder().setNullValue(Null.getDefaultInstance()).build();
-		}
-		if (value instanceof Boolean b) {
-			return Value.newBuilder().setBoolValue(b).build();
-		}
-		if (value instanceof Byte b) {
-			return Value.newBuilder().setByteValue(b).build();
-		}
-		if (value instanceof Character c) {
-			return Value.newBuilder().setCharValue(c).build();
-		}
-		if (value instanceof Short s) {
-			return Value.newBuilder().setShortValue(s).build();
-		}
-		if (value instanceof Integer i) {
-			return Value.newBuilder().setIntValue(i).build();
-		}
-		if (value instanceof Long l) {
-			return Value.newBuilder().setLongValue(l).build();
-		}
-		if (value instanceof String s) {
-			return Value.newBuilder().setStringValue(s).build();
-		}
-		if (value instanceof boolean[] ba) {
-			return Value.newBuilder()
+		return switch (value) {
+			case Void v -> Value.newBuilder().setNullValue(Null.getDefaultInstance()).build();
+			case Boolean b -> Value.newBuilder().setBoolValue(b).build();
+			case Byte b -> Value.newBuilder().setByteValue(b).build();
+			case Character c -> Value.newBuilder().setCharValue(c).build();
+			case Short s -> Value.newBuilder().setShortValue(s).build();
+			case Integer i -> Value.newBuilder().setIntValue(i).build();
+			case Long l -> Value.newBuilder().setLongValue(l).build();
+			case String s -> Value.newBuilder().setStringValue(s).build();
+			case boolean[] ba -> Value.newBuilder()
 					.setBoolArrValue(
 						BoolArr.newBuilder().addAllArr(Arrays.asList(ArrayUtils.toObject(ba))))
 					.build();
-		}
-		if (value instanceof byte[] ba) {
-			return Value.newBuilder().setBytesValue(ByteString.copyFrom(ba)).build();
-		}
-		if (value instanceof char[] ca) {
-			return Value.newBuilder().setCharArrValue(new String(ca)).build();
-		}
-		if (value instanceof short[] sa) {
-			return Value.newBuilder()
+			case byte[] ba -> Value.newBuilder().setBytesValue(ByteString.copyFrom(ba)).build();
+			case char[] ca -> Value.newBuilder().setCharArrValue(new String(ca)).build();
+			case short[] sa -> Value.newBuilder()
 					.setShortArrValue(ShortArr.newBuilder()
 							.addAllArr(
 								Stream.of(ArrayUtils.toObject(sa)).map(s -> (int) s).toList()))
 					.build();
-		}
-		if (value instanceof int[] ia) {
-			return Value.newBuilder()
+			case int[] ia -> Value.newBuilder()
 					.setIntArrValue(
 						IntArr.newBuilder().addAllArr(IntStream.of(ia).mapToObj(i -> i).toList()))
 					.build();
-		}
-		if (value instanceof long[] la) {
-			return Value.newBuilder()
+			case long[] la -> Value.newBuilder()
 					.setLongArrValue(
 						LongArr.newBuilder().addAllArr(LongStream.of(la).mapToObj(l -> l).toList()))
 					.build();
-		}
-		if (value instanceof String[] sa) {
-			return Value.newBuilder()
+			case String[] sa -> Value.newBuilder()
 					.setStringArrValue(StringArr.newBuilder().addAllArr(List.of(sa)))
 					.build();
-		}
-		if (value instanceof Address a) {
-			return Value.newBuilder().setAddressValue(makeAddr(a)).build();
-		}
-		if (value instanceof AddressRange r) {
-			return Value.newBuilder().setRangeValue(makeAddrRange(r)).build();
-		}
-		if (value instanceof TraceObject o) {
-			return Value.newBuilder().setChildDesc(makeObjDesc(o)).build();
-		}
-		throw new AssertionError(
-			"Cannot encode value: " + value + "(type=" + value.getClass() + ")");
+			case Address a -> Value.newBuilder().setAddressValue(makeAddr(a)).build();
+			case AddressRange r -> Value.newBuilder().setRangeValue(makeAddrRange(r)).build();
+			case TraceObject o -> Value.newBuilder().setChildDesc(makeObjDesc(o)).build();
+			default -> throw new AssertionError(
+				"Cannot encode value: " + value + "(type=" + value.getClass() + ")");
+		};
 	}
 
 	protected static MethodArgument makeArgument(String name, Object value) {
@@ -809,49 +805,32 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		return makeArgument(ent.getKey(), ent.getValue());
 	}
 
-	protected boolean followsPresent(Trace trace) {
-		DebuggerControlService controlService = this.controlService;
-		if (controlService == null) {
-			return true;
-		}
-		return controlService.getCurrentMode(trace).followsPresent();
+	@Override
+	protected DebuggerTraceManagerService getTraceManager() {
+		return this.traceManager;
+	}
+
+	@Override
+	protected DebuggerControlService getControlService() {
+		return this.controlService;
+	}
+
+	@Override
+	protected boolean ownsTrace(Trace trace) {
+		return openTraces.getByTrace(trace) != null;
 	}
 
 	protected ReplyActivate handleActivate(RequestActivate req) {
 		OpenTrace open = requireOpenTrace(req.getOid());
 		TraceObject object = open.getObject(req.getObject(), false);
-		DebuggerCoordinates coords = traceManager.getCurrent();
-		if (coords.getTrace() != open.trace) {
-			coords = DebuggerCoordinates.NOWHERE;
-		}
-		if (open.lastSnapshot != null && followsPresent(open.trace)) {
-			coords = coords.snap(open.lastSnapshot.getKey());
-		}
-		DebuggerCoordinates finalCoords = object == null ? coords : coords.object(object);
-		Swing.runLater(() -> {
-			DebuggerTraceManagerService traceManager = this.traceManager;
-			if (traceManager == null) {
-				// Can happen during tear down.
-				return;
-			}
-			if (!traceManager.getOpenTraces().contains(open.trace)) {
-				traceManager.openTrace(open.trace);
-				traceManager.activate(finalCoords, ActivationCause.SYNC_MODEL);
-			}
-			else {
-				Trace currentTrace = traceManager.getCurrentTrace();
-				if (currentTrace == null || openTraces.getByTrace(currentTrace) != null) {
-					traceManager.activate(finalCoords, ActivationCause.SYNC_MODEL);
-				}
-			}
-		});
+		doActivate(object, open.trace, open.lastSnapshot);
 		return ReplyActivate.getDefaultInstance();
 	}
 
 	protected ReplyCloseTrace handleCloseTrace(RequestCloseTrace req) {
 		OpenTrace open = requireOpenTrace(req.getOid());
 		openTraces.removeById(open.doId);
-		open.trace.release(this);
+		open.dispose(this);
 		return ReplyCloseTrace.getDefaultInstance();
 	}
 
@@ -896,11 +875,24 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		DoId doId = requireAvailableDoId(req.getOid());
 		openTraces.put(new OpenTrace(doId, trace, target));
 		createDeconflictedFile(folder, trace);
+		doActivate(null, trace, null);
 		return ReplyCreateTrace.getDefaultInstance();
 	}
 
+	protected static String sanitizeName(String name) {
+		StringBuffer buf = new StringBuffer(name.length());
+		for (int i = 0; i < name.length(); i++) {
+			char c = name.charAt(i);
+			buf.append(LocalFileSystem.isValidNameCharacter(c) ? c : '_');
+		}
+		return buf.toString();
+	}
+
 	protected static List<String> sanitizePath(String path) {
-		return Stream.of(path.split("\\\\|/")).filter(p -> !p.isBlank()).toList();
+		return Stream.of(path.split("\\\\|/"))
+				.filter(n -> !n.isBlank())
+				.map(n -> sanitizeName(n))
+				.toList();
 	}
 
 	protected ReplyDeleteBytes handleDeleteBytes(RequestDeleteBytes req)
@@ -943,12 +935,12 @@ public class TraceRmiHandler implements TraceRmiConnection {
 
 		// Want addresses satisfying {@code known | (readOnly & everKnown)}
 		TraceMemoryManager memoryManager = open.trace.getMemoryManager();
-		AddressSetView readOnly = memoryManager.getRegionsAddressSetWith(snap, r -> !r.isWrite());
-		AddressSetView everKnown = memoryManager.getAddressesWithState(Lifespan.since(snap),
-			s -> s == TraceMemoryState.KNOWN);
+		AddressSetView readOnly =
+			memoryManager.getRegionsAddressSetWith(snap, r -> !r.isWrite(snap));
+		AddressSetView everKnown =
+			memoryManager.getAddressesWithState(Lifespan.since(snap), StatePredicate.IS_KNOWN);
 		AddressSetView roEverKnown = new IntersectionAddressSetView(readOnly, everKnown);
-		AddressSetView known =
-			memoryManager.getAddressesWithState(snap, s -> s == TraceMemoryState.KNOWN);
+		AddressSetView known = memoryManager.getAddressesWithState(snap, StatePredicate.IS_KNOWN);
 		AddressSetView disassemblable = new AddressSet(new UnionAddressSetView(known, roEverKnown));
 
 		Address start = open.toAddress(req.getStart(), true);
@@ -962,9 +954,22 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			dis.applyTo(open.trace.getFixedProgramView(snap), monitor);
 		}
 
+		AddressSetView result = dis.getDisassembledAddressSet();
 		return ReplyDisassemble.newBuilder()
-				.setLength(dis.getDisassembledAddressSet().getNumAddresses())
+				.setLength(result == null ? 0 : result.getNumAddresses())
 				.build();
+	}
+
+	protected void checkRestoreEvents(OpenTrace open) {
+		final boolean restoreEvents;
+		synchronized (openTxes) {
+			restoreEvents = openTxes.keySet()
+					.stream()
+					.noneMatch(id -> id.doId.equals(open.doId));
+		}
+		if (restoreEvents) {
+			open.trace.setEventsEnabled(true);
+		}
 	}
 
 	protected ReplyEndTx handleEndTx(RequestEndTx req) {
@@ -979,13 +984,21 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			Msg.error(this, "Back-end debugger aborted a transaction!");
 			tx.tx.abortOnClose();
 		}
-		tx.tx.close();
+
 		OpenTrace open = requireOpenTrace(tx.txId.doId);
 		if (!tx.undoable) {
-			open.trace.clearUndo();
+			/**
+			 * The listener is invoked via runLater, so we must do the same here, so that events are
+			 * processed in the order emitted.
+			 */
+			Swing.runLater(() -> open.txListener.markNotUndoable());
 		}
-		// TODO: Check for other transactions on the same trace?
-		open.trace.setEventsEnabled(true);
+
+		tx.tx.close();
+		checkRestoreEvents(open);
+
+		Swing.runLater(
+			() -> plugin.listeners.invoke().transactionClosed(this, open.target, req.getAbort()));
 		return ReplyEndTx.getDefaultInstance();
 	}
 
@@ -1039,7 +1052,9 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 		for (Method m : req.getMethodsList()) {
 			RemoteMethod rm = new RecordRemoteMethod(this, m.getName(),
-				ActionName.name(m.getAction()), m.getDisplay(), m.getDescription(),
+				ActionName.name(m.getAction()), m.getDisplay(),
+				m.getIcon().isBlank() ? null : new GIcon(m.getIcon()), m.getOkText(),
+				m.getDescription(),
 				m.getParametersList()
 						.stream()
 						.collect(Collectors.toMap(MethodParameter::getName, this::makeParameter)),
@@ -1168,13 +1183,21 @@ public class TraceRmiHandler implements TraceRmiConnection {
 
 	protected ReplySnapshot handleSnapshot(RequestSnapshot req) {
 		OpenTrace open = requireOpenTrace(req.getOid());
-		TraceSnapshot snapshot = open.createSnapshot(req.getSnap(), req.getDescription());
+		TraceSnapshot snapshot = switch (req.getTimeCase()) {
+			case TIME_NOT_SET -> throw new TraceRmiError("snap or time required");
+			case SNAP -> open.createSnapshot(req.getSnap().getSnap());
+			case SCHEDULE -> open.createSnapshot(
+				TraceSchedule.parse(req.getSchedule().getSchedule(), TimeRadix.DEC));
+		};
+		snapshot.setDescription(req.getDescription());
 		if (!"".equals(req.getDatetime())) {
 			Instant instant =
 				DateTimeFormatter.ISO_INSTANT.parse(req.getDatetime()).query(Instant::from);
 			snapshot.setRealTime(instant.toEpochMilli());
 		}
-		return ReplySnapshot.getDefaultInstance();
+		return ReplySnapshot.newBuilder()
+				.setSnap(Snap.newBuilder().setSnap(snapshot.getKey()))
+				.build();
 	}
 
 	protected ReplyStartTx handleStartTx(RequestStartTx req) {
@@ -1187,6 +1210,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		synchronized (openTxes) {
 			openTxes.put(tx.txId, tx);
 		}
+		Swing.runLater(() -> plugin.listeners.invoke().transactionOpened(this, open.target));
 		return ReplyStartTx.getDefaultInstance();
 	}
 
@@ -1287,7 +1311,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	@Override
 	public void forceCloseTrace(Trace trace) {
 		OpenTrace open = openTraces.removeByTrace(trace);
-		open.trace.release(this);
+		open.dispose(this);
 	}
 
 	@Override
@@ -1315,5 +1339,49 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			return "Trace RMI";
 		}
 		return description;
+	}
+
+	@Override
+	public boolean isBusy() {
+		synchronized (openTxes) {
+			return !openTxes.isEmpty();
+		}
+	}
+
+	@Override
+	public boolean isBusy(Target target) {
+		OpenTrace openTrace = openTraces.getByTrace(target.getTrace());
+		if (openTrace == null || openTrace.target != target) {
+			return false;
+		}
+
+		synchronized (openTxes) {
+			for (Tid tid : openTxes.keySet()) {
+				if (Objects.equals(openTrace.doId, tid.doId)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public void forciblyCloseTransactions(Target target) {
+		OpenTrace open = openTraces.getByTrace(target.getTrace());
+		if (open == null || open.target != target) {
+			return;
+		}
+		synchronized (openTxes) {
+			for (OpenTx tx : List.copyOf(openTxes.values())) {
+				if (Objects.equals(open.doId, tx.txId.doId)) {
+					openTxes.remove(tx.txId);
+					tx.tx.commit();
+					tx.tx.close();
+					Swing.runLater(
+						() -> plugin.listeners.invoke().transactionClosed(this, target, false));
+				}
+			}
+		}
+		open.trace.setEventsEnabled(true);
 	}
 }

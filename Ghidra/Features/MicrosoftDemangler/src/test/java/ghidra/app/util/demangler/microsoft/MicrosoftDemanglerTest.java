@@ -238,6 +238,20 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		fail(); // We are expecting an exception.
 	}
 
+	@Test
+	public void testSimpleDemangleType() throws Exception {
+		String mangled = ".?AUname0@name1@@";
+		Address address = addr("01001000");
+		String expected = "struct name1::name0";
+
+		MicrosoftDemangler demangler = new MicrosoftDemangler();
+		DemanglerOptions options = new MicrosoftDemanglerOptions();
+		MangledContext mangledContext =
+			demangler.createMangledContext(mangled, options, program, address);
+		DemangledDataType dt = demangler.demangleType(mangledContext);
+		assertEquals(expected, dt.toString());
+	}
+
 	private Address addr(String address) {
 		return program.getAddressFactory().getAddress(address);
 	}

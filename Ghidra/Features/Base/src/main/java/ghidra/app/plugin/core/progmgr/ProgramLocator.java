@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +20,10 @@ import java.net.URL;
 import java.util.Objects;
 
 import ghidra.framework.data.DomainFileProxy;
-import ghidra.framework.data.LinkHandler;
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 
 /** 
  * Programs locations can be specified from either a {@link DomainFile} or a ghidra {@link URL}.
@@ -56,7 +56,7 @@ public class ProgramLocator {
 	}
 
 	/**
-	 * Creates a {@link DomainFile} based based ProgramLocator for the current version of a Program.
+	 * Creates a {@link DomainFile}-based ProgramLocator for the current version of a Program.
 	 * @param domainFile the DomainFile for a program
 	 */
 	public ProgramLocator(DomainFile domainFile) {
@@ -64,7 +64,7 @@ public class ProgramLocator {
 	}
 
 	/**
-	 * Creates a {@link DomainFile} based based ProgramLocator for a specific Program version.
+	 * Creates a {@link DomainFile}-based ProgramLocator for a specific Program version.
 	 * @param domainFile the DomainFile for a program
 	 * @param version the specific version of the program
 	 */
@@ -81,11 +81,19 @@ public class ProgramLocator {
 			file = domainFile;
 		}
 		else {
-			try {
-				url = GhidraURL.getNormalizedURL(resolveURL(domainFile));
+			if (domainFile instanceof LinkedDomainFile linkedFile) {
+				try {
+					// Attempt to resolve to actual linked-file to allow for
+					// direct URL reference
+					domainFile = linkedFile.getRealFile();
+				}
+				catch (IOException e) {
+					Msg.error(this, "Failed to resolve linked-file", e);
+				}
 			}
-			catch (IOException e) {
-				file = domainFile;
+			url = domainFile.getLocalProjectURL(null);
+			if (url == null) {
+				url = domainFile.getSharedProjectURL(null);
 			}
 		}
 		this.domainFile = file;
@@ -177,25 +185,4 @@ public class ProgramLocator {
 			Objects.equals(ghidraURL, other.ghidraURL) && version == other.version;
 	}
 
-	private URL resolveURL(DomainFile file) throws IOException {
-		if (file.isLinkFile()) {
-			return LinkHandler.getURL(file);
-		}
-		DomainFolder parent = file.getParent();
-		if (file instanceof LinkedDomainFile linkedFile) {
-			return resolveLinkedDomainFile(linkedFile);
-		}
-		if (!parent.getProjectLocator().isTransient()) {
-			return file.getLocalProjectURL(null);
-		}
-		return file.getSharedProjectURL(null);
-	}
-
-	private URL resolveLinkedDomainFile(LinkedDomainFile linkedFile) {
-		URL url = linkedFile.getLocalProjectURL(null);
-		if (url == null) {
-			url = linkedFile.getSharedProjectURL(null);
-		}
-		return url;
-	}
 }

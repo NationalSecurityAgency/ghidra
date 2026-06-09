@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,14 +20,14 @@ import java.util.*;
 
 import org.apache.commons.collections4.map.LazyMap;
 
-import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.DecompilerHighlighter;
+import ghidra.app.decompiler.*;
 import ghidra.program.model.listing.Function;
 
 /**
  * A class to manage and track Decompiler highlights created by the user via the UI or from a 
- * script.  This class manages secondary and global highlights.  For a description of these terms, 
- * see {@link ClangHighlightController}.
+ * script.  This class manages secondary highlights and highlights created from the 
+ * {@link DecompilerHighlightService}, which has both global and per-function highlights.  For a 
+ * description of these terms, see {@link ClangHighlightController}.
  * <p>
  * These highlights will remain until cleared explicitly by the user or a client API call.  
  * Contrastingly, context highlights are cleared as the user moves the cursor around the Decompiler 
@@ -42,7 +42,8 @@ public class UserHighlights {
 	// between secondary highlights and highlight service highlights
 	private Set<DecompilerHighlighter> secondaryHighlighters = new HashSet<>();
 
-	// all highlighters, including secondary and global highlight service highlighters
+	// all highlighters, including secondary and global highlight service highlighters and per 
+	// function highlight service highlighters
 	private Map<DecompilerHighlighter, TokenHighlights> allHighlighterHighlights = new HashMap<>();
 
 	// color supplier for secondary highlights
@@ -81,7 +82,7 @@ public class UserHighlights {
 		return new HashSet<>(secondaryHighlightersByFunction.get(function));
 	}
 
-	Set<DecompilerHighlighter> getGlobalHighlighters() {
+	Set<DecompilerHighlighter> getServiceHighlighters() {
 		Set<DecompilerHighlighter> allHighlighters = allHighlighterHighlights.keySet();
 		Set<DecompilerHighlighter> results = new HashSet<>(allHighlighters);
 		results.removeAll(secondaryHighlighters);
@@ -110,7 +111,7 @@ public class UserHighlights {
 
 	void addSecondaryHighlighter(Function function, DecompilerHighlighter highlighter) {
 
-		// Note: this highlighter has likely already been added the the this class, but has not
+		// Note: this highlighter has likely already been added to this class, but has not
 		//       yet been bound to the given function.
 		secondaryHighlightersByFunction.get(function).add(highlighter);
 		secondaryHighlighters.add(highlighter);

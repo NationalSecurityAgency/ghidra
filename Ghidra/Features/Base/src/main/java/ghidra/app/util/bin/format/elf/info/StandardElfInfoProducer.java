@@ -26,7 +26,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -42,6 +42,7 @@ import ghidra.util.task.TaskMonitor;
  * 	<li>NoteGnuBuildId</li>
  * 	<li>NoteGnuProperty</li>
  * 	<li>GnuDebugLink (not a note)</li>
+ * 	<li>GnuDebugAltLink (not a note)</li>
  *  <li>ElfComment (not a note)</li>
  * </ul>
  * <p>
@@ -52,12 +53,16 @@ public class StandardElfInfoProducer implements ElfInfoProducer {
 
 	public static final CategoryPath ELF_CATEGORYPATH = new CategoryPath("/ELF");
 
-	private static final Map<String, ReaderFunc<ElfInfoItem>> STANDARD_READERS =
-		Map.of(GnuDebugLink.SECTION_NAME, GnuDebugLink::read, NoteAbiTag.SECTION_NAME,
-			(br, prg) -> NoteAbiTag.read(ElfNote.read(br), prg), NoteGnuBuildId.SECTION_NAME,
-			(br, prg) -> NoteGnuBuildId.read(ElfNote.read(br), prg), NoteGnuProperty.SECTION_NAME,
-			(br, prg) -> NoteGnuProperty.read(ElfNote.read(br), prg), ElfComment.SECTION_NAME,
-			ElfComment::read);
+	private static final Map<String, ReaderFunc<ElfInfoItem>> STANDARD_READERS = Map.of(
+	//@formatter:off		
+		GnuDebugLink.SECTION_NAME, GnuDebugLink::read,
+		GnuDebugAltLink.SECTION_NAME, GnuDebugAltLink::read,
+		NoteAbiTag.SECTION_NAME, (br, prg) -> NoteAbiTag.read(ElfNote.read(br), prg),
+		NoteGnuBuildId.SECTION_NAME, (br, prg) -> NoteGnuBuildId.read(ElfNote.read(br), prg),
+		NoteGnuProperty.SECTION_NAME, (br, prg) -> NoteGnuProperty.read(ElfNote.read(br), prg),
+		ElfComment.SECTION_NAME, ElfComment::read,
+		GnuBuildAttributes.SECTION_NAME, GnuBuildAttributes::read);
+	//@formatter:on
 
 	private ElfLoadHelper elfLoadHelper;
 
@@ -133,16 +138,19 @@ public class StandardElfInfoProducer implements ElfInfoProducer {
 			br.align(4);	// fix any notes with non-aligned size payloads
 			long noteLength = br.getPointerIndex() - start;
 
-			try {
-				StructureDataType struct = note.toStructure(program.getDataTypeManager());
-				DataUtilities.createData(program, noteAddr, struct, -1, false,
-					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
-				String comment =
-					"ELF Note \"%s\", %xh".formatted(note.getName(), note.getVendorType());
-				program.getListing().setComment(noteAddr, CodeUnit.EOL_COMMENT, comment);
-			}
-			catch (CodeUnitInsertionException e) {
-				elfLoadHelper.log("Failed to markup ELF Note at " + noteAddr + ": data conflict");
+			if (DataUtilities.isUndefinedData(program, noteAddr)) {
+				try {
+					StructureDataType struct = note.toStructure(program.getDataTypeManager());
+					DataUtilities.createData(program, noteAddr, struct, -1, false,
+						ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
+					String comment =
+						"ELF Note \"%s\", %xh".formatted(note.getName(), note.getVendorType());
+					program.getListing().setComment(noteAddr, CommentType.EOL, comment);
+				}
+				catch (CodeUnitInsertionException e) {
+					elfLoadHelper
+							.log("Failed to markup ELF Note at " + noteAddr + ": data conflict");
+				}
 			}
 
 			noteAddr = noteAddr.add(noteLength);

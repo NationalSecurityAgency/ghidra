@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
 
+import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.FixedSizeStack;
 
@@ -38,8 +39,10 @@ import ghidra.util.datastruct.FixedSizeStack;
  * item is cleared, then client is expected to call {@link #add(Object)} with value of 
  * null.  (This is safe to do, regardless of whether null are allowed).  When nulls are allowed
  * and a null value is received, then current item is placed onto the history stack as the 
- * previous item.  This way, when the user presses the back button, the last visible item 
- * will be activated.  
+ * previous item, thus using the null value as a flag.  After using null this way, when the user 
+ * presses the back button, the last visible item will be activated.   
+ * 
+ * <p>If nulls are not allowed, then any calls to {@link #add(Object)} a null value will be ignored.
  * 
  * <p>Note: when nulls are allowed, only a single null value will be stored.  Further, 
  * if new, non-null items are added, then the null value is dropped.  
@@ -191,8 +194,14 @@ public class HistoryList<T> {
 			return;
 		}
 
+		doGoToIndex(historyIndex - 1);
+	}
+
+	private void doGoToIndex(int index) {
 		T leaving = getCurrentHistoryItem();
-		T t = historyStack.get(--historyIndex);
+		historyIndex = index;
+		T t = historyStack.get(index);
+
 		dropNull();
 		broadcast(t, leaving);
 	}
@@ -204,9 +213,21 @@ public class HistoryList<T> {
 	 * @param t the item
 	 */
 	public void goBackTo(T t) {
-		while (!getCurrentHistoryItem().equals(t) && hasPrevious()) {
-			goBack();
+		int index = historyIndex - 1; // assume we want to ignore the current item
+		while (index >= 0) {
+			T other = historyStack.get(index);
+			if (Objects.equals(t, other)) {
+				break;
+			}
+			index--;
 		}
+
+		if (index < 0) {
+			Msg.error(this, "Item not in backward history: " + t);
+			return;
+		}
+
+		doGoToIndex(index);
 	}
 
 	/**
@@ -220,9 +241,7 @@ public class HistoryList<T> {
 			return;
 		}
 
-		T leaving = getCurrentHistoryItem();
-		T t = historyStack.get(++historyIndex);
-		broadcast(t, leaving);
+		doGoToIndex(historyIndex + 1);
 	}
 
 	/**
@@ -232,9 +251,21 @@ public class HistoryList<T> {
 	 * @param t the item
 	 */
 	public void goForwardTo(T t) {
-		while (!getCurrentHistoryItem().equals(t) && hasNext()) {
-			goForward();
+		int index = historyIndex + 1; // assume we want to ignore the current item
+		while (index < historyStack.size()) {
+			T other = historyStack.get(index);
+			if (Objects.equals(t, other)) {
+				break;
+			}
+			index++;
 		}
+
+		if (index < 0) {
+			Msg.error(this, "Item not in forward history: " + t);
+			return;
+		}
+
+		doGoToIndex(index);
 	}
 
 	/**

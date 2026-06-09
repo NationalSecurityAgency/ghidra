@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,7 +67,7 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.util.InvalidNameException;
@@ -276,8 +276,7 @@ public class VariableValueHoverPluginScreenShots extends GhidraScreenShotGenerat
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
-						Set.of(),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
+						Set.of(), CommonSet.SWX.kinds(), true, "unwind stack");
 		}
 
 		EmulationResult result = emuService.run(atSetup.getPlatform(), atSetup.getTime(), monitor,

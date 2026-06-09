@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,6 @@ import docking.widgets.shapes.PopupWindowPlacer.*;
  * Each edge placer takes a variable number of Location arguments.  These arguments work in the
  * same way for each method, though some arguments are not valid for some edges; for instance,
  * <code>Location.TOP</code> is only valid for left and right edges.
- * <p>
  * 
  * <H2>Two or More Location Arguments</H2>
  * 
@@ -56,7 +55,6 @@ import docking.widgets.shapes.PopupWindowPlacer.*;
  * the second argument specifies the nominal placement cell and the third argument specifies how
  * far the solution is allowed to shift. To specify a "no-shift" solution, one specifies the same
  * placement cell twice (e.g., <code>rightEdge(Location.TOP, Location.TOP)</code>).
- * <p>
  * 
  * <H2>One Location Argument</H2>
  * 
@@ -67,14 +65,12 @@ import docking.widgets.shapes.PopupWindowPlacer.*;
  * <code>rightEdge(Location.TOP, Location.CENTER)</code>.  When the single argument is
  * <code>Location.CENTER</code>, two attempts are built, the first being the BOTTOM or RIGHT cell
  * and the second being the TOP or LEFT cell.
- * <p>
  * 
  * <H2>No Arguments</H2>
  * 
  * <p>
  * When no arguments are specified, two arguments to the underlying placer are automatically set
  * to BOTTOM or RIGHT for the first and TOP or LEFT for the second.
- * <p>
  * 
  * <H2>Examples</H2>
  * 
@@ -315,7 +311,7 @@ public class PopupWindowPlacerBuilder {
 				}
 			}
 			else {
-				// Only looking from greater/lesser to the the center.
+				// Only looking from greater/lesser to the center.
 				add(new EdgePopupPlacer(major, minors[0], Location.CENTER));
 			}
 		}

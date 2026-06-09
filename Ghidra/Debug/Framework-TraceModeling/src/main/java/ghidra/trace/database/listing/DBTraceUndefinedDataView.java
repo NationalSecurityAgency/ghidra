@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -142,7 +142,12 @@ public class DBTraceUndefinedDataView extends
 			boolean forward) {
 		Iterator<Address> ait =
 			getAddressSetView(snap, new AddressRangeImpl(min, max)).getAddresses(forward);
-		return () -> IteratorUtils.transformedIterator(ait, a -> doCreateUnit(snap, a));
+		/**
+		 * a should NEVER be null, but if it happens, I'd rather the caller deal with the null than
+		 * throw an exception here.
+		 */
+		return () -> IteratorUtils.transformedIterator(ait,
+			a -> a == null ? null : doCreateUnit(snap, a));
 	}
 
 	@Override

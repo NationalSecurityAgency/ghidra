@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,11 @@
  */
 package agent.gdb.rmi;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -28,15 +30,14 @@ import org.junit.experimental.categories.Category;
 
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.testutil.DummyProc;
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.path.*;
 import ghidra.trace.model.time.TraceSnapshot;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
@@ -55,8 +56,22 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 
 		@Override
 		public void close() throws Exception {
-			conn.close();
-			mdo.close();
+			Exception toThrow = null;
+			try {
+				conn.close();
+			}
+			catch (Exception e) {
+				toThrow = e;
+			}
+			try {
+				mdo.close();
+			}
+			catch (Exception e) {
+				toThrow = e;
+			}
+			if (toThrow != null) {
+				throw toThrow;
+			}
 		}
 	}
 
@@ -91,15 +106,15 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 		if (object == null) {
 			return null;
 		}
-		PathPattern pat = PathPredicates.parse(pattern).getSingletonPattern();
+		PathPattern pat = PathFilter.parse(pattern).getSingletonPattern();
 		if (pat.countWildcards() != 1) {
 			throw new IllegalArgumentException("Exactly one wildcard required");
 		}
-		List<String> path = object.getCanonicalPath().getKeyList();
+		KeyPath path = object.getCanonicalPath();
 		if (path.size() < pat.asPath().size()) {
 			return null;
 		}
-		List<String> matched = pat.matchKeys(path.subList(0, pat.asPath().size()));
+		List<String> matched = pat.matchKeys(path, false);
 		if (matched == null) {
 			return null;
 		}
@@ -148,12 +163,12 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testOnNewThread() throws Exception {
-		String cloneExit = DummyProc.which("expCloneExit");
+		String specimen = getSpecimenNewThreadAndExit();
 		try (GdbAndTrace conn = startAndSyncGdb()) {
 			conn.execute("""
 					file %s
 					break work
-					start""".formatted(cloneExit));
+					%s""".formatted(specimen, PLAT.startCmd()));
 			waitForPass(() -> {
 				TraceObject inf = tb.obj("Inferiors[1]");
 				assertNotNull(inf);
@@ -164,8 +179,10 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 				RUN_TIMEOUT_MS, RETRY_MS);
 
 			conn.execute("continue");
-			waitForPass(() -> assertEquals(2,
-				tb.objValues(lastSnap(conn), "Inferiors[1].Threads[]").size()),
+			int nthreads = getSleepThreadCount();
+			waitForPass(() -> assertThat(
+				tb.objValues(lastSnap(conn), "Inferiors[1].Threads[]").size(),
+				greaterThan(nthreads)),
 				RUN_TIMEOUT_MS, RETRY_MS);
 		}
 	}
@@ -176,21 +193,23 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testOnThreadSelected() throws Exception {
-		String cloneExit = DummyProc.which("expCloneExit");
+		String specimen = getSpecimenNewThreadAndExit();
 		try (GdbAndTrace conn = startAndSyncGdb()) {
 			traceManager.openTrace(tb.trace);
 
 			conn.execute("""
 					file %s
 					break work
-					run""".formatted(cloneExit));
+					run""".formatted(specimen));
 			waitForPass(() -> {
 				TraceObject inf = tb.obj("Inferiors[1]");
 				assertNotNull(inf);
 				assertEquals("STOPPED", tb.objValue(inf, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
-			waitForPass(() -> assertEquals(2,
-				tb.objValues(lastSnap(conn), "Inferiors[1].Threads[]").size()),
+			int nthreads = getSleepThreadCount();
+			waitForPass(() -> assertThat(
+				tb.objValues(lastSnap(conn), "Inferiors[1].Threads[]").size(),
+				greaterThan(nthreads)),
 				RUN_TIMEOUT_MS, RETRY_MS);
 
 			// Now the real test
@@ -211,7 +230,7 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testOnFrameSelected() throws Exception {
-		String stack = DummyProc.which("expStack");
+		String stack = which("expStack");
 		try (GdbAndTrace conn = startAndSyncGdb()) {
 			traceManager.openTrace(tb.trace);
 
@@ -244,9 +263,10 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testOnMemoryChanged() throws Exception {
 		try (GdbAndTrace conn = startAndSyncGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
-					start""");
+					file %s
+					start""".formatted(target));
 
 			long address = Long.decode(conn.executeCapture("print/x &main").split("\\s+")[2]);
 			conn.execute("set *((char*) &main) = 0x7f");
@@ -261,9 +281,10 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testOnRegisterChanged() throws Exception {
 		try (GdbAndTrace conn = startAndSyncGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
-					start""");
+					file %s
+					start""".formatted(target));
 
 			TraceObject thread = waitForValue(() -> tb.obj("Inferiors[1].Threads[1]"));
 			waitForPass(
@@ -276,15 +297,19 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 			TraceMemorySpace regs = tb.trace.getMemoryManager().getMemorySpace(space, false);
 			waitForPass(() -> assertEquals("1234",
 				regs.getValue(lastSnap(conn), tb.reg("RAX")).getUnsignedValue().toString(16)));
+
+			assertEquals(List.of("0x1234"),
+				tb.objValues(lastSnap(conn), "Inferiors[1].Threads[1].Stack[0].Registers.rax"));
 		}
 	}
 
 	@Test
 	public void testOnCont() throws Exception {
 		try (GdbAndTrace conn = startAndSyncGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
-					run""");
+					file %s
+					run""".formatted(target));
 
 			TraceObject inf = waitForValue(() -> tb.obj("Inferiors[1]"));
 			TraceObject thread = waitForValue(() -> tb.obj("Inferiors[1].Threads[1]"));
@@ -298,9 +323,10 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testOnStop() throws Exception {
 		try (GdbAndTrace conn = startAndSyncGdb()) {
+			String target = which("expSpin");
 			conn.execute("""
-					file bash
-					start""");
+					file %s
+					%s""".formatted(target, PLAT.startCmd()));
 
 			TraceObject inf = waitForValue(() -> tb.obj("Inferiors[1]"));
 			TraceObject thread = waitForValue(() -> tb.obj("Inferiors[1].Threads[1]"));
@@ -314,10 +340,11 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testOnExited() throws Exception {
 		try (GdbAndTrace conn = startAndSyncGdb()) {
+			String target = which("bash");
 			conn.execute("""
-					file bash
+					file %s
 					set args -c "exit 1"
-					run""");
+					run""".formatted(target));
 
 			waitForPass(() -> {
 				TraceSnapshot snapshot =
@@ -340,27 +367,30 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 	 * <p>
 	 * Technically, this probably doesn't hit on_free_objfile, but all three just call
 	 * modules_changed, so I'm not concerned.
+	 * 
+	 * @throws Exception because
 	 */
 	@Test
 	public void testOnEventsObjfiles() throws Exception {
-		String print = DummyProc.which("expPrint");
-		String modPrint = "Inferiors[1].Modules[%s]".formatted(print);
+		String print = which("expPrint");
+		String modPrint = "Inferiors[1].Modules[%s]".formatted(DummyProc.which("expPrint"));
 		try (GdbAndTrace conn = startAndSyncGdb()) {
 			conn.execute("""
 					file %s
-					start""".formatted(print));
+					%s""".formatted(print, PLAT.startCmd()));
 			waitForPass(() -> assertEquals(1, tb.objValues(lastSnap(conn), modPrint).size()),
 				RUN_TIMEOUT_MS, RETRY_MS);
 
 			conn.execute("continue");
-			waitState(1, () -> lastSnap(conn), TargetExecutionState.TERMINATED);
+			waitState(1, () -> lastSnap(conn), TraceExecutionState.TERMINATED);
 			/**
 			 * Termination does not clear objfiles. Not until we run a new target.
 			 */
+			String target = which("bash");
 			conn.execute("""
-					file bash
+					file %s
 					set args -c "exit 1"
-					run""");
+					run""".formatted(target));
 			waitForPass(() -> assertEquals(0, tb.objValues(lastSnap(conn), modPrint).size()),
 				RUN_TIMEOUT_MS, RETRY_MS);
 		}
@@ -368,7 +398,7 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testOnBreakpointCreated() throws Exception {
-		String print = DummyProc.which("expPrint");
+		String print = which("expPrint");
 		try (GdbAndTrace conn = startAndSyncGdb()) {
 			conn.execute("file " + print);
 			assertEquals(0, tb.objValues(lastSnap(conn), "Breakpoints[]").size());
@@ -384,7 +414,7 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testOnBreakpointModified() throws Exception {
-		String print = DummyProc.which("expPrint");
+		String print = which("expPrint");
 		try (GdbAndTrace conn = startAndSyncGdb()) {
 			conn.execute("file " + print);
 			assertEquals(0, tb.objValues(lastSnap(conn), "Breakpoints[]").size());
@@ -408,7 +438,7 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testOnBreakpointDeleted() throws Exception {
-		String print = DummyProc.which("expPrint");
+		String print = which("expPrint");
 		try (GdbAndTrace conn = startAndSyncGdb()) {
 			conn.execute("file " + print);
 			assertEquals(0, tb.objValues(lastSnap(conn), "Breakpoints[]").size());

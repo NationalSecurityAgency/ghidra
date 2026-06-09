@@ -15,10 +15,5 @@ VMARG_LIST="-Djava.awt.headless=true "
 # contains the link you are calling (which is the best we can do on macOS), and the "echo" is the 
 # fallback, which doesn't attempt to do anything with links.
 SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
-SCRIPT_DIR="${SCRIPT_FILE%/*}"
-
-# Some JVM's with class data sharing enabled have issues with BSim starting with Ghidra's custom 
-# classloader, so we will disable sharing
-VMARG_LIST="-Xshare:off"
-
+SCRIPT_DIR="$(dirname -- "$SCRIPT_FILE")"
 ${SCRIPT_DIR}/launch.sh $LAUNCH_MODE jdk "BSimControl" $MAXMEM "${VMARG_LIST}" ghidra.features.bsim.query.BSimControlLaunchable "$@"

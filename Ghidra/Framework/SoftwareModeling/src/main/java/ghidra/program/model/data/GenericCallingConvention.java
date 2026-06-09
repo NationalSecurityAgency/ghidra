@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,10 +81,16 @@ public enum GenericCallingConvention {
 	/**
 	 * Returns the GenericCallingConvention corresponding to the specified
 	 * type string or unknown if name is not defined.
-	 * @param callingConvention calling convention declaration name (e.g., "__stdcall")
+	 * @param callingConvention calling convention declaration name (e.g., "__stdcall").
+	 * Enum name is also allowed for backward compatibility.
 	 * @return GenericCallingConvention or {@link #unknown} if not found.
 	 */
 	public static GenericCallingConvention getGenericCallingConvention(String callingConvention) {
+		for (GenericCallingConvention value : GenericCallingConvention.values()) {
+			if (value.getDeclarationName().equalsIgnoreCase(callingConvention)) {
+				return value;
+			}
+		}
 		for (GenericCallingConvention value : GenericCallingConvention.values()) {
 			if (value.name().equalsIgnoreCase(callingConvention)) {
 				return value;

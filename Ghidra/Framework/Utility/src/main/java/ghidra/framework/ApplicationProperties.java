@@ -96,6 +96,12 @@ public class ApplicationProperties extends Properties {
 	public static final String APPLICATION_JAVA_COMPILER_PROPERTY = "application.java.compiler";
 
 	/**
+	 * A comma-delimted priority-ordred list of versions of Python supported by the application.
+	 */
+	public static final String APPLICATION_PYTHON_SUPPORTED_PROPERTY =
+		"application.python.supported";
+
+	/**
 	 * The date the application was built on, in a long format.
 	 * For example, "2018-Jan-11 1346 EST".
 	 */

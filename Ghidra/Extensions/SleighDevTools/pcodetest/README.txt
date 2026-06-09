@@ -13,6 +13,9 @@ options needed to build the pcode test.
 The defaults.py script should be modified to suit your environment
 reflecting the installation location of your toolchains, build artifacts, etc. 
 
+Options and parameters for building individual pcodetests are contained
+in the pcode_defs.py script.
+
 USAGE
 -----
 
@@ -23,9 +26,14 @@ arguments.
 
 It is possible to build everything from scratch with this command:
 
-./build --pcodetest-all
+./build -a
 
 Typically, pcode test binaries are built individually per processor,
 such as:
 
-./build --pcodetest MIPS16
+./build -t MIPS16
+
+To see a list of all processor tests, run with the --list options:
+
+./build -l
+

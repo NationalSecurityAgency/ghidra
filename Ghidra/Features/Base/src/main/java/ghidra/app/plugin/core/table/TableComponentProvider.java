@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,11 +31,13 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
+import docking.widgets.table.actions.DeleteTableRowAction;
 import generic.theme.GIcon;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigatableRemovalListener;
 import ghidra.app.services.*;
 import ghidra.app.util.HelpTopics;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.address.Address;
@@ -43,7 +45,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
-import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
 import utility.function.Callback;
 import utility.function.Dummy;
@@ -63,6 +64,9 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	private String windowSubMenu;
 	private List<ComponentProviderActivationListener> activationListenerList = new ArrayList<>();
 	private Callback closedCallback = Dummy.callback();
+
+	// optional client listener
+	private DomainObjectListener programListener;
 
 	private Navigatable navigatable;
 	private SelectionNavigationAction selectionNavigationAction;
@@ -138,8 +142,8 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 
 		if (navigatable != null) {
 			// Only allow global actions if we are derived from the connect/primary navigatable.  
-			// This allows the the primary navigatable to process key events without the user having
-			// to focus first focus the primary navigatable.
+			// This allows the primary navigatable to process key events without the user having
+			// to first focus the primary navigatable.
 			table.setActionsEnabled(navigatable.isConnected());
 			navigatable.addNavigatableListener(this);
 			table.installNavigation(tool, navigatable);
@@ -160,6 +164,13 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	private void createActions(Plugin plugin) {
 
 		GhidraTable table = threadedPanel.getTable();
+
+		// The name of this provider is specified by the clients of the service and it is expected 
+		// to be something like 'Search Results'.  The title is also from the client and is expected
+		// to be something like 'Search Text "foo"'
+		table.setAccessibleNamePrefix(getName());
+		table.getAccessibleContext().setAccessibleDescription("Provider title: " + getTitle());
+
 		if (navigatable != null) {
 			selectAction =
 				new MakeProgramSelectionAction(navigatable, tableServicePlugin.getName(), table);
@@ -174,7 +185,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		selectionNavigationAction
 				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 
-		externalGotoAction = new DockingAction("Go to External Location", getName()) {
+		externalGotoAction = new DockingAction("Go to External Location", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				gotoExternalAddress(getSelectedExternalAddress());
@@ -384,6 +395,10 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		return model;
 	}
 
+	public GhidraTable getTable() {
+		return threadedPanel.getTable();
+	}
+
 	private void updateTitle() {
 		setSubTitle(generateSubTitle());
 	}
@@ -408,6 +423,15 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	public void componentDeactived() {
 		for (ComponentProviderActivationListener listener : activationListenerList) {
 			listener.componentProviderDeactivated(this);
+		}
+	}
+
+	@Override
+	public void componentHidden() {
+		// Note: this method will get called when this provider is closed.  Also, the provider will
+		// be closed if its program is closed.
+		if (programListener != null) {
+			program.removeListener(programListener);
 		}
 	}
 
@@ -444,5 +468,23 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	 */
 	public void setClosedCallback(Callback c) {
 		this.closedCallback = Dummy.ifNull(c);
+	}
+
+	/**
+	 * Sets a program listener on this provider.  This class will add the listener to the program
+	 * and maintain a reference to the listener for the life of this provider.  This prevents the 
+	 * listener from getting garbage collected until this provider is disposed.
+	 * 
+	 * @param programListener the listener
+	 */
+	public void setProgramListener(DomainObjectListener programListener) {
+		if (this.programListener != null) {
+			program.removeListener(programListener);
+		}
+
+		this.programListener = programListener;
+		if (programListener != null) {
+			program.addListener(programListener);
+		}
 	}
 }

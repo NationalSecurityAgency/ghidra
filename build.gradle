@@ -16,7 +16,6 @@
 apply plugin: 'eclipse'
 
 apply from: 'gradle/root/eclipse.gradle'
-apply from: "gradle/support/eclipseLauncher.gradle"
 apply from: "gradle/support/loadApplicationProperties.gradle"
 
 
@@ -49,9 +48,8 @@ if ("32".equals(System.getProperty("sun.arch.data.model"))) {
 /***************************************************************************************
  * Identify supported Python command
  ***************************************************************************************/
-project.ext.SUPPORTED_PY_VERSIONS = ['3.12', '3.11', '3.10', '3.9']
 project.ext.PYTHON3 = findPython3(true)
-project.ext.PYTHON_DEPS = new HashSet<String>()
+project.ext.PYTHON_DEPS = new HashMap<Project, Set<File>>()
 
 /*********************************************************************************
  *  Define the location of bin repo
@@ -68,7 +66,13 @@ allprojects {
 	tasks.withType(JavaForkOptions) {
 		jvmArgs '-Djava.awt.headless=true'
 	}
+
+	// enable generating lock files for gradle dependencies
+	dependencyLocking {
+		lockAllConfigurations()
+	}
 }
+
 
 /*********************************************************************************
  *  Use flat directory-style repository if flatRepo directory is present.
@@ -79,7 +83,6 @@ if (flatRepo.isDirectory()) {
 		repositories {
 			mavenLocal()
 			mavenCentral()
-			jcenter()
 			flatDir name: "flat", dirs:["$flatRepo"]
 		}
 	}
@@ -91,6 +94,26 @@ else {
 			"  Ensure you have created the ${flatRepo.getName()} directory or ${f.getName()} file.\n\n\n");
 	}
 }
+
+/*********************************************************************************
+ *  Force all project compile classpaths to be resolved at configuration time.
+ *********************************************************************************/
+allprojects {
+	gradle.taskGraph.whenReady {
+		configurations.matching { it.name.endsWith("compileClasspath") }.all { cfg ->
+			if (cfg.canBeResolved) {
+				try {
+					cfg.files   // trigger resolution safely now
+				} catch (ignored) { }
+			}
+		}
+	}
+}
+
+/*********************************************************************************
+ *  Store :MarkdownSupport ClassPath to fix issues with Gradle 9.
+ *********************************************************************************/
+ext.markdownDeps = []
 
 /*********************************************************************************
  * Imports
@@ -160,67 +183,83 @@ def checkGradleVersion() {
  * Although warnings may be produced no exception is thrown since python only required
  * for specific build tasks and is not required for prepdev
  *********************************************************************************/
-def checkPythonVersion(String pyCmd) {
+def checkPythonVersion(List<String> pyCmd) {
 	try {
-		def stdout = new ByteArrayOutputStream()
-		exec {
-			commandLine pyCmd, "-c", "import sys; print('{0}.{1}'.format(*sys.version_info))"
-			standardOutput = stdout
-			errorOutput = OutputStream.nullOutputStream()
-		}
-		def version = "$stdout".strip()
-		return version
+		return providers.exec {
+			commandLine pyCmd
+			args "-c", "import sys; print('{0}.{1}'.format(*sys.version_info))"
+		}.standardOutput.asText.get().strip()
 	}
 	catch (Exception e) {
 		return "ABSENT"
 	}
 }
 
-def checkPip(String pyCmd) {
+def getPythonExecutable(List<String> pyCmd) {
 	try {
-		def stdout = new ByteArrayOutputStream()
-		exec {
-			commandLine pyCmd, "-c", "import pip; print(pip.__version__)"
-			standardOutput = stdout
-			errorOutput = OutputStream.nullOutputStream()
-		}
-		def version = "$stdout".strip();
-		if (version.length() == 0) {
-			println("Warning: Python3 pip not installed (required for build)")
-		}
-		else {
-			println("Python3 pip version: ${version}")
+		return providers.exec {
+			commandLine pyCmd
+			args "-c", "import sys; print(sys.executable)"
+		}.standardOutput.asText.get().strip()
+	}
+	catch (Exception e) {
+		return "ABSENT"
+	}
+}
+
+def checkPip(List<String> pyCmd, boolean shouldPrint) {
+	try {
+		def version = providers.exec {
+			commandLine pyCmd
+			args "-c", "import pip; print(pip.__version__)"
+		}.standardOutput.asText.get().strip()
+		if (shouldPrint) {
+			if (version.length() == 0) {
+				println("Warning: Python3 pip not installed (required for build)")
+			}
+			else {
+				println("Python3 pip version: ${version}")
+			}
 		}
 		return version
 	}
 	catch (Exception e) {
-		println("Warning: Python3 pip not installed (required for build)")
+		if (shouldPrint) {
+			println("Warning: Python3 pip not installed (required for build)")
+		}
 	}
 }
 
-def findPython3(boolean useDefault) {
-	for (pyCmd in ['py', 'python3', 'python']) {
+def findPython3(boolean shouldPrint) {
+	def supportedVersions = "${PYTHON_SUPPORTED}".split(",").collect {
+		try {
+			GradleVersion.version(it.trim()).getVersion() // use GradleVersion to validate version format
+		}
+		catch (IllegalArgumentException e) {
+			throw new GradleException("Invalid supported Python version list specified in application.properties.\n" + e.message);
+		}	
+	}
+
+	def pyCmds = supportedVersions.collectMany { [["python$it"], ["py", "-$it"]] }
+	pyCmds += [['python3'], ['python'], ['py']]
+	for (pyCmd in pyCmds) {	
 		def pyVer = checkPythonVersion(pyCmd)
-		if (pyVer in SUPPORTED_PY_VERSIONS) {
-			println("Python3 command:  ${pyCmd} (version ${pyVer})")
-			checkPip(pyCmd)
+		def pyExe = getPythonExecutable(pyCmd)
+		if (pyVer in supportedVersions) {
+			if (shouldPrint) {
+				println("Python3 command: ${pyCmd} (${pyVer}, ${pyExe})")
+			}
+			checkPip(pyCmd, shouldPrint)
 			return pyCmd
 		}
 	}
-	for (pyVer in SUPPORTED_PY_VERSIONS) {
-		def pyCmd = "python${pyVer}"
-		if (checkPythonVersion(pyCmd) in SUPPORTED_PY_VERSIONS) {
-			println("Python3 command:  ${pyCmd}")
-			checkPip(pyCmd)
-			return pyCmd
-		}
+
+	if (shouldPrint) {
+		println("Warning: Supported Python [${PYTHON_SUPPORTED}] not found (required for build)")
 	}
-	// Don't fail until task execution. Just let "python3" fail.
-	// Force use of non-existent python3.9 instead of unsupported python version
-	// which should fail if a python build is performed.
-	println("Warning: Python3 command not found (required for build)")
 	
-	return useDefault ? 'python3.9' : null
+	// Don't fail until task execution. Just retun null, which can be gracefully handled later.
+	return null
 }
 
 /******************************************************************************************
@@ -305,6 +344,47 @@ def getCurrentDateTimeLong() {
 	def formattedDate = date.format('yyyy-MMM-dd HHmm z')
 	return formattedDate
 }
+
+/*********************************************************************************
+ * Returns the project object from the given projectDependency
+ *********************************************************************************/
+def getDependencyProject(p, projectDependency) {
+    if (projectDependency.hasProperty("path")) {
+        // Supported by Gradle 8.11 and later
+        return p.project(projectDependency.path)
+    }
+    else {
+        // Supported in Gradle 8.5, removed in Gradle 9
+        return projectDependency.dependencyProject
+    }
+}
+
+/*********************************************************************************
+ * Returns true if 'project' has a direct or transitive API project dependency
+ * on the project with path 'targetPath'. The 'targetPath' should be specified
+ * in the form ":<project-name>"
+ *********************************************************************************/
+boolean hasApiProjectDependency(Project project, String targetPath) {
+    def visited = [] as Set
+
+    def walk
+    walk = { Project p ->
+        if (!visited.add(p)) return false
+
+        def apiDeps = p.configurations.api
+            .allDependencies
+            .withType(org.gradle.api.artifacts.ProjectDependency)
+
+        if (apiDeps.any { getDependencyProject(p, it).path == targetPath }) {
+            return true
+        }
+
+        return apiDeps.any { walk(getDependencyProject(p, it)) }
+    }
+
+    walk(project)
+}
+
 
 /*********************************************************************************
  * Returns a list of all the external library paths declared as dependencies for the 

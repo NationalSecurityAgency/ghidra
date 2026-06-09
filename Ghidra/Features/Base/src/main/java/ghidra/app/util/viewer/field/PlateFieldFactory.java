@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,9 @@ package ghidra.app.util.viewer.field;
 
 import java.awt.Color;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -40,6 +41,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
+import util.CollectionUtils;
 
 /**
  * Class for showing plate comments
@@ -142,12 +144,14 @@ public class PlateFieldFactory extends FieldFactory {
 		CodeUnit cu = (CodeUnit) proxy.getObject();
 		boolean isClipped = false;
 		List<FieldElement> elements = new ArrayList<>();
-		String commentText = getCommentText(cu);
+		List<String> offcutComments = CommentUtils.getOffcutComments(cu, CommentType.PLATE);
+		String commentText = getCommentText(cu, offcutComments);
+
 		if (StringUtils.isBlank(commentText)) {
 			getDefaultFieldElements(cu, elements);
 		}
 		else {
-			isClipped = getFormattedFieldElements(cu, elements);
+			isClipped = getFormattedFieldElements(cu, elements, offcutComments);
 		}
 
 		if (elements.isEmpty()) {
@@ -163,21 +167,21 @@ public class PlateFieldFactory extends FieldFactory {
 
 		ListingFieldHighlightFactoryAdapter hlFactory =
 			new ListingFieldHighlightFactoryAdapter(hlProvider);
-		PlateFieldTextField textField =
-			new PlateFieldTextField(elements, this, proxy, startX, width, commentText, isClipped,
-				hlFactory);
+		PlateFieldTextField textField = new PlateFieldTextField(elements, this, proxy, startX,
+			width, commentText, isClipped, hlFactory);
 		PlateListingTextField listingField = new PlateListingTextField(proxy, textField, hlFactory);
 		return listingField;
 	}
 
-	private boolean getFormattedFieldElements(CodeUnit cu, List<FieldElement> elements) {
+	private boolean getFormattedFieldElements(CodeUnit cu, List<FieldElement> elements,
+			List<String> offcutComments) {
 
 		int numberBlankLines = getNumberBlankLines(cu, true);
 
 		addBlankLines(elements, numberBlankLines, cu);
 
-		String[] comments = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
-		return generateFormattedPlateComment(elements, comments, cu.getProgram());
+		String[] comments = cu.getCommentAsArray(CommentType.PLATE);
+		return generateFormattedPlateComment(elements, comments, offcutComments, cu.getProgram());
 	}
 
 	private void getDefaultFieldElements(CodeUnit cu, List<FieldElement> elements) {
@@ -205,20 +209,17 @@ public class PlateFieldFactory extends FieldFactory {
 		return false;
 	}
 
-	private String getCommentText(CodeUnit cu) {
-		String[] comments = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
-		if (comments == null) {
-			return null;
+	private String getCommentText(CodeUnit cu, List<String> offcutComments) {
+		Stream<String> commentsStream = Stream.empty();
+		String[] plateComments = cu.getCommentAsArray(CommentType.PLATE);
+		if (plateComments != null) {
+			commentsStream = Arrays.stream(plateComments);
 		}
 
-		StringBuilder buffy = new StringBuilder();
-		for (String comment : comments) {
-			if (buffy.length() != 0) {
-				buffy.append('\n');
-			}
-			buffy.append(comment);
-		}
-		return buffy.toString();
+		Program program = cu.getProgram();
+		Stream<String> comments = Stream.concat(commentsStream, offcutComments.stream());
+		return comments.map(c -> CommentUtils.getDisplayString(c, program))
+				.collect(Collectors.joining("\n"));
 	}
 
 	/*
@@ -226,8 +227,8 @@ public class PlateFieldFactory extends FieldFactory {
 	 * data is clipped because it is too long to display.
 	 */
 	private boolean generateFormattedPlateComment(List<FieldElement> elements, String[] comments,
-			Program p) {
-		if (comments == null || comments.length == 0) {
+			List<String> offcutComments, Program p) {
+		if (offcutComments.isEmpty() && CollectionUtils.isBlank(comments)) {
 			return false;
 		}
 
@@ -244,6 +245,11 @@ public class PlateFieldFactory extends FieldFactory {
 		List<FieldElement> commentsList = new ArrayList<>();
 		for (String c : comments) {
 			commentsList.add(CommentUtils.parseTextForAnnotations(c, p, prototype, row++));
+		}
+		for (String offcut : offcutComments) {
+			AttributedString as =
+				new AttributedString(offcut, CommentColors.OFFCUT, getMetrics(style), false, null);
+			commentsList.add(new TextFieldElement(as, commentsList.size(), 0));
 		}
 
 		if (isWordWrap) {
@@ -488,7 +494,7 @@ public class PlateFieldFactory extends FieldFactory {
 		}
 
 		CodeUnit cu = (CodeUnit) proxyObject;
-		String[] comments = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
+		String[] comments = cu.getCommentAsArray(CommentType.PLATE);
 		RowColLocation dataLocation =
 			((ListingTextField) listingField).screenToDataLocation(row, col);
 
@@ -525,7 +531,7 @@ public class PlateFieldFactory extends FieldFactory {
 		}
 
 		CommentFieldLocation commentLocation = (CommentFieldLocation) programLoc;
-		if (commentLocation.getCommentType() != CodeUnit.PLATE_COMMENT) {
+		if (commentLocation.getCommentType() != CommentType.PLATE) {
 			return null;
 		}
 
@@ -554,7 +560,8 @@ public class PlateFieldFactory extends FieldFactory {
 		 */
 
 		CodeUnit cu = (CodeUnit) obj;
-		String commentText = getCommentText(cu);
+		List<String> offcutComments = CommentUtils.getOffcutComments(cu, CommentType.PLATE);
+		String commentText = getCommentText(cu, offcutComments);
 		boolean hasComment = true;
 		if (StringUtils.isBlank(commentText)) {
 			String defaultComment = getDefaultComment(cu);
@@ -587,8 +594,8 @@ public class PlateFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel,
-			ListingHighlightProvider hsProvider,
-			ToolOptions toolOptions, ToolOptions fieldOptions) {
+			ListingHighlightProvider hsProvider, ToolOptions toolOptions,
+			ToolOptions fieldOptions) {
 		return new PlateFieldFactory(formatModel, hsProvider, toolOptions, fieldOptions);
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.program.model.data;
+
+import ghidra.util.StringUtilities;
 
 public interface InternalDataTypeComponent extends DataTypeComponent {
 
@@ -49,6 +51,34 @@ public interface InternalDataTypeComponent extends DataTypeComponent {
 		String cmt = c.getComment();
 		buffer.append("  " + ((cmt != null) ? ("\"" + cmt + "\"") : ""));
 		return buffer.toString();
+	}
+
+	/**
+	 * Modify field name to transform whitespace chars to underscores after triming and checking
+	 * for empty string.  Empty string is returned as null for storage to indicate default name use. 
+	 * @param name original field name (may be null) 
+	 * @return revised field name (may be null)
+	 */
+	public static String cleanupFieldName(String name) {
+		String fieldName = name;
+		if (name != null) {
+
+			// Trim field name and ensure empty string is stored as null to indicate default field name
+			fieldName = name.trim();
+
+			if (fieldName.length() == 0) {
+				fieldName = null;
+			}
+			else {
+				// NOTE: Should we be checking for default field name pattern and disallow.
+				// If so, additional parameters would be required (e.g., struct vs union, is packed struct)
+
+				// Don't allow whitespace in field names. Until we change the API to throw an exception
+				// when a field name has whitespace, just silently replace whitespace with underscores.
+				fieldName = StringUtilities.whitespaceToUnderscores(fieldName);
+			}
+		}
+		return fieldName;
 	}
 
 }

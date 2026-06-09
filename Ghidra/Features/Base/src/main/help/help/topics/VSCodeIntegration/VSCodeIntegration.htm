@@ -1,0 +1,57 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Visual Studio Code Integration</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="VSCodeIntegration"></A>Visual Studio Code Integration</H1>
+    
+    <P>Ghidra is capable of integrating with an existing Visual Studio Code installation to aid
+    in the development of Ghidra scripts and modules.<p>
+    
+    <H2><A name="VSCodeIntegrationOptions"></A>Visual Studio Code Integration Tool Options</H2>
+    <P>The following Front-End tool options (Edit -> Tool Options) may need to be configured for 
+    Ghidra to successfully launch Visual Studio Code on your platform.</P>
+    <BR>
+    
+    <CENTER>
+    <TABLE border="1" width="80%">
+      <TBODY>
+        <TR valign="middle">
+          <TD colspan="2" bgcolor="#c0c0c0" valign="top" align="left">
+            <P align="center"><B>Tool Options</B></P>
+          </TD>
+        </TR>
+
+        <TR>
+          <TD bgcolor="#DDDDDD" align="left"><B>Option</B></TD>
+          <TD bgcolor="#DDDDDD" align="left"><B>Description</B></TD>
+        </TR>
+
+        <TR valign="middle">
+          <TD valign="top" width="200" align="left">Visual Studio Code Executable Path</TD>
+          <TD valign="top" align="left">Path to a Visual Studio Code executable file. It defaults
+          to the most commonly used location on your specific platform.</TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+   </CENTER>
+   
+    <H2><A name="VSCodeModuleProject"></A>Create Visual Studio Code Module Project</H2>
+    <P>This action creates a new Visual Studio Code project folder which can be used as a convenient
+    starting point to develop a new Ghidra module. The new project will be linked against the 
+    version of Ghidra that was used to create the project. Once the project is created, the
+    associated Ghidra version cannot change. This behavior may become more flexible in the 
+    future.</P>
+    
+    <P>Visual Studio Code launchers are provided which will allow you to debug your module's code.
+    Also, a Gradle task named <i>ghidra/distributeExtension</i> is provided that will allow you to 
+    build a distributable Ghidra extension.
+    </P>
+    
+  </BODY>
+</HTML>

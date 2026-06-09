@@ -17,12 +17,8 @@ package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.net.SocketAddress;
-import java.util.List;
-import java.util.Map;
 
 import ghidra.app.plugin.core.debug.gui.tracermi.launcher.ScriptAttributesParser.ScriptAttributes;
-import ghidra.debug.api.ValStr;
 import ghidra.program.model.listing.Program;
 
 /**

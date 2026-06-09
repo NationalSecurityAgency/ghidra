@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.navigation.locationreferences;
 
 import ghidra.program.database.symbol.FunctionSymbol;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -67,7 +68,14 @@ public class FunctionDefinitionLocationDescriptor extends GenericDataTypeLocatio
 				continue;
 			}
 
-			accumulator.add(new LocationReference(symbol.getAddress()));
+			ProgramLocation location = symbol.getProgramLocation();
+			Address address = symbol.getAddress();
+			if (location != null) {
+				accumulator.add(new LocationReference(address, null, location));
+			}
+			else {
+				accumulator.add(new LocationReference(address));
+			}
 		}
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.graph.viewer.GraphViewerUtils;
  * of a grid.
  * 
  * <p>This class maintains a collection of vertices on this row, organized by column index.  You
- * can get the column of a vertex from {@link #getColumn(Object) getColumn(V)}.
+ * can get the column of a vertex from {@link #getColumn(Object)}
  * 
  * @param <V> the vertex type
  */
@@ -42,7 +42,7 @@ public class Row<V> {
 	/** The grid index of this row (0, 1...n) for the number of rows */
 	public int index = Integer.MAX_VALUE;
 
-	// Note: this must change together (they are effectively a BiDi map)
+	// Note: these must change together (they are effectively a BiDi map)
 	private TreeMap<Integer, V> verticesByColumn = new TreeMap<>();
 	private Map<V, Integer> columnsByVertex = new HashMap<>();
 

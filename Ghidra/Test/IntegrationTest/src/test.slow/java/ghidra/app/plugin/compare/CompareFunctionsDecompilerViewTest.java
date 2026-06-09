@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import org.junit.*;
 
 import ghidra.features.base.codecompare.model.FunctionComparisonModel;
 import ghidra.features.codecompare.decompile.CDisplay;
-import ghidra.features.codecompare.decompile.DecompilerCodeComparisonPanel;
+import ghidra.features.codecompare.decompile.DecompilerCodeComparisonView;
 import ghidra.features.codecompare.plugin.FunctionComparisonPlugin;
 import ghidra.features.codecompare.plugin.FunctionComparisonProvider;
 import ghidra.program.model.address.Address;
@@ -48,14 +48,13 @@ public class CompareFunctionsDecompilerViewTest extends AbstractGhidraHeadedInte
 	@Before
 	public void setUp() throws Exception {
 		env = new TestEnv();
-		plugin = env.addPlugin(FunctionComparisonPlugin.class);
 		program1 = buildTestProgram();
-		showTool(plugin.getTool());
-		env.open(program1);
+		env.showTool(program1);
+		plugin = env.addPlugin(FunctionComparisonPlugin.class);
+
 		FunctionManager functionManager = program1.getFunctionManager();
 		fun1 = functionManager.getFunctionAt(addr(0x01002cf5));
 		fun2 = functionManager.getFunctionAt(addr(0x0100415a));
-
 	}
 
 	private Address addr(long offset) {
@@ -68,7 +67,9 @@ public class CompareFunctionsDecompilerViewTest extends AbstractGhidraHeadedInte
 	}
 
 	@Test
-	public void testDecompDifView() throws Exception {
+	public void testDecompilerDiffView() throws Exception {
+		assertFalse(program1.isClosed());
+
 		Set<Function> functions = Set.of(fun1, fun2);
 		compareFunctions(functions);
 
@@ -76,13 +77,13 @@ public class CompareFunctionsDecompilerViewTest extends AbstractGhidraHeadedInte
 			waitForComponentProvider(FunctionComparisonProvider.class);
 
 		checkFunctions(provider, LEFT, fun1, fun1, fun2);
-		DecompilerCodeComparisonPanel panel =
-			(DecompilerCodeComparisonPanel) provider
-					.getCodeComparisonPanelByName(DecompilerCodeComparisonPanel.NAME);
+		DecompilerCodeComparisonView comparisonProvider =
+			(DecompilerCodeComparisonView) provider
+					.getView(DecompilerCodeComparisonView.NAME);
 
-		waitForDecompiler(panel);
-		assertHasLines(panel.getLeftPanel(), 28);
-		assertHasLines(panel.getRightPanel(), 23);
+		waitForDecompiler(provider, comparisonProvider);
+		assertHasLines(comparisonProvider.getLeftPanel(), 28);
+		assertHasLines(comparisonProvider.getRightPanel(), 22);
 	}
 
 	private void checkFunctions(FunctionComparisonProvider provider, Side side,
@@ -101,9 +102,13 @@ public class CompareFunctionsDecompilerViewTest extends AbstractGhidraHeadedInte
 		assertEquals(lineCount, panel.getDecompilerPanel().getLines().size());
 	}
 
-	private void waitForDecompiler(DecompilerCodeComparisonPanel panel) {
+	private void waitForDecompiler(FunctionComparisonProvider provider,
+			DecompilerCodeComparisonView view) {
+
+		runSwing(() -> provider.setActiveView(view.getName()));
 		waitForSwing();
-		waitForCondition(() -> !panel.isBusy());
+
+		waitForCondition(() -> !view.isBusy());
 		waitForSwing();
 	}
 
@@ -113,8 +118,7 @@ public class CompareFunctionsDecompilerViewTest extends AbstractGhidraHeadedInte
 	}
 
 	private Program buildTestProgram() throws Exception {
-		ClassicSampleX86ProgramBuilder builder =
-			new ClassicSampleX86ProgramBuilder("Test", false);
+		ClassicSampleX86ProgramBuilder builder = new ClassicSampleX86ProgramBuilder("Test", false);
 		return builder.getProgram();
 	}
 

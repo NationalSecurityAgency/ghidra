@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,15 +35,12 @@ import docking.dnd.GClipboard;
 import docking.widgets.OptionDialog;
 import generic.Unique;
 import ghidra.app.plugin.assembler.*;
-import ghidra.app.plugin.core.assembler.AssemblerPlugin;
-import ghidra.app.plugin.core.assembler.AssemblerPluginTestHelper;
 import ghidra.app.plugin.core.clipboard.ClipboardPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin;
 import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPluginTestHelper;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerIntegrationTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
-import ghidra.app.plugin.core.debug.mapping.ObjectBasedDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiConnection.TestRemoteMethod;
@@ -51,24 +48,19 @@ import ghidra.app.services.DebuggerControlService;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerEmulationService.CachedEmulator;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
-import ghidra.dbg.model.*;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.debug.api.control.ControlMode;
-import ghidra.debug.api.model.DebuggerTargetTraceMapper;
-import ghidra.debug.api.model.TraceRecorder;
 import ghidra.pcode.exec.SuspendedPcodeExecutionException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.ShortDataType;
-import ghidra.program.model.lang.CompilerSpecID;
-import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.util.ProgramLocation;
+import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -97,204 +89,6 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		emulationService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 		controlPlugin = addPlugin(tool, DebuggerControlPlugin.class);
-
-		mb = new TestDebuggerModelBuilder() {
-			@Override
-			protected TestDebuggerObjectModel newModel(String typeHint) {
-				commands.clear();
-				return new TestDebuggerObjectModel(typeHint) {
-					@Override
-					protected TestTargetThread newTestTargetThread(
-							TestTargetThreadContainer container, int tid) {
-						return new TestTargetThread(container, tid) {
-							{
-								setState(TargetExecutionState.STOPPED);
-							}
-
-							@Override
-							public CompletableFuture<Void> resume() {
-								commands.add("resume");
-								setState(TargetExecutionState.RUNNING);
-								return super.resume();
-							}
-
-							@Override
-							public CompletableFuture<Void> interrupt() {
-								commands.add("interrupt");
-								setState(TargetExecutionState.STOPPED);
-								return super.interrupt();
-							}
-
-							@Override
-							public CompletableFuture<Void> kill() {
-								commands.add("kill");
-								setState(TargetExecutionState.TERMINATED);
-								return super.kill();
-							}
-
-							@Override
-							public CompletableFuture<Void> step(TargetStepKind kind) {
-								commands.add("step(" + kind + ")");
-								setState(TargetExecutionState.RUNNING);
-								setState(TargetExecutionState.STOPPED);
-								return super.step(kind);
-							}
-						};
-					}
-
-					@Override
-					public CompletableFuture<Void> close() {
-						commands.add("close");
-						return super.close();
-					}
-				};
-			}
-		};
-	}
-
-	@Override
-	protected DebuggerTargetTraceMapper createTargetTraceMapper(TargetObject target)
-			throws Exception {
-		return new ObjectBasedDebuggerTargetTraceMapper(target,
-			new LanguageID("DATA:BE:64:default"), new CompilerSpecID("pointer64"), Set.of());
-	}
-
-	@Override
-	protected TraceRecorder recordAndWaitSync() throws Throwable {
-		TraceRecorder recorder = super.recordAndWaitSync();
-		useTrace(recorder.getTrace());
-		return recorder;
-	}
-
-	@Override
-	protected TargetObject chooseTarget() {
-		return mb.testModel.session;
-	}
-
-	@Test
-	public void testRecorderTargetResumeAction() throws Throwable {
-		createTestModel();
-		TraceRecorder recorder = recordAndWaitSync();
-		traceManager.openTrace(tb.trace);
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-		waitOn(recorder.requestFocus(mb.testThread1));
-		waitRecorder(recorder);
-		waitForSwing();
-
-		DockingAction actionTargetResume = controlPlugin.actionTargetResume;
-		assertInTool(actionTargetResume);
-		performEnabledAction(null, actionTargetResume, true);
-		waitForTasks();
-		waitRecorder(recorder);
-		assertEquals(List.of("resume"), commands);
-		waitForSwing();
-		assertFalse(actionTargetResume.isEnabled());
-	}
-
-	@Test
-	public void testRecorderTargetInterruptAction() throws Throwable {
-		createTestModel();
-		TraceRecorder recorder = recordAndWaitSync();
-		traceManager.openTrace(tb.trace);
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-		waitOn(recorder.requestFocus(mb.testThread1));
-		waitRecorder(recorder);
-		waitForSwing();
-
-		DockingAction actionTargetInterrupt = controlPlugin.actionTargetInterrupt;
-		assertInTool(actionTargetInterrupt);
-		assertFalse(actionTargetInterrupt.isEnabled());
-		waitOn(mb.testThread1.resume());
-		waitRecorder(recorder);
-		commands.clear();
-		waitForSwing();
-
-		performEnabledAction(null, actionTargetInterrupt, true);
-		waitForTasks();
-		waitRecorder(recorder);
-		assertEquals(List.of("interrupt"), commands);
-		waitForSwing();
-		assertFalse(actionTargetInterrupt.isEnabled());
-	}
-
-	@Test
-	public void testRecorderTargetKillAction() throws Throwable {
-		createTestModel();
-		TraceRecorder recorder = recordAndWaitSync();
-		traceManager.openTrace(tb.trace);
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-		waitOn(recorder.requestFocus(mb.testThread1));
-		waitRecorder(recorder);
-		waitForSwing();
-
-		DockingAction actionTargetKill = controlPlugin.actionTargetKill;
-		assertInTool(actionTargetKill);
-		performEnabledAction(null, actionTargetKill, true);
-		waitForTasks();
-		waitRecorder(recorder);
-		assertEquals(List.of("kill"), commands);
-		waitForSwing();
-		assertFalse(actionTargetKill.isEnabled());
-	}
-
-	@Test
-	public void testRecorderTargetDisconnectAction() throws Throwable {
-		createTestModel();
-		TraceRecorder recorder = recordAndWaitSync();
-		traceManager.openTrace(tb.trace);
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-
-		DockingAction actionTargetDisconnect = controlPlugin.actionTargetDisconnect;
-		assertInTool(actionTargetDisconnect);
-		performEnabledAction(null, actionTargetDisconnect, true);
-		waitForTasks();
-		waitRecorder(recorder);
-		assertEquals(List.of("close"), commands);
-		waitForSwing();
-		waitForPass(() -> assertFalse(actionTargetDisconnect.isEnabled()));
-	}
-
-	protected void runTestRecorderTargetStepAction(Supplier<DockingAction> actionSupplier,
-			TargetStepKind expected) throws Throwable {
-		createTestModel();
-		TraceRecorder recorder = recordAndWaitSync();
-		traceManager.openTrace(tb.trace);
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-		waitOn(recorder.requestFocus(mb.testThread1));
-		waitRecorder(recorder);
-		waitForSwing();
-
-		DockingAction action = actionSupplier.get();
-		assertInTool(action);
-		performEnabledAction(null, action, true);
-		waitForTasks();
-		waitRecorder(recorder);
-		assertEquals(List.of("step(" + expected + ")"), commands);
-		waitForSwing();
-		assertTrue(actionSupplier.get().isEnabled());
-	}
-
-	@Test
-	public void testRecorderTargetStepIntoAction() throws Throwable {
-		runTestRecorderTargetStepAction(() -> controlPlugin.actionTargetStepInto,
-			TargetStepKind.INTO);
-	}
-
-	@Test
-	public void testRecorderTargetStepOverAction() throws Throwable {
-		runTestRecorderTargetStepAction(() -> controlPlugin.actionTargetStepOver,
-			TargetStepKind.OVER);
-	}
-
-	@Test
-	public void testRecorderTargetStepOutAction() throws Throwable {
-		runTestRecorderTargetStepAction(() -> controlPlugin.actionTargetStepOut,
-			TargetStepKind.FINISH);
 	}
 
 	protected TraceObject setUpRmiTarget() throws Throwable {
@@ -328,7 +122,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		Map<String, Object> args = rmiMethodResume.expect();
 		try (Transaction tx = tb.startTransaction()) {
-			proc1.setAttribute(Lifespan.nowOn(0), "_state", TargetExecutionState.RUNNING.name());
+			proc1.setAttribute(Lifespan.nowOn(0), "_state", TraceExecutionState.RUNNING.name());
 		}
 		rmiMethodResume.result(null);
 		assertEquals(Map.ofEntries(
@@ -351,7 +145,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		assertFalse(actionTargetInterrupt.isEnabled());
 
 		try (Transaction tx = tb.startTransaction()) {
-			proc1.setAttribute(Lifespan.nowOn(0), "_state", TargetExecutionState.RUNNING.name());
+			proc1.setAttribute(Lifespan.nowOn(0), "_state", TraceExecutionState.RUNNING.name());
 		}
 		waitForDomainObject(tb.trace);
 
@@ -359,7 +153,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		Map<String, Object> args = rmiMethodInterrupt.expect();
 		try (Transaction tx = tb.startTransaction()) {
-			proc1.setAttribute(Lifespan.nowOn(0), "_state", TargetExecutionState.STOPPED.name());
+			proc1.setAttribute(Lifespan.nowOn(0), "_state", TraceExecutionState.STOPPED.name());
 		}
 		rmiMethodInterrupt.result(null);
 		assertEquals(Map.ofEntries(
@@ -383,7 +177,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		Map<String, Object> args = rmiMethodKill.expect();
 		try (Transaction tx = tb.startTransaction()) {
-			proc1.setAttribute(Lifespan.nowOn(0), "_state", TargetExecutionState.TERMINATED.name());
+			proc1.setAttribute(Lifespan.nowOn(0), "_state", TraceExecutionState.TERMINATED.name());
 		}
 		rmiMethodKill.result(null);
 		assertEquals(Map.ofEntries(
@@ -413,7 +207,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	}
 
 	protected void runTestRmiTargetStepAction(Supplier<DockingAction> actionSupplier,
-			TargetStepKind expected, Supplier<TestRemoteMethod> methodSupplier) throws Throwable {
+			Supplier<TestRemoteMethod> methodSupplier) throws Throwable {
 		setUpRmiTarget(); // method is created here, so we accept a supplier
 		TraceObject thread1 = tb.obj("Processes[1].Threads[1]");
 		traceManager.activateObject(thread1);
@@ -440,19 +234,26 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	@Test
 	public void testRmiTargetStepIntoAction() throws Throwable {
 		runTestRmiTargetStepAction(() -> controlPlugin.actionTargetStepInto,
-			TargetStepKind.INTO, () -> rmiMethodStepInto);
+			() -> rmiMethodStepInto);
 	}
 
 	@Test
 	public void testRmiTargetStepOverAction() throws Throwable {
 		runTestRmiTargetStepAction(() -> controlPlugin.actionTargetStepOver,
-			TargetStepKind.OVER, () -> rmiMethodStepOver);
+			() -> rmiMethodStepOver);
 	}
 
 	@Test
 	public void testRmiTargetStepOutAction() throws Throwable {
 		runTestRmiTargetStepAction(() -> controlPlugin.actionTargetStepOut,
-			TargetStepKind.FINISH, () -> rmiMethodStepOut);
+			() -> rmiMethodStepOut);
+	}
+
+	SchemaContext buildContext() {
+		return new ToySchemaBuilder()
+				.noRegisterGroups()
+				.useRegistersPerFrame()
+				.build();
 	}
 
 	TraceThread createToyLoopTrace() throws Throwable {
@@ -461,11 +262,13 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		Address start = tb.addr(0x00400000);
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			Assembler asm = Assemblers.getAssembler(tb.language);
 			AssemblyBuffer buf = new AssemblyBuffer(asm, start);
 			buf.assemble("br 0x" + start);
 
 			thread = tb.getOrAddThread("Threads[0]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			tb.exec(0, thread, 0, "pc = 0x" + start + ";");
 			tb.trace.getMemoryManager().putBytes(0, start, ByteBuffer.wrap(buf.getBytes()));
 		}
@@ -490,8 +293,10 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	}
 
 	/**
-	 * Tests the UI so it does not error when the user presses resume after already stepped into a
-	 * pcode instruction.
+	 * Tests the UI so it does not error when the user presses resume after already stepping into a
+	 * p-code instruction.
+	 * 
+	 * @throws Throwable because
 	 */
 	@Test
 	public void testEmulateResumeActionAfterPcodeStep() throws Throwable {
@@ -499,7 +304,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
 
 		traceManager.activateThread(thread);
-		traceManager.activateTime(TraceSchedule.parse("0:.t0-2"));
+		traceManager.activateTime(TraceSchedule.parse("0:.t%d-2".formatted(thread.getKey())));
 		waitForSwing();
 
 		performEnabledAction(null, controlPlugin.actionEmulateResume, true);
@@ -543,7 +348,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		assertFalse(controlPlugin.actionEmulateStepBack.isEnabled());
 
-		traceManager.activateTime(TraceSchedule.parse("0:t0-1"));
+		traceManager.activateTime(TraceSchedule.parse("0:t%d-1".formatted(thread.getKey())));
 		waitForSwing();
 
 		performEnabledAction(null, controlPlugin.actionEmulateStepBack, true);
@@ -562,7 +367,8 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		performEnabledAction(null, controlPlugin.actionEmulateStepInto, true);
 
-		assertEquals(TraceSchedule.parse("0:t0-1"), traceManager.getCurrent().getTime());
+		assertEquals(TraceSchedule.parse("0:t%d-1".formatted(thread.getKey())),
+			traceManager.getCurrent().getTime());
 	}
 
 	@Test
@@ -575,7 +381,8 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		performEnabledAction(null, controlPlugin.actionEmulateSkipOver, true);
 
-		assertEquals(TraceSchedule.parse("0:t0-s1"), traceManager.getCurrent().getTime());
+		assertEquals(TraceSchedule.parse("0:t%d-s1".formatted(thread.getKey())),
+			traceManager.getCurrent().getTime());
 	}
 
 	protected void create2SnapTrace() throws Throwable {
@@ -627,6 +434,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			tb.getOrAddThread("Threads[0]", 0);
 			tb.trace.getMemoryManager()
 					.createRegion("Memory[bin:.text]", 0, tb.range(0x00400000, 0x00401000),
@@ -658,26 +466,32 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		assertTrue(
 			helper.patchInstructionAction.isAddToPopup(listingProvider.getActionContext(null)));
+		long snapBefore = traceManager.getCurrent().getViewSnap();
 		Instruction ins =
 			helper.patchInstructionAt(tb.addr(0x00400123), "imm r0,#0x0", "imm r0,#0x3d2");
 		assertEquals(2, ins.getLength());
 
+		waitForPass(() -> assertNotEquals(snapBefore, traceManager.getCurrent().getViewSnap()));
 		long snap = traceManager.getCurrent().getViewSnap();
 		assertTrue(Lifespan.isScratch(snap));
 		byte[] bytes = new byte[2];
-		view.getMemory().getBytes(tb.addr(0x00400123), bytes);
-		assertArrayEquals(tb.arr(0x30, 0xd2), bytes);
+		waitForPass(noExc(() -> {
+			view.getMemory().getBytes(tb.addr(0x00400123), bytes);
+			assertArrayEquals(tb.arr(0x30, 0xd2), bytes);
+		}));
 	}
 
 	@Test
 	public void testPatchDataActionInDynamicListingEmu() throws Throwable {
-		AssemblerPlugin assemblerPlugin = addPlugin(tool, AssemblerPlugin.class);
+		DebuggerDisassemblerPlugin disassemblerPlugin =
+			addPlugin(tool, DebuggerDisassemblerPlugin.class);
 
 		assertFalse(controlPlugin.actionControlMode.isEnabled());
 
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			tb.getOrAddThread("Threads[0]", 0);
 			tb.trace.getMemoryManager()
 					.createRegion("Memory[bin:.text]", 0, tb.range(0x00400000, 0x00401000),
@@ -688,8 +502,8 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		}
 
 		CodeViewerProvider listingProvider = listingPlugin.getProvider();
-		AssemblerPluginTestHelper helper =
-			new AssemblerPluginTestHelper(assemblerPlugin, listingProvider, view);
+		DebuggerDisassemblerPluginTestHelper helper =
+			new DebuggerDisassemblerPluginTestHelper(disassemblerPlugin, listingProvider, view);
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
@@ -707,6 +521,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		goTo(listingProvider.getListingPanel(), new ProgramLocation(view, tb.addr(0x00400123)));
 		assertTrue(helper.patchDataAction.isAddToPopup(listingProvider.getActionContext(null)));
+		long snapBefore = traceManager.getCurrent().getViewSnap();
 
 		/**
 		 * TODO: There's a bug in the trace forking: Data units are not replaced when bytes changed.
@@ -715,11 +530,14 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		/*Data data =*/ helper.patchDataAt(tb.addr(0x00400123), "0h", "5h");
 		// assertEquals(2, data.getLength());
 
+		waitForPass(() -> assertNotEquals(snapBefore, traceManager.getCurrent().getViewSnap()));
 		long snap = traceManager.getCurrent().getViewSnap();
 		assertTrue(Lifespan.isScratch(snap));
 		byte[] bytes = new byte[2];
-		view.getMemory().getBytes(tb.addr(0x00400123), bytes);
-		assertArrayEquals(tb.arr(0, 5), bytes);
+		waitForPass(noExc(() -> {
+			view.getMemory().getBytes(tb.addr(0x00400123), bytes);
+			assertArrayEquals(tb.arr(0, 5), bytes);
+		}));
 	}
 
 	@Test
@@ -734,6 +552,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			tb.getOrAddThread("Threads[0]", 0);
 			tb.trace.getMemoryManager()
 					.createRegion("Memory[bin:.text]", 0, tb.range(0x00400000, 0x00401000),

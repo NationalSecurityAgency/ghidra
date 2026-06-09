@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,31 +28,24 @@ import ghidra.program.util.FunctionSignatureFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import resources.MultiIcon;
-import resources.icons.TranslateIcon;
 
 public class ExternalCallNode extends CallNode {
 
 	private static final Icon EXTERNAL_ICON = new GIcon("icon.plugin.calltree.node.external");
-	private final Icon EXTERNAL_FUNCTION_ICON;
-	private final Icon baseIcon;
+	private static final Icon CALL_REFERENCE_ICON = createIcon(EXTERNAL_ICON, true);
+	private static final Icon NON_CALL_REFERENCE_ICON = createIcon(EXTERNAL_ICON, false);
 
 	private final Function function;
 	private final Address sourceAddress;
 	private final String name;
 
-	ExternalCallNode(Function function, Address sourceAddress, Icon baseIcon,
-			CallTreeOptions callTreeOptions) {
+	ExternalCallNode(Function function, Address sourceAddress,
+			boolean isCallReference, CallTreeOptions callTreeOptions) {
 		super(callTreeOptions);
 		this.function = function;
 		this.sourceAddress = sourceAddress;
 		this.name = function.getName();
-		this.baseIcon = baseIcon;
-
-		MultiIcon outgoingFunctionIcon = new MultiIcon(EXTERNAL_ICON, false, 32, 16);
-		TranslateIcon translateIcon = new TranslateIcon(baseIcon, 16, 0);
-		outgoingFunctionIcon.addIcon(translateIcon);
-		EXTERNAL_FUNCTION_ICON = outgoingFunctionIcon;
+		this.isCallReference = isCallReference;
 	}
 
 	@Override
@@ -62,7 +55,7 @@ public class ExternalCallNode extends CallNode {
 
 	@Override
 	CallNode recreate() {
-		return new ExternalCallNode(function, sourceAddress, baseIcon, callTreeOptions);
+		return new ExternalCallNode(function, sourceAddress, isCallReference, callTreeOptions);
 	}
 
 	@Override
@@ -87,7 +80,7 @@ public class ExternalCallNode extends CallNode {
 
 	@Override
 	public Icon getIcon(boolean expanded) {
-		return EXTERNAL_FUNCTION_ICON;
+		return isCallReference ? CALL_REFERENCE_ICON : NON_CALL_REFERENCE_ICON;
 	}
 
 	@Override
@@ -97,7 +90,7 @@ public class ExternalCallNode extends CallNode {
 
 	@Override
 	public String getToolTip() {
-		return "External Call - called from " + sourceAddress;
+		return "(External) " + super.getToolTip();
 	}
 
 	@Override

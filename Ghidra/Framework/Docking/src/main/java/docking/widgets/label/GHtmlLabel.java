@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import utilities.util.reflection.ReflectionUtilities;
  *
  * <p>
  * See also:
- * <table border=1><caption></caption>
+ * <table border=1>
  * 	<tr><th>Class</th><th>Mutable text</th><th>HTML rendering</th><th>Description</th></tr>
  *  <tr><td>{@link GLabel}</td><td>Immutable</td><td>NO</td><td>Non-html unchangeable label</td></tr>
  *  <tr><td>{@link GDLabel}</td><td>Mutable</td><td>NO</td><td>Non-html changeable label</td></tr>
@@ -52,7 +52,6 @@ public class GHtmlLabel extends AbstractHtmlLabel {
 	 * horizontal alignment, with HTML rendering allowed.
 	 * <p>
 	 * See {@link JLabel#JLabel()}.
-	 * <p>
 	 */
 	public GHtmlLabel() {
 	}
@@ -62,7 +61,7 @@ public class GHtmlLabel extends AbstractHtmlLabel {
 	 * horizontal alignment, with HTML rendering allowed.
 	 * <p>
 	 * See {@link JLabel#JLabel(String)}.
-	 * <p>
+	 * 
 	 * @param text string to be displayed by the label
 	 */
 	public GHtmlLabel(String text) {
@@ -77,7 +76,7 @@ public class GHtmlLabel extends AbstractHtmlLabel {
 	 * <p>
 	 * If there are calls to setText() after the initial value has been set by the  constructor, a
 	 * warning will be printed in the log.
-	 * <p>
+	 * 
 	 * @param text string this label will display
 	 */
 	@Deprecated

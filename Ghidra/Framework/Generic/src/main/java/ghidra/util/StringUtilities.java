@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -989,7 +989,7 @@ public class StringUtilities {
 	/**
 	 * Replaces escaped characters in a string to corresponding control characters. For example a
 	 * string containing a backslash character followed by a 'n' character would be replaced with a
-	 * single line feed (0x0a) character. One use for this is to to allow users to type strings in a
+	 * single line feed (0x0a) character. One use for this is to allow users to type strings in a
 	 * text field and include control characters such as line feeds and tabs.
 	 *
 	 * The string that contains 'a','b','c', '\', 'n', 'd', '\', 'u', '0', '0', '0', '1', 'e' would
@@ -1195,16 +1195,28 @@ public class StringUtilities {
 
 	/**
 	 * Wrap the given string at whitespace to best fit within the given line width
-	 * 
 	 * <p>
 	 * If it is not possible to fit a word in the given width, it will be put on a line by itself,
 	 * and that line will be allowed to exceed the given width.
 	 * 
 	 * @param str the string to wrap
 	 * @param width the max width of each line, unless a single word exceeds it
-	 * @return
+	 * @return The wrapped string
 	 */
 	public static String wrapToWidth(String str, int width) {
 		return new LineWrapper(width).append(str).finish();
+	}
+
+	/**
+	 * Removes any whitespace from start or end of string, then replaces any non-printable
+	 * character (&lt; 32) or spaces (32) with an underscore.
+	 * @param s the string to adjust
+	 * @return a new trimmed string with underscores replacing any non-printable characters.
+	 */
+	public static String whitespaceToUnderscores(String s) {
+		if (s == null) {
+			return null;
+		}
+		return s.trim().replaceAll("[\\x00-\\x20]", "_");
 	}
 }

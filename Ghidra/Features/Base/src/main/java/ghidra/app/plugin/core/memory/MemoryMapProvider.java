@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,9 +25,10 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.ToolBarData;
+import docking.DockingUtils;
+import docking.action.*;
 import docking.action.builder.ActionBuilder;
+import docking.action.builder.ToggleActionBuilder;
 import docking.widgets.OptionDialog;
 import docking.widgets.table.*;
 import docking.widgets.textfield.GValidatedTextField.MaxLengthField;
@@ -40,12 +41,13 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.OverlayAddressSpace;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.program.util.ProgramLocation;
+import ghidra.util.*;
 import ghidra.util.exception.UsrException;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
+import resources.Icons;
 
 /**
  * Provider for the memory map Component.
@@ -71,6 +73,9 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 	private Program program;
 	private MemoryMapManager memManager;
+
+	private boolean followLocationChanges;
+	private ToggleDockingAction toggleNavigateAction;
 
 	MemoryMapProvider(MemoryMapPlugin plugin) {
 		super(plugin.getTool(), "Memory Map", plugin.getName(), ProgramActionContext.class);
@@ -104,6 +109,17 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		return new ProgramActionContext(this, program, table);
 	}
 
+	void locationChanged(ProgramLocation location) {
+		if (!followLocationChanges || location == null || location.getAddress() == null) {
+			return;
+		}
+		Memory memory = program.getMemory();
+		MemoryBlock block = memory.getBlock(location.getAddress());
+		if (block != null) {
+			filterPanel.setSelectedItem(block);
+		}
+	}
+
 	void setStatusText(String msg) {
 		tool.setStatusInfo(msg);
 	}
@@ -120,10 +136,6 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		this.program = program;
 		updateProgram(program);
 		arrangeTable();
-	}
-
-	MemoryMapManager getMemoryMapManager() {
-		return memManager;
 	}
 
 	private JPanel buildMainPanel() {
@@ -153,16 +165,17 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		column = table.getColumn(MemoryMapModel.LENGTH_COL);
 		column.setCellRenderer(monoRenderer);
 
+		GBooleanCellRenderer booleanRenderer = new GBooleanCellRenderer();
 		column = table.getColumn(MemoryMapModel.READ_COL);
-		column.setCellRenderer(new GBooleanCellRenderer());
+		column.setCellRenderer(booleanRenderer);
 		column = table.getColumn(MemoryMapModel.WRITE_COL);
-		column.setCellRenderer(new GBooleanCellRenderer());
+		column.setCellRenderer(booleanRenderer);
 		column = table.getColumn(MemoryMapModel.EXECUTE_COL);
-		column.setCellRenderer(new GBooleanCellRenderer());
+		column.setCellRenderer(booleanRenderer);
 		column = table.getColumn(MemoryMapModel.VOLATILE_COL);
-		column.setCellRenderer(new GBooleanCellRenderer());
+		column.setCellRenderer(booleanRenderer);
 		column = table.getColumn(MemoryMapModel.INIT_COL);
-		column.setCellRenderer(new GBooleanCellRenderer());
+		column.setCellRenderer(booleanRenderer);
 
 		table.setDefaultEditor(String.class,
 			new GTableTextCellEditor(new MaxLengthField(MAX_SIZE)));
@@ -323,6 +336,17 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		MakeProgramSelectionAction action = new MakeProgramSelectionAction(plugin, table);
 		action.getToolBarData().setToolBarGroup("B"); // the other actions are in group 'A'
 		tool.addLocalAction(this, action);
+
+		toggleNavigateAction =
+			new ToggleActionBuilder("Navigate on Incoming Location Changes", plugin.getName())
+					.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
+					.selected(false)
+					.sharedKeyBinding()
+					.helpLocation(new HelpLocation("MemoryMapPlugin", "Navigation"))
+					.description(HTMLUtilities.toHTML("Toggle <b>on</b> means to select the block" +
+						" that contains the current location"))
+					.onAction(c -> followLocationChanges = toggleNavigateAction.isSelected())
+					.buildAndInstallLocal(this);
 	}
 
 	private boolean checkExclusiveAccess() {
@@ -453,60 +477,79 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		updateTitle();
 	}
 
-	/**
-	 * Set up the table so it looks well arranged.
-	 */
 	private void arrangeTable() {
-		// memTable.setRowHeight(20);
-		TableColumn column;
+		// 
+		// Table column resize behavior is tough to control.  When setting the column size here, we
+		// use the max width to keep the columns from being resizable.  The effect of this is that
+		// the table will layout the columns by giving all extra space to the resizable columns.  
+		// Any columns not marked resizable will be the exact requested size.  This allows us to 
+		// force small columns to take up the minimum amount of space.  The downside of locking the
+		// columns is that users cannot change the size.  So, we will set the size for the initial 
+		// layout to get the size we desire, and then we will set the size again to make the columns
+		// resizable after the layout has taken place. 
+		// 
+		setColumnSizes(true);
 
-		column = table.getColumn(MemoryMapModel.READ_COL);
+		// call again after the sizes have been updated from the previous call
+		setColumnSizes(false);
+	}
+
+	private void setColumnSizes(boolean lock) {
+
+		boolean resizable = !lock;
+		TableColumn column = table.getColumn(MemoryMapModel.READ_COL);
+		int width = 25;
+		int maxWidth = resizable ? Integer.MAX_VALUE : width;
 		if (column != null) {
-			column.setMaxWidth(25);
-			column.setMinWidth(25);
-			column.setResizable(false);
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
 		}
 
 		column = table.getColumn(MemoryMapModel.WRITE_COL);
 		if (column != null) {
-			column.setMaxWidth(25);
-			column.setMinWidth(25);
-			column.setResizable(false);
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
 		}
 
 		column = table.getColumn(MemoryMapModel.EXECUTE_COL);
 		if (column != null) {
-			column.setMaxWidth(25);
-			column.setMinWidth(25);
-			column.setResizable(false);
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
 		}
 
 		column = table.getColumn(MemoryMapModel.VOLATILE_COL);
+		width = 65;
+		maxWidth = resizable ? Integer.MAX_VALUE : width;
 		if (column != null) {
-			column.setMaxWidth(65);
-			column.setMinWidth(65);
-			column.setResizable(false);
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
 		}
 
 		column = table.getColumn(MemoryMapModel.ARTIFICIAL_COL);
 		if (column != null) {
-			column.setMaxWidth(65);
-			column.setMinWidth(65);
-			column.setResizable(false);
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
 		}
 
 		column = table.getColumn(MemoryMapModel.BLOCK_TYPE_COL);
+		width = 25;
+		maxWidth = resizable ? Integer.MAX_VALUE : width;
 		if (column != null) {
-			column.setMinWidth(25);
-//			column.setResizable(true);
+			column.setMinWidth(width);
 		}
 
 		column = table.getColumn(MemoryMapModel.INIT_COL);
 		if (column != null) {
-			column.setMaxWidth(25);
-			column.setMinWidth(25);
-			column.setResizable(false);
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
 		}
+
 	}
 
 	/**
@@ -523,7 +566,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			setStatusText("");
 			if (!e.isPopupTrigger()) {
 				if ((e.getModifiersEx() &
-					(InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
+					(DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
 					navigateToAddress();
 				}
 			}
@@ -545,24 +588,26 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private void navigateToAddress() {
-		int viewRow = table.getSelectedRow();
-		int viewColumn = table.getSelectedColumn();
-		int modelColumn = table.convertColumnIndexToModel(viewColumn);
-		MemoryBlock block = tableModel.getBlockAt(viewRow);
-		if (block != null && (modelColumn == 1 || modelColumn == 2)) {
-			Address addr = (modelColumn == 1 ? block.getStart() : block.getEnd());
-			plugin.blockSelected(block, addr);
-			table.setRowSelectionInterval(viewRow, viewRow);
-		}
-	}
-
 	private MemoryBlock getSelectedBlock() {
 		int row = table.getSelectedRow();
 		if (row < 0) {
 			return null;
 		}
-		return tableModel.getBlockAt(row);
+		int viewRow = table.getSelectedRow();
+		int modelRow = filterPanel.getModelRow(viewRow);
+		return tableModel.getBlockAt(modelRow);
+	}
+
+	private void navigateToAddress() {
+		int viewRow = table.getSelectedRow();
+		int viewColumn = table.getSelectedColumn();
+		int modelColumn = table.convertColumnIndexToModel(viewColumn);
+		MemoryBlock block = getSelectedBlock();
+		if (block != null && (modelColumn == 1 || modelColumn == 2)) {
+			Address addr = (modelColumn == 1 ? block.getStart() : block.getEnd());
+			plugin.blockSelected(block, addr);
+			table.setRowSelectionInterval(viewRow, viewRow);
+		}
 	}
 
 	private void renameOverlaySpace(ActionContext c) {
@@ -686,7 +731,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 				"OTHER overlay blocks can not be split.");
 		}
 		else {
-			SplitBlockDialog d = new SplitBlockDialog(plugin, block, program.getAddressFactory());
+			SplitBlockDialog d = new SplitBlockDialog(plugin, block, program);
 			tool.showDialog(d, this);
 		}
 	}
@@ -707,7 +752,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		}
 
 		ExpandBlockDialog dialog =
-			new ExpandBlockDialog(tool, model, block, program.getAddressFactory(), dialogType);
+			new ExpandBlockDialog(tool, model, block, program, dialogType);
 		model.initialize(block);
 		dialog.dispose();
 	}

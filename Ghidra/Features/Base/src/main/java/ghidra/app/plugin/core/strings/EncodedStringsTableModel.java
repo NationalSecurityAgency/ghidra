@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -124,7 +124,8 @@ class EncodedStringsTableModel extends AddressBasedTableModel<EncodedStringsRow>
 				filteredAddresses.intersect(localProgram.getMemory().getAllInitializedAddressSet());
 
 			monitor.setIndeterminate(true);
-			monitor.initialize(0, "Finding undefined address ranges");
+			monitor.initialize(filteredAddresses.getNumAddresses(),
+				"Finding undefined address ranges");
 			// Note: this can be slow for large programs 
 			filteredAddresses = listing.getUndefinedRanges(filteredAddresses, false, monitor);
 			monitor.setIndeterminate(false);
@@ -190,12 +191,20 @@ class EncodedStringsTableModel extends AddressBasedTableModel<EncodedStringsRow>
 		for (EncodedStringsRow row : rows) {
 			removeObject(row);
 		}
+		if (!rows.isEmpty() && state != null) {
+			// nuke the cached data so we don't bring back deleted rows
+			state.previousData = null;
+		}
+		filteredAddresses = null; // force refiltering selectedAddresses for updated undefined addrs
 	}
 
 	public void setOptions(EncodedStringsOptions options) {
 		boolean canReusePrevData = options.equivalentStringCreationOptions(state.options);
 		ModelState newState = new ModelState(options, canReusePrevData ? state.previousData : null);
 		this.state = newState;
+		if (!canReusePrevData) {
+			filteredAddresses = null;
+		}
 		clearData();
 		reload();
 	}

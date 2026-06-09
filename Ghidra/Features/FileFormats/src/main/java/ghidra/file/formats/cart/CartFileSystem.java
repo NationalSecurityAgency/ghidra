@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import com.google.gson.*;
 
+import generic.hash.HashUtilities;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.formats.gfilesystem.*;
@@ -30,7 +31,6 @@ import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.crypto.CryptoSession;
 import ghidra.formats.gfilesystem.fileinfo.*;
 import ghidra.framework.generic.auth.Password;
-import ghidra.util.HashUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -195,6 +195,11 @@ public class CartFileSystem implements GFileSystem {
 	@Override
 	public GFile lookup(String path) throws IOException {
 		return fsIndexHelper.lookup(path);
+	}
+
+	@Override
+	public GFile lookup(String path, Comparator<String> nameComp) throws IOException {
+		return fsIndexHelper.lookup(null, path, nameComp);
 	}
 
 	/**

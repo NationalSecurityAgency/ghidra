@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,20 +30,17 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.*;
 import ghidra.app.plugin.core.debug.gui.model.QueryPanelTestHelper;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServiceTestAccess;
-import ghidra.dbg.target.TargetExecutionStateful;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathUtils;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.target.TraceObjectManager;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.target.iface.TraceExecutionStateful;
+import ghidra.trace.model.target.path.PathFilter;
+import ghidra.trace.model.target.path.PathPattern;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.util.table.GhidraTable;
 
@@ -74,8 +71,8 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 	DebuggerThreadsProvider provider;
 
-	protected TraceObjectThread thread1;
-	protected TraceObjectThread thread2;
+	protected TraceThread thread1;
+	protected TraceThread thread2;
 
 	protected SchemaContext ctx;
 
@@ -98,18 +95,18 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		}
 	}
 
-	protected TraceObjectThread addThread(int index, Lifespan lifespan, String comment) {
+	protected TraceThread addThread(int index, Lifespan lifespan, String comment) {
 		TraceObjectManager om = tb.trace.getObjectManager();
-		PathPattern threadPattern = new PathPattern(PathUtils.parse("Processes[1].Threads[]"));
-		TraceObjectThread thread = Objects.requireNonNull(om.createObject(
-			TraceObjectKeyPath.of(threadPattern.applyIntKeys(index).getSingletonPath()))
+		PathPattern threadPattern = PathFilter.parse("Processes[1].Threads[]");
+		TraceThread thread = Objects.requireNonNull(om.createObject(
+			threadPattern.applyIntKeys(index).getSingletonPath())
 				.insert(lifespan, ConflictResolution.TRUNCATE)
 				.getDestination(null)
-				.queryInterface(TraceObjectThread.class));
+				.queryInterface(TraceThread.class));
 		thread.getObject()
-				.setAttribute(lifespan, TargetExecutionStateful.STATE_ATTRIBUTE_NAME,
-					TargetExecutionState.STOPPED.name());
-		thread.getObject().setAttribute(lifespan, TraceObjectThread.KEY_COMMENT, comment);
+				.setAttribute(lifespan, TraceExecutionStateful.KEY_STATE,
+					TraceExecutionState.STOPPED.name());
+		thread.getObject().setAttribute(lifespan, TraceThread.KEY_COMMENT, comment);
 		return thread;
 	}
 
@@ -129,7 +126,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 	}
 
 	protected void assertThreadRow(int position, Object object, String name,
-			TargetExecutionState state, String comment) {
+			TraceExecutionState state, String comment) {
 		// NB. Not testing plot, since that's unmodified from generic ObjectTable
 		ValueRow row = provider.panel.getAllItems().get(position);
 		var tableModel = QueryPanelTestHelper.getTableModel(provider.panel);
@@ -154,16 +151,16 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		assertThreadsTableSize(2);
 
 		assertThreadRow(0, thread1.getObject(), "Processes[1].Threads[1]",
-			TargetExecutionState.STOPPED, "A comment");
+			TraceExecutionState.STOPPED, "A comment");
 		assertThreadRow(1, thread2.getObject(), "Processes[1].Threads[2]",
-			TargetExecutionState.STOPPED, "Another comment");
+			TraceExecutionState.STOPPED, "Another comment");
 	}
 
 	protected void assertNoThreadSelected() {
 		assertNull(provider.panel.getSelectedItem());
 	}
 
-	protected void assertThreadSelected(TraceObjectThread thread) {
+	protected void assertThreadSelected(TraceThread thread) {
 		ValueRow row = provider.panel.getSelectedItem();
 		assertNotNull(row);
 		assertEquals(thread.getObject(), row.getValue().getChild());
@@ -289,7 +286,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		waitForPass(() -> {
 			assertThreadRow(0, thread1.getObject(), "Processes[1].Threads[1]",
-				TargetExecutionState.STOPPED, "A comment");
+				TraceExecutionState.STOPPED, "A comment");
 		});
 		// NOTE: Destruction will not be visible in plot unless snapshot 15 is created
 	}
@@ -332,7 +329,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForTasks();
 
 		waitForPass(() -> assertEquals("A different comment",
-			thread1.getObject().getAttribute(0, TraceObjectThread.KEY_COMMENT).getValue()));
+			thread1.getObject().getAttribute(0, TraceThread.KEY_COMMENT).getValue()));
 	}
 
 	// @Test // Not gonna with write-behind cache

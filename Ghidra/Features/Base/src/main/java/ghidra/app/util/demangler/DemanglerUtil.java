@@ -46,11 +46,11 @@ public class DemanglerUtil {
 	/**
 	 * Deprecated.  Use {@link #demangle(Program, String, Address)}. See class header for more
 	 * details.
-	 *
+	 * <p>
 	 * Locates all available demanglers, then it attempts to demangle.  This method will
 	 * query all demanglers regardless of architecture.
-	 *
-	 * <p>This method will use only the default options for demangling.  If you need to
+	 * <p>
+	 * This method will use only the default options for demangling.  If you need to
 	 * specify options, then you will have to call each specific demangler directly, creating
 	 * the options and mangled context specifically needed for each demangler.   See
 	 * {@link Demangler#createMangledContext(String, DemanglerOptions, Program, Address)} and
@@ -82,11 +82,11 @@ public class DemanglerUtil {
 	/**
 	 * Deprecated.  Use {@link #demangle(Program, String, Address)}. See class header for more
 	 * details.
-	 *
+	 * <p>
 	 * Locates all available demanglers and checks to see if the supplied program is
 	 * supported, then it attempts to demangle.
-	 *
-	 * <p>This method will use only the default options for demangling.  If you need to
+	 * <p>
+	 * This method will use only the default options for demangling.  If you need to
 	 * specify options, then you will have to call each specific demangler directly, creating
 	 * the options and mangled context specifically needed for each demangler.   See
 	 * {@link Demangler#createMangledContext(String, DemanglerOptions, Program, Address)} and
@@ -123,17 +123,17 @@ public class DemanglerUtil {
 	/**
 	 * Locates all available demanglers and checks to see if the supplied program is
 	 * supported, then it attempts to demangle.  Returns a list of {@link DemangledObject} of
-	 * successful demanglings
-	 *
-	 * <p>This method will use only the default options for demangling.  If you need to
+	 * successful demanglings.
+	 * <p>
+	 * This method will use only the default options for demangling.  If you need to
 	 * specify options, then you will have to call each specific demangler directly, creating
 	 * the options and mangled context specifically needed for each demangler.   See
 	 * {@link Demangler#createMangledContext(String, DemanglerOptions, Program, Address)} and
 	 * {@link Demangler#createDefaultOptions()}.
 	 *
-	 * @param program the program containing the mangled name
+	 * @param program the program containing the mangled name; can be null
 	 * @param mangled the mangled name
-	 * @param address the address of the mangled name
+	 * @param address the address of the mangled name; can be null
 	 * @return the list of {@link DemangledObject}
 	 */
 	public static List<DemangledObject> demangle(Program program, String mangled, Address address) {
@@ -170,6 +170,7 @@ public class DemanglerUtil {
 
 	/**
 	 * Remove superfluous function signature spaces from specified string
+	 * 
 	 * @param str string
 	 * @return string with unwanted spaces removed
 	 */

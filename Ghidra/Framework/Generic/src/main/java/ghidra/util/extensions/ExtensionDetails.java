@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -270,8 +270,11 @@ public class ExtensionDetails implements Comparable<ExtensionDetails> {
 	/**
 	 * Returns true if this extension is installed under an installation folder or inside of a 
 	 * source control repository folder.
-	 * @return true if this extension is installed under an installation folder or inside of a 
-	 * source control repository folder.
+	 * <p>
+	 * In a repo, extension modules live under repo/Ghidra/Extensions.  In an installation, there 
+	 * may exist pre-installed extensions under installDir/Ghidra/Extensions.
+	 * 
+	 * @return true if this extension is installed under an installation folder
 	 */
 	public boolean isInstalledInInstallationFolder() {
 		if (installDir == null) {
@@ -286,12 +289,12 @@ public class ExtensionDetails implements Comparable<ExtensionDetails> {
 			return false;
 		}
 
-		// extDirs.get(0) is the user extension dir
-		ResourceFile appExtDir = extDirs.get(1);
-		if (FileUtilities.isPathContainedWithin(appExtDir.getFile(false), installDir)) {
-			return true;
-		}
-		return false;
+		// extDirs.get(0) is the user extension dir (e.g., '.config/ghidra/ghidra<version>/Extensions
+		// The remaining dirs are of the form: 
+		// 		<repo>/Ghidra/Extensions
+		//      <install dir>/Ghidra/Extensions
+		List<ResourceFile> remainingDirs = extDirs.subList(1, extDirs.size());
+		return FileUtilities.startsWith(remainingDirs, installDir.getAbsolutePath());
 	}
 
 	/**

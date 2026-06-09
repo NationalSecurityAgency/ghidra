@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,13 +16,14 @@
 package ghidra.formats.gfilesystem;
 
 import java.io.*;
-import java.util.List;
+import java.util.*;
+import java.util.function.Predicate;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.ByteProviderInputStream;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
-import ghidra.formats.gfilesystem.fileinfo.FileAttribute;
-import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
+import ghidra.formats.gfilesystem.fileinfo.*;
+import ghidra.util.Msg;
 import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -44,7 +45,7 @@ import ghidra.util.task.TaskMonitor;
  * implementations, and usage is being migrated to this interface where possible and as
  * time permits.
  */
-public interface GFileSystem extends Closeable, ExtensionPoint {
+public interface GFileSystem extends Closeable, Iterable<GFile>, ExtensionPoint {
 	/**
 	 * File system volume name.
 	 * <p>
@@ -104,7 +105,7 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	/**
 	 * Returns the {@link FileSystemRefManager ref manager} that is responsible for
 	 * creating and releasing {@link FileSystemRef refs} to this filesystem.
-	 * <p>
+	 * 
 	 * @return {@link FileSystemRefManager} that manages references to this filesystem.
 	 */
 	FileSystemRefManager getRefManager();
@@ -121,13 +122,33 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	/**
 	 * Retrieves a {@link GFile} from this filesystem based on its full path and filename, using
 	 * this filesystem's default name comparison logic (eg. case sensitive vs insensitive).
-	 * <p>
+	 * 
 	 * @param path string path and filename of a file located in this filesystem.  Use 
 	 * {@code null} or "/" to retrieve the root directory 
 	 * @return {@link GFile} instance of requested file, null if not found.
 	 * @throws IOException if IO error when looking up file.
 	 */
 	GFile lookup(String path) throws IOException;
+
+	/**
+	 * Retrieves a {@link GFile} from this filesystem based on its full path and filename, using
+	 * the specified name comparison logic (eg. case sensitive vs insensitive).
+	 * 
+	 * @param path string path and filename of a file located in this filesystem.  Use 
+	 * {@code null} or "/" to retrieve the root directory
+	 * @param nameComp string comparator used to compare filenames.  Use {@code null} to specify
+	 * the file system's native comparison logic.
+	 * @return {@link GFile} instance of requested file, null if not found.
+	 * @throws IOException if IO error when looking up file.
+	 */
+	default GFile lookup(String path, Comparator<String> nameComp) throws IOException {
+		// If you are seeing this error in your log file, it means your GFileSystem needs to be
+		// updated to implement this lookup() method.
+		Msg.error(GFileSystem.class,
+			"Unimplemented %s.lookup(path, comparator), falling back to non-comparator lookup"
+					.formatted(this.getClass().getSimpleName()));
+		return lookup(path);
+	}
 
 	/**
 	 * Returns the file system's root directory.
@@ -149,7 +170,7 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	 * Returns an {@link InputStream} that contains the contents of the specified {@link GFile}.
 	 * <p>
 	 * The caller is responsible for closing the stream.
-	 * <p>
+	 * 
 	 * @param file {@link GFile} to get an InputStream for
 	 * @param monitor {@link TaskMonitor} to watch and update progress
 	 * @return new {@link InputStream} contains the contents of the file or NULL if the
@@ -180,7 +201,7 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	/**
 	 * Returns a list of {@link GFile files} that reside in the specified directory on
 	 * this filesystem.
-	 * <p>
+	 * 
 	 * @param directory NULL means root of filesystem.
 	 * @return {@link List} of {@link GFile} instances of file in the requested directory.
 	 * @throws IOException if IO problem.
@@ -203,21 +224,34 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 
 	/**
 	 * Converts the specified (symlink) file into it's destination, or if not a symlink,
-	 * returns the original file unchanged.
+	 * returns the original file unchanged, or null if invalid symlink.
 	 *  
 	 * @param file symlink file to follow
-	 * @return destination of symlink, or original file if not a symlink
-	 * @throws IOException if error following symlink path, typically outside of the hosting
-	 * file system
+	 * @return destination of symlink, or original file if not a symlink, or {@code null} if symlink
+	 * destination was invalid
+	 * @throws IOException if error following symlink path, typically because of recursive paths
 	 */
 	default GFile resolveSymlinks(GFile file) throws IOException {
 		return null;
 	}
 
 	/**
+	 * Returns the {@link FileType} of the specified file.
+	 * 
+	 * @param f {@link GFile} to query
+	 * @param monitor {@link TaskMonitor}
+	 * @return {@link FileType} of the specified file
+	 */
+	default FileType getFileType(GFile f, TaskMonitor monitor) {
+		FileAttributes attrs = getFileAttributes(f, monitor);
+		FileType fileType = attrs.get(FileAttributeType.FILE_TYPE_ATTR, FileType.class,
+			f.isDirectory() ? FileType.DIRECTORY : FileType.FILE);
+		return fileType;
+	}
+
+	/**
 	 * Default implementation of getting an {@link InputStream} from a {@link GFile}'s
 	 * {@link ByteProvider}.
-	 * <p>
 	 * 
 	 * @param file {@link GFile}
 	 * @param fs the {@link GFileSystem filesystem} containing the file
@@ -231,6 +265,57 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 		ByteProvider bp = fs.getByteProvider(file, monitor);
 		return (bp != null) ? new ByteProviderInputStream.ClosingInputStream(bp) : null;
 
+	}
+
+	/**
+	 * Gets an {@link Iterable} over this {@link GFileSystem}'s {@link GFile files}.
+	 * 
+	 * @return An {@link Iterable} over this {@link GFileSystem}'s {@link GFile files}.
+	 */
+	default Iterable<GFile> files() {
+		return () -> new GFileSystemIterator(this);
+	}
+
+	/**
+	 * Gets an {@link Iterable} over this {@link GFileSystem}'s {@link GFile files}.
+	 * 
+	 * @param dir The {@link GFile directory} to start iterating at in this {@link GFileSystem}. If
+	 *   {@code null}, iteration will start at the root of the {@link GFileSystem}.
+	 * @throws UncheckedIOException if {@code dir} is not a directory
+	 * @return An {@link Iterable} over this {@link GFileSystem}'s {@link GFile files}.
+	 */
+	default Iterable<GFile> files(GFile dir) throws UncheckedIOException {
+		return () -> new GFileSystemIterator(Objects.requireNonNullElse(dir, getRootDir()));
+	}
+
+	/**
+	 * Gets an {@link Iterable} over this {@link GFileSystem}'s {@link GFile files}.
+	 * 
+	 * @param fileFilter A filter to apply to the {@link GFile files} iterated over
+	 * @return An {@link Iterable} over this {@link GFileSystem}'s {@link GFile files}.
+	 */
+	default Iterable<GFile> files(Predicate<GFile> fileFilter) {
+		return () -> new GFileSystemIterator(getRootDir(), fileFilter);
+	}
+
+	/**
+	 * Gets an {@link Iterable} over this {@link GFileSystem}'s {@link GFile files}.
+	 * 
+	 * @param dir The {@link GFile directory} to start iterating at in this {@link GFileSystem}. If
+	 *   {@code null}, iteration will start at the root of the {@link GFileSystem}.
+	 * @param fileFilter A filter to apply to the {@link GFile files} iterated over
+	 * @throws UncheckedIOException if {@code dir} is not a directory
+	 * @return An {@link Iterable} over this {@link GFileSystem}'s {@link GFile files}.
+	 */
+	default Iterable<GFile> files(GFile dir, Predicate<GFile> fileFilter)
+			throws UncheckedIOException {
+		return () -> new GFileSystemIterator(Objects.requireNonNullElse(dir, getRootDir()),
+			fileFilter);
+	}
+
+	@Override
+	default Iterator<GFile> iterator() {
+		return new GFileSystemIterator(this);
 	}
 
 }

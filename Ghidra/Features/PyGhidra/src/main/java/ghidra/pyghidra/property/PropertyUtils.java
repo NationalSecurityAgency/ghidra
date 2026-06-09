@@ -20,9 +20,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -126,10 +124,26 @@ public class PropertyUtils {
 	}
 
 	private static Stream<Method> getMethods(Class<?> cls) {
-		// customizations added using JClass._customize are inherited
-		// therfore we only care about the ones declared by this class
-		return Arrays.stream(cls.getDeclaredMethods())
+		if (isPublic(cls)) {
+			return Arrays.stream(cls.getMethods());
+		}
+		Class<?> base = cls;
+		while (!isPublic(base)) {
+			base = base.getSuperclass();
+		}
+		Stream<Method> head = Arrays.stream(base.getMethods())
 				.filter(PropertyUtils::methodFilter);
+		Stream<Method> tail = Stream.concat(
+			Arrays.stream(base.getInterfaces()),
+			Arrays.stream(cls.getInterfaces()))
+				.sorted(Comparator.comparing(Class::getSimpleName))
+				.distinct()
+				.map(Class::getDeclaredMethods)
+				.flatMap(Arrays::stream)
+				.filter(PropertyUtils::methodFilter);
+		return Stream.concat(head, tail)
+				.sorted(Comparator.comparing(Method::toGenericString))
+				.distinct();
 	}
 
 	private static boolean methodFilter(Method m) {
@@ -190,6 +204,10 @@ public class PropertyUtils {
 			default:
 				return false;
 		}
+	}
+
+	private static boolean isPublic(Class<?> cls) {
+		return Modifier.isPublic(cls.getModifiers());
 	}
 
 	private static boolean isPublic(Method m) {

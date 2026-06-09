@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,10 @@
  */
 package ghidra.program.model.address;
 
+import java.io.Serializable;
+
 import ghidra.util.datastruct.NoSuchIndexException;
 import ghidra.util.map.ObjectValueMap;
-
-import java.io.Serializable;
 
 
 /**
@@ -159,13 +159,13 @@ public class AddressObjectMap {
     }
 
     /**
-     * Adds a range to a object.
-     * Assumes that the range has already been cleared.
-     * <P>
-     * @param range the range being added.
-     * @param objID the id of the object the range is being
-     * added to.
-     */
+	 * Adds a range to a object.
+	 * Assumes that the range has already been cleared.
+	 * 
+	 * @param range the range being added.
+	 * @param objID the id of the object the range is being
+	 * added to.
+	 */
     private void addRange(Object obj, long start, long end) {
         try {
             long next;
@@ -285,12 +285,12 @@ public class AddressObjectMap {
     }
 
     /**
-     * Removes a range from a object.
-     * <P>
-     * @param range the range being removed.
-     * @param objID the id of the object it is being
-     * removed from.
-     */
+	 * Removes a range from a object.
+	 * 
+	 * @param range the range being removed.
+	 * @param objID the id of the object it is being
+	 * removed from.
+	 */
     private void removeRange(Object obj, long start, long end) {
         try {
             long next;

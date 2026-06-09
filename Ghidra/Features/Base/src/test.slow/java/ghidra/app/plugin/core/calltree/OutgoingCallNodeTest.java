@@ -59,7 +59,8 @@ public class OutgoingCallNodeTest extends AbstractGenericTest {
 		CallTreeOptions callTreeOptions = new CallTreeOptions();
 		callTreeOptions = callTreeOptions.withRecurseDepth(5);
 		node1 =
-			new OutgoingCallNode(program, firstCalledFunction, calledFromAddress, callTreeOptions);
+			new OutgoingCallNode(program, firstCalledFunction, calledFromAddress, true,
+				callTreeOptions);
 	}
 
 	@After
@@ -73,7 +74,18 @@ public class OutgoingCallNodeTest extends AbstractGenericTest {
 		builder.createMemoryCallReference(firstCalledFunctionAddress, firstCalledFunctionAddress);
 
 		List<GTreeNode> children = node1.generateChildren(TaskMonitor.DUMMY);
-		assertTrue(children.isEmpty());
+		assertEquals(1, children.size());
+
+	}
+
+	@Test
+	public void testGenerateChildren_SelfRecursiveReference() throws Exception {
+
+		builder.createMemoryReadReference(firstCalledFunctionAddress, firstCalledFunctionAddress);
+
+		List<GTreeNode> children = node1.generateChildren(TaskMonitor.DUMMY);
+		assertEquals(1, children.size());
+
 	}
 
 	@Test
@@ -294,10 +306,12 @@ public class OutgoingCallNodeTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testGenerateChildren_ReadReference_NotCallInstruction() throws Exception {
+	public void testGenerateChildren_ReadReference_NotCallInstruction_NoFunctionAtToAddress()
+			throws Exception {
 
 		//
-		// Read reference to an instruction with a flow type that is not a call
+		// Read reference to an instruction with a flow type that is not a call.  There is no 
+		// function a the destination.
 		//
 
 		builder.addBytesFallthrough(firstCalledFunctionAddress);
@@ -307,6 +321,26 @@ public class OutgoingCallNodeTest extends AbstractGenericTest {
 			SourceType.USER_DEFINED);
 		List<GTreeNode> children = node1.generateChildren(TaskMonitor.DUMMY);
 		assertTrue(children.isEmpty());
+	}
+
+	@Test
+	public void testGenerateChildren_ReadReference_NotCallInstruction_FunctionAtToAddress()
+			throws Exception {
+
+		//
+		// Read reference to an instruction with a flow type that is not a call.  There is a 
+		// function at the destination.
+		//
+
+		String toAddress = "0x1000";
+		builder.createEmptyFunction("Function_1000", toAddress, 1, new VoidDataType());
+		builder.addBytesFallthrough(firstCalledFunctionAddress);
+		builder.disassemble(firstCalledFunctionAddress, 2);
+
+		builder.createMemoryReference(firstCalledFunctionAddress, toAddress, RefType.READ,
+			SourceType.USER_DEFINED);
+		List<GTreeNode> children = node1.generateChildren(TaskMonitor.DUMMY);
+		assertEquals(1, children.size());
 	}
 
 	@Test
@@ -410,6 +444,79 @@ public class OutgoingCallNodeTest extends AbstractGenericTest {
 		assertTrue(children.get(0) instanceof DeadEndNode);
 	}
 
+	@Test
+	public void testGenerateChildren_MultipleReferences_SameSource_SameRemoteFunction()
+			throws Exception {
+
+		//
+		// This is testing when more than 1 reference exists at an address to the same function.
+		// We have code that will ensure that call references are preferred over other reference 
+		// types, creating one node for the call reference.
+		//
+
+		String toAddress = "0x1000";
+		builder.createEmptyFunction("Function_1000", toAddress, 1, new VoidDataType());
+		builder.addBytesFallthrough(firstCalledFunctionAddress);
+		builder.disassemble(firstCalledFunctionAddress, 2);
+
+		// create non-call read reference
+		builder.createMemoryReference(firstCalledFunctionAddress, toAddress, RefType.READ,
+			SourceType.USER_DEFINED);
+
+		// create call reference at a different op index so both references can co-exist
+		builder.tx(() -> {
+			ReferenceManager refManager = program.getReferenceManager();
+			Reference ref =
+				refManager.addMemoryReference(addr(firstCalledFunctionAddress), addr(toAddress),
+					RefType.UNCONDITIONAL_CALL, SourceType.USER_DEFINED, 1);
+			return ref;
+		});
+
+		List<GTreeNode> children = node1.generateChildren(TaskMonitor.DUMMY);
+		assertEquals(1, children.size());
+		OutgoingCallNode outgoingNode = (OutgoingCallNode) children.get(0);
+		assertTrue(outgoingNode.isCallReference());
+	}
+
+	@Test
+	public void testGenerateChildren_MultipleReferences_SameSource_DifferentRemoteFunction()
+			throws Exception {
+
+		//
+		// This is testing when more than 1 reference exists at an address to different functions.
+		// We have code that will ensure that call references are preferred over other reference 
+		// types.  In this scenario, since the remote functions are different, there should be 2
+		// nodes created in the tree, 1 for each reference.
+		//
+
+		String toAddress = "0x1000";
+		builder.createEmptyFunction("Function_1000", toAddress, 1, new VoidDataType());
+		builder.addBytesFallthrough(firstCalledFunctionAddress);
+		builder.disassemble(firstCalledFunctionAddress, 2);
+
+		String secondToAddress = "0x2000";
+
+		// create non-call read reference
+		builder.createMemoryReference(firstCalledFunctionAddress, toAddress, RefType.READ,
+			SourceType.USER_DEFINED);
+
+		// create call reference at a different op index so both references can co-exist
+		builder.tx(() -> {
+			ReferenceManager refManager = program.getReferenceManager();
+			Reference ref =
+				refManager.addMemoryReference(addr(firstCalledFunctionAddress),
+					addr(secondToAddress), RefType.UNCONDITIONAL_CALL, SourceType.USER_DEFINED, 1);
+			return ref;
+		});
+
+		List<GTreeNode> children = node1.generateChildren(TaskMonitor.DUMMY);
+		assertEquals(2, children.size());
+	}
+
+//=================================================================================================
+// Private Methods
+//=================================================================================================
+
 	private Address addr(String addrString) {
 		return builder.addr(addrString);
 	}
@@ -456,7 +563,8 @@ public class OutgoingCallNodeTest extends AbstractGenericTest {
 		callTreeOptions = callTreeOptions.withRecurseDepth(5);
 		callTreeOptions = callTreeOptions.withFilterThunks(true);
 		node1 =
-			new OutgoingCallNode(program, firstCalledFunction, calledFromAddress, callTreeOptions);
+			new OutgoingCallNode(program, firstCalledFunction, calledFromAddress, true,
+				callTreeOptions);
 
 	}
 

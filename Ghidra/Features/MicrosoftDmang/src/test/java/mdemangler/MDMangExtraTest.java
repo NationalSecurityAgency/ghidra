@@ -22,6 +22,7 @@ import java.util.List;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+import mdemangler.datatype.MDDataType;
 import mdemangler.naming.MDQualification;
 import mdemangler.object.MDObjectCPP;
 import mdemangler.typeinfo.MDVxTable;
@@ -54,6 +55,163 @@ public class MDMangExtraTest extends AbstractGenericTest {
 		assertEquals("e::d::c", qualifications.get(0).toString());
 		assertEquals("h::g::f", qualifications.get(1).toString());
 		assertEquals("k::j::i", qualifications.get(2).toString());
+	}
+
+	// Backref used in parentage
+	@Test
+	public void testVxTableNestedQualificationWithBackref() throws Exception {
+		String mangled = "??_7a@b@@6B01@@";
+		String truth = "const b::a::`vftable'{for `b::a'}";
+
+		MDMangGhidra demangler = new MDMangGhidra();
+		demangler.setMangledSymbol(mangled);
+		demangler.setErrorOnRemainingChars(true);
+		demangler.setDemangleOnlyKnownPatterns(true);
+		MDParsableItem item = demangler.demangle();
+
+		String demangled = item.toString();
+		assertEquals(truth, demangled);
+
+		MDObjectCPP cppItem = (MDObjectCPP) item;
+		MDVxTable vxTable = (MDVxTable) cppItem.getTypeInfo();
+		List<MDQualification> qualifications = vxTable.getNestedQualifications();
+		assertEquals(1, qualifications.size());
+		assertEquals("b::a", qualifications.get(0).toString());
+	}
+
+	// Anonymous namespace in owner and backref
+	@Test
+	public void testVxTableAnonymousNsInOwner() throws Exception {
+		String mangled = "??_7a@?A0xfedcba98@b@@6B@";
+		String truth = "const b::`anonymous namespace'::a::`vftable'";
+		String truth2 = "const b::_anon_FEDCBA98::a::`vftable'";
+
+		MDMangGhidra demangler = new MDMangGhidra();
+		demangler.setMangledSymbol(mangled);
+		demangler.setErrorOnRemainingChars(true);
+		demangler.setDemangleOnlyKnownPatterns(true);
+		MDParsableItem item = demangler.demangle();
+
+		MDObjectCPP cppItem = (MDObjectCPP) item;
+		MDVxTable vxTable = (MDVxTable) cppItem.getTypeInfo();
+		List<MDQualification> qualifications = vxTable.getNestedQualifications();
+		assertEquals(0, qualifications.size());
+
+		String demangled = item.toString();
+		assertEquals(truth, demangled);
+
+		demangler.getOutputOptions().setUseEncodedAnonymousNamespace(true);
+		demangled = item.toString();
+		assertEquals(truth2, demangled);
+	}
+
+	// Anonymous namespace in owner and backref
+	@Test
+	public void testVxTableAnonymousNsInOwnerAndBackref() throws Exception {
+		String mangled = "??_7a@?A0xfedcba98@b@@6B012@01@@";
+		String truth =
+			"const b::`anonymous namespace'::a::`vftable'{for `b::A0xfedcba98::a's `A0xfedcba98::a'}";
+		String truth2 =
+			"const b::_anon_FEDCBA98::a::`vftable'{for `b::_anon_FEDCBA98::a's `_anon_FEDCBA98::a'}";
+
+		MDMangGhidra demangler = new MDMangGhidra();
+		demangler.setMangledSymbol(mangled);
+		demangler.setErrorOnRemainingChars(true);
+		demangler.setDemangleOnlyKnownPatterns(true);
+		MDParsableItem item = demangler.demangle();
+
+		MDObjectCPP cppItem = (MDObjectCPP) item;
+		MDVxTable vxTable = (MDVxTable) cppItem.getTypeInfo();
+		List<MDQualification> qualifications = vxTable.getNestedQualifications();
+		assertEquals(2, qualifications.size());
+
+		String demangled = item.toString();
+		assertEquals(truth, demangled);
+		assertEquals("b::A0xfedcba98::a", qualifications.get(0).toString());
+		assertEquals("A0xfedcba98::a", qualifications.get(1).toString());
+
+		demangler.getOutputOptions().setUseEncodedAnonymousNamespace(true);
+		demangled = item.toString();
+		assertEquals(truth2, demangled);
+		assertEquals("b::_anon_FEDCBA98::a", qualifications.get(0).toString());
+		assertEquals("_anon_FEDCBA98::a", qualifications.get(1).toString());
+	}
+
+	// Eliminate complex tag in template arguments
+	@Test
+	public void testDemangleNameWithComplexTagInTemplateArgumentsWithBackRef() throws Exception {
+		String mangled = "?Ti@@3V?$Tc@V?$Tb@H@@0@@A";
+		String truth = "class Tc<class Tb<int>,class Tb<int> > Ti";
+		String truth2 = "class Tc<Tb<int>,Tb<int> > Ti";
+
+		MDMangGhidra demangler = new MDMangGhidra();
+		demangler.setMangledSymbol(mangled);
+		demangler.setErrorOnRemainingChars(true);
+		demangler.setDemangleOnlyKnownPatterns(true);
+		MDParsableItem item = demangler.demangle();
+
+		String demangled = item.toString();
+		assertEquals(truth, demangled);
+
+		demangler.getOutputOptions().setApplyUdtArgumentTypeTag(false);
+		demangled = item.toString();
+		assertEquals(truth2, demangled);
+	}
+
+	// Eliminate complex tag in template arguments
+	@Test
+	public void testDemangleTypeWithComplexTagInTemplateArguments() throws Exception {
+		String mangled = ".?AV?$name0@Uname1@@Uname2@@@@";
+		String truth = "class name0<struct name1,struct name2>";
+		String truth2 = "class name0<name1,name2>";
+
+		MDMangGhidra demangler = new MDMangGhidra();
+		demangler.setMangledSymbol(mangled);
+		demangler.setErrorOnRemainingChars(true);
+		MDParsableItem item = demangler.demangleType(); // note demangleType()
+
+		String demangled = item.toString();
+		assertEquals(truth, demangled);
+
+		demangler.getOutputOptions().setApplyUdtArgumentTypeTag(false);
+		demangled = item.toString();
+		assertEquals(truth2, demangled);
+	}
+
+	// Eliminate complex tag in template arguments
+	@Test
+	public void testDemangleTemplateConstructorWithTagInTemplateAndFunctionArguments()
+			throws Exception {
+		String mangled = "??0?$AAA@VBBB@@@ANS@@QAE@VBBB@@@Z";
+		String truth = "public: __thiscall ANS::AAA<class BBB>::AAA<class BBB>(class BBB)";
+		String truth2 = "public: __thiscall ANS::AAA<BBB>::AAA<BBB>(BBB)";
+
+		MDMangGhidra demangler = new MDMangGhidra();
+		demangler.setMangledSymbol(mangled);
+		demangler.setErrorOnRemainingChars(true);
+		demangler.setDemangleOnlyKnownPatterns(true);
+		MDParsableItem item = demangler.demangle();
+
+		String demangled = item.toString();
+		assertEquals(truth, demangled);
+
+		demangler.getOutputOptions().setApplyUdtArgumentTypeTag(false);
+		demangled = item.toString();
+		assertEquals(truth2, demangled);
+	}
+
+	@Test
+	public void testSimpleDemangleType() throws Exception {
+		String mangled = ".?AUname0@name1@@";
+		String expected = "struct name1::name0";
+
+		MDMangGhidra demangler = new MDMangGhidra();
+		demangler.setMangledSymbol(mangled);
+		demangler.setErrorOnRemainingChars(true);
+		MDDataType item = demangler.demangleType();
+
+		String demangled = item.toString();
+		assertEquals(expected, demangled);
 	}
 
 	// Need to test the demangleType() method to make sure it does the retry with LLVM mode

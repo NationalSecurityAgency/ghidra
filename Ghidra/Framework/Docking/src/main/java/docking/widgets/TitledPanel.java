@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,16 +15,11 @@
  */
 package docking.widgets;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.BorderFactory;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.label.GDLabel;
@@ -34,7 +29,7 @@ import docking.widgets.label.GDLabel;
  * components (usually icon buttons)
  */
 public class TitledPanel extends JPanel {
-	private JLabel title; // GDLabel or GHtmlLabel
+	private JLabel titleLabel;
 	private JPanel titlePanel;
 	private JPanel iconPanel;
 	private JComponent bottomComp;
@@ -42,34 +37,28 @@ public class TitledPanel extends JPanel {
 
 	/**
 	 * Creates a new TitlePanel
-	 * @param name the name of the panel
-	 * @param panel the component to wrap
-	 * @param margin the size of the margin to use
-	 */
-	public TitledPanel(String name, JComponent panel, int margin) {
-		this(new GDHtmlLabel(name), panel, margin);
-	}
-
-	/**
-	 * Creates a new TitlePanel
 	 * 
-	 * @param titleLabel the title label for the panel; this allow clients to provide HTML-based
+	 * @param title the title; this allow clients to provide HTML-based
 	 *        title text.  Note: it is up to the client to escape this text as needed for safety
 	 * @param panel the component to wrap
 	 * @param margin the size of the margin to use
 	 */
-	public TitledPanel(JLabel titleLabel, JComponent panel, int margin) {
+	public TitledPanel(String title, JComponent panel, int margin) {
 		super(new BorderLayout());
 		titlePanel = new JPanel(new BorderLayout());
 		iconPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 1));
 		iconPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-		title = titleLabel;
+		titleLabel = new GDHtmlLabel(title);
+
+		titleLabel.setMinimumSize(new Dimension(16, 20));
+		titleLabel.setToolTipText(title);
+
 		JLabel filler = new GDLabel();
 		filler.setPreferredSize(new Dimension(margin, filler.getPreferredSize().height));
 		titlePanel.add(filler, BorderLayout.WEST);
 
 		titlePanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-		titlePanel.add(title, BorderLayout.CENTER);
+		titlePanel.add(titleLabel, BorderLayout.CENTER);
 		titlePanel.add(iconPanel, BorderLayout.EAST);
 
 		add(titlePanel, BorderLayout.NORTH);
@@ -77,8 +66,8 @@ public class TitledPanel extends JPanel {
 	}
 
 	public void setTitleName(String name) {
-		title.setText(name);
-		title.setToolTipText(name);
+		titleLabel.setText(name);
+		titleLabel.setToolTipText(name);
 	}
 
 	/**

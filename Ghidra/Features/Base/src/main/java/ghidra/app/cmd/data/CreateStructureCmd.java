@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package ghidra.app.cmd.data;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -73,9 +72,6 @@ public class CreateStructureCmd extends AbstractCreateStructureCmd {
 		structureDataLength = structure.getLength();
 	}
 
-	/* 
-	 * @see AbstractCreateStructureCmd#createStructure(Address, Program)
-	 */
 	@Override
 	Structure createStructure(Address address, Program program) {
 
@@ -87,9 +83,6 @@ public class CreateStructureCmd extends AbstractCreateStructureCmd {
 		return structure;
 	}
 
-	/*
-	 * @see AbstractCreateStructureCmd#initializeStructureData(Program, Structure)
-	 */
 	@Override
 	DataType initializeStructureData(Program program, Structure localStructure) {
 
@@ -101,11 +94,11 @@ public class CreateStructureCmd extends AbstractCreateStructureCmd {
 		}
 		catch (AddressOverflowException e1) {
 			throw new IllegalArgumentException(
-				"Can't create structure because length exceeds address " + "space" +
+				"Can't create structure because length exceeds address space" +
 					structureDataLength);
 		}
 		ReferenceManager refMgr = program.getReferenceManager();
-		Reference[] refs = findExistingRefs(refMgr, program.getAddressFactory(),
+		List<Reference> refs = findExistingRefs(refMgr, program.getAddressFactory(),
 			getStructureAddress(), endAddress);
 		listing.clearCodeUnits(getStructureAddress(), endAddress, false);
 
@@ -123,20 +116,20 @@ public class CreateStructureCmd extends AbstractCreateStructureCmd {
 		return data.getDataType();
 	}
 
-	private Reference[] findExistingRefs(ReferenceManager refMgr, AddressFactory af, Address start,
+	private List<Reference> findExistingRefs(ReferenceManager refMgr, AddressFactory af,
+			Address start,
 			Address end) {
-		ArrayList<Reference> list = new ArrayList<Reference>();
+		List<Reference> list = new ArrayList<Reference>();
 		AddressIterator it = refMgr.getReferenceSourceIterator(new AddressSet(start, end), true);
 		while (it.hasNext()) {
 			Address addr = it.next();
 			Reference[] refs = refMgr.getReferencesFrom(addr);
 			Collections.addAll(list, refs);
 		}
-		Reference[] refList = new Reference[list.size()];
-		return list.toArray(refList);
+		return list;
 	}
 
-	private void addRefs(Program p, ReferenceManager refMgr, Reference[] refs) {
+	private void addRefs(Program p, ReferenceManager refMgr, List<Reference> refs) {
 		for (Reference ref : refs) {
 			refMgr.addReference(ref);
 		}

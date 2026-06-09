@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import utilities.util.reflection.ReflectionUtilities;
  * A label that only contains an image and no text.
  * <p>
  * See also:
- * <table border=1><caption></caption>
+ * <table border=1>
  * 	<tr><th>Class</th><th>Mutable text</th><th>HTML rendering</th><th>Description</th></tr>
  *  <tr><td>{@link GLabel}</td><td>Immutable</td><td>NO</td><td>Non-html unchangeable label</td></tr>
  *  <tr><td>{@link GDLabel}</td><td>Mutable</td><td>NO</td><td>Non-html changeable label</td></tr>
@@ -48,7 +48,6 @@ public class GIconLabel extends GLabel implements GComponent {
 	 * alignment, with HTML rendering disabled.
 	 * <p>
 	 * See {@link JLabel#JLabel()}.
-	 * <p>
 	 */
 	public GIconLabel() {
 		super();
@@ -59,7 +58,7 @@ public class GIconLabel extends GLabel implements GComponent {
 	 * with HTML rendering disabled.
 	 * <p>
 	 * See {@link JLabel#JLabel(Icon)}.
-	 * <p>
+	 * 
 	 * @param image icon to be displayed by the label
 	 */
 	public GIconLabel(Icon image) {
@@ -71,7 +70,7 @@ public class GIconLabel extends GLabel implements GComponent {
 	 * with HTML rendering disabled.
 	 * <p>
 	 * See {@link JLabel#JLabel(Icon, int)}.
-	 * <p>
+	 * 
 	 * @param image icon to be displayed by the label
 	 * @param horizontalAlignment  One of
 	 *           {@link SwingConstants#LEFT},
@@ -91,7 +90,7 @@ public class GIconLabel extends GLabel implements GComponent {
 	 * <p>
 	 * If there are calls to setText() with any non-null or non-empty value, a
 	 * warning will be printed in the log.
-	 * <p>
+	 * 
 	 * @param text string this label will NOT display
 	 */
 	@Deprecated

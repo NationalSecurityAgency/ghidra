@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,9 +18,7 @@ package sarif;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,23 +28,10 @@ import ghidra.app.util.Option;
 import ghidra.app.util.OptionException;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.AbstractProgramLoader;
-import ghidra.app.util.opinion.LoadException;
-import ghidra.app.util.opinion.LoadSpec;
-import ghidra.app.util.opinion.Loaded;
-import ghidra.app.util.opinion.LoaderTier;
+import ghidra.app.util.opinion.*;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.Project;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.CompilerSpec;
-import ghidra.program.model.lang.CompilerSpecDescription;
-import ghidra.program.model.lang.CompilerSpecNotFoundException;
-import ghidra.program.model.lang.Endian;
-import ghidra.program.model.lang.ExternalLanguageCompilerSpecQuery;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.LanguageCompilerSpecPair;
-import ghidra.program.model.lang.LanguageDescription;
-import ghidra.program.model.lang.LanguageNotFoundException;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -88,7 +73,7 @@ public class SarifLoader extends AbstractProgramLoader {
 		//
 		getLanguageService();
 
-		ParseResult result = parse(provider);
+		ParseResult result = parse(provider, new MessageLog());
 
 		ProgramInfo info = result.lastInfo;
 		if (info == null) {
@@ -188,49 +173,44 @@ public class SarifLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String programName,
-			Project project, String programFolderPath, LoadSpec loadSpec, List<Option> options,
-			MessageLog log, Object consumer, TaskMonitor monitor)
+	protected List<Loaded<Program>> loadProgram(ImporterSettings settings)
 			throws IOException, LoadException, CancelledException {
 
 		//throw new RuntimeException("SARIF importer supports only 'Add To Program'");
-		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
+		LanguageCompilerSpecPair pair = settings.loadSpec().getLanguageCompilerSpec();
 		Language importerLanguage = getLanguageService().getLanguage(pair.languageID);
-		CompilerSpec importerCompilerSpec =
-			importerLanguage.getCompilerSpecByID(pair.compilerSpecID);
 
-		ParseResult result = parse(provider);
+		ParseResult result = parse(settings.provider(), settings.log());
 
 		Address imageBase = null;
 		if (result.lastInfo.imageBase != null) {
 			imageBase = importerLanguage.getAddressFactory().getAddress(result.lastInfo.imageBase);
 		}
-		Program prog = createProgram(provider, programName, imageBase, getName(), importerLanguage,
-			importerCompilerSpec, consumer);
-		List<Loaded<Program>> loadedList =
-			List.of(new Loaded<>(prog, programName, programFolderPath));
+		Program prog = createProgram(imageBase, settings);
+		List<Loaded<Program>> loadedList = List.of(new Loaded<>(prog, settings));
 		boolean success = false;
 		try {
-			success = doImport(result.lastSarifMgr, options, log, prog, monitor, false);
+			success = doImport(result.lastSarifMgr, settings.options(), settings.log(), prog,
+				settings.monitor(), false);
 			if (success) {
-				createDefaultMemoryBlocks(prog, importerLanguage, log);
+				createDefaultMemoryBlocks(prog, settings);
 				return loadedList;
 			}
 			throw new LoadException("Failed to load");
 		}
 		finally {
 			if (!success) {
-				release(loadedList, consumer);
+				loadedList.forEach(Loaded::close);
 			}
 		}
 	}
 
 	@Override
-	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor)
+	protected void loadProgramInto(Program prog, ImporterSettings settings)
 			throws IOException, LoadException, CancelledException {
-		File file = provider.getFile();
-		doImport(new ProgramSarifMgr(prog, file), options, log, prog, monitor, true);
+		File file = settings.provider().getFile();
+		doImport(new ProgramSarifMgr(prog, file, settings.log()), settings.options(),
+			settings.log(), prog, settings.monitor(), true);
 	}
 
 	private boolean doImportWork(final ProgramSarifMgr mgr, final List<Option> options,
@@ -238,9 +218,7 @@ public class SarifLoader extends AbstractProgramLoader {
 			final boolean isAddToProgram) throws LoadException {
 		boolean success = true;
 		try {
-			SarifProgramOptions sarifOptions = mgr.getOptions();
-			sarifOptions.setOptions(options);
-			sarifOptions.setAddToProgram(isAddToProgram);
+			mgr.setOptions(options, isAddToProgram);
 			mgr.read(prog, monitor);
 			success = true;
 		}
@@ -311,9 +289,9 @@ public class SarifLoader extends AbstractProgramLoader {
 		}
 	}
 
-	private ParseResult parse(ByteProvider provider) throws IOException {
+	private ParseResult parse(ByteProvider provider, MessageLog log) throws IOException {
 		try {
-			ProgramSarifMgr lastSarifMgr = new ProgramSarifMgr(provider);
+			ProgramSarifMgr lastSarifMgr = new ProgramSarifMgr(provider, log);
 			ProgramInfo lastInfo = lastSarifMgr.getProgramInfo();
 			return new ParseResult(lastSarifMgr, lastInfo);
 		}
@@ -329,7 +307,7 @@ public class SarifLoader extends AbstractProgramLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		return new SarifProgramOptions().getOptions(loadIntoProgram);
 	}
 
@@ -339,7 +317,8 @@ public class SarifLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 		try {
 			new SarifProgramOptions().setOptions(options);
 		}

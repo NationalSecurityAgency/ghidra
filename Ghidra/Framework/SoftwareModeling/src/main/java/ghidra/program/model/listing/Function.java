@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,9 +64,6 @@ public interface Function extends Namespace {
 		 */
 		DYNAMIC_STORAGE_FORMAL_PARAMS,
 		/**
-		 * 
-		 */
-		/**
 		 * All parameters and return have been specified without storage.
 		 * Storage will be computed.  Any use of the reserved names 'this' and 
 		 * '__return_storage_ptr__' will be stripped before considering the injection
@@ -83,6 +80,11 @@ public interface Function extends Namespace {
 	 */
 	public final static int UNKNOWN_STACK_DEPTH_CHANGE = Integer.MAX_VALUE;
 	public final static int INVALID_STACK_DEPTH_CHANGE = Integer.MAX_VALUE - 1;
+
+	@Override
+	default Type getType() {
+		return Type.FUNCTION;
+	}
 
 	/**
 	 * Get the name of this function.
@@ -700,6 +702,7 @@ public interface Function extends Namespace {
 	 * @throws IllegalArgumentException if an attempt is made to thunk a function or another
 	 * thunk which would result in a loop back to this function or if this function is an external
 	 * function, or specified function is from a different program instance.
+	 * @throws UnsupportedOperationException if this method is invoked on an external function.
 	 */
 	public void setThunkedFunction(Function thunkedFunction) throws IllegalArgumentException;
 

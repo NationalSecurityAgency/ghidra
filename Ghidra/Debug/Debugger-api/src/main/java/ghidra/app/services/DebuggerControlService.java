@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,6 @@ import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
-import ghidra.program.model.mem.LiveMemoryHandler;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
 
@@ -53,9 +52,6 @@ public interface DebuggerControlService {
 		}
 	}
 
-	interface StateEditingMemoryHandler extends StateEditor, LiveMemoryHandler {
-	}
-
 	interface ControlModeChangeListener {
 		void modeChanged(Trace trace, ControlMode mode);
 	}
@@ -78,5 +74,5 @@ public interface DebuggerControlService {
 	 */
 	StateEditor createStateEditor(Trace trace);
 
-	StateEditingMemoryHandler createStateEditor(TraceProgramView view);
+	StateEditor createStateEditor(TraceProgramView view);
 }

@@ -33,10 +33,6 @@
   <stackpointer register="sp" space="ram"/>
   <funcptr align="4"/>     <!-- Function pointers are word aligned and leastsig bit may encode otherstuff -->
   
-	<returnaddress>
-		<varnode space="stack" offset="0" size="8"/>
-	</returnaddress>
-
     <default_proto>
 		<prototype name="abi-internal" extrapop="8" stackshift="8">
 			<input>
@@ -198,6 +194,7 @@
 			<unaffected>
 				<register name="x16"/>
 				<register name="x17"/>
+				<register name="sp"/>
 			</unaffected>
 		</prototype>
 	</default_proto>
@@ -233,8 +230,81 @@
 		<unaffected>
 			<register name="x16"/>
 			<register name="x17"/>
+			<register name="sp"/>
 		</unaffected>
 	</prototype>
+	
+	<prototype name="gcwrite_batch" extrapop="8" stackshift="8">
+		<input>
+			<pentry minsize="1" maxsize="8">
+				<register name="x25"/>
+			</pentry>
+		</input>
+      
+		<output>
+			<pentry minsize="1" maxsize="8">
+				<register name="x25"/>
+			</pentry>
+		</output>
+		
+		<unaffected>
+			<register name="x0"/>
+			<register name="x1"/>
+			<register name="x2"/>
+			<register name="x3"/>
+			<register name="x4"/>
+			<register name="x5"/>
+			<register name="x6"/>
+			<register name="x7"/>
+			<register name="x8"/>
+			<register name="x9"/>
+			<register name="x10"/>
+			<register name="x11"/>
+			<register name="x12"/>
+			<register name="x13"/>
+			<register name="x14"/>
+			<register name="x15"/>
+			<register name="x16"/>
+			<register name="x17"/>
+			<register name="sp"/>
+		</unaffected>
+	</prototype>
+
+	<prototype name="gcwrite_buffered" extrapop="8" stackshift="8">
+		<input>
+			<pentry minsize="1" maxsize="8">
+				<register name="x3"/>
+			</pentry>
+			<pentry minsize="1" maxsize="8">
+				<register name="x2"/>
+			</pentry>
+		</input>
+      
+		<output></output>
+      
+		<unaffected>
+			<register name="x0"/>
+			<register name="x1"/>
+			<register name="x2"/>
+			<register name="x3"/>
+			<register name="x4"/>
+			<register name="x5"/>
+			<register name="x6"/>
+			<register name="x7"/>
+			<register name="x8"/>
+			<register name="x9"/>
+			<register name="x10"/>
+			<register name="x11"/>
+			<register name="x12"/>
+			<register name="x13"/>
+			<register name="x14"/>
+            <register name="x15"/>
+			<register name="x16"/>
+			<register name="x17"/>
+			<register name="sp"/>
+		</unaffected>
+	</prototype>
+	
 	
 	<prototype name="duffzero" extrapop="8" stackshift="8">
 		<input>
@@ -255,6 +325,7 @@
 		<unaffected>
 			<register name="x16"/>
 			<register name="x17"/>
+			<register name="sp"/>
 		</unaffected>
 	</prototype>
 		
@@ -303,6 +374,7 @@
 			<register name="x15"/>
 			<register name="x16"/>
 			<register name="x17"/>
+			<register name="sp"/>
 		</unaffected>
 	</prototype>
 		

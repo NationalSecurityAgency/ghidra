@@ -21,6 +21,8 @@ import java.util.List;
 
 import javax.swing.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.combobox.GComboBox;
@@ -246,12 +248,12 @@ public class AskDialog<T> extends DialogComponentProvider {
 
 	protected Integer getValueAsInt() {
 		String text = getValueAsString();
-		return text != null ? NumericUtilities.parseInt(text) : null;
+		return !StringUtils.isBlank(text) ? NumericUtilities.parseInt(text) : null;
 	}
 
 	protected Long getValueAsLong() {
 		String text = getValueAsString();
-		return text != null ? NumericUtilities.parseLong(text) : null;
+		return !StringUtils.isBlank(text) ? NumericUtilities.parseLong(text) : null;
 	}
 
 	protected Double getValueAsDouble() {

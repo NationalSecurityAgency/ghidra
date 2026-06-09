@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,11 +23,9 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.dyld.DyldArchitecture;
 import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
-import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * A {@link Loader} for DYLD shared cache files.
@@ -129,13 +127,12 @@ public class DyldCacheLoader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
+	public void load(Program program, ImporterSettings settings) throws IOException {
 
 		try {
-			DyldCacheProgramBuilder.buildProgram(program, provider,
-				MemoryBlockUtils.createFileBytes(program, provider, monitor),
-				getDyldCacheOptions(options), log, monitor);
+			DyldCacheProgramBuilder.buildProgram(program, settings.provider(),
+				MemoryBlockUtils.createFileBytes(program, settings.provider(), settings.monitor()),
+				getDyldCacheOptions(settings.options()), settings.log(), settings.monitor());
 		}
 		catch (CancelledException e) {
 			return;
@@ -147,40 +144,50 @@ public class DyldCacheLoader extends AbstractProgramWrapperLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
-		List<Option> list =
-			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
+		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
+			loadIntoProgram, mirrorFsLayout);
 		if (!loadIntoProgram) {
-			list.add(new Option(FIXUP_SLIDE_POINTERS_OPTION_NAME,
-				FIXUP_SLIDE_POINTERS_OPTION_DEFAULT, Boolean.class,
-				Loader.COMMAND_LINE_ARG_PREFIX + "-fixupSlidePointers"));
-			list.add(
-				new Option(MARKUP_SLIDE_POINTERS_OPTION_NAME, MARKUP_SLIDE_POINTERS_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-markupSlidePointers"));
-			list.add(new Option(ADD_SLIDE_POINTER_RELOCATIONS_OPTION_NAME,
-				ADD_SLIDE_POINTERS_RELOCATIONS_OPTION_DEFAULT, Boolean.class,
-				Loader.COMMAND_LINE_ARG_PREFIX + "-addSlidePointerRelocations"));
-			list.add(
-				new Option(PROCESS_LOCAL_SYMBOLS_OPTION_NAME, PROCESS_LOCAL_SYMBOLS_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processLocalSymbols"));
-			list.add(
-				new Option(MARKUP_LOCAL_SYMBOLS_OPTION_NAME, MARKUP_LOCAL_SYMBOLS_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-markupLocalSymbols"));
-			list.add(
-				new Option(PROCESS_DYLIB_MEMORY_OPTION_NAME, PROCESS_DYLIB_MEMORY_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processDylibMemory"));
-			list.add(
-				new Option(PROCESS_DYLIB_SYMBOLS_OPTION_NAME, PROCESS_DYLIB_SYMBOLS_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processDylibSymbols"));
-			list.add(
-				new Option(PROCESS_DYLIB_EXPORTS_OPTION_NAME, PROCESS_DYLIB_EXPORTS_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processDylibExports"));
-			list.add(new Option(MARKUP_DYLIB_LC_DATA_OPTION_NAME,
-				MARKUP_DYLIB_LC_DATA_OPTION_DEFAULT, Boolean.class,
-				Loader.COMMAND_LINE_ARG_PREFIX + "-markupDylibLoadCommandData"));
-			list.add(
-				new Option(PROCESS_DYLIB_LIBOBJC_OPTION_NAME, PROCESS_DYLIB_LIBOBJC_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processLibobjc"));
+			list.add(Option.newBoolean(FIXUP_SLIDE_POINTERS_OPTION_NAME)
+					.value(FIXUP_SLIDE_POINTERS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-fixupSlidePointers"))
+					.build());
+			list.add(Option.newBoolean(MARKUP_SLIDE_POINTERS_OPTION_NAME)
+					.value(MARKUP_SLIDE_POINTERS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-markupSlidePointers"))
+					.build());
+			list.add(Option.newBoolean(ADD_SLIDE_POINTER_RELOCATIONS_OPTION_NAME)
+					.value(ADD_SLIDE_POINTERS_RELOCATIONS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-addSlidePointerRelocations"))
+					.build());
+			list.add(Option.newBoolean(PROCESS_LOCAL_SYMBOLS_OPTION_NAME)
+					.value(PROCESS_LOCAL_SYMBOLS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-processLocalSymbols"))
+					.build());
+			list.add(Option.newBoolean(MARKUP_LOCAL_SYMBOLS_OPTION_NAME)
+					.value(MARKUP_LOCAL_SYMBOLS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-markupLocalSymbols"))
+					.build());
+			list.add(Option.newBoolean(PROCESS_DYLIB_MEMORY_OPTION_NAME)
+					.value(PROCESS_DYLIB_MEMORY_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-processDylibMemory"))
+					.build());
+			list.add(Option.newBoolean(PROCESS_DYLIB_SYMBOLS_OPTION_NAME)
+					.value(PROCESS_DYLIB_SYMBOLS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-processDylibSymbols"))
+					.build());
+			list.add(Option.newBoolean(PROCESS_DYLIB_EXPORTS_OPTION_NAME)
+					.value(PROCESS_DYLIB_EXPORTS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-processDylibExports"))
+					.build());
+			list.add(Option.newBoolean(MARKUP_DYLIB_LC_DATA_OPTION_NAME)
+					.value(MARKUP_DYLIB_LC_DATA_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-markupDylibLoadCommandData"))
+					.build());
+			list.add(Option.newBoolean(PROCESS_DYLIB_LIBOBJC_OPTION_NAME)
+					.value(PROCESS_DYLIB_LIBOBJC_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-processLibobjc"))
+					.build());
 		}
 		return list;
 	}

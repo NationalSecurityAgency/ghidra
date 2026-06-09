@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.pdb;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import ghidra.app.util.SymbolPathParser;
 import ghidra.program.model.data.DataType;
@@ -134,14 +135,15 @@ public class DefaultPdbMember extends PdbMember {
 			try {
 				int colonIndex = bitSizeOffsetStr.indexOf(':');
 				if (colonIndex > 0) {
-					bitFieldOffset = (int) NumericUtilities.parseNumber(
-						bitSizeOffsetStr.substring(colonIndex + 1));
+					bitFieldOffset =
+						NumericUtilities.parseInt(bitSizeOffsetStr.substring(colonIndex + 1));
 					bitSizeOffsetStr = bitSizeOffsetStr.substring(0, colonIndex);
 				}
 				else {
 					dataTypeParser.setMissingBitOffsetError();
 				}
-				bitFieldSize = (int) NumericUtilities.parseNumber(bitSizeOffsetStr);
+				NumberUtils.toInt(bitSizeOffsetStr, 0);
+				bitFieldSize = NumericUtilities.parseInt(bitSizeOffsetStr);
 			}
 			catch (NumberFormatException e) {
 				Msg.error(this, "Invalid PDB bitfield specification: " + name);

@@ -24,12 +24,17 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import docking.action.DockingActionIf;
+import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.Highlight;
+import docking.widgets.table.GTable;
 import ghidra.GhidraOptions;
 import ghidra.app.services.MarkerSet;
 import ghidra.app.util.viewer.field.BytesFieldFactory;
 import ghidra.features.base.memsearch.bytesource.ProgramSearchRegion;
+import ghidra.features.base.memsearch.combiner.Combiner;
 import ghidra.features.base.memsearch.format.SearchFormat;
+import ghidra.features.base.memsearch.gui.MemorySearchResultsPanel;
 import ghidra.framework.options.Options;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
@@ -259,15 +264,13 @@ public class MemSearchHexTest extends AbstractMemSearchTest {
 
 	@Test
 	public void testHexSearchAll2() throws Exception {
-		// enter search string for multiple byte match
 
+		// enter search string for multiple byte match
 		setInput("ff 15");
 		performSearchAll();
-
 		waitForSearch(5);
 
 		List<Address> addrs = addrs(0x01002d1f, 0x01002d41, 0x01002d4a, 0x01002d5e, 0x010029bd);
-
 		checkMarkerSet(addrs);
 	}
 
@@ -552,4 +555,113 @@ public class MemSearchHexTest extends AbstractMemSearchTest {
 
 		assertEquals(addr(0x01002d0b), currentAddress());
 	}
+
+	@Test
+	public void testPromptToClose_NoChanges() {
+
+		search("ff 15", 5);
+
+		triggerEscape(searchProvider.getComponent());
+		assertProviderClosed();
+	}
+
+	@Test
+	public void testPromptToClose_DeletedRows() {
+
+		search("ff 15", 5);
+
+		deleteRow(0);
+
+		triggerEscape(searchProvider.getComponent());
+		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
+		pressButtonByText(dialog, "Yes");
+		assertProviderClosed();
+	}
+
+	@Test
+	public void testPromptToClose_DeletedRows_Cancel() {
+
+		search("ff 15", 5);
+
+		deleteRow(0);
+
+		triggerEscape(searchProvider.getComponent());
+		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
+		pressButtonByText(dialog, "No");
+		assertProviderVisible();
+	}
+
+	@Test
+	public void testPromptToClose_MergedData() {
+
+		//
+		// Search then perform a new search that will be combined with the initial search results.
+		// This new merged search will trigger the requirement to prompt the user before closing,
+		// since the new set of data is non-trivial to create.
+		//
+
+		search("ff 15", 5);
+
+		// perform a new search and use the existing results
+		runSwing(() -> searchProvider.setSearchCombiner(Combiner.UNION));
+		search("8b f?", 9);
+
+		triggerEscape(searchProvider.getComponent());
+		OptionDialog confirmDialog = waitForDialogComponent(OptionDialog.class);
+		pressButtonByText(confirmDialog, "Yes");
+		assertProviderClosed();
+	}
+
+	@Test
+	public void testPromptToClose_DeletedRows_NewSearch() {
+
+		//
+		// Search.  Delete a row.  This would trigger a prompt when closing the dialog.  Perform a
+		// new search. This new non-merged search will clear the requirement to prompt the user 
+		// before closing.
+		//
+
+		search("ff 15", 5);
+
+		deleteRow(0);
+
+		search("8b f?", 4);
+
+		triggerEscape(searchProvider.getComponent());
+		assertProviderClosed();
+	}
+
+	private void assertProviderVisible() {
+		assertTrue(runSwing(() -> searchProvider.isVisible()));
+	}
+
+	private void assertProviderClosed() {
+		assertFalse(runSwing(() -> searchProvider.isVisible()));
+	}
+
+	private void search(String input, int expectedMatchCount) {
+		setInput(input);
+		performSearchAll();
+		waitForSearch(expectedMatchCount);
+	}
+
+	private void deleteRow(int row) {
+
+		int resultCount = getResultCount();
+		runSwing(() -> {
+
+			MemorySearchResultsPanel panel = searchProvider.getResultsPanel();
+			GTable table = panel.getTable();
+			table.selectRow(row);
+		});
+
+		DockingActionIf removeAction = getAction(memorySearchPlugin, "Remove Items");
+		performAction(removeAction);
+		assertEquals(resultCount - 1, getResultCount());
+	}
+
+	private int getResultCount() {
+		return runSwing(() -> searchProvider.getSearchResults().size());
+	}
+
 }

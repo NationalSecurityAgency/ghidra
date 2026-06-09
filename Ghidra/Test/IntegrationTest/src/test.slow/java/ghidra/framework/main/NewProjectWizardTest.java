@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,11 @@ import org.junit.*;
 import org.junit.experimental.categories.Category;
 
 import docking.action.DockingActionIf;
-import docking.wizard.WizardManager;
-import generic.test.AbstractGenericTest;
+import docking.wizard.WizardDialog;
 import generic.test.category.PortSensitiveCategory;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.client.*;
+import ghidra.framework.main.wizard.project.*;
 import ghidra.framework.model.Project;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.framework.preferences.Preferences;
@@ -130,8 +130,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			performAction(action, false);
 			waitForSwing();
 
-			WizardManager wm =
-				waitForDialogComponent(frontEndTool.getToolFrame(), WizardManager.class, 2000);
+			WizardDialog wm = waitForDialogComponent(WizardDialog.class);
 			assertNotNull(wm);
 
 			ProjectTypePanel typePanel = findComponent(wm, ProjectTypePanel.class);
@@ -193,8 +192,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			performAction(action, false);
 			waitForSwing();
 
-			WizardManager wm =
-				waitForDialogComponent(frontEndTool.getToolFrame(), WizardManager.class, 2000);
+			WizardDialog wm = waitForDialogComponent(WizardDialog.class);
 			assertNotNull(wm);
 
 			ProjectTypePanel typePanel = findComponent(wm, ProjectTypePanel.class);
@@ -253,8 +251,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			performAction(action, false);
 			waitForSwing();
 
-			WizardManager wm =
-				waitForDialogComponent(frontEndTool.getToolFrame(), WizardManager.class, 2000);
+			WizardDialog wm = waitForDialogComponent(WizardDialog.class);
 			assertNotNull(wm);
 
 			ProjectTypePanel typePanel = findComponent(wm, ProjectTypePanel.class);
@@ -315,7 +312,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			assertNotNull(repNameField);
 			assertTrue(!repNameField.isEnabled());
 
-			JList repList = findComponent(repPanel, JList.class);
+			JList<?> repList = findComponent(repPanel, JList.class);
 			assertNotNull(repList);
 			assertTrue(repList.isEnabled());
 
@@ -393,8 +390,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			performAction(action, false);
 			waitForSwing();
 
-			WizardManager wm =
-				waitForDialogComponent(frontEndTool.getToolFrame(), WizardManager.class, 2000);
+			WizardDialog wm = waitForDialogComponent(WizardDialog.class);
 			assertNotNull(wm);
 
 			ProjectTypePanel typePanel = findComponent(wm, ProjectTypePanel.class);
@@ -460,7 +456,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			assertNotNull(repNameField);
 			assertTrue(!repNameField.isEnabled());
 
-			final JList repList = findComponent(repPanel, JList.class);
+			final JList<?> repList = findComponent(repPanel, JList.class);
 			assertNotNull(repList);
 			assertTrue(repList.isEnabled());
 
@@ -474,7 +470,6 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			SwingUtilities.invokeAndWait(() -> repList.setSelectedIndex(0));
 			waitForSwing();
 			assertTrue(nextButton.isEnabled());
-			assertTrue(!finishButton.isEnabled());
 
 			// next panel is project location panel
 			pressButton(nextButton, true);
@@ -534,7 +529,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void startServer() throws Exception {
-		File parent = new File(AbstractGenericTest.getTestDirectoryPath());
+		File parent = new File(getTestDirectoryPath());
 
 		// Create server instance
 		serverRoot = new File(parent, "My_Server");

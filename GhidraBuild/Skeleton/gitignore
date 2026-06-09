@@ -1,5 +1,6 @@
 .project
 .pyproject
+.pydevproject
 .classpath
 .settings/
 .gradle/

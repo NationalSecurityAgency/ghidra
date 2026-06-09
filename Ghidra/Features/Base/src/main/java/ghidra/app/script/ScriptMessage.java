@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,21 +16,30 @@
 package ghidra.app.script;
 
 import org.apache.logging.log4j.message.Message;
+import org.apache.logging.log4j.message.StringFormattedMessage;
 
 /**
  * A simple {@link Message} implementation that allows us to use the filtering capability
- * of log4j.  This class has a formatted and unformatted message.  log4j writes the the formatted
+ * of log4j.  This class has a formatted and unformatted message.  log4j writes the formatted
  * message out.  Our formatted message is the original message given to us.   We use the
  * unformatted message, in conjunction with a regex filter to allow for filtering such that
  * the script log file only has script messages.
- *
- * <P>See log4j-appender-rolling-file-scripts.xml
+ * <p>
+ * See log4j-appender-rolling-file-scripts.xml
+ * <p>
+ * NOTE: {@link Message#getFormat()} was deprecated in log4j 2.24.0, and the behavior of 
+ * {@code useRawMsg} changed to only work with certain classes that implement the {@link Message}
+ * interface, such as {@link StringFormattedMessage}. Implementing our own {@link Message}
+ * resulted in {@code useRawMsg} not calling {@link #getFormat()}. See
+ * <a href="https://github.com/apache/logging-log4j2/pull/2773">logging-log4j2/pull/2773</a> for
+ * more info.
  */
-public class ScriptMessage implements Message {
+public class ScriptMessage extends StringFormattedMessage {
 
 	private String message;
 
 	public ScriptMessage(String message) {
+		super(message);
 		this.message = message;
 	}
 

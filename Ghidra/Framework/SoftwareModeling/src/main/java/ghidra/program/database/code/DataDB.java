@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,16 +20,19 @@ import java.util.*;
 import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
-import ghidra.program.database.DBObjectCache;
+import ghidra.program.database.DbCache;
+import ghidra.program.database.DbFactory;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.Msg;
 
 /**
@@ -54,12 +57,23 @@ class DataDB extends CodeUnitDB implements Data {
 
 	private static final int[] EMPTY_PATH = new int[0];
 
-	private DBObjectCache<DataDB> componentCache = null;// data components are keyed on index in parent (i.e., ordinal)
+	// data components are keyed on index in parent (i.e., ordinal)
+	private DbCache<DataComponent> componentCache = null;
 
-	DataDB(CodeManager codeMgr, DBObjectCache<? extends CodeUnitDB> codeUnitCache, long cacheKey,
-			Address address, long addr, DataType dataType) {
+	/**
+	 * Constructs a new DataDB object
+	 * @param codeManager the code manager
+	 * @param cacheKey the cache key (normally this is the encoded address, but for data components
+	 * the objects are cached based on their ordinal (and the cache is a special cache inside the
+	 * data object and not the normal code manager cache)
+	 * @param address the address for the data
+	 * @param addr the encoded address for the data
+	 * @param dataType the datatype for the data
+	 */
+	protected DataDB(CodeManager codeManager, long cacheKey, Address address, long addr,
+			DataType dataType) {
 
-		super(codeMgr, codeUnitCache, cacheKey, address, addr,
+		super(codeManager, cacheKey, address, addr,
 			dataType == null ? 1 : dataType.getLength());
 		if (dataType == null) {
 			dataType = DataType.DEFAULT;
@@ -106,6 +120,18 @@ class DataDB extends CodeUnitDB implements Data {
 			if (dt == null) {
 				Msg.error(this, "Data found but datatype missing at " + address);
 			}
+		}
+		else if (address.isExternalAddress()) {
+			Symbol externalSymbol = program.getSymbolTable().getPrimarySymbol(address);
+			if (externalSymbol == null || externalSymbol.getSymbolType() != SymbolType.LABEL) {
+				return true;
+			}
+
+			ExternalLocation externalLocation =
+				program.getExternalManager().getExternalLocation(externalSymbol);
+
+			dt = externalLocation.getDataType();
+			dt = dt == null ? DataType.DEFAULT : dt;
 		}
 		else {
 			dt = codeMgr.getDataType(addr);
@@ -197,7 +223,7 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public void addValueReference(Address refAddr, RefType type) {
-		refreshIfNeeded();
+		validate(lock);
 		refMgr.addMemoryReference(address, refAddr, type, SourceType.USER_DEFINED,
 			CodeManager.DATA_OP_INDEX);
 	}
@@ -207,55 +233,21 @@ class DataDB extends CodeUnitDB implements Data {
 		removeOperandReference(CodeManager.DATA_OP_INDEX, refAddr);
 	}
 
+	private void createCacheIfNeeded() {
+		if (componentCache == null) {
+			componentCache =
+				new DbCache<DataComponent>(new ComponentFactory(), lock, 1);
+		}
+	}
+
 	@Override
 	public Data getComponent(int index) {
-		lock.acquire();
-		try {
-
-			checkIsValid();
-
+		try (Closeable c = lock.read()) {
 			if (index < 0 || index >= getNumComponents()) {
 				return null;
 			}
-
-			if (componentCache == null) {
-				componentCache = new DBObjectCache<>(1);
-			}
-			else {
-				Data data = componentCache.get(index);
-				if (data != null) {
-					return data;
-				}
-			}
-
-			AddressMap addressMap = codeMgr.getAddressMap();
-
-			if (baseDataType instanceof Array) {
-				Array array = (Array) baseDataType;
-				Address componentAddr = address.add(index * array.getElementLength());
-				return new DataComponent(codeMgr, componentCache, componentAddr,
-					addressMap.getKey(componentAddr, false), this, array, index);
-			}
-			if (baseDataType instanceof Composite) {
-				Composite composite = (Composite) baseDataType;
-				DataTypeComponent dtc = composite.getComponent(index);
-				Address componentAddr = address.add(dtc.getOffset());
-				return new DataComponent(codeMgr, componentCache, componentAddr,
-					addressMap.getKey(componentAddr, false), this, dtc);
-			}
-			if (baseDataType instanceof DynamicDataType) {
-				DynamicDataType ddt = (DynamicDataType) baseDataType;
-				DataTypeComponent dtc = ddt.getComponent(index, this);
-				Address componentAddr = address.add(dtc.getOffset());
-				return new DataComponent(codeMgr, componentCache, componentAddr,
-					addressMap.getKey(componentAddr, false), this, dtc);
-			}
-			Msg.error(this,
-				"Unsupported composite data type class: " + baseDataType.getClass().getName());
-			return null;
-		}
-		finally {
-			lock.release();
+			createCacheIfNeeded();
+			return componentCache.getCachedInstance((long) index);
 		}
 	}
 
@@ -282,25 +274,17 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public String getDefaultValueRepresentation() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return dataType.getRepresentation(this, this, getLength());
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public String getMnemonicString() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return dataType.getMnemonic(this);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -345,9 +329,8 @@ class DataDB extends CodeUnitDB implements Data {
 		if (hasSetting != null && !hasSetting) {
 			return mutabilityType == MutabilitySettingsDefinition.NORMAL;
 		}
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			MutabilitySettingsDefinition def =
 				getSettingsDefinition(MutabilitySettingsDefinition.class);
 			if (def != null) {
@@ -355,11 +338,8 @@ class DataDB extends CodeUnitDB implements Data {
 				return def.getChoice(this) == mutabilityType;
 			}
 			hasMutabilitySetting = false;
+			return false;
 		}
-		finally {
-			lock.release();
-		}
-		return false;
 	}
 
 	@Override
@@ -379,19 +359,19 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
-		refreshIfNeeded();
+		validate(lock);
 		return dataMgr.isChangeAllowed(this, settingsDefinition);
 	}
 
 	@Override
 	public void clearSetting(String name) {
-		refreshIfNeeded();
+		validate(lock);
 		dataMgr.clearSetting(this, name);
 	}
 
 	@Override
 	public Long getLong(String name) {
-		refreshIfNeeded();
+		validate(lock);
 		Long value = dataMgr.getLongSettingsValue(this, name);
 		if (value == null) {
 			value = getDefaultSettings().getLong(name);
@@ -401,13 +381,13 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public String[] getNames() {
-		refreshIfNeeded();
+		validate(lock);
 		return dataMgr.getInstanceSettingsNames(this);
 	}
 
 	@Override
 	public String getString(String name) {
-		refreshIfNeeded();
+		validate(lock);
 		String value = dataMgr.getStringSettingsValue(this, name);
 		if (value == null) {
 			value = getDefaultSettings().getString(name);
@@ -417,7 +397,7 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public Object getValue(String name) {
-		refreshIfNeeded();
+		validate(lock);
 		Object value = dataMgr.getSettings(this, name);
 		if (value == null) {
 			value = getDefaultSettings().getValue(name);
@@ -427,39 +407,35 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public void setLong(String name, long value) {
-		refreshIfNeeded();
+		validate(lock);
 		dataMgr.setLongSettingsValue(this, name, value);
 	}
 
 	@Override
 	public void setString(String name, String value) {
-		refreshIfNeeded();
+		validate(lock);
 		dataMgr.setStringSettingsValue(this, name, value);
 	}
 
 	@Override
 	public void setValue(String name, Object value) {
-		refreshIfNeeded();
+		validate(lock);
 		dataMgr.setSettings(this, name, value);
 	}
 
 	@Override
 	public Data getComponent(int[] componentPath) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			if (componentPath == null || componentPath.length <= level) {
 				return this;
 			}
 			Data component = getComponent(componentPath[level]);
 			return (component == null ? null : component.getComponent(componentPath));
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
-	public String getComment(int commentType) {
+	public String getComment(CommentType commentType) {
 		Data child = getComponentContaining(0);
 		if (child != null) {
 			// avoid caching issue by maintaining comment at lowest point in data path
@@ -469,7 +445,7 @@ class DataDB extends CodeUnitDB implements Data {
 	}
 
 	@Override
-	public void setComment(int commentType, String comment) {
+	public void setComment(CommentType commentType, String comment) {
 		Data child = getComponentContaining(0);
 		if (child != null) {
 			// avoid caching issue by maintaining comment at lowest point in data path
@@ -487,9 +463,8 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public Data getComponentContaining(int offset) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (offset < 0 || offset > getLength()) {
 				return null;
 			}
@@ -516,17 +491,12 @@ class DataDB extends CodeUnitDB implements Data {
 			}
 			return null;
 		}
-		finally {
-			lock.release();
-		}
-
 	}
 
 	@Override
 	public List<Data> getComponentsContaining(int offset) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (offset < 0 || offset >= getLength()) {
 				return null;
 			}
@@ -571,10 +541,6 @@ class DataDB extends CodeUnitDB implements Data {
 			}
 			return Collections.emptyList();
 		}
-		finally {
-			lock.release();
-		}
-
 	}
 
 	@Override
@@ -609,9 +575,8 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public int getNumComponents() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (getLength() < dataType.getLength()) {
 				return -1;
 			}
@@ -633,9 +598,6 @@ class DataDB extends CodeUnitDB implements Data {
 			}
 			return 0;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
@@ -650,7 +612,7 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public String getPathName() {
-		refreshIfNeeded();
+		validate(lock);
 		Address cuAddress = address;
 		SymbolTable st = program.getSymbolTable();
 		Symbol symbol = st.getPrimarySymbol(cuAddress);
@@ -662,9 +624,8 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public Data getPrimitiveAt(int offset) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (offset < 0 || offset >= getLength()) {
 				return null;
 			}
@@ -673,9 +634,6 @@ class DataDB extends CodeUnitDB implements Data {
 				return this;
 			}
 			return dc.getPrimitiveAt(offset - dc.getParentOffset());
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -691,13 +649,9 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public Object getValue() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return dataType.getValue(this, this, getLength());
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -763,13 +717,13 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public void clearAllSettings() {
-		refreshIfNeeded();
+		validate(lock);
 		dataMgr.clearAllSettings(this);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		refreshIfNeeded();
+		validate(lock);
 		return dataMgr.isEmptySetting(this);
 	}
 
@@ -792,6 +746,46 @@ class DataDB extends CodeUnitDB implements Data {
 	@Override
 	public Settings getDefaultSettings() {
 		return dataType.getDefaultSettings();
+	}
+
+	private class ComponentFactory implements DbFactory<DataComponent> {
+
+		@Override
+		public DataComponent instantiate(long ordinal) {
+			AddressMap addressMap = codeMgr.getAddressMap();
+			int index = (int) ordinal;
+			if (baseDataType instanceof Array) {
+				Array array = (Array) baseDataType;
+				Address componentAddr = address.add(index * array.getElementLength());
+				long dbKey = addressMap.getKey(componentAddr, false);
+				return new DataComponent(codeMgr, componentAddr,
+					dbKey, DataDB.this, array, index);
+			}
+			if (baseDataType instanceof Composite) {
+				Composite composite = (Composite) baseDataType;
+				DataTypeComponent dtc = composite.getComponent(index);
+				Address componentAddr = address.add(dtc.getOffset());
+				long dbKey = addressMap.getKey(componentAddr, false);
+				return new DataComponent(codeMgr, componentAddr, dbKey, DataDB.this, dtc);
+			}
+			if (baseDataType instanceof DynamicDataType) {
+				DynamicDataType ddt = (DynamicDataType) baseDataType;
+				DataTypeComponent dtc = ddt.getComponent(index, DataDB.this);
+				Address componentAddr = address.add(dtc.getOffset());
+				long dbKey = addressMap.getKey(componentAddr, false);
+				return new DataComponent(codeMgr, componentAddr, dbKey, DataDB.this, dtc);
+			}
+			Msg.error(this,
+				"Unsupported composite data type class: " + baseDataType.getClass().getName());
+			return null;
+		}
+
+		@Override
+		public DataComponent instantiate(DBRecord record) {
+			// DataComponents don't have records
+			return null;
+		}
+
 	}
 
 }

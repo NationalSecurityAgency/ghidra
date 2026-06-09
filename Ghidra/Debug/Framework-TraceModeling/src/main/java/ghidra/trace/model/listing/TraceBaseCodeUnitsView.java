@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.IntersectionAddressSetView;
 import ghidra.util.UnionAddressSetView;
 
@@ -240,8 +239,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	 * This checks if any (snap, address) point within the given box is contained within some code
 	 * unit in this view.
 	 * 
-	 * @param span the span of snaps
-	 * @param range the address range
+	 * @param range the address-snap range
 	 * @return true if intersecting, false otherwise
 	 */
 	boolean intersectsRange(TraceAddressSnapRange range);
@@ -250,6 +248,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	 * Get the unit (or component of a structure) which spans exactly the addresses of the given
 	 * register
 	 * 
+	 * @param snap the snap
 	 * @param register the register
 	 * @return the unit or {@code null}
 	 */
@@ -262,6 +261,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	 * platform register
 	 * 
 	 * @param platform the platform whose language defines the register
+	 * @param snap the snap
 	 * @param register the register
 	 * @return the unit or {@code null}
 	 */
@@ -287,7 +287,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	 * <p>
 	 * This does not descend into structures.
 	 * 
-	 * @platform the platform whose language defines the register
+	 * @param platform the platform whose language defines the register
 	 * @param snap the snap during which the unit must be alive
 	 * @param register the register
 	 * @return the unit or {@code unit}
@@ -297,11 +297,25 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	/**
 	 * Get the live units whose start addresses are within the given register
 	 * 
+	 * @param snap the snap
 	 * @param register the register
 	 * @param forward true to order the units by increasing address, false for descending
 	 * @return the iterable of units
 	 */
 	default Iterable<? extends T> get(long snap, Register register, boolean forward) {
-		return get(snap, TraceRegisterUtils.rangeForRegister(register), forward);
+		return get(getTrace().getPlatformManager().getHostPlatform(), snap, register, forward);
 	}
+
+	/**
+	 * Get the live units whose start addresses are within the given register
+	 * 
+	 * 
+	 * @param platform the platform whose language defines the register
+	 * @param snap the snap during which the units must be alive
+	 * @param register the register
+	 * @param forward true to order the units by increasing address, false for descending
+	 * @return the iterable of units
+	 */
+	Iterable<? extends T> get(TracePlatform platform, long snap, Register register,
+			boolean forward);
 }

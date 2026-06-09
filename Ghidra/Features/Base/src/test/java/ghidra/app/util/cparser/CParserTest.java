@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -246,9 +246,9 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		
 		assertTrue("Duplicate ENUM message missing", parseMessages.contains("duplicate enum value: options_enum : PLUS_SET : 16"));
 		
-		assertTrue("Duplicate ENUM message missing", parseMessages.contains("Static_Asssert has failed  \"\"math fail!\"\""));
+		assertTrue("Static assert fail missing", parseMessages.contains("Static_Assert possibly failed  \"\"math fail!\"\""));
 		
-		assertTrue("Duplicate ENUM message missing", parseMessages.contains("Static_Asssert has failed  \"\"1 + 1 == 3, fail!\"\""));
+		assertTrue("Static assert fail missing", parseMessages.contains("Static_Assert possibly failed  \"\"1 + 1 == 3, fail!\"\""));
 		
 		dt = dtMgr.getDataType(new CategoryPath("/"), "_IO_FILE_complete");
 		Structure sldt = (Structure) dt;
@@ -479,6 +479,69 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 			((Enum) dt).getValue("SHIFTED3"));
 		assertEquals("enum options_enum not correct", 15 >> 3 << 3,
 			((Enum) dt).getValue("SHIFTED4"));
+			
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_char");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_char size not correct", 1, dt.getLength());
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_short");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_short size not correct", 2, dt.getLength());
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_int");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_int size not correct", 4, dt.getLength());
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_long");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_long size not correct", 4, dt.getLength());
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_longlong");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_longlong size not correct", 8, dt.getLength());
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_DWORD");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_DWORD size not correct", 4, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_style_1");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_enum_style_1 size not correct", 1, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_style_2");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_enum_style_2 size not correct", 1, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_cpp_style_1");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_enum_cpp_style_1 size not correct", 1, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_cpp_style_2");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_enum_cpp_style_2 size not correct", 1, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_cpp_style_gnu");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_enum_cpp_style_gnu size not correct", 1, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "non_packed_enum");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum non_packed_enum size not correct", 4, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_negative_enum");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_negative_enum size not correct", 1, dt.getLength());
+		assertEquals("enum packed_negative_enum value not correct", -1,
+			((Enum) dt).getValue("A"));
+		assertEquals("enum packed_negative_enum value not correct", -2,
+			((Enum) dt).getValue("B"));
+		assertEquals("enum packed_negative_enum value not correct", -3,
+			((Enum) dt).getValue("C"));
+			
+		dt = dtMgr.getDataType(new CategoryPath("/"), "normal_negative_enum");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum normal_negative_enum size not correct", 4, dt.getLength());
+		assertEquals("enum normal_negative_enum value not correct", -1,
+			((Enum) dt).getValue("A"));
+		assertEquals("enum normal_negative_enum value not correct", -2,
+			((Enum) dt).getValue("B"));
+		assertEquals("enum normal_negative_enum value not correct", -3,
+			((Enum) dt).getValue("C"));
 
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "__checkint");
 		assertTrue("not a function", dt instanceof FunctionDefinition);

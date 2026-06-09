@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,8 +35,6 @@ public abstract class AncillaryFilterDialogComponentProvider<T>
 	protected final VTController controller;
 	private final FilterDialogModel<T> dialogModel;
 
-	private Boolean isFiltered;
-
 	protected AncillaryFilterDialogComponentProvider(VTController controller, String title,
 			FilterDialogModel<T> dialogModel) {
 		super(title);
@@ -58,14 +56,10 @@ public abstract class AncillaryFilterDialogComponentProvider<T>
 	}
 
 	/**
-	 * Returns true if any of the filters managed by this dialog are not in their default state.
+	 * {@return true if any of the filters managed by this dialog are not in their default state}
 	 */
 	public boolean isFiltered() {
-		if (isFiltered != null) {
-			return isFiltered;
-		}
-
-		isFiltered = Boolean.FALSE;
+		boolean isFiltered = false;
 		for (Filter<T> filter : ancillaryFilters) {
 			FilterShortcutState state = filter.getFilterShortcutState();
 			if (state != FilterShortcutState.ALWAYS_PASSES) {
@@ -88,7 +82,6 @@ public abstract class AncillaryFilterDialogComponentProvider<T>
 	protected void dialogShown() {
 		dialogModel.dialogVisibilityChanged(true);
 		originalState = getCurrentState();
-		isFiltered = null;
 	}
 
 	@Override

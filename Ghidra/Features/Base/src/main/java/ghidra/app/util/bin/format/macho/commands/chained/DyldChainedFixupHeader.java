@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,11 +38,11 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DyldChainedFixupHeader implements StructConverter {
 
-	private int fixupsVersion;
-	private int startsOffset;
-	private int importsOffset;
-	private int symbolsOffset;
-	private int importsCount;
+	private long fixupsVersion;
+	private long startsOffset;
+	private long importsOffset;
+	private long symbolsOffset;
+	private long importsCount;
 	private int importsFormat;
 	private int symbolsFormat;
 
@@ -58,11 +58,11 @@ public class DyldChainedFixupHeader implements StructConverter {
 	public DyldChainedFixupHeader(BinaryReader reader) throws IOException {
 		long ptrIndex = reader.getPointerIndex();
 
-		fixupsVersion = reader.readNextInt();
-		startsOffset = reader.readNextInt();
-		importsOffset = reader.readNextInt();
-		symbolsOffset = reader.readNextInt();
-		importsCount = reader.readNextInt();
+		fixupsVersion = reader.readNextUnsignedInt();
+		startsOffset = reader.readNextUnsignedInt();
+		importsOffset = reader.readNextUnsignedInt();
+		symbolsOffset = reader.readNextUnsignedInt();
+		importsCount = reader.readNextUnsignedInt();
 		importsFormat = reader.readNextInt();
 		symbolsFormat = reader.readNextInt();
 
@@ -134,23 +134,23 @@ public class DyldChainedFixupHeader implements StructConverter {
 		return struct;
 	}
 
-	public int getFixupsVersion() {
+	public long getFixupsVersion() {
 		return fixupsVersion;
 	}
 
-	public int getStartsOffset() {
+	public long getStartsOffset() {
 		return startsOffset;
 	}
 
-	public int getImportsOffset() {
+	public long getImportsOffset() {
 		return importsOffset;
 	}
 
-	public int getSymbolsOffset() {
+	public long getSymbolsOffset() {
 		return symbolsOffset;
 	}
 
-	public int getImportsCount() {
+	public long getImportsCount() {
 		return importsCount;
 	}
 

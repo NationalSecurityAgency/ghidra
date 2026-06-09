@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ public interface TraceSnapshot {
 	/**
 	 * Get the description of the snapshot
 	 * 
-	 * @return
+	 * @return the description
 	 */
 	String getDescription();
 
@@ -109,6 +109,19 @@ public interface TraceSnapshot {
 	String getScheduleString();
 
 	/**
+	 * Check whether this snapshot represents a fork
+	 * 
+	 * <p>
+	 * A snapshot is a fork if the snap immediately preceding it does not actually represents its
+	 * immediately preceding snapshot in time. This is the case if the snapshot has a schedule whose
+	 * initial snapshot is not the one immediately preceding it. NOTE: The (scratch) snapshot with
+	 * the minimum key is <em>not</em> considered a fork.
+	 * 
+	 * @return true if a fork, false otherwise
+	 */
+	public boolean isFork();
+
+	/**
 	 * Set the schedule from some previous snapshot to this one
 	 * 
 	 * @param schedule the schedule
@@ -130,6 +143,34 @@ public interface TraceSnapshot {
 	 * @param version the version
 	 */
 	void setVersion(long version);
+
+	/**
+	 * Check if a snapshot involves any steps of emulation
+	 * <p>
+	 * A scratch snapshot, i.e., whose key is negative, without a schedule set is considered
+	 * inconsistent.
+	 * 
+	 * @param whenInconsistent the value to return for a scratch snapshot without a set schedule
+	 * @return true if no emulation is involved
+	 */
+	boolean isSnapOnly(boolean whenInconsistent);
+
+	/**
+	 * For an emulated snapshot, check if re-emulation is necessary to produce an up-to-date
+	 * snapshot.
+	 * <p>
+	 * For non-emulated snapshots, this always returns false. A non-emulated snapshot is a snapshot
+	 * whose schedule includes no emulation steps. An emulation snapshot is stale when its version
+	 * is less than the trace's emulator cache version. A scratch snapshot, i.e., whose key is
+	 * negative, without a schedule set is considered inconsistent.
+	 * 
+	 * @param whenInconsistent the value to return for a scratch snapshot without a set schedule
+	 * @return true if re-emulation is needed
+	 * @see #getVersion()
+	 * @see #setVersion(long)
+	 * @see Trace#getEmulatorCacheVersion()
+	 */
+	boolean isStale(boolean whenInconsistent);
 
 	/**
 	 * Delete this snapshot

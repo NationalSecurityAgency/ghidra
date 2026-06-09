@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,14 +30,18 @@ public abstract class AbstractMapProposal<T, P, E extends MapEntry<T, P>>
 
 	protected abstract static class Matcher<T, P> {
 		protected final T fromObject;
+		protected final long snap;
 		protected final P toObject;
+
 		protected final AddressRange fromRange;
 		protected final AddressRange toRange;
 		protected final double score;
 
-		protected Matcher(T fromObject, P toObject) {
+		protected Matcher(T fromObject, long snap, P toObject) {
 			this.fromObject = fromObject;
+			this.snap = snap;
 			this.toObject = toObject;
+
 			this.fromRange = fromObject == null ? null : getFromRange();
 			this.toRange = toObject == null ? null : getToRange();
 			this.score = fromObject == null || toObject == null ? 0 : computeScore();
@@ -63,6 +67,9 @@ public abstract class AbstractMapProposal<T, P, E extends MapEntry<T, P>>
 		}
 
 		protected double computeLengthScore() {
+			if (fromRange == null) {
+				return 0;
+			}
 			long fLen = fromRange.getLength();
 			long tLen = toRange.getLength();
 			for (int bitsmatched = 64; bitsmatched > 0; bitsmatched--) {
@@ -77,8 +84,14 @@ public abstract class AbstractMapProposal<T, P, E extends MapEntry<T, P>>
 	}
 
 	protected static abstract class MatcherMap<K, T, P, M extends Matcher<T, P>> {
+		protected final long snap;
+
 		protected Map<K, Set<T>> fromsByJoin = new LinkedHashMap<>();
 		protected Map<T, M> map = new LinkedHashMap<>();
+
+		public MatcherMap(long snap) {
+			this.snap = snap;
+		}
 
 		protected abstract M newMatcher(T fromObject, P toObject);
 

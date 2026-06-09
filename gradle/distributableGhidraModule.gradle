@@ -28,28 +28,32 @@ apply from: "$rootProject.projectDir/gradle/support/distributionCommon.gradle"
 
 rootProject.assembleDistribution {
 	def p = this.project
-
 	def zipPath = getZipPath(p)
 	
-	from (p.projectDir.toString() + "/Module.manifest") {
+	from ("${p.projectDir}/Module.manifest") {
 		into  { zipPath }
 	}
 
-	from (p.projectDir.toString() + "/data") {
-		into { zipPath + "/data" }
-		exclude 'build.xml' // associated with language modules (dev use only)
+	from ("${p.projectDir}/support") {
+		into  { "${zipPath}/support" }
+	}
+
+	from ("${p.projectDir}/data") {
+		into { "${zipPath}/data" }
+		exclude 'build.xml'   // associated with language modules (dev use only)
+		exclude '**/*.sla.lock' // associated with language modules
 	}
 	
-	from (BIN_REPO + '/' + getGhidraRelativePath(p) + "/data") {
-		into { zipPath + "/data" }
+	from ("${BIN_REPO}/${getGhidraRelativePath(p)}/data") {
+		into { "${zipPath}/data" }
 	}
 	
-	from (p.projectDir.toString() + "/build/LICENSE.txt") {
+	from ("${p.projectDir}/build/LICENSE.txt") {
 		into { zipPath }
 	}
 
 	// handle special case where modules build data artifacts into the build dir
-	from (p.projectDir.toString() + "/build/data") {
+	from ("${p.projectDir}/build/data") {
 		into {zipPath + "/data" }
 	}
 	
@@ -91,15 +95,25 @@ rootProject.assembleDistribution {
 	//
 	fileTree.each { File file ->
 		String filePath = getGlobalFilePathSubDirName(file)
-		from (file) {
-			into filePath
+		
+		if (file.name.toLowerCase().endsWith(".md")) {
+			rootProject.assembleMarkdownToHtml {
+				from (file) {
+					into filePath
+				}
+			}
+		}
+		else {
+			from (file) {
+				into filePath
+			}
 		}
 	}
 }
 
 // copy os specific files for each platform
 rootProject.PLATFORMS.each { platform ->
-	rootProject.tasks.findAll {it.name == "assembleDistribution_${platform.name}"}.each { t -> 
+	rootProject.tasks.matching {it.name == "assembleDistribution_${platform.name}"}.each { t -> 
 
 		def p = this.project
 		
@@ -163,8 +177,6 @@ String getGlobalFilePathSubDirName(File file) {
 
 
 plugins.withType(JavaPlugin) {
-	// build up a java classpath for javadocs
-	rootProject.ghidraPath.from(sourceSets.main.compileClasspath)
 
 	rootProject.assembleSource {
 		from (this.project.zipSourceSubproject) {
@@ -187,7 +199,7 @@ plugins.withType(JavaPlugin) {
 			into { zipPath + "/ghidra_scripts" }
 		}
 		
-			// External Libraries
+		// External Libraries
 		gradle.taskGraph.whenReady { taskGraph ->
 			List<String> externalPaths = getExternalRuntimeDependencies(p)
 			externalPaths.each { path ->
@@ -196,17 +208,24 @@ plugins.withType(JavaPlugin) {
 				}
 			}
 		}
-			
-	
 	}
 }	
+
+rootProject.assembleMarkdownToHtml {
+	def p = this.project
+	def zipPath = getZipPath(p)
+	
+	from ("${p.projectDir}/README.md") {
+		into { zipPath }
+	}
+}
 	
 /////////////////////////////////////////////////////////////////////////////
 // Native 
 /////////////////////////////////////////////////////////////////////////////	
 plugins.withType(CPlugin) {
 	rootProject.PLATFORMS.each { platform ->
-		rootProject.tasks.findAll {it.name == "assembleDistribution_${platform.name}"}.each { t -> 
+		rootProject.tasks.matching {it.name == "assembleDistribution_${platform.name}"}.each { t -> 
 			t.dependsOn this.assemble
 		}
 	}

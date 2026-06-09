@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 import javax.swing.Icon;
 import javax.swing.tree.TreePath;
 
+import org.apache.commons.io.FilenameUtils;
+
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeSlowLoadingNode;
 import ghidra.formats.gfilesystem.*;
@@ -32,6 +34,12 @@ import ghidra.util.task.TaskMonitor;
  * Base class for all filesystem browser gtree nodes.
  */
 public abstract class FSBNode extends GTreeSlowLoadingNode {
+
+	protected String name;
+
+	protected FSBNode(String name) {
+		this.name = name;
+	}
 
 	/**
 	 * Returns the {@link FSRL} of the filesystem object that this node represents.
@@ -62,7 +70,16 @@ public abstract class FSBNode extends GTreeSlowLoadingNode {
 
 	@Override
 	public String getName() {
-		return getFSRL().getName();
+		return name;
+	}
+
+	/**
+	 * Returns the extension of this node's name, or "" if none
+	 * 
+	 * @return extension of this node's name, or "" if none
+	 */
+	public String getFileExtension() {
+		return FilenameUtils.getExtension(getName());
 	}
 
 	public FSBRootNode getFSBRootNode() {

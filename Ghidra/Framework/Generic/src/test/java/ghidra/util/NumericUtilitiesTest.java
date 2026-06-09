@@ -15,8 +15,7 @@
  */
 package ghidra.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -362,60 +361,194 @@ public class NumericUtilitiesTest {
 			fail();
 		}
 		catch (NumberFormatException e) {
+			// do nothing
 		}
 		try {
 			NumericUtilities.decodeBigInteger("+");
 			fail();
 		}
 		catch (NumberFormatException e) {
+			// do nothing
 		}
 		try {
 			NumericUtilities.decodeBigInteger("-");
 			fail();
 		}
 		catch (NumberFormatException e) {
+			// do nothing
 		}
 		try {
 			NumericUtilities.decodeBigInteger("0x");
 			fail();
 		}
 		catch (NumberFormatException e) {
+			// do nothing
 		}
 		try {
 			NumericUtilities.decodeBigInteger("0b");
 			fail();
 		}
 		catch (NumberFormatException e) {
+			// do nothing
 		}
 		try {
 			NumericUtilities.decodeBigInteger("a01");
 			fail();
 		}
 		catch (NumberFormatException e) {
+			// do nothing
 		}
 		try {
 			NumericUtilities.decodeBigInteger("081");
 			fail();
 		}
 		catch (NumberFormatException e) {
+			// do nothing
 		}
 		try {
 			NumericUtilities.decodeBigInteger("0x9g");
 			fail();
 		}
 		catch (NumberFormatException e) {
+			// do nothing
 		}
 		try {
 			NumericUtilities.decodeBigInteger(" 10");
 			fail();
 		}
 		catch (NumberFormatException e) {
+			// do nothing
 		}
 		try {
 			NumericUtilities.decodeBigInteger("10 ");
 			fail();
 		}
 		catch (NumberFormatException e) {
+			// do nothing
+		}
+	}
+
+	@Test
+	public void testParse() {
+
+		// parseInt()
+		assertEquals(-1, NumericUtilities.parseInt("0xffffffff"));
+		assertEquals(-1, NumericUtilities.parseInt("+0xffffffff"));
+		assertEquals(1, NumericUtilities.parseInt("-0xffffffff"));
+		assertEquals(0, NumericUtilities.parseInt("0x100000000", 0));
+		assertEquals(-1, NumericUtilities.parseInt("4294967295")); // 0xffffffff
+		try {
+			assertEquals(0, NumericUtilities.parseInt("0x100000000"));
+			fail();
+		}
+		catch (NumberFormatException e) {
+			// do nothing
+		}
+		try {
+			assertEquals(0, NumericUtilities.parseInt("4294967296")); // 0x100000000
+			fail();
+		}
+		catch (NumberFormatException e) {
+			// do nothing
+		}
+		try {
+			assertEquals(0, NumericUtilities.parseInt("0x-5"));
+			fail();
+		}
+		catch (NumberFormatException e) {
+			// do nothing
+		}
+		try {
+			assertEquals(0, NumericUtilities.parseInt(null));
+			fail();
+		}
+		catch (NumberFormatException e) {
+			// do nothing
+		}
+		try {
+			assertEquals(0, NumericUtilities.parseInt(" "));
+			fail();
+		}
+		catch (NumberFormatException e) {
+			// do nothing
+		}
+
+		// parseLong()
+		assertEquals(-1, NumericUtilities.parseLong("0xffffffffffffffff"));
+		assertEquals(-1, NumericUtilities.parseLong("+0xffffffffffffffff"));
+		assertEquals(1, NumericUtilities.parseLong("-0xffffffffffffffff"));
+		assertEquals(0, NumericUtilities.parseLong("0x10000000000000000", 0));
+		assertEquals(-1, NumericUtilities.parseLong("18446744073709551615")); // 0xffffffffffffffff
+		try {
+			assertEquals(0, NumericUtilities.parseLong("0x10000000000000000"));
+			fail();
+		}
+		catch (NumberFormatException e) {
+			// do nothing
+		}
+		try {
+			assertEquals(0, NumericUtilities.parseLong("18446744073709551616")); // 0x10000000000000000
+			fail();
+		}
+		catch (NumberFormatException e) {
+			// do nothing
+		}
+		try {
+			assertEquals(0, NumericUtilities.parseInt("0x-5"));
+			fail();
+		}
+		catch (NumberFormatException e) {
+			// do nothing
+		}
+		try {
+			assertEquals(0, NumericUtilities.parseLong(null));
+			fail();
+		}
+		catch (NumberFormatException e) {
+			// do nothing
+		}
+		try {
+			assertEquals(0, NumericUtilities.parseLong(" "));
+			fail();
+		}
+		catch (NumberFormatException e) {
+			// do nothing
+		}
+
+		// parseHexLong()
+		assertEquals(-1, NumericUtilities.parseHexLong("ffffffffffffffff"));
+		assertEquals(-1, NumericUtilities.parseHexLong("0xffffffffffffffff"));
+		assertEquals(-1, NumericUtilities.parseHexLong("+ffffffffffffffff"));
+		assertEquals(-1, NumericUtilities.parseHexLong("+0xffffffffffffffff"));
+		assertEquals(1, NumericUtilities.parseHexLong("-ffffffffffffffff"));
+		assertEquals(1, NumericUtilities.parseHexLong("-0xffffffffffffffff"));
+		try {
+			assertEquals(0, NumericUtilities.parseHexLong("0x10000000000000000"));
+			fail();
+		}
+		catch (NumberFormatException e) {
+			// do nothing
+		}
+		try {
+			assertEquals(0, NumericUtilities.parseHexLong("0x-5"));
+			fail();
+		}
+		catch (NumberFormatException e) {
+			// do nothing
+		}
+		try {
+			assertEquals(0, NumericUtilities.parseHexLong(null));
+			fail();
+		}
+		catch (NumberFormatException e) {
+			// do nothing
+		}
+		try {
+			assertEquals(0, NumericUtilities.parseHexLong(" "));
+			fail();
+		}
+		catch (NumberFormatException e) {
+			// do nothing
 		}
 	}
 }

@@ -1,5 +1,6 @@
-//@title java launch
-//@timeout 20000
+//@title java
+//@image-opt env:OPT_TARGET_CLASS
+//@timeout 2000000
 //@desc <html><body width="300px">
 //@desc   <h3>Launch with <tt>java</tt></h3>
 //@desc   <p>
@@ -7,14 +8,14 @@
 //@desc     For setup instructions, press <b>F1</b>.
 //@desc   </p>
 //@desc </body></html>
-//@menu-group local
+//@menu-group java
 //@icon icon.debugger
-//@help TraceRmiLauncherServicePlugin#java
+//@help jpda#local
+//@env OPT_TARGET_CLASS:file="" "Image" "The Main Class to launch (defaults to current program)."
+//@env OPT_TARGET_CLASSPATH:str="" "ClassPath" "The JVM classpath"
 //@args "Arguments" "Command-line arguments to pass to the target"
 //@enum Arch:str JVM Dalvik
 //@env OPT_ARCH:Arch="JVM" "Arch" "Either 'JVM' or 'Dalvik'"
-//@env OPT_TARGET_CLASS:str="" "Image" "The Main Class to launch (defaults to current program)."
-////@env OPT_SUSPEND:bool=true "Suspend" "Suspend the VM on launch."
 //@env OPT_INCLUDE:str=n "Include virtual threads" "Include virtual threads."
 //@env OPT_JSHELL_PATH:file="" "JShell cmd (if desired)" "The full path to jshell."
 

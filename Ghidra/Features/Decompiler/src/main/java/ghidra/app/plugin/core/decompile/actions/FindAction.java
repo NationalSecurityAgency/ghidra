@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,12 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.action.KeyBindingData;
-import docking.action.MenuData;
+import docking.DockingUtils;
+import docking.action.*;
 import docking.widgets.FindDialog;
 import ghidra.app.decompiler.component.DecompilerFindDialog;
 import ghidra.app.decompiler.component.DecompilerPanel;
@@ -36,8 +35,14 @@ public class FindAction extends AbstractDecompilerAction {
 		super("Find");
 		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFind"));
 		setPopupMenuData(new MenuData(new String[] { "Find..." }, "Decompile"));
-		setKeyBindingData(new KeyBindingData(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
+		setKeyBindingData(
+			new KeyBindingData(KeyEvent.VK_F, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 		setEnabled(true);
+	}
+
+	@Override
+	public KeyBindingType getKeyBindingType() {
+		return KeyBindingType.SHARED;
 	}
 
 	@Override
@@ -74,6 +79,11 @@ public class FindAction extends AbstractDecompilerAction {
 
 		if (!StringUtils.isBlank(text)) {
 			dialog.setSearchText(text);
+		}
+
+		if (dialog.isShowing()) {
+			dialog.toFront();
+			return;
 		}
 
 		// show over the root frame, so the user can still see the Decompiler window

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.swing.*;
-
-import org.apache.commons.io.FilenameUtils;
 
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
@@ -48,9 +46,7 @@ public class ImageFSBFileHandler implements FSBFileHandler {
 
 	@Override
 	public boolean fileDefaultAction(FSBFileNode fileNode) {
-		FSRL fsrl = fileNode.getFSRL();
-		String extension = FilenameUtils.getExtension(fsrl.getName().toLowerCase());
-		if (COMMON_IMAGE_EXTENSIONS.contains(extension)) {
+		if (COMMON_IMAGE_EXTENSIONS.contains(fileNode.getFileExtension().toLowerCase())) {
 			FSBComponentProvider fsbComponent = context.fsbComponent();
 			fsbComponent.runTask(monitor -> doViewAsImage(fileNode.getFSRL(),
 				fsbComponent.getComponent(), monitor));

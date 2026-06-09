@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -98,8 +98,7 @@ public class UnwindAnalysis {
 	/**
 	 * Wrap a {@link CodeBlock}
 	 */
-	record BlockVertex(CodeBlock block) {
-	}
+	record BlockVertex(CodeBlock block) {}
 
 	/**
 	 * Wrap a {@link CodeBlockReference}
@@ -420,16 +419,16 @@ public class UnwindAnalysis {
 		 * function return.</li>
 		 * <li>Examine the symbol in the program counter register. This gives the location (register
 		 * or stack offset) of the return address. This strategy should work whether or not a link
-		 * register is involved. See {@link SymPcodeExecutorState#computeAddressOfReturn()}.
+		 * register is involved. See {@link SymPcodeExecutorState#computeAddressOfReturn()}.</li>
 		 * <li>Examine the symbol in the stack pointer register, again. It should be a stack offset.
 		 * That offset is the "stack adjustment." See {@link UnwindInfo#adjust()},
 		 * {@link UnwindInfo#computeNextSp(Address)}, and
-		 * {@link SymPcodeExecutorState#computeStackDepth()}.
+		 * {@link SymPcodeExecutorState#computeStackDepth()}.</li>
 		 * <li>Search the registers for stack dereference symbols, creating an offset-register map.
 		 * This intersected with the same from entry to program counter is the saved registers map.
 		 * See {@link UnwindInfo#saved()},
 		 * {@link UnwindInfo#mapSavedRegisters(Address, SavedRegisterMap)}, and
-		 * {@link SymPcodeExecutorState#computeMapUsingRegisters()}.
+		 * {@link SymPcodeExecutorState#computeMapUsingRegisters()}.</li>
 		 * </ol>
 		 * 
 		 * <p>
@@ -492,6 +491,7 @@ public class UnwindAnalysis {
 							new UnwindException("Cannot determine address of return pointer");
 						continue;
 					}
+					long maskOfReturn = exitState.computeMaskOfReturn();
 					Long adjust = exitState.computeStackDepth();
 					if (adjust == null) {
 						lastError = new UnwindException("Cannot determine stack adjustment");
@@ -501,8 +501,8 @@ public class UnwindAnalysis {
 					warnings.addAll(exitState.warnings);
 					Map<Register, Address> mapByExit = exitState.computeMapUsingRegisters();
 					mapByExit.entrySet().retainAll(mapByEntry.entrySet());
-					return new UnwindInfo(function, depth, adjust, addressOfReturn, mapByExit,
-						new StackUnwindWarningSet(warnings), null);
+					return new UnwindInfo(function, depth, adjust, addressOfReturn, maskOfReturn,
+						mapByExit, new StackUnwindWarningSet(warnings), null);
 				}
 			}
 			if (lastSuccessfulEntryState != null) {
@@ -510,16 +510,16 @@ public class UnwindAnalysis {
 				try {
 					long adjust = SymPcodeExecutor.computeStackChange(function, warnings);
 					return new UnwindInfo(function, lastSuccessfulEntryState.computeStackDepth(),
-						adjust, null, lastSuccessfulEntryState.computeMapUsingStack(),
+						adjust, null, -1, lastSuccessfulEntryState.computeMapUsingStack(),
 						new StackUnwindWarningSet(warnings), lastError);
 				}
 				catch (Exception e) {
 					return new UnwindInfo(function, lastSuccessfulEntryState.computeStackDepth(),
-						null, null, lastSuccessfulEntryState.computeMapUsingStack(),
+						null, null, -1, lastSuccessfulEntryState.computeMapUsingStack(),
 						new StackUnwindWarningSet(warnings), e);
 				}
 			}
-			return new UnwindInfo(function, null, null, null, null,
+			return new UnwindInfo(function, null, null, null, -1, null,
 				new StackUnwindWarningSet(warnings), new UnwindException(
 					"Could not analyze any path from %s entry to %s.\n%s".formatted(function, pc,
 						lastError.getMessage()),

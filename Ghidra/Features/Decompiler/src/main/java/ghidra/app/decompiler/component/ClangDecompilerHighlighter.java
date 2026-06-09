@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.function.Supplier;
 
 import generic.json.Json;
 import ghidra.app.decompiler.*;
+import ghidra.program.model.listing.Function;
 
 /**
  * The implementation of {@link DecompilerHighlighter}.  This will get created by the
@@ -38,17 +39,20 @@ class ClangDecompilerHighlighter implements DecompilerHighlighter {
 	protected String id;
 	private DecompilerPanel decompilerPanel;
 	private CTokenHighlightMatcher matcher;
+	private Function function; // will be null for global highlights
 	private Set<ClangDecompilerHighlighter> clones = new HashSet<>();
 
-	ClangDecompilerHighlighter(DecompilerPanel panel, CTokenHighlightMatcher matcher) {
-		UUID uuId = UUID.randomUUID();
-		this.id = uuId.toString();
+	ClangDecompilerHighlighter(String id, DecompilerPanel panel, Function function,
+			CTokenHighlightMatcher matcher) {
+		this.id = id;
 		this.decompilerPanel = panel;
+		this.function = function;
 		this.matcher = matcher;
 	}
 
-	ClangDecompilerHighlighter(String id, DecompilerPanel panel, CTokenHighlightMatcher matcher) {
-		this.id = id;
+	private ClangDecompilerHighlighter(DecompilerPanel panel, CTokenHighlightMatcher matcher) {
+		UUID uuId = UUID.randomUUID();
+		this.id = uuId.toString();
 		this.decompilerPanel = panel;
 		this.matcher = matcher;
 	}
@@ -60,7 +64,8 @@ class ClangDecompilerHighlighter implements DecompilerHighlighter {
 	 */
 	ClangDecompilerHighlighter clone(DecompilerPanel panel) {
 		// note: we re-use the ID to make tracking easier
-		ClangDecompilerHighlighter clone = new ClangDecompilerHighlighter(id, panel, matcher);
+		ClangDecompilerHighlighter clone =
+			new ClangDecompilerHighlighter(id, panel, function, matcher);
 		clones.add(clone);
 		return clone;
 	}
@@ -81,7 +86,14 @@ class ClangDecompilerHighlighter implements DecompilerHighlighter {
 			return; // disposed
 		}
 
-		clearHighlights();
+		DecompilerController controller = decompilerPanel.getController();
+		Function decompiledFunction = controller.getFunction();
+		if (function != null && !function.equals(decompiledFunction)) {
+			return; // this is a function-specific highlighter and this is not the desired function 
+		}
+
+		// This is done by the caller of this method
+		// clearHighlights();
 
 		ClangLayoutController layoutModel = decompilerPanel.getLayoutController();
 		ClangTokenGroup root = layoutModel.getRoot();
@@ -160,18 +172,18 @@ class ClangDecompilerHighlighter implements DecompilerHighlighter {
 	}
 
 	private class MappedTokenColorProvider implements ColorProvider {
-	
+
 		private Map<ClangToken, Color> highlights;
-	
+
 		MappedTokenColorProvider(Map<ClangToken, Color> highlights) {
 			this.highlights = highlights;
 		}
-	
+
 		@Override
 		public Color getColor(ClangToken token) {
 			return highlights.get(token);
 		}
-	
+
 		@Override
 		public String toString() {
 			return "Token Matcher Color " + matcher.toString();

@@ -20,19 +20,20 @@ import static org.junit.Assert.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.math.BigInteger;
+import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 import org.junit.*;
 import org.junit.rules.TestName;
 
@@ -45,26 +46,20 @@ import docking.widgets.table.DynamicTableColumn;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.Unique;
+import generic.jar.ResourceFile;
+import ghidra.GhidraTestApplicationLayout;
 import ghidra.app.nav.Navigatable;
-import ghidra.app.plugin.core.debug.gui.action.*;
+import ghidra.app.plugin.core.debug.gui.action.BasicAutoReadMemorySpec;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueObjectPropertyColumn;
-import ghidra.app.plugin.core.debug.mapping.*;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceInternal;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
 import ghidra.app.plugin.core.debug.service.target.DebuggerTargetServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.dbg.model.AbstractTestTargetRegisterBank;
-import ghidra.dbg.model.TestDebuggerModelBuilder;
-import ghidra.dbg.target.*;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.dbg.testutil.DebuggerModelTestUtils;
+import ghidra.async.AsyncTestUtils;
 import ghidra.debug.api.action.*;
-import ghidra.debug.api.model.*;
 import ghidra.docking.settings.SettingsImpl;
+import ghidra.framework.Application;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramDB;
@@ -76,36 +71,106 @@ import ghidra.program.util.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.trace.database.ToyDBTraceBuilder;
-import ghidra.trace.model.*;
-import ghidra.trace.model.memory.TraceMemorySpace;
-import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
-import ghidra.trace.util.TraceEvents;
-import ghidra.util.InvalidNameException;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
+import ghidra.util.*;
 import ghidra.util.datastruct.TestDataStructureErrorHandlerInstaller;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.ConsoleTaskMonitor;
+import utility.application.ApplicationLayout;
 
 public abstract class AbstractGhidraHeadedDebuggerTest
-		extends AbstractGhidraHeadedIntegrationTest implements DebuggerModelTestUtils {
+		extends AbstractGhidraHeadedIntegrationTest implements AsyncTestUtils {
+
+	/**
+	 * Any test that uses staticall-initialized variables with any real complexity runs the risk of
+	 * invoking the logger before said logger has been initialized. The abstract test case is
+	 * responsible for initializing it, and it affords its subclasses the opportunity to override
+	 * things like the application layout and configuration. Thus, we cannot initialize the
+	 * application in the static initializer here. What will happen, then, is the logger will be
+	 * partially initialized, and the XML config files refer to system properties that will not have
+	 * been set yet. This manifests in strange files being created in the tests' working
+	 * directories, e.g., <code>${sys:logFilename}</code>.
+	 * 
+	 * <p>
+	 * A cheap hack to avoid this issue is to just initialize those system properties to some temp
+	 * file. Once the logging system is initialized, the variables will be overwritten by the
+	 * application config and the logger re- and fully-initialized. For what it's worth, the logging
+	 * config for the test case is going to be a file in a temp directory, anyway. As long as it's
+	 * cleaned up by the JVM or the OS, we should be happy. I just want to ensure they're not
+	 * showing up in git commits.
+	 * 
+	 * <p>
+	 * TODO: Should this hack be moved up into the super classes of the Ghidra Test framework?
+	 */
+	static {
+		try {
+			System.setProperty("logFilename",
+				Files.createTempFile("ghidraTest", ".log").toString());
+			System.setProperty("scriptLogFilename",
+				Files.createTempFile("ghidraTestScript", ".log").toString());
+		}
+		catch (IOException e) {
+			throw new AssertionError(e);
+		}
+	}
+
+	@Override
+	protected ApplicationLayout createApplicationLayout() throws IOException {
+		return new GhidraTestApplicationLayout(new File(getTestDirectoryPath())) {
+			@Override
+			protected Set<String> getDependentModulePatterns() {
+				Set<String> patterns = super.getDependentModulePatterns();
+				patterns.add("Debugger-agent");
+				return patterns;
+			}
+		};
+	}
 
 	public static final String LANGID_TOYBE64 = "Toy:BE:64:default";
 
-	public static class TestDebuggerTargetTraceMapper extends DefaultDebuggerTargetTraceMapper {
-		public TestDebuggerTargetTraceMapper(TargetObject target)
-				throws LanguageNotFoundException, CompilerSpecNotFoundException {
-			super(target, new LanguageID(LANGID_TOYBE64), new CompilerSpecID("default"), Set.of());
-		}
+	public static void assertVersionMatchesApplication(String version) {
+		String applicationVersion = Application.getApplicationVersion();
+		List<String> partsExp = List.of(applicationVersion.split("\\."));
+		List<String> partsAct = List.of(version.split("\\."));
+		assertTrue("Version %s cannot be more specific than application version %s".formatted(
+			version, applicationVersion), partsExp.size() >= partsAct.size());
+		assertEquals("Version %s is not consistent with application version %s".formatted(version,
+			applicationVersion), partsAct, partsExp.subList(0, partsAct.size()));
+	}
 
-		@Override
-		protected DebuggerMemoryMapper createMemoryMapper(TargetMemory memory) {
-			return new DefaultDebuggerMemoryMapper(language, memory.getModel());
+	public static List<String> readToml(String module) throws IOException {
+		ResourceFile toml = Application.getModuleFile(module, "src/main/py/pyproject.toml");
+		try (BufferedReader reader = new BufferedReader(new FileReader(toml.getFile(false)))) {
+			return reader.lines().toList();
 		}
+	}
 
-		@Override
-		protected DebuggerRegisterMapper createRegisterMapper(TargetRegisterContainer registers) {
-			return new DefaultDebuggerRegisterMapper(cSpec, registers, true);
-		}
+	private static String group(CharSequence seq, Pattern pat) {
+		Matcher matcher = pat.matcher(seq);
+		assertTrue(matcher.matches());
+		return matcher.group(1);
+	}
+
+	public static String parseVersionFromToml(List<String> toml) throws IOException {
+		Pattern versionEq = Pattern.compile("version = \"(.*)\"");
+		return Unique.assertOne(toml.stream()
+				.filter(versionEq.asMatchPredicate())
+				.map(l -> group(l, versionEq)));
+	}
+
+	public static String parseGhidraTraceDepFromToml(List<String> toml) throws IOException {
+		Pattern ghidraTraceDep = Pattern.compile("\\s+\"ghidratrace==(.*)\",?");
+		return Unique.assertOne(toml.stream()
+				.dropWhile(l -> !"dependencies = [".equals(l))
+				.takeWhile(l -> !"]".equals(l))
+				.filter(ghidraTraceDep.asMatchPredicate())
+				.map(l -> group(l, ghidraTraceDep)));
+	}
+
+	protected static byte[] arr(String hex) {
+		return NumericUtilities.convertStringToBytes(hex);
 	}
 
 	protected static SchemaContext xmlSchema(String xml) {
@@ -253,11 +318,6 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 		}
 	}
 
-	protected static TargetBreakpointSpecContainer getBreakpointContainer(TraceRecorder r) {
-		return waitFor(() -> Unique.assertAtMostOne(r.collectBreakpointContainers(null)),
-			"No container");
-	}
-
 	// TODO: Propose this replace waitForProgram
 	public static void waitForDomainObject(DomainObject object) {
 		object.flushEvents();
@@ -291,6 +351,25 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 				return false;
 			}
 		}, () -> lastError.get().getMessage());
+	}
+
+	public static void waitForPass(Object originator, Runnable runnable, long duration,
+			TimeUnit unit) {
+		long start = System.currentTimeMillis();
+		while (System.currentTimeMillis() - start < unit.toMillis(duration)) {
+			try {
+				waitForPass(runnable);
+				break;
+			}
+			catch (Throwable e) {
+				Msg.warn(originator, "Long wait: " + e);
+				try {
+					Thread.sleep(500);
+				}
+				catch (InterruptedException e1) {
+				}
+			}
+		}
 	}
 
 	public static <T> T waitForPass(Supplier<T> supplier) {
@@ -401,8 +480,7 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 	}
 
 	/**
-	 * Only use this to escape from pop-up menus. Otherwise, use
-	 * {@link #triggerEscapeKey(Component)}.
+	 * Only use this to escape from pop-up menus. Otherwise, use {@link #triggerEscape(Component)}.
 	 * 
 	 * @throws AWTException
 	 */
@@ -504,20 +582,29 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 	}
 
 	protected static void assertDisabled(ActionContextProvider provider, DockingActionIf action) {
-		ActionContext context = provider.getActionContext(null);
+		ActionContext context = createActionContext(provider);
 		assertFalse(action.isEnabledForContext(context));
 	}
 
 	protected static void assertEnabled(ActionContextProvider provider, DockingActionIf action) {
-		ActionContext context = provider.getActionContext(null);
+		ActionContext context = createActionContext(provider);
 		assertTrue(action.isEnabledForContext(context));
 	}
 
 	protected static void performEnabledAction(ActionContextProvider provider,
 			DockingActionIf action, boolean wait) {
 		ActionContext context = waitForValue(() -> {
-			ActionContext ctx =
-				provider == null ? new DefaultActionContext() : provider.getActionContext(null);
+
+			ActionContext ctx = null;
+			if (provider == null) {
+				ctx = new DefaultActionContext();
+			}
+			else {
+				ctx = provider.getActionContext(null);
+			}
+
+			ctx.setContextProvider(provider);
+
 			if (!action.isEnabledForContext(ctx)) {
 				return null;
 			}
@@ -565,26 +652,23 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 	}
 
 	protected static AutoReadMemorySpec getAutoReadMemorySpec(String name) {
-		return AutoReadMemorySpec.fromConfigName(name);
+		return AutoReadMemorySpecFactory.fromConfigName(name);
 	}
 
 	protected final AutoReadMemorySpec readNone =
-		getAutoReadMemorySpec(NoneAutoReadMemorySpec.CONFIG_NAME);
+		getAutoReadMemorySpec(BasicAutoReadMemorySpec.NONE.getConfigName());
 	protected final AutoReadMemorySpec readVisible =
-		getAutoReadMemorySpec(VisibleAutoReadMemorySpec.CONFIG_NAME);
+		getAutoReadMemorySpec(BasicAutoReadMemorySpec.VISIBLE.getConfigName());
 	protected final AutoReadMemorySpec readVisROOnce =
-		getAutoReadMemorySpec(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
+		getAutoReadMemorySpec(BasicAutoReadMemorySpec.VIS_RO_ONCE.getConfigName());
 
 	protected TestEnv env;
 	protected PluginTool tool;
 
-	protected DebuggerModelService modelService;
-	protected DebuggerModelServiceInternal modelServiceInternal;
 	protected DebuggerTargetService targetService;
 	protected DebuggerTraceManagerService traceManager;
 	protected ProgramManager programManager;
 
-	protected TestDebuggerModelBuilder mb;
 	protected ToyDBTraceBuilder tb;
 	protected Program program;
 
@@ -592,25 +676,6 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 	public TestName name = new TestName();
 
 	protected final ConsoleTaskMonitor monitor = new ConsoleTaskMonitor();
-
-	protected void waitRecorder(TraceRecorder recorder) throws Throwable {
-		if (recorder == null) {
-			return;
-		}
-		try {
-			waitOn(recorder.getTarget().getModel().flushEvents());
-		}
-		catch (RejectedExecutionException e) {
-			// Whatever
-		}
-		try {
-			waitOn(recorder.flushTransactions());
-		}
-		catch (RejectedExecutionException e) {
-			// Whatever
-		}
-		waitForDomainObject(recorder.getTrace());
-	}
 
 	@BeforeClass
 	public static void beforeClass() {
@@ -620,15 +685,9 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 
 	@Before
 	public void setUp() throws Exception {
-
 		env = new TestEnv();
 		tool = env.getTool();
 
-		DebuggerModelServiceProxyPlugin modelPlugin =
-			addPlugin(tool, DebuggerModelServiceProxyPlugin.class);
-		modelService = tool.getService(DebuggerModelService.class);
-		assertEquals(modelPlugin, modelService);
-		modelServiceInternal = modelPlugin;
 		targetService = addPlugin(tool, DebuggerTargetServicePlugin.class);
 
 		addPlugin(tool, DebuggerTraceManagerServicePlugin.class);
@@ -637,9 +696,6 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 		programManager = tool.getService(ProgramManager.class);
 
 		env.showTool();
-
-		// Need this for the factory
-		mb = new TestDebuggerModelBuilder();
 	}
 
 	@After
@@ -660,15 +716,6 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 				tb.close();
 			}
 
-			if (mb != null) {
-				if (mb.testModel != null) {
-					modelService.removeModel(mb.testModel);
-					for (TraceRecorder recorder : modelService.getTraceRecorders()) {
-						recorder.stopRecording();
-					}
-				}
-			}
-
 			if (program != null) {
 				programManager.closeAllPrograms(true);
 				program.release(this);
@@ -679,40 +726,6 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 		finally {
 			env.dispose();
 		}
-	}
-
-	protected void createTestModel() throws Exception {
-		mb.createTestModel();
-		modelService.addModel(mb.testModel);
-	}
-
-	protected void populateTestModel() throws Throwable {
-		mb.createTestProcessesAndThreads();
-		// NOTE: Test mapper uses TOYBE64
-		mb.testProcess1.regs.addRegistersFromLanguage(getToyBE64Language(),
-			Register::isBaseRegister);
-		mb.createTestThreadRegisterBanks();
-		mb.testProcess1.addRegion(".text", mb.rng(0x00400000, 0x00401000), "rx");
-		mb.testProcess1.addRegion(".data", mb.rng(0x00600000, 0x00601000), "rw");
-	}
-
-	protected TargetObject chooseTarget() {
-		return mb.testProcess1;
-	}
-
-	protected TraceRecorder recordAndWaitSync() throws Throwable {
-		createTestModel();
-		populateTestModel();
-
-		TargetObject target = chooseTarget();
-		TraceRecorder recorder = modelService.recordTarget(target, createTargetTraceMapper(target),
-			ActionSource.AUTOMATIC);
-
-		waitRecorder(recorder);
-		return recorder;
-	}
-
-	protected void nop() {
 	}
 
 	protected void intoProject(DomainObject obj) {
@@ -758,17 +771,6 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 
 	protected void useTrace(Trace trace) {
 		tb = new ToyDBTraceBuilder(trace);
-	}
-
-	protected DebuggerTargetTraceMapper createTargetTraceMapper(TargetObject target)
-			throws Exception {
-		return new TestDebuggerTargetTraceMapper(target) {
-			@Override
-			public TraceRecorder startRecording(PluginTool tool, Trace trace) {
-				useTrace(trace);
-				return super.startRecording(tool, trace);
-			}
-		};
 	}
 
 	protected void createAndOpenTrace(String langID) throws IOException {
@@ -817,53 +819,6 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 			program.setExecutablePath(path);
 		}
 		programManager.openProgram(program);
-	}
-
-	protected void setRegistersAndWaitForRecord(AbstractTestTargetRegisterBank<?> bank,
-			Map<String, byte[]> values, long timeoutMillis) throws Exception {
-		TraceThread traceThread = modelService.getTraceThread(bank.getThread());
-		assertNotNull(traceThread);
-		Trace trace = traceThread.getTrace();
-		TraceRecorder recorder = modelService.getRecorder(trace);
-		CompletableFuture<Void> observedTraceChange = new CompletableFuture<>();
-
-		TraceDomainObjectListener listener = new TraceDomainObjectListener() {
-			{
-				listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
-			}
-
-			void bytesChanged(TraceAddressSpace space, TraceAddressSnapRange range, byte[] oldValue,
-					byte[] newValue) {
-				if (space.getThread() != traceThread) {
-					return;
-				}
-				TraceMemorySpace regSpace =
-					trace.getMemoryManager().getMemoryRegisterSpace(traceThread, false);
-				assertNotNull(regSpace);
-				for (Map.Entry<String, byte[]> ent : values.entrySet()) {
-					String regName = ent.getKey();
-					Register register = trace.getBaseLanguage().getRegister(regName);
-					RegisterValue recorded = regSpace.getValue(recorder.getSnap(), register);
-					RegisterValue expected =
-						new RegisterValue(register, new BigInteger(1, ent.getValue()));
-					if (!recorded.equals(expected)) {
-						continue;
-					}
-				}
-				observedTraceChange.complete(null);
-			}
-		};
-		try {
-			trace.addListener(listener);
-			// get() is not my favorite, but it'll do for testing
-			// can't remove listener until observedTraceChange has completed.
-			bank.writeRegistersNamed(values)
-					.thenCompose(__ -> observedTraceChange)
-					.get(timeoutMillis, TimeUnit.MILLISECONDS);
-		}
-		finally {
-			trace.removeListener(listener);
-		}
 	}
 
 	protected File pack(DomainObject object) throws Exception {

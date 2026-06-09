@@ -386,4 +386,13 @@
    ]]></body>
   </pcode>
 </callfixup>
+
+<callfixup name="security_check_cookie">
+    <target name="__security_check_cookie"/>
+    <pcode>
+      <body><![CDATA[
+        tmpzero:4 = 0;
+      ]]></body>
+    </pcode>
+</callfixup>
 </compiler_spec>

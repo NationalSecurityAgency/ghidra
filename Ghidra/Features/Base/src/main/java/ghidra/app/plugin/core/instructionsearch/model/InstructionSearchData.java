@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,9 +30,9 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.TaskLauncher;
-import ghidra.util.task.TaskMonitor;
+import ghidra.util.task.*;
 
 /**
  * This is the data model that {@link InstructionSearchDialog} instances use
@@ -115,25 +115,72 @@ public class InstructionSearchData extends Observable {
 			throw new InvalidInputException("No instructions found in selection.");
 		}
 
-		TaskLauncher.launchModal("Loading Instructions", monitor -> {
+		TaskLauncher.launch(new LoadInstructionsTask(program, addrSet));
 
-			SleighDebugLogger logger;
+		modelChanged(UpdateType.RELOAD);
+	}
+
+	/**
+	 * Examines the given addresses from the given program to extract all instructions; results are 
+	 * stored in the local {@link InstructionMetadata} list.
+	 * 
+	 * @param program the current program
+	 * @param addresses the addresses to load instructions for
+	 * @throws InvalidInputException if there's an error parsing the instructions
+	 */
+	public void add(Program program, AddressSetView addresses) throws InvalidInputException {
+
+		// Do some initial checks on the program and addresses we want to load instructions
+		// for.  If these are invalid, no need to proceed.
+		if (program == null || addresses == null || addresses.isEmpty()) {
+			return;
+		}
+
+		// Do a quick check to see if we have any valid code units in the selection.  If not,
+		// display an error message.
+		Listing listing = program.getListing();
+		CodeUnitIterator cuIter = listing.getCodeUnits(addresses, true);
+		if (!cuIter.hasNext()) {
+			throw new InvalidInputException("No instructions found in selection.");
+		}
+
+		TaskLauncher.launch(new LoadInstructionsTask(program, addresses));
+
+		modelChanged(UpdateType.RELOAD);
+	}
+
+	private class LoadInstructionsTask extends Task {
+
+		private Program program;
+		private AddressSetView addresses;
+
+		public LoadInstructionsTask(Program program, AddressSetView addresses) {
+			super("Loading Instructions", true, true, true);
+			this.program = program;
+			this.addresses = addresses;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+
 			monitor.setIndeterminate(true);
 
-			while (cuIter.hasNext()) {
+			Listing listing = program.getListing();
+			CodeUnitIterator it = listing.getCodeUnits(addresses, true);
+			while (it.hasNext()) {
 				if (monitor.isCancelled()) {
 					return;
 				}
 
-				CodeUnit cu = cuIter.next();
+				CodeUnit cu = it.next();
 
 				InstructionMetadata instructionMetadata;
 
 				// If this CU is an instruction, we can use the Sleigh debug logger to build the 
-				// mask info.  If not, we don't need to create anything complex for masking - it's either
-				// on or off.
+				// mask info.  If not, we don't need to create anything complex for masking - it's 
+				// either on or off.
 				if (cu instanceof Instruction) {
-					logger =
+					SleighDebugLogger logger =
 						new SleighDebugLogger(program, cu.getAddress(), SleighDebugMode.VERBOSE);
 					if (logger.parseFailed()) {
 						Msg.showError(this, null, "Parsing error",
@@ -162,9 +209,7 @@ public class InstructionSearchData extends Observable {
 					}
 				}
 			}
-		});
-
-		modelChanged(UpdateType.RELOAD);
+		}
 	}
 
 	/**
@@ -349,8 +394,11 @@ public class InstructionSearchData extends Observable {
 			return;
 		}
 
-		instructions.get(row).getOperands().get(col).setMasked(
-			table.getCellData(row, col + 1).getState().equals(OperandState.MASKED));
+		instructions.get(row)
+				.getOperands()
+				.get(col)
+				.setMasked(
+					table.getCellData(row, col + 1).getState().equals(OperandState.MASKED));
 	}
 
 	/**
@@ -674,10 +722,12 @@ public class InstructionSearchData extends Observable {
 
 		// Do a quick check to make sure the search bounds are within the bounds of the 
 		// program.
-		if (searchBounds.getMinAddress().compareTo(
-			plugin.getCurrentProgram().getMinAddress()) < 0 ||
-			searchBounds.getMaxAddress().compareTo(
-				plugin.getCurrentProgram().getMaxAddress()) > 0) {
+		if (searchBounds.getMinAddress()
+				.compareTo(
+					plugin.getCurrentProgram().getMinAddress()) < 0 ||
+			searchBounds.getMaxAddress()
+					.compareTo(
+						plugin.getCurrentProgram().getMaxAddress()) > 0) {
 			throw new IllegalArgumentException(
 				"Search bounds are not valid; must be within the bounds of the program.");
 		}
@@ -734,8 +784,11 @@ public class InstructionSearchData extends Observable {
 		while (currentPosition.compareTo(endAddress) < 0) {
 
 			// Search program memory for the given mask and val.
-			currentPosition = plugin.getCurrentProgram().getMemory().findBytes(currentPosition,
-				endAddress, maskContainer.getValue(), maskContainer.getMask(), true, taskMonitor);
+			currentPosition = plugin.getCurrentProgram()
+					.getMemory()
+					.findBytes(currentPosition,
+						endAddress, maskContainer.getValue(), maskContainer.getMask(), true,
+						taskMonitor);
 
 			// If no match was found, currentPosition will be null.
 			if (currentPosition == null) {
@@ -792,8 +845,11 @@ public class InstructionSearchData extends Observable {
 		while (currentPosition.compareTo(endAddress) > 0) {
 
 			// Search program memory for the given mask and val.
-			currentPosition = plugin.getCurrentProgram().getMemory().findBytes(currentPosition,
-				endAddress, maskContainer.getValue(), maskContainer.getMask(), false, taskMonitor);
+			currentPosition = plugin.getCurrentProgram()
+					.getMemory()
+					.findBytes(currentPosition,
+						endAddress, maskContainer.getValue(), maskContainer.getMask(), false,
+						taskMonitor);
 
 			// If no match was found, currentPosition will be null.
 			if (currentPosition == null) {

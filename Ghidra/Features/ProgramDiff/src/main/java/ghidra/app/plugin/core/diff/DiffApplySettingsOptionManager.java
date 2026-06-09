@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.util.ProgramMergeFilter;
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 
 /**
  * Manages the options for the Diff apply settings.
@@ -43,35 +44,38 @@ class DiffApplySettingsOptionManager {
 	private static final int PROPERTIES = 1 << 11;
 	private static final int FUNCTIONS = 1 << 12;
 	private static final int FUNCTION_TAGS = 1 << 13;
+	private static final int SOURCE_MAP = 1 << 14;
 
-	private static final String OPTION_PROGRAM_CONTEXT = DIFF_APPLY_SETTINGS_OPTIONS +
-		Options.DELIMITER + "Program Context";
-	private static final String OPTION_BYTES = DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER +
-		"Bytes";
-	private static final String OPTION_CODE_UNITS = DIFF_APPLY_SETTINGS_OPTIONS +
-		Options.DELIMITER + "Code Units";
-	private static final String OPTION_REFERENCES = DIFF_APPLY_SETTINGS_OPTIONS +
-		Options.DELIMITER + "References";
-	private static final String OPTION_PLATE_COMMENTS = DIFF_APPLY_SETTINGS_OPTIONS +
-		Options.DELIMITER + "Plate Comments";
-	private static final String OPTION_PRE_COMMENTS = DIFF_APPLY_SETTINGS_OPTIONS +
-		Options.DELIMITER + "Pre Comments";
-	private static final String OPTION_EOL_COMMENTS = DIFF_APPLY_SETTINGS_OPTIONS +
-		Options.DELIMITER + "End Of Line Comments";
-	private static final String OPTION_REPEATABLE_COMMENTS = DIFF_APPLY_SETTINGS_OPTIONS +
-		Options.DELIMITER + "Repeatable Comments";
-	private static final String OPTION_POST_COMMENTS = DIFF_APPLY_SETTINGS_OPTIONS +
-		Options.DELIMITER + "Post Comments";
-	private static final String OPTION_SYMBOLS = DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER +
-		"Labels";
-	private static final String OPTION_BOOKMARKS = DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER +
-		"Bookmarks";
-	private static final String OPTION_PROPERTIES = DIFF_APPLY_SETTINGS_OPTIONS +
-		Options.DELIMITER + "Properties";
-	private static final String OPTION_FUNCTIONS = DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER +
-		"Functions";
+	private static final String OPTION_PROGRAM_CONTEXT =
+		DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER + "Program Context";
+	private static final String OPTION_BYTES =
+		DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER + "Bytes";
+	private static final String OPTION_CODE_UNITS =
+		DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER + "Code Units";
+	private static final String OPTION_REFERENCES =
+		DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER + "References";
+	private static final String OPTION_PLATE_COMMENTS =
+		DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER + "Plate Comments";
+	private static final String OPTION_PRE_COMMENTS =
+		DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER + "Pre Comments";
+	private static final String OPTION_EOL_COMMENTS =
+		DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER + "End Of Line Comments";
+	private static final String OPTION_REPEATABLE_COMMENTS =
+		DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER + "Repeatable Comments";
+	private static final String OPTION_POST_COMMENTS =
+		DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER + "Post Comments";
+	private static final String OPTION_SYMBOLS =
+		DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER + "Labels";
+	private static final String OPTION_BOOKMARKS =
+		DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER + "Bookmarks";
+	private static final String OPTION_PROPERTIES =
+		DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER + "Properties";
+	private static final String OPTION_FUNCTIONS =
+		DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER + "Functions";
 	private static final String OPTION_FUNCTION_TAGS =
 		DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER + "Function Tags";
+	private static final String OPTION_SOURCE_MAP =
+		DIFF_APPLY_SETTINGS_OPTIONS + Options.DELIMITER + "Source Map";
 
 //	public static final String MERGE = "Merge";
 //	public static final String MERGE_SYMBOLS_1 = "Merge";
@@ -79,6 +83,7 @@ class DiffApplySettingsOptionManager {
 
 	public static enum REPLACE_CHOICE {
 		IGNORE("Ignore"), REPLACE("Replace");
+
 		private String description;
 
 		REPLACE_CHOICE(String description) {
@@ -93,6 +98,7 @@ class DiffApplySettingsOptionManager {
 
 	public static enum MERGE_CHOICE {
 		IGNORE("Ignore"), REPLACE("Replace"), MERGE("Merge");
+
 		private String description;
 
 		MERGE_CHOICE(String description) {
@@ -111,6 +117,7 @@ class DiffApplySettingsOptionManager {
 		REPLACE("Replace"),
 		MERGE_DONT_SET_PRIMARY("Merge"),
 		MERGE_AND_SET_PRIMARY("Merge & Set Primary");
+
 		private String description;
 
 		SYMBOL_MERGE_CHOICE(String description) {
@@ -146,10 +153,7 @@ class DiffApplySettingsOptionManager {
 		options.setOptionsHelpLocation(help);
 
 		// Set the help strings
-		options.registerOption(
-			OPTION_PROGRAM_CONTEXT,
-			REPLACE_CHOICE.REPLACE,
-			help,
+		options.registerOption(OPTION_PROGRAM_CONTEXT, REPLACE_CHOICE.REPLACE, help,
 			getReplaceDescription("program context register value",
 				"program context register values"));
 		options.registerOption(OPTION_BYTES, REPLACE_CHOICE.REPLACE, help,
@@ -180,6 +184,8 @@ class DiffApplySettingsOptionManager {
 			getReplaceDescription("function", "functions"));
 		options.registerOption(OPTION_FUNCTION_TAGS, MERGE_CHOICE.MERGE, help,
 			getReplaceDescription("function tag", "function tags"));
+		options.registerOption(OPTION_SOURCE_MAP, REPLACE_CHOICE.IGNORE, help,
+			getReplaceDescription("source map", "source map"));
 
 		getDefaultApplyFilter();
 	}
@@ -218,6 +224,7 @@ class DiffApplySettingsOptionManager {
 		REPLACE_CHOICE properties = options.getEnum(OPTION_PROPERTIES, REPLACE_CHOICE.REPLACE);
 		REPLACE_CHOICE functions = options.getEnum(OPTION_FUNCTIONS, REPLACE_CHOICE.REPLACE);
 		MERGE_CHOICE functionTags = options.getEnum(OPTION_FUNCTION_TAGS, MERGE_CHOICE.MERGE);
+		REPLACE_CHOICE sourceMap = options.getEnum(OPTION_SOURCE_MAP, REPLACE_CHOICE.IGNORE);
 
 		// Convert the options to a merge filter.
 		ProgramMergeFilter filter = new ProgramMergeFilter();
@@ -238,6 +245,7 @@ class DiffApplySettingsOptionManager {
 		filter.setFilter(ProgramMergeFilter.FUNCTION_TAGS, functionTags.ordinal());
 		filter.setFilter(ProgramMergeFilter.PRIMARY_SYMBOL,
 			convertSymbolMergeChoiceToReplaceChoiceForPrimay(symbols).ordinal());
+		filter.setFilter(ProgramMergeFilter.SOURCE_MAP, sourceMap.ordinal());
 
 		return filter;
 	}
@@ -293,6 +301,7 @@ class DiffApplySettingsOptionManager {
 		saveReplaceOption(options, newDefaultApplyFilter, BOOKMARKS);
 		saveReplaceOption(options, newDefaultApplyFilter, PROPERTIES);
 		saveReplaceOption(options, newDefaultApplyFilter, FUNCTIONS);
+		saveReplaceOption(options, newDefaultApplyFilter, SOURCE_MAP);
 
 		saveMergeOption(options, newDefaultApplyFilter, PLATE_COMMENTS);
 		saveMergeOption(options, newDefaultApplyFilter, PRE_COMMENTS);
@@ -311,8 +320,9 @@ class DiffApplySettingsOptionManager {
 	private void saveCodeUnitReplaceOption(Options options, ProgramMergeFilter defaultApplyFilter,
 			int setting) {
 		int filter =
-			(defaultApplyFilter.getFilter(ProgramMergeFilter.INSTRUCTIONS) >= defaultApplyFilter.getFilter(ProgramMergeFilter.DATA)) ? ProgramMergeFilter.INSTRUCTIONS
-					: ProgramMergeFilter.DATA;
+			(defaultApplyFilter.getFilter(ProgramMergeFilter.INSTRUCTIONS) >= defaultApplyFilter
+					.getFilter(ProgramMergeFilter.DATA)) ? ProgramMergeFilter.INSTRUCTIONS
+							: ProgramMergeFilter.DATA;
 		REPLACE_CHOICE defaultSetting = REPLACE_CHOICE.REPLACE;
 		REPLACE_CHOICE optionSetting = options.getEnum(getOptionName(setting), defaultSetting);
 		REPLACE_CHOICE diffSetting = convertTypeToReplaceEnum(defaultApplyFilter, filter);
@@ -332,7 +342,8 @@ class DiffApplySettingsOptionManager {
 		}
 	}
 
-	private void saveMergeOption(Options options, ProgramMergeFilter defaultApplyFilter, int setting) {
+	private void saveMergeOption(Options options, ProgramMergeFilter defaultApplyFilter,
+			int setting) {
 		MERGE_CHOICE defaultSetting = MERGE_CHOICE.MERGE;
 		MERGE_CHOICE optionSetting = options.getEnum(getOptionName(setting), defaultSetting);
 		MERGE_CHOICE diffSetting =
@@ -386,6 +397,8 @@ class DiffApplySettingsOptionManager {
 				return ProgramMergeFilter.SYMBOLS;
 			case FUNCTION_TAGS:
 				return ProgramMergeFilter.FUNCTION_TAGS;
+			case SOURCE_MAP:
+				return ProgramMergeFilter.SOURCE_MAP;
 			default:
 				return 0;
 		}
@@ -426,6 +439,8 @@ class DiffApplySettingsOptionManager {
 				return OPTION_SYMBOLS;
 			case FUNCTION_TAGS:
 				return OPTION_FUNCTION_TAGS;
+			case SOURCE_MAP:
+				return OPTION_SOURCE_MAP;
 			default:
 				return null;
 		}
@@ -507,8 +522,10 @@ class DiffApplySettingsOptionManager {
 	 * @param type the ProgramMergeFilter filter type
 	 * @return the StringEnum
 	 */
-	private REPLACE_CHOICE convertTypeToReplaceEnum(ProgramMergeFilter defaultApplyFilter, int type) {
+	private REPLACE_CHOICE convertTypeToReplaceEnum(ProgramMergeFilter defaultApplyFilter,
+			int type) {
 		int filter = defaultApplyFilter.getFilter(type);
+		Msg.info(this, "type: " + Integer.toHexString(filter) + " filter: " + filter);
 		return REPLACE_CHOICE.values()[filter];
 	}
 

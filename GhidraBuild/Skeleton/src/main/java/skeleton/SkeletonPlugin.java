@@ -80,7 +80,7 @@ public class SkeletonPlugin extends ProgramPlugin {
 		private DockingAction action;
 
 		public MyProvider(Plugin plugin, String owner) {
-			super(plugin.getTool(), owner, owner);
+			super(plugin.getTool(), "Skeleton Provider", owner);
 			buildPanel();
 			createActions();
 		}
@@ -96,7 +96,7 @@ public class SkeletonPlugin extends ProgramPlugin {
 
 		// Customize actions
 		private void createActions() {
-			action = new DockingAction("My Action", getName()) {
+			action = new DockingAction("My Action", getOwner()) {
 				@Override
 				public void actionPerformed(ActionContext context) {
 					Msg.showInfo(getClass(), panel, "Custom Action", "Hello!");

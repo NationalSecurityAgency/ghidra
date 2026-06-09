@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra;
 import java.awt.event.MouseEvent;
 
 import generic.theme.GColor;
+import ghidra.app.util.SearchConstants;
 import ghidra.framework.options.Options;
 
 /**
@@ -82,13 +83,17 @@ public interface GhidraOptions {
 	/**
 	 * Option for the max number of hits found in a search; the search
 	 * stops when it reaches this limit.
+	 * @deprecated use {@link SearchConstants#SEARCH_LIMIT_NAME}
 	 */
-	final String OPTION_SEARCH_LIMIT = "Search Limit";
+	@Deprecated
+	final String OPTION_SEARCH_LIMIT = SearchConstants.SEARCH_LIMIT_NAME;
 
 	/**
 	 * Options title the search category
+	 * @deprecated use {@link SearchConstants#SEARCH_OPTION_NAME}
 	 */
-	final String OPTION_SEARCH_TITLE = "Search";
+	@Deprecated(since = "11.3", forRemoval = true)
+	final String OPTION_SEARCH_TITLE = SearchConstants.SEARCH_OPTION_NAME;
 
 	/**
 	 * Category name for the "Auto Analysis" options.

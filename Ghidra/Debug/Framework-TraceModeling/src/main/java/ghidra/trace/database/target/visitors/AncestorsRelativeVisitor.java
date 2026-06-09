@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,22 +15,22 @@
  */
 package ghidra.trace.database.target.visitors;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import ghidra.dbg.util.PathPredicates;
 import ghidra.trace.database.target.visitors.TreeTraversal.SpanIntersectingVisitor;
 import ghidra.trace.database.target.visitors.TreeTraversal.VisitResult;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter;
 
 public class AncestorsRelativeVisitor implements SpanIntersectingVisitor {
 
-	protected final PathPredicates predicates;
+	protected final PathFilter filter;
 
-	public AncestorsRelativeVisitor(PathPredicates predicates) {
-		this.predicates = predicates;
+	public AncestorsRelativeVisitor(PathFilter filter) {
+		this.filter = filter;
 	}
 
 	@Override
@@ -40,10 +40,10 @@ public class AncestorsRelativeVisitor implements SpanIntersectingVisitor {
 	}
 
 	@Override
-	public VisitResult visitValue(TraceObjectValue value, TraceObjectValPath path) {
-		List<String> keyList = path.getKeyList();
-		return VisitResult.result(predicates.matches(keyList),
-			predicates.ancestorCouldMatchRight(keyList, true) && value.isObject());
+	public VisitResult visitValue(TraceObjectValue value, TraceObjectValPath valPath) {
+		KeyPath path = valPath.getPath();
+		return VisitResult.result(filter.matches(path),
+			filter.ancestorCouldMatchRight(path, true) && value.isObject());
 	}
 
 	@Override
@@ -54,13 +54,13 @@ public class AncestorsRelativeVisitor implements SpanIntersectingVisitor {
 	@Override
 	public Stream<? extends TraceObjectValue> continueValues(TraceObject object,
 			Lifespan span, TraceObjectValPath pre) {
-		Set<String> prevKeys = predicates.getPrevKeys(pre.getKeyList());
+		Set<String> prevKeys = filter.getPrevKeys(pre.getPath());
 		if (prevKeys.isEmpty()) {
 			return Stream.empty();
 		}
 
 		return object.getParents(span)
 				.stream()
-				.filter(v -> PathPredicates.anyMatches(prevKeys, v.getEntryKey()));
+				.filter(v -> PathFilter.anyMatches(prevKeys, v.getEntryKey()));
 	}
 }

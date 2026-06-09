@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,6 @@ import java.util.List;
 import org.junit.*;
 
 import generic.test.AbstractGuiTest;
-import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
@@ -40,7 +39,6 @@ public class FunctionEditorModelTest extends AbstractGuiTest {
 	private volatile boolean dataChangeCalled;
 	private Structure bigStruct;
 	private ProgramDB program;
-	private DataTypeManagerService service;
 	private volatile boolean tableRowsChanged;
 
 	class MyModelChangeListener implements ModelChangeListener {
@@ -492,9 +490,10 @@ public class FunctionEditorModelTest extends AbstractGuiTest {
 	public void testAutoStorageFix() {
 		model.addParameter();
 		ParamInfo paramInfo = model.getParameters().get(0);// param_0@Stack[0x4]:4
+		model.setParameterFormalDataType(paramInfo, IntegerDataType.dataType);
 		model.setUseCustomizeStorage(true);
 		Varnode v = paramInfo.getStorage().getFirstVarnode();
-		assertEquals(1, v.getSize());
+		assertEquals(4, v.getSize());
 		assertEquals(4, v.getOffset());
 		model.setParameterFormalDataType(paramInfo, new Undefined8DataType());
 		assertTrue(model.isValid());
@@ -507,9 +506,9 @@ public class FunctionEditorModelTest extends AbstractGuiTest {
 	public void testAutoStorageFixReg() throws Exception {
 		model.addParameter();
 		ParamInfo paramInfo = model.getParameters().get(0);
+		model.setParameterFormalDataType(paramInfo, new Undefined2DataType());
 		model.setUseCustomizeStorage(true);
 
-		model.setParameterFormalDataType(paramInfo, new Undefined2DataType());
 		assertTrue(model.getStatusText(), model.isValid());
 		Varnode v = paramInfo.getStorage().getFirstVarnode();
 		assertEquals(2, v.getSize());
@@ -1046,7 +1045,7 @@ public class FunctionEditorModelTest extends AbstractGuiTest {
 		param = model.getParameters().get(3);
 		assertEquals("param_2", param.getName());
 		assertTrue(DefaultDataType.dataType.isEquivalent(param.getDataType()));
-		assertEquals("Stack[0xc]:1", param.getStorage().toString());
+		assertEquals("<UNASSIGNED>", param.getStorage().toString());
 
 		model.setParameterFormalDataType(param, struct);
 
@@ -1156,7 +1155,7 @@ public class FunctionEditorModelTest extends AbstractGuiTest {
 		param = model.getParameters().get(3);
 		assertEquals("param_2", param.getName());
 		assertTrue(DefaultDataType.dataType.isEquivalent(param.getDataType()));
-		assertEquals("R9B:1", param.getStorage().toString());
+		assertEquals("<UNASSIGNED>", param.getStorage().toString());
 
 		model.setParameterFormalDataType(param, struct);
 
@@ -1611,9 +1610,9 @@ public class FunctionEditorModelTest extends AbstractGuiTest {
 		assertEquals("R9D:4", storage.toString());
 
 		model.setUseCustomizeStorage(false);
-		// no change to 'this', return ptr consumed and unfortunately
+		// no change to 'this', return pointer consumed and unfortunately
 		// injected before custom 'this' param
-		// TODO: should we be removing 'this' param if not __thiscall ?
+		// Note: should we be removing 'this' param if not __thiscall ?
 
 		assertTrue(model.getReturnType().isEquivalent(new PointerDataType(bigStruct)));
 		assertTrue(model.getFormalReturnType().isEquivalent(bigStruct));
@@ -1842,7 +1841,6 @@ public class FunctionEditorModelTest extends AbstractGuiTest {
 
 		model.setUseCustomizeStorage(true);
 		VariableStorage paramStorage1 = model.getParameters().get(0).getStorage();
-		VariableStorage paramStorage2 = model.getParameters().get(1).getStorage();
 		VariableStorage paramStorage3 = model.getParameters().get(2).getStorage();
 
 		model.setSignatureFieldText("int joe(int e, int c, int f, int g)");

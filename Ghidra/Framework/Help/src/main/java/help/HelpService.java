@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package help;
 import java.awt.Component;
 import java.net.URL;
 
+import ghidra.util.DynamicHelpLocation;
 import ghidra.util.HelpLocation;
 
 /**
@@ -84,6 +85,14 @@ public interface HelpService {
 	 * @param helpLocation help content location
 	 */
 	public void registerHelp(Object helpObject, HelpLocation helpLocation);
+
+	/**
+	 * Registers a provider of dynamic help.  See {@link DynamicHelpLocation} for more information.
+	 * 
+	 * @param helpObject the object to associate the specified help location with
+	 * @param helpLocation the dynamic help location
+	 */
+	public void registerDynamicHelp(Object helpObject, DynamicHelpLocation helpLocation);
 
 	/**
 	 * Removes this object from the help system.  This method is useful, for example,

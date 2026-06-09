@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,53 +58,60 @@ public class ProjectDataDeleteAction extends FrontendProjectTreeAction {
 
 		// Confirm the delete *without* using a task so that do not have 2 dialogs showing
 		int fileCount = countTask.getFileCount();
-		if (!confirmDelete(fileCount, files, context.getComponent())) {
+		if (!confirmDelete(fileCount, files, folders, context.getComponent())) {
 			return;
 		}
 
 		// Task 2 - perform the delete--this could take a while
 		DeleteProjectFilesTask deleteTask = createDeleteTask(context, files, folders, fileCount);
 		TaskLauncher.launch(deleteTask);
-	}
 
+		if (!deleteTask.isCancelled()) {
+			deleteTask.showReport();
+		}
+	}
+	
 	DeleteProjectFilesTask createDeleteTask(ProjectDataContext context, Set<DomainFile> files,
 			Set<DomainFolder> folders, int fileCount) {
 		return new DeleteProjectFilesTask(folders, files, fileCount, context.getComponent());
 	}
 
-	private boolean confirmDelete(int fileCount, Set<DomainFile> files, Component parent) {
+	private boolean confirmDelete(int fileCount, Set<DomainFile> files, Set<DomainFolder> folders,
+			Component parent) {
 
-		String message = getMessage(fileCount, files);
+		String message = getMessage(fileCount, files, folders);
 		OptionDialogBuilder builder = new OptionDialogBuilder("Confirm Delete", message);
-		builder.addOption("OK").addCancel().setMessageType(OptionDialog.QUESTION_MESSAGE);
-		return builder.show(parent) != OptionDialog.CANCEL_OPTION;
+		int choice = builder.addOption("OK")
+				.addCancel()
+				.setMessageType(OptionDialog.QUESTION_MESSAGE)
+				.show(parent);
+		return choice != OptionDialog.CANCEL_OPTION;
 	}
 
-	private String getMessage(int fileCount, Set<DomainFile> selectedFiles) {
+	private String getMessage(int fileCount, Set<DomainFile> files, Set<DomainFolder> folders) {
 
 		if (fileCount == 0) {
 			return "Are you sure you want to delete the selected empty folder(s)?";
 		}
 
-		if (fileCount == 1) {
-			if (!selectedFiles.isEmpty()) {
-				DomainFile file = CollectionUtils.any(selectedFiles);
-				return "<html>Are you sure you want to <B><U>permanently</U></B> delete \"" +
-					HTMLUtilities.escapeHTML(file.getName()) + "\"?";
+		if (folders.isEmpty()) {
+			if (fileCount == 1) {
+				DomainFile file = CollectionUtils.any(files);
+				String type = file.getContentType();
+				return "<html>Are you sure you want to <B><U>permanently</U></B> delete " + type +
+					" \"" + HTMLUtilities.escapeHTML(file.getName()) + "\"?";
 			}
-
-			// only folders are selected, but they contain files
 			return "<html>Are you sure you want to <B><U>permanently</U></B> delete the " +
-				" selected files and folders?";
+				" selected files?";
 		}
 
 		// multiple files selected
-		return "<html>Are you sure you want to <B><U>permanently</U></B> delete the " + fileCount +
-			" selected files?";
+		return "<html>Are you sure you want to <B><U>permanently</U></B> delete the selected folder(s) and file(s)?";
 	}
 
 	@Override
 	protected boolean isEnabledForContext(ProjectDataContext context) {
+		// NOTE: Folder-links are treated as files
 		if (!context.hasOneOrMoreFilesAndFolders()) {
 			return false;
 		}

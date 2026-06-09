@@ -19,12 +19,10 @@ import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.swing.MenuElement;
 import javax.swing.SwingUtilities;
@@ -47,6 +45,8 @@ import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.plugin.core.decompile.DecompilePlugin;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
+import ghidra.app.plugin.core.functiongraph.FGProvider;
+import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
@@ -61,9 +61,9 @@ import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
@@ -76,18 +76,19 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 
 	protected static final Map<State, Color> COLOR_FOR_STATE =
-		Stream.of(State.values()).collect(Collectors.toMap(s -> s, s -> new Color(s.ordinal())));
+		State.VALUES.stream().collect(Collectors.toMap(s -> s, s -> new Color(s.ordinal())));
 
 	protected static final Set<String> POPUP_ACTIONS = Set.of(AbstractSetBreakpointAction.NAME,
 		AbstractToggleBreakpointAction.NAME, AbstractEnableBreakpointAction.NAME,
 		AbstractDisableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME);
 
 	protected static final Set<String> SET_ACTIONS =
-		Set.of("SW_EXECUTE", "HW_EXECUTE", "READ,WRITE", "READ", "WRITE");
+		Set.of("Execute (sw)", "Execute (hw)", "Access (hw)", "Read (hw)", "Write (hw)");
 
 	protected DebuggerBreakpointMarkerPlugin breakpointMarkerPlugin;
 	protected DebuggerListingPlugin listingPlugin;
 	protected CodeBrowserPlugin codeBrowserPlugin;
+	protected FunctionGraphPlugin functionGraphPlugin; // Not initialized in setup
 
 	protected DebuggerLogicalBreakpointService breakpointService;
 	protected DebuggerStaticMappingService mappingService;
@@ -107,7 +108,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 	 */
 	protected void hackMarkerBackgroundColors(Program p) throws Exception {
 		SwingUtilities.invokeAndWait(() -> {
-			for (State state : State.values()) {
+			for (State state : State.VALUES) {
 				if (state == State.NONE) {
 					continue;
 				}
@@ -151,11 +152,11 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 	protected abstract void handleSetBreakpointInvocation(Set<TraceBreakpointKind> expectedKinds,
 			long dynOffset) throws Throwable;
 
-	protected abstract void handleToggleBreakpointInvocation(TraceBreakpoint expectedBreakpoint,
-			boolean expectedEn) throws Throwable;
+	protected abstract void handleToggleBreakpointInvocation(
+			TraceBreakpointLocation expectedBreakpoint, boolean expectedEn) throws Throwable;
 
-	protected abstract void handleDeleteBreakpointInvocation(TraceBreakpoint expectedBreakpoint)
-			throws Throwable;
+	protected abstract void handleDeleteBreakpointInvocation(
+			TraceBreakpointLocation expectedBreakpoint) throws Throwable;
 
 	@Before
 	public void setUpBreakpointMarkerPluginTest() throws Exception {
@@ -200,7 +201,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 						TaskMonitor.DUMMY, false);
 			program.getBookmarkManager()
 					.setBookmark(addr(program, 0x00400123), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
-						"SW_EXECUTE;1", "");
+						"x;1", "");
 		}
 	}
 
@@ -482,7 +483,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 			throws Throwable {
 		addMappedBreakpointOpenAndWait(); // wasteful, but whatever
 		for (LogicalBreakpoint lb : List.copyOf(breakpointService.getAllBreakpoints())) {
-			TraceBreakpoint brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
+			TraceBreakpointLocation brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
 			CompletableFuture<Void> delete = lb.delete();
 			handleDeleteBreakpointInvocation(brk);
 			waitOn(delete);
@@ -504,7 +505,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
 		runSwing(() -> dialog.okCallback());
-		handleSetBreakpointInvocation(TraceBreakpointKindSet.SW_EXECUTE, 0x55550123);
+		handleSetBreakpointInvocation(CommonSet.SWX.kinds(), 0x55550123);
 		waitForDomainObject(program);
 		waitForDomainObject(tb.trace);
 		waitOn(breakpointService.changesSettled());
@@ -513,7 +514,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 			assertEquals(State.ENABLED, lb.computeState());
 			// TODO: Different cases for different expected default kinds?
-			assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), lb.getKinds());
+			assertEquals(CommonSet.SWX.kinds(), lb.getKinds());
 		});
 	}
 
@@ -521,7 +522,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 	public void testActionToggleBreakpointProgramWithNoCurrentBreakpointOnData() throws Throwable {
 		addMappedBreakpointOpenAndWait(); // wasteful, but whatever
 		for (LogicalBreakpoint lb : List.copyOf(breakpointService.getAllBreakpoints())) {
-			TraceBreakpoint brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
+			TraceBreakpointLocation brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
 			CompletableFuture<Void> delete = lb.delete();
 			handleDeleteBreakpointInvocation(brk);
 			waitOn(delete);
@@ -542,7 +543,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
 		runSwing(() -> dialog.okCallback());
-		handleSetBreakpointInvocation(TraceBreakpointKindSet.ACCESS, 0x55550123);
+		handleSetBreakpointInvocation(CommonSet.ACCESS.kinds(), 0x55550123);
 		waitForDomainObject(program);
 		waitForDomainObject(tb.trace);
 		waitOn(breakpointService.changesSettled());
@@ -551,7 +552,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 			assertEquals(State.ENABLED, lb.computeState());
 			// TODO: Different cases for different expected default kinds?
-			assertEquals(TraceBreakpointKindSet.ACCESS, lb.getKinds());
+			assertEquals(CommonSet.ACCESS.kinds(), lb.getKinds());
 		});
 	}
 
@@ -620,8 +621,8 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		waitForPass(() -> assertEquals(State.ENABLED, lb.computeStateForTrace(trace)));
 	}
 
-	protected void testActionSetBreakpointProgram(DockingAction action,
-			Set<TraceBreakpointKind> expectedKinds) throws Throwable {
+	protected void testActionSetBreakpointProgram(CommonSet kind) throws Throwable {
+		DockingAction action = breakpointMarkerPlugin.actionsSetBreakpoint.get(kind);
 		addMappedBreakpointOpenAndWait(); // Adds an unneeded breakpoint. Aw well.
 
 		ProgramLocationActionContext ctx = staticCtx(addr(program, 0x0400321));
@@ -634,19 +635,19 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 			dialog.okCallback();
 		});
 
-		handleSetBreakpointInvocation(expectedKinds, 0x55550321);
+		handleSetBreakpointInvocation(kind.kinds(), 0x55550321);
 
 		waitForPass(() -> {
 			LogicalBreakpoint lb = Unique.assertOne(
 				breakpointService.getBreakpointsAt(program, addr(program, 0x00400321)));
-			assertEquals(expectedKinds, lb.getKinds());
+			assertEquals(kind.kinds(), lb.getKinds());
 			assertEquals(State.ENABLED, lb.computeState());
 			assertEquals("Test name", lb.getName());
 		});
 	}
 
-	protected void testActionSetBreakpointTrace(DockingAction action,
-			Set<TraceBreakpointKind> expectedKinds) throws Throwable {
+	protected void testActionSetBreakpointTrace(CommonSet kind) throws Throwable {
+		DockingAction action = breakpointMarkerPlugin.actionsSetBreakpoint.get(kind);
 		T t = addMappedBreakpointOpenAndWait(); // Adds an unneeded breakpoint. Aw well.
 		Trace trace = getTrace(t);
 
@@ -656,12 +657,12 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
 		runSwing(() -> dialog.okCallback());
-		handleSetBreakpointInvocation(expectedKinds, 0x55550321);
+		handleSetBreakpointInvocation(kind.kinds(), 0x55550321);
 
 		waitForPass(() -> {
 			LogicalBreakpoint lb = Unique
 					.assertOne(breakpointService.getBreakpointsAt(trace, addr(trace, 0x55550321)));
-			assertEquals(expectedKinds, lb.getKinds());
+			assertEquals(kind.kinds(), lb.getKinds());
 			assertEquals(State.ENABLED, lb.computeStateForTrace(trace));
 		});
 		/**
@@ -671,63 +672,53 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 	}
 
 	@Test
-	public void testActionSetSoftwareBreakpointProgram() throws Throwable {
-		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetSoftwareBreakpoint,
-			Set.of(TraceBreakpointKind.SW_EXECUTE));
+	public void testActionSetSwExecuteBreakpointProgram() throws Throwable {
+		testActionSetBreakpointProgram(CommonSet.SWX);
 	}
 
 	@Test
-	public void testActionSetSoftwareBreakpointTrace() throws Throwable {
-		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetSoftwareBreakpoint,
-			Set.of(TraceBreakpointKind.SW_EXECUTE));
+	public void testActionSetSwExecuteBreakpointTrace() throws Throwable {
+		testActionSetBreakpointTrace(CommonSet.SWX);
 	}
 
 	@Test
-	public void testActionSetExecuteBreakpointProgram() throws Throwable {
-		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetExecuteBreakpoint,
-			Set.of(TraceBreakpointKind.HW_EXECUTE));
+	public void testActionSetHwExecuteBreakpointProgram() throws Throwable {
+		testActionSetBreakpointProgram(CommonSet.HWX);
 	}
 
 	@Test
-	public void testActionSetExecuteBreakpointTrace() throws Throwable {
-		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetExecuteBreakpoint,
-			Set.of(TraceBreakpointKind.HW_EXECUTE));
-	}
-
-	@Test
-	public void testActionSetReadWriteBreakpointProgram() throws Throwable {
-		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetReadWriteBreakpoint,
-			Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE));
-	}
-
-	@Test
-	public void testActionSetReadWriteBreakpointTrace() throws Throwable {
-		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetReadWriteBreakpoint,
-			Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE));
+	public void testActionSetHwExecuteBreakpointTrace() throws Throwable {
+		testActionSetBreakpointTrace(CommonSet.HWX);
 	}
 
 	@Test
 	public void testActionSetReadBreakpointProgram() throws Throwable {
-		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetReadBreakpoint,
-			Set.of(TraceBreakpointKind.READ));
+		testActionSetBreakpointProgram(CommonSet.READ);
 	}
 
 	@Test
 	public void testActionSetReadBreakpointTrace() throws Throwable {
-		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetReadBreakpoint,
-			Set.of(TraceBreakpointKind.READ));
+		testActionSetBreakpointTrace(CommonSet.READ);
 	}
 
 	@Test
 	public void testActionSetWriteBreakpointProgram() throws Throwable {
-		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetWriteBreakpoint,
-			Set.of(TraceBreakpointKind.WRITE));
+		testActionSetBreakpointProgram(CommonSet.WRITE);
 	}
 
 	@Test
 	public void testActionSetWriteBreakpointTrace() throws Throwable {
-		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetWriteBreakpoint,
-			Set.of(TraceBreakpointKind.WRITE));
+		testActionSetBreakpointTrace(CommonSet.WRITE);
+	}
+
+	@Test
+	public void testActionSetAccessBreakpointProgram() throws Throwable {
+		testActionSetBreakpointProgram(CommonSet.ACCESS);
+	}
+
+	@Test
+	public void testActionSetAccessBreakpointTrace() throws Throwable {
+		testActionSetBreakpointTrace(CommonSet.ACCESS);
 	}
 
 	@Test
@@ -804,7 +795,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 
 		ProgramLocationActionContext ctx = staticCtx(addr(program, 0x00400123));
 		assertTrue(breakpointMarkerPlugin.actionClearBreakpoint.isAddToPopup(ctx));
-		TraceBreakpoint brk = Unique.assertOne(lb.getTraceBreakpoints(trace));
+		TraceBreakpointLocation brk = Unique.assertOne(lb.getTraceBreakpoints(trace));
 		performAction(breakpointMarkerPlugin.actionClearBreakpoint, ctx, true);
 		handleDeleteBreakpointInvocation(brk);
 
@@ -819,7 +810,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 
 		ProgramLocationActionContext ctx = dynamicCtx(trace, addr(trace, 0x55550123));
 		assertTrue(breakpointMarkerPlugin.actionClearBreakpoint.isAddToPopup(ctx));
-		TraceBreakpoint brk = Unique.assertOne(lb.getTraceBreakpoints(trace));
+		TraceBreakpointLocation brk = Unique.assertOne(lb.getTraceBreakpoints(trace));
 		performAction(breakpointMarkerPlugin.actionClearBreakpoint, ctx, true);
 		handleDeleteBreakpointInvocation(brk);
 
@@ -866,7 +857,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		waitForPass(() -> {
 			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 			assertEquals(State.INEFFECTIVE_ENABLED, lb.computeState());
-			assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), lb.getKinds());
+			assertEquals(CommonSet.SWX.kinds(), lb.getKinds());
 		});
 
 		performEnabledAction(decompilerProvider, breakpointMarkerPlugin.actionToggleBreakpoint,
@@ -874,7 +865,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		waitForPass(() -> {
 			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 			assertEquals(State.INEFFECTIVE_DISABLED, lb.computeState());
-			assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), lb.getKinds());
+			assertEquals(CommonSet.SWX.kinds(), lb.getKinds());
 		});
 	}
 
@@ -890,9 +881,9 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		runSwing(() -> decompilerProvider.getController().setDecompileData(mockData(results)));
 
 		waitOn(breakpointService.placeBreakpointAt(program, entry, 1,
-			Set.of(TraceBreakpointKind.SW_EXECUTE), ""));
+			CommonSet.SWX.kinds(), ""));
 		waitOn(breakpointService.placeBreakpointAt(program, entry.add(2), 1,
-			Set.of(TraceBreakpointKind.SW_EXECUTE), ""));
+			CommonSet.SWX.kinds(), ""));
 		waitForPass(() -> {
 			assertEquals(2, breakpointService.getAllBreakpoints().size());
 		});
@@ -906,5 +897,65 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 				assertEquals(State.INEFFECTIVE_DISABLED, lb.computeState());
 			}
 		});
+	}
+
+	@Test
+	public void testWithFunctionGraphPlugin() throws Throwable {
+		functionGraphPlugin = addPlugin(tool, FunctionGraphPlugin.class);
+
+		tool.removePlugins(List.of(breakpointMarkerPlugin));
+		breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
+
+		tool.removePlugins(List.of(functionGraphPlugin));
+	}
+
+	protected void toggleInstallFunctionGraphPlugin() throws Throwable {
+		if (functionGraphPlugin == null) {
+			functionGraphPlugin = addPlugin(tool, FunctionGraphPlugin.class);
+		}
+		else {
+			tool.removePlugins(List.of(functionGraphPlugin));
+			functionGraphPlugin = null;
+		}
+	}
+
+	protected void toggleInstallBreakointMarkerPlugin() throws Throwable {
+		if (breakpointMarkerPlugin == null) {
+			breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
+		}
+		else {
+			tool.removePlugins(List.of(breakpointMarkerPlugin));
+			breakpointMarkerPlugin = null;
+		}
+	}
+
+	@Test
+	public void testWithFunctionGraphPluginFrenetically() throws Throwable {
+		Random rnd = new Random();
+		for (int i = 0; i < 100; i++) {
+			if (rnd.nextBoolean()) {
+				toggleInstallFunctionGraphPlugin();
+			}
+			else {
+				toggleInstallBreakointMarkerPlugin();
+			}
+		}
+	}
+
+	@Test
+	public void testWithFunctionGraphPluginAndOpenProgram() throws Throwable {
+		functionGraphPlugin = addPlugin(tool, FunctionGraphPlugin.class);
+		tool.removePlugins(List.of(breakpointMarkerPlugin));
+
+		FGProvider functionGraphProvider = waitForComponentProvider(FGProvider.class);
+		prepareDecompiler(); // Just to get a minimally meaningful program
+		functionGraphProvider.setVisible(true);
+
+		breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
+		tool.removePlugins(List.of(functionGraphPlugin));
+		breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
+		tool.removePlugins(List.of(functionGraphPlugin));
+		breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
+		tool.removePlugins(List.of(functionGraphPlugin));
 	}
 }

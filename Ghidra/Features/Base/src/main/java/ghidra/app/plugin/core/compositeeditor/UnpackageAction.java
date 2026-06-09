@@ -53,9 +53,11 @@ public class UnpackageAction extends CompositeEditorTableAction {
 		if (!isEnabledForContext(context)) {
 			return;
 		}
+
 		// If lots of components, verify the user really wants to unpackage.
 		int currentRowIndex =
 			model.getSelection().getFieldRange(0).getStart().getIndex().intValue();
+
 		int subComps = model.getNumSubComponents(currentRowIndex);
 		if (subComps > 1000) {
 			String question = "Are you sure you want to unpackage " + subComps + " components?";

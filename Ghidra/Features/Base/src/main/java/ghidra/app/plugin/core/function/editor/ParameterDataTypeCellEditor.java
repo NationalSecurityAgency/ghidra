@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,12 @@
  */
 package ghidra.app.plugin.core.function.editor;
 
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.*;
 import java.util.EventObject;
 
-import javax.swing.*;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JTable;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
@@ -30,6 +31,7 @@ import docking.widgets.table.FocusableEditor;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeManager;
 import ghidra.util.MessageType;
 import ghidra.util.data.DataTypeParser;
 
@@ -37,33 +39,33 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor
 		implements TableCellEditor, FocusableEditor {
 	private DataTypeSelectionEditor editor;
 	private DropDownSelectionTextField<DataType> textField;
-	private JButton dataTypeChooserButton;
 	private DataType dt;
 
-	private JPanel editorPanel;
 	private DataTypeManagerService service;
 	private DialogComponentProvider dialog;
+	private DataTypeManager dtm;
 
-	ParameterDataTypeCellEditor(DialogComponentProvider dialog, DataTypeManagerService service) {
+	ParameterDataTypeCellEditor(DialogComponentProvider dialog, DataTypeManagerService service,
+			DataTypeManager dtm) {
 		this.dialog = dialog;
 		this.service = service;
-
+		this.dtm = dtm;
 	}
 
 	@Override
 	public Component getTableCellEditorComponent(JTable table1, Object value, boolean isSelected,
 			int row, int column) {
-		init();
-
 		dt = (DataType) value;
+
+		init();
 
 		editor.setCellEditorValue(dt);
 
-		return editorPanel;
+		return editor.getEditorComponent();
 	}
 
 	private void init() {
-		editor = new DataTypeSelectionEditor(service, DataTypeParser.AllowedDataTypes.ALL);
+		editor = new DataTypeSelectionEditor(dtm, service, DataTypeParser.AllowedDataTypes.ALL);
 		editor.setTabCommitsEdit(true);
 		editor.setConsumeEnterKeyPress(false); // we want the table to handle Enter key presses
 
@@ -80,39 +82,13 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor
 			}
 		});
 
-		// force a small button for the table's cell editor
-		dataTypeChooserButton = new JButton("...") {
-			@Override
-			public Dimension getPreferredSize() {
-				Dimension preferredSize = super.getPreferredSize();
-				preferredSize.width = 15;
-				return preferredSize;
-			}
-		};
-
-		dataTypeChooserButton.addActionListener(e -> SwingUtilities.invokeLater(() -> {
-			DataType dataType = service.getDataType((String) null);
-			if (dataType != null) {
-				editor.setCellEditorValue(dataType);
-				editor.stopCellEditing();
-			}
-			else {
-				editor.cancelCellEditing();
-			}
-		}));
-
-		FocusAdapter focusListener = new FocusAdapter() {
+		textField.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusGained(FocusEvent e) {
 				textField.selectAll();
 				textField.removeFocusListener(this);
 			}
-		};
-		textField.addFocusListener(focusListener);
-
-		editorPanel = new JPanel(new BorderLayout());
-		editorPanel.add(textField, BorderLayout.CENTER);
-		editorPanel.add(dataTypeChooserButton, BorderLayout.EAST);
+		});
 	}
 
 	@Override
@@ -126,14 +102,6 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor
 	 */
 	public DropDownSelectionTextField<DataType> getTextField() {
 		return textField;
-	}
-
-	/**
-	 * @return chooser button '...' associated with the generated component.  Null will 
-	 * be returned if getTableCellEditorComponent method has not yet been invoked. 
-	 */
-	public JButton getChooserButton() {
-		return dataTypeChooserButton;
 	}
 
 	@Override
@@ -156,7 +124,7 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor
 				fireEditingCanceled(); // user picked the same datatype
 			}
 			else {
-				dt = dataType;
+				dt = dataType.clone(dtm);
 				fireEditingStopped();
 			}
 		}

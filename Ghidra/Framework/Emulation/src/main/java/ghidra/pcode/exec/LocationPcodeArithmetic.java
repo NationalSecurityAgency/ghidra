@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.pcode.exec;
 import java.math.BigInteger;
 
 import ghidra.pcode.utils.Utils;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.pcode.PcodeOp;
 
@@ -42,6 +43,11 @@ public enum LocationPcodeArithmetic implements PcodeArithmetic<ValueLocation> {
 
 	private LocationPcodeArithmetic(Endian endian) {
 		this.endian = endian;
+	}
+
+	@Override
+	public Class<ValueLocation> getDomain() {
+		return ValueLocation.class;
 	}
 
 	@Override
@@ -79,13 +85,13 @@ public enum LocationPcodeArithmetic implements PcodeArithmetic<ValueLocation> {
 	}
 
 	@Override
-	public ValueLocation modBeforeStore(int sizeout, int sizeinAddress, ValueLocation inAddress,
-			int sizeinValue, ValueLocation inValue) {
+	public ValueLocation modBeforeStore(int sizeinOffset, AddressSpace space,
+			ValueLocation inOffset, int sizeinValue, ValueLocation inValue) {
 		return inValue;
 	}
 
 	@Override
-	public ValueLocation modAfterLoad(int sizeout, int sizeinAddress, ValueLocation inAddress,
+	public ValueLocation modAfterLoad(int sizeinOffset, AddressSpace space, ValueLocation inOffset,
 			int sizeinValue, ValueLocation inValue) {
 		return inValue;
 	}

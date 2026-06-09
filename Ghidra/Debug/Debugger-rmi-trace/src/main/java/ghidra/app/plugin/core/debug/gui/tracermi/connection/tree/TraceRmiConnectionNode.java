@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,9 +24,11 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.tracermi.connection.TraceRmiConnectionManagerProvider;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracermi.TraceRmiConnection;
+import resources.MultiIcon;
 
 public class TraceRmiConnectionNode extends AbstractTraceRmiManagerNode {
 	private static final Icon ICON = DebuggerResources.ICON_CONNECTION;
+	private static final Icon ICON_TX = new MultiIcon(ICON, ICON_TX_OVERLAY);
 
 	private final TraceRmiConnection connection;
 	private final Map<Target, TraceRmiTargetNode> targetNodes = new HashMap<>();
@@ -45,7 +47,7 @@ public class TraceRmiConnectionNode extends AbstractTraceRmiManagerNode {
 
 	@Override
 	public Icon getIcon(boolean expanded) {
-		return ICON;
+		return connection.isBusy() ? ICON_TX : ICON;
 	}
 
 	@Override

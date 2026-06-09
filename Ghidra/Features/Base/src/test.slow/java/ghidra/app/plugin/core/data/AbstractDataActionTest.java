@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,7 +86,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 	protected static final String CHOOSE_DATA_TYPE = "Choose Data Type";
 
 	// CycleGroupAction's
-	protected static final String CYCLE_FLOAT_DOUBLE = "Cycle: float,double";
+	protected static final String CYCLE_FLOAT_DOUBLE_LONGDOUBLE = "Cycle: float,double,longdouble";
 	protected static final String CYCLE_BYTE_WORD_DWORD_QWORD = "Cycle: byte,word,dword,qword";
 	protected static final String CYCLE_CHAR_STRING_UNICODE = "Cycle: char,string,unicode";
 
@@ -182,7 +182,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		checkAction(actions, CHOOSE_DATA_TYPE, enabled, caseStr);
 		checkAction(actions, DEFAULT_SETTINGS, enabled, caseStr);
 		checkAction(actions, DATA_SETTINGS, enabled, caseStr);
-		checkAction(actions, CYCLE_FLOAT_DOUBLE, enabled, caseStr);
+		checkAction(actions, CYCLE_FLOAT_DOUBLE_LONGDOUBLE, enabled, caseStr);
 		checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, enabled, caseStr);
 		checkAction(actions, CYCLE_CHAR_STRING_UNICODE, enabled, caseStr);
 		checkAction(actions, DEFINE_BYTE, enabled, caseStr);
@@ -1248,7 +1248,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		checkAction(actions, CREATE_ARRAY, false, caseName);
 		checkAction(actions, DEFAULT_SETTINGS, hasSettings, caseName);
 		checkAction(actions, DATA_SETTINGS, hasSettings, caseName);
-		checkAction(actions, CYCLE_FLOAT_DOUBLE, false, caseName);
+		checkAction(actions, CYCLE_FLOAT_DOUBLE_LONGDOUBLE, false, caseName);
 		checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, false, caseName);
 		checkAction(actions, CYCLE_CHAR_STRING_UNICODE, false, caseName);
 		checkAction(actions, DEFINE_BYTE, false, caseName);
@@ -1292,7 +1292,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		checkAction(actions, CREATE_ARRAY, true, caseName);
 		checkAction(actions, DEFAULT_SETTINGS, false, caseName);
 		checkAction(actions, DATA_SETTINGS, hasNormalUnitSelection, caseName);
-		checkAction(actions, CYCLE_FLOAT_DOUBLE, true, caseName);
+		checkAction(actions, CYCLE_FLOAT_DOUBLE_LONGDOUBLE, true, caseName);
 		checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, true, caseName);
 		checkAction(actions, CYCLE_CHAR_STRING_UNICODE, true, caseName);
 		checkAction(actions, DEFINE_BYTE, true, caseName);
@@ -1360,7 +1360,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		checkAction(actions, DEFAULT_SETTINGS,
 			(!hasSelection || isSelectionJustSingleDataInstance(sel, d)) && hasSettings, caseName);
 		checkAction(actions, DATA_SETTINGS, hasNormalUnitSelection || hasSettings, caseName);
-		checkAction(actions, CYCLE_FLOAT_DOUBLE, onFloatDoubleData, caseName);
+		checkAction(actions, CYCLE_FLOAT_DOUBLE_LONGDOUBLE, onFloatDoubleData, caseName);
 		checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, onByteWordData, caseName);
 		checkAction(actions, CYCLE_CHAR_STRING_UNICODE, onCharData, caseName);
 		checkAction(actions, DEFINE_BYTE, true, caseName);
@@ -1423,7 +1423,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		checkAction(actions, DEFAULT_SETTINGS,
 			hasSettings && (!hasSelection || isSelectionJustSingleDataInstance(sel, d)), caseName);
 		checkAction(actions, DATA_SETTINGS, hasSettings, caseName);
-		checkAction(actions, CYCLE_FLOAT_DOUBLE, true, caseName);
+		checkAction(actions, CYCLE_FLOAT_DOUBLE_LONGDOUBLE, true, caseName);
 		checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, true, caseName);
 		checkAction(actions, CYCLE_CHAR_STRING_UNICODE, true, caseName);
 		checkAction(actions, DEFINE_BYTE, true, caseName);
@@ -1471,7 +1471,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		checkAction(actions, CREATE_ARRAY, true, caseName);
 		checkAction(actions, DEFAULT_SETTINGS, false, caseName);
 		checkAction(actions, DATA_SETTINGS, hasNormalUnitSelection, caseName);
-		checkAction(actions, CYCLE_FLOAT_DOUBLE, true, caseName);
+		checkAction(actions, CYCLE_FLOAT_DOUBLE_LONGDOUBLE, true, caseName);
 		checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, true, caseName);
 		checkAction(actions, CYCLE_CHAR_STRING_UNICODE, true, caseName);
 		checkAction(actions, DEFINE_BYTE, true, caseName);

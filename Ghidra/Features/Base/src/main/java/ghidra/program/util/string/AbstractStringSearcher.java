@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,7 +95,7 @@ public abstract class AbstractStringSearcher {
 	 * <li> if the given set is null, it will be re-initialized to encompass all of program memory</li>
 	 * <li> the set will be further culled to only include loaded memory blocks, if specified</li>
 	 * </ul>
-	 * <p>
+	 * 
 	 * @param addressSet the address set to search over; if null, will initialized to all memory
 	 * @param callback the callback invoked when a string is found
 	 * @param searchLoadedMemoryBlocksOnly if true, will exclude unloaded memory blocks from the search

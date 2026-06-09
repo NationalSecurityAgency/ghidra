@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
 import ghidra.framework.cmd.Command;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceManager;
 import ghidra.program.util.*;
@@ -58,7 +59,7 @@ public class DeleteReferencesAction extends ListingContextAction {
 		if (loc instanceof OperandFieldLocation) {
 			opIndex = ((OperandFieldLocation) loc).getOperandIndex();
 		}
-		Command cmd = new RemoveAllReferencesCmd(loc.getAddress(), opIndex);
+		Command<Program> cmd = new RemoveAllReferencesCmd(loc.getAddress(), opIndex);
 		plugin.getTool().execute(cmd, context.getProgram());
 	}
 

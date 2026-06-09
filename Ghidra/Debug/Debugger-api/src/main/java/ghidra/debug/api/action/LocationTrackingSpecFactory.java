@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,6 +46,7 @@ public interface LocationTrackingSpecFactory extends ExtensionPoint {
 	/**
 	 * Get a copy of all the known specifications
 	 * 
+	 * @param tool the plugin tool or context
 	 * @return the specifications by configuration name
 	 */
 	static Map<String, LocationTrackingSpec> allSuggested(PluginTool tool) {
@@ -68,7 +69,7 @@ public interface LocationTrackingSpecFactory extends ExtensionPoint {
 	List<LocationTrackingSpec> getSuggested(PluginTool tool);
 
 	/**
-	 * Attempt to parse the given configuration name as as specification
+	 * Attempt to parse the given configuration name as a specification
 	 * 
 	 * @param name the configuration name, usually including a prefix unique to each factory
 	 * @return the specification, or null if this factory cannot parse it

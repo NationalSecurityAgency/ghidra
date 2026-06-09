@@ -39,8 +39,8 @@ abstract public class CompositeEditorTableAction extends DockingAction {
 	static final String COMPONENT_ACTION_GROUP = "4_COMPONENT_EDITOR_ACTION";
 	static final String BITFIELD_ACTION_GROUP = "5_COMPONENT_EDITOR_ACTION";
 
-	protected CompositeEditorProvider provider;
-	protected CompositeEditorModel model;
+	protected CompositeEditorProvider<?, ?> provider;
+	protected CompositeEditorModel<?> model;
 	protected String tooltip;
 	protected ImageIcon icon;
 	protected ActionListener listener;
@@ -53,12 +53,13 @@ abstract public class CompositeEditorTableAction extends DockingAction {
 
 	// note: Only call this constructor if you know you do not want to use the shared editor prefix;
 	//       If you call this, then you must manage your own menu/popup/toolbar data installation
-	protected CompositeEditorTableAction(CompositeEditorProvider provider, String name) {
+	protected CompositeEditorTableAction(CompositeEditorProvider<?, ?> provider, String name) {
 		super(name, provider.plugin.getName());
 		init(provider);
 	}
 
-	public CompositeEditorTableAction(CompositeEditorProvider provider, String name, String group,
+	public CompositeEditorTableAction(CompositeEditorProvider<?, ?> provider, String name,
+			String group,
 			String[] popupPath, String[] menuPath, Icon icon) {
 		super(name, provider.plugin.getName(), KeyBindingType.SHARED);
 		init(provider);
@@ -73,7 +74,7 @@ abstract public class CompositeEditorTableAction extends DockingAction {
 		}
 	}
 
-	private void init(CompositeEditorProvider editorProvider) {
+	private void init(CompositeEditorProvider<?, ?> editorProvider) {
 		this.provider = editorProvider;
 		this.model = provider.getModel();
 		this.plugin = provider.plugin;

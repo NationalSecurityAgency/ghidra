@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,6 +57,8 @@ public class DeleteProjectFilesTaskTest extends AbstractDockingTest {
 
 	@Before
 	public void setUp() throws Exception {
+		// NOTE: TestDummyDomainFolder is inadequate to test against linked-folder cases
+		// which requires real project data support.
 		root = new TestDummyDomainFolder(null, "root");
 		a = root.createFolder("a");
 		b = root.createFolder("b");
@@ -488,9 +490,9 @@ public class DeleteProjectFilesTaskTest extends AbstractDockingTest {
 
 	private void runAction() {
 
-		ActionContext context = new ProjectDataContext(/*provider*/null, /*project data*/null,
-			/*context object*/ null, CollectionUtils.asList(folders), CollectionUtils.asList(files),
-			null, true);
+		ActionContext context =
+			new ProjectDataContext(/*provider*/null, /*project data*/null, /*context object*/ null,
+				CollectionUtils.asList(folders), CollectionUtils.asList(files), null, true);
 		performAction(deleteAction, context, false);
 		waitForSwing();
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class represents the the Multi-Stream Format File used for Windows PDB files.
+ * This class represents the Multi-Stream Format File used for Windows PDB files.
  *  We have intended to implement to the Microsoft PDB API (source); see the API for truth.
  *  <P>
  *  Derived classes represents the real formats.  The file format represents a kind of
@@ -76,7 +76,7 @@ import ghidra.util.task.TaskMonitor;
  * The file directory is stored in stream 0, which has its information persisted in
  *  the header as described above.  However, for the newest format, the page (pointed
  *  to in the header) for the directory stream has an extra level of indirection.  The
- *  page contains page numbers, whose pages contain contain page numbers for the
+ *  page contains page numbers, whose pages contain page numbers for the
  *  directory stream.  Note that the page numbers listed on any of these pages have
  *  the following format on disk:
  * <PRE>
@@ -96,7 +96,7 @@ import ghidra.util.task.TaskMonitor;
  *  version of stream 0 is what was persisted in the header.  So after the StreamTable
  *  has been deserialized from the directory stream, the stream 0 information in the
  *  StreamTable gets overwritten with the stream 0 that we had already obtained.
- * <P>
+ * 
  * @see MsfFileReader
  * @see MsfStream
  * @see MsfDirectoryStream
@@ -226,8 +226,8 @@ public interface Msf extends AutoCloseable {
 	int getLog2PageSize();
 
 	/**
-	 * Returns the the mask used for masking off the upper bits of a value use to get the
-	 *  mod-page-size of the value (pageSizes must be power of two for this to work)
+	 * Returns the mask used for masking off the upper bits of a value used to get the
+	 *  mod-page-size of the value (pageSizes must be a power of two for this to work)
 	 * @return the mask
 	 */
 	int getPageSizeModMask();

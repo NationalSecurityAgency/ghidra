@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -141,6 +141,7 @@ public class ValuesMapDialog extends DialogComponentProvider {
 	private JPanel buildValuesPanel() {
 		JPanel panel = new JPanel(new PairLayout(4, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+		panel.getAccessibleContext().setAccessibleName("Values");
 		return panel;
 	}
 
@@ -149,7 +150,6 @@ public class ValuesMapDialog extends DialogComponentProvider {
 		if (message != null) {
 			String literalHTML = HTMLUtilities.toLiteralHTML(message, MAX_MESSAGE_LINE_WIDTH);
 			GHtmlLabel label = new GHtmlLabel(literalHTML);
-
 			label.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 			panel.add(label, BorderLayout.NORTH);
 		}
@@ -157,6 +157,7 @@ public class ValuesMapDialog extends DialogComponentProvider {
 		JScrollPane scroll = new JScrollPane(valuesPanel);
 		scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		panel.add(scroll, BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Values Map");
 		return panel;
 	}
 

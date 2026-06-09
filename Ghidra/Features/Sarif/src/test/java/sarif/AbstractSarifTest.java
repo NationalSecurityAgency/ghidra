@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,17 +15,16 @@
  */
 package sarif;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.io.StringWriter;
 
 import org.junit.After;
 import org.junit.Before;
 
+import ghidra.app.util.importer.MessageLog;
 import ghidra.program.database.ProgramBuilder;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramDiff;
@@ -43,6 +42,7 @@ public class AbstractSarifTest extends AbstractGhidraHeadedIntegrationTest {
 	protected Address entry;
 	protected MemoryBlock block;
 	protected DummyCancellableTaskMonitor monitor;
+	protected MessageLog log;
 	protected ProgramSarifMgr mgr;
 	protected AddressSet addrSet;
 
@@ -97,7 +97,8 @@ public class AbstractSarifTest extends AbstractGhidraHeadedIntegrationTest {
 		addrSet = new AddressSet(program.getMemory());
 
 		monitor = new DummyCancellableTaskMonitor();
-		mgr = new ProgramSarifMgr(program);
+		log = new MessageLog();
+		mgr = new ProgramSarifMgr(program, log);
 		mgr.useTempFileForBytes(getTestDirectoryPath());
 	}
 

@@ -106,6 +106,7 @@ public class BSimSearchPlugin extends ProgramPlugin {
 	private void createActions() {
 		new ActionBuilder("BSim Overview", getName()).menuPath("BSim", "Perform Overview...")
 				.helpLocation(new HelpLocation(getName(), "BSim_Overview_Dialog"))
+				.enabledWhen(c -> currentProgram != null)
 				.onAction(c -> showOverviewDialog())
 				.buildAndInstall(tool);
 
@@ -115,6 +116,7 @@ public class BSimSearchPlugin extends ProgramPlugin {
 				.toolBarIcon(ICON)
 				.toolBarGroup("View", "Bsim")
 				.helpLocation(new HelpLocation(getName(), "BSim_Search_Dialog"))
+				.enabledWhen(c -> currentProgram != null)
 				.onAction(c -> showSearchDialog(getSelectedFunctions()))
 				.buildAndInstall(tool);
 

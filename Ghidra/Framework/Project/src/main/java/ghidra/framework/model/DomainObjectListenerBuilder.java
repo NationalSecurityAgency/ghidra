@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,6 @@ import utility.function.Callback;
  * the remaining event records. This is can be handled with an {@link #any(EventType...)},  
  * followed by a {@link AnyBuilder#terminate(Callback)} or {@link AnyBuilder#terminate(Consumer)} 
  * if you want the event.
- * <P>
  * <PRE>
  * new DomainObjectListenerBuilder()
  *	.any(DomainObjectEvent.RESTORED).call(() -> refreshAll())
@@ -51,7 +50,6 @@ import utility.function.Callback;
  * details of the record, only that one of the  given events was fired. This can be handled using 
  * the  {@link #any(EventType...)}, followed by a  call to {@link AnyBuilder#call(Callback)} or
  * {@link AnyBuilder#call(Consumer)}
- * <P>
  * <PRE>
  * new DomainObjectListenerBuilder()
  *	.onAny(ProgramEvent.FUNCTION_CHANGED).call(() -> refreshFunctions())
@@ -66,7 +64,7 @@ import utility.function.Callback;
  * </PRE>
  * <P>
  * And finally, the third way is where you have to perform some processing on each record of a 
- * certain type. This can be done using the the {@link #each(EventType...)}, followed by the
+ * certain type. This can be done using the {@link #each(EventType...)}, followed by the
  * {@link EachBuilder#call(Consumer)} if you just want the record, or 
  * {@link EachBuilder#call(BiConsumer)} if you want the record and the event.
  * <P>
@@ -74,7 +72,6 @@ import utility.function.Callback;
  * can be changed by calling {@link #with(Class)}. Once this is called the builder
  * will require that all consumers being passed in will now be typed on that record
  * class. 
- * <P>
  * <PRE>
  * new DomainObjectListenerBuilder()
  *	.each(DomainObjectEvent.PROPERTY_CHANGED).call(r -> processPropertyChanged(r))

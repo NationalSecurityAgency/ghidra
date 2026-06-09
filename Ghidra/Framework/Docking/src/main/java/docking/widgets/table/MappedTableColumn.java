@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,8 @@
 package docking.widgets.table;
 
 import java.util.Comparator;
+
+import javax.swing.table.TableCellEditor;
 
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
@@ -100,6 +102,11 @@ public class MappedTableColumn<ROW_TYPE, EXPECTED_ROW_TYPE, COLUMN_TYPE, DATA_SO
 	}
 
 	@Override
+	public TableCellEditor getColumnEditor() {
+		return tableColumn.getColumnEditor();
+	}
+
+	@Override
 	public GTableHeaderRenderer getHeaderRenderer() {
 		return tableColumn.getHeaderRenderer();
 	}
@@ -115,6 +122,16 @@ public class MappedTableColumn<ROW_TYPE, EXPECTED_ROW_TYPE, COLUMN_TYPE, DATA_SO
 	}
 
 	@Override
+	public int getColumnMaxWidth() {
+		return tableColumn.getColumnMaxWidth();
+	}
+
+	@Override
+	public int getColumnMinWidth() {
+		return tableColumn.getColumnMinWidth();
+	}
+
+	@Override
 	public Comparator<COLUMN_TYPE> getComparator(DynamicColumnTableModel<?> model,
 			int columnIndex) {
 		return tableColumn.getComparator(model, columnIndex);
@@ -124,16 +141,19 @@ public class MappedTableColumn<ROW_TYPE, EXPECTED_ROW_TYPE, COLUMN_TYPE, DATA_SO
 	public COLUMN_TYPE getValue(ROW_TYPE rowObject, Settings settings, DATA_SOURCE data,
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
 
-		if (rowObject == null) {
-			// can happen when the model is cleared out from under Swing
+		EXPECTED_ROW_TYPE mappedRowObject = map(rowObject, data, serviceProvider);
+		if (mappedRowObject == null) {
 			return null;
 		}
+		return tableColumn.getValue(mappedRowObject, settings, data, serviceProvider);
+	}
 
-		EXPECTED_ROW_TYPE mappedObject = mapper.map(rowObject, data, serviceProvider);
-		if (mappedObject == null) {
-			return null; // some mappers have null data
+	public EXPECTED_ROW_TYPE map(ROW_TYPE rowObject, DATA_SOURCE data,
+			ServiceProvider serviceProvider) {
+		if (rowObject == null) {
+			return null;// can happen when the model is cleared out from under Swing
 		}
-		return tableColumn.getValue(mappedObject, settings, data, serviceProvider);
+		return mapper.map(rowObject, data, serviceProvider);
 	}
 
 	@Override

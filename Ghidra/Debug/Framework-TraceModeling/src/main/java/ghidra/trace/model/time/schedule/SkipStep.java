@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,17 +16,18 @@
 package ghidra.trace.model.time.schedule;
 
 import ghidra.pcode.emu.PcodeThread;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class SkipStep extends AbstractStep {
 
-	public static SkipStep parse(long threadKey, String stepSpec) {
+	public static SkipStep parse(long threadKey, String stepSpec, TimeRadix radix) {
 		if (!stepSpec.startsWith("s")) {
 			throw new IllegalArgumentException("Cannot parse skip step: '" + stepSpec + "'");
 		}
 		try {
-			return new SkipStep(threadKey, Long.parseLong(stepSpec.substring(1)));
+			return new SkipStep(threadKey, radix.decode(stepSpec.substring(1)));
 		}
 		catch (NumberFormatException e) {
 			throw new IllegalArgumentException("Cannot parse skip step: '" + stepSpec + "'");
@@ -49,8 +50,13 @@ public class SkipStep extends AbstractStep {
 	}
 
 	@Override
-	protected String toStringStepPart() {
-		return String.format("s%d", tickCount);
+	public long getSkipCount() {
+		return tickCount;
+	}
+
+	@Override
+	protected String toStringStepPart(TimeRadix radix) {
+		return "s" + radix.format(tickCount);
 	}
 
 	@Override
@@ -66,7 +72,7 @@ public class SkipStep extends AbstractStep {
 	}
 
 	@Override
-	public <T> void execute(PcodeThread<T> emuThread, Stepper stepper, TaskMonitor monitor)
+	public void execute(PcodeThread<?> emuThread, Stepper stepper, TaskMonitor monitor)
 			throws CancelledException {
 		for (int i = 0; i < tickCount; i++) {
 			monitor.incrementProgress(1);

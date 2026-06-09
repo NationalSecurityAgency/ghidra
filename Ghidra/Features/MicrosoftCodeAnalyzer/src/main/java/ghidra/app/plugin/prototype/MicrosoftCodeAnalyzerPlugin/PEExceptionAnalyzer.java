@@ -26,8 +26,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
 import ghidra.features.base.memsearch.bytesource.ProgramByteSource;
 import ghidra.features.base.memsearch.gui.SearchSettings;
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
-import ghidra.features.base.memsearch.matcher.RegExByteMatcher;
+import ghidra.features.base.memsearch.matcher.*;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.features.base.memsearch.searcher.MemorySearcher;
 import ghidra.framework.cmd.Command;
@@ -94,7 +93,7 @@ public class PEExceptionAnalyzer extends AbstractAnalyzer {
 		SearchSettings settings = new SearchSettings().withAlignment(alignment);
 		settings = settings.withIncludeInstructions(false); 	// only search data
 
-		ByteMatcher matcher = new RegExByteMatcher(pattern, settings);
+		ByteMatcher<SearchData> matcher = new RegExByteMatcher(pattern, settings);
 		AddressableByteSource byteSource = new ProgramByteSource(program);
 		Memory memory = program.getMemory();
 		AddressSet addresses = memory.getLoadedAndInitializedAddressSet().intersect(set);
@@ -102,11 +101,12 @@ public class PEExceptionAnalyzer extends AbstractAnalyzer {
 		// Only want to search exception handling memory blocks.
 		addresses = getAddressSet(ehBlocks).intersect(addresses);
 
-		MemorySearcher searcher = new MemorySearcher(byteSource, matcher, addresses, MATCH_LIMIT);
+		MemorySearcher<SearchData> searcher =
+			new MemorySearcher<>(byteSource, matcher, addresses, MATCH_LIMIT);
 
-		ListAccumulator<MemoryMatch> accumulator = new ListAccumulator<>();
+		ListAccumulator<MemoryMatch<SearchData>> accumulator = new ListAccumulator<>();
 		searcher.findAll(accumulator, monitor);
-		List<MemoryMatch> results = accumulator.asList();
+		List<MemoryMatch<SearchData>> results = accumulator.asList();
 
 		// Establish the options to use when creating the exception handling data.
 		// For now these are fixed. Later these may need to come from analysis options.

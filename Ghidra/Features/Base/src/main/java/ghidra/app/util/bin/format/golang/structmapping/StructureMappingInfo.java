@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -130,6 +130,15 @@ public class StructureMappingInfo<T> {
 		return fields;
 	}
 
+	public FieldMappingInfo<T> getFieldInfo(String javaFieldName) throws IOException {
+		for (FieldMappingInfo<T> fmi : fields) {
+			if (fmi.getField().getName().equals(javaFieldName)) {
+				return fmi;
+			}
+		}
+		throw new IOException("Java field name not found: " + javaFieldName);
+	}
+
 	public List<Method> getAfterMethods() {
 		return afterMethods;
 	}
@@ -157,6 +166,12 @@ public class StructureMappingInfo<T> {
 				fieldInfo.assignField(fieldReadContext, value);
 			}
 			context.reader.setPointerIndex(context.getStructureEnd());
+		}
+		if (newInstance instanceof StructureVerifier structVerifier) {
+			if (!structVerifier.isValid()) {
+				throw new IOException(
+					"Invalid data for struct @0x%x".formatted(context.structureStart));
+			}
 		}
 	}
 
@@ -313,6 +328,7 @@ public class StructureMappingInfo<T> {
 				? FieldMappingInfo.createEarlyBinding(field, dtc, signedness, length)
 				: FieldMappingInfo.createLateBinding(field, fieldNames[0], signedness, length);
 
+		@SuppressWarnings("rawtypes")
 		Class<? extends FieldReadFunction> fieldReadFuncClass =
 			fma != null ? fma.readFunc() : FieldReadFunction.class;
 		String setterNameOverride = fma != null ? fma.setter() : null;
@@ -370,7 +386,7 @@ public class StructureMappingInfo<T> {
 			T obj = context.getStructureInstance();
 			Object val = ReflectionHelper.callGetter(commentGetter, obj);
 			if (val != null) {
-				session.appendComment(context, CodeUnit.PLATE_COMMENT, null, val.toString(), "\n");
+				session.appendComment(context, CommentType.PLATE, null, val.toString(), "\n");
 			}
 		});
 	}

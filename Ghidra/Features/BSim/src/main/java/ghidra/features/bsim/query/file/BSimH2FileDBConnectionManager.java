@@ -40,10 +40,11 @@ public class BSimH2FileDBConnectionManager {
 	 * Data source map keyed by absolute DB file path
 	 */
 	private static HashMap<BSimServerInfo, BSimH2FileDataSource> dataSourceMap = new HashMap<>();
+	private static boolean shutdownHookInstalled = false;
 
 	/**
-	 * Get all H2 File DB data sorces which exist in the JVM.
-	 * @return all H2 File DB data sorces
+	 * Get all H2 File DB data sources which exist in the JVM.
+	 * @return all H2 File DB data sources
 	 */
 	public static synchronized Collection<BSimH2FileDataSource> getAllDataSources() {
 		// Create copy to avoid potential concurrent modification
@@ -62,6 +63,7 @@ public class BSimH2FileDBConnectionManager {
 		if (fileServerInfo.getDBType() != DBType.file) {
 			throw new IllegalArgumentException("expected file info");
 		}
+		enableShutdownHook();
 		return dataSourceMap.computeIfAbsent(fileServerInfo,
 			info -> new BSimH2FileDataSource(info));
 	}
@@ -102,6 +104,30 @@ public class BSimH2FileDBConnectionManager {
 		return true;
 	}
 
+	private static synchronized void enableShutdownHook() {
+		if (shutdownHookInstalled) {
+			return;
+		}
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				Collection<BSimH2FileDataSource> dataSources = dataSourceMap.values();
+				for (BSimH2FileDataSource ds : dataSources) {
+					int activeConnections = ds.getActiveConnections();
+					if (activeConnections != 0) {
+						Msg.error(BSimH2FileDBConnectionManager.class,
+							activeConnections +
+								" BSim active H2 File connections were not properly closed: " +
+								ds.serverInfo);
+					}
+					ds.close();
+				}
+				dataSourceMap.clear();
+			}
+		});
+		shutdownHookInstalled = true;
+	}
+
 	/**
 	 * {@link BSimH2FileDataSource} provides a pooled DB data source for a specific H2 File DB. 
 	 */
@@ -112,11 +138,11 @@ public class BSimH2FileDBConnectionManager {
 		private boolean successfulConnection = false;
 
 		private BasicDataSource bds = new BasicDataSource();
-		private BSimDBConnectTaskCoordinator taskCoordinator;
+		private BSimDBConnectTaskManager taskManager;
 
 		private BSimH2FileDataSource(BSimServerInfo serverInfo) {
 			this.serverInfo = serverInfo;
-			this.taskCoordinator = new BSimDBConnectTaskCoordinator(serverInfo);
+			this.taskManager = new BSimDBConnectTaskManager(serverInfo);
 		}
 
 		@Override
@@ -133,7 +159,7 @@ public class BSimH2FileDBConnectionManager {
 		 * Delete the database files associated with this H2 File DB.  This will fail immediately 
 		 * if active connections exist.  Otherwise removal will be attempted and this data source 
 		 * will no longer be valid.
-		 * @return true if DB sucessfully removed
+		 * @return true if DB successfully removed
 		 */
 		public synchronized boolean delete() {
 
@@ -146,7 +172,7 @@ public class BSimH2FileDBConnectionManager {
 
 			dispose();
 
-			if (dbf.isFile()) {
+			if (!dbf.isFile()) {
 				return true;
 			}
 
@@ -220,7 +246,6 @@ public class BSimH2FileDBConnectionManager {
 				// Remove leading '/' before drive letter
 				dbName = dbName.substring(1);
 			}
-
 			return "jdbc:h2:" + dbName;
 		}
 
@@ -231,6 +256,7 @@ public class BSimH2FileDBConnectionManager {
 
 			// Set database URL
 			// NOTE: keywords 'key' and 'value' are used by KeyValueTable as column names
+
 			bds.setUrl(getH2FileUrl() +
 				";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;NON_KEYWORDS=key,value");
 
@@ -250,9 +276,9 @@ public class BSimH2FileDBConnectionManager {
 
 		/**
 		 * Get a connection to the H2 file database.
-		 * It is important to note that if the database does not exist and empty one will
+		 * It is important to note that if the database does not exist an empty one will
 		 * be created.  The {@link #exists()} method should be used to check for the database
-		 * existance prior to connecting the first time.
+		 * existence prior to connecting the first time.
 		 * @return database connection
 		 * @throws SQLException if a database error occurs
 		 */
@@ -260,12 +286,15 @@ public class BSimH2FileDBConnectionManager {
 		public synchronized Connection getConnection() throws SQLException {
 
 			if (successfulConnection) {
+				if (bds.isClosed()) {
+					bds.restart();
+				}
 				return bds.getConnection();
 			}
 
 			setDefaultProperties();
 
-			return taskCoordinator.getConnection(() -> connect());
+			return taskManager.getConnection(() -> connect());
 		}
 
 		@Override
@@ -291,6 +320,9 @@ public class BSimH2FileDBConnectionManager {
 		 * @throws SQLException if connection or authentication error occurs 
 		 */
 		private Connection connect() throws SQLException {
+			if (bds.isClosed()) {
+				bds.restart();
+			}
 			Connection c = bds.getConnection();
 			successfulConnection = true;
 			return c;

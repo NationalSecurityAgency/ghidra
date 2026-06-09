@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +20,15 @@ import java.io.File;
 
 import javax.swing.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.ReusableDialogComponentProvider;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
+import docking.widgets.textfield.ElidingFilePathTextField;
 import generic.theme.Gui;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.model.ProjectLocator;
@@ -74,12 +78,13 @@ public class ArchiveDialog extends ReusableDialogComponentProvider {
 	protected JPanel buildMainPanel() {
 		GridBagLayout gbl = new GridBagLayout();
 		JPanel outerPanel = new JPanel(gbl);
-
+		outerPanel.getAccessibleContext().setAccessibleName("Archive");
 		archiveLabel = new GDLabel(" Archive File ");
-		archiveField = new JTextField();
+		archiveField = new ElidingFilePathTextField();
 		archiveField.setName("archiveField");
+		archiveField.getAccessibleContext().setAccessibleName("Archive Field");
 		archiveField.setColumns(NUM_TEXT_COLUMNS);
-		archiveBrowse = new JButton(ArchivePlugin.DOT_DOT_DOT);
+		archiveBrowse = new BrowseButton();
 		archiveBrowse.addActionListener(e -> {
 			archivePathName = archiveField.getText().trim();
 			String archName = chooseArchiveFile("Choose archive file", "Selects the archive file");
@@ -95,6 +100,7 @@ public class ArchiveDialog extends ReusableDialogComponentProvider {
 
 		Gui.registerFont(archiveBrowse, Font.BOLD);
 		archiveBrowse.setName("archiveBrowse");
+		archiveBrowse.getAccessibleContext().setAccessibleName("Browse Archive");
 
 		// Layout the components.
 		GridBagConstraints gbc = new GridBagConstraints();
@@ -230,17 +236,23 @@ public class ArchiveDialog extends ReusableDialogComponentProvider {
 	 */
 	private boolean checkInput() {
 		String pathname = getArchivePathName();
-		if ((pathname == null) || (pathname.equals(""))) {
+		if (StringUtils.isBlank(pathname)) {
 			setStatusText("Specify an archive file.");
 			return false;
 		}
 
 		File file = new File(pathname);
 		String name = file.getName();
-		if (!NamingUtilities.isValidProjectName(name)) {
-			setStatusText("Archive name contains invalid characters.");
+
+		// Impose same naming restrictions as Project name uses
+		try {
+			NamingUtilities.checkName(name, "Archive name");
+		}
+		catch (IllegalArgumentException e) {
+			setStatusText(e.getMessage());
 			return false;
 		}
+
 		return true;
 	}
 
@@ -318,7 +330,7 @@ public class ArchiveDialog extends ReusableDialogComponentProvider {
 			jarFile = new File(archivePathName);
 		}
 		else if (projectLocator != null) {
-			jarFile = new File(projectLocator.toString() + ArchivePlugin.ARCHIVE_EXTENSION);
+			jarFile = new File(projectLocator.getName() + ArchivePlugin.ARCHIVE_EXTENSION);
 		}
 		jarFileChooser.setSelectedFile(jarFile);
 		jarFileChooser.setApproveButtonText(approveButtonText);
@@ -337,15 +349,7 @@ public class ArchiveDialog extends ReusableDialogComponentProvider {
 			String name = file.getName();
 			if (!NamingUtilities.isValidProjectName(name)) {
 				Msg.showError(getClass(), null, "Invalid Archive Name",
-					name + " is not a valid archive name");
-				continue;
-			}
-
-			File f = projectLocator.getProjectDir();
-			String filename = f.getAbsolutePath();
-			if (chosenPathname.indexOf(filename) >= 0) {
-				Msg.showError(getClass(), null, "Invalid Archive Name",
-					"Output file cannot be inside of Project");
+					"Archive name contains invalid characters or is too long");
 				continue;
 			}
 

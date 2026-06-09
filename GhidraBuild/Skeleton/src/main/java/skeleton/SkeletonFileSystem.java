@@ -16,6 +16,7 @@
 package skeleton;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 
 import ghidra.app.util.bin.ByteProvider;
@@ -110,6 +111,11 @@ public class SkeletonFileSystem implements GFileSystem {
 	@Override
 	public GFile lookup(String path) throws IOException {
 		return fsih.lookup(path);
+	}
+
+	@Override
+	public GFile lookup(String path, Comparator<String> nameComp) throws IOException {
+		return fsih.lookup(null, path, nameComp);
 	}
 
 	@Override

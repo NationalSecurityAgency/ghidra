@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.analysis.PdbAnalyzerCommon;
 import ghidra.app.services.DataTypeManagerService;
+import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.preferences.Preferences;
@@ -282,9 +283,11 @@ public class PdbPlugin extends Plugin {
 			symbolServerInstanceCreatorContext.getSymbolServerInstanceCreatorRegistry()
 				.newSymbolServer(Preferences.getProperty(SYMBOL_STORAGE_DIR_OPTION, "", true),
 					symbolServerInstanceCreatorContext);
-		SymbolStore symbolStore =
-			(temporarySymbolServer instanceof SymbolStore) ? (SymbolStore) temporarySymbolServer
-					: new SameDirSymbolStore(symbolServerInstanceCreatorContext.getRootDir());
+		FSRL programFSRL = symbolServerInstanceCreatorContext.getProgramFSRL();
+		SymbolStore symbolStore = (temporarySymbolServer instanceof SymbolStore tmpSymbolStore)
+				? tmpSymbolStore
+				: new SameDirSymbolStore(symbolServerInstanceCreatorContext.getRootDir(),
+					programFSRL != null ? programFSRL.getName() : null);
 		List<SymbolServer> symbolServers =
 			symbolServerInstanceCreatorContext.getSymbolServerInstanceCreatorRegistry()
 				.createSymbolServersFromPathList(getSymbolSearchPaths(),

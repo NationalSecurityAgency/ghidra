@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,15 +54,17 @@ public abstract class MenuHandler implements MenuListener, PopupMenuListener {
 	 * Invoked when a menu is cancelled (not sure if this is ever invoked)
 	 * @see javax.swing.event.MenuListener#menuCanceled(javax.swing.event.MenuEvent)
 	 */
+	@Override
 	public void menuCanceled(MenuEvent e) {
 	}
 
 	/**
-	 * Invoked when a menu is no longer selected.  This is always preceeded
+	 * Invoked when a menu is no longer selected.  This is always preceded
 	 * by a menuSelected invocation.  This is invoked prior to the processMenuAction 
 	 * if an action item is selected.
 	 * @see javax.swing.event.MenuListener#menuDeselected(javax.swing.event.MenuEvent)
 	 */
+	@Override
 	public void menuDeselected(MenuEvent e) {
 	}
 
@@ -71,6 +72,7 @@ public abstract class MenuHandler implements MenuListener, PopupMenuListener {
 	 * Invoked when a menu is selected.
 	 * @see javax.swing.event.MenuListener#menuSelected(javax.swing.event.MenuEvent)
 	 */
+	@Override
 	public void menuSelected(MenuEvent e) {
 	}
 
@@ -78,7 +80,8 @@ public abstract class MenuHandler implements MenuListener, PopupMenuListener {
 	 * This method is called before the popup menu becomes visible 
 	 * @see javax.swing.event.PopupMenuListener#popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent)
 	 */
-    public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+    @Override
+	public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
     }
 
     /**
@@ -86,14 +89,16 @@ public abstract class MenuHandler implements MenuListener, PopupMenuListener {
      * Note that a JPopupMenu can become invisible any time 
      * @see javax.swing.event.PopupMenuListener#popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent)
      */
-    public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+    @Override
+	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
     }
 
     /**
      * This method is called when the popup menu is canceled
      * @see javax.swing.event.PopupMenuListener#popupMenuCanceled(javax.swing.event.PopupMenuEvent)
      */
-    public void popupMenuCanceled(PopupMenuEvent e) {
+    @Override
+	public void popupMenuCanceled(PopupMenuEvent e) {
     }
 	
 }

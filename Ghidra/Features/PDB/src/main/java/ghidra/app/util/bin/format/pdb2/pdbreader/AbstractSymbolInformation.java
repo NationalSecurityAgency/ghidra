@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
@@ -246,11 +245,9 @@ public abstract class AbstractSymbolInformation {
 	}
 
 	protected void deserializeHashHeader() throws PdbException, CancelledException, IOException {
-		MsfStream stream = pdb.getMsf().getStream(streamNumber);
-		PdbByteReader reader =
-			pdb.getReaderForStreamNumber(streamNumber, symbolHashOffset,
-				HASH_HEADER_MIN_READ_LENGTH);
-		deserializeHashHeader(reader, stream.getLength());
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, symbolHashOffset,
+			HASH_HEADER_MIN_READ_LENGTH);
+		deserializeHashHeader(reader);
 	}
 
 	/**
@@ -258,7 +255,7 @@ public abstract class AbstractSymbolInformation {
 	 * @param reader {@link PdbByteReader} containing the data buffer to process
 	 * @throws PdbException upon not enough data left to parse
 	 */
-	private void deserializeHashHeader(PdbByteReader reader, int streamLength) throws PdbException {
+	private void deserializeHashHeader(PdbByteReader reader) throws PdbException {
 		headerSignature = reader.parseInt();
 		if (headerSignature == HEADER_SIGNATURE) {
 			hashHeaderLength = HASH_70_HEADER_LENGTH;
@@ -273,10 +270,10 @@ public abstract class AbstractSymbolInformation {
 			reader.reset(); // There was no header
 			// Calculate the values
 			bucketsLength = 4 * (numHashRecords + 1);
-			if (streamLength < bucketsLength) {
+			if (symbolHashLength < bucketsLength) {
 				throw new PdbException("Not enough data for symbol hash buckets.");
 			}
-			hashRecordsLength = streamLength - bucketsLength;
+			hashRecordsLength = symbolHashLength - bucketsLength;
 			hashRecordsOffset = symbolHashOffset + 0;
 			bucketsOffset = hashRecordsOffset + hashRecordsLength;
 		}

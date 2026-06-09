@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -89,6 +89,7 @@ class LayoutTransitionManager {
 			((VertexBoundsFunctionConsumer<AttributedVertex>) layoutAlgorithm)
 					.setVertexBoundsFunction(vertexBoundsFunction);
 		}
+
 		// mincross layouts are 'layered'. put some bounds on the number of
 		// iterations of the level cross function based on the size of the graph
 		// very large graphs do not improve enough to out-weigh the cost of
@@ -97,13 +98,14 @@ class LayoutTransitionManager {
 			((Layered<AttributedVertex, AttributedEdge>) layoutAlgorithm).setMaxLevelCrossFunction(
 				g -> Math.max(1, Math.min(10, 500 / g.vertexSet().size())));
 		}
-		// tree layouts need a way to determine which vertices are roots
-		// especially when the graph is not a DAG
+
+		// tree layouts need a way to determine which vertices are roots, especially when the graph 
+		// is not a DAG
 		if (layoutAlgorithm instanceof TreeLayout) {
 			((TreeLayout<AttributedVertex>) layoutAlgorithm).setRootPredicate(rootPredicate);
 		}
-		// remove any previously added layout paintables
-		// and apply paintables to these 2 algorithms
+
+		// remove any previously added layout paintables and apply paintables to these 2 algorithms
 		removePaintable(radialLayoutRings);
 		removePaintable(balloonLayoutRings);
 		if (layoutAlgorithm instanceof BalloonLayoutAlgorithm) {

@@ -16,27 +16,12 @@
 package ghidra.doclets.typestubs;
 
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.TypeParameterElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
+import javax.lang.model.element.*;
+import javax.lang.model.type.*;
 
 import com.sun.source.doctree.DocTree;
 
@@ -125,18 +110,13 @@ class PythonTypeStubType extends PythonTypeStubElement<TypeElement> {
 			imports.add((TypeElement) dt.asElement());
 		}
 		for (TypeMirror iface : el.getInterfaces()) {
-			if (iface instanceof DeclaredType dt) {
-				imports.add((TypeElement) dt.asElement());
-			}
+			addNeededTypes(imports, iface);
 		}
 		for (PythonTypeStubNestedType nested : getNestedTypes()) {
 			imports.addAll(nested.getImportedTypes());
 		}
 		for (VariableElement field : getFields()) {
-			TypeMirror fieldType = field.asType();
-			if (fieldType instanceof DeclaredType dt) {
-				imports.add((TypeElement) dt.asElement());
-			}
+			addNeededTypes(imports, field.asType());
 		}
 		for (PythonTypeStubMethod method : getMethods()) {
 			imports.addAll(method.getImportedTypes());
@@ -283,12 +263,11 @@ class PythonTypeStubType extends PythonTypeStubElement<TypeElement> {
 		for (PythonTypeStubNestedType nested : getNestedTypes()) {
 			nested.process(printer, indent);
 		}
+		printClassLiteralField(printer, indent);
 		for (VariableElement field : getFields()) {
 			printField(field, printer, indent, isStatic(field));
 		}
-		if (!getFields().isEmpty()) {
-			printer.println();
-		}
+		printer.println();
 		ListIterator<PythonTypeStubMethod> methodIterator = getMethods().listIterator();
 		while (methodIterator.hasNext()) {
 			PythonTypeStubMethod method = methodIterator.next();
@@ -327,7 +306,7 @@ class PythonTypeStubType extends PythonTypeStubElement<TypeElement> {
 		else {
 			TypeMirror type = field.asType();
 			printer.print(": ");
-			String sanitizedType = getTypeString(el, type);
+			String sanitizedType = sanitizeQualifiedName(type);
 
 			// only one of these may be applied
 			// prefer Final over ClassVar
@@ -345,6 +324,17 @@ class PythonTypeStubType extends PythonTypeStubElement<TypeElement> {
 		if (writeJavaDoc(field, printer, indent, "")) {
 			printer.println();
 		}
+	}
+
+	/**
+	 * Prints the class literal field to the provided printer
+	 *
+	 * @param printer the printer
+	 * @param indent the indentation
+	 */
+	void printClassLiteralField(PrintWriter printer, String indent) {
+		printer.print(indent);
+		printer.println("class_: " + applyClassVar(Class.class.getName()));
 	}
 
 	/**
@@ -648,11 +638,7 @@ class PythonTypeStubType extends PythonTypeStubElement<TypeElement> {
 			}
 			return OBJECT_NAME;
 		}
-		return sanitizeQualifiedName(el, base);
-	}
-
-	private String sanitizeQualifiedName(TypeMirror type) {
-		return sanitizeQualifiedName(el, type);
+		return sanitizeQualifiedName(base);
 	}
 
 	/**

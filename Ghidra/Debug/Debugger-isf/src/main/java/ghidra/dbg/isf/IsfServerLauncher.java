@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,6 @@
 package ghidra.dbg.isf;
 
 import java.io.File;
-import java.io.IOException;
 
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
@@ -46,7 +45,7 @@ public class IsfServerLauncher implements GhidraLaunchable {
 		server.startServer();
 	}
 
-	GhidraProject parseArgs(String[] args) throws IOException {
+	GhidraProject parseArgs(String[] args) throws Exception {
 		if (args != null && args.length < 1) {
 			usage();
 			return null;

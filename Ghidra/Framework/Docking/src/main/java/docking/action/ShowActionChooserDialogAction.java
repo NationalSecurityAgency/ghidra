@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,9 @@ public class ShowActionChooserDialogAction extends DockingAction {
 		Tool tool = DockingWindowManager.getActiveInstance().getTool();
 
 		if (focusedWindow instanceof DockingDialog dialog) {
-			context = dialog.getDialogComponent().getActionContext(null);
+			DialogComponentProvider provider = dialog.getDialogComponent();
+			context = provider.getActionContext(null);
+			context.setContextProvider(provider);
 			showActionsDialog(tool, dialog, context);
 		}
 		else if (focusedWindow instanceof DockingFrame dockingFrame) {
@@ -56,6 +58,9 @@ public class ShowActionChooserDialogAction extends DockingAction {
 
 	private void showActionsDialog(Tool tool, DockingFrame frame, ActionContext context) {
 		ComponentProvider provider = tool.getWindowManager().getActiveComponentProvider();
+		if (provider == null) {
+			return; // this can happen if there is no active provider
+		}
 		ActionChooserDialog actionsDialog = new ActionChooserDialog(tool, provider, context);
 		tool.showDialog(actionsDialog);
 	}

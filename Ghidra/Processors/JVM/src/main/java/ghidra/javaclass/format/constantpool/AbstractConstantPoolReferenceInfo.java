@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,6 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
- * <p>
- *
  */
 public abstract class AbstractConstantPoolReferenceInfo extends AbstractConstantPoolInfoJava {
 
@@ -51,7 +49,7 @@ public abstract class AbstractConstantPoolReferenceInfo extends AbstractConstant
 	 * <p>
 	 * The class_index item of a CONSTANT_Fieldref_info structure may be either
 	 * a class type or an interface type.
-	 * <p>
+	 * 
 	 * @return a valid index into the constant_pool table
 	 */
 	public int getClassIndex() {
@@ -72,7 +70,7 @@ public abstract class AbstractConstantPoolReferenceInfo extends AbstractConstant
 	 * with a '<' ('\u003c'), then the name must be the special name <init>,
 	 * representing an instance initialization method. The return type of such
 	 * a method must be void.
-	 * <p>
+	 * 
 	 * @return a valid index into the constant_pool table
 	 */
 	public int getNameAndTypeIndex() {

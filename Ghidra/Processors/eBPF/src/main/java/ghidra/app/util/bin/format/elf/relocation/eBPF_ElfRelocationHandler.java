@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,9 +47,10 @@ public class eBPF_ElfRelocationHandler
 		Program program = elfRelocationContext.getProgram();
 		Memory memory = program.getMemory();
 
-		String section_name =
-			elfRelocationContext.relocationTable.getSectionToBeRelocated().getNameAsString();
-		if (section_name.toString().contains("debug")) {
+		ElfSectionHeader sectionToBeRelocated =
+		elfRelocationContext.relocationTable.getSectionToBeRelocated();
+		if (sectionToBeRelocated != null &&
+				sectionToBeRelocated.getNameAsString().startsWith(".debug")) {
 			return RelocationResult.SKIPPED;
 		}
 
@@ -78,7 +79,7 @@ public class eBPF_ElfRelocationHandler
 				long instr_next = relocationAddress.add(0x8).getAddressableWordOffset();
 				if (symbol.isFunction()) {
 					new_value = symbolAddr.getAddressableWordOffset();
-					int offset = (int) (new_value - instr_next);
+					int offset = (int) ((new_value - instr_next) / 8);
 					memory.setInt(relocationAddress.add(0x4), offset);
 				}
 				else if (symbol.isSection()) {
@@ -95,7 +96,7 @@ public class eBPF_ElfRelocationHandler
 						// according to formula in "kernel.org" docs: https://www.kernel.org/doc/html/latest/bpf/llvm_reloc.html
 						int func_sec_offset = (current_imm + 1) * 8;
 						long func_addr = section_start + func_sec_offset;
-						int offset = (int) (func_addr - instr_next);
+						int offset = (int) ((func_addr - instr_next) / 8);
 						memory.setInt(relocationAddress.add(0x4), offset);
 					}
 //					else {

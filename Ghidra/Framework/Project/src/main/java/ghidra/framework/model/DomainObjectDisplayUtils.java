@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.framework.model;
 
 import ghidra.framework.store.FileSystem;
+import ghidra.util.StringUtilities;
 
 public class DomainObjectDisplayUtils {
 	private static final String VERSION_SEP = "@";
@@ -24,13 +25,16 @@ public class DomainObjectDisplayUtils {
 	private static final String PROJECT_SEP_ELLIPSES =
 		":" + FileSystem.SEPARATOR + "..." + FileSystem.SEPARATOR;
 
+	private static final int TOOLTIP_PATH_LENGTH_LIMIT = 100;
+	private static final int TAB_NAME_LENGTH_LIMIT = 40;
+
 	private DomainObjectDisplayUtils() {
 	}
 
 	public static String getShortPath(DomainFile df) {
 		String pathString = df.toString();
 		int length = pathString.length();
-		if (length < 100) {
+		if (length < TOOLTIP_PATH_LENGTH_LIMIT) {
 			return pathString;
 		}
 
@@ -60,14 +64,16 @@ public class DomainObjectDisplayUtils {
 
 	public static String getTabText(DomainFile df) {
 		String tabName = df.getName();
-		if (df.isReadOnly()) {
-			int version = df.getVersion();
-			if (!df.canSave() && version != DomainFile.DEFAULT_VERSION) {
-				tabName += VERSION_SEP + version;
-			}
-			tabName = tabName + READ_ONLY;
+		String trimmedName = StringUtilities.trimMiddle(tabName, TAB_NAME_LENGTH_LIMIT);
+		if (!df.isReadOnly()) {
+			return trimmedName;
 		}
-		return tabName;
+
+		int version = df.getVersion();
+		if (!df.canSave() && version != DomainFile.DEFAULT_VERSION) {
+			trimmedName += VERSION_SEP + version;
+		}
+		return trimmedName + READ_ONLY;
 	}
 
 	public static String getTabText(DomainObject object) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -133,13 +133,12 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 	 *
 	 * @param selection the current selection
 	 * @param plugin the parent plugin
-	 * @throws InvalidInputException  if there's a problem loading instructions
 	 */
-	public void loadInstructions(ProgramSelection selection, InstructionSearchPlugin plugin)
-			throws InvalidInputException {
+	public void loadInstructions(ProgramSelection selection, InstructionSearchPlugin plugin) {
 
-		if (selection == null && getMessagePanel() != null) {
-			getMessagePanel().setMessageText(
+		MessagePanel msg = getMessagePanel();
+		if (selection == null && msg != null) {
+			msg.setMessageText(
 				"Select instructions from the listing (and hit reload) to populate the table.",
 				Messages.NORMAL);
 		}
@@ -153,6 +152,26 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 			// Load the instructions, but note that we only allow a single selection range.  If
 			// there's more than one we will process the FIRST one, and display a warning message.
 			populateSearchData(plugin.getCurrentProgram(), selection);
+		}
+	}
+
+	/**
+	 * Adds the instructions in the given selection and displays them in the gui.
+	 *
+	 * @param selection the current selection
+	 * @param plugin the parent plugin
+	 */
+	public void addToInstructions(ProgramSelection selection, InstructionSearchPlugin plugin) {
+
+		MessagePanel msg = getMessagePanel();
+		if (selection == null && msg != null) {
+			msg.setMessageText(
+				"Select instructions from the listing (and hit add) to update the table.",
+				Messages.NORMAL);
+		}
+
+		if (selection != null && plugin.isSelectionValid(selection, this)) {
+			addToSearchData(plugin.getCurrentProgram(), selection);
 		}
 	}
 
@@ -174,6 +193,20 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 		}
 		catch (InvalidInputException e) {
 			Msg.error(this, "Error loading new search data", e);
+		}
+	}
+
+	private void addToSearchData(Program currentProgram, ProgramSelection selection) {
+
+		if (selection == null || currentProgram == null) {
+			return;
+		}
+
+		try {
+			getSearchData().add(currentProgram, selection);
+		}
+		catch (InvalidInputException e) {
+			Msg.error(this, "Error adding to search data", e);
 		}
 	}
 
@@ -360,12 +393,13 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 		if (controlPanel == null) {
 			controlPanel = new ControlPanel(plugin, this);
 		}
-
+		controlPanel.getAccessibleContext().setAccessibleName("Control");
+		messagePanel.getAccessibleContext().setAccessibleName("Message");
 		lowerPanel.add(controlPanel);
 		lowerPanel.add(messagePanel);
-
+		lowerPanel.getAccessibleContext().setAccessibleName("Control and Message");
 		mainPanel.add(lowerPanel, BorderLayout.SOUTH);
-
+		mainPanel.getAccessibleContext().setAccessibleName("Instruction Search");
 		return mainPanel;
 	}
 
@@ -421,6 +455,7 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 		searchAllButton = new JButton("Search All");
 		searchAllButton.addActionListener(ev -> searchAllButtonActionPerformed());
 		searchAllButton.setName("Search All");
+		searchAllButton.getAccessibleContext().setAccessibleName("Search All");
 		addButton(searchAllButton);
 
 		addCancelButton();
@@ -502,8 +537,9 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 
 			model.setSelectionSize(matchSize);
 			TableComponentProvider<Address> tableProvider =
-				table.showTableWithMarkers(title + " " + model.getName(), "InstructionSearch",
-					model, BG_COLOR_MARKERS, null, "Instruction Search Results", null);
+				table.showTableWithMarkers(title + " " + model.getName(),
+					"Instruction Search Results", model, BG_COLOR_MARKERS, null,
+					"Search", null);
 			tableProvider.installRemoveItemsAction();
 		};
 		SystemUtilities.runSwingLater(runnable);

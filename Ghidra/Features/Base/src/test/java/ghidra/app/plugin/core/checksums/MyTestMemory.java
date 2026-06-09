@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 public class MyTestMemory extends AddressSet implements Memory {
@@ -65,16 +64,6 @@ public class MyTestMemory extends AddressSet implements Memory {
 	@Override
 	public boolean isBigEndian() {
 		return false;
-	}
-
-	@Override
-	public void setLiveMemoryHandler(LiveMemoryHandler handler) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public LiveMemoryHandler getLiveMemoryHandler() {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -163,30 +152,30 @@ public class MyTestMemory extends AddressSet implements Memory {
 
 	@Override
 	public void moveBlock(MemoryBlock block, Address newStartAddr, TaskMonitor monitor)
-			throws MemoryConflictException, AddressOverflowException, NotFoundException {
+			throws MemoryConflictException, AddressOverflowException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void split(MemoryBlock block, Address addr) throws NotFoundException {
+	public void split(MemoryBlock block, Address addr) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock join(MemoryBlock blockOne, MemoryBlock blockTwo)
-			throws MemoryBlockException, NotFoundException {
+			throws MemoryBlockException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock convertToInitialized(MemoryBlock uninitializedBlock, byte initialValue)
-			throws MemoryBlockException, NotFoundException {
+			throws MemoryBlockException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock convertToUninitialized(MemoryBlock initializedBlock)
-			throws MemoryBlockException, NotFoundException {
+			throws MemoryBlockException {
 		throw new UnsupportedOperationException();
 	}
 

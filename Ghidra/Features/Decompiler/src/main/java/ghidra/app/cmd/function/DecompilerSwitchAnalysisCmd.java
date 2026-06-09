@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,8 +48,8 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 	protected DecompInterface decompiler;
 	private boolean useArraysForSwitchTables = false;
 
-	public DecompilerSwitchAnalysisCmd(DecompileResults decopmileResults) {
-		this.decompilerResults = decopmileResults;
+	public DecompilerSwitchAnalysisCmd(DecompileResults decompileResults) {
+		this.decompilerResults = decompileResults;
 	}
 
 	@Override
@@ -71,20 +71,18 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 		}
 
 		try {
-
 			monitor.checkCancelled();
 
 			Function f = decompilerResults.getFunction();
 			HighFunction hfunction = decompilerResults.getHighFunction();
-			processBranchIND(f, hfunction, monitor);
-
-			monitor.checkCancelled();
-
+			
 			String errMsg = getStatusMsg();
-			if (decompilerResults.getHighFunction() == null) {
+			if (hfunction == null) {
 				String msg = (errMsg != null && errMsg.length() != 0) ? (": " + errMsg) : "";
 				Msg.debug(this, "  Failed to decompile function: " + f.getName() + msg);
 			}
+			
+			processBranchIND(f, hfunction, monitor);
 		}
 		catch (Exception e) {
 			if (!monitor.isCancelled()) {
@@ -114,34 +112,8 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 				continue; // skip switch owned by a different defined function
 			}
 
-			AddressSetView containingBody =
-				containingFunction != null ? containingFunction.getBody() : null;
-
-			Reference[] referencesFrom = instr.getReferencesFrom();
-			Address[] tableDest = table.getCases();
-
-			boolean foundNotThere = false;
-			int tableIndx;
-			for (tableIndx = 0; tableIndx < tableDest.length; tableIndx++) {
-				monitor.checkCancelled();
-				boolean foundit = false;
-				if (containingBody != null && !containingBody.contains(tableDest[tableIndx])) {
-					// switch case missing from owner function's body
-					foundNotThere = true;
-					break;
-				}
-				for (Reference element : referencesFrom) {
-					if (element.getToAddress().equals(tableDest[tableIndx])) {
-						foundit = true;
-						break;
-					}
-				}
-				if (!foundit) {
-					foundNotThere = true;
-				}
-			}
 			// references already there, ignore this table
-			if (!foundNotThere) {
+			if (hasAllReferences(monitor, table, instr, containingFunction)) {
 				continue;
 			}
 
@@ -158,64 +130,158 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 			labelSwitch(table, monitor);
 
 			// disassemble the table
-			// pull out the current context so we can flow anything that needs to flow
-			ProgramContext programContext = program.getProgramContext();
-			Register baseContextRegister = programContext.getBaseContextRegister();
-			RegisterValue switchContext = null;
-			if (baseContextRegister != null) {
-				// Use disassembler context based upon context register value at switch address (i.e., computed jump)
-				// Only use flowing context bits
-				switchContext = programContext.getRegisterValue(baseContextRegister, switchAddr);
-				switchContext = programContext.getFlowValue(switchContext);
-			}
-
-			Listing listing = program.getListing();
-			Address[] cases = table.getCases();
-			AddressSet disSetList = new AddressSet();
-			for (Address caseStart : cases) {
-				monitor.checkCancelled();
-				instr.addMnemonicReference(caseStart, flowType, SourceType.ANALYSIS);
-
-				// if conflict skip case
-				if (listing.getUndefinedDataAt(caseStart) == null) {
-					continue;
-				}
-				// already done
-				if (disSetList.contains(caseStart)) {
-					continue;
-				}
-				try {
-					setSwitchTargetContext(programContext, caseStart, switchContext);
-				}
-				catch (ContextChangeException e) {
-					// This can occur when two or more threads are working on the same function
-					continue;
-				}
-				disSetList.add(caseStart);
-			}
-
-			// do all cases at one time
-			if (!disSetList.isEmpty()) {
-				DisassembleCommand cmd = new DisassembleCommand(disSetList, null, true);
-				cmd.applyTo(program);
-			}
+			disassembleTable(monitor, table, instr, flowType);
 
 			// fixup the function body
-			// make sure this case isn't the result of an undefined function, that somehow one of the cases found a real function.
-			Function fixupFunc = f;
-			if (fixupFunc instanceof UndefinedFunction) {
-				Function realFunc =
-					program.getFunctionManager().getFunctionContaining(instr.getMinAddress());
-				if (realFunc != null) {
-					fixupFunc = realFunc;
-				}
-			}
-			Instruction funcStartInstr =
-				program.getListing().getInstructionAt(fixupFunc.getEntryPoint());
-			CreateFunctionCmd.fixupFunctionBody(program, funcStartInstr, monitor);
+			fixupFunction(f, monitor, instr);
 		}
 	}
 
+	/*
+	 * Fix the functions body with any newly reached code from the switch recovery
+	 */
+	private void fixupFunction(Function f, TaskMonitor monitor, Instruction instr)
+			throws CancelledException {
+		Function fixupFunc = f;
+		
+		// Make sure this case isn't the result of an undefined function,
+		// that somehow one of the cases found a real function.
+		if (fixupFunc instanceof UndefinedFunction) {
+			Function realFunc =
+				program.getFunctionManager().getFunctionContaining(instr.getMinAddress());
+			if (realFunc != null) {
+				fixupFunc = realFunc;
+			}
+		}
+		Instruction funcStartInstr =
+			program.getListing().getInstructionAt(fixupFunc.getEntryPoint());
+		CreateFunctionCmd.fixupFunctionBody(program, funcStartInstr, monitor);
+	}
+
+	/*
+	 * Disassemble all code reached from the table.
+	 * Also adds the case flow references to the switching instruction.
+	 */
+	private void disassembleTable(TaskMonitor monitor, JumpTable table,
+			Instruction instr, FlowType flowType) throws CancelledException {
+		
+		Address switchAddr = table.getSwitchAddress();
+		
+		// pull out the current context so we can flow anything that needs to flow
+		ProgramContext programContext = program.getProgramContext();
+		Register baseContextRegister = programContext.getBaseContextRegister();
+		RegisterValue switchContext = null;
+		if (baseContextRegister != null) {
+			// Use disassembler context based upon context register value at switch address (i.e., computed jump)
+			// Only use flowing context bits
+			switchContext = programContext.getRegisterValue(baseContextRegister, switchAddr);
+			switchContext = programContext.getFlowValue(switchContext);
+		}
+
+		Listing listing = program.getListing();
+		Address[] cases = table.getCases();
+		Integer[] caseValues = table.getLabelValues();
+		AddressSet disSetList = new AddressSet();
+
+		for (int caseIndex = 0; caseIndex < cases.length; caseIndex++) {
+			Address caseStart = cases[caseIndex];
+			monitor.checkCancelled();
+			
+			if (!isDefaultCase(caseValues, caseIndex)) {
+				// only non-default cases should be added to the switching instruction
+				instr.addMnemonicReference(caseStart, flowType, SourceType.ANALYSIS);
+			}
+
+			// if conflict skip case
+			if (listing.getUndefinedDataAt(caseStart) == null) {
+				continue;
+			}
+			// already done
+			if (disSetList.contains(caseStart)) {
+				continue;
+			}
+			try {
+				setSwitchTargetContext(programContext, caseStart, switchContext);
+			}
+			catch (ContextChangeException e) {
+				// This can occur when two or more threads are working on the same function
+				continue;
+			}
+			disSetList.add(caseStart);
+		}
+
+		// do all cases at one time
+		if (!disSetList.isEmpty()) {
+			DisassembleCommand cmd = new DisassembleCommand(disSetList, null, true);
+			cmd.applyTo(program);
+		}
+	}
+
+	/*
+	 * Check if this case index is a default case.
+	 * 
+	 * In general, each case target address should have an associated caseValue.
+	 * A case is default if it is first case to not have a case value, or has a magic case value.
+	 * It is possible that there could be more than one case without a value.  The code shouldn't
+	 * blow up if this is the case.
+	 * 
+	 * TODO: Should this check if the default case already has a reference to it
+	 *       from a conditional jump?
+	 */
+	private boolean isDefaultCase(Integer[] caseValues, int caseIndex) {
+		return (caseIndex == caseValues.length) ||
+				(caseIndex < caseValues.length && caseValues[caseIndex] == DEFAULT_CASE_VALUE);
+	}
+
+	/*
+	 * Check if the switching instruction has all switch references already.
+	 * Extra check for default case target as part of the table, when it shouldn't be.
+	 */
+	public boolean hasAllReferences(TaskMonitor monitor, JumpTable table, Instruction instr,
+			Function containingFunction) throws CancelledException {
+		AddressSetView containingBody =
+			containingFunction != null ? containingFunction.getBody() : null;
+
+		Reference[] referencesFrom = instr.getReferencesFrom();
+		Address[] tableDest = table.getCases();
+		Integer[] caseValues = table.getLabelValues();
+
+		// check that all cases are already a reference on the instruction, except default
+		for (int caseIndex = 0; caseIndex < tableDest.length; caseIndex++) {
+			monitor.checkCancelled();
+			
+			// a case is default if it is first case to not have a value, or has a magic case value
+			boolean isDefaultCase = isDefaultCase(caseValues, caseIndex);
+			
+			if (containingBody != null && !containingBody.contains(tableDest[caseIndex])) {
+				// switch case missing from owner function's body
+				return false;
+			}
+
+			boolean foundit = false;
+			for (Reference element : referencesFrom) {
+				if (element.getToAddress().equals(tableDest[caseIndex])) {
+					foundit = true;
+					break;
+				}
+			}
+			if (isDefaultCase) {
+				// default case should not be on switching instruction
+				if (foundit) {
+					return false;
+				}
+			}
+			else if (!foundit) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
+
+	/*
+	 * Set the context that should flow to the target so that target instruction will disassemble correctly
+	 */
 	private void setSwitchTargetContext(ProgramContext programContext, Address targetStart, RegisterValue switchContext) throws ContextChangeException {
 		if (switchContext == null) {
 			return;
@@ -236,6 +302,9 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 		program.getProgramContext().setRegisterValue(targetStart, targetStart, switchContext);
 	}
 
+	/*
+	 * Label switch table, cases, default with labels in namespace of the switch
+	 */
 	private void labelSwitch(JumpTable table, TaskMonitor monitor) throws CancelledException {
 		AddLabelCmd tableNameLabel =
 			new AddLabelCmd(table.getSwitchAddress(), "switchD", SourceType.ANALYSIS);
@@ -266,18 +335,24 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 		tableNameLabel.applyTo(program);
 
 		Address[] switchCases = table.getCases();
-		Integer[] caseLabels = table.getLabelValues();
-		Symbol[] caseSymbols = new Symbol[caseLabels.length];
+		Integer[] caseValues = table.getLabelValues();
+		Symbol[] caseSymbols = new Symbol[caseValues.length];
 		SymbolTable symTable = program.getSymbolTable();
-		for (int i = 0; i < switchCases.length; i++) {
+
+		for (int caseIndex = 0; caseIndex < switchCases.length; caseIndex++) {
 			monitor.checkCancelled();
-			int offset = (i >= caseLabels.length ? i : caseLabels[i]);
-			String caseName = "caseD_" + Integer.toHexString(offset);
-			if (offset == DEFAULT_CASE_VALUE) { // magic constant to indicate default case
+			
+			// if there are more switchCases than switch values, just use the caseIndex
+			int caseValue = (caseIndex < caseValues.length) ? caseValues[caseIndex] : caseIndex;
+
+			boolean isDefaultCase = isDefaultCase(caseValues, caseIndex);
+			
+			String caseName = "caseD_" + Integer.toHexString(caseValue);
+			if (isDefaultCase) {
 				caseName = "default";
 			}
 			AddLabelCmd lcmd =
-				new AddLabelCmd(switchCases[i], caseName, space, SourceType.ANALYSIS);
+				new AddLabelCmd(switchCases[caseIndex], caseName, space, SourceType.ANALYSIS);
 
 			Symbol oldSym = symTable.getPrimarySymbol(lcmd.getLabelAddr());
 			if (oldSym != null && oldSym.getSource() == SourceType.ANALYSIS &&
@@ -285,8 +360,8 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 				// cleanup AddressTableAnalyzer label
 				oldSym.delete();
 			}
-			if (lcmd.applyTo(program) && i < caseSymbols.length) {
-				caseSymbols[i] = symTable.getSymbol(caseName, switchCases[i], space);
+			if (lcmd.applyTo(program) && caseIndex < caseSymbols.length) {
+				caseSymbols[caseIndex] = symTable.getSymbol(caseName, switchCases[caseIndex], space);
 			}
 		}
 
@@ -338,6 +413,9 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 		return addresses;
 	}
 
+	/*
+	 * put labels on the switch table used to compute the target addresses of the switch.
+	 */
 	private void labelLoadTable(JumpTable.LoadTable loadtable, Address[] switchCases,
 			Symbol[] caseSymbols, Namespace space, TaskMonitor monitor) throws CancelledException {
 

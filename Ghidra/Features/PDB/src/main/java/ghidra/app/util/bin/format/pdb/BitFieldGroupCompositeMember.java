@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,9 +22,9 @@ import ghidra.program.model.data.BitFieldDataType;
 import ghidra.program.model.data.DataType;
 
 /**
- * <code>BitFieldGroupCompositeMember</code> provides the ability to collect related 
+ * <code>BitFieldGroupCompositeMember</code> provides the ability to collect related
  * {@link DefaultCompositeMember} members within a group during the composite reconstruction
- * process.  
+ * process.
  */
 public class BitFieldGroupCompositeMember extends CompositeMember {
 
@@ -84,7 +84,7 @@ public class BitFieldGroupCompositeMember extends CompositeMember {
 		if (list.isEmpty()) {
 			return 0;
 		}
-		return list.get(0).getLength();
+		return list.get(0).getLength(); // length is base-datatype-length
 	}
 
 	@Override
@@ -128,7 +128,7 @@ public class BitFieldGroupCompositeMember extends CompositeMember {
 	}
 
 	@Override
-	void finalizeDataType(int preferredSize) {
+	void finalizeDataType(int preferredSize, boolean packingDisabled) {
 		return; // nothing to do
 	}
 
@@ -136,6 +136,7 @@ public class BitFieldGroupCompositeMember extends CompositeMember {
 		if (!member.isSingleBitFieldMember()) {
 			throw new IllegalArgumentException("expected single bit-field member");
 		}
+		// Check verifies that bitfield base-datatype-length is the same as the group
 		if (!list.isEmpty() &&
 			(member.getOffset() != getOffset() || member.getLength() != getLength())) {
 			throw new IllegalArgumentException(
@@ -148,8 +149,8 @@ public class BitFieldGroupCompositeMember extends CompositeMember {
 
 	/**
 	 * Add a new member to the end of this bit-field group.  The caller should ensure that the
-	 * specified member is a suitable addition to this group (must be single bit field whose 
-	 * member offset and length match this group's). 
+	 * specified member is a suitable addition to this group (must be single bit field whose
+	 * member offset and length match this group's).
 	 * @param member bit-field member (must have data type of BitFieldDataType).
 	 * @throws IllegalArgumentException if specified member is not suitable for this group.
 	 */

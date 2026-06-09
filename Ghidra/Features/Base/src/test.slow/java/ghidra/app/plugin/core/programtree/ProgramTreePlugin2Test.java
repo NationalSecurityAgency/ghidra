@@ -679,7 +679,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 	public void testCutFolderCollapsed2() throws Exception {
 		// cut folder is collapsed,
 		// destination folder is collapsed.
-		// Paste the the folder; the destination folder
+		// Paste the folder; the destination folder
 		// remains collapsed
 		ProgramNode stringsNode = root.getChild("Strings");
 		visitNode(stringsNode);

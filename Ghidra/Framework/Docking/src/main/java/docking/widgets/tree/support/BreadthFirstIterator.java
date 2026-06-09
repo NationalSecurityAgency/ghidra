@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,9 @@ import docking.widgets.tree.GTreeNode;
 /**
  * Implements an iterator over all GTreeNodes in some gTree (or subtree).  The nodes are
  * return in breadth first order.
+ * <br>
+ * NOTE: Iterator will not include children of a node where {@link GTreeNode#isAutoExpandPermitted()}
+ * returns false.
  */
 public class BreadthFirstIterator implements Iterator<GTreeNode> {
 	private Queue<GTreeNode> nodeQueue = new LinkedList<GTreeNode>();
@@ -39,7 +42,7 @@ public class BreadthFirstIterator implements Iterator<GTreeNode> {
 	@Override
 	public GTreeNode next() {
 		lastNode = nodeQueue.poll();
-		if (lastNode != null) {
+		if (lastNode != null && lastNode.isAutoExpandPermitted()) {
 			List<GTreeNode> children = lastNode.getChildren();
 			nodeQueue.addAll(children);
 		}

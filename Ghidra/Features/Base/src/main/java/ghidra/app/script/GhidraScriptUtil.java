@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.app.plugin.core.script.GhidraScriptMgrPlugin;
 import ghidra.app.util.headless.HeadlessAnalyzer;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
-import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.classfinder.*;
 import utilities.util.FileUtilities;
 
 /**
@@ -63,11 +63,11 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * set the bundle host and start the framework
+	 * Initialize state of GhidraScriptUtil with user and system paths
 	 * 
-	 * @param aBundleHost the bundle host
+	 * @param aBundleHost the host to use
 	 */
-	private static void setBundleHost(BundleHost aBundleHost) {
+	private static void initialize(BundleHost aBundleHost) {
 		if (bundleHost != null) {
 			throw new RuntimeException("GhidraScriptUtil initialized multiple times!");
 		}
@@ -79,22 +79,6 @@ public class GhidraScriptUtil {
 		catch (OSGiException | IOException e) {
 			Msg.error(GhidraScriptUtil.class, "Failed to initialize BundleHost", e);
 		}
-	}
-
-	/**
-	 * Initialize state of GhidraScriptUtil with user, system, and optional extra system paths.
-	 * 
-	 * @param aBundleHost the host to use 
-	 * @param extraSystemPaths additional system paths for this run, can be null 
-	 * 
-	 */
-	public static void initialize(BundleHost aBundleHost, List<String> extraSystemPaths) {
-		setBundleHost(aBundleHost);
-		if (extraSystemPaths != null) {
-			for (String path : extraSystemPaths) {
-				bundleHost.add(new ResourceFile(path), true, true);
-			}
-		}
 
 		bundleHost.add(getUserScriptDirectory(), true, false);
 		bundleHost.add(getSystemScriptDirectories(), true, true);
@@ -103,7 +87,7 @@ public class GhidraScriptUtil {
 	/**
 	 * dispose of the bundle host and providers list
 	 */
-	public static void dispose() {
+	private static void dispose() {
 		if (bundleHost != null) {
 			bundleHost.stopFramework();
 			bundleHost = null;
@@ -276,18 +260,18 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * Returns a list of all supported Ghidra script providers
+	 * Returns a list of all supported Ghidra script providers.
+	 * <p>
+	 * NOTE: The list is {@link ExtensionPointProperties#priority() priority-sorted}
 	 * 
 	 * @return a list of all supported Ghidra script providers
+	 * @apiNote this method is synchronized so that two threads do not try to create the list when 
+	 *   null
 	 */
-	// Note: this method is synchronized so that two threads do not try to create the list when null
 	public static synchronized List<GhidraScriptProvider> getProviders() {
 		if (providers == null) {
-			providers = ClassSearcher.getInstances(GhidraScriptProvider.class)
-					.stream()
-					.filter(p -> !(p instanceof UnsupportedScriptProvider))
-					.sorted()
-					.toList();
+			providers = ClassSearcher.getInstances(GhidraScriptProvider.class,
+				new ClassExclusionFilter(UnsupportedScriptProvider.class));
 		}
 		return providers;
 	}
@@ -455,7 +439,7 @@ public class GhidraScriptUtil {
 	 */
 	public static BundleHost acquireBundleHostReference() {
 		if (referenceCount.getAndIncrement() == 0) {
-			initialize(new BundleHost(), null);
+			initialize(new BundleHost());
 		}
 		return bundleHost;
 	}

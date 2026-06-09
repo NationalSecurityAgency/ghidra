@@ -15,9 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 import java.nio.file.Paths;
 import java.util.*;
@@ -26,13 +25,21 @@ import org.junit.Before;
 import org.junit.Test;
 
 import db.Transaction;
+import generic.jar.ResourceFile;
+import ghidra.app.plugin.core.analysis.AnalysisBackgroundCommand;
+import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.services.TraceRmiLauncherService;
+import ghidra.app.util.importer.ProgramLoader;
+import ghidra.app.util.opinion.LoadResults;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.*;
+import ghidra.framework.Application;
 import ghidra.framework.OperatingSystem;
+import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
+import ghidra.program.model.listing.Program;
 import ghidra.util.task.ConsoleTaskMonitor;
 
 public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebuggerTest {
@@ -66,6 +73,24 @@ public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebug
 				return args;
 			}
 		};
+	}
+
+	@Test
+	public void testGetClassName() throws Exception {
+		ResourceFile rf = Application.getModuleDataFile("TestResources", "HelloWorld.class");
+		try (LoadResults<Program> results = ProgramLoader.builder()
+				.source(rf.getFile(false))
+				.project(env.getProject())
+				.monitor(monitor)
+				.load()) {
+			program = results.getPrimaryDomainObject(this);
+		}
+		AutoAnalysisManager analyzer = AutoAnalysisManager.getAnalysisManager(program);
+		analyzer.reAnalyzeAll(null);
+		Command<Program> cmd = new AnalysisBackgroundCommand(analyzer, false);
+		tool.execute(cmd, program);
+		waitForBusyTool(tool);
+		assertEquals("HelloWorld", TraceRmiLauncherServicePlugin.tryProgramJvmClass(program));
 	}
 
 	// @Test // This is currently hanging the test machine. The gdb process is left running

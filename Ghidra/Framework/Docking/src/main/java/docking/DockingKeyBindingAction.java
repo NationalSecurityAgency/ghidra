@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package docking;
 
-import java.awt.event.ActionEvent;
+import java.awt.Component;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -46,19 +46,10 @@ public abstract class DockingKeyBindingAction extends AbstractAction {
 		return true; // always enable; this is a internal action that cannot be disabled
 	}
 
-	public abstract KeyBindingPrecedence getKeyBindingPrecedence();
+	public abstract ExecutableAction getExecutableAction(Component focusOwner);
 
 	public boolean isSystemKeybindingPrecedence() {
 		return false;
-	}
-
-	@Override
-	public void actionPerformed(final ActionEvent e) {
-		tool.setStatusInfo("");
-		ComponentProvider provider = tool.getActiveComponentProvider();
-		ActionContext context = getLocalContext(provider);
-		context.setSourceObject(e.getSource());
-		dockingAction.actionPerformed(context);
 	}
 
 	protected ActionContext getLocalContext(ComponentProvider localProvider) {
@@ -66,15 +57,17 @@ public abstract class DockingKeyBindingAction extends AbstractAction {
 			return new DefaultActionContext();
 		}
 
-		ActionContext actionContext = localProvider.getActionContext(null);
-		if (actionContext != null) {
-			return actionContext;
+		ActionContext context = localProvider.getActionContext(null);
+		if (context == null) {
+			context = new DefaultActionContext(localProvider);
 		}
 
-		return new DefaultActionContext(localProvider, null);
+		context.setContextProvider(localProvider);
+		return context;
 	}
 
 	public List<DockingActionIf> getActions() {
 		return List.of(dockingAction);
 	}
+
 }

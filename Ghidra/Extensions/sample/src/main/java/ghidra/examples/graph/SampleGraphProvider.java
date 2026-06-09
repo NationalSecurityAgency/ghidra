@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,8 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
-import docking.action.ToggleDockingAction;
-import docking.action.ToolBarData;
+import docking.action.*;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.*;
@@ -345,7 +344,8 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 	private void addLayoutAction() {
 
 		MultiStateDockingAction<LayoutProvider<SampleVertex, SampleEdge, SampleGraph>> layoutAction =
-			new MultiStateDockingAction<>(RELAYOUT_GRAPH_ACTION_NAME, plugin.getName()) {
+			new MultiStateDockingAction<>(RELAYOUT_GRAPH_ACTION_NAME, plugin.getName(),
+				KeyBindingType.SHARED) {
 
 				@Override
 				public void actionPerformed(ActionContext context) {

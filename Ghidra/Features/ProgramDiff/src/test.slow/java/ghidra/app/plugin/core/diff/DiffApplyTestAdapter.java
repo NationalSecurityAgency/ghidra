@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,6 +48,7 @@ public class DiffApplyTestAdapter extends DiffTestAdapter {
 	JComboBox<?> bookmarkApplyCB;
 	JComboBox<?> propertiesApplyCB;
 	JComboBox<?> functionTagApplyCB;
+	JComboBox<?> sourceMapApplyCB;
 
 	public DiffApplyTestAdapter() {
 		super();
@@ -204,15 +205,15 @@ public class DiffApplyTestAdapter extends DiffTestAdapter {
 			(JComboBox<?>) findComponentByName(settingsPanel, "Code Units Diff Apply CB");
 		refApplyCB = (JComboBox<?>) findComponentByName(settingsPanel, "References Diff Apply CB");
 		plateCommentApplyCB =
-			(JComboBox<?>) findComponentByName(settingsPanel, "Plate Comments Diff Apply CB");
+			(JComboBox<?>) findComponentByName(settingsPanel, "Comments, Plate Diff Apply CB");
 		preCommentApplyCB =
-			(JComboBox<?>) findComponentByName(settingsPanel, "Pre Comments Diff Apply CB");
+			(JComboBox<?>) findComponentByName(settingsPanel, "Comments, Pre Diff Apply CB");
 		eolCommentApplyCB =
-			(JComboBox<?>) findComponentByName(settingsPanel, "Eol Comments Diff Apply CB");
+			(JComboBox<?>) findComponentByName(settingsPanel, "Comments, EOL Diff Apply CB");
 		repeatableCommentApplyCB =
-			(JComboBox<?>) findComponentByName(settingsPanel, "Repeatable Comments Diff Apply CB");
+			(JComboBox<?>) findComponentByName(settingsPanel, "Comments, Repeatable Diff Apply CB");
 		postCommentApplyCB =
-			(JComboBox<?>) findComponentByName(settingsPanel, "Post Comments Diff Apply CB");
+			(JComboBox<?>) findComponentByName(settingsPanel, "Comments, Post Diff Apply CB");
 		labelApplyCB = (JComboBox<?>) findComponentByName(settingsPanel, "Labels Diff Apply CB");
 		functionApplyCB =
 			(JComboBox<?>) findComponentByName(settingsPanel, "Functions Diff Apply CB");
@@ -222,6 +223,8 @@ public class DiffApplyTestAdapter extends DiffTestAdapter {
 			(JComboBox<?>) findComponentByName(settingsPanel, "Properties Diff Apply CB");
 		functionTagApplyCB =
 			(JComboBox<?>) findComponentByName(settingsPanel, "Function Tags Diff Apply CB");
+		sourceMapApplyCB =
+			(JComboBox<?>) findComponentByName(settingsPanel, "Source Map Diff Apply CB");
 	}
 
 	void checkDiffSelection(AddressSetView addrSet) {

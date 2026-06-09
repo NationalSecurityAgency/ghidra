@@ -95,8 +95,8 @@ public class DemangledDataType extends DemangledType {
 	private static final String UNSIGNED_LONG = "unsigned long";
 
 	public final static String[] PRIMITIVES =
-		{ VOID, BOOL, CHAR, WCHAR_T, WCHAR16, WCHAR32, CHAR8_T, SHORT, INT, INT0_T, LONG,
-			LONG_LONG, FLOAT, FLOAT2, DOUBLE, INT128, FLOAT128, LONG_DOUBLE, };
+		{ VOID, BOOL, CHAR, WCHAR_T, WCHAR16, WCHAR32, CHAR8_T, SHORT, INT, INT0_T, LONG, LONG_LONG,
+			FLOAT, FLOAT2, DOUBLE, INT128, FLOAT128, LONG_DOUBLE, };
 
 	private int arrayDimensions = 0;
 	private boolean isClass;
@@ -200,10 +200,10 @@ public class DemangledDataType extends DemangledType {
 			else if (dt == null) {
 
 				// I don't know what this is
-				// If it isn't pointed to, or isn't a referent, then assume typedef.
+				// If it isn't pointed to, or isn't a referent, then assume undefined typedef.
 				if (!(isReference() || isPointer())) { // Unknown type
 					dt = new TypedefDataType(getDemanglerCategoryPath(getNamespace()), name,
-						new DWordDataType());
+						DataType.DEFAULT);
 				}
 				else {
 					// try creating empty structures for unknown types instead.
@@ -379,17 +379,13 @@ public class DemangledDataType extends DemangledType {
 	static DataType findDataType(DataTypeManager dataTypeManager, Demangled namespace,
 			String dtName) {
 
-		// TODO: add support for use of Program.getPreferredRootNamespaceCategoryPath when
-		// searching for datatypes
-
 		List<DataType> list = new ArrayList<>();
 		dataTypeManager.findDataTypes(dtName, list);
 		if (list.isEmpty()) {
 			return null;
 		}
 
-		//use the datatype that exists in the root category,
-		//otherwise just pick the first one...
+		// use the datatype that exists in the root category, otherwise just pick the first one
 		DataType anyDt = null;
 		DataType preferredDataType = null;
 		for (DataType existingDT : list) {

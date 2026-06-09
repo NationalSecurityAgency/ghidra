@@ -42,7 +42,7 @@ public class InsertUndefinedAction extends CompositeEditorTableAction {
 	private final static KeyStroke KEY_STROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK);
 
-	public InsertUndefinedAction(CompositeEditorProvider provider) {
+	public InsertUndefinedAction(CompositeEditorProvider<?, ?> provider) {
 		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 		setDescription(DESCRIPTION);
 		setKeyBindingData(new KeyBindingData(KEY_STROKE));

@@ -21,17 +21,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 
 import db.Transaction;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils.Extrema;
 import ghidra.app.services.DebuggerEmulationService;
-import ghidra.dbg.target.*;
-import ghidra.dbg.target.schema.*;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.util.*;
 import ghidra.framework.model.DomainFile;
+import ghidra.pcode.emu.EmulatorUtilities;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
@@ -42,9 +39,15 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceConflictedMappingException;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.thread.*;
+import ghidra.trace.model.target.TraceObjectManager;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.schema.*;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -72,8 +75,6 @@ public class ProgramEmulationUtils {
 			    </schema>
 			    <schema name='BreakpointContainer' canonical='yes' elementResync='NEVER'
 			            attributeResync='NEVER'>
-			        <interface name='BreakpointSpecContainer' />
-			        <interface name='BreakpointLocationContainer' />
 			        <element schema='Breakpoint' />
 			    </schema>
 			    <schema name='Breakpoint' elementResync='NEVER' attributeResync='NEVER'>
@@ -110,7 +111,15 @@ public class ProgramEmulationUtils {
 			        <interface name='Thread' />
 			        <interface name='Activatable' />
 			        <interface name='Aggregate' />
+			        <attribute name='Stack' schema='Stack' />
 			        <attribute name='Registers' schema='RegisterContainer' />
+			    </schema>
+			    <schema name='Stack' canonical='yes'>
+			        <interface name='Stack' />
+			        <element schema='Frame' />
+			    </schema>
+			    <schema name='Frame'>
+			        <interface name='StackFrame' />
 			    </schema>
 			    <schema name='RegisterContainer' canonical='yes' elementResync='NEVER'
 			            attributeResync='NEVER'>
@@ -123,7 +132,7 @@ public class ProgramEmulationUtils {
 			</context>
 			""";
 	public static final SchemaContext EMU_CTX;
-	public static final TargetObjectSchema EMU_SESSION_SCHEMA;
+	public static final TraceObjectSchema EMU_SESSION_SCHEMA;
 	static {
 		try {
 			EMU_CTX = XmlSchemaContext.deserialize(EMU_CTX_XML);
@@ -134,7 +143,7 @@ public class ProgramEmulationUtils {
 		EMU_SESSION_SCHEMA = EMU_CTX.getSchema(new SchemaName("EmuSession"));
 	}
 
-	public static final String BLOCK_NAME_STACK = "STACK";
+	public static final String BLOCK_NAME_STACK = EmulatorUtilities.BLOCK_NAME_STACK;
 
 	/**
 	 * Conventional prefix for first snapshot to identify "pure emulation" traces.
@@ -234,9 +243,10 @@ public class ProgramEmulationUtils {
 
 				// NB. No need to populate as module.
 				// UI will sync from mapping, so it's obvious where the cursor is.
-				String path = PathUtils.toString(patRegion
+				String path = patRegion
 						.applyKeys(block.getStart() + "-" + modName + ":" + block.getName())
-						.getSingletonPath());
+						.getSingletonPath()
+						.toString();
 				trace.getMemoryManager()
 						.createRegion(path, snapshot.getKey(), range, getRegionFlags(block));
 			}
@@ -270,10 +280,10 @@ public class ProgramEmulationUtils {
 		// N.B. Bytes will be loaded lazily
 	}
 
-	public static PathPattern computePattern(TargetObjectSchema root, Trace trace,
-			Class<? extends TargetObject> iface) {
-		PathMatcher matcher = root.searchFor(iface, true);
-		PathPattern pattern = matcher.getSingletonPattern();
+	public static PathPattern computePattern(TraceObjectSchema root, Trace trace,
+			Class<? extends TraceObjectInterface> iface) {
+		PathFilter filter = root.searchFor(iface, true);
+		PathPattern pattern = filter.getSingletonPattern();
 		if (pattern == null || pattern.countWildcards() != 1) {
 			throw new IllegalArgumentException(
 				"Cannot find unique " + iface.getSimpleName() + " container");
@@ -282,19 +292,13 @@ public class ProgramEmulationUtils {
 	}
 
 	public static PathPattern computePatternRegion(Trace trace) {
-		TargetObjectSchema root = trace.getObjectManager().getRootSchema();
-		if (root == null) {
-			return new PathPattern(PathUtils.parse("Memory[]"));
-		}
-		return computePattern(root, trace, TargetMemoryRegion.class);
+		TraceObjectSchema root = trace.getObjectManager().requireRootSchema();
+		return computePattern(root, trace, TraceMemoryRegion.class);
 	}
 
 	public static PathPattern computePatternThread(Trace trace) {
-		TargetObjectSchema root = trace.getObjectManager().getRootSchema();
-		if (root == null) {
-			return new PathPattern(PathUtils.parse("Threads[]"));
-		}
-		return computePattern(root, trace, TargetThread.class);
+		TraceObjectSchema root = trace.getObjectManager().requireRootSchema();
+		return computePattern(root, trace, TraceThread.class);
 	}
 
 	/**
@@ -312,13 +316,13 @@ public class ProgramEmulationUtils {
 		PathPattern patThread = computePatternThread(trace);
 		long next = tm.getAllThreads().size();
 		String path;
-		while (!tm.getThreadsByPath(path =
-			PathUtils.toString(patThread.applyKeys(Long.toString(next)).getSingletonPath()))
+		while (!tm.getThreadsByPath(
+			path = patThread.applyKeys(Long.toString(next)).getSingletonPath().toString())
 				.isEmpty()) {
 			next++;
 		}
 		try {
-			return tm.createThread(path, "[" + next + "]", snap);
+			return tm.createThread(path, KeyPath.makeIndex(next), snap);
 		}
 		catch (DuplicateNameException e) {
 			throw new AssertionError(e);
@@ -339,19 +343,16 @@ public class ProgramEmulationUtils {
 	public static void initializeRegisters(Trace trace, long snap, TraceThread thread,
 			Program program, Address tracePc, Address programPc, AddressRange stack) {
 		TraceMemoryManager memory = trace.getMemoryManager();
-		if (thread instanceof TraceObjectThread ot) {
-			TraceObject object = ot.getObject();
-			PathPredicates regsMatcher = object.getRoot()
-					.getTargetSchema()
-					.searchForRegisterContainer(0, object.getCanonicalPath().getKeyList());
-			if (regsMatcher.isEmpty()) {
-				throw new IllegalArgumentException("Cannot create register container");
-			}
-			for (PathPattern regsPattern : regsMatcher.getPatterns()) {
-				trace.getObjectManager()
-						.createObject(TraceObjectKeyPath.of(regsPattern.getSingletonPath()));
-				break;
-			}
+		TraceObject object = thread.getObject();
+		PathFilter regsFilter = object.getRoot()
+				.getSchema()
+				.searchForRegisterContainer(0, object.getCanonicalPath());
+		if (regsFilter.isNone()) {
+			throw new IllegalArgumentException("Cannot create register container");
+		}
+		for (PathPattern regsPattern : regsFilter.getPatterns()) {
+			trace.getObjectManager().createObject(regsPattern.getSingletonPath());
+			break;
 		}
 		TraceMemorySpace regSpace = memory.getMemoryRegisterSpace(thread, true);
 		if (program != null) {
@@ -428,7 +429,7 @@ public class ProgramEmulationUtils {
 		final AddressRange alloc;
 		if (cSpec.stackGrowsNegative()) {
 			Address max = spAddr.subtractWrap(1);
-			Address min = spAddr.subtractWrapSpace(size);
+			Address min = spAddr.subtractWrap(size);
 			if (min.compareTo(max) > 0) {
 				alloc = new AddressRangeImpl(max.getAddressSpace().getMinAddress(), max);
 			}
@@ -448,16 +449,14 @@ public class ProgramEmulationUtils {
 		}
 
 		PathPattern patRegion = computePatternRegion(trace);
-		String threadName = PathUtils.isIndex(thread.getName())
-				? PathUtils.parseIndex(thread.getName())
-				: thread.getName();
-		String path = PathUtils.toString(
-			patRegion.applyKeys(alloc.getMinAddress() + "-stack " + threadName)
-					.getSingletonPath());
+		String threadName = KeyPath.parseIfIndex(thread.getName(snap));
+		String path = patRegion.applyKeys(alloc.getMinAddress() + "-stack " + threadName)
+				.getSingletonPath()
+				.toString();
 		TraceMemoryManager mm = trace.getMemoryManager();
 		try {
 			return mm.createRegion(path, snap, alloc,
-				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE).getRange();
+				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE).getRange(snap);
 		}
 		catch (TraceOverlappedRegionException e) {
 			Msg.showError(ProgramEmulationUtils.class, null, "Stack conflict",
@@ -512,13 +511,13 @@ public class ProgramEmulationUtils {
 			return alloc;
 		}
 		PathPattern patRegion = computePatternRegion(trace);
-		String path = PathUtils.toString(
-			patRegion.applyKeys(stackBlock.getStart() + "-STACK")
-					.getSingletonPath());
+		String path = patRegion.applyKeys(stackBlock.getStart() + "-STACK")
+				.getSingletonPath()
+				.toString();
 		TraceMemoryManager mm = trace.getMemoryManager();
 		try {
 			return mm.createRegion(path, snap, alloc,
-				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE).getRange();
+				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE).getRange(snap);
 		}
 		catch (TraceOverlappedRegionException e) {
 			Msg.showError(ProgramEmulationUtils.class, null, "Stack conflict",
@@ -584,14 +583,13 @@ public class ProgramEmulationUtils {
 			for (AddressRange candidate : left) {
 				if (Long.compareUnsigned(candidate.getLength(), size) >= 0) {
 					AddressRange alloc = new AddressRangeImpl(candidate.getMinAddress(), size);
-					String threadName = PathUtils.isIndex(thread.getName())
-							? PathUtils.parseIndex(thread.getName())
-							: thread.getName();
-					String path = PathUtils.toString(
-						patRegion.applyKeys(alloc.getMinAddress() + "-stack " + threadName)
-								.getSingletonPath());
+					String threadName = KeyPath.parseIfIndex(thread.getName(snap));
+					String path = patRegion
+							.applyKeys(alloc.getMinAddress() + "-stack " + threadName)
+							.getSingletonPath()
+							.toString();
 					return mm.createRegion(path, snap, alloc,
-						TraceMemoryFlag.READ, TraceMemoryFlag.WRITE).getRange();
+						TraceMemoryFlag.READ, TraceMemoryFlag.WRITE).getRange(snap);
 				}
 			}
 		}
@@ -602,17 +600,22 @@ public class ProgramEmulationUtils {
 		throw new EmulatorOutOfMemoryException();
 	}
 
-	protected static void createObjects(Trace trace) {
+	/**
+	 * Initialize a given emulation trace with some required/expected objects
+	 * 
+	 * @param trace the trace
+	 */
+	public static void createObjects(Trace trace) {
 		TraceObjectManager om = trace.getObjectManager();
 		om.createRootObject(EMU_SESSION_SCHEMA);
 
-		om.createObject(TraceObjectKeyPath.parse("Breakpoints"))
+		om.createObject(KeyPath.parse("Breakpoints"))
 				.insert(Lifespan.ALL, ConflictResolution.DENY);
-		om.createObject(TraceObjectKeyPath.parse("Memory"))
+		om.createObject(KeyPath.parse("Memory"))
 				.insert(Lifespan.ALL, ConflictResolution.DENY);
-		om.createObject(TraceObjectKeyPath.parse("Modules"))
+		om.createObject(KeyPath.parse("Modules"))
 				.insert(Lifespan.ALL, ConflictResolution.DENY);
-		om.createObject(TraceObjectKeyPath.parse("Threads"))
+		om.createObject(KeyPath.parse("Threads"))
 				.insert(Lifespan.ALL, ConflictResolution.DENY);
 	}
 
@@ -641,7 +644,8 @@ public class ProgramEmulationUtils {
 					pc.getAddressSpace().isOverlaySpace() ? List.of(pc.getAddressSpace())
 							: List.of();
 				loadExecutable(initial, program, overlays);
-				doLaunchEmulationThread(trace, snap, program, pc, pc);
+				TraceThread thread = doLaunchEmulationThread(trace, snap, program, pc, pc);
+				initial.setEventThread(thread);
 			}
 			trace.clearUndo();
 			success = true;
@@ -686,6 +690,13 @@ public class ProgramEmulationUtils {
 	/**
 	 * Same as {@link #doLaunchEmulationThread(Trace, long, Program, Address, Address)}, but within
 	 * a transaction
+	 * 
+	 * @param trace the trace to contain the new thread
+	 * @param snap the creation snap for the new thread
+	 * @param program the program whose context to use for initial register values
+	 * @param tracePc the program counter in the trace's memory map
+	 * @param programPc the program counter in the program's memory map
+	 * @return the new thread
 	 */
 	public static TraceThread launchEmulationThread(Trace trace, long snap, Program program,
 			Address tracePc, Address programPc) {

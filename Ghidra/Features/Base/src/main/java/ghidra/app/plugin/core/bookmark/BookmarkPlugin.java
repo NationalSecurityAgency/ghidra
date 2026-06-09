@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.bookmark;
 
-import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.framework.model.DomainObjectEvent.RESTORED;
 import static ghidra.program.util.ProgramEvent.*;
 
 import java.awt.event.KeyEvent;
@@ -34,13 +34,13 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
+import ghidra.app.plugin.core.bookmark.BookmarkPlugin.BookmarkTransientState;
 import ghidra.app.services.*;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.model.DomainObjectListenerBuilder;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.PluginInfo;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -68,7 +68,8 @@ import resources.MultiIconBuilder;
 	eventsProduced = { ProgramSelectionPluginEvent.class }
 )
 //@formatter:on
-public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider, BookmarkService {
+public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider, BookmarkService,
+		PluginWithTransientState<BookmarkTransientState> {
 
 	private final static int MAX_DELETE_ACTIONS = 10;
 
@@ -182,7 +183,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 		DockingAction selectionAction = new DockingAction("Select Bookmark Locations", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				select(provider.getBookmarkLocations());
+				select(provider.getBookmarkSelection());
 			}
 		};
 		icon = new GIcon("icon.plugin.bookmark.select");
@@ -202,7 +203,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 	 */
 	public void filterBookmarks() {
 		FilterDialog d = new FilterDialog(provider, currentProgram);
-		tool.showDialog(d, provider);
+		tool.showDialog(d, provider.getComponent());
 		provider.contextChanged();
 	}
 
@@ -282,9 +283,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 	}
 
 	private void disposeAllBookmarkers() {
-		Iterator<BookmarkNavigator> it = bookmarkNavigators.values().iterator();
-		while (it.hasNext()) {
-			BookmarkNavigator nav = it.next();
+		for (BookmarkNavigator nav : bookmarkNavigators.values()) {
 			nav.dispose();
 		}
 		bookmarkNavigators.clear();
@@ -300,12 +299,16 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 		if (type == null) {
 			return null;
 		}
+
 		String typeString = type.getTypeString();
 		BookmarkNavigator nav = bookmarkNavigators.get(typeString);
-		if (nav == null) {
-			nav = new BookmarkNavigator(markerService, currentProgram.getBookmarkManager(), type);
-			bookmarkNavigators.put(typeString, nav);
+		if (nav != null) {
+			return nav;
 		}
+
+		BookmarkManager bookmarkManager = currentProgram.getBookmarkManager();
+		nav = new BookmarkNavigator(markerService, bookmarkManager, type);
+		bookmarkNavigators.put(typeString, nav);
 		return nav;
 	}
 
@@ -390,14 +393,16 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 		bookmarkMgr = null;
 	}
 
+	record BookmarkTransientState(FilterState filterState) {}
+
 	@Override
-	public Object getTransientState() {
-		return provider.getFilterState();
+	public BookmarkTransientState getTransientState() {
+		return new BookmarkTransientState(provider.getFilterState());
 	}
 
 	@Override
-	public void restoreTransientState(Object state) {
-		provider.restoreFilterState((FilterState) state);
+	public void restoreTransientState(BookmarkTransientState state) {
+		provider.restoreFilterState(state.filterState);
 	}
 
 	@Override
@@ -413,14 +418,25 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 		if (program != currentProgram) {
 			return;
 		}
-		Listing listing = currentProgram.getListing();
-		CodeUnit currCU = listing.getCodeUnitContaining(address);
-		if (currCU == null) {
+		CodeUnit cu = getLowestLevelCodeUnit(program, address);
+		if (cu == null) {
 			return;
 		}
 		boolean hasSelection = currentSelection != null && !currentSelection.isEmpty();
-		CreateBookmarkDialog createDialog = new CreateBookmarkDialog(this, currCU, hasSelection);
+		CreateBookmarkDialog createDialog = new CreateBookmarkDialog(this, cu, hasSelection);
 		tool.showDialog(createDialog);
+	}
+
+	CodeUnit getLowestLevelCodeUnit(Program program, Address address) {
+		Listing listing = program.getListing();
+		CodeUnit cu = listing.getCodeUnitContaining(address);
+		if (cu instanceof Data data) {
+			Data subData = data.getPrimitiveAt((int) address.subtract(cu.getMinAddress()));
+			if (subData != null) {
+				return subData;
+			}
+		}
+		return cu;
 	}
 
 	/**
@@ -433,7 +449,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 	 */
 	public void setNote(Address addr, String category, String comment) {
 
-		CompoundCmd cmd = new CompoundCmd("Set Note Bookmark");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Set Note Bookmark");
 
 		if (addr != null) {
 			// Add address specified within bookmark
@@ -502,7 +518,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 
 	/**
 	 * Returns a list of actions to delete bookmarks that are in the code unit surrounding the given
-	 * address. The list of actions will not exceed <tt>maxActionsCount</tt>
+	 * address. The list of actions will not exceed {@code maxActionsCount}
 	 * 
 	 * @param primaryAddress The address required to find the containing code unit.
 	 * @param maxActionsCount The maximum number of actions to include in the returned list.
@@ -533,7 +549,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 	 * @param primaryAddress The address required to find the containing code unit.
 	 * @param type The bookmark type to retrieve.
 	 * @param navigator The BookmarkNavigator used to determine whether there are bookmarks inside
-	 *            the code unit containing the given <tt>primaryAddress</tt>.
+	 *            the code unit containing the given {@code primaryAddress}.
 	 * @return a list of actions to delete bookmarks that are in the code unit surrounding the given
 	 *         address <b>for the given <i>type</i> of bookmark</b>.
 	 */
@@ -568,8 +584,8 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 	}
 
 	/**
-	 * Adds the actions in <tt>newActionList</tt> to <tt>actionList</tt> while the size of
-	 * <tt>actionList</tt> is less than the given {@link #MAX_DELETE_ACTIONS}.
+	 * Adds the actions in {@code newActionList} to {@code actionList} while the size of
+	 * {@code actionList} is less than the given {@link #MAX_DELETE_ACTIONS}.
 	 * 
 	 * @param actionList The list to add to
 	 * @param newActionList The list containing items to add
@@ -613,9 +629,8 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 				types.add(type);
 			}
 			else {
-				Iterator<String> it = bookmarkNavigators.keySet().iterator();
-				while (it.hasNext()) {
-					types.add(it.next());
+				for (String element : bookmarkNavigators.keySet()) {
+					types.add(element);
 				}
 			}
 			updateMgr.update();
@@ -644,9 +659,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 				running = true;
 			}
 			try {
-				Iterator<String> it = myTypes.iterator();
-				while (it.hasNext()) {
-					String type = it.next();
+				for (String type : myTypes) {
 					updateNav(type);
 				}
 			}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -170,7 +170,7 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 			return true;
 		}
 
-		// We used to have code that pass proxy objects to this class to remove items.  That code
+		// We used to have code that passed proxy objects to this class to remove items.  That code
 		// has been updated to no longer pass proxy objects.  Leaving this code here for a while
 		// just in case we find another client doing the same thing.
 		// return data.remove(t);
@@ -189,6 +189,10 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	public void process(
 			BiFunction<List<ROW_OBJECT>, TableSortingContext<ROW_OBJECT>, List<ROW_OBJECT>> function) {
 
+		if (!isSorted()) {
+			return;
+		}
+
 		if (source != null) {
 			source.process(function);
 		}
@@ -197,7 +201,7 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	}
 
 	/**
-	 * Adds the new <tt>value</tt> to the data at the appropriate location based on the sort
+	 * Adds the new {@code value} to the data at the appropriate location based on the sort
 	 * 
 	 * @param value the row Object to insert
 	 */

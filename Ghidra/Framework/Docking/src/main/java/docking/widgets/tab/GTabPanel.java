@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,10 @@
  */
 package docking.widgets.tab;
 
-import java.awt.Container;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 import javax.swing.*;
 
 import ghidra.util.layout.HorizontalLayout;
+import resources.ResourceManager;
 import utility.function.Dummy;
 
 /**
@@ -49,6 +51,7 @@ import utility.function.Dummy;
  */
 public class GTabPanel<T> extends JPanel {
 
+	private boolean isActive;
 	private T selectedValue;
 	private T highlightedValue;
 	private boolean ignoreFocusLost;
@@ -64,6 +67,9 @@ public class GTabPanel<T> extends JPanel {
 	private Consumer<T> selectedTabConsumer = Dummy.consumer();
 	private Consumer<T> closeTabConsumer = t -> removeTab(t);
 	private boolean showTabsAlways = true;
+
+	private Cursor moveCursor = createMoveCursor();
+	private boolean isDragging;
 
 	/**
 	 * Constructor
@@ -112,13 +118,19 @@ public class GTabPanel<T> extends JPanel {
 			@Override
 			public void focusGained(FocusEvent e) {
 				updateTabColors();
+				repaint();
 			}
 
 			@Override
 			public void focusLost(FocusEvent e) {
+				if (ignoreFocusLost) {
+					return;
+				}
+
 				highlightedValue = null;
-				updateAccessibleName();
 				updateTabColors();
+				updateAccessibleName();
+				repaint();
 			}
 		});
 	}
@@ -128,8 +140,9 @@ public class GTabPanel<T> extends JPanel {
 	 * @param value the value for the new tab
 	 */
 	public void addTab(T value) {
-		doAddValue(value);
-		rebuildTabs();
+		if (doAddValue(value)) {
+			rebuildTabs();
+		}
 	}
 
 	/**
@@ -174,6 +187,19 @@ public class GTabPanel<T> extends JPanel {
 		}
 	}
 
+	public Color getSelectedTabColor() {
+
+		if (selectedValue == null) {
+			return GTab.BG_COLOR_UNSELECTED;
+		}
+
+		GTab<T> tab = getTab(selectedValue);
+		if (tab == null) {
+			return GTab.BG_COLOR_UNSELECTED;
+		}
+		return tab.getBackgroundColor(false);
+	}
+
 	/**
 	 * Returns the currently selected tab. If the panel is not empty, there will always be a
 	 * selected tab.
@@ -186,26 +212,104 @@ public class GTabPanel<T> extends JPanel {
 	/**
 	 * Returns the currently highlighted tab if a tab is highlighted. Note: the selected tab can
 	 * never be highlighted.
-	 * @return the currently highlighted tab or null if no tab is highligted
+	 * @return the currently highlighted tab or null if no tab is highlighted
 	 */
 	public T getHighlightedTabValue() {
 		return highlightedValue;
 	}
 
 	/**
-	 * Makes the tab for the given value be the selected tab.
+	 * Sets this panel to be active.  When active, this panel will paint differently than when 
+	 * inactive.
+	 * @param isActive true if active
+	 */
+	public void setActive(boolean isActive) {
+		this.isActive = isActive;
+		doUpdateSelectedTab(selectedValue);
+		repaint();
+	}
+
+	/**
+	 * True if this panel is active.
+	 * @return true if active
+	 */
+	public boolean isActive() {
+		return isActive;
+	}
+
+	/**
+	 * Makes the tab for the given value be the selected and active tab.  If the value is null, then
+	 * the tabs will be rebuilt and no tab will be selected.
+	 * 
 	 * @param value the value whose tab is to be selected
 	 */
 	public void selectTab(T value) {
 		if (value != null && !allValues.contains(value)) {
 			throw new IllegalArgumentException(
-				"Attempted to set selected value to non added value");
+				"Attempted to set selected value to non-added value");
 		}
+
+		if (isAlreadySelected(value)) {
+			return;
+		}
+
+		clearHighlightedTab(value);
+
+		// This method is called for things like user clicks. Anytime we select the tab from the 
+		// API, also make this panel active.  This is easier on clients in that they do not have to
+		// both select and activate this panel.
+		isActive = true;
+		doUpdateSelectedTab(value);
+	}
+
+	private void clearHighlightedTab(T value) {
+		if (highlightedValue != null && highlightedValue != value) {
+			GTab<T> tab = getTab(highlightedValue);
+			if (tab != null) {
+				tab.setHighlight(false);
+			}
+			highlightedValue = null;
+		}
+	}
+
+	private boolean isAlreadySelected(T value) {
+		if (value != selectedValue) {
+			return false; // different values; can't ignore
+		}
+
+		if (value == null) {
+			return true; // new value and current value are null; nothing to update
+		}
+
+		GTab<T> oldTab = getTab(selectedValue);
+		if (oldTab == null) {
+			return false;
+		}
+
+		return oldTab.isSelected();
+	}
+
+	private void doUpdateSelectedTab(T newValue) {
+
 		closeTabList();
-		highlightedValue = null;
-		selectedValue = value;
-		rebuildTabs();
-		selectedTabConsumer.accept(value);
+		T oldValue = selectedValue;
+		selectedValue = newValue;
+
+		if (isVisibleTab(selectedValue)) {
+			GTab<T> oldTab = getTab(oldValue);
+			if (oldTab != null) {
+				oldTab.setSelected(false);
+			}
+			GTab<T> newTab = getTab(newValue);
+			newTab.setSelected(true);
+		}
+		else {
+			rebuildTabs();
+		}
+
+		if (oldValue != newValue) {
+			selectedTabConsumer.accept(newValue);
+		}
 	}
 
 	/**
@@ -247,6 +351,7 @@ public class GTabPanel<T> extends JPanel {
 		highlightedValue = value == selectedValue ? null : value;
 		updateTabColors();
 		updateAccessibleName();
+		repaint();
 	}
 
 	/**
@@ -400,6 +505,15 @@ public class GTabPanel<T> extends JPanel {
 		return null;
 	}
 
+	public GTab<T> getTab(T value) {
+		for (GTab<T> tab : allTabs) {
+			if (tab.getValue().equals(value)) {
+				return tab;
+			}
+		}
+		return null;
+	}
+
 	void showTabList() {
 		if (tabList != null) {
 			return;
@@ -481,9 +595,13 @@ public class GTabPanel<T> extends JPanel {
 		return false;
 	}
 
-	private void doAddValue(T value) {
+	private boolean doAddValue(T value) {
 		Objects.requireNonNull(value);
-		allValues.add(value);
+		if (!allValues.contains(value)) {
+			allValues.add(value);
+			return true;
+		}
+		return false;
 	}
 
 	private void rebuildTabs() {
@@ -491,43 +609,78 @@ public class GTabPanel<T> extends JPanel {
 		removeAll();
 		closeTabList();
 		setBorder(null);
-		if (!shouldShowTabs()) {
-			setFocusable(false);
-			revalidate();
-			repaint();
-			return;
+		setFocusable(false);
+
+		if (shouldShowTabs()) {
+			setFocusable(true);
+			setBorder(new GTabPanelBorder(this));
+			populateTabs();
 		}
 
-		setFocusable(true);
-		setBorder(new GTabPanelBorder());
-
-		GTab<T> selectedTab = null;
-		int availableWidth = getPanelWidth();
-		if (selectedValue != null) {
-			selectedTab = new GTab<>(this, selectedValue, true);
-			availableWidth -= getTabWidth(selectedTab);
-		}
-		createNonSelectedTabsForWidth(availableWidth);
-
-		// a negative available width means there wasn't even enough room for the selected value tab
-		if (selectedValue != null && availableWidth >= 0) {
-			allTabs.add(getIndexToInsertSelectedValue(allTabs.size()), selectedTab);
-		}
-
-		// add tabs to this panel
-		for (GTab<T> gTab : allTabs) {
-			add(gTab);
-		}
-
-		// if there are hidden tabs add hidden value control to this panel
-		if (hasHiddenTabs()) {
-			hiddenValuesControl.setHiddenCount(allValues.size() - allTabs.size());
-			add(hiddenValuesControl);
-		}
 		updateTabColors();
 		updateAccessibleName();
 		revalidate();
 		repaint();
+	}
+
+	private void populateTabs() {
+		int availableWidth = getPanelWidth();
+
+		// first try to build tabs to see if they all fit and don't need to show the 
+		// hidden values control. If the first pass doesn't fully add all the tabs, need
+		// to redo it a second time reserving space for the hidden values control
+
+		if (!buildTabs(availableWidth)) {
+			// set the controls hidden count to the hidden count for sizing purposes
+			hiddenValuesControl.setHiddenCount(allValues.size() - allTabs.size());
+			int hiddenValuesControlWidth = getParentedComponentWidth(hiddenValuesControl);
+			buildTabs(availableWidth - hiddenValuesControlWidth);
+			hiddenValuesControl.setHiddenCount(allValues.size() - allTabs.size());
+			add(hiddenValuesControl);
+		}
+	}
+
+	private boolean buildTabs(int availableWidth) {
+		allTabs.clear();
+		removeAll();
+
+		// reserve space for the selected tab
+		GTab<T> selectedTab = null;
+		if (selectedValue != null) {
+			selectedTab = new GTab<>(this, selectedValue, true);
+		}
+
+		availableWidth -= getParentedComponentWidth(selectedTab);
+
+		boolean selectedTabAdded = false;
+		for (T value : allValues) {
+			boolean isSelectedValue = value == selectedValue;
+			GTab<T> nextTab = selectedTab;
+			if (!isSelectedValue) {
+				nextTab = new GTab<>(this, value, false);
+			}
+
+			int tabWidth = isSelectedValue ? 0 : getParentedComponentWidth(nextTab);
+			if (tabWidth > availableWidth) {
+				break;
+			}
+
+			allTabs.add(nextTab);
+			add(nextTab);
+			selectedTabAdded |= isSelectedValue;
+			availableWidth -= tabWidth;
+		}
+
+		// If we ran out of space before adding the selected tab, add it now if it fits since
+		// we always want the selected tab visible and we reserved space for it (unless there 
+		// wasn't space for any tabs)
+		if (selectedTab != null && !selectedTabAdded && availableWidth >= 0) {
+			allTabs.add(selectedTab);
+			add(selectedTab);
+		}
+
+		// returns true only if all tabs fit
+		return allTabs.size() == allValues.size();
 	}
 
 	private boolean shouldShowTabs() {
@@ -566,43 +719,22 @@ public class GTabPanel<T> extends JPanel {
 		return builder.toString();
 	}
 
-	private int getIndexToInsertSelectedValue(int maxIndex) {
-		Iterator<T> it = allValues.iterator();
-		for (int i = 0; i < maxIndex; i++) {
-			T t = it.next();
-			if (t == selectedValue) {
-				return i;
-			}
-		}
-		return maxIndex;
-	}
+	private int getParentedComponentWidth(Component component) {
+		// preferred size is unreliable when unparented if the scaling factor has been changed,
+		// so temporarily parent it while computing its preferred size (if not already parented)
 
-	private void createNonSelectedTabsForWidth(int availableWidth) {
-		for (T value : allValues) {
-			if (value == selectedValue) {
-				continue;
-			}
-			GTab<T> tab = new GTab<>(this, value, false);
-
-			int tabWidth = getTabWidth(tab);
-			if (tabWidth > availableWidth) {
-				break;
-			}
-
-			allTabs.add(tab);
-			availableWidth -= tabWidth;
+		if (component == null) {
+			return 0;
 		}
 
-		// remove last tab if there isn't room for hidden values control
-		if (hasHiddenTabs() && availableWidth < hiddenValuesControl.getPreferredWidth()) {
-			if (!allTabs.isEmpty()) {
-				allTabs.remove(allTabs.size() - 1);
-			}
+		if (component.getParent() != null) {
+			return component.getPreferredSize().width;
 		}
-	}
 
-	private int getTabWidth(GTab<T> tab) {
-		return tab.getPreferredSize().width;
+		add(component);
+		int width = component.getPreferredSize().width;
+		remove(component);
+		return width;
 	}
 
 	private int getPanelWidth() {
@@ -642,13 +774,91 @@ public class GTabPanel<T> extends JPanel {
 		this.ignoreFocusLost = ignoreFocusLost;
 	}
 
-	/*testing*/public JPanel getTab(T value) {
-		for (GTab<T> tab : allTabs) {
-			if (tab.getValue().equals(value)) {
-				return tab;
+	void mouseDragged(GTab<T> draggedTab, MouseEvent e) {
+		isDragging = true;
+		clearAllHighlights();
+		GTab<T> targetTab = getTab(e);
+		if (targetTab == null) {
+			// if the mouse is not currently over a valid target tab, put the cursor back to the
+			// default cursor to indicate this is not a valid drop location. (Couldn't find a 
+			// decent "nope" icon that looked good when converted to a cursor)
+			setCursor(Cursor.getDefaultCursor());
+			return;
+		}
+
+		setCursor(moveCursor);
+		if (targetTab != draggedTab) {
+			// we highlight the tab we are hovering over to indicate it is a valid drop target
+			targetTab.setHighlight(true);
+		}
+	}
+
+	void mouseReleased(GTab<T> draggedTab, MouseEvent e) {
+		if (!isDragging) {
+			return;
+		}
+		isDragging = false;
+		setCursor(Cursor.getDefaultCursor());
+
+		int targetTabIndex = getTabIndex(e);
+		if (targetTabIndex >= 0) {
+			int draggedTabIndex = allTabs.indexOf(draggedTab);
+			if (draggedTabIndex == targetTabIndex) {
+				return;
+			}
+			moveTab(draggedTab.getValue(), targetTabIndex);
+		}
+	}
+
+	private GTab<T> getTab(MouseEvent e) {
+		int index = getTabIndex(e);
+		if (index < 0) {
+			return null;
+		}
+		return allTabs.get(index);
+	}
+
+	private int getTabIndex(MouseEvent e) {
+		// this e is from a GTab component, so we need to convert to GTablePanel point
+		Point gTabPoint = e.getPoint();
+		Point p = SwingUtilities.convertPoint(e.getComponent(), gTabPoint, this);
+		Dimension size = getSize();
+
+		// if the point is outside of the the tab panel, not a valid drop target
+		if (p.x < 0 || p.y < 0 || p.x >= size.width || p.y >= size.height) {
+			return -1;
+		}
+
+		// find the tab the mouse is over
+		for (int i = 0; i < allTabs.size(); i++) {
+			GTab<T> tab = allTabs.get(i);
+			Rectangle tabBounds = tab.getBounds();
+			if (tabBounds.contains(p)) {
+				return i;
 			}
 		}
-		return null;
+
+		// we are in the area past the last tab, just return the last tab index
+		return allTabs.size() - 1;
+	}
+
+	public void moveTab(T value, int newIndex) {
+		List<T> newValues = new ArrayList<>(allValues);
+		newValues.remove(value);
+		newValues.add(newIndex, value);
+		allValues.clear();
+		allValues.addAll(newValues);
+		rebuildTabs();
+	}
+
+	private static Cursor createMoveCursor() {
+		Icon icon = ResourceManager.loadIcon("move.png");
+		Image image = ResourceManager.getImageIcon(icon).getImage();
+		return Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(8, 8), "nope");
+	}
+
+	private void clearAllHighlights() {
+		allTabs.forEach(t -> t.setHighlight(false));
 	}
 
 }
