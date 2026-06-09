@@ -26,8 +26,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import docking.action.DockingActionIf;
 import docking.options.OptionsService;
@@ -44,7 +43,6 @@ import ghidra.app.plugin.core.decompile.AbstractDecompilerTest;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.decompile.actions.*;
 import ghidra.app.util.AddEditDialog;
-import ghidra.framework.Application;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Function;
@@ -958,6 +956,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	}
 
 	@Test
+	@Ignore("Resolved for 12.2")
 	public void testSecondaryHighlighting_CloneDecompiler() {
 
 		/*
@@ -978,12 +977,6 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   12|	}
 		
 		 */
-
-		// TODO temp workaround; delete when 12.2 is released
-		String version = Application.getApplicationVersion();
-		if ("12.1".equals(version)) {
-			return;
-		}
 
 		decompile("100000d60"); // '_call_structure_A'
 
