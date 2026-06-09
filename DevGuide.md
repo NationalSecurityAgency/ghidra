@@ -302,7 +302,7 @@ This is not so readily presented by Eclipse.
 You'll also need to provide launcher(s) so that Ghidra knows how to configure and start your connector.
 These are just shell scripts.
 We use bash scripts on Linux and macOS, and we use batch files on Windows.
-The ideal goal for a launcher is (after one-time configuration) the user can launch and begin debugging with a single click.
+The ideal goal for a launcher is that, after one-time configuration, the user can launch and begin debugging with a single click.
 Try to include as many common use cases as makes sense for the debugger.
 This provides the most flexibility to users and examples to power users who might create derivative launchers.
 Look at the existing launchers for examples.
