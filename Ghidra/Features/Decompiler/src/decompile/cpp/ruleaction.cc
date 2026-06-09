@@ -11042,6 +11042,52 @@ int4 ActionPropagateEnums::apply(Funcdata &data)
     for(iter=bb->beginOp();iter!=bb->endOp();++iter) {
       op = *iter;
       OpCode code = op->code();
+      
+      Varnode *constant;
+      if (code == CPUI_INT_SLESS) {
+        int4 constantSlot = -1;
+        for (int i = 0; i < 2; ++i) {
+          if (op->getIn(i)->isConstant()) {
+            constantSlot = i;
+            break;
+          }
+        }
+        if (constantSlot == -1) {
+          continue;
+        }
+        constant = op->getIn(constantSlot);
+        Datatype *constantType = constant->getTypeReadFacing(op);
+        if (constantType->isEnumType()
+            || constant->getSize() != 1
+            || !(
+              constantSlot == 0 && constant->getOffset() == 0xff
+              || constantSlot == 1 && constant->getOffset() == 0
+            )) continue;
+        
+        Varnode *charVn = op->getIn(1 - constantSlot);
+        if (charVn->getSize() != 1) continue;
+        PcodeOp *subpieceOp = charVn->getDef();
+        if (!subpieceOp || subpieceOp->code() != CPUI_SUBPIECE) continue;
+        int subpieceOffset = subpieceOp->getIn(1)->getOffset();  // in bytes
+        Varnode *enumVn = subpieceOp->getIn(0);
+        Datatype *enumOpType = enumVn->getTypeReadFacing(op);
+        if (!enumOpType->isEnumType()) continue;
+        
+        Varnode *newConstForAnd = data.newConstant(1, 0x80);
+        PcodeOp *newAnd = data.newOpBefore(op, CPUI_INT_AND, charVn, newConstForAnd);
+        Varnode *newConstForEq = data.newConstant(1, constantSlot == 0 ? 0 : 0x80);
+        data.opSetOpcode(op, CPUI_INT_EQUAL);
+        Varnode *andOutput = newAnd->getOut();
+        data.opSetInput(op, andOutput, 0);
+        andOutput->setImplied();  // prevent C printer from printing unique0x7800 = enumField & 0x80, unique0x7800 == 0,
+                                  // so that we get a nice short (enumField & 0x80) == 0
+        data.opSetInput(op, newConstForEq, 1);
+        updateTypeWithOptionalCast(data, newConstForAnd, (TypeEnum *)enumOpType, newAnd, subpieceOffset * 8);
+        updateTypeWithOptionalCast(data, newConstForEq,  (TypeEnum *)enumOpType, op,     subpieceOffset * 8);
+        ++count;
+        continue;
+      }
+      
       if (code != CPUI_STORE
 	&& code != CPUI_INT_AND
 	&& code != CPUI_INT_OR
@@ -11050,11 +11096,37 @@ int4 ActionPropagateEnums::apply(Funcdata &data)
 	continue;
       }
 
-      Varnode* constant = op->getIn(1);
+      constant = op->getIn(1);
       if (op->code() == CPUI_STORE) {
 	constant = op->getIn(2);
       }
-      if (!constant->isConstant() || constant->getType()->isEnumType() || constant->isSpacebase() || constant->isTypeLock()) {
+      if (constant->getType()->isEnumType()) {
+        PcodeOp *in0Def = op->getIn(0)->getDef();
+        if (!in0Def) continue;
+        if (in0Def->numInput() == 0) continue;
+        Varnode *in0DefIn0 = in0Def->getIn(0);
+        Datatype *in0DefIn0Type = in0DefIn0->getTypeReadFacing(in0Def);
+        if (!in0DefIn0Type->isEnumType()) continue;
+        Datatype *constantType = constant->getType();
+        for (
+          Datatype *partialBase = constantType->getPartialBase(); 
+          partialBase != (Datatype *)0;
+          partialBase = partialBase->getPartialBase()
+        ) {
+          constantType = partialBase;
+        }
+        for (
+          Datatype *partialBase = in0DefIn0Type->getPartialBase(); 
+          partialBase != (Datatype *)0;
+          partialBase = partialBase->getPartialBase()
+        ) {
+          in0DefIn0Type = partialBase;
+        }
+        if (in0DefIn0Type == constantType) continue;
+      }
+      if (!constant->isConstant()
+          || constant->isSpacebase()
+          || constant->isTypeLock()) {
 	continue;
       }
       PcodeOp* def = op;
@@ -11076,7 +11148,7 @@ int4 ActionPropagateEnums::apply(Funcdata &data)
       struct VarnodeToScan {
 	Varnode* varnode = nullptr;
 	int operationSize = 0;
-	bool subpieceUpper4Bytes = false;
+	int subpieceOffset = 0;
 	int shiftLength = 0;
 	int slot = 0;
       };
@@ -11084,6 +11156,27 @@ int4 ActionPropagateEnums::apply(Funcdata &data)
       vector<VarnodeToScan> varnodes;
 
       code = def->code();
+      if (code == CPUI_INT_SEXT || code == CPUI_INT_ZEXT) {
+        Varnode *origSizeVn = def->getIn(0);
+        Varnode *extOutput = def->getOut();
+        PcodeOp *andOp = extOutput->loneDescend();
+        if (!andOp || andOp->code() != CPUI_INT_AND) continue;
+        Varnode *andConst = andOp->getIn(1 - andOp->getSlot(extOutput));
+        if (!andConst->isConstant()) continue;
+        int4 andConstVal = andConst->getOffset();
+        if (origSizeVn->getSize() < (int4)(sizeof(uintb))
+            // if what we got is (int)(char)enum & 0x100, presence of 0x100 flag depends on whether the number is signed, so we can just check 0x80.
+            // But if it's (int)(char)enum & 0x101, we have to check both 0x80 (for signedness) and 1, so our enum would have to be 0x81.
+            // Basically, if it's SEXT, we take all bits above the origSizeVn->getSize() and lump them together into 0x80.
+            // I've never seen code that does SEXT and then & against a constant whose value is outside of original size that was pre-SEXT.
+            // So I'm just not going to handle this case. If some people get it, then we'll implement it.
+            // I'm only writing this check so that if such case happens, we won't produce incorrect output and lie to the user.
+            && andConstVal >= (1ULL << (origSizeVn->getSize() * 8))) continue;
+        
+        def = origSizeVn->getDef();
+        if (!def) continue;
+        code = def->code();
+      }
 
       if (code == CPUI_LOAD) {
 	if (def->getOut() == (Varnode *)0) {
@@ -11096,17 +11189,15 @@ int4 ActionPropagateEnums::apply(Funcdata &data)
 	newVnToScan.slot = 1;
 
       } else if (code == CPUI_SUBPIECE) {
+        if (def->getOut() == (Varnode *)0) {
+          continue;
+        }
 	varnodes.emplace_back();
 	VarnodeToScan& newVnToScan = varnodes.back();
 	newVnToScan.varnode = def->getIn(0);
 	newVnToScan.slot = 0;
-	Varnode* subpiece = def->getIn(1);
-	uintb subpieceOffset = subpiece->getOffset();
-	if (subpieceOffset != 0 && subpieceOffset != 4) {
-	  continue;
-	}
-	newVnToScan.subpieceUpper4Bytes = (subpieceOffset == 4);
-	newVnToScan.operationSize = subpiece->getSize();
+	newVnToScan.subpieceOffset = def->getIn(1)->getOffset();
+	newVnToScan.operationSize = def->getOut()->getSize();
 
       } else if (code == CPUI_STORE) {
 	varnodes.emplace_back();
@@ -11161,7 +11252,7 @@ int4 ActionPropagateEnums::apply(Funcdata &data)
 	int shiftLength = vn.shiftLength;
 	Datatype* ct = vn.varnode->getTypeReadFacing(def);
 	bool ctIsPtr = ct->getMetatype() == TYPE_PTR;
-	bool subpieceUpper4Bytes = vn.subpieceUpper4Bytes;
+	int subpieceOffset = vn.subpieceOffset;
 	if (ctIsPtr) {
 	  ct = ((TypePointer *)ct)->getPtrTo();
 	}
@@ -11177,14 +11268,12 @@ int4 ActionPropagateEnums::apply(Funcdata &data)
 	if (!ct->isEnumType()) {
 	  int4 off;
 	  Datatype *newct = getFinalDisplayedType(vn.varnode, def, vn.slot, off);
-	  if (newct && newct->isEnumType() && (off == 0 || off == 4)) {
+	  if (newct && newct->isEnumType()) {
 	    ct = newct;
-	    if (off == 4) {
-	      subpieceUpper4Bytes = true;
-	    }
+	    subpieceOffset = off;
 	  }
 	}
-	if (subpieceUpper4Bytes) shiftLength += 32;
+	shiftLength += subpieceOffset * 8;
 	if (ct->isEnumType() && (vn.operationSize != ct->getSize() || shiftLength > 0) && constant->getType() != ct) {
 	  updateTypeWithOptionalCast(data, constant, (TypeEnum *)ct, op, shiftLength);
 	  ++count;
@@ -11194,13 +11283,15 @@ int4 ActionPropagateEnums::apply(Funcdata &data)
 	  PcodeOp* inDef = vn.varnode->getDef();
 	  if (inDef && inDef->code() == CPUI_INT_ADD) {
 	    Varnode* rightOperand = inDef->getIn(1);
-	    if (rightOperand->isConstant() && rightOperand->getOffset() == 4) {
+	    if (rightOperand->isConstant()) {
+	      subpieceOffset = (int)rightOperand->getOffset();
+	      shiftLength += subpieceOffset * 8;
 	      Varnode* leftOperand = inDef->getIn(0);
 	      Datatype* leftOperandType = leftOperand->getTypeReadFacing(inDef);
-	      if (leftOperandType->getMetatype() == TYPE_PTR) {
+	      if (subpieceOffset >= 0 && leftOperandType->getMetatype() == TYPE_PTR) {
 		Datatype* leftOperandPointedToType = ((TypePointer *)leftOperandType)->getPtrTo();
 		if (leftOperandPointedToType->isEnumType()
-		    && leftOperandPointedToType->getSize() == 8) {
+		    && (int)leftOperandPointedToType->getSize() > subpieceOffset) {
 		  updateTypeWithOptionalCast(data, constant, (TypeEnum *)leftOperandPointedToType, op, shiftLength);
 		  ++count;
 		  break;
