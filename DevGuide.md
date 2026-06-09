@@ -284,7 +284,7 @@ Typically, it examines the target's architecture and immediately creates a trace
 
 So Ghidra does not yet support your favorite debugger?
 We believe the new system is much less daunting than the previous.
-Still, please finish reading this guide, and look carefully at the ones we have so far, and perhaps ask to see if we are already developing one.
+Still, please finish reading this guide and look carefully at the ones we have so far, and perhaps ask to see if we are already developing one.
 Of course, in time you might also search the internet to see if others are developing one.
 There are quite a few caveats and gotchas, the most notable being that this interface is still in some flux.
 When things go wrong, it could be because of, without limitation:
