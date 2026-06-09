@@ -20,6 +20,7 @@ import logging
 import re
 import sys
 import threading
+import traceback
 import types
 from code import InteractiveConsole
 from typing import Generator
@@ -35,10 +36,10 @@ from java.lang import String # type:ignore @UnresolvedImport
 from java.lang import Thread as JThread # type:ignore @UnresolvedImport
 from java.util import Collections # type:ignore @UnresolvedImport
 from java.util.function import Consumer # type:ignore @UnresolvedImport
-from jpype import JClass, JImplements, JOverride
+from jpype import JClass, JImplements, JOverride, JException
 
 from pyghidra.internal.plugin.completions import PythonCodeCompleter
-from pyghidra.script import PyGhidraScript
+from pyghidra.script import PyGhidraScript, print_stacktrace
 
 
 logger = logging.getLogger(__name__)
@@ -296,8 +297,7 @@ class PyConsole(InteractiveConsole):
             super().showsyntaxerror(filename=filename, **kwargs)
 
     def showtraceback(self) -> None:
-        with self.redirect_writer():
-            super().showtraceback()
+        print_stacktrace(self._script, "<console>")
 
     @contextlib.contextmanager
     def _run_context(self) -> Generator[None, None, None]:

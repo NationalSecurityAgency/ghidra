@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import Generator, List, NoReturn, Tuple, Union
 
 import jpype
-from jpype import imports, _jpype
+from jpype import imports, _jpype, JException
 from packaging.version import Version
 
 from pyghidra.javac import java_compile
@@ -176,6 +176,12 @@ def _lastrun() -> Path:
         
     return None
 
+def _pyghidra_excepthook(exc_type, exc_value, tb):
+    sys.__excepthook__(exc_type, exc_value, tb)
+    if isinstance(exc_type, JException):
+        # Remove the first line of the Java stack trace...it's already output
+        sys.stderr.write(exc_value.stacktrace().partition("\n")[2])
+
 class PyGhidraLauncher:
     """
     Base pyghidra launcher
@@ -221,6 +227,10 @@ class PyGhidraLauncher:
         self.vm_args = self._jvm_args()
         self.args = []
         self.app_info = ApplicationInfo.from_file(ghidra_dir / "application.properties")
+        
+        # Install our custom excepthook (only if no one else already has)
+        if sys.excepthook == sys.__excepthook__:
+            sys.excepthook = _pyghidra_excepthook
 
     def _setup_dev_classpath(self, utility_dir: Path):
         """

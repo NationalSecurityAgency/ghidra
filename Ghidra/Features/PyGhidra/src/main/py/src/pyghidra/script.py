@@ -22,7 +22,7 @@ import traceback
 from collections.abc import ItemsView, KeysView
 from importlib.machinery import ModuleSpec, SourceFileLoader
 from pathlib import Path
-from jpype import JClass, JImplementationFor
+from jpype import JClass, JImplementationFor, JException
 from typing import List
 
 
@@ -255,18 +255,7 @@ class PyGhidraScript(dict):
                 spec.loader.exec_module(m)
             # pylint: disable=bare-except
             except:
-                # filter the traceback so that it stops at the script
-                exc_type, exc_value, exc_tb = sys.exc_info()
-                i = 0
-                tb = traceback.extract_tb(exc_tb)
-                for fs in tb:
-                    if fs.filename == script_path:
-                        break
-                    i += 1
-                ss = traceback.StackSummary.from_list(tb[i:])
-                e = traceback.TracebackException(exc_type, exc_value, exc_tb)
-                e.stack = ss
-                self._script.printerr(''.join(e.format()))
+                print_stacktrace(self._script, script_path)
         finally:
             sys.argv = orig_argv
 
@@ -320,3 +309,22 @@ def get_current_interpreter():
 
     except ImportError:
         return None
+    
+    
+def print_stacktrace(script, script_path):
+    exc_type, exc_value, exc_tb = sys.exc_info()
+    i = 0
+    tb = traceback.extract_tb(exc_tb)
+    for fs in tb:
+        if fs.filename == script_path:
+            break
+        i += 1
+    ss = traceback.StackSummary.from_list(tb[i:])
+    te = traceback.TracebackException(exc_type, exc_value, exc_tb)
+    te.stack = ss
+    output = ''.join(te.format())
+    if isinstance(exc_type, JException):
+        # Remove the first line of the Java stack trace...it's already output
+        output += exc_value.stacktrace().partition('\n')[2]
+    script.printerr(output)
+
