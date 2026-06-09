@@ -35,14 +35,14 @@ root.
 gradle -I gradle/support/fetchDependencies.gradle
 ```
 
-Download Maven Central dependencies and setup the repository for development.  By default, these 
+Download Maven Central dependencies and set up the repository for development.  By default, these 
 will be stored at `$HOME/.gradle/`.
 ```
 gradle prepdev
 ```
 
 Clean up repository build files.  In rare circumstances this may be necessary after a `git pull` to
-fix unexplainable compilation errors.
+fix unexplained compilation errors.
 ```
 gradle clean
 ```
@@ -113,7 +113,7 @@ access to the editable PyGhidra module, as well as the typing/stub information. 
 4. Choose `build/venv/bin/python3`
 5. Enter a value for _Interpreter Name_
 6. Check _Select All_ and press _OK_
-7. Click the _Prefined_ tab, and then _New..._
+7. Click the _Predefined_ tab, and then _New..._
 8. Choose `build/typestubs/pypredef`
 9. Click _Apply and Close_
 
