@@ -1227,7 +1227,55 @@ Symbol *Funcdata::linkSymbolReference(Varnode *vn)
     throw LowlevelError("Unable to generate proper address from spacebase");
   SymbolEntry *entry = scope->queryContainer(addr,1,Address());
   if (entry == (SymbolEntry *)0)
+  {
+    if (vn->getHigh())
+    {
+      VarnodeLocSet::const_iterator begiter,enditer;
+      
+      for (int desperation = 0; desperation < 2; ++desperation)
+      {
+        for (int spacebaseIndex = 0; spacebaseIndex < addr.getSpace()->numSpacebase(); ++spacebaseIndex)
+        {
+          const VarnodeData &spacebasedata(addr.getSpace()->getSpacebase(spacebaseIndex));
+          begiter = beginLoc(spacebasedata.size, addr);
+          enditer = endLoc(spacebasedata.size, addr);
+          bool assigned = false;
+          while(begiter != enditer)
+          {
+            Varnode *otherVn = *begiter;
+            HighVariable *otherHigh = otherVn->getHigh();
+            if (otherHigh && otherHigh->getSymbol())
+            {
+              switch (desperation)
+              {
+                case 0:
+                  entry = otherVn->getSymbolEntry();
+                  if (entry)
+                  {
+                    vn->setSymbolReference(entry, 0);
+                    return entry->getSymbol();
+                  }
+                  break;
+                case 1:
+                  if (!otherVn->getSymbolEntry())
+                  {
+                    entry = otherVn->getHigh()->getSymbolEntry();
+                    if (entry)
+                    {
+                      vn->setSymbolReference(entry, 0);
+                      return entry->getSymbol();
+                    }
+                  }
+                  break;
+              }
+            }
+            ++begiter;
+          }
+        }
+      }
+    }
     return (Symbol *)0;
+  }
   int4 off = (int4)(addr.getOffset() - entry->getAddr().getOffset()) + entry->getOffset();
   vn->setSymbolReference(entry, off);
   return entry->getSymbol();

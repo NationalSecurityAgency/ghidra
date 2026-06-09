@@ -2985,7 +2985,7 @@ void ActionNameVars::lookForFuncParamNames(Funcdata &data,const vector<Varnode *
 /// \param vn is the given \e spacebase Varnode
 /// \param data is the function containing the Varnode
 /// \param namerec is used to store any recovered Symbol without a name
-void ActionNameVars::linkSpacebaseSymbol(Varnode *vn,Funcdata &data,vector<Varnode *> &namerec)
+void ActionNameVars::linkSpacebaseSymbol(Varnode *vn,Funcdata &data,vector<Varnode *> &namerec,vector<Varnode *> *failedLinks)
 
 {
   if (!vn->isConstant() && !vn->isInput()) return;
@@ -2995,6 +2995,7 @@ void ActionNameVars::linkSpacebaseSymbol(Varnode *vn,Funcdata &data,vector<Varno
     if (op->code() != CPUI_PTRSUB) continue;
     Varnode *offVn = op->getIn(1);
     Symbol *sym = data.linkSymbolReference(offVn);
+    if (!sym && failedLinks) failedLinks->push_back(offVn);
     if ((sym != (Symbol *)0) && sym->isNameUndefined())
       namerec.push_back(offVn);
   }
@@ -3024,6 +3025,7 @@ void ActionNameVars::linkSymbols(Funcdata &data,vector<Varnode *> &namerec)
       linkSpacebaseSymbol(curvn, data, namerec);
   }
 
+  std::vector<Varnode *> failedSpacebases;
   TypeFactory *typeFactory = data.getArch()->types;
   for(int4 i=0;i<manage->numSpaces();++i) { // Build a list of nameable highs
     spc = manage->getSpace(i);
@@ -3036,7 +3038,7 @@ void ActionNameVars::linkSymbols(Funcdata &data,vector<Varnode *> &namerec)
 	continue;
       }
       if (curvn->isSpacebase())
-	linkSpacebaseSymbol(curvn, data, namerec);
+	linkSpacebaseSymbol(curvn, data, namerec, &failedSpacebases);
       Varnode *vn = curvn->getHigh()->getNameRepresentative();
       if (vn != curvn) continue; // Hit each high only once
       HighVariable *high = vn->getHigh();
@@ -3053,6 +3055,11 @@ void ActionNameVars::linkSymbols(Funcdata &data,vector<Varnode *> &namerec)
 	  high->finalizeDatatype(typeFactory);
       }
     }
+  }
+  
+  for (Varnode *constVn : failedSpacebases) {
+    if (constVn->getSymbolEntry()) continue;
+    linkSpacebaseSymbol(constVn, data, namerec);
   }
 }
 

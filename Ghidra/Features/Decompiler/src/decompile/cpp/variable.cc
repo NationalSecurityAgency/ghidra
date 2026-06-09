@@ -241,6 +241,25 @@ HighVariable::~HighVariable(void)
     delete piece;
 }
 
+static bool vnPointsToSymbol(Varnode *vn, Symbol *symbol, SymbolEntry *entry) {
+  if (symbol->getType()->getSize() == vn->getSize()
+      && entry->getAddr().getSpace() && entry->getAddr().getSpace()->getType() == IPTR_SPACEBASE
+      && vn->getAddr().getSpace() && vn->getAddr().getSpace()->getType() == IPTR_CONSTANT
+      && entry->getAddr().getOffset() == vn->getOffset()
+  ) {
+    PcodeOp *op = vn->loneDescend();
+    if (!op || op->code() != CPUI_PTRSUB || op->getIn(1) != vn) return false;
+    Varnode *in0 = op->getIn(0);
+    if (!in0->isSpacebase()) return false;
+    TypePointer *ptype = (TypePointer *)in0->getHigh()->getType();
+    if (ptype->getMetatype() != TYPE_PTR) return false;
+    TypeSpacebase *sb = (TypeSpacebase *)ptype->getPtrTo();
+    if (sb->getMetatype() != TYPE_SPACEBASE) return false;
+    return sb->getAddress(vn->getOffset(), in0->getSize(), op->getAddr()) == entry->getAddr();
+  }
+  return false;
+}
+
 /// The given Varnode \b must be a member and \b must have a non-null SymbolEntry
 void HighVariable::setSymbol(Varnode *vn) const
 
@@ -262,6 +281,8 @@ void HighVariable::setSymbol(Varnode *vn) const
     symboloffset = -1;
   else if (symbol->getCategory() == Symbol::equate)
     symboloffset = -1;			// For equates, we don't care about size
+  else if (vnPointsToSymbol(vn, symbol, entry))
+    symboloffset = 0;
   else if (symbol->getType()->getSize() == vn->getSize() &&
       entry->getAddr() == vn->getAddr() && !entry->isPiece())
     symboloffset = -1;			// A matching entry
