@@ -1001,7 +1001,9 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			return;
 		}
 
+		placeholder.toFront();
 		toFront(root.getWindow(placeholder));
+
 		if (emphasisze) {
 			placeholder.emphasize();
 		}
