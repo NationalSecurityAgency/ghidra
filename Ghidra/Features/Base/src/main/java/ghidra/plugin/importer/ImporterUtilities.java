@@ -16,6 +16,7 @@
 package ghidra.plugin.importer;
 
 import java.awt.Window;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -446,44 +447,75 @@ public class ImporterUtilities {
 		}
 	}
 
-	private static Set<DomainFile> doPostImportProcessing(PluginTool pluginTool,
+	private static void doPostImportProcessing(PluginTool pluginTool,
 			ProgramManager programManager, LoadResults<? extends DomainObject> loadResults,
 			String importMessages, TaskMonitor monitor) throws CancelledException {
 
-		boolean firstProgram = true;
+		// Optionally echo loader message log to application.log
+		if (!Loader.loggingDisabled && !importMessages.isEmpty()) {
+			Msg.info(ImporterUtilities.class, "Import info:\n" + importMessages);
+		}
+
+		int openFailures = 0;
+		boolean isFirstFile = true;
+		DomainFile firstDomainFile = null;
+
 		Set<DomainFile> importedFilesSet = new HashSet<>();
 		for (Loaded<? extends DomainObject> loaded : loadResults) {
 			monitor.checkCancelled();
+
+			DomainFile savedDomainFile = null;
+			try {
+				savedDomainFile = loaded.getSavedDomainFile();
+				if (firstDomainFile == null) {
+					firstDomainFile = savedDomainFile;
+				}
+				if (savedDomainFile != null) {
+					importedFilesSet.add(savedDomainFile);
+				}
+			}
+			catch (FileNotFoundException e) {
+				// ignore - domain object was not saved
+			}
+
 			Object consumer = new Object();
 			DomainObject obj = loaded.getDomainObject(consumer);
+			boolean opened = false;
 			try {
-				if (obj instanceof Program) {
-					if (programManager != null) {
-						int openState = firstProgram
-								? ProgramManager.OPEN_CURRENT
-								: ProgramManager.OPEN_VISIBLE;
-						programManager.openProgram((Program) obj, openState);
-					}
-					importedFilesSet.add(obj.getDomainFile());
+				if (obj instanceof Program && programManager != null) {
+					int openState = isFirstFile
+							? ProgramManager.OPEN_CURRENT
+							: ProgramManager.OPEN_VISIBLE;
+					programManager.openProgram((Program) obj, openState);
+					opened = true;
 				}
-				if (firstProgram) {
+				else if (savedDomainFile != null) {
+					// Attempt to open in tool if it will accept it (e.g., DBTrace from GZT file)
+					opened = pluginTool.acceptDomainFiles(new DomainFile[] { savedDomainFile });
+				}
+				if (isFirstFile) {
 					// currently we only show results for the imported program, not any libraries
-					displayResults(pluginTool, obj, obj.getDomainFile(), importMessages);
-
-					// Optionally echo loader message log to application.log
-					if (!Loader.loggingDisabled && !importMessages.isEmpty()) {
-						Msg.info(ImporterUtilities.class, "Additional info:\n" + importMessages);
-					}
+					displayResults(pluginTool, obj, importMessages);
 				}
-				firstProgram = false;
 			}
 			finally {
 				obj.release(consumer);
 			}
+			if (!opened) {
+				++openFailures;
+			}
+			isFirstFile = false;
 		}
 
 		selectFiles(importedFilesSet);
-		return importedFilesSet;
+
+		if (openFailures != 0 && pluginTool != AppInfo.getFrontEndTool()) {
+			// Indicate imports which failed to open in tool
+			Msg.showInfo(ImporterUtilities.class, null, "Import Notice",
+				"Unable to open " + openFailures +
+					" file(s) within current tool after successful import.\n" +
+					"See selected files in project window.");
+		}
 	}
 
 	private static void selectFiles(Set<DomainFile> importedFilesSet) {
@@ -506,7 +538,7 @@ public class ImporterUtilities {
 				program.getDomainFile().getPathname(), false, loadSpec, options, consumer,
 				messageLog, monitor);
 			loadSpec.getLoader().loadInto(program, settings);
-			displayResults(tool, program, program.getDomainFile(), messageLog.toString());
+			displayResults(tool, program, messageLog.toString());
 
 			// Optionally echo loader message log to application.log
 			if (!Loader.loggingDisabled && messageLog.hasMessages()) {
@@ -526,18 +558,9 @@ public class ImporterUtilities {
 
 	}
 
-	private static void displayResults(PluginTool tool, DomainObject obj, DomainFile df,
-			String info) {
-
-		DomainFile domainFile = obj.getDomainFile();
-		Map<String, String> metadata = obj.getMetadata();
-		if (df != null) {
-			domainFile = df;
-			metadata = df.getMetadata();
-		}
-
+	private static void displayResults(PluginTool tool, DomainObject obj, String info) {
 		HelpLocation helpLocation = new HelpLocation(GenericHelpTopics.ABOUT, "About_Program");
-		AboutDomainObjectUtils.displayInformation(tool, domainFile, metadata,
+		AboutDomainObjectUtils.displayInformation(tool, obj.getDomainFile(), obj.getMetadata(),
 			"Import Results Summary", info, helpLocation);
 	}
 

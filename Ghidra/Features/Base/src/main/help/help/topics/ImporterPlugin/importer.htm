@@ -38,6 +38,7 @@
         <LI>Executable and Linking Format (ELF)</LI>
         <LI>Ghidra Data Type Archive File (GDT)</LI>
         <LI>Ghidra Zip File (GZF)</LI>
+		<LI>Ghidra Zip Debugger Trace File (GZT)</LI>
         <LI>Intel Hex</LI>
         <LI>Java Class File</LI>
         <LI>Mac OS X Mach-O</LI>
@@ -96,10 +97,12 @@
 	        <UL>
 	          <LI><B>Project Window</B>:  Drag a file from the system file explorer application and drop 
 	          onto the Ghidra Project Tree destination folder.  Dropping onto the table view is not
-	          supported.  In the case of Ghidra Zip File (GZF) or Ghidra Data Type Archive (GDT) file
+	          supported.  In the case of Ghidra Zip File (GZF), Ghidra Zip Debugger Trace file (GZT),
+			  or Ghidra Data Type Archive (GDT) file
 	          imports, an immediate unpack can be performed wthout a popup dialog if the Front End option
-	          <I>Enable simple GZF/GDT unpack</I> is enabled (
-	          <B>Edit<IMG src="help/shared/arrow.gif">Tool Options...<IMG src="help/shared/arrow.gif">File Import<IMG src="help/shared/arrow.gif">Enable simple GZF/GDT unpack</B>).
+	          <I>Enable simple GZF/GZT/GDT unpack</I> is enabled (
+	          <B>Edit<IMG src="help/shared/arrow.gif">Tool Options...<IMG src="help/shared/arrow.gif">
+				File Import<IMG src="help/shared/arrow.gif">Enable simple GZF/GZT/GDT unpack</B>).
 	          </LI>  
               
               <LI>or <B>Running Tool</B>:  Drag a file from the system file explorer application and drop 
@@ -274,9 +277,10 @@
           folder, otherwise the root folder will be the default. The <B>...</B> will bring up a
           dialog for changing the destination folder.</LI><BR>
 
-          <LI><B>Program Name</B> - This field specifies the name for the newly imported program.
+          <LI><B>Program Name</B> - This field specifies the name for the newly imported file into
+			the active project.
           By default, it will be the name of the imported file with any format specific extenstion
-          removed (e.g., .xml, .gzf).  Path information at the beginning of this field
+          removed (e.g., .xml, .gzf, .gzt, .gdt).  Path information at the beginning of this field
           will be used to create a destination folder in the current project under the root folder
           specified by the <B>Destination Folder</B> field.</LI><BR>
           

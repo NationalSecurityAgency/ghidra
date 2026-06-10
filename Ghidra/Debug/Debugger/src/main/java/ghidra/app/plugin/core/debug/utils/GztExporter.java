@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.exporter;
+package ghidra.app.plugin.core.debug.utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,46 +21,48 @@ import java.util.List;
 
 import ghidra.app.util.DomainObjectService;
 import ghidra.app.util.Option;
+import ghidra.app.util.exporter.Exporter;
+import ghidra.app.util.exporter.ExporterException;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObject;
-import ghidra.program.database.DataTypeArchiveDB;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.trace.database.DBTrace;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-public class GdtExporter extends Exporter {
+public class GztExporter extends Exporter {
 
-	public static final String EXTENSION = "gdt";
+	public static final String EXTENSION = "gzt";
 	public static final String SUFFIX = "." + EXTENSION;
 
-	public static final String NAME = "Ghidra Data Type Archive File";
+	public static final String NAME = "Ghidra Trace Zip File";
 
-	public GdtExporter() {
-		super(NAME, EXTENSION, new HelpLocation("ExporterPlugin", EXTENSION));
-	}
-
-	@Override
-	public boolean canExportDomainObject(Class<? extends DomainObject> domainObjectClass) {
-		return DataTypeArchiveDB.class.isAssignableFrom(domainObjectClass);
+	public GztExporter() {
+		super(NAME, EXTENSION, new HelpLocation("ExporterPlugin", "gzt"));
 	}
 
 	@Override
 	public boolean canExportDomainFile(DomainFile domainFile) {
-		// Avoid exporting link-file itself or non-Datatype Archives
+		// Avoid exporting link-files or non-Trace files
 		return !domainFile.isLink() && canExportDomainObject(domainFile.getDomainObjectClass());
 	}
 
 	@Override
+	public boolean canExportDomainObject(Class<? extends DomainObject> domainObjectClass) {
+		return DBTrace.class.isAssignableFrom(domainObjectClass);
+	}
+
+	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof GdtExporter);
+		return (obj instanceof GztExporter);
 	}
 
 	@Override
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet,
 			TaskMonitor monitor) {
 		if (!canExportDomainObject(domainObj.getClass())) {
-			throw new UnsupportedOperationException("only DataTypeArchiveDB objects are supported");
+			throw new UnsupportedOperationException("only DBTrace objects are supported");
 		}
 		try {
 			file.delete();
@@ -85,7 +87,7 @@ public class GdtExporter extends Exporter {
 	public boolean export(File file, DomainFile domainFile, TaskMonitor monitor)
 			throws ExporterException, IOException {
 		if (!canExportDomainFile(domainFile)) {
-			throw new UnsupportedOperationException("only DataTypeArchiveDB files are supported");
+			throw new UnsupportedOperationException("only DBTrace files are supported");
 		}
 		try {
 			domainFile.packFile(file, monitor);
@@ -111,7 +113,7 @@ public class GdtExporter extends Exporter {
 	}
 
 	/**
-	 * Returns false.  GDT export only supports entire database.
+	 * Returns false.  GZT export only supports entire database.
 	 */
 	@Override
 	public boolean supportsAddressRestrictedExport() {
