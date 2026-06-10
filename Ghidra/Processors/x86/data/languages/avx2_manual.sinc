@@ -1,13 +1,15 @@
 # VINSERTI128/VINSERTI32x4/VINSERTI64x2/VINSERTI32x8/VINSERTI64x4 5-314 PAGE 2138 LINE 109785
-define pcodeop vinserti128 ;
-:VINSERTI128 YmmReg1, vexVVVV_YmmReg, XmmReg2_m128, imm8 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x38; YmmReg1 ... & XmmReg2_m128; imm8 & imm8_0 {
-	local tmp:16 = XmmReg2_m128;
-	local cond0:16 = zext((imm8_0:1 & 0x1) == 0);
-	local cond1:16 = zext((imm8_0:1 & 0x1) == 1);
-	# ignoring all but the least significant bit
-	YmmReg1[0,128] = (cond0 * tmp) + (cond1 * vexVVVV_YmmReg[0,128]);
-	YmmReg1[128,128] = (cond0 * vexVVVV_YmmReg[128,128]) + (cond1 * tmp);
-
+:VINSERTI128 YmmReg1, vexVVVV_YmmReg, XmmReg2_m128, imm8 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x38; YmmReg1 ... & XmmReg2_m128; imm8 & imm8_0{
+	local scr1l:16 = vexVVVV_YmmReg[0,128];
+	local scr1h:16 = vexVVVV_YmmReg[128,128];
+	local src2:16 = XmmReg2_m128;
+	local vcond:1 = (imm8_0:1 & 0x1) == 0;
+	local part1:16 = 0;
+	conditionalAssign(part1, vcond, src2, scr1l);
+	local part2:16 = 0;
+	conditionalAssign(part2, vcond, scr1h, src2);
+	YmmReg1[0,128] = part1;
+	YmmReg1[128,128] = part2;
 }
 
 # VGATHERDPD/VGATHERQPD 5-251 PAGE 2075 LINE 106903

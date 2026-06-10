@@ -2775,7 +2775,7 @@ mrsipsr: "i"	is thc0000=1 & Rd0811 {
 	b:1 = isCurrentModePrivileged();
 	if (!b) goto <notPriv>;
 	ipsr:4 = getCurrentExceptionNumber();
-	Rd0811 = Rd0811 | (ipsr & 0x1f);
+	Rd0811 = Rd0811 | (ipsr & 0x1ff);
  <notPriv> 
 }
 mrsipsr: 		is thc0000=0 { }
