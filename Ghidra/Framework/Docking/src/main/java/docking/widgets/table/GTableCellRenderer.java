@@ -155,7 +155,6 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 
 		data.resetRowData();
 
-
 		return renderComponent;
 	}
 
@@ -178,9 +177,8 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 		String text = getText(data);
 		setText(text);
 
-		if (value instanceof Number) {
-			setHorizontalAlignment(SwingConstants.RIGHT);
-		}
+		int alignment = (value instanceof Number) ? SwingConstants.RIGHT : SwingConstants.LEFT;
+		setHorizontalAlignment(alignment);
 
 		TableModel model = table.getModel();
 		setFont(getDefaultFont());
@@ -249,7 +247,6 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 		String columnName = model.getColumnName(columnModelIndex);
 		return "Column: " + columnName;
 	}
-
 
 	protected void setForegroundColor(JTable table, TableModel model, Object value) {
 		setForeground(table.getForeground());
