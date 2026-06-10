@@ -16,7 +16,6 @@
 package ghidra.plugin.importer;
 
 import java.awt.Window;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -447,75 +446,56 @@ public class ImporterUtilities {
 		}
 	}
 
-	private static void doPostImportProcessing(PluginTool pluginTool,
+	private static Set<DomainFile> doPostImportProcessing(PluginTool pluginTool,
 			ProgramManager programManager, LoadResults<? extends DomainObject> loadResults,
 			String importMessages, TaskMonitor monitor) throws CancelledException {
 
-		// Optionally echo loader message log to application.log
-		if (!Loader.loggingDisabled && !importMessages.isEmpty()) {
-			Msg.info(ImporterUtilities.class, "Import info:\n" + importMessages);
-		}
-
-		int openFailures = 0;
-		boolean isFirstFile = true;
-		DomainFile firstDomainFile = null;
-
+		boolean firstFile = true;
 		Set<DomainFile> importedFilesSet = new HashSet<>();
 		for (Loaded<? extends DomainObject> loaded : loadResults) {
 			monitor.checkCancelled();
-
-			DomainFile savedDomainFile = null;
-			try {
-				savedDomainFile = loaded.getSavedDomainFile();
-				if (firstDomainFile == null) {
-					firstDomainFile = savedDomainFile;
-				}
-				if (savedDomainFile != null) {
-					importedFilesSet.add(savedDomainFile);
-				}
-			}
-			catch (FileNotFoundException e) {
-				// ignore - domain object was not saved
-			}
-
 			Object consumer = new Object();
 			DomainObject obj = loaded.getDomainObject(consumer);
-			boolean opened = false;
+			DomainFile df = obj.getDomainFile();
 			try {
-				if (obj instanceof Program && programManager != null) {
-					int openState = isFirstFile
-							? ProgramManager.OPEN_CURRENT
-							: ProgramManager.OPEN_VISIBLE;
-					programManager.openProgram((Program) obj, openState);
-					opened = true;
+				if (obj instanceof Program) {
+					if (programManager != null) {
+						int openState = firstFile
+								? ProgramManager.OPEN_CURRENT
+								: ProgramManager.OPEN_VISIBLE;
+						programManager.openProgram((Program) obj, openState);
+					}
 				}
-				else if (savedDomainFile != null) {
-					// Attempt to open in tool if it will accept it (e.g., DBTrace from GZT file)
-					opened = pluginTool.acceptDomainFiles(new DomainFile[] { savedDomainFile });
+				else {
+					// We imported a non-Program (i.e., a Trace or similar).
+					// Try to open it in the current tool (if not FrontEndTool).
+					if (!(pluginTool instanceof FrontEndTool)) {
+						boolean success = pluginTool.acceptDomainFiles(new DomainFile[] { df });
+						if (!success) {
+							importMessages = "Saved " + df +
+								", but failed to open it in the current tool.\n" + importMessages;
+						}
+					}
 				}
-				if (isFirstFile) {
+				if (firstFile) {
 					// currently we only show results for the imported program, not any libraries
 					displayResults(pluginTool, obj, importMessages);
+
+					// Optionally echo loader message log to application.log
+					if (!Loader.loggingDisabled && !importMessages.isEmpty()) {
+						Msg.info(ImporterUtilities.class, "Additional info:\n" + importMessages);
+					}
 				}
+				firstFile = false;
+				importedFilesSet.add(df);
 			}
 			finally {
 				obj.release(consumer);
 			}
-			if (!opened) {
-				++openFailures;
-			}
-			isFirstFile = false;
 		}
 
 		selectFiles(importedFilesSet);
-
-		if (openFailures != 0 && pluginTool != AppInfo.getFrontEndTool()) {
-			// Indicate imports which failed to open in tool
-			Msg.showInfo(ImporterUtilities.class, null, "Import Notice",
-				"Unable to open " + openFailures +
-					" file(s) within current tool after successful import.\n" +
-					"See selected files in project window.");
-		}
+		return importedFilesSet;
 	}
 
 	private static void selectFiles(Set<DomainFile> importedFilesSet) {
