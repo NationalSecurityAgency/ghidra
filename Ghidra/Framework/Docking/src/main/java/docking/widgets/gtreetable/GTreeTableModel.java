@@ -51,6 +51,11 @@ public class GTreeTableModel<T extends GTreeTableNode> extends ThreadedTableMode
 				throws IllegalArgumentException {
 			return rowObject;
 		}
+
+		@Override
+		public Comparator<GTreeTableNode> getComparator() {
+			return Comparator.comparingInt(GTreeTableNode::getIndex);
+		}
 	}
 
 	private GTreeTableNode rootNode;
@@ -68,7 +73,7 @@ public class GTreeTableModel<T extends GTreeTableNode> extends ThreadedTableMode
 	@Override
 	protected TableColumnDescriptor<T> createTableColumnDescriptor() {
 		final TableColumnDescriptor<T> descriptor = new TableColumnDescriptor<>();
-		descriptor.addVisibleColumn(new TreeColumn(treeColumnName()));
+		descriptor.addVisibleColumn(new TreeColumn(treeColumnName()), 0, true);
 
 		return descriptor;
 	}
@@ -122,6 +127,7 @@ public class GTreeTableModel<T extends GTreeTableNode> extends ThreadedTableMode
 	protected void doLoad(Accumulator<T> accumulator, TaskMonitor monitor)
 			throws CancelledException {
 		if (rootNode != null) {
+			rootNode.reindex();
 			for (final GTreeTableNode c : rootNode.expandedDescendants()) {
 				monitor.checkCancelled();
 				if (c.isVisible()) {
