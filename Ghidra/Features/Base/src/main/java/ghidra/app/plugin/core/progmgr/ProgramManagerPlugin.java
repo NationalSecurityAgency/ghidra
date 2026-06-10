@@ -484,8 +484,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 		}
 
 		Runnable r = () -> {
-			programMgr.addProgram(p, locator, state);
-			if (state == ProgramManager.OPEN_CURRENT) {
+			if (programMgr.addProgram(p, locator, state)) {
 				programMgr.saveLocation();
 			}
 			contextChanged();

@@ -15,15 +15,15 @@
  */
 package ghidra.framework.store.local;
 
+import java.io.*;
+
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.framework.store.DataFileItem;
 import ghidra.framework.store.FolderItem;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateFileException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.*;
-
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * <code>LocalDataFileItem</code> provides a FolderItem implementation
@@ -186,8 +186,7 @@ public class LocalDataFileItem extends LocalFolderItem implements DataFileItem {
 	@Override
 	public void output(File outputFile, int version, TaskMonitor monitor) throws IOException {
 
-		throw new UnsupportedOperationException("Output not yet supported for DataFiles");
-
+		throw new IOException("Packed output not yet supported for DataFiles");
 	}
 
 	@Override
