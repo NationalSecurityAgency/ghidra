@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.opinion;
+package ghidra.app.plugin.core.debug.utils;
 
 import java.io.*;
 import java.util.*;
@@ -23,26 +23,28 @@ import org.apache.commons.io.FilenameUtils;
 import db.DBHandle;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.opinion.*;
 import ghidra.framework.Application;
 import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.framework.store.local.ItemSerializer;
-import ghidra.program.database.ProgramContentHandler;
-import ghidra.program.database.ProgramDB;
 import ghidra.program.model.lang.LanguageNotFoundException;
 import ghidra.program.model.listing.Program;
+import ghidra.trace.database.DBTrace;
+import ghidra.trace.database.DBTraceContentHandler;
+import ghidra.trace.model.Trace;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 /**
- * Loads a packed Ghidra program.
+ * Loads a packed Ghidra Trace file.
  */
-public class GzfLoader implements Loader {
+public class GztLoader implements Loader {
 
-	public final static String GZF_NAME = "GZF Input Format";
+	public final static String GZT_NAME = "GZT Input Format";
 
 	@Override
 	public LoaderTier getTier() {
@@ -58,7 +60,7 @@ public class GzfLoader implements Loader {
 	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
 			Program program) {
 		if (options != null && options.size() > 0) {
-			return "GzfLoader takes no options";
+			return "GztLoader takes no options";
 		}
 		return null;
 	}
@@ -73,15 +75,15 @@ public class GzfLoader implements Loader {
 	public LoadResults<? extends DomainObject> load(ImporterSettings settings)
 			throws IOException, CancelledException, VersionException {
 
-		Program program = loadPackedProgramDatabase(settings.provider(), settings.importName(),
+		Trace trace = loadPackedTraceDatabase(settings.provider(), settings.importName(),
 			settings.consumer(), settings.monitor());
-		return new LoadResults<>(new Loaded<>(program, settings));
+		return new LoadResults<>(new Loaded<>(trace, settings));
 	}
 
-	private Program loadPackedProgramDatabase(ByteProvider provider, String programName,
+	private Trace loadPackedTraceDatabase(ByteProvider provider, String traceName,
 			Object consumer, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException, LanguageNotFoundException {
-		Program program;
+		Trace trace;
 		File file = provider.getFile();
 		File tmpFile = null;
 		if (file == null) {
@@ -93,15 +95,16 @@ public class GzfLoader implements Loader {
 			boolean success = false;
 			DBHandle dbh = null;
 			try {
-				if (!ProgramContentHandler.PROGRAM_CONTENT_TYPE
+				if (!DBTraceContentHandler.TRACE_CONTENT_TYPE
 						.equals(packedDatabase.getContentType())) {
-					throw new IOException("File imported is not a Program: " + programName);
+					throw new IOException("File imported is not a Trace: " + traceName);
 				}
 
 				monitor.setMessage("Restoring " + provider.getName());
 
 				dbh = packedDatabase.open(monitor);
-				program = new ProgramDB(dbh, OpenMode.UPGRADE, monitor, consumer);
+
+				trace = new DBTrace(dbh, OpenMode.UPGRADE, monitor, consumer);
 				success = true;
 			}
 			finally {
@@ -114,7 +117,7 @@ public class GzfLoader implements Loader {
 					}
 				}
 			}
-			return program;
+			return trace;
 		}
 		finally {
 			if (tmpFile != null) {
@@ -126,13 +129,13 @@ public class GzfLoader implements Loader {
 	@Override
 	public void loadInto(Program program, ImporterSettings settings)
 			throws IOException, LoadException, CancelledException {
-		throw new LoadException("Cannot add GZF to program");
+		throw new LoadException("Cannot add GZT to program");
 	}
 
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
 		List<LoadSpec> loadSpecs = new ArrayList<>();
-		if (isGzfFile(provider)) {
+		if (isGztFile(provider)) {
 			loadSpecs.add(new LoadSpec(this, 0, false));
 		}
 		return loadSpecs;
@@ -145,7 +148,7 @@ public class GzfLoader implements Loader {
 
 	private static File createTmpFile(ByteProvider provider, TaskMonitor monitor)
 			throws IOException {
-		File tmpFile = Application.createTempFile("ghidra_gzf_loader", null);
+		File tmpFile = Application.createTempFile("ghidra_gzt_loader", null);
 		try (InputStream is = provider.getInputStream(0);
 				FileOutputStream fos = new FileOutputStream(tmpFile)) {
 			FileUtilities.copyStreamToStream(is, fos, monitor);
@@ -153,22 +156,22 @@ public class GzfLoader implements Loader {
 		return tmpFile;
 	}
 
-	private static boolean isGzfFile(ByteProvider provider) {
-		if (!provider.getName().toLowerCase().endsWith(".gzf")) {
+	private static boolean isGztFile(ByteProvider provider) {
+		if (!provider.getName().toLowerCase().endsWith(".gzt")) {
 			return false;
 		}
-		boolean isGZF = false;
+		boolean isGZT = false;
 		try (InputStream inputStream = provider.getInputStream(0)) {
-			isGZF = ItemSerializer.isPackedFile(inputStream);
+			isGZT = ItemSerializer.isPackedFile(inputStream);
 		}
 		catch (IOException e) {
 			// ignore
 		}
-		return isGZF;
+		return isGZT;
 	}
 
 	@Override
 	public String getName() {
-		return GZF_NAME;
+		return GZT_NAME;
 	}
 }

@@ -47,7 +47,7 @@ public class GdtLoader implements Loader {
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
 			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	@Override
