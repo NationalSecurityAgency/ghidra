@@ -1134,6 +1134,22 @@ PcodeOp *PcodeOpBank::findOp(const SeqNum &num) const
   return (*iter).second;
 }
 
+/// If PcodeOps exist at the address, the one with the biggest getTime() is returned.
+/// \param addr is the given address
+/// \return the last PcodeOp at the address (or NULL)
+PcodeOp *PcodeOpBank::findLastOp(const Address &addr) const
+
+{
+  PcodeOpTree::const_iterator iter = optree.upper_bound(SeqNum(addr,~((uintm)0)));
+  if (iter != optree.begin()) {
+    --iter;
+    PcodeOp *op = (*iter).second;
+    if (op->getAddr() == addr)
+      return op;
+  }
+  return (PcodeOp *)0;
+}
+
 /// The term \e fallthru in this context refers to p-code \e not assembly instructions.
 /// \param op is the given PcodeOp
 /// \return the fallthru PcodeOp
