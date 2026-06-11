@@ -853,7 +853,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				(RemoteBlockStreamHandle.enableCompressedSerializationOutput ? "enabled"
 						: "disabled"));
 //			log.info("   Class server port: " + ??);
-			log.info("   Root: " + rootPath);
+			log.info("   Root: " + serverRoot.getAbsolutePath());
 			log.info("   Auth: " + authMode.getDescription());
 			if (authMode == PASSWORD_FILE_LOGIN && defaultPasswordExpiration >= 0) {
 				log.info("   Default password expiration: " +
