@@ -106,8 +106,15 @@ Varnode *Funcdata::newUnique(int4 s,Datatype *ct)
 Varnode *Funcdata::newVarnodeOut(int4 s,const Address &m,PcodeOp *op)
 
 {
+  Varnode *vn;
   Datatype *ct = glb->types->getBase(s,TYPE_UNKNOWN);
-  Varnode *vn = vbank.createDef(s,m,ct,op);
+  if (m.isValidRange(s)) {
+    vn = vbank.createDef(s,m,ct,op);
+  }
+  else {
+    Address addr = glb->constructWrappingAddress(m, s);
+    vn = vbank.createDef(s,addr,ct,op);
+  }
   op->setOutput(vn);
   assignHigh(vn);
 
@@ -154,8 +161,13 @@ Varnode *Funcdata::newVarnode(int4 s,const Address &m,Datatype *ct)
 
   if (ct == (const Datatype *)0)
     ct = glb->types->getBase(s,TYPE_UNKNOWN);
-
-  vn = vbank.create(s,m,ct);
+  if (m.isValidRange(s)) {
+    vn = vbank.create(s,m,ct);
+  }
+  else {
+    Address addr = glb->constructWrappingAddress(m, s);
+    vn = vbank.create(s,addr,ct);
+  }
   assignHigh(vn);
 
   if (s >= minLanedSize)
