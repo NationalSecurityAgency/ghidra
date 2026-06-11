@@ -18,6 +18,8 @@ package ghidra.app.plugin.core.symboltree;
 import static org.junit.Assert.*;
 
 import java.awt.Rectangle;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
@@ -723,7 +725,52 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		// verify node is in the tree
 		assertClassNodes("ClassGroup1::ClassGroup10::ClassGroup100::NewClass");
+	}
 
+	@Test
+	public void testDeleteOrgNode() throws Exception {
+
+		//
+		// Tests that OrganizationNodes can be deleted from the UI
+		// 
+
+		// set org node threshold to a low value 
+		ToolOptions options = tool.getOptions(SymbolTreePlugin.OPTIONS_CATEGORY);
+		int newThreshold = 4;
+		options.setInt(SymbolTreePlugin.OPTION_NAME_GROUP_THRESHOLD, newThreshold);
+
+		/*
+		 	Create enough nodes to trigger an org node.
+		 	
+		 	Namespaces
+		 		NsGroup1
+		 			NsGroup10
+		 				NsGroup100
+		 		NsGroup2
+		 		NsGroup3
+		 */
+		createOrgNamespaces(newThreshold);
+		openNamespaceNodes("NsGroup1::NsGroup10::NsGroup100");
+
+		GTreeNode group10 = getNode(tree, "Global", "Namespaces", "NsGroup1", "NsGroup10");
+
+		List<GTreeNode> children = group10.getChildren();
+		List<SymbolNode> symbols =
+			children.stream().map(n -> (SymbolNode) n).collect(Collectors.toList());
+
+		util.selectNode(group10);
+
+		ActionContext context = util.getSymbolTreeContext();
+		performTreeAction(deleteAction, context);
+
+		GTreeNode group1 = getNode(tree, "Global", "Namespaces", "NsGroup1");
+		group10 = group1.getChild("NsGroup10");
+		assertNull(group10);
+
+		for (SymbolNode node : symbols) {
+			Symbol symbol = node.getSymbol();
+			assertTrue(symbol.isDeleted());
+		}
 	}
 
 //=================================================================================================
