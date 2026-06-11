@@ -88,8 +88,7 @@ public abstract class DecompilerReference {
 	}
 
 	protected SearchLocationContext getContext() {
-		SearchLocationContext context = getContext(variable);
-		return context;
+		return getContext(variable);
 	}
 
 	protected SearchLocationContext getContext(DecompilerVariable var) {
