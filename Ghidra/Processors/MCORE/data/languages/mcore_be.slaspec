@@ -1,0 +1,2 @@
+define endian=big;
+@include "mcore_common.sinc"
