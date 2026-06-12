@@ -676,8 +676,9 @@ public class PeLoader extends AbstractPeDebugLoader {
 				int rawDataSize = sections[i].getSizeOfRawData();
 				int rawDataPtr = sections[i].getPointerToRawData();
 				virtualSize = sections[i].getVirtualSize();
+				int unChangedRawDataPtr = sections[i].getRawPointerToRawData();
 				MemoryBlock block = null;
-				if (rawDataSize != 0 && rawDataPtr != 0) {
+				if (rawDataSize != 0 && unChangedRawDataPtr != 0) { // Check PointerToRawData before it was rounded down
 					int dataSize =
 						((rawDataSize > virtualSize && virtualSize > 0) || rawDataSize < 0)
 								? virtualSize

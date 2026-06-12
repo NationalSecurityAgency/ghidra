@@ -415,19 +415,27 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	/**
 	 * Returns the file offset where the data 
 	 * for the section begins. For executables, 
-	 * this value must be a multiple of the file 
+	 * this value *should* be a multiple of the file
 	 * alignment given in the PE header.
-	 * <p>
-	 * If a section is uninitialized, this value will be 0.
+	 * Note: While this value *should* be a
+	 * multiple of the file alignment, Windows will
+	 * round down to the nearest multiple of 0x200
+	 * regardless of the file alignment.
+	 * Also note that for values below 0x200 but above 0x0
+	 * Windows will round down to 0 but still load the section
+	 * into memory instead of not loading anything as it would
+	 * if it were 0 from the start.
 	 * 
 	 * @return the file offset where the data for the section begins
 	 */
 	public int getPointerToRawData() {
-		if (pointerToRawData < 0x200) {
-			return 0;
-		}
+		return (pointerToRawData / 0x200) * 0x200;
+	}
+
+	public int getRawPointerToRawData() {
 		return pointerToRawData;
 	}
+
 
 	/**
 	 * Returns the file offset of relocations for this section. 
