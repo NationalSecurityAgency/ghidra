@@ -581,6 +581,7 @@ private:
   void clearSavedModel(void);	///< Clear any saved model
   void recoverModel(Funcdata *fd);	///< Attempt recovery of the jump-table model
   void trivialSwitchOver(void);	///< Switch \b this table over to a trivial model
+  bool isThunk(Funcdata *fd) const;	///< Return \b true if the function looks like a thunk
   void sanityCheck(Funcdata *fd,vector<int4> *loadpoints);	///< Perform sanity check on recovered address targets
   int4 block2Position(const FlowBlock *bl) const;	///< Convert a basic-block to an out-edge index from the switch.
   static bool isReachable(PcodeOp *op);	///< Check if the given PcodeOp still seems reachable in its function
