@@ -1541,7 +1541,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 					file1.getName().toLowerCase().endsWith("exe"));
 		}
 
-		runSwing(() -> chooser.setFileFilter(new ExtensionFileFilter("exe", "dll")));
+		runSwing(() -> chooser.setFileFilter(
+			new ExtensionFileFilter(new String[] { "exe", "dll" }, "Executables")));
 		setDir(file);
 
 		waitForNewDirLoad(file);
