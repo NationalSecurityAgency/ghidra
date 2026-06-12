@@ -565,4 +565,36 @@ public class PKIUtils {
 					x509Cert.getNotAfter());
 		}
 	}
+
+	private static final String[] KEY_USAGE_NAMES = {
+		"DigitalSignature",
+		"NonRepudiation",
+		"KeyEncipherment",
+		"DataEncipherment",
+		"KeyAgreement",
+		"KeyCertSign",
+		"CRLSign",
+		"EncipherOnly",
+		"DecipherOnly"
+	};
+
+	/**
+	 * {@return the key-usages as sequence of comma-separated names for a specified certificate}
+	 * @param cert x509 certificate
+	 */
+	public static String formatKeyUsage(X509Certificate cert) {
+		boolean[] usage = cert.getKeyUsage();
+		if (usage == null) {
+			return "No KeyUsage extension present";
+		}
+
+		List<String> enabled = new ArrayList<>();
+		for (int i = 0; i < usage.length && i < KEY_USAGE_NAMES.length; i++) {
+			if (usage[i]) {
+				enabled.add(KEY_USAGE_NAMES[i]);
+			}
+		}
+
+		return String.join(", ", enabled);
+	}
 }
