@@ -122,9 +122,9 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 	public void testNameMatchReplaceCallingConventionBothSpecified() throws Exception {
 
 		// NOTE: This test is performing an unsupported operation when changing a
-		// Program's Language while it is in use.  This is potentially very bad
+		// Program's Language while it is in use.  This is error prone
 		// since a DomainObjectEvent.RESTORED will be triggered which requires
-		// all Program related objects to be discarded since there state is
+		// all Program related objects to be discarded since their state is
 		// unreliable and error prone.
 
 		setLanguage(destinationProgram, "Toy:LE:32:default", "default");
@@ -176,9 +176,9 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 	public void testNameMatchNotFoundCallingConventionBothSpecified() throws Exception {
 
 		// NOTE: This test is performing an unsupported operation when changing a
-		// Program's Language while it is in use.  This is potentially very bad
+		// Program's Language while it is in use.  This is error prone
 		// since a DomainObjectEvent.RESTORED will be triggered which requires
-		// all Program related objects to be discarded since there state is
+		// all Program related objects to be discarded since their state is
 		// unreliable and error prone.
 
 		setLanguage(destinationProgram, "Toy:LE:32:default", "default");

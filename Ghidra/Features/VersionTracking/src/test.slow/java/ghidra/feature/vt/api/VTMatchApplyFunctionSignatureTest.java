@@ -1234,9 +1234,9 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		useMatch("0x00401040", "0x00401040");
 
 		// NOTE: This test is performing an unsupported operation when changing a
-		// Program's Language while it is in use.  This is potentially very bad
+		// Program's Language while it is in use.  This is error prone
 		// since a DomainObjectEvent.RESTORED will be triggered which requires
-		// all Program related objects to be discarded since there state is
+		// all Program related objects to be discarded since their state is
 		// unreliable and error prone.
 
 		setLanguage(sourceProgram, "Toy:LE:32:default", "default");
@@ -1281,9 +1281,9 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		useMatch("0x00401040", "0x00401040");
 
 		// NOTE: This test is performing an unsupported operation when changing a
-		// Program's Language while it is in use.  This is potentially very bad
+		// Program's Language while it is in use.  This is error prone
 		// since a DomainObjectEvent.RESTORED will be triggered which requires
-		// all Program related objects to be discarded since there state is
+		// all Program related objects to be discarded since their state is
 		// unreliable and error prone.
 
 		setLanguage(sourceProgram, "Toy:LE:32:default", "default");
