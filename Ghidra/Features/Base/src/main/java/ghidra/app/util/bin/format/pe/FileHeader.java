@@ -434,7 +434,7 @@ public class FileHeader implements StructConverter {
 		if (symbolTableOffset == 0) {
 			return;
 		}
-		if (numberOfSymbols < 0) {
+		if (numberOfSymbols < 0 || numberOfSymbols > NTHeader.MAX_SANE_COUNT) {
 			Msg.error(this, "Invalid symbol count: " + Integer.toHexString(numberOfSymbols));
 			return;
 		}
