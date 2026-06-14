@@ -7275,6 +7275,7 @@ is b_1031=0b0001111001111110000000 & Rd_GPR32 & Rn_FPR64 & Rd_GPR64
 is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=1 & b_21=0 & Rm_FPR64 & b_15=0 & Ra_FPR64 & Rn_FPR64 & Rd_FPR64 & Zd
 {
 	Rd_FPR64 = Ra_FPR64 f+ (Rm_FPR64 f* Rn_FPR64); #NEON_fmadd(Rn_FPR64, Rm_FPR64, Ra_FPR64);
+	zext_zd(Zd); # zero upper bytes of dest (FMA, ARM SIMD&FP write semantics)
 }
 
 # C7.2.100 FMADD page C7-2246 line 131323 MATCH x1f000000/mask=xff208000
@@ -7286,6 +7287,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=1 & b_21=0 & Rm_FPR64 & b_15=0 & R
 is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=0 & b_21=0 & Rm_FPR32 & b_15=0 & Ra_FPR32 & Rn_FPR32 & Rd_FPR32 & Zd
 {
 	Rd_FPR32 = Ra_FPR32 f+ (Rm_FPR32 f* Rn_FPR32); #NEON_fmadd(Rn_FPR32, Rm_FPR32, Ra_FPR32);
+	zext_zs(Zd); # zero upper bytes of dest (FMA, ARM SIMD&FP write semantics)
 }
 
 # C7.2.100 FMADD page C7-2246 line 131323 MATCH x1f000000/mask=xff208000
@@ -7297,6 +7299,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=0 & b_21=0 & Rm_FPR32 & b_15=0 & R
 is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=3 & b_21=0 & Rm_FPR16 & b_15=0 & Ra_FPR16 & Rn_FPR16 & Rd_FPR16 & Zd
 {
 	Rd_FPR16 = Ra_FPR16 f+ (Rm_FPR16 f* Rn_FPR16); #NEON_fmadd(Rn_FPR16, Rm_FPR16, Ra_FPR16);
+	zext_zh(Zd); # zero upper bytes of dest (FMA, ARM SIMD&FP write semantics)
 }
 
 # C7.2.101 FMAX (vector) page C7-2248 line 131451 MATCH x0e20f400/mask=xbfa0fc00
@@ -9562,6 +9565,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Imm8_fmov16_operand
 is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=1 & b_21=0 & Rm_FPR64 & b_15=1 & Ra_FPR64 & Rn_FPR64 & Rd_FPR64 & Zd
 {
 	Rd_FPR64 = Ra_FPR64 f- (Rm_FPR64 f* Rn_FPR64);
+	zext_zd(Zd); # zero upper bytes of dest (FMA, ARM SIMD&FP write semantics)
 
 }
 
@@ -9574,6 +9578,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=1 & b_21=0 & Rm_FPR64 & b_15=1 & R
 is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=0 & b_21=0 & Rm_FPR32 & b_15=1 & Ra_FPR32 & Rn_FPR32 & Rd_FPR32 & Zd
 {
 	Rd_FPR32 = Ra_FPR32 f- (Rm_FPR32 f* Rn_FPR32);
+	zext_zs(Zd); # zero upper bytes of dest (FMA, ARM SIMD&FP write semantics)
 }
 
 # C7.2.133 FMSUB page C7-2318 line 135582 MATCH x1f008000/mask=xff208000
@@ -9585,6 +9590,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=0 & b_21=0 & Rm_FPR32 & b_15=1 & R
 is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=3 & b_21=0 & Rm_FPR16 & b_15=1 & Ra_FPR16 & Rn_FPR16 & Rd_FPR16 & Zd
 {
 	Rd_FPR16 = Ra_FPR16 f- (Rm_FPR16 f* Rn_FPR16);
+	zext_zh(Zd); # zero upper bytes of dest (FMA, ARM SIMD&FP write semantics)
 }
 
 # C7.2.134 FMUL (by element) page C7-2320 line 135711 MATCH x5f009000/mask=xffc0f400
