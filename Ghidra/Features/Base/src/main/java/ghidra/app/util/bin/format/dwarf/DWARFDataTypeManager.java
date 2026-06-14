@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 import ghidra.app.util.bin.format.dwarf.DWARFDataTypeImporter.DWARFDataType;
 import ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionException;
 import ghidra.program.database.DbObject;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.Program;
@@ -443,7 +444,9 @@ public class DWARFDataTypeManager {
 		}
 
 		if (name != null /* mangledName also will be non-null */) {
-			dt = new TypedefDataType(prog.getRootDNI().asCategoryPath(), name, dt, dataTypeManager);
+			TypedefDataType typedef =
+				new TypedefDataType(prog.getRootDNI().asCategoryPath(), name, dt, dataTypeManager);
+			dt = DataTypeUtilities.getTypedefReplacement(typedef, true);
 
 			dt = dataTypeManager.addDataType(dt, DataTypeConflictHandler.DEFAULT_HANDLER);
 

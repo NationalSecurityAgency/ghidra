@@ -41,7 +41,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 import util.CollectionUtils;
 
-public class CppExporter extends Exporter {
+public class CppExporter extends ProgramExporter {
 
 	public static final String CREATE_C_FILE = "Create C File (.c)";
 	public static final String CREATE_HEADER_FILE = "Create Header File (.h)";
@@ -90,12 +90,15 @@ public class CppExporter extends Exporter {
 	@Override
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet,
 			TaskMonitor monitor) throws IOException, ExporterException {
-		if (!(domainObj instanceof Program)) {
+
+		Program program;
+		try {
+			program = getProgram(domainObj);
+		}
+		catch (ClassCastException e) {
 			log.appendMsg("Unsupported type: " + domainObj.getClass().getName());
 			return false;
 		}
-
-		Program program = (Program) domainObj;
 
 		configureOptions(program);
 		configureFunctionTags(program);

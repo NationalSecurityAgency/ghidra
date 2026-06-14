@@ -21,8 +21,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.task.TaskMonitor;
+import util.CollectionUtils;
 
 /**
  * Factory and utility methods for working with {@link Loader}s.
@@ -36,28 +39,31 @@ public class LoaderService {
 	 * 
 	 * @param provider The {@link ByteProvider} to load.
 	 * @param loaderFilter A {@link Predicate} that will filter out undesired {@link Loader}s.
+	 * @param monitor The {@link TaskMonitor}
 	 * @return All supported {@link LoadSpec}s in the form of a {@link LoaderMap}.
 	 */
 	public static LoaderMap getSupportedLoadSpecs(ByteProvider provider,
-			Predicate<Loader> loaderFilter) {
+			Predicate<Loader> loaderFilter, TaskMonitor monitor) {
+		initializeLanguageService(monitor);
 		LoaderMap loaderMap = new LoaderMap();
+		List<Loader> fallback = new ArrayList<>();
 		for (Loader loader : getAllLoaders()) {
 			if (loaderFilter.test(loader)) {
-				try {
-					Collection<LoadSpec> loadSpecs = loader.findSupportedLoadSpecs(provider);
-					if (loadSpecs != null && !loadSpecs.isEmpty()) { // shouldn't be null, but protect against rogue loaders
-						loaderMap.put(loader, loadSpecs);
-					}
+				if (!loader.isFallback()) {
+					tryLoadSpecs(loader, provider, loaderMap);
 				}
-				catch (IOException e) {
-					// file not applicable for loader
-				}
-				catch (RuntimeException e) {
-					Msg.error(LoaderService.class,
-						"Unexpected Loader exception from " + loader.getName(), e);
+				else {
+					fallback.add(loader);
 				}
 			}
 		}
+
+		if (loaderMap.size() <= 1) { // BinaryLoader is always there
+			for (Loader loader : fallback) {
+				tryLoadSpecs(loader, provider, loaderMap);
+			}
+		}
+
 		return loaderMap;
 	}
 
@@ -65,10 +71,60 @@ public class LoaderService {
 	 * Gets all supported {@link LoadSpec}s for loading the given {@link ByteProvider}.
 	 * 
 	 * @param provider The {@link ByteProvider} to load.
+	 * @param loaderFilter A {@link Predicate} that will filter out undesired {@link Loader}s.
+	 * @return All supported {@link LoadSpec}s in the form of a {@link LoaderMap}.
+	 * @deprecated Use {@link #getSupportedLoadSpecs(ByteProvider, Predicate, TaskMonitor)}
+	 */
+	@Deprecated(since = "12.2", forRemoval = true)
+	public static LoaderMap getSupportedLoadSpecs(ByteProvider provider,
+			Predicate<Loader> loaderFilter) {
+		return getSupportedLoadSpecs(provider, loaderFilter, TaskMonitor.DUMMY);
+	}
+
+	/**
+	 * Attempts to find and register supported {@link LoadSpec}s for the given {@link Loader}
+	 * 
+	 * @param loader The {@link Loader} to query
+	 * @param provider The {@link ByteProvider} to load from
+	 * @param loaderMap The {@link LoaderMap} to populate with discovered {@link LoadSpec}s
+	 */
+	private static void tryLoadSpecs(Loader loader, ByteProvider provider, LoaderMap loaderMap) {
+		try {
+			Collection<LoadSpec> loadSpecs = loader.findSupportedLoadSpecs(provider);
+			if (!CollectionUtils.isBlank(loadSpecs)) {
+				loaderMap.put(loader, loadSpecs);
+			}
+		}
+		catch (IOException e) {
+			// file not applicable for loader
+		}
+		catch (RuntimeException e) {
+			Msg.error(LoaderService.class, "Unexpected Loader exception from " + loader.getName(),
+				e);
+		}
+	}
+
+	/**
+	 * Gets all supported {@link LoadSpec}s for loading the given {@link ByteProvider}.
+	 * 
+	 * @param provider The {@link ByteProvider} to load.
+	 * @param monitor The {@link TaskMonitor}
 	 * @return All supported {@link LoadSpec}s in the form of a {@link LoaderMap}.
 	 */
+	public static LoaderMap getAllSupportedLoadSpecs(ByteProvider provider, TaskMonitor monitor) {
+		return getSupportedLoadSpecs(provider, ACCEPT_ALL, monitor);
+	}
+
+	/**
+	 * Gets all supported {@link LoadSpec}s for loading the given {@link ByteProvider}.
+	 * 
+	 * @param provider The {@link ByteProvider} to load.
+	 * @return All supported {@link LoadSpec}s in the form of a {@link LoaderMap}.
+	 * @deprecated Use {@link #getAllSupportedLoadSpecs(ByteProvider, TaskMonitor)}
+	 */
+	@Deprecated(since = "12.2", forRemoval = true)
 	public static LoaderMap getAllSupportedLoadSpecs(ByteProvider provider) {
-		return getSupportedLoadSpecs(provider, ACCEPT_ALL);
+		return getAllSupportedLoadSpecs(provider, TaskMonitor.DUMMY);
 	}
 
 	/**
@@ -113,5 +169,23 @@ public class LoaderService {
 		List<Loader> loaders = new ArrayList<>(ClassSearcher.getInstances(Loader.class));
 		Collections.sort(loaders);
 		return loaders;
+	}
+
+	/**
+	 * Gets the language service so we can show its slow progress with a monitor.
+	 * <p>
+	 * Typically the first time the language service is gotten is from within a call to
+	 * {@link Loader#findSupportedLoadSpecs(ByteProvider)}, which doesn't have access to monitor
+	 * (nor does {@link DefaultLanguageService#getLanguageService()}). This results in a stale
+	 * monitor message being shown for several seconds.
+	 * 
+	 * @param monitor The {@link TaskMonitor}
+	 */
+	private static void initializeLanguageService(TaskMonitor monitor) {
+		monitor.setMessage("Initializing language service...");
+		monitor.setIndeterminate(true);
+		monitor.setCancelEnabled(false);
+		DefaultLanguageService.getLanguageService();
+		monitor.setCancelEnabled(true);
 	}
 }

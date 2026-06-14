@@ -154,25 +154,53 @@
     point in time. If the current trace is live and at the present, the target may be queried to
     retrieve any machine state required to evaluate the expression. The expression may be in terms
     of labels, registers, and constants. Labels may come from the current trace or a program mapped
-    into the trace. Ambiguities are resolved arbitrarily.</P>
+    into the trace. Ambiguities are resolved arbitrarily. Relative expressions are permitted by
+    starting with a plus (<CODE>+</CODE>) or minus (<CODE>-</CODE>). Additionally, a dot
+    (<CODE>.</CODE>) refers to the current address.</P>
 
     <DIV class="image">
       <IMG alt="" src="images/DebuggerGoToDialog.png">
     </DIV>
+
+    <P>The radio buttons at the bottom indicate the default radix of integer literals:</P>
+
+    <UL>
+      <LI>In <B>Normal</B> mode, the parser behaves exactly as it would for Watches or for the
+      semantic section of a <CODE>.slaspec</CODE> file. Literals are assumed in decimal unless an
+      <CODE>0x</CODE> or <CODE>0b</CODE> prefix is included. There is no ambiguity with ids, since
+      they cannot start with a digit 0-9.</LI>
+
+      <LI>In <B>Hex</B> mode, literals are assumed in hexadecimal unless an <CODE>0n</CODE>
+      (decimal) prefix is included. The tokenizer treats any contiguous sequence of digits
+      0-9,A-F,a-f as a literal, which introduces ambiguity with certain ids, e.g., <CODE>a1</CODE>,
+      which in some languages could refer to a register. In this mode, the ambiguous token is
+      treated as an integer literal, i.e., having the decimal value 161. Note that the prefix
+      <CODE>0b</CODE> (for binary literals) is no longer permitted. The token, e.g.,
+      <CODE>0b01</CODE> is treated as a hex literal, i.e., having the decimal value 2817.</LI>
+
+      <LI>In <B>Hex, prefer ids</B> mode, literals are treated the same as in <B>Hex</B> mode.
+      Ambiguous tokens are treated as ids, e.g., the token <CODE>a1</CODE> is first checked to
+      match a register. If there is no <CODE>a1</CODE> register, then it treats it as an integer
+      literal. Unfortunately, this may lead to unexpected behavior. A user typing <CODE>A1</CODE>
+      would get the literal value, even if register <CODE>a1</CODE> exists, since ids are case
+      sensitive.</LI>
+    </UL>
 
     <P>Note that a Go-To action can fail for many reasons, e.g., syntax errors, computation
     failures. One possible reason is that the address is not part of a memory region known to the
     debugger. This failure can be overcome by enabling <A href=
     "help/topics/DebuggerRegionsPlugin/DebuggerRegionsPlugin.html">Force Full View</A>.</P>
 
-    <P>Some examples:</P>
+    <P>Some examples (in <b>Hex</b> mode):</P>
 
     <UL>
-      <LI><CODE>00401234</CODE> &mdash; A constant address in simple notation</LI>
+      <LI><CODE>00401234</CODE> &mdash; A constant address</LI>
 
       <LI><CODE>0x00401234:8</CODE> &mdash; A constant address in Sleigh notation</LI>
 
-      <LI><CODE>main + 10</CODE> &mdash; 10 bytes past the address of "main"</LI>
+      <LI><CODE>+4c</CODE> &mdash; 76 (4c hex) bytes past the current address</LI>
+
+      <LI><CODE>main + 10</CODE> &mdash; 16 (10 hex) bytes past the address of "main"</LI>
 
       <LI><CODE>RAX</CODE> &mdash; The address in RAX</LI>
 

@@ -44,7 +44,7 @@ import ghidra.util.task.TaskMonitor;
  * cause only lines that match the max record size to be printed; any other 
  * bytes will be dropped. If this option is not set, every byte will be represented in the output.
  */
-public class IntelHexExporter extends Exporter {
+public class IntelHexExporter extends ProgramExporter {
 
 	/** Option allowing the user to select the address space */
 	protected Option addressSpaceOption;
@@ -151,7 +151,11 @@ public class IntelHexExporter extends Exporter {
 
 		log.clear();
 
-		if (!(domainObj instanceof Program program)) {
+		Program program;
+		try {
+			program = getProgram(domainObj);
+		}
+		catch (ClassCastException e) {
 			log.appendMsg("Unsupported type: " + domainObj.getClass().getName());
 			return false;
 		}

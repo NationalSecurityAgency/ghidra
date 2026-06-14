@@ -259,8 +259,8 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 				int nameOffset = Integer.parseInt(result.name.substring(1));
 				result.name = reader.readAsciiString(stringTableOffset + nameOffset);
 			}
-			catch (NumberFormatException nfe) {
-				// ignore error, section name will remain as it was
+			catch (NumberFormatException | IOException nfe) {
+				// ignore format or out-of-bounds errors...section name will remain as it was
 			}
 		}
 

@@ -324,9 +324,9 @@ expr_term
 	;
 
 varnode
-	:	integer
+	:	int_lit
 	|	identifier
-	|	integer lc=COLON constant -> ^(OP_TRUNCATION_SIZE[$lc] integer constant)
+	|	int_lit lc=COLON constant -> ^(OP_TRUNCATION_SIZE[$lc] int_lit constant)
 	|	identifier lc=COLON constant -> ^(OP_BITRANGE2[$lc] identifier constant)
 	|	lc=AMPERSAND fp=COLON constant varnode -> ^(OP_ADDRESS_OF[$lc] ^(OP_SIZING_SIZE[$fp] constant) varnode)
 	|	lc=AMPERSAND varnode -> ^(OP_ADDRESS_OF[$lc] varnode)
@@ -336,8 +336,15 @@ constant
 	:	integer
 	;
 
-integer
+int_lit
 	:	lc=HEX_INT -> ^(OP_HEX_CONSTANT[$lc, "HEX_INT"] HEX_INT)
 	|	lc=DEC_INT -> ^(OP_DEC_CONSTANT[$lc, "DEC_INT"] DEC_INT)
 	|	lc=BIN_INT -> ^(OP_BIN_CONSTANT[$lc, "BIN_INT"] BIN_INT)
+	|	lc=DEF_INT -> ^(OP_DEF_CONSTANT[$lc, "DEF_INT"] DEF_INT)
+	;
+
+integer
+	:	lc=HEX_INT -> ^(OP_HEX_CONSTANT[$lc, "HEX_INT"] HEX_INT)
+	|	lc=BIN_INT -> ^(OP_BIN_CONSTANT[$lc, "BIN_INT"] BIN_INT)
+	|	lc=DEF_INT -> ^(OP_DEF_CONSTANT[$lc, "DEF_INT"] DEF_INT)
 	;

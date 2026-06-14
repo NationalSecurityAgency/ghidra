@@ -207,6 +207,12 @@ public class PackedEncode implements Encoder {
 		writeInteger((TYPECODE_SIGNEDINT_POSITIVE << TYPECODE_SHIFT), opcode.ordinal());
 	}
 
+	@Override
+	public void writeOpcode(AttributeId attribId, int opcode) throws IOException {
+		writeHeader(ATTRIBUTE, attribId.id());
+		writeInteger((TYPECODE_SIGNEDINT_POSITIVE << TYPECODE_SHIFT), opcode);
+	}
+
 	/**
 	 * @return the underlying stream
 	 */

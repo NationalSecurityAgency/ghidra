@@ -20,6 +20,8 @@ src/main/antlr/ghidra/sleigh/grammar/DisplayLexer.g||GHIDRA||||END|
 src/main/antlr/ghidra/sleigh/grammar/DisplayParser.g||GHIDRA||||END|
 src/main/antlr/ghidra/sleigh/grammar/README.txt||GHIDRA||||END|
 src/main/antlr/ghidra/sleigh/grammar/SemanticLexer.g||GHIDRA||||END|
+src/main/antlr/ghidra/sleigh/grammar/SemanticLexerHex.g||GHIDRA||||END|
+src/main/antlr/ghidra/sleigh/grammar/SemanticLexerIdHex.g||GHIDRA||||END|
 src/main/antlr/ghidra/sleigh/grammar/SemanticParser.g||GHIDRA||||END|
 src/main/antlr/ghidra/sleigh/grammar/SleighCompiler.g||GHIDRA||||END|
 src/main/antlr/ghidra/sleigh/grammar/SleighEcho.g||GHIDRA||||END|

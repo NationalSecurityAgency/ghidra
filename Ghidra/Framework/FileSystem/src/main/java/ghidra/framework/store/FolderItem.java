@@ -276,8 +276,8 @@ public interface FolderItem {
 	/**
 	 * Update the checkout version associated with this versioned item.
 	 * @param checkoutId id corresponding to an existing checkout
-	 * @param checkoutVersion
-	 * @param user
+	 * @param checkoutVersion current checkout version
+	 * @param user user performing update
 	 * @throws IOException if an IO error occurs.
 	 */
 	void updateCheckoutVersion(long checkoutId, int checkoutVersion, String user)
@@ -289,7 +289,7 @@ public interface FolderItem {
 	 * @param version if this item is versioned, specifies the version to be output, otherwise
 	 * -1 should be specified.
 	 * @param monitor progress monitor
-	 * @throws IOException
+	 * @throws IOException if failed to save packed file
 	 * @throws CancelledException if monitor cancels operation
 	 */
 	public void output(File outputFile, int version, TaskMonitor monitor)
@@ -297,6 +297,8 @@ public interface FolderItem {
 
 	/**
 	 * Returns this instance after refresh or null if item no longer exists
+	 * @return refreshed item
+	 * @throws IOException if error occured during refresh
 	 */
 	public FolderItem refresh() throws IOException;
 

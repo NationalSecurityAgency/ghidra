@@ -61,8 +61,8 @@ public abstract class OverlayAddressSpace extends AbstractAddressSpace {
 	/**
 	 * {@inheritDoc}
 	 * <p>
-	 * NOTE: This overridden method behaves like {@link #getAddress(long)}, not
-	 * {@link #getAddressInThisSpaceOnly(long)}
+	 * NOTE: This overridden method behaves like {@link #getAddressInThisSpaceOnly(long)}, not
+	 * {@link #getAddress(long)}
 	 */
 	@Override
 	public Address getAddress(String addrString, boolean caseSensitive)

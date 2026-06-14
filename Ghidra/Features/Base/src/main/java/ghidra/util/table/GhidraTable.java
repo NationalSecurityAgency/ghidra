@@ -237,6 +237,8 @@ public class GhidraTable extends GTable {
 	 * @param column the column
 	 */
 	public void navigate(int row, int column) {
+
+
 		if (serviceProvider == null) {
 			return;
 		}

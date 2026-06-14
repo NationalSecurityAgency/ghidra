@@ -44,20 +44,15 @@ public class BreakpointTimelineProvider extends ComponentProvider {
 	private class BreakpointTimeOverviewEventListener extends TraceDomainObjectListener {
 
 		public BreakpointTimeOverviewEventListener() {
-			listenFor(TraceEvents.BREAKPOINT_CHANGED, this::breakpointChanged);
-			listenFor(TraceEvents.BREAKPOINT_DELETED, this::breakpointDeleted);
+			listenFor(TraceEvents.BREAKPOINT_CHANGED, this::breakpointEvent);
+			listenFor(TraceEvents.BREAKPOINT_DELETED, this::breakpointEvent);
 			listenFor(TraceEvents.SNAPSHOT_ADDED, this::snapshotEvent);
 			listenFor(TraceEvents.SNAPSHOT_DELETED, this::snapshotEvent);
 			listenFor(TraceEvents.SNAPSHOT_CHANGED, this::snapshotEvent);
 			listenForUntyped(DomainObjectEvent.RESTORED, e -> snapshotEvent());
 		}
 
-		void breakpointChanged(TraceBreakpointLocation tb) {
-			refreshBreakpointHits();
-			breakpointTimelinePlugin.refreshAllProviders(null);
-		}
-
-		void breakpointDeleted(TraceBreakpointLocation tb) {
+		void breakpointEvent(TraceBreakpointLocation tb) {
 			refreshBreakpointHits();
 			breakpointTimelinePlugin.refreshAllProviders(null);
 		}
@@ -68,6 +63,7 @@ public class BreakpointTimelineProvider extends ComponentProvider {
 						.longValue();
 
 			if (newMaxSnap != curMaxSnap) {
+				refreshBreakpointHits();
 				breakpointTimelinePanel.setEventsAndVisibleRange(breakpointHits, 0, newMaxSnap);
 				curMaxSnap = newMaxSnap;
 			}

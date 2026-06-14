@@ -23,6 +23,7 @@ import ghidra.debug.api.action.LocationTrackingSpec;
 import ghidra.debug.api.listing.DebuggerListing;
 import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.framework.plugintool.ServiceInfo;
+import ghidra.pcode.exec.SleighUtils.LitIdMode;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramSelection;
 
@@ -110,6 +111,23 @@ public interface DebuggerListingService extends CodeViewerService {
 	 * @return true if the request was effective
 	 */
 	boolean goTo(Address address, boolean centerOnScreen);
+
+	/**
+	 * Set the mode of the Go-to dialog's Sleigh expressions
+	 * <p>
+	 * This applies to all Go-to dialogs among the dynamic providers, including listings and memory
+	 * (hex byte) views.
+	 * 
+	 * @param mode the new mode
+	 */
+	void setGoToSleighMode(LitIdMode mode);
+
+	/**
+	 * Get the mode of the Go-to dialog's Sleigh expressions
+	 * 
+	 * @return the current mode
+	 */
+	LitIdMode getGoToSleighMode();
 
 	/**
 	 * Obtain a coloring background model suitable for the given listing

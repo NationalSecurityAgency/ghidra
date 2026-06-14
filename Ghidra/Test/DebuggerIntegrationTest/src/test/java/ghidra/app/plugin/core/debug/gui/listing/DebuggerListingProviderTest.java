@@ -54,6 +54,7 @@ import ghidra.debug.api.action.AutoReadMemorySpec;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.*;
+import ghidra.pcode.exec.DebuggerPcodeUtils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.lang.Register;

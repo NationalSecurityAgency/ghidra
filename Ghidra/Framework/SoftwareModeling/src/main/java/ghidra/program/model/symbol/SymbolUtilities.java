@@ -98,11 +98,6 @@ public class SymbolUtilities {
 	 */
 	public final static String ORDINAL_PREFIX = "Ordinal_";
 
-	/**
-	 * Invalid characters for a symbol name.
-	 */
-	public final static char[] INVALIDCHARS = { ' ' };
-
 	private static final Comparator<Symbol> CASE_INSENSITIVE_SYMBOL_NAME_COMPARATOR = (s1, s2) -> {
 		return s1.getName().compareToIgnoreCase(s2.getName());
 	};
@@ -135,23 +130,22 @@ public class SymbolUtilities {
 	}
 
 	/**
-	 * Check for invalid characters
-	 * (space or unprintable ascii below 0x20)
-	 * in labels.
+	 * Checks a string for invalid characters (control chars, space chars, whitespace chars).
 	 *
 	 * @param str the string to be checked for invalid characters.
-	 * @return boolean true if no invalid chars
+	 * @return boolean true if the string has invalid chars, false if string is valid
 	 */
 	public static boolean containsInvalidChars(String str) {
-		int len = str.length();
-		for (int i = 0; i < len; i++) {
-			char c = str.charAt(i);
-			if (isInvalidChar(c)) {
+		for (int i = 0; i < str.length();) {
+			int codePoint = str.codePointAt(i);
+			if (isInvalidCodePoint(codePoint)) {
 				return true;
 			}
+			i += Character.charCount(codePoint);
 		}
 		return false;
 	}
+
 
 	/**
 	 * Generates a default function name for a given address.
@@ -329,54 +323,135 @@ public class SymbolUtilities {
 	}
 
 	/**
-	 * Returns true if the specified char
-	 * is not valid for use in a symbol name
+	 * Returns true if the specified char is not valid for use in a symbol name.
+	 * <p>
+	 * See {@link #isInvalidCodePoint(int)} for better method that uses code points instead of
+	 * chars.
+	 * 
 	 * @param c the character to be tested as a valid symbol character.
-	 * @return return true if c is an invalid char within a symbol name, else false
+	 * @return boolean true if c is an invalid char within a symbol name, else false
 	 */
 	public static boolean isInvalidChar(char c) {
-		if (c < ' ') { // non-printable ASCII
-			return true;
-		}
+		return isInvalidCodePoint(c);
+	}
 
-		for (char element : INVALIDCHARS) {
-			if (c == element) {
+	/**
+	 * Returns true if the specified code point is not valid for use in a symbol name.
+	 * 
+	 * @param cp the code point to be tested as a valid symbol character.
+	 * @return boolean true if the code point is an invalid character within a symbol name,
+	 * 	else false
+	 */
+	public static boolean isInvalidCodePoint(int cp) {
+		// Invisible / unprintable / whitespace unicode character categories.
+		// This bad list + the good list in the following comment are an exhaustive list of all
+		// unicode categories
+		switch (Character.getType(cp)) {
+			case Character.SPACE_SEPARATOR:
+			case Character.COMBINING_SPACING_MARK:
+			case Character.CONTROL:
+			case Character.ENCLOSING_MARK:
+			case Character.FORMAT:
+			case Character.LINE_SEPARATOR:
+			case Character.NON_SPACING_MARK:
+			case Character.PARAGRAPH_SEPARATOR:
+			case Character.PRIVATE_USE:
+			case Character.SURROGATE:
+			case Character.UNASSIGNED:
 				return true;
-			}
+			/*
+				Unicode Character categories that are allowed:
+				    Character.UPPERCASE_LETTER
+				    Character.LOWERCASE_LETTER
+				    Character.TITLECASE_LETTER
+				    Character.MODIFIER_LETTER
+				    Character.OTHER_LETTER
+				    Character.DECIMAL_DIGIT_NUMBER
+				    Character.LETTER_NUMBER
+				    Character.OTHER_NUMBER
+				    Character.DASH_PUNCTUATION
+				    Character.START_PUNCTUATION
+				    Character.END_PUNCTUATION
+				    Character.CONNECTOR_PUNCTUATION
+				    Character.OTHER_PUNCTUATION
+				    Character.MATH_SYMBOL
+				    Character.CURRENCY_SYMBOL
+				    Character.MODIFIER_SYMBOL
+				    Character.OTHER_SYMBOL
+				    Character.INITIAL_QUOTE_PUNCTUATION
+				    Character.FINAL_QUOTE_PUNCTUATION
+			*/
 		}
 		return false;
 	}
 
 	/**
-	 * Removes from the given string any invalid characters or replaces
-	 * them with underscores.
-	 *
-	 * For example:
-	 * given "a:b*c", the return value would be "a_b_c"
-	 *
-	 * @param str the string to have invalid chars converted to underscores or removed.
-	 * @param replaceWithUnderscore - true means replace the invalid
-	 * chars with underscore. if false, then just drop the invalid chars
-	 * @return modified string
+	 * Callback functional interface, called by 
+	 * {@link SymbolUtilities#replaceInvalidChars(String, BadCharFixupFunc)} when it encounters a
+	 * bad code point that needs addressing.  (good characters in a string are NOT sent to
+	 * this method) 
+	 */
+	public interface BadCharFixupFunc {
+		String fixBadChar(int origIndex, int badCodePoint);
+	}
+
+	/**
+	 * BadCharFixupFunc that replaces bad characters with '_' underscores
+	 */
+	public static final BadCharFixupFunc USE_UNDERSCORES = (i, cp) -> "_";
+	/**
+	 * BadCharFixupFunc that removes bad characters from the string
+	 */
+	public static final BadCharFixupFunc OMIT_BAD_CHARS = (i, cp) -> null;
+
+	/**
+	 * Converts a string with possible invalid characters into a valid symbol string.
+	 * 
+	 * @param str String to fix, {@code null} ok
+	 * @param replaceWithUnderscore - true means replace the invalid chars with underscores, else
+	 * 	 if false, then just drop the invalid chars
+	 * @return either the original String instance if already valid (or {@code null}), or a new
+	 *   string that contains the valid portions of the original with any bad chars removed or
+	 *   replaced with underscores.
 	 */
 	public static String replaceInvalidChars(String str, boolean replaceWithUnderscore) {
+		return replaceInvalidChars(str, replaceWithUnderscore ? USE_UNDERSCORES : OMIT_BAD_CHARS);
+	}
+
+	/**
+	 * Converts a string with possible invalid characters into a valid symbol string.
+	 * 
+	 * @param str String to fix, {@code null} ok
+	 * @param badCharFixup callback that controls how each bad char is fixed.  It should return
+	 *   a string that should be used in place of the invalid character, or {@code null} if nothing
+	 *   should be used.
+	 * @return either the original String instance if already valid (or {@code null}), or a new
+	 *   string that contains the valid portions of the original with any fixed-ups as returned by
+	 *   the badCharFixup callback.
+	 */
+	public static String replaceInvalidChars(String str, BadCharFixupFunc badCharFixup) {
 		if (str == null) {
 			return null;
 		}
-		int len = str.length();
-		StringBuilder buf = new StringBuilder(len);
-		for (int i = 0; i < len; ++i) {
-			char c = str.charAt(i);
-			if (isInvalidChar(c)) {
-				if (replaceWithUnderscore) {
-					buf.append(UNDERSCORE);
+		StringBuilder result = null;
+		for (int i = 0; i < str.length();) {
+			int codePoint = str.codePointAt(i);
+			if (isInvalidCodePoint(codePoint)) {
+				if (result == null) {
+					result = new StringBuilder(str.length());
+					result.append(str.substring(0, i));
+				}
+				String replacement = badCharFixup.fixBadChar(i, codePoint);
+				if (replacement != null) {
+					result.append(replacement);
 				}
 			}
-			else {
-				buf.append(c);
+			else if (result != null) {
+				result.appendCodePoint(codePoint);
 			}
+			i += Character.charCount(codePoint);
 		}
-		return buf.toString();
+		return result != null ? result.toString() : str;
 	}
 
 	/**

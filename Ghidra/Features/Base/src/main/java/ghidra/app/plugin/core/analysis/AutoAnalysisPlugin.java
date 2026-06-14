@@ -360,9 +360,10 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 			options = options.getOptions(analyzer.getName());
 			analyzer.optionsChanged(options, program);
 
-			analysisMgr.schedule(
-				new OneShotAnalysisCommand(analyzer, set, analysisMgr.getMessageLog()),
-				analyzer.getPriority().priority());
+			OneShotAnalysisCommand cmd =
+				new OneShotAnalysisCommand(analyzer, set, analysisMgr.getMessageLog());
+			analysisMgr.addListener(cmd);
+			analysisMgr.schedule(cmd, analyzer.getPriority().priority());
 
 			tool.setStatusInfo("Analysis scheduled: " + analyzer.getName());
 		}
