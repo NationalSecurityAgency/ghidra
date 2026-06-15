@@ -16,7 +16,6 @@
 package ghidra.framework.protocol.ghidra;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.net.*;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -47,6 +46,13 @@ import ghidra.util.NamingUtilities;
  * <p>
  * Various system path utilities are also provided in support of local Ghidra project URLs and
  * {@link ProjectLocator}. 
+ * <p>
+ * NOTE: Avoid using {@link URL#getRef()} which returns the encoded refereance fragment as it
+ * appears in the URL.  The proper technique is to use {@code URL.toURI().getFragment()}.
+ * Alternatively, the method {@link #getDecodedReference(URL)} may be used.  Encoding of space
+ * character in URL reference can be inconsistent.  URI encodes space as {@code %20} while 
+ * some other implementation may encode space as '+'.  Creation and decoding of Ghidra URLs
+ * should use this utility class to ensure proper round-trip encode/decode.
  */
 public class GhidraURL {
 
@@ -265,40 +271,21 @@ public class GhidraURL {
 	}
 
 	/**
-	 * {@return Get the URL-decoded reference/fragment from the URL or null}
+	 * {@return Get the URL-decoded reference fragment from the URL or null}
 	 * <p>
-	 * NOTE: The presence of "+" in the original reference fragment is problematic and
-	 * requires consistent use of this method in conjunction with the URL instantiation
-	 * methods provided by this utility class.
+	 * NOTE: Avoid using {@link URL#getRef()} which returns the encoded refereance fragment as it
+	 * appears in the URL.
 	 * 
-	 * @param url Ghidra URL
+	 * @param url URL or null if no ref or URL failure occurs
 	 */
 	public static String getDecodedReference(URL url) {
-		String ref = url.getRef();
-		if (StringUtils.isBlank(ref)) {
-			return null;
-		}
 		try {
-			// NOTE: original "+" may appear encoded in final URL as "%252B"
-			ref = URLDecoder.decode(ref, "UTF-8");
-			ref = ref.replace("%2B", "+"); // force double-decode of original "+"
-			return ref;
+			return url.toURI().getFragment();
 		}
-		catch (UnsupportedEncodingException e) {
-			return null;
+		catch (URISyntaxException e) {
+			// ignore
 		}
-	}
-
-	/**
-	 * Perform preliminary encode of '+' within raw ref string so that it may be preserved
-	 * and properly decoded from {@link URI#getFragment()} by {@link #getDecodedReference(URL)}.
-	 * Once fully encoded by URI a raw '+' will appear with a double encoding of "%252B".
-	 * 
-	 * @param rawRef raw ref/fragment to be prepared for use with URI creation.
-	 * @return preliminary encoding of specified raw ref string.
-	 */
-	private static String encodeRefPlus(String rawRef) {
-		return StringUtils.isBlank(rawRef) ? null : rawRef.replace("+", "%2B");
+		return null;
 	}
 
 	/**
@@ -310,8 +297,13 @@ public class GhidraURL {
 	 * @return repository name or null if not applicable to URL
 	 */
 	public static String getRepositoryName(URL url) {
-		if (!isServerURL(url)) {
+
+		if (isLocalURL(url)) {
 			return null;
+		}
+
+		if (!isServerURL(url)) {
+			throw new IllegalArgumentException("Invalid project/repository URL");
 		}
 
 		try {
@@ -453,6 +445,12 @@ public class GhidraURL {
 	/**
 	 * Create a Ghidra URL from a string form of a Ghidra URL or local project path.
 	 * This method can consume strings produced by the getDisplayString method.
+	 * <p>
+	 * NOTE: If a Ghidra URL string is improperly encode (e.g., had been made by simple string
+	 * concatentaion) an exception may be thrown.  In such situations, a URL re-encoding will be 
+	 * attempted but may produce an incorrect URL if partial encoding was used.  The following 
+	 * characters present in an improperly encoded URL may not handled properly: 
+	 * {@code ' ', '?', '%', '+', '&', '#', '=' }
 	 * 
 	 * @param projectPathOrURL {@literal project path (<absolute-directory>/<project-name>)} or 
 	 * string form of Ghidra URL.
@@ -478,12 +476,42 @@ public class GhidraURL {
 			return makeURL(location, projectName);
 		}
 
-		// NOTE: We must assume URL is properly encoded in its external form
+		URL url;
 		try {
-			return URI.create(projectPathOrURL).toURL();
+			// NOTE: will fail if URL has improper encoding
+			url = URI.create(projectPathOrURL).toURL();
 		}
 		catch (Exception e) {
-			throw new IllegalArgumentException("Invalid Ghidra URL", e);
+			// Since URL string may have been improperly formed via simple string concatentenation 
+			// attempt to repair encodes (primarily handles presence of spaces). 
+			url = getReformedGhidraURL(projectPathOrURL);
+			if (url == null) {
+				throw new IllegalArgumentException("Invalid Ghidra URL: " + projectPathOrURL, e);
+			}
+		}
+		if (!isLocalURL(url) && url.getQuery() != null) {
+			throw new IllegalArgumentException("Invalid Ghidra URL: " + projectPathOrURL);
+		}
+		return url;
+	}
+
+	private static URL getReformedGhidraURL(String invalidGhidraUrl) {
+
+		if (!invalidGhidraUrl.startsWith(PROTOCOL_URL_START + "/")) {
+			// Assume opaque ghidra URL (i.e., ghidra protocol extension)
+			return null;
+		}
+
+		try {
+			// Assume old code was used to directly for URL without the use of URI
+			URL url = new URL(invalidGhidraUrl);
+
+			URI repairedUri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(),
+				url.getPort(), url.getPath(), url.getQuery(), url.getRef());
+			return repairedUri.toURL();
+		}
+		catch (Exception e) {
+			return null;
 		}
 	}
 
@@ -513,8 +541,6 @@ public class GhidraURL {
 			projectFilePath = null;
 		}
 
-		ref = encodeRefPlus(ref);
-		
 		Exception exc = null;
 		try {
 			URI uri = ghidraUrl.toURI();
@@ -691,6 +717,10 @@ public class GhidraURL {
 				return new URI(PROTOCOL, ssp, null).toURL();
 			}
 
+			if (uri.getQuery() != null) {
+				throw new URISyntaxException(url.toExternalForm(), "Invalid Ghidra URL");
+			}
+
 			String host = uri.getHost();
 			String revisedHost = getHostAsIpAddress(host);
 			if (Objects.equals(host, revisedHost) && url.getRef() == null) {
@@ -818,7 +848,7 @@ public class GhidraURL {
 		}
 
 		try {
-			return new URI(GhidraURL.PROTOCOL, null, path, projectFilePath, encodeRefPlus(ref))
+			return new URI(GhidraURL.PROTOCOL, null, path, projectFilePath, ref)
 					.toURL();
 		}
 		catch (URISyntaxException | MalformedURLException e) {
@@ -937,7 +967,7 @@ public class GhidraURL {
 		}
 
 		try {
-			return new URI(PROTOCOL, null, host, port, path, null, encodeRefPlus(ref)).toURL();
+			return new URI(PROTOCOL, null, host, port, path, null, ref).toURL();
 		}
 		catch (URISyntaxException | MalformedURLException e) {
 			throw new IllegalArgumentException(e);
