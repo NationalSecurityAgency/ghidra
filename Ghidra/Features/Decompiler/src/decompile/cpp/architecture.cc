@@ -342,8 +342,7 @@ void Architecture::clearAnalysis(Funcdata *fd)
 
 /// Symbols do not necessarily need to be available for the decompiler.
 /// This routine loads all the \e load \e image knows about into the symbol table
-/// \param delim is the delimiter separating namespaces from symbol base names
-void Architecture::readLoaderSymbols(const string &delim)
+void Architecture::readLoaderSymbols(void)
 
 {
   if (loadersymbols_parsed) return; // already read
@@ -352,7 +351,7 @@ void Architecture::readLoaderSymbols(const string &delim)
   LoadImageFunc record;
   while(loader->getNextSymbol(record)) {
     string basename;
-    Scope *scope = symboltab->findCreateScopeFromSymbolName(record.name, delim, basename, (Scope *)0);
+    Scope *scope = symboltab->findCreateScopeFromSymbolName(record.name, basename, (Scope *)0);
     scope->addFunction(record.address,basename);
   }
   loader->closeSymbols();
@@ -393,7 +392,7 @@ void Architecture::setPrototype(const PrototypePieces &pieces)
 
 {
   string basename;
-  Scope *scope = symboltab->resolveScopeFromSymbolName(pieces.name, "::", basename, (Scope *)0);
+  Scope *scope = symboltab->resolveScopeFromSymbolName(pieces.name, basename, (Scope *)0);
   if (scope == (Scope *)0)
     throw ParseError("Unknown namespace: " + pieces.name);
   Funcdata *fd = scope->queryFunction( basename );

@@ -230,7 +230,7 @@ public:
   int4 getMinimumLanedRegisterSize(void) const;		///< Get the minimum size of a laned register in bytes
   void setDefaultModel(ProtoModel *model);		///< Set the default PrototypeModel
   void clearAnalysis(Funcdata *fd);			///< Clear analysis specific to a function
-  void readLoaderSymbols(const string &delim);		 ///< Read any symbols from loader into database
+  void readLoaderSymbols(void);		 		///< Read any symbols from loader into database
   void collectBehaviors(vector<OpBehavior *> &behave) const;	///< Provide a list of OpBehavior objects
   SegmentOp *getSegmentOp(AddrSpace *spc) const;	///< Retrieve the \e segment op for the given space if any
   void setPrototype(const PrototypePieces &pieces);	///< Set the prototype for a particular function
@@ -251,6 +251,7 @@ public:
   virtual void encode(Encoder &encoder) const;		///< Encode \b this architecture to a stream
   virtual void restoreXml(DocumentStorage &store);	///< Restore the Architecture state from XML documents
   virtual void nameFunction(const Address &addr,string &name) const;	///< Pick a default name for a function
+  string getScopeDelimiter(void) const { return print->getScopeDelimiter(); }	///< Get the character string separating scope names
 #ifdef OPACTION_DEBUG
   void setDebugStream(ostream *s) { debugstream = s; }	///< Establish the debug console stream
   void printDebug(const string &message) const { *debugstream << message << endl; }	///< Print message to the debug stream
