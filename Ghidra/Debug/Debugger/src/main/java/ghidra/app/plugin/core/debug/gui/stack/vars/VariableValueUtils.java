@@ -819,9 +819,20 @@ public enum VariableValueUtils {
 		public UnwoundFrame<WatchValue> getStackFrame(Function function,
 				StackUnwindWarningSet warnings, TaskMonitor monitor, boolean required) {
 			synchronized (lock) {
+				// We unwind first from the current frame, because we want the closest function
+				//  match above the current frame.
+				// NB: Unwinding from 0 may provide better info
 				AnalysisUnwoundFrame<WatchValue> currentFrame =
 					unwinder.findMatchForFunction(function, coordinates, warnings, monitor);
 				if (currentFrame != null) {
+					return currentFrame;
+				}
+
+				// Unwind from 0 for functions below the current frame
+				currentFrame = unwinder.findMatchForFunction(function, coordinates.frame(0),
+					warnings, monitor);
+				if (currentFrame != null) {
+					warnings.add(new CustomStackUnwindWarning("Unwinding from frame 0"));
 					return currentFrame;
 				}
 
