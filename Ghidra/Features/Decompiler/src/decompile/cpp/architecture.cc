@@ -1421,6 +1421,7 @@ void Architecture::resetDefaultsInternal(void)
   max_basetype_size = 10;	// Needs to be 8 or bigger
   flowoptions = FlowInfo::error_toomanyinstructions;
   max_instructions = 100000;
+  max_baddata = 4;
   infer_pointers = true;
   analyze_for_loops = true;
   readonlypropagate = false;

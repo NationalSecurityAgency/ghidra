@@ -290,6 +290,7 @@ public record ElementId(String name, int id) {
 		new ElementId("errortoomanyinstructions", 185);
 	public static final ElementId ELEM_ERRORUNIMPLEMENTED =
 		new ElementId("errorunimplemented", 186);
+	public static final ElementId ELEM_BADDATACOUNT = new ElementId("baddatacount", 290);
 	public static final ElementId ELEM_EXTRAPOP = new ElementId("extrapop", 187);
 	public static final ElementId ELEM_IGNOREUNIMPLEMENTED =
 		new ElementId("ignoreunimplemented", 188);
@@ -460,5 +461,5 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_EXTRA_STACK = new ElementId("extra_stack", 287);
 	public static final ElementId ELEM_CONSUME_REMAINING = new ElementId("consume_remaining", 288);
 
-	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 290);
+	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 291);
 }

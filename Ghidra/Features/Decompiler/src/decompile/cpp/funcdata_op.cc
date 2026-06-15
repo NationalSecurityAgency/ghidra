@@ -862,7 +862,7 @@ int4 Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
   Address eaddr(baseaddr.getSpace(),~((uintb)0));
   inlineflow.setRange(baddr,eaddr);
   inlineflow.setFlags(FlowInfo::error_outofbounds|FlowInfo::error_unimplemented|
-		      FlowInfo::error_reinterpreted|FlowInfo::flow_forinline);
+		      FlowInfo::error_baddata|FlowInfo::error_reinterpreted|FlowInfo::flow_forinline);
   inlineflow.forwardRecursion(flow);
   inlineflow.generateOps();
 
