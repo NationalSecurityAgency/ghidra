@@ -972,4 +972,32 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 		assertEquals(AssemblyPatternBlock.fromString("SS:SS:X[x111]"), opInfoEDX.location());
 		assertEquals(Set.of("EDX"), Set.copyOf(allValidChoices));
 	}
+	
+	@Test
+	public void testLeaWild_x86() throws Exception {
+		x86();
+		Collection<AssemblyParseResult> parses = asmX86.parseLine("LEA EAX, [ EDX + `Q1` ]");
+		AssemblyParseResult[] allResults = parses.stream()
+				.filter(p -> !p.isError())
+				.toArray(AssemblyParseResult[]::new);
+
+		var allValidResults = new ArrayList<WildAssemblyResolvedPatterns>();
+		Address addr0 = x86.getAddressFactory().getDefaultAddressSpace().getAddress(0);
+		for (AssemblyParseResult r : allResults) {
+			AssemblyResolutionResults results = asmX86.resolveTree(r, addr0);
+			dumpResults(results);
+			allValidResults.addAll(getValidResults(results));
+		}
+
+		assertTrue(allValidResults.size() > 0);
+		// The direct disp8 form keeps only the displacement byte wildcarded.
+		WildAssemblyResolvedPatterns directDisp8 =
+			Unique.assertOne(allValidResults.stream()
+					.filter(r -> r.getInstruction()
+							.equals(AssemblyPatternBlock.fromString("8D:42:XX"))));
+		WildOperandInfo opInfoQ1 = Unique.assertOne(directDisp8.getOperandInfo());
+		assertEquals("Q1", opInfoQ1.wildcard());
+		assertEquals(AssemblyPatternBlock.fromString("SS:SS:FF"), opInfoQ1.location());
+		assertNull(opInfoQ1.choice());
+	}
 }
