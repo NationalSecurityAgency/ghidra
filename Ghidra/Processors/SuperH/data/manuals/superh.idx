@@ -35,7 +35,9 @@ extu.w, 101
 jmp, 102
 jsr, 103
 ldc, 105
+ldc.l, 105
 lds, 107
+lds.l, 107
 mac.l, 109
 mac, 112
 mac.w, 113
@@ -73,7 +75,9 @@ shlr8, 154
 shlr16, 154
 sleep, 156
 stc, 157
+stc.l, 157
 sts, 159
+sts.l, 159
 sub, 161
 subc, 162
 subv, 163
