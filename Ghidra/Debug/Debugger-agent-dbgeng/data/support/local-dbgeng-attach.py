@@ -51,7 +51,11 @@ def append_paths():
 
 
 def main():
+    global cxn, target, args
     append_paths()
+    if not parse_parameters():
+        return
+        
     # Delay these imports until sys.path is patched
     try:
         import ghidradbg

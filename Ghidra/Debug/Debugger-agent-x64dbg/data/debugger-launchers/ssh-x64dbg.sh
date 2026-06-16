@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 ## ###
 # IP: GHIDRA
 #
@@ -13,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@title x64dbg via ssh
-#@image-opt env:OPT_TARGET_IMG
+#@title x64dbg via ssh (shell)
+#@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>x64dbg</tt> via <tt>ssh</tt></h3>
 #@desc   <p>
@@ -37,51 +38,41 @@
 #@env OPT_PYTHON_EXE:file!="python" "Python command" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
 #@env OPT_PYTHON_ARGS:str="" "python cmd args" "Arguments passed to python (versus the target)"
 
-. ..\support\x64dbgsetuputils.ps1
+. ../support/x64dbgsetuputils.sh
 
-function Compute-Python-Args {
-	param($TempFile)
-	
-	$arglist = @("$Env:OPT_PYTHON_EXE")
-	$arglist+=@("-i")
-	if ("$Env:OPT_PYTHON_ARGS" -ne "") {
-		$arglist+=($Env:OPT_PYTHON_ARGS)
-	}
-	$arglist+=($TempFile)
-	if ("$Env:OPT_REMOTE_PORT" -ne "") {
-		$arglist+=("localhost:$Env:OPT_REMOTE_PORT")
-	}
-	else {
-		$arglist+=($Env:GHIDRA_TRACE_RMI_ADDR)
-	}
-	
-	if ("$Env:OPT_TARGET_IMG" -ne "") {
-		$arglist+=($Env:OPT_TARGET_IMG)
-	}
-	if ("$Env:OPT_X64DBG_EXE" -ne "") {
-		$arglist+=($Env:OPT_X64DBG_EXE)
-	}
-	if ("$Env:OPT_TARGET_DIR" -ne "") {
-		$arglist+=($Env:OPT_TARGET_DIR)
-	}
-	if ("$Env:OPT_TARGET_ARGS" -ne "") {
-		$arglist+=($Env:OPT_TARGET_ARGS)
-	}
-	return $arglist
+target_image=$(echo $OPT_TARGET_IMG | sed 's/\\/\\\\/g')
+x64dbg_exe=$(echo $OPT_X64DBG_EXE | sed 's/\\/\\\\/g')
+
+OPT_OS_WINDOWS=true
+
+function launch-x64dbg-scp() {
+	local -a scpargs
+	compute-scp-args "../support/local-x64dbg.py"
+
+	"${scpargs[@]}"
 }
 
-$Env:OPT_OS_WINDOWS = $true
-$tmpfile = "local-x64dbg.py"
-$arglist = Compute-Python-Args -TempFile $tmpfile
+function launch-x64dbg-ssh() {
+	local -a sshargs
+	compute-ssh-args true "$OPT_PYTHON_EXE -i $OPT_PYTHON_ARGS .\\local-x64dbg.py localhost:$OPT_REMOTE_PORT $target_image $x64dbg_exe $OPT_TARGET_DIR $OPT_TARGET_ARGS"
 
-$scpargs = Compute-Scp-Args "..\support\$tmpfile"
-$sshargs = Compute-Ssh-Args $arglist True
+	"${sshargs[@]}"
+}
 
-$scpproc = Start-Process -FilePath $scpargs[0] -ArgumentList $scpargs[1..$scpargs.Count] -NoNewWindow -Wait -PassThru
-$sshproc = Start-Process -FilePath $sshargs[0] -ArgumentList $sshargs[1..$sshargs.Count] -NoNewWindow -Wait -PassThru
+version=$(get-ghidra-version)
 
-$version = Get-Ghidra-Version
-$answer = Check-Result-And-Prompt-Mitigation $sshproc @"
+function do-installation() {
+	local -a pipargs
+	compute-x64dbg-pipinstall-args "'-f'" "os.environ['HOME']" "'ghidradbg>=$version'"
+	local -a sshargs
+	compute-ssh-args false "${pipargs[@]}"
+
+	"${sshargs[@]}"
+}
+
+launch-x64dbg-scp
+launch-x64dbg-ssh "$@"
+if check-result-and-prompt-mitigation $? "
 It appears ghidraxdbg is missing from the remote system. This can happen if you
 forgot to install the required package. This can also happen if you installed
 the packages to a different Python environment than is being used by the
@@ -106,14 +97,11 @@ are copied and installed.
 
 NOTE: Automatic resolution will cause this session to terminate. When it has
 finished, try launching again.
-"@ "Would you like to install 'ghidraxdbg>=$version'?"
+" "Would you like to install 'ghidradbg>=$version'?"; then
 
-if ($answer) {
-	Write-Host "Copying Wheels to $Env:OPT_HOST"
-	Mitigate-Scp-PyModules "Debugger-rmi-trace" "<SELF>"
+	echo "Copying Wheels to $OPT_HOST"
+	mitigate-scp-pymodules "Debugger-rmi-trace" "<SELF>"
 
-	Write-Host "Installing Wheels into python"
-	$arglist = Compute-X64dbg-PipInstall-Args "'-f'" "os.environ['HOME']" "'ghidraxdbg>=$version'"
-	$sshargs = Compute-Ssh-Args $arglist False
-	Start-Process -FilePath $sshargs[0] -ArgumentList $sshargs[1..$sshargs.Count] -NoNewWindow -Wait
-}
+	echo "Installing Wheels into python"
+	do-installation
+fi
