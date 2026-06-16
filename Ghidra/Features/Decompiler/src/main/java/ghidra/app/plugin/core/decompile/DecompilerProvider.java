@@ -350,11 +350,11 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		if (currentLocation != null) {
 			if (lockDisplay) {
-				overlayPainter.setMessage(getOverlayRefreshMessage());
+				setOverlayMessage(getOverlayRefreshMessage());
 			}
 			else {
 				controller.refreshDisplay(program, currentLocation, null);
-				overlayPainter.setMessage("");
+				setOverlayMessage("");
 			}
 		}
 	}
@@ -370,8 +370,13 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	private void updateOverlayMessage() {
 		if (overlayPainter.isActive()) {
-			overlayPainter.setMessage(getOverlayRefreshMessage());
+			setOverlayMessage(getOverlayRefreshMessage());
 		}
+	}
+
+	private void setOverlayMessage(String s) {
+		overlayPainter.setMessage(s);
+		decorationPanel.repaint();
 	}
 
 	private void refreshToggleButtons() {
@@ -528,7 +533,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	 */
 	void refresh() {
 		controller.refreshDisplay(program, currentLocation, null);
-		overlayPainter.setMessage("");
+		setOverlayMessage("");
 	}
 
 	/**
