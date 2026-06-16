@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.function.editor;
 
 import java.util.*;
 
+import generic.json.Json;
 import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
@@ -78,6 +79,11 @@ class FunctionDataView {
 		callingConventionName = otherFunctionData.callingConventionName;
 		allowCustomStorage = otherFunctionData.allowCustomStorage;
 		callFixupName = otherFunctionData.callFixupName;
+	}
+
+	@Override
+	public String toString() {
+		return Json.toString(this);
 	}
 
 	@Override
