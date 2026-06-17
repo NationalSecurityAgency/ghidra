@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.gui.stack.vars;
 
-import static ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueRow.*;
-
 import java.nio.ByteBuffer;
 import java.util.stream.Collectors;
 

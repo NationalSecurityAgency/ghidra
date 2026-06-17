@@ -62,7 +62,6 @@ public class SymPcodeExecutor extends PcodeExecutor<Sym> {
 	 * @param program the program to analyze
 	 * @param state the symbolic state
 	 * @param reason a reason to give when reading state
-	 * @param warnings a place to emit warnings
 	 * @param monitor a monitor for analysis, usually decompilation
 	 * @return the executor
 	 */

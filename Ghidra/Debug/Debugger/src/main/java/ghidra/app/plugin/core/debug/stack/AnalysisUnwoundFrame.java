@@ -21,10 +21,10 @@ import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.bookmark.BookmarkNavigator;
 import ghidra.app.services.DebuggerControlService.StateEditor;
-import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.BytesPcodeArithmetic;
+import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
 import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
@@ -47,6 +47,8 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * The typical pattern for invoking analysis to unwind an entire stack is to use
  * {@link StackUnwinder#getFrames(DebuggerCoordinates, TaskMonitor)}.
+ * 
+ * @param <T> the type of values retrievable from the unwound frame
  */
 public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 
@@ -105,16 +107,13 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 
 	/**
 	 * Unwind the next frame up
-	 * 
 	 * <p>
 	 * Unwind the frame that would become current if the function that allocated this frame were to
 	 * return. For example, if this frame is at level 3, {@code unwindNext} will attempt to unwind
 	 * the frame at level 4.
-	 * 
 	 * <p>
 	 * The program counter and stack pointer for the next frame are computed using the state
-	 * originally given in
-	 * {@link StackUnwinder#start(DebuggerCoordinates, PcodeExecutorState, TaskMonitor)} and this
+	 * originally given in {@link StackUnwinder#start(DebuggerCoordinates, TaskMonitor)} and this
 	 * frame's unwind information. The state is usually the watch-value state bound to the starting
 	 * coordinates. The program counter is evaluated like any other variable. The stack pointer is
 	 * computed by removing the depth of this frame. Then registers are restored and unwinding
@@ -125,13 +124,12 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	 * @throws CancelledException if the monitor is cancelled
 	 * @throws UnwindException if unwinding fails
 	 */
-	public AnalysisUnwoundFrame<T> unwindNext(TaskMonitor monitor)
+	public AnalysisUnwoundFrame<WatchValue> unwindNext(TaskMonitor monitor)
 			throws CancelledException {
 		if (info == null || info.ofReturn() == null) {
 			throw new NoSuchElementException();
 		}
-		return (AnalysisUnwoundFrame<T>) unwinder.getFrame(coordinates, state, level + 1, null,
-			monitor);
+		return unwinder.getFrame(coordinates, state, level + 1, null, monitor);
 	}
 
 	@Override
@@ -190,6 +188,11 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	@Override
 	public Address getProgramCounter() {
 		return pcVal;
+	}
+
+	@Override
+	public Address getStaticCounter() {
+		return staticPcVal;
 	}
 
 	public Address getStackPointer() {
@@ -280,18 +283,15 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	 * may be placed a little after the derived stack pointer to accommodate the parameters of an
 	 * inner stack frame. The structure data type will have the category path
 	 * {@link StackUnwinder#FRAMES_PATH}. This allows follow-on analysis to identify data units
-	 * representing unwound frames. See {@link #isFrame(TraceData)}.</li>
+	 * representing unwound frames.</li>
 	 * <li>Places a comment at the start of the frame. This is meant for human consumption, so
 	 * follow-on analysis should not attempt to parse or otherwise interpret it. It will indicate
 	 * the frame level (0 being the innermost), the function name, the program counter, the stack
 	 * pointer, and the frame base pointer.</li>
 	 * <li>Places a {@link RefType#DATA} reference from the frame start to its own base address.
-	 * This permits follow-on analysis to derive variable values stored on the stack. See
-	 * {@link #getBase(TraceData)} and {@link #getValue(TraceData, VariableStorage)}.</li>
+	 * This permits follow-on analysis to derive variable values stored on the stack.</li>
 	 * <li>Places a {@link RefType#DATA} reference from the program counter to the frame start. This
-	 * allows follow-on analysis to determine the function for the frame. See
-	 * {@link #getProgramCounter(TraceData)} and
-	 * {@link #getFunction(TraceData, DebuggerStaticMappingService)}.</li>
+	 * allows follow-on analysis to determine the function for the frame.</li>
 	 * </ul>
 	 * 
 	 * <p>
