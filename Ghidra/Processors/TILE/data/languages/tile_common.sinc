@@ -3,11 +3,21 @@
 # Tile-Gx is a RISC processor from Tilera:
 #   - 32-bit fixed-length instructions
 #   - 64-bit registers (TILEGX) or 32-bit (TILE32)
+#   - Big and little endian variants
 #
-# Register Classes:
-#   GP   (0x1000): r0-r35  (general purpose registers)
-#   CP   (0x2000): sr0-sr35 (system registers)
-#   CP0  (0x3000): c0-c31  (control registers)
+# Register Class Details:
+#   GP   (0x1000): r0-r35  - General purpose registers (36 × 8 bytes = 288 bytes)
+#     Used for: arithmetic operands, data pointers, loop counters, return values
+#     Return address stored in r36
+#
+#   CP   (0x2000): sr0-sr35 - System registers (36 × 8 bytes = 288 bytes)
+#     Used for: memory management, cache control, performance monitoring
+#
+#   CP0  (0x3000): c0-c31 - Control registers (32 × 8 bytes = 256 bytes)
+#     Used for: interrupt control, privilege levels, trap vectors
+#
+#   CSR  (0x4000): system registers - Control/Status register space
+#     Used for: processor status, exception handling, power management
 #
 # P-code Operations: PADD, PSUB, PSIGN, PAND, POR, PXOR, PXNOR,
 #                    PSRL, PSRA, PSL, PLOAD, PSAVE, PBRANCH, PJUMP, PJUMPI,

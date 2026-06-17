@@ -5,10 +5,52 @@ define endian = little;
 
 # ===== Register Classes =====
 # Each register class gets a unique offset and size for proper address resolution
+# Sizes reflect register width (SIZE = 8 means 64-bit registers).
 define register GP    offset = 0x1000 SIZE = 8;  # General purpose registers (r0-r35)
 define register CP    offset = 0x2000 SIZE = 8;  # System registers (sr0-sr35)
 define register CP0   offset = 0x3000 SIZE = 8;  # Control registers (c0-c31)
 define register CSR   offset = 0x4000 SIZE = 8;  # Control/status registers
+
+# ===== Bit Token Definitions =====
+
+# opbyte is the full 16-bit token (upper half of the 32-bit instruction word).
+# Each field is defined as (low_bit, high_bit) within the token.
+define token opbyte (16)
+   rd      = (0, 4)       # Destination register (5 bits, r0-r31)
+   rs1     = (5, 9)       # First source register (5 bits)
+   rs2     = (10, 14)     # Second source register (5 bits)
+   opcode  = (0, 5)       # Opcode field (6 bits, upper instruction word)
+   func3   = (15, 17)     # Function code (3 bits)
+   imm8    = (16, 23)     # 8-bit immediate
+   imm12   = (16, 27)     # 12-bit immediate
+   imm16   = (16, 31)     # 16-bit immediate
+   imm26   = (0, 25)      # 26-bit branch immediate (signed)
+   rs1_imm = (5, 9)       # rs1 field used as immediate
+   rd_imm  = (0, 4)       # rd field used as immediate
+;
+
+# Branch target definitions.
+# branch_tgt: computed branch target address, exported as const pointer.
+# disp8_label: 8-bit displacement label with full address calculation.
+branch_tgt: tgt is imm26 [tgt = inst_start + imm26; ] { export *[const]:4 tgt; }
+disp8_label: tgt is imm12 [tgt = inst_start + imm12; ] { export *[const]:4 tgt; }
+
+# Register-to-token variable attachment.
+# Attaches register names to token fields for decompiler clarity.
+attach variables [ rd rs1 rs2 ] [
+	r0   r1   r2   r3   r4   r5   r6   r7
+	r8   r9   r10  r11  r12  r13  r14  r15
+	r16  r17  r18  r19  r20  r21  r22  r23
+	r24  r25  r26  r27  r28  r29  r30  r31
+];
+
+# Register rotation macro.
+# rotl32: left-rotate a 32-bit register by the low 5 bits of another.
+macro rotl32(out, a, b) {
+	local shift:5 = b;
+	local out1:4 = (a << shift) | (a >> (32 - shift));
+	out = out1;
+}
 
 
 # ===== Common P-code Operations =====

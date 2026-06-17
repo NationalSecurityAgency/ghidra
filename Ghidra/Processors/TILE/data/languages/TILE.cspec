@@ -14,18 +14,26 @@
     </size_alignment_map>
   </data_organization>
 
+  <!-- Stack pointer register -->
   <stackpointer register="sp" space="ram"/>
+  <!-- Function pointer alignment -->
   <funcptr align="2"/>
   <global>
     <range space="ram"/>
+    <!-- General purpose register space -->
     <range space="register" first="0x1000" last="0x1fff"/>
   </global>
+  <!-- Return address register -->
   <returnaddress>
     <register name="r36"/>
   </returnaddress>
+
+  <!-- Default calling convention: register-passing with stack fallback -->
+  <!-- Arguments are passed in r0-r7 (8 registers × 8 bytes), then on the stack starting at offset 64 -->
   <default_proto>
     <prototype name="__default" extrapop="0" stackshift="0">
       <input>
+        <!-- Register argument registers (r0-r7) -->
         <pentry minsize="1" maxsize="8">
           <register name="r0"/>
         </pentry>
@@ -50,10 +58,12 @@
         <pentry minsize="1" maxsize="8">
           <register name="r7"/>
         </pentry>
+        <!-- Stack arguments (beyond r0-r7 register args) -->
         <pentry minsize="1" maxsize="500" align="8">
           <addr offset="64" space="stack"/>
         </pentry>
       </input>
+      <!-- Return value -->
       <output>
         <pentry minsize="1" maxsize="8">
           <register name="r0"/>
