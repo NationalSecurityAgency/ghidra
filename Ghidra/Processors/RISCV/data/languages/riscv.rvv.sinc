@@ -675,26 +675,26 @@ define pcodeop vfmin_vv;
 define pcodeop vfmsac_vf;
 # vfmsac.vf      31..26=0x2e vm vs2 rs1 14..12=0x5 vd 6..0=0x57
 # vfmsac.vf vd, frs1, vs2, vm    # vd[i] = +(f[rs1] * vs2[i]) - vd[i]
-:vfmsac.vf  vd, frs1, vs2         is op2631=0x2e & op2525=0x1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmsac_vf(frs1,vs2);}
-:vfmsac.vf  vd, frs1, vs2, "v0.t" is op2631=0x2e & op2525=0x0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmsac_vf(frs1,vs2,v0);}
+:vfmsac.vf  vd, frs1, vs2         is op2631=0x2e & op2525=0x1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmsac_vf(frs1,vs2,vd);}
+:vfmsac.vf  vd, frs1, vs2, "v0.t" is op2631=0x2e & op2525=0x0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmsac_vf(frs1,vs2,vd,v0);}
 
 define pcodeop vfmsac_vv;
 # vfmsac.vv      31..26=0x2e vm vs2 vs1 14..12=0x1 vd 6..0=0x57
 # vfmsac.vv vd, vs1, vs2, vm    # vd[i] = +(vs1[i] * vs2[i]) - vd[i]
-:vfmsac.vv  vd, vs1, vs2         is op2631=0x2e & op2525=0x1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfmsac_vv(vs1,vs2);}
-:vfmsac.vv  vd, vs1, vs2, "v0.t" is op2631=0x2e & op2525=0x0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfmsac_vv(vs1,vs2,v0);}
+:vfmsac.vv  vd, vs1, vs2         is op2631=0x2e & op2525=0x1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfmsac_vv(vs1,vs2,vd);}
+:vfmsac.vv  vd, vs1, vs2, "v0.t" is op2631=0x2e & op2525=0x0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfmsac_vv(vs1,vs2,vd,v0);}
 
 define pcodeop vfmsub_vf;
 # vfmsub.vf      31..26=0x2a vm vs2 frs1 14..12=0x5 vd 6..0=0x57
 # vfmsub.vf vd, frs1, vs2, vm    # vd[i] = +(f[rs1] * vd[i]) - vs2[i]
-:vfmsub.vf  vd, frs1, vs2         is op2631=0x2a & op2525=0x1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmsub_vf(frs1,vs2);}
-:vfmsub.vf  vd, frs1, vs2, "v0.t" is op2631=0x2a & op2525=0x0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmsub_vf(frs1,vs2,v0);}
+:vfmsub.vf  vd, frs1, vs2         is op2631=0x2a & op2525=0x1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmsub_vf(frs1,vs2,vd);}
+:vfmsub.vf  vd, frs1, vs2, "v0.t" is op2631=0x2a & op2525=0x0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmsub_vf(frs1,vs2,vd,v0);}
 
 define pcodeop vfmsub_vv;
 # vfmsub.vv      31..26=0x2a vm vs2 vs1 14..12=0x1 vd 6..0=0x57
 # vfmsub.vv vd, vs1, vs2, vm    # vd[i] = +(vs1[i] * vd[i]) - vs2[i]
-:vfmsub.vv  vd, vs1, vs2         is op2631=0x2a & op2525=0x1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfmsub_vv(vs1,vs2);}
-:vfmsub.vv  vd, vs1, vs2, "v0.t" is op2631=0x2a & op2525=0x0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfmsub_vv(vs1,vs2,v0);}
+:vfmsub.vv  vd, vs1, vs2         is op2631=0x2a & op2525=0x1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfmsub_vv(vs1,vs2,vd);}
+:vfmsub.vv  vd, vs1, vs2, "v0.t" is op2631=0x2a & op2525=0x0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfmsub_vv(vs1,vs2,vd,v0);}
 
 define pcodeop vfmul_vf;
 # vfmul.vf       31..26=0x24 vm vs2 frs1 14..12=0x5 vd 6..0=0x57
@@ -1003,26 +1003,26 @@ define pcodeop vfwcvt_xu_f_v;
 define pcodeop vfwmacc_vf;
 # vfwmacc.vf     31..26=0x3c vm vs2 frs1 14..12=0x5 vd 6..0=0x57
 # vfwmacc.vf vd, frs1, vs2, vm    # vd[i] = +(f[rs1] * vs2[i]) + vd[i]
-:vfwmacc.vf  vd, frs1, vs2         is op2631=0x3c & op2525=1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwmacc_vf(frs1,vs2);}
-:vfwmacc.vf  vd, frs1, vs2, "v0.t" is op2631=0x3c & op2525=0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwmacc_vf(frs1,vs2,v0);}
+:vfwmacc.vf  vd, frs1, vs2         is op2631=0x3c & op2525=1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwmacc_vf(frs1,vs2,vd);}
+:vfwmacc.vf  vd, frs1, vs2, "v0.t" is op2631=0x3c & op2525=0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwmacc_vf(frs1,vs2,vd,v0);}
 
 define pcodeop vfwmacc_vv;
 # vfwmacc.vv     31..26=0x3c vm vs2 vs1 14..12=0x1 vd 6..0=0x57
 # vfwmacc.vv vd, vs1, vs2, vm    # vd[i] = +(vs1[i] * vs2[i]) + vd[i]
-:vfwmacc.vv  vd, vs1, vs2         is op2631=0x3c & op2525=1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwmacc_vv(vs1,vs2);}
-:vfwmacc.vv  vd, vs1, vs2, "v0.t" is op2631=0x3c & op2525=0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwmacc_vv(vs1,vs2,v0);}
+:vfwmacc.vv  vd, vs1, vs2         is op2631=0x3c & op2525=1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwmacc_vv(vs1,vs2,vd);}
+:vfwmacc.vv  vd, vs1, vs2, "v0.t" is op2631=0x3c & op2525=0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwmacc_vv(vs1,vs2,vd,v0);}
 
 define pcodeop vfwmsac_vf;
 # vfwmsac.vf     31..26=0x3e vm vs2 frs1 14..12=0x5 vd 6..0=0x57
 # vfwmsac.vf vd, frs1, vs2, vm    # vd[i] = +(f[rs1] * vs2[i]) - vd[i]
-:vfwmsac.vf  vd, frs1, vs2         is op2631=0x3e & op2525=1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwmsac_vf(frs1,vs2);}
-:vfwmsac.vf  vd, frs1, vs2, "v0.t" is op2631=0x3e & op2525=0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwmsac_vf(frs1,vs2,v0);}
+:vfwmsac.vf  vd, frs1, vs2         is op2631=0x3e & op2525=1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwmsac_vf(frs1,vs2,vd);}
+:vfwmsac.vf  vd, frs1, vs2, "v0.t" is op2631=0x3e & op2525=0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwmsac_vf(frs1,vs2,vd,v0);}
 
 define pcodeop vfwmsac_vv;
 # vfwmsac.vv     31..26=0x3e vm vs2 vs1 14..12=0x1 vd 6..0=0x57
 # vfwmsac.vv vd, vs1, vs2, vm    # vd[i] = +(vs1[i] * vs2[i]) - vd[i]
-:vfwmsac.vv  vd, vs1, vs2         is op2631=0x3e & op2525=1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwmsac_vv(vs1,vs2);}
-:vfwmsac.vv  vd, vs1, vs2, "v0.t" is op2631=0x3e & op2525=0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwmsac_vv(vs1,vs2,v0);}
+:vfwmsac.vv  vd, vs1, vs2         is op2631=0x3e & op2525=1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwmsac_vv(vs1,vs2,vd);}
+:vfwmsac.vv  vd, vs1, vs2, "v0.t" is op2631=0x3e & op2525=0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwmsac_vv(vs1,vs2,vd,v0);}
 
 define pcodeop vfwmul_vf;
 # vfwmul.vf      31..26=0x38 vm vs2 frs1 14..12=0x5 vd 6..0=0x57
@@ -1039,26 +1039,26 @@ define pcodeop vfwmul_vv;
 define pcodeop vfwnmacc_vf;
 # vfwnmacc.vf    31..26=0x3d vm vs2 frs1 14..12=0x5 vd 6..0=0x57
 # vfwnmacc.vf vd, frs1, vs2, vm   # vd[i] = -(f[frs1] * vs2[i]) - vd[i]
-:vfwnmacc.vf  vd, frs1, vs2         is op2631=0x3d & op2525=1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwnmacc_vf(frs1,vs2);}
-:vfwnmacc.vf  vd, frs1, vs2, "v0.t" is op2631=0x3d & op2525=0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwnmacc_vf(frs1,vs2,v0);}
+:vfwnmacc.vf  vd, frs1, vs2         is op2631=0x3d & op2525=1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwnmacc_vf(frs1,vs2,vd);}
+:vfwnmacc.vf  vd, frs1, vs2, "v0.t" is op2631=0x3d & op2525=0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwnmacc_vf(frs1,vs2,vd,v0);}
 
 define pcodeop vfwnmacc_vv;
 # vfwnmacc.vv    31..26=0x3d vm vs2 vs1 14..12=0x1 vd 6..0=0x57
 # vfwnmacc.vv vd, vs1, vs2, vm   # vd[i] = -(vs1[i] * vs2[i]) - vd[i]
-:vfwnmacc.vv  vd, vs1, vs2         is op2631=0x3d & op2525=1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwnmacc_vv(vs1,vs2);}
-:vfwnmacc.vv  vd, vs1, vs2, "v0.t" is op2631=0x3d & op2525=0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwnmacc_vv(vs1,vs2,v0);}
+:vfwnmacc.vv  vd, vs1, vs2         is op2631=0x3d & op2525=1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwnmacc_vv(vs1,vs2,vd);}
+:vfwnmacc.vv  vd, vs1, vs2, "v0.t" is op2631=0x3d & op2525=0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwnmacc_vv(vs1,vs2,vd,v0);}
 
 define pcodeop vfwnmsac_vf;
 # vfwnmsac.vf    31..26=0x3f vm vs2 frs1 14..12=0x5 vd 6..0=0x57
 # vfwnmsac.vf vd, frs1, vs2, vm   # vd[i] = -(f[rs1] * vs2[i]) + vd[i]
-:vfwnmsac.vf  vd, frs1, vs2         is op2631=0x3f & op2525=1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwnmsac_vf(frs1,vs2);}
-:vfwnmsac.vf  vd, frs1, vs2, "v0.t" is op2631=0x3f & op2525=0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwnmsac_vf(frs1,vs2,v0);}
+:vfwnmsac.vf  vd, frs1, vs2         is op2631=0x3f & op2525=1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwnmsac_vf(frs1,vs2,vd);}
+:vfwnmsac.vf  vd, frs1, vs2, "v0.t" is op2631=0x3f & op2525=0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfwnmsac_vf(frs1,vs2,vd,v0);}
 
 define pcodeop vfwnmsac_vv;
 # vfwnmsac.vv    31..26=0x3f vm vs2 vs1 14..12=0x1 vd 6..0=0x57
 # vfwnmsac.vv vd, vs1, vs2, vm   # vd[i] = -(vs1[i] * vs2[i]) + vd[i]
-:vfwnmsac.vv  vd, vs1, vs2         is op2631=0x3f & op2525=1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwnmsac_vv(vs1,vs2);}
-:vfwnmsac.vv  vd, vs1, vs2, "v0.t" is op2631=0x3f & op2525=0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwnmsac_vv(vs1,vs2,v0);}
+:vfwnmsac.vv  vd, vs1, vs2         is op2631=0x3f & op2525=1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwnmsac_vv(vs1,vs2,vd);}
+:vfwnmsac.vv  vd, vs1, vs2, "v0.t" is op2631=0x3f & op2525=0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfwnmsac_vv(vs1,vs2,vd,v0);}
 
 define pcodeop vfwredosum_vs;
 # vfwredosum.vs  31..26=0x33 vm vs2 vs1 14..12=0x1 vd 6..0=0x57
@@ -2267,14 +2267,14 @@ define pcodeop vlxei8_v;
 define pcodeop vmacc_vv;
 # vmacc.vv       31..26=0x2d vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vmacc.vv vd, vs1, vs2, vm    # vd[i] = +(vs1[i] * vs2[i]) + vd[i]
-:vmacc.vv  vd, vs1, vs2         is op2631=0x2d & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vmacc_vv(vs1,vs2);}
-:vmacc.vv  vd, vs1, vs2, "v0.t" is op2631=0x2d & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vmacc_vv(vs1,vs2,v0);}
+:vmacc.vv  vd, vs1, vs2         is op2631=0x2d & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vmacc_vv(vs1,vs2,vd);}
+:vmacc.vv  vd, vs1, vs2, "v0.t" is op2631=0x2d & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vmacc_vv(vs1,vs2,vd,v0);}
 
 define pcodeop vmacc_vx;
 # vmacc.vx       31..26=0x2d vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vmacc.vx vd, rs1, vs2, vm    # vd[i] = +(x[rs1] * vs2[i]) + vd[i]
-:vmacc.vx  vd, rs1, vs2         is op2631=0x2d & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vmacc_vx(rs1,vs2);}
-:vmacc.vx  vd, rs1, vs2, "v0.t" is op2631=0x2d & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vmacc_vx(rs1,vs2,v0);}
+:vmacc.vx  vd, rs1, vs2         is op2631=0x2d & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vmacc_vx(rs1,vs2,vd);}
+:vmacc.vx  vd, rs1, vs2, "v0.t" is op2631=0x2d & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vmacc_vx(rs1,vs2,vd,v0);}
 
 define pcodeop vmadc_vim;
 # vmadc.vim      31..26=0x11 vm   vs2 simm5 14..12=0x3 vd 6..0=0x57
@@ -2299,15 +2299,15 @@ define pcodeop vmadc_vxm;
 define pcodeop vmadd_vv;
 # vmadd.vv       31..26=0x29 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vmadd.vv vd, vs1, vs2, vm    # vd[i] = (vs1[i] * vd[i]) + vs2[i]
-:vmadd.vv  vd, vs1, vs2, vm     is op2631=0x29 & vm & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vmadd_vv(vs1,vs2,vm);}
-:vmadd.vv  vd, vs1, vs2         is op2631=0x29 & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vmadd_vv(vs1,vs2);}
-:vmadd.vv  vd, vs1, vs2, "v0.t" is op2631=0x29 & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vmadd_vv(vs1,vs2,v0);}
+:vmadd.vv  vd, vs1, vs2, vm     is op2631=0x29 & vm & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vmadd_vv(vs1,vd,vs2,vm);}
+:vmadd.vv  vd, vs1, vs2         is op2631=0x29 & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vmadd_vv(vs1,vd,vs2);}
+:vmadd.vv  vd, vs1, vs2, "v0.t" is op2631=0x29 & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vmadd_vv(vs1,vd,vs2,v0);}
 
 define pcodeop vmadd_vx;
 # vmadd.vx       31..26=0x29 vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vmadd.vx vd, rs1, vs2, vm    # vd[i] = (x[rs1] * vd[i]) + vs2[i]
-:vmadd.vx  vd, rs1, vs2         is op2631=0x29 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vmadd_vx(rs1,vs2);}
-:vmadd.vx  vd, rs1, vs2, "v0.t" is op2631=0x29 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vmadd_vx(rs1,vs2,v0);}
+:vmadd.vx  vd, rs1, vs2         is op2631=0x29 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vmadd_vx(rs1,vd,vs2);}
+:vmadd.vx  vd, rs1, vs2, "v0.t" is op2631=0x29 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vmadd_vx(rs1,vd,vs2,v0);}
 
 define pcodeop vmand_mm;
 # vmand.mm       31..26=0x19 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
@@ -2768,26 +2768,26 @@ define pcodeop vnclipu_wx;
 define pcodeop vnmsac_vv;
 # vnmsac.vv      31..26=0x2f vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vnmsac.vv vd, vs1, vs2, vm    # vd[i] = -(vs1[i] * vs2[i]) + vd[i]
-:vnmsac.vv  vd, vs1, vs2         is op2631=0x2f & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vnmsac_vv(vs1,vs2);}
-:vnmsac.vv  vd, vs1, vs2, "v0.t" is op2631=0x2f & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vnmsac_vv(vs1,vs2,v0);}
+:vnmsac.vv  vd, vs1, vs2         is op2631=0x2f & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vnmsac_vv(vs1,vs2,vd);}
+:vnmsac.vv  vd, vs1, vs2, "v0.t" is op2631=0x2f & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vnmsac_vv(vs1,vs2,vd,v0);}
 
 define pcodeop vnmsac_vx;
 # vnmsac.vx      31..26=0x2f vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vnmsac.vx vd, rs1, vs2, vm    # vd[i] = -(x[rs1] * vs2[i]) + vd[i]
-:vnmsac.vx  vd, rs1, vs2         is op2631=0x2f & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vnmsac_vx(rs1,vs2);}
-:vnmsac.vx  vd, rs1, vs2, "v0.t" is op2631=0x2f & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vnmsac_vx(rs1,vs2,v0);}
+:vnmsac.vx  vd, rs1, vs2         is op2631=0x2f & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vnmsac_vx(rs1,vs2,vd);}
+:vnmsac.vx  vd, rs1, vs2, "v0.t" is op2631=0x2f & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vnmsac_vx(rs1,vs2,vd,v0);}
 
 define pcodeop vnmsub_vv;
 # vnmsub.vv      31..26=0x2b vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vnmsub.vv vd, vs1, vs2, vm    # vd[i] = -(vs1[i] * vd[i]) + vs2[i]
-:vnmsub.vv  vd, vs1, vs2         is op2631=0x2b & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vnmsub_vv(vs1,vs2);}
-:vnmsub.vv  vd, vs1, vs2, "v0.t" is op2631=0x2b & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vnmsub_vv(vs1,vs2,v0);}
+:vnmsub.vv  vd, vs1, vs2         is op2631=0x2b & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vnmsub_vv(vs1,vs2,vd);}
+:vnmsub.vv  vd, vs1, vs2, "v0.t" is op2631=0x2b & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vnmsub_vv(vs1,vs2,vd,v0);}
 
 define pcodeop vnmsub_vx;
 # vnmsub.vx      31..26=0x2b vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vnmsub.vx vd, rs1, vs2, vm    # vd[i] = -(x[rs1] * vd[i]) + vs2[i]
-:vnmsub.vx  vd, rs1, vs2         is op2631=0x2b & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vnmsub_vx(rs1,vs2);}
-:vnmsub.vx  vd, rs1, vs2, "v0.t" is op2631=0x2b & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vnmsub_vx(rs1,vs2,v0);}
+:vnmsub.vx  vd, rs1, vs2         is op2631=0x2b & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vnmsub_vx(rs1,vs2,vd);}
+:vnmsub.vx  vd, rs1, vs2, "v0.t" is op2631=0x2b & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vnmsub_vx(rs1,vs2,vd,v0);}
 
 define pcodeop vnsra_wi;
 # vnsra.wi       31..26=0x2d vm vs2 uimm5 14..12=0x3 vd 6..0=0x57
@@ -2867,32 +2867,32 @@ define pcodeop vqmacc_vx;
 define pcodeop vqmaccsu_vv;
 # vqmaccsu.vv    31..26=0x3f vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vqmaccsu.vv vd, vs1, vs2, vm # vd[i] = +(signed(vs1[i]) * unsigned(vs2[i])) + vd[i]
-:vqmaccsu.vv  vd, vs1, vs2         is op2631=0x3f & op2525=1 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 {vd=vqmaccsu_vv(vs1,vs2);}
-:vqmaccsu.vv  vd, vs1, vs2, "v0.t" is op2631=0x3f & op2525=0 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 {vd=vqmaccsu_vv(vs1,vs2,v0);}
+:vqmaccsu.vv  vd, vs1, vs2         is op2631=0x3f & op2525=1 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 {vd=vqmaccsu_vv(vs1,vs2,vd);}
+:vqmaccsu.vv  vd, vs1, vs2, "v0.t" is op2631=0x3f & op2525=0 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 {vd=vqmaccsu_vv(vs1,vs2,vd,v0);}
 
 define pcodeop vqmaccsu_vx;
 # vqmaccsu.vx    31..26=0x3f vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vqmaccsu.vx vd, rs1, vs2, vm # vd[i] = +(signed(x[rs1]) * unsigned(vs2[i])) + vd[i]
-:vqmaccsu.vx  vd, rs1, vs2         is op2631=0x3f & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vqmaccsu_vx(rs1,vs2);}
-:vqmaccsu.vx  vd, rs1, vs2, "v0.t" is op2631=0x3f & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vqmaccsu_vx(rs1,vs2,v0);}
+:vqmaccsu.vx  vd, rs1, vs2         is op2631=0x3f & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vqmaccsu_vx(rs1,vs2,vd);}
+:vqmaccsu.vx  vd, rs1, vs2, "v0.t" is op2631=0x3f & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vqmaccsu_vx(rs1,vs2,vd,v0);}
 
 define pcodeop vqmaccu_vv;
 # vqmaccu.vv     31..26=0x3c vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vqmaccu.vv vd, vs1, vs2, vm # vd[i] = +(vs1[i] * vs2[i]) + vd[i]
-:vqmaccu.vv  vd, vs1, vs2         is op2631=0x3c & op2525=1 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 {vd=vqmaccu_vv(vs1,vs2);}
-:vqmaccu.vv  vd, vs1, vs2, "v0.t" is op2631=0x3c & op2525=0 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 {vd=vqmaccu_vv(vs1,vs2,v0);}
+:vqmaccu.vv  vd, vs1, vs2         is op2631=0x3c & op2525=1 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 {vd=vqmaccu_vv(vs1,vs2,vd);}
+:vqmaccu.vv  vd, vs1, vs2, "v0.t" is op2631=0x3c & op2525=0 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 {vd=vqmaccu_vv(vs1,vs2,vd,v0);}
 
 define pcodeop vqmaccu_vx;
 # vqmaccu.vx     31..26=0x3c vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vqmaccu.vx vd, rs1, vs2, vm # vd[i] = +(x[rs1] * vs2[i]) + vd[i]
-:vqmaccu.vx  vd, rs1, vs2         is op2631=0x3c & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vqmaccu_vx(rs1,vs2);}
-:vqmaccu.vx  vd, rs1, vs2, "v0.t" is op2631=0x3c & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vqmaccu_vx(rs1,vs2,v0);}
+:vqmaccu.vx  vd, rs1, vs2         is op2631=0x3c & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vqmaccu_vx(rs1,vs2,vd);}
+:vqmaccu.vx  vd, rs1, vs2, "v0.t" is op2631=0x3c & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vqmaccu_vx(rs1,vs2,vd,v0);}
 
 define pcodeop vqmaccus_vx;
 # vqmaccus.vx    31..26=0x3e vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vqmaccus.vx vd, rs1, vs2, vm # vd[i] = +(unsigned(x[rs1]) * signed(vs2[i])) + vd[i]
-:vqmaccus.vx  vd, rs1, vs2         is op2631=0x3e & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vqmaccus_vx(rs1,vs2);}
-:vqmaccus.vx  vd, rs1, vs2, "v0.t" is op2631=0x3e & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vqmaccus_vx(rs1,vs2,v0);}
+:vqmaccus.vx  vd, rs1, vs2         is op2631=0x3e & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vqmaccus_vx(rs1,vs2,vd);}
+:vqmaccus.vx  vd, rs1, vs2, "v0.t" is op2631=0x3e & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vqmaccus_vx(rs1,vs2,vd,v0);}
 
 define pcodeop vredand_vs;
 # vredand.vs     31..26=0x01 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
@@ -4884,44 +4884,44 @@ define pcodeop vwaddu_wx;
 define pcodeop vwmacc_vv;
 # vwmacc.vv      31..26=0x3d vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vwmacc.vv vd, vs1, vs2, vm    # vd[i] = +(vs1[i] * vs2[i]) + vd[i]
-:vwmacc.vv  vd, vs1, vs2         is op2631=0x3d & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vwmacc_vv(vs1,vs2);}
-:vwmacc.vv  vd, vs1, vs2, "v0.t" is op2631=0x3d & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vwmacc_vv(vs1,vs2,v0);}
+:vwmacc.vv  vd, vs1, vs2         is op2631=0x3d & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vwmacc_vv(vs1,vs2,vd);}
+:vwmacc.vv  vd, vs1, vs2, "v0.t" is op2631=0x3d & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vwmacc_vv(vs1,vs2,vd,v0);}
 
 define pcodeop vwmacc_vx;
 # vwmacc.vx      31..26=0x3d vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vwmacc.vx vd, rs1, vs2, vm    # vd[i] = +(x[rs1] * vs2[i]) + vd[i]
-:vwmacc.vx  vd, rs1, vs2         is op2631=0x3d & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmacc_vx(rs1,vs2);}
-:vwmacc.vx  vd, rs1, vs2, "v0.t" is op2631=0x3d & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmacc_vx(rs1,vs2,v0);}
+:vwmacc.vx  vd, rs1, vs2         is op2631=0x3d & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmacc_vx(rs1,vs2,vd);}
+:vwmacc.vx  vd, rs1, vs2, "v0.t" is op2631=0x3d & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmacc_vx(rs1,vs2,vd,v0);}
 
 define pcodeop vwmaccsu_vv;
 # vwmaccsu.vv    31..26=0x3f vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vwmaccsu.vv vd, vs1, vs2, vm    # vd[i] = +(signed(vs1[i]) * unsigned(vs2[i])) + vd[i]
-:vwmaccsu.vv  vd, vs1, vs2         is op2631=0x3f & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vwmaccsu_vv(vs1,vs2);}
-:vwmaccsu.vv  vd, vs1, vs2, "v0.t" is op2631=0x3f & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vwmaccsu_vv(vs1,vs2,v0);}
+:vwmaccsu.vv  vd, vs1, vs2         is op2631=0x3f & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vwmaccsu_vv(vs1,vs2,vd);}
+:vwmaccsu.vv  vd, vs1, vs2, "v0.t" is op2631=0x3f & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vwmaccsu_vv(vs1,vs2,vd,v0);}
 
 define pcodeop vwmaccsu_vx;
 # vwmaccsu.vx    31..26=0x3f vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vwmaccsu.vx vd, rs1, vs2, vm    # vd[i] = +(signed(x[rs1]) * unsigned(vs2[i])) + vd[i]
-:vwmaccsu.vx  vd, rs1, vs2         is op2631=0x3f & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmaccsu_vx(rs1,vs2);}
-:vwmaccsu.vx  vd, rs1, vs2, "v0.t" is op2631=0x3f & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmaccsu_vx(rs1,vs2,v0);}
+:vwmaccsu.vx  vd, rs1, vs2         is op2631=0x3f & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmaccsu_vx(rs1,vs2,vd);}
+:vwmaccsu.vx  vd, rs1, vs2, "v0.t" is op2631=0x3f & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmaccsu_vx(rs1,vs2,vd,v0);}
 
 define pcodeop vwmaccu_vv;
 # vwmaccu.vv     31..26=0x3c vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vwmaccu.vv vd, vs1, vs2, vm    # vd[i] = +(vs1[i] * vs2[i]) + vd[i]
-:vwmaccu.vv  vd, vs1, vs2         is op2631=0x3c & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vwmaccsu_vv(vs1,vs2);}
-:vwmaccu.vv  vd, vs1, vs2, "v0.t" is op2631=0x3c & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vwmaccsu_vv(vs1,vs2,v0);}
+:vwmaccu.vv  vd, vs1, vs2         is op2631=0x3c & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vwmaccsu_vv(vs1,vs2,vd);}
+:vwmaccu.vv  vd, vs1, vs2, "v0.t" is op2631=0x3c & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vwmaccsu_vv(vs1,vs2,vd,v0);}
 
 define pcodeop vwmaccu_vx;
 # vwmaccu.vx     31..26=0x3c vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vwmaccu.vx vd, rs1, vs2, vm    # vd[i] = +(x[rs1] * vs2[i]) + vd[i]
-:vwmaccu.vx  vd, rs1, vs2         is op2631=0x3c & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmaccu_vx(rs1,vs2);}
-:vwmaccu.vx  vd, rs1, vs2, "v0.t" is op2631=0x3c & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmaccu_vx(rs1,vs2,v0);}
+:vwmaccu.vx  vd, rs1, vs2         is op2631=0x3c & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmaccu_vx(rs1,vs2,vd);}
+:vwmaccu.vx  vd, rs1, vs2, "v0.t" is op2631=0x3c & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmaccu_vx(rs1,vs2,vd,v0);}
 
 define pcodeop vwmaccus_vx;
 # vwmaccus.vx    31..26=0x3e vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vwmaccus.vx vd, rs1, vs2, vm    # vd[i] = +(unsigned(x[rs1]) * signed(vs2[i])) + vd[i]
-:vwmaccus.vx  vd, rs1, vs2         is op2631=0x3e & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmaccus_vx(rs1,vs2);}
-:vwmaccus.vx  vd, rs1, vs2, "v0.t" is op2631=0x3e & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmaccus_vx(rs1,vs2,v0);}
+:vwmaccus.vx  vd, rs1, vs2         is op2631=0x3e & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmaccus_vx(rs1,vs2,vd);}
+:vwmaccus.vx  vd, rs1, vs2, "v0.t" is op2631=0x3e & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 {vd=vwmaccus_vx(rs1,vs2,vd,v0);}
 
 define pcodeop vwmul_vv;
 # vwmul.vv       31..26=0x3b vm vs2 vs1 14..12=0x2 vd 6..0=0x57
