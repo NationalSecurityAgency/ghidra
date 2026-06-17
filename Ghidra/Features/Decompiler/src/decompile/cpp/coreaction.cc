@@ -2461,6 +2461,7 @@ bool ActionSetCasts::testStructOffset0(Datatype *reqtype,Datatype *curtype,CastS
 /// \param dt is the data-type needed by the p-code op
 /// \param op is the p-code op
 /// \param slot is the index of the slot to test for resolution (-1 for output, >= 0 for input)
+/// \param data is the function
 /// \return \b true if the resolution was successfully changed and a CAST is not needed
 bool ActionSetCasts::tryResolutionAdjustment(Datatype *dt,PcodeOp *op,int4 slot,Funcdata &data)
 

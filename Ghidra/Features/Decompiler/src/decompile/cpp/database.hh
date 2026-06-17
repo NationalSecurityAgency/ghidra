@@ -940,9 +940,9 @@ public:
   void removeRange(Scope *scope,AddrSpace *spc,uintb first,uintb last);	///< Remove an address range from \e ownership of a Scope
   Scope *getGlobalScope(void) const { return globalscope; }	///< Get the global Scope
   Scope *resolveScope(uint8 id) const;				///< Look-up a Scope by id
-  Scope *resolveScopeFromSymbolName(const string &fullname,const string &delim,string &basename,Scope *start) const;
+  Scope *resolveScopeFromSymbolName(const string &fullname,string &basename,Scope *start) const;
   Scope *findCreateScope(uint8,const string &nm,Scope *parent);	/// Find (and if not found create) a specific subscope
-  Scope *findCreateScopeFromSymbolName(const string &fullname,const string &delim,string &basename,Scope *start);
+  Scope *findCreateScopeFromSymbolName(const string &fullname,string &basename,Scope *start);
   const Scope *mapScope(const Scope *qpoint,const Address &addr,const Address &usepoint) const;
   Scope *mapScope(Scope *qpoint,const Address &addr,const Address &usepoint);
   uint4 getProperty(const Address &addr) const { return flagbase.getValue(addr); }	///< Get boolean properties at the given address

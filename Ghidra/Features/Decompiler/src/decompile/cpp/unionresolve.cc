@@ -255,11 +255,11 @@ int4 ScoreUnionFields::scoreReturnType(Datatype *ct,const FuncProto *proto)
   return 0;
 }
 
-/// Test if the data-type is a pointer and if the pointed-to data-type is
+/// Test if a parameter trial data-type is a pointer and if the pointed-to data-type is
 /// compatible with the size of the value being loaded or stored. A \b score is
 /// passed back for how closely the data-type fits this scenario, and if it
 /// does we return the data-type of the pointer value.
-/// \param ct is the trial data-type
+/// \param trial is the parameter trial whose data-type is tested
 /// \param vn is the Varnode holding the value being loaded or stored
 /// \param score is used to pass back the score
 /// \return the data-type of the value or null

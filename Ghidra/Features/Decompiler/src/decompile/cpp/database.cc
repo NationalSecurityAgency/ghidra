@@ -1451,7 +1451,7 @@ string Scope::getFullName(void) const
   string fname = name;
   Scope *scope = parent;
   while(scope->parent != (Scope *)0) {
-    fname = scope->name + "::" + fname;
+    fname = scope->name + glb->getScopeDelimiter() + fname;
     scope = scope->parent;
   }
   return fname;
@@ -2778,6 +2778,12 @@ void ScopeInternal::decode(Decoder &decoder)
 	  SymbolEntry *e = sym->getFirstWholeMap();
 	  glb->symboltab->addRange(this,e->getAddr().getSpace(),e->getFirst(),e->getLast());
 	}
+	uint4 props = sym->getFlags() & (Varnode::readonly | Varnode::volatil);
+	if (props != 0) {
+	  SymbolEntry *e = sym->getFirstWholeMap();
+	  Range rng(e->getAddr().getSpace(),e->getFirst(),e->getLast());
+	  glb->symboltab->setPropertyRange(props,rng);
+	}
       }
       else if (symId == ELEM_HOLE)
 	decodeHole(decoder);
@@ -3106,21 +3112,24 @@ Scope *Database::resolveScope(uint8 id) const
 /// starts with the delimiter, the name is assumed to be relative to the global Scope.
 /// The unqualified (base) name of the Symbol is passed back to the caller.
 /// \param fullname is the qualified Symbol name
-/// \param delim is the delimiter separating names
 /// \param basename will hold the passed back base Symbol name
 /// \param start is the Scope to start drilling down from, or NULL for the global scope
 /// \return the Scope being referred to by the name
-Scope *Database::resolveScopeFromSymbolName(const string &fullname,const string &delim,string &basename,
-					    Scope *start) const
+Scope *Database::resolveScopeFromSymbolName(const string &fullname,string &basename,Scope *start) const
+
 {
   if (start == (Scope *)0)
     start = globalscope;
   
   string::size_type mark = 0;
   string::size_type endmark;
+  string::size_type templateopen = fullname.find("<");
+  string delim = glb->getScopeDelimiter();
   for(;;) {
     endmark = fullname.find(delim,mark);
     if (endmark == string::npos) break;
+    if (templateopen != string::npos && endmark > templateopen)
+      break;
     if (endmark == 0) {		// Path is "absolute"
       start = globalscope;	// Start from the global scope
     }
@@ -3132,7 +3141,7 @@ Scope *Database::resolveScopeFromSymbolName(const string &fullname,const string 
     }
     mark = endmark + delim.size();
   }
-  basename = fullname.substr(mark,endmark);
+  basename = fullname.substr(mark);
   return start;
 }
 
@@ -3144,21 +3153,24 @@ Scope *Database::resolveScopeFromSymbolName(const string &fullname,const string 
 /// relative to the global Scope.  The unqualified (base) name of the Symbol
 /// is passed back to the caller.  Any missing scope in the path is created.
 /// \param fullname is the qualified Symbol name
-/// \param delim is the delimiter separating names
 /// \param basename will hold the passed back base Symbol name
 /// \param start is the Scope to start drilling down from, or NULL for the global scope
 /// \return the Scope being referred to by the name
-Scope *Database::findCreateScopeFromSymbolName(const string &fullname,const string &delim,string &basename,
-					       Scope *start)
+Scope *Database::findCreateScopeFromSymbolName(const string &fullname,string &basename,Scope *start)
+
 {
   if (start == (Scope *)0)
     start = globalscope;
 
   string::size_type mark = 0;
   string::size_type endmark;
+  string::size_type templateopen = fullname.find("<");
+  string delim = glb->getScopeDelimiter();
   for(;;) {
     endmark = fullname.find(delim,mark);
     if (endmark == string::npos) break;
+    if (templateopen != string::npos && endmark > templateopen)
+      break;
     if (!idByNameHash)
       throw LowlevelError("Scope name hashes not allowed");
     string scopename = fullname.substr(mark,endmark-mark);
@@ -3166,7 +3178,7 @@ Scope *Database::findCreateScopeFromSymbolName(const string &fullname,const stri
     start = findCreateScope(nameId, scopename, start);
     mark = endmark + delim.size();
   }
-  basename = fullname.substr(mark,endmark);
+  basename = fullname.substr(mark);
   return start;
 }
 
