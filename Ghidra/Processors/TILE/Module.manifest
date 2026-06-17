@@ -1,0 +1,4 @@
+Package: ghidra.processors.tile
+Package: ghidra.program.emulation
+Package: ghidra.app.plugin.core.analysis
+Package: ghidra.test.processors

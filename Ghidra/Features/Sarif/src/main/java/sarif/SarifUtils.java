@@ -150,7 +150,7 @@ public class SarifUtils {
 		Long addr = -1L;
 		PhysicalLocation physicalLocation = location.getPhysicalLocation();
 		if (location.getPhysicalLocation() != null) {
-			addr = physicalLocation.getAddress().getAbsoluteAddress();
+			addr = physicalLocation.getAddress().getAbsoluteAddress().longValue();
 		}
 		if (addr >= 0) {
 			AddressFactory af = program.getAddressFactory();
@@ -364,7 +364,7 @@ public class SarifUtils {
 		Iterator<LogicalLocation> it = llocset.iterator();
 		if (it.hasNext()) {
 			LogicalLocation next = it.next();
-			Long index = next.getIndex();
+			Long index = Long.valueOf(next.getIndex());
 			if (index != null && llocs != null) {
 				return llocs[index.intValue()];
 			}
@@ -385,7 +385,7 @@ public class SarifUtils {
 		addresses = run.getAddresses();
 		if (addresses != null) {
 			for (com.contrastsecurity.sarif.Address sarifAddr : addresses) {
-				Long offset = sarifAddr.getAbsoluteAddress();
+				Long offset = Long.valueOf(sarifAddr.getAbsoluteAddress());
 				String fqname = sarifAddr.getFullyQualifiedName();
 				nameToOffset.put(fqname, offset);
 			}

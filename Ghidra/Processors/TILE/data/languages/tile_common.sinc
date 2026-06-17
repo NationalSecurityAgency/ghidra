@@ -1,0 +1,119 @@
+# tile_common.sinc - Tile-Gx / TILE32 Common Instruction Definitions
+#
+# Tile-Gx is a RISC processor from Tilera:
+#   - 32-bit fixed-length instructions
+#   - 64-bit registers (TILEGX) or 32-bit (TILE32)
+#
+# Register Classes:
+#   GP   (0x1000): r0-r35  (general purpose registers)
+#   CP   (0x2000): sr0-sr35 (system registers)
+#   CP0  (0x3000): c0-c31  (control registers)
+#
+# P-code Operations: PADD, PSUB, PSIGN, PAND, POR, PXOR, PXNOR,
+#                    PSRL, PSRA, PSL, PLOAD, PSAVE, PBRANCH, PJUMP, PJUMPI,
+#                    PLOADU, PSAVEU, PNOOP, PSPECIAL, PJMPNE, PJMPEQ,
+#                    PJMPLT, PJMPGE, PLOADF, PSAVEF, PMUL, PLOADI
+
+# ===== Endianness =====
+
+# ===== Register Class Definitions =====
+define register GP   0x1000;    # General purpose registers
+define register CP   0x2000;    # Control/counter registers
+define register CP0  0x3000;    # CP0 space (CSR registers)
+
+# ===== Data Type Definitions =====
+
+# ===== Opcodes 0x00-0x0F: ARITHMETIC (ADD family) =====
+
+# ===== Opcodes 0x08-0x0F: SUBTRACT (SUB family) =====
+
+# ===== Opcodes 0x10-0x17: LOGICAL (AND, OR, XOR family) =====
+
+# ===== Opcodes 0x18-0x1F: LOAD/STORE =====
+
+# ===== Opcodes 0x20-0x27: BRANCH =====
+
+# ===== Opcodes 0x28-0x2F: MISC/SPECIAL =====
+
+# ===== Opcodes 0x30-0x3F: MULTI-REGISTER (MR/MT family) =====
+
+# ===== Common P-code Operations (TILEGX variant) =====
+
+# Arithmetic
+define : add op=PADD:z(8):r8:r8:r8
+define : addi op=PADD:z(8):r8:r8:z(8)
+define : addif op=PADD:z(8):r8:r8:z(8)
+define : addf op=PADD:z(8):r8:r8:r8
+define : addim op=PADD:z(16):r8:r8:u16
+define : addifim op=PADD:z(16):r8:r8:u16
+define : addim12 op=PADD:z(12):r8:r8:s16
+define : addim16 op=PADD:z(16):r8:r8:u16
+
+define : sub op=PSUB:z(8):r8:r8:r8
+define subf : op=PSUB:z(8):r8:r8:r8
+define : subif op=PSUB:z(8):r8:r8:z(8)
+define : subifim op=PSUB:z(16):r8:r8:u16
+define : subim op=PSUB:z(16):r8:r8:u16
+define : subim12 op=PSUB:z(12):r8:r8:s16
+define : subfim op=PSUB:z(16):r8:r8:u16
+define : subif2 op=PSUB:z(8):r8:r8:z(8)
+
+# Logical
+define : and op=PAND:z(8):r8:r8:r8
+define andi : op=PAND:z(8):r8:r8:z(8)
+define : or op=POR:z(8):r8:r8:r8
+define ori : op=POR:z(8):r8:r8:z(8)
+define : xor op=PXOR:z(8):r8:r8:r8
+define xori : op=PXOR:z(8):r8:r8:z(8)
+define : andim op=PAND:z(16):r8:r8:u16
+define orim : op=POR:z(16):r8:r8:u16
+
+# Load/Store
+define : ld op=PLOAD:z(8):r8:m64:r8
+define ldim : op=PLOAD:z(8):r8:m64:r8
+define ldif : op=PLOAD:z(8):r8:m64:r8
+define : ldifim op=PLOAD:z(16):r8:m64:r8
+define : st op=PSAVE:z(8):r8:m64:r8
+define stim : op=PSAVE:z(8):r8:m64:r8
+define stif : op=PSAVE:z(8):r8:m64:r8
+define : stifim op=PSAVE:z(16):r8:m64:r8
+
+# Branch
+define : br op=PBRANCH:r8:r8:r8
+define : bri op=PJUMPI:r8:r8
+define : bri16 op=PJUMPI:r8:r8
+define : bri12 op=PJUMPI:r8:r8
+define : brc op=PBRANCH:r8:r8:r8
+define brcf : op=PBRANCH:r8:r8:r8
+define : brtype op=PJUMP:r8
+define : brtypef op=PJUMP:r8
+
+# Special
+define : nop op=PNOOP
+define : ecall op=PSPECIAL
+define : ebreak op=PSPECIAL
+define : mret op=PSPECIAL
+define : dsys op=PSPECIAL
+define : isys op=PSPECIAL
+define : mtcr op=PSPECIAL
+define : mfc op=PSPECIAL
+
+# Multi-register
+define : mr3 op=PJMPEQ:r8:r8:r8
+define : mt3 op=PJMPEQ:r8:r8:r8
+define : mr2 op=PJMPEQ:r8:r8:r8
+define : mt2 op=PJMPEQ:r8:r8:r8
+define : mrif op=PLOAD:z(8):r8:m64:r8
+define : mtif op=PSAVE:z(8):r8:m64:r8
+define : mrf op=PLOAD:z(8):r8:m64:r8
+define : mr op=PLOAD:r8:r8:r8
+define : mt op=PSAVE:r8:r8:r8
+define : mri op=PLOAD:z(16):r8:m64:r8
+define : mti op=PSAVE:z(16):r8:m64:r8
+define : mrid op=PLOAD:z(16):r8:m64:r8
+define : mtid op=PSAVE:z(16):r8:m64:r8
+define : mrs op=PLOAD:z(8):r8:r8:r8
+define : mts op=PSAVE:z(8):r8:r8:r8
+
+# Extended (fixed duplicates)
+define : mtif2 op=PSAVE:z(8):r8:r8:r8

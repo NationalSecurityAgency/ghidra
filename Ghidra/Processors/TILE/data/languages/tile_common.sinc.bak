@@ -1,0 +1,230 @@
+# ===========================================================================
+# tile_common.sinc - Tile-Gx / TILE32 Common Instruction Definitions
+#
+# Tile-Gx is a RISC processor from Tilera:
+#   - 32-bit fixed-length instructions
+#   - Top 6 bits = opcode (0x00-0x3F), remaining 26 bits = operands
+#   - 64-bit registers (TILEGX) or 32-bit (TILE32)
+#   - Big or little endian
+#
+# Register Classes:
+#   GP   (0x1000): r0-r35  (general purpose registers)
+#   CP   (0x2000): sr0-sr35 (system registers)
+#   CP0  (0x3000): c0-c31  (control registers)
+#   CSR  (0x4000): CSR space (Control/Status Registers)
+#
+# P-code Operations: PADD, PSUB, PSIGN, PAND, POR, PXOR, PXNOR,
+#                    PSRL, PSRA, PSL, PLOAD, PSAVE, PBRANCH, PJUMP, PJUMPI,
+#                    PLOADU, PSAVEU, PNOOP, PSPECIAL, PJMPNE, PJMPEQ,
+#                    PJMPLT, PJMPGE, PLOADF, PSAVEF, PMUL, PLOADI
+# ===========================================================================
+
+# ===========================================================================
+# Register Class Definitions
+# ===========================================================================
+define reg_class GP    offset=0x1000   # r0-r35  (general purpose)
+define reg_class CP    offset=0x2000   # sr0-sr35 (system registers)
+define reg_class CP0   offset=0x3000   # c0-c31   (control registers)
+define reg_class CSR   offset=0x4000   # CSR space (Control/Status Registers)
+
+# ===========================================================================
+# Address Spaces
+# ===========================================================================
+define address_space ram        0x00000000
+define address_space register   0x1000
+define address_space cp         0x2000
+define address_space cp0        0x3000
+define address_space csr        0x4000
+
+# ===========================================================================
+# Data Type Definitions
+# ===========================================================================
+define datatype   z(8)    "unsigned 8-bit"
+define datatype   u8      "unsigned 8-bit"
+define datatype   s8      "signed 8-bit"
+define datatype   u16     "unsigned 16-bit"
+define datatype   s16     "signed 16-bit"
+define datatype   u32     "unsigned 32-bit"
+define datatype   s32     "signed 32-bit"
+define datatype   u64     "unsigned 64-bit"
+define datatype   s64     "signed 64-bit"
+define datatype   r4      "32-bit register value"
+define datatype   r8      "64-bit register value"
+define datatype   f32     "32-bit floating point"
+define datatype   f64     "64-bit floating point"
+define datatype   ptr     "64-bit pointer"
+
+# ===========================================================================
+# Opcodes 0x00-0x0F: ARITHMETIC (ADD family)
+# ===========================================================================
+define opcode add     0x00000000  "ADD(rd, rs1, rs2)"
+define opcode addi    0x01000000  "ADDI(rd, rs1, imm8)"
+define opcode addif   0x02000000  "ADDIF(rd, rs1, imm8)"
+define opcode addf    0x03000000  "ADDF(rd, rs1, rs2)"
+define opcode addim   0x04000000  "ADDIM(rd, rs1, imm16)"
+define opcode addifim 0x05000000  "ADDIFIM(rd, rs1, imm16)"
+define opcode addim12 0x06000000  "ADDIM12(rd, rs1, imm12)"
+define opcode addim16 0x07000000  "ADDIM16(rd, rs1, imm16)"
+
+# ===========================================================================
+# Opcodes 0x08-0x0F: SUBTRACT (SUB family)
+# ===========================================================================
+define opcode sub     0x08000000  "SUB(rd, rs1, rs2)"
+define opcode subf    0x09000000  "SUBF(rd, rs1, rs2)"
+define opcode subif   0x0A000000  "SUBIF(rd, rs1, imm8)"
+define opcode subifim 0x0B000000  "SUBIFIM(rd, rs1, imm16)"
+define opcode subim   0x0C000000  "SUBIM(rd, rs1, imm16)"
+define opcode subim12 0x0D000000  "SUBIM12(rd, rs1, imm12)"
+define opcode subif2  0x0E000000  "SUBIF2(rd, rs1, imm8)"
+define opcode subfim  0x0F000000  "SUBFIM(rd, rs1, imm16)"
+
+# ===========================================================================
+# Opcodes 0x10-0x17: LOGICAL (AND, OR, XOR family)
+# ===========================================================================
+define opcode and     0x10000000  "AND(rd, rs1, rs2)"
+define opcode andi    0x11000000  "ANDI(rd, rs1, imm8)"
+define opcode or      0x12000000  "OR(rd, rs1, rs2)"
+define opcode ori     0x13000000  "ORI(rd, rs1, imm8)"
+define opcode xor     0x14000000  "XOR(rd, rs1, rs2)"
+define opcode xori    0x15000000  "XORI(rd, rs1, imm8)"
+define opcode andim   0x16000000  "ANDIM(rd, rs1, imm16)"
+define opcode orim    0x17000000  "ORIM(rd, rs1, imm16)"
+
+# ===========================================================================
+# Opcodes 0x18-0x1F: LOAD/STORE
+# ===========================================================================
+define opcode ld      0x18000000  "LD(rd, rs1, imm12)"
+define opcode ldim    0x19000000  "LDIM(rd, imm16)"
+define opcode ldif    0x1A000000  "LDIF(rd, rs1, imm8)"
+define opcode ldifim  0x1B000000  "LDIFIM(rd, rs1, imm16)"
+define opcode st      0x1C000000  "ST(rd, rs1, imm12)"
+define opcode stim    0x1D000000  "STIM(rd, imm16)"
+define opcode stif    0x1E000000  "STIF(rd, imm16)"
+define opcode stifim  0x1F000000  "STIFIM(rd, imm16)"
+
+# ===========================================================================
+# Opcodes 0x20-0x27: BRANCH
+# ===========================================================================
+define opcode br      0x20000000  "BR(imm26)"
+define opcode bri     0x21000000  "BRI(imm16)"
+define opcode bri16   0x22000000  "BRI16(imm16)"
+define opcode bri12   0x23000000  "BRI12(imm12)"
+define opcode brc     0x24000000  "BRC(rd, rs1)"
+define opcode brcf    0x25000000  "BRCF(rd, rs1)"
+define opcode brtype  0x26000000  "BRTYPE(rd, rs1)"
+define opcode brtypef 0x27000000  "BRTYPEF(rd, rs1)"
+
+# ===========================================================================
+# Opcodes 0x28-0x2F: MISC/SPECIAL
+# ===========================================================================
+define opcode nop     0x28000000  "NOP"
+define opcode ecall   0x29000000  "ECALL"
+define opcode ebreak  0x2A000000  "EBREAK"
+define opcode mret    0x2B000000  "MRET"
+define opcode dsys    0x2C000000  "DSYS"
+define opcode isys    0x2D000000  "ISYS"
+define opcode mtcr    0x2E000000  "MTSR(rd, cr)"
+define opcode mfc     0x2F000000  "MFSR(rd, cr)"
+
+# ===========================================================================
+# Opcodes 0x30-0x3F: MULTI-REGISTER (MR/MT family)
+# ===========================================================================
+define opcode mr3     0x30000000  "MR3(rd, rs1, rs2)"
+define opcode mt3     0x31000000  "MT3(rd, rs1, rs2)"
+define opcode mr2     0x32000000  "MR2(rd, rs1)"
+define opcode mt2     0x33000000  "MT2(rd, rs1)"
+define opcode mrif    0x34000000  "MRIF(rd, imm8)"
+define opcode mtif    0x35000000  "MTIF(rd, imm8)"
+define opcode mrf     0x36000000  "MRF(rd, rs1, rs2)"
+define opcode mtif2   0x37000000  "MTIF2(rd, imm8)"
+define opcode mr      0x38000000  "MR(rd, rs1, rs2)"
+define opcode mt      0x39000000  "MT(rd, rs1, rs2)"
+define opcode mri     0x3A000000  "MRI(rd, imm16)"
+define opcode mti     0x3B000000  "MTI(rd, imm16)"
+define opcode mrid    0x3C000000  "MRID(rd, imm16)"
+define opcode mtid    0x3D000000  "MTID(rd, imm16)"
+define opcode mrs     0x3E000000  "MRS(rd, sr)"
+define opcode mts     0x3F000000  "MTS(rd, sr)"
+
+# ===========================================================================
+# Common P-code Operations (TILEGX variant)
+# ===========================================================================
+
+# Arithmetic
+define add    op=PADD:z(8):r8:r8:r8
+define addi   op=PADD:z(8):r8:r8:z(8)
+define addif  op=PADD:z(8):r8:r8:z(8)
+define addf   op=PADD:z(8):r8:r8:r8
+define addim  op=PADD:z(16):r8:r8:u16
+define addifim op=PADD:z(16):r8:r8:u16
+define addim12 op=PADD:z(12):r8:r8:s16
+define addim16 op=PADD:z(16):r8:r8:u16
+
+define sub    op=PSUB:z(8):r8:r8:r8
+define subf   op=PSUB:z(8):r8:r8:r8
+define subif  op=PSUB:z(8):r8:r8:z(8)
+define subifim op=PSUB:z(16):r8:r8:u16
+define subim  op=PSUB:z(16):r8:r8:u16
+define subim12 op=PSUB:z(12):r8:r8:s16
+define subfim op=PSUB:z(16):r8:r8:u16
+define subif2 op=PSUB:z(8):r8:r8:z(8)
+
+# Logical
+define and    op=PAND:z(8):r8:r8:r8
+define andi   op=PAND:z(8):r8:r8:z(8)
+define or     op=POR:z(8):r8:r8:r8
+define ori    op=POR:z(8):r8:r8:z(8)
+define xor    op=PXOR:z(8):r8:r8:r8
+define xori   op=PXOR:z(8):r8:r8:z(8)
+define andim  op=PAND:z(16):r8:r8:u16
+define orim   op=POR:z(16):r8:r8:u16
+
+# Load/Store
+define ld     op=PLOAD:z(8):r8:m64:r8
+define ldim   op=PLOAD:z(8):r8:m64:r8
+define ldif   op=PLOAD:z(8):r8:m64:r8
+define ldifim op=PLOAD:z(16):r8:m64:r8
+define st      op=PSAVE:z(8):r8:m64:r8
+define stim   op=PSAVE:z(8):r8:m64:r8
+define stif   op=PSAVE:z(8):r8:m64:r8
+define stifim op=PSAVE:z(16):r8:m64:r8
+
+# Branch
+define br     op=PBRANCH:r8:r8:r8
+define bri    op=PJUMPI:r8:r8
+define bri16  op=PJUMPI:r8:r8
+define bri12  op=PJUMPI:r8:r8
+define brc    op=PBRANCH:r8:r8:r8
+define brcf   op=PBRANCH:r8:r8:r8
+define brtype op=PJUMP:r8
+define brtypef op=PJUMP:r8
+
+# Special
+define nop    op=PNOOP
+define ecall  op=PSPECIAL
+define ebreak op=PSPECIAL
+define mret   op=PSPECIAL
+define dsys   op=PSPECIAL
+define isys   op=PSPECIAL
+define mtcr   op=PSPECIAL
+define mfc    op=PSPECIAL
+
+# Multi-register
+define mr3    op=PJMPEQ:r8:r8:r8
+define mt3    op=PJMPEQ:r8:r8:r8
+define mr2    op=PJMPEQ:r8:r8:r8
+define mt2    op=PJMPEQ:r8:r8:r8
+define mrif   op=PLOAD:z(8):r8:m64:r8
+define mtif   op=PSAVE:z(8):r8:m64:r8
+define mrf    op=PLOAD:z(8):r8:m64:r8
+define mr     op=PLOAD:r8:r8:r8
+define mt     op=PSAVE:r8:r8:r8
+define mri    op=PLOAD:z(16):r8:m64:r8
+define mti    op=PSAVE:z(16):r8:m64:r8
+define mrid   op=PLOAD:z(16):r8:m64:r8
+define mtid   op=PSAVE:z(16):r8:m64:r8
+define mrs    op=PLOAD:z(8):r8:r8:r8
+define mts    op=PSAVE:z(8):r8:r8:r8
+
+# Extended (fixed duplicates)
+define mtif2  op=PSAVE:z(8):r8:r8:r8

@@ -126,7 +126,7 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 		}
 		PhysicalLocation pl = loc.getPhysicalLocation();
 		if (pl != null) {
-			Long offset = pl.getAddress().getAbsoluteAddress();
+			Long offset = Long.valueOf(pl.getAddress().getAbsoluteAddress());
 			Address addr = SarifUtils.getAddress(program, offset);
 			if (addr != null) {
 				map.put("Address", addr);

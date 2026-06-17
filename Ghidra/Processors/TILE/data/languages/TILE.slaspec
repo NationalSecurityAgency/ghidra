@@ -1,0 +1,14 @@
+# SLA specification file for TILE-Gx 64-bit big endian
+
+@define ENDIAN "big"
+
+@define REGISTER_SIZE "8"
+@define BIT_64 "64"
+@define XLEN "8"
+@define FLEN "8"
+@define CONTEXTLEN "12"
+
+@include "TILEGX.sinc"
+@include "tile_common.sinc"
+
+RES_IS;

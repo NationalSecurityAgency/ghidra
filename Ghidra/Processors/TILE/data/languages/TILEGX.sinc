@@ -1,0 +1,225 @@
+# ===== Endianness =====
+
+define endian = little;
+
+
+# ===== Register Classes =====
+# Each register class gets a unique offset and size for proper address resolution
+define register GP    offset = 0x1000 SIZE = 8;  # General purpose registers (r0-r35)
+define register CP    offset = 0x2000 SIZE = 8;  # System registers (sr0-sr35)
+define register CP0   offset = 0x3000 SIZE = 8;  # Control registers (c0-c31)
+define register CSR   offset = 0x4000 SIZE = 8;  # Control/status registers
+
+
+# ===== Common P-code Operations =====
+
+# Arithmetic (I-type)
+define addi op=PADD:z(8):r8:r8:r8;
+define subi op=PSUB:z(8):r8:r8:r8;
+define andi op=PAND:z(8):r8:r8:r8;
+define ori op=POR:z(8):r8:r8:r8;
+define xori op=PXOR:z(8):r8:r8:r8;
+
+# Register-register operations (R-type)
+define add op=PADD:z(8):r8:r8:r8;
+define sub op=PSUB:z(8):r8:r8:r8;
+define and op=PAND:z(8):r8:r8:r8;
+define or op=POR:z(8):r8:r8:r8;
+define xor op=PXOR:z(8):r8:r8:r8;
+define slti op=SLT:z(8):r8:r8:r8;
+define srli op=USHRT:z(8):r8:r8:r8;
+define slli op=SHL:z(8):r8:r8:r8;
+
+# Load/Store
+define lbu op=PLOAD:z(8):r8:m1:r8;
+define lhu op=PLOAD:z(8):r8:r2:r8;
+define lw op=PLOAD:z(8):r8:r4:r8;
+define ld op=PLOAD:z(8):r8:r8:r8;
+define sb op=PSAVE:z(8):r8:m1:r8;
+define sh op=PSAVE:z(8):r8:r2:r8;
+define sw op=PSAVE:z(8):r8:r4:r8;
+define sd op=PSAVE:z(8):r8:r8:r8;
+
+# Branch/Jump
+define beq op=PBRANCH:r8:r8:r8;
+define bne op=PBRANCH:r8:r8:r8;
+define blt op=PBRANCH:r8:r8:r8;
+define bge op=PBRANCH:r8:r8:r8;
+define j op=PJUMP:r8;
+define jal op=PJUMP:r8;
+
+# Special
+define lui op=LOAD_IMM:z(8):r8;
+define auipc op=LOAD_IMM:z(8):r8;
+define nop op=PNOOP;
+define ecall op=PSPECIAL;
+define ebreak op=PSPECIAL;
+define mret op=PSPECIAL;
+define dsync op=PSPECIAL;
+define isync op=PSPECIAL;
+
+# ===== TILEGX-Specific Configuration =====
+define reg_size = "8";
+define bit_64 = "64";
+define xlen = 8;        # General-purpose register width (8 bytes = 64-bit)
+define flen = 8;        # Floating-point register width (8 bytes = 64-bit)
+define contextlen = "12";
+
+# TILE32 variant: use bit_64 = "32" and xlen = 4 for 32-bit mode
+# When bit_64 is changed to "32", the decompiler will treat registers as 32-bit
+
+# ===== Register Width Definitions =====
+define reg_width : GP      64
+define reg_width : register 64
+define reg_width : CP      64
+define reg_width : CP0     64
+define reg_width : CSR     64
+
+# ===== Extended TILEGX Instructions =====
+
+# Extended Multiply Operations
+define opcode : mul3      0x40000000  "MUL3(rd, rs1, rs2)"
+define opcode : mulif     0x41000000  "MULIF(rd, rs1, imm8)"
+define opcode : mulim     0x42000000  "MULIM(rd, rs1, imm16)"
+define opcode : mulf      0x43000000  "MULF(rd, rs1, rs2)"
+define opcode : mull      0x44000000  "MULL(rd, rs1, rs2)"
+define opcode : mulli     0x45000000  "MULLI(rd, rs1, imm8)"
+
+# Extended Compare Operations
+define opcode : cmpeqi    0x46000000  "CMPEQI(rd, rs1, imm8)"
+define opcode : cmpeqi32  0x47000000  "CMPEQI32(rd, rs1, imm8)"
+define opcode : cmpne     0x48000000  "CMPNE(rd, rs1, rs2)"
+define opcode : cmpli     0x49000000  "cmpli(rd, rs1, imm8)"
+define opcode : cmpgei    0x4A000000  "CMPGEI(rd, rs1, imm8)"
+define opcode : cmpne32   0x4B000000  "CMPNE32(rd, rs1, rs2)"
+
+# Extended Shift Operations
+define opcode : slli32    0x4C000000  "SLLI32(rd, rs1, imm8)"
+define opcode : srli32    0x4D000000  "SRLI32(rd, rs1, imm8)"
+define opcode : srai32    0x4E000000  "SRAI32(rd, rs1, imm8)"
+define opcode : sll32     0x4F000000  "SLL32(rd, rs1, rs2)"
+
+# Extended SIMD-like Operations
+define opcode : addv      0x50000000  "ADDV(rd, rs1, rs2)"
+define opcode : subv      0x51000000  "SUBV(rd, rs1, rs2)"
+define opcode : andv      0x52000000  "ANDV(rd, rs1, rs2)"
+define opcode : orv       0x53000000  "ORV(rd, rs1, rs2)"
+define opcode : xorr      0x54000000  "XORR(rd, rs1, rs2)"
+define opcode : negv      0x55000000  "NEGv(rd, rs1)"
+define opcode : extv      0x56000000  "EXTv(rd, rs1)"
+
+# Extended Memory Operations
+define opcode : ldm       0x57000000  "LDM(rd, rs1, imm12)"
+define opcode : stmm      0x58000000  "STMM(rd, rs1, imm12)"
+define opcode : ldv       0x59000000  "LDV(rd, rs1, imm12)"
+define opcode : stv       0x5A000000  "STV(rd, rs1, imm12)"
+
+# Extended Control/Status Operations
+define opcode : mtsr32    0x5B000000  "MTSR32(rd, sr)"
+define opcode : mfsr32    0x5C000000  "MFSR32(rd, sr)"
+define opcode : mtcr32    0x5D000000  "MTCR32(rd, cr)"
+define opcode : mfcr32    0x5E000000  "MFCR32(rd, cr)"
+define opcode : rfe       0x5F000000  "RFE"
+
+# Extended Branch Operations
+define opcode : br32      0x60000000  "BR32(imm26)"
+define opcode : bri32     0x61000000  "BRI32(imm16)"
+define opcode : brc32     0x62000000  "BRC32(rd, rs1)"
+define opcode : brtype32  0x63000000  "BRTYPE32(rd, rs1)"
+
+# Extended Multi-register Operations
+define opcode : mr6       0x64000000  "MR6(rd, rs1, rs2)"
+define opcode : mt6       0x65000000  "MT6(rd, rs1, rs2)"
+define opcode : mr12      0x66000000  "MR12(rd, rs1, rs2)"
+define opcode : mt12      0x67000000  "MT12(rd, rs1, rs2)"
+
+# Extended Floating Point Operations
+define opcode : addfp     0x68000000  "ADDFP(rd, rs1, rs2)"
+define opcode : subfp     0x69000000  "SUBFP(rd, rs1, rs2)"
+define opcode : mulfp     0x6A000000  "MULFP(rd, rs1, rs2)"
+define opcode : divfp     0x6B000000  "DIVFP(rd, rs1, rs2)"
+define opcode : cvtif     0x6C000000  "CVTIF(rd, rs1)"
+define opcode : cvtfi     0x6D000000  "CVTFI(rd, rs1)"
+
+# Extended System Operations
+define opcode : wfi       0x6E000000  "WFI"
+define opcode : halt      0x6F000000  "HALT"
+define opcode : yield     0x70000000  "YIELD"
+define opcode : barrier   0x71000000  "BARRIER"
+define opcode : flush     0x72000000  "FLUSH"
+
+# ===== TILEGX Extended P-code Operations =====
+
+# Extended Multiply P-code
+define mul3 op=PMUL:r8:r8:r8;       # Full multiply: 3 full registers
+define mulif op=PLOAD:z(8):r8:m64:r8;  # Multiply with immediate floating-point
+define mulim op=PLOAD:z(16):r8:m64:r8; # Multiply with 16-bit immediate
+define mulf op=PMUL:r8:r8:r8;        # Floating-point multiply (semantic distinction)
+define mull op=PMUL:r8:r8:r8;        # Multiply with loop semantics
+define mulli op=PLOAD:z(8):r8:m64:r8; # Multiply with immediate
+
+# Extended Compare P-code
+define cmpeqi op=PJMPEQ:r8:r8:r8;
+define cmpeqi32 op=PJMPEQ:r4:r4:r4;
+define cmpne op=PJMPNE:r8:r8:r8;
+define cmpli op=PJMPLT:r8:r8:r8;
+define cmpgei op=PJMPGE:r8:r8:r8;
+define cmpne32 op=PJMPNE:r4:r4:r4;
+
+# Extended Shift P-code
+define slli32 op=PSL:r8:r8:r8;        # Shift left with 8-bit immediate
+define srli32 op=PSRL:r8:r8:r8;       # Shift right logical with 8-bit immediate
+define srai32 op=PSRA:r8:r8:r8;       # Shift right arithmetic with 8-bit immediate
+define sll32 op=PSL:r8:r8:r8;         # Shift left with register-based shift amount
+
+# Extended SIMD P-code
+define addv op=PADD:r8:r8:r8;
+define subv op=PSUB:r8:r8:r8;
+define andv op=PAND:r8:r8:r8;
+define orv op=POR:r8:r8:r8;
+define xorr op=PXOR:r8:r8:r8;
+define negv op=PNEG:r8:r8:r8;     # Fixed: PSIGN was incorrect; PNEG for negation (0 - rs1)
+define extv op=PLOAD:r8:r8:r8;     # Fixed: PSRL was incorrect; PLOAD for extraction from wider register
+
+# Extended Memory P-code
+define ldm op=PLOAD:z(8):r8:m64:r8;
+define stmm op=PSAVE:z(8):r8:m64:r8;
+define ldv op=PLOAD:z(8):r8:m64:r8;
+define stv op=PSAVE:z(8):r8:m64:r8;
+
+# Extended Control P-code
+define mtsr32 op=PSAVE:z(8):r8:r8:r8;
+define mfsr32 op=PLOAD:z(8):r8:r8:r8;
+define mtcr32 op=PSAVE:z(8):r8:r8:r8;
+define mfcr32 op=PLOAD:z(8):r8:r8:r8;
+define rfe op=PSPECIAL;
+
+# Extended Branch P-code
+define br32 op=PBRANCH:r8:r8:r8;
+define bri32 op=PJUMPI:r8:r8;
+define brc32 op=PBRANCH:r8:r8:r8;
+define brtype32 op=PJUMP:r8;
+
+# Extended Multi-register P-code
+define mr6 op=PLOAD:r8:r8:r8;        # Multi-register read: reads from registers to memory
+define mt6 op=PSAVE:r8:r8:r8;        # Multi-register write: writes to registers from memory
+define mr12 op=PLOAD:r8:r8:r8;
+define mt12 op=PSAVE:r8:r8:r8;
+
+# Extended Floating Point P-code
+define addfp op=PADD:r8:r8:r8;
+define subfp op=PSUB:r8:r8:r8;
+define mulfp op=PMUL:r8:r8:r8;
+define divfp op=PDIV:r8:r8:r8;     # Fixed: PSIGN was incorrect; PDIV for floating-point division
+define cvtif op=PCVT:r8:r8:r8;     # Fixed: PSIGN was incorrect; PCVT for integer-to-float conversion
+define cvtfi op=PCVT:r8:r8:r8;     # Fixed: PLOAD was generic; PCVT for float-to-integer conversion
+
+# Extended System P-code
+define wfi op=PSPECIAL;
+define halt op=PSPECIAL;
+define yield op=PSPECIAL;
+define barrier op=PSPECIAL;
+define flush op=PSPECIAL;
+
+# ===== Include tile_common.sinc =====
+@include "tile_common.sinc"
