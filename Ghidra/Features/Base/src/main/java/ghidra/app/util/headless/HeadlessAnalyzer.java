@@ -1228,7 +1228,7 @@ public class HeadlessAnalyzer {
 				program = null;
 
 				// Only commit if it's a shared project.
-				commitProgram(domFile);
+				commit(domFile);
 			}
 		}
 		catch (VersionException e) {
@@ -1469,7 +1469,7 @@ public class HeadlessAnalyzer {
 		return true;
 	}
 
-	private void commitProgram(DomainFile df) throws IOException {
+	private void commit(DomainFile df) throws IOException {
 
 		RepositoryAdapter rep = project.getRepository();
 		if (rep != null) {
@@ -1636,7 +1636,7 @@ public class HeadlessAnalyzer {
 				for (Loaded<? extends DomainObject> loaded : loadResults) {
 					if (!loaded.check(DomainObject::isTemporary)) {
 						loaded.close(); // we need to close before committing
-						commitProgram(loaded.getSavedDomainFile());
+						commit(loaded.getSavedDomainFile());
 					}
 				}
 			}
