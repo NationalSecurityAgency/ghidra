@@ -25,6 +25,7 @@ import ghidra.app.services.AnalysisPriority;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.*;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
@@ -125,12 +126,15 @@ public class RustDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	}
 
 	@Override
-	protected void apply(MangledContext mangledContext, DemangledObject demangled, MessageLog log,
-			TaskMonitor monitor) {
+	protected void apply(MangledContext mangledContext, DemangledObject demangled,
+			boolean isPrimary, MessageLog log, TaskMonitor monitor) {
+
 		try {
 			if (demangled instanceof DemangledFunction defunc) {
-				defunc.applyTo(mangledContext.getProgram(), mangledContext.getAddress(),
-					mangledContext.getOptions(), monitor);
+				Program program = mangledContext.getProgram();
+				Address address = mangledContext.getAddress();
+				DemanglerOptions options = mangledContext.getOptions();
+				defunc.applyTo(program, address, options, monitor);
 				return;
 			}
 		}
@@ -148,7 +152,7 @@ public class RustDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		DemangledVariable demangledVariable = new DemangledVariable(mangled, original, name);
 		demangledVariable.setNamespace(namespace);
 
-		super.apply(mangledContext, demangledVariable, log, monitor);
+		super.apply(mangledContext, demangledVariable, isPrimary, log, monitor);
 	}
 
 //==================================================================================================
