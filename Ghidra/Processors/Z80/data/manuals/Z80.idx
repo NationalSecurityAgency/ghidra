@@ -1,5 +1,5 @@
 @UM0080.pdf [Z80 FamilyCPU User Manual, Aug 2016 (UM008011-0816)]
-LD, 85
+LD, 84
 PUSH, 129
 POP, 133
 EX, 138
