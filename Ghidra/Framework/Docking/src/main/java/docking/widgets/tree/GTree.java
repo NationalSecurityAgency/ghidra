@@ -252,6 +252,11 @@ public class GTree extends JPanel implements BusyListener {
 		add(filterProvider.getFilterComponent(), BorderLayout.SOUTH);
 	}
 
+	@Override
+	public void requestFocus() {
+		tree.requestFocus();
+	}
+
 	/**
 	 * Sets an accessible name on the GTree. This prefix will be used to assign
 	 * meaningful accessible names to the tree, filter text field and the filter options button such

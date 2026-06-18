@@ -1327,6 +1327,10 @@ public class DialogComponentProvider
 	 * @param action the action
 	 */
 	public void addAction(DockingActionIf action) {
+		if (dialogActions.contains(action)) {
+			return; // protect from repeated adding
+		}
+
 		dialogActions.add(action);
 		addToolbarAction(action);
 		popupManager.addAction(action);
