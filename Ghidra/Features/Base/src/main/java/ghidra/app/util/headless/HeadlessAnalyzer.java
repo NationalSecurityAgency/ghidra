@@ -291,18 +291,6 @@ public class HeadlessAnalyzer {
 				Msg.warn(this, "REPORT: Nothing to do ... must specify files for import.");
 				return;
 			}
-
-			if (!path.endsWith("/")) {
-				// force explicit folder path so that non-existent folders are created on import
-				ghidraURL = new URI("ghidra", null, ghidraURL.getHost(), ghidraURL.getPort(),
-					path + "/", null, null).toURL();
-			}
-		}
-		else { // Running in -process mode
-			if (path.endsWith("/") && path.length() > 1) {
-				ghidraURL = new URI("ghidra", null, ghidraURL.getHost(), ghidraURL.getPort(),
-					path.substring(0, path.length() - 1), null, null).toURL();
-			}
 		}
 
 		BundleHost bundleHost = GhidraScriptUtil.acquireBundleHostReference();
