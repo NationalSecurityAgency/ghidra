@@ -44,7 +44,7 @@
 # MULHI imm16, reg1, reg2 - rrrrr110111RRRRR|iiiiiiiiiiiiiiii
 :mulhi s1631, R0004, R1115 is op0510=0x37 & R1115 & R0004; s1631
 {
-	R1115 = R0004 * s1631;
+	R1115 = sext(R0004:2) * s1631;
 }
 
 # MULU reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01000100010
@@ -175,69 +175,137 @@
 #####################################################
 
 
-define pcodeop __saturate;
-
 # SATADD reg1, reg2 - rrrrr000110RRRRR
 :satadd R0004, R1115 is op0510=0x06 & R0004 & R1115 & op1115!=0
 {
-	set_general_flags_pos(R1115, R0004);
+	set_CY_pos(R1115, R0004);
+	set_OV_pos(R1115, R0004);
+	local result:4 = R1115 + R0004;
 	$(SAT) = $(SAT) || $(OV);
-	R1115 = R1115 + R0004;
-	__saturate(R1115);
+	if (!$(OV)) goto <no_sat>;
+	if (R1115 s< 0) goto <neg_sat>;
+	result = 0x7FFFFFFF;
+	goto <no_sat>;
+	<neg_sat>
+	result = 0x80000000;
+	<no_sat>
+	R1115 = result;
+	set_S(result);
+	set_Z(result);
 }
 
 #SATADD imm5, reg2 - rrrrr010001iiiii
 :satadd s0004, R1115 is op0510=0x11 & s0004 & R1115 & op1115!=0
 {
-	set_general_flags_pos(R1115, s0004);
+	set_CY_pos(R1115, s0004);
+	set_OV_pos(R1115, s0004);
+	local result:4 = R1115 + s0004;
 	$(SAT) = $(SAT) || $(OV);
-	R1115 = R1115 + s0004;
-	__saturate(R1115);
+	if (!$(OV)) goto <no_sat>;
+	if (R1115 s< 0) goto <neg_sat>;
+	result = 0x7FFFFFFF;
+	goto <no_sat>;
+	<neg_sat>
+	result = 0x80000000;
+	<no_sat>
+	R1115 = result;
+	set_S(result);
+	set_Z(result);
 }
 
 # SATADD reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01110111010
 :satadd R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x3BA & R2731
 {
-	set_general_flags_pos(R1115, R0004);
+	set_CY_pos(R1115, R0004);
+	set_OV_pos(R1115, R0004);
+	local result:4 = R1115 + R0004;
 	$(SAT) = $(SAT) || $(OV);
-	R2731 = R1115 + R0004;
-	__saturate(R2731);
+	if (!$(OV)) goto <no_sat>;
+	if (R1115 s< 0) goto <neg_sat>;
+	result = 0x7FFFFFFF;
+	goto <no_sat>;
+	<neg_sat>
+	result = 0x80000000;
+	<no_sat>
+	R2731 = result;
+	set_S(result);
+	set_Z(result);
 }
 
 # SATSUB reg1, reg2 - rrrrr000101RRRRR
-:satsub R0004, R1115 is op0510=0x05 & R0004 & R1115 & op1115!=0 
+:satsub R0004, R1115 is op0510=0x05 & R0004 & R1115 & op1115!=0
 {
-	set_general_flags_neg(R1115, R0004);
+	set_CY_neg(R1115, R0004);
+	set_OV_neg(R1115, R0004);
+	local result:4 = R1115 - R0004;
 	$(SAT) = $(SAT) || $(OV);
-	R1115 = R1115 - R0004;
-	__saturate(R1115);
+	if (!$(OV)) goto <no_sat>;
+	if (R1115 s< 0) goto <neg_sat>;
+	result = 0x7FFFFFFF;
+	goto <no_sat>;
+	<neg_sat>
+	result = 0x80000000;
+	<no_sat>
+	R1115 = result;
+	set_S(result);
+	set_Z(result);
 }
 
 # SATSUB reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01110011010
 :satsub R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x39A & R2731
 {
-	set_general_flags_neg(R1115, R0004);
+	set_CY_neg(R1115, R0004);
+	set_OV_neg(R1115, R0004);
+	local result:4 = R1115 - R0004;
 	$(SAT) = $(SAT) || $(OV);
-	R2731 = R1115 - R0004;
-	__saturate(R2731);
+	if (!$(OV)) goto <no_sat>;
+	if (R1115 s< 0) goto <neg_sat>;
+	result = 0x7FFFFFFF;
+	goto <no_sat>;
+	<neg_sat>
+	result = 0x80000000;
+	<no_sat>
+	R2731 = result;
+	set_S(result);
+	set_Z(result);
 }
 
 # SATSUBI imm16, reg1, reg2
 :satsubi s1631, R0004, R1115 is op0510=0x33 & op1115!=0 & R0004 & R1115; s1631
 {
-	set_general_flags_neg(R0004, s1631);
+	set_CY_neg(R0004, s1631);
+	set_OV_neg(R0004, s1631);
+	local result:4 = R0004 - s1631;
 	$(SAT) = $(SAT) || $(OV);
-	R1115 = R0004 - s1631;
-	__saturate(R1115);
+	if (!$(OV)) goto <no_sat>;
+	if (R0004 s< 0) goto <neg_sat>;
+	result = 0x7FFFFFFF;
+	goto <no_sat>;
+	<neg_sat>
+	result = 0x80000000;
+	<no_sat>
+	R1115 = result;
+	set_S(result);
+	set_Z(result);
 }
 
 # SATSUBR reg1, reg2
 :satsubr R0004, R1115 is op0510=0x04 & R0004 & R1115 & op1115!=0
 {
-	set_general_flags_neg(R0004, R1115);
+	set_CY_neg(R0004, R1115);
+	set_OV_neg(R0004, R1115);
+	local result:4 = R0004 - R1115;
 	$(SAT) = $(SAT) || $(OV);
-	R1115 = R0004 - R1115;
-	__saturate(R1115);
+	if (!$(OV)) goto <no_sat>;
+	if (R0004 s< 0) goto <neg_sat>;
+	result = 0x7FFFFFFF;
+	goto <no_sat>;
+	<neg_sat>
+	result = 0x80000000;
+	<no_sat>
+	R1115 = result;
+	set_S(result);
+	set_Z(result);
 }
 
 
@@ -253,17 +321,18 @@ define pcodeop __saturate;
 	local quot:4 = R1115 s/ R0004;
 	local mod:4 = R1115 s% R0004;
 	$(OV) = ((R1115 == 0x80000000 && R0004 == 0xFFFFFFFF) || R0004 == 0x0);
-	set_Z(R1115);
-	set_S(R1115);
+	set_Z(quot);
+	set_S(quot);
 	R1115 = quot;
- 	R2731 = mod;
+	R2731 = mod;
 }
 
 # DIVH reg1, reg2 - rrrrr000010RRRRR
 :divh R0004, R1115 is op0510=0x02 & R0004 & R1115
 {
-	$(OV) = ((R1115 == 0x80000000 && R0004 == 0xFFFFFFFF) || R0004 == 0x0);
-	R1115 = R1115 / R0004;
+	local divisor:4 = sext(R0004:2);
+	$(OV) = ((R1115 == 0x80000000 && divisor == 0xFFFFFFFF) || divisor == 0x0);
+	R1115 = R1115 s/ divisor;
 	set_Z(R1115);
 	set_S(R1115);
 }
@@ -271,11 +340,12 @@ define pcodeop __saturate;
 # DIVH reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01010000000
 :divh R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x280 & R2731
 {
-	local quot:4 = R1115 s/ sext(R0004:2);
-	local mod:4 = R1115 s% sext(R0004:2);
-	$(OV) = ((R1115 == 0x80000000 && R0004 == 0xFFFFFFFF) || R0004 == 0x0);
-	set_Z(R1115);
-	set_S(R1115);
+	local divisor:4 = sext(R0004:2);
+	local quot:4 = R1115 s/ divisor;
+	local mod:4 = R1115 s% divisor;
+	$(OV) = ((R1115 == 0x80000000 && divisor == 0xFFFFFFFF) || divisor == 0x0);
+	set_Z(quot);
+	set_S(quot);
 	R1115 = quot;
 	R2731 = mod;
 }
@@ -283,11 +353,12 @@ define pcodeop __saturate;
 # DIVHU reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01010000010
 :divhu R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x282 & R2731
 {
-	local quot:4 = R1115 / sext(R0004:2);
-	local mod:4 = R1115 % sext(R0004:2);
-	$(OV) = (R0004 == 0);
-	set_Z(R1115);
-	set_S(R1115);
+	local divisor:4 = zext(R0004:2);
+	local quot:4 = R1115 / divisor;
+	local mod:4 = R1115 % divisor;
+	$(OV) = (divisor == 0);
+	set_Z(quot);
+	set_S(quot);
 	R1115 = quot;
 	R2731 = mod;
 }
@@ -298,8 +369,8 @@ define pcodeop __saturate;
 	local quot:4 = R1115 / R0004;
 	local mod:4 = R1115 % R0004;
 	$(OV) = (R0004 == 0);
-	set_Z(R1115);
-	set_S(R1115);
+	set_Z(quot);
+	set_S(quot);
 	R1115 = quot;
 	R2731 = mod;
 }
@@ -317,10 +388,10 @@ define pcodeop __saturate;
 	local quot:4 = R1115 s/ R0004;
 	local mod:4 = R1115 s% R0004;
 	$(OV) = ((R1115 == 0x80000000 && R0004 == 0xFFFFFFFF) || R0004 == 0x0);
-	set_Z(R1115);
-	set_S(R1115);
-	R2731 = mod;
+	set_Z(quot);
+	set_S(quot);
 	R1115 = quot;
+	R2731 = mod;
 }
 
 # DIVQU reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01011111110
@@ -329,8 +400,8 @@ define pcodeop __saturate;
 	local quot:4 = R1115 / R0004;
 	local mod:4 = R1115 % R0004;
 	$(OV) = (R0004 == 0);
-	set_Z(R1115);
-	set_S(R1115);
-	R2731 = mod;
+	set_Z(quot);
+	set_S(quot);
 	R1115 = quot;
+	R2731 = mod;
 }

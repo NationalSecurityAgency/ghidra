@@ -160,7 +160,7 @@
 }
 
 # TST1 reg2, [reg1] - rrrrr111111RRRRR|0000000011100110
-:tst1 R0004, [R1115] is op0510=0x3F & R0004 & R1115; op1631=0xE6
+:tst1 R1115, [R0004] is op0510=0x3F & R0004 & R1115; op1631=0xE6
 {
 	local tkn = *:1 R0004;
 	set_Z(tkn & (1 << R1115));
