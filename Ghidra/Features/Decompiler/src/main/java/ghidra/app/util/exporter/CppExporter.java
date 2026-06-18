@@ -48,6 +48,7 @@ public class CppExporter extends ProgramExporter {
 	public static final String USE_CPP_STYLE_COMMENTS = "Use C++ Style Comments (//)";
 	public static final String EMIT_TYPE_DEFINITONS = "Emit Data-type Definitions";
 	public static final String EMIT_REFERENCED_GLOBALS = "Emit Referenced Globals";
+	public static final String EMIT_GLOBAL_DATA = "Emit Global Data Initializers";
 	public static final String FUNCTION_TAG_FILTERS = "Function Tags to Filter";
 	public static final String FUNCTION_TAG_EXCLUDE = "Function Tags Excluded";
 
@@ -58,6 +59,7 @@ public class CppExporter extends ProgramExporter {
 	private boolean isUseCppStyleComments = true;
 	private boolean emitDataTypeDefinitions = true;
 	private boolean emitReferencedGlobals = true;
+	private boolean emitGlobalData = true;
 	private String tagOptions = "";
 
 	private Set<FunctionTag> functionTagSet = new HashSet<>();
@@ -71,7 +73,8 @@ public class CppExporter extends ProgramExporter {
 	}
 
 	public CppExporter(DecompileOptions options, boolean createHeader, boolean createFile,
-			boolean emitTypes, boolean emitGlobals, boolean excludeTags, String tags) {
+			boolean emitTypes, boolean emitGlobals, boolean emitData, boolean excludeTags,
+			String tags) {
 		this();
 		this.options = options;
 		if (options != null) {
@@ -81,6 +84,7 @@ public class CppExporter extends ProgramExporter {
 		isCreateCFile = createFile;
 		emitDataTypeDefinitions = emitTypes;
 		emitReferencedGlobals = emitGlobals;
+		emitGlobalData = emitData;
 		excludeMatchingTags = excludeTags;
 		if (tags != null) {
 			tagOptions = tags;
@@ -373,6 +377,9 @@ public class CppExporter extends ProgramExporter {
 		list.add(Option.newBoolean(EMIT_REFERENCED_GLOBALS)
 				.value(emitReferencedGlobals)
 				.build());
+		list.add(Option.newBoolean(EMIT_GLOBAL_DATA)
+				.value(emitGlobalData)
+				.build());
 		list.add(Option.newString(FUNCTION_TAG_FILTERS)
 				.value(tagOptions)
 				.build());
@@ -401,6 +408,9 @@ public class CppExporter extends ProgramExporter {
 				}
 				else if (optName.equals(EMIT_REFERENCED_GLOBALS)) {
 					emitReferencedGlobals = ((Boolean) option.getValue()).booleanValue();
+				}
+				else if (optName.equals(EMIT_GLOBAL_DATA)) {
+					emitGlobalData = ((Boolean) option.getValue()).booleanValue();
 				}
 				else if (optName.equals(FUNCTION_TAG_FILTERS)) {
 					tagOptions = (String) option.getValue();
@@ -489,6 +499,66 @@ public class CppExporter extends ProgramExporter {
 // Inner Classes
 //==================================================================================================
 
+	/**
+	 * Builds a C initializer expression for the given data item.
+	 * <p>
+	 * Returns a string suitable for use as a C initializer (e.g., {@code 0x42},
+	 * {@code "hello"}, {@code {1, 2, 3}}), or {@code null} if no valid initializer
+	 * can be produced (e.g., for pointer types whose address representation is not
+	 * portable C syntax).
+	 *
+	 * @param data the data item to render as a C initializer
+	 * @return C initializer string, or {@code null} if not representable
+	 */
+	private static String buildDataInitializer(Data data) {
+		if (data == null) {
+			return null;
+		}
+
+		DataType dt = data.getDataType();
+
+		// Unwrap typedefs to check the base type
+		DataType baseType = dt;
+		while (baseType instanceof TypeDef td) {
+			baseType = td.getBaseDataType();
+		}
+
+		// Skip pointer types - their address representation is not valid C syntax
+		if (baseType instanceof Pointer || baseType instanceof FunctionDefinition) {
+			return null;
+		}
+
+		// For non-string composites (arrays, structs, unions), recurse into components
+		if (!data.hasStringValue()) {
+			int numComponents = data.getNumComponents();
+			if (numComponents > 0) {
+				StringBuilder sb = new StringBuilder("{");
+				for (int i = 0; i < numComponents; i++) {
+					if (i > 0) {
+						sb.append(", ");
+					}
+					Data component = data.getComponent(i);
+					String compInit = buildDataInitializer(component);
+					if (compInit == null) {
+						return null;
+					}
+					sb.append(compInit);
+				}
+				sb.append("}");
+				return sb.toString();
+			}
+		}
+
+		// For scalars, strings, enums, and undefined bytes use the default representation
+		String repr = data.getDefaultValueRepresentation();
+		if (repr != null && !repr.isEmpty()) {
+			return repr;
+		}
+
+		return null;
+	}
+
+
 	private record CPPResult(Address address, String headerCode, String bodyCode,
 			List<String> globals) implements Comparable<CPPResult> {
 		@Override
@@ -570,6 +640,7 @@ public class CppExporter extends ProgramExporter {
 				return null;
 			}
 
+			Program prog = function.getProgram();
 			DecompiledFunction decompiledFunction = dr.getDecompiledFunction();
 			List<String> globals =
 				CollectionUtils.asStream(dr.getHighFunction().getGlobalSymbolMap().getSymbols())
@@ -577,6 +648,18 @@ public class CppExporter extends ProgramExporter {
 							String dt = hsym.getDataType().getDisplayName();
 							String name = hsym.getName();
 							String space = dt.endsWith("*") ? "" : " ";
+							if (emitGlobalData) {
+								VariableStorage storage = hsym.getStorage();
+								if (storage != null && storage.isMemoryStorage()) {
+									Address addr = storage.getMinAddress();
+									Data data = prog.getListing().getDataAt(addr);
+									String initializer = buildDataInitializer(data);
+									if (initializer != null) {
+										return "%s%s%s = %s;".formatted(dt, space, name,
+											initializer);
+									}
+								}
+							}
 							return "%s%s%s;".formatted(dt, space, name);
 						})
 						.toList();
