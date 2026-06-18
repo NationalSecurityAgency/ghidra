@@ -16,6 +16,7 @@
 package ghidra.app.util.exporter;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
@@ -34,6 +35,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Equate;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -174,7 +176,7 @@ public class CppExporter extends ProgramExporter {
 		Listing listing = program.getListing();
 		FunctionIterator iterator = listing.getFunctions(addrSet, true);
 		List<Function> functions = new ArrayList<>();
-		Set<String> processedGlobals = new HashSet<>();
+		Set<Address> processedGlobals = new HashSet<>();
 		for (int i = 0; iterator.hasNext(); i++) {
 			//
 			// Write results every so many items so that we don't blow out memory
@@ -216,13 +218,15 @@ public class CppExporter extends ProgramExporter {
 		return excludeMatchingTags == hasTag;
 	}
 
-	private void writeResults(List<CPPResult> results, Set<String> processedGlobals,
+	private void writeResults(List<CPPResult> results, Set<Address> processedGlobals,
 			PrintWriter headerWriter, PrintWriter cFileWriter, TaskMonitor monitor)
 			throws CancelledException {
 		monitor.checkCancelled();
 
 		Collections.sort(results);
 
+		TreeMap<Address, String> newGlobalsByAddress = new TreeMap<>();
+		List<String> nonAddressedGlobalDecls = new ArrayList<>();
 		StringBuilder globalDecls = new StringBuilder();
 		StringBuilder headers = new StringBuilder();
 		StringBuilder bodies = new StringBuilder();
@@ -233,10 +237,14 @@ public class CppExporter extends ProgramExporter {
 				continue;
 			}
 			if (emitReferencedGlobals) {
-				for (String global : result.globals()) {
-					if (processedGlobals.add(global)) {
-						globalDecls.append(global);
-						globalDecls.append(EOL);
+				for (GlobalDecl gd : result.globals()) {
+					if (gd.address() != null) {
+						if (processedGlobals.add(gd.address())) {
+							newGlobalsByAddress.put(gd.address(), gd.declaration());
+						}
+					}
+					else {
+						nonAddressedGlobalDecls.add(gd.declaration());
 					}
 				}
 			}
@@ -254,6 +262,13 @@ public class CppExporter extends ProgramExporter {
 		}
 
 		monitor.checkCancelled();
+
+		for (String decl : nonAddressedGlobalDecls) {
+			globalDecls.append(decl).append(EOL);
+		}
+		for (String decl : newGlobalsByAddress.values()) {
+			globalDecls.append(decl).append(EOL);
+		}
 
 		if (headerWriter != null) {
 			headerWriter.println(headers.toString());
@@ -504,8 +519,7 @@ public class CppExporter extends ProgramExporter {
 	 * <p>
 	 * Returns a string suitable for use as a C initializer (e.g., {@code 0x42},
 	 * {@code "hello"}, {@code {1, 2, 3}}), or {@code null} if no valid initializer
-	 * can be produced (e.g., for pointer types whose address representation is not
-	 * portable C syntax).
+	 * can be produced (e.g., for pointer types, function types, or uninitialized memory).
 	 *
 	 * @param data the data item to render as a C initializer
 	 * @return C initializer string, or {@code null} if not representable
@@ -549,18 +563,71 @@ public class CppExporter extends ProgramExporter {
 			}
 		}
 
-		// For scalars, strings, enums, and undefined bytes use the default representation
-		String repr = data.getDefaultValueRepresentation();
-		if (repr != null && !repr.isEmpty()) {
-			return repr;
+		// For strings: use the default representation (already properly quoted)
+		if (data.hasStringValue()) {
+			String repr = data.getDefaultValueRepresentation();
+			return (repr != null && !repr.isEmpty() && !"??".equals(repr)) ? repr : null;
+		}
+
+		// For enums: use the default representation which returns the member name (valid C)
+		if (baseType instanceof ghidra.program.model.data.Enum) {
+			String repr = data.getDefaultValueRepresentation();
+			return (repr != null && !repr.isEmpty() && !"??".equals(repr)) ? repr : null;
+		}
+
+		// For floats: use the default representation (decimal notation, valid C)
+		if (baseType instanceof AbstractFloatDataType) {
+			String repr = data.getDefaultValueRepresentation();
+			return (repr != null && !repr.isEmpty() && !"??".equals(repr)) ? repr : null;
+		}
+
+		// For scalars (integers and undefined types): use getValue() to get the raw numeric
+		// value and format as 0x-prefixed hex, avoiding the display-oriented h-suffix format.
+		Object value = data.getValue();
+		if (value == null) {
+			return null; // uninitialized or inaccessible memory
+		}
+
+		if (value instanceof Scalar scalar) {
+			int byteSize = scalar.bitLength() / 8;
+			if (byteSize <= 0) {
+				byteSize = data.getLength();
+			}
+			if (byteSize <= 0) {
+				byteSize = 1;
+			}
+			String hex = Long.toHexString(scalar.getUnsignedValue()).toUpperCase();
+			// Pad to the natural byte width of the type
+			String padded = hex;
+			int hexLen = byteSize * 2;
+			while (padded.length() < hexLen) {
+				padded = "0" + padded;
+			}
+			return "0x" + padded;
+		}
+
+		if (value instanceof BigInteger bigInt) {
+			// Handle wide integer types (> 8 bytes): convert to unsigned representation
+			if (bigInt.signum() < 0) {
+				int bitLen = data.getLength() * 8;
+				bigInt = bigInt.add(BigInteger.ONE.shiftLeft(bitLen));
+			}
+			String hex = bigInt.toString(16).toUpperCase();
+			int hexLen = data.getLength() * 2;
+			while (hex.length() < hexLen) {
+				hex = "0" + hex;
+			}
+			return "0x" + hex;
 		}
 
 		return null;
 	}
 
 
+	private record GlobalDecl(Address address, String declaration) {}
+
 	private record CPPResult(Address address, String headerCode, String bodyCode,
-			List<String> globals) implements Comparable<CPPResult> {
+			List<GlobalDecl> globals) implements Comparable<CPPResult> {
 		@Override
 		public int compareTo(CPPResult other) {
 			return address.compareTo(other.address);
@@ -642,25 +709,30 @@ public class CppExporter extends ProgramExporter {
 
 			Program prog = function.getProgram();
 			DecompiledFunction decompiledFunction = dr.getDecompiledFunction();
-			List<String> globals =
+			List<GlobalDecl> globals =
 				CollectionUtils.asStream(dr.getHighFunction().getGlobalSymbolMap().getSymbols())
 						.map(hsym -> {
 							String dt = hsym.getDataType().getDisplayName();
 							String name = hsym.getName();
 							String space = dt.endsWith("*") ? "" : " ";
-							if (emitGlobalData) {
-								VariableStorage storage = hsym.getStorage();
-								if (storage != null && storage.isMemoryStorage()) {
-									Address addr = storage.getMinAddress();
-									Data data = prog.getListing().getDataAt(addr);
-									String initializer = buildDataInitializer(data);
-									if (initializer != null) {
-										return "%s%s%s = %s;".formatted(dt, space, name,
-											initializer);
-									}
-								}
+
+							VariableStorage storage = hsym.getStorage();
+							Address symAddr = (storage != null && storage.isMemoryStorage())
+									? storage.getMinAddress()
+									: null;
+
+							String declaration;
+							if (emitGlobalData && symAddr != null) {
+								Data data = prog.getListing().getDataAt(symAddr);
+								String initializer = buildDataInitializer(data);
+								declaration = initializer != null
+										? "%s%s%s = %s;".formatted(dt, space, name, initializer)
+										: "%s%s%s;".formatted(dt, space, name);
 							}
-							return "%s%s%s;".formatted(dt, space, name);
+							else {
+								declaration = "%s%s%s;".formatted(dt, space, name);
+							}
+							return new GlobalDecl(symAddr, declaration);
 						})
 						.toList();
 			return new CPPResult(entryPoint, decompiledFunction.getSignature(),
