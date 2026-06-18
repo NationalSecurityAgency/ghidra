@@ -1329,10 +1329,14 @@ bool TypePointer::isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const
         return false;
     }
   }
-  else if (ptrto->getMetatype() == TYPE_UNION) {
+  else if (meta == TYPE_UNION) {
     // A PTRSUB reaching here cannot be used for a union field resolution
     // These are created by ActionSetCasts::resolveUnion
     return false;	// So we always return false
+  }
+  else if (meta == TYPE_CODE) {
+    if (extra < 0)
+      return false;
   }
   else
     return false;	// Not a pointer to a structured data-type
