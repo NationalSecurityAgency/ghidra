@@ -7,7 +7,7 @@ define endian = little;
 # Each register class gets a unique offset and size for proper address resolution
 # Sizes reflect register width (SIZE = 8 means 64-bit registers).
 define register GP    offset = 0x1000 SIZE = 8;  # General purpose registers (r0-r35)
-define register CP    offset = 0x2000 SIZE = 8;  # System registers (sr0-sr35)
+define register CP    offset = 0x2000 SIZE = 8;  # System registers (sr0-sr40, 41 total)
 define register CP0   offset = 0x3000 SIZE = 8;  # Control registers (c0-c31)
 define register CSR   offset = 0x4000 SIZE = 8;  # Control/status registers
 

@@ -65,6 +65,9 @@ public class TILEPcodeUseropLibraryFactory {
 			Register cpReg = lang.getRegister("cp");
 			Register cp0Reg = lang.getRegister("cp0");
 			Register csrReg = lang.getRegister("csr");
+			// NOTE: uses && logic - throws ONLY if ALL four registers are null.
+			// If at least one register is defined, the check passes.
+			// This is correct for TILEGX where not all register classes are required.
 			if (gpReg == null && cpReg == null && cp0Reg == null && csrReg == null) {
 				throw new IOException("TILE register classes (GP/CP/CP0/CSR) not found in language");
 			}

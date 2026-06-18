@@ -82,6 +82,7 @@
     <register name="sr33" width="8"/>
     <register name="sr34" width="8"/>
     <register name="sr35" width="8"/>
+    <!-- Extended system registers sr36-sr40 (41 total CP registers) -->
     <register name="sr36" width="8"/>
     <register name="sr37" width="8"/>
     <register name="sr38" width="8"/>

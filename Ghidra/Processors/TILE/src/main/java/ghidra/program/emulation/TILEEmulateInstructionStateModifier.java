@@ -36,7 +36,7 @@ import ghidra.program.model.lang.Language;
  *                     EmulateInstructionStateModifier's callback contract.
  */
 @SuppressWarnings("deprecation")
-public class TILEEmulateInstructionStateModifier {
+public class TILEEmulateInstructionStateModifier implements EmulateInstructionStateModifier {
 
 	/** TILE general-purpose register class offset. */
 	private static final long GP_OFFSET = 0x1000;
@@ -47,7 +47,7 @@ public class TILEEmulateInstructionStateModifier {
 	/** Default stack pointer value for TILE emulation. */
 	private static final long DEFAULT_SP = 0x8000;
 
-	private Emulate emulate;
+	private final Emulate emulate;
 
 	/**
 	 * Constructs a TILEEmulateInstructionStateModifier.

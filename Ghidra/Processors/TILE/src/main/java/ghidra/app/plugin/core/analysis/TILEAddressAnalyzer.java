@@ -77,7 +77,7 @@ public class TILEAddressAnalyzer {
 
 		// Validate register address space
 		Processor proc = program.getLanguage().getProcessor();
-		boolean hasValidProcessor = (proc == Processor.findOrPossiblyCreateProcessor("TILE"));
+		boolean hasValidProcessor = Processor.findOrPossiblyCreateProcessor("TILE").equals(proc);
 
 		return hasMemoryBlock && hasValidProcessor;
 	}
