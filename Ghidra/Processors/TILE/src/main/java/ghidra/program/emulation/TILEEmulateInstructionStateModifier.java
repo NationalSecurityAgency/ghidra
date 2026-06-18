@@ -30,7 +30,12 @@ import ghidra.program.model.lang.Language;
  * Initializes TILE-specific register state before emulation begins.
  * Sets up the program counter, stack pointer, and context register
  * based on the TILE architecture specification.
+ *
+ * @suppressWarnings deprecation Uses the deprecated {@link Emulate} class
+ *                     which is retained for compatibility with
+ *                     EmulateInstructionStateModifier's callback contract.
  */
+@SuppressWarnings("deprecation")
 public class TILEEmulateInstructionStateModifier {
 
 	/** TILE general-purpose register class offset. */

@@ -15,16 +15,11 @@
  */
 package ghidra.program.emulation;
 
-import ghidra.program.model.address.AddressSpace;
+import java.io.IOException;
+
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolType;
-import ghidra.program.model.data.DataType;
 import ghidra.util.exception.VersionException;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Creates the p-code user operation library for TILE processors.
