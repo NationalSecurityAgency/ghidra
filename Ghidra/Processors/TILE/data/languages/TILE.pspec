@@ -4,6 +4,8 @@
   <properties>
     <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.TILEEmulateInstructionStateModifier"/>
     <property key="assemblyRating:TILE:BE:64:default" value="PLATINUM"/>
+    <!-- XMOS XS1/XS2/XS3 tile processor identification -->
+    <property key="xmos.support" value="true"/>
   </properties>
   <programcounter register="pc"/>
   <register_data>

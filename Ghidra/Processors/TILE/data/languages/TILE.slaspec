@@ -25,7 +25,7 @@
 # Calling convention (__default):
 #   Input arguments: r0-r7 (register passing), then stack (starting at offset 64)
 #   Return value: r0
-#   Stack pointer: r0 (same as first argument register)
+#   Stack pointer: sp (separate from r0 first argument register)
 #   Return address: r36
 
 @define ENDIAN "big"

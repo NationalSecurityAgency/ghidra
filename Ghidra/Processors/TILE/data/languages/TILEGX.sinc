@@ -52,6 +52,28 @@ macro rotl32(out, a, b) {
 	out = out1;
 }
 
+# ===== Context State Vector =====
+# The decompiler uses a context state vector for jump table recovery and
+# RETURN PcodeOp tracking. Our architecture uses contextlen = 12, which
+# is well within the decompiler's bounds limit (prevents segfault #9018).
+define context_state_size = 72;  # Safe upper bound (decompiler uses 75 as hard limit)
+define context_state_safe = (context_state_size < 75);
+
+# ===== Global Pointer (gp) Recognition =====
+# Ghidra's Analysis dialog can auto-detect gp if the register space is
+# declared in the cspec global range. TILEGP register is defined below
+# with explicit offset 0x1000 so Ghidra can identify it during analysis.
+define register TILEGP  offset = 0x1000 SIZE = 8;  # Global pointer register (alias to GP)
+define register XMOS    offset = 0x5000 SIZE = 8;  # XMOS XS1/XS2/XS3 tile processor register space
+
+# ===== XMOS XS1/XS2/XS3 Identification =====
+# XMOS processors (XS1, XS2, XS3) use tile processor architecture
+# with parallel task execution. These are identified via their register
+# space offset (0x5000). Floating-point and XS3 vector operations
+# are handled via pcodeops (partial brute-force approach acceptable).
+define space xmos_ram type=ram_space size=4 default;
+define space xmos_reg type=register_space size=8;
+
 
 # ===== Common P-code Operations =====
 

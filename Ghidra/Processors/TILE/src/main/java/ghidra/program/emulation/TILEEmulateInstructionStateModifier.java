@@ -15,6 +15,7 @@
  */
 package ghidra.program.emulation;
 
+import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.Processor;
@@ -74,19 +75,19 @@ public class TILEEmulateInstructionStateModifier {
 		// Tile-Gx specific state setup
 		Register spReg = program.getLanguage().getRegister("sp");
 		if (spReg != null) {
-			emulate.setRegister(spReg, DEFAULT_SP);
+			emulate.getMemoryState().setValue(spReg, DEFAULT_SP);
 		}
 
 		Register ctxReg = program.getLanguage().getRegister("ctx");
 		if (ctxReg != null) {
-			emulate.setRegister(ctxReg, 0L);
+			emulate.getMemoryState().setValue(ctxReg, 0L);
 		}
 
 		Register pcReg = program.getLanguage().getRegister("pc");
 		if (pcReg != null) {
-			Address pc = emulate == null ? program.getImageBase() : emulate.getPC();
+			Address pc = emulate == null ? program.getImageBase() : emulate.getExecuteAddress();
 			if (pc != null) {
-				emulate.setRegister(pcReg, pc.getOffset());
+				emulate.getMemoryState().setValue(pcReg, pc.getOffset());
 			}
 		}
 	}

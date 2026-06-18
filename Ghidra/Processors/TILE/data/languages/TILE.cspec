@@ -22,11 +22,18 @@
     <range space="ram"/>
     <!-- General purpose register space -->
     <range space="register" first="0x1000" last="0x1fff"/>
+    <!-- gp global pointer space (TILEGP at 0x1000, alias to GP) -->
+    <range space="register" first="0x1000" last="0x1200"/>
   </global>
   <!-- Return address register -->
   <returnaddress>
     <register name="r36"/>
   </returnaddress>
+  <!-- gp register for Ghidra auto-detection (NDS32 #1778 concern) -->
+  <globalpointer register="TILEGP" space="register"/>
+  <!-- Context state bounds for decompiler (prevents segfault #9018) -->
+  <!-- contextlen = 12 is safe (decompiler uses 75 as hard limit) -->
+  <contextlen value="12"/>
 
   <!-- Default calling convention: register-passing with stack fallback -->
   <!-- Arguments are passed in r0-r7 (8 registers × 8 bytes), then on the stack starting at offset 64 -->

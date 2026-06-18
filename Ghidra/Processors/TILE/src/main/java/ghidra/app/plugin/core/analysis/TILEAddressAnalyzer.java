@@ -79,6 +79,6 @@ public class TILEAddressAnalyzer {
 		Processor proc = program.getLanguage().getProcessor();
 		boolean hasValidProcessor = (proc == Processor.findOrPossiblyCreateProcessor("TILE"));
 
-		return hasMemoryBlock || hasValidProcessor;
+		return hasMemoryBlock && hasValidProcessor;
 	}
 }

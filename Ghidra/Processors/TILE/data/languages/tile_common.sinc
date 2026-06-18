@@ -30,6 +30,7 @@
 define register GP   0x1000;    # General purpose registers
 define register CP   0x2000;    # Control/counter registers
 define register CP0  0x3000;    # CP0 space (CSR registers)
+define register CSR  0x4000;    # Control/status registers
 
 # ===== Data Type Definitions =====
 
