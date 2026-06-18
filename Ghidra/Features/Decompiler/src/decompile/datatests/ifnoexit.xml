@@ -1,0 +1,36 @@
+<decompilertest>
+  <!--
+     A loop body that should not be a part of nested ifs.  If blocks that just return should
+     be displayed first.
+  -->
+<binaryimage arch="x86:LE:64:default:gcc">
+<bytechunk space="ram" offset="0x100000" readonly="true">
+83ff64742c81ffc8000000742a81ff2c
+01000075284889f04883c628c7000700
+00004883c0044839f075f1b800000000
+c3b8ffffffffc3b8feffffffc3b8fdff
+ffffc3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="ifnoexit"/>
+</binaryimage>
+<script>
+  <com>parse line extern int4 ifnoexit(int4 val,int4 *ptr);</com>
+  <com>lo fu ifnoexit</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="If no exit #1" min="1" max="1">if \(val == 100\) \{
+                                                    return -1;
+                                                  \}</stringmatch>
+<stringmatch name="If no exit #2" min="1" max="1">if \(val == 200\) \{
+                                                    return -2;
+                                                  \}</stringmatch>
+<stringmatch name="If no exit #3" min="1" max="1">if \(val != 300\) \{
+                                                    return -3;
+                                                  \}
+                                                  piVar. = ptr \+ 10;
+                                                  do \{</stringmatch>
+<stringmatch name="If no exit #4" min="1" max="1">\} while \(ptr != piVar.\);
+						  return 0;</stringmatch>
+</decompilertest>
