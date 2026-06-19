@@ -1,0 +1,340 @@
+#!/usr/bin/env python3
+import binascii
+import chardet
+import os
+import re
+import sys
+
+def get_encoding(filename):
+  with open(filename, "rb") as f:
+    rawdata = f.read()
+    return chardet.detect(rawdata)
+
+def stoh(src):
+    return str(binascii.hexlify(bytes(src, 'utf-8')),'ascii')
+
+def find_define(filename, name, codec, isopen=True):
+  additional = {}
+  additional["/tmp/Windows Kits/10/Include/10.0.26100.0/um/mfapi.h"] = "/tmp/Windows Kits/10/Include/10.0.26100.0/shared/mmreg.h"
+
+  #print(f"Searching in {filename} for {name}")
+
+  if not isopen:
+    codec = get_encoding(filename)
+
+  merged = ""
+  try:
+    with open(filename, 'r', encoding=codec['encoding']) as f:
+      for line in f:
+        stripped = line.strip()
+        if stripped.startswith("#define"):
+          merged = stripped
+        elif merged:
+          merged += " " + stripped
+        else:
+          merged = ""
+
+        if merged:
+          if merged.endswith('\\'):
+            pos = len(merged) - 1
+            merged = list(merged)
+            merged[pos] = ""
+            merged = ''.join(merged)
+
+          elif f"define{name}" in merged.replace(" ", "").replace("\t", ""):
+            match = re.search(r"#define.*0[Xx]([^L,]*).*0[Xx]([^,]*).*0[Xx]([^,]*).*0[Xx]([^,]*).*0[Xx]([^,]*).*0[Xx]([^,]*).*0[Xx]([^,]*).*0[Xx]([^,]*).*0[Xx]([^,]*).*0[Xx]([^,]*).*0[Xx]([^\s\n]*).*", merged)
+            if match:
+              return f"{match.group(1).zfill(8)}-{match.group(2).zfill(4)}-{match.group(3).zfill(4)}-{match.group(4).zfill(2)}{match.group(5).zfill(2)}-{match.group(6).zfill(2)}{match.group(7).zfill(2)}{match.group(8).zfill(2)}{match.group(9).zfill(2)}{match.group(10).zfill(2)}{match.group(11).zfill(2)}".upper()
+            else:
+              match = re.search(r"#define\s*[^\s]*.*0[Xx]([A-F0-9]*).*", merged)
+              if match:
+                return match.group(1)
+              else:
+                match = re.search(r"#define\s*[^\s]*[^\d]*(\d*[^\s]).*", merged)
+                if match:
+                  return str(hex(int(match.group(1)))).replace("0x", "")
+                else:
+                  print(f"Wrong define: {merged}")
+                  sys.exit()
+      # Add additional includes
+      ret = ""
+      if filename in additional:
+        ret = find_define(additional[filename], name, codec, False)
+      if ret:
+        return ret
+      if isopen:
+        print(f"{name} not defined")
+        sys.exit()
+
+  except FileNotFoundError:
+    print(f"Error: File '{filename}' not found.")
+
+
+def find_guid_definitions(filename):
+  guids = []
+  guid_keywords = ["MIDL_DEFINE_GUID", "DEFINE_GUIDSTRUCT", "DEFINE_GUID", "DEFINE_OLEGUID", "DECLARE_INTERFACE_IID", "DECLARE_INTERFACE_IID_", "#define GUID_IID", "#define GUID_LIBID", "#define GUID_CLSID", "DEFINE_BLUETOOTH_UUID128", "interface", "OUR_GUID_ENTRY", "DEFINE_MEDIATYPE_GUID", "DEFINE_BINARY_MEDIATYPE", "DEFINE_AVIGUID", "EXTERN_GUID", "DEFINE_NWF_GUID", "DEFINE_CODECAPI_GUID", "DEFINE_DAOGUID", "GUID_BUILDER"]
+
+  try:
+    codec = get_encoding(filename)
+    with open(filename, 'r', encoding=codec['encoding']) as f:
+      mergedLine = ""
+      for line in f:
+        stripped_line = re.sub(r'/\*.*?\*/', '', line, flags=re.DOTALL)
+        stripped_line = re.sub(r'//.*', '', stripped_line, flags=re.DOTALL)
+        stripped_line = stripped_line.strip()
+        if (stripped_line.startswith(tuple(guid_keywords)) or re.search(r"^#define.*GUID_BUILDER.*", stripped_line)) and not "##" in stripped_line:
+          mergedLine = stripped_line
+        elif mergedLine:  # If we're in the middle of a multiline definition
+          mergedLine += stripped_line
+        else:
+          mergedLine = ""
+
+        if mergedLine and (';' in stripped_line or stripped_line.startswith("#") or not re.search(r'\([^\)]*$', mergedLine)) and not stripped_line.endswith("\\"):
+          mergedLine = mergedLine.replace(" ", "").replace("\t", "").replace("\\", "")
+          if mergedLine.startswith("DEFINE_GUIDSTRUCT"):
+            match = re.search(r".*\"(.*)\",(.*)\).*", mergedLine)
+            if match:
+              guid_string = f"{match.group(1).upper()} {match.group(2)}\n"
+              guids.append(guid_string)
+            else:
+              print(f"Invalid: {mergedLine}")
+          elif mergedLine.startswith('DEFINE_GUID'):
+            if not "(" in mergedLine[11]:
+              mergedLine = ""
+              continue
+            match = re.search(r".*\(([^,]*).*0[Xx]([^L,]*).*0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^\)]*).*", mergedLine)
+            if match:
+              guid_string = f"{match.group(2).zfill(8)}-{match.group(3).zfill(4)}-{match.group(4).zfill(4)}-{match.group(5).zfill(2)}{match.group(6).zfill(2)}-{match.group(7).zfill(2)}{match.group(8).zfill(2)}{match.group(9).zfill(2)}{match.group(10).zfill(2)}{match.group(11).zfill(2)}{match.group(12).zfill(2)}"
+              guid_string = f"{guid_string.upper()} {match.group(1)}\n"
+              guids.append(guid_string)
+            elif not "DEFINE_GUID\(name" in mergedLine:
+              match = re.search(r".*\(([^,]*),(STATIC[^\)]*).*", mergedLine)
+              if match:
+                defined = find_define(filename, match.group(2), codec)
+                guid_string = f"{defined.upper()} {match.group(1)}\n"
+                guids.append(guid_string)
+              else:
+                match = re.search(r"^.*\(([^,]*),0[Xx]([^L,]*).*,0,0,0xC0,0,0,0,0,0,0,0x46\);", mergedLine)
+                if match:
+                  guid_string = f"{match.group(2).zfill(8).upper()}-0000-0000-C000-000000000046 {match.group(1)}\n"
+                  guids.append(guid_string)
+                else:
+                  print(f"Invalid: {mergedLine}")
+          elif mergedLine.startswith("OUR_GUID_ENTRY"):
+            match = re.search(r".*\(([^,]*).*0[Xx]([^L,]*).*0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^\)]*).*", mergedLine)
+            if match:
+              guid_string = f"{match.group(2).zfill(8)}-{match.group(3).zfill(4)}-{match.group(4).zfill(4)}-{match.group(5).zfill(2)}{match.group(6).zfill(2)}-{match.group(7).zfill(2)}{match.group(8).zfill(2)}{match.group(9).zfill(2)}{match.group(10).zfill(2)}{match.group(11).zfill(2)}{match.group(12).zfill(2)}"
+              guid_string = f"{guid_string.upper()} {match.group(1)}\n"
+              guids.append(guid_string)
+            else:
+              match = re.search(r".*\(([^,]*).*[\"\']([^\"\']*).*0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^\)]*).*", mergedLine)
+              if match:
+                guid_string = stoh(match.group(2))
+                guid_string = f"{guid_string.zfill(8)}-{match.group(3).zfill(4)}-{match.group(4).zfill(4)}-{match.group(5).zfill(2)}{match.group(6).zfill(2)}-{match.group(7).zfill(2)}{match.group(8).zfill(2)}{match.group(9).zfill(2)}{match.group(10).zfill(2)}{match.group(11).zfill(2)}{match.group(12).zfill(2)}"
+                guid_string = f"{guid_string.upper()} {match.group(1)}\n"
+                guids.append(guid_string)
+              else:
+                print(f"Invalid: {mergedLine}")
+          elif mergedLine.startswith("DEFINE_OLEGUID"):
+            match = re.search(r".*\(([^,]*),0[Xx]([^L,]*).*", mergedLine)
+            if match:
+              guid_string = f"{match.group(2).zfill(8).upper()}-0000-0000-C000-000000000046 {match.group(1)}\n"
+              guids.append(guid_string)
+            else:
+              print(f"Invalid: {mergedLine}")
+          elif mergedLine.startswith("MIDL_DEFINE_GUID"):
+            match = re.search(r".*,([^,]*),0[Xx]([^L,]*).*0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^\)]*).*", mergedLine)
+            if match:
+              guid_string = f"{match.group(2).zfill(8)}-{match.group(3).zfill(4)}-{match.group(4).zfill(4)}-{match.group(5).zfill(2)}{match.group(6).zfill(2)}-{match.group(7).zfill(2)}{match.group(8).zfill(2)}{match.group(9).zfill(2)}{match.group(10).zfill(2)}{match.group(11).zfill(2)}{match.group(12).zfill(2)}"
+              guid_string = f"{guid_string.upper()} {match.group(1)}\n"
+              guids.append(guid_string)
+            else:
+              print(f"Invalid: {mergedLine}")
+          elif mergedLine.startswith("DECLARE_INTERFACE"):
+            match = re.search(r"^.*\(([^,]*)[^\"\']*[\"\']([^\"\']*).*", mergedLine)
+            if match:
+              guid_string = f"{match.group(2).upper()} {match.group(1)}\n"
+              guids.append(guid_string)
+            else:
+              print(f"Invalid: {mergedLine}")
+          elif mergedLine.startswith("#defineGUID_"):
+            match = re.search(r"#define\s*([^\s]*)\s*([^\s]*).*", stripped_line)
+            if match:
+              guid_string = f"{match.group(2).upper()} {match.group(1)}\n"
+              guids.append(guid_string)
+            else:
+              print(f"Invalid: {mergedLine}")
+          elif mergedLine.startswith("DEFINE_BLUETOOTH_UUID128"):
+            match = re.search(r".*\(([^,]*),([^\)]*).*", mergedLine)
+            if match:
+              defined = find_define(filename, match.group(2), codec)
+              guid_string = f"{defined.zfill(8).upper()}-0000-1000-8000-00805F9B34FB {match.group(1)}\n"
+              guids.append(guid_string)
+            else:
+              print(f"Invalid: {mergedLine}")
+          elif mergedLine.startswith("interfaceDECLSPEC_UUID"):
+            if not ":" in mergedLine:
+              continue # fetch one more line
+            match = re.search(r"^[^\"]*\"([^\"]*)[^\)]*\)(DECLSPEC_NOVTABLE)?([^;:]*).*", mergedLine)
+            if match:
+              guid_string = f"{match.group(1).upper()} {match.group(3)}\n"
+              guids.append(guid_string)
+            else:
+              match = re.search(r"^[^\"]*\"([^\"]*)[^\)]\)(.*);", mergedLine)
+              if match:
+                guid_string = f"{match.group(1).upper()} {match.group(2)}\n"
+                guids.append(guid_string)
+              else:
+                 print(f"Invalid: {mergedLine}")
+          elif mergedLine.startswith("DEFINE_MEDIATYPE_GUID"):
+            match = re.search(r"^.*\(([^,]*),0[Xx]([^L\)]*).*", mergedLine)
+            if match:
+              guid_string = f"{match.group(2).zfill(8).upper()}-0000-0010-8000-00AA00389B71 {match.group(1)}\n"
+              guids.append(guid_string)
+            else:
+              match = re.search(r"^.*\(([^,]*),FCC\([\"\']([^\"\']*).*", mergedLine)
+              if match:
+                guid_string = stoh(match.group(2)[::-1])
+                guid_string = f"{guid_string.zfill(8).upper()}-0000-0010-8000-00AA00389B71 {match.group(1)}\n"
+                guids.append(guid_string)
+              else:
+                match = re.search(r".*\(([^,]*),([^\)]*).*", mergedLine)
+                if match:
+                  defined = find_define(filename, match.group(2), codec)
+                  guid_string = f"{defined.zfill(8).upper()}-0000-1000-8000-00805F9B34FB {match.group(1)}\n"
+                  guids.append(guid_string)
+                else:
+                  print(f"Invalid: {mergedLine}")
+          elif mergedLine.startswith("DEFINE_BINARY_MEDIATYPE"):
+            match = re.search(r"^.*\(([^,]*),0[Xx]([^\)]*).*", mergedLine)
+            if match:
+              guid_string = f"{match.group(2).zfill(8).upper()}-BF10-48B4-BC18-593DC1DB950F {match.group(1)}\n"
+              guids.append(guid_string)
+            else:
+              match = re.search(r"^.*\(([^,]*),[\"\']([^\"\']*).*", mergedLine)
+              if match:
+                guid_string = stoh(match.group(2))
+                guid_string = f"{guid_string.zfill(8).upper()}-BF10-48B4-BC18-593DC1DB950F {match.group(1)}\n"
+                guids.append(guid_string)
+              else:
+                match = re.search(r"^.*\(([^,]*),([^\)]*).*", mergedLine)
+                if match:
+                  defined = find_define(filename, match.group(2), codec)
+                  guid_string = f"{defined.zfill(8).upper()}-BF10-48B4-BC18-593DC1DB950F {match.group(1)}\n"
+                  guids.append(guid_string)
+                else:
+                  print(f"Invalid: {mergedLine}")
+          elif mergedLine.startswith("DEFINE_AVIGUID"):
+            match = re.search(r"^.*\(([^,]*),0[Xx]([^,]*).*", mergedLine)
+            if match:
+              guid_string = f"{match.group(2).zfill(8).upper()}-0000-0000-C000-000000000046 {match.group(1)}\n"
+              guids.append(guid_string)
+            else:
+              print(f"Invalid: {mergedLine}")
+          elif mergedLine.startswith("EXTERN_GUID"):
+            match = re.search(r".*\(([^,]*).*0[Xx]([^L,]*).*0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^,]*),0[Xx]([^\)]*).*", mergedLine)
+            if match:
+              guid_string = f"{match.group(2).zfill(8)}-{match.group(3).zfill(4)}-{match.group(4).zfill(4)}-{match.group(5).zfill(2)}{match.group(6).zfill(2)}-{match.group(7).zfill(2)}{match.group(8).zfill(2)}{match.group(9).zfill(2)}{match.group(10).zfill(2)}{match.group(11).zfill(2)}{match.group(12).zfill(2)}"
+              guid_string = f"{guid_string.upper()} {match.group(1)}\n"
+              guids.append(guid_string)
+            else:
+              print(f"Invalid: {mergedLine}")
+          elif mergedLine.startswith("DEFINE_NWF_GUID"):
+            match = re.search(r".*\(([^,]*),([^\+]*)\+([^\)]*).*", mergedLine)
+            if match:
+              val = hex(int(match.group(2)) + int(match.group(3)) + 0x6cb9a43e).replace("0x", "").upper()
+              guid_string = f"{val}-C45F-4039-9FE6-D08CB057184C {match.group(1)}\n"
+              guids.append(guid_string)
+            else:
+              match = re.search(r".*\(([^,]*),([^\)]*).*", mergedLine)
+              if match:
+                val = hex(int(match.group(2)) + 0x6cb9a43e).replace("0x", "").upper()
+                guid_string = f"{val}-C45F-4039-9FE6-D08CB057184C {match.group(1)}\n"
+                guids.append(guid_string)
+              else:
+                print(f"Invalid: {mergedLine}")
+          elif mergedLine.startswith("DEFINE_CODECAPI_GUID"):
+            if not "(" in mergedLine[20]:
+              mergedLine = ""
+              continue
+            match = re.search(r"^.*\(([^,]*),[\'\"]([^\'\"]*)[\'\"],.*", mergedLine)
+            if match:
+              guid_string = f"{match.group(2).upper()} CODECAPI_{match.group(1)}\n"
+              guids.append(guid_string)
+            else:
+              print(f"Invalid: {mergedLine}")
+          elif mergedLine.startswith("DEFINE_DAOGUID"):
+            match = re.search(r"^.*\(([^,]*),0[Xx]([^\)]*).*", mergedLine)
+            if match:
+              guid_string = f"{match.group(2).upper()}-0000-0010-8000-00AA006D2EA4 {match.group(1)}\n"
+              guids.append(guid_string)
+            else:
+              print(f"Invalid: {mergedLine}")
+          elif re.search(r"^#define.*GUID_BUILDER\(", mergedLine):
+            match = re.search(r".*\(([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^\)]*).*", mergedLine)
+            if match:
+              guid_string = f"{match.group(2).zfill(8)}-{match.group(3).zfill(4)}-{match.group(4).zfill(4)}-{match.group(5).zfill(2)}{match.group(6).zfill(2)}-{match.group(7).zfill(2)}{match.group(8).zfill(2)}{match.group(9).zfill(2)}{match.group(10).zfill(2)}{match.group(11).zfill(2)}{match.group(12).zfill(2)}"
+              guid_string = f"{guid_string.upper()} {match.group(1)}\n"
+              guids.append(guid_string)
+            else:
+              print(f"Invalid: {mergedLine}")
+
+          guid_string = ""
+          mergedLine = ""  # Reset mergedLine for the next definition
+
+  except FileNotFoundError:
+    print(f"Error: File '{filename}' not found.")
+
+  return guids
+
+# Example usage
+
+def find_files(rootdir):
+    files = []
+    for dirpath, dirnames, filenames in os.walk(rootdir):
+        for filename in filenames:
+            files.append(os.path.join(dirpath, filename))
+    return files
+
+def is_binary_file(filename):
+    """
+    Checks if the given file is binary.
+
+    Args:
+        filename: The path to the file.
+
+    Returns:
+        True if the file is binary, False otherwise.
+    """
+    try:
+        with open(filename, 'r', encoding='utf-8') as f:
+            f.read()
+            return False  # If no UnicodeDecodeError, it's likely text
+    except UnicodeDecodeError:
+        return True  # If UnicodeDecodeError, it's likely binary
+
+#rootdirectory = "/tmp/Include"
+rootdirectory = "/tmp/Windows Kits"
+outfile = "/tmp/guids-export.txt"
+
+all_files = []
+if os.path.isfile(rootdirectory):
+    all_files.append(rootdirectory)
+else:
+    all_files = find_files(rootdirectory)
+all_guids = []
+for file in all_files:
+#  print(f"Processing {file}")
+  if is_binary_file(file):
+#    print(f"Skipping {file}")
+    continue
+  found_guids = find_guid_definitions(file)
+  all_guids += found_guids
+
+if all_guids:
+  all_guids.sort()
+  print(f"Found {len(all_guids)} GUID definition:")
+  with open(outfile, 'w', encoding='utf-8') as file:
+    file.writelines(all_guids)
+else:
+  print(f"No GUID definitions found.")
