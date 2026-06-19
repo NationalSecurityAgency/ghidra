@@ -515,6 +515,40 @@ public class CppExporter extends ProgramExporter {
 //==================================================================================================
 
 	/**
+	 * Builds a C-style variable declaration string, correctly placing array dimensions
+	 * after the variable name rather than as part of the type prefix.
+	 * <p>
+	 * For example, a {@code byte[32]} type with name {@code "buf"} produces
+	 * {@code "byte buf[32]"} rather than {@code "byte[32] buf"}.
+	 *
+	 * @param dataType the variable's data type (may be an array type)
+	 * @param name the (already sanitized) variable name
+	 * @return declaration in C form, without a trailing semicolon
+	 */
+	private static String buildGlobalDeclaration(DataType dataType, String name) {
+		StringBuilder dims = new StringBuilder();
+		DataType base = dataType;
+		while (base instanceof Array arr) {
+			dims.append("[").append(arr.getNumElements()).append("]");
+			base = arr.getDataType();
+		}
+		String typeName = base.getDisplayName();
+		String space = typeName.endsWith("*") ? "" : " ";
+		return typeName + space + name + dims;
+	}
+
+	/**
+	 * Returns a valid C identifier by replacing any character that is not a letter,
+	 * digit, or underscore with an underscore.
+	 *
+	 * @param name the original symbol name
+	 * @return a valid C identifier
+	 */
+	private static String sanitizeCIdentifier(String name) {
+		return name.replaceAll("[^A-Za-z0-9_]", "_");
+	}
+
+	/**
 	 * Builds a C initializer expression for the given data item.
 	 * <p>
 	 * Returns a string suitable for use as a C initializer (e.g., {@code 0x42},
@@ -712,26 +746,36 @@ public class CppExporter extends ProgramExporter {
 			List<GlobalDecl> globals =
 				CollectionUtils.asStream(dr.getHighFunction().getGlobalSymbolMap().getSymbols())
 						.map(hsym -> {
-							String dt = hsym.getDataType().getDisplayName();
 							String name = hsym.getName();
-							String space = dt.endsWith("*") ? "" : " ";
+							String sanitizedName = sanitizeCIdentifier(name);
 
 							VariableStorage storage = hsym.getStorage();
 							Address symAddr = (storage != null && storage.isMemoryStorage())
 									? storage.getMinAddress()
 									: null;
 
+							String declBase =
+								buildGlobalDeclaration(hsym.getDataType(), sanitizedName);
+
 							String declaration;
 							if (emitGlobalData && symAddr != null) {
 								Data data = prog.getListing().getDataAt(symAddr);
 								String initializer = buildDataInitializer(data);
 								declaration = initializer != null
-										? "%s%s%s = %s;".formatted(dt, space, name, initializer)
-										: "%s%s%s;".formatted(dt, space, name);
+										? declBase + " = " + initializer + ";"
+										: declBase + ";";
 							}
 							else {
-								declaration = "%s%s%s;".formatted(dt, space, name);
+								declaration = declBase + ";";
 							}
+
+							if (!sanitizedName.equals(name)) {
+								String comment = isUseCppStyleComments
+										? " // " + name
+										: " /* " + name + " */";
+								declaration += comment;
+							}
+
 							return new GlobalDecl(symAddr, declaration);
 						})
 						.toList();
