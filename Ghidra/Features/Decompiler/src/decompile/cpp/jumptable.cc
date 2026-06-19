@@ -513,11 +513,11 @@ uintb JumpBasic::backup2Switch(Funcdata *fd,uintb output,Varnode *outvn,Varnode 
 /// values.
 /// \param vn is the given Varnode
 /// \return one more than the largest value the varnode can take or 0
-uintb JumpBasic::getMaxValue(Varnode *vn)
+uintb JumpBasic::getMaxValue(Varnode *vn, int depth = 0)
 
 {
   uintb maxValue = 0;		// 0 indicates maximum possible value
-  if (!vn->isWritten())
+  if ((depth > 10) || !vn->isWritten())
     return maxValue;
   PcodeOp *op = vn->getDef();
   if (op->code() == CPUI_INT_AND) {
@@ -536,7 +536,7 @@ uintb JumpBasic::getMaxValue(Varnode *vn)
     int4 i;
     for(i=0;i<op->numInput();++i) {
       Varnode *subvn = op->getIn(i);
-      uintb submax = getMaxValue(subvn);
+      uintb submax = getMaxValue(subvn, depth + 1);
       if (submax == 0) {	// One of the inputs cannot be constrained -> the output cannot be constrained either
 	maxValue = 0;
 	break;
