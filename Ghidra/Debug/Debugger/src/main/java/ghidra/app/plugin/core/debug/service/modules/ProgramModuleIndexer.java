@@ -177,6 +177,7 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 	private final Project project;
 	private final ProjectData projectData;
 	private volatile boolean disposed;
+	private volatile boolean indexed = false;
 
 	private final Map<Program, ModuleChangeListener> openedForUpdate = new HashMap<>();
 	private final ModuleIndex index = new ModuleIndex();
@@ -185,8 +186,18 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 		this.project = tool.getProject();
 		this.projectData = tool.getProject().getProjectData();
 		this.projectData.addDomainFolderChangeListener(this);
+	}
 
-		indexFolder(projectData.getRootFolder());
+	private void ensureIndexed() {
+		if (indexed) {
+			return;
+		}
+		synchronized (this) {
+			if (!indexed) {
+				indexFolder(projectData.getRootFolder());
+				indexed = true;
+			}
+		}
 	}
 
 	void dispose() {
@@ -395,6 +406,7 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 	}
 
 	public List<IndexEntry> getBestEntries(TraceModule module, long snap) {
+		ensureIndexed();
 		String modulePathName = module.getName(snap).toLowerCase();
 		List<IndexEntry> entries = new ArrayList<>(index.getByName(modulePathName));
 		if (!entries.isEmpty()) {
