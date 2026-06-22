@@ -68,7 +68,7 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 			}
 		}
 		Varnode vn = tokenAtCursor.getVarnode();
-		if (vn != null) {
+		if (vn != null && vn.getHigh() != null) {
 			DataType dt = vn.getHigh().getDataType();
 			if (dt instanceof TypeDef) {
 				dt = ((TypeDef) dt).getBaseDataType();
