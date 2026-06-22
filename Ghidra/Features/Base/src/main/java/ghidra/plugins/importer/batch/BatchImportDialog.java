@@ -40,15 +40,18 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.table.*;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.services.ProgramManager;
+import ghidra.app.util.opinion.LoadSpec;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
+import ghidra.plugin.importer.ImporterLanguageDialog;
 import ghidra.plugin.importer.ImporterUtilities;
 import ghidra.plugins.importer.batch.BatchGroup.BatchLoadConfig;
 import ghidra.plugins.importer.tasks.ImportBatchTask;
+import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.util.*;
 import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.task.TaskLauncher;
@@ -76,7 +79,8 @@ public class BatchImportDialog extends DialogComponentProvider {
 	 */
 	public static void showAndImport(PluginTool tool, BatchInfo batchInfo, List<FSRL> initialFiles,
 			DomainFolder defaultFolder, ProgramManager programManager) {
-		BatchImportDialog dialog = new BatchImportDialog(batchInfo, defaultFolder, programManager);
+		BatchImportDialog dialog =
+			new BatchImportDialog(batchInfo, defaultFolder, programManager, tool);
 		Swing.runLater(() -> {
 			if (initialFiles != null && !initialFiles.isEmpty()) {
 				dialog.addSources(initialFiles);
@@ -91,6 +95,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 	private BatchInfo batchInfo;
 	private DomainFolder destinationFolder;
 	private ProgramManager programManager;
+	private PluginTool tool;
 	private boolean stripLeading = getBooleanPref(PREF_STRIPLEADING, true);
 	private boolean stripContainer = getBooleanPref(PREF_STRIPCONTAINER, false);
 	private boolean mirrorFs = getBooleanPref(PREF_MIRRORFS, false);
@@ -109,13 +114,14 @@ public class BatchImportDialog extends DialogComponentProvider {
 	private SourcesListModel sourceListModel;
 
 	private BatchImportDialog(BatchInfo batchInfo, DomainFolder defaultFolder,
-			ProgramManager programManager) {
+			ProgramManager programManager, PluginTool tool) {
 		super("Batch Import", true);
 
 		this.batchInfo = (batchInfo != null) ? batchInfo : new BatchInfo();
 		this.destinationFolder = defaultFolder != null ? defaultFolder
 				: AppInfo.getActiveProject().getProjectData().getRootFolder();
 		this.programManager = programManager;
+		this.tool = tool;
 
 		setHelpLocation(new HelpLocation("ImporterPlugin", "Batch_Import_Dialog"));
 
@@ -150,6 +156,9 @@ public class BatchImportDialog extends DialogComponentProvider {
 				if (modelIndex == BatchImportTableModel.COLS.FILES.ordinal()) {
 					showFiles(row);
 				}
+				else if (modelIndex == BatchImportTableModel.COLS.LANG.ordinal()) {
+					showLanguages(row);
+				}
 			}
 		});
 
@@ -171,7 +180,6 @@ public class BatchImportDialog extends DialogComponentProvider {
 
 		TableColumn langColumn =
 			table.getColumnModel().getColumn(BatchImportTableModel.COLS.LANG.ordinal());
-		langColumn.setCellEditor(createLangColumnCellEditor());
 		langColumn.setCellRenderer(createLangColumnCellRenderer());
 
 		JScrollPane scrollPane = new JScrollPane(table);
@@ -377,18 +385,45 @@ public class BatchImportDialog extends DialogComponentProvider {
 		BatchGroup group = tableModel.getRowObject(row);
 		List<BatchLoadConfig> batchLoadConfigs = group.getBatchLoadConfig();
 
-		//@formatter:off		
 		List<String> names = batchLoadConfigs.stream()
-			.map(batchLoadConfig -> batchLoadConfig.getPreferredFileName())
-			.sorted()
-			.collect(Collectors.toList())
-			;
-		//@formatter:on
+				.map(batchLoadConfig -> batchLoadConfig.getPreferredFileName())
+				.sorted()
+				.collect(Collectors.toList());
 
 		ListSelectionTableDialog<String> dialog =
 			new ListSelectionTableDialog<>("Application Files", names);
 		dialog.hideOkButton();
 		dialog.showSelectMultiple(table);
+	}
+
+	private void showLanguages(int row) {
+
+		BatchGroup group = tableModel.getRowObject(row);
+		List<BatchLoadConfig> batchLoadConfigs = group.getBatchLoadConfig();
+
+		List<LoadSpec> loadSpecs = batchLoadConfigs.stream()
+				.flatMap(entry -> entry.getLoadSpecs().stream())
+				.distinct()
+				.collect(Collectors.toList());
+
+		BatchGroupLoadSpec selectedLoadSpec = group.getSelectedBatchGroupLoadSpec();
+		ImporterLanguageDialog dialog =
+			new ImporterLanguageDialog(loadSpecs, tool, selectedLoadSpec.lcsPair());
+		dialog.show(getComponent());
+		LanguageCompilerSpecPair dialogResult = dialog.getSelectedLanguage();
+		if (dialogResult != null) {
+			for (BatchLoadConfig loadConfig : batchLoadConfigs) {
+				for (LoadSpec loadSpec : loadConfig.getLoadSpecs()) {
+					if (dialogResult.equals(loadSpec.getLanguageCompilerSpec())) {
+						tableModel.setValueAt(new BatchGroupLoadSpec(loadSpec), row,
+							BatchImportTableModel.COLS.LANG.ordinal());
+						return;
+					}
+				}
+			}
+			tableModel.setValueAt(new BatchGroupLoadSpec(dialogResult, false), row,
+				BatchImportTableModel.COLS.LANG.ordinal());
+		}
 	}
 
 	private void setOpenAfterImporting(boolean b) {
@@ -534,30 +569,6 @@ public class BatchImportDialog extends DialogComponentProvider {
 		return cellRenderer;
 	}
 
-	private TableCellEditor createLangColumnCellEditor() {
-		JComboBox<Object> comboBox = new GComboBox<>();
-		DefaultCellEditor cellEditor = new DefaultCellEditor(comboBox) {
-			@Override
-			public boolean shouldSelectCell(EventObject anEvent) {
-				return false;
-			}
-
-			@Override
-			public Component getTableCellEditorComponent(JTable jtable, Object value,
-					boolean isSelected, int row, int column) {
-				comboBox.removeAllItems();
-				BatchGroup batchGroup = tableModel.getRowObject(row);
-				for (BatchGroupLoadSpec bo : batchGroup.getCriteria().getBatchGroupLoadSpecs()) {
-					comboBox.addItem(bo);
-				}
-
-				return super.getTableCellEditorComponent(jtable, value, isSelected, row, column);
-			}
-		};
-
-		return cellEditor;
-	}
-
 	private TableCellRenderer createLangColumnCellRenderer() {
 		TableCellRenderer cellRenderer = new GTableCellRenderer() {
 			{
@@ -579,7 +590,6 @@ public class BatchImportDialog extends DialogComponentProvider {
 							"\">Click to set language</font>";
 			}
 		};
-
 		return cellRenderer;
 	}
 
