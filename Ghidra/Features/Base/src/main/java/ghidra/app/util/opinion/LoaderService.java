@@ -58,10 +58,13 @@ public class LoaderService {
 			}
 		}
 
-		if (loaderMap.size() <= 1) { // BinaryLoader is always there
-			for (Loader loader : fallback) {
-				tryLoadSpecs(loader, provider, loaderMap);
-			}
+		// Only try fallback loaders if no other loaders matched (ignoring the BinaryLoader)
+		boolean matches = loaderMap.keySet()
+				.stream()
+				.map(Loader::getName)
+				.anyMatch(Predicate.not(BinaryLoader.BINARY_NAME::equals));
+		if (!matches) {
+			fallback.forEach(loader -> tryLoadSpecs(loader, provider, loaderMap));
 		}
 
 		return loaderMap;
