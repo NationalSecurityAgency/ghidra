@@ -2318,7 +2318,7 @@ int4 ActionReturnSplit::apply(Funcdata &data)
     count += 1;
 #ifdef BLOCKCONSISTENT_DEBUG
     if (!data.getBasicBlocks().isConsistent())
-      data.getArch()->printMessage("Block structure is not consistent");
+      data.getArch()->printWarning("Block structure is not consistent");
 #endif
   }
   return 0;

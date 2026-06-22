@@ -1598,7 +1598,7 @@ Symbol *Scope::addMapSym(Decoder &decoder)
     SymbolEntry entry(sym);
     entry.decode(decoder);
     if (entry.isInvalid()) {
-      glb->printMessage("WARNING: Throwing out symbol with invalid mapping: "+sym->getName());
+      glb->printWarning("Throwing out symbol with invalid mapping: "+sym->getName());
       removeSymbol(sym);
       decoder.closeElement(elemId);
       return (Symbol *)0;
@@ -1623,9 +1623,9 @@ FunctionSymbol *Scope::addFunction(const Address &addr,const string &nm)
 
   SymbolEntry *overlap = queryContainer(addr,1,Address());
   if (overlap != (SymbolEntry *)0) {
-    string errmsg = "WARNING: Function "+name;
+    string errmsg = "Function "+nm;
     errmsg += " overlaps object: "+overlap->getSymbol()->getName();
-    glb->printMessage(errmsg);
+    glb->printWarning(errmsg);
   }
   sym = new FunctionSymbol(owner,nm,glb->min_funcsymbol_size);
   addSymbolInternal(sym);
@@ -1672,9 +1672,12 @@ LabSymbol *Scope::addCodeLabel(const Address &addr,const string &nm)
 
   SymbolEntry *overlap = queryContainer(addr,1,addr);
   if (overlap != (SymbolEntry *)0) {
-    string errmsg = "WARNING: Codelabel "+nm;
-    errmsg += " overlaps object: "+overlap->getSymbol()->getName();
-    glb->printMessage(errmsg);
+    FunctionSymbol *funcsym = dynamic_cast<FunctionSymbol *>(overlap->getSymbol());
+    if (funcsym == (FunctionSymbol *)0) {	// Overlapping with something that isn't a function body
+      string errmsg = "Codelabel "+nm;
+      errmsg += " overlaps object: "+overlap->getSymbol()->getName();
+      glb->printWarning(errmsg);
+    }
   }
   sym = new LabSymbol(owner,nm);
   addSymbolInternal(sym);

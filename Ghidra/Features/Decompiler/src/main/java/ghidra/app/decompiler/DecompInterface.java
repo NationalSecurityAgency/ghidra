@@ -129,9 +129,7 @@ public class DecompInterface {
 	protected Program program;
 	private SleighLanguage pcodelanguage;
 	private PcodeDataTypeManager dtmanage;
-	// Last warning messages from the decompiler
-	// or other error message
-	protected String decompileMessage;
+	protected String errorMessage;					// Last error causing decompilation to fail
 	protected CompilerSpec compilerSpec;
 	protected DecompileProcess decompProcess;
 	protected DecompileCallback decompCallback;
@@ -166,7 +164,7 @@ public class DecompInterface {
 		baseEncodingSet = null;
 		overlayEncodingSet = null;
 		debug = null;
-		decompileMessage = "";
+		errorMessage = "";
 		compilerSpec = null;
 		actionname = "decompile";
 		printSyntaxTree = true;
@@ -222,16 +220,14 @@ public class DecompInterface {
 	 * @return the message string or null
 	 */
 	public String getLastMessage() {
-		return decompileMessage;
+		return errorMessage;
 	}
 
-	private boolean isErrorMessage() {
-		if (decompileMessage == null || decompileMessage.length() == 0) {
-			return false;
-		}
-
-		// do not count warning messages as error messages
-		if (decompileMessage.toLowerCase().indexOf("warning") != -1) {
+	/**
+	 * @return true if there was an error during the last action on this interface
+	 */
+	private boolean isError() {
+		if (errorMessage == null || errorMessage.length() == 0) {
 			return false;
 		}
 
@@ -285,10 +281,10 @@ public class DecompInterface {
 		String cspecxml = xmlEncode.toString();
 		baseEncodingSet = new EncodeDecodeSet(program);
 
-		decompCallback.setNativeMessage(null);
+		decompCallback.setErrorMessage("");
 		decompProcess.registerProgram(decompCallback, pspecxml, cspecxml, tspec, coretypes,
 			program);
-		String nativeMessage = decompCallback.getNativeMessage();
+		String nativeMessage = decompCallback.getErrorMessage();
 		if ((nativeMessage != null) && (nativeMessage.length() != 0)) {
 			throw new IOException("Could not register program: " + nativeMessage);
 		}
@@ -339,11 +335,11 @@ public class DecompInterface {
 			decompProcess.sendCommand1Param("setSignatureSettings", Integer.toString(sigSettings),
 				stringResponse);
 			if (stringResponse.isEmpty()) {
-				if (decompCallback.getNativeMessage().startsWith("Bad command")) {
+				if (decompCallback.getErrorMessage().startsWith("Bad command")) {
 					throw new DecompileException("Decompiler",
 						"Decompiler executable not built with signature module");
 				}
-				throw new DecompileException("Decompiler", decompCallback.getNativeMessage());
+				throw new DecompileException("Decompiler", decompCallback.getErrorMessage());
 			}
 			if (!stringResponse.toString().equals("t")) {
 				throw new IOException("Could not set signature settings");
@@ -375,18 +371,17 @@ public class DecompInterface {
 	 * @return true if the decompiler process is successfully initialized
 	 */
 	public synchronized boolean openProgram(Program prog) {
-		decompileMessage = "";
+		errorMessage = "";
 		program = prog;
 		Language lang = prog.getLanguage();
 		if (!lang.supportsPcode()) {
-			decompileMessage = "Language does not support PCode.";
+			errorMessage = "Language does not support PCode.";
 			return false;
 		}
 		pcodelanguage = (SleighLanguage) lang;
 		CompilerSpec spec = prog.getCompilerSpec();
 		if (!(spec instanceof BasicCompilerSpec)) {
-			decompileMessage =
-				"Language has unsupported compiler spec: " + spec.getClass().getName();
+			errorMessage = "Language has unsupported compiler spec: " + spec.getClass().getName();
 			return false;
 		}
 		compilerSpec = spec;
@@ -401,13 +396,13 @@ public class DecompInterface {
 			if (!decompProcess.isReady()) {
 				throw new IOException("Unable to start decompiler process");
 			}
-			decompileMessage = decompCallback.getNativeMessage();
-			if (!isErrorMessage()) {
+			errorMessage = decompCallback.getErrorMessage();
+			if (!isError()) {
 				return true;
 			}
 		}
 		catch (Exception ex) {
-			decompileMessage = ex.getMessage();
+			errorMessage = ex.getMessage();
 			if (decompProcess == null) {
 				return false;
 			}
@@ -427,7 +422,7 @@ public class DecompInterface {
 	 * is made again.
 	 */
 	public synchronized void closeProgram() {
-		decompileMessage = "";
+		errorMessage = "";
 		if (program != null) {
 			program = null;
 			decompCallback = null;
@@ -668,7 +663,7 @@ public class DecompInterface {
 		if (dtmanage != null) {
 			dtmanage.setNameTransformer(options.getNameTransformer());
 		}
-		decompileMessage = "";
+		errorMessage = "";
 		// Property can be set before process exists
 		if (decompProcess == null) {
 			return true;
@@ -731,7 +726,7 @@ public class DecompInterface {
 
 	public synchronized BlockGraph structureGraph(BlockGraph ingraph, int timeoutSecs,
 			TaskMonitor monitor) {
-		decompileMessage = "";
+		errorMessage = "";
 		if (monitor != null && monitor.isCancelled()) {
 			return null;
 		}
@@ -745,7 +740,7 @@ public class DecompInterface {
 			baseEncodingSet.mainQuery.clear();
 			ingraph.encode(baseEncodingSet.mainQuery);
 			decompProcess.sendCommandTimeout("structureGraph", timeoutSecs, baseEncodingSet);
-			decompileMessage = decompCallback.getNativeMessage();
+			errorMessage = decompCallback.getErrorMessage();
 			if (!baseEncodingSet.mainResponse.isEmpty()) {
 				resgraph = new BlockGraph();
 				resgraph.decode(baseEncodingSet.mainResponse);
@@ -753,7 +748,7 @@ public class DecompInterface {
 			}
 		}
 		catch (Exception ex) {
-			decompileMessage = "Exception while graph structuring: " + ex.getMessage() + '\n';
+			errorMessage = "Exception while graph structuring: " + ex.getMessage() + '\n';
 		}
 		finally {
 			if (monitor != null) {
@@ -775,11 +770,11 @@ public class DecompInterface {
 			TaskMonitor monitor) {
 
 		dtmanage.clearTemporaryIds();
-		decompileMessage = "";
+		errorMessage = "";
 
 		if (program == null || (monitor != null && monitor.isCancelled())) {
 			return new DecompileResults(func, pcodelanguage, compilerSpec, dtmanage,
-				decompileMessage, null, DecompileProcess.DisposeState.DISPOSED_ON_CANCEL);
+				errorMessage, null, DecompileProcess.DisposeState.DISPOSED_ON_CANCEL);
 		}
 
 		if (monitor != null) {
@@ -799,11 +794,11 @@ public class DecompInterface {
 			activeSet.mainQuery.clear();
 			AddressXML.encode(activeSet.mainQuery, funcEntry);
 			decompProcess.sendCommandTimeout("decompileAt", timeoutSecs, activeSet);
-			decompileMessage = decompCallback.getNativeMessage();
+			errorMessage = decompCallback.getErrorMessage();
 		}
 		catch (Exception ex) {
 			decoder.clear(); 	// Clear any partial result
-			decompileMessage = "Exception while decompiling " + func.getEntryPoint() + ": " +
+			errorMessage = "Exception while decompiling " + func.getEntryPoint() + ": " +
 				ex.getMessage() + '\n';
 		}
 		finally {
@@ -834,7 +829,7 @@ public class DecompInterface {
 			processState = DecompileProcess.DisposeState.DISPOSED_ON_CANCEL;
 		}
 
-		return new DecompileResults(func, pcodelanguage, compilerSpec, dtmanage, decompileMessage,
+		return new DecompileResults(func, pcodelanguage, compilerSpec, dtmanage, errorMessage,
 			decoder, processState);
 	}
 
@@ -861,7 +856,7 @@ public class DecompInterface {
 			initializeProcess();
 		}
 		catch (IOException | DecompileException e) {
-			decompileMessage = "Exception while resetting decompiler: " + e.getMessage() + "\n";
+			errorMessage = "Exception while resetting decompiler: " + e.getMessage() + "\n";
 		}
 	}
 
@@ -939,10 +934,10 @@ public class DecompInterface {
 		try {
 			verifyProcess();
 			decompProcess.sendCommand("getSignatureSettings", baseEncodingSet.mainResponse);
-			decompileMessage = decompCallback.getNativeMessage();
+			errorMessage = decompCallback.getErrorMessage();
 		}
 		catch (Exception e) {
-			decompileMessage = "Exception while retrieving settings: " + e.getMessage() + '\n';
+			errorMessage = "Exception while retrieving settings: " + e.getMessage() + '\n';
 		}
 		// flushCache();   // We don't need to flush the cache
 		if (!baseEncodingSet.mainResponse.isEmpty()) {
@@ -950,7 +945,7 @@ public class DecompInterface {
 				decodeVersionNumber(baseEncodingSet.mainResponse);
 			}
 			catch (Exception e) {
-				decompileMessage = "Exception while parsing signatures: " + e.getMessage() + '\n';
+				errorMessage = "Exception while parsing signatures: " + e.getMessage() + '\n';
 			}
 		}
 	}
@@ -1024,7 +1019,7 @@ public class DecompInterface {
 	public synchronized SignatureResult generateSignatures(Function func, boolean keepcalllist,
 			int timeoutSecs, TaskMonitor monitor) {
 
-		decompileMessage = "";
+		errorMessage = "";
 		if (monitor != null && monitor.isCancelled()) {
 			return null;
 		}
@@ -1042,10 +1037,10 @@ public class DecompInterface {
 			activeSet.mainQuery.clear();
 			AddressXML.encode(activeSet.mainQuery, funcEntry);
 			decompProcess.sendCommandTimeout("generateSignatures", timeoutSecs, activeSet);
-			decompileMessage = decompCallback.getNativeMessage();
+			errorMessage = decompCallback.getErrorMessage();
 		}
 		catch (Exception ex) {
-			decompileMessage = "Exception while generating signatures: " + ex.getMessage() + '\n';
+			errorMessage = "Exception while generating signatures: " + ex.getMessage() + '\n';
 		}
 		finally {
 			if (monitor != null) {
@@ -1058,7 +1053,7 @@ public class DecompInterface {
 				return SignatureResult.decode(decoder, func, keepcalllist);
 			}
 			catch (DecoderException e) {		// Error walking the DOM
-				decompileMessage = "Exception while parsing signatures: " + e.getMessage() + '\n';
+				errorMessage = "Exception while parsing signatures: " + e.getMessage() + '\n';
 			}
 		}
 		return null;
@@ -1076,7 +1071,7 @@ public class DecompInterface {
 	 */
 	public synchronized ArrayList<DebugSignature> debugSignatures(Function func, int timeoutSecs,
 			TaskMonitor monitor) {
-		decompileMessage = "";
+		errorMessage = "";
 		if (monitor != null && monitor.isCancelled()) {
 			return null;
 		}
@@ -1094,10 +1089,10 @@ public class DecompInterface {
 			activeSet.mainQuery.clear();
 			AddressXML.encode(activeSet.mainQuery, funcEntry);
 			decompProcess.sendCommandTimeout("debugSignatures", timeoutSecs, activeSet);
-			decompileMessage = decompCallback.getNativeMessage();
+			errorMessage = decompCallback.getErrorMessage();
 		}
 		catch (Exception ex) {
-			decompileMessage = "Exception while debugging signatures: " + ex.getMessage() + '\n';
+			errorMessage = "Exception while debugging signatures: " + ex.getMessage() + '\n';
 		}
 		finally {
 			if (monitor != null) {
@@ -1110,11 +1105,10 @@ public class DecompInterface {
 				return DebugSignature.decodeSignatures(decoder, func);
 			}
 			catch (DecoderException e) {
-				decompileMessage = "Exception while debugging signatures: " + e.getMessage() + '\n';
+				errorMessage = "Exception while debugging signatures: " + e.getMessage() + '\n';
 			}
 			catch (Exception e) {			// Error with the underlying stream
-				decompileMessage =
-					"Error in stream describing signatures: " + e.getMessage() + '\n';
+				errorMessage = "Error in stream describing signatures: " + e.getMessage() + '\n';
 			}
 		}
 		return null;
