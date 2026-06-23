@@ -269,8 +269,10 @@ AddrSpace *AddrSpaceManager::decodeSpace(Decoder &decoder,const Translate *trans
     res.reset(new OtherSpace(this,trans));
   else if (elemId == ELEM_SPACE_OVERLAY)
     res.reset(new OverlaySpace(this,trans));
-  else
+  else if (elemId == ELEM_SPACE)
     res.reset(new AddrSpace(this,trans,IPTR_PROCESSOR));
+  else
+    throw LowlevelError("Invalid address space element");
 
   res->decode(decoder);
   return res.release();
