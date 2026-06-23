@@ -89,7 +89,7 @@ public abstract class AbstractDBTraceSymbolSingleTypeWithLocationView<T extends 
 		}
 
 		@Override
-		protected void loadRangeCache(TraceAddressSnapRange range) {
+		protected synchronized void loadRangeCache(TraceAddressSnapRange range) {
 			rangeCache.clear();
 			DBTraceAddressSnapRangePropertyMapSpace<Long, DBTraceSymbolIDEntry> idSpace =
 				manager.idMap.getForSpace(range.getRange().getAddressSpace(), false);
@@ -116,7 +116,7 @@ public abstract class AbstractDBTraceSymbolSingleTypeWithLocationView<T extends 
 		}
 
 		@Override
-		protected Collection<? extends T> doGetContaining(GetSymbolsKey key) {
+		protected synchronized Collection<? extends T> doGetContaining(GetSymbolsKey key) {
 			if (key.thread != null) {
 				List<T> result =
 					new ArrayList<>(getIntersecting(Lifespan.at(key.snap),

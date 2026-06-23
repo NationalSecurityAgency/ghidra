@@ -22,10 +22,10 @@ import java.util.function.Consumer;
 import db.DBRecord;
 import db.Field;
 import ghidra.docking.settings.Settings;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.util.Lock.Closeable;
 
 /**
  * Database implementation for the Union data type.
@@ -40,17 +40,14 @@ class UnionDB extends CompositeDB implements UnionInternal {
 
 	/**
 	 * Constructor
-	 * 
-	 * @param dataMgr
-	 * @param cache
-	 * @param compositeAdapter
-	 * @param componentAdapter
-	 * @param record
+	 * @param dataMgr the datatypes manager
+	 * @param compositeAdapter the composites database adapter
+	 * @param componentAdapter the components database adapter
+	 * @param record the record for the union
 	 */
-	public UnionDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
-			CompositeDBAdapter compositeAdapter, ComponentDBAdapter componentAdapter,
-			DBRecord record) {
-		super(dataMgr, cache, compositeAdapter, componentAdapter, record);
+	UnionDB(DataTypeManagerDB dataMgr, CompositeDBAdapter compositeAdapter,
+			ComponentDBAdapter componentAdapter, DBRecord record) {
+		super(dataMgr, compositeAdapter, componentAdapter, record);
 	}
 
 	@Override
@@ -87,8 +84,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 	@Override
 	public DataTypeComponent add(DataType dataType, int length, String componentName,
 			String comment) throws IllegalArgumentException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			getComputedAlignment(true); // ensure previous alignment has been stored
 			DataTypeComponent dtc = doAdd(dataType, length, componentName, comment, true);
@@ -99,9 +95,6 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		}
 		catch (DataTypeDependencyException e) {
 			throw new IllegalArgumentException(e.getMessage(), e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -151,8 +144,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 	@Override
 	public DataTypeComponent insert(int ordinal, DataType dataType, int length, String name,
 			String comment) throws IllegalArgumentException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			dataType = validateDataType(dataType);
 
@@ -179,9 +171,6 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		catch (DataTypeDependencyException e) {
 			throw new IllegalArgumentException(e.getMessage(), e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
@@ -205,8 +194,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 
 	@Override
 	public void delete(int ordinal) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 
 			getComputedAlignment(true); // ensure previous alignment has been stored
@@ -223,9 +211,6 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		catch (IOException e) {
 			dataMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
@@ -240,8 +225,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			return;
 		}
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 
 			if (isPackingEnabled()) {
@@ -292,9 +276,6 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		catch (IOException e) {
 			dataMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
@@ -302,9 +283,9 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		if (!(dataType instanceof UnionInternal)) {
 			throw new IllegalArgumentException();
 		}
-		lock.acquire();
-		boolean isResolveCacheOwner = dataMgr.activateResolveCache();
-		try {
+		boolean isResolveCacheOwner = false;
+		try (Closeable c = lock.write()) {
+			isResolveCacheOwner = dataMgr.activateResolveCache();
 			checkDeleted();
 			doReplaceWith((UnionInternal) dataType, true);
 		}
@@ -318,7 +299,6 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			if (isResolveCacheOwner) {
 				dataMgr.processResolveQueue(true);
 			}
-			lock.release();
 		}
 	}
 
@@ -375,9 +355,8 @@ class UnionDB extends CompositeDB implements UnionInternal {
 
 	@Override
 	public boolean isPartOf(DataType dataType) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (equals(dataType)) {
 				return true;
 			}
@@ -394,20 +373,13 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			}
 			return false;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public int getNumComponents() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return components.size();
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -418,28 +390,20 @@ class UnionDB extends CompositeDB implements UnionInternal {
 
 	@Override
 	public DataTypeComponentDB getComponent(int ordinal) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (ordinal < 0 || ordinal >= components.size()) {
 				return null;
 			}
 			return components.get(ordinal);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public DataTypeComponentDB[] getComponents() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return components.toArray(new DataTypeComponentDB[components.size()]);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -480,16 +444,12 @@ class UnionDB extends CompositeDB implements UnionInternal {
 
 	@Override
 	public int getLength() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (unionLength == 0) {
 				return 1; // positive length required
 			}
 			return unionLength;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -532,15 +492,14 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		if (deleting) {
 			return;
 		}
-		lock.acquire();
-		try {
+		if (dt instanceof BitFieldDataType) {
+			return; // unsupported
+		}
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (isPackingEnabled()) {
 				repack(true, true);
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -552,8 +511,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		if (dt instanceof BitFieldDataType) {
 			return; // unsupported
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			boolean changed = false;
 			for (DataTypeComponentDB dtc : components) {
@@ -568,9 +526,6 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			if (changed && !repack(true, true)) {
 				dataMgr.dataTypeChanged(this, true);
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -655,8 +610,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 	 */
 	@Override
 	protected boolean repack(boolean isAutoChange, boolean notify) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 
 			int oldLength = unionLength;
@@ -708,9 +662,6 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			}
 			return changed;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
@@ -718,8 +669,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		if (deleting) {
 			return;
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			boolean changed = false;
 			for (int i = components.size() - 1; i >= 0; i--) { // reverse order
@@ -755,9 +705,6 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -838,8 +785,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			return;
 		}
 		DataTypeUtilities.checkValidReplacement(oldDt, newDt);
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			DataType replacementDt = newDt;
 			try {
@@ -874,9 +820,6 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 

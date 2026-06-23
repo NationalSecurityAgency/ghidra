@@ -15,177 +15,156 @@
  */
 package docking.widgets.textfield;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static docking.widgets.textfield.integer.IntegerFormat.*;
+import static org.junit.Assert.*;
 
 import java.math.BigInteger;
-import java.util.concurrent.atomic.AtomicIntegerArray;
 
-import javax.swing.JFrame;
-import javax.swing.JTextField;
-import javax.swing.UIManager;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-import docking.test.AbstractDockingTest;
+public class IntegerTextFieldTest extends AbstractIntegerTextFieldTest<IntegerTextField> {
 
-public class IntegerTextFieldTest extends AbstractDockingTest {
-
-	private JFrame frame;
-	private IntegerTextField field;
-	private JTextField textField;
-
-	@Before
-	public void setUp() throws Exception {
-		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		field = new IntegerTextField(10);
-		field.setShowNumberMode(true);
-		textField = (JTextField) field.getComponent();
-		frame = new JFrame("Test");
-		frame.getContentPane().add(field.getComponent());
-		frame.pack();
-		frame.setVisible(true);
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		frame.setVisible(false);
+	@Override
+	protected IntegerTextField createField() {
+		return new IntegerTextField(10);
 	}
 
 	@Test
 	public void testDefaultState() {
-		assertNull(field.getValue());// no value
-		assertEquals(0, field.getIntValue());// the "int value" return for null is 0
-		assertEquals(0, field.getLongValue());
-		assertTrue(!field.isHexMode());
-		assertNull(field.getMaxValue());
+		assertNull(getBigIntegerValue());// no value
+		assertEquals(0, getIntValue());     // the "int value" return for null is 0
+		assertEquals(0, getValue());
+		assertEquals(DEC, getFormat());
+		assertNull(getMaxValue());
 	}
 
 	@Test
 	public void testTypeValidDecimalNumber() {
-		triggerText(textField, "123");
-		assertEquals(123, field.getIntValue());
+		typeText("123");
+		assertEquals(123, getIntValue());
 	}
 
 	@Test
 	public void testTypeValidHexNumber() {
-		triggerText(textField, "0x2abcdef");
-		assertEquals(0x2abcdef, field.getIntValue());
+		typeText("0x2abcdef");
+		assertEquals(0x2abcdef, getValue());
 	}
 
 	@Test
 	public void testInvalidCharsIgnored() {
-		triggerText(textField, "123ghijklmnopqrstuvwxyz4");
-		assertEquals(1234, field.getIntValue());
+		typeText("123ghijklmnopqrstuvwxyz4");
+		assertEquals(1234, getValue());
 	}
 
 	@Test
 	public void testHexCharsIgnoredInDecimalMode() {
-		assertTrue(!field.isHexMode());
-		triggerText(textField, "123ghijklmnopqrstuvwxyz4");
-		assertEquals(1234, field.getIntValue());
+		setFormat(HEX);
+		typeText("123ghijklmnopqrstuvwxyz4");
+		assertEquals(1234, getValue());
 	}
 
 	@Test
 	public void testXchangesHexMode() {
-		assertTrue(!field.isHexMode());
-		triggerText(textField, "0");
-		assertTrue(!field.isHexMode());
-		triggerText(textField, "x");
-		assertTrue(field.isHexMode());
+		assertEquals(DEC, getFormat());
+		typeText("0");
+		assertEquals(DEC, getFormat());
+		typeText("x");
+		assertEquals(HEX, getFormat());
 		triggerBackspace(textField);
-		assertTrue(!field.isHexMode());
+		assertEquals(HEX, getFormat());
 	}
 
 	@Test
 	public void testHexModeWithoutPrefix() {
-		triggerText(textField, "abc");// not allowed when using hex prefix, so expect empty
-		assertEquals(null, field.getValue());
+		setFormat(HEX);
+		typeText("a");
+		assertEquals(null, getBigIntegerValue());
 
-		field.setAllowsHexPrefix(false);
-		field.setHexMode();
-		triggerText(textField, "abc");
-		assertEquals(0xabc, field.getIntValue());
+		setUsePrefix(false);
+		typeText("abc");
+		assertEquals(0xabc, getValue());
 	}
 
 	@Test
 	public void testNegative() {
-		triggerText(textField, "-123");
-		assertEquals(-123, field.getIntValue());
+		typeText("-123");
+		assertEquals(-123, getValue());
 	}
 
 	@Test
 	public void testNegativeHex() {
-		triggerText(textField, "-0xa");
-		assertEquals(-10, field.getIntValue());
+		typeText("-0xa");
+		assertEquals(-10, getValue());
 	}
 
 	@Test
 	public void testNegativeNotAllowed() {
-		field.setAllowNegativeValues(false);
-		triggerText(textField, "-123");
-		assertEquals(123, field.getIntValue());
+		setMinValue(BigInteger.ZERO);
+		typeText("-123");
+		assertEquals(123, getValue());
 	}
 
 	@Test
 	public void testSetNegativeWithCurrentNegativeValue() {
-		field.setValue(-123);
-		field.setAllowNegativeValues(false);
+		setValue(-123);
+		setMinValue(BigInteger.ZERO);
 		assertEquals(null, field.getValue());
 	}
 
 	@Test
 	public void testMax() {
 		field.setMaxValue(BigInteger.valueOf(13l));
-		triggerText(textField, "12");
-		assertEquals(12, field.getIntValue());
+		typeText("12");
+		assertEquals(12, getValue());
 
-		field.setValue(null);
-		triggerText(textField, "13");
-		assertEquals(13, field.getIntValue());
+		setText("");
+		typeText("13");
+		assertEquals(13, getValue());
 
-		field.setValue(null);
-		triggerText(textField, "14");// four should be ignored
-		assertEquals(1, field.getIntValue());
+		setText("");
+		typeText("14");// four should be ignored
+		assertEquals(1, getValue());
 
 	}
 
 	@Test
 	public void testSetMaxToValueSmallerThanCurrent() {
-		field.setValue(500);
+		setValue(500);
 		field.setMaxValue(BigInteger.valueOf(400));
-		assertEquals(400, field.getIntValue());
+		assertNull(field.getValue());
+	}
+
+	@Test
+	public void testMinSetTo1() {
+		field.setMinValue(BigInteger.ONE);
+		setValue(0);
+		assertEquals(1, getValue());
+
 	}
 
 	@Test
 	public void testMaxInHex() {
 		field.setMaxValue(BigInteger.valueOf(0xd));
-		triggerText(textField, "0xc");
-		assertEquals(12, field.getIntValue());
+		typeText("0xc");
+		assertEquals(12, getValue());
 
-		field.setValue(null);
-		triggerText(textField, "0xd");
-		assertEquals(13, field.getIntValue());
+		setText("");
+		typeText("0xd");
+		assertEquals(13, getValue());
 
-		field.setValue(null);
-		triggerText(textField, "0xe");// e should be ignored
-		assertEquals(0, field.getIntValue());
+		setText("");
+		typeText("0xe");// e should be ignored
+		assertEquals(0, getValue());
 
 	}
 
 	@Test
 	public void testSwitchingHexMode() {
-		field.setValue(255);
+		setValue(255);
 		assertEquals("255", field.getText());
-		field.setHexMode();
+		setFormat(HEX);
 		assertEquals("0xff", field.getText());
-		field.setDecimalMode();
+		setFormat(DEC);
 		assertEquals("255", field.getText());
 	}
 
@@ -194,7 +173,7 @@ public class IntegerTextFieldTest extends AbstractDockingTest {
 		TestChangeListener listener = new TestChangeListener();
 		field.addChangeListener(listener);
 
-		triggerText(textField, "123");
+		typeText("123");
 		assertEquals(3, listener.count);
 		assertEquals(1, listener.values.get(0));
 		assertEquals(12, listener.values.get(1));
@@ -207,129 +186,149 @@ public class IntegerTextFieldTest extends AbstractDockingTest {
 
 	@Test
 	public void testChangeListenerAfterSwitchingModes() {
-		triggerText(textField, "123");
+		setFormat(DEC);
+		typeText("12");
 
 		TestChangeListener listener = new TestChangeListener();
 		field.addChangeListener(listener);
 
-		setHexMode();
+		setFormat(HEX);
+		assertEquals("0xc", getText());
 
 		assertEquals(2, listener.count);
-		assertEquals(123, listener.values.get(1));
+		assertEquals(12, listener.values.get(1));
 
 	}
 
 	@Test
 	public void testNegativeHexFromValue() {
-		field.setValue(-255);
-		setHexMode();
+		setValue(-255);
+		setFormat(HEX);
 		assertEquals("-0xff", field.getText());
 	}
 
 	@Test
 	public void testNullValue() {
-		field.setValue(12);
+		setValue(12);
 		assertEquals("12", field.getText());
-		field.setValue(null);
+		setText("");
 		assertEquals("", field.getText());
-		assertEquals(0, field.getIntValue());
-		assertEquals(0l, field.getLongValue());
-		assertEquals(null, field.getValue());
+		assertEquals(0, getValue());
+		assertEquals(null, getBigIntegerValue());
 	}
 
 	@Test
 	public void testHexValueInDontRequireHexPrefixMode() {
-		field.setAllowsHexPrefix(false);
-		field.setHexMode();
-		field.setValue(255);
+		field.setUseNumberPrefix(false);
+		field.setFormat(HEX);
+		setValue(255);
 		assertEquals("ff", field.getText());
 	}
 
 	@Test
+	public void testAutoModeSwitchingIsOffWhenPrefixNotUsed() {
+		field.setUseNumberPrefix(false);
+		field.setFormat(HEX);
+		typeText("15");
+		assertEquals(HEX, getFormat());
+		assertEquals(21, getValue());
+		field.setFormat(DEC);
+		field.setText("");
+		typeText("0x15");
+		assertEquals(DEC, getFormat());
+		assertEquals("015", getText());
+		assertEquals(15, getValue()); // the 0x should have been ignored
+	}
+
+	@Test
 	public void testSetNotAllowNegativeModeWhileCurrentValueIsNegative() {
-		field.setValue(-10);
-		field.setAllowNegativeValues(false);
+		setValue(-10);
+		setMinValue(BigInteger.ZERO);
 		assertEquals("", field.getText());
-		assertEquals(0, field.getIntValue());
+		assertEquals(0, getValue());
 	}
 
 	@Test
 	public void testSetLongValue() {
-		field.setValue(100L);
+		setValue(100L);
 		assertEquals(100L, field.getLongValue());
-		assertEquals(100, field.getIntValue());
+		assertEquals(100, getValue());
 	}
 
 	@Test
 	public void testSettingNegativeNumberWhenNegativesArentAllowed() {
-		field.setValue(10);
-		field.setAllowNegativeValues(false);
-		field.setValue(-10);
+		setValue(10);
+		setMinValue(BigInteger.ZERO);
+		setValue(-10);
 		assertEquals("", field.getText());
 	}
 
 	@Test
 	public void testUseHexPrefixUpdatesTextField() {
-		field.setAllowsHexPrefix(false);
-		field.setHexMode();
-		field.setValue(255);
+		field.setUseNumberPrefix(false);
+		setFormat(HEX);
+		setValue(255);
 		assertEquals("ff", field.getText());
-		field.setAllowsHexPrefix(true);
+		field.setUseNumberPrefix(true);
 		assertEquals("0xff", field.getText());
 	}
 
 	@Test
 	public void testPastingBadText() {
-		field.setHexMode();
-		field.setValue(0);
+		setFormat(HEX);
+		setValue(0);
 		assertFalse(field.setText("asdf 0x azzz"));
 	}
 
 	@Test
 	public void testSetText() {
-		field.setHexMode();
-		field.setValue(0);
+		setFormat(HEX);
+		setValue(0);
 		assertTrue(field.setText("0x15"));
-		assertEquals(0x15, field.getIntValue());
+		assertEquals(0x15, getValue());
 	}
 
 	@Test
 	public void testSetTextWithInvalidValue() {
-		field.setHexMode();
-		field.setValue(0);
+		setFormat(HEX);
+		setValue(0);
 		assertFalse(field.setText("bad value"));
-		assertEquals(0, field.getIntValue());
-		assertTrue(field.isHexMode());
+		assertEquals(0, getValue());
+		assertEquals(HEX, getFormat());
 	}
 
 	@Test
 	public void testSucessfulSetTextChangesHexMode() {
-		field.setHexMode();
-		field.setValue(0);
+		setFormat(HEX);
+		setValue(0);
 		assertTrue(field.setText("33"));
-		assertEquals(33, field.getIntValue());
-		assertFalse(field.isHexMode());
+		assertEquals(33, getValue());
+		assertEquals(DEC, getFormat());
 
 		assertTrue(field.setText("0x33"));
-		assertEquals(0x33, field.getIntValue());
-		assertTrue(field.isHexMode());
-
+		assertEquals(0x33, getValue());
+		assertEquals(HEX, getFormat());
 	}
 
-	private void setHexMode() {
-		runSwing(() -> field.setHexMode());
-		waitForSwing();
+	@Test
+	public void testMinValueOfOneDecimalFormat() {
+		setFormat(DEC);
+		field.setMinValue(BigInteger.ONE);
+		typeText("0");
+		assertEquals("", field.getText());
+		typeText("1");
+		assertEquals("1", field.getText());
 	}
 
-	class TestChangeListener implements ChangeListener {
-		volatile int count;
-		private AtomicIntegerArray values = new AtomicIntegerArray(10);
-
-		@Override
-		public void stateChanged(ChangeEvent e) {
-			values.set(count++, field.getIntValue());
-		}
-
+	@Test
+	public void testMinValueOfOneHexFormat() {
+		setFormat(HEX);
+		field.setMinValue(BigInteger.ONE);
+		typeText("0x1");
+		assertEquals("0x1", field.getText());
 	}
 
+	protected void setMinValue(BigInteger minValue) {
+		runSwing(() -> field.setMinValue(minValue));
+	}
 }

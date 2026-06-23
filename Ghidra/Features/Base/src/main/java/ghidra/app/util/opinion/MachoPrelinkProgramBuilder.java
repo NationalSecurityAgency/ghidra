@@ -30,7 +30,8 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -171,12 +172,6 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		}
 
 		return machoInfoList;
-	}
-
-	@Override
-	protected void renameObjMsgSendRtpSymbol()
-			throws DuplicateNameException, InvalidInputException {
-		// Do nothing.  This is not applicable for a PRELINK Mach-O.
 	}
 
 	@Override

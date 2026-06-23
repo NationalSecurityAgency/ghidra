@@ -312,13 +312,13 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		FieldHeader headerPanel = listingPanel.getFieldHeader();
 		if (headerPanel != null && source instanceof FieldHeaderComp) {
 			FieldHeaderLocation fhLoc = headerPanel.getFieldHeaderLocation(event.getPoint());
-			return createContext(fhLoc);
+			return new DefaultActionContext(this).setContextObject(fhLoc);
 		}
 
 		if (otherPanel != null && otherPanel.isAncestorOf((Component) source)) {
 			Object obj = getContextForMarginPanels(otherPanel, event);
 			if (obj != null) {
-				return createContext(obj);
+				return new DefaultActionContext(this).setContextObject(obj);
 			}
 			return new OtherPanelContext(this, program);
 		}
@@ -333,7 +333,8 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 			}
 		}
 
-		return createContext(getContextForMarginPanels(listingPanel, event));
+		Object marginContextObject = getContextForMarginPanels(listingPanel, event);
+		return new DefaultActionContext(this).setContextObject(marginContextObject);
 	}
 
 	private Object getContextForMarginPanels(ListingPanel lp, MouseEvent event) {

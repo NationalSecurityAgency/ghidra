@@ -67,15 +67,6 @@ public interface BookmarkManager {
 	BookmarkType defineType(String type, Icon icon, Color color, int priority);
 
 	/**
-	 * Returns true if the given bookmark type has been defined via a call to 
-	 * {@link #defineType(String, Icon, Color, int)}.  This allows clients to know whether the
-	 * given type should be displayed.
-	 * @param type the type to check
-	 * @return true if defined
-	 */
-	boolean isDefinedType(String type);
-
-	/**
 	 * Returns list of known bookmark types
 	 * @return list of known bookmark types
 	 */

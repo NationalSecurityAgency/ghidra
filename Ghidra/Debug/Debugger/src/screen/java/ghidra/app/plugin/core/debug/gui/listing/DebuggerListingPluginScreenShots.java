@@ -121,9 +121,11 @@ public class DebuggerListingPluginScreenShots extends GhidraScreenShotGenerator 
 	@Test
 	public void testCaptureDebuggerGoToDialog() throws Throwable {
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject();
 			tb.trace.getTimeManager().createSnapshot("First").getKey();
 			tb.trace.getMemoryManager()
-					.addRegion("bash:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+					.addRegion("Targets[0].Memory[bash:.text]", Lifespan.nowOn(0),
+						tb.range(0x00400000, 0x0040ffff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 
 			traceManager.openTrace(tb.trace);
@@ -134,6 +136,7 @@ public class DebuggerListingPluginScreenShots extends GhidraScreenShotGenerator 
 		DebuggerGoToDialog dialog = waitForDialogComponent(DebuggerGoToDialog.class);
 		dialog.setOffset("RAX");
 
+		dialog.getComponent().grabFocus();
 		captureDialog(dialog);
 	}
 }

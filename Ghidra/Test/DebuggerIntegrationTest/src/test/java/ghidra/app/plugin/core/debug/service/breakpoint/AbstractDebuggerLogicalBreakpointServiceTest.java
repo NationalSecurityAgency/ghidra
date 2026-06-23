@@ -42,6 +42,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.*;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
@@ -263,10 +264,10 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		try (Transaction tx = p.openTransaction("Create bookmarks")) {
 			enBm = p.getBookmarkManager()
 					.setBookmark(addr(p, 0x00400123), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
-						"SW_EXECUTE;1", "");
+						"x;1", "");
 			disBm = p.getBookmarkManager()
 					.setBookmark(addr(p, 0x00400321), LogicalBreakpoint.DISABLED_BOOKMARK_TYPE,
-						"SW_EXECUTE;1", "");
+						"x;1", "");
 		}
 		waitForDomainObject(p);
 	}
@@ -274,11 +275,9 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 	protected void refetchProgramBreakpoints(Program p) throws Throwable {
 		// After a redo
 		enBm = p.getBookmarkManager()
-				.getBookmark(addr(p, 0x00400123), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
-					"SW_EXECUTE;1");
+				.getBookmark(addr(p, 0x00400123), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE, "x;1");
 		disBm = p.getBookmarkManager()
-				.getBookmark(addr(p, 0x00400321), LogicalBreakpoint.DISABLED_BOOKMARK_TYPE,
-					"SW_EXECUTE;1");
+				.getBookmark(addr(p, 0x00400321), LogicalBreakpoint.DISABLED_BOOKMARK_TYPE, "x;1");
 	}
 
 	protected void removeProgramBreakpoints(Program p) throws Throwable {
@@ -292,7 +291,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 	protected void assertLogicalBreakpointForLoneAccessBreakpoint(Trace trace) {
 		LogicalBreakpoint enLb = Unique.assertOne(breakpointService.getAllBreakpoints());
 		assertNull(enLb.getProgramLocation());
-		assertEquals(Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE), enLb.getKinds());
+		assertEquals(CommonSet.ACCESS.kinds(), enLb.getKinds());
 
 		TraceBreakpointLocation bpt =
 			Unique.assertOne(trace.getBreakpointManager().getAllBreakpointLocations());
@@ -314,7 +313,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		LogicalBreakpoint enLb =
 			Unique.assertOne(breakpointService.getBreakpointsAt(trace, addr(trace, offset)));
 		assertNull(enLb.getProgramLocation());
-		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), enLb.getKinds());
+		assertEquals(CommonSet.SWX.kinds(), enLb.getKinds());
 
 		TraceBreakpointLocation bpt =
 			Unique.assertOne(trace.getBreakpointManager().getAllBreakpointLocations());
@@ -332,7 +331,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 				.assertOne(breakpointService.getBreakpointsAt(program, addr(program, 0x00400123)));
 		assertNotNull(enLb.getProgramBookmark()); // Created automatically when trace breakpoint set.
 		assertEquals(State.ENABLED, enLb.computeStateForProgram(program));
-		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), enLb.getKinds());
+		assertEquals(CommonSet.SWX.kinds(), enLb.getKinds());
 
 		TraceBreakpointLocation bpt =
 			Unique.assertOne(trace.getBreakpointManager().getAllBreakpointLocations());
@@ -353,7 +352,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		assertEquals(enBm, enLb.getProgramBookmark());
 		assertTrue(enLb.getMappedTraces().isEmpty());
 		assertEquals(State.INEFFECTIVE_ENABLED, enLb.computeStateForProgram(program));
-		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), enLb.getKinds());
+		assertEquals(CommonSet.SWX.kinds(), enLb.getKinds());
 
 		LogicalBreakpoint disLb = Unique
 				.assertOne(breakpointService.getBreakpointsAt(program, addr(program, 0x00400321)));
@@ -362,7 +361,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		assertEquals(disBm, disLb.getProgramBookmark());
 		assertTrue(disLb.getMappedTraces().isEmpty());
 		assertEquals(State.INEFFECTIVE_DISABLED, disLb.computeStateForProgram(program));
-		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), disLb.getKinds());
+		assertEquals(CommonSet.SWX.kinds(), disLb.getKinds());
 	}
 
 	protected void assertLogicalBreakpointsForMappedBookmarks(Trace trace) {
@@ -1509,7 +1508,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		try (Transaction tid = p.openTransaction("Create bookmark bp with sleigh")) {
 			enBm = p.getBookmarkManager()
 					.setBookmark(addr(p, 0x00400123), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
-						"SW_EXECUTE;1", "{sleigh: 'r0=0xbeef;'}");
+						"x;1", "{sleigh: 'r0=0xbeef;'}");
 		}
 		waitForDomainObject(p);
 	}
@@ -1606,7 +1605,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 			tb.createRootObject(SCHEMA_CTX);
 			TraceBreakpointLocation bpt = tb.trace.getBreakpointManager()
 					.addBreakpoint("Processes[1].Breakpoints[0][0]", Lifespan.nowOn(0),
-						tb.addr(0x55550123), Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE),
+						tb.addr(0x55550123), Set.of(), CommonSet.SWX.kinds(),
 						false /* emuEnabled defaults to true */, "");
 			bpt.setEmuSleigh(0, "r0=0xbeef;");
 		}
@@ -1661,7 +1660,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 			TraceBreakpointLocation bpt = tb.trace.getBreakpointManager()
 					.addBreakpoint("Processes[1].Breakpoints[0]", Lifespan.nowOn(0),
 						tb.addr(0x55550123),
-						Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE),
+						Set.of(), CommonSet.SWX.kinds(),
 						false /* emuEnabled defaults to true */, "");
 			bpt.setEmuSleigh(0, "r0=0xbeef;");
 			waitForValue(() -> Unique.assertAtMostOne(

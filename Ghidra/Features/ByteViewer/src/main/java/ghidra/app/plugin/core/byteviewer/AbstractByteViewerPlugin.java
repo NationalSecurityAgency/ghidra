@@ -21,12 +21,12 @@ import org.jdom2.Element;
 
 import ghidra.app.events.AbstractLocationPluginEvent;
 import ghidra.app.events.AbstractSelectionPluginEvent;
+import ghidra.app.plugin.core.byteviewer.AbstractByteViewerPlugin.ByteViewerTransientState;
 import ghidra.app.services.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.Plugin;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -34,7 +34,7 @@ import ghidra.util.SystemUtilities;
 import utility.function.Callback;
 
 public abstract class AbstractByteViewerPlugin<P extends ProgramByteViewerComponentProvider>
-		extends Plugin {
+		extends Plugin implements PluginWithTransientState<ByteViewerTransientState> {
 
 	protected Program currentProgram;
 	private boolean areEventsDisabled;
@@ -216,26 +216,20 @@ public abstract class AbstractByteViewerPlugin<P extends ProgramByteViewerCompon
 		}
 	}
 
-	@Override
-	public Object getTransientState() {
-		Object[] state = new Object[2];
+	protected record ByteViewerTransientState(SaveState ss, ProgramSelection selection) {}
 
+	@Override
+	public ByteViewerTransientState getTransientState() {
 		SaveState ss = new SaveState();
 		connectedProvider.writeDataState(ss);
-
-		state[0] = ss;
-		state[1] = connectedProvider.getCurrentSelection();
-
-		return state;
+		return new ByteViewerTransientState(ss, connectedProvider.getCurrentSelection());
 	}
 
 	@Override
-	public void restoreTransientState(Object objectState) {
-
+	public void restoreTransientState(ByteViewerTransientState state) {
 		doWithEventsDisabled(() -> {
-			Object[] state = (Object[]) objectState;
-			connectedProvider.restoreLocation((SaveState) state[0]);
-			connectedProvider.setSelection((ProgramSelection) state[1]);
+			connectedProvider.restoreLocation(state.ss);
+			connectedProvider.setSelection(state.selection);
 		});
 	}
 

@@ -25,6 +25,7 @@ import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.sourcelanguage.SourceLanguageService;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
@@ -106,6 +107,7 @@ public abstract class AbstractProgramLoader implements Loader {
 				Program program = loadedProgram.getDomainObject(this);
 				try {
 					applyProcessorLabels(settings.options(), program);
+					setSourceLanguages(program, settings);
 					program.setEventsEnabled(true);
 				}
 				finally {
@@ -162,10 +164,18 @@ public abstract class AbstractProgramLoader implements Loader {
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
 			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		ArrayList<Option> list = new ArrayList<>();
-		list.add(new Option(APPLY_LABELS_OPTION_NAME, shouldApplyProcessorLabelsByDefault(),
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-applyLabels"));
-		list.add(new Option(ANCHOR_LABELS_OPTION_NAME, true, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-anchorLabels"));
+		list.add(Option.newBoolean(APPLY_LABELS_OPTION_NAME)
+				.value(shouldApplyProcessorLabelsByDefault())
+				.commandLineArgument(createArg("-applyLabels"))
+				.description("Create processor labels at specific addresses as defined by the " +
+					"processor specification.")
+				.build());
+		list.add(Option.newBoolean(ANCHOR_LABELS_OPTION_NAME)
+				.value(true)
+				.commandLineArgument("-anchorLabels")
+				.description(
+					"Prevent processor labels from moving on imagebase or memory block change.")
+				.build());
 
 		return list;
 	}
@@ -477,6 +487,18 @@ public abstract class AbstractProgramLoader implements Loader {
 			}
 
 			GhidraProgramUtilities.resetAnalysisFlags(program);
+		}
+		finally {
+			program.endTransaction(id, true);
+		}
+	}
+
+	private void setSourceLanguages(Program program, ImporterSettings settings)
+			throws CancelledException {
+		int id = program.startTransaction("Set Source Languages");
+		try {
+			program.setSourceLanguageIDs(
+				SourceLanguageService.find(program, settings.log(), settings.monitor()));
 		}
 		finally {
 			program.endTransaction(id, true);

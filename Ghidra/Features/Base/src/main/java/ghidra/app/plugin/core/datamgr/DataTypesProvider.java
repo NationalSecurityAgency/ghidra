@@ -426,9 +426,18 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		archiveGTree.addGTreeSelectionListener(e -> {
 
 			TreePath path = e.getNewLeadSelectionPath();
-			DataType dataType = getDataTypeFrom(path);
+			DataType selectedDt = getDataTypeFrom(path);
+			DataTypeUrl dtUrl = navigationHistory.getCurrentHistoryItem();
+			if (dtUrl != null) {
+				DataType historyDt = dtUrl.getDataType(plugin);
+				if (Objects.equals(historyDt, selectedDt)) {
+					// Don't add an item to the history that is already there.  This can happen when
+					// the user interacts with the navigation buttons.
+					return;
+				}
+			}
 
-			dataTypeSelected(e.getEventOrigin(), dataType);
+			dataTypeSelected(e.getEventOrigin(), selectedDt);
 		});
 
 		buildPreviewPane();
@@ -535,7 +544,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		DataType dataType = dataTypeNode.getDataType();
 		if (dataType.isDeleted()) {
 			// this can happen during an undo
-			lastPreviewNode = null;
+			clearDataTypePreview();
 			return;
 		}
 
@@ -543,6 +552,11 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		String updated = HTMLUtilities.convertLinkPlaceholdersToHyperlinks(toolTipText);
 		previewPane.setText(updated);
 		previewPane.setCaretPosition(0);
+	}
+
+	private void clearDataTypePreview() {
+		lastPreviewNode = null;
+		previewPane.setText("");
 	}
 
 	void dispose() {
@@ -783,8 +797,9 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			return;
 		}
 
+		TreePath treePath = dataTypeNode.getTreePath();
 		gTree.setSelectedNode(dataTypeNode);
-		gTree.scrollPathToVisible(dataTypeNode.getTreePath());
+		gTree.scrollPathToVisible(treePath);
 		contextChanged();
 	}
 
@@ -965,6 +980,10 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 
 		long id = program.getUniqueProgramID();
 		programTreeState.remove(id);
+	}
+
+	void programActivated(Program program) {
+		clearDataTypePreview();
 	}
 
 	void archiveClosed(DataTypeManager dtm) {

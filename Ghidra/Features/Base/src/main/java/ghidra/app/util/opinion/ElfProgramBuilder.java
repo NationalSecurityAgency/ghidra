@@ -25,8 +25,6 @@ import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
-import ghidra.app.plugin.core.analysis.rust.RustConstants;
-import ghidra.app.plugin.core.analysis.rust.RustUtilities;
 import ghidra.app.util.*;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.MemoryLoadable;
@@ -54,7 +52,6 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.program.util.ExternalSymbolResolver;
 import ghidra.util.*;
 import ghidra.util.datastruct.*;
 import ghidra.util.exception.*;
@@ -188,8 +185,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			adjustReadOnlyMemoryRegions(monitor);
 
 			markupElfInfoProducers(monitor);
-
-			setCompiler(monitor);
 
 			success = true;
 		}
@@ -458,7 +453,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			String[] neededLibs = elf.getDynamicLibraryNames();
 			for (String neededLib : neededLibs) {
 				monitor.checkCancelled();
-				props.setString(ExternalSymbolResolver.getRequiredLibraryProperty(libraryIndex++),
+				props.setString(
+					AbstractLibrarySupportLoader.getRequiredLibraryProperty(libraryIndex++),
 					neededLib);
 			}
 		}
@@ -996,9 +992,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			int symbolIndex = reloc.getSymbolIndex();
 			String symbolName = symbolTable != null ? symbolTable.getSymbolName(symbolIndex) : "";
-			if (symbolName != null && SymbolUtilities.containsInvalidChars(symbolName)) {
-				symbolName = getEscapedSymbolName(symbolName);
-			}
+			symbolName = ElfSymbolNameUtils.replaceInvalidChars(symbolName);
 
 			Address baseAddress = relocationSpace.getTruncatedAddress(baseWordOffset, true);
 
@@ -2119,10 +2113,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					isPrimary = (existingSym == null);
 				}
 
-				if (SymbolUtilities.containsInvalidChars(name)) {
-					String escapedName = getEscapedSymbolName(name);
-					log("Unsupported symbol name has been escaped: \"" + escapedName + "\"");
-					name = escapedName;
+				String validatedName = ElfSymbolNameUtils.replaceInvalidChars(name);
+				if (name != validatedName) {
+					log("Unsupported symbol name has been escaped: \"" + validatedName + "\"");
+					name = validatedName;
 				}
 
 				createSymbol(address, name, isPrimary, elfSymbol.isAbsolute(), null);
@@ -2159,27 +2153,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 	}
 
-	private String getEscapedSymbolName(String name) {
-		// Do not preclude use of UTF8 strings
-		StringBuilder escapedBuf = new StringBuilder();
-		name.codePoints().forEach(cp -> {
-			if (cp < 0x20) {
-				// Format as ^Control character for consistency with readelf
-				cp += 0x40; // get ASCII control character, starts with ^@
-				escapedBuf.append('^');
-				escapedBuf.appendCodePoint(cp);
-			}
-			else if (cp == 0x7F) {
-				// Format as ^? character for consistency with readelf
-				escapedBuf.append("^?");
-			}
-			else {
-				// Assume valid code point
-				escapedBuf.appendCodePoint(cp);
-			}
-		});
-		return escapedBuf.toString();
-	}
 
 	@Override
 	public void setElfSymbolAddress(ElfSymbol elfSymbol, Address address) {
@@ -2461,22 +2434,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			monitor.checkCancelled();
 
 			elfInfoProducer.markupElfInfo(monitor);
-		}
-	}
-
-	private void setCompiler(TaskMonitor monitor) throws CancelledException {
-		// Check for Rust
-		try {
-			if (RustUtilities.isRust(program, memory.getBlock(ElfSectionHeaderConstants.dot_rodata),
-				monitor)) {
-				program.setCompiler(RustConstants.RUST_COMPILER);
-				int extensionCount = RustUtilities.addExtensions(program, monitor,
-					RustConstants.RUST_EXTENSIONS_UNIX);
-				log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
-			}
-		}
-		catch (IOException e) {
-			log.appendMsg("Rust error: " + e.getMessage());
 		}
 	}
 

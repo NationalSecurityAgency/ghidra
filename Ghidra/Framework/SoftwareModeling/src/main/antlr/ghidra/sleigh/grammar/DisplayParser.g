@@ -78,7 +78,7 @@ special
 	|	lc=SPEC_OR			-> ^(OP_STRING[$lc, "SPEC_OR"] SPEC_OR)
 	|	lc=SPEC_AND			-> ^(OP_STRING[$lc, "SPEC_AND"] SPEC_AND)
 	|	lc=SPEC_XOR			-> ^(OP_STRING[$lc, "SPEC_XOR"] SPEC_XOR)
-	|	lc=DEC_INT			-> ^(OP_STRING[$lc, "DEC_INT"] DEC_INT)
+	|	lc=DEF_INT			-> ^(OP_STRING[$lc, "DEF_INT"] DEF_INT)
 	|	lc=HEX_INT			-> ^(OP_STRING[$lc, "HEX_INT"] HEX_INT)
 	|	lc=BIN_INT			-> ^(OP_STRING[$lc, "BIN_INT"] BIN_INT)
 	;

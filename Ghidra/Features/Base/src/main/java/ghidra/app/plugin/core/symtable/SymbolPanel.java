@@ -36,6 +36,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.util.LabelFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.table.*;
 
@@ -126,12 +127,17 @@ class SymbolPanel extends JPanel {
 		Program program = location.getProgram();
 		SymbolTable symbolTable = program.getSymbolTable();
 		Address address = location.getAddress();
-		Symbol primarySymbol = symbolTable.getPrimarySymbol(address);
-		if (primarySymbol == null) {
-			return;
+
+		Symbol symbol = null;
+		if (location instanceof LabelFieldLocation lfl) {
+			symbol = lfl.getSymbol();
 		}
 
-		SymbolRowObject rowObject = new SymbolRowObject(primarySymbol);
+		if (symbol == null) {
+			symbol = symbolTable.getPrimarySymbol(address);
+		}
+
+		SymbolRowObject rowObject = new SymbolRowObject(symbol);
 		int index = symbolModel.getRowIndex(rowObject);
 		if (index >= 0) {
 			gTable.selectRow(index);

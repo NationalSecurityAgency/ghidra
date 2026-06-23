@@ -479,6 +479,7 @@ define context contextreg
 # For example:    CRC32 r32, r16 -- 66  F2 OF 38 F1 C8
 
 @define PRE_NO		"mandover=0"
+@define PRE_NOFX	"(mandover=0 | prefix_66=1)"
 @define PRE_66		"prefix_66=1"
 @define PRE_F3		"prefix_f3=1"
 @define PRE_F2		"prefix_f2=1"
@@ -2418,6 +2419,7 @@ macro fucompe(val1, val2) {
 @define VEX_MAP4	"vexMMMMM=4"
 @define VEX_MAP5	"vexMMMMM=5"
 @define VEX_MAP6	"vexMMMMM=6"
+@define VEX_MAP7	"vexMMMMM=7"
 
 # Specification is "WIG", "W0", or "W1".
 @define VEX_WIG		"rexWprefix"
@@ -3012,12 +3014,17 @@ with : lockprefx=0 {
 :CQO            is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x99                 { tmp:16 = sext(RAX); RDX = tmp(8); }
 @endif
 
+define pcodeop cldemote;
+:CLDEMOTE m8     is vexMode=0 & $(PRE_NO) & byte=0x0F; byte=0x1C; reg_opcode=0 ... & m8 {
+	cldemote(m8);
+}
+
 define pcodeop clflush;
 :CLFLUSH m8     is vexMode=0 & mandover=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=7 ) ... & m8 {
 	clflush(m8);
 }
 
-:CLAC           is vexMode=0 & byte=0x0F; byte=0x01; byte=0xCA { AC = 0; }
+:CLAC           is $(PRE_NO) & vexMode=0 & byte=0x0F; byte=0x01; byte=0xCA { AC = 0; }
 
 :CLC			is vexMode=0 & byte=0xf8						{ CF = 0; }
 :CLD			is vexMode=0 & byte=0xfc						{ DF = 0; }
@@ -3320,6 +3327,23 @@ define pcodeop cpuid_brand_part3_info;
                                                   RDX = rem:8; }                                                  
 @endif
 
+define pcodeop enqcmd;
+define pcodeop enqcmds;
+macro enqcmdFlags() {
+	OF = 0;
+	SF = 0;
+	AF = 0;
+	CF = 0;
+	PF = 0;
+}
+:ENQCMD Reg32, m512  is $(PRE_F2) & opsize=1 & byte=0x0F; byte=0x38; byte=0xF8; (mod!=3 & Reg32) ... & m512 { ZF = enqcmd(Reg32, m512); enqcmdFlags(); }
+:ENQCMDS Reg32, m512 is $(PRE_F3) & opsize=1 & byte=0x0F; byte=0x38; byte=0xF8; (mod!=3 & Reg32) ... & m512 { ZF = enqcmds(Reg32, m512); enqcmdFlags(); }
+@ifdef IA64
+:ENQCMD Reg64, m512  is $(LONGMODE_ON) & $(PRE_F2) & opsize=2 & byte=0x0F; byte=0x38; byte=0xF8; (mod!=3 & Reg64) ... & m512 { ZF = enqcmd(Reg64, m512); enqcmdFlags(); }
+:ENQCMDS Reg64, m512 is $(LONGMODE_ON) & $(PRE_F3) & opsize=2 & byte=0x0F; byte=0x38; byte=0xF8; (mod!=3 & Reg64) ... & m512 { ZF = enqcmds(Reg64, m512); enqcmdFlags(); }
+@endif
+
+
 enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
 
 :ENTER imm16,enterFrames is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & byte=0xc8; imm16; enterFrames & low5=0x00 {
@@ -3552,7 +3576,39 @@ enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
 }
 @endif
 
+####
+#### FRED instructions
+####
 
+@ifdef IA64
+define pcodeop eretu;
+define pcodeop erets;
+define pcodeop lkgs;
+
+:ERETU is $(PRE_F3) & byte=0x0F; byte=0x01; byte=0xCA {
+	eretu();
+	pop88(RIP);
+	tmp:8=0; pop88(tmp); CS=tmp(0)|0x3;
+	pop88(rflags);
+	pop88(RSP);
+	pop88(tmp); SS=tmp(0)|0x3;
+	return [RIP];
+}
+
+:ERETS is $(PRE_F2) & byte=0x0F; byte=0x01; byte=0xCA {
+	erets();
+	pop88(RIP);
+	tmp:8=0; pop88(tmp); # Not used to load CS
+	pop88(rflags);
+	pop88(RSP);
+	pop88(tmp); # Not used to load SS 
+	return [RIP];
+}
+
+:LKGS rm16 is $(LONGMODE_ON) & $(PRE_F2) & byte=0x0F; byte=0x00; reg_opcode=6 ... & rm16 {
+	lkgs(rm16);
+}
+@endif #def IA64
 
 # Informs the 80287 coprocessor of the switch to protected mode, treated as NOP for 80387 and later.
 # We used to have a pseudo-op, but as this is a legacy instruction which is now explicitly treated
@@ -3560,6 +3616,16 @@ enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
 :FSETPM 	is vexMode=0 & byte=0xdb; byte=0xe4	{ } # 80287 set protected mode
 
 :HLT            is vexMode=0 & byte=0xf4                        { goto inst_start; }
+
+define pcodeop hreset;
+:HRESET imm8     is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x3A; byte=0xF0; byte=0xC0; imm8  { EAX = hreset(imm8:1); }
+
+@ifdef IA64
+# Indirect Branch History Fence. Treated as a NOP outside of 64-bit mode.
+# Used to prevent branch history injection, added as a pseudo-op
+define pcodeop ibhf;
+:IBHF is $(LONGMODE_ON) & $(PRE_F3) & $(REX_W) & byte=0x0F; byte=0x1E; byte=0xF8 { ibhf(); }
+@endif
 
 :IDIV rm8       is vexMode=0 & byte=0xf6;  rm8 & reg_opcode=7 ...           { rm8ext:2 = sext(rm8);
                                                   local quotient = AX s/ rm8ext;  # DE exception if quotient doesn't fit in AL
@@ -3700,10 +3766,23 @@ enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
 :IRETQ          is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=2 & byte=0xcf            { pop88(RIP); tmp:8=0; pop88(tmp); CS=tmp(0); pop88(rflags); return [RIP]; }
 @endif
 
-:J^cc rel8      is vexMode=0 & row=7 & cc; rel8                                          { if (cc) goto rel8; }
-:J^cc rel16     is $(LONGMODE_OFF) & vexMode=0 & opsize=0 & byte=0xf; row=8 & cc; rel16  { if (cc) goto rel16; }
-:J^cc rel32     is vexMode=0 & opsize=1 & byte=0xf; row=8 & cc; rel32                    { if (cc) goto rel32; }
-:J^cc rel32     is vexMode=0 & opsize=2 & byte=0xf; row=8 & cc; rel32                    { if (cc) goto rel32; }
+# HWNT Branch Not Taken hint (prefix 2E)
+# HST  Branch Taken hint (prefix 3E)
+jccRel8:  rel8   is  rel8  { export rel8; }
+jccRel8:  rel8, "bn"   is segover=1 & rel8  { export rel8; }
+jccRel8:  rel8, "bt"   is segover=3 & rel8  { export rel8; }
+jccRel16: rel16  is rel16 { export rel16; }
+jccRel16: rel16, "bn"  is segover=1 & rel16 { export rel16; }
+jccRel16: rel16, "bt"  is segover=3 & rel16 { export rel16; }
+jccRel32: rel32  is rel32 { export rel32; }
+jccRel32: rel32, "bn"  is segover=1 & rel32 { export rel32; }
+jccRel32: rel32, "bt"  is segover=3 & rel32 { export rel32; }
+
+:J^cc jccRel8      is vexMode=0 & row=7 & cc; jccRel8                                          { if (cc) goto jccRel8; }
+:J^cc jccRel16     is $(LONGMODE_OFF) & vexMode=0 & opsize=0 & byte=0xf; row=8 & cc; jccRel16  { if (cc) goto jccRel16; }
+:J^cc jccRel32     is vexMode=0 & opsize=1 & byte=0xf; row=8 & cc; jccRel32                    { if (cc) goto jccRel32; }
+:J^cc jccRel32     is vexMode=0 & opsize=2 & byte=0xf; row=8 & cc; jccRel32                    { if (cc) goto jccRel32; }
+
 # The following is vexMode=0 & picked up by the line above.  rel32 works for both 32 and 64 bit
 #@ifdef IA64
 #:J^cc rel32     is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0xf; row=8 & cc; rel32     { if (cc) goto rel32; }
@@ -4197,6 +4276,19 @@ define pcodeop swap_bytes;
 :PAUSE          is vexMode=0 & opsize=0 & $(PRE_F3) & byte=0x90     {  }
 :PAUSE          is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x90     {  }
 
+@ifdef IA64
+define pcodeop pbndkb;
+:PBNDKB is $(LONGMODE_ON) & vexMode=0 & $(PRE_NO) & byte=0x0F; byte=0x01; byte=0xC7 { RAX = pbndkb(RBX, RCX); ZF = (RAX != 0); }
+@endif
+
+# leaf function 2 is the only one that uses RCX, and it is only available in 64-bit
+# The instruction description mentions RDX, but no leaf functions use RDX
+define pcodeop pconfig;
+:PCONFIG        is $(LONGMODE_OFF) & vexMode=0 & $(PRE_NO) & byte=0x0F; byte=0x01; byte=0xC5 { EAX = pconfig(EAX, EBX); ZF = (EAX != 0); }
+@ifdef IA64
+:PCONFIG        is $(LONGMODE_ON) & vexMode=0 & $(PRE_NO) & byte=0x0F; byte=0x01; byte=0xC5 { RAX = pconfig(RAX, RBX, RCX); ZF = (RAX != 0); }
+@endif
+
 :POP rm16        is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0x8f; rm16 & reg_opcode=0 ... { local val:2 = 0; pop22(val); build rm16; rm16 = val; }
 :POP rm16        is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0x8f; rm16 & reg_opcode=0 ... { local val:2 = 0; pop42(val); build rm16; rm16 = val; }
 :POP rm32        is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & byte=0x8f; rm32 & reg_opcode=0 ... { local val:4 = 0; pop24(val); build rm32; rm32 = val; }
@@ -4592,6 +4684,10 @@ define pcodeop smm_restore_state;
 :SCASQ^repe^repetail eseDI8 is $(LONGMODE_ON) & vexMode=0 & repe & repetail & opsize=2 & byte=0xaf & eseDI8  { build repe; build eseDI8; subflags(RAX,eseDI8); local diff=RAX-eseDI8; resultflags(diff); build repetail; }
 @endif
 
+define pcodeop serialize;
+:SERIALIZE      is vexMode=0 & $(PRE_NO) & byte=0x0F; byte=0x01; byte=0xE8  { serialize(); }
+
+
 :SET^cc rm8     is vexMode=0 & byte=0xf; row=9 & cc; rm8                { rm8 = cc; }
 
 # manual is not consistent on operands
@@ -4862,6 +4958,33 @@ define pcodeop invalidInstructionException;
 :UD1  Reg32, rm32 is vexMode=0 & byte=0x0f; byte=0xb9; rm32 & Reg32 ...           { local target:$(SIZE) = invalidInstructionException(); goto [target]; }
 :UD2              is vexMode=0 & byte=0xf; byte=0xb                               { local target:$(SIZE) = invalidInstructionException(); goto [target]; }
 
+define pcodeop umonitor;
+:UMONITOR Rmr16    is vexMode=0 & opsize=0 & $(PRE_F3) & byte=0x0F; byte=0xAE; reg_opcode=6 & mod=3 & Rmr16 {
+    umonitor(Rmr16);
+}
+
+:UMONITOR Rmr32    is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0F; byte=0xAE; reg_opcode=6 & mod=3 & Rmr32 {
+    umonitor(Rmr32);
+}
+
+@ifdef IA64
+:UMONITOR Rmr64    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(PRE_F3) & byte=0x0F; byte=0xAE; reg_opcode=6 & mod=3 & Rmr64 {
+    umonitor(Rmr64);
+}
+@endif
+
+define pcodeop umwait;
+:UMWAIT Rmr32    is vexMode=0  & $(PRE_F2) & byte=0x0F; byte=0xAE; reg_opcode=6 & mod=3 & Rmr32 {
+    umwait(Rmr32, EDX, EAX);
+}
+
+define pcodeop tpause;
+:TPAUSE Rmr32    is vexMode=0  & $(PRE_66) & byte=0x0F; byte=0xAE; reg_opcode=6 & mod=3 & Rmr32 {
+    tpause(Rmr32, EDX, EAX);
+}
+
+
+
 define pcodeop verr;
 define pcodeop verw;
 :VERR rm16      is vexMode=0 & byte=0xf; byte=0x0; rm16 & reg_opcode=4 ...      { ZF = verr(); }
@@ -4874,7 +4997,7 @@ define pcodeop verw;
 @ifdef IA64
 :VMLOAD RAX     is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0x0f; byte=0x01; byte=0xda & RAX       { vmload(RAX); }
 @endif
-:VMMCALL        is vexMode=0 & byte=0x0f; byte=0x01; byte=0xd9          { vmmcall(); }
+:VMMCALL        is $(PRE_NOFX) & vexMode=0 & byte=0x0f; byte=0x01; byte=0xd9          { vmmcall(); }
 # Limiting the effective address size to 32 and 64 bit.  Surely we're not expecting a 16-bit VM address, are we?
 :VMRUN EAX      is vexMode=0 & addrsize=1 & byte=0x0f; byte=0x01; byte=0xd8 & EAX       { vmrun(EAX); }
 @ifdef IA64
@@ -4885,7 +5008,57 @@ define pcodeop verw;
 @ifdef IA64
 :VMSAVE RAX     is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0x0f; byte=0x01; byte=0xdb & RAX       { vmsave(RAX); }
 @endif
-#
+
+@ifdef IA64
+
+define pcodeop rmpFlags;
+
+# rFLAGS bits OF, ZF, AF, PF and SF are set based on return code
+macro rmpFlagSet() {
+    local result:1 = rmpFlags(EAX);
+    OF = result[0,1];
+    ZF = result[1,1];
+    AF = result[2,1];
+    PF = result[3,1];
+    SF = result[4,1];
+}
+
+# Exit to VMM
+define pcodeop vmgexit;
+:VMGEXIT  is ($(PRE_F2) | $(PRE_F3)) & vexMode=0 & byte=0x0f; byte=0x01; byte=0xd9          { vmgexit(); }
+
+# Page Smash
+define pcodeop psmash;
+:PSMASH  is $(LONGMODE_ON) & vexMode=0 & $(PRE_F3) & byte=0x0f; byte=0x01; byte=0xff       { EAX = psmash(RAX); rmpFlagSet(); }
+
+# Validate guest page RMP entry
+define pcodeop pvalidate;
+:PVALIDATE  is $(LONGMODE_ON) & vexMode=0 & $(PRE_F2) & byte=0x0f; byte=0x01; byte=0xff       { EAX = pvalidate(RAX, RCX, RDX); rmpFlagSet(); }
+
+# Adjust RMP permissions for guest page
+define pcodeop rmpadjust;
+:RMPADJUST  is $(LONGMODE_ON) & vexMode=0 & $(PRE_F3) & byte=0x0f; byte=0x01; byte=0xfe       { EAX = rmpadjust(RAX, RCX, RDX); rmpFlagSet(); }
+
+# Read the RMP permission mask for a guest page
+define pcodeop rmpquery;
+:RMPQUERY  is $(LONGMODE_ON) & vexMode=0 & $(PRE_F3) & byte=0x0f; byte=0x01; byte=0xfd       { EAX = rmpquery(RAX, RDX); rmpFlagSet(); }
+
+# Read an RMP entry
+define pcodeop rmpread;
+:RMPREAD  is $(LONGMODE_ON) & vexMode=0 & $(PRE_F2) & byte=0x0f; byte=0x01; byte=0xfd       { EAX = rmpread(RAX, RCX); rmpFlagSet(); }
+
+# Check RMP dirty status
+define pcodeop rmpchkd;
+:RMPCHKD  is $(LONGMODE_ON) & vexMode=0 & $(PRE_F3) & byte=0x0f; byte=0x01; byte=0xfc       { local result:1 = rmpchkd(RAX, RCX);  ZF = result[1,1]; CF = result[2,1]; }
+
+# RMP Optimization
+define pcodeop rmpopt;
+:RMPOPT   is $(LONGMODE_ON) & vexMode=0 & $(PRE_F2) & byte=0x0f; byte=0x01; byte=0xfc       { CF = rmpopt(RAX, RCX); }
+
+# Write a new RMP entry
+define pcodeop rmpupdate;
+:RMPUPDATE  is $(LONGMODE_ON) & vexMode=0 & $(PRE_F2) & byte=0x0f; byte=0x01; byte=0xfe       { EAX = rmpupdate(RAX, RCX); rmpFlagSet(); }
+@endif
 
 #
 # Intel hardware assisted virtualization opcodes
@@ -4946,6 +5119,23 @@ define pcodeop wrpkru;
 
 define pcodeop wrmsr;
 :WRMSR is vexMode=0 & byte=0xf; byte=0x30 { tmp:8 = (zext(EDX) << 32) | zext(EAX); wrmsr(ECX,tmp); }
+
+
+@ifdef IA64
+define pcodeop urdmsr;
+define pcodeop uwrmsr;
+:URDMSR Rmr64, Reg64 is $(LONGMODE_ON) & vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x38; byte=0xF8; mod=3 & Reg64 & Rmr64 { Rmr64 = urdmsr(Reg64); }
+:URDMSR Rmr64, imm32 is $(LONGMODE_ON) & $(VEX_L128) & $(PRE_F2) & $(VEX_MAP7) & $(VEX_W0) & byte=0xF8; mod=3 & reg_opcode=0 & Rmr64; imm32 { Rmr64 = urdmsr(imm32:4); }
+:UWRMSR Reg64, Rmr64 is $(LONGMODE_ON) & vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x38; byte=0xF8; mod=3 & Reg64 & Rmr64 { Rmr64 = uwrmsr(Reg64, Rmr64); }
+:UWRMSR imm32, Rmr64 is $(LONGMODE_ON) & $(VEX_L128) & $(PRE_F3) & $(VEX_MAP7) & $(VEX_W0) & byte=0xF8; mod=3 & reg_opcode=0 & Rmr64; imm32 { uwrmsr(imm32:4, Rmr64); }
+
+define pcodeop rdmsrlist;
+define pcodeop wrmsrlist;
+define pcodeop wrmsrns;
+:RDMSRLIST is $(LONGMODE_ON) & vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x01; byte=0xC6 { rdmsrlist(RCX, RDI, RSI); }
+:WRMSRLIST is $(LONGMODE_ON) & vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x01; byte=0xC6 { wrmsrlist(RCX, RDI, RSI); }
+:WRMSRNS   is $(LONGMODE_ON) & vexMode=0 & $(PRE_NO) & byte=0x0F; byte=0x01; byte=0xC6 { tmp:8 = (zext(EDX) << 32) | zext(EAX); wrmsrns(ECX,tmp); }
+@endif
 
 # See 'lockable.sinc' for memory destination, lockable variants
 :XADD       Rmr8,Reg8 	is vexMode=0 & byte=0x0F; byte=0xC0; mod=3 & Rmr8 & Reg8        { addflags( Rmr8,Reg8 ); local tmp =  Rmr8 +  Reg8;  Reg8 = Rmr8; Rmr8 = tmp;     resultflags(tmp); }
@@ -5071,6 +5261,7 @@ define pcodeop xtest;
 :LFENCE         is vexMode=0 & $(PRE_NO) & byte=0x0F; byte=0xAE; mod = 0b11 & reg_opcode=5 & r_m=0 { }
 :MFENCE         is vexMode=0 & $(PRE_NO) & byte=0x0F; byte=0xAE; mod = 0b11 & reg_opcode=6 & r_m=0 { }
 :SFENCE         is vexMode=0 & $(PRE_NO) & byte=0x0F; byte=0xAE; mod = 0b11 & reg_opcode=7 & r_m=0 { }
+
 
 #
 # floating point instructions
@@ -9644,6 +9835,18 @@ define pcodeop rsqrtss;
 :RSQRTSS         XmmReg, m32      is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x52; XmmReg ... & m32 { XmmReg = rsqrtss(XmmReg, m32); }
 :RSQRTSS         XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x52; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1 = rsqrtss(XmmReg1, XmmReg2); }
 
+@ifdef IA64
+define pcodeop senduipi;
+define pcodeop testui;
+define pcodeop setui;
+define pcodeop clearui;
+:SENDUIPI Rmr64 is $(LONGMODE_ON) & $(PRE_F3) & byte=0x0F; byte=0xC7; mod=3 & reg_opcode=0x6 & Rmr64 { senduipi(Rmr64); }
+:TESTUI         is $(LONGMODE_ON) & $(PRE_F3) & byte=0x0F; byte=0x01; byte=0xED { CF = testui(); }
+:UIRET          is $(LONGMODE_ON) & $(PRE_F3) & byte=0x0F; byte=0x01; byte=0xEC { pop88(RIP); pop88(rflags); pop88(RSP); unpackflags(rflags); unpackeflags(rflags); setui(); return [RIP]; }
+:CLUI           is $(LONGMODE_ON) & $(PRE_F3) & byte=0x0F; byte=0x01; byte=0xEE { clearui(); }
+:STUI           is $(LONGMODE_ON) & $(PRE_F3) & byte=0x0F; byte=0x01; byte=0xEF { setui(); }
+@endif
+
 :SHUFPD          XmmReg1, XmmReg2_m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xC6; XmmReg1 ... & XmmReg2_m128; imm8 
 { 
     local srcLow:8 = XmmReg2_m128[0,64];
@@ -10546,4 +10749,7 @@ lsbOffset: val is imm8 [ val=imm8 & 0x3f; ] { export *[const]:1 val; }
 :MOVNTSS m32, XmmReg1 is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2B; XmmReg1 ... & m32 {
 	m32 = XmmReg1[0,32];
 }
+
+
+
 } # end with : lockprefx=0

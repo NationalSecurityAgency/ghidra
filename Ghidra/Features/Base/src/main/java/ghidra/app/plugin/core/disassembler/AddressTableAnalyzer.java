@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,8 @@ import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Undefined;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.util.exception.CancelledException;
@@ -86,14 +87,13 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 	private boolean relocationGuideEnabled = OPTION_DEFAULT_RELOCATION_GUIDE_ENABLED;
 
 	private boolean allowOffcutReferences = OPTION_DEFAULT_ALLOW_OFFCUT_REFERENCES;
-	
+
 	private static final String ADDRESS_TABLE_BOOKMARK_TYPENAME = "Address Table";
 
 	// true if the processor uses Address low bit to refer to code
 	private boolean processorHasLowBitCode = false;
 
 	private long lastID;
-
 
 	public AddressTableAnalyzer() {
 		super("Create Address Tables", DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
@@ -134,7 +134,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 			lastID = id;
 			addrSet = removeDefined(program, addrSet);
 		}
-		
+
 		if (addrSet.isEmpty()) {
 			return true;
 		}
@@ -158,7 +158,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 		boolean didTable = false;
 		while (!didTable && addrIter.hasNext()) {
 			monitor.checkCancelled();
-			
+
 			addrCount++;
 			monitor.setProgress(addrCount);
 			Address start = addrIter.next();
@@ -175,20 +175,20 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 			AddressTable addressTable =
 				AddressTable.getEntry(program, start, monitor, true, minimumTableSize, ptrAlignment,
 					0, AddressTable.MINIMUM_SAFE_ADDRESS, relocationGuideEnabled);
-			
+
 			if (addressTable == null) {
 				continue;
 			}
-			
+
 			didTable = processAddressTable(addressTable, program, mgr, monitor);
-			
+
 			// Assumes that the entire table found was processed
 			long tableByteLen = addressTable.getByteLength();
 			addrCount += tableByteLen;
-			
+
 			// update maximum addresses consumed by table
 			try {
-				maxAddr = start.addNoWrap(tableByteLen-1);
+				maxAddr = start.addNoWrap(tableByteLen - 1);
 				addrIter = addrSet.getAddresses(maxAddr.addNoWrap(1), true);
 			}
 			catch (AddressOverflowException e) {
@@ -221,15 +221,16 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 	 * @return true if a table was actually made, false otherwise
 	 * @throws CancelledException if use cancels
 	 */
-	private boolean processAddressTable(AddressTable addressTable, Program program, AutoAnalysisManager mgr,
+	private boolean processAddressTable(AddressTable addressTable, Program program,
+			AutoAnalysisManager mgr,
 			TaskMonitor monitor) throws CancelledException {
 		boolean didTable = false;
-		
+
 		while (addressTable != null) {
 			Address startTableAddr = addressTable.getTopAddress();
 
 			int tableLen = checkTable(addressTable, program, monitor);
-			
+
 			// check if there is already an address table bookmark here
 			Bookmark bookmark = program.getBookmarkManager()
 					.getBookmark(addressTable.getTopAddress(), BookmarkType.ANALYSIS,
@@ -244,7 +245,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 				// broken the table up, thus (tableLen+1)
 				//
 				// table entry will be null if no more table entries beyond tableLen+1
-				addressTable = addressTable.newRemainingAddressTable(tableLen+1);
+				addressTable = addressTable.newRemainingAddressTable(tableLen + 1);
 				continue;
 			}
 
@@ -252,14 +253,15 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 			addressTable.makeTable(program, 0, tableLen - 1, autoLabelTable, false);
 
 			int tableByteLen = addressTable.getByteLength(0, tableLen - 1, false);
-			Address endTableAddr = startTableAddr.add(tableByteLen-1);
+			Address endTableAddr = startTableAddr.add(tableByteLen - 1);
 			mgr.codeDefined(new AddressSet(startTableAddr, endTableAddr));
 
 			// put info bookmark in
 			if (createBookmarksEnabled) {
 				program.getBookmarkManager()
 						.setBookmark(addressTable.getTopAddress(), BookmarkType.ANALYSIS,
-							ADDRESS_TABLE_BOOKMARK_TYPENAME, "Address table[" + tableLen + "] created");
+							ADDRESS_TABLE_BOOKMARK_TYPENAME,
+							"Address table[" + tableLen + "] created");
 			}
 
 			// if all are valid code, disassemble
@@ -296,16 +298,16 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 					//		AnalysisPriority.DATA_TYPE_PROPOGATION.getNext());
 				}
 			}
-			
+
 			// There might be more to the table. Get a new smaller table.
 			// This will skip one element in the table, that is assumed to have
 			// broken the table up, thus (tableLen+1)
 			//
 			// table entry will be null if no more table entries beyond tableLen+1
-			addressTable = addressTable.newRemainingAddressTable(tableLen+1);
+			addressTable = addressTable.newRemainingAddressTable(tableLen + 1);
 			didTable = true;
 		}
-		
+
 		return didTable;
 	}
 
@@ -319,11 +321,11 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 		// find defined data that should be removed
 		DataIterator definedData = program.getListing().getDefinedData(addrSet, true);
 		for (Data data : definedData) {
-			DataType dataType = data.getDataType();			
+			DataType dataType = data.getDataType();
 			if (dataType instanceof Undefined) {
 				continue;
 			}
-			
+
 			if (data.isPointer()) {
 				continue;
 			}
@@ -332,7 +334,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 			subSet.add(data.getMinAddress(), data.getMaxAddress());
 		}
 		addrSet = addrSet.subtract(subSet);
-		
+
 		// Find defined instructions that should be removed
 		subSet = new AddressSet();
 		InstructionIterator instructions = program.getListing().getInstructions(addrSet, true);
@@ -340,7 +342,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 			subSet.add(instruction.getMinAddress(), instruction.getMaxAddress());
 		}
 		addrSet = addrSet.subtract(subSet);
-		
+
 		return addrSet;
 	}
 
@@ -383,7 +385,8 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 	 * @return number of entries in table before hitting an inconsistent entry
 	 * @throws CancelledException if user cancels
 	 */
-	private int checkTable(AddressTable tableEntry, Program program, TaskMonitor monitor) throws CancelledException {
+	private int checkTable(AddressTable tableEntry, Program program, TaskMonitor monitor)
+			throws CancelledException {
 		// search for unicode strings first.
 		//   don't create an address table that overlaps a unicode string.
 		AddressSetView addrSet = tableEntry.getTableBody();
@@ -432,7 +435,8 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 		return tableLen;
 	}
 
-	private AddressSet findPossibleStrings(Program program, AddressSetView addrSet, TaskMonitor monitor) throws CancelledException {
+	private AddressSet findPossibleStrings(Program program, AddressSetView addrSet,
+			TaskMonitor monitor) throws CancelledException {
 		AddressSet possibleStrSet = new AddressSet();
 		Memory memory = program.getMemory();
 
@@ -444,7 +448,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 
 		while (addrIter.hasNext()) {
 			Address start = addrIter.next();
-			
+
 			monitor.checkCancelled();
 
 			// skip over anything that smells like a unicode string

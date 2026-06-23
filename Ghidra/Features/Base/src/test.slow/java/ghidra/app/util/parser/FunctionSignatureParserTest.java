@@ -132,6 +132,7 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	public void testExtractFunctionName() throws Exception {
 		assertEquals("bob", parser.extractFunctionName("void bob(int a)"));
 		assertEquals("bob", parser.extractFunctionName("void    bob    (int a)"));
+		assertEquals("Foo::Bar::bob", parser.extractFunctionName("void Foo::Bar::bob (int a)"));
 	}
 
 	@Test

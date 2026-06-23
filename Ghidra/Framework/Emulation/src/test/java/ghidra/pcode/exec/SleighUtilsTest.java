@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,7 @@ import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.Tree;
 import org.junit.Test;
 
-import ghidra.pcode.exec.SleighUtils.AddressOf;
-import ghidra.pcode.exec.SleighUtils.SleighParseError;
+import ghidra.pcode.exec.SleighUtils.*;
 
 public class SleighUtilsTest {
 	@Test
@@ -35,7 +34,7 @@ public class SleighUtilsTest {
 				""";
 		Tree tree = SleighUtils.parseSleighSemantic(mySleigh);
 		assertEquals(
-			"(OP_SEMANTIC (if (! ((...) (== (IDENTIFIER RAX) (DEC_INT 0)))) (goto " +
+			"(OP_SEMANTIC (if (! ((...) (== (IDENTIFIER RAX) (DEF_INT 0)))) (goto " +
 				"(OP_JUMPDEST_LABEL (< (IDENTIFIER L1))))) (OP_APPLY (IDENTIFIER emu_swi)) " +
 				"(< (IDENTIFIER L1)) (OP_APPLY (IDENTIFIER emu_exec_decoded)))",
 			tree.toStringTree());
@@ -262,8 +261,16 @@ public class SleighUtilsTest {
 
 	@Test
 	public void testParseSleighExpression() throws RecognitionException {
-		assertEquals("(|| (== (IDENTIFIER RAX) (DEC_INT 0)) (== (IDENTIFIER RBX) (DEC_INT 7)))",
+		assertEquals("(|| (== (IDENTIFIER RAX) (DEF_INT 0)) (== (IDENTIFIER RBX) (DEF_INT 7)))",
 			SleighUtils.parseSleighExpression("RAX == 0 || RBX == 7").toStringTree());
+	}
+
+	@Test
+	public void testParseSleighExpressionHex() throws RecognitionException {
+		assertEquals("(DEF_INT 0afeface)",
+			SleighUtils.parseSleighExpression("0afeface", LitIdMode.HEX).toStringTree());
+		assertEquals("(DEF_INT cafeface)",
+			SleighUtils.parseSleighExpression("cafeface", LitIdMode.HEX).toStringTree());
 	}
 
 	@Test

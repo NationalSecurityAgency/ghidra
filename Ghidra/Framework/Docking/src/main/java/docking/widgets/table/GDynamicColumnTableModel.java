@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
 import docking.widgets.table.sort.*;
@@ -125,9 +126,10 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 
 	/**
 	 * Allows clients to defer column creation until after this parent class's constructor has been
-	 * called. This method will not restore any column settings that have been changed after
-	 * construction. Thus, this method is intended only to be called during the construction
-	 * process.
+	 * called.
+	 * <p>
+	 * This method will not restore any column settings that have been changed after construction.
+	 * Thus, this method is intended only to be called during the construction process.
 	 */
 	protected void reloadColumns() {
 
@@ -158,13 +160,9 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 		// note: we may have multiple columns with the same class.  It is not the normal case, 
 		//       but it can happen for re-usable column classes.
 
-		//@formatter:off
-		List<DynamicTableColumn<ROW_TYPE, ?, ?>> matching =
-			tableColumns.stream()
-						.filter(c -> isColumnClassMatch(c, clazz))
-						.collect(Collectors.toList())
-						;
-		//@formatter:on
+		List<DynamicTableColumn<ROW_TYPE, ?, ?>> matching = tableColumns.stream()
+				.filter(c -> isColumnClassMatch(c, clazz))
+				.collect(Collectors.toList());
 
 		if (matching.size() > 1) {
 			Msg.warn(this, "More than one column found matching class '" + clazz + "'");
@@ -179,8 +177,7 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 			return true;
 		}
 
-		if (column instanceof MappedTableColumn) {
-			MappedTableColumn<?, ?, ?, ?> mappedColumn = (MappedTableColumn<?, ?, ?, ?>) column;
+		if (column instanceof MappedTableColumn<?, ?, ?, ?> mappedColumn) {
 			Class<?> columnClass = mappedColumn.getMappedColumnClass();
 			if (clazz.equals(columnClass)) {
 				return true;
@@ -209,7 +206,6 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	 * @param columnIndex the column index
 	 * @return a comparator for the specific column values
 	 */
-	@SuppressWarnings("unchecked") // the column provides the values itself; safe cast
 	protected Comparator<Object> createSortComparatorForColumn(int columnIndex) {
 		if (columnIndex < 0 || columnIndex >= tableColumns.size()) {
 			// We have seen this sporadically.  Assume for now there is some sort of timing issue.
@@ -219,6 +215,7 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 			return null;
 		}
 		DynamicTableColumn<ROW_TYPE, ?, ?> column = getColumn(columnIndex);
+		@SuppressWarnings("unchecked") // the column provides the values itself; safe cast
 		Comparator<Object> comparator =
 			(Comparator<Object>) column.getComparator(this, columnIndex);
 		return comparator;
@@ -261,10 +258,10 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	}
 
 	/**
-	 * Adds the given column at the end of the list of columns. This method is intended for
-	 * implementations to add custom column objects, rather than relying on generic, discovered
-	 * DynamicTableColumn implementations.
-	 * 
+	 * Adds the given column at the end of the list of columns.
+	 * <p>
+	 * This method is intended for implementations to add custom column objects, rather than relying
+	 * on generic, discovered DynamicTableColumn implementations.
 	 * <p>
 	 * <b>Note: this method assumes that the columns have already been sorted</b>
 	 * 
@@ -275,10 +272,10 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	}
 
 	/**
-	 * Adds the given columns to the end of the list of columns. This method is intended for
-	 * implementations to add custom column objects, rather than relying on generic, discovered
-	 * DynamicTableColumn implementations.
-	 * 
+	 * Adds the given columns to the end of the list of columns.
+	 * <p>
+	 * This method is intended for implementations to add custom column objects, rather than relying
+	 * on generic, discovered DynamicTableColumn implementations.
 	 * <p>
 	 * <b>Note: this method assumes that the columns have already been sorted.</b>
 	 * 
@@ -289,10 +286,10 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	}
 
 	/**
-	 * Adds the given columns to the end of the list of columns. This method is intended for
-	 * implementations to add custom column objects, rather than relying on generic, discovered
-	 * DynamicTableColumn implementations.
-	 * 
+	 * Adds the given columns to the end of the list of columns.
+	 * <p>
+	 * This method is intended for implementations to add custom column objects, rather than relying
+	 * on generic, discovered DynamicTableColumn implementations.
 	 * <p>
 	 * <b>Note: this method assumes that the columns have already been sorted.</b>
 	 * 
@@ -308,9 +305,10 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	}
 
 	/**
-	 * Adds the given field at the given index to the list of fields in this class. This method is
-	 * intended for implementations to add custom column objects, rather than relying on generic,
-	 * discovered DynamicTableColumn implementations.
+	 * Adds the given field at the given index to the list of fields in this class.
+	 * <p>
+	 * This method is intended for implementations to add custom column objects, rather than relying
+	 * on generic, discovered DynamicTableColumn implementations.
 	 * <p>
 	 * <b>Note: this method assumes that the columns have already been sorted.</b>
 	 * 
@@ -367,8 +365,10 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	}
 
 	/**
-	 * Removes the given columns from this model. This method allows the client to remove multiple
-	 * columns at once, firing only one event when the work is finished.
+	 * Removes the given columns from this model.
+	 * <p>
+	 * This method allows the client to remove multiple columns at once, firing only one event when
+	 * the work is finished.
 	 *
 	 * @param columns the columns to remove
 	 */
@@ -403,13 +403,6 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 		return defaultColumns.contains(column);
 	}
 
-	/**
-	 * Returns true if the column indicated by the index in the model is a default column (meaning
-	 * that it was specified by the model and not discovered).
-	 * 
-	 * @param modelIndex the index of the column in the model.
-	 * @return true if the column is a default.
-	 */
 	@Override
 	public boolean isDefaultColumn(int modelIndex) {
 		if (modelIndex < 0 || modelIndex >= tableColumns.size()) {
@@ -464,6 +457,30 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	}
 
 	@Override
+	public int getMaxColumnWidth(int column) {
+		if (column < 0 || column >= tableColumns.size()) {
+
+			// hacky: this can happen when we are in the process of rebuilding our column structure,
+			//        where the client calling us has an old index value (such as when we are
+			//        adding/removing columns).
+			return -1; // default
+		}
+		return tableColumns.get(column).getColumnMaxWidth();
+	}
+
+	@Override
+	public int getMinColumnWidth(int column) {
+		if (column < 0 || column >= tableColumns.size()) {
+
+			// hacky: this can happen when we are in the process of rebuilding our column structure,
+			//        where the client calling us has an old index value (such as when we are
+			//        adding/removing columns).
+			return -1; // default
+		}
+		return tableColumns.get(column).getColumnMinWidth();
+	}
+
+	@Override
 	public String getColumnDisplayName(int columnIndex) {
 		DynamicTableColumn<ROW_TYPE, ?, ?> column = tableColumns.get(columnIndex);
 		return column.getColumnDisplayName(columnSettings.get(column));
@@ -485,35 +502,32 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 			return null;
 		}
 
+		if (t == null) {
+			// sometimes happens if we are painting while being disposed
+			return null;
+		}
+
 		DATA_SOURCE dataSource = getDataSource();
 
 		@SuppressWarnings("unchecked")
-		// Note: We are casting now, as in practice the type should never be different that
+		// Note: We are casting now, as in practice the type should never be different than
 		//       the declared type.  We want to remove entirely the 'dataSource' value and then
 		//       the templating will be simpler.
 		DynamicTableColumn<ROW_TYPE, ?, DATA_SOURCE> column =
 			(DynamicTableColumn<ROW_TYPE, ?, DATA_SOURCE>) tableColumns.get(columnIndex);
 
-		if (t == null) {
-			// sometimes happen if we are painting while being disposed
-			return null;
-		}
-
 		return column.getValue(t, columnSettings.get(column), dataSource, serviceProvider);
 	}
 
 	/**
-	 * Returns the table's context for the data.
-	 * 
-	 * @return the table's context for the data.
+	 * {@return the table's context for the data}
 	 */
 	public abstract DATA_SOURCE getDataSource();
 
 	/**
-	 * Returns the column index of the given column class
+	 * {@return the column index of the given column class, or -1 if not found}
 	 * 
 	 * @param columnClass the class for the type of DynamicTableColumn you want to find.
-	 * @return the column index for the specified DynamicTableColumn. -1 if not found.
 	 */
 	public int getColumnIndex(Class<?> columnClass) {
 		DynamicTableColumn<ROW_TYPE, ?, ?> column =
@@ -568,43 +582,24 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 		stateChanged(new ChangeEvent(this));
 	}
 
-	/**
-	 * Gets the special table cell renderer for the specified table field column. A null value
-	 * indicates that this field uses a default cell renderer.
-	 *
-	 * @param index the model column index
-	 * @return a table cell renderer for this field. Otherwise, null if a default renderer should be
-	 *         used.
-	 */
 	@Override
 	public TableCellRenderer getRenderer(int index) {
 		return tableColumns.get(index).getColumnRenderer();
 	}
 
-	/**
-	 * Gets the special header cell renderer for the specified table field column. A null value
-	 * indicates that this column uses a default header renderer.
-	 *
-	 * @param index the model column index
-	 * @return a table cell renderer for this field's header. Otherwise, null if a default renderer
-	 *         should be used.
-	 */
+	@Override
+	public TableCellEditor getEditor(int index) {
+		return tableColumns.get(index).getColumnEditor();
+	}
+
 	@Override
 	public TableCellRenderer getHeaderRenderer(int index) {
 		return tableColumns.get(index).getHeaderRenderer();
 	}
 
-	/**
-	 * Gets the maximum number of text display lines needed for any given cell within the specified
-	 * column.
-	 * 
-	 * @param index column field index
-	 * @return maximum number of lines needed for specified column
-	 */
 	@Override
 	public int getMaxLines(int index) {
 		if (index < 0 || index >= tableColumns.size()) {
-
 			// hacky: this can happen when we are in the process of rebuilding our column structure,
 			//        where the client calling us has an old index value (such as when we are
 			//        adding/removing columns).

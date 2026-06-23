@@ -602,6 +602,7 @@ public:
   virtual void opLzcountOp(const PcodeOp *op)=0;			///< Emit a LZCOUNT operator
   virtual void opSpullOp(const PcodeOp *op)=0;				///< Emit an SPULL operator
   virtual string unnamedField(int4 off,int4 size);			///< Generate an artificial field name
+  virtual string getScopeDelimiter(void) const=0;			///< Return the character string used to separate scope names
 
   static int4 mostNaturalBase(uintb val); 			///< Determine the most natural base for an integer
   static void formatBinary(ostream &s,uintb val);		///< Print a number in binary form

@@ -27,6 +27,7 @@ import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.services.*;
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.sourcelanguage.SourceLanguageService;
 import ghidra.framework.Application;
 import ghidra.framework.model.*;
 import ghidra.framework.options.OptionType;
@@ -191,6 +192,38 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 					String msg = Objects.requireNonNullElse(e.getMessage(), e.toString());
 					log.appendMsg("Apply Data Archives",
 						"Unexpected Error opening archive %s: %s".formatted(archiveName, msg));
+				}
+			}
+		}
+
+		// Add source language data archives
+		result.addAll(getSourceLanguageDTMs(program, log, monitor));
+
+		return result;
+	}
+
+	private List<DataTypeManager> getSourceLanguageDTMs(Program program, MessageLog log,
+			TaskMonitor monitor) {
+		List<DataTypeManager> result = new ArrayList<>();
+		for (ResourceFile file : SourceLanguageService.getDataArchives(program,
+			program.getSourceLanguageIDs(), log, monitor)) {
+			if (monitor.isCancelled()) {
+				break;
+			}
+			try {
+				DataTypeManager dtm = dtmService.openArchive(file, false);
+				result.add(dtm);
+			}
+			catch (Exception e) {
+				Throwable cause = e.getCause();
+				if (cause instanceof VersionException) {
+					log.appendMsg("Apply Data Archives",
+						"Unable to open archive %s: %s".formatted(file, cause.toString()));
+				}
+				else {
+					String msg = Objects.requireNonNullElse(e.getMessage(), e.toString());
+					log.appendMsg("Apply Data Archives",
+						"Unexpected Error opening archive %s: %s".formatted(file, msg));
 				}
 			}
 		}

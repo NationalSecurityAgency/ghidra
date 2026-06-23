@@ -28,7 +28,6 @@ import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.dyld.DyldArchitecture;
 import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
-import ghidra.app.util.bin.format.swift.SwiftUtils;
 import ghidra.app.util.bin.format.ubi.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.*;
@@ -149,8 +148,11 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
 			loadIntoProgram, mirrorFsLayout);
 		if (!loadIntoProgram) {
-			list.add(new Option(REEXPORT_OPTION_NAME, REEXPORT_OPTION_DEFAULT,
-				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-reexport"));
+			list.add(Option.newBoolean(REEXPORT_OPTION_NAME)
+					.value(REEXPORT_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-reexport"))
+					.description("Transitively export symbols from LC_REEXPORT_DYLIB libraries.")
+					.build());
 		}
 		return list;
 	}
@@ -541,9 +543,6 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 					.flatMap(seg -> seg.getSections().stream())
 					.map(section -> section.getSectionName())
 					.toList();
-			if (SwiftUtils.isSwift(sectionNames)) {
-				return SwiftUtils.SWIFT_COMPILER;
-			}
 			if (GoRttiMapper.hasGolangSections(sectionNames)) {
 				return GoConstants.GOLANG_CSPEC_NAME;
 			}

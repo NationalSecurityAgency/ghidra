@@ -164,6 +164,9 @@ public class ConstraintFilterPanel extends JPanel {
 			extends GComboBoxCellRenderer<ColumnConstraint<?>> {
 		@Override
 		protected String getItemText(ColumnConstraint<?> value) {
+			if (value == null) {
+				return "";
+			}
 			return value.getName();
 		}
 	}

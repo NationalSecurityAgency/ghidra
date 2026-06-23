@@ -248,11 +248,6 @@ public class FunctionReachabilityTableModel
 		}
 
 		@Override
-		public Iterator<List<FRVertex>> iterator() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
 		public void add(List<FRVertex> t) {
 			accumulator.add(new FunctionReachabilityResult(fromFunction, toFunction, t));
 		}
@@ -265,18 +260,8 @@ public class FunctionReachabilityTableModel
 		}
 
 		@Override
-		public boolean contains(List<FRVertex> t) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Collection<List<FRVertex>> get() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public int size() {
-			return accumulator.size();
+		public int getProgress() {
+			return accumulator.getProgress();
 		}
 
 	}

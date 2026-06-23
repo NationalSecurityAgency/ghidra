@@ -18,6 +18,8 @@ package ghidra.app.plugin.core.symboltree;
 import static org.junit.Assert.*;
 
 import java.awt.Rectangle;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
@@ -36,9 +38,9 @@ import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
 import ghidra.app.plugin.core.symboltree.actions.NavigateOnIncomingAction;
-import ghidra.app.plugin.core.symboltree.nodes.SymbolCategoryNode;
-import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
+import ghidra.app.plugin.core.symboltree.nodes.*;
 import ghidra.app.util.viewer.field.*;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
@@ -666,9 +668,194 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("MyAnotherLocal", (((SymbolNode) node).getSymbol()).getName());
 	}
 
+	@Test
+	public void testOrgNode_Namespaces() throws Exception {
+
+		// set org node threshold to a low value 
+		ToolOptions options = tool.getOptions(SymbolTreePlugin.OPTIONS_CATEGORY);
+		int newThreshold = 4;
+		options.setInt(SymbolTreePlugin.OPTION_NAME_GROUP_THRESHOLD, newThreshold);
+
+		/*
+		 	Create enough nodes to trigger an org node.
+		 	
+		 	Namespaces
+		 		NsGroup1
+		 			NsGroup10
+		 				NsGroup100
+		 		NsGroup2
+		 		NsGroup3
+		 */
+		createOrgNamespaces(newThreshold);
+
+		// create a new namespace node that would appear under an org node
+		NamespaceSymbolNode parentNode = openNamespaceNodes("NsGroup1::NsGroup10::NsGroup100");
+		Namespace parentNs = parentNode.getNamespace();
+		createNamespace(parentNs, "NewNamespace");
+
+		// verify node is in the tree
+		assertNamespaceNodes("NsGroup1::NsGroup10::NsGroup100::NewNamespace");
+	}
+
+	@Test
+	public void testOrgNode_Classes() throws Exception {
+
+		// set org node threshold to a low value 
+		ToolOptions options = tool.getOptions(SymbolTreePlugin.OPTIONS_CATEGORY);
+		int newThreshold = 4;
+		options.setInt(SymbolTreePlugin.OPTION_NAME_GROUP_THRESHOLD, newThreshold);
+
+		/*
+		 	Create enough nodes to trigger an org node.
+		 	
+		 	Classes
+		 		ClassGroup1
+		 			ClassGroup10
+		 				ClassGroup100
+		 		ClassGroup2
+		 		ClassGroup3
+		 */
+		createOrgClasses(newThreshold);
+
+		// create a new namespace node that would appear under an org node
+		ClassSymbolNode parentNode =
+			openClassNodes("ClassGroup1::ClassGroup10::ClassGroup100");
+		Namespace parentNs = parentNode.getNamespace();
+		createClass(parentNs, "NewClass");
+
+		// verify node is in the tree
+		assertClassNodes("ClassGroup1::ClassGroup10::ClassGroup100::NewClass");
+	}
+
+	@Test
+	public void testDeleteOrgNode() throws Exception {
+
+		//
+		// Tests that OrganizationNodes can be deleted from the UI
+		// 
+
+		// set org node threshold to a low value 
+		ToolOptions options = tool.getOptions(SymbolTreePlugin.OPTIONS_CATEGORY);
+		int newThreshold = 4;
+		options.setInt(SymbolTreePlugin.OPTION_NAME_GROUP_THRESHOLD, newThreshold);
+
+		/*
+		 	Create enough nodes to trigger an org node.
+		 	
+		 	Namespaces
+		 		NsGroup1
+		 			NsGroup10
+		 				NsGroup100
+		 		NsGroup2
+		 		NsGroup3
+		 */
+		createOrgNamespaces(newThreshold);
+		openNamespaceNodes("NsGroup1::NsGroup10::NsGroup100");
+
+		GTreeNode group10 = getNode(tree, "Global", "Namespaces", "NsGroup1", "NsGroup10");
+
+		List<GTreeNode> children = group10.getChildren();
+		List<SymbolNode> symbols =
+			children.stream().map(n -> (SymbolNode) n).collect(Collectors.toList());
+
+		util.selectNode(group10);
+
+		ActionContext context = util.getSymbolTreeContext();
+		performTreeAction(deleteAction, context);
+
+		GTreeNode group1 = getNode(tree, "Global", "Namespaces", "NsGroup1");
+		group10 = group1.getChild("NsGroup10");
+		assertNull(group10);
+
+		for (SymbolNode node : symbols) {
+			Symbol symbol = node.getSymbol();
+			assertTrue(symbol.isDeleted());
+		}
+	}
+
 //=================================================================================================
 // Private Methods
 //=================================================================================================	
+
+	private NamespaceCategoryNode getNamespacesNode() {
+		GTreeNode root = tree.getViewRoot();
+		return (NamespaceCategoryNode) root.getChild("Namespaces");
+	}
+
+	private ClassCategoryNode getClassesNode() {
+		GTreeNode root = tree.getViewRoot();
+		return (ClassCategoryNode) root.getChild("Classes");
+	}
+
+	private NamespaceSymbolNode openNamespaceNodes(String path) {
+
+		GTreeNode parent = getNamespacesNode();
+		String[] parts = path.split("::");
+		for (String name : parts) {
+			GTreeNode child = parent.getChild(name);
+			String message =
+				"Child '%s' not found in parent '%s' \n\tfor path '%s'"
+						.formatted(name, parent, path);
+			assertNotNull(message, child);
+			tree.expandPath(child);
+			parent = child;
+		}
+		waitForTree(tree);
+
+		return (NamespaceSymbolNode) parent;
+	}
+
+	private ClassSymbolNode openClassNodes(String path) {
+
+		GTreeNode parent = getClassesNode();
+		String[] parts = path.split("::");
+		for (String name : parts) {
+			GTreeNode child = parent.getChild(name);
+			String message =
+				"Child '%s' not found in parent '%s' \n\tfor path '%s'"
+						.formatted(name, parent, path);
+			assertNotNull(message, child);
+			tree.expandPath(child);
+			parent = child;
+		}
+		waitForTree(tree);
+
+		return (ClassSymbolNode) parent;
+	}
+
+	private void createOrgNamespaces(int threshold) throws Exception {
+		int groupCount = 3;
+		for (int i = 0; i < groupCount; i++) {
+			// groups need to share a common prefix
+			String groupName = "Group" + (i + 1); // 1-based for readability
+			int childCount = (threshold + 1);
+			for (int j = 0; j < childCount; j++) {
+
+				String subGroupName = groupName + j;
+				for (int k = 0; k < childCount; k++) {
+
+					createNamespace("Ns" + subGroupName + k);
+				}
+			}
+		}
+	}
+
+	private void createOrgClasses(int threshold) throws Exception {
+		int groupCount = 3;
+		for (int i = 0; i < groupCount; i++) {
+			// groups need to share a common prefix
+			String groupName = "Group" + (i + 1); // 1-based for readability
+			int childCount = (threshold + 1);
+			for (int j = 0; j < childCount; j++) {
+
+				String subGroupName = groupName + j;
+				for (int k = 0; k < childCount; k++) {
+
+					createClass("Class" + subGroupName + k);
+				}
+			}
+		}
+	}
 
 	private void expandClasses() {
 		GTreeNode node = rootNode.getChild("Classes");
@@ -738,6 +925,10 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		CreateNamespacesCmd cmd = new CreateNamespacesCmd(name, parent, SourceType.USER_DEFINED);
 		applyCmd(program, cmd);
 		return cmd.getNamespace();
+	}
+
+	private void createClass(String name) throws Exception {
+		createClass(program.getGlobalNamespace(), name);
 	}
 
 	private GhidraClass createClass(Namespace parent, String name) throws Exception {

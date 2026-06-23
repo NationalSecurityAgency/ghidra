@@ -15,7 +15,8 @@
  */
 package agent.dbgeng.rmi;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.*;
 
 import java.io.File;
@@ -38,7 +39,7 @@ import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.modules.TraceModule;
@@ -142,9 +143,9 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				Address main = rangeMain.getMinAddress();
 
 				assertBreakLoc(procBreakLocVals.get(0), "[0]", main, 1,
-					Set.of(TraceBreakpointKind.SW_EXECUTE), "ntdll!Ldr");
+					CommonSet.SWX.kinds(), "ntdll!Ldr");
 				assertBreakLoc(procBreakLocVals.get(1), "[1]", main.add(4), 1,
-					Set.of(TraceBreakpointKind.HW_EXECUTE), "ntdll!Ldr");
+					CommonSet.HWX.kinds(), "ntdll!Ldr");
 			}
 		}
 	}
@@ -185,14 +186,11 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				Address main2 = rangeMain2.getMinAddress();
 
 				assertWatchLoc(procBreakVals.get(0), "[0]", main0, (int) rangeMain0.getLength(),
-					Set.of(TraceBreakpointKind.HW_EXECUTE),
-					"main");
+					CommonSet.HWX.kinds(), "main");
 				assertWatchLoc(procBreakVals.get(1), "[1]", main1, (int) rangeMain1.getLength(),
-					Set.of(TraceBreakpointKind.WRITE),
-					"main+4");
+					CommonSet.WRITE.kinds(), "main+4");
 				assertWatchLoc(procBreakVals.get(2), "[2]", main2, (int) rangeMain1.getLength(),
-					Set.of(TraceBreakpointKind.READ),
-					"main+8");
+					CommonSet.READ.kinds(), "main+8");
 			}
 		}
 	}

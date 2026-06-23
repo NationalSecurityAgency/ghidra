@@ -51,6 +51,12 @@ public class SkeletonExporter extends Exporter {
 	}
 
 	@Override
+	public boolean canExportDomainObject(Class<? extends DomainObject> domainObjectClass) {
+		// return Program.class.isAssignableFrom(domainObjectClass);
+		return false;
+	}
+
+	@Override
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet,
 			TaskMonitor monitor) throws ExporterException, IOException {
 
@@ -64,7 +70,9 @@ public class SkeletonExporter extends Exporter {
 		List<Option> list = new ArrayList<>();
 
 		// If this exporter has custom options, add them to 'list'
-		list.add(new Option("Option name goes here", "Default option value goes here"));
+		list.add(Option.newString("Option name goes here")
+				.value("Default option value goes here")
+				.build());
 
 		return list;
 	}

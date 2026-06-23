@@ -16,9 +16,10 @@
 package ghidra.program.model.listing;
 
 import ghidra.program.model.symbol.*;
+import ghidra.util.exception.InvalidInputException;
 
 /**
- * Interface for a Library namespace.
+ * Interface for a Library dependency and namespace.
  */
 public interface Library extends Namespace {
 
@@ -30,9 +31,19 @@ public interface Library extends Namespace {
 	}
 
 	/**
-	 * @return the associated program within the project which corresponds to this library
+	 * @return the associated program file pathname within the project which corresponds to this library.
 	 */
 	public String getAssociatedProgramPath();
+
+	/**
+	 * Sets the program file pathname within the project which corresponds to this library.
+	 * <p>
+	 * NOTE: Assigning a path to {@link Library#UNKNOWN} Library will be ignored.
+	 *
+	 * @param programPath a program file pathname  or null to clear the stored path.
+	 * @throws InvalidInputException on invalid programPath is specified
+	 */
+	public void setAssociatedProgramPath(String programPath) throws InvalidInputException;
 
 	/**
 	 * Get the Library which contains the specified external symbol.

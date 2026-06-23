@@ -225,6 +225,10 @@ public class DebuggerTrackLocationTrait {
 		return trackedLocation;
 	}
 
+	public void clearTrackedLocation() {
+		trackedLocation = null;
+	}
+
 	public MultiStateDockingAction<LocationTrackingSpec> installAction() {
 		// TODO: Only those Sleigh expressions applicable to the current thread's registers?
 		action = DebuggerTrackLocationAction.builder(plugin)

@@ -264,7 +264,7 @@ public class ProgramMemoryUtil {
 	public static void loadDirectReferenceList(Program program, int alignment, Address toAddress,
 			AddressSetView toAddressSet, List<ReferenceAddressPair> directReferenceList,
 			TaskMonitor monitor) throws CancelledException {
-		Accumulator<ReferenceAddressPair> accumulator = new ListAccumulator<>();
+		ListAccumulator<ReferenceAddressPair> accumulator = new ListAccumulator<>();
 		loadDirectReferenceList(program, alignment, toAddress, toAddressSet, accumulator, monitor);
 		directReferenceList.addAll(accumulator.get());
 	}

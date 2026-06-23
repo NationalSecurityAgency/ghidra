@@ -15,6 +15,7 @@
  */
 package agent.dbgeng.rmi;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
@@ -41,7 +42,7 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.*;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.memory.*;
@@ -989,9 +990,9 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 			Address bp1 = rangeMain.getMinAddress();
 
 			assertBreakLoc(procBreakLocVals.get(0), "[0]", bp1, 1,
-				Set.of(TraceBreakpointKind.SW_EXECUTE), "ntdll!Ldr");
+				CommonSet.SWX.kinds(), "ntdll!Ldr");
 			assertBreakLoc(procBreakLocVals.get(1), "[1]", bp1.add(4), 1,
-				Set.of(TraceBreakpointKind.HW_EXECUTE), "ntdll!Ldr");
+				CommonSet.HWX.kinds(), "ntdll!Ldr");
 		}
 	}
 
@@ -1031,11 +1032,11 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 			Address main2 = rangeMain2.getMinAddress();
 
 			assertWatchLoc(procBreakVals.get(0), "[0]", main0, (int) rangeMain0.getLength(),
-				Set.of(TraceBreakpointKind.HW_EXECUTE), "ntdll!LdrInit");
+				CommonSet.HWX.kinds(), "ntdll!LdrInit");
 			assertWatchLoc(procBreakVals.get(1), "[1]", main1, (int) rangeMain1.getLength(),
-				Set.of(TraceBreakpointKind.WRITE), "ntdll!LdrInit");
+				CommonSet.WRITE.kinds(), "ntdll!LdrInit");
 			assertWatchLoc(procBreakVals.get(2), "[2]", main2, (int) rangeMain2.getLength(),
-				Set.of(TraceBreakpointKind.READ), "ntdll!LdrInit");
+				CommonSet.READ.kinds(), "ntdll!LdrInit");
 		}
 	}
 

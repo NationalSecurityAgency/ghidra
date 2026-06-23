@@ -95,7 +95,7 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 		builder.createFunction(entry);
 	}
 
-	private void createData(ProgramBuilder builder) throws Exception {
+	protected void createData(ProgramBuilder builder) throws Exception {
 		// "LoadCursorW", 00
 		builder.setBytes("0x010074e6", "4c 6f 61 64 43 75 72 73 6f 72 57 00");
 	}

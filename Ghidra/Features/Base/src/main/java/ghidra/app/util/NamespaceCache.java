@@ -23,6 +23,9 @@ import ghidra.util.datastruct.LRUSet;
 
 /**
  * Static class for remember the last few namespaces used for a program.
+ * 
+ * <p>Note: This class is not currently multi-threaded.  Accesses are expected to be on the Swing
+ * thread.
  */
 public class NamespaceCache {
 	public static final int MAX_RECENTS = 10;

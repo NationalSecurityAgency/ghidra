@@ -18,22 +18,28 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.DBRecord;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.model.data.*;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.UniversalID;
 
-public class SourceArchiveDB extends DatabaseObject implements SourceArchive {
+public class SourceArchiveDB extends DbObject implements SourceArchive {
 	private UniversalID sourceID;
 	private DBRecord record;
 	private final SourceArchiveAdapter adapter;
 	private final DataTypeManagerDB dtMgr;
 	private Lock lock;
 
-	public SourceArchiveDB(DataTypeManagerDB dtMgr, DBObjectCache<SourceArchiveDB> cache,
-			SourceArchiveAdapter adapter, DBRecord record) {
-		super(cache, record.getKey());
+	/**
+	 * Constructor
+	 * @param dtMgr the datatype manager
+	 * @param adapter the source archive database adapter
+	 * @param record the source archive record
+	 */
+	SourceArchiveDB(DataTypeManagerDB dtMgr, SourceArchiveAdapter adapter,
+			DBRecord record) {
+		super(record.getKey());
 		this.dtMgr = dtMgr;
 		this.adapter = adapter;
 		this.record = record;
@@ -99,9 +105,11 @@ public class SourceArchiveDB extends DatabaseObject implements SourceArchive {
 	}
 
 	@Override
-	protected boolean refresh() {
+	protected boolean refresh(DBRecord rec) {
 		try {
-			DBRecord rec = adapter.getRecord(key);
+			if (rec == null) {
+				rec = adapter.getRecord(key);
+			}
 			if (rec != null) {
 				record = rec;
 				return true;
@@ -125,9 +133,8 @@ public class SourceArchiveDB extends DatabaseObject implements SourceArchive {
 
 	@Override
 	public void setLastSyncTime(long syncTime) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.write()) {
+			checkDeleted();
 			record.setLongValue(SourceArchiveAdapter.ARCHIVE_ID_LAST_SYNC_TIME_COL, syncTime);
 			adapter.updateRecord(record);
 			dtMgr.sourceArchiveChanged(getSourceArchiveID());
@@ -135,25 +142,18 @@ public class SourceArchiveDB extends DatabaseObject implements SourceArchive {
 		catch (IOException e) {
 			dtMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public void setDirtyFlag(boolean isDirty) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.write()) {
+			checkDeleted();
 			record.setBooleanValue(SourceArchiveAdapter.ARCHIVE_ID_DIRTY_FLAG_COL, isDirty);
 			adapter.updateRecord(record);
 			dtMgr.sourceArchiveChanged(getSourceArchiveID());
 		}
 		catch (IOException e) {
 			dtMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -162,18 +162,14 @@ public class SourceArchiveDB extends DatabaseObject implements SourceArchive {
 		if (getName().equals(newName)) {
 			return;
 		}
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.write()) {
+			checkDeleted();
 			record.setString(SourceArchiveAdapter.ARCHIVE_ID_NAME_COL, newName);
 			adapter.updateRecord(record);
 			dtMgr.sourceArchiveChanged(getSourceArchiveID());
 		}
 		catch (IOException e) {
 			dtMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 

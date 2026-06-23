@@ -46,8 +46,8 @@ import utilities.util.FileResolutionResult;
 import utilities.util.FileUtilities;
 
 /**
- * <code>SleighCompile</code> provides the ability to compile Sleigh language module (e.g., *.slaspec)
- * files.
+ * <code>SleighCompile</code> provides the ability to compile Sleigh language module (e.g.,
+ * *.slaspec) files.
  */
 public class SleighCompile extends SleighBase {
 
@@ -121,6 +121,11 @@ public class SleighCompile extends SleighBase {
 		}
 
 		@Override
+		public int getDefaultConstantSize() {
+			return 0;
+		}
+
+		@Override
 		public AddrSpace getDefaultSpace() {
 			return SleighCompile.this.getDefaultSpace();
 		}
@@ -136,8 +141,13 @@ public class SleighCompile extends SleighBase {
 		}
 
 		@Override
-		public SleighSymbol findSymbol(String nm) {
+		public SleighSymbol findSymbol(Location loc, String nm) {
 			return SleighCompile.this.findSymbol(nm);
+		}
+
+		@Override
+		public RadixBigInteger parseIntegerLiteral(Location loc, String text) {
+			return SleighCompile.this.parseIntegerLiteral(loc, text);
 		}
 
 		@Override
@@ -1279,11 +1289,10 @@ public class SleighCompile extends SleighBase {
 	public void selfDefine(OperandSymbol sym) {
 		entry("selfDefine", sym);
 		SleighSymbol sleighSymbol = symtab.findSymbol(sym.getName(), 1);
-		if (!(sleighSymbol instanceof TripleSymbol)) {
+		if (!(sleighSymbol instanceof TripleSymbol glob)) {
 			reportError(sym.getLocation(), "No matching global symbol '" + sym.getName() + "'");
 			return;
 		}
-		TripleSymbol glob = (TripleSymbol) sleighSymbol;
 		symbol_type tp = glob.getType();
 		try {
 			if ((tp == symbol_type.value_symbol) || (tp == symbol_type.context_symbol)) {
@@ -1587,6 +1596,7 @@ public class SleighCompile extends SleighBase {
 
 	/**
 	 * Insert a region of zero bits into an address offset
+	 * 
 	 * @param addr is the address offset
 	 * @return the modified offset
 	 */
@@ -1784,6 +1794,22 @@ public class SleighCompile extends SleighBase {
 		return 0;
 	}
 
+	public void setOptions(SleighCompileOptions options) {
+		Set<Entry<String, String>> entrySet = options.preprocs.entrySet();
+		for (Entry<String, String> entry : entrySet) {
+			setPreprocValue(entry.getKey(), entry.getValue());
+		}
+		setUnnecessaryPcodeWarning(options.unnecessaryPcodeWarning);
+		setLenientConflict(options.lenientConflict);
+		setLocalCollisionWarning(options.allCollisionWarning);
+		setAllNopWarning(options.allNopWarning);
+		setDeadTempWarning(options.deadTempWarning);
+		setUnusedFieldWarning(options.unusedFieldWarning);
+		setEnforceLocalKeyWord(options.enforceLocalKeyWord);
+		setInsensitiveDuplicateError(!options.caseSensitiveRegisterNames);
+		setDebugOutput(options.debugOutput);
+	}
+
 	public void setAllOptions(Map<String, String> preprocs, boolean unnecessaryPcodeWarning,
 			boolean lenientConflict, boolean allCollisionWarning, boolean allNopWarning,
 			boolean deadTempWarning, boolean unusedFieldWarning, boolean enforceLocalKeyWord,
@@ -1884,9 +1910,10 @@ public class SleighCompile extends SleighBase {
 	}
 
 	/**
-	 * Run the sleigh compiler.  This provides a direct means of invoking the
-	 * compiler without using the launcher.  The full SoftwareModeling classpath 
-	 * must be established including any dependencies.
+	 * Run the sleigh compiler. This provides a direct means of invoking the compiler without using
+	 * the launcher. The full SoftwareModeling classpath must be established including any
+	 * dependencies.
+	 * 
 	 * @param args compiler command line arguments
 	 * @throws IOException for file access errors
 	 * @throws RecognitionException for parsing errors

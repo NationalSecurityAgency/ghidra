@@ -275,18 +275,13 @@ public class IntelHexLoader extends AbstractProgramLoader {
 		ArrayList<Option> list = new ArrayList<Option>();
 
 		if (loadIntoProgram) {
-			list.add(new Option(OPTION_NAME_IS_OVERLAY, isOverlay));
-			list.add(new Option(OPTION_NAME_BLOCK_NAME, blockName));
+			list.add(Option.newBoolean(OPTION_NAME_IS_OVERLAY).value(isOverlay).build());
+			list.add(Option.newString(OPTION_NAME_BLOCK_NAME).value(blockName).build());
 		}
 		else {
 			isOverlay = false;
 		}
-		if (baseAddr == null) {
-			list.add(new Option(OPTION_NAME_BASE_ADDRESS, Address.class));
-		}
-		else {
-			list.add(new Option(OPTION_NAME_BASE_ADDRESS, baseAddr));
-		}
+		list.add(Option.newAddress(OPTION_NAME_BASE_ADDRESS).value(baseAddr).build());
 		return list;
 	}
 

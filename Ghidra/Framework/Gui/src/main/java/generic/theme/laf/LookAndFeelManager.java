@@ -70,11 +70,22 @@ public abstract class LookAndFeelManager {
 	public void installLookAndFeel() throws ClassNotFoundException, InstantiationException,
 			IllegalAccessException, UnsupportedLookAndFeelException {
 
+		clearUiDefaults();
 		doInstallLookAndFeel();
 		processJavaDefaults();
 		fixupLookAndFeelIssues();
 		installCustomLookAndFeelActions();
 		updateComponentUis();
+	}
+
+	protected void clearUiDefaults() {
+		/*
+		 	The UIDefaults extends hash table.  It has 2 layers into which it puts values: the base
+		 	hash table and the set of tables created by the Look and Feel.  When the LaF changes, 
+		 	any values it puts in will get replaced.  Any values we put in will be in the non-Laf
+		 	layer.  Thus, to remove our old values, we need to clear the main hash table.
+		 */
+		UIManager.getDefaults().clear();
 	}
 
 	/**

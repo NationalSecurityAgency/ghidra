@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.exceptionhandlers.gcc;
 
-import ghidra.app.util.opinion.ElfLoader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -30,7 +29,6 @@ public class DwarfDecodeContext {
 	private final Address addr;
 	private final MemoryBlock ehBlock;
 	private final Address functionEntryPoint;
-	private final long imageBaseAdjustment;
 
 	private Object decodedValue;
 	private int encodedLength;
@@ -95,16 +93,7 @@ public class DwarfDecodeContext {
 		this.addr = readAddr;
 		this.ehBlock = ehBlock;
 		this.functionEntryPoint = entryPoint;
-		this.imageBaseAdjustment = getImageBaseAdjustment(program);
 
-	}
-
-	private static long getImageBaseAdjustment(Program program) {
-		Long originalImageBase = ElfLoader.getElfOriginalImageBase(program);
-		if (originalImageBase != null) {
-			return program.getImageBase().getOffset() - originalImageBase;
-		}
-		return 0;
 	}
 
 	/**
@@ -164,13 +153,5 @@ public class DwarfDecodeContext {
 	 */
 	public Address getFunctionEntryPoint() {
 		return functionEntryPoint;
-	}
-
-	/**
-	 * {@return any adjustment needed to be applied to absolute addresses (because the program's
-	 * base address was modified during import)}
-	 */
-	public long getImageBaseAdjustment() {
-		return imageBaseAdjustment;
 	}
 }

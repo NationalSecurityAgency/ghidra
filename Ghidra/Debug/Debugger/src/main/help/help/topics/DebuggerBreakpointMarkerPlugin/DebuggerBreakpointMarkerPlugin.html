@@ -88,11 +88,10 @@
 
     <P>This menu is available on the dynamic listing when the target supports at least one
     breakpoint kind. This menu is always available on the static listing. It displays set
-    breakpoint actions for each reasonable combination of kinds supported by the target. In the
-    static listing, all reasonable combinations are available, regardless of target support;
-    however, only those kinds supported by the target will be included in the resulting command.
-    Selecting one of the actions will display a prompt allowing adjustments to the parameters
-    before issuing the command.</P>
+    breakpoint actions for each kind supported by the target. In the static listing, all kinds are
+    available, regardless of target support; however, only those kinds supported by the target will
+    be included in the resulting command. Selecting one of the actions will display a prompt
+    allowing adjustments to the parameters before issuing the command.</P>
 
     <DIV class="image">
       <IMG alt="" src="images/DebuggerPlaceBreakpointDialog.png">
@@ -106,9 +105,9 @@
       to 1 &mdash; often the required value. For access breakpoints, this defaults to the size of
       the data at the cursor.</LI>
 
-      <LI>Kinds - the kind(s) of breakpoint. Only the reasonable combinations are presented, but
-      the user may type any desired combination. A connected debugger may not support the desired
-      combination.</LI>
+      <LI>Kind - the kind of breakpoint. Only Execute (hw or sw), Read, Write, and Access are
+      presented. A connected debugger may not support the requested kind, in which case it may
+      substitute a similar kind or fail.</LI>
 
       <LI>Name - the user-defined name of the breakpoint. The name is set on the bookmark at its
       static location, if applicable.</LI>

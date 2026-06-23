@@ -43,6 +43,8 @@ import ghidra.util.task.TaskMonitor;
  */
 public class UnwindAnalysis {
 
+	private Map<Address, UnwindInfo> unwindInfo = new HashMap<>();
+
 	/**
 	 * A graph used for finding execution paths from function entry through the program counter to a
 	 * return.
@@ -551,5 +553,21 @@ public class UnwindAnalysis {
 			throws CancelledException {
 		AnalysisForPC analysis = start(pc, monitor);
 		return analysis.computeUnwindInfo();
+	}
+
+	public UnwindInfo getUnwindInfo(Address key, TaskMonitor monitor) {
+		UnwindInfo info = unwindInfo.get(key);
+		if (info == null) {
+			try {
+				info = computeUnwindInfo(key, monitor);
+				if (info != null && info.error() != null) {
+					unwindInfo.put(key, info);
+				}
+			}
+			catch (CancelledException e) {
+				// info is null
+			}
+		}
+		return info;
 	}
 }

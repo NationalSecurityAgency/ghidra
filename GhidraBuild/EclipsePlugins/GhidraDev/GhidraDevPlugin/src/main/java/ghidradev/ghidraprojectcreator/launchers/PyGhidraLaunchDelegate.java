@@ -37,8 +37,7 @@ import org.python.pydev.debug.ui.launching.RegularLaunchConfigurationDelegate;
 
 import ghidra.launch.AppConfig;
 import ghidradev.EclipseMessageUtils;
-import ghidradev.ghidraprojectcreator.utils.GhidraProjectUtils;
-import ghidradev.ghidraprojectcreator.utils.PyDevUtils;
+import ghidradev.ghidraprojectcreator.utils.*;
 
 /**
  * The PyGhidra Launch delegate handles the final launch of PyGhidra.
@@ -51,6 +50,9 @@ public class PyGhidraLaunchDelegate extends RegularLaunchConfigurationDelegate {
 			IProgressMonitor monitor) throws CoreException {
 
 		try {
+			boolean isHeadless = configuration.getType()
+					.getIdentifier()
+					.equals(GhidraLaunchUtils.PYGHIDRA_HEADLESS_LAUNCH);
 			ILaunchConfigurationWorkingCopy wc = configuration.getWorkingCopy();
 
 			// Get project
@@ -82,16 +84,45 @@ public class PyGhidraLaunchDelegate extends RegularLaunchConfigurationDelegate {
 				return;
 			}
 
+			// Determine which module to call
+			String module = "pyghidra";
+			if (isHeadless) {
+				module += "/ghidra_launch.py";
+			}
+
 			// Set program location
 			wc.setAttribute(PyDevUtils.getAttrLocation(),
-				"${workspace_loc:%s/Ghidra/Ghidra/Features/PyGhidra/pypkg/src/pyghidra}"
-						.formatted(project.getName()));
+				"${workspace_loc:%s/Ghidra/Ghidra/Features/PyGhidra/pypkg/src/%s}"
+						.formatted(project.getName(), module));
+
+			// Set VM arguments
+			String vmArgs =
+				" " + configuration.getAttribute(GhidraLaunchUtils.ATTR_VM_ARGUMENTS, "").trim();
+			vmArgs += " -Dghidra.external.modules=\"%s%s%s\"".formatted(
+				javaProject.getProject().getLocation(), File.pathSeparator,
+				GhidraProjectUtils.getProjectDependencyDirs(javaProject));
+			File pyDevSrcDir = PyDevUtils.getPyDevSrcDir();
+			if (pyDevSrcDir != null) {
+				vmArgs += " " + "-Declipse.pysrc.dir=\"" + pyDevSrcDir + "\"";
+			}
 
 			// Set program arguments
-			wc.setAttribute(PyDevUtils.getAttrProgramArguments(),
-				"-v -g -D ghidra.external.modules=\"%s%s%s\"".formatted(
-					javaProject.getProject().getLocation(), File.pathSeparator,
-					GhidraProjectUtils.getProjectDependencyDirs(javaProject)));
+			String customProgramArgs =
+					configuration.getAttribute(GhidraLaunchUtils.ATTR_PROGAM_ARGUMENTS, "").trim();
+			StringBuilder args = new StringBuilder();
+			if (isHeadless) {
+				args.append("ghidra.app.util.headless.AnalyzeHeadless ");
+			}
+			else {
+				args.append("-v ");
+				args.append("-g ");
+			}
+			args.append(vmArgs + " ");
+			args.append(customProgramArgs);
+			wc.setAttribute(PyDevUtils.getAttrProgramArguments(), args.toString());
+			if (isHeadless && customProgramArgs.isEmpty()) {
+				GhidraLaunchUtils.notifyAboutHeadlessWithNoArgs(configuration);
+			}
 
 			// Set Python interpreter
 			String interpreterName = PyDevUtils.getInterpreterName(project);
@@ -100,7 +131,7 @@ public class PyGhidraLaunchDelegate extends RegularLaunchConfigurationDelegate {
 
 			// Set environment variables
 			Map<String, String> env = new HashMap<>();
-			//env.put("GHIDRA_INSTALL_DIR", "${project_loc:/%s/Ghidra}".formatted(project.getName()));
+			env = wc.getAttribute(ILaunchManager.ATTR_ENVIRONMENT_VARIABLES, env);
 			env.put("GHIDRA_INSTALL_DIR",
 				"${resource_loc:/%s/Ghidra}".formatted(project.getName()));
 			env.put("JAVA_HOME_OVERRIDE", "${ee_home:JavaSE-%s}".formatted(javaComplianceLevel));

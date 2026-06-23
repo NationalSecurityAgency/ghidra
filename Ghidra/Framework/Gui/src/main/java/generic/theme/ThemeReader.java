@@ -135,7 +135,15 @@ class ThemeReader extends AbstractThemeReader {
 		int indexOf = path.indexOf("images/");
 		if (indexOf < 0) {
 			Msg.error(this, "Unknown file: " + path);
+			return;
 		}
+
+		if (path.contains("..")) {
+			// We write the theme images to an 'images' dir under the zip root.  No need for '..'
+			Msg.error(this, "Zip paths with '..' not allowed: " + path);
+			return;
+		}
+
 		String relativePath = path.substring(indexOf, path.length());
 		File dir = Application.getUserSettingsDirectory();
 		File iconFile = new File(dir, relativePath);

@@ -185,7 +185,12 @@ public class GoInterfaceType extends GoType {
 
 	@Override
 	public boolean isValid() {
-		return super.isValid() && typ.getSize() == programContext.getPtrSize() * 2; // runtime.iface?
+		return super.isValid() && isValidSize();
+	}
+
+	private boolean isValidSize() {
+		return typ.getSize() == programContext.getPtrSize() * 2 &&
+			typ.getPtrBytes() == programContext.getPtrSize() * 2;
 	}
 
 	@Override

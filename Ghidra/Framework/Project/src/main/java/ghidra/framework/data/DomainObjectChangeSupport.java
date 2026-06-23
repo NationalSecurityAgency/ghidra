@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,14 +16,16 @@
 package ghidra.framework.data;
 
 import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 import generic.timer.GhidraTimer;
 import generic.timer.GhidraTimerFactory;
 import ghidra.framework.model.*;
 import ghidra.util.*;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
+import utility.function.Callback;
 
 /**
  * A class to queue and send {@link DomainObjectChangeRecord} events.
@@ -225,35 +227,14 @@ class DomainObjectChangeSupport {
 //=================================================================================================
 
 	// Note: all clients of lockQueue() must not call external APIs that could use locking
-	private void withLock(Runnable r) {
-
-		try {
-			writeLock.acquire();
-			r.run();
-		}
-		finally {
-			writeLock.release();
-		}
+	private void withLock(Callback r) {
+		writeLock.withWrite(r);
 	}
 
 	// Note: all clients of lockQueue() must not call external APIs that could use locking
-	private <T> T withLock(Callable<T> c) {
-
-		try {
-			writeLock.acquire();
-			T result;
-			try {
-				result = c.call();
-				return result;
-			}
-			catch (Exception e) {
-				// sholudn't happen
-				Msg.error(this, "Exception while updating change records", e);
-				return null;
-			}
-		}
-		finally {
-			writeLock.release();
+	private <T> T withLock(Supplier<T> s) {
+		try (Closeable c = writeLock.write()) {
+			return s.get();
 		}
 	}
 

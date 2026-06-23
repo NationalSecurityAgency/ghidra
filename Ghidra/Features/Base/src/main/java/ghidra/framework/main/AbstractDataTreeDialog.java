@@ -166,11 +166,7 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 			return super.getActionContext(event);
 		}
 
-		ActionContext actionContext = treePanel.getActionContext(null, event);
-		if (actionContext instanceof DialogActionContext dac) {
-			dac.setDialogComponentProvider(this);
-		}
-		return actionContext;
+		return treePanel.getActionContext(null, event);
 	}
 
 	public void show() {

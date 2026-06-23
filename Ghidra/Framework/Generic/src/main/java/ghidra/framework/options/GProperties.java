@@ -113,9 +113,7 @@ public class GProperties {
 	 */
 	public GProperties(Element root) {
 		this(root.getName());
-		Iterator<?> iter = root.getChildren().iterator();
-		while (iter.hasNext()) {
-			Element elem = (Element) iter.next();
+		for (Element elem : root.getChildren()) {
 			processElement(elem);
 		}
 	}

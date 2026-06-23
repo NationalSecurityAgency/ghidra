@@ -291,9 +291,10 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	@Override
 	public synchronized DataBuffer get(DataBuffer buf, int index) throws IOException {
 
-		if (index > getBufferCount())
+		if (index > getBufferCount()) {
 			throw new EOFException(
 				"Buffer index too large (" + index + " > " + getBufferCount() + ")");
+		}
 
 		if (versionFileHandler != null) {
 			DataBuffer vbuf = versionFileHandler.getOldBuffer(buf, index);
@@ -312,10 +313,12 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	@Override
 	public synchronized void put(DataBuffer buf, int index) throws IOException {
 
-		if (isReadOnly())
+		if (isReadOnly()) {
 			throw new IOException("File is read-only");
-		if (index > MAX_BUFFER_INDEX)
+		}
+		if (index > MAX_BUFFER_INDEX) {
 			throw new EOFException("Buffer index too large, exceeds max-int");
+		}
 
 		versionBufferIfNeeded(index);
 
@@ -355,8 +358,9 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	@Override
 	public synchronized boolean setReadOnly() throws IOException {
 
-		if (!flush())
+		if (!flush()) {
 			return false;
+		}
 
 		if (versionOutFile != null) {
 			versionOutFile.close();
@@ -380,8 +384,9 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	@Override
 	public synchronized void close() throws IOException {
 
-		if (isClosed())
+		if (isClosed()) {
 			return;
+		}
 
 		stopPreSave(true);
 
@@ -427,8 +432,9 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	@Override
 	public synchronized boolean delete() {
 
-		if (isClosed() || isReadOnly())
+		if (isClosed() || isReadOnly()) {
 			return false;
+		}
 
 		boolean success = false;
 		try {
@@ -712,6 +718,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 			if (!success) {
 				saveFile.delete();
 			}
+
 			saveFile = null;
 			saveChangeFile = null;
 		}
@@ -1066,15 +1073,20 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 			success = true;
 		}
 		finally {
-			saveCompleted(success);
-			if (!success) {
-				bfMgr.updateEnded(checkinId);
+			try {
+				saveCompleted(success);
 			}
-//			else {
-//				// VERIFY RESULT FILE
-//				System.err.println("Update check: " + file);
-//				checkSameContent(versionedBufferFile, bf);
-//			}
+			finally {
+				bf.dispose();
+				if (!success) {
+					bfMgr.updateEnded(checkinId);
+				}
+//	    		else {
+//					// VERIFY RESULT FILE
+//					System.err.println("Update check: " + file);
+//					checkSameContent(versionedBufferFile, bf);
+//				}
+			}
 		}
 
 	}

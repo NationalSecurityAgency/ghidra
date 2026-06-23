@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,14 +36,14 @@ public class ElfScalarOperandAnalyzer extends ScalarOperandAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		boolean elf = isELF(program);
+		boolean elf = ElfLoader.isElf(program);
 
 		return elf;
 	}
 
 	@Override
 	public boolean getDefaultEnablement(Program program) {
-		if (!isELF(program)) {
+		if (!ElfLoader.isElf(program)) {
 			return false;
 		}
 		return getDefaultEnablement2(program);
@@ -61,7 +60,7 @@ public class ElfScalarOperandAnalyzer extends ScalarOperandAnalyzer {
 	@Override
 	protected boolean addReference(Program program, Instruction instr, int opIndex,
 			AddressSpace space, Scalar scalar) {
-		if (program.getExecutableFormat().equals(ElfLoader.ELF_NAME)) {
+		if (ElfLoader.isElf(program)) {
 			if (instr.getMnemonicString().equalsIgnoreCase("add")) {
 				try {
 					Address gotAddr = instr.getMinAddress().add(scalar.getUnsignedValue());

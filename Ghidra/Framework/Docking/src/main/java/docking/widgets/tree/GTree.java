@@ -252,6 +252,11 @@ public class GTree extends JPanel implements BusyListener {
 		add(filterProvider.getFilterComponent(), BorderLayout.SOUTH);
 	}
 
+	@Override
+	public void requestFocus() {
+		tree.requestFocus();
+	}
+
 	/**
 	 * Sets an accessible name on the GTree. This prefix will be used to assign
 	 * meaningful accessible names to the tree, filter text field and the filter options button such
@@ -1853,6 +1858,10 @@ public class GTree extends JPanel implements BusyListener {
 				}
 
 				GTree gTree = getTree(context);
+				if (gTree.isFiltered()) {
+					return false;
+				}
+
 				List<GTreeNode> nodes = gTree.getSelectedNodes();
 				return !nodes.isEmpty();
 			}
@@ -1886,6 +1895,10 @@ public class GTree extends JPanel implements BusyListener {
 				}
 
 				GTree gTree = getTree(context);
+				if (gTree.isFiltered()) {
+					return false;
+				}
+
 				List<GTreeNode> nodes = gTree.getSelectedNodes();
 				return !nodes.isEmpty();
 			}
@@ -1908,6 +1921,17 @@ public class GTree extends JPanel implements BusyListener {
 				GTreeNode root = gTree.getViewRoot();
 				gTree.collapseAll(root);
 			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+
+				if (!super.isEnabledForContext(context)) {
+					return false;
+				}
+
+				GTree gTree = getTree(context);
+				return !gTree.isFiltered();
+			}
 		};
 		//@formatter:off
 		collapseTreeAction.setPopupMenuData(new MenuData(
@@ -1924,6 +1948,17 @@ public class GTree extends JPanel implements BusyListener {
 			public void actionPerformed(ActionContext context) {
 				GTree gTree = getTree(context);
 				gTree.expandAll();
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+
+				if (!super.isEnabledForContext(context)) {
+					return false;
+				}
+
+				GTree gTree = getTree(context);
+				return !gTree.isFiltered();
 			}
 		};
 		//@formatter:off

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.awt.Container;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyEditorSupport;
+import java.math.BigInteger;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -97,7 +98,7 @@ public class ArrayElementPropertyEditor extends PropertyEditorSupport
 			Container parent) {
 
 		IntegerTextField textField = new IntegerTextField(10);
-		textField.setAllowNegativeValues(false);
+		textField.setMinValue(BigInteger.ZERO);
 		textField.setEnabled(true);
 
 		JPanel textFieldPanel = new JPanel();
@@ -132,7 +133,8 @@ public class ArrayElementPropertyEditor extends PropertyEditorSupport
 	}
 
 	private void setLocalValues(ArrayElementWrappedOption namespaceOption) {
-		if (namespaceOption.showMultipleArrayElementPerLine() != groupElementsCheckBox.isSelected()) {
+		if (namespaceOption.showMultipleArrayElementPerLine() != groupElementsCheckBox
+				.isSelected()) {
 			groupElementsCheckBox.setSelected(namespaceOption.showMultipleArrayElementPerLine());
 		}
 		if (namespaceOption.getArrayElementsPerLine() != elementsPerLineField.getIntValue()) {

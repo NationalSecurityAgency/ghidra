@@ -2302,6 +2302,26 @@ void JumpTable::recoverModel(Funcdata *fd)
   jmodel = (JumpModel *)0;
 }
 
+/// If the function is just a sequence of absolute jumps ending in an indirect jump that recovers
+/// to a single address, return \b true.
+/// \param fd is the function to test
+/// \return \b true if the function looks like a thunk
+bool JumpTable::isThunk(Funcdata *fd) const
+
+{
+  if (addresstable.size() != 1) return false;
+  Address addr = addresstable[0];
+  if (addr.getOffset()==0)
+    return true;
+  list<PcodeOp *>::const_iterator iter;
+  for(iter = fd->beginOpAlive(); iter != fd->endOpAlive(); ++iter) {
+    OpCode opc = (*iter)->code();
+    if (opc != CPUI_BRANCHIND && opc != CPUI_BRANCH)
+      return false;
+  }
+  return true;
+}
+
 /// Check that the BRANCHIND is still reachable, if not throw JumptableNotReachableError.
 /// Check pathological cases when there is only one address in the table, if we find
 /// this, throw the JumptableThunkError. Let the model run its sanity check.
@@ -2319,24 +2339,8 @@ void JumpTable::sanityCheck(Funcdata *fd,vector<int4> *loadcounts)
 
   if (!isReachable(indirect))
     partialTable = true;		// If the jumptable is not reachable, mark as incomplete
-  if (addresstable.size() == 1) { 	// One entry is likely some kind of thunk
-    bool isthunk = false;
-    uintb diff;
-    Address addr = addresstable[0];
-    if (addr.getOffset()==0) 
-      isthunk = true;
-    else {
-      Address addr2 = indirect->getAddr();
-      diff = (addr.getOffset() < addr2.getOffset()) ?
-	(addr2.getOffset() - addr.getOffset()) :
-	(addr.getOffset() - addr2.getOffset());
-      if (diff > 0xffff)
-	isthunk = true;
-    }
-    if (isthunk) {
-      throw JumptableThunkError("Likely thunk");
-    }
-  }
+  if (isThunk(fd))
+    throw JumptableThunkError("Likely thunk");
   if (!jmodel->sanityCheck(fd,indirect,addresstable,loadpoints,loadcounts)) {
     ostringstream err;
     err << "Jumptable at " << opaddress << " did not pass sanity check.";

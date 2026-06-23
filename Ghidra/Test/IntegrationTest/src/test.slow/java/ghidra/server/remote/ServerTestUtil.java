@@ -17,6 +17,8 @@ package ghidra.server.remote;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.KeyStore.PrivateKeyEntry;
@@ -27,6 +29,7 @@ import java.util.zip.ZipInputStream;
 
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import db.buffers.DataBuffer;
@@ -99,6 +102,7 @@ public class ServerTestUtil {
 	private static IOThread cmdErr;
 	private static Process serverProcess;
 	private static String serverRepositories;
+	private static Path argsFile;
 
 	static {
 		Runtime.getRuntime().addShutdownHook(new ShutdownHook());
@@ -435,19 +439,15 @@ public class ServerTestUtil {
 			getTestPkiCACertsPath());
 		DefaultSSLContextInitializer.initialize(true);
 
-		ArrayList<String> argList = new ArrayList<>();
 		String javaCommand =
 			System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-		argList.add(javaCommand);
 
+		List<String> argList = new ArrayList<>();
 		argList.add("-cp");
-		argList.add(System.getProperty("java.class.path"));
+		argList.add("\"" + System.getProperty("java.class.path").replace("\\", "/") + "\"");
 
 		argList.add("-Xmx512M");
 
-		argList.add("-Xdebug");
-		argList.add("-Xnoagent");
-		argList.add("-Djava.compiler=NONE");
 		argList.add("-Ddb.buffers.DataBuffer.compressedOutput=" + enableCompressionOnServerStart);
 		argList.add("-D" + DefaultTrustManagerFactory.GHIDRA_CACERTS_PATH_PROPERTY + "=" +
 			getTestPkiCACertsPath());
@@ -483,25 +483,15 @@ public class ServerTestUtil {
 		argList.add("-p" + port);
 		argList.add(dirPath);
 
-		String[] args = new String[argList.size()];
-		argList.toArray(args);
-
-		System.out.println();
-		for (String arg : argList) {
-			boolean includeQuotes = arg.indexOf(' ') != -1;
-			if (includeQuotes) {
-				System.out.print("'");
-			}
-			System.out.print(arg);
-			if (includeQuotes) {
-				System.out.print("'");
-			}
-			System.out.print(" ");
-		}
-		System.out.println();
 
 		try {
-			serverProcess = Runtime.getRuntime().exec(args);
+			// Command line argument is too long on Windows, so use an @arg-file
+			argsFile =
+				Files.createTempFile(Application.getUserTempDirectory().toPath(), "args", ".txt");
+			Files.write(argsFile, argList);
+			System.out.println(javaCommand + " \"@" + argsFile + "\"");
+
+			serverProcess = new ProcessBuilder(javaCommand, "@" + argsFile).start();
 			serverRepositories = dirPath;
 
 			cmdOut = new IOThread(serverProcess.getInputStream());
@@ -658,8 +648,24 @@ public class ServerTestUtil {
 			serverRepositories = null;
 
 			if (testPkiDirectory != null) {
-				FileUtilities.deleteDir(testPkiDirectory);
-				testPkiDirectory = null;
+				try {
+					FileUtils.deleteDirectory(testPkiDirectory);
+				}
+				catch (IOException e) {
+					// Will likely be an error the next time the test starts
+					e.printStackTrace();
+				}
+				finally {
+					testPkiDirectory = null;
+				}
+			}
+		}
+		if (argsFile != null && Files.exists(argsFile)) {
+			try {
+				Files.delete(argsFile);
+			}
+			catch (IOException e) {
+				// don't care
 			}
 		}
 	}

@@ -21,7 +21,7 @@ import javax.help.UnsupportedOperationException;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.*;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.InsufficientBytesException;
@@ -1443,7 +1443,7 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 		else {
 			// Check for managed datatype changing
 			DataType originalDt = originalDTM.getDataType(newPath);
-			if (!(originalDt instanceof DatabaseObject)) {
+			if (!(originalDt instanceof DbObject)) {
 				return;
 			}
 			DataType dt = viewDTM.findMyDataTypeFromOriginalID(originalDTM.getID(originalDt));
@@ -1532,7 +1532,7 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 				// undo transactions for the viewDTM.  An editor save could generate quite a few with
 				// potentially many types getting changed by one change.
 				DataType changedDt = originalDTM.getDataType(path);
-				if (!(changedDt instanceof DatabaseObject)) {
+				if (!(changedDt instanceof DbObject)) {
 					return;
 				}
 				DataType viewDt =

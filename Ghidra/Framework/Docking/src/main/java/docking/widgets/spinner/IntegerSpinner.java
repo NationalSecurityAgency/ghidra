@@ -76,7 +76,9 @@ public class IntegerSpinner {
 			}
 
 			Number newVal = (Number) spinnerModel.getValue();
-			integerTextField.setValue(newVal.longValue());
+			if (newVal.longValue() != integerTextField.getLongValue()) {
+				integerTextField.setValue(newVal.longValue());
+			}
 		});
 
 		integerTextField.getComponent().addKeyListener(new KeyAdapter() {

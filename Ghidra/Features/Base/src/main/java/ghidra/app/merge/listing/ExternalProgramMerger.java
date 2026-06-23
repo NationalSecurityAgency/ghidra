@@ -26,8 +26,7 @@ import ghidra.app.merge.*;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.ProgramChangeSet;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramMerge;
 import ghidra.program.util.SimpleDiffUtility;
@@ -448,20 +447,36 @@ public class ExternalProgramMerger implements MergeResolver, ListingMergeConstan
 		mergeManager.updateProgress(progress,
 			"Merging external program information for " + name + "...");
 
-		String originalPath =
-			(originalName != null) ? originalExtMgr.getExternalLibraryPath(originalName) : null;
-		String latestPath =
-			(latestName != null) ? latestExtMgr.getExternalLibraryPath(latestName) : null;
-		String myPath = (myName != null) ? myExtMgr.getExternalLibraryPath(myName) : null;
-		if (same(latestName, myName) && same(latestPath, myPath)) {
+		Library originalLib =
+			(originalName != null) ? originalExtMgr.getExternalLibrary(originalName) : null;
+		Library latestLib =
+			(latestName != null) ? latestExtMgr.getExternalLibrary(latestName) : null;
+		Library myLib = (myName != null) ? myExtMgr.getExternalLibrary(myName) : null;
+
+		String originalPath = (originalLib != null) ? originalLib.getAssociatedProgramPath() : null;
+		String latestPath = (latestLib != null) ? latestLib.getAssociatedProgramPath() : null;
+		String myPath = (myLib != null) ? myLib.getAssociatedProgramPath() : null;
+
+		int originalOrdinal =
+			originalLib != null ? originalExtMgr.getLibraryOrdinal(originalName) : -1;
+		int latestOrdinal = latestLib != null ? latestExtMgr.getLibraryOrdinal(latestName) : -1;
+		int myOrdinal = myLib != null ? myExtMgr.getLibraryOrdinal(myName) : -1;
+
+		if (same(latestName, myName) && same(latestPath, myPath) && latestOrdinal == myOrdinal) {
 			return;
 		}
 		boolean changedLatestName = !same(originalName, latestName);
 		boolean changedMyName = !same(originalName, myName);
 		boolean changedLatestPath = !same(originalPath, latestPath);
 		boolean changedMyPath = !same(originalPath, myPath);
-		boolean changedLatest = changedLatestName || changedLatestPath;
-		boolean changedMy = changedMyName || changedMyPath;
+
+		// Temper ordinal changes - don't allow them to drive a conflict but try to preserve my change.
+		// Ordinal changes may be lost during any library change conflict resolution.
+		boolean changedMyOrdinal = myLib != null && myOrdinal != originalOrdinal;
+
+		boolean changedLatest = changedLatestName || changedLatestPath; // ignore ordinal change
+		boolean changedMy = changedMyName || changedMyPath || changedMyOrdinal;
+
 		if (changedLatest) {
 			if (changedMy) {
 				// conflict: Ask to keep latest or my
@@ -473,7 +488,7 @@ public class ExternalProgramMerger implements MergeResolver, ListingMergeConstan
 				if (resultID != -1 && resultName == null) {
 					resultName = latestName; // Need to create Library symbol in Result program.
 				}
-				autoMergeWhenOnlyLatestChanged(resultName, latestName, latestPath);
+				autoMergeWhenOnlyLatestChanged(resultName, latestName, latestPath, latestOrdinal);
 			}
 		}
 		else {
@@ -491,13 +506,13 @@ public class ExternalProgramMerger implements MergeResolver, ListingMergeConstan
 							symbol.getSymbolType());
 					}
 				}
-				autoMergeWhenOnlyMyChanged(resultName, myName, myPath);
+				autoMergeWhenOnlyMyChanged(resultName, myName, myPath, myOrdinal);
 			}
 		}
 	}
 
 	private void autoMergeWhenOnlyLatestChanged(String resultName, String latestName,
-			String latestPath) {
+			String latestPath, int latestOrdinal) {
 		if (resultName == null) {
 			// latestName appears to have been discarded during SymbolMerge.
 			return;
@@ -509,6 +524,9 @@ public class ExternalProgramMerger implements MergeResolver, ListingMergeConstan
 			else {
 				resultExtMgr.setExternalPath(resultName, latestPath,
 					isExternalUserDefined(latestPgm, latestName));
+				if (latestOrdinal >= 0) {
+					resultExtMgr.setLibraryOrdinal(resultName, latestOrdinal);
+				}
 			}
 		}
 		catch (InvalidInputException e) {
@@ -516,7 +534,8 @@ public class ExternalProgramMerger implements MergeResolver, ListingMergeConstan
 		}
 	}
 
-	private void autoMergeWhenOnlyMyChanged(String resultName, String myName, String myPath) {
+	private void autoMergeWhenOnlyMyChanged(String resultName, String myName, String myPath,
+			int myOrdinal) {
 		if (resultName == null) {
 			// myName appears to have been discarded during SymbolMerge.
 			return;
@@ -528,6 +547,9 @@ public class ExternalProgramMerger implements MergeResolver, ListingMergeConstan
 			else {
 				resultExtMgr.setExternalPath(resultName, myPath,
 					isExternalUserDefined(myPgm, myName));
+				if (myOrdinal >= 0) {
+					resultExtMgr.setLibraryOrdinal(resultName, myOrdinal);
+				}
 			}
 		}
 		catch (InvalidInputException e) {

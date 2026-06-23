@@ -385,7 +385,7 @@ public class DefaultKeyManagerFactory {
 		private synchronized boolean init(String newKeystorePath) throws CancelledException {
 
 			if (wrappedKeyManager != null) {
-				if (StringUtils.equals(keystorePath, newKeystorePath)) {
+				if (Objects.equals(keystorePath, newKeystorePath)) {
 					return true;
 				}
 				invalidateKey();
@@ -393,7 +393,7 @@ public class DefaultKeyManagerFactory {
 
 			isSelfSigned = false;
 			try {
-				if (newKeystorePath != null && newKeystorePath.length() != 0) {
+				if (!StringUtils.isBlank(newKeystorePath)) {
 					Msg.info(DefaultKeyManagerFactory.class,
 						"Using certificate keystore: " + newKeystorePath);
 					// Password optionally specified via property
@@ -411,9 +411,12 @@ public class DefaultKeyManagerFactory {
 						defaultSubjectAlternativeNames, pwd);
 					wrappedKeyManager = ApplicationKeyManagerFactory
 							.getKeyManagerFromKeyStore(selfSignedKeyStore, pwd);
+					keystorePath = null;
 					isSelfSigned = true;
 				}
 				else {
+					Msg.error(this,
+						"Failed to generate certificate without Distinguished Name (DN)");
 					return false;
 				}
 				return true;

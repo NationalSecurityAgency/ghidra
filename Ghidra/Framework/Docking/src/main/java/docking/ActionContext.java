@@ -18,6 +18,7 @@ package docking;
 import java.awt.Component;
 import java.awt.event.*;
 
+import docking.action.ActionContextProvider;
 import docking.action.DockingActionIf;
 
 /**
@@ -49,9 +50,9 @@ import docking.action.DockingActionIf;
  * {@link DockingActionIf}, again using a possible default context if the active context isn't valid
  * for that action.  Ultimately, context serves to manage actions and to 
  * allow plugins to share state with actions without them being directly coupled together.
-
+ *
  * <P>
- * {@link ComponentProvider}s are required to return ActionContext objects in their 
+ * {@link ComponentProvider}s can choose to return ActionContext objects in their 
  * {@link ComponentProvider#getActionContext(MouseEvent)} methods.  Generally, ComponentProviders 
  * have two ways to use this class. They can either create an {@link DefaultActionContext} instance
  * and pass in a contextObject that will be useful to its actions or, subclass the ActionContext
@@ -64,7 +65,8 @@ import docking.action.DockingActionIf;
  * 
  * <ul>
  * 	<li><b>provider</b> - the component provider to which this context belongs; the provider that
- *                        contains the component that is the source of the user action
+ *                        contains the component that is the source of the user action.  This value
+ *                        is client-defined, typically at construction time.
  *  </li>
  * 	<li><b>contextObject</b> - client-defined data object.  This allows clients to save any 
  *                             information desired to be used when the action is performed.
@@ -82,7 +84,14 @@ import docking.action.DockingActionIf;
  *                               will not change between  
  *                               {@link DockingActionIf#isEnabledForContext(ActionContext) enablement}
  *                            	 and {@link DockingActionIf#actionPerformed(ActionContext) execution}.
+ *                               This value is set by the framework.
  *  </li>
+ *  <li><b>contextProvider</b> - the {@link ActionContextProvider} that created the context.  This
+ *                               will be null in the case that a default context was created.  When
+ *                               not null this will typically be a {@link ComponentProvider} or a
+ *                               {@link DialogComponentProvider}.  This value is set by the 
+ *                               framework.
+ *  </li>                              
  * 	<li><b>mouseEvent</b> - the mouse event that triggered the action; null if the action was
  *                          triggered by a key binding.
  *  </li>
@@ -109,12 +118,6 @@ public interface ActionContext {
 	 * @return this context
 	 */
 	public ActionContext setContextObject(Object contextObject);
-
-	/**
-	 * Returns the sourceObject from the actionEvent that triggered this context to be generated.
-	 * @return the sourceObject from the actionEvent that triggered this context to be generated.
-	 */
-	public Object getSourceObject();
 
 	/**
 	 * Sets the modifiers for this event that were present when the item was clicked on.
@@ -145,13 +148,34 @@ public interface ActionContext {
 
 	/**
 	 * Sets the sourceObject for this ActionContext.  This method is used internally by the 
-	 * DockingWindowManager. ComponentProvider and action developers should only use this 
-	 * method for testing.
+	 * framework. ComponentProvider and action developers should only use this method for testing.
 	 * 
 	 * @param sourceObject the source object
 	 * @return this context
 	 */
 	public ActionContext setSourceObject(Object sourceObject);
+
+	/**
+	 * Returns the sourceObject from the actionEvent that triggered this context to be generated.
+	 * The value returned will typically be the clicked component for mouse events and the focused
+	 * component for key binding events.
+	 * @return the sourceObject; may be null.
+	 */
+	public Object getSourceObject();
+
+	/**
+	 * Sets the context provider for this ActionContext.  This method is used internally by the 
+	 * framework.   
+	 * @param provider the context provider
+	 * @return this context
+	 */
+	public ActionContext setContextProvider(ActionContextProvider provider);
+
+	/**
+	 * Returns the context provider used to create this context.  May be null.
+	 * @return the context provider
+	 */
+	public ActionContextProvider getContextProvider();
 
 	/**
 	 * Updates the context's mouse event.  Contexts that are based upon key events will have no 

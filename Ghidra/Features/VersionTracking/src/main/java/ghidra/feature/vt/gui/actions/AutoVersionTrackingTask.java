@@ -294,8 +294,7 @@ public class AutoVersionTrackingTask extends Task {
 					VTAbstractReferenceProgramCorrelatorFactory.SIMILARITY_THRESHOLD, minScore);
 
 				monitor.setPrefix(String.format(prefix, "Data Reference", ++count));
-				hasApplyErrors =
-					hasApplyErrors | correlateAndPossiblyApply(factory, vtOptions, monitor);
+				hasApplyErrors |= correlateAndPossiblyApply(factory, vtOptions, monitor);
 				monitor.doIncrementProgress();
 
 				// Get the number of data and function matches again if this correlator ran
@@ -316,8 +315,7 @@ public class AutoVersionTrackingTask extends Task {
 				factory = new FunctionReferenceProgramCorrelatorFactory();
 
 				monitor.setPrefix(String.format(prefix, "Function Reference", ++count));
-				hasApplyErrors =
-					hasApplyErrors | correlateAndPossiblyApply(factory, vtOptions, monitor);
+				hasApplyErrors |= correlateAndPossiblyApply(factory, vtOptions, monitor);
 				monitor.doIncrementProgress();
 
 				// Get the number of data and function matches again if this correlator ran
@@ -337,8 +335,7 @@ public class AutoVersionTrackingTask extends Task {
 					VTAbstractReferenceProgramCorrelatorFactory.SIMILARITY_THRESHOLD, minScore);
 
 				monitor.setPrefix(String.format(prefix, "Function and Data", ++count));
-				hasApplyErrors =
-					hasApplyErrors | correlateAndPossiblyApply(factory, vtOptions, monitor);
+				hasApplyErrors |= correlateAndPossiblyApply(factory, vtOptions, monitor);
 				monitor.doIncrementProgress();
 			}
 		}
@@ -355,7 +352,7 @@ public class AutoVersionTrackingTask extends Task {
 				toolOptions.getBoolean(VTOptionDefines.APPLY_IMPLIED_MATCHES_OPTION, true);
 			int minVotes = toolOptions.getInt(VTOptionDefines.MIN_VOTES_OPTION, 2);
 			int maxConflicts = toolOptions.getInt(VTOptionDefines.MAX_CONFLICTS_OPTION, 2);
-			hasApplyErrors = hasApplyErrors |
+			hasApplyErrors |=
 				createImpliedMatches(applyImpliedMatches, minVotes, maxConflicts, monitor);
 		}
 

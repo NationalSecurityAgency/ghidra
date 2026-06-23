@@ -93,7 +93,7 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 	@Override
 	protected void run() throws Exception {
 
-		if (!(currentProgram.getExecutableFormat().equals(ElfLoader.ELF_NAME) &&
+		if (!(ElfLoader.isElf(currentProgram) &&
 			currentProgram.getLanguage().getProcessor().toString().equals(X86))) {
 			popup("This script is intended for x86 or x64 Linux files");
 			return;

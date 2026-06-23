@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.navigation.locationreferences;
 
 import java.util.*;
-import java.util.Stack;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -24,14 +23,14 @@ import docking.widgets.search.SearchLocationContext;
 import ghidra.app.services.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.Array;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
-import ghidra.util.datastruct.*;
+import ghidra.util.datastruct.Accumulator;
+import ghidra.util.datastruct.SetAccumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -74,16 +73,14 @@ public final class ReferenceUtils {
 	public static void getReferences(Accumulator<LocationReference> accumulator,
 			ProgramLocation location, TaskMonitor monitor) throws CancelledException {
 
-		Accumulator<LocationReference> asSet = asSet(accumulator);
-
 		Program program = location.getProgram();
 		Address address = location.getAddress();
 		Consumer<LocationReference> consumer = ref -> accumulator.add(ref);
 		accumulateDirectReferences(consumer, program, address);
-		accumulateThunkReferences(asSet, program, address, monitor);
+		accumulateThunkReferences(accumulator, program, address, monitor);
 
 		if (isMemoryAddress(location)) {
-			accumulateOffcutReferencesToCodeUnitAt(asSet, location, monitor);
+			accumulateOffcutReferencesToCodeUnitAt(accumulator, location, monitor);
 		}
 	}
 
@@ -291,23 +288,20 @@ public final class ReferenceUtils {
 
 		monitor.initialize(totalCount);
 
-		// Mimic a set in case the client passes in an accumulator that allows duplicates.  This
-		// seems a bit cleaner than adding checks for 'accumulator.contains(ref)' throughout
-		// the code.
-		Accumulator<LocationReference> asSet = asSet(accumulator);
-
 		if (fieldMatcher.isIgnored()) {
 			//
 			// It only makes sense to search here when we do not have a field to match
 			//
 			boolean localsOnly = discoverTypes;
 			FunctionIterator iterator = listing.getFunctions(false);
-			findDataTypeMatchesInFunctionHeaders(asSet, iterator, dataType, localsOnly, monitor);
+			findDataTypeMatchesInFunctionHeaders(accumulator, iterator, dataType, localsOnly,
+				monitor);
 
 			// external functions don't get searched by type discovery
 			localsOnly = false;
 			iterator = listing.getExternalFunctions();
-			findDataTypeMatchesInFunctionHeaders(asSet, iterator, dataType, localsOnly, monitor);
+			findDataTypeMatchesInFunctionHeaders(accumulator, iterator, dataType, localsOnly,
+				monitor);
 		}
 
 		Predicate<Data> dataMatcher = data -> {
@@ -316,23 +310,14 @@ public final class ReferenceUtils {
 			return matches;
 		};
 
-		findDataTypeMatchesInDefinedData(asSet, program, dataMatcher, fieldMatcher, monitor);
+		findDataTypeMatchesInDefinedData(accumulator, program, dataMatcher, fieldMatcher, monitor);
 
 		if (discoverTypes) {
-			findDataTypeMatchesOutsideOfListing(asSet, program, dataType, fieldMatcher, monitor);
+			findDataTypeMatchesOutsideOfListing(accumulator, program, dataType, fieldMatcher,
+				monitor);
 		}
 
 		monitor.checkCancelled();
-	}
-
-	private static Accumulator<LocationReference> asSet(
-			Accumulator<LocationReference> accumulator) {
-
-		if (accumulator instanceof SetAccumulator) {
-			return accumulator;
-		}
-
-		return new FilteringAccumulatorWrapper<>(accumulator, ref -> !accumulator.contains(ref));
 	}
 
 	private static void findDataTypeMatchesOutsideOfListing(
@@ -345,7 +330,9 @@ public final class ReferenceUtils {
 		Consumer<DataTypeReference> callback = ref -> {
 
 			SearchLocationContext context = ref.getContext();
-			LocationReference locationReference = new LocationReference(ref.getAddress(), context);
+			String fieldName = ref.getFieldName();
+			LocationReference locationReference =
+				new LocationReference(ref.getAddress(), context, fieldName);
 			accumulator.add(locationReference);
 		};
 
@@ -1054,9 +1041,11 @@ public final class ReferenceUtils {
 	private static LocationReference createReferenceFromDefinedData(Data data,
 			FieldMatcher fieldMatcher) {
 		Address dataAddress = data.getMinAddress();
+		String pathName = data.getPathName();
 		if (fieldMatcher.isIgnored()) {
 			// no field to match; include the hit
-			return new LocationReference(dataAddress, data.getPathName());
+			SearchLocationContext context = SearchLocationContext.get(pathName);
+			return new LocationReference(dataAddress, context);
 		}
 
 		DataType dt = data.getDataType();
@@ -1067,8 +1056,11 @@ public final class ReferenceUtils {
 		}
 
 		DataType baseDt = getBaseDataType(data.getDataType());
+		String fieldName = fieldMatcher.getFieldName();
 		if (matchesEnumField(data, baseDt, fieldMatcher)) {
-			return new LocationReference(dataAddress, fieldMatcher.getDisplayText());
+			String text = fieldMatcher.getDisplayText();
+			SearchLocationContext context = SearchLocationContext.get(text);
+			return new LocationReference(dataAddress, context, fieldName);
 		}
 
 		DataTypeComponent component = getDataTypeComponent(baseDt, fieldMatcher);
@@ -1079,13 +1071,14 @@ public final class ReferenceUtils {
 		Address componentAddress;
 		try {
 			componentAddress = dataAddress.addNoWrap(component.getOffset());
-			return new LocationReference(componentAddress,
-				data.getPathName() + "." + fieldMatcher.getFieldName());
+			String text = pathName + "." + fieldName;
+			SearchLocationContext context = SearchLocationContext.get(text);
+			return new LocationReference(componentAddress, context, fieldName);
 		}
 		catch (AddressOverflowException e) {
 			// shouldn't happen
 			Msg.error(ReferenceUtils.class, "Unable to create address for sub-component of " +
-				data.getPathName() + " at " + dataAddress, e);
+				pathName + " at " + dataAddress, e);
 		}
 		return null;
 	}
@@ -1173,16 +1166,14 @@ public final class ReferenceUtils {
 			return;
 		}
 
-		if (!accumulator.contains(ref)) {
-			accumulator.add(ref);
-		}
+		accumulator.add(ref);
 
 		// this address will either be the data, or the field's, if it exists
 		Address dataAddress = ref.getLocationOfUse();
 		Consumer<LocationReference> consumer =
 			locationReference -> accumulator.add(locationReference);
 		Program program = data.getProgram();
-		accumulateDirectReferences(consumer, program, dataAddress);
+		accumulateDirectReferences(consumer, program, fieldMatcher, dataAddress);
 
 		Consumer<Reference> referenceConsumer = reference -> {
 			Address toAddress = reference.getToAddress();
@@ -1194,7 +1185,8 @@ public final class ReferenceUtils {
 
 			// have a field match; only add the reference if it is directly to the field
 			if (toAddress.equals(dataAddress)) {
-				accumulator.add(new LocationReference(reference, false));
+				String fieldName = fieldMatcher.getFieldName();
+				accumulator.add(new LocationReference(reference, false, fieldName));
 			}
 		};
 		accumulateOffcutReferences(referenceConsumer, data, monitor);
@@ -1281,8 +1273,8 @@ public final class ReferenceUtils {
 		ReferenceManager referenceManager = program.getReferenceManager();
 		Reference[] variableRefsTo = referenceManager.getReferencesTo(variable);
 		for (Reference ref : variableRefsTo) {
-			accumulator
-					.add(new LocationReference(ref, !ref.getToAddress().equals(variableAddress)));
+			Address toAddress = ref.getToAddress();
+			accumulator.add(new LocationReference(ref, !toAddress.equals(variableAddress)));
 		}
 	}
 
@@ -1365,12 +1357,18 @@ public final class ReferenceUtils {
 
 	private static void accumulateDirectReferences(Consumer<LocationReference> consumer,
 			Program program, Address address) {
+		accumulateDirectReferences(consumer, program, null, address);
+	}
 
+	private static void accumulateDirectReferences(Consumer<LocationReference> consumer,
+			Program program, FieldMatcher fieldMatcher, Address address) {
+
+		String fieldName = fieldMatcher != null ? fieldMatcher.getFieldName() : null;
 		boolean isOffcut = isOffcut(program, address);
 		ReferenceIterator iter = program.getReferenceManager().getReferencesTo(address);
 		while (iter.hasNext()) {
 			Reference ref = iter.next();
-			consumer.accept(new LocationReference(ref, isOffcut));
+			consumer.accept(new LocationReference(ref, isOffcut, fieldName));
 		}
 	}
 

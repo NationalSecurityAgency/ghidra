@@ -1,0 +1,17 @@
+##VERSION: 2.0
+##MODULE IP: Apache License 2.0
+Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
+data/extensions.json||GHIDRA||||END|
+data/extensions/unix32/cc.xml||GHIDRA||||END|
+data/extensions/unix32/probe_fixup.xml||GHIDRA||||END|
+data/extensions/unix32/try_fixup.xml||GHIDRA||||END|
+data/extensions/unix64/cc.xml||GHIDRA||||END|
+data/extensions/unix64/probe_fixup.xml||GHIDRA||||END|
+data/extensions/unix64/try_fixup.xml||GHIDRA||||END|
+data/extensions/windows32/probe_fixup.xml||GHIDRA||||END|
+data/extensions/windows32/try_fixup.xml||GHIDRA||||END|
+data/extensions/windows64/probe_fixup.xml||GHIDRA||||END|
+data/extensions/windows64/try_fixup.xml||GHIDRA||||END|
+data/typeinfo/rust-common.gdt||GHIDRA||||END|
+data/types.json||GHIDRA||||END|

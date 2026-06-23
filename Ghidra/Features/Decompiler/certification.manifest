@@ -24,6 +24,7 @@ src/decompile/datatests/condconstsub.xml||GHIDRA||||END|
 src/decompile/datatests/condexesub.xml||GHIDRA||||END|
 src/decompile/datatests/condmulti.xml||GHIDRA||||END|
 src/decompile/datatests/convert.xml||GHIDRA||||END|
+src/decompile/datatests/copytrim.xml||GHIDRA||||END|
 src/decompile/datatests/deadvolatile.xml||GHIDRA||||END|
 src/decompile/datatests/deindirect.xml||GHIDRA||||END|
 src/decompile/datatests/deindirect2.xml||GHIDRA||||END|
@@ -94,6 +95,7 @@ src/decompile/datatests/twodim.xml||GHIDRA||||END|
 src/decompile/datatests/union_datatype.xml||GHIDRA||||END|
 src/decompile/datatests/varcross.xml||GHIDRA||||END|
 src/decompile/datatests/wayoffarray.xml||GHIDRA||||END|
+src/decompile/datatests/wraprange.xml||GHIDRA||||END|
 src/decompile/zlib/README.txt||GHIDRA||||END|
 src/main/doc/commonprofile.xsl||GHIDRA||||END|
 src/main/doc/cspec.xml||GHIDRA||||END|

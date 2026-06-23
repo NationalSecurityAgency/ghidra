@@ -33,6 +33,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramChangeRecord;
 import ghidra.program.util.ProgramEvent;
 import ghidra.util.InvalidNameException;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -496,13 +497,9 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 
 	@Override
 	protected void clearCache(boolean all) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			super.clearCache(all);
 			dataTypeManager.invalidateCache();
-		}
-		finally {
-			lock.release();
 		}
 	}
 

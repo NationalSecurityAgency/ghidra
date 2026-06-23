@@ -44,8 +44,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	private final Map<Trace, TraceBreakpointSet> traceBreaks = new HashMap<>();
 
 	protected MappedLogicalBreakpoint(PluginTool tool, Program program, Address progAddr,
-			long length,
-			Collection<TraceBreakpointKind> kinds) {
+			long length, Collection<TraceBreakpointKind> kinds) {
 		this.tool = tool;
 		this.kinds = Set.copyOf(kinds);
 		this.length = length;

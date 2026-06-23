@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.features.base.values.GhidraValuesMap;
+import ghidra.features.bsim.gui.BSimServerManager;
 import ghidra.features.bsim.query.*;
 import ghidra.features.bsim.query.FunctionDatabase.BSimError;
 import ghidra.features.bsim.query.description.DatabaseInformation;
@@ -37,6 +38,7 @@ public class CreateH2BSimDatabaseScript extends GhidraScript {
 	private static final String DATABASE_TEMPLATE = "Database Template";
 	private static final String FUNCTION_TAGS = "Function Tags (CSV)";
 	private static final String EXECUTABLE_CATEGORIES = "Executable Categories (CSV)";
+	private static final String ADD_TO_MANAGER = "Add New Server to Server Manager";
 
 	private static final String[] templates =
 		{ "medium_nosize", "medium_32", "medium_64", "medium_cpool" };
@@ -54,6 +56,7 @@ public class CreateH2BSimDatabaseScript extends GhidraScript {
 		values.defineChoice(DATABASE_TEMPLATE, "medium_nosize", templates);
 		values.defineString(FUNCTION_TAGS);
 		values.defineString(EXECUTABLE_CATEGORIES);
+		values.defineBoolean(ADD_TO_MANAGER, true);
 
 		values.setValidator((valueMap, status) -> {
 			String databaseName = valueMap.getString(NAME);
@@ -86,6 +89,7 @@ public class CreateH2BSimDatabaseScript extends GhidraScript {
 
 		String exeCatCSV = values.getString(EXECUTABLE_CATEGORIES);
 		List<String> cats = parseCSV(exeCatCSV);
+		boolean addToManager = values.getBoolean(ADD_TO_MANAGER);
 
 		File dbFile = new File(dbDir, databaseName);
 		BSimServerInfo serverInfo = new BSimServerInfo(dbFile.getAbsolutePath());
@@ -129,6 +133,10 @@ public class CreateH2BSimDatabaseScript extends GhidraScript {
 					BSimError lastError = h2Database.getLastError();
 					throw new LSHException(lastError.message);
 				}
+			}
+			if (addToManager) {
+				BSimServerManager serverManager = BSimServerManager.getBSimServerManager();
+				serverManager.addServer(serverInfo);
 			}
 			popup("Database " + values.getString(NAME) + " created successfully!");
 		}

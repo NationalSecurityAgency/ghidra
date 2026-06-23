@@ -62,7 +62,6 @@ public class SymPcodeExecutor extends PcodeExecutor<Sym> {
 	 * @param program the program to analyze
 	 * @param state the symbolic state
 	 * @param reason a reason to give when reading state
-	 * @param warnings a place to emit warnings
 	 * @param monitor a monitor for analysis, usually decompilation
 	 * @return the executor
 	 */
@@ -327,7 +326,8 @@ public class SymPcodeExecutor extends PcodeExecutor<Sym> {
 		for (int i = 0; i < arguments.length; i++) {
 			types[i + 1] = arguments[0].getDataType();
 		}
-		VariableStorage[] vsLocs = convention.getStorageLocations(program, types, false);
+		VariableStorage[] vsLocs =
+			convention.getStorageLocations(program, types, false, sig.hasVarArgs());
 		Address min = null;
 		Address max = null; // Exclusive
 		for (VariableStorage vs : vsLocs) {

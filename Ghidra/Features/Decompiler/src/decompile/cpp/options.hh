@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,6 +39,7 @@ extern ElementId ELEM_DEFAULTPROTOTYPE;		///< Marshaling element \<defaultprotot
 extern ElementId ELEM_ERRORREINTERPRETED;	///< Marshaling element \<errorreinterpreted>
 extern ElementId ELEM_ERRORTOOMANYINSTRUCTIONS;	///< Marshaling element \<errortoomanyinstructions>
 extern ElementId ELEM_ERRORUNIMPLEMENTED;	///< Marshaling element \<errorunimplemented>
+extern ElementId ELEM_BADDATACOUNT;		///< Marshaling element \<errorbaddata>
 extern ElementId ELEM_EXTRAPOP;			///< Marshaling element \<extrapop>
 extern ElementId ELEM_IGNOREUNIMPLEMENTED;	///< Marshaling element \<ignoreunimplemented>
 extern ElementId ELEM_INDENTINCREMENT;		///< Marshaling element \<indentincrement>
@@ -280,6 +281,12 @@ public:
 class OptionErrorTooManyInstructions : public ArchOption {
 public:
   OptionErrorTooManyInstructions(void) { name = "errortoomanyinstructions"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
+class OptionBadDataCount : public ArchOption {
+public:
+  OptionBadDataCount(void) { name = "baddatacount"; }	///< Constructor
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 

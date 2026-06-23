@@ -401,7 +401,7 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod removeProcess = conn.getMethod("remove_process");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/netstat.exe")) {
+			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/NETSTAT.EXE")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				TraceObject proc2 = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
@@ -476,7 +476,7 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod detach = conn.getMethod("detach");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/netstat.exe")) {
+			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/NETSTAT.EXE")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));

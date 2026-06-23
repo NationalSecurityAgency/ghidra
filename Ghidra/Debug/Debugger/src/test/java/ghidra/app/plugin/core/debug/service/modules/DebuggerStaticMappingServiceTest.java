@@ -27,7 +27,7 @@ import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProviderTest;
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
+import ghidra.debug.api.modules.MappedAddressRange;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;

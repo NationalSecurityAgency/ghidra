@@ -392,6 +392,8 @@
 
       <H3><A name="Demangler_Analyzer"></A>Demangler Analyzer</H3>
 
+	  <H3>Demangler GNU or Demangeler Microsoft</H3>
+	  
       <BLOCKQUOTE>
         <P>This analyzer examines the name of the newly created function. If the name appears to be
         a <I>GCC v3</I> or <I>Microsoft Visual Studio</I> mangled symbol, then it will demangle the
@@ -577,25 +579,14 @@
 
         <P><U>Started By:</U> Importing or adding to a program, Auto Analyze command</P>
       </BLOCKQUOTE>
-      <H3><A name="Format_String_Analyzer"></A>Format String Analyzer</H3>
+
+
+      <H3><A name="Image"></A>Embedded Media Analyzer</H3>
 
       <BLOCKQUOTE>
-        <P>This analyzer detects variadic function calls in the bodies of each function that intersect 
-        the current selection. It then parses their format string arguments to infer the correct function 
-        call signatures. Currently, this analyzer only supports printf, scanf, and their variants (e.g., snprintf, fscanf). 
-        If the current selection is empty, it searches through every function within the binary. Once 
-        the signatures are inferred, they are overridden.</P>
-
-        <P><U>Started By:</U> Importing or adding to a program, Auto Analyze command</P>
-
-      </BLOCKQUOTE>
-
-      <H3><A name="Image"></A>Image Analyzer</H3>
-
-      <BLOCKQUOTE>
-        <P>This analyzer searches the program for images. If a valid image is found an appropriate
-        image data type is applied at that location with the corresponding visual representation of
-        the image. Also, a bookmark is added to indicate an image.</P>
+        <P>Finds embedded media data types (e.g., png, gif, jpeg, wav). If a valid image is found an 
+		appropriate image data type is applied at that location with the corresponding visual 
+		representation of image. Also, a bookmark is added to indicate an image.</P>
 
         <P><U>Started By</U>: Importing or adding to a program, Auto Analyze command</P>
       </BLOCKQUOTE>
@@ -727,6 +718,22 @@
 
         <P><U>Started By</U>: Auto Analyze command</P>
       </BLOCKQUOTE>
+	  
+	  <H3><A name="Format_String_Analyzer"></A>Format String Analyzer</H3>
+	  <H3>(Variadic Function Signature Override)</H3>
+
+	  <BLOCKQUOTE>
+	    <P>This analyzer detects variadic function calls in the bodies of each function that intersect 
+	    the current selection. It then parses their format string arguments to infer the correct function 
+	    call signatures. Currently, this analyzer only supports printf, scanf, and their variants (e.g., snprintf, fscanf). 
+	    If the current selection is empty, it searches through every function within the binary. Once 
+	    the signatures are inferred, they are overridden.</P>
+
+	    <P><U>Started By:</U> Importing or adding to a program, Auto Analyze command</P>
+
+	  </BLOCKQUOTE>
+	  
+	  
     </BLOCKQUOTE>
 
     <P class="providedbyplugin">Provided by: <I>AutoAnalysisPlugin</I><BR>

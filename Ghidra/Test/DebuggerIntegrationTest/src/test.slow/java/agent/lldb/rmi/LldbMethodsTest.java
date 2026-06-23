@@ -18,7 +18,7 @@ package agent.lldb.rmi;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.*;
 
@@ -28,7 +28,6 @@ import org.junit.experimental.categories.Category;
 
 import generic.Unique;
 import generic.test.category.NightlyCategory;
-import generic.test.rule.Repeated;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.debug.api.tracermi.RemoteMethod;
 import ghidra.framework.OperatingSystem;
@@ -38,7 +37,7 @@ import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.modules.TraceModule;
@@ -52,6 +51,8 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 	@Test
 	public void testExecuteCapture() throws Exception {
+		// NB: print returns no value on Windows
+		assumeTrue(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.LINUX);
 		try (LldbAndConnection conn = startAndConnectLldb()) {
 			RemoteMethod execute = conn.getMethod("execute");
 			assertEquals(false, execute.parameters().get("to_string").getDefaultValue());
@@ -128,11 +129,9 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				Address main = rangeMain.getMinAddress();
 
 				assertBreakLoc(procBreakLocVals.get(0), "[1]", main, 1,
-					Set.of(TraceBreakpointKind.SW_EXECUTE),
-					"main");
+					CommonSet.SWX.kinds(), "main");
 				assertBreakLoc(procBreakLocVals.get(1), "[1]", main, 1,
-					Set.of(TraceBreakpointKind.HW_EXECUTE),
-					"main");
+					CommonSet.HWX.kinds(), "main");
 			}
 			conn.success();
 		}
@@ -175,14 +174,11 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				Address main2 = rangeMain2.getMinAddress();
 
 				assertWatchLoc(procWatchLocVals.get(0), "[1]", main0, (int) rangeMain0.getLength(),
-					Set.of(TraceBreakpointKind.WRITE),
-					"main");
+					CommonSet.WRITE.kinds(), "main");
 				assertWatchLoc(procWatchLocVals.get(1), "[2]", main1, (int) rangeMain1.getLength(),
-					Set.of(TraceBreakpointKind.READ),
-					"main+0x20");
+					CommonSet.READ.kinds(), "main+0x20");
 				assertWatchLoc(procWatchLocVals.get(2), "[3]", main2, (int) rangeMain1.getLength(),
-					Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE),
-					"main+0x30");
+					CommonSet.ACCESS.kinds(), "main+0x30");
 			}
 			conn.success();
 		}
@@ -572,12 +568,11 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				launch.invoke(Map.ofEntries(
 					Map.entry("process", proc),
-					Map.entry("file", getSpecimenRead())));
+					Map.entry("file", getSpecimenSpin())));
 
 				txPut(conn, "processes");
 
 				waitRunning(conn);
-				Thread.sleep(100); // Give it plenty of time to block on read
 
 				conn.execute("process interrupt");
 				txPut(conn, "processes");
@@ -585,7 +580,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				waitStopped(conn);
 
 				String out = conn.executeCapture("bt");
-				assertThat(out, containsString("read"));
+				assertThat(out, containsString("stop"));
 			}
 			conn.success();
 		}

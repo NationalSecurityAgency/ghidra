@@ -18,6 +18,8 @@ package ghidra.app.util.bin.format.pe;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.pe.chpe.ImageArm64ecMetadata;
+import ghidra.app.util.bin.format.pe.chpe.ImageChpeMetadataX86;
 import ghidra.app.util.bin.format.pe.dvrt.ImageDynamicRelocationTable;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
@@ -67,6 +69,16 @@ public class LoadConfigDataDirectory extends DataDirectory {
 
 		markupSeHandler(program, isBinary, monitor, log, nt);
 		ControlFlowGuard.markup(lcd, program, log, nt);
+
+		ImageChpeMetadataX86 chpeMetadata = lcd.getChpeMetadataX86();
+		if (chpeMetadata != null) {
+			chpeMetadata.markup(program, isBinary, monitor, log, nt);
+		}
+
+		ImageArm64ecMetadata arm64ecMetadata = lcd.getArm64ecMetadata();
+		if (arm64ecMetadata != null) {
+			arm64ecMetadata.markup(program, isBinary, monitor, log, nt);
+		}
 
 		ImageDynamicRelocationTable dvrt = lcd.getDynamicRelocationTable();
 		if (dvrt != null) {

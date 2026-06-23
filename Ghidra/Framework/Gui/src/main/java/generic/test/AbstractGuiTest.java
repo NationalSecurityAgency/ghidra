@@ -1092,28 +1092,7 @@ public class AbstractGuiTest extends AbstractGenericTest {
 	 *                running <code>doRun</code>
 	 */
 	public static void fixupGUI() throws InterruptedException, InvocationTargetException {
-		// Make the test look & feel as it would normally.
-		SwingUtilities.invokeAndWait(() -> {
-			try {
-				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			}
-			catch (ClassNotFoundException e1) {
-				// don't care
-			}
-			catch (InstantiationException e2) {
-				// don't care
-			}
-			catch (IllegalAccessException e3) {
-				// don't care
-			}
-			catch (UnsupportedLookAndFeelException e4) {
-				// don't care
-			}
-		});
-		// Fix up the default fonts that Java 1.5.0 changed to Courier, which looked terrible.
-		Font f = new Font("monospaced", Font.PLAIN, 12);
-		UIManager.put("PasswordField.font", f);
-		UIManager.put("TextArea.font", f);
+		// here to prevent compiler errors; should not be needed now that we have theming
 	}
 
 	/**

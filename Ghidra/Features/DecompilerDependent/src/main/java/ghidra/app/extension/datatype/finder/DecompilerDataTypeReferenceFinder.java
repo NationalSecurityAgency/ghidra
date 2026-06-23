@@ -478,8 +478,12 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 						DtrfDbg.println(function,
 							"\tcreating an anonymous variable access: " + line);
 
-						// this can happen when a field is used anonymously, such as directly
-						// after a nested array index operation
+						// This can happen when a field is used anonymously, such as directly
+						// after a nested array index operation.  'anonymous' here means that there
+						// is no named variable in the decompiler that is being dereferenced.  In
+						// addition to seeing this for array accesses, we will also see this for
+						// nested composite access, like foo->bar->baz.   'baz' is being accessed
+						// anonymously.
 						results.add(new AnonymousVariableAccessDR(line, field));
 						continue;
 					}
@@ -497,15 +501,38 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 				return false; // should not happen
 			}
 
+			/*
+			 	Unusual Code: The data type of 'field' is usually the parent structure that contains
+			 	the field (not always though?).  Also, apparently sometimes the data type of the
+			 	'variable' in 'access' is that of the field being accessed instead of the parent
+			 	structure.  I'm guessing these conditions are bugs.  Normally, the data type of 
+			 	'variable' should be the parent containing type and the data type of 'field' should
+			 	be contained in the parent type.
+			 	
+			 	This is used to determine when parent->child relationship is not correct so that we
+			 	can create an special access type to represent that.  
+			 */
+
+			DataType parentType = field.getDataType();
+			DataType variableType = variable.getDataType();
+			if (DecompilerReference.isEqual(parentType, variableType)) {
+				return false; // the types match; this is the normal flow
+			}
+
 			// Note: the field's type is that of the parent structure, not the field.  We want the
 			//       field's type, so we must retrieve that.
-			DataType fieldDt = DecompilerReference.getFieldDataType(field);
+			DataType fieldType = DecompilerReference.getFieldDataType(field);
 
-			// unusual code: getDataType() on the variable may return the type of the field being
-			//               accessed.  Contrastingly, getDataType() on the field may return the
-			//               type of the parent structure.
-			DataType variableDt = variable.getDataType();
-			return !DecompilerReference.isEqual(variableDt, fieldDt);
+			// check for the unusual case where the 'variable' type may be that of the field
+			if (DecompilerReference.isEqual(variableType, fieldType)) {
+
+				// Note: it would be nice to find a case(s) to verify this path
+
+				return false; // the types match; this is the normal flow
+			}
+
+			return true;
+
 		}
 
 		private VariableAccessDR getLastAccess(List<DecompilerReference> variables) {

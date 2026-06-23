@@ -29,7 +29,6 @@ import javax.swing.table.TableColumn;
 
 import org.junit.*;
 
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import generic.Span;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;

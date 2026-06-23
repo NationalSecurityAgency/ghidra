@@ -19,9 +19,9 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin.ChangeCollector;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingContext.ChangeCollector;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
-import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
+import ghidra.debug.api.modules.MappedAddressRange;
 import ghidra.framework.model.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -52,14 +52,14 @@ class InfoPerProgram implements DomainObjectListener {
 		}
 	}
 
-	private final DebuggerStaticMappingServicePlugin plugin;
+	private final DebuggerStaticMappingContext ctx;
 	final Program program;
 	final NavMultiMap<Address, MappingEntry> inboundByStaticAddress = new NavMultiMap<>();
 
 	final URL url;
 
-	InfoPerProgram(DebuggerStaticMappingServicePlugin plugin, Program program) {
-		this.plugin = plugin;
+	InfoPerProgram(DebuggerStaticMappingContext ctx, Program program) {
+		this.ctx = ctx;
 		this.program = program;
 		this.url = ProgramURLUtils.getUrlFromProgram(program);
 
@@ -70,7 +70,12 @@ class InfoPerProgram implements DomainObjectListener {
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		if (ev.contains(DomainObjectEvent.FILE_CHANGED) || ev.contains(DomainObjectEvent.RENAMED)) {
 			if (!urlMatches()) {
-				CompletableFuture.runAsync(plugin::programsChanged, plugin.executor);
+				CompletableFuture.runAsync(() -> {
+					try (ChangeCollector cc = ctx.collectChanges()) {
+						ctx.processRemovedProgramInfo(cc, this);
+						ctx.processAddedProgram(cc, program);
+					}
+				}, ctx.executor);
 			}
 		}
 	}
@@ -95,7 +100,7 @@ class InfoPerProgram implements DomainObjectListener {
 		if (url == null) {
 			return;
 		}
-		for (InfoPerTrace info : plugin.traceInfoByTrace.values()) {
+		for (InfoPerTrace info : ctx.traceInfoByTrace.values()) {
 			info.clearEntriesForProgram(cc, this);
 		}
 	}
@@ -104,7 +109,7 @@ class InfoPerProgram implements DomainObjectListener {
 		if (url == null) {
 			return;
 		}
-		for (InfoPerTrace info : plugin.traceInfoByTrace.values()) {
+		for (InfoPerTrace info : ctx.traceInfoByTrace.values()) {
 			info.fillEntriesForProgram(cc, this);
 		}
 	}

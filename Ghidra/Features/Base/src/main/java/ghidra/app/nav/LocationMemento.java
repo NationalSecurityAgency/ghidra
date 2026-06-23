@@ -87,7 +87,8 @@ public class LocationMemento {
 			return false;
 		}
 		LocationMemento other = (LocationMemento) obj;
-		return (program == other.program && compareLocations(programLocation, other.programLocation));
+		return (program == other.program &&
+			compareLocations(programLocation, other.programLocation));
 	}
 
 	@Override
@@ -127,13 +128,10 @@ public class LocationMemento {
 		if (loc1.getClass() == loc2.getClass()) {
 			return true;
 		}
-		// at this point we know they have the some addresses, but different location types (fields)
+		// at this point we know they have the same addresses, but different location types (fields)
 		// also consider generic program locations to be equal to addressField locations
-		boolean isAddr1 =
-			loc1 instanceof AddressFieldLocation || loc1.getClass() == ProgramLocation.class;
-		boolean isAddr2 =
-			loc2 instanceof AddressFieldLocation || loc2.getClass() == ProgramLocation.class;
-		return isAddr1 & isAddr2;
+		return (loc1 instanceof AddressFieldLocation || loc1.getClass() == ProgramLocation.class) &&
+			(loc2 instanceof AddressFieldLocation || loc2.getClass() == ProgramLocation.class);
 	}
 
 	public void saveState(SaveState saveState) {
@@ -143,7 +141,6 @@ public class LocationMemento {
 		programLocation.saveState(saveState);
 	}
 
-	@SuppressWarnings("unchecked")
 	// we saved the class, it should be the right type
 	public static LocationMemento getLocationMemento(SaveState saveState, Program[] programs) {
 		String className = saveState.getString(MEMENTO_CLASS, null);
@@ -154,26 +151,22 @@ public class LocationMemento {
 		try {
 			Class<? extends LocationMemento> mementoClass = ClassSearcher.forNameSafe(className,
 				LocationMemento.class, LocationMemento.class.getClassLoader());
-
 			Constructor<? extends LocationMemento> constructor =
 				mementoClass.getConstructor(SaveState.class, Program[].class);
 			return constructor.newInstance(saveState, programs);
 		}
 		catch (ClassNotFoundException e) {
-			// class must have been deleted or renamed
+			// this can happen for locations created by plugins that are no longer installed
+			Msg.info(LocationMemento.class,
+				"Unable to identify saved location, class not found: " + className);
 		}
-		catch (InstantiationException e) {
-			Msg.showError(ProgramLocation.class, null, "Programming Error", "Class " + className +
-				" must have public constructor!", e);
-		}
-		catch (IllegalAccessException e) {
-			Msg.showError(ProgramLocation.class, null, "Programming Error", "Class " + className +
+		catch (InstantiationException | IllegalAccessException e) {
+			Msg.showError(LocationMemento.class, null, "Programming Error", "Class " + className +
 				" must have public constructor!", e);
 		}
 		catch (NoSuchMethodException e) {
-			Msg.showError(ProgramLocation.class, null, "Programming Error", "Class " + className +
+			Msg.showError(LocationMemento.class, null, "Programming Error", "Class " + className +
 				" must have a public constructor that takes a SaveState " + "and a Program[]!", e);
-			e.printStackTrace();
 		}
 		catch (InvocationTargetException e) {
 			Throwable cause = e.getCause();
@@ -183,7 +176,8 @@ public class LocationMemento {
 
 			// Cause could be null here, so protect.
 			String message = cause == null ? "" : cause.getMessage();
-			throw new IllegalArgumentException("Unexpected exception restoring memento: " + message);
+			throw new IllegalArgumentException(
+				"Unexpected exception restoring memento: " + message);
 		}
 		return null;
 

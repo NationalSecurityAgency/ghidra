@@ -66,6 +66,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.*;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
@@ -504,8 +505,12 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			!ProgramEmulationUtils.isEmulatedProgram(current.getTrace())) {
 			return false;
 		}
+		ProgramLocation programLoc = ctx.getLocation();
+		if (programLoc == null) {
+			return false;
+		}
 		TraceLocation traceLoc = staticMappings.getOpenMappedLocation(
-			current.getTrace(), ctx.getLocation(), current.getSnap());
+			current.getTrace(), programLoc, current.getSnap());
 		if (traceLoc == null) {
 			return false;
 		}
@@ -664,12 +669,8 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 					continue;
 				}
 				Set<TraceBreakpointKind> kinds = bpt.getKinds(snap);
-				boolean isExecute =
-					kinds.contains(TraceBreakpointKind.HW_EXECUTE) ||
-						kinds.contains(TraceBreakpointKind.SW_EXECUTE);
-				boolean isRead = kinds.contains(TraceBreakpointKind.READ);
-				boolean isWrite = kinds.contains(TraceBreakpointKind.WRITE);
-				if (isExecute) {
+				if (kinds.contains(TraceBreakpointKind.HW_EXECUTE) ||
+					kinds.contains(TraceBreakpointKind.SW_EXECUTE)) {
 					Address minAddress = bpt.getMinAddress(snap);
 					try {
 						emu.inject(minAddress, bpt.getEmuSleigh(snap));
@@ -679,13 +680,13 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 						emu.inject(minAddress, "emu_injection_err();");
 					}
 				}
-				if (isRead && isWrite) {
+				if (kinds.equals(CommonSet.ACCESS.kinds())) {
 					emu.addAccessBreakpoint(bpt.getRange(snap), AccessKind.RW);
 				}
-				else if (isRead) {
+				else if (kinds.equals(CommonSet.READ.kinds())) {
 					emu.addAccessBreakpoint(bpt.getRange(snap), AccessKind.R);
 				}
-				else if (isWrite) {
+				else if (kinds.equals(CommonSet.WRITE.kinds())) {
 					emu.addAccessBreakpoint(bpt.getRange(snap), AccessKind.W);
 				}
 			}

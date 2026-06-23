@@ -612,8 +612,10 @@ public class Pagedump extends DumpFile {
 
 		List<Option> list = new ArrayList<>();
 
-		list.add(new Option(DEBUG_DATA_PATH_OPTION_NAME, DEBUG_DATA_PATH_OPTION_DEFAULT,
-			String.class, Loader.COMMAND_LINE_ARG_PREFIX + "-debugDataFilePath"));
+		list.add(Option.newString(DEBUG_DATA_PATH_OPTION_NAME)
+				.value(DEBUG_DATA_PATH_OPTION_DEFAULT)
+				.commandLineArgument(Loader.COMMAND_LINE_ARG_PREFIX + "-debugDataFilePath")
+				.build());
 
 		list.addAll(DumpFile.getDefaultOptions(reader));
 

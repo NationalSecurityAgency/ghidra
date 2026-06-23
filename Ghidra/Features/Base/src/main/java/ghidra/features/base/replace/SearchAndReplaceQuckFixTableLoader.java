@@ -50,7 +50,7 @@ public class SearchAndReplaceQuckFixTableLoader implements TableDataLoader<Quick
 			searchLimitExceeded = true;
 		}
 		finally {
-			hasResults = !accumulator.isEmpty();
+			hasResults = accumulator.getProgress() != 0;
 		}
 	}
 

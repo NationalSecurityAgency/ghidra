@@ -27,7 +27,7 @@ import ghidra.feature.vt.api.markuptype.*;
 import ghidra.feature.vt.api.util.Stringable;
 import ghidra.feature.vt.api.util.VersionTrackingApplyException;
 import ghidra.framework.options.ToolOptions;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.SystemUtilities;
@@ -402,7 +402,7 @@ public class MarkupItemImpl implements VTMarkupItem {
 	}
 
 	public boolean isStoredInDB() {
-		return (markupItemStorage instanceof DatabaseObject);
+		return (markupItemStorage instanceof DbObject);
 	}
 
 	@Override

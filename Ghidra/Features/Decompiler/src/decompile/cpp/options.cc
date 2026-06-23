@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,7 @@ ElementId ELEM_DEFAULTPROTOTYPE = ElementId("defaultprototype",183);
 ElementId ELEM_ERRORREINTERPRETED = ElementId("errorreinterpreted",184);
 ElementId ELEM_ERRORTOOMANYINSTRUCTIONS = ElementId("errortoomanyinstructions",185);
 ElementId ELEM_ERRORUNIMPLEMENTED = ElementId("errorunimplemented",186);
+ElementId ELEM_BADDATACOUNT = ElementId("baddatacount",290);
 ElementId ELEM_EXTRAPOP = ElementId("extrapop",187);
 ElementId ELEM_IGNOREUNIMPLEMENTED = ElementId("ignoreunimplemented",188);
 ElementId ELEM_INDENTINCREMENT = ElementId("indentincrement",189);
@@ -100,6 +101,7 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionErrorUnimplemented());
   registerOption(new OptionErrorReinterpreted());
   registerOption(new OptionErrorTooManyInstructions());
+  registerOption(new OptionBadDataCount());
   registerOption(new OptionDefaultPrototype());
   registerOption(new OptionInferConstPtr());
   registerOption(new OptionForLoops());
@@ -779,6 +781,33 @@ string OptionErrorTooManyInstructions::apply(Architecture *glb,const string &p1,
     glb->flowoptions &= ~((uint4)FlowInfo::error_toomanyinstructions);
   }
 
+  return res;
+}
+
+/// \class OptionErrorBadData
+/// \brief Toggle whether disassembling bytes that can't be decoded or at a non-existent address is considered a fatal error.
+///
+/// If the first parameter is "on" then any BadDataError encountered while following flow will cause a fatal error.
+/// Otherwise, artificial halts are generated at addresses causing the BadDataError, allowing analysis to continue.
+string OptionBadDataCount::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  uint4 newMax;
+  string res;
+  if (p1.size() == 0) {
+    newMax = 0xffffffff;
+    res = "No limit on instructions that cannot be disassembled";
+  }
+  else {
+    newMax = 0xdeadbeef;
+    istringstream s1(p1);
+    s1.unsetf(ios::dec | ios::hex | ios::oct); // Let user specify base
+    s1 >> newMax;
+    if (newMax == 0xdeadbeef)
+      throw ParseError("Bad baddatacount parameter");
+    res = "Maximum instructions that cannot be disassembled set to " + p1;
+  }
+  glb->max_baddata = newMax;
   return res;
 }
 
