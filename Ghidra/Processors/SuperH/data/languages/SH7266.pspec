@@ -2,21 +2,21 @@
 <processor_spec>
   <programcounter register="pc"/>
   <default_memory_blocks>
-    <memory_block name="HSRAM_P0" start_address="ram:0xFFF80000" length="0x4000" initialized="false"/>
-    <memory_block name="HSRAM_P1" start_address="ram:0xFFF84000" length="0x4000" initialized="false"/>
-    <memory_block name="HSRAM_P2" start_address="ram:0xFFF88000" length="0x4000" initialized="false"/>
-    <memory_block name="HSRAM_P3" start_address="ram:0xFFF8C000" length="0x4000" initialized="false"/>
-    <memory_block name="LCRAM_P0" start_address="ram:0x1C000000" length="0x40000" initialized="false"/>
-    <memory_block name="LCRAM_P1" start_address="ram:0x1C040000" length="0x40000" initialized="false"/>
-    <memory_block name="LCRAM_P2" start_address="ram:0x1C080000" length="0x40000" initialized="false"/>
-    <memory_block name="LCRAM_P3" start_address="ram:0x1C0C0000" length="0x40000" initialized="false"/>
-    <memory_block name="LCRAM_P4" start_address="ram:0x1C100000" length="0x40000" initialized="false"/>
-    <memory_block name="LCRAM_P5" start_address="ram:0x1C140000" length="0x40000" initialized="false"/>
-    <memory_block name="PERIPHERAL" start_address="ram:0xFFFC0000" length="0x40000" initialized="false"/>
-    <memory_block name="CS0_FLASH" start_address="ram:0x00000000" length="0x400000" initialized="false"/>
-    <memory_block name="CS0_FLASH_NOCACHE" start_address="ram:0x20000000" length="0x400000" initialized="false"/>
-    <memory_block name="CS2_SDRAM" start_address="ram:0x08000000" length="0x4000000" initialized="false"/>
-    <memory_block name="CS2_SDRAM_NOCACHE" start_address="ram:0x28000000" length="0x4000000" initialized="false"/>
+    <memory_block name="HSRAM_P0" start_address="0xFFF80000" length="0x4000" initialized="false"/>
+    <memory_block name="HSRAM_P1" start_address="0xFFF84000" length="0x4000" initialized="false"/>
+    <memory_block name="HSRAM_P2" start_address="0xFFF88000" length="0x4000" initialized="false"/>
+    <memory_block name="HSRAM_P3" start_address="0xFFF8C000" length="0x4000" initialized="false"/>
+    <memory_block name="LCRAM_P0" start_address="0x1C000000" length="0x40000" initialized="false"/>
+    <memory_block name="LCRAM_P1" start_address="0x1C040000" length="0x40000" initialized="false"/>
+    <memory_block name="LCRAM_P2" start_address="0x1C080000" length="0x40000" initialized="false"/>
+    <memory_block name="LCRAM_P3" start_address="0x1C0C0000" length="0x40000" initialized="false"/>
+    <memory_block name="LCRAM_P4" start_address="0x1C100000" length="0x40000" initialized="false"/>
+    <memory_block name="LCRAM_P5" start_address="0x1C140000" length="0x40000" initialized="false"/>
+    <memory_block name="PERIPHERAL" start_address="0xFFFC0000" length="0x40000" initialized="false"/>
+    <memory_block name="CS0_FLASH" start_address="0x00000000" length="0x400000" initialized="false"/>
+    <memory_block name="CS0_FLASH_NOCACHE" start_address="0x20000000" length="0x400000" initialized="false"/>
+    <memory_block name="CS2_SDRAM" start_address="0x08000000" length="0x4000000" initialized="false"/>
+    <memory_block name="CS2_SDRAM_NOCACHE" start_address="0x28000000" length="0x4000000" initialized="false"/>
   </default_memory_blocks>
   <default_symbols>
     <symbol name="BSC_CMNCR" address="0xFFFC0000" entry="false"/>
