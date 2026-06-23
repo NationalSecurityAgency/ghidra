@@ -146,7 +146,6 @@ public class SymbolUtilities {
 		return false;
 	}
 
-
 	/**
 	 * Generates a default function name for a given address.
 	 * @param addr the entry point of the function.
@@ -158,8 +157,8 @@ public class SymbolUtilities {
 
 	/**
 	 * Returns true if the specified name is reserved as a default external name.
-	 * @param name
-	 * @param addrFactory
+	 * @param name the name
+	 * @param addrFactory the address factory
 	 * @return true if the specified name is reserved as a default external name.
 	 */
 	public static boolean isReservedExternalDefaultName(String name, AddressFactory addrFactory) {
@@ -197,6 +196,9 @@ public class SymbolUtilities {
 	 * at some address.
 	 * WARNING! Does not handle dynamic labels which use data-type prefixes -
 	 * see {@link #isDynamicSymbolPattern(String, boolean)} for more liberal check
+	 * @param name the name 
+	 * @param addrFactory the address factory
+	 * @return true if a reserved dynamic name
 	 */
 	public static boolean isReservedDynamicLabelName(String name, AddressFactory addrFactory) {
 		String prefix = findDynamicPrefix(name);

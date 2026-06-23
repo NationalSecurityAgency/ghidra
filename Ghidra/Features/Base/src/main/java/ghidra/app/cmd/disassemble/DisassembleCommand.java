@@ -343,7 +343,7 @@ public class DisassembleCommand extends BackgroundCommand<Program> {
 	/**
 	 * Determine if intermediate analysis is required to reduce the risk of disassembling data
 	 * regions when performing static disassembly over a contiguous range if addresses. This method
-	 * attemps to identify this situation by checking the first range of disassembledSet against the
+	 * attempts to identify this situation by checking the first range of disassembledSet against the
 	 * startSet. Analysis will be triggered if startSet contains both the max address of the first
 	 * range of disassembledSet (M where M=disassembledSet.firstRange().getMaxAddress()) and the
 	 * next address (M.next()) which will be the next seed point.
