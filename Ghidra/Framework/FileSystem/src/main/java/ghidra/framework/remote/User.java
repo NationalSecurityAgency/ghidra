@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,8 @@ public class User implements Comparable<User>, Serializable {
 	private String name;
 
 	/**
-	 * Constructor.
+	 * Creates a new {@link User}
+	 * 
 	 * @param name user id/name
 	 * @param permission permission value (READ_ONLY, WRITE or ADMIN)
 	 */
@@ -65,43 +66,40 @@ public class User implements Comparable<User>, Serializable {
 	}
 
 	/**
-	 * Returns user id/name
+	 * {@return user id/name}
 	 */
 	public String getName() {
 		return name;
 	}
 
 	/**
-	 * Returns true if permission is READ_ONLY.
+	 * {@return true if permission is READ_ONLY}
 	 */
 	public boolean isReadOnly() {
 		return permission == READ_ONLY;
 	}
 
 	/**
-	 * Return true if this user has permission of WRITE or ADMIN.
+	 * {@return true if this user has permission of WRITE or ADMIN}
 	 */
 	public boolean hasWritePermission() {
 		return permission == WRITE || permission == ADMIN;
 	}
 
 	/**
-	 * Returns true if permission is ADMIN.
+	 * {@return true if permission is ADMIN}
 	 */
 	public boolean isAdmin() {
 		return permission == ADMIN;
 	}
 
 	/**
-	 * Returns the permission value assigned this user.
+	 * {@return the permission value assigned this user}
 	 */
 	public int getPermissionType() {
 		return permission;
 	}
 
-	/*
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		StringBuffer buf = new StringBuffer();
@@ -147,7 +145,7 @@ public class User implements Comparable<User>, Serializable {
 			if (other.name != null)
 				return -1;
 		}
-		else if (other.name != null) {
+		else if (other.name == null) {
 			return 1;
 		}
 		int rc = name.compareTo(other.name);
