@@ -51,8 +51,7 @@ public class DecompilerController {
 	private int cacheSize;
 
 	public DecompilerController(ServiceProvider serviceProvider, DecompilerCallbackHandler handler,
-			DecompileOptions options,
-			DecompilerClipboardProvider clipboard) {
+			DecompileOptions options, DecompilerClipboardProvider clipboard) {
 		this.serviceProvider = serviceProvider;
 		this.cacheSize = options.getCacheSize();
 		this.callbackHandler = handler;
@@ -368,6 +367,13 @@ public class DecompilerController {
 
 	public void clearCache() {
 		decompilerCache.invalidateAll();
+	}
+
+	public void clearCacheForCurrentFunction() {
+		Function function = getFunction();
+		if (function != null) {
+			decompilerCache.invalidate(function);
+		}
 	}
 
 	public void programClosed(Program closedProgram) {

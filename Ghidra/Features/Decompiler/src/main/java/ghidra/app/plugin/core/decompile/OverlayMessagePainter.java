@@ -20,7 +20,7 @@ import java.awt.*;
 import org.apache.commons.lang3.StringUtils;
 
 import generic.theme.GColor;
-import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.GThemeDefaults.Colors;
 import generic.theme.Gui;
 
 /**
@@ -28,9 +28,13 @@ import generic.theme.Gui;
  * needs to be refreshed manually.
  */
 class OverlayMessagePainter {
+
+	private static final String FONT_MESSAGE_ID = "font.decompiler.message";
+	private static final Color COLOR_BG_GRADIENT = new GColor("color.bg.decompiler.message");
+	private static final Color COLOR_FG_MESSAGE = new GColor("color.fg.decompiler.message");
+
 	private static final int MARGIN = 10;
-	private static final String FONT_ID = "font.graph.component.message";
-	private final Color gradientColor = new GColor("color.bg.visualgraph.message");
+
 	private String message;
 
 	void setMessage(String message) {
@@ -47,32 +51,35 @@ class OverlayMessagePainter {
 		}
 
 		Graphics2D g2 = (Graphics2D) g;
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		// this composite softens the text and color of the message
 		Composite originalComposite = g2.getComposite();
 		g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SrcOver.getRule(), .60f));
 
 		// set up font
-		Font font = Gui.getFont(FONT_ID);
+		Font font = Gui.getFont(FONT_MESSAGE_ID);
 		g.setFont(font);
 		Rectangle textBounds = font.getStringBounds(message, g2.getFontRenderContext()).getBounds();
 
+		int gx = bounds.x;
 		int gh = textBounds.height * 3;
-		int gy = bounds.height - gh;
-		paintGradient(g2, 0, gy, bounds.width, gh);
+		int gy = (bounds.y + bounds.height) - gh;
+		int gw = bounds.width;
+		paintGradient(g2, gx, gy, gw, gh);
 
 		// paint message
-		g2.setPaint(Palette.BLACK);
+		g2.setPaint(COLOR_FG_MESSAGE);
 		int textX = bounds.width - textBounds.width - MARGIN;
-		int textY = bounds.height - textBounds.height / 2; //text at bottom; account for baseline
+		int textY = bounds.height - textBounds.height / 2; // text at bottom; account for baseline
 		g2.drawString(message, textX, textY);
 
 		g2.setComposite(originalComposite);
 	}
 
 	private void paintGradient(Graphics2D g2, int x, int y, int w, int h) {
-		Color[] colors = new Color[] { Color.WHITE, gradientColor };
-		float[] fractions = new float[] { 0.0f, .95f };
+		Color[] colors = new Color[] { Colors.BACKGROUND, COLOR_BG_GRADIENT };
+		float[] fractions = new float[] { 0.0f, .85f };
 		LinearGradientPaint gradiantPaint =
 			new LinearGradientPaint(new Point(x, y), new Point(x, y + h), fractions, colors);
 		g2.setPaint(gradiantPaint);
