@@ -1,10 +1,11 @@
-<?xml version="1.0" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <processor_spec>
 
-  <!-- source: SH7266 Group, SH7267 Group User’s Manual: Hardware Rev. 3.00 Oct 2016 -->
+  <!-- Source: SH7266 Group, SH7267 Group User's Manual: Hardware Rev. 3.00 Oct 2016 -->
+  <!-- NOTE: SD Host Interface (SDHI): registers not included - Section 30 of the datasheet is NDA-protected and register addresses are unavailable. -->
 
   <programcounter register="pc"/>
-  
+
   <default_memory_blocks>
     <memory_block name="HSRAM_P0" start_address="0xFFF80000" length="0x4000" initialized="false"/>
     <memory_block name="HSRAM_P1" start_address="0xFFF84000" length="0x4000" initialized="false"/>
@@ -964,6 +965,6 @@
     <symbol name="USB_DEVADD8" address="0xFFFFC0E0" entry="false"/>
     <symbol name="USB_DEVADD9" address="0xFFFFC0E2" entry="false"/>
     <symbol name="USB_DEVADDA" address="0xFFFFC0E4" entry="false"/>
-    <!-- SD Host Interface (SDHI): registers not included - Section 30 of the datasheet is NDA-protected and register addresses are unavailable. -->
   </default_symbols>
+
 </processor_spec>
