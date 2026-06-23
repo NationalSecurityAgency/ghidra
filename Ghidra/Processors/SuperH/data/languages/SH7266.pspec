@@ -1,6 +1,10 @@
 <?xml version="1.0" ?>
 <processor_spec>
+
+  <!-- source: SH7266 Group, SH7267 Group User’s Manual: Hardware Rev. 3.00 Oct 2016 -->
+
   <programcounter register="pc"/>
+  
   <default_memory_blocks>
     <memory_block name="HSRAM_P0" start_address="0xFFF80000" length="0x4000" initialized="false"/>
     <memory_block name="HSRAM_P1" start_address="0xFFF84000" length="0x4000" initialized="false"/>
@@ -18,6 +22,7 @@
     <memory_block name="CS2_SDRAM" start_address="0x08000000" length="0x4000000" initialized="false"/>
     <memory_block name="CS2_SDRAM_NOCACHE" start_address="0x28000000" length="0x4000000" initialized="false"/>
   </default_memory_blocks>
+
   <default_symbols>
     <symbol name="BSC_CMNCR" address="0xFFFC0000" entry="false"/>
     <symbol name="BSC_CS0BCR" address="0xFFFC0004" entry="false"/>
@@ -66,7 +71,7 @@
     <symbol name="INTC_IPR20" address="0xFFFE0C1C" entry="false"/>
     <symbol name="INTC_IPR21" address="0xFFFE0C1E" entry="false"/>
     <symbol name="INTC_IPR22" address="0xFFFE0C20" entry="false"/>
-    <symbol name="INTC_IPR23" address="0xFFFF0C22" entry="false"/>
+    <symbol name="INTC_IPR23" address="0xFFFE0C22" entry="false"/>
     <symbol name="CACHE_CCR1" address="0xFFFC1000" entry="false"/>
     <symbol name="CACHE_CCR2" address="0xFFFC1004" entry="false"/>
     <symbol name="DMA_SAR_0" address="0xFFFE1000" entry="false"/>
@@ -446,5 +451,519 @@
     <symbol name="QSPI_SPBMUL1" address="0xFFFFE020" entry="false"/>
     <symbol name="QSPI_SPBMUL2" address="0xFFFFE024" entry="false"/>
     <symbol name="QSPI_SPBMUL3" address="0xFFFFE028" entry="false"/>
+    <!-- CPG -->
+    <symbol name="CPG_FRQCR" address="0xFFFE0010" entry="false"/>
+    <!-- System Control -->
+    <symbol name="SYS_STBCR1" address="0xFFFE0014" entry="false"/>
+    <symbol name="SYS_STBCR2" address="0xFFFE0018" entry="false"/>
+    <symbol name="SYS_SYSCR1" address="0xFFFE0400" entry="false"/>
+    <symbol name="SYS_SYSCR2" address="0xFFFE0404" entry="false"/>
+    <symbol name="SYS_STBCR3" address="0xFFFE0408" entry="false"/>
+    <symbol name="SYS_STBCR4" address="0xFFFE040C" entry="false"/>
+    <symbol name="SYS_STBCR5" address="0xFFFE0410" entry="false"/>
+    <symbol name="SYS_STBCR6" address="0xFFFE0414" entry="false"/>
+    <symbol name="SYS_STBCR7" address="0xFFFE0418" entry="false"/>
+    <symbol name="SYS_STBCR8" address="0xFFFE041C" entry="false"/>
+    <symbol name="SYS_SYSCR3" address="0xFFFE0420" entry="false"/>
+    <symbol name="SYS_SYSCR4" address="0xFFFE0424" entry="false"/>
+    <symbol name="SYS_SYSCR5" address="0xFFFE0428" entry="false"/>
+    <symbol name="SYS_SWRSTCR" address="0xFFFE0430" entry="false"/>
+    <symbol name="SYS_RRAMKP" address="0xFFFE6800" entry="false"/>
+    <symbol name="SYS_DSCTR" address="0xFFFE6802" entry="false"/>
+    <symbol name="SYS_DSSSR" address="0xFFFE6804" entry="false"/>
+    <symbol name="SYS_DSESR" address="0xFFFE6806" entry="false"/>
+    <symbol name="SYS_DSFR" address="0xFFFE6808" entry="false"/>
+    <symbol name="SYS_XTALCTR" address="0xFFFE6810" entry="false"/>
+    <!-- UDI -->
+    <symbol name="UDI_SDIR" address="0xFFFE2000" entry="false"/>
+    <!-- GPIO Port A -->
+    <symbol name="GPIO_PAIOR1" address="0xFFFE3810" entry="false"/>
+    <symbol name="GPIO_PAIOR0" address="0xFFFE3812" entry="false"/>
+    <symbol name="GPIO_PADR1" address="0xFFFE3814" entry="false"/>
+    <symbol name="GPIO_PADR0" address="0xFFFE3816" entry="false"/>
+    <symbol name="GPIO_PAPR0" address="0xFFFE381A" entry="false"/>
+    <!-- GPIO Port B -->
+    <symbol name="GPIO_PBCR5" address="0xFFFE3824" entry="false"/>
+    <symbol name="GPIO_PBCR4" address="0xFFFE3826" entry="false"/>
+    <symbol name="GPIO_PBCR3" address="0xFFFE3828" entry="false"/>
+    <symbol name="GPIO_PBCR2" address="0xFFFE382A" entry="false"/>
+    <symbol name="GPIO_PBCR1" address="0xFFFE382C" entry="false"/>
+    <symbol name="GPIO_PBCR0" address="0xFFFE382E" entry="false"/>
+    <symbol name="GPIO_PBIOR1" address="0xFFFE3830" entry="false"/>
+    <symbol name="GPIO_PBIOR0" address="0xFFFE3832" entry="false"/>
+    <symbol name="GPIO_PBDR1" address="0xFFFE3834" entry="false"/>
+    <symbol name="GPIO_PBDR0" address="0xFFFE3836" entry="false"/>
+    <symbol name="GPIO_PBPR1" address="0xFFFE3838" entry="false"/>
+    <symbol name="GPIO_PBPR0" address="0xFFFE383A" entry="false"/>
+    <!-- GPIO Port C -->
+    <symbol name="GPIO_PCCR2" address="0xFFFE384A" entry="false"/>
+    <symbol name="GPIO_PCCR1" address="0xFFFE384C" entry="false"/>
+    <symbol name="GPIO_PCCR0" address="0xFFFE384E" entry="false"/>
+    <symbol name="GPIO_PCIOR0" address="0xFFFE3852" entry="false"/>
+    <symbol name="GPIO_PCDR0" address="0xFFFE3856" entry="false"/>
+    <symbol name="GPIO_PCPR0" address="0xFFFE385A" entry="false"/>
+    <!-- GPIO Port D -->
+    <symbol name="GPIO_PDCR3" address="0xFFFE3868" entry="false"/>
+    <symbol name="GPIO_PDCR2" address="0xFFFE386A" entry="false"/>
+    <symbol name="GPIO_PDCR1" address="0xFFFE386C" entry="false"/>
+    <symbol name="GPIO_PDCR0" address="0xFFFE386E" entry="false"/>
+    <symbol name="GPIO_PDIOR0" address="0xFFFE3872" entry="false"/>
+    <symbol name="GPIO_PDDR0" address="0xFFFE3876" entry="false"/>
+    <symbol name="GPIO_PDPR0" address="0xFFFE387A" entry="false"/>
+    <!-- GPIO Port E -->
+    <symbol name="GPIO_PECR1" address="0xFFFE388C" entry="false"/>
+    <symbol name="GPIO_PECR0" address="0xFFFE388E" entry="false"/>
+    <symbol name="GPIO_PEIOR0" address="0xFFFE3892" entry="false"/>
+    <symbol name="GPIO_PEDR0" address="0xFFFE3896" entry="false"/>
+    <symbol name="GPIO_PEPR0" address="0xFFFE389A" entry="false"/>
+    <!-- GPIO Port F -->
+    <symbol name="GPIO_PFCR3" address="0xFFFE38A8" entry="false"/>
+    <symbol name="GPIO_PFCR2" address="0xFFFE38AA" entry="false"/>
+    <symbol name="GPIO_PFCR1" address="0xFFFE38AC" entry="false"/>
+    <symbol name="GPIO_PFCR0" address="0xFFFE38AE" entry="false"/>
+    <symbol name="GPIO_PFIOR0" address="0xFFFE38B2" entry="false"/>
+    <symbol name="GPIO_PFDR0" address="0xFFFE38B6" entry="false"/>
+    <symbol name="GPIO_PFPR0" address="0xFFFE38BA" entry="false"/>
+    <!-- GPIO Port G -->
+    <symbol name="GPIO_PGCR6" address="0xFFFE38C2" entry="false"/>
+    <symbol name="GPIO_PGCR5" address="0xFFFE38C4" entry="false"/>
+    <symbol name="GPIO_PGCR4" address="0xFFFE38C6" entry="false"/>
+    <symbol name="GPIO_PGCR3" address="0xFFFE38C8" entry="false"/>
+    <symbol name="GPIO_PGCR2" address="0xFFFE38CA" entry="false"/>
+    <symbol name="GPIO_PGCR1" address="0xFFFE38CC" entry="false"/>
+    <symbol name="GPIO_PGCR0" address="0xFFFE38CE" entry="false"/>
+    <symbol name="GPIO_PGIOR1" address="0xFFFE38D0" entry="false"/>
+    <symbol name="GPIO_PGIOR0" address="0xFFFE38D2" entry="false"/>
+    <symbol name="GPIO_PGDR1" address="0xFFFE38D4" entry="false"/>
+    <symbol name="GPIO_PGDR0" address="0xFFFE38D6" entry="false"/>
+    <symbol name="GPIO_PGPR1" address="0xFFFE38D8" entry="false"/>
+    <symbol name="GPIO_PGPR0" address="0xFFFE38DA" entry="false"/>
+    <!-- GPIO Port H -->
+    <symbol name="GPIO_PHCR1" address="0xFFFE38EC" entry="false"/>
+    <symbol name="GPIO_PHCR0" address="0xFFFE38EE" entry="false"/>
+    <symbol name="GPIO_PHPR0" address="0xFFFE38FA" entry="false"/>
+    <!-- GPIO Port J -->
+    <symbol name="GPIO_PJCR1" address="0xFFFE390C" entry="false"/>
+    <symbol name="GPIO_PJCR0" address="0xFFFE390E" entry="false"/>
+    <symbol name="GPIO_PJIOR0" address="0xFFFE3912" entry="false"/>
+    <symbol name="GPIO_PJDR0" address="0xFFFE3916" entry="false"/>
+    <symbol name="GPIO_PJPR0" address="0xFFFE391A" entry="false"/>
+    <symbol name="GPIO_SNCR" address="0xFFFE393E" entry="false"/>
+    <!-- CAN Channel 0 -->
+    <symbol name="CAN_MCR_0" address="0xFFFE5000" entry="false"/>
+    <symbol name="CAN_GSR_0" address="0xFFFE5002" entry="false"/>
+    <symbol name="CAN_BCR1_0" address="0xFFFE5004" entry="false"/>
+    <symbol name="CAN_BCR0_0" address="0xFFFE5006" entry="false"/>
+    <symbol name="CAN_IRR_0" address="0xFFFE5008" entry="false"/>
+    <symbol name="CAN_IMR_0" address="0xFFFE500A" entry="false"/>
+    <symbol name="CAN_TEC_REC_0" address="0xFFFE500C" entry="false"/>
+    <symbol name="CAN_TXPR1_0" address="0xFFFE5020" entry="false"/>
+    <symbol name="CAN_TXPR0_0" address="0xFFFE5022" entry="false"/>
+    <symbol name="CAN_TXCR1_0" address="0xFFFE5028" entry="false"/>
+    <symbol name="CAN_TXCR0_0" address="0xFFFE502A" entry="false"/>
+    <symbol name="CAN_TXACK1_0" address="0xFFFE5030" entry="false"/>
+    <symbol name="CAN_TXACK0_0" address="0xFFFE5032" entry="false"/>
+    <symbol name="CAN_ABACK1_0" address="0xFFFE5038" entry="false"/>
+    <symbol name="CAN_ABACK0_0" address="0xFFFE503A" entry="false"/>
+    <symbol name="CAN_RXPR1_0" address="0xFFFE5040" entry="false"/>
+    <symbol name="CAN_RXPR0_0" address="0xFFFE5042" entry="false"/>
+    <symbol name="CAN_RFPR1_0" address="0xFFFE5048" entry="false"/>
+    <symbol name="CAN_RFPR0_0" address="0xFFFE504A" entry="false"/>
+    <symbol name="CAN_MBIMR1_0" address="0xFFFE5050" entry="false"/>
+    <symbol name="CAN_MBIMR0_0" address="0xFFFE5052" entry="false"/>
+    <symbol name="CAN_UMSR1_0" address="0xFFFE5058" entry="false"/>
+    <symbol name="CAN_UMSR0_0" address="0xFFFE505A" entry="false"/>
+    <symbol name="CAN_TTCR0_0" address="0xFFFE5080" entry="false"/>
+    <symbol name="CAN_CMAX_TEW_0" address="0xFFFE5084" entry="false"/>
+    <symbol name="CAN_RFTROFF_0" address="0xFFFE5086" entry="false"/>
+    <symbol name="CAN_TSR_0" address="0xFFFE5088" entry="false"/>
+    <symbol name="CAN_CCR_0" address="0xFFFE508A" entry="false"/>
+    <symbol name="CAN_TCNTR_0" address="0xFFFE508C" entry="false"/>
+    <symbol name="CAN_CYCTR_0" address="0xFFFE5090" entry="false"/>
+    <symbol name="CAN_RFMK_0" address="0xFFFE5094" entry="false"/>
+    <symbol name="CAN_TCMR0_0" address="0xFFFE5098" entry="false"/>
+    <symbol name="CAN_TCMR1_0" address="0xFFFE509C" entry="false"/>
+    <symbol name="CAN_TCMR2_0" address="0xFFFE50A0" entry="false"/>
+    <symbol name="CAN_TTTSEL_0" address="0xFFFE50A4" entry="false"/>
+    <!-- CAN Channel 1 -->
+    <symbol name="CAN_MCR_1" address="0xFFFE5800" entry="false"/>
+    <symbol name="CAN_GSR_1" address="0xFFFE5802" entry="false"/>
+    <symbol name="CAN_BCR1_1" address="0xFFFE5804" entry="false"/>
+    <symbol name="CAN_BCR0_1" address="0xFFFE5806" entry="false"/>
+    <symbol name="CAN_IRR_1" address="0xFFFE5808" entry="false"/>
+    <symbol name="CAN_IMR_1" address="0xFFFE580A" entry="false"/>
+    <symbol name="CAN_TEC_REC_1" address="0xFFFE580C" entry="false"/>
+    <symbol name="CAN_TXPR1_1" address="0xFFFE5820" entry="false"/>
+    <symbol name="CAN_TXPR0_1" address="0xFFFE5822" entry="false"/>
+    <symbol name="CAN_TXCR1_1" address="0xFFFE5828" entry="false"/>
+    <symbol name="CAN_TXCR0_1" address="0xFFFE582A" entry="false"/>
+    <symbol name="CAN_TXACK1_1" address="0xFFFE5830" entry="false"/>
+    <symbol name="CAN_TXACK0_1" address="0xFFFE5832" entry="false"/>
+    <symbol name="CAN_ABACK1_1" address="0xFFFE5838" entry="false"/>
+    <symbol name="CAN_ABACK0_1" address="0xFFFE583A" entry="false"/>
+    <symbol name="CAN_RXPR1_1" address="0xFFFE5840" entry="false"/>
+    <symbol name="CAN_RXPR0_1" address="0xFFFE5842" entry="false"/>
+    <symbol name="CAN_RFPR1_1" address="0xFFFE5848" entry="false"/>
+    <symbol name="CAN_RFPR0_1" address="0xFFFE584A" entry="false"/>
+    <symbol name="CAN_MBIMR1_1" address="0xFFFE5850" entry="false"/>
+    <symbol name="CAN_MBIMR0_1" address="0xFFFE5852" entry="false"/>
+    <symbol name="CAN_UMSR1_1" address="0xFFFE5858" entry="false"/>
+    <symbol name="CAN_UMSR0_1" address="0xFFFE585A" entry="false"/>
+    <symbol name="CAN_TTCR0_1" address="0xFFFE5880" entry="false"/>
+    <symbol name="CAN_CMAX_TEW_1" address="0xFFFE5884" entry="false"/>
+    <symbol name="CAN_RFTROFF_1" address="0xFFFE5886" entry="false"/>
+    <symbol name="CAN_TSR_1" address="0xFFFE5888" entry="false"/>
+    <symbol name="CAN_CCR_1" address="0xFFFE588A" entry="false"/>
+    <symbol name="CAN_TCNTR_1" address="0xFFFE588C" entry="false"/>
+    <symbol name="CAN_CYCTR_1" address="0xFFFE5890" entry="false"/>
+    <symbol name="CAN_RFMK_1" address="0xFFFE5894" entry="false"/>
+    <symbol name="CAN_TCMR0_1" address="0xFFFE5898" entry="false"/>
+    <symbol name="CAN_TCMR1_1" address="0xFFFE589C" entry="false"/>
+    <symbol name="CAN_TCMR2_1" address="0xFFFE58A0" entry="false"/>
+    <symbol name="CAN_TTTSEL_1" address="0xFFFE58A4" entry="false"/>
+    <!-- IIC Channel 0 -->
+    <symbol name="IIC_ICCR1_0" address="0xFFFEE000" entry="false"/>
+    <symbol name="IIC_ICCR2_0" address="0xFFFEE001" entry="false"/>
+    <symbol name="IIC_ICMR_0" address="0xFFFEE002" entry="false"/>
+    <symbol name="IIC_ICIER_0" address="0xFFFEE003" entry="false"/>
+    <symbol name="IIC_ICSR_0" address="0xFFFEE004" entry="false"/>
+    <symbol name="IIC_SAR_0" address="0xFFFEE005" entry="false"/>
+    <symbol name="IIC_ICDRT_0" address="0xFFFEE006" entry="false"/>
+    <symbol name="IIC_ICDRR_0" address="0xFFFEE007" entry="false"/>
+    <symbol name="IIC_NF2CYC_0" address="0xFFFEE008" entry="false"/>
+    <!-- IIC Channel 1 -->
+    <symbol name="IIC_ICCR1_1" address="0xFFFEE400" entry="false"/>
+    <symbol name="IIC_ICCR2_1" address="0xFFFEE401" entry="false"/>
+    <symbol name="IIC_ICMR_1" address="0xFFFEE402" entry="false"/>
+    <symbol name="IIC_ICIER_1" address="0xFFFEE403" entry="false"/>
+    <symbol name="IIC_ICSR_1" address="0xFFFEE404" entry="false"/>
+    <symbol name="IIC_SAR_1" address="0xFFFEE405" entry="false"/>
+    <symbol name="IIC_ICDRT_1" address="0xFFFEE406" entry="false"/>
+    <symbol name="IIC_ICDRR_1" address="0xFFFEE407" entry="false"/>
+    <symbol name="IIC_NF2CYC_1" address="0xFFFEE408" entry="false"/>
+    <!-- IIC Channel 2 -->
+    <symbol name="IIC_ICCR1_2" address="0xFFFEE800" entry="false"/>
+    <symbol name="IIC_ICCR2_2" address="0xFFFEE801" entry="false"/>
+    <symbol name="IIC_ICMR_2" address="0xFFFEE802" entry="false"/>
+    <symbol name="IIC_ICIER_2" address="0xFFFEE803" entry="false"/>
+    <symbol name="IIC_ICSR_2" address="0xFFFEE804" entry="false"/>
+    <symbol name="IIC_SAR_2" address="0xFFFEE805" entry="false"/>
+    <symbol name="IIC_ICDRT_2" address="0xFFFEE806" entry="false"/>
+    <symbol name="IIC_ICDRR_2" address="0xFFFEE807" entry="false"/>
+    <symbol name="IIC_NF2CYC_2" address="0xFFFEE808" entry="false"/>
+    <!-- IEBus -->
+    <symbol name="IEBus_IECTR" address="0xFFFEF000" entry="false"/>
+    <symbol name="IEBus_IECMR" address="0xFFFEF001" entry="false"/>
+    <symbol name="IEBus_IEMCR" address="0xFFFEF002" entry="false"/>
+    <symbol name="IEBus_IEAR1" address="0xFFFEF003" entry="false"/>
+    <symbol name="IEBus_IEAR2" address="0xFFFEF004" entry="false"/>
+    <symbol name="IEBus_IESA1" address="0xFFFEF005" entry="false"/>
+    <symbol name="IEBus_IESA2" address="0xFFFEF006" entry="false"/>
+    <symbol name="IEBus_IETBFL" address="0xFFFEF007" entry="false"/>
+    <symbol name="IEBus_IEMA1" address="0xFFFEF009" entry="false"/>
+    <symbol name="IEBus_IEMA2" address="0xFFFEF00A" entry="false"/>
+    <symbol name="IEBus_IERCTL" address="0xFFFEF00B" entry="false"/>
+    <symbol name="IEBus_IERBFL" address="0xFFFEF00C" entry="false"/>
+    <symbol name="IEBus_IELA1" address="0xFFFEF00E" entry="false"/>
+    <symbol name="IEBus_IELA2" address="0xFFFEF00F" entry="false"/>
+    <symbol name="IEBus_IEFLG" address="0xFFFEF010" entry="false"/>
+    <symbol name="IEBus_IETSR" address="0xFFFEF011" entry="false"/>
+    <symbol name="IEBus_IEIET" address="0xFFFEF012" entry="false"/>
+    <symbol name="IEBus_IERSR" address="0xFFFEF014" entry="false"/>
+    <symbol name="IEBus_IEIER" address="0xFFFEF015" entry="false"/>
+    <symbol name="IEBus_IECKSR" address="0xFFFEF018" entry="false"/>
+    <!-- Motor Control PWM -->
+    <symbol name="MPWM_PWBTCR" address="0xFFFEF406" entry="false"/>
+    <symbol name="MPWM_PWCR_1" address="0xFFFEF4E0" entry="false"/>
+    <symbol name="MPWM_PWPR_1" address="0xFFFEF4E4" entry="false"/>
+    <symbol name="MPWM_PWCYR_1" address="0xFFFEF4E6" entry="false"/>
+    <symbol name="MPWM_PWBFR_1A" address="0xFFFEF4E8" entry="false"/>
+    <symbol name="MPWM_PWBFR_1C" address="0xFFFEF4EA" entry="false"/>
+    <symbol name="MPWM_PWBFR_1E" address="0xFFFEF4EC" entry="false"/>
+    <symbol name="MPWM_PWBFR_1G" address="0xFFFEF4EE" entry="false"/>
+    <symbol name="MPWM_PWCR_2" address="0xFFFEF4F0" entry="false"/>
+    <symbol name="MPWM_PWPR_2" address="0xFFFEF4F4" entry="false"/>
+    <symbol name="MPWM_PWCYR_2" address="0xFFFEF4F6" entry="false"/>
+    <symbol name="MPWM_PWBFR_2A" address="0xFFFEF4F8" entry="false"/>
+    <symbol name="MPWM_PWBFR_2C" address="0xFFFEF4FA" entry="false"/>
+    <symbol name="MPWM_PWBFR_2E" address="0xFFFEF4FC" entry="false"/>
+    <symbol name="MPWM_PWBFR_2G" address="0xFFFEF4FE" entry="false"/>
+    <!-- SSI Channel 0 -->
+    <symbol name="SSI_SSICR_0" address="0xFFFF0000" entry="false"/>
+    <symbol name="SSI_SSISR_0" address="0xFFFF0004" entry="false"/>
+    <symbol name="SSI_SSIFCR_0" address="0xFFFF0010" entry="false"/>
+    <symbol name="SSI_SSIFSR_0" address="0xFFFF0014" entry="false"/>
+    <symbol name="SSI_SSIFTDR_0" address="0xFFFF0018" entry="false"/>
+    <symbol name="SSI_SSIFRDR_0" address="0xFFFF001C" entry="false"/>
+    <!-- SSI Channel 1 -->
+    <symbol name="SSI_SSICR_1" address="0xFFFF0800" entry="false"/>
+    <symbol name="SSI_SSISR_1" address="0xFFFF0804" entry="false"/>
+    <symbol name="SSI_SSIFCR_1" address="0xFFFF0810" entry="false"/>
+    <symbol name="SSI_SSIFSR_1" address="0xFFFF0814" entry="false"/>
+    <symbol name="SSI_SSIFTDR_1" address="0xFFFF0818" entry="false"/>
+    <symbol name="SSI_SSIFRDR_1" address="0xFFFF081C" entry="false"/>
+    <!-- SSI Channel 2 -->
+    <symbol name="SSI_SSICR_2" address="0xFFFF1000" entry="false"/>
+    <symbol name="SSI_SSISR_2" address="0xFFFF1004" entry="false"/>
+    <symbol name="SSI_SSIFCR_2" address="0xFFFF1010" entry="false"/>
+    <symbol name="SSI_SSIFSR_2" address="0xFFFF1014" entry="false"/>
+    <symbol name="SSI_SSIFTDR_2" address="0xFFFF1018" entry="false"/>
+    <symbol name="SSI_SSIFRDR_2" address="0xFFFF101C" entry="false"/>
+    <!-- SSI Channel 3 -->
+    <symbol name="SSI_SSICR_3" address="0xFFFF1800" entry="false"/>
+    <symbol name="SSI_SSISR_3" address="0xFFFF1804" entry="false"/>
+    <symbol name="SSI_SSIFCR_3" address="0xFFFF1810" entry="false"/>
+    <symbol name="SSI_SSIFSR_3" address="0xFFFF1814" entry="false"/>
+    <symbol name="SSI_SSIFTDR_3" address="0xFFFF1818" entry="false"/>
+    <symbol name="SSI_SSIFRDR_3" address="0xFFFF181C" entry="false"/>
+    <!-- VDC3 Video Input -->
+    <symbol name="VDC3_VIDEO_MODE" address="0xFFFF2000" entry="false"/>
+    <symbol name="VDC3_VIDEO_INT_CNT" address="0xFFFF2004" entry="false"/>
+    <symbol name="VDC3_VIDEO_TIM_CNT" address="0xFFFF2008" entry="false"/>
+    <symbol name="VDC3_VIDEO_SIZE" address="0xFFFF2100" entry="false"/>
+    <symbol name="VDC3_VIDEO_VSTART" address="0xFFFF2104" entry="false"/>
+    <symbol name="VDC3_VIDEO_HSTART" address="0xFFFF2108" entry="false"/>
+    <symbol name="VDC3_VIDEO_VSYNC_TIM1" address="0xFFFF210C" entry="false"/>
+    <symbol name="VDC3_VIDEO_SAVE_NUM" address="0xFFFF2110" entry="false"/>
+    <symbol name="VDC3_VIDEO_IMAGE_CNT" address="0xFFFF2114" entry="false"/>
+    <symbol name="VDC3_VIDEO_BASEADR" address="0xFFFF2118" entry="false"/>
+    <symbol name="VDC3_VIDEO_LINE_OFFSET" address="0xFFFF211C" entry="false"/>
+    <symbol name="VDC3_VIDEO_FIELD_OFFSET" address="0xFFFF2120" entry="false"/>
+    <symbol name="VDC3_VIDEO_LINEBUFF_NUM" address="0xFFFF2124" entry="false"/>
+    <symbol name="VDC3_VIDEO_DISP_SIZE" address="0xFFFF2128" entry="false"/>
+    <symbol name="VDC3_VIDEO_DISP_HSTART" address="0xFFFF212C" entry="false"/>
+    <!-- VDC3 Graphics 1 -->
+    <symbol name="VDC3_GRCMEN1" address="0xFFFF2800" entry="false"/>
+    <symbol name="VDC3_GRCBUSCNT1" address="0xFFFF2804" entry="false"/>
+    <symbol name="VDC3_GRCINTCNT1" address="0xFFFF2808" entry="false"/>
+    <symbol name="VDC3_GROPSADR1" address="0xFFFF2B08" entry="false"/>
+    <symbol name="VDC3_GROPSWH1" address="0xFFFF2B0C" entry="false"/>
+    <symbol name="VDC3_GROPSOFST1" address="0xFFFF2B10" entry="false"/>
+    <symbol name="VDC3_GROPDPHV1" address="0xFFFF2B14" entry="false"/>
+    <symbol name="VDC3_GROPEWH1" address="0xFFFF2B18" entry="false"/>
+    <symbol name="VDC3_GRPEDPHV1" address="0xFFFF2B1C" entry="false"/>
+    <symbol name="VDC3_GROPEDPA1" address="0xFFFF2B20" entry="false"/>
+    <symbol name="VDC3_GROPCRKY0_1" address="0xFFFF2B24" entry="false"/>
+    <symbol name="VDC3_GROPCRKY1_1" address="0xFFFF2B28" entry="false"/>
+    <symbol name="VDC3_GROPBASERGB1" address="0xFFFF2B2C" entry="false"/>
+    <!-- VDC3 Graphics 2 -->
+    <symbol name="VDC3_GRCMEN2" address="0xFFFF3000" entry="false"/>
+    <symbol name="VDC3_GRCBUSCNT2" address="0xFFFF3004" entry="false"/>
+    <symbol name="VDC3_GRCINTCNT2" address="0xFFFF3008" entry="false"/>
+    <symbol name="VDC3_GROPSADR2" address="0xFFFF3308" entry="false"/>
+    <symbol name="VDC3_GROPSWH2" address="0xFFFF330C" entry="false"/>
+    <symbol name="VDC3_GROPSOFST2" address="0xFFFF3310" entry="false"/>
+    <symbol name="VDC3_GROPDPHV2" address="0xFFFF3314" entry="false"/>
+    <symbol name="VDC3_GROPEWH2" address="0xFFFF3318" entry="false"/>
+    <symbol name="VDC3_GRPEDPHV2" address="0xFFFF331C" entry="false"/>
+    <symbol name="VDC3_GROPEDPA2" address="0xFFFF3320" entry="false"/>
+    <symbol name="VDC3_GROPCRKY0_2" address="0xFFFF3324" entry="false"/>
+    <symbol name="VDC3_GROPCRKY1_2" address="0xFFFF3328" entry="false"/>
+    <symbol name="VDC3_GROPBASERGB2" address="0xFFFF332C" entry="false"/>
+    <!-- VDC3 Display Output -->
+    <symbol name="VDC3_SGMODE" address="0xFFFF3800" entry="false"/>
+    <symbol name="VDC3_SGINTCNT" address="0xFFFF3804" entry="false"/>
+    <symbol name="VDC3_SYNCNT" address="0xFFFF3808" entry="false"/>
+    <symbol name="VDC3_PANEL_CLKSEL" address="0xFFFF380C" entry="false"/>
+    <symbol name="VDC3_SYN_SIZE" address="0xFFFF3900" entry="false"/>
+    <symbol name="VDC3_PANEL_VSYNC_TIM" address="0xFFFF3904" entry="false"/>
+    <symbol name="VDC3_PANEL_HSYNC_TIM" address="0xFFFF3908" entry="false"/>
+    <symbol name="VDC3_VIDEO_VSYNC_TIM2" address="0xFFFF390C" entry="false"/>
+    <symbol name="VDC3_GRA_VSYNC_TIM" address="0xFFFF3910" entry="false"/>
+    <symbol name="VDC3_AC_LINE_NUM" address="0xFFFF3914" entry="false"/>
+    <symbol name="VDC3_DE_SIZE" address="0xFFFF3920" entry="false"/>
+    <symbol name="VDC3_DE_START" address="0xFFFF3924" entry="false"/>
+    <!-- NAND Flash Controller -->
+    <symbol name="NAND_FLCMNCR" address="0xFFFF4000" entry="false"/>
+    <symbol name="NAND_FLCMDCR" address="0xFFFF4004" entry="false"/>
+    <symbol name="NAND_FLCMCDR" address="0xFFFF4008" entry="false"/>
+    <symbol name="NAND_FLADR" address="0xFFFF400C" entry="false"/>
+    <symbol name="NAND_FLDATAR" address="0xFFFF4010" entry="false"/>
+    <symbol name="NAND_FLDTCNTR" address="0xFFFF4014" entry="false"/>
+    <symbol name="NAND_FLINTDMACR" address="0xFFFF4018" entry="false"/>
+    <symbol name="NAND_FLBSYTMR" address="0xFFFF401C" entry="false"/>
+    <symbol name="NAND_FLBSYCNT" address="0xFFFF4020" entry="false"/>
+    <symbol name="NAND_FLTRCR" address="0xFFFF402C" entry="false"/>
+    <symbol name="NAND_FLHOLDCR" address="0xFFFF4038" entry="false"/>
+    <symbol name="NAND_FLADR2" address="0xFFFF403C" entry="false"/>
+    <symbol name="NAND_FLDTFIFO" address="0xFFFF4050" entry="false"/>
+    <symbol name="NAND_FLECFIFO" address="0xFFFF4060" entry="false"/>
+    <!-- SIM -->
+    <symbol name="SIM_SIMDR" address="0xFFFF4800" entry="false"/>
+    <symbol name="SIM_SISCR" address="0xFFFF4802" entry="false"/>
+    <symbol name="SIM_SITDAR" address="0xFFFF4804" entry="false"/>
+    <symbol name="SIM_SIRDAR" address="0xFFFF4806" entry="false"/>
+    <symbol name="SIM_SICTR" address="0xFFFF480C" entry="false"/>
+    <symbol name="SIM_SIFCTR" address="0xFFFF4810" entry="false"/>
+    <symbol name="SIM_SISTR" address="0xFFFF4814" entry="false"/>
+    <symbol name="SIM_SIIER" address="0xFFFF4816" entry="false"/>
+    <symbol name="SIM_SITDR" address="0xFFFF4820" entry="false"/>
+    <symbol name="SIM_SIRDR" address="0xFFFF4824" entry="false"/>
+    <!-- SPDIF -->
+    <symbol name="SPDIF_TLCA" address="0xFFFF5800" entry="false"/>
+    <symbol name="SPDIF_TRCA" address="0xFFFF5804" entry="false"/>
+    <symbol name="SPDIF_TLCS" address="0xFFFF5808" entry="false"/>
+    <symbol name="SPDIF_TRCS" address="0xFFFF580C" entry="false"/>
+    <symbol name="SPDIF_TUI" address="0xFFFF5810" entry="false"/>
+    <symbol name="SPDIF_RLCA" address="0xFFFF5814" entry="false"/>
+    <symbol name="SPDIF_RRCA" address="0xFFFF5818" entry="false"/>
+    <symbol name="SPDIF_RLCS" address="0xFFFF581C" entry="false"/>
+    <symbol name="SPDIF_RRCS" address="0xFFFF5820" entry="false"/>
+    <symbol name="SPDIF_RUI" address="0xFFFF5824" entry="false"/>
+    <symbol name="SPDIF_CTRL" address="0xFFFF5828" entry="false"/>
+    <symbol name="SPDIF_STAT" address="0xFFFF582C" entry="false"/>
+    <symbol name="SPDIF_TDAD" address="0xFFFF5830" entry="false"/>
+    <symbol name="SPDIF_RDAD" address="0xFFFF5834" entry="false"/>
+    <!-- SRC Channel 0 -->
+    <symbol name="SRC_SRCID_0" address="0xFFFF7000" entry="false"/>
+    <symbol name="SRC_SRCOD_0" address="0xFFFF7004" entry="false"/>
+    <symbol name="SRC_SRCIDCTRL_0" address="0xFFFF7008" entry="false"/>
+    <symbol name="SRC_SRCODCTRL_0" address="0xFFFF700A" entry="false"/>
+    <symbol name="SRC_SRCCTRL_0" address="0xFFFF700C" entry="false"/>
+    <symbol name="SRC_SRCSTAT_0" address="0xFFFF700E" entry="false"/>
+    <!-- SRC Channel 1 -->
+    <symbol name="SRC_SRCID_1" address="0xFFFF7800" entry="false"/>
+    <symbol name="SRC_SRCOD_1" address="0xFFFF7804" entry="false"/>
+    <symbol name="SRC_SRCIDCTRL_1" address="0xFFFF7808" entry="false"/>
+    <symbol name="SRC_SRCODCTRL_1" address="0xFFFF780A" entry="false"/>
+    <symbol name="SRC_SRCCTRL_1" address="0xFFFF780C" entry="false"/>
+    <symbol name="SRC_SRCSTAT_1" address="0xFFFF780E" entry="false"/>
+    <!-- CD-ROM Decoder -->
+    <symbol name="CDROM_CROMEN" address="0xFFFF9000" entry="false"/>
+    <symbol name="CDROM_CROMSY0" address="0xFFFF9001" entry="false"/>
+    <symbol name="CDROM_CROMCTL0" address="0xFFFF9002" entry="false"/>
+    <symbol name="CDROM_CROMCTL1" address="0xFFFF9003" entry="false"/>
+    <symbol name="CDROM_CROMCTL3" address="0xFFFF9005" entry="false"/>
+    <symbol name="CDROM_CROMCTL4" address="0xFFFF9006" entry="false"/>
+    <symbol name="CDROM_CROMCTL5" address="0xFFFF9007" entry="false"/>
+    <symbol name="CDROM_CROMST0" address="0xFFFF9008" entry="false"/>
+    <symbol name="CDROM_CROMST1" address="0xFFFF9009" entry="false"/>
+    <symbol name="CDROM_CROMST3" address="0xFFFF900B" entry="false"/>
+    <symbol name="CDROM_CROMST4" address="0xFFFF900C" entry="false"/>
+    <symbol name="CDROM_CROMST5" address="0xFFFF900D" entry="false"/>
+    <symbol name="CDROM_CROMST6" address="0xFFFF900E" entry="false"/>
+    <symbol name="CDROM_CBUFST0" address="0xFFFF9014" entry="false"/>
+    <symbol name="CDROM_CBUFST1" address="0xFFFF9015" entry="false"/>
+    <symbol name="CDROM_CBUFST2" address="0xFFFF9016" entry="false"/>
+    <symbol name="CDROM_HEAD00" address="0xFFFF9018" entry="false"/>
+    <symbol name="CDROM_HEAD01" address="0xFFFF9019" entry="false"/>
+    <symbol name="CDROM_HEAD02" address="0xFFFF901A" entry="false"/>
+    <symbol name="CDROM_HEAD03" address="0xFFFF901B" entry="false"/>
+    <symbol name="CDROM_SHEAD00" address="0xFFFF901C" entry="false"/>
+    <symbol name="CDROM_SHEAD01" address="0xFFFF901D" entry="false"/>
+    <symbol name="CDROM_SHEAD02" address="0xFFFF901E" entry="false"/>
+    <symbol name="CDROM_SHEAD03" address="0xFFFF901F" entry="false"/>
+    <symbol name="CDROM_SHEAD04" address="0xFFFF9020" entry="false"/>
+    <symbol name="CDROM_SHEAD05" address="0xFFFF9021" entry="false"/>
+    <symbol name="CDROM_SHEAD06" address="0xFFFF9022" entry="false"/>
+    <symbol name="CDROM_SHEAD07" address="0xFFFF9023" entry="false"/>
+    <symbol name="CDROM_HEAD20" address="0xFFFF9024" entry="false"/>
+    <symbol name="CDROM_HEAD21" address="0xFFFF9025" entry="false"/>
+    <symbol name="CDROM_HEAD22" address="0xFFFF9026" entry="false"/>
+    <symbol name="CDROM_HEAD23" address="0xFFFF9027" entry="false"/>
+    <symbol name="CDROM_SHEAD20" address="0xFFFF9028" entry="false"/>
+    <symbol name="CDROM_SHEAD21" address="0xFFFF9029" entry="false"/>
+    <symbol name="CDROM_SHEAD22" address="0xFFFF902A" entry="false"/>
+    <symbol name="CDROM_SHEAD23" address="0xFFFF902B" entry="false"/>
+    <symbol name="CDROM_SHEAD24" address="0xFFFF902C" entry="false"/>
+    <symbol name="CDROM_SHEAD25" address="0xFFFF902D" entry="false"/>
+    <symbol name="CDROM_SHEAD26" address="0xFFFF902E" entry="false"/>
+    <symbol name="CDROM_SHEAD27" address="0xFFFF902F" entry="false"/>
+    <symbol name="CDROM_CBUFCTL0" address="0xFFFF9040" entry="false"/>
+    <symbol name="CDROM_CBUFCTL1" address="0xFFFF9041" entry="false"/>
+    <symbol name="CDROM_CBUFCTL2" address="0xFFFF9042" entry="false"/>
+    <symbol name="CDROM_CBUFCTL3" address="0xFFFF9043" entry="false"/>
+    <symbol name="CDROM_CROMST0M" address="0xFFFF9045" entry="false"/>
+    <symbol name="CDROM_ROMDECRST" address="0xFFFF9100" entry="false"/>
+    <symbol name="CDROM_RSTSTAT" address="0xFFFF9101" entry="false"/>
+    <symbol name="CDROM_SSI" address="0xFFFF9102" entry="false"/>
+    <symbol name="CDROM_INTHOLD" address="0xFFFF9108" entry="false"/>
+    <symbol name="CDROM_INHINT" address="0xFFFF9109" entry="false"/>
+    <symbol name="CDROM_STRMDIN0" address="0xFFFF9200" entry="false"/>
+    <symbol name="CDROM_STRMDIN2" address="0xFFFF9202" entry="false"/>
+    <symbol name="CDROM_STRMDOUT0" address="0xFFFF9204" entry="false"/>
+    <!-- ADC -->
+    <symbol name="ADC_ADDRA" address="0xFFFF9800" entry="false"/>
+    <symbol name="ADC_ADDRB" address="0xFFFF9802" entry="false"/>
+    <symbol name="ADC_ADDRC" address="0xFFFF9804" entry="false"/>
+    <symbol name="ADC_ADDRD" address="0xFFFF9806" entry="false"/>
+    <symbol name="ADC_ADDRE" address="0xFFFF9808" entry="false"/>
+    <symbol name="ADC_ADDRF" address="0xFFFF980A" entry="false"/>
+    <symbol name="ADC_ADCSR" address="0xFFFF9820" entry="false"/>
+    <!-- USB 2.0 -->
+    <symbol name="USB_SYSCFG" address="0xFFFFC000" entry="false"/>
+    <symbol name="USB_BUSWAIT" address="0xFFFFC002" entry="false"/>
+    <symbol name="USB_SYSSTS" address="0xFFFFC004" entry="false"/>
+    <symbol name="USB_DVSTCTR" address="0xFFFFC008" entry="false"/>
+    <symbol name="USB_TESTMODE" address="0xFFFFC00C" entry="false"/>
+    <symbol name="USB_D0FBCFG" address="0xFFFFC010" entry="false"/>
+    <symbol name="USB_D1FBCFG" address="0xFFFFC012" entry="false"/>
+    <symbol name="USB_CFIFO" address="0xFFFFC014" entry="false"/>
+    <symbol name="USB_D0FIFO" address="0xFFFFC018" entry="false"/>
+    <symbol name="USB_D1FIFO" address="0xFFFFC01C" entry="false"/>
+    <symbol name="USB_CFIFOSEL" address="0xFFFFC020" entry="false"/>
+    <symbol name="USB_CFIFOCTR" address="0xFFFFC022" entry="false"/>
+    <symbol name="USB_D0FIFOSEL" address="0xFFFFC028" entry="false"/>
+    <symbol name="USB_D0FIFOCTR" address="0xFFFFC02A" entry="false"/>
+    <symbol name="USB_D1FIFOSEL" address="0xFFFFC02C" entry="false"/>
+    <symbol name="USB_D1FIFOCTR" address="0xFFFFC02E" entry="false"/>
+    <symbol name="USB_INTENB0" address="0xFFFFC030" entry="false"/>
+    <symbol name="USB_INTENB1" address="0xFFFFC032" entry="false"/>
+    <symbol name="USB_BRDYENB" address="0xFFFFC036" entry="false"/>
+    <symbol name="USB_NRDYENB" address="0xFFFFC038" entry="false"/>
+    <symbol name="USB_BEMPENB" address="0xFFFFC03A" entry="false"/>
+    <symbol name="USB_SOFCFG" address="0xFFFFC03C" entry="false"/>
+    <symbol name="USB_INTSTS0" address="0xFFFFC040" entry="false"/>
+    <symbol name="USB_INTSTS1" address="0xFFFFC042" entry="false"/>
+    <symbol name="USB_BRDYSTS" address="0xFFFFC046" entry="false"/>
+    <symbol name="USB_NRDYSTS" address="0xFFFFC048" entry="false"/>
+    <symbol name="USB_BEMPSTS" address="0xFFFFC04A" entry="false"/>
+    <symbol name="USB_FRMNUM" address="0xFFFFC04C" entry="false"/>
+    <symbol name="USB_UFRMNUM" address="0xFFFFC04E" entry="false"/>
+    <symbol name="USB_USBADDR" address="0xFFFFC050" entry="false"/>
+    <symbol name="USB_USBREQ" address="0xFFFFC054" entry="false"/>
+    <symbol name="USB_USBVAL" address="0xFFFFC056" entry="false"/>
+    <symbol name="USB_USBINDX" address="0xFFFFC058" entry="false"/>
+    <symbol name="USB_USBLENG" address="0xFFFFC05A" entry="false"/>
+    <symbol name="USB_DCPCFG" address="0xFFFFC05C" entry="false"/>
+    <symbol name="USB_DCPMAXP" address="0xFFFFC05E" entry="false"/>
+    <symbol name="USB_DCPCTR" address="0xFFFFC060" entry="false"/>
+    <symbol name="USB_PIPESEL" address="0xFFFFC064" entry="false"/>
+    <symbol name="USB_PIPECFG" address="0xFFFFC068" entry="false"/>
+    <symbol name="USB_PIPEBUF" address="0xFFFFC06A" entry="false"/>
+    <symbol name="USB_PIPEMAXP" address="0xFFFFC06C" entry="false"/>
+    <symbol name="USB_PIPEPERI" address="0xFFFFC06E" entry="false"/>
+    <symbol name="USB_PIPE1CTR" address="0xFFFFC070" entry="false"/>
+    <symbol name="USB_PIPE2CTR" address="0xFFFFC072" entry="false"/>
+    <symbol name="USB_PIPE3CTR" address="0xFFFFC074" entry="false"/>
+    <symbol name="USB_PIPE4CTR" address="0xFFFFC076" entry="false"/>
+    <symbol name="USB_PIPE5CTR" address="0xFFFFC078" entry="false"/>
+    <symbol name="USB_PIPE6CTR" address="0xFFFFC07A" entry="false"/>
+    <symbol name="USB_PIPE7CTR" address="0xFFFFC07C" entry="false"/>
+    <symbol name="USB_PIPE8CTR" address="0xFFFFC07E" entry="false"/>
+    <symbol name="USB_PIPE9CTR" address="0xFFFFC080" entry="false"/>
+    <symbol name="USB_PIPE1TRE" address="0xFFFFC090" entry="false"/>
+    <symbol name="USB_PIPE1TRN" address="0xFFFFC092" entry="false"/>
+    <symbol name="USB_PIPE2TRE" address="0xFFFFC094" entry="false"/>
+    <symbol name="USB_PIPE2TRN" address="0xFFFFC096" entry="false"/>
+    <symbol name="USB_PIPE3TRE" address="0xFFFFC098" entry="false"/>
+    <symbol name="USB_PIPE3TRN" address="0xFFFFC09A" entry="false"/>
+    <symbol name="USB_PIPE4TRE" address="0xFFFFC09C" entry="false"/>
+    <symbol name="USB_PIPE4TRN" address="0xFFFFC09E" entry="false"/>
+    <symbol name="USB_PIPE5TRE" address="0xFFFFC0A0" entry="false"/>
+    <symbol name="USB_PIPE5TRN" address="0xFFFFC0A2" entry="false"/>
+    <symbol name="USB_USBACSWR1" address="0xFFFFC0C2" entry="false"/>
+    <symbol name="USB_DEVADD0" address="0xFFFFC0D0" entry="false"/>
+    <symbol name="USB_DEVADD1" address="0xFFFFC0D2" entry="false"/>
+    <symbol name="USB_DEVADD2" address="0xFFFFC0D4" entry="false"/>
+    <symbol name="USB_DEVADD3" address="0xFFFFC0D6" entry="false"/>
+    <symbol name="USB_DEVADD4" address="0xFFFFC0D8" entry="false"/>
+    <symbol name="USB_DEVADD5" address="0xFFFFC0DA" entry="false"/>
+    <symbol name="USB_DEVADD6" address="0xFFFFC0DC" entry="false"/>
+    <symbol name="USB_DEVADD7" address="0xFFFFC0DE" entry="false"/>
+    <symbol name="USB_DEVADD8" address="0xFFFFC0E0" entry="false"/>
+    <symbol name="USB_DEVADD9" address="0xFFFFC0E2" entry="false"/>
+    <symbol name="USB_DEVADDA" address="0xFFFFC0E4" entry="false"/>
+    <!-- SD Host Interface (SDHI): registers not included - Section 30 of the datasheet is NDA-protected and register addresses are unavailable. -->
   </default_symbols>
 </processor_spec>
