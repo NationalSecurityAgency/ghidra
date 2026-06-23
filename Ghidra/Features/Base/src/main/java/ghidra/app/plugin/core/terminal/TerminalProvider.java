@@ -442,7 +442,9 @@ public class TerminalProvider extends ComponentProviderAdapter {
 		Swing.runIfSwingOrRunLater(() -> {
 			terminated = true;
 			panel.terminalListeners.invoke().terminated(exitcode);
-			removeLocalAction(actionTerminate);
+			if (actionTerminate != null) {
+				removeLocalAction(actionTerminate);
+			}
 			panel.terminalListeners.clear();
 			panel.setOutputCallback(buf -> {
 			});
