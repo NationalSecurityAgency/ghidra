@@ -71,6 +71,7 @@ void FunctionTestProperty::restoreXml(const Element *el)
      n = nextpos - pos;			// Create a line regex upto newline char
      nextpos += 1;			// Skip newline when creating next line regex
    }
+   rawPattern.push_back(line.substr(pos, n));
    pattern.emplace_back(line.substr(pos, n));	// Add a regex to list of lines to match
    pos = nextpos;
   } while(pos != string::npos);
@@ -208,12 +209,23 @@ void FunctionTestCollection::evaluateTests(list<string> &lateStream) const
     else {
       *console->optr << "FAIL -- " << (*iter).getName() << endl;
       lateStream.push_back((*iter).getName());
+      if (verbose) {
+        const auto &test = *iter;
+        *console->optr << "Found " << test.getCount() << " matches, but expected ";
+        *console->optr << test.getMinMatch() << " to " << test.getMaxMatch();
+        *console->optr << " matches of pattern(s):\n";
+        const auto &patterns = test.getRawPattern();
+        for (size_t i = 0; i < patterns.size(); i++) {
+          *console->optr << "\t'" << patterns[i] << "'\n";
+        }
+      }
     }
   }
 }
 
 /// \param s is the stream where output is sent during tests
-FunctionTestCollection::FunctionTestCollection(ostream &s)
+/// \param verbose is a flag whether to print test failures verbosely
+FunctionTestCollection::FunctionTestCollection(ostream &s, bool verbose)
 
 {
   console = new ConsoleCommands(s,commands);
@@ -222,9 +234,10 @@ FunctionTestCollection::FunctionTestCollection(ostream &s)
   console->setErrorIsDone(true);
   numTestsApplied = 0;
   numTestsSucceeded = 0;
+  this->verbose = verbose;
 }
 
-FunctionTestCollection::FunctionTestCollection(IfaceStatus *con)
+FunctionTestCollection::FunctionTestCollection(IfaceStatus *con, bool verbose)
 
 {
   console = con;
@@ -232,6 +245,7 @@ FunctionTestCollection::FunctionTestCollection(IfaceStatus *con)
   dcp = (IfaceDecompData *)console->getData("decompile");
   numTestsApplied = 0;
   numTestsSucceeded = 0;
+  this->verbose = verbose;
 }
 
 FunctionTestCollection::~FunctionTestCollection(void)
@@ -347,19 +361,26 @@ void FunctionTestCollection::runTests(list<string> &lateStream)
     string line = result.substr(prevpos);	// Process final line without a newline char
     passLineToTests(line);
   }
+  if (verbose && std::any_of(testList.begin(), testList.end(), [](const FunctionTestProperty &test) { return !test.endTest(); })) {
+    *console->optr << "Output for " << fileName << "\n";
+    *console->optr << "--------------------------------\n";
+    *console->optr << result << "\n";
+    *console->optr << "--------------------------------\n";
+  }
   evaluateTests(lateStream);
 }
 
 /// Run through all XML files in the given list, processing each in turn.
 /// \param testFiles is the given list of test files
 /// \param s is the output stream to print results to
-int FunctionTestCollection::runTestFiles(const vector<string> &testFiles,ostream &s)
+/// \param verbose is a flag whether to print test failures verbosely
+int FunctionTestCollection::runTestFiles(const vector<string> &testFiles,ostream &s,bool verbose)
 
 {
   int4 totalTestsApplied = 0;
   int4 totalTestsSucceeded = 0;
   list<string> failures;
-  FunctionTestCollection testCollection(s);
+  FunctionTestCollection testCollection(s, verbose);
   for(int4 i=0;i<testFiles.size();++i) {
     try {
       testCollection.clear();
