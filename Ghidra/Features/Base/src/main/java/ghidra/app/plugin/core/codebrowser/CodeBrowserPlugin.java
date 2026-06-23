@@ -26,6 +26,7 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.context.*;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin.CodeBrowserTransientState;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -63,7 +64,8 @@ import ghidra.program.util.ProgramSelection;
 		ViewChangedPluginEvent.class, ProgramHighlightPluginEvent.class },
 	eventsProduced = { ProgramLocationPluginEvent.class, ProgramSelectionPluginEvent.class })
 //@formatter:on
-public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvider> {
+public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvider>
+		implements PluginWithTransientState<CodeBrowserTransientState> {
 
 	public CodeBrowserPlugin(PluginTool tool) {
 		super(tool);
@@ -181,38 +183,28 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 		}
 	}
 
+	record CodeBrowserTransientState(ViewerPosition position, ProgramLocation location,
+			ProgramSelection highlight, ProgramSelection selection, AddressSetView view) {}
+
 	@Override
-	public Object getTransientState() {
-		Object[] state = new Object[5];
+	public CodeBrowserTransientState getTransientState() {
 		FieldPanel fieldPanel = connectedProvider.getListingPanel().getFieldPanel();
-		state[0] = fieldPanel.getViewerPosition();
-		state[1] = connectedProvider.getLocation();
-		state[2] = connectedProvider.getHighlight();
-		state[3] = connectedProvider.getSelection();
-		state[4] = currentView;
-		return state;
+		return new CodeBrowserTransientState(fieldPanel.getViewerPosition(),
+			connectedProvider.getLocation(), connectedProvider.getHighlight(),
+			connectedProvider.getSelection(), currentView);
 	}
 
 	@Override
-	public void restoreTransientState(final Object objectState) {
-		Object[] state = (Object[]) objectState;
-		ViewerPosition vp = (ViewerPosition) state[0];
-		ProgramLocation location = (ProgramLocation) state[1];
-		ProgramSelection highlight = (ProgramSelection) state[2];
-		ProgramSelection selection = (ProgramSelection) state[3];
-
-		setView((AddressSetView) state[4]);
-
-		if (location != null) {
-			connectedProvider.setLocation(location);
+	public void restoreTransientState(final CodeBrowserTransientState state) {
+		setView(state.view);
+		if (state.location != null) {
+			connectedProvider.setLocation(state.location);
 		}
-
-		connectedProvider.setHighlight(highlight);
-
-		if (selection != null) {
-			connectedProvider.setSelection(selection);
+		connectedProvider.setHighlight(state.highlight);
+		if (state.selection != null) {
+			connectedProvider.setSelection(state.selection);
 		}
-
+		ViewerPosition vp = state.position;
 		if (vp != null) {
 			FieldPanel fieldPanel = connectedProvider.getListingPanel().getFieldPanel();
 			fieldPanel.setViewerPosition(vp.getIndex(), vp.getXOffset(), vp.getYOffset());

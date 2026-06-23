@@ -230,7 +230,7 @@ public class ImporterUtilities {
 			}
 
 			LoaderMap loaderMap = LoaderService.getSupportedLoadSpecs(provider,
-				loader -> loader.supportsLoadIntoProgram(program));
+				loader -> loader.supportsLoadIntoProgram(program), monitor);
 
 			SystemUtilities.runSwingLater(() -> {
 				AddToProgramDialog dialog =
@@ -275,7 +275,7 @@ public class ImporterUtilities {
 					"Cannot Load Libraries. Program does not have file bytes associated with it.");
 				return;
 			}
-			LoadSpec loadSpec = getLoadSpec(provider, program);
+			LoadSpec loadSpec = getLoadSpec(provider, program, monitor);
 			if (loadSpec == null || loadSpec.getLoader()
 					.getDefaultOptions(provider, loadSpec, null, false, false)
 					.stream()
@@ -319,7 +319,7 @@ public class ImporterUtilities {
 
 		try {
 			ByteProvider provider = fsService.getByteProvider(fsrl, true, monitor);
-			LoaderMap loaderMap = LoaderService.getAllSupportedLoadSpecs(provider);
+			LoaderMap loaderMap = LoaderService.getAllSupportedLoadSpecs(provider, monitor);
 
 			SystemUtilities.runSwingLater(() -> {
 				ImporterDialog importerDialog = new ImporterDialog(tool, programManager, loaderMap,
@@ -450,32 +450,44 @@ public class ImporterUtilities {
 			ProgramManager programManager, LoadResults<? extends DomainObject> loadResults,
 			String importMessages, TaskMonitor monitor) throws CancelledException {
 
-		boolean firstProgram = true;
+		boolean firstFile = true;
 		Set<DomainFile> importedFilesSet = new HashSet<>();
 		for (Loaded<? extends DomainObject> loaded : loadResults) {
 			monitor.checkCancelled();
 			Object consumer = new Object();
 			DomainObject obj = loaded.getDomainObject(consumer);
+			DomainFile df = obj.getDomainFile();
 			try {
 				if (obj instanceof Program) {
 					if (programManager != null) {
-						int openState = firstProgram
+						int openState = firstFile
 								? ProgramManager.OPEN_CURRENT
 								: ProgramManager.OPEN_VISIBLE;
 						programManager.openProgram((Program) obj, openState);
 					}
-					importedFilesSet.add(obj.getDomainFile());
 				}
-				if (firstProgram) {
+				else {
+					// We imported a non-Program (i.e., a Trace or similar).
+					// Try to open it in the current tool (if not FrontEndTool).
+					if (!(pluginTool instanceof FrontEndTool)) {
+						boolean success = pluginTool.acceptDomainFiles(new DomainFile[] { df });
+						if (!success) {
+							importMessages = "Saved " + df +
+								", but failed to open it in the current tool.\n" + importMessages;
+						}
+					}
+				}
+				if (firstFile) {
 					// currently we only show results for the imported program, not any libraries
-					displayResults(pluginTool, obj, obj.getDomainFile(), importMessages);
+					displayResults(pluginTool, obj, importMessages);
 
 					// Optionally echo loader message log to application.log
 					if (!Loader.loggingDisabled && !importMessages.isEmpty()) {
 						Msg.info(ImporterUtilities.class, "Additional info:\n" + importMessages);
 					}
 				}
-				firstProgram = false;
+				firstFile = false;
+				importedFilesSet.add(df);
 			}
 			finally {
 				obj.release(consumer);
@@ -506,7 +518,7 @@ public class ImporterUtilities {
 				program.getDomainFile().getPathname(), false, loadSpec, options, consumer,
 				messageLog, monitor);
 			loadSpec.getLoader().loadInto(program, settings);
-			displayResults(tool, program, program.getDomainFile(), messageLog.toString());
+			displayResults(tool, program, messageLog.toString());
 
 			// Optionally echo loader message log to application.log
 			if (!Loader.loggingDisabled && messageLog.hasMessages()) {
@@ -526,18 +538,9 @@ public class ImporterUtilities {
 
 	}
 
-	private static void displayResults(PluginTool tool, DomainObject obj, DomainFile df,
-			String info) {
-
-		DomainFile domainFile = obj.getDomainFile();
-		Map<String, String> metadata = obj.getMetadata();
-		if (df != null) {
-			domainFile = df;
-			metadata = df.getMetadata();
-		}
-
+	private static void displayResults(PluginTool tool, DomainObject obj, String info) {
 		HelpLocation helpLocation = new HelpLocation(GenericHelpTopics.ABOUT, "About_Program");
-		AboutDomainObjectUtils.displayInformation(tool, domainFile, metadata,
+		AboutDomainObjectUtils.displayInformation(tool, obj.getDomainFile(), obj.getMetadata(),
 			"Import Results Summary", info, helpLocation);
 	}
 
@@ -561,12 +564,13 @@ public class ImporterUtilities {
 	 * 
 	 * @param provider The original bytes of the {@link Program}
 	 * @param program The {@link Program}
+	 * @param monitor The {@link TaskMonitor}
 	 * @return The {@link LoadSpec} that was used to import the given {@link Program}, or null if
 	 *   it could not be determined
 	 */
-	static LoadSpec getLoadSpec(ByteProvider provider, Program program) {
+	static LoadSpec getLoadSpec(ByteProvider provider, Program program, TaskMonitor monitor) {
 		LoaderMap loaderMap = LoaderService.getSupportedLoadSpecs(provider,
-			loader -> loader.getName().equalsIgnoreCase(program.getExecutableFormat()));
+			loader -> loader.getName().equalsIgnoreCase(program.getExecutableFormat()), monitor);
 
 		if (loaderMap.isEmpty()) {
 			return null;
@@ -589,15 +593,16 @@ public class ImporterUtilities {
 	 * Get's the {@link LoadSpec} that was used to import the given {@link Program}
 	 * 
 	 * @param program The {@link Program}
+	 * @param monitor The {@link TaskMonitor}
 	 * @return The {@link LoadSpec} that was used to import the given {@link Program}, or null if
 	 *   it could not be determined
 	 */
-	public static LoadSpec getLoadSpec(Program program) {
+	public static LoadSpec getLoadSpec(Program program, TaskMonitor monitor) {
 		ByteProvider provider;
 		if (program == null || (provider = getProvider(program)) == null) {
 			return null;
 		}
-		return getLoadSpec(provider, program);
+		return getLoadSpec(provider, program, monitor);
 	}
 	
 	private static boolean ensureFileImportable(RefdFile refdFile, TaskMonitor monitor) {

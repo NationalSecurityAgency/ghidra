@@ -268,7 +268,7 @@ public class DWARFLine {
 		DWARFLineProgramExecutor lpe = new DWARFLineProgramExecutor(
 			cu.getDIEContainer().getDebugLineReader().clone(opcodes_start), endOffset,
 			cu.getPointerSize(), opcode_base, line_base, line_range, minimum_instruction_length,
-			default_is_stmt);
+			default_is_stmt, cu.getProgram().isAddr0Tombstone());
 
 		return lpe;
 	}
@@ -286,6 +286,12 @@ public class DWARFLine {
 		try (DWARFLineProgramExecutor lpe = getLineProgramExecutor(cu)) {
 			List<SourceFileAddr> results = new ArrayList<>();
 			for (DWARFLineProgramState row : lpe.allRows()) {
+				if (row.tombstone) {
+					// skips elements that were based on tombstoned/dead code that wasn't included
+					// in final binary
+					cu.getProgram().getImportSummary().tombstonedSourceLineEntrySkippedCount++;
+					continue;
+				}
 				try {
 					DWARFFile file = getFile(row.file);
 					results.add(new SourceFileAddr(row.address, file.getPathName(this),

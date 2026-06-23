@@ -233,7 +233,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 			monitor.initialize(size);
 
 			while (iterator.hasNext()) {
-				if (accumulator.size() >= resultsLimit) {
+				if (accumulator.getProgress() >= resultsLimit) {
 					Msg.showWarn(this, null, "Results Truncated",
 						"Results are limited to " + resultsLimit + " code units.\n" +
 							"This limit can be changed by the tool option \"" +

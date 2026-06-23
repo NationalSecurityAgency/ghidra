@@ -198,10 +198,9 @@ public class DialogComponentProvider
 		DockingAction closeAction = new ActionBuilder(CLOSE_ACTION_NAME, owner)
 				.sharedKeyBinding()
 				.keyBinding(ESC_KEYSTROKE)
-				.withContext(DialogActionContext.class)
-				.enabledWhen(c -> c.getDialogComponentProvider() != null)
+				.enabledWhen(c -> c.getContextProvider() instanceof DialogComponentProvider)
 				.onAction(c -> {
-					DialogComponentProvider dcp = c.getDialogComponentProvider();
+					DialogComponentProvider dcp = (DialogComponentProvider) c.getContextProvider();
 					dcp.escapeCallback();
 				})
 				.build();
@@ -683,6 +682,9 @@ public class DialogComponentProvider
 	 */
 	public void setAccessibleDescription(String description) {
 		this.accessibleDescription = description;
+		if (dialog != null) {
+			dialog.getAccessibleContext().setAccessibleDescription(description);
+		}
 	}
 
 	private void doSetStatusText(String text, MessageType type, boolean alert) {
@@ -1253,7 +1255,7 @@ public class DialogComponentProvider
 	/**
 	 * An optional extension point for subclasses to provider action context for the actions used by
 	 * this provider.
-	 *
+	 * 
 	 * @param event The mouse event used (may be null) to generate a popup menu
 	 */
 	@Override
@@ -1274,7 +1276,10 @@ public class DialogComponentProvider
 		if (sourceComponent != null) {
 			c = sourceComponent;
 		}
-		return new DialogActionContext(this, c).setSourceObject(event.getSource());
+
+		DialogActionContext context = new DialogActionContext(this, c);
+		context.setSourceObject(event.getSource());
+		return context;
 	}
 
 	/**
@@ -1286,6 +1291,9 @@ public class DialogComponentProvider
 		if (context == null) {
 			context = new DefaultActionContext();
 		}
+
+		context.setContextProvider(this);
+
 		Set<DockingActionIf> keySet = toolbarButtonsByAction.keySet();
 		for (DockingActionIf action : keySet) {
 			action.setEnabled(action.isEnabledForContext(context));
@@ -1319,6 +1327,10 @@ public class DialogComponentProvider
 	 * @param action the action
 	 */
 	public void addAction(DockingActionIf action) {
+		if (dialogActions.contains(action)) {
+			return; // protect from repeated adding
+		}
+
 		dialogActions.add(action);
 		addToolbarAction(action);
 		popupManager.addAction(action);
@@ -1460,8 +1472,11 @@ public class DialogComponentProvider
 
 		@Override
 		public void popupTriggered(MouseEvent e) {
-			ActionContext actionContext = getActionContext(e);
-			popupManager.popupMenu(actionContext, e);
+			ActionContext context = getActionContext(e);
+			if (context != null) {
+				context.setContextProvider(DialogComponentProvider.this);
+			}
+			popupManager.popupMenu(context, e);
 		}
 
 		@Override
@@ -1500,15 +1515,11 @@ public class DialogComponentProvider
 
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
-			if (context instanceof DialogActionContext dialogContext) {
-				DialogComponentProvider contextProvider =
-					dialogContext.getDialogComponentProvider();
-				if (provider != contextProvider) {
-					return false;
-				}
-				return dockingAction.isEnabledForContext(context);
+			ActionContextProvider contextProvider = context.getContextProvider();
+			if (provider != contextProvider) {
+				return false;
 			}
-			return false;
+			return dockingAction.isEnabledForContext(context);
 		}
 	}
 }

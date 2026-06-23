@@ -366,7 +366,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	@Override
 	public Address getFallThrough() {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			checkIsValid();
+			refreshIfNeeded();
 			if (isFallThroughOverridden()) {
 				DBTraceReferenceSpace refSpace = space.referenceManager.get(space.space, false);
 				if (refSpace == null) {
@@ -392,7 +392,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	@Override
 	public Address getFallFrom() {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			checkIsValid();
+			refreshIfNeeded();
 			// Go back one, considering alignment
 			DBTraceInstruction ins = this;
 			int alignment = Math.min(1, getLanguage().getInstructionAlignment());
@@ -515,7 +515,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	@Override
 	public boolean hasFallthrough() {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			checkIsValid();
+			refreshIfNeeded();
 			if (isFallThroughOverridden()) {
 				return getFallThrough() != null; // dest stored as reference
 			}
@@ -646,7 +646,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			return getBytes();
 		}
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			checkIsValid();
+			refreshIfNeeded();
 			int len = getPrototype().getLength();
 			byte[] b = new byte[len];
 			Address addr = getAddress();

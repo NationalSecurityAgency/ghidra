@@ -30,6 +30,7 @@ import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.events.TreeSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
+import ghidra.app.plugin.core.programtree.ProgramTreePlugin.ProgramTreeTransientState;
 import ghidra.app.services.*;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.*;
@@ -48,8 +49,8 @@ import ghidra.util.task.RunManager;
 import resources.Icons;
 
 /**
- * Plugin that creates view provider services to show the trees in a program.
- * Notifies the view manager service when the view changes.
+ * Plugin that creates view provider services to show the trees in a program. Notifies the view
+ * manager service when the view changes.
  */
 //@formatter:off
 @PluginInfo(
@@ -68,7 +69,8 @@ import resources.Icons;
 )
 //@formatter:on
 public class ProgramTreePlugin extends ProgramPlugin
-		implements ProgramTreeService, OptionsChangeListener {
+		implements ProgramTreeService, OptionsChangeListener,
+		PluginWithTransientState<ProgramTreeTransientState> {
 
 	private static final String DEFAULT_TREE_NAME = "Program Tree";
 	private static final String PROGRAM_TREE_OPTION_NAME = "Program Tree";
@@ -197,8 +199,8 @@ public class ProgramTreePlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Tells a plugin that it is no longer needed. The plugin should remove
-	 * itself from anything that it is registered to and release any resources.
+	 * Tells a plugin that it is no longer needed. The plugin should remove itself from anything
+	 * that it is registered to and release any resources.
 	 */
 	@Override
 	public void dispose() {
@@ -260,8 +262,8 @@ public class ProgramTreePlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Read the data for the plugin upon deserialization; reads what should be
-	 * the current selection in the tree.
+	 * Read the data for the plugin upon deserialization; reads what should be the current selection
+	 * in the tree.
 	 */
 	@Override
 	public void readDataState(SaveState saveState) {
@@ -337,24 +339,23 @@ public class ProgramTreePlugin extends ProgramPlugin
 		componentProvider.treeViewsRestored(list);
 	}
 
+	record ProgramTreeTransientState(SaveState ss) {}
+
 	@Override
-	public Object getTransientState() {
+	public ProgramTreeTransientState getTransientState() {
 		SaveState ss = new SaveState();
 		writeDataState(ss);
-		return ss;
+		return new ProgramTreeTransientState(ss);
 	}
 
 	@Override
-	public void restoreTransientState(Object state) {
-		SaveState ss = (SaveState) state;
-		readDataState(ss);
+	public void restoreTransientState(ProgramTreeTransientState state) {
+		readDataState(state.ss);
 	}
 
 	@Override
 	public void processEvent(PluginEvent event) {
-
-		if (event instanceof TreeSelectionPluginEvent) {
-			TreeSelectionPluginEvent ev = (TreeSelectionPluginEvent) event;
+		if (event instanceof TreeSelectionPluginEvent ev) {
 			String treeName = ev.getTreeName();
 			TreeViewProvider provider = providerMap.get(treeName);
 			if (provider == null) {
@@ -532,6 +533,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 
 	/**
 	 * Method renameView.
+	 * 
 	 * @param treeViewProvider the provider
 	 * @param newName the new name
 	 * @return true if renamed
@@ -598,8 +600,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 	 * Get the program tree for the given tree name.
 	 *
 	 * @param treeName name of tree in the program (also the name of the view)
-	 * @return ProgramDnDTree tree, or null if there is no provider for the
-	 *         given name
+	 * @return ProgramDnDTree tree, or null if there is no provider for the given name
 	 */
 	ProgramDnDTree getTree(String treeName) {
 		TreeViewProvider provider = providerMap.get(treeName);
@@ -623,8 +624,8 @@ public class ProgramTreePlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Notification from the program domain object change listener that a
-	 * fragment was moved; update all the view maps.
+	 * Notification from the program domain object change listener that a fragment was moved; update
+	 * all the view maps.
 	 */
 	void fragmentMoved() {
 		for (String treeName : providerMap.keySet()) {
@@ -636,8 +637,8 @@ public class ProgramTreePlugin extends ProgramPlugin
 	/**
 	 * The program was restored from an Undo/Redo operation so reload it
 	 *
-	 * @param checkRoot if true, only rebuild the tree if the root node is invalid; if false,
-	 *        force a rebuild of the tree
+	 * @param checkRoot if true, only rebuild the tree if the root node is invalid; if false, force
+	 *            a rebuild of the tree
 	 */
 	void reloadProgram(boolean checkRoot) {
 		if (currentProgram == null) {
@@ -676,8 +677,8 @@ public class ProgramTreePlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Remember expansion and selection state, and the reload the program
-	 * because it just got restored from an undo operation.
+	 * Remember expansion and selection state, and the reload the program because it just got
+	 * restored from an undo operation.
 	 */
 	private void reloadTree(final ProgramDnDTree tree, boolean checkRoot) {
 		if (tree == null) {
@@ -769,8 +770,8 @@ public class ProgramTreePlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Return true if a tree with the given name exists in the program. If
-	 * program is null and if the tree name is the default name, return true.
+	 * Return true if a tree with the given name exists in the program. If program is null and if
+	 * the tree name is the default name, return true.
 	 *
 	 * @param treeName tree name to look for
 	 * @return boolean
@@ -795,8 +796,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 	/**
 	 * Set the program on each of the providers.
 	 *
-	 * @param p program that is being opened; if p is null, then program is
-	 *            being closed.
+	 * @param p program that is being opened; if p is null, then program is being closed.
 	 */
 	private void setProgram(Program p) {
 
@@ -831,8 +831,8 @@ public class ProgramTreePlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Add tree views that are in the program; if no trees exist (unlikely),
-	 * then add the default provider.
+	 * Add tree views that are in the program; if no trees exist (unlikely), then add the default
+	 * provider.
 	 */
 	private void addTreeViews() {
 		deregisterService(ViewProviderService.class, defaultProvider);
@@ -863,8 +863,8 @@ public class ProgramTreePlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Callback from the create default view action in the provider. Add a
-	 * one-up number to the default name.
+	 * Callback from the create default view action in the provider. Add a one-up number to the
+	 * default name.
 	 */
 	private void createDefaultTreeView() {
 		Listing listing = currentProgram.getListing();
@@ -891,9 +891,8 @@ public class ProgramTreePlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Method called when the "Open Tree View" icon is hit; creates a window
-	 * relative to the event source (in this case, a button) and shows the list
-	 * of trees currently in the Program.
+	 * Method called when the "Open Tree View" icon is hit; creates a window relative to the event
+	 * source (in this case, a button) and shows the list of trees currently in the Program.
 	 */
 	private void openView(Object sourceObject) {
 		JButton button = sourceObject instanceof JButton ? (JButton) sourceObject : null;
@@ -919,9 +918,8 @@ public class ProgramTreePlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Open an existing view in the program. If a provider already exists for
-	 * the given tree name, make this the current view provider in the view
-	 * manager service.
+	 * Open an existing view in the program. If a provider already exists for the given tree name,
+	 * make this the current view provider in the view manager service.
 	 *
 	 * @param treeName name of tree
 	 */

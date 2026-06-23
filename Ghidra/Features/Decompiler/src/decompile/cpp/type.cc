@@ -120,6 +120,26 @@ void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseaddr)
   }
 }
 
+/// Construct a data-type providing just the size, alignment, and meta-type.
+/// Sets up the default configuration, which may be overridden by the derived constructor.
+/// \param s is the size in bytes
+/// \param align is the byte alignment required for \b this
+/// \param m is the meta-type
+Datatype::Datatype(int4 s,int4 align,type_metatype m)
+
+{
+  if (s < 0)
+    throw LowlevelError("Bad data-type size");
+  size = s;
+  metatype = m;
+  submeta = base2sub[m];
+  flags = 0;
+  id = 0;
+  typedefImm = (Datatype *)0;
+  alignment = align;
+  alignSize = s;
+}
+
 /// If \b this and the other given data-type are both variable length and come from the
 /// the same base data-type, return \b true.
 /// \param ct is the other given data-type to compare with \b this
@@ -1163,7 +1183,7 @@ void TypePointer::decode(Decoder &decoder,TypeFactory &typegrp)
   ptrto = typegrp.decodeType( decoder );
   calcSubmeta();
   if (name.size() == 0)		// Inherit only if no name
-    flags |= ptrto->getInheritable();
+    flags |= ptrto->inheritForPointer();
   calcTruncate(typegrp);
 //  decoder.closeElement(elemId);
 }
@@ -1267,9 +1287,17 @@ bool TypePointer::isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const
     if (subType == (Datatype *)0 || newoff != 0)
       return false;
     extra = AddrSpace::addressToByteInt(extra,wordsize);
-    if (extra < 0 || extra >= subType->getSize()) {
-      if (!testForArraySlack(subType, extra))
+    if (subType->getMetatype() == TYPE_CODE) {
+      // When the pointer targets inside a function, consider PTRSUB to be suitable when
+      // the extra is non-negative, as subType->getSize() cannot be used (it is always 1).
+      if (extra < 0)
 	return false;
+    }
+    else {
+      if (extra < 0 || extra >= subType->getSize()) {
+	if (!testForArraySlack(subType, extra))
+	  return false;
+      }
     }
   }
   else if (meta == TYPE_ARRAY) {
@@ -1301,10 +1329,14 @@ bool TypePointer::isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const
         return false;
     }
   }
-  else if (ptrto->getMetatype() == TYPE_UNION) {
+  else if (meta == TYPE_UNION) {
     // A PTRSUB reaching here cannot be used for a union field resolution
     // These are created by ActionSetCasts::resolveUnion
     return false;	// So we always return false
+  }
+  else if (meta == TYPE_CODE) {
+    if (extra < 0)
+      return false;
   }
   else
     return false;	// Not a pointer to a structured data-type
@@ -1317,9 +1349,15 @@ Datatype *TypePointer::resolveInFlow(PcodeOp *op,int4 slot)
   if (ptrto->getMetatype() == TYPE_UNION) {
     Funcdata *fd = op->getParent()->getFuncdata();
     const ResolvedUnion *res = fd->getUnionField(this,op,slot);
-    if (res != (ResolvedUnion*)0)
+    if (res != (ResolvedUnion *)0)
       return res->getDatatype();
-    ScoreUnionFields scoreFields(*fd->getArch()->types,this,op,slot);
+    res = fd->getAddressBasedUnionField(this, op->getAddr(), slot);
+    if (res != (ResolvedUnion *)0) {
+      ResolvedUnion resolve(this,res->getFieldNum(),*fd->getArch()->types);
+      fd->setUnionField(this,op,slot,resolve);
+      return resolve.getDatatype();
+    }
+    ScoreUnionFields scoreFields(*fd,this,op,slot);
     fd->setUnionField(this,op,slot,scoreFields.getResult());
     return scoreFields.getResult().getDatatype();
   }
@@ -1336,6 +1374,15 @@ Datatype* TypePointer::findResolve(const PcodeOp *op,int4 slot)
       return res->getDatatype();
   }
   return this;
+}
+
+int4 TypePointer::findCompatibleResolve(Datatype *ct) const
+
+{
+  if (ct->getMetatype() == TYPE_PTR) {
+    return ptrto->findCompatibleResolve(((TypePointer *)ct)->ptrto);
+  }
+  return -1;
 }
 
 void TypeArray::printRaw(ostream &s) const
@@ -2530,7 +2577,13 @@ Datatype *TypeUnion::resolveInFlow(PcodeOp *op,int4 slot)
   const ResolvedUnion *res = fd->getUnionField(this, op, slot);
   if (res != (ResolvedUnion *)0)
     return res->getDatatype();
-  ScoreUnionFields scoreFields(*fd->getArch()->types,this,op,slot);
+  res = fd->getAddressBasedUnionField(this, op->getAddr(), slot);
+  if (res != (ResolvedUnion *)0) {
+    ResolvedUnion resolve(this,res->getFieldNum(),*fd->getArch()->types);
+    fd->setUnionField(this, op, slot, *res);
+    return resolve.getDatatype();
+  }
+  ScoreUnionFields scoreFields(*fd,this,op,slot);
   fd->setUnionField(this, op, slot, scoreFields.getResult());
   return scoreFields.getResult().getDatatype();
 }
@@ -2549,7 +2602,13 @@ const TypeField *TypeUnion::resolveTruncation(int8 offset,PcodeOp *op,int4 slot,
 
 {
   Funcdata *fd = op->getParent()->getFuncdata();
-  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  const ResolvedUnion *res = fd->getUnionResolution(this, op, slot);
+  if (res == (ResolvedUnion *)0) {
+    res = fd->getAddressBasedUnionField(this, op->getAddr(), slot);
+    if (res != (ResolvedUnion *)0) {
+      fd->setUnionField(this, op, slot, *res);
+    }
+  }
   if (res != (ResolvedUnion *)0) {
     if (res->getFieldNum() >= 0) {
       const TypeField *field = getField(res->getFieldNum());
@@ -2558,7 +2617,7 @@ const TypeField *TypeUnion::resolveTruncation(int8 offset,PcodeOp *op,int4 slot,
     }
   }
   else if (op->code() == CPUI_SUBPIECE && slot == 1) {	// The slot is artificial in this case
-    ScoreUnionFields scoreFields(*fd->getArch()->types,this,offset,op);
+    ScoreUnionFields scoreFields(*fd,this,offset,op);
     fd->setUnionField(this, op, slot, scoreFields.getResult());
     if (scoreFields.getResult().getFieldNum() >= 0) {
       newoff = 0;
@@ -2566,7 +2625,7 @@ const TypeField *TypeUnion::resolveTruncation(int8 offset,PcodeOp *op,int4 slot,
     }
   }
   else {
-    ScoreUnionFields scoreFields(*fd->getArch()->types,this,offset,op,slot);
+    ScoreUnionFields scoreFields(*fd,this,offset,op,slot);
     fd->setUnionField(this, op, slot, scoreFields.getResult());
     if (scoreFields.getResult().getFieldNum() >= 0) {
       const TypeField *field = getField(scoreFields.getResult().getFieldNum());
@@ -2588,7 +2647,7 @@ const TypeField *TypeUnion::findTruncation(int8 offset,int4 sz,const PcodeOp *op
 {
   // No new scoring is done, but if a cached result is available, return it.
   const Funcdata *fd = op->getParent()->getFuncdata();
-  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  const ResolvedUnion *res = fd->getUnionResolution(this, op, slot);
   if (res != (ResolvedUnion *)0 && res->getFieldNum() >= 0) {
     const TypeField *field = getField(res->getFieldNum());
     newoff = offset - field->offset;
@@ -2656,6 +2715,7 @@ TypePartialEnum::TypePartialEnum(const TypePartialEnum &op)
 TypePartialEnum::TypePartialEnum(TypeEnum *par,int4 off,int4 sz,Datatype *strip)
   : TypeEnum(sz, TYPE_PARTIALENUM)
 {
+  flags |= par->inheritForPartial();
   flags |= has_stripped;
   stripped = strip;
   parent = par;
@@ -2740,6 +2800,7 @@ TypePartialStruct::TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype
   if (contain->getMetatype() != TYPE_STRUCT && contain->getMetatype() != TYPE_ARRAY)
     throw LowlevelError("Parent of partial struct is not a structure or array");
 #endif
+  flags |= contain->inheritForPartial();
   flags |= has_stripped;
   stripped = strip;
   container = contain;
@@ -2834,6 +2895,7 @@ TypePartialUnion::TypePartialUnion(const TypePartialUnion &op)
 TypePartialUnion::TypePartialUnion(TypeUnion *contain,int4 off,int4 sz,Datatype *strip)
   : Datatype(sz,1,TYPE_PARTIALUNION)
 {
+  flags |= contain->inheritForPartial();
   flags |= (needs_resolution | has_stripped);
   stripped = strip;
   container = contain;
@@ -2908,38 +2970,50 @@ void TypePartialUnion::encode(Encoder &encoder) const
 Datatype *TypePartialUnion::resolveInFlow(PcodeOp *op,int4 slot)
 
 {
+  Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0)
+    return res->getDatatype();
   Datatype *curType = container;
   int8 curOff = offset;
   while(curType != (Datatype *)0 && curType->getSize() > size) {
-    if (curType->getMetatype() == TYPE_UNION) {
-      const TypeField *field = curType->resolveTruncation(curOff, op, slot, curOff);
-      curType = (field == (const TypeField *)0) ? (Datatype *)0 : field->type;
+    if (curType->getMetatype() == TYPE_PARTIALUNION) {
+      TypePartialUnion *curPartial = (TypePartialUnion *)curType;
+      curOff += curPartial->getOffset();
+      int8 newOff;
+      const TypeField *field = curPartial->getParentUnion()->resolveTruncation(curOff, op, slot, newOff);
+      Architecture *glb = op->getParent()->getFuncdata()->getArch();
+      curType = (Datatype *)0;
+      if (field != (const TypeField *)0)
+	curType = glb->types->getExactPiece(field->type, curOff, size);
+      curOff = 0;
     }
-    else {
-      curType = curType->getSubType(curOff, &curOff);
+    else if (curType->getMetatype() == TYPE_UNION) {
+      const TypeField *field = curType->resolveTruncation(curOff, op, slot, curOff);
+      Architecture *glb = op->getParent()->getFuncdata()->getArch();
+      curType = (Datatype *)0;
+      if (field != (const TypeField *)0)
+	curType = glb->types->getExactPiece(field->type, curOff, size);
+      curOff = 0;
+    }
+    else {		// Should never reach here
+      curType = (Datatype *)0;
+      break;
     }
   }
-  if (curType != (Datatype *)0 && curType->getSize() == size)
-    return curType;
-  return stripped;
+  if (curType == (Datatype *)0 || curType->getSize() != size)
+    curType = stripped;
+  fd->updateUnionField(this, op, slot, curType);
+  return curType;
 }
 
 Datatype* TypePartialUnion::findResolve(const PcodeOp *op,int4 slot)
 
 {
-  Datatype *curType = container;
-  int8 curOff = offset;
-  while(curType != (Datatype *)0 && curType->getSize() > size) {
-    if (curType->getMetatype() == TYPE_UNION) {
-      Datatype *newType = curType->findResolve(op, slot);
-      curType = (newType == curType) ? (Datatype *)0 : newType;
-    }
-    else {
-      curType = curType->getSubType(curOff, &curOff);
-    }
-  }
-  if (curType != (Datatype *)0 && curType->getSize() == size)
-    return curType;
+  const Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0)
+    return res->getDatatype();
   return stripped;
 }
 
@@ -3664,6 +3738,25 @@ void TypeFactory::cacheCoreTypes(void)
   }
 }
 
+/// \param dt is the data-type to search for
+/// \return any associated warning string or the empty string otherwise
+string TypeFactory::findWarning(Datatype *dt) const
+
+{
+  while(dt->getMetatype() == TYPE_PTR)
+    dt = ((TypePointer *)dt)->getPtrTo();
+  while(dt->getTypedef() != (Datatype *)0)
+    dt = dt->getTypedef();
+  Datatype *base = dt->getPartialBase();
+  if (base != (Datatype *)0)
+    dt = base;
+  map<Datatype *,string>::const_iterator iter;
+  iter = warnings.find(dt);
+  if (iter != warnings.end())
+    return (*iter).second;
+  return "";
+}
+
 /// Remove all Datatype objects owned by this TypeFactory
 void TypeFactory::clear(void)
 
@@ -4052,7 +4145,7 @@ Datatype *TypeFactory::getBase(int4 s,type_metatype m)
 
 {
   Datatype *ct;
-  if (s<9) {
+  if ((uint4)s<9) {
     if (m >= TYPE_FLOAT) {
       ct = typecache[s][m-TYPE_FLOAT];
       if (ct != (Datatype *)0)
@@ -4061,13 +4154,9 @@ Datatype *TypeFactory::getBase(int4 s,type_metatype m)
   }
   else if (m==TYPE_FLOAT) {
     if (s==10)
-      ct = typecache10;
-    else if (s==16)
-      ct = typecache16;
-    else
-      ct = (Datatype *)0;
-    if (ct != (Datatype *)0)
-      return ct;
+      return typecache10;
+    if (s==16)
+      return typecache16;
   }
   if (s > glb->max_basetype_size) {
     // Create array of unknown bytes to match size
@@ -4098,7 +4187,7 @@ Datatype *TypeFactory::getBase(int4 s,type_metatype m,const string &n)
 Datatype *TypeFactory::getTypeChar(int4 s)
 
 {
-  if (s < 5) {
+  if ((uint4)s < 5) {
     Datatype *res = charcache[s];
     if (res != (Datatype *)0)
       return res;
@@ -4173,23 +4262,15 @@ void TypeFactory::insertWarning(Datatype *dt,string warn)
   if (dt->getId() == 0)
     throw LowlevelError("Can only issue warnings for named data-types");
   dt->flags |= Datatype::warning_issued;
-  warnings.emplace_back(dt,warn);
+  warnings[dt] = warn;
 }
 
-/// Run through the \b warnings and delete any matching the given data-type
+/// Delete any warning matching the given data-type
 /// \param dt is the given data-type
 void TypeFactory::removeWarning(Datatype *dt)
 
 {
-  list<DatatypeWarning>::iterator iter = warnings.begin();
-  while(iter != warnings.end()) {
-    if ((*iter).dataType->getId() == dt->getId() && (*iter).dataType->getName() == dt->getName()) {
-      iter = warnings.erase(iter);
-    }
-    else {
-      ++iter;
-    }
-  }
+  warnings.erase(dt);
 }
 
 /// Run through typedefs that were initially defined on incomplete data-types.  If the data-type is now complete,
@@ -4535,9 +4616,6 @@ Datatype *TypeFactory::getExactPiece(Datatype *ct,int4 offset,int4 size)
     }
     if (ct->getSize() == size)
 	return ct;				// Perfect size match
-    if (ct->getMetatype() == TYPE_UNION) {
-      return getTypePartialUnion((TypeUnion *)ct, curOff, size);
-    }
     lastType = ct;
     lastOff = curOff;
     ct = ct->getSubType(curOff,&curOff);
@@ -4547,6 +4625,12 @@ Datatype *TypeFactory::getExactPiece(Datatype *ct,int4 offset,int4 size)
     type_metatype meta = lastType->getMetatype();
     if (meta == TYPE_STRUCT || meta == TYPE_ARRAY || meta == TYPE_PARTIALSTRUCT)
       return getTypePartialStruct(lastType, lastOff, size);
+    else if (meta == TYPE_UNION)
+      return getTypePartialUnion((TypeUnion *)lastType, lastOff, size);
+    else if (meta == TYPE_PARTIALUNION) {	// Truncate to smaller partial union
+      TypePartialUnion *partial = (TypePartialUnion *)lastType;
+      return getTypePartialUnion(partial->getParentUnion(),lastOff + partial->getOffset(), size);
+    }
     else if (lastType->isEnumType() && !lastType->hasStripped())
       return getTypePartialEnum((TypeEnum *)lastType, lastOff, size);
   }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.PdbProgramAttributes;
 import ghidra.framework.*;
 import ghidra.framework.options.Options;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -760,10 +761,11 @@ public class PdbParser {
 		return new UnionDataType(getCategory(path.getParent(), true), path.getName(), dataMgr);
 	}
 
-	TypedefDataType createTypeDef(String name, DataType baseDataType) {
+	DataType createTypeDef(String name, DataType baseDataType) {
 		SymbolPath path = new SymbolPath(name);
-		return new TypedefDataType(getCategory(path.getParent(), true), path.getName(),
+		TypeDef td = new TypedefDataType(getCategory(path.getParent(), true), path.getName(),
 			baseDataType, dataMgr);
+		return DataTypeUtilities.getTypedefReplacement(td, true);
 	}
 
 	EnumDataType createEnum(String name, int length) {

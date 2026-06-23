@@ -43,7 +43,7 @@ import ghidra.framework.main.wizard.project.*;
 import ghidra.framework.model.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.project.extensions.ExtensionTablePanel;
-import ghidra.framework.project.extensions.ExtensionTableProvider;
+import ghidra.framework.project.extensions.ExtensionTableDialog;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramContentHandler;
@@ -190,8 +190,8 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 		performAction("Extensions", "Project Window", false);
 		waitForSwing();
 
-		ExtensionTableProvider provider =
-			(ExtensionTableProvider) getDialog(ExtensionTableProvider.class);
+		ExtensionTableDialog provider =
+			(ExtensionTableDialog) getDialog(ExtensionTableDialog.class);
 		Object panel = getInstanceField("extensionTablePanel", provider);
 		GTable table = (GTable) getInstanceField("table", panel);
 

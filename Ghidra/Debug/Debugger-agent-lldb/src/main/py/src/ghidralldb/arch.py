@@ -15,7 +15,7 @@
 ##
 from typing import Dict, List, Optional, Tuple
 from ghidratrace.client import Address, RegVal
-import lldb
+import lldb #  type: ignore  # no stubs available from upstream/SWIG
 
 from . import util
 

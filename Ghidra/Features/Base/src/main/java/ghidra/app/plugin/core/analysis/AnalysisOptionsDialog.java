@@ -20,6 +20,7 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 
 import docking.DialogComponentProvider;
+import docking.action.DockingAction;
 import docking.widgets.OptionDialog;
 import ghidra.GhidraOptions;
 import ghidra.framework.options.EditorStateFactory;
@@ -62,16 +63,20 @@ public class AnalysisOptionsDialog extends DialogComponentProvider
 		addOKButton();
 		addCancelButton();
 		addApplyButton();
-		setOkButtonText("Analyze");
 
-		// This allows user to press Enter to launch analysis when the dialog is shown.  Without
-		// this, the table takes focus, which consumes Enter key presses.
-		setFocusComponent(okButton);
-		okButton.setMnemonic('A');
-		setOkEnabled(true);
+		setOkButtonText("Analyze");
+		okButton.setMnemonic('N'); // 'N' to avoid conflict with the 'A' in Apply
+
 		setPreferredSize(1000, 600);
 		setRememberSize(true);
 		setHasChanges(panel.hasChangedValues());
+
+		setFocusComponent(panel.getFocusComponent());
+
+		List<DockingAction> actions = panel.getActions();
+		for (DockingAction action : actions) {
+			addAction(action);
+		}
 	}
 
 	@Override

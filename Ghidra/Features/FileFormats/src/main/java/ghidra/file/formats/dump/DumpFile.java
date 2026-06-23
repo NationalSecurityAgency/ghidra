@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -317,12 +317,17 @@ public class DumpFile {
 	protected static Collection<? extends Option> getDefaultOptions(DumpFileReader reader) {
 		List<Option> list = new ArrayList<>();
 
-		list.add(new Option(CREATE_MEMORY_BLOCKS_OPTION_NAME, CREATE_MEMORY_BLOCKS_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-createMemoryBlocks"));
-		list.add(new Option(JOIN_BLOCKS_OPTION_NAME, JOIN_BLOCKS_OPTION_DEFAULT, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-joinBlocks"));
-		list.add(new Option(ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME,
-			ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT));
+		list.add(Option.newBoolean(CREATE_MEMORY_BLOCKS_OPTION_NAME)
+				.value(CREATE_MEMORY_BLOCKS_OPTION_DEFAULT)
+				.commandLineArgument(Loader.COMMAND_LINE_ARG_PREFIX + "-createMemoryBlocks")
+				.build());
+		list.add(Option.newBoolean(JOIN_BLOCKS_OPTION_NAME)
+				.value(JOIN_BLOCKS_OPTION_DEFAULT)
+				.commandLineArgument(Loader.COMMAND_LINE_ARG_PREFIX + "-joinBlocks")
+				.build());
+		list.add(Option.newBoolean(ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME)
+				.value(ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT)
+				.build());
 
 		return list;
 	}

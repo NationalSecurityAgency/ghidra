@@ -48,9 +48,9 @@ public class ThemePreferences {
 		else if (themeId.startsWith(DiscoverableGTheme.CLASS_PREFIX)) {
 			String className = themeId.substring(DiscoverableGTheme.CLASS_PREFIX.length());
 			try {
-				Class<? extends GTheme> forName =
+				Class<? extends GTheme> clazz =
 					ClassSearcher.forNameSafe(className, GTheme.class, getClass().getClassLoader());
-				return forName.getDeclaredConstructor().newInstance();
+				return clazz.getDeclaredConstructor().newInstance();
 			}
 			catch (Exception e) {
 				Msg.showError(GTheme.class, null, "Can't Load Previous Theme",

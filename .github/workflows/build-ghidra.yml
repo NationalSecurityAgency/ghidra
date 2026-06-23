@@ -1,0 +1,28 @@
+name: Build Ghidra
+
+on: [push]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest]
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v6
+  
+      - name: Read Ghidra JDK Version
+        run: echo "JDK_VER=$(awk -F'=' '$1=="application.java.min" {print $2}' Ghidra/application.properties)" >> $GITHUB_ENV 
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.JDK_VER }}'
+
+      - name: Fetch Dependencies
+        run: ./gradlew -I gradle/support/fetchDependencies.gradle -DhideDownloadProgress -DnoEclipse
+
+      - name: Build Ghidra
+        run: ./gradlew buildGhidra --parallel

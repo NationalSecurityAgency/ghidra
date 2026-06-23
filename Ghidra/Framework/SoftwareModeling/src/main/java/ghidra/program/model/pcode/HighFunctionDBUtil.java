@@ -877,48 +877,65 @@ public class HighFunctionDBUtil {
 	/**
 	 * Write a union facet to the database (UnionFacetSymbol).  Parameters provide the
 	 * pieces for building the dynamic LocalVariable.  This method clears out any preexisting
-	 * union facet with the same dynamic hash and firstUseOffset.
+	 * union facet with the same dynamic hash and firstUseOffset. The new facet can optionally
+	 * be "address based", meaning that all reads/writes of the union at the address are
+	 * controlled by this single facet.
 	 * @param function is the function affected by the union facet
 	 * @param dt is the parent data-type; a union, a pointer to a union, or a partial union
 	 * @param fieldNum is the ordinal of the desired union field
 	 * @param addr is the first use address of the facet
 	 * @param hash is the dynamic hash
+	 * @param isAddr is true if the new facet is address based
 	 * @param source is the SourceType for the LocalVariable
 	 * @throws InvalidInputException if the LocalVariable cannot be created
 	 * @throws DuplicateNameException if the (auto-generated) name is used elsewhere
 	 */
 	public static void writeUnionFacet(Function function, DataType dt, int fieldNum, Address addr,
-			long hash, SourceType source) throws InvalidInputException, DuplicateNameException {
-		if (dt instanceof PartialUnion) {
-			dt = ((PartialUnion) dt).getParent();
-		}
+			long hash, boolean isAddr, SourceType source)
+			throws InvalidInputException, DuplicateNameException {
 		int firstUseOffset = (int) addr.subtract(function.getEntryPoint());
-		String symbolName = UnionFacetSymbol.buildSymbolName(fieldNum, addr);
 		boolean nameCollision = false;
 		Variable[] localVariables =
 			function.getLocalVariables(VariableFilter.UNIQUE_VARIABLE_FILTER);
-		// Clean out any facet symbols with bad data-types
 		for (int i = 0; i < localVariables.length; ++i) {
 			Variable var = localVariables[i];
 			if (var.getName().startsWith(UnionFacetSymbol.BASENAME)) {
-				if (!UnionFacetSymbol.isUnionType(var.getDataType())) {
+				if (!UnionFacetSymbol.isUnionType(var.getDataType())) {	// Clean out any facet symbols with bad data-types
 					function.removeVariable(var);
 					localVariables[i] = null;
 				}
 			}
+			else {
+				localVariables[i] = null;		// Ignore symbols that aren't facets
+			}
 		}
+		String symbolName = UnionFacetSymbol.buildSymbolName(fieldNum, addr, isAddr);
 		Variable preexistingVar = null;
 		for (Variable var : localVariables) {
 			if (var == null) {
 				continue;
 			}
-			if (var.getFirstUseOffset() == firstUseOffset &&
+			if (isAddr && var.getFirstUseOffset() == firstUseOffset) {
+				if (preexistingVar == null) {
+					preexistingVar = var;
+				}
+				else {
+					function.removeVariable(var);	// Address based facets override all other facets at the same address
+				}
+			}
+			else if (!isAddr && var.getFirstUseOffset() == firstUseOffset &&
 				var.getFirstStorageVarnode().getOffset() == hash) {
 				preexistingVar = var;
 			}
 			else if (var.getName().startsWith(symbolName)) {
 				nameCollision = true;
 			}
+		}
+		if (dt instanceof PartialUnion) {
+			dt = ((PartialUnion) dt).getParent();
+		}
+		if (isAddr && dt instanceof Pointer) {
+			dt = ((Pointer) dt).getDataType();
 		}
 		if (nameCollision) {	// Uniquify the name if necessary
 			symbolName = symbolName + '_' + Integer.toHexString(DynamicHash.getComparable(hash));

@@ -53,9 +53,12 @@ public enum ProgramEvent implements EventType {
 	SYMBOL_DATA_CHANGED,				// some symbol property was changed 
 	SYMBOL_ADDRESS_CHANGED,				// the symbol's address changed (only applies to param and variables)
 
-	EXTERNAL_ENTRY_ADDED,				// an external entry point was added
-	EXTERNAL_ENTRY_REMOVED,				// an external entry point was removed
-	EXTERNAL_PATH_CHANGED,				// the external path name changed for an external program
+	EXTERNAL_ENTRY_ADDED,				// an external entry point was added (i.e., Export)
+	EXTERNAL_ENTRY_REMOVED,				// an external entry point was removed (i.e., Export)
+
+	//
+	// Events related to Library symbols and associated External Location
+	//
 	EXTERNAL_NAME_ADDED,				// an external program name was added
 	EXTERNAL_NAME_REMOVED,				// an external program name was removed
 	EXTERNAL_NAME_CHANGED,				// the name of an external program was changed

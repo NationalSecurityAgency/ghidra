@@ -77,6 +77,27 @@ void Funcdata::removeJumpTable(JumpTable *jt)
   jumpvec = remain;
 }
 
+/// The replacement has the same address and size as the given Varnode but can optionally turned into a new \e unique.
+/// We assume the given Varnode will be destroyed but that it may already be merged into a HighVariable.
+/// If a HighVariable exists, the given Varnode is removed and the replacement is added.
+/// \param origvn is the given Varnode to be replaced
+/// \param makeUnique is \b true if the replacement should be a new \e unique
+/// \return the new replacement Varnode
+Varnode *Funcdata::createReplaceVarnode(Varnode *origvn,bool makeUnique)
+
+{
+  Varnode *replacevn;
+  if (makeUnique)
+    replacevn = newUnique(origvn->getSize(),origvn->getType());
+  else
+    replacevn = newVarnode(origvn->getSize(),origvn->getAddr(),origvn->getType());
+  if (isHighOn()) {
+    origvn->replaceInHigh(replacevn);
+    replacevn->setExplicit();
+  }
+  return replacevn;
+}
+
 /// Assuming the given basic block is being removed, force any Varnode defined by
 /// a MULTIEQUAL in the block to be defined in the output block instead. This is used
 /// as part of the basic block removal process to patch up data-flow.
@@ -128,11 +149,8 @@ void Funcdata::pushMultiequals(BlockBasic *bb)
     }
     if (!needreplace) continue;
 				// Construct artificial MULTIEQUAL
+    replacevn = createReplaceVarnode(origvn, neednewunique);
     vector<Varnode *> branches;
-    if (neednewunique)
-      replacevn = newUnique(origvn->getSize());
-    else
-      replacevn = newVarnode(origvn->getSize(),origvn->getAddr());
     for(int4 i=0;i<outblock->sizeIn();++i) {
       if (outblock->getIn(i) == bb)
 	branches.push_back(origvn);
@@ -208,7 +226,7 @@ void Funcdata::branchRemoveInternal(BlockBasic *bb,int4 num)
   bblocks.removeEdge(bb,bbout); // Sever (one) connection between bb and bbout
   for(iter=bbout->beginOp();iter!=bbout->endOp();++iter) {
     op = *iter;
-    if (op->code() != CPUI_MULTIEQUAL) continue;
+    if (op->code() != CPUI_MULTIEQUAL) break;
     opRemoveInput(op,blocknum);
     opZeroMulti(op);
   }

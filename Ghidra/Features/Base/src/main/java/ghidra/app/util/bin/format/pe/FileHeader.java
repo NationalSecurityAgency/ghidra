@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -168,7 +168,7 @@ public class FileHeader implements StructConverter {
 	public final static int IMAGE_FILE_MACHINE_WCEMIPSV2 = 0x169;	//	MIPS little-endian WCE v2
 
 	private short machine;
-	private short numberOfSections;
+	private int numberOfSections;
 	private int timeDateStamp;
 	private int pointerToSymbolTable;
 	private int numberOfSymbols;
@@ -204,6 +204,33 @@ public class FileHeader implements StructConverter {
 	 */
 	public String getMachineName() {
 		return MachineName.getName(machine);
+	}
+
+	/**
+	 * {@return whether or not the machine is an X86 variant}
+	 */
+	public boolean isX86() {
+		return switch (machine & IMAGE_FILE_MACHINE_MASK) {
+			case IMAGE_FILE_MACHINE_I386:
+			case IMAGE_FILE_MACHINE_AMD64:
+				yield true;
+			default:
+				yield false;
+		};
+	}
+
+	/**
+	 * {@return whether or not the machine is an ARM variant}
+	 */
+	public boolean isArm() {
+		return switch (machine & IMAGE_FILE_MACHINE_MASK) {
+			case IMAGE_FILE_MACHINE_ARM:
+			case IMAGE_FILE_MACHINE_ARM64:
+			case IMAGE_FILE_MACHINE_ARMNT:
+				yield true;
+			default:
+				yield false;
+		};
 	}
 
 	/**
@@ -336,10 +363,7 @@ public class FileHeader implements StructConverter {
 		long oldIndex = reader.getPointerIndex();
 
 		int tmpIndex = getPointerToSections();
-		if (numberOfSections < 0) {
-			Msg.error(this, "Number of sections = " + numberOfSections);
-		}
-		else if (optHeader.getFileAlignment() == 0) {
+		if (optHeader.getFileAlignment() == 0) {
 			Msg.error(this, "File alignment == 0: section processing skipped");
 		}
 		else {
@@ -407,7 +431,7 @@ public class FileHeader implements StructConverter {
 		if (symbolTableOffset == 0) {
 			return;
 		}
-		if (numberOfSymbols < 0) {
+		if (numberOfSymbols < 0 || numberOfSymbols > NTHeader.MAX_SANE_COUNT) {
 			Msg.error(this, "Invalid symbol count: " + Integer.toHexString(numberOfSymbols));
 			return;
 		}
@@ -470,7 +494,7 @@ public class FileHeader implements StructConverter {
 		reader.setPointerIndex(startIndex);
 
 		machine = reader.readNextShort();
-		numberOfSections = reader.readNextShort();
+		numberOfSections = reader.readNextUnsignedShort();
 		timeDateStamp = reader.readNextInt();
 		pointerToSymbolTable = reader.readNextInt();
 		numberOfSymbols = reader.readNextInt();
@@ -500,7 +524,7 @@ public class FileHeader implements StructConverter {
 
 	private void setSectionHeaders(SectionHeader[] sectionHeaders) {
 		this.sectionHeaders = sectionHeaders;
-		numberOfSections = (short) sectionHeaders.length;
+		numberOfSections = sectionHeaders.length;
 	}
 
 	void writeHeader(RandomAccessFile raf, DataConverter dc) throws IOException {

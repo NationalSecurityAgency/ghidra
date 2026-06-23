@@ -80,7 +80,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private final VerticalLayoutPixelIndexMap pixmap = new VerticalLayoutPixelIndexMap();
 
 	private FieldHighlightFactory hlFactory;
-	private ClangHighlightController highlightController;
+	private ClangHighlightController highlightController =
+		ClangHighlightController.dummyIfNull(null);
 	private Map<String, DecompilerHighlighter> highlightersById = new HashMap<>();
 	private PendingHighlightUpdate pendingHighlightUpdate;
 	private SwingUpdateManager highlighCursorUpdater = new SwingUpdateManager(() -> {
@@ -419,7 +420,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		// Apply the new middle-mouse highlighter when we have rebuilt the token
 		controller.doWhenNotBusy(() -> {
-			activeMiddleMouse.apply();
+			if (activeMiddleMouse != null) {
+				activeMiddleMouse.apply();
+			}
 		});
 	}
 
@@ -510,6 +513,11 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (layoutController == null) {
 			// we've been disposed!
 			return;
+		}
+
+		if (activeMiddleMouse != null) {
+			activeMiddleMouse.clear();
+			activeMiddleMouse = null;
 		}
 
 		DecompileData oldData = this.decompileData;
@@ -894,6 +902,13 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			if (addr.isMemoryAddress()) {
 				controller.goToAddress(vn.getAddress(), newWindow);
 			}
+		}
+		else if (highVar.getSymbol() != null) {
+			VariableStorage storage = highVar.getSymbol().getStorage();
+			if (storage.isMemoryStorage()) {
+				controller.goToAddress(storage.getMinAddress(), newWindow);
+			}
+			return;		// Don't goto if symbol is on the stack or in a register
 		}
 		else if (vn.isConstant()) {
 			controller.goToScalar(vn.getOffset(), newWindow);
@@ -1371,6 +1386,23 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	public synchronized void removeFocusListener(FocusListener l) {
 		// we are not focusable, defer to contained field panel
 		fieldPanel.removeFocusListener(l);
+	}
+
+	/**
+	 * {@return the bounds of the content area of this decompiler panel. This includes the main
+	 * decompiler content panel and the line numbers panel}
+	 */
+	public Rectangle getViewContentBounds() {
+		// The bounds we want includes both the extent size of the main decompiler view + the
+		// area that displays the line numbers which is not inside the IndexedScrollPane. The width
+		// of the line numbers panel can be found by looking at the x position of the scroller as
+		// it is offset by the line number panel's width. We are also assuming there are no borders
+		// internal to the DecompilerPanel. If that changes, we would also need to factor in the
+		// insets.
+		Rectangle bounds = scroller.getBounds();
+		Dimension scrollerSize = scroller.getViewExtentSize();
+		int lineNumberWidth = bounds.x;
+		return new Rectangle(0, 0, scrollerSize.width + lineNumberWidth, scrollerSize.height);
 	}
 
 	private void buildPanels() {

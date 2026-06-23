@@ -168,7 +168,17 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 
 	@Override
 	public void setCancelEnabled(boolean enable) {
-		throw new UnsupportedOperationException();
+		// throw new UnsupportedOperationException();
+
+		/*
+		 	Note: we used to throw the exception above.  This API requires cancel to work at all 
+		 	times in order to facilitate ConcurrentQ task management.   Currently, this monitor is 
+		 	handed out to clients, which means that this method is available to any
+		 	job that is being run in the queue.  Thus, this method is available to client code, 
+		 	which may decide to call this method.  Instead of throwing an exception, we will simply
+		 	do nothing here.  Unfortunately, this puts the onus on the client to know that this 
+		 	methods will sometimes not be supported.
+		 */
 	}
 
 	@Override
@@ -178,6 +188,7 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 
 	@Override
 	public void clearCanceled() {
+		// once cancelled, always cancelled
 		throw new UnsupportedOperationException();
 
 	}

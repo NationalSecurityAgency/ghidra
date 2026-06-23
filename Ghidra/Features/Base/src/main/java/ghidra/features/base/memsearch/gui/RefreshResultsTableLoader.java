@@ -38,7 +38,7 @@ public class RefreshResultsTableLoader implements MemoryMatchTableLoader {
 	@Override
 	public void loadResults(Accumulator<MemoryMatch<SearchData>> accumulator, TaskMonitor monitor) {
 		accumulator.addAll(matches);
-		hasResults = !accumulator.isEmpty();
+		hasResults = accumulator.getProgress() > 0;
 	}
 
 	@Override
@@ -50,11 +50,6 @@ public class RefreshResultsTableLoader implements MemoryMatchTableLoader {
 	@Override
 	public boolean didTerminateEarly() {
 		return false;
-	}
-
-	@Override
-	public MemoryMatch getFirstMatch() {
-		return null;
 	}
 
 	@Override

@@ -9,5 +9,10 @@
   <volatile outputop="write" inputop="read">
     <range space="ram" first="0x0" last="0x20"/>
   </volatile>
-
+  
+  <default_symbols>
+    <symbol name="FETrapHandler" address="ram:0x00000030" entry="true" type="code_ptr"/>
+    <symbol name="Trap0Handler"  address="ram:0x00000040" entry="true" type="code_ptr"/>
+    <symbol name="Trap1Handler"  address="ram:0x00000050" entry="true" type="code_ptr"/>
+  </default_symbols>
 </processor_spec>

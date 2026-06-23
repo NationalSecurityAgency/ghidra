@@ -16,7 +16,8 @@
 package ghidra.framework.plugintool.dialog;
 
 import java.net.URL;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.swing.Icon;
@@ -89,8 +90,8 @@ class PluginInstallerTableModel
 		TableColumnDescriptor<PluginDescription> descriptor = new TableColumnDescriptor<>();
 
 		descriptor.addVisibleColumn(new PluginInstalledColumn(), -1, false);
-		descriptor.addVisibleColumn(new PluginStatusColumn());
-		descriptor.addVisibleColumn(new PluginNameColumn(), 1, true);
+		descriptor.addVisibleColumn(new PluginWarningColumn());
+		descriptor.addVisibleColumn(new PluginNameColumn());
 		descriptor.addVisibleColumn(new PluginDescriptionColumn());
 		descriptor.addVisibleColumn(new PluginCategoryColumn());
 		descriptor.addHiddenColumn(new PluginModuleColumn());
@@ -201,12 +202,12 @@ class PluginInstallerTableModel
 	/**
 	 * Column for displaying the status of the plugin.
 	 */
-	private class PluginStatusColumn
+	private class PluginWarningColumn
 			extends AbstractDynamicTableColumn<PluginDescription, Icon, List<PluginDescription>> {
 
 		@Override
 		public String getColumnName() {
-			return "Status";
+			return "Warning";
 		}
 
 		@Override
@@ -226,7 +227,6 @@ class PluginInstallerTableModel
 	 */
 	private class PluginNameColumn
 			extends AbstractDynamicTableColumn<PluginDescription, String, List<PluginDescription>> {
-
 		@Override
 		public String getColumnName() {
 			return "Name";

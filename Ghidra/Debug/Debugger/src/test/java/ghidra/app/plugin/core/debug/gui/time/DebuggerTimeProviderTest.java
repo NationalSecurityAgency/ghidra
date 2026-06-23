@@ -102,25 +102,26 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 		createSnaplessTrace();
 		addSnapshots();
+		waitForBusyTool(tool);
 		assertDisabled(listingProvider, timePlugin.actionRenameSnapshot);
 
 		traceManager.openTrace(tb.trace);
-		waitForSwing();
+		waitForBusyTool(tool);
 		assertDisabled(listingProvider, timePlugin.actionRenameSnapshot);
 
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForBusyTool(tool);
 		assertEnabled(listingProvider, timePlugin.actionRenameSnapshot);
 
 		traceManager.activateSnap(10);
-		waitForSwing();
+		waitForBusyTool(tool);
 		performEnabledAction(listingProvider, timePlugin.actionRenameSnapshot, false);
 		InputDialog dialog = waitForDialogComponent(InputDialog.class);
 		assertEquals("Snap 10", dialog.getValue());
 
 		dialog.setValue("My Snapshot");
 		dialog.close(); // isCancelled (private) defaults to false
-		waitForSwing();
+		waitForBusyTool(tool);
 
 		DBTraceSnapshot snapshot = tb.trace.getTimeManager().getSnapshot(10, false);
 		assertEquals("My Snapshot", snapshot.getDescription());
@@ -130,6 +131,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 	@Test
 	public void testEmpty() {
+		waitForBusyTool(tool);
 		assertProviderEmpty();
 	}
 
@@ -138,12 +140,13 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		createSnaplessTrace();
 		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForBusyTool(tool);
 
 		assertProviderEmpty();
 
 		addSnapshots();
 		waitForDomainObject(tb.trace);
+		waitForBusyTool(tool);
 
 		assertProviderPopulated();
 	}
@@ -158,12 +161,13 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		}
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
-		waitForSwing();
+		waitForBusyTool(tool);
 
 		assertProviderEmpty();
 
 		addSnapshots();
 		waitForDomainObject(tb.trace);
+		waitForBusyTool(tool);
 
 		assertProviderPopulated();
 	}
@@ -174,11 +178,12 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.openTrace(tb.trace);
 		addSnapshots();
 		waitForDomainObject(tb.trace);
+		waitForBusyTool(tool);
 
 		assertProviderEmpty();
 
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForBusyTool(tool);
 
 		assertProviderPopulated();
 	}
@@ -189,11 +194,12 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.openTrace(tb.trace);
 		addSnapshots();
 		waitForDomainObject(tb.trace);
+		waitForBusyTool(tool);
 
 		assertProviderEmpty();
 
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForBusyTool(tool);
 
 		assertProviderPopulated();
 
@@ -201,6 +207,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 			tb.trace.getTimeManager().getSnapshot(10, false).delete();
 		}
 		waitForDomainObject(tb.trace);
+		waitForBusyTool(tool);
 
 		assertEquals(1, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 	}
@@ -210,20 +217,23 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		createSnaplessTrace();
 		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForBusyTool(tool);
 
 		assertProviderEmpty();
 
 		addSnapshots();
 		waitForDomainObject(tb.trace);
+		waitForBusyTool(tool);
 
 		assertProviderPopulated();
 
 		undo(tb.trace);
+		waitForBusyTool(tool);
 
 		assertProviderEmpty();
 
 		redo(tb.trace);
+		waitForBusyTool(tool);
 
 		assertProviderPopulated();
 	}
@@ -233,19 +243,21 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		createSnaplessTrace();
 		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForBusyTool(tool);
 
 		assertProviderEmpty();
 
 		try (Transaction tx = tb.startTransaction()) {
 			addSnapshots();
 			waitForDomainObject(tb.trace);
+			waitForBusyTool(tool);
 
 			assertProviderPopulated();
 
 			tx.abort();
 		}
 		waitForDomainObject(tb.trace);
+		waitForBusyTool(tool);
 
 		assertProviderEmpty();
 	}
@@ -260,7 +272,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		assertProviderEmpty();
 
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForBusyTool(tool);
 
 		assertProviderPopulated();
 
@@ -276,15 +288,17 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.openTrace(tb.trace);
 		addSnapshots();
 		waitForDomainObject(tb.trace);
+		waitForBusyTool(tool);
 
 		assertProviderEmpty();
 
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForBusyTool(tool);
 
 		SnapshotRow row = timeProvider.mainPanel.snapshotTableModel.getModelData().get(0);
 		runSwing(() -> row.setDescription("Custom Description"));
 		waitForDomainObject(tb.trace);
+		waitForBusyTool(tool);
 
 		assertEquals("Custom Description",
 			tb.trace.getTimeManager().getSnapshot(0, false).getDescription());
@@ -298,11 +312,12 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.openTrace(tb.trace);
 		addSnapshots();
 		waitForDomainObject(tb.trace);
+		waitForBusyTool(tool);
 
 		assertProviderEmpty();
 
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForBusyTool(tool);
 
 		clickTableCell(timeProvider.mainPanel.snapshotTable, 0, 0, 2);
 		assertEquals(0, traceManager.getCurrentSnap());
@@ -318,9 +333,10 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		addSnapshots();
 		addScratchSnapshot();
 		waitForDomainObject(tb.trace);
+		waitForBusyTool(tool);
 
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForBusyTool(tool);
 
 		assertEquals(3, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 	}
@@ -331,14 +347,16 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.openTrace(tb.trace);
 		addSnapshots();
 		waitForDomainObject(tb.trace);
+		waitForBusyTool(tool);
 
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForBusyTool(tool);
 
 		assertEquals(2, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 
 		addScratchSnapshot();
 		waitForDomainObject(tb.trace);
+		waitForBusyTool(tool);
 
 		assertEquals(3, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 	}
@@ -350,19 +368,22 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		addSnapshots();
 		addScratchSnapshot();
 		waitForDomainObject(tb.trace);
+		waitForBusyTool(tool);
 
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForBusyTool(tool);
 
 		assertEquals(false, timeProvider.hideScratch);
 		assertEquals(3, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 
 		performAction(timeProvider.actionHideScratch);
+		waitForBusyTool(tool);
 
 		assertEquals(true, timeProvider.hideScratch);
 		assertEquals(2, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 
 		performAction(timeProvider.actionHideScratch);
+		waitForBusyTool(tool);
 
 		assertEquals(false, timeProvider.hideScratch);
 		assertEquals(3, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
@@ -377,9 +398,10 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		addSnapshots();
 		addScratchSnapshot();
 		waitForDomainObject(tb.trace);
+		waitForBusyTool(tool);
 
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForBusyTool(tool);
 
 		assertEquals(true, timeProvider.hideScratch);
 		List<SnapshotRow> data = timeProvider.mainPanel.snapshotTableModel.getModelData();

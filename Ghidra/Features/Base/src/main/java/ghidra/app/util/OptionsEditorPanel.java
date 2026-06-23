@@ -21,17 +21,10 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 import org.apache.commons.collections4.map.LazyMap;
 
-import docking.widgets.checkbox.GCheckBox;
-import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
-import docking.widgets.textfield.IntegerTextField;
-import ghidra.framework.options.SaveState;
-import ghidra.program.model.address.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.*;
 
@@ -193,195 +186,12 @@ public class OptionsEditorPanel extends JPanel {
 	 * is not available).
 	 */
 	private Component getEditorComponent(Option option) {
-
-		Component customEditorComponent = option.getCustomEditorComponent();
-		if (customEditorComponent != null) {
-			return customEditorComponent;
-		}
-
-		Class<?> optionClass = option.getValueClass();
-		if (Address.class.isAssignableFrom(optionClass)) {
-			return getAddressEditorComponent(option);
-		}
-		else if (Boolean.class.isAssignableFrom(optionClass)) {
-			return getBooleanEditorComponent(option);
-		}
-		else if (Long.class.isAssignableFrom(optionClass)) {
-			return getLongEditorComponent(option);
-		}
-		else if (Integer.class.isAssignableFrom(optionClass)) {
-			return getIntegerEditorComponent(option);
-		}
-		else if (HexLong.class.isAssignableFrom(optionClass)) {
-			return getHexLongEditorComponent(option);
-		}
-		else if (String.class.isAssignableFrom(optionClass)) {
-			return getStringEditorComponent(option);
-		}
-		else if (AddressSpace.class.isAssignableFrom(optionClass)) {
-			return getAddressSpaceEditorComponent(option);
-		}
-		else {
+		Component customEditorComponent = option.getCustomEditorComponent(addressFactoryService);
+		if (customEditorComponent == null) {
 			throw new AssertException(
 				"Attempted to get default editor component for Option type: " +
-					optionClass.getName() + ". Please register a custom editor");
+					option.getValueClass().getName() + ". Please register a custom editor");
 		}
-	}
-
-	private Component getAddressSpaceEditorComponent(Option option) {
-		if (addressFactoryService == null) {
-			return null;
-		}
-		JComboBox<AddressSpace> combo = new GComboBox<>();
-		AddressFactory addressFactory = addressFactoryService.getAddressFactory();
-		AddressSpace[] spaces =
-			addressFactory == null ? new AddressSpace[0] : addressFactory.getAddressSpaces();
-		for (AddressSpace space : spaces) {
-			combo.addItem(space);
-		}
-		AddressSpace space = (AddressSpace) option.getValue();
-		if (space != null) {
-			combo.setSelectedItem(space);
-		}
-		combo.addActionListener(e -> {
-			// called whenever the combobox changes to push the value back to the Option that is
-			// our 'model'
-			option.setValue(combo.getSelectedItem());
-		});
-		return combo;
-	}
-
-	private Component getStringEditorComponent(Option option) {
-		final SaveState state = option.getState();
-		String defaultValue = (String) option.getValue();
-		String value =
-			state != null ? state.getString(option.getName(), defaultValue) : defaultValue;
-		option.setValue(value);
-		JTextField tf = new JTextField(5);
-		tf.setName(option.getName());
-		tf.getDocument().addDocumentListener(new ImporterDocumentListener(option, tf, state));
-		tf.setText(value);
-		return tf;
-	}
-
-	private Component getHexLongEditorComponent(Option option) {
-		final SaveState state = option.getState();
-		HexLong defaultValue = (HexLong) option.getValue();
-		long value = state != null ? state.getLong(option.getName(), defaultValue.longValue())
-				: defaultValue.longValue();
-		option.setValue(new HexLong(value));
-		IntegerTextField field = new IntegerTextField();
-		field.setValue(value);
-		field.setHexMode();
-		field.addChangeListener(e -> {
-			option.setValue(new HexLong(field.getLongValue()));
-			if (state != null) {
-				state.putLong(option.getName(), field.getLongValue());
-			}
-		});
-		return field.getComponent();
-	}
-
-	private Component getIntegerEditorComponent(Option option) {
-		final SaveState state = option.getState();
-		int defaultValue = (int) option.getValue();
-		int value = state != null ? state.getInt(option.getName(), defaultValue) : defaultValue;
-		option.setValue(value);
-		IntegerTextField field = new IntegerTextField();
-		field.setValue(value);
-		field.addChangeListener(e -> {
-			option.setValue(field.getIntValue());
-			if (state != null) {
-				state.putInt(option.getName(), field.getIntValue());
-			}
-		});
-		return field.getComponent();
-	}
-
-	private Component getLongEditorComponent(Option option) {
-		final SaveState state = option.getState();
-		long defaultValue = (long) option.getValue();
-		long value =
-			state != null ? state.getLong(option.getName(), defaultValue) : defaultValue;
-		option.setValue(value);
-		IntegerTextField field = new IntegerTextField();
-		field.setValue(value);
-		field.addChangeListener(e -> {
-			option.setValue(field.getLongValue());
-			if (state != null) {
-				state.putLong(option.getName(), field.getLongValue());
-			}
-		});
-		return field.getComponent();
-	}
-
-	private Component getBooleanEditorComponent(Option option) {
-		final SaveState state = option.getState();
-		boolean defaultValue = (boolean) option.getValue();
-		boolean initialState =
-			state != null ? state.getBoolean(option.getName(), defaultValue) : defaultValue;
-		option.setValue(initialState);
-		GCheckBox cb = new GCheckBox();
-		cb.setName(option.getName());
-		cb.setSelected(initialState);
-		cb.addItemListener(e -> {
-			option.setValue(cb.isSelected());
-			if (state != null) {
-				state.putBoolean(option.getName(), cb.isSelected());
-			}
-		});
-		return cb;
-	}
-
-	private Component getAddressEditorComponent(Option option) {
-		if (addressFactoryService == null) {
-			return null;
-		}
-		AddressFactory addressFactory = addressFactoryService.getAddressFactory();
-		AddressInput addressInput = new AddressInput(a -> option.setValue(a));
-		addressInput.setName(option.getName());
-		Address addr = (Address) option.getValue();
-		if (addr == null && addressFactory != null) {
-			addr = addressFactory.getDefaultAddressSpace().getAddress(0);
-			option.setValue(addr);
-		}
-		addressInput.setAddressFactory(addressFactory);
-		addressInput.setAddress(addr);
-		return addressInput;
-	}
-}
-
-class ImporterDocumentListener implements DocumentListener {
-	private Option option;
-	private JTextField textField;
-	private SaveState state;
-
-	ImporterDocumentListener(Option option, JTextField textField, SaveState state) {
-		this.option = option;
-		this.textField = textField;
-		this.state = state;
-	}
-
-	@Override
-	public void insertUpdate(DocumentEvent e) {
-		updated();
-	}
-
-	@Override
-	public void removeUpdate(DocumentEvent e) {
-		updated();
-	}
-
-	@Override
-	public void changedUpdate(DocumentEvent e) {
-		updated();
-	}
-
-	private void updated() {
-		String text = textField.getText();
-		option.setValue(text);
-		if (state != null) {
-			state.putString(option.getName(), text);
-		}
+		return customEditorComponent;
 	}
 }

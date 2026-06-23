@@ -20,14 +20,14 @@ import ghidra.program.model.listing.Program;
 import ghidra.xml.XmlPullParser;
 
 /**
- * Interface for a match action to be taken for the Program@Address for a ditted bit seqence pattern
+ * Interface for a match action to be taken for the Program@Address for a ditted bit sequence pattern
  */
 public interface MatchAction {
 	/**
 	 * Apply the match action to the program at the address.
 	 * 
 	 * @param program program in which the match occurred
-	 * @param addr where the match occured
+	 * @param addr where the match occurred
 	 * @param match information about the match that occurred
 	 */
 	public void apply(Program program, Address addr, Match<Pattern> match);

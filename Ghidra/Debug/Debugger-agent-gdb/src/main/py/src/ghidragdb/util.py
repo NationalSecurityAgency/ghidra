@@ -18,7 +18,7 @@ from collections import namedtuple
 import bisect
 from dataclasses import dataclass
 import re
-from typing import Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Callable, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import gdb
 
@@ -305,9 +305,9 @@ REGION_INFO_READER = _choose_region_info_reader()
 
 AVAILABLES_CMD = 'info os processes'
 AVAILABLE_PATTERN = re.compile("\\s*" +
-                            "(?P<pid>[0-9]+)\\s+" +
-                            "(?P<user>[0-9,A-Z,a-z]+)\\s+" +
-                            "(?P<command>.*)")
+                               "(?P<pid>[0-9]+)\\s+" +
+                               "(?P<user>[0-9,A-Z,a-z]+)\\s+" +
+                               "(?P<command>.*)")
 
 
 class AvailableInfoReader(object):
@@ -321,7 +321,7 @@ class AvailableInfoReader(object):
         pid = mat['pid']
         user = mat['user']
         command = mat['command']
-        return Available(pid, user, command)
+        return Available(int(pid), user, command)
 
     def get_availables(self) -> List[Available]:
         availables: List[Available] = []
@@ -365,12 +365,12 @@ class BreakpointLocation:
 
 # Quite a hack, but only needed for type annotations
 if not hasattr(gdb, 'BreakpointLocation'):
-    gdb.BreakpointLocation = BreakpointLocation
+    gdb.BreakpointLocation = BreakpointLocation  # type: ignore
 
 
 class BreakpointLocationInfoReader(object):
     @abstractmethod
-    def get_locations(self, breakpoint: gdb.Breakpoint) -> List[Union[
+    def get_locations(self, breakpoint: gdb.Breakpoint) -> Sequence[Union[
             BreakpointLocation, gdb.BreakpointLocation]]:
         pass
 
@@ -396,8 +396,10 @@ class BreakpointLocationInfoReaderV9(BreakpointLocationInfoReader):
         if breakpoint.location is None:
             return []
         try:
-            address = int(gdb.parse_and_eval(
-                breakpoint.location).address) & compute_max_addr()
+            loc_eval = gdb.parse_and_eval(breakpoint.location)
+            if loc_eval.address is None:
+                return []
+            address = int(loc_eval.address) & compute_max_addr()
             loc = BreakpointLocation(
                 address, breakpoint.enabled, thread_groups)
             return [loc]
@@ -407,7 +409,7 @@ class BreakpointLocationInfoReaderV9(BreakpointLocationInfoReader):
 
 
 class BreakpointLocationInfoReaderV13(BreakpointLocationInfoReader):
-    def get_locations(self, breakpoint: gdb.Breakpoint) -> List[Union[
+    def get_locations(self, breakpoint: gdb.Breakpoint) -> Sequence[Union[
             BreakpointLocation, gdb.BreakpointLocation]]:
         return breakpoint.locations
 

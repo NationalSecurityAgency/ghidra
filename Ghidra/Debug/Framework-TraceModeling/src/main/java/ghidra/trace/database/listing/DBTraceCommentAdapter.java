@@ -16,6 +16,7 @@
 package ghidra.trace.database.listing;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import org.apache.commons.lang3.StringUtils;
@@ -138,8 +139,8 @@ public class DBTraceCommentAdapter
 		}
 		String oldValue = null;
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
-			for (DBTraceCommentEntry entry : reduce(TraceAddressSnapRangeQuery
-					.intersecting(new AddressRangeImpl(address, address), lifespan)).values()) {
+			for (DBTraceCommentEntry entry : List.copyOf(reduce(TraceAddressSnapRangeQuery
+					.intersecting(new AddressRangeImpl(address, address), lifespan)).values())) {
 				if (entry.type == commentType.ordinal()) {
 					if (entry.getLifespan().contains(lifespan.lmin())) {
 						oldValue = entry.comment;
@@ -207,8 +208,8 @@ public class DBTraceCommentAdapter
 	 */
 	public void clearComments(Lifespan span, AddressRange range, CommentType commentType) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
-			for (DBTraceCommentEntry entry : reduce(
-				TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
+			for (DBTraceCommentEntry entry : List.copyOf(reduce(
+				TraceAddressSnapRangeQuery.intersecting(range, span)).values())) {
 				if (commentType == null || entry.type == commentType.ordinal()) {
 					makeWay(entry, span);
 				}

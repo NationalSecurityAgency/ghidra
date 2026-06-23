@@ -22,6 +22,9 @@ import docking.DockingWindowManager;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.action.builder.ActionBuilder;
+import docking.actions.DockingToolActions;
+import docking.actions.SharedDockingActionPlaceholder;
+import docking.options.editor.OptionsDialog;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
@@ -65,6 +68,8 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 	private static final String SHOW_ANALYSIS_OPTIONS = "Show Analysis Options";
 	private static final String ANALYZE_GROUP_NAME = "Analyze";
+
+	static final String OPTIONS_OWNER = "Analysis Options";
 
 	private DockingAction autoAnalyzeAction;
 
@@ -131,6 +136,11 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 		tool.setMenuGroup(new String[] { "Analysis", "One Shot" }, ANALYZE_GROUP_NAME);
 
+		// This action is created later in the AnalysisPanel
+		AnalysisOptionsSharedActionPlaceholder placeholder =
+			new AnalysisOptionsSharedActionPlaceholder(OptionsDialog.TOGGLE_EDITOR_ACTION_NAME);
+		DockingToolActions toolActions = tool.getToolActions();
+		toolActions.registerSharedActionPlaceholder(placeholder);
 	}
 
 	private void updateActionName(ActionContext context) {
@@ -324,7 +334,11 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		}
 	}
 
-	class OneShotAnalyzerAction extends ListingContextAction {
+//=================================================================================================
+// Inner Classes
+//=================================================================================================	
+
+	private class OneShotAnalyzerAction extends ListingContextAction {
 		private Analyzer analyzer;
 		private Program canAnalyzeProgram;
 		private boolean canAnalyze;
@@ -360,9 +374,10 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 			options = options.getOptions(analyzer.getName());
 			analyzer.optionsChanged(options, program);
 
-			analysisMgr.schedule(
-				new OneShotAnalysisCommand(analyzer, set, analysisMgr.getMessageLog()),
-				analyzer.getPriority().priority());
+			OneShotAnalysisCommand cmd =
+				new OneShotAnalysisCommand(analyzer, set, analysisMgr.getMessageLog());
+			analysisMgr.addListener(cmd);
+			analysisMgr.schedule(cmd, analyzer.getPriority().priority());
 
 			tool.setStatusInfo("Analysis scheduled: " + analyzer.getName());
 		}
@@ -389,4 +404,26 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 			}
 		}
 	}
+
+	// Small class to register actions by name before the various editors have been shown. We need
+	// this for the Analysis OptionsDialog actions to appear in the key binding options.
+	private class AnalysisOptionsSharedActionPlaceholder implements SharedDockingActionPlaceholder {
+
+		private String actionName;
+
+		AnalysisOptionsSharedActionPlaceholder(String actionName) {
+			this.actionName = actionName;
+		}
+
+		@Override
+		public String getOwner() {
+			return OPTIONS_OWNER;
+		}
+
+		@Override
+		public String getName() {
+			return actionName;
+		}
+	}
+
 }

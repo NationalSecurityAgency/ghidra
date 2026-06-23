@@ -230,11 +230,20 @@ class SymbolMerge {
 		}
 		else if (type == SymbolType.LIBRARY) {
 			ExternalManager fromExtMgr = fromProgram.getExternalManager();
-			String path = fromExtMgr.getExternalLibraryPath(name);
+			Library fromLib = fromExtMgr.getExternalLibrary(name);
+
+			String path = fromLib != null ? fromLib.getAssociatedProgramPath() : null;
+			int ordinal = fromLib != null ? fromExtMgr.getLibraryOrdinal(name) : -1;
 
 			ExternalManagerDB extMgr = (ExternalManagerDB) toProgram.getExternalManager();
-			extMgr.setExternalPath(name, path, source == SourceType.USER_DEFINED);
-			symbol = toSymbolTable.getLibrarySymbol(name);
+			Library newLib = extMgr.addExternalLibraryName(name, source);
+			symbol = newLib.getSymbol();
+			if (ordinal >= 0) {
+				extMgr.setLibraryOrdinal(name, ordinal);
+			}
+			if (path != null) {
+				extMgr.setExternalPath(name, path, source == SourceType.USER_DEFINED);
+			}
 		}
 		else if (type == SymbolType.FUNCTION) {
 			FunctionManager fromFunctionMgr = fromProgram.getFunctionManager();

@@ -286,7 +286,7 @@ public class GhidraLauncher {
 		for (GModule module : modules.values()) {
 
 			ResourceFile moduleDir = module.getModuleRoot();
-			if (!FileUtilities.isPathContainedWithin(extensionInstallationDirs, moduleDir)) {
+			if (!FileUtilities.startsWith(extensionInstallationDirs, moduleDir.getAbsolutePath())) {
 				continue; // not an extension
 			}
 

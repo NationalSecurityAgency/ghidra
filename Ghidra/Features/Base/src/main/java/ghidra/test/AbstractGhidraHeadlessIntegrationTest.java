@@ -24,6 +24,7 @@ import java.util.*;
 import org.junit.AfterClass;
 
 import docking.test.AbstractDockingTest;
+import generic.jar.ResourceFile;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -659,9 +660,16 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 			Set<ClassFileInfo> serviceSet = extensionPointSuffixToInfoMap.get(suffix);
 			assertNotNull(serviceSet);
 			serviceSet.clear();
-			ClassFileInfo info = new ClassFileInfo("", replacement.getClass().getName(), suffix);
+			Class<? extends Object> clazz = replacement.getClass();
+			ResourceFile module = Application.getModuleContainingClass(clazz);
+			String modulePath = "";
+			if (module != null) {
+				modulePath = module.getAbsolutePath();
+			}
+			String name = clazz.getName();
+			ClassFileInfo info = new ClassFileInfo("", name, suffix, modulePath);
 			serviceSet.add(info);
-			loadedCache.put(info, replacement.getClass());
+			loadedCache.put(info, clazz);
 		}
 
 		T instance = tool.getService(service);

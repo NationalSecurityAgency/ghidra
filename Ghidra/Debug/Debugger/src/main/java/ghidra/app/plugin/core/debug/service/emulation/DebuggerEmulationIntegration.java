@@ -153,6 +153,7 @@ public enum DebuggerEmulationIntegration {
 						return super.readUninitialized(acc, thread, piece, set);
 					}
 				}
+				unknown = unknown.subtract(memAcc.intersectViewKnown(unknown, true));
 				AddressSetView remains = memAcc.readFromStaticImages(piece, unknown);
 				/**
 				 * In this case, readFromStaticImages has in fact modified the state piece, so we to

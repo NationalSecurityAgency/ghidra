@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,10 +17,10 @@ package ghidra.framework.plugintool.dialog;
 
 import static ghidra.util.HTMLUtilities.*;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
+import java.awt.*;
 
 import javax.swing.*;
+import javax.swing.text.View;
 
 import docking.widgets.label.GDHtmlLabel;
 import generic.theme.*;
@@ -30,12 +30,13 @@ import generic.theme.*;
  */
 public abstract class AbstractDetailsPanel extends JPanel {
 
-	protected static final String FONT_DEFAULT = "font.panel.details";
-	protected static final String FONT_MONOSPACED = "font.panel.details.monospaced";
+	protected static final String FONT_DEFAULT = "font.plugin.details.panel.default";
+	protected static final String FONT_MONOSPACED = "font.plugin.details.panel.monospaced";
 
+	// based on the default font size
+	private static final int PREFERRED_WIDTH = 900;
+	private static final int LEFT_COLUMN_WIDTH = 150;
 	private static final int MIN_WIDTH = 700;
-	protected static final int LEFT_COLUMN_WIDTH = 150;
-	protected static final int RIGHT_MARGIN = 30;
 
 	// Font attributes for the title of each row.
 	protected static GAttributes titleAttrs;
@@ -44,10 +45,7 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	protected JScrollPane sp;
 
 	private ThemeListener themeListener = e -> {
-
-		if (e.isFontChanged(FONT_DEFAULT) || e.isFontChanged(FONT_MONOSPACED)) {
-			updateFieldAttributes();
-		}
+		updateFieldAttributes();
 	};
 
 	protected AbstractDetailsPanel() {
@@ -81,15 +79,39 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	 */
 	protected void createMainPanel() {
 		setLayout(new BorderLayout());
+
 		textLabel = new GDHtmlLabel() {
+
 			@Override
 			public Dimension getPreferredSize() {
 
-				// overridden to force word-wrapping by limiting the preferred size of the label
-				Dimension mySize = super.getPreferredSize();
-				int rightColumnWidth = AbstractDetailsPanel.this.getWidth() - LEFT_COLUMN_WIDTH;
-				mySize.width = Math.max(MIN_WIDTH, rightColumnWidth);
-				return mySize;
+				// Overridden to force word-wrapping by limiting the preferred size of the label.
+				// Specifically, long descriptions will get word-wrapped by the html document when
+				// the text is longer than the preferred width.
+				Dimension size = super.getPreferredSize();
+				int availableRightWidth = AbstractDetailsPanel.this.getWidth() - LEFT_COLUMN_WIDTH;
+				size.width = Math.max(MIN_WIDTH, availableRightWidth);
+
+				View v = (View) getClientProperty("html");
+				if (v == null) {
+					return size;
+				}
+
+				// We may have html wider than the chosen width that cannot wrap due to not having
+				// any whitespace (e.g., a file path).  In that case, the display will run past the
+				// right edge of the screen without showing a horizontal scrollbar.  We can force 
+				// the scroll bar to appear by making the chosen width be the html minimum width
+				// (which is the width needed to render an unbreakable line of text).
+				Insets i = getInsets();
+				int availableWidth = size.width - (i.left + i.right);
+				int htmlw = (int) v.getMinimumSpan(View.X_AXIS);
+				boolean isClipped = htmlw > availableWidth;
+				if (isClipped) {
+					// the minimum html is wider than the current preferred width
+					size.width = htmlw;
+				}
+
+				return size;
 			}
 		};
 
@@ -98,7 +120,7 @@ public abstract class AbstractDetailsPanel extends JPanel {
 		textLabel.setBackground(new GColor("color.bg.panel.details"));
 		sp = new JScrollPane(textLabel);
 		sp.getVerticalScrollBar().setUnitIncrement(10);
-		sp.setPreferredSize(new Dimension(MIN_WIDTH, 200));
+		sp.setPreferredSize(new Dimension(PREFERRED_WIDTH, 300));
 		add(sp, BorderLayout.CENTER);
 	}
 
@@ -110,9 +132,13 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	 * @param rowName the name of the row to add
 	 */
 	protected void insertRowTitle(StringBuilder buffer, String rowName) {
+		insertRowTitle(buffer, rowName, titleAttrs);
+	}
+
+	protected void insertRowTitle(StringBuilder buffer, String rowName, GAttributes attributes) {
 		buffer.append("<TR>");
-		buffer.append("<TD VALIGN=\"TOP\">");
-		insertHTMLLine(buffer, rowName + ":", titleAttrs);
+		buffer.append("<TD VALIGN=\"TOP\" NOWRAP>");
+		insertHTMLLine(buffer, rowName + ":", attributes);
 		buffer.append("</TD>");
 	}
 

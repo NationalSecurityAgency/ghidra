@@ -18,10 +18,22 @@ package ghidra.sleigh.grammar;
 import java.math.BigInteger;
 import java.util.Random;
 
+import org.antlr.runtime.*;
+
 public class RadixBigInteger extends BigInteger {
 	private static final long serialVersionUID = -7927157989937732244L;
 	protected int preferredRadix = 10;
 	public final Location location;
+
+	public static RadixBigInteger parse(IntStream input, int expected, Location location,
+			String val, int radix) throws RecognitionException {
+		try {
+			return new RadixBigInteger(location, val, radix);
+		}
+		catch (NumberFormatException e) {
+			throw new MismatchedTokenException(expected, input);
+		}
+	}
 
 	public RadixBigInteger(Location location, byte[] val) {
 		super(val);

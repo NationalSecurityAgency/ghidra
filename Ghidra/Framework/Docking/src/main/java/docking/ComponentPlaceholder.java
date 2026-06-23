@@ -544,13 +544,16 @@ public class ComponentPlaceholder {
 			return; // disposed
 		}
 
-		ActionContext actionContext = componentProvider.getActionContext(null);
-		if (actionContext == null) {
-			actionContext = new DefaultActionContext(componentProvider, null);
+		ActionContext context = componentProvider.getActionContext(null);
+		if (context == null) {
+			context = new DefaultActionContext(componentProvider, null);
 		}
-		for (DockingActionIf action : actions) {
-			action.setEnabled(
-				action.isValidContext(actionContext) && action.isEnabledForContext(actionContext));
+
+		context.setContextProvider(componentProvider);
+
+		for (DockingActionIf a : actions) {
+			boolean enabled = a.isValidContext(context) && a.isEnabledForContext(context);
+			a.setEnabled(enabled);
 		}
 	}
 

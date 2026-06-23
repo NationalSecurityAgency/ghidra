@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,9 +24,10 @@ import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 
 import docking.widgets.textfield.IntegerTextField;
+import docking.widgets.textfield.integer.IntegerFormat;
 
 public class HexBigIntegerTableCellEditor extends AbstractCellEditor implements TableCellEditor {
-	private IntegerTextField input;
+	protected IntegerTextField input;
 
 	@Override
 	public BigInteger getCellEditorValue() {
@@ -48,11 +49,11 @@ public class HexBigIntegerTableCellEditor extends AbstractCellEditor implements 
 			int row, int column) {
 		input = new IntegerTextField();
 		input.getComponent().setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
-		input.setAllowNegativeValues(true);
-		input.setHexMode();
-		input.setAllowsHexPrefix(false);
+		input.setMinValue(null);	// allow negative numbers
+		input.setFormat(IntegerFormat.HEX);
+		input.setUseNumberPrefix(false);
 		input.setShowNumberMode(true);
-		input.setHorizontalAlignment(JTextField.RIGHT);
+		input.setHorizontalAlignment(SwingConstants.RIGHT);
 
 		if (value != null) {
 			input.setValue((BigInteger) value);

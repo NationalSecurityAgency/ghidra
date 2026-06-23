@@ -20,8 +20,8 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.plugin.core.debug.utils.AbstractMappedMemoryBytesVisitor;
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.debug.api.emulation.PcodeDebuggerMemoryAccess;
+import ghidra.debug.api.modules.MappedAddressRange;
 import ghidra.debug.api.target.Target;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.pcode.exec.PcodeExecutorStatePiece;

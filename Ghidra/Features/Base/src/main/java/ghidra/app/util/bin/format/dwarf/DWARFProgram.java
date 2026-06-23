@@ -121,6 +121,7 @@ public class DWARFProgram implements Closeable {
 	private DWARFImportSummary importSummary = new DWARFImportSummary();
 	private DWARFSectionProvider sectionProvider;
 	protected long programBaseAddressFixup;
+	protected boolean addr0IsTombstone;
 	private Charset charset;
 
 	private int maxDNICacheSize = 50;
@@ -594,6 +595,9 @@ public class DWARFProgram implements Closeable {
 
 	public void setProgramBaseAddressFixup(long programBaseAddressFixup) {
 		this.programBaseAddressFixup = programBaseAddressFixup;
+		this.addr0IsTombstone = !program.getMemory()
+				.getExecuteSet()
+				.contains(getCodeAddress(0 + programBaseAddressFixup));
 	}
 
 	public AddressRange getAddressRange(DWARFRange range, boolean isCode) {
@@ -620,6 +624,10 @@ public class DWARFProgram implements Closeable {
 	public boolean isZeroDataAddress(Address addr) {
 		Address realZero = getDataAddress(0);
 		return realZero.equals(addr);
+	}
+
+	public boolean isAddr0Tombstone() {
+		return addr0IsTombstone;
 	}
 
 	public boolean stackGrowsNegative() {

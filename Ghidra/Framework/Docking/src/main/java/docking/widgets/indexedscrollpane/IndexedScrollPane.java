@@ -119,6 +119,10 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 		return new Dimension(comp.getPreferredSize().width, indexMapper.getViewHeight());
 	}
 
+	public Dimension getViewExtentSize() {
+		return viewport.getExtentSize();
+	}
+
 	public void viewportStateChanged() {
 		Dimension extentSize = viewport.getExtentSize();
 		if (!extentSize.equals(visibleSize)) {
@@ -241,7 +245,24 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 
 		@Override
 		public boolean getScrollableTracksViewportWidth() {
-			return false;
+			int prefWidth = comp.getPreferredSize().width;
+			int scrollPaneWidth = getScrollPaneWidth();
+			return scrollPaneWidth > prefWidth;
+		}
+
+		private int getScrollPaneWidth() {
+			Container myParent = getParent();
+			if (myParent == null) {
+				return 0;
+			}
+			if (myParent instanceof JViewport vp) {
+				return vp.getExtentSize().width;
+			}
+			Container grandParent = myParent.getParent();
+			if (grandParent == null) {
+				return 0;
+			}
+			return grandParent.getSize().width;
 		}
 
 		@Override

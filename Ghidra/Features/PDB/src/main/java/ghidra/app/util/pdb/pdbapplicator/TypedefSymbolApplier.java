@@ -22,6 +22,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractUserDefinedTypeM
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractComplexMsType;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.pdb.PdbNamespaceUtils;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -120,10 +121,10 @@ public class TypedefSymbolApplier extends MsSymbolApplier
 		symbolPath = PdbNamespaceUtils.convertToGhidraPathName(symbolPath);
 		CategoryPath categoryPath =
 			applicator.getTypedefsCategory(applicator.getCurrentModuleNumber(), symbolPath);
-		DataType typedef = new TypedefDataType(categoryPath.getParent(), categoryPath.getName(),
+		TypeDef typedef = new TypedefDataType(categoryPath.getParent(), categoryPath.getName(),
 			dataType, applicator.getDataTypeManager());
-
-		return applicator.resolve(typedef);
+		DataType dt = DataTypeUtilities.getTypedefReplacement(typedef, true);
+		return applicator.resolve(dt);
 	}
 
 	private AbstractUserDefinedTypeMsSymbol getValidatedSymbol(MsSymbolIterator iter,

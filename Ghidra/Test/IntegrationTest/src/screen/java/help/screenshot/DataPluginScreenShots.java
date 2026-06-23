@@ -98,9 +98,9 @@ public class DataPluginScreenShots extends GhidraScreenShotGenerator {
 	public void testDefaultSettings() {
 		positionListingTop(0x40d3a4);
 		ComponentProvider componentProvider = getProvider(CodeViewerProvider.class);
-		ActionContext actionContext = componentProvider.getActionContext(null);
-		DockingActionIf action = getAction("Default Settings", actionContext);
-		performAction(action, actionContext, false);
+		ActionContext context = createActionContext(componentProvider);
+		DockingActionIf action = getAction("Default Settings", context);
+		performAction(action, context, false);
 		captureDialog();
 	}
 

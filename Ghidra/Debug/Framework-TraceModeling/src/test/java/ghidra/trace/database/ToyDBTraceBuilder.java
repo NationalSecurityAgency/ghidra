@@ -236,9 +236,9 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	/**
-	 * Open a .gzf compressed trace
+	 * Open a .gzt packed trace
 	 * 
-	 * @param file the .gzf file containing the trace
+	 * @param file the .gzt file containing the trace
 	 * @throws CancelledException never, since the monitor cannot be cancelled
 	 * @throws VersionException if the trace's version is not as expected
 	 * @throws LanguageNotFoundException if the trace's language cannot be found
@@ -467,15 +467,15 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	/**
-	 * Create an address-span box in the trace's default space with a singleton snap
+	 * Create an address-span box in the trace's default space with a span
 	 * 
-	 * @param snap the snap
+	 * @param span the span
 	 * @param start the start address offset
 	 * @param end the end address offset
 	 * @return the box
 	 */
-	public TraceAddressSnapRange srange(long snap, long start, long end) {
-		return new ImmutableTraceAddressSnapRange(addr(start), addr(end), snap, snap);
+	public TraceAddressSnapRange srange(Lifespan span, long start, long end) {
+		return new ImmutableTraceAddressSnapRange(addr(start), addr(end), span);
 	}
 
 	/**
@@ -936,7 +936,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	/**
-	 * Save the trace to a temporary .gzf file
+	 * Save the trace to a temporary packed .gzt file
 	 * 
 	 * @return the new file
 	 * @throws IOException if the trace could not be saved

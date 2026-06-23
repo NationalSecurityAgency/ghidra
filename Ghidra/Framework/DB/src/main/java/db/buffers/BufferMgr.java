@@ -737,7 +737,8 @@ public class BufferMgr {
 			Msg.trace(BufferMgr.this, "Pre-cache started...");
 			int cacheCount = 0;
 			BufferFileAdapter sourceAdapter = (BufferFileAdapter) sourceFile;
-			try (InputBlockStream inputBlockStream = sourceAdapter.getInputBlockStream()) {
+			try (InputBlockStream inputBlockStream =
+				sourceAdapter.getInputBlockStream(TaskMonitor.DUMMY)) {
 				BufferFileBlock block;
 				while (!Thread.interrupted() && (block = inputBlockStream.readBlock()) != null) {
 					DataBuffer buf = LocalBufferFile.getDataBuffer(block);
@@ -1857,7 +1858,7 @@ public class BufferMgr {
 					// Monitor not supported for remote saves
 					monitor.setCancelEnabled(false);
 					outFile = ((ManagedBufferFile) sourceFile).getSaveFile();
-					monitor.setCancelEnabled(oldCancelState & !monitor.isCancelled());
+					monitor.setCancelEnabled(oldCancelState && !monitor.isCancelled());
 				}
 				if (outFile == null) {
 					throw new IOException("Save not allowed");
@@ -1889,7 +1890,7 @@ public class BufferMgr {
 				}
 				finally {
 					((ManagedBufferFile) sourceFile).saveCompleted(success);
-					monitor.setCancelEnabled(oldCancelState & !monitor.isCancelled());
+					monitor.setCancelEnabled(oldCancelState && !monitor.isCancelled());
 				}
 
 				doSetSourceFile(outFile);
@@ -2000,7 +2001,8 @@ public class BufferMgr {
 		monitor.initialize(indexCnt);
 
 		// write/update all non-empty buffers
-		try (OutputBlockStream out = LocalBufferFile.getOutputBlockStream(outFile, bufCount)) {
+		try (OutputBlockStream out =
+			LocalBufferFile.getOutputBlockStream(outFile, bufCount, monitor)) {
 			for (int id = 0; id < indexCnt; id++) {
 				monitor.checkCancelled();
 				monitor.setProgress(id);

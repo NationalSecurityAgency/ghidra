@@ -18,7 +18,6 @@ package ghidra.app.decompiler;
 import static ghidra.program.model.pcode.AttributeId.*;
 import static ghidra.program.model.pcode.ElementId.*;
 
-import java.awt.Color;
 import java.util.Iterator;
 import java.util.List;
 
@@ -49,13 +48,11 @@ public class ClangToken implements ClangNode {
 	private ClangLine lineparent;
 	private String text;
 	private int syntax_type;
-	private Color highlight; // Color to highlight with or null if no highlight
 	private boolean matchingToken;
 
 	public ClangToken(ClangNode par) {
 		parent = par;
 		text = null;
-		highlight = null;
 		syntax_type = DEFAULT_COLOR;
 		lineparent = null;
 	}
@@ -63,14 +60,12 @@ public class ClangToken implements ClangNode {
 	public ClangToken(ClangNode par, String txt) {
 		parent = par;
 		text = txt;
-		highlight = null;
 		syntax_type = DEFAULT_COLOR;
 	}
 
 	public ClangToken(ClangNode par, String txt, int color) {
 		parent = par;
 		text = txt;
-		highlight = null;
 		syntax_type = color;
 	}
 
@@ -121,19 +116,6 @@ public class ClangToken implements ClangNode {
 			return parent.getClangFunction();
 		}
 		return null;
-	}
-
-	@Override
-	public void setHighlight(Color val) {
-		highlight = val;
-	}
-
-	/**
-	 * Get the background highlight color used to render this token, or null if not highlighted
-	 * @return the Color or null
-	 */
-	public Color getHighlight() {
-		return highlight;
 	}
 
 	/**

@@ -66,7 +66,6 @@ def main():
     try:
         import ghidraxdbg
     except Exception as e:
-        print(e)
         exit(253)
     from ghidraxdbg import commands as cmd
     from ghidraxdbg.hooks import on_state_changed

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ import utilities.util.FileUtilities;
  * WARNING: Programs written to disk with this exporter may be runnable on your native platform.
  * Use caution when exporting potentially malicious programs.
  */
-public class OriginalFileExporter extends Exporter {
+public class OriginalFileExporter extends ProgramExporter {
 
 	private static final String USER_MODS_OPTION_NAME = "Export User Byte Modifications";
 	private static final boolean USER_MODS_OPTION_DEFAULT = true;
@@ -64,6 +64,11 @@ public class OriginalFileExporter extends Exporter {
 	}
 
 	@Override
+	public boolean canExportDomainObject(Class<? extends DomainObject> domainObjectClass) {
+		return Program.class.isAssignableFrom(domainObjectClass);
+	}
+
+	@Override
 	public boolean canExportDomainObject(DomainObject domainObject) {
 		if (domainObject instanceof Program program) {
 			return !program.getMemory().getAllFileBytes().isEmpty();
@@ -75,12 +80,14 @@ public class OriginalFileExporter extends Exporter {
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet,
 			TaskMonitor monitor) throws IOException, ExporterException {
 
-		if (!(domainObj instanceof Program)) {
-			log.appendMsg("Unsupported type: " + domainObj.getClass().getSimpleName());
+		Program program;
+		try {
+			program = getProgram(domainObj);
+		}
+		catch (ClassCastException e) {
+			log.appendMsg("Unsupported type: " + domainObj.getClass().getName());
 			return false;
 		}
-
-		Program program = (Program) domainObj;
 
 		List<FileBytes> allFileBytes = program.getMemory().getAllFileBytes();
 		if (allFileBytes.isEmpty()) {
@@ -220,10 +227,14 @@ public class OriginalFileExporter extends Exporter {
 	public List<Option> getOptions(DomainObjectService domainObjectService) {
 		if (options == null) {
 			options = new ArrayList<>();
-			options.add(new Option(USER_MODS_OPTION_NAME, USER_MODS_OPTION_DEFAULT));
+			options.add(Option.newBoolean(USER_MODS_OPTION_NAME)
+					.value(USER_MODS_OPTION_DEFAULT)
+					.build());
 			if (domainObjectService.getDomainObject() instanceof Program program &&
 				program.getMemory().getAllFileBytes().size() > 1) {
-				options.add(new Option(CREATE_DIR_OPTION_NAME, CREATE_DIR_OPTION_DEFAULT));
+				options.add(Option.newBoolean(CREATE_DIR_OPTION_NAME)
+						.value(CREATE_DIR_OPTION_DEFAULT)
+						.build());
 			}
 		}
 		return options;

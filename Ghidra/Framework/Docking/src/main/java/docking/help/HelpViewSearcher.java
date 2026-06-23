@@ -39,6 +39,8 @@ import generic.util.WindowUtilities;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.worker.Worker;
+import help.Help;
+import help.HelpService;
 
 /**
  * Enables the Find Dialog for searching through the current page of a help document.
@@ -273,6 +275,12 @@ class HelpViewSearcher {
 
 		@Override
 		public void activate() {
+
+			HelpService help = Help.getHelpService();
+			if (!help.isShowing()) {
+				help.showHelp(searchUrl);
+			}
+
 			//
 			// When we activate, a new page load may get triggered.  When that happens the caret 
 			// position will get moved by the help viewer.  We will put back the last active search

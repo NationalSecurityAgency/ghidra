@@ -124,6 +124,29 @@ bool PcodeOp::isCollapsible(void) const
   return true;
 }
 
+/// \param slot is the specific input edge being marked
+void PcodeOp::setCopyImmed(int4 slot)
+
+{
+  FlowBlock *inbl = parent->getIn(slot);
+  int4 outedge = parent->getInRevIndex(slot);
+  inbl->setImmedCopyEdge(outedge);
+  addlflags |= immed_copy;
+}
+
+/// \param slot is the specific input edge to test
+/// \return \b true if an immediate COPY has been propagated along the edge
+bool PcodeOp::hasCopyImmed(int4 slot) const
+
+{
+  if ((addlflags & immed_copy) != 0) {
+    FlowBlock *inbl = parent->getIn(slot);
+    int4 outedge = parent->getInRevIndex(slot);
+    return inbl->hasImmedCopyEdge(outedge);
+  }
+  return false;
+}
+
 /// Produce a hash of the following attributes: output size, the opcode, and the identity
 /// of each input varnode.  This is suitable for determining if two PcodeOps calculate identical values
 /// \return the calculated hash or 0 if the op is not cse hashable
@@ -1109,6 +1132,22 @@ PcodeOp *PcodeOpBank::findOp(const SeqNum &num) const
   PcodeOpTree::const_iterator iter = optree.find(num);
   if (iter == optree.end()) return (PcodeOp *)0;
   return (*iter).second;
+}
+
+/// If PcodeOps exist at the address, the one with the biggest getTime() is returned.
+/// \param addr is the given address
+/// \return the last PcodeOp at the address (or NULL)
+PcodeOp *PcodeOpBank::findLastOp(const Address &addr) const
+
+{
+  PcodeOpTree::const_iterator iter = optree.upper_bound(SeqNum(addr,~((uintm)0)));
+  if (iter != optree.begin()) {
+    --iter;
+    PcodeOp *op = (*iter).second;
+    if (op->getAddr() == addr)
+      return op;
+  }
+  return (PcodeOp *)0;
 }
 
 /// The term \e fallthru in this context refers to p-code \e not assembly instructions.

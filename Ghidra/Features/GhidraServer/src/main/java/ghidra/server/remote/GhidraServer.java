@@ -25,8 +25,10 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.*;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.*;
 
+import javax.net.ssl.X509ExtendedKeyManager;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import javax.rmi.ssl.SslRMIServerSocketFactory;
 import javax.security.auth.Subject;
@@ -36,16 +38,17 @@ import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.x500.X500Principal;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.asn1.x509.GeneralName;
 
 import generic.jar.ResourceFile;
 import generic.random.SecureRandomFactory;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.framework.remote.*;
-import ghidra.net.DefaultKeyManagerFactory;
-import ghidra.net.DefaultSSLContextInitializer;
+import ghidra.net.*;
 import ghidra.server.RepositoryManager;
 import ghidra.server.UserManager;
 import ghidra.server.security.*;
@@ -473,7 +476,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 	private static String initRemoteAccessHostname() throws UnknownHostException {
 		String hostname = System.getProperty(RMI_SERVER_PROPERTY);
-		if (hostname == null) {
+		if (StringUtils.isBlank(hostname)) {
 			if (bindAddress != null) {
 				hostname = bindAddress.getHostAddress();
 			}
@@ -482,7 +485,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				if (localhost.isLoopbackAddress()) {
 					localhost = findHost();
 					if (localhost == null) {
-						log.fatal("Can't find host ip address!");
+						log.fatal("Failed to identify host interface IP address");
 						System.exit(-1);
 					}
 				}
@@ -500,7 +503,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		}
 
 		ResourceFile serverRoot = new ResourceFile(Application.getInstallationDirectory(),
-			SystemUtilities.isInDevelopmentMode() ? "ghidra/Ghidra/RuntimeScripts/Common/server"
+			SystemUtilities.isInDevelopmentMode() ? "ghidra/Ghidra/RuntimeScripts/server"
 					: "server");
 		if (serverRoot.getFile(false) == null) {
 			System.err.println(
@@ -719,7 +722,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			}
 		}
 
-		if (rootPath == null) {
+		if (StringUtils.isBlank(rootPath)) {
 			displayUsage("Repository directory must be specified!");
 			System.exit(-1);
 		}
@@ -802,49 +805,28 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			}
 
 			String preferredKeyStore = DefaultKeyManagerFactory.getPreferredKeyStore();
-			if (preferredKeyStore == null) {
-
+			if (StringUtils.isBlank(preferredKeyStore)) {
 				// keystore has not been identified - use self-signed certificate
 				log.info("   Generating self-signed certificate...");
-				log.info("   Subject Alternative Names:");
-				log.info("      " + hostname);
-
-				DefaultKeyManagerFactory.setDefaultIdentity(new X500Principal("CN=GhidraServer"));
-				DefaultKeyManagerFactory.addSubjectAlternativeName(hostname);
-
-				// Collect alternate hostnames for inclusion in certificate
-				Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
-				while (nets.hasMoreElements()) {
-					NetworkInterface netint = nets.nextElement();
-					Enumeration<InetAddress> addrs = netint.getInetAddresses();
-					while (addrs.hasMoreElements()) {
-						InetAddress addr = addrs.nextElement();
-						altNames.add(addr.getHostAddress());
-						altNames.add(addr.getHostName());
-						altNames.add(addr.getCanonicalHostName());
-					}
-				}
-				altNames.remove(hostname);
-				for (String name : altNames) {
-					log.info("      " + name);
-					DefaultKeyManagerFactory.addSubjectAlternativeName(name);
-				}
+				initSelfSignedCertificateData(hostname, altNames);
 			}
 			else {
 				log.info("   Using server certificate keystore: " + preferredKeyStore);
+				if (!altNames.isEmpty()) {
+					log.warn("   -ipAlt use ignored with installed server certificate");
+				}
 			}
 
 			if (!DefaultKeyManagerFactory.initialize()) {
 				log.fatal("Failed to initialize PKI/SSL keystore");
 				System.exit(0);
-				return;
 			}
-
-			// RMIClassServer.startServer(classSvrPort);
-
-			// String codeBaseProp = "http://" +
-			// localhost.getCanonicalHostName() + ":" + classSvrPort + "/";
-			// System.setProperty(RMI_CODEBASE_PROPERTY, codeBaseProp);
+			
+			int signingKeyCount = logServerCertificates("RSA") + logServerCertificates("ECDSA");
+			if (signingKeyCount == 0) {
+				log.fatal("Failed to locate a certificate with digital-signature usage");
+				System.exit(0);
+			}
 
 			log.info("   RMI Registry port: " + ServerPortFactory.getRMIRegistryPort());
 			log.info("   RMI SSL port: " + ServerPortFactory.getRMISSLPort());
@@ -852,8 +834,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			log.info("   Block Stream compression: " +
 				(RemoteBlockStreamHandle.enableCompressedSerializationOutput ? "enabled"
 						: "disabled"));
-//			log.info("   Class server port: " + ??);
-			log.info("   Root: " + rootPath);
+			log.info("   Root: " + serverRoot.getAbsolutePath());
 			log.info("   Auth: " + authMode.getDescription());
 			if (authMode == PASSWORD_FILE_LOGIN && defaultPasswordExpiration >= 0) {
 				log.info("   Default password expiration: " +
@@ -919,6 +900,105 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			log.fatal("Server error: " + t.getMessage(), t);
 			System.exit(-1);
 		}
+	}
+	
+	private static void initSelfSignedCertificateData(String preferredHostname,
+			Set<String> altNames) throws SocketException {
+
+		DefaultKeyManagerFactory.setDefaultIdentity(new X500Principal("CN=GhidraServer"));
+		DefaultKeyManagerFactory.addSubjectAlternativeName(preferredHostname);
+
+		// Collect alternate hostnames for inclusion in certificate
+		Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+		while (nets.hasMoreElements()) {
+			NetworkInterface netint = nets.nextElement();
+			Enumeration<InetAddress> addrs = netint.getInetAddresses();
+			while (addrs.hasMoreElements()) {
+				InetAddress addr = addrs.nextElement();
+				altNames.add(addr.getHostAddress());
+				altNames.add(addr.getHostName());
+				altNames.add(addr.getCanonicalHostName());
+			}
+		}
+		altNames.remove(preferredHostname); // already added as first entry
+		for (String name : altNames) {
+			DefaultKeyManagerFactory.addSubjectAlternativeName(name);
+		}
+	}
+
+	/**
+	 * Log server certiifcates
+	 * @param keyType
+	 * @return number of certificates that support signing
+	 */
+	private static int logServerCertificates(String keyType) {
+
+		X509ExtendedKeyManager km = DefaultKeyManagerFactory.getKeyManager();
+		String[] aliases = km.getServerAliases(keyType, null);
+		if (aliases == null) {
+			return 0;
+		}
+
+		String pad = "      ";
+		Date now = new Date();
+		int signingCount = 0;
+
+		for (String alias : aliases) {
+
+			X509Certificate[] certificateChain = km.getCertificateChain(alias);
+			X509Certificate x509Cert = certificateChain[certificateChain.length - 1];
+
+			if (x509Cert.getKeyUsage()[0]) {
+				++signingCount;
+			}
+
+			X500Principal subj = x509Cert.getSubjectX500Principal();
+			X500Principal issuer = x509Cert.getIssuerX500Principal();
+
+			String label = "'" + alias + "' (" + keyType + "): ";
+			if (now.compareTo(x509Cert.getNotAfter()) > 0) {
+				log.error(
+					pad + label + subj + ", issued by " + issuer +
+						", S/N " + x509Cert.getSerialNumber().toString(16) + ", expired " +
+						x509Cert.getNotAfter() + " **EXPIRED**");
+			}
+			else {
+				log.info(
+					pad + label + subj + ", issued by " + issuer +
+						", S/N " + x509Cert.getSerialNumber().toString(16) + ", expires " +
+						x509Cert.getNotAfter());
+			}
+
+			log.info(pad + "Key Usage: " + PKIUtils.formatKeyUsage(x509Cert));
+
+			boolean foundEntries = false;
+			try {
+				Collection<List<?>> sanList = x509Cert.getSubjectAlternativeNames();
+				if (sanList != null) {
+					for (List<?> sanEntry : sanList) {
+					Integer type = (Integer) sanEntry.get(0);
+					Object value = sanEntry.get(1);
+					if (type == GeneralName.iPAddress || type == GeneralName.dNSName) {
+						if (!foundEntries) {
+							log.info(pad + "Subject Alternative Names:");
+						}
+						foundEntries = true;
+						log.info(pad + "   " + value);
+					}
+				}
+			}
+			}
+			catch (Exception e) {
+				log.fatal("Error reading certificate SANs: " + e.getMessage());
+				System.exit(-1);
+			}
+
+			// Generally a server signing cert needs SAN entries
+			if (x509Cert.getKeyUsage()[0] && !foundEntries) {
+				log.warn(pad + "** No Hostname or IP Address SANs are defined **");
+			}
+		}
+		return signingCount;
 	}
 
 	private static String[] getEnabledTlsProtocols() {

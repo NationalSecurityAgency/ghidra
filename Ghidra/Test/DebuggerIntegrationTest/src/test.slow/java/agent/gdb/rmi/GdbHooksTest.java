@@ -15,8 +15,11 @@
  */
 package agent.gdb.rmi;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -364,6 +367,8 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 	 * <p>
 	 * Technically, this probably doesn't hit on_free_objfile, but all three just call
 	 * modules_changed, so I'm not concerned.
+	 * 
+	 * @throws Exception because
 	 */
 	@Test
 	public void testOnEventsObjfiles() throws Exception {

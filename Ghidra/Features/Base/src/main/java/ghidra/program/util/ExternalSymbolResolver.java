@@ -23,75 +23,18 @@ import java.util.function.Consumer;
 import db.Transaction;
 import ghidra.app.util.opinion.Loaded;
 import ghidra.framework.model.*;
-import ghidra.framework.options.Options;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
-import ghidra.util.StringUtilities;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * Moves dangling external function symbols found in the {@link Library#UNKNOWN EXTERNAL/UNKNOWN}
  * namespace into the namespace of the external library that publishes a matching symbol.
- * <p>
- * This uses an ordered list of external library names that was attached to the program during
- * import by the Elf or Macho loader (see {@link #REQUIRED_LIBRARY_PROPERTY_PREFIX}).
  * 
  */
 public class ExternalSymbolResolver implements Closeable {
-	private final static String REQUIRED_LIBRARY_PROPERTY_PREFIX = "Required Library [";
-
-	/**
-	 * Gets a program property name to represent the ordered required library of the given index
-	 * 
-	 * @param libraryIndex The index of the required library
-	 * @return A program property name to represent the ordered required library of the given index
-	 */
-	public static String getRequiredLibraryProperty(int libraryIndex) {
-		return String.format("%s %s]", REQUIRED_LIBRARY_PROPERTY_PREFIX,
-			StringUtilities.pad("" + libraryIndex, ' ', 4));
-	}
-
-	/**
-	 * Returns an ordered list of library names, as specified by the logic/rules of the original
-	 * operating system's loader (eg. Elf / MachO dynamic library loading / symbol resolving
-	 * rules)
-	 * 
-	 * @param program The {@link Program}
-	 * @return list of library names, in original order
-	 */
-	public static List<String> getOrderedRequiredLibraryNames(Program program) {
-		TreeMap<Integer, String> orderLibraryMap = new TreeMap<>();
-		Options options = program.getOptions(Program.PROGRAM_INFO);
-		for (String optionName : options.getOptionNames()) {
-
-			// Legacy programs may have the old "ELF Required Library [" program property, so 
-			// we should not assume that the option name starts exactly with 
-			// REQUIRED_LIBRARY_PROPERTY_PREFIX.  We must deal with a potential substring at the
-			// start of the option name.
-			int prefixIndex = optionName.indexOf(REQUIRED_LIBRARY_PROPERTY_PREFIX);
-			if (prefixIndex == -1 || !optionName.endsWith("]")) {
-				continue;
-			}
-			String libName = options.getString(optionName, null);
-			if (libName == null) {
-				continue;
-			}
-			String indexStr = optionName
-					.substring(prefixIndex + REQUIRED_LIBRARY_PROPERTY_PREFIX.length(),
-						optionName.length() - 1)
-					.trim();
-			try {
-				orderLibraryMap.put(Integer.parseInt(indexStr), libName.trim());
-			}
-			catch (NumberFormatException e) {
-				Msg.error(ExternalSymbolResolver.class,
-					"Program contains invalid property: " + optionName);
-			}
-		}
-		return new ArrayList<>(orderLibraryMap.values());
-	}
 
 	private final ProjectData projectData;
 	private final TaskMonitor monitor;
@@ -236,33 +179,6 @@ public class ExternalSymbolResolver implements Closeable {
 	 * Represents a program that needs its external symbols to be fixed.
 	 */
 	private class ProgramSymbolResolver {
-		record ExtLibInfo(String name, Library lib, String programPath, Program program,
-				List<String> resolvedSymbols, Throwable problem) {
-			String getProblemMessage() {
-				if (problem instanceof VersionException ve) {
-					return getVersionError(ve);
-				}
-				return problem != null ? problem.getMessage() : "";
-			}
-
-			String getLibPath() {
-				return programPath != null ? programPath : "missing";
-			}
-
-			String getVersionError(VersionException ve) {
-				String versionType = switch (ve.getVersionIndicator()) {
-					case VersionException.NEWER_VERSION -> " newer";
-					case VersionException.OLDER_VERSION -> "n older";
-					default -> "n unknown";
-				};
-
-				String upgradeMsg = ve.isUpgradable() ? " (upgrade is possible)" : "";
-
-				return "skipped: file was created with a%s version of Ghidra%s"
-						.formatted(versionType, upgradeMsg);
-			}
-
-		}
 
 		Program program;
 		String programPath;
@@ -296,16 +212,19 @@ public class ExternalSymbolResolver implements Closeable {
 			logger.accept("\t%d external symbols resolved, %d remain unresolved"
 					.formatted(getResolvedSymbolCount(), unresolvedExternalFunctionIds.size()));
 			for (ExtLibInfo extLib : extLibs) {
+				String libPath = extLib.getAssociatedProgramPath();
+				String loggedLibPath = libPath != null ? libPath : "missing";
 				if (extLib.problem != null) {
-					logger.accept("\t[%s] -> %s, %s".formatted(extLib.name, extLib.getLibPath(),
+					logger.accept("\t[%s] -> %s, %s".formatted(extLib.getName(), loggedLibPath,
 						extLib.getProblemMessage()));
 				}
-				else if (extLib.programPath != null) {
-					logger.accept("\t[%s] -> %s, %d new symbols resolved".formatted(extLib.name,
-						extLib.getLibPath(), extLib.resolvedSymbols.size()));
+				else if (libPath != null) {
+					logger.accept(
+						"\t[%s] -> %s, %d new symbols resolved".formatted(extLib.getName(),
+						loggedLibPath, extLib.resolvedSymbols.size()));
 				}
 				else {
-					logger.accept("\t[%s] -> %s".formatted(extLib.name, extLib.getLibPath()));
+					logger.accept("\t[%s] -> %s".formatted(extLib.getName(), loggedLibPath));
 				}
 				if (!shortSummary) {
 					for (String symbolName : extLib.resolvedSymbols) {
@@ -328,8 +247,8 @@ public class ExternalSymbolResolver implements Closeable {
 
 		private boolean hasSomeLibrariesConfigured() {
 			for (ExtLibInfo extLib : extLibs) {
-				if (extLib.program != null || extLib.problem != null ||
-					extLib.programPath != null) {
+				if (extLib.problem != null ||
+					extLib.getAssociatedProgramPath() != null) {
 					return true;
 				}
 			}
@@ -367,19 +286,17 @@ public class ExternalSymbolResolver implements Closeable {
 		private List<ExtLibInfo> getLibsToSearch() throws CancelledException {
 			List<ExtLibInfo> result = new ArrayList<>();
 			ExternalManager externalManager = program.getExternalManager();
-			for (String libName : getOrderedRequiredLibraryNames(program)) {
-				Library lib = externalManager.getExternalLibrary(libName);
-				String libPath = lib != null ? lib.getAssociatedProgramPath() : null;
+			// External manager supplies external Libraries in appropriate search order
+			for (Library lib : externalManager.getLibraries()) {
+				String libPath = lib.getAssociatedProgramPath();
 				Program libProg = libPath != null ? getLibraryProgram(libPath) : null;
 				Throwable problem =
 					libProg == null && libPath != null ? problemLibraries.get(libPath) : null;
-
-				result.add(
-					new ExtLibInfo(libName, lib, libPath, libProg, new ArrayList<>(), problem));
+				result.add(new ExtLibInfo(lib, problem));
 			}
 			return result;
 		}
-
+		
 		/**
 		 * Moves unresolved functions from the EXTERNAL/UNKNOWN namespace to the namespace of the 
 		 * external library if the extLib publishes a symbol with a matching name.
@@ -388,10 +305,6 @@ public class ExternalSymbolResolver implements Closeable {
 		 * @throws CancelledException if cancelled
 		 */
 		private void resolveSymbolsToLibrary(ExtLibInfo extLib) throws CancelledException {
-			if (extLib.program == null) {
-				// can't do anything if the external library doesn't have a valid program associated 
-				return;
-			}
 			ExternalManager externalManager = program.getExternalManager();
 			SymbolTable symbolTable = program.getSymbolTable();
 
@@ -409,7 +322,7 @@ public class ExternalSymbolResolver implements Closeable {
 				ExternalLocation extLoc = externalManager.getExternalLocation(s);
 				String extLocName =
 					Objects.requireNonNullElse(extLoc.getOriginalImportedName(), extLoc.getLabel());
-				if (isExportedSymbol(extLib.program, extLocName)) {
+				if (isExportedSymbol(program, extLocName)) {
 					try {
 						s.setNamespace(extLib.lib);
 						idIterator.remove();
@@ -442,6 +355,56 @@ public class ExternalSymbolResolver implements Closeable {
 				}
 			}
 			return symbolIds;
+		}
+
+		private class ExtLibInfo {
+
+			final Library lib;
+			final List<String> resolvedSymbols = new ArrayList<>();
+			final Throwable problem;
+
+			/**
+			 * Define external Library dependency associated with {@link ProgramSymbolResolver}
+			 * instance.
+			 * @param lib external library dependency
+			 * @param problem exception which occured while accessing Library
+			 */
+			ExtLibInfo(Library lib, Throwable problem) {
+				if (program != lib.getSymbol().getProgram()) {
+					throw new AssertionError("Program mismatch");
+				}
+				this.lib = lib;
+				this.problem = problem;
+			}
+
+			String getName() {
+				return lib.getName();
+			}
+
+			String getProblemMessage() {
+				if (problem instanceof VersionException ve) {
+					return getVersionError(ve);
+				}
+				return problem != null ? problem.getMessage() : "";
+			}
+
+			String getVersionError(VersionException ve) {
+				String versionType = switch (ve.getVersionIndicator()) {
+					case VersionException.NEWER_VERSION -> " newer";
+					case VersionException.OLDER_VERSION -> "n older";
+					default -> "n unknown";
+				};
+
+				String upgradeMsg = ve.isUpgradable() ? " (upgrade is possible)" : "";
+
+				return "skipped: file was created with a%s version of Ghidra%s"
+						.formatted(versionType, upgradeMsg);
+			}
+
+			String getAssociatedProgramPath() {
+				return lib.getAssociatedProgramPath();
+			}
+
 		}
 	}
 

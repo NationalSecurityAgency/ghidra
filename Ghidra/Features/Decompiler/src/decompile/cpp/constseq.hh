@@ -95,11 +95,12 @@ class HeapSequence : public ArraySequence {
     static bool compareOutput(const IndirectPair *a,const IndirectPair *b);	///< Compare pairs by output storage
   };
   Varnode *basePointer;			///< Pointer that sequence is stored to
+  PcodeOp *immedRead;			///< Op immediately reading basePointer
   uint8 baseOffset;			///< Offset relative to pointer to root STORE
   AddrSpace *storeSpace;		///< Address space being STOREed to
   int4 ptrAddMult;			///< Required multiplier for PTRADD ops
   vector<Varnode *> nonConstAdds;	///< non-constant Varnodes being added into pointer calculation
-  void findBasePointer(Varnode *initPtr);	///< Find the base pointer for the sequence
+  void findBasePointer(void);		///< Find the base pointer for the sequence
   void findDuplicateBases(vector<Varnode *> &duplist);	///< Find any duplicates of \b basePointer
   void findInitialStores(vector<PcodeOp *> &stores);
   static uint8 calcAddElements(Varnode *vn,vector<Varnode *> &nonConst,int4 maxDepth);

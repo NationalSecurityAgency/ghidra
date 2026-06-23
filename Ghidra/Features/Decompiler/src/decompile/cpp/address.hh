@@ -87,6 +87,7 @@ public:
   Address operator+(int8 off) const; ///< Increment address by a number of bytes
   Address operator-(int8 off) const; ///< Decrement address by a number of bytes
   friend ostream &operator<<(ostream &s,const Address &addr);  ///< Write out an address to stream
+  bool isValidRange(uint8 size) const;	///< Is the range properly contained in its address space
   bool containedBy(int4 sz,const Address &op2,int4 sz2) const;	///< Determine if \e op2 range contains \b this range
   int4 justifiedContain(int4 sz,const Address &op2,int4 sz2,bool forceleft) const; ///< Determine if \e op2 is the least significant part of \e this.
   int4 overlap(int4 skip,const Address &op,int4 size) const; ///< Determine how \b this address falls in a given address range
@@ -463,6 +464,14 @@ inline Address Address::operator+(int8 off) const {
 /// \return the new decremented address
 inline Address Address::operator-(int8 off) const {
   return Address(base,base->wrapOffset(offset-off));
+}
+
+/// If the range starting at \b this address and extending for \b size bytes, encompasses bytes beyond
+/// the edge of the address space (or wraps), then return \b false.
+/// \param size is the number of bytes in the range (must be non-zero)
+/// \return \b true if the range is properly contained in the address space
+inline bool Address::isValidRange(uint8 size) const {
+  return (size-1) <= (base->getHighest() - offset);
 }
 
 /// This method is equivalent to Address::overlap, but a range in the \e join space can be

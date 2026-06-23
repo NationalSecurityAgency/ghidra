@@ -1450,7 +1450,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private ActionContext getActionContext(ComponentProviderWrapper wrapper) {
 		return runSwing(() -> {
 			ComponentProvider provider = wrapper.getComponentProvider();
-			ActionContext context = provider.getActionContext(null);
+			ActionContext context = createActionContext(provider);
 			return context;
 		});
 	}
@@ -1622,7 +1622,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		@Override
 		public ActionContext getContext() {
-			return provider.getActionContext(null);
+			return createActionContext(provider);
 		}
 
 		@Override

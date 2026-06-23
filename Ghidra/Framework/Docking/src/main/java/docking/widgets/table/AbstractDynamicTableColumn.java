@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,8 @@
 package docking.widgets.table;
 
 import java.util.*;
+
+import javax.swing.table.TableCellEditor;
 
 import ghidra.docking.settings.*;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -74,7 +76,17 @@ public abstract class AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOU
 
 	@Override
 	public int getColumnPreferredWidth() {
-		return -1;
+		return AbstractGTableModel.WIDTH_UNDEFINED;
+	}
+
+	@Override
+	public int getColumnMaxWidth() {
+		return AbstractGTableModel.WIDTH_UNDEFINED;
+	}
+
+	@Override
+	public int getColumnMinWidth() {
+		return AbstractGTableModel.WIDTH_UNDEFINED;
 	}
 
 	public Comparator<COLUMN_TYPE> getComparator() {
@@ -115,6 +127,11 @@ public abstract class AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOU
 
 	@Override
 	public GColumnRenderer<COLUMN_TYPE> getColumnRenderer() {
+		return null;
+	}
+
+	@Override
+	public TableCellEditor getColumnEditor() {
 		return null;
 	}
 
@@ -200,7 +217,7 @@ public abstract class AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOU
 		 		-The case where 2 different column classes share the same column header value
 		 		-The case where a single column class is used repeatedly, with a different
 		 		 column header value each time
-
+		
 		 	Thus, to be unique, we need to combine both the class name and the column header
 		 	value.  The only time this may be an issue is if the column header value changes
 		 	dynamically--not sure if this actually happens anywhere in our system.  If it did,

@@ -94,6 +94,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	// Flags for what's been enabled
 	protected boolean showCursor;
 	protected boolean bracketedPaste;
+	protected boolean win32InputMode; // not implemented
 	protected boolean reportMousePress;
 	protected boolean reportMouseRelease;
 	protected boolean reportFocus;
@@ -139,6 +140,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 		buffer = bufPrimary;
 
 		bracketedPaste = false;
+		win32InputMode = false;
 		reportMousePress = false;
 		reportMouseRelease = false;
 		reportFocus = false;
@@ -496,6 +498,11 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	@Override
 	public void handleBracketedPasteMode(boolean en) {
 		this.bracketedPaste = en;
+	}
+	
+	@Override
+	public void handleWin32InputMode(boolean en) {
+		this.win32InputMode = en;
 	}
 
 	@Override

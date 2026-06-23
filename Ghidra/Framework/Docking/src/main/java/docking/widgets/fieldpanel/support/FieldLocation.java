@@ -93,6 +93,13 @@ public class FieldLocation implements Comparable<FieldLocation> {
 		this(BigInteger.valueOf(index), fieldNum, row, col);
 	}
 
+	/**
+	* Construct a new FieldLocation with the given index,fieldNum,row, and col.
+	* @param index the index of the layout containing the location
+	* @param fieldNum the index of the field in the layout containing the location
+	* @param row the text row in the field containing the location.
+	* @param col the character position in the row containing the location.
+	*/
 	public FieldLocation(BigInteger index, int fieldNum, int row, int col) {
 		this.index = index;
 		this.fieldNum = fieldNum;

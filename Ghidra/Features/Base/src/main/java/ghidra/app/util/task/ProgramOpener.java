@@ -170,8 +170,12 @@ public class ProgramOpener {
 			// we don't care, the task has been cancelled
 		}
 		catch (LanguageNotFoundException e) {
-			Msg.showError(this, null, "Error Opening " + filename,
-				e.getMessage() + "\nPlease contact the Ghidra team for assistance.");
+			String msg = e.getMessage() + "\n";
+			if (e.getCause() != null) {
+				msg += e.getCause().getMessage() + "\n";
+			}
+			msg += "Please contact the Ghidra team for assistance.";
+			Msg.showError(this, null, "Error Opening " + filename, msg);
 		}
 		catch (Exception e) {
 			if (domainFile.isInWritableProject() && (e instanceof IOException)) {

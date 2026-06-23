@@ -21,16 +21,19 @@ import static ghidra.program.util.ProgramEvent.*;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
+import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.OptionDialogBuilder;
+import docking.widgets.table.DynamicTableColumn;
+import docking.widgets.table.TableColumnDescriptor;
 import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.cmd.refs.RemoveReferenceCmd;
@@ -39,17 +42,20 @@ import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.symboltree.actions.*;
+import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.services.BlockModelService;
 import ghidra.app.services.GoToService;
+import ghidra.app.util.HelpTopics;
 import ghidra.app.util.SymbolInspector;
+import ghidra.app.util.viewer.field.LabelFieldSymbolLoader;
+import ghidra.app.util.viewer.field.LabelFieldSymbolLoader.Symbols;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.model.DomainObjectListenerBuilder;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramChangeRecord;
 import ghidra.program.util.ProgramLocation;
@@ -79,12 +85,13 @@ import resources.Icons;
 			"allows symbols to be renamed and deleted. This plugin also " +
 			"shows references to a symbol. Filters can be set " +
 			"to show subsets of the symbols.",
+	servicesProvided = { SymbolTableService.class },
 	servicesRequired = { GoToService.class, BlockModelService.class },
 	eventsProduced = { ProgramLocationPluginEvent.class },
 	eventsConsumed = { ProgramActivatedPluginEvent.class, ProgramLocationPluginEvent.class }
 )
 //@formatter:on
-public class SymbolTablePlugin extends Plugin {
+public class SymbolTablePlugin extends Plugin implements SymbolTableService {
 
 	private static final String NAVIGATE_ON_INCOMING_EVENT_KEY = "NAVIGATE_ON_INCOMING_EVENT";
 	private static final String NAVIGATE_ON_OUTGOING_EVENT_KEY = "NAVIGATE_ON_OUTGOING_EVENT";
@@ -106,6 +113,10 @@ public class SymbolTablePlugin extends Plugin {
 	private BlockModelService blockModelService;
 	private SwingUpdateManager swingMgr;
 
+	// providers shown by the service interface
+	private Map<String, TableComponentProvider<SymbolRowObject>> transientTableProviders =
+		new HashMap<>();
+
 	private DomainObjectListener domainObjectListener = createDomainObjectListener();
 
 	/**
@@ -126,6 +137,7 @@ public class SymbolTablePlugin extends Plugin {
 
 	@Override
 	protected void init() {
+
 		gotoService = tool.getService(GoToService.class);
 		blockModelService = tool.getService(BlockModelService.class);
 
@@ -138,11 +150,6 @@ public class SymbolTablePlugin extends Plugin {
 		inspector = new SymbolInspector(getTool(), symProvider.getComponent());
 	}
 
-	/**
-	 * Tells a plugin that it is no longer needed.
-	 * The plugin should remove itself from anything that
-	 * it is registered to and release any resources.
-	 */
 	@Override
 	public void dispose() {
 		super.dispose();
@@ -456,9 +463,13 @@ public class SymbolTablePlugin extends Plugin {
 		DockingAction clearPinnedAction = new ClearPinSymbolAction(getName(), pinnedPopupGroup);
 		tool.addAction(clearPinnedAction);
 
-		CreateSymbolTableAction tableAction = new CreateSymbolTableAction(this);
+		CreateSymbolTableAction tableAction = new CreateSymbolTableAction(getTool());
 		tableAction.getPopupMenuData().setMenuGroup(popupGroup);
 		tool.addLocalAction(symProvider, tableAction);
+
+		SetSymbolPrimaryAction primaryAction = new SetSymbolPrimaryAction();
+		primaryAction.getPopupMenuData().setMenuGroup(popupGroup);
+		tool.addLocalAction(symProvider, primaryAction);
 
 		//@formatter:off
 		String bottomGroup = "ShowReferencesTo" + 1;
@@ -639,6 +650,163 @@ public class SymbolTablePlugin extends Plugin {
 		// by toggling the state
 		action.setSelected(false);
 		action.setSelected(true);
+	}
+
+//=================================================================================================
+// Service Methods
+//=================================================================================================	
+
+	@Override
+	public TableComponentProvider<SymbolRowObject> showSymbols(CodeUnit codeUnit) {
+
+		Objects.requireNonNull(codeUnit);
+
+		Program program = codeUnit.getProgram();
+		Address addr = codeUnit.getMinAddress();
+		String title = "Labels at " + addr;
+
+		TableComponentProvider<SymbolRowObject> provider = transientTableProviders.get(title);
+		if (provider != null) {
+
+			if (provider.isShowing()) {
+				LabelFieldSymbolModel model = (LabelFieldSymbolModel) provider.getModel();
+				reload(codeUnit, model);
+				provider.toFront();
+				return provider;
+			}
+
+			transientTableProviders.remove(title);
+		}
+
+		LabelFieldSymbolLoader loader =
+			new LabelFieldSymbolLoader(codeUnit, Integer.MAX_VALUE, true);
+		Symbols symbols = loader.getSymbols();
+
+		List<Symbol> list = symbols.getAllSymbols();
+
+		HashSet<SymbolRowObject> rowObjects = list.stream()
+				.map(s -> new SymbolRowObject(s))
+				.collect(Collectors.toCollection(HashSet::new));
+
+		LabelFieldSymbolModel model =
+			new LabelFieldSymbolModel(tool, program, rowObjects);
+		provider = CreateSymbolTableAction.showTransientTable(tool, title, program, model);
+		if (provider == null) {
+			return null;
+		}
+
+		provider.setClosedCallback(() -> {
+			transientTableProviders.remove(title);
+		});
+
+		addActions(provider, model, codeUnit);
+
+		transientTableProviders.put(title, provider);
+
+		return provider;
+	}
+
+	private void addActions(TableComponentProvider<SymbolRowObject> provider,
+			LabelFieldSymbolModel model, CodeUnit cu) {
+
+		new ActionBuilder("Refresh", ToolConstants.SHARED_OWNER)
+				.toolBarGroup("_", "1") // first
+				.toolBarIcon(Icons.REFRESH_ICON)
+				.helpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, "Refresh_Labels"))
+				.onAction(c -> {
+					reload(cu, model);
+				})
+				.buildAndInstallLocal(provider);
+
+		new ActionBuilder("Delete", ToolConstants.SHARED_OWNER)
+				.toolBarGroup("_", "2") // first
+				.toolBarIcon(Icons.DELETE_ICON)
+				.helpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, "Delete_Label"))
+				.enabledWhen(c -> {
+					GhidraTable table = provider.getTable();
+					return table.getSelectedRowCount() > 0;
+				})
+				.onAction(c -> {
+					deleteSymbols(provider, model);
+				})
+				.buildAndInstallLocal(provider);
+	}
+
+	private void deleteSymbols(TableComponentProvider<SymbolRowObject> provider,
+			LabelFieldSymbolModel model) {
+
+		List<Symbol> symbols = new ArrayList<>();
+
+		GhidraTable table = provider.getTable();
+		int[] rows = table.getSelectedRows();
+		for (int row : rows) {
+			SymbolRowObject ro = model.getRowObject(row);
+			Symbol symbol = ro.getSymbol();
+			if (symbol.isDeleted()) {
+				// this symbol was deleted outside of the table and the table did not update
+				model.removeObject(ro);
+				continue;
+			}
+
+			symbols.add(symbol);
+		}
+		model.delete(symbols);
+	}
+
+	private void reload(CodeUnit cu, LabelFieldSymbolModel model) {
+		LabelFieldSymbolLoader loader =
+			new LabelFieldSymbolLoader(cu, Integer.MAX_VALUE, true);
+		Symbols symbols = loader.getSymbols();
+
+		List<Symbol> list = symbols.getAllSymbols();
+
+		HashSet<SymbolRowObject> rowObjects = list.stream()
+				.map(s -> new SymbolRowObject(s))
+				.collect(Collectors.toCollection(HashSet::new));
+
+		model.setData(rowObjects);
+	}
+
+	private class LabelFieldSymbolModel extends TransientSymbolTableModel {
+
+		public LabelFieldSymbolModel(ServiceProvider sp, Program program,
+				HashSet<SymbolRowObject> rowObjects) {
+			super(sp, program, rowObjects);
+		}
+
+		public void setData(HashSet<SymbolRowObject> rowObjects) {
+			this.rowObjects = rowObjects;
+			reload();
+		}
+
+		@Override
+		protected void delete(List<Symbol> symbols) {
+			super.delete(symbols);
+		}
+
+		@Override
+		protected TableColumnDescriptor<SymbolRowObject> createTableColumnDescriptor() {
+
+			TableColumnDescriptor<SymbolRowObject> descriptor = super.createTableColumnDescriptor();
+
+			//@formatter:off
+			Set<String> visibleNames = new HashSet<>(Set.of(
+				NameTableColumn.NAME, 
+				SymbolTypeTableColumn.NAME,
+				SourceTableColumn.NAME,
+				ReferenceCountTableColumn.NAME));
+			//@formatter:on
+
+			List<DynamicTableColumn<SymbolRowObject, ?, ?>> allColumns = descriptor.getAllColumns();
+
+			for (DynamicTableColumn<SymbolRowObject, ?, ?> column : allColumns) {
+				String columnName = column.getColumnName();
+				boolean visible = visibleNames.contains(columnName);
+				descriptor.setVisible(columnName, visible);
+			}
+
+			return descriptor;
+		}
 	}
 
 //==================================================================================================

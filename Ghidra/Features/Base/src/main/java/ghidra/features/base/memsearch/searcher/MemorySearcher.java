@@ -327,7 +327,7 @@ public class MemorySearcher<T> {
 			byte[] bytes = searchSequence.getBytes((int) match.getStart(), match.getLength());
 			MemoryMatch<T> memMatch = new MemoryMatch<>(address, bytes, match.getPattern());
 			if (filter.test(memMatch)) {
-				if (accumulator.size() >= searchLimit) {
+				if (accumulator.getProgress() >= searchLimit) {
 					return false;
 				}
 				accumulator.add(memMatch);

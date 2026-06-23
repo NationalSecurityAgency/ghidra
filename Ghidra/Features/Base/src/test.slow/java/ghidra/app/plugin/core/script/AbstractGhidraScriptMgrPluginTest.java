@@ -36,6 +36,7 @@ import javax.swing.undo.UndoableEdit;
 
 import org.junit.*;
 
+import docking.ActionContext;
 import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
@@ -1086,7 +1087,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		waitForSwing();
 		DockingActionIf saveAction = getAction(plugin, "Save Script");
 
-		boolean isEnabled = saveAction.isEnabledForContext(editor.getActionContext(null));
+		ActionContext context = createActionContext(editor);
+		boolean isEnabled = saveAction.isEnabledForContext(context);
 		if (!isEnabled) {
 			// the action is enabled when the provider detects changes; it is disabled for read-only
 
@@ -1135,7 +1137,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	protected void assertSaveButtonDisabled() {
 		waitForSwing();
 		DockingActionIf saveAction = getAction(plugin, "Save Script");
-		assertFalse(saveAction.isEnabledForContext(editor.getActionContext(null)));
+		ActionContext context = createActionContext(editor);
+		assertFalse(saveAction.isEnabledForContext(context));
 
 		assertEditorHasNoChanges();
 	}
