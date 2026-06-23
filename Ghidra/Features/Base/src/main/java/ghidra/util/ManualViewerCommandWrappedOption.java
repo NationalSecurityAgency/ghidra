@@ -28,6 +28,12 @@ public class ManualViewerCommandWrappedOption implements CustomOption {
 	static final String FILE_URL_REPLACEMENT_STRING = "${FILE_URL}";
 	static final String FILENAME_REPLACEMENT_STRING = "${FILENAME}";
 
+	/**
+	 * Token that may be used within the command arguments; it is replaced with the manual page
+	 * number when the command is launched (e.g. SumatraPDF's {@code -page ${PAGE}}).
+	 */
+	static final String PAGE_REPLACEMENT_STRING = "${PAGE}";
+
 	private static final String COMMAND_STRING = "commandString";
 	private static final String COMMAND_ARGUMENTS = "commandArguments";
 	private static final String URL_STRING = "urlReplacementString";
