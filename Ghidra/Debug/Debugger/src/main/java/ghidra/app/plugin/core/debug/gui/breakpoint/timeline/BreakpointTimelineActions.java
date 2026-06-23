@@ -31,14 +31,14 @@ import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingActionContext;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegisterActionContext;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.modules.MappedAddressRange;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
-import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
 public class BreakpointTimelineActions {
@@ -145,11 +145,13 @@ public class BreakpointTimelineActions {
 						new String[] { "Go to...", searchType.menuGroup, breakType.menuName },
 						null,
 						BreakpointTimelineActions.this.name));
+				setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "goto_actions"));
 			}
 			else {
 				setPopupMenuData(
 						new MenuData(new String[] { searchType.menuGroup, breakType.menuName },
 								null, BreakpointTimelineActions.this.name));
+				setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "show_all_actions"));
 			}
 		}
 
@@ -282,51 +284,38 @@ public class BreakpointTimelineActions {
 		}
 
 		private AddressSet getAddressRangeFromCodeViewerActionContext(CodeViewerActionContext c) {
-			final Trace trace =
-					tool.getService(DebuggerTraceManagerService.class).getCurrentTrace();
 			final DebuggerStaticMappingService staticMappingService =
 					tool.getService(DebuggerStaticMappingService.class);
 			final AddressSet dynamicSet = new AddressSet();
-			String noMapping = "No mapping";
-			String noMappingFormat = "No mapping for %s @ 0x%x";
+			List<AddressRange> addressRanges = new ArrayList<>();
 
 			if (c.getSelection().isEmpty()) {
-				final ProgramLocation dynamicLocation =
-						staticMappingService.getDynamicLocationFromStatic(trace.getProgramView(),
-								new ProgramLocation(c.getProgram(), c.getAddress()));
-				if (dynamicLocation == null) {
-					Msg.showInfo(null, null, noMapping,
-							noMappingFormat.formatted(c.getProgram(), c.getAddress().getOffset()));
-				}
-				else {
-					dynamicSet.add(dynamicLocation.getAddress());
-				}
+				addressRanges.add(new AddressRangeImpl(c.getAddress(), c.getAddress()));
 			}
 			else {
-				for (final AddressRange range : c.getSelection().getAddressRanges()) {
-					final ProgramLocation startDynamicLocation =
-							staticMappingService.getDynamicLocationFromStatic(
-									trace.getProgramView(),
-									new ProgramLocation(c.getProgram(), range.getMinAddress()));
-					if (startDynamicLocation == null) {
-						Msg.showInfo(null, null, noMapping,
-								noMappingFormat.formatted(c.getProgram(),
-										range.getMinAddress().getOffset()));
+				c.getSelection().getAddressRanges().forEachRemaining(addressRanges::add);
+			}
+
+			for (final AddressRange range : addressRanges) {
+				Map<TraceSpan, Collection<MappedAddressRange>> openMappedViews =
+						staticMappingService.getOpenMappedViews(c.getProgram(),
+								new AddressSet(range));
+				for (Map.Entry<TraceSpan, Collection<MappedAddressRange>> entry :
+						openMappedViews.entrySet()) {
+					if (entry.getKey().getTrace() != currentTrace) {
 						continue;
 					}
-					final ProgramLocation endDynamicLocation =
-							staticMappingService.getDynamicLocationFromStatic(
-									trace.getProgramView(),
-									new ProgramLocation(c.getProgram(), range.getMaxAddress()));
-					if (endDynamicLocation == null) {
-						Msg.showInfo(null, null, noMapping,
-								noMappingFormat.formatted(c.getProgram(),
-										range.getMaxAddress().getOffset()));
-						continue;
+					for (MappedAddressRange addressRange : entry.getValue()) {
+						dynamicSet.add(addressRange.getDestinationAddressRange().getMinAddress(),
+								addressRange.getDestinationAddressRange().getMaxAddress());
 					}
-					dynamicSet.add(startDynamicLocation.getAddress(),
-							endDynamicLocation.getAddress());
 				}
+			}
+
+			if (dynamicSet.isEmpty()) {
+				Msg.showInfo(null, null, "No mapping",
+						"No mapping for %s @ 0x%x".formatted(c.getProgram(),
+								c.getAddress().getOffset()));
 			}
 			return dynamicSet;
 		}
@@ -380,6 +369,7 @@ public class BreakpointTimelineActions {
 	private final PluginTool tool;
 	String name = this.getClass().getSimpleName();
 	List<TimelineAction> actions;
+	private Trace currentTrace;
 
 	BreakpointTimelineActions(PluginTool tool) {
 		this.tool = tool;
@@ -396,5 +386,9 @@ public class BreakpointTimelineActions {
 		for (final TimelineAction action : actions) {
 			tool.removeAction(action);
 		}
+	}
+
+	public void setTrace(Trace t) {
+		currentTrace = t;
 	}
 }
