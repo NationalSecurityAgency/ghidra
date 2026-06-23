@@ -277,7 +277,8 @@ class RootNode extends WindowNode {
 			}
 			child.parent = this;
 		}
-		placeholder.getNode().add(placeholder);
+
+		node.add(placeholder);
 	}
 
 	/**
