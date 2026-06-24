@@ -15,7 +15,7 @@
 # limitations under the License.
 ##
 #@title x64dbg via ssh (shell)
-#@image-opt arg:1
+#@image-opt env:OPT_TARGET_IMG
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>x64dbg</tt> via <tt>ssh</tt></h3>
 #@desc   <p>
@@ -27,7 +27,7 @@
 #@icon icon.debugger
 #@help x64dbg#ssh
 #@depends Debugger-rmi-trace
-#@env OPT_TARGET_IMG:file="" "Image" "The target binary executable image"
+#@env OPT_TARGET_IMG:str="" "Image" "The target binary executable image"
 #@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_TARGET_DIR:str="" "Dir" "Initial directory"
 #@env OPT_SSH_PATH:file="ssh" "ssh command" "The path to ssh on the local system. Omit the full path to resolve using the system PATH."
@@ -97,10 +97,12 @@ are copied and installed.
 
 NOTE: Automatic resolution will cause this session to terminate. When it has
 finished, try launching again.
-" "Would you like to install 'ghidradbg>=$version'?"; then
+" "Would you like to install 'ghidraxdbg>=$version'?"; then
 
 	echo "Copying Wheels to $OPT_HOST"
-	mitigate-scp-pymodules "Debugger-rmi-trace" "<SELF>"
+	if ! mitigate-scp-pymodules "Debugger-rmi-trace" "<SELF>"; then
+		exit 1
+	fi
 
 	echo "Installing Wheels into python"
 	do-installation

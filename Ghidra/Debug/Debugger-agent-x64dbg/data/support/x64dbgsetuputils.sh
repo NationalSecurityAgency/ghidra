@@ -20,5 +20,5 @@ compute-x64dbg-pipinstall-args() {
 	printf -v argvpart ", %s" "$@"
 	pipargs=("$OPT_PYTHON_EXE")
 	pipargs+=(-c)
-	pipargs+=("import os, sys, runpy; sys.argv=['pip', 'install', '--force-reinstall'$argvpart]; os.environ['PIP_BREAK_SYSTEM_PACKAGE']='1'; runpy.run_module('pip', run_name='__main__')")
+	pipargs+=("\"import os, sys, runpy; sys.argv=['pip', 'install', '--force-reinstall'$argvpart]; os.environ['PIP_BREAK_SYSTEM_PACKAGE']='1'; runpy.run_module('pip', run_name='__main__')\"")
 }

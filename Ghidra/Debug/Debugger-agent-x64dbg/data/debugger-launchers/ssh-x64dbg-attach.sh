@@ -15,7 +15,6 @@
 # limitations under the License.
 ##
 #@title x64dbg attach via ssh (shell)
-#@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>x64dbg</tt> via <tt>ssh</tt></h3>
 #@desc   <p>
@@ -39,7 +38,6 @@
 
 . ../support/x64dbgsetuputils.sh
 
-target_image=$(echo $OPT_TARGET_IMG | sed 's/\\/\\\\/g')
 x64dbg_exe=$(echo $OPT_X64DBG_EXE | sed 's/\\/\\\\/g')
 
 OPT_OS_WINDOWS=true
@@ -62,7 +60,7 @@ version=$(get-ghidra-version)
 
 function do-installation() {
 	local -a pipargs
-	compute-dbg-pipinstall-args "'-f'" "os.environ['HOME']" "'ghidraxdbg>=$version'"
+	compute-x64dbg-pipinstall-args "'-f'" "os.environ['HOME']" "'ghidraxdbg>=$version'"
 	local -a sshargs
 	compute-ssh-args false "${pipargs[@]}"
 
@@ -96,10 +94,12 @@ are copied and installed.
 
 NOTE: Automatic resolution will cause this session to terminate. When it has
 finished, try launching again.
-" "Would you like to install 'ghidradbg>=$version'?"; then
+" "Would you like to install 'ghidraxdbg>=$version'?"; then
 
 	echo "Copying Wheels to $OPT_HOST"
-	mitigate-scp-pymodules "Debugger-rmi-trace" "<SELF>"
+	if ! mitigate-scp-pymodules "Debugger-rmi-trace" "<SELF>"; then
+		exit 1
+	fi
 
 	echo "Installing Wheels into python"
 	do-installation
