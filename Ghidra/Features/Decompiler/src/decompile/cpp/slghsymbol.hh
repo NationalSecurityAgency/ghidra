@@ -92,7 +92,10 @@ public:
   SleighSymbol *findSymbol(const string &nm) const { return findSymbolInternal(curscope,nm); }
   SleighSymbol *findSymbol(const string &nm,int4 skip) const { return findSymbolInternal(skipScope(skip),nm); }
   SleighSymbol *findGlobalSymbol(const string &nm) const { return findSymbolInternal(table[0],nm); }
-  SleighSymbol *findSymbol(uintm id) const { return symbollist[id]; }
+  SleighSymbol *findSymbol(uintm id) const {
+    if (id >= symbollist.size())
+      throw SleighError("Bad symbol id");
+    return symbollist[id]; }
   void replaceSymbol(SleighSymbol *a,SleighSymbol *b);
   void encode(Encoder &encoder) const;
   void decode(Decoder &decoder,SleighBase *trans);
