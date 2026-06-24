@@ -866,28 +866,28 @@ XmmReg1:  xmmreg1   is rexRprefix=0 & xmmreg1                           { export
 XmmReg1:  xmmreg1_x is rexRprefix=1 & xmmreg1_x                         { export xmmreg1_x; }
 XmmReg1:  xmmreg1_r  is rexRprefix=0 & evexRp=1 & xmmreg1_r             { export xmmreg1_r; }
 XmmReg1:  xmmreg1_rx is rexRprefix=1 & evexRp=1 & xmmreg1_rx            { export xmmreg1_rx; }
-XmmReg2:  xmmreg2   is rexBprefix=0 & xmmreg2                           { export xmmreg2; }
-XmmReg2:  xmmreg2_b is rexBprefix=1 & xmmreg2_b                         { export xmmreg2_b; }
-XmmReg2:  xmmreg2_x is rexBprefix=0 & rexXprefix=1 & xmmreg2_x          { export xmmreg2_x; }
-XmmReg2:  xmmreg2_bx is rexBprefix=1 & rexXprefix=1 & xmmreg2_bx        { export xmmreg2_bx; }
+XmmReg2:  xmmreg2    is rexBprefix=0 & xmmreg2                           { export xmmreg2; }
+XmmReg2:  xmmreg2_b  is rexBprefix=1 & xmmreg2_b                         { export xmmreg2_b; }
+XmmReg2:  xmmreg2_x  is vexMode=2 & rexBprefix=0 & rexXprefix=1 & xmmreg2_x          { export xmmreg2_x; }
+XmmReg2:  xmmreg2_bx is vexMode=2 & rexBprefix=1 & rexXprefix=1 & xmmreg2_bx        { export xmmreg2_bx; }
 
-YmmReg1:  ymmreg1   is rexRprefix=0 & ymmreg1                           { export ymmreg1; }
-YmmReg1:  ymmreg1_x is rexRprefix=1 & ymmreg1_x                         { export ymmreg1_x; }
+YmmReg1:  ymmreg1    is rexRprefix=0 & ymmreg1                           { export ymmreg1; }
+YmmReg1:  ymmreg1_x  is rexRprefix=1 & ymmreg1_x                         { export ymmreg1_x; }
 YmmReg1:  ymmreg1_r  is rexRprefix=0 & evexRp=1 & ymmreg1_r             { export ymmreg1_r; }
 YmmReg1:  ymmreg1_rx is rexRprefix=1 & evexRp=1 & ymmreg1_rx            { export ymmreg1_rx; }
-YmmReg2:  ymmreg2   is rexBprefix=0 & ymmreg2                           { export ymmreg2; }
-YmmReg2:  ymmreg2_b is rexBprefix=1 & ymmreg2_b                         { export ymmreg2_b; }
-YmmReg2:  ymmreg2_x is rexBprefix=0 & rexXprefix=1 & ymmreg2_x          { export ymmreg2_x; }
-YmmReg2:  ymmreg2_bx is rexBprefix=1 & rexXprefix=1 & ymmreg2_bx        { export ymmreg2_bx; }
+YmmReg2:  ymmreg2    is rexBprefix=0 & ymmreg2                           { export ymmreg2; }
+YmmReg2:  ymmreg2_b  is rexBprefix=1 & ymmreg2_b                         { export ymmreg2_b; }
+YmmReg2:  ymmreg2_x  is vexMode=2 & rexBprefix=0 & rexXprefix=1 & ymmreg2_x          { export ymmreg2_x; }
+YmmReg2:  ymmreg2_bx is vexMode=2 & rexBprefix=1 & rexXprefix=1 & ymmreg2_bx        { export ymmreg2_bx; }
 
-ZmmReg1:  zmmreg1   is rexRprefix=0 & zmmreg1                           { export zmmreg1; }
-ZmmReg1:  zmmreg1_x is rexRprefix=1 & zmmreg1_x                         { export zmmreg1_x; }
+ZmmReg1:  zmmreg1    is rexRprefix=0 & zmmreg1                           { export zmmreg1; }
+ZmmReg1:  zmmreg1_x  is rexRprefix=1 & zmmreg1_x                         { export zmmreg1_x; }
 ZmmReg1:  zmmreg1_r  is rexRprefix=0 & evexRp=1 & zmmreg1_r             { export zmmreg1_r; }
 ZmmReg1:  zmmreg1_rx is rexRprefix=1 & evexRp=1 & zmmreg1_rx            { export zmmreg1_rx; }
-ZmmReg2:  zmmreg2   is rexBprefix=0 & zmmreg2                           { export zmmreg2; }
-ZmmReg2:  zmmreg2_b is rexBprefix=1 & zmmreg2_b                         { export zmmreg2_b; }
-ZmmReg2:  zmmreg2_x is rexBprefix=0 & rexXprefix=1 & zmmreg2_x          { export zmmreg2_x; }
-ZmmReg2:  zmmreg2_bx is rexBprefix=1 & rexXprefix=1 & zmmreg2_bx        { export zmmreg2_bx; }
+ZmmReg2:  zmmreg2    is rexBprefix=0 & zmmreg2                           { export zmmreg2; }
+ZmmReg2:  zmmreg2_b  is rexBprefix=1 & zmmreg2_b                         { export zmmreg2_b; }
+ZmmReg2:  zmmreg2_x  is vexMode=2 & rexBprefix=0 & rexXprefix=1 & zmmreg2_x          { export zmmreg2_x; }
+ZmmReg2:  zmmreg2_bx is vexMode=2 & rexBprefix=1 & rexXprefix=1 & zmmreg2_bx        { export zmmreg2_bx; }
 
 Xmm_vsib:  xmm_vsib       is rexXprefix=0 & xmm_vsib                             { export xmm_vsib; }
 Xmm_vsib:  xmm_vsib_x     is rexXprefix=1 & xmm_vsib_x                           { export xmm_vsib_x; }
