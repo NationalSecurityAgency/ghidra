@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -74,7 +74,6 @@ class FidServiceLibraryIngest {
 		 * @param name the name
 		 * @param hashQuad the hash quad of the function
 		 * @param hasTerminator whether the function body contains a terminating flow
-		 * @return the new function row
 		 */
 		public FunctionRow(DomainFile domainFile, Function function, String name,
 				FidHashQuad hashQuad, boolean hasTerminator) {
@@ -199,7 +198,8 @@ class FidServiceLibraryIngest {
 	/**
 	 * Mark a set of function symbols as "very common" so a match relationship won't be generated with
 	 * functions that call it.
-	 * @param symbols
+	 * 
+	 * @param symbols The symbols
 	 */
 	public void markCommonChildReferences(List<String> symbols) {
 		if (symbols == null) {
@@ -259,7 +259,7 @@ class FidServiceLibraryIngest {
 
 	/**
 	 * Processes a single program, adding it to the library.
-	 * @param result the populate result
+	 * 
 	 * @param program the program
 	 * @throws CancelledException if the user cancels
 	 */
@@ -323,7 +323,7 @@ class FidServiceLibraryIngest {
 
 	/**
 	 * Hashes all the functions in the program for inserting into the database.
-	 * @param result the populate result
+	 * 
 	 * @param program the program
 	 * @param hasher the FID hasher
 	 * @param theFunctions the functions
@@ -598,6 +598,8 @@ class FidServiceLibraryIngest {
 	 */
 	private boolean checkLanguageCompilerSpec(Program program) {
 		if (!languageId.equals(program.getLanguageID())) {
+			Msg.error(this,
+				"Program " + program.getName() + " does not have language " + languageId);
 			return false;
 		}
 		if (compilerSpec != null) {
