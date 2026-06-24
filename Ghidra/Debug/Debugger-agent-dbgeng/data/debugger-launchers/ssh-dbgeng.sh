@@ -15,7 +15,7 @@
 # limitations under the License.
 ##
 #@title dbgeng via ssh (shell)
-#@image-opt arg:1
+#@image-opt env:OPT_TARGET_IMG
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>dbgeng</tt> via <tt>ssh</tt></h3>
 #@desc   <p>
@@ -27,7 +27,7 @@
 #@icon icon.debugger
 #@help dbgeng#ssh
 #@depends Debugger-rmi-trace
-#@env OPT_TARGET_IMG:file="" "Image" "The target binary executable image"
+#@env OPT_TARGET_IMG:str="" "Image" "The target binary executable image"
 #@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_SSH_PATH:file="ssh" "ssh command" "The path to ssh on the local system. Omit the full path to resolve using the system PATH."
 #@env OPT_HOST:str="localhost" "[User@]Host" "The hostname or user@host"
@@ -36,6 +36,7 @@
 #@env OPT_PYTHON_EXE:file!="python" "Python command" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
 #@env OPT_PYTHON_ARGS:str="" "python cmd args" "Arguments passed to python (versus the target)"
 #@env OPT_USE_DBGMODEL:bool=true "Use dbgmodel" "Load and use dbgmodel.dll if it is available."
+#@env WINDBG_DIR:dir="C:\\Windows\\System32" "Path to dbgeng.dll directory" "Path containing dbgeng and associated DLLS (if not Windows Kits)."
 
 . ../support/dbgsetuputils.sh
 
@@ -52,7 +53,7 @@ function launch-dbg-scp() {
 
 function launch-dbg-ssh() {
 	local -a sshargs
-	compute-ssh-args true "$OPT_PYTHON_EXE -i $OPT_PYTHON_ARGS .\\local-dbgeng.py localhost:$OPT_REMOTE_PORT $OPT_USE_DBGMODEL $target_image $OPT_TARGET_ARGS"
+	compute-ssh-args true "$OPT_PYTHON_EXE -i $OPT_PYTHON_ARGS .\\local-dbgeng.py localhost:$OPT_REMOTE_PORT $OPT_USE_DBGMODEL $WINDBG_DIR $target_image $OPT_TARGET_ARGS"
 
 	"${sshargs[@]}"
 }
@@ -98,7 +99,9 @@ finished, try launching again.
 " "Would you like to install 'ghidradbg>=$version'?"; then
 
 	echo "Copying Wheels to $OPT_HOST"
-	mitigate-scp-pymodules "Debugger-rmi-trace" "<SELF>"
+	if ! mitigate-scp-pymodules "Debugger-rmi-trace" "<SELF>"; then
+		exit 1
+	fi
 
 	echo "Installing Wheels into Python"
 	do-installation

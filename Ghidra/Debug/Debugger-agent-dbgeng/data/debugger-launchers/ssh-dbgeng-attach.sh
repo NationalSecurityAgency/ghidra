@@ -15,7 +15,6 @@
 # limitations under the License.
 ##
 #@title dbgeng attach via ssh (shell)
-#@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>dbgeng</tt> via <tt>ssh</tt></h3>
 #@desc   <p>
@@ -36,10 +35,9 @@
 #@env OPT_PYTHON_EXE:file!="python" "Python command" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
 #@env OPT_PYTHON_ARGS:str="" "python cmd args" "Arguments passed to python (versus the target)"
 #@env OPT_USE_DBGMODEL:bool=true "Use dbgmodel" "Load and use dbgmodel.dll if it is available."
+#@env WINDBG_DIR:dir="C:\\Windows\\System32" "Path to dbgeng.dll directory" "Path containing dbgeng and associated DLLS (if not Windows Kits)."
 
 . ../support/dbgsetuputils.sh
-
-target_image=$(echo $OPT_TARGET_IMG | sed 's/\\/\\\\/g')
 
 OPT_OS_WINDOWS=true
 
@@ -52,7 +50,7 @@ function launch-dbg-scp() {
 
 function launch-dbg-ssh() {
 	local -a sshargs
-	compute-ssh-args true "$OPT_PYTHON_EXE -i $OPT_PYTHON_ARGS .\\local-dbgeng-attach.py localhost:$OPT_REMOTE_PORT $OPT_USE_DBGMODEL $OPT_TARGET_PID $OPT_ATTACH_FLAGS"
+	compute-ssh-args true "$OPT_PYTHON_EXE -i $OPT_PYTHON_ARGS .\\local-dbgeng-attach.py localhost:$OPT_REMOTE_PORT $OPT_USE_DBGMODEL $WINDBG_DIR $OPT_TARGET_PID $OPT_ATTACH_FLAGS"
 
 	"${sshargs[@]}"
 }
@@ -98,7 +96,9 @@ finished, try launching again.
 " "Would you like to install 'ghidradbg>=$version'?"; then
 
 	echo "Copying Wheels to $OPT_HOST"
-	mitigate-scp-pymodules "Debugger-rmi-trace" "<SELF>"
+	if ! mitigate-scp-pymodules "Debugger-rmi-trace" "<SELF>"; then
+		exit 1
+	fi
 
 	echo "Installing Wheels into Python"
 	do-installation
