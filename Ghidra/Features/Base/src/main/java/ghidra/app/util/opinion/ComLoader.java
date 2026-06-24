@@ -60,16 +60,24 @@ public class ComLoader extends AbstractLibrarySupportLoader {
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
 
 		List<LoadSpec> specs = new ArrayList<>();
-		long len = provider.length();
 
+		if (!provider.getName().toLowerCase().endsWith(".com")) {
+			return specs;
+		}
+
+		long len = provider.length();
 		if (len == 0 || len > COM_MAX_LEN) {
 			return specs;
 		}
 
-		byte[] data = provider.readBytes(0, len);
+		byte[] bytes = provider.readBytes(0, len);
+		int[] data = new int[bytes.length];
+		for (int i = 0; i < bytes.length; i++) {
+			data[i] = Byte.toUnsignedInt(bytes[i]);
+		}
 
 		// Reject MZ executables
-		if (data.length > 1 && (data[0] & 0xFF) == 'M' && (data[1] & 0xFF) == 'Z') {
+		if (data.length > 1 && data[0] == 'M' && data[1] == 'Z') {
 			return specs;
 		}
 
@@ -83,46 +91,52 @@ public class ComLoader extends AbstractLibrarySupportLoader {
 		return specs;
 	}
 
-	private int calculateScore(byte[] data) {
+	private int calculateScore(int[] data) {
 
 		int score = 0;
 
 		for (int i = 0; i < data.length - 2 && score < SCORE_THRESHOLD; i++) {
 
-			// INT 21h (DOS services)
-			if ((data[i] & 0xFF) == 0xCD && (data[i + 1] & 0xFF) == 0x21) {
+			// INT
+			if (data[i] != 0xCD) {
+				continue;
+			}
 
+			// INT 21h (DOS services)
+			if (data[i + 1] == 0x21) {
 				score += 2;
 
 				// MOV AH, imm8 or MOV AL, imm8 before INT 21h
-				if (i >= 2 && ((data[i - 2] & 0xFF) == 0xB4 || (data[i - 2] & 0xFF) == 0xB0)) {
+				if (i >= 2 && (data[i - 2] == 0xB4 || data[i - 2] == 0xB0)) {
 					score += 3;
 				}
 
 				// MOV AX, imm16 before INT 21h
-				if (i >= 3 && (data[i - 3] & 0xFF) == 0xB8) {
+				if (i >= 3 && data[i - 3] == 0xB8) {
 					score += 2;
+				}
+
+				if (score >= SCORE_THRESHOLD) {
+					return score;
 				}
 			}
 
 			// INT 20h (program terminate)
-			if ((data[i] & 0xFF) == 0xCD && (data[i + 1] & 0xFF) == 0x20) {
+			else if (data[i + 1] == 0x20) {
 				score += 2;
-			}
 
-			if (score >= SCORE_THRESHOLD) {
-				return score;
+				if (score >= SCORE_THRESHOLD) {
+					return score;
+				}
 			}
 
 			// Other INT patterns preceded by register setup
-			if (i > 1 && (data[i] & 0xFF) == 0xCD &&
-				((data[i - 2] & 0xFF) == 0xB4 || (data[i - 2] & 0xFF) == 0xB0)) {
+			if (i > 1 && (data[i - 2] == 0xB4 || data[i - 2] == 0xB0)) {
 				score += 2;
 			}
-			if (i > 2 && (data[i - 3] & 0xFF) == 0xB8) {
+			if (i > 2 && data[i - 3] == 0xB8) {
 				score += 2;
 			}
-
 			if (score >= SCORE_THRESHOLD) {
 				return score;
 			}
@@ -151,7 +165,7 @@ public class ComLoader extends AbstractLibrarySupportLoader {
 	 * followed by '$'. The scan is limited to a small prefix of the file
 	 * for performance, since this method runs on every file imported.
 	 */
-	private int countDollarStrings(byte[] data) {
+	private int countDollarStrings(int[] data) {
 
 		int count = 0;
 		int minLen = 4;
@@ -174,9 +188,8 @@ public class ComLoader extends AbstractLibrarySupportLoader {
 		return count;
 	}
 
-	private boolean isPrintable(byte b) {
-		int c = b & 0xFF;
-		return c >= 0x20 && c <= 0x7E;
+	private boolean isPrintable(int b) {
+		return b >= 0x20 && b <= 0x7E;
 	}
 
 	@Override
