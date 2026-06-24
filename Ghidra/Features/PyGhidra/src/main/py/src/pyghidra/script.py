@@ -256,6 +256,7 @@ class PyGhidraScript(dict):
             # pylint: disable=bare-except
             except:
                 print_stacktrace(self._script, script_path)
+                raise
         finally:
             sys.argv = orig_argv
 
