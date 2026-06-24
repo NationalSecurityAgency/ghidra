@@ -386,11 +386,11 @@ JumpValues *JumpValuesRangeDefault::clone(void) const
   return res;
 }
 
-bool JumpModelTrivial::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize)
+bool JumpModelTrivial::recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel *previous,uint4 maxtablesize)
 
 {
   size = indop->getParent()->sizeOut();
-  return ((size != 0)&&(size<=matchsize));
+  return ((size != 0)&&(size<=jumptable->numEntries()));
 }
 
 void JumpModelTrivial::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
@@ -505,44 +505,58 @@ uintb JumpBasic::backup2Switch(Funcdata *fd,uintb output,Varnode *outvn,Varnode 
   return output;
 }
 
-/// If the Varnode has a restricted range due to masking via INT_AND, the maximum value of this range is returned.
-/// Otherwise, 0 is returned, indicating that the Varnode can take all possible values.
 /// \param vn is the given Varnode
-/// \return the maximum value or 0
-uintb JumpBasic::getMaxValue(Varnode *vn)
+/// \param rng passes back the initial range
+void JumpBasic::getInitialRange(Varnode *vn,CircleRange &rng) const
 
 {
-  uintb maxValue = 0;		// 0 indicates maximum possible value
-  if (!vn->isWritten())
-    return maxValue;
+  if (vn->isConstant()) {
+    rng = CircleRange(vn->getOffset(),vn->getSize());
+    return;
+  }
+  if (vn->isWritten() && vn->getDef()->isBoolOutput()) {
+    rng = CircleRange(0,2,1,1);	// Only 0 or 1 possible
+    return;
+  }
+  int4 step = getStride(vn);
+  if (!vn->isWritten()) {
+    rng = CircleRange(0,0,vn->getSize(),step);
+    return;
+  }
+  if (jumptable->isPartial())
+    rng.setRange(0,0,vn->getSize(),step);	// Don't restrict with non-zero mask if we restricted too far previously
+  else
+    rng.setRange(0,vn->getNZMask() + step, vn->getSize(),step);
   PcodeOp *op = vn->getDef();
   if (op->code() == CPUI_INT_AND) {
-    Varnode *constvn = op->getIn(1);
-    if (constvn->isConstant()) {
-      maxValue = coveringmask( constvn->getOffset() );
-      maxValue = (maxValue + 1) & calc_mask(vn->getSize());
+    Varnode *cvn = op->getIn(1);
+    if (cvn->isConstant()) {
+      CircleRange tmprange(0,cvn->getOffset()+step,vn->getSize(),step);
+      if (tmprange.getSize() < rng.getSize())
+	rng = tmprange;
     }
   }
-  else if (op->code() == CPUI_MULTIEQUAL) {	// Its possible the AND is duplicated across multiple blocks
-    int4 i;
-    for(i=0;i<op->numInput();++i) {
-      Varnode *subvn = op->getIn(i);
-      if (!subvn->isWritten()) break;
-      PcodeOp *andOp = subvn->getDef();
-      if (andOp->code() != CPUI_INT_AND) break;
-      Varnode *constvn = andOp->getIn(1);
-      if (!constvn->isConstant()) break;
-      if (maxValue < constvn->getOffset())
-	maxValue = constvn->getOffset();
+  else if (op->code() == CPUI_INT_REM) {
+    Varnode *cvn = op->getIn(1);
+    if (cvn->isConstant()) {
+      CircleRange tmprange(0,cvn->getOffset(),vn->getSize(),step);
+      if (tmprange.getSize() < rng.getSize())
+	rng = tmprange;
     }
-    if (i == op->numInput()) {
-      maxValue = coveringmask( maxValue );
-      maxValue = (maxValue + 1) & calc_mask(vn->getSize());
-    }
-    else
-      maxValue = 0;
   }
-  return maxValue;
+  else if (op->code() == CPUI_INT_SREM) {
+    Varnode *cvn = op->getIn(1);
+    if (cvn->isConstant()) {
+      uintb val = cvn->getOffset();
+      if (signbit_negative(val, cvn->getSize())) {
+	val = uintb_negate(val,cvn->getSize());
+	val += 1;
+      }
+      CircleRange tmprange(-val+step,val,vn->getSize(),step);
+      if (tmprange.getSize() < rng.getSize())
+	rng = tmprange;
+    }
+  }
 }
 
 /// \brief Calculate the initial set of Varnodes that might be switch variables
@@ -1135,17 +1149,7 @@ void JumpBasic::analyzeGuards(BlockBasic *bl,int4 pathout)
 void JumpBasic::calcRange(Varnode *vn,CircleRange &rng) const
 
 {
-  // Get an initial range, based on the size/type of -vn-
-  int4 stride = 1;
-  if (vn->isConstant())
-    rng = CircleRange(vn->getOffset(),vn->getSize());
-  else if (vn->isWritten() && vn->getDef()->isBoolOutput())
-    rng = CircleRange(0,2,1,1);	// Only 0 or 1 possible
-  else {			// Should we go ahead and use nzmask in all cases?
-    uintb maxValue = getMaxValue(vn);
-    stride = getStride(vn);
-    rng = CircleRange(0,maxValue,vn->getSize(),stride);
-  }
+  getInitialRange(vn,rng);
 
   // Intersect any guard ranges which apply to -vn-
   int4 bitsPreserved;
@@ -1163,11 +1167,30 @@ void JumpBasic::calcRange(Varnode *vn,CircleRange &rng) const
   // in which case the guard might not check for it. If the
   // size is too big, we try only positive values
   if (rng.getSize() > 0x10000) {
-    CircleRange positive(0,(rng.getMask()>>1)+1,vn->getSize(),stride);
+    CircleRange positive(0,(rng.getMask()>>1)+1,vn->getSize(),rng.getStep());
     positive.intersect(rng);
     if (!positive.isEmpty())
       rng = positive;
   }
+}
+
+/// \brief Return \b true if the \b newRange is preferred over the \b oldRange
+///
+/// If the ranges are equal keep the old. Prefer a range with a smaller step,min,or size.
+/// \param oldRange is the old range
+/// \param newRange is the new range
+/// \return \b true if the new range is preferred
+bool JumpBasic::isPreferredRange(int4 pos,const CircleRange &newRange)
+
+{
+  const CircleRange &oldRange(jrange->getRange());
+  if (oldRange.getStep() != newRange.getStep())
+    return (newRange.getStep() < oldRange.getStep());
+  if (oldRange.getMin() != newRange.getMin())
+    return (newRange.getMin() < oldRange.getMin());
+  int4 oldSize = pathMeld.getVarnode(varnodeIndex)->getSize();
+  int4 newSize = pathMeld.getVarnode(pos)->getSize();
+  return (newSize < oldSize);
 }
 
 /// \brief Find the putative switch variable with the smallest range of values reaching the switch
@@ -1176,36 +1199,41 @@ void JumpBasic::calcRange(Varnode *vn,CircleRange &rng) const
 /// switch variable. If an expected range size is provided, it is used to \e prefer a particular
 /// Varnode as the switch variable.  Whatever Varnode is selected,
 /// the JumpValue object is set up to iterator over its range.
-/// \param matchsize optionally gives an expected size of the range, or it can be 0
-void JumpBasic::findSmallestNormal(uint4 matchsize)
+/// \param previous (if not NULL) is a previously recovered model for the same switch
+void JumpBasic::findSmallestNormal(const JumpBasic *previous)
 
 {
   CircleRange rng;
+  CircleRange expectedRange;
   uintb sz,maxsize;
 
+  if (previous != (const JumpBasic *)0 && previous->jrange != (JumpValuesRange *)0) {
+    expectedRange = previous->jrange->getRange();
+  }
   varnodeIndex = 0;
   calcRange(pathMeld.getVarnode(0),rng);
-  jrange->setRange(rng);
-  jrange->setStartVn(pathMeld.getVarnode(0));
-  jrange->setStartOp(pathMeld.getOp(0));
+  jrange->setRange(rng,pathMeld.getVarnode(0),pathMeld.getOp(0));
   maxsize = rng.getSize();
   for(uint4 i=1;i<pathMeld.numCommonVarnode();++i) {
-    if (maxsize == matchsize)	// Found variable that gives (already recovered) size
+    if (rng == expectedRange)	// Found variable that gives (already recovered) range
       return;
     calcRange(pathMeld.getVarnode(i),rng);
     sz = rng.getSize();
-    if (sz < maxsize) {
-      // Don't accept a 1-byte switch variable unless there is an explicit guard
-      // or a table lookup between the byte and the indirect jump.
-      // "goto *(#const + byteVar)" should not be interpreted as 256 case switch
-      if (sz != 256 || pathMeld.getVarnode(i)->getSize()!=1 || pathMeld.isLoadInPath(i)) {
-	varnodeIndex = i;
-	maxsize = sz;
-	jrange->setRange(rng);
-	jrange->setStartVn(pathMeld.getVarnode(i));
-	jrange->setStartOp(pathMeld.getEarliestOp(i));
-      }
+    if (sz > maxsize) continue;
+    if (sz == maxsize) {				// If range sizes are the same
+      if (!isPreferredRange(i, rng))	// Prefer a smaller step, min, or size
+	continue;
     }
+    varnodeIndex = i;
+    maxsize = sz;
+    jrange->setRange(rng,pathMeld.getVarnode(i),pathMeld.getEarliestOp(i));
+  }
+  if (maxsize == 256 && pathMeld.getVarnode(varnodeIndex)->getSize()==1 && !pathMeld.isLoadInPath(varnodeIndex)) {
+    // Don't accept a 1-byte switch variable unless there is an explicit guard
+    // or a table lookup between the byte and the indirect jump.
+    // "goto *(#const + byteVar)" should not be interpreted as 256 case switch
+    rng.setFull(pathMeld.getVarnode(0)->getSize());
+    jrange->setRange(rng,pathMeld.getVarnode(0),pathMeld.getOp(0));
   }
 }
 
@@ -1216,15 +1244,15 @@ void JumpBasic::findSmallestNormal(uint4 matchsize)
 /// \param fd is the function containing the switch
 /// \param rootbl is the basic-block
 /// \param pathout is the (optional) path to the BRANCHIND or -1
-/// \param matchsize is an (optional) size to expect for the normalized switch variable range
+/// \param previous is an (optional) previous model to compare with (or NULL)
 /// \param maxtablesize is the maximum size expected for the normalized switch variable range
-void JumpBasic::findNormalized(Funcdata *fd,BlockBasic *rootbl,int4 pathout,uint4 matchsize,uint4 maxtablesize)
+void JumpBasic::findNormalized(Funcdata *fd,BlockBasic *rootbl,int4 pathout,const JumpModel *previous,uint4 maxtablesize)
 
 {
   uintb sz;
 
   analyzeGuards(rootbl,pathout);
-  findSmallestNormal(matchsize);
+  findSmallestNormal(dynamic_cast<const JumpBasic *>(previous));
   sz = jrange->getSize();
   if ((sz > maxtablesize)&&(pathMeld.numCommonVarnode()==1)) {
     // Check for jump through readonly variable
@@ -1242,9 +1270,7 @@ void JumpBasic::findNormalized(Funcdata *fd,BlockBasic *rootbl,int4 pathout,uint
       MemoryImage mem(vn->getSpace(),4,16,glb->loader);
       uintb val = mem.getValue(vn->getOffset(),vn->getSize());
       varnodeIndex = 0;
-      jrange->setRange(CircleRange(val,vn->getSize()));
-      jrange->setStartVn(vn);
-      jrange->setStartOp(pathMeld.getOp(0));
+      jrange->setRange(CircleRange(val,vn->getSize()),vn,pathMeld.getOp(0));
     }
   }
 }
@@ -1432,7 +1458,7 @@ JumpBasic::~JumpBasic(void)
     delete jrange;
 }
 
-bool JumpBasic::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize)
+bool JumpBasic::recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel *previous,uint4 maxtablesize)
 
 {
   // Basically there needs to be a straight line calculation from a switch variable to the final
@@ -1441,7 +1467,7 @@ bool JumpBasic::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 m
   // location.
   jrange = new JumpValuesRange();
   findDeterminingVarnodes(indop,0);
-  findNormalized(fd,indop->getParent(),-1,matchsize,maxtablesize);
+  findNormalized(fd,indop->getParent(),-1,previous,maxtablesize);
   if (jrange->getSize() > maxtablesize)
     return false;
   markFoldableGuards();
@@ -1677,7 +1703,7 @@ void JumpBasic2::initializeStart(const PathMeld &pMeld)
   origPathMeld.set(pMeld);
 }
 
-bool JumpBasic2::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize)
+bool JumpBasic2::recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel *previous,uint4 maxtablesize)
 
 { // Try to recover a jumptable using the second model
   // Basically there is a guard on the main switch variable,
@@ -1719,7 +1745,7 @@ bool JumpBasic2::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 
   jdef->setDefaultOp(origPathMeld.getOp(origPathMeld.numOps()-1));
 
   findDeterminingVarnodes(multiop,1-path);
-  findNormalized(fd,rootbl,pathout,matchsize,maxtablesize);
+  findNormalized(fd,rootbl,pathout,previous,maxtablesize);
   if (jrange->getSize() > maxtablesize)
     return false;		// We didn't find a good range
 
@@ -1966,7 +1992,7 @@ void JumpBasicOverride::clearCopySpecific(void)
   switchvn = (Varnode *)0;
 }
 
-bool JumpBasicOverride::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize)
+bool JumpBasicOverride::recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel *previous,uint4 maxtablesize)
 
 {
   clearCopySpecific();
@@ -2105,7 +2131,7 @@ void JumpBasicOverride::decode(Decoder &decoder)
     throw LowlevelError("Empty jumptable override");
 }
 
-bool JumpAssisted::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize)
+bool JumpAssisted::recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel *previous,uint4 maxtablesize)
 
 {
   // Look for the special "jumpassist" pseudo-op
@@ -2137,7 +2163,7 @@ bool JumpAssisted::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint
       inputs.push_back(assistOp->getIn(i+1)->getOffset());
     sizeIndices = pcodeScript->evaluate(inputs);
   }
-  if (matchsize !=0 && matchsize-1 != sizeIndices)	// matchsize has 1 added to it for the default case
+  if (previous != (const JumpModel *)0 && previous->getTableSize()-1 != sizeIndices)	// table size has 1 added to it for the default case
     return false;			// Not matching the size we saw previously
   if (sizeIndices > maxtablesize)
     return false;
@@ -2266,15 +2292,16 @@ void JumpTable::clearSavedModel(void)
   }
 }
 
-/// Try to recover each model in turn, until we find one that matches the specific BRANCHIND.
+/// Try to recover each model in turn, until we find one that matches data-flow around the specific BRANCHIND.
 /// \param fd is the function containing the switch
-void JumpTable::recoverModel(Funcdata *fd)
+/// \param matchModel (if not NULL) is a previously calculated model that we are trying to match
+void JumpTable::recoverModel(Funcdata *fd,const JumpModel *matchModel)
 
 {
   uint4 maxTableSize = fd->getArch()->max_jumptable_size;
   if (jmodel != (JumpModel *)0) {
     if (jmodel->isOverride()) {	// If preexisting model is override
-      jmodel->recoverModel(fd,indirect,0,maxTableSize);
+      jmodel->recoverModel(fd,indirect,(const JumpModel *)0,maxTableSize);
       return;
     }
     delete jmodel;		// Otherwise this is an old attempt we should remove
@@ -2285,18 +2312,18 @@ void JumpTable::recoverModel(Funcdata *fd)
     if (op->code() == CPUI_CALLOTHER) {
       JumpAssisted *jassisted = new JumpAssisted(this);
       jmodel = jassisted;
-      if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxTableSize))
+      if (jmodel->recoverModel(fd,indirect,matchModel,maxTableSize))
 	return;
     }
   }
   JumpBasic *jbasic = new JumpBasic(this);
   jmodel = jbasic;
-  if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxTableSize))
+  if (jmodel->recoverModel(fd,indirect,matchModel,maxTableSize))
     return;
   jmodel = new JumpBasic2(this);
   ((JumpBasic2 *)jmodel)->initializeStart(jbasic->getPathMeld());
   delete jbasic;
-  if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxTableSize))
+  if (jmodel->recoverModel(fd,indirect,matchModel,maxTableSize))
     return;
   delete jmodel;
   jmodel = (JumpModel *)0;
@@ -2640,7 +2667,7 @@ void JumpTable::trivialSwitchOver(void)
 void JumpTable::recoverAddresses(Funcdata *fd)
 
 {
-  recoverModel(fd);
+  recoverModel(fd,(const JumpModel *)0);
   if (jmodel == (JumpModel *)0) {
     ostringstream err;
     err << "Could not recover jumptable at " << opaddress << ". Too many branches";
@@ -2712,7 +2739,7 @@ void JumpTable::matchModel(Funcdata *fd)
       fd->warning("Switch is manually overridden",opaddress);
     }
   }
-  recoverModel(fd);		// Create a current instance of the model
+  recoverModel(fd,origmodel);		// Create a current instance of the model (matching the previous model)
   if (jmodel != (JumpModel *)0 && jmodel->getTableSize() != addresstable.size()) {
     if ((addresstable.size()==1)&&(jmodel->getTableSize() > 1)) {
       // The jumptable was not fully recovered during flow analysis, try to issue a restart
@@ -2743,7 +2770,7 @@ void JumpTable::recoverLabels(Funcdata *fd)
   }
   else {
     jmodel = new JumpModelTrivial(this);
-    jmodel->recoverModel(fd,indirect,addresstable.size(),fd->getArch()->max_jumptable_size);
+    jmodel->recoverModel(fd,indirect,origmodel,fd->getArch()->max_jumptable_size);
     jmodel->buildAddresses(fd,indirect,addresstable,(vector<LoadTable> *)0,(vector<int4> *)0);
     trivialSwitchOver();
     jmodel->buildLabels(fd,addresstable,label,origmodel);

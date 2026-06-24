@@ -1280,6 +1280,62 @@ int4 ActionDeindirect::apply(Funcdata &data)
   return 0;
 }
 
+/// \brief Try to eliminate constant extended to be larger than sizeof(uintb)
+///
+/// If given varnode is defined as zext(#0), simplify operations that read it.
+/// \param vn is the big varnode
+/// \param data is the function
+void ActionVarnodeProps::handleExtendedZero(Varnode *vn,Funcdata &data)
+
+{
+  PcodeOp *zext = vn->getDef();
+  if (zext->code() != CPUI_INT_ZEXT) return;
+  if (!zext->getIn(0)->constantMatch(0)) return;
+  list<PcodeOp *>::const_iterator iter;
+  iter = vn->beginDescend();
+   while(iter != vn->endDescend()) {
+    PcodeOp *subop = *iter;
+    ++iter;
+    switch(subop->code()) {
+      case CPUI_INT_ADD:
+      case CPUI_INT_OR:
+      case CPUI_INT_XOR:
+	data.opRemoveInput(subop, subop->getSlot(vn));	// Convert to COPY of other slot
+	data.opSetOpcode(subop, CPUI_COPY);
+	iter = vn->beginDescend();
+	count += 1;
+	break;
+      case CPUI_INT_2COMP:
+	data.opSetOpcode(subop, CPUI_COPY);
+	count += 1;
+	break;
+      case CPUI_INT_LEFT:
+      case CPUI_INT_RIGHT:
+      case CPUI_INT_SRIGHT:
+      case CPUI_INT_DIV:
+      case CPUI_INT_SDIV:
+      case CPUI_INT_REM:
+      case CPUI_INT_SREM:
+	if (subop->getIn(0) != vn)		// Check if zero is first input
+	  break;
+	data.opRemoveInput(subop, 1);		// Convert to COPY of zero
+	data.opSetOpcode(subop, CPUI_COPY);
+	iter = vn->beginDescend();
+	count += 1;
+	break;
+      case CPUI_INT_MULT:
+      case CPUI_INT_AND:
+	data.opRemoveInput(subop, 1-subop->getSlot(vn));	// Convert to COPY of zero
+	data.opSetOpcode(subop, CPUI_COPY);
+	iter = vn->beginDescend();
+	count += 1;
+	break;
+      default:
+	break;
+    }
+  }
+}
+
 int4 ActionVarnodeProps::apply(Funcdata &data)
 
 {
@@ -1325,10 +1381,14 @@ int4 ActionVarnodeProps::apply(Funcdata &data)
 	if (data.replaceVolatile(vn))
 	  count += 1;		// Try to replace vn with pcode op
     }
-    else if (((vn->getNZMask() & vn->getConsume())==0)&&(vnSize<=sizeof(uintb))) {
+    else if ((vn->getNZMask() & vn->getConsume())==0) {
       // FIXME: uintb should be arbitrary precision
       if (vn->isConstant()) continue; // Don't replace a constant
       if (vn->isWritten()) {
+	if (vnSize > sizeof(uintb)) {
+	  handleExtendedZero(vn, data);
+	  continue;
+	}
 	if (vn->getDef()->code() == CPUI_COPY) {
 	  if (vn->getDef()->getIn(0)->isConstant()) {
 	    // Don't replace a COPY 0, with a zero, let

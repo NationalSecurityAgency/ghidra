@@ -220,6 +220,7 @@ public:
 ///   - Volatile Varnodes are converted read/write functions
 ///   - Varnodes whose values are not consumed are replaced with constant 0 Varnodes
 class ActionVarnodeProps : public Action {
+  void handleExtendedZero(Varnode *vn,Funcdata &data);
 public:
   ActionVarnodeProps(const string &g) : Action(0,"varnodeprops",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
