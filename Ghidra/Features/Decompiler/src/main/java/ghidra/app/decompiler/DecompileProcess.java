@@ -304,6 +304,17 @@ public class DecompileProcess {
 		throw new DecompileException(type, message);
 	}
 
+	private void generateWarning() throws IOException {
+		stringDecoder.open(1 << 16, programSource);
+		int type = readToBuffer(stringDecoder);
+		if (type != 19) {
+			throw new IOException("GHIDRA/decompiler alignment error");
+		}
+		stringDecoder.endIngest();
+		Msg.warn(this, stringDecoder.toString());
+		stringDecoder.clear();
+	}
+
 	private void readResponse(ByteIngest mainResponse) throws IOException, DecompileException {
 		mainResponse.clear();
 		readToResponse();
@@ -420,20 +431,23 @@ public class DecompileProcess {
 					currentResponse.endIngest();
 					currentResponse = null;		// Reset current buffer as a native message may follow
 					break;
-				case 16:			// Beginning of any native message from the decompiler
-					if (currentResponse != null) {	// Beginning of native message before end of main response
+				case 16:			// Beginning of any error message from the decompiler
+					if (currentResponse != null) {	// If error message comes before end of main response
 						currentResponse.clear();	// Don't try to parse main response
 					}
 					currentResponse = stringDecoder;
 					currentResponse.open(1 << 20, programSource);
 					break;
-				case 17:			// End of the native message from the decompiler
+				case 17:			// End of the error message from the decompiler
 					if (currentResponse == null) {
 						throw new IOException("Mismatched message header");
 					}
 					currentResponse.endIngest();
-					callback.setNativeMessage(currentResponse.toString());
+					callback.setErrorMessage(currentResponse.toString());
 					currentResponse = null;
+					break;
+				case 18:			// Beginning of informational message
+					generateWarning();
 					break;
 				default:
 					throw new IOException("GHIDRA/decompiler alignment error");

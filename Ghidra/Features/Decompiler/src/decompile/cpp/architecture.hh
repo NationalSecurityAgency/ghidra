@@ -244,11 +244,11 @@ public:
   /// \return the description
   virtual string getDescription(void) const { return archid; }
 
-  /// \brief Print an error message to console
+  /// \brief Print a warning message to console
   ///
-  /// Write the given message to whatever the registered error stream is
+  /// Write the given message to a registered stream.
   /// \param message is the error message
-  virtual void printMessage(const string &message) const=0;
+  virtual void printWarning(const string &message) const=0;
   virtual void encode(Encoder &encoder) const;		///< Encode \b this architecture to a stream
   virtual void restoreXml(DocumentStorage &store);	///< Restore the Architecture state from XML documents
   virtual void nameFunction(const Address &addr,string &name) const;	///< Pick a default name for a function
