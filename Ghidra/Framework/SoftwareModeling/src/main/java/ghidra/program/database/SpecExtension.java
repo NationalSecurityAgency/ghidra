@@ -369,7 +369,7 @@ public class SpecExtension {
 		}
 		for (int i = 0; i < formalName.length(); ++i) {
 			char c = formalName.charAt(i);
-			if (!Character.isLetterOrDigit(c) && c != '_' && c != '.' && c != '-') {
+			if (!Character.isLetterOrDigit(c) && c != '_' && c != '.' && c != '-' && c != '/') {
 				return false;
 			}
 		}

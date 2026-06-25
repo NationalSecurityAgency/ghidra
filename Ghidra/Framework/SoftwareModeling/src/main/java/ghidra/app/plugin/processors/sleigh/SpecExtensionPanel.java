@@ -546,6 +546,23 @@ public class SpecExtensionPanel extends JPanel {
 		}
 	}
 
+	private static PrototypeModel findPrototypeModel(CompilerSpec compilerSpec, String name) {
+		PrototypeModel model = compilerSpec.getCallingConvention(name);
+		if (model != null) {
+			return model;
+		}
+		for (PrototypeModel candidate : compilerSpec.getAllModels()) {
+			if (name.equals(candidate.getName())) {
+				return candidate;
+			}
+		}
+		return null;
+	}
+
+	private static String toExportFilename(String name) {
+		return name.replace('/', '_').replace('\\', '_');
+	}
+
 	private String getXmlString(CompilerElement element) throws IOException {
 		CompilerSpec compilerSpec = program.getCompilerSpec();
 		PcodeInjectLibrary injectLibrary = compilerSpec.getPcodeInjectLibrary();
@@ -570,7 +587,7 @@ public class SpecExtensionPanel extends JPanel {
 					break;
 				case PROTOTYPE_MODEL:
 				case MERGE_MODEL:
-					model = compilerSpec.getCallingConvention(element.name);
+					model = findPrototypeModel(compilerSpec, element.name);
 					if (model != null) {
 						model.encode(encoder, injectLibrary);
 					}
@@ -596,7 +613,7 @@ public class SpecExtensionPanel extends JPanel {
 		if (!compilerElement.isExisting()) {
 			return;		// Only export existing elements
 		}
-		String suggestedName = compilerElement.name + PREFERENCES_FILE_EXTENSION;
+		String suggestedName = toExportFilename(compilerElement.name) + PREFERENCES_FILE_EXTENSION;
 		File outputFile = getFileFromUser(suggestedName);
 		if (outputFile == null) {
 			return;
