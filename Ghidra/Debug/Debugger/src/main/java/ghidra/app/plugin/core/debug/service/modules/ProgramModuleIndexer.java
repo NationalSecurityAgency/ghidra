@@ -35,6 +35,7 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.task.CancelledListener;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
@@ -190,7 +191,7 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 	private final ModuleIndex index = new ModuleIndex();
 
 	public ProgramModuleIndexer(PluginTool tool) {
-		this(tool, task -> tool.execute(task));
+		this(tool, tool::execute);
 	}
 
 	public ProgramModuleIndexer(PluginTool tool, Consumer<Task> taskExecutor) {
@@ -256,26 +257,30 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 	public void waitForInitialIndex(TaskMonitor monitor) throws CancelledException {
 		monitor = TaskMonitor.dummyIfNull(monitor);
 		monitor.setMessage("Waiting for program module index");
-		while (true) {
+		CompletableFuture<Void> cancelled = new CompletableFuture<>();
+		CancelledListener listener = () -> cancelled.cancel(false);
+		monitor.addCancelledListener(listener);
+		try {
 			monitor.checkCancelled();
-			try {
-				initialIndexFuture.get(100, TimeUnit.MILLISECONDS);
-				return;
-			}
-			catch (TimeoutException e) {
-				// Check for cancellation periodically while the background task finishes.
-			}
-			catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
+			CompletableFuture.anyOf(cancelled, initialIndexFuture).get();
+			initialIndexFuture.get();
+		}
+		catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new CancelledException();
+		}
+		catch (CancellationException e) {
+			throw new CancelledException();
+		}
+		catch (ExecutionException e) {
+			Throwable cause = e.getCause();
+			if (cause instanceof CancellationException) {
 				throw new CancelledException();
 			}
-			catch (CancellationException e) {
-				throw new CancelledException();
-			}
-			catch (ExecutionException e) {
-				Msg.error(this, "Failed to index program modules", e.getCause());
-				return;
-			}
+			Msg.error(this, "Failed to index program modules", cause);
+		}
+		finally {
+			monitor.removeCancelledListener(listener);
 		}
 	}
 
