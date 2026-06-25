@@ -682,6 +682,9 @@ public class DialogComponentProvider
 	 */
 	public void setAccessibleDescription(String description) {
 		this.accessibleDescription = description;
+		if (dialog != null) {
+			dialog.getAccessibleContext().setAccessibleDescription(description);
+		}
 	}
 
 	private void doSetStatusText(String text, MessageType type, boolean alert) {
@@ -1324,6 +1327,10 @@ public class DialogComponentProvider
 	 * @param action the action
 	 */
 	public void addAction(DockingActionIf action) {
+		if (dialogActions.contains(action)) {
+			return; // protect from repeated adding
+		}
+
 		dialogActions.add(action);
 		addToolbarAction(action);
 		popupManager.addAction(action);
@@ -1509,7 +1516,10 @@ public class DialogComponentProvider
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
 			ActionContextProvider contextProvider = context.getContextProvider();
-			return provider == contextProvider;
+			if (provider != contextProvider) {
+				return false;
+			}
+			return dockingAction.isEnabledForContext(context);
 		}
 	}
 }

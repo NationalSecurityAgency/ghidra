@@ -93,7 +93,9 @@ finished, try launching again.
 " "Would you like to install 'ghidralldb>=$version'?"; then
 
 	echo "Copying Wheels to $OPT_HOST"
-	mitigate-scp-pymodules "Debugger-rmi-trace" "<SELF>"
+	if ! mitigate-scp-pymodules "Debugger-rmi-trace" "<SELF>"; then
+		exit 1
+	fi
 
 	echo "Installing Wheels into LLDB's embedded Python"
 	do-installation

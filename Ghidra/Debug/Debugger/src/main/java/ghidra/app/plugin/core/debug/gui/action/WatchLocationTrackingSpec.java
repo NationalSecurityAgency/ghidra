@@ -128,7 +128,7 @@ public class WatchLocationTrackingSpec implements LocationTrackingSpec {
 			if (current.getTrace() == null) {
 				return null;
 			}
-			compiled = DebuggerPcodeUtils.compileExpression(provider, current, expression);
+			compiled = DebuggerPcodeUtils.compileExpression(provider, current, null, expression);
 			WatchValue value = compiled.evaluate(exec);
 			return value == null ? null : value.address();
 		}

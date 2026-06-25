@@ -104,7 +104,7 @@ public class DefaultWatchRow implements WatchRow {
 		}
 		try {
 			compiled = DebuggerPcodeUtils.compileExpression(provider.getTool(), provider.current,
-				expression);
+				null, expression);
 		}
 		catch (Exception e) {
 			error = e;

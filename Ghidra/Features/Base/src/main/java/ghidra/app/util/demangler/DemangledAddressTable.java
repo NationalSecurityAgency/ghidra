@@ -83,7 +83,7 @@ public class DemangledAddressTable extends DemangledObject {
 			return false;
 		}
 
-		Symbol s = applyDemangledName(address, true, false, program);
+		Symbol s = applyDemangledName(address, isPrimary, false, program);
 		if (s == null) {
 			return false;
 		}
@@ -121,7 +121,7 @@ public class DemangledAddressTable extends DemangledObject {
 
 		if (isUndefinedInRange(program, address, address.add(length - 1))) {
 			long count = length / program.getDefaultPointerSize();
-			createPointers(program, address, (int) count);
+			createPointers(program, address, (int) count, monitor);
 		}
 
 		return true;
@@ -166,8 +166,9 @@ public class DemangledAddressTable extends DemangledObject {
 	/**
 	 * Creates pointers from start address.
 	 * If a pointer already exists, then skip it and continue.
+	 * @param monitor the task monitor
 	 */
-	private void createPointers(Program program, Address start, int count) {
+	private void createPointers(Program program, Address start, int count, TaskMonitor monitor) {
 
 		DataType pointerDt = new PointerDataType(program.getDataTypeManager());
 
@@ -176,6 +177,10 @@ public class DemangledAddressTable extends DemangledObject {
 		DumbMemBufferImpl buf = new DumbMemBufferImpl(mem, start);
 
 		for (int i = 0; i < count; ++i) {
+
+			if (monitor.isCancelled()) {
+				return;
+			}
 
 			Address addr = start.add(pointerDt.getLength() * i);
 			buf.setPosition(addr);

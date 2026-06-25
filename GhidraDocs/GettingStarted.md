@@ -203,6 +203,8 @@ Ghidra supports running on the following additional platforms with user-built na
 * Linux ARM 64-bit
 * FreeBSD x86 64-bit (no debugger support)
 * FreeBSD ARM 64-bit (no debugger support)
+* OpenBSD x86 64-bit (no debugger support)
+* OpenBSD ARM 64-bit (no debugger support)
 
 For supported systems where native binaries have not been supplied, or those that are supplied fail
 to run properly, it may be necessary to build the native Ghidra binaries. In order to build native
@@ -214,7 +216,7 @@ binaries for your platform, you will need the following installed on your system
     to the Internet, _Xcode_ (which includes the command tools) may be installed directly from the
     App Store while _Command Line Tools for Xcode_ may be installed using the command:
     `xcode-select --install`.
-  * __Linux/FreeBSD:__ the 64-bit versions of the following packages should installed:
+  * __Linux/FreeBSD/OpenBSD:__ the 64-bit versions of the following packages should installed:
     * GCC or Clang
     * make
   * __Windows:__

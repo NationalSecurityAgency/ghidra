@@ -18,6 +18,7 @@ import platform
 import os
 import sys
 import subprocess
+from subprocess import DEVNULL
 import sysconfig
 from pathlib import Path
 from itertools import chain
@@ -38,7 +39,7 @@ def get_application_properties(install_dir: Path) -> Dict[str, str]:
 
 def get_launch_properties(install_dir: Path, dev: bool) -> List[str]:
     if dev:
-        launch_properties_path: Path = install_dir / 'Ghidra' / 'RuntimeScripts' / 'Common' / 'support' / 'launch.properties'
+        launch_properties_path: Path = install_dir / 'Ghidra' / 'RuntimeScripts' / 'support' / 'launch.properties'
     else:
         launch_properties_path: Path = install_dir / 'support' / 'launch.properties'
     props: List[str] = []
@@ -130,7 +131,24 @@ def get_venv_exe(venv_dir: Path) -> List[str]:
 
 def get_ghidra_venv(install_dir: Path, dev: bool) -> Path:
     return (install_dir / 'build' if dev else get_user_settings_dir(install_dir, dev)) / 'venv'
-    
+
+def check_module(python_cmd: List[str], module_name: str) -> bool:
+    return subprocess.run(python_cmd + ['-c', f'import {module_name}'], stdout=DEVNULL, stderr=DEVNULL).returncode == 0
+
+def check_venv(python_cmd: List[str]) -> bool:
+    if check_module(python_cmd, 'ensurepip'):
+        return True
+    print('A virtual environment cannot be created because "ensurepip" is not available.')
+    print('You likely need to install the appropriate "venv" package for your platform and python version.')
+    return False
+
+def check_pip(python_cmd: List[str]) -> bool:
+    if check_module(python_cmd, 'pip'):
+        return True
+    print('pip is not present in the current environment.')
+    print("Please install pip, remove your virtual environment if applicable, and relaunch PyGhidra.")
+    return False
+
 def create_ghidra_venv(python_cmd: List[str], venv_dir: Path) -> None:
     print(f'Creating Ghidra virtual environment at {venv_dir}...')
     subprocess.run(python_cmd + ['-m', 'venv', venv_dir.absolute()])
@@ -171,6 +189,8 @@ def install(install_dir: Path, python_cmd: List[str], pip_args: List[str], offer
         if offer_venv:
             ghidra_venv_choice: str = input('Install into new Ghidra virtual environment (y/n)? ')
             if ghidra_venv_choice.lower() in ('y', 'yes'):
+                if not check_venv(python_cmd):
+                    return None
                 venv_dir = get_ghidra_venv(install_dir, False)
                 create_ghidra_venv(python_cmd, venv_dir)
                 python_cmd = get_venv_exe(venv_dir)
@@ -183,6 +203,8 @@ def install(install_dir: Path, python_cmd: List[str], pip_args: List[str], offer
             else:
                 print('Please answer yes or no.')
                 return None 
+        if not check_pip(python_cmd):
+            return None
         subprocess.check_call(python_cmd + pip_args)
         return python_cmd
     elif not install_choice.lower() in ('n', 'no'):
@@ -203,6 +225,8 @@ def upgrade(python_cmd: List[str], pip_args: List[str], dist_dir: Path, current_
             return False
         choice: str = input(f'Do you wish to upgrade PyGhidra {current_version} to {included_version} (y/n)? ')
         if choice.lower() in ('y', 'yes'):
+            if not check_pip(python_cmd):
+                return False
             pip_args.append('-U')
             subprocess.check_call(python_cmd + pip_args)
             return True
@@ -265,6 +289,8 @@ def main() -> None:
             print('Externally managed environment detected')
             current_pyghidra_version = get_package_version(python_cmd, 'pyghidra')
             if current_pyghidra_version is None:
+                if not check_venv(python_cmd):
+                    sys.exit(1)
                 create_ghidra_venv(python_cmd, venv_dir)
                 python_cmd = get_venv_exe(venv_dir)
                 print(f'Switching to Ghidra virtual environment: {venv_dir}')
@@ -295,7 +321,7 @@ def main() -> None:
         subprocess.call(py_args + remaining)
     else:
         creation_flags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
-        subprocess.Popen(py_args + remaining, creationflags=creation_flags, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.Popen(py_args + remaining, creationflags=creation_flags, stdout=DEVNULL, stderr=DEVNULL)
 
 if __name__ == "__main__":
     main()

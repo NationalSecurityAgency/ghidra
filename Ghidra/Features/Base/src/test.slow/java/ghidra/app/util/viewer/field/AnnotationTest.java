@@ -48,8 +48,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.UnsignedIntegerDataType;
 import ghidra.program.model.data.VoidDataType;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.LabelFieldLocation;
@@ -87,9 +86,15 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		builder.createLabel("1001018", "mySym{0}"); // symbol with braces
 		builder.createLabel("1001022", "mySym\\{0\\}"); // symbol with braces escaped
 
+		// create a variable name that can also be interpreted as an address
+		String paramName = "deadbeef";
+		Parameter p =
+			new ParameterImpl(paramName, UnsignedIntegerDataType.dataType, builder.getProgram());
 		Function myFunction =
-			builder.createEmptyFunction("MyFunction", "1002000", 0x10, VoidDataType.dataType);
+			builder.createEmptyFunction("MyFunction", "1002000", 0x10, VoidDataType.dataType, p);
 		builder.createLocalVariable(myFunction, "myVariable", UnsignedIntegerDataType.dataType, 10);
+		builder.createLocalVariable(myFunction, "ram:" + paramName,
+			UnsignedIntegerDataType.dataType, 14);
 
 		return builder.getProgram();
 	}
@@ -742,14 +747,14 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testVariableAnnotation_BasicModify() {
+	public void testVariableAnnotation() {
 		String rawComment = "{@variable myVariable MyFunction}";
 		String display = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals("{@variable Stack[0xa] 01002000}", display);
 	}
 
 	@Test
-	public void testVariableAnnotation_BasicModify_NoFunction() {
+	public void testVariableAnnotation_NoFunction() {
 		String rawComment = "{@variable myVariable}";
 		String functionAddress = "01002000";
 		Address entryPoint = addr(functionAddress);
@@ -758,19 +763,74 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testLocalAnnotation_VariableAddress() {
+	public void testVariableAnnotation_BadName() {
+		String rawComment = "{@variable noSuchName MyFunction}";
+		String functionAddress = "01002000";
+		Address entryPoint = addr(functionAddress);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, entryPoint);
+		AttributedString prototype = prototype();
+		FieldElement element =
+			CommentUtils.parseTextForAnnotations(fixed, program, prototype, 0);
+		String displayString = element.getText();
+
+		assertContainsString("Could not find variable by address or name 'noSuchName'",
+			displayString);
+	}
+
+	@Test
+	public void testVariableAnnotation_BadName_BadFunction() {
+		String rawComment = "{@variable noSuchName NoSuchFunction}";
+		String functionAddress = "01002000";
+		Address entryPoint = addr(functionAddress);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, entryPoint);
+		AttributedString prototype = prototype();
+		FieldElement element =
+			CommentUtils.parseTextForAnnotations(fixed, program, prototype, 0);
+		String displayString = element.getText();
+
+		assertContainsString("Could not find function 'NoSuchFunction'",
+			displayString);
+	}
+
+	@Test
+	public void testVariableAnnotation_HexName_AsName() {
+		// the variable name can also be interpreted as an address
+		String paramName = "deadbeef";
+		String rawComment = "{@variable %s MyFunction}".formatted(paramName);
+		String display = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
+		assertEquals("{@variable register:1030 01002000}", display);
+	}
+
+	@Test
+	public void testVariableAnnotation_HexName_AsAddress() {
+		// the variable address matches an existing param name
+		String paramAddress = "ram:deadbeef";
+		String rawComment = "{@variable %s MyFunction}".formatted(paramAddress);
+		String display = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
+		assertEquals("{@variable Stack[0xe] 01002000}", display);
+	}
+
+	@Test
+	public void testVariableAnnotation_StackAddress() {
 		String rawComment = "{@variable Stack[0xa] MyFunction}";
 		String display = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals("{@variable Stack[0xa] 01002000}", display);
 	}
 
 	@Test
-	public void testLocalAnnotation_VariableAddress_NoFunction() {
+	public void testVariableAnnotation_StackAddress_NoFunction() {
 		String rawComment = "{@variable Stack[0xa]}";
 		String functionAddress = "01002000";
 		Address entryPoint = addr(functionAddress);
 		String display = CommentUtils.fixupAnnotations(rawComment, program, entryPoint);
 		assertEquals("{@variable Stack[0xa] 01002000}", display);
+	}
+
+	@Test
+	public void testVariableAnnotation_RegisterAddress() {
+		String rawComment = "{@variable register:1030 MyFunction}";
+		String display = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
+		assertEquals("{@variable register:1030 01002000}", display);
 	}
 
 	@Test

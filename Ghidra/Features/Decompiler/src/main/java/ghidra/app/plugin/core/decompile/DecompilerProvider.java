@@ -86,6 +86,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	private ToggleDockingAction displayUnreachableCodeToggle;
 	private ToggleDockingAction respectReadOnlyFlags;
+	private ToggleDockingAction toggleLockAction;
 
 	private final DecompilePlugin plugin;
 	private ClipboardService clipboardService;
@@ -146,7 +147,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 			new DecompilerController(getTool(), this, decompilerOptions, clipboardProvider);
 		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
 
-		// TODO move the hl controller into the panel
+		// FUTURE move the hl controller into the panel
 		highlightController = new LocationClangHighlightController();
 		decompilerPanel.setHighlightController(highlightController);
 		decorationPanel = new DecoratorPanel(decompilerPanel, isConnected) {
@@ -155,7 +156,6 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 				super.paint(g);
 				overlayPainter.paintOverlay(g, decompilerPanel.getViewContentBounds());
 			}
-
 		};
 
 		if (!isConnected) {
@@ -326,6 +326,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		if (!isVisible()) {
 			return;
 		}
+
 		ToolOptions fieldOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		ToolOptions opt = tool.getOptions(DecompilePlugin.OPTIONS_TITLE);
 
@@ -350,11 +351,15 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		if (currentLocation != null) {
 			if (lockDisplay) {
-				overlayPainter.setMessage(getOverlayRefreshMessage());
+				// Clear the cached results so the next time we come back to this function, it will
+				// get re-decompiled.  If we don't do this, then we would need the ability to mark 
+				// the cached results as needing update, so future loads of that cached function 
+				// will trigger the refresh message.
+				controller.clearCacheForCurrentFunction();
+				setOverlayMessage(getOverlayRefreshMessage());
 			}
 			else {
 				controller.refreshDisplay(program, currentLocation, null);
-				overlayPainter.setMessage("");
 			}
 		}
 	}
@@ -370,8 +375,18 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	private void updateOverlayMessage() {
 		if (overlayPainter.isActive()) {
-			overlayPainter.setMessage(getOverlayRefreshMessage());
+			setOverlayMessage(getOverlayRefreshMessage());
 		}
+	}
+
+	private void setOverlayMessage(String s) {
+		overlayPainter.setMessage(s);
+		decorationPanel.repaint();
+	}
+
+	private void clearOverlayMessage() {
+		overlayPainter.setMessage("");
+		decorationPanel.repaint();
 	}
 
 	private void refreshToggleButtons() {
@@ -528,7 +543,6 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	 */
 	void refresh() {
 		controller.refreshDisplay(program, currentLocation, null);
-		overlayPainter.setMessage("");
 	}
 
 	/**
@@ -611,6 +625,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		updateTitle();
 		contextChanged();
 		controller.setSelection(currentSelection);
+
+		clearOverlayMessage();
 	}
 
 	@Override
@@ -759,22 +775,34 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		// invoke later to give the window manage a chance to create the new window
 		// (its done in an invoke later)
 		Swing.runLater(() -> {
+			initializeClone(newProvider);
+		});
+	}
 
-			ViewerPosition myViewPosition = controller.getDecompilerPanel().getViewerPosition();
-			newProvider.doSetProgram(program);
+	private void initializeClone(DecompilerProvider newProvider) {
+		ViewerPosition myViewPosition = controller.getDecompilerPanel().getViewerPosition();
+		newProvider.doSetProgram(program);
 
-			// initialize the new provider's cache and then set the location
-			DecompileData myDecompileData = controller.getDecompileData();
-			newProvider.controller.addToCache(myDecompileData);
-			newProvider.setLocation(currentLocation, myViewPosition);
+		// initialize the new provider's cache and then set the location
+		DecompileData myDecompileData = controller.getDecompileData();
+		newProvider.controller.addToCache(myDecompileData);
+		newProvider.setLocation(currentLocation, myViewPosition);
 
-			// transfer any state after the new decompiler is initialized
-			DecompilerPanel myPanel = getDecompilerPanel();
-			DecompilerPanel newPanel = newProvider.getDecompilerPanel();
-			newProvider.doWhenNotBusy(() -> {
-				newPanel.setViewerPosition(myViewPosition);
-				newPanel.cloneHighlights(myPanel);
-			});
+		// update the lock action and overlay message for the new provider
+		if (lockDisplay) {
+			newProvider.toggleLockAction.setSelected(true);
+			newProvider.lockDisplay = true;
+			if (overlayPainter.isActive()) {
+				newProvider.setOverlayMessage(getOverlayRefreshMessage());
+			}
+		}
+
+		// transfer any state after the new decompiler is initialized
+		DecompilerPanel myPanel = getDecompilerPanel();
+		DecompilerPanel newPanel = newProvider.getDecompilerPanel();
+		newProvider.doWhenNotBusy(() -> {
+			newPanel.setViewerPosition(myViewPosition);
+			newPanel.cloneHighlights(myPanel);
 		});
 	}
 
@@ -830,7 +858,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	private void createActions(boolean isConnected) {
 		String owner = plugin.getName();
 
-		new ToggleActionBuilder("Lock Display", owner)
+		toggleLockAction = new ToggleActionBuilder("Lock Display", owner)
 				.toolBarIcon(LOCK_DISPLAY_ICON)
 				.description("Lock display for auto-updates, only update on manual refresh")
 				.helpLocation(new HelpLocation(HelpTopics.DECOMPILER, "LockDisplay"))

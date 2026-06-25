@@ -26,7 +26,7 @@
 #@icon icon.debugger
 #@help x64dbg#ssh
 #@depends Debugger-rmi-trace
-#@env OPT_TARGET_IMG:file="" "Image" "The target binary executable image"
+#@env OPT_TARGET_IMG:str="" "Image" "The target binary executable image"
 #@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_TARGET_DIR:str="" "Dir" "Initial directory"
 #@env OPT_SSH_PATH:file="ssh" "ssh command" "The path to ssh on the local system. Omit the full path to resolve using the system PATH."
@@ -43,6 +43,7 @@ function Compute-Python-Args {
 	param($TempFile)
 	
 	$arglist = @("$Env:OPT_PYTHON_EXE")
+	$arglist+=@("-i")
 	if ("$Env:OPT_PYTHON_ARGS" -ne "") {
 		$arglist+=($Env:OPT_PYTHON_ARGS)
 	}

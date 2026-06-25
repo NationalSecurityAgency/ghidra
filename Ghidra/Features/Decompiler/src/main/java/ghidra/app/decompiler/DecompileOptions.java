@@ -477,6 +477,7 @@ public class DecompileOptions {
 	private final static String MAX_INSTRUCTIONS = "Max Instructions per Function";
 	private final static String MAX_JUMPTABLE_ENTRIES = "Max Entries per Jumptable";
 	private final static Boolean LINE_NUMBER_DEF = Boolean.TRUE;
+	private final static int SUGGESTED_MAX_BADDATA = 4;		// Must match Architecture::resetDefaultsInternal
 
 	private boolean displayLineNumbers;
 	private int decompileTimeoutSeconds;
@@ -484,6 +485,8 @@ public class DecompileOptions {
 	private int maxIntructionsPer;
 	private int maxJumpTableEntries;
 	private int cachedResultsSize;
+
+	private int maxBadData;		// Maximum number of bad data exceptions caught before aborting
 
 	private DecompilerLanguage displayLanguage; // Output language displayed by the decompiler
 
@@ -533,6 +536,7 @@ public class DecompileOptions {
 		maxIntructionsPer = SUGGESTED_MAX_INSTRUCTIONS;
 		maxJumpTableEntries = SUGGESTED_MAX_JUMPTABLE_ENTRIES;
 		cachedResultsSize = SUGGESTED_CACHED_RESULTS_SIZE;
+		maxBadData = SUGGESTED_MAX_BADDATA;
 		nameTransformer = null;
 	}
 
@@ -981,6 +985,9 @@ public class DecompileOptions {
 		if (maxJumpTableEntries != SUGGESTED_MAX_JUMPTABLE_ENTRIES) {
 			appendOption(encoder, ELEM_JUMPTABLEMAX, Integer.toString(maxJumpTableEntries), "", "");
 		}
+		if (maxBadData != SUGGESTED_MAX_BADDATA) {
+			appendOption(encoder, ELEM_BADDATACOUNT, Integer.toString(maxBadData), "", "");
+		}
 		appendOption(encoder, ELEM_PROTOEVAL, protoEvalModel, "", "");
 		encoder.closeElement(ELEM_OPTIONSLIST);
 	}
@@ -1326,6 +1333,13 @@ public class DecompileOptions {
 	}
 
 	/**
+	 * @return the maximum number of times the decompiler will catch a "bad data" exception
+	 */
+	public int getMaxBadData() {
+		return maxBadData;
+	}
+
+	/**
 	 * Retrieve the transformer being applied to data-type, function, and namespace names.
 	 * If no transform is being applied, a pass-through object is returned.
 	 * @return the transformer object
@@ -1375,6 +1389,14 @@ public class DecompileOptions {
 	 */
 	public void setNoCastPrint(boolean noCastPrint) {
 		this.noCastPrint = noCastPrint;
+	}
+
+	/**
+	 * Set the maximum number of times the decompiler will catch a "bad data" exception
+	 * @param val is the maximum value
+	 */
+	public void setMaxBadData(int val) {
+		maxBadData = val;
 	}
 
 	/**

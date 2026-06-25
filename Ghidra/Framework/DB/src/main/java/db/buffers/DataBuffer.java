@@ -33,7 +33,7 @@ public class DataBuffer implements Buffer, Externalizable {
 		"db.buffers.DataBuffer.compressedOutput";
 
 	private static boolean enableCompressedSerializationOutput =
-		Boolean.parseBoolean(System.getProperty(COMPRESSED_SERIAL_OUTPUT_PROPERTY, "false"));
+		Boolean.parseBoolean(System.getProperty(COMPRESSED_SERIAL_OUTPUT_PROPERTY, "true"));
 
 	public static void enableCompressedSerializationOutput(boolean enable) {
 		System.setProperty(COMPRESSED_SERIAL_OUTPUT_PROPERTY, Boolean.toString(enable));

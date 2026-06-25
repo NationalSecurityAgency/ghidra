@@ -373,7 +373,7 @@ public class AppConfig {
 
 		// Get the required launch properties file
 		File launchPropertiesFile = new File(installDir,
-			(isDev ? "Ghidra/RuntimeScripts/Common/" : "") + "support/" + LAUNCH_PROPERTIES_NAME);
+			(isDev ? "Ghidra/RuntimeScripts/" : "") + "support/" + LAUNCH_PROPERTIES_NAME);
 		if (!launchPropertiesFile.isFile()) {
 			throw new FileNotFoundException(
 				"Launch properties file does not exist: " + launchPropertiesFile);
@@ -453,6 +453,7 @@ public class AppConfig {
 					new File(localAppDataDirPath, appName + "/" + userSettingsDirName);
 				break;
 			case LINUX:
+			case OPEN_BSD:
 				userSettingsDir =
 					new File(userHomeDir, ".config/" + appName + "/" + userSettingsDirName);
 				break;

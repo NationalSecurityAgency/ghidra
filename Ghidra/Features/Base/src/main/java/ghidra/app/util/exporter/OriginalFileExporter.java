@@ -41,7 +41,7 @@ import utilities.util.FileUtilities;
  * WARNING: Programs written to disk with this exporter may be runnable on your native platform.
  * Use caution when exporting potentially malicious programs.
  */
-public class OriginalFileExporter extends Exporter {
+public class OriginalFileExporter extends ProgramExporter {
 
 	private static final String USER_MODS_OPTION_NAME = "Export User Byte Modifications";
 	private static final boolean USER_MODS_OPTION_DEFAULT = true;
@@ -64,6 +64,11 @@ public class OriginalFileExporter extends Exporter {
 	}
 
 	@Override
+	public boolean canExportDomainObject(Class<? extends DomainObject> domainObjectClass) {
+		return Program.class.isAssignableFrom(domainObjectClass);
+	}
+
+	@Override
 	public boolean canExportDomainObject(DomainObject domainObject) {
 		if (domainObject instanceof Program program) {
 			return !program.getMemory().getAllFileBytes().isEmpty();
@@ -75,12 +80,14 @@ public class OriginalFileExporter extends Exporter {
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet,
 			TaskMonitor monitor) throws IOException, ExporterException {
 
-		if (!(domainObj instanceof Program)) {
-			log.appendMsg("Unsupported type: " + domainObj.getClass().getSimpleName());
+		Program program;
+		try {
+			program = getProgram(domainObj);
+		}
+		catch (ClassCastException e) {
+			log.appendMsg("Unsupported type: " + domainObj.getClass().getName());
 			return false;
 		}
-
-		Program program = (Program) domainObj;
 
 		List<FileBytes> allFileBytes = program.getMemory().getAllFileBytes();
 		if (allFileBytes.isEmpty()) {

@@ -1233,7 +1233,13 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 			throws Exception {
 		useMatch("0x00401040", "0x00401040");
 
-		setLanguage(sourceFunction, "Toy:LE:32:default", "default");
+		// NOTE: This test is performing an unsupported operation when changing a
+		// Program's Language while it is in use.  This is error prone
+		// since a DomainObjectEvent.RESTORED will be triggered which requires
+		// all Program related objects to be discarded since their state is
+		// unreliable and error prone.
+
+		setLanguage(sourceProgram, "Toy:LE:32:default", "default");
 		setCallingConvention(sourceFunction, "__stdcall");
 		setCallingConvention(destinationFunction, "__cdecl");
 
@@ -1274,7 +1280,13 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 			throws Exception {
 		useMatch("0x00401040", "0x00401040");
 
-		setLanguage(sourceFunction, "Toy:LE:32:default", "default");
+		// NOTE: This test is performing an unsupported operation when changing a
+		// Program's Language while it is in use.  This is error prone
+		// since a DomainObjectEvent.RESTORED will be triggered which requires
+		// all Program related objects to be discarded since their state is
+		// unreliable and error prone.
+
+		setLanguage(sourceProgram, "Toy:LE:32:default", "default");
 		setCallingConvention(sourceFunction, "__stdcall");
 		setCallingConvention(destinationFunction, "__cdecl");
 
@@ -2544,10 +2556,27 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		}
 	}
 
-	private void setLanguage(Function function, String languageID, String compilerSpecName)
+	/**
+	 * Alter the Language and CompilerSpec used by a specified Program.
+	 * <p>
+	 * WARNING! Invoking this method requires all Program related objects to be discarded.
+	 * Continued use of objects previously obtained from the specified program may have an
+	 * invalid state.
+	 *  
+	 * @param program program whose language is to be changed
+	 * @param languageID new language ID
+	 * @param compilerSpecName compiler space ID known to language
+	 * @throws LanguageNotFoundException specified language could not be found
+	 * @throws IllegalStateException thrown if any error occurs, including a cancelled monitor, which leaves this 
+	 * program object in an unusable state.  The current transaction should be aborted and the program instance
+	 * discarded.
+	 * @throws IncompatibleLanguageException thrown if the new language is too different from the
+	 * existing language.
+	 * @throws LockException if the program is shared and not checked out exclusively.
+	 */
+	private void setLanguage(Program program, String languageID, String compilerSpecName)
 			throws IllegalStateException, LockException, IncompatibleLanguageException,
 			LanguageNotFoundException {
-		Program program = function.getProgram();
 		int transaction = -1;
 		try {
 			transaction =

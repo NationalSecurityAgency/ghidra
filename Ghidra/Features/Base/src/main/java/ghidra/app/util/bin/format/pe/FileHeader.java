@@ -168,7 +168,7 @@ public class FileHeader implements StructConverter {
 	public final static int IMAGE_FILE_MACHINE_WCEMIPSV2 = 0x169;	//	MIPS little-endian WCE v2
 
 	private short machine;
-	private short numberOfSections;
+	private int numberOfSections;
 	private int timeDateStamp;
 	private int pointerToSymbolTable;
 	private int numberOfSymbols;
@@ -363,10 +363,7 @@ public class FileHeader implements StructConverter {
 		long oldIndex = reader.getPointerIndex();
 
 		int tmpIndex = getPointerToSections();
-		if (numberOfSections < 0) {
-			Msg.error(this, "Number of sections = " + numberOfSections);
-		}
-		else if (optHeader.getFileAlignment() == 0) {
+		if (optHeader.getFileAlignment() == 0) {
 			Msg.error(this, "File alignment == 0: section processing skipped");
 		}
 		else {
@@ -434,7 +431,7 @@ public class FileHeader implements StructConverter {
 		if (symbolTableOffset == 0) {
 			return;
 		}
-		if (numberOfSymbols < 0) {
+		if (numberOfSymbols < 0 || numberOfSymbols > NTHeader.MAX_SANE_COUNT) {
 			Msg.error(this, "Invalid symbol count: " + Integer.toHexString(numberOfSymbols));
 			return;
 		}
@@ -497,7 +494,7 @@ public class FileHeader implements StructConverter {
 		reader.setPointerIndex(startIndex);
 
 		machine = reader.readNextShort();
-		numberOfSections = reader.readNextShort();
+		numberOfSections = reader.readNextUnsignedShort();
 		timeDateStamp = reader.readNextInt();
 		pointerToSymbolTable = reader.readNextInt();
 		numberOfSymbols = reader.readNextInt();
@@ -527,7 +524,7 @@ public class FileHeader implements StructConverter {
 
 	private void setSectionHeaders(SectionHeader[] sectionHeaders) {
 		this.sectionHeaders = sectionHeaders;
-		numberOfSections = (short) sectionHeaders.length;
+		numberOfSections = sectionHeaders.length;
 	}
 
 	void writeHeader(RandomAccessFile raf, DataConverter dc) throws IOException {

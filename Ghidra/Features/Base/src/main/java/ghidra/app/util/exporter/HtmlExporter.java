@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.util.task.TaskMonitor;
  * An implementation of exporter that creates
  * an HTML representation of the program.
  */
-public class HtmlExporter extends Exporter {
+public class HtmlExporter extends ProgramExporter {
 	private ProgramTextOptions options;
 
 	/**
@@ -58,11 +58,14 @@ public class HtmlExporter extends Exporter {
 	public boolean export(File file, DomainObject domainObj, AddressSetView addressSet,
 			TaskMonitor monitor) throws IOException, ExporterException {
 
-		if (!(domainObj instanceof Program)) {
+		Program program;
+		try {
+			program = getProgram(domainObj);
+		}
+		catch (ClassCastException e) {
 			log.appendMsg("Unsupported type: " + domainObj.getClass().getName());
 			return false;
 		}
-		Program program = (Program) domainObj;
 
 		getOptions(() -> program);
 		new ProgramTextWriter(file, program, addressSet, monitor, options, provider);

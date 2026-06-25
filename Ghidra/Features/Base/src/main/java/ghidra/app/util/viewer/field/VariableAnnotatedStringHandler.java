@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.viewer.field;
 
+import java.awt.FontMetrics;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -92,7 +93,7 @@ public class VariableAnnotatedStringHandler implements AnnotatedStringHandler {
 		String entry = text[2];
 		Function function = getFunctionAt(program, entry);
 		if (function == null) {
-			throw new AnnotationException("Could not find function \"" + entry + "\"");
+			throw new AnnotationException("Could not find function '%s'".formatted(entry));
 		}
 
 		String address = text[1];
@@ -100,19 +101,18 @@ public class VariableAnnotatedStringHandler implements AnnotatedStringHandler {
 		if (var == null) {
 			String functionName = function.getName();
 			throw new AnnotationException(
-				"Could not find variable at address %s in function %s".formatted(functionName,
-					address));
+				"Could not find variable by address or name '%s' in function '%s'".formatted(
+					address, functionName));
 		}
 
 		return new AttributedString(var.getName(), prototypeString.getColor(0),
 			prototypeString.getFontMetrics(0), true, prototypeString.getColor(0));
 	}
 
-	private AttributedString createPlaceholderString(AttributedString prototypeString,
-			String[] text) {
+	private AttributedString createPlaceholderString(AttributedString prototype, String[] text) {
 		String joined = Arrays.stream(text).collect(Collectors.joining(" "));
-		return new AttributedString(joined, Palette.LIGHT_GRAY,
-			prototypeString.getFontMetrics(0));
+		FontMetrics fm = prototype.getFontMetrics(0);
+		return new AttributedString(joined, Palette.LIGHT_GRAY, fm);
 	}
 
 	private Function getFunction(Program program, String value) {
@@ -176,7 +176,11 @@ public class VariableAnnotatedStringHandler implements AnnotatedStringHandler {
 		VariableMatcher matcher = createVariableMatcher(program, value);
 		Variable var = findVariable(function, matcher);
 		if (var == null) {
-			return null;
+			return new String[] {
+				"variable",
+				value, // leave the variable text untouched
+				function.getEntryPoint().toString()
+			};
 		}
 
 		return new String[] {
@@ -251,9 +255,14 @@ public class VariableAnnotatedStringHandler implements AnnotatedStringHandler {
 		return null;
 	}
 
+	/* Only local addresses, such as Stack, register, and HASH need to be supported. */
 	private static Address toAddress(Program p, String s) {
 		AddressFactory af = p.getAddressFactory();
-		return af.getAddress(s);
+		Address addr = af.getAddress(s);
+		if (addr == null) {
+			return null;
+		}
+		return addr.isMemoryAddress() ? null : addr;
 	}
 
 	private static interface VariableMatcher {

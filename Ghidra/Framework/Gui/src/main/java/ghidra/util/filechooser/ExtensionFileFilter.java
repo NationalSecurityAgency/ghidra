@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,13 @@
  */
 package ghidra.util.filechooser;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import java.io.File;
-import java.io.FileFilter;
+import ghidra.util.Msg;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * A convenience implementation of FileFilter that filters out
@@ -73,9 +75,19 @@ public class ExtensionFileFilter implements GhidraFileFilter {
 	public ExtensionFileFilter(String[] filters, String description) {
 		this.extensions = Arrays.asList(filters)
 				.stream()
-				.map(String::toLowerCase)
+				.map(ExtensionFileFilter::clean)
 				.collect(Collectors.toList());
 		this.description = description;
+	}
+
+	private static String clean(String ext) {
+		String lc = ext.toLowerCase();
+		if (lc.startsWith(".")) {
+			Msg.error(ExtensionFileFilter.class, "Extensions cannot start with '.': " + ext,
+				ReflectionUtilities.createJavaFilteredThrowable());
+			return lc.substring(1);
+		}
+		return lc;
 	}
 
 	/**
@@ -97,19 +109,23 @@ public class ExtensionFileFilter implements GhidraFileFilter {
 		if (extensions.isEmpty()) {
 			return true;
 		}
+
 		String filename = f.getName().toLowerCase();
 		if (filename.startsWith(".")) {
-			return false;
+			return false; // assuming we don't want to allow hidden files?
 		}
-		int fnLen = filename.length();
+
+		int n = filename.length();
 		for (String ext : extensions) {
-			int extLen = ext.length();
-			int extStart = fnLen - extLen;
-			if (extStart > 0 && filename.substring(extStart).equals(ext) &&
-				filename.charAt(extStart - 1) == '.') {
+			if (ext.length() >= n) {
+				continue; // >= since we will add the '.'
+			}
+
+			if (filename.endsWith('.' + ext)) {
 				return true;
 			}
 		}
+
 		return false;
 	}
 

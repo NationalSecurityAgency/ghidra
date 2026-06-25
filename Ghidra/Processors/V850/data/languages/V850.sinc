@@ -1,0 +1,748 @@
+###########################################
+#####                                 #####
+#####    V850 SLEIGH specification    #####
+#####                                 #####
+###########################################
+define endian = little;
+define alignment = 2;
+
+# Size & default are required
+define space  ram       type=ram_space      size=4  default;
+define space  register  type=register_space size=4;
+define space  sysreg    type=ram_space size=2;
+
+##########################
+#####    Register    #####
+##########################
+
+
+##### General-purpose registers (r0 to r31) #####
+
+define register offset=0x0 size=0x4
+[
+  r0   r1   r2   sp   gp   tp   r6   r7   r8   r9   
+  r10  r11  r12  r13  r14  r15  r16  r17  r18  r19 
+  r20  r21  r22  r23  r24  r25  r26  r27  r28  r29  
+  ep   lp
+];
+
+
+@define UM  	"UMf"#"PSW[30,1]"
+@define NP  	"NPf"#"PSW[7,1]"
+@define EP  	"EPf"#"PSW[6,1]"
+@define ID  	"IDf"#"PSW[5,1]"
+@define SAT 	"SATf"#"PSW[4,1]"
+@define CY  	"CYf"#"PSW[3,1]"
+@define OV  	"OVf"#"PSW[2,1]"
+@define S   	"Sf"#"PSW[1,1]"
+@define Z   	"Zf"#"PSW[0,1]"
+
+define register offset=0x800 size=1
+[
+	Zf Sf OVf CYf SATf IDf EPf NPf UMf
+];
+
+##### Control/Special registers #####
+
+@ifndef V850E3
+define sysreg offset=0x0 size=0x4
+[
+  EIPC   EIPSW  FEPC   FEPSW  ECR    PSW    FPSR   FPEPC  FPST  FPCC   
+  FPCFG  SCCFG  SCBP   EIIC   FEIC   DBIC   CTPC   CTPSW  DBPC  DBPSW  
+  CTBP   DIR    DBG22  DBG23  DBG24  DBG25  DBG26  DBG27  EIWR  FEWR  
+  DBWR   BSEL
+];
+
+
+
+@else
+# The v850e3 uses a selID selector for system registers
+# selID 0
+define sysreg offset=0x0 size=0x4
+[
+	EIPC  EIPSW  FEPC   FEPSW  _     PSW   FPSR  FPEPC
+	FPST  FPCC   FPCFG  FPEC   _     EIIC  FEIC  _
+	CTPC  CTPSW  DBPC   DBPSW  CTBP  _     _     _
+	_     _      _      _      EIWR  FEWR  _     BSEL
+];
+
+# selID 1
+define sysreg offset=0x80 size=0x4
+[
+	MCFG0     MCFG1     RBASE     EBASE     INTBP  MCTL    PID    FPIPR
+	_         _         TCSEL     SCCFG     SCBP   HVCCFG  HVCBP  VSEL
+	VMPRT0    VMPRT1    VMPRT2    _         _      _       _      VMSCCTL
+	VMSCTBL0  VMSCTBL1  VMSCTBL2  VMSCTBL3  _      _       _      _
+];
+
+# selID 2
+define sysreg offset=0x100 size=0x4
+[
+	HTCFG0    _         _         _         _         HTCTL     MEA       ASID
+	MEI       ISPR      PMR       ICSR      INTCFG    _         _         _
+	TLBSCH    _         _         _         _         _         _         HTSCCTL
+	HTSCTBL0  HTSCTBL1  HTSCTBL2  HTSCTBL3  HTSCTBL4  HTSCTBL5  HTSCTBL6  HTSCTBL7
+];
+
+# no selID 3
+# selID 4
+define sysreg offset=0x200 size=0x4
+[
+	TLBIDX  _       _       _       TELO0   TELO1   TEHI0   TEHI1   
+	_       _       TLBCFG  _       BWERRL  BWERRH  BRERRL  BRERRH   
+	ICTAGL  ICTAGH  ICDATL  ICDATH  DCTAGL  DCTAGH  DCDATL  DCDATH   
+	ICCTRL  DCCTRL  ICCFG   DCCFG   ICERR   DCERR   _       _
+];
+
+# selID 5
+define sysreg offset=0x280 size=0x4
+[
+	MPM  MPRC _    _    MPBRGN  MPTRGN  _       _
+	MCA  MCS  MCC  MCR  _       _       _       _
+	_    _    _    _    MPPRT0  MPPRT1  MPPRT2  _
+	_    _    _    _    _       _       _       _
+];
+
+# selID 6
+define sysreg offset=0x300 size=0x4
+[
+	MPLA0  MPUA0  MPAT0  _  MPLA1  MPUA1  MPAT1  _
+	MPLA2  MPUA2  MPAT2  _  MPLA3  MPUA3  MPAT3  _
+	MPLA4  MPUA4  MPAT4  _  MPLA5  MPUA5  MPAT5  _
+	MPLA6  MPUA6  MPAT6  _  MPLA7  MPUA7  MPAT7  _
+];
+
+# selID 7
+define sysreg offset=0x380 size=0x4
+[
+	MPLA8   MPUA8   MPAT8   _  MPLA9   MPUA9   MPAT9   _
+	MPLA10  MPUA10  MPAT10  _  MPLA11  MPUA11  MPAT11  _
+	MPLA12  MPUA12  MPAT12  _  MPLA13  MPUA13  MPAT13  _
+	MPLA14  MPUA14  MPAT14  _  MPLA15  MPUA15  MPAT15  _
+];
+
+@endif #ndef V850E3
+
+define register offset=0x0 size=0x8 
+[ 
+  r0r1    r2sp    r4r5    r6r7    r8r9    
+  r10r11  r12r13  r14r15  r16r17  r18r19
+  r20r21  r22r23  r24r25  r26r27  r28r29  
+  eplp
+];
+
+define register offset=0x100 size=0x4 [ PC ];     # offset = 0x100(256) = PreOffset+PreRegister*Size = 128+32*4 = 256
+
+define register offset=0x200 size=4 [ _sp ];
+define register offset=0x1000 size=4 contextreg;
+
+define context contextreg
+regNum = (17,21)
+counter=(27,31)
+;
+
+########################
+#####    Tokens    #####
+########################
+
+
+define token instr(16)
+	op0000 	  = (0,0)
+	op0003 	  = (0,3)
+	op0004 	  = (0,4)
+	_R0004 	  = (0,4)
+	SR0004 	  = (0,4)
+	R0004x2   = (0,4)
+	s0004 	  = (0,4) 	signed
+	s0005 	  = (0,5) 	signed
+	op0005 	  = (0,5)
+	op0006 	  = (0,6)
+	op0010 	  = (0,10)
+	op0015 	  = (0,15)
+	op0106 	  = (1,6)
+	s0404     = (4,4)
+	op0406 	  = (4,6)
+	op0410 	  = (4,10)
+	op0505	  = (5,5)
+	op0510	  = (5,10)
+	op0515 	  = (5,15)
+	op0610 	  = (6,10)
+	op0615 	  = (6,15)
+	op0710 	  = (7,10)
+	op1112    = (11,12)
+	op1113 	  = (11,13)
+	op1114 	  = (11,14)
+	op1115 	  = (11,15)
+	_R1115 	  = (11,15)
+	SR1115 	  = (11,15)
+	R1115x2   = (11,15)
+	regId     = (11,15)
+	s1115 	  = (11,15)	signed
+	op1315    = (13,15)
+	op1415 	  = (14,15)
+	op1515 	  = (15,15)
+;
+
+define token instr2(16)
+	op1616 	  = (0,0)
+	op1617 	  = (0,1)
+	op1619 	  = (0,3)
+	op1620 	  = (0,4)
+	R1620 	  = (0,4)
+	R1620x2   = (0,4)
+	op1626	  = (0,10)
+	op1631 	  = (0,15)
+	s1631 	  = (0,15)	signed
+	fcbit1719 = (1,3)
+	op1719    = (1,3)
+	op1720 	  = (1,4)
+	op0_1720  = (1,4)
+	op1_1720  = (1,4)
+	op1731    = (1,15)
+	s1731 	  = (1,15) 	signed
+	op1821 	  = (2,5)
+	s1821 	  = (2,5) 	signed
+	op2020 	  = (4,4)
+	op2026 	  = (4,10)
+	op2122 	  = (5,6)
+	op2126 	  = (5,10)
+	op2226 	  = (6,10)
+	op2323 	  = (7,7)
+	op2426 	  = (8,10)
+	op2727    = (11,11)
+	op2729 	  = (11,13)
+	fcond2730 = (11,14)
+	op2731 	  = (11,15)
+	op2831    = (12,15)
+	_R2731 	  = (11,15)
+	R2731x2   = (11,15)
+	selId     = (11,15)
+	op3031 	  = (14,15)
+	op3131 	  = (15,15)
+;
+
+define token instr3(16)
+	op3247 	  = (0,15)
+	s3247 	  = (0,15)	signed
+;
+
+define token instr4(16)
+	op4863 	  = (0,15)
+;
+
+# used in PREPARE/DISPOSE instructions
+define token prep(32)
+	prep00 	  = (0,0)
+	prep0105  = (1,5)
+	prep0615  = (6,15)
+	prep1620  = (16,20)
+	prep21 	  = (21,21)
+	prep22 	  = (22,22)
+	prep2223  = (22,31)
+	prep23 	  = (23,23)
+	prep24 	  = (24,24)
+	prep25 	  = (25,25)
+	prep26 	  = (26,26)
+	prep27 	  = (27,27)
+	prep28 	  = (28,28)
+	prep2831  = (28,31)
+	prep29 	  = (29,29)
+	prep2931  = (29,31)
+	prep3031  = (30,31)
+	prep2231  = (22,31)
+	prep2331  = (23,31)
+	prep2431  = (24,31)
+	prep2427  = (24,27)
+	prep2527  = (25,27)
+	prep2627  = (26,27)
+	prep30 	  = (30,30)
+	prep31 	  = (31,31)
+;
+
+###########################
+#####    Variables    #####
+###########################
+
+
+attach variables [ _R0004 _R1115 _R2731 R1620 prep1620 ]
+[ 
+  r0  r1  r2  sp  gp  tp  r6  r7  r8  r9 
+  r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 
+  r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 
+  ep  lp 
+];
+
+attach variables [ R0004x2 R1115x2 R1620x2 R2731x2 ]
+[ 
+  r0r1 	 _  r2sp    _  r4r5   _ r6r7   _  r8r9    _ 
+  r10r11 _  r12r13  _  r14r15 _ r16r17 _  r18r19  _ 
+  r20r21 _  r22r23  _  r24r25 _ r26r27 _  r28r29  _ 
+  eplp 	 _ 
+];
+
+@ifndef V850E3
+attach variables [ SR0004 SR1115 ]
+[
+  EIPC   EIPSW  FEPC   FEPSW  ECR    PSW    FPSR   FPEPC  FPST  FPCC   
+  FPCFG  SCCFG  SCBP   EIIC   FEIC   DBIC   CTPC   CTPSW  DBPC  DBPSW  
+  CTBP   DIR    DBG22  DBG23  DBG24  DBG25  DBG26  DBG27  EIWR  FEWR  
+  DBWR   BSEL
+];
+@else
+
+@endif #ndef V850E3
+
+attach variables [op0_1720] [r0 r2 gp r6 r8 r10 r12 r14 r16 r18 r20 r22 r24 r26 r28 ep];
+attach variables [op1_1720] [r1 sp tp r7 r9 r11 r13 r15 r17 r19 r21 r23 r25 r27 r29 lp];
+
+
+attach names [fcond2730]
+["f" "un" "eq" "ueq" "olt" "ult" "ole" "ule" "sd" "ngle" "seq" "ngl" "lt" "nge" "le" "ngt"];
+
+
+
+@define EICC  	"ECR[0,16]"
+@define FECC  	"ECR[16,16]"
+
+########################
+#####    Macros    #####
+########################
+
+
+##### CARRY-Flag #####
+
+macro set_CY_pos(op1, op2)
+{
+	$(CY) = carry(op1, op2);
+}
+
+macro set_CY_pos2(op1, op2, carryIn)
+{
+	local res = op1 + op2;
+	$(CY) = carry(op1, op2) || carry(res, carryIn);
+}
+
+macro set_CY_neg(op1, op2)
+{
+	$(CY) = op1 < op2;
+}
+
+macro set_CY_neg2(op1, op2, carryIn)
+{
+	local res = op2 + carryIn;
+	$(CY) = (op1 < res);
+}
+
+
+
+##### Overflow-Flag #####
+
+macro set_OV_pos(op1, op2)
+{
+	$(OV) = scarry(op1, op2);
+}
+
+macro set_OV_pos2(op1, op2, carryIn)
+{
+	local result = op1 + op2;
+	$(OV) = scarry(op1, op2) ^^ scarry(result, carryIn);
+}
+
+macro set_OV_neg(op1, op2)
+{	
+	$(OV) = sborrow(op1,op2);
+}
+
+macro set_OV_neg2(op1, op2, carryIn)
+{
+	local borrowIn = (1-carryIn);
+	local result = op1 - op2;
+	$(OV) = sborrow( op1, op2 ) ^^ sborrow( result, borrowIn );
+}
+
+
+
+##### S/Z-Flags #####
+
+macro set_S(flag)
+{
+	$(S) = flag s< 0;
+}
+
+macro set_Z(var)
+{
+	$(Z) = var == 0;
+}
+
+
+
+##### General-Flag-Macros #####
+
+macro set_general_flags_pos(var1, var2)
+{
+	local res = var1 + var2;
+	set_CY_pos(var1, var2);
+	set_OV_pos(var1, var2);
+	set_S(res);
+	set_Z(res);
+}
+
+macro set_general_flags_neg(var1, var2)
+{
+	local res = var1 - var2;
+	$(CY) = var1 < var2;
+	$(OV) = sborrow(var1, var2);
+	$(S) = res s< 0;
+	$(Z) = res == 0;
+}
+
+macro set_OV0_S_Z(var)
+{
+	$(OV) = 0;
+	set_S(var);
+	set_Z(var);
+}
+
+
+
+##### General-Macros #####
+
+# if condition is != 0
+
+macro either_or(res, cond, trueVal, falseVal) {
+	res = zext(cond) * trueVal | zext(!cond) * falseVal;	
+}
+# if condition is == 1
+macro either_or1(res, cond, trueVal, falseVal)
+{
+	res = (trueVal * zext(cond == 1)) + (falseVal * zext(cond != 1));
+}
+
+macro shift_right_logic(res, var, shift_)
+{
+	local shift = shift_ & 0x1f;
+	local mask =  var & (zext(shift != 0) << (shift - 1));
+	res = var >> shift;
+	set_OV0_S_Z(res);
+	$(CY) = ((mask != 0) && (shift != 0));
+}
+
+macro shift_right_arith(res, var, shift_)
+{
+	local shift = shift_ & 0x1f;
+	local mask = (zext(shift != 0) * var) & (1 << (shift - 1));
+	res = var s>> shift;
+	set_OV0_S_Z(res);
+	$(CY) = ((mask != 0) && (shift != 0));
+}
+
+macro shift_left_logic(res, var, shift_) 
+{
+	local shift = shift_ & 0x1f;
+	local mask = (zext(shift != 0) * var) & (1 << (32 - shift));
+	res = var << shift;
+	set_OV0_S_Z(res);
+	$(CY) = ((mask != 0) && (shift != 0));
+}
+
+
+macro bfmask (res, off, width) {
+	res = ((1 << width) - 1) << (32 - off - width);
+}
+
+##### Stack Macros #####
+
+macro push(reg)
+{
+	sp = sp - 4;
+	*:4 sp = reg;
+}
+
+macro pop(reg)
+{
+	reg = *:4 sp;
+	sp = sp + 4;
+}
+
+macro pushsp(reg)
+{
+	_sp = _sp - 4;
+	*:4 _sp = reg;
+}
+
+macro popsp(reg)
+{
+	reg = *:4 _sp;
+	_sp = _sp + 4;
+}
+
+##### Search Macros #####
+
+macro SearchRight(res, var, char)
+{
+	local var_:4 = var;
+	res = 0;
+
+	<loop>
+	if ((var_ & 0x1) == char)
+		goto <end>;
+
+	var_ = var_ >> 1;
+	res = res + 1;
+
+	if (res < 32)
+		goto <loop>;
+	
+	res = 0;
+
+	<end>
+}
+
+macro SearchLeft(res, var, char)
+{
+	local var_:4 = var;
+	res = 0;
+
+	<loop>
+	if ((var_ >> 31) == char) 
+		goto <end>;
+
+	var_ = var_ << 1;
+	res = res + 1;
+
+	if (res < 32) 
+		goto <loop>;
+
+	res = 0;
+
+	<end>
+}
+
+# macro saturate(var) 
+# {
+# 	if (var s> 0x7FFFFFFF) 
+#         	goto <pos_sat>;
+    
+# 	if (var s< -0x80000000) 
+#         	goto <neg_sat>;
+
+# 	goto <end>;
+
+# 	<pos_sat> 
+#     var =  0x7FFFFFFF; 
+#     goto <end>;
+
+# 	<neg_sat> 
+#     var = -0x80000000; 
+#     goto <end>;
+	
+#     <end>
+# }
+
+
+##### Float-Macros #####
+
+macro compare_float(res, fcond, reg1, reg2)
+{
+	local un = ((fcond & 1) == 1)	&    (nan(reg2) || nan(reg1));
+	local eq = ((fcond & 2) == 2)   &  (!(nan(reg2) || nan(reg1)))  &  (reg2 f== reg1);
+	local le = ((fcond & 4) == 4)	&  (!(nan(reg2) || nan(reg1)))  &  (reg2 f<  reg1);
+	#local ex = (fcond & 8)		&   ((nan(reg2) || nan(reg1)));
+	
+	res = zext(un|eq|le);
+}
+
+
+###########################
+#####    Conditions    ####
+###########################
+
+
+c0003: "v"	is op0003=0x0	{ tmp:1 = ($(OV)) == 1; 		export tmp; }
+c0003: "nv"	is op0003=0x8	{ tmp:1 = ($(OV)) == 0; 		export tmp; }
+c0003: "c"	is op0003=0x1	{ tmp:1 = ($(CY)) == 1; 		export tmp; }
+c0003: "nc"	is op0003=0x9	{ tmp:1 = ($(CY)) == 0; 		export tmp; }
+c0003: "e"	is op0003=0x2	{ tmp:1 = ($(Z)) == 1; 			export tmp; }
+c0003: "ne"	is op0003=0xA	{ tmp:1 = ($(Z)) == 0; 			export tmp; }
+c0003: "nh"	is op0003=0x3	{ tmp:1 = ($(CY) || $(Z)) == 1; 	export tmp; }
+c0003: "h"	is op0003=0xB	{ tmp:1 = ($(CY) || $(Z)) == 0; 	export tmp; }
+c0003: "n"	is op0003=0x4	{ tmp:1 = ($(S)) == 1; 			export tmp; }
+c0003: "p"	is op0003=0xC	{ tmp:1 = ($(S)) == 0; 			export tmp; }
+c0003: "t"	is op0003=0x5	{ tmp:1 = 1; 				export tmp; }
+c0003: "sa"	is op0003=0xD	{ tmp:1 = ($(SAT)) == 1; 		export tmp; }
+c0003: "lt"	is op0003=0x6	{ tmp:1 = ($(S) ^^ $(OV)) == 1; 	export tmp; }
+c0003: "ge"	is op0003=0xE	{ tmp:1 = ($(S) ^^ $(OV)) == 0; 	export tmp; }
+c0003: "le"	is op0003=0x7	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 1; export tmp; }
+c0003: "gt"	is op0003=0xF	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 0; export tmp; }
+
+c1720: "v"	is op1720=0x0	{ tmp:1 = ($(OV)) == 1; 		export tmp; }
+c1720: "nv"	is op1720=0x8	{ tmp:1 = ($(OV)) == 0; 		export tmp; }
+c1720: "c"	is op1720=0x1	{ tmp:1 = ($(CY)) == 1; 		export tmp; }
+c1720: "nc"	is op1720=0x9	{ tmp:1 = ($(CY)) == 0; 		export tmp; }
+c1720: "e"	is op1720=0x2	{ tmp:1 = ($(Z)) == 1; 			export tmp; }
+c1720: "ne"	is op1720=0xA	{ tmp:1 = ($(Z)) == 0; 			export tmp; }
+c1720: "nh"	is op1720=0x3	{ tmp:1 = ($(CY) || $(Z)) == 1; 	export tmp; }
+c1720: "h"	is op1720=0xB	{ tmp:1 = ($(CY) || $(Z)) == 0; 	export tmp; }
+c1720: "n"	is op1720=0x4	{ tmp:1 = ($(S)) == 1; 			export tmp; }
+c1720: "p"	is op1720=0xC	{ tmp:1 = ($(S)) == 0; 			export tmp; }
+c1720: "t"	is op1720=0x5	{ tmp:1 = 1; 				export tmp; }
+c1720: "sa"	is op1720=0xD	{ tmp:1 = ($(SAT)) == 1; 		export tmp; }
+c1720: "lt"	is op1720=0x6	{ tmp:1 = ($(S) ^^ $(OV)) == 1; 	export tmp; }
+c1720: "ge"	is op1720=0xE	{ tmp:1 = ($(S) ^^ $(OV)) == 0; 	export tmp; }
+c1720: "le"	is op1720=0x7	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 1; export tmp; }
+c1720: "gt"	is op1720=0xF	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 0; export tmp; }
+
+##################################
+#####    Sub-Constructors    #####
+##################################
+
+
+# read r0 always return zero
+R0004: _R0004 is _R0004 & _R0004=0	{ local x:4=0; 	export x;	}
+R0004: _R0004 is _R0004			{		export _R0004;	}
+
+R1115: _R1115 is _R1115 & _R1115=0	{ local	x:4=0; 	export x;	}
+R1115: _R1115 is _R1115			{ 		export _R1115;	}
+
+R2731: _R2731 is _R2731 & _R2731=0	{ local x:4=0; 	export x;	}
+R2731: _R2731 is _R2731			{		export _R2731;	}
+
+
+adr9: res is op0406 & s1115
+[ res = ((s1115 << 4) | (op0406 << 1)) + inst_start; ] 
+{ 
+	export *:4 res; 
+}
+adr17: res is  s0404; s1731
+[ res = ((s0404 << 16) | (s1731 << 1)) + inst_start; ] 
+{ 
+	export *:4 res; 
+}
+adr22: res is s0005; op1631 & op1616=0
+[ res = ((s0005 << 16) | op1631) + inst_start; ] 
+{ 
+	export *:4 res;
+}
+
+adr22off4: res is s0005; op1631 & op1616=0
+[ res = ((s0005 << 16) | op1631) + inst_start + 4; ] 
+{ 
+	export *:4 res;
+}
+
+adr32: res is op1631 & op1616=0; op3247
+[ res = ((op3247 << 16) | op1631) + inst_start; ]
+{
+	export *:4 res;
+}
+
+adr32i: res is op1631 & op1616=0; op3247
+[ res = ((op3247 << 16) | op1631); ]
+{
+	export *[const]:4 res;
+}
+
+reg4: op0_1720 is op2323=0 & op0_1720 { export op0_1720; }
+reg4: op1_1720 is op2323=1 & op1_1720 { export op1_1720; }
+
+
+
+##### Prep/Disp Loop #####
+
+PrepList20: r20			is prep27=1 & r20					{ push(r20); }
+PrepList20:			is prep27=0						{ }
+
+PrepList21: r21			is prep26=1 & prep27=0 & r21				{ push(r21); }
+PrepList21: PrepList20,r21	is prep26=1 & PrepList20 & r21				{ push(r21); }
+PrepList21: PrepList20		is prep26=0 & PrepList20		 		{ }
+
+PrepList22: r22			is prep25=1 & prep2627=0 & r22				{ push(r22); }
+PrepList22: PrepList21,r22	is prep25=1 & PrepList21 & r22				{ push(r22); }
+PrepList22: PrepList21		is prep25=0 & PrepList21		 		{ }
+
+PrepList23: r23			is prep24=1 & prep2527=0 & r23				{ push(r23); }
+PrepList23: PrepList22,r23	is prep24=1 & PrepList22 & r23				{ push(r23); }
+PrepList23: PrepList22		is prep24=0 & PrepList22		 		{ }
+
+PrepList24: r24			is prep31=1 & prep2427=0 & r24				{ push(r24); }
+PrepList24: PrepList23,r24	is prep31=1 & PrepList23 & r24				{ push(r24); }
+PrepList24: PrepList23		is prep31=0 & PrepList23		 		{ }
+
+PrepList25: r25			is prep30=1 & prep2427=0 & prep31=0 & r25		{ push(r25); }
+PrepList25: PrepList24,r25	is prep30=1 & PrepList24 & r25				{ push(r25); }
+PrepList25: PrepList24		is prep30=0 & PrepList24				{ }
+
+PrepList26: r26			is prep29=1 & prep2427=0 & prep3031=0 & r26		{ push(r26); }
+PrepList26: PrepList25,r26	is prep29=1 & PrepList25 & r26				{ push(r26); }
+PrepList26: PrepList25		is prep29=0 & PrepList25				{ }
+
+PrepList27: r27			is prep28=1 & prep2427=0 & prep2931=0 & r27		{ push(r27); }
+PrepList27: PrepList26,r27	is prep28=1 & PrepList26 & r27				{ push(r27); }
+PrepList27: PrepList26		is prep28=0 & PrepList26				{ }
+
+PrepList28: r28			is prep23=1 & prep2431=0 & r28				{ push(r28); }
+PrepList28: PrepList27,r28	is prep23=1 & PrepList27 & r28				{ push(r28); }
+PrepList28: PrepList27		is prep23=0 & PrepList27				{ }
+
+PrepList29: r29			is prep22=1 & prep2431=0 & prep23=0 & r29		{ push(r29); }
+PrepList29: PrepList28,r29	is prep22=1 & PrepList28 & r29				{ push(r29); }
+PrepList29: PrepList28		is prep22=0 & PrepList28				{ }
+
+PrepList30: ep			is prep00=1 & prep2431=0 & prep2223=0 & ep		{ push(ep); }
+PrepList30: PrepList29,ep	is prep00=1 & PrepList29 & ep				{ push(ep); }
+PrepList30: PrepList29		is prep00=0 & PrepList29		 		{ }
+
+PrepList:   { lp }		is prep21=1 & prep2431=0 & prep2223=0 & prep00=0 & lp	{ push(lp); }
+PrepList:   { PrepList30,lp }	is prep21=1 & PrepList30 & lp				{ push(lp); }
+PrepList:   { PrepList30 }	is prep21=0 & PrepList30				{ }
+
+
+
+DispList31: ,lp			is prep21=1 & lp								{ pop(lp); }
+DispList31: lp			is prep21=1 & prep00=0 & prep2231=0 & lp		{ pop(lp); }
+DispList31:			is prep21=0						{ }
+
+DispList30: ep^DispList31	is DispList31 & prep00=1 & ep					{ pop(ep); }
+DispList30: ,ep^DispList31	is DispList31 & prep00=1 & prep2231=0 & ep		{ pop(ep); }
+DispList30: DispList31		is DispList31 & prep00=0				{ }
+
+DispList29: ,r29^DispList30	is DispList30 & prep22=1 & r29					{ pop(r29); }
+DispList29: r29^DispList30	is DispList30 & prep22=1 & prep2331=0 & r29		{ pop(r29); }
+DispList29: DispList30		is DispList30 & prep22=0				{ }
+
+DispList28: ,r28^DispList29	is DispList29 & prep23=1 & r28								{ pop(r28); }
+DispList28: r28^DispList29	is DispList29 & prep23=1 & prep2831=0 & prep2427=0 & r28	{ pop(r28); }
+DispList28: DispList29		is DispList29 & prep23=0				{ }
+
+DispList27: ,r27^DispList28	is DispList28 & prep28=1 & r27				{ pop(r27); }
+DispList27: r27^DispList28	is DispList28 & prep28=1 & prep2931=0 & prep2427=0 & r27	{ pop(r27); }
+DispList27: DispList28		is DispList28 & prep28=0				{ }
+
+DispList26: ,r26^DispList27	is DispList27 & prep29=1 & r26								{ pop(r26); }
+DispList26: r26^DispList27	is DispList27 & prep29=1 & prep3031=0 & prep2427=0 & r26	{ pop(r26); }
+DispList26: DispList27		is DispList27 & prep29=0				{ }
+
+DispList25: ,r25^DispList26	is DispList26 & prep30=1 & r25							{ pop(r25); }
+DispList25: r25^DispList26	is DispList26 & prep30=1 & prep31=0 & prep2427=0 & r25	{ pop(r25); }
+DispList25: DispList26		is DispList26 & prep30=0				{ }
+
+DispList24: ,r24^DispList25	is DispList25 & prep31=1 & r24					{ pop(r24); }
+DispList24: r24^DispList25	is DispList25 & prep31=1 & prep2427=0 & r24		{ pop(r24); }
+DispList24: DispList25		is DispList25 & prep31=0				{ }
+
+DispList23: ,r23^DispList24	is DispList24 & prep24=1 & r23					{ pop(r23); }
+DispList23: r23^DispList24	is DispList24 & prep24=1 & prep2527=0 & r23		{ pop(r23); }
+DispList23: DispList24		is DispList24 & prep24=0				{ }
+
+DispList22: ,r22^DispList23	is DispList23 & prep25=1 & r22					{ pop(r22); }
+DispList22: r22^DispList23	is DispList23 & prep25=1 & prep2627=0 & r22		{ pop(r22); }
+DispList22: DispList23		is DispList23 & prep25=0				{ }
+
+DispList21: ,r21^DispList22	is DispList22 & prep26=1 & r21					{ pop(r21); }
+DispList21: r21^DispList22	is DispList22 & prep26=1 & prep27=0 & r21		{ pop(r21); }
+DispList21: DispList22		is DispList22 & prep26=0				{ }
+
+DispList: { r20^DispList21 }	is DispList21 & prep27=1 & r20				{ pop(r20); }
+DispList: { DispList21 }	is DispList21 & prep27=0				{ }
+
+

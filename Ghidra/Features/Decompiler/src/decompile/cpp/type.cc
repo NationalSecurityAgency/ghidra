@@ -120,6 +120,26 @@ void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseaddr)
   }
 }
 
+/// Construct a data-type providing just the size, alignment, and meta-type.
+/// Sets up the default configuration, which may be overridden by the derived constructor.
+/// \param s is the size in bytes
+/// \param align is the byte alignment required for \b this
+/// \param m is the meta-type
+Datatype::Datatype(int4 s,int4 align,type_metatype m)
+
+{
+  if (s < 0)
+    throw LowlevelError("Bad data-type size");
+  size = s;
+  metatype = m;
+  submeta = base2sub[m];
+  flags = 0;
+  id = 0;
+  typedefImm = (Datatype *)0;
+  alignment = align;
+  alignSize = s;
+}
+
 /// If \b this and the other given data-type are both variable length and come from the
 /// the same base data-type, return \b true.
 /// \param ct is the other given data-type to compare with \b this
@@ -1267,9 +1287,17 @@ bool TypePointer::isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const
     if (subType == (Datatype *)0 || newoff != 0)
       return false;
     extra = AddrSpace::addressToByteInt(extra,wordsize);
-    if (extra < 0 || extra >= subType->getSize()) {
-      if (!testForArraySlack(subType, extra))
+    if (subType->getMetatype() == TYPE_CODE) {
+      // When the pointer targets inside a function, consider PTRSUB to be suitable when
+      // the extra is non-negative, as subType->getSize() cannot be used (it is always 1).
+      if (extra < 0)
 	return false;
+    }
+    else {
+      if (extra < 0 || extra >= subType->getSize()) {
+	if (!testForArraySlack(subType, extra))
+	  return false;
+      }
     }
   }
   else if (meta == TYPE_ARRAY) {
@@ -1301,10 +1329,14 @@ bool TypePointer::isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const
         return false;
     }
   }
-  else if (ptrto->getMetatype() == TYPE_UNION) {
+  else if (meta == TYPE_UNION) {
     // A PTRSUB reaching here cannot be used for a union field resolution
     // These are created by ActionSetCasts::resolveUnion
     return false;	// So we always return false
+  }
+  else if (meta == TYPE_CODE) {
+    if (extra < 0)
+      return false;
   }
   else
     return false;	// Not a pointer to a structured data-type
@@ -4113,7 +4145,7 @@ Datatype *TypeFactory::getBase(int4 s,type_metatype m)
 
 {
   Datatype *ct;
-  if (s<9) {
+  if ((uint4)s<9) {
     if (m >= TYPE_FLOAT) {
       ct = typecache[s][m-TYPE_FLOAT];
       if (ct != (Datatype *)0)
@@ -4122,13 +4154,9 @@ Datatype *TypeFactory::getBase(int4 s,type_metatype m)
   }
   else if (m==TYPE_FLOAT) {
     if (s==10)
-      ct = typecache10;
-    else if (s==16)
-      ct = typecache16;
-    else
-      ct = (Datatype *)0;
-    if (ct != (Datatype *)0)
-      return ct;
+      return typecache10;
+    if (s==16)
+      return typecache16;
   }
   if (s > glb->max_basetype_size) {
     // Create array of unknown bytes to match size
@@ -4159,7 +4187,7 @@ Datatype *TypeFactory::getBase(int4 s,type_metatype m,const string &n)
 Datatype *TypeFactory::getTypeChar(int4 s)
 
 {
-  if (s < 5) {
+  if ((uint4)s < 5) {
     Datatype *res = charcache[s];
     if (res != (Datatype *)0)
       return res;

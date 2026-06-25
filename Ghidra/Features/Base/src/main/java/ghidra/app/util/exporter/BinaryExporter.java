@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,14 +23,15 @@ import ghidra.app.util.Option;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.*;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * An {@link Exporter} that can export memory blocks as raw bytes
  */
-public class BinaryExporter extends Exporter {
+public class BinaryExporter extends ProgramExporter {
 
 	public BinaryExporter() {
 		super("Raw Bytes", "bin", new HelpLocation("ExporterPlugin", "binary"));
@@ -40,30 +41,27 @@ public class BinaryExporter extends Exporter {
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet,
 			TaskMonitor monitor) throws IOException, ExporterException {
 
-		if (!(domainObj instanceof Program)) {
+		Program program;
+		try {
+			program = getProgram(domainObj);
+		}
+		catch (ClassCastException e) {
 			log.appendMsg("Unsupported type: " + domainObj.getClass().getName());
 			return false;
 		}
-		Program program = (Program) domainObj;
 
 		Memory memory = program.getMemory();
+		AddressSetView initializedAddressSet = memory.getAllInitializedAddressSet();
 
 		if (addrSet == null) {
-			addrSet = memory;
+			addrSet = initializedAddressSet;
 		}
-
-		AddressSet set = new AddressSet(addrSet);
-
-		//skip blocks that are not initialized...
-		MemoryBlock[] blocks = memory.getBlocks();
-		for (int i = 0; i < blocks.length; ++i) {
-			if (!blocks[i].isInitialized()) {
-				set.delete(new AddressRangeImpl(blocks[i].getStart(), blocks[i].getEnd()));
-			}
+		else {
+			addrSet = addrSet.intersect(initializedAddressSet);
 		}
 
 		try (FileOutputStream fos = new FileOutputStream(file)) {
-			AddressRangeIterator iter = set.getAddressRanges();
+			AddressRangeIterator iter = addrSet.getAddressRanges();
 			while (iter.hasNext()) {
 				AddressRange range = iter.next();
 				byte[] mem = new byte[(int) range.getLength()];

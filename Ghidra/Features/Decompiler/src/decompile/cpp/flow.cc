@@ -38,6 +38,7 @@ FlowInfo::FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,vector<FuncCallSpecs
   inline_recursion = (set<Address> *)0;
   insn_count = 0;
   insn_max = ~((uint4)0);
+  baddata_count = 0;
   flowoverride_present = data.getOverride().hasFlowOverride();
 }
 
@@ -72,6 +73,7 @@ FlowInfo::FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,vector<FuncCallSpecs
     inline_recursion = (set<Address> *)0;
   insn_count = op2->insn_count;
   insn_max = op2->insn_max;
+  baddata_count = op2->baddata_count;
   flowoverride_present = data.getOverride().hasFlowOverride();
 }
 
@@ -80,6 +82,7 @@ void FlowInfo::clearProperties(void)
 {
   flags &= ~((uint4)(unimplemented_present|baddata_present|outofbounds_present));
   insn_count = 0;
+  baddata_count = 0;
 }
 
 /// For efficiency, this method assumes the given op can actually fall-thru.
@@ -156,11 +159,10 @@ PcodeOp *FlowInfo::findRelTarget(PcodeOp *op,Address &res) const
   if (retop != (PcodeOp *)0)	// Is this a "properly" internal branch
     return retop;
 
-  // Now we check if the relative branch is really to the next instruction
-  SeqNum seqnum1(op->getAddr(),id-1);
-  retop = obank.findOp(seqnum1); // We go back one sequence number
-  if (retop != (PcodeOp *)0) {
-    // If the PcodeOp exists here then branch was indeed to next instruction
+  // Check if the relative branch is to the next instruction
+  retop = obank.findLastOp(op->getAddr()); // Find the last op at this address
+  if (retop != (PcodeOp *)0 && retop->getTime() < id) {
+    // Branch is beyond the last op.  Treat as branch to next instruction.
     map<Address,VisitStat>::const_iterator miter;
     miter = visited.upper_bound(retop->getAddr());
     if (miter != visited.begin()) {
@@ -442,9 +444,10 @@ bool FlowInfo::processInstruction(const Address &curaddr,bool &startbasic)
     }
   }
   catch(BadDataError &err) {
-    if ((flags & error_unimplemented)!=0)
+    if ((flags & error_baddata)!=0)
       throw err;		// rethrow
     else {
+      countBadData(err.explain);
       // Add infinite loop instruction
       step = 1;			// Pretend size 1
       artificialHalt(curaddr,PcodeOp::badinstruction);
@@ -539,6 +542,17 @@ void FlowInfo::handleOutOfBounds(const Address &fromaddr,const Address &toaddr)
   }
 }
 
+/// If the count exceeds the maximum allowable, an exception is thrown.
+/// \param errMsg is the error message associated with the current bad data
+void FlowInfo::countBadData(const string &errMsg)
+
+{
+  if (baddata_count >= glb->max_baddata) {
+    throw BadDataError("Bad instruction count exceeded:\n    ...\n    "+ errMsg);
+  }
+  baddata_count += 1;
+}
+
 /// The address at the top stack that still needs processing is popped.
 /// P-code is generated for instructions starting at this address until
 /// one no longer has fall-thru flow (or some other error occurs).
@@ -622,6 +636,7 @@ void FlowInfo::reinterpreted(const Address &addr)
   if ((flags & error_reinterpreted)!=0)
     throw LowlevelError(s.str());
 
+  countBadData(s.str());
   if ((flags & reinterpreted_present)==0) {
     flags |= reinterpreted_present;
     data.warningHeader(s.str());

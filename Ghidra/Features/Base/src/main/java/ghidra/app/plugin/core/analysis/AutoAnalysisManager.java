@@ -232,6 +232,7 @@ public class AutoAnalysisManager {
 		analyzer.optionsChanged(options.getOptions(analyzer.getName()), getProgram());
 
 		OneShotAnalysisCommand cmd = new OneShotAnalysisCommand(analyzer, set, log);
+		addListener(cmd);
 		schedule(cmd, analyzer.getPriority().priority());
 	}
 

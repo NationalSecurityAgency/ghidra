@@ -63,6 +63,71 @@ public class DataTypeUtilities {
 		cPrimitiveNameMap.put("long double", LongDoubleDataType.dataType);
 	}
 
+	private static Map<String, DataType> cTypedefBuiltInNameRemap = new HashMap<>();
+	static {
+		cTypedefBuiltInNameRemap.put("int8_t", Int8TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int8_t", Int8TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int8", Int8TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("int_fast8_t", Int8TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("uint8_t", UInt8TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint8_t", UInt8TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint8", UInt8TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("uint_fast8_t", UInt8TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("u_int8_t", UInt8TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("int16_t", Int16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int16_t", Int16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int16", Int16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("int_fast16_t", Int16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("_G_int16_t", Int16TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("uint16_t", UInt16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint16_t", UInt16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint16", UInt16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("uint_fast16_t", UInt16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("u_int16_t", UInt16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("_G_uint16_t", UInt16TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("int32_t", Int32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int32_t", Int32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int32", Int32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("int_fast32_t", Int32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("_G_int32_t", Int32TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("uint32_t", UInt32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint32_t", UInt32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint32", UInt32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("uint_fast32_t", UInt32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("u_int32_t", UInt32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("_G_uint32_t", UInt32TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("int64_t", Int64TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int64_t", Int64TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int64", Int64TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("int_fast64_t", Int64TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("uint64_t", UInt64TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint64_t", UInt64TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint64", UInt64TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("uint_fast64_t", UInt64TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("u_int64_t", UInt64TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("intptr_t", PointerSizedIntegerDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__intptr_t", PointerSizedIntegerDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("uintptr_t", UnsignedPointerSizedIntegerDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uintptr_t", UnsignedPointerSizedIntegerDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("wchar_t", WideCharDataType.dataType);
+		cTypedefBuiltInNameRemap.put("wchar", WideCharDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("char16_t", WideChar16DataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("char32_t", WideChar32DataType.dataType);
+
+	}
+
 	// TODO: Should we drop the handling of "_" use in conflict name.  It's unclear
 	// when/if this was ever used in the generation of a conflict name.
 	// NOTE: It is assumed that all BuiltInDataType types (other then possibly Pointers)
@@ -76,6 +141,95 @@ public class DataTypeUtilities {
 
 	private static final Pattern DATATYPE_POINTER_ARRAY_PATTERN =
 		Pattern.compile("(( \\*\\d*)|(\\[\\d+\\]))+$");
+
+	/**
+	 * Get a BuiltIn {@link TypeDef} replacement, if one exists, for the specified fabricated 
+	 * typedef.  It is important that the supplied typedef has the correct target 
+	 * {@link DataTypeManager} and associated {@link DataOrganization} so that a proper replacement 
+	 * verification may be performed.
+	 * <p>
+	 * This method is intended to be used by parsers prior to resolving or applying a fabricated
+	 * fixed-length typedef to allow a portable implementation to be used in its place.  If one
+	 * exists, this ensures that its size will not change when moving between different architectures.
+	 * 
+	 * @param typedef {@link TypeDef} data type to consider for replacement
+	 * @param enforceSizeMatch if true, size of replacement must match specified typedef
+	 * @return replacement data type or the original typedef if a replacement was not found
+	 * @throws IllegalArgumentException if typedef was not constructed or cloned for a specific
+	 * data type manager.
+	 */
+	public static DataType getTypedefReplacement(TypeDef typedef, boolean enforceSizeMatch) {
+
+		DataTypeManager dtm = typedef.getDataTypeManager();
+		if (dtm == null) {
+			throw new IllegalArgumentException(
+				"typedef does not target a specific data type manager");
+		}
+
+		// Check for direct replacement of typedef with BuiltIn of same name
+		DataType directReplacement = getValidReplacement(typedef, enforceSizeMatch, dtm);
+		if (directReplacement != null && directReplacement.getName().equals(typedef.getName())) {
+			return directReplacement;
+		}
+
+		// Handle as possible typedef to BuiltIn replacement
+		DataType refDt = typedef.getDataType();
+		if (refDt instanceof TypeDef td) {
+			DataType replacementDt = getTypedefReplacement(td, enforceSizeMatch);
+			if (replacementDt != td) {
+				return new TypedefDataType(typedef.getCategoryPath(), typedef.getName(), refDt,
+					dtm);
+			}
+		}
+
+		// Handle as typedef replacement based on remap if directReplacement differs from refDt
+		if (directReplacement != null && !directReplacement.equals(refDt)) {
+			return new TypedefDataType(typedef.getCategoryPath(), typedef.getName(),
+				directReplacement, dtm);
+		}
+
+		return typedef;
+	}
+
+	/**
+	 * Get valid typedef replacement
+	 * @param typedef typedef to be replaced (should not reference another typedef)
+	 * @param enforceSizeMatch if true size of replacement must match specified typedef
+	 * @param dtm data type manager
+	 * @return replacement data type or the null if a replacement was not found
+	 */
+	private static DataType getValidReplacement(TypeDef typedef, boolean enforceSizeMatch,
+			DataTypeManager dtm) {
+		
+		DataType replacementDt = cTypedefBuiltInNameRemap.get(typedef.getName());
+		if (replacementDt == null) {
+			return null;
+		}
+
+		if (enforceSizeMatch) {
+			if (replacementDt.hasLanguageDependantLength()) {
+				replacementDt = replacementDt.clone(dtm);
+			}
+			if (typedef.getLength() != replacementDt.getLength()) {
+				return null;
+			}
+		}
+
+		DataType tdDt = typedef.getBaseDataType();
+
+		if (replacementDt instanceof AbstractIntegerDataType intDt) {
+			if (tdDt instanceof AbstractIntegerDataType tdIntDt) {
+				if (intDt.isSigned() == tdIntDt.isSigned()) {
+					return replacementDt = replacementDt.clone(dtm);
+				}
+			}
+		}
+		else if (replacementDt instanceof DataTypeWithCharset) {
+			// Unsure what other constraints should be placed on valid replacement
+			return replacementDt = replacementDt.clone(dtm);
+		}
+		return null;
+	}
 
 	public static Collection<DataType> getContainedDataTypes(DataType rootDataType) {
 		HashMap<String, DataType> dataTypeMap = new HashMap<>();

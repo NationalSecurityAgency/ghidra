@@ -103,6 +103,11 @@ public class HelpManager implements HelpService {
 	}
 
 	@Override
+	public boolean isShowing() {
+		return mainHB.isDisplayed();
+	}
+
+	@Override
 	public boolean helpExists() {
 		return isValidHelp && hasMergedHelpSets;
 	}

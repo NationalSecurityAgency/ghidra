@@ -61,6 +61,7 @@ SpacebaseSpace::SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const stri
   contain = base;
   hasbaseregister = false;	// No base register assigned yet
   isNegativeStack = true;	// default stack growth
+  setFlags(allows_wrapped_range);
   if (isFormal)
     setFlags(formal_stackspace);
 }
@@ -73,9 +74,10 @@ SpacebaseSpace::SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const stri
 SpacebaseSpace::SpacebaseSpace(AddrSpaceManager *m,const Translate *t)
   : AddrSpace(m,t,IPTR_SPACEBASE)
 {
+  contain = (AddrSpace *)0;
   hasbaseregister = false;
   isNegativeStack = true;
-  setFlags(programspecific);
+  setFlags(programspecific | allows_wrapped_range);
 }
 
 /// This routine sets the base register associated with this \b virtual space
@@ -843,6 +845,38 @@ Address AddrSpaceManager::constructJoinAddress(const Translate *translate,
   pieces[1].space = loaddr.getSpace();
   pieces[1].offset = loaddr.getOffset();
   pieces[1].size = losz;
+  JoinRecord *join = findAddJoin(pieces,0);
+  return join->getUnified().getAddr();
+}
+
+/// Check if the address space allows wrapped ranges. If so, construct a \e joined address
+/// out of the high address piece of the range and the low address piece.
+/// \param addr is the initial address in the range
+/// \param size is the number of bytes in the range
+/// \return the address representing the wrapped range
+Address AddrSpaceManager::constructWrappingAddress(const Address &addr,int4 size)
+
+{
+  AddrSpace *spc = addr.getSpace();
+  if (!spc->isHeritaged())
+    return addr;		// Size is ignored
+  uintb dist = spc->getHighest() - addr.getOffset() + 1;
+  if (size <= dist)
+    return addr;
+  if (!spc->allowsWrappedRange())
+    throw LowlevelError("Trying to construct memory range beyond end of address space: "+spc->getName());
+  int4 sizehi = (int4)dist;
+  int4 sizelo = size - sizehi;
+  vector<VarnodeData> pieces;
+  pieces.emplace_back();
+  pieces.emplace_back();
+  int4 highIndex = spc->isBigEndian() ? 0 : 1;
+  pieces[highIndex].space = spc;
+  pieces[highIndex].offset = addr.getOffset();
+  pieces[highIndex].size = sizehi;
+  pieces[1-highIndex].space = spc;
+  pieces[1-highIndex].offset = 0;
+  pieces[1-highIndex].size = sizelo;
   JoinRecord *join = findAddJoin(pieces,0);
   return join->getUnified().getAddr();
 }

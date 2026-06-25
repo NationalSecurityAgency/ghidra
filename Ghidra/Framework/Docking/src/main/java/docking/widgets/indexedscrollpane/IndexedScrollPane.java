@@ -115,12 +115,15 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 
 	}
 
-	public Dimension getViewSize() {
-		return new Dimension(comp.getPreferredSize().width, indexMapper.getViewHeight());
+	public Dimension getViewExtentSize() {
+		Dimension size = viewport.getExtentSize();
+		int w = size.width;
+		int h = size.height;
+		return new Dimension(w, h);
 	}
 
-	public Dimension getViewExtentSize() {
-		return viewport.getExtentSize();
+	public Insets getViewInsets() {
+		return scrollPane.getInsets();
 	}
 
 	public void viewportStateChanged() {
@@ -311,7 +314,7 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 	public void setColumnHeaderComp(JComponent comp) {
 		scrollPane.setColumnHeaderView(comp);
 
-		// SWING WORK AROUND - setting the header panel on a scrollpane that is horizontally
+		// SWING WORK AROUND - setting the header panel on a scroll pane that is horizontally
 		// scrolled does not initially scroll the header to match the main view.  Setting the
 		// horizontal position to 0 and back to where it was, resynchronizes the header with the
 		// view.

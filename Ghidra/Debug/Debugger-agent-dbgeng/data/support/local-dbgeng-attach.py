@@ -27,14 +27,17 @@ def parse_parameters():
     global cxn, target, args
     os.environ['OPT_OS_WINDOWS'] = "true"
     argc = len(sys.argv)
+    # This is the .bat case:
     if argc == 1:
         return True
-    if argc >= 4:
+    # Local and remote .ps1 cases
+    if argc >= 5:
         cxn = sys.argv[1]
         os.environ['OPT_USE_DBGMODEL'] = sys.argv[2]
-        target = sys.argv[3]
-        if argc > 4:
-            args = sys.argv[4]
+        os.environ['WINDBG_DIR'] = sys.argv[3]
+        target = sys.argv[4]
+        if argc > 5:
+            args = sys.argv[5]
         return True
     print("Error: expected (cxn, use_dbgmodel, target, ...)")
     return False
@@ -51,12 +54,17 @@ def append_paths():
 
 
 def main():
+    global cxn, target, args
     append_paths()
+    if not parse_parameters():
+        return
+        
     # Delay these imports until sys.path is patched
     try:
         import ghidradbg
-    except Exception as e:
-        exit(253)
+    except ModuleNotFoundError:
+        os._exit(253)
+        
     from ghidradbg import commands as cmd
     from pybag.dbgeng import core as DbgEng
     from ghidradbg.hooks import on_state_changed
@@ -87,7 +95,5 @@ if __name__ == '__main__':
     try:
         main()
     except SystemExit as x:
-        if x.code == 253:
-            exit(253)
         if x.code != 0:
             print(f"Exited with code {x.code}")

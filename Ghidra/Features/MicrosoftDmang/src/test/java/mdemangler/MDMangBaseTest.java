@@ -3243,6 +3243,26 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		demangleAndTest();
 	}
 
+	//=====================
+	// $2 template constants
+	//
+	// We seem to have two different encodings for $2 template constant.  An older form that
+	//  encodes floating point numbers that works in undname from vs2017 and a newer form that
+	//  encodes type constants with initializers that works in undname from vs2022.  The 2017
+	//  mangled strings do not demangle under 2022 and the 2022 strings do not demangle under
+	//  2017.  I have not checked other VS versions.  Probably no longer need to encode floating
+	//  point type the same way, as they could probably be encoded with the newer format, which
+	//  should offer a broader encoding scheme.  We don't know if both encoding styles can
+	//  coexist or whether we need to offer different demangling versions (e.g., see MDMangVS2015).
+	//  We haven't pursued fleshing out the differences between versions, but if we did, then we
+	//  could offer the user the options of choosing or we could detect from PE header, PDB, or
+	//  other analysis.  Probably best if we can make all coexist. (Note: we still have other
+	//  issues where LLVM or Clang don't adhere exactly to some MSFT encoding standards; this
+	//  was partially worked around, but is still a mess.)
+	//
+	// ALSO... gaining evidence that there are many more $ codes for template constants than
+	//  what we have implemented.  Seems like it might be a lot of work to tackle all of them.
+
 	//manufactured symbol: $2 Blank (zero) exponent
 	@Test
 	public void testSpecialTemplateParameters_dollar2_blankzeroexp() throws Exception {
@@ -3365,6 +3385,56 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mdTruth = msTruth;
 		demangleAndTest();
 	}
+
+	// Newer $2 template constant encodings below.  See note at top of $2 section
+
+	// real symbol with $2 non-floating point template constant with initializers
+	// From template_op_lit/tol64
+	// mstruth here is from vs2022 undname
+	@Category(MDMangFailingTestCategory.class)
+	@Test
+	public void testTemplateConstantParameterWithInitializers1() throws Exception {
+		mangled =
+			"??$?__K_x2@$2U?$DoubleString@$03@@3D0GB@@0GC@@0GD@@0GB@@0GC@@0GD@@0A@@@@@@YA?A_PXZ";
+		msTruth =
+			"auto __cdecl operator \"\" _x2<struct DoubleString<4>{char{97,98,99,97,98,99,0}}>(void)";
+		mdTruth = msTruth;
+		demangleAndTest16Bit();
+	}
+
+	// This is fuzzed counterpoint to the real $2 template constant, above
+	// mstruth here is from vs2022 undname
+	@Category(MDMangFailingTestCategory.class)
+	@Test
+	public void testTemplateConstantParameterWithInitializers1_counterpoint1() throws Exception {
+		mangled = "??$?M$2H@@@YA?AXXZ";
+		msTruth = "void __cdecl operator<<int{}>(void)";
+		mdTruth = msTruth;
+		demangleAndTest16Bit();
+	}
+
+	// This is fuzzed counterpoint to the real $2 template constant, above.  This does not have $2
+	// mstruth here is from both vs2022 and vs2017 undname
+	@Test
+	public void testTemplateConstantParameterWithInitializers1_counterpoint2() throws Exception {
+		mangled = "??$?MH@@YAXXZ";
+		msTruth = "void __cdecl operator<<int>(void)";
+		mdTruth = msTruth;
+		demangleAndTest16Bit();
+	}
+
+	// This is fuzzed counterpoint to the real $2 template constant, above.  This does not have $2
+	//  probably don't need since we just figured out ?A (we already process)
+	// mstruth here is from both vs2022 and vs2017 undname
+	@Test
+	public void testTemplateConstantParameterWithInitializers1_counterpoint3() throws Exception {
+		mangled = "??$?MH@@YA?AXXZ";
+		msTruth = "void __cdecl operator<<int>(void)";
+		mdTruth = msTruth;
+		demangleAndTest16Bit();
+	}
+
+	//=====================
 
 	//real symbol: $D
 	@Test
@@ -5049,6 +5119,22 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mdTruth = msTruth;
 		demangleAndTest();
 	}
+
+	//manufactured symbol
+	// We have no real symbols and haven't been able to get undname to produce results,
+	//  which means that we might not have all the right pieces for a ??_W symbol to parse.
+	//  If we find/produce a symbol that undname works on, the we should delete and
+	//  replace this test and change the demangler to properly parse the symbol (which should
+	//  also cause this current test to fail).
+	@Test
+	public void testSpecialNames_W() throws Exception {
+		mangled = "??_WAA@@QAAXXZ";
+		msTruth = "";
+		mdTruth = "public: void __cdecl AA::`omni callsig'(void)";
+		demangleAndTest();
+	}
+	// ??_WAA@@QAAXXZ
+	// public: void __cdecl AA::`omni callsig'(void)
 
 	//manufactured symbol
 	@Test

@@ -216,6 +216,16 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	public int getTierPriority();
 
 	/**
+	 * {@return whether or not this is a "fallback" {@link Loader}}
+	 * <p>
+	 * Fallback loaders are only considered during the import process if no other non-fallback 
+	 * loaders were compatible with the thing being imported.
+	 */
+	public default boolean isFallback() {
+		return false;
+	}
+
+	/**
 	 * The preferred file name to use when loading.
 	 * <p>
 	 * The default behavior of this method is to return the (cleaned up) name of the given 

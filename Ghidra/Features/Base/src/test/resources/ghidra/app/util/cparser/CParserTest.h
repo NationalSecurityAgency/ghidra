@@ -439,8 +439,10 @@ enum __attribute__((enum_extensibility(open))) OpenEnum {
 
 typedef int (__cdecl * _onexit_t)(void);
 
-typedef int int32_t;
-typedef long int64_t;
+typedef int __int32_t;
+typedef __int32_t int32_t;
+typedef long __int64_t;
+typedef __int64_t int64_t;
 
 static __inline __attribute__((always_inline)) int
 __checkint(int val, int* err) {

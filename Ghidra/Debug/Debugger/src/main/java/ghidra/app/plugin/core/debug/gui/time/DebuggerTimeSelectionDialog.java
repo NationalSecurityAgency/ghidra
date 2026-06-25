@@ -205,8 +205,15 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 		radix = trace.getTimeManager().getTimeRadix();
 		schedule = defaultTime;
 		scheduleText.setText(defaultTime.toString(radix));
+		scheduleText.selectAll();
 		tool.showDialog(this);
 		return schedule;
+	}
+
+	@Override
+	protected void dialogShown() {
+		super.dialogShown();
+		scheduleText.requestFocus();
 	}
 
 	public Trace getTrace() {

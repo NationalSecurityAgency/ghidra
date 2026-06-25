@@ -94,7 +94,12 @@ public abstract class SymbolDB extends DbObject implements Symbol {
 			record = rec;
 			Address newAddress = symbolMgr.getAddressMap()
 					.decodeAddress(rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
-			return address.equals(newAddress);
+			boolean isAddrSame = address.equals(newAddress);
+			address = newAddress;
+			// NOTE: If isAddrSame is not true, the symbol address changed which implies this 
+			// symbol was deleted and the key re-used.  It is important to note this instance
+			// is not the same symbol as the previous record state and should not be used.  
+			return isAddrSame;
 		}
 		return false;
 	}

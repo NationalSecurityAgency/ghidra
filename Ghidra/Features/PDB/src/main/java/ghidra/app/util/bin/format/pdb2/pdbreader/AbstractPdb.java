@@ -684,25 +684,36 @@ public abstract class AbstractPdb implements AutoCloseable {
 			throws IOException, PdbException, CancelledException {
 		nameTable.deserializeDirectory(reader);
 		// Read the parameters.
+		// 20260616: Modified processing to prevent unabated growth of parameters.  Will continue
+		// processing data from stream, looking only for expected parameter types.  Loop will
+		// terminate upon repeated or unknown param signature (we will keep the first unknown
+		// parameter for diagnostic sake). The parameters list will only contain the values up to
+		// the point of termination.  Since there are so few signatures that we are looking for,
+		// we are keeping parameters as a list and using the contains() method.
+		// If VC110_ID is found, then we terminate after capture, as no other parameters are
+		// supposed to be valid (here, we are now mimicking what is in the spec).
 		while (reader.hasMore()) {
 			checkCancelled();
-			int val = reader.parseInt();
-			parameters.add(val);
-		}
-		// Check the parameters for IDs
-		for (int param : parameters) {
-			checkCancelled();
-			if (param == MINIMAL_DEBUG_INFO_PARAM) {
+			int param = reader.parseInt();
+			if (parameters.contains(param)) {
+				break;
+			}
+			parameters.add(param); // capture non-repeating param, which can be first "unknown"
+			if (param == PdbParser.VC110_ID) {
+				hasIdStream = true;
+				break; // no other parameters are supposed to be valid
+			}
+			else if (param == MINIMAL_DEBUG_INFO_PARAM) {
 				minimalDebugInfo = true;
 			}
 			else if (param == NO_TYPE_MERGE_PARAM) {
 				noTypeMerge = true;
 			}
-			// Putting all of these >= ID after the specific == tests above
-			//  so that no >= tests in the ID section trigger off of any
-			//  of the above flags
-			else if (param >= PdbParser.VC110_ID) {
+			else if (param == PdbParser.VC140_ID) {
 				hasIdStream = true;
+			}
+			else {
+				break;
 			}
 		}
 	}

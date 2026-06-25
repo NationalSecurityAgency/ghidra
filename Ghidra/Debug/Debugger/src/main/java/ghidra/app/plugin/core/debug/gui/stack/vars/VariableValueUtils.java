@@ -19,8 +19,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import ghidra.app.decompiler.ClangLine;
-import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.debug.stack.*;
 import ghidra.app.plugin.core.debug.stack.StackUnwindWarning.CustomStackUnwindWarning;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -65,21 +63,6 @@ public enum VariableValueUtils {
 	 * context
 	 */
 	private static final class RequiresFrameEvaluator extends AbstractVarnodeEvaluator<Boolean> {
-		private final AddressSetView symbolStorage;
-
-		private RequiresFrameEvaluator(AddressSetView symbolStorage) {
-			this.symbolStorage = symbolStorage;
-		}
-
-		@Override
-		protected boolean isLeaf(Varnode vn) {
-			if (vn.getDef() == null && (vn.isRegister() || vn.isAddress())) {
-				return true;
-			}
-			return vn.isConstant() ||
-				symbolStorage.contains(vn.getAddress(), vn.getAddress().add(vn.getSize() - 1));
-		}
-
 		@Override
 		protected Address applyBase(long offset) {
 			throw new AssertionError();
@@ -359,13 +342,10 @@ public enum VariableValueUtils {
 	 * 
 	 * @param program the program containing the variable storage
 	 * @param storage the storage to evaluate
-	 * @param symbolStorage the leaves of evaluation, usually storage used by symbols in scope. See
-	 *            {@link #collectSymbolStorage(ClangLine)}
 	 * @return true if a frame is required, false otherwise
 	 */
-	public static boolean requiresFrame(Program program, VariableStorage storage,
-			AddressSetView symbolStorage) {
-		return new RequiresFrameEvaluator(symbolStorage).evaluateStorage(program, storage);
+	public static boolean requiresFrame(Program program, VariableStorage storage) {
+		return new RequiresFrameEvaluator().evaluateStorage(program, storage);
 	}
 
 	/**
@@ -373,13 +353,10 @@ public enum VariableValueUtils {
 	 * 
 	 * @param program the program containing the variable storage
 	 * @param varnode the varnode to evaluate
-	 * @param symbolStorage the leaves of evaluation, usually storage used by symbols in scope. See
-	 *            {@link #collectSymbolStorage(ClangLine)}
 	 * @return true if a frame is required, false otherwise
 	 */
-	public static boolean requiresFrame(Program program, Varnode varnode,
-			AddressSetView symbolStorage) {
-		return new RequiresFrameEvaluator(symbolStorage).evaluateVarnode(program, varnode);
+	public static boolean requiresFrame(Program program, Varnode varnode) {
+		return new RequiresFrameEvaluator().evaluateVarnode(program, varnode);
 	}
 
 	/**
@@ -387,12 +364,10 @@ public enum VariableValueUtils {
 	 * 
 	 * @param program the program containing the variable storage
 	 * @param op the op whose output to evaluation
-	 * @param symbolStorage the leaves of evaluation, usually storage used by symbols in scope. See
-	 *            {@link #collectSymbolStorage(ClangLine)}
 	 * @return true if a frame is required, false otherwise
 	 */
-	public static boolean requiresFrame(Program program, PcodeOp op, AddressSetView symbolStorage) {
-		return new RequiresFrameEvaluator(symbolStorage).evaluateOp(program, op);
+	public static boolean requiresFrame(Program program, PcodeOp op) {
+		return new RequiresFrameEvaluator().evaluateOp(program, op);
 	}
 
 	/**
@@ -470,8 +445,8 @@ public enum VariableValueUtils {
 	 * 
 	 * <p>
 	 * This will prefer the stack pointer in the {@link TraceStackFrame}. If that's not available,
-	 * it will use the value of the stack pointer register from the thread's register bank for
-	 * frame 0.
+	 * it will use the value of the stack pointer register from the thread's register bank for frame
+	 * 0.
 	 * 
 	 * @param platform the platform
 	 * @param thread the thread
@@ -520,8 +495,8 @@ public enum VariableValueUtils {
 	 * 
 	 * <p>
 	 * This will prefer the stack pointer in the {@link TraceStackFrame}. If that's not available,
-	 * it will use the value of the stack pointer register from the thread's register bank for
-	 * frame 0.
+	 * it will use the value of the stack pointer register from the thread's register bank for frame
+	 * 0.
 	 * 
 	 * @param platform the platform
 	 * @param thread the thread
@@ -605,45 +580,6 @@ public enum VariableValueUtils {
 	 */
 	public static boolean containsVarnode(AddressSetView set, Varnode vn) {
 		return set.contains(vn.getAddress(), vn.getAddress().add(vn.getSize() - 1));
-	}
-
-	/**
-	 * Collect the addresses used for storage by any symbol in the given line of decompiled C code
-	 * 
-	 * <p>
-	 * It's not the greatest, but any variable to be evaluated should only be expressed in terms of
-	 * symbols on the same line (at least by the decompiler's definition, wrapping shouldn't count
-	 * against us). This can be used to determine where evaluation should cease descending into
-	 * defining p-code ops. See {@link #requiresFrame(Program, PcodeOp, AddressSetView)}, and
-	 * {@link UnwoundFrame#evaluate(Program, PcodeOp, AddressSetView)}.
-	 * 
-	 * @param line the line
-	 * @return the address set
-	 */
-	public static AddressSet collectSymbolStorage(ClangLine line) {
-		AddressSet storage = new AddressSet();
-		for (ClangToken tok : line.getAllTokens()) {
-			Varnode vn = tok.getVarnode();
-			if (vn != null) {
-				storage.add(rangeFromVarnode(vn));
-			}
-			HighVariable hVar = tok.getHighVariable();
-			if (hVar == null) {
-				continue;
-			}
-			Varnode rep = hVar.getRepresentative();
-			if (rep != null) {
-				storage.add(rangeFromVarnode(rep));
-			}
-			HighSymbol hSym = hVar.getSymbol();
-			if (hSym == null) {
-				continue;
-			}
-			for (Varnode stVn : hSym.getStorage().getVarnodes()) {
-				storage.add(rangeFromVarnode(stVn));
-			}
-		}
-		return storage;
 	}
 
 	/**
@@ -819,9 +755,20 @@ public enum VariableValueUtils {
 		public UnwoundFrame<WatchValue> getStackFrame(Function function,
 				StackUnwindWarningSet warnings, TaskMonitor monitor, boolean required) {
 			synchronized (lock) {
+				// We unwind first from the current frame, because we want the closest function
+				//  match above the current frame.
+				// NB: Unwinding from 0 may provide better info
 				AnalysisUnwoundFrame<WatchValue> currentFrame =
 					unwinder.findMatchForFunction(function, coordinates, warnings, monitor);
 				if (currentFrame != null) {
+					return currentFrame;
+				}
+
+				// Unwind from 0 for functions below the current frame
+				currentFrame = unwinder.findMatchForFunction(function, coordinates.frame(0),
+					warnings, monitor);
+				if (currentFrame != null) {
+					warnings.add(new CustomStackUnwindWarning("Unwinding from frame 0"));
 					return currentFrame;
 				}
 

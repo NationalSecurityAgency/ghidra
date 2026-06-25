@@ -633,12 +633,15 @@ def putreg(frame: gdb.Frame, reg_descs: Sequence[
     # NB: This command will fail if the process is running
     for desc in reg_descs:
         v = frame.read_register(desc.name)
-        rv = mapper.map_value(inf, desc.name, v)
-        values.append(rv)
-        # Mapper has converted to big endian.
-        # Display value should interpret it as such.
-        value = hex(int.from_bytes(rv.value, byteorder='big'))
-        cobj.set_value(desc.name, str(value))
+        try:
+            rv = mapper.map_value(inf, desc.name, v)
+            values.append(rv)
+            # Mapper has converted to big endian.
+            # Display value should interpret it as such.
+            value = hex(int.from_bytes(rv.value, byteorder='big'))
+            cobj.set_value(desc.name, str(value))
+        except Exception as e:
+            cobj.set_value(desc.name, str(v))
         keys.append(desc.name)
     cobj.retain_values(keys)
     # TODO: Memorize registers that failed for this arch, and omit later.

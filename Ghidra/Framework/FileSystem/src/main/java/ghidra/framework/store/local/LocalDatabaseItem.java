@@ -600,13 +600,18 @@ public class LocalDatabaseItem extends LocalFolderItem implements DatabaseItem {
 	public void output(File outputFile, int version, TaskMonitor monitor)
 			throws CancelledException, IOException {
 		synchronized (fileSystem) {
+
+			String contentType = getContentType();
+			if (UnknownFolderItem.UNKNOWN_CONTENT_TYPE.equals(contentType)) {
+				throw new IOException("Unknown content type");
+			}
+
 			if (isVersioned) {
-				versionedDb.output(version, outputFile, getName(), DATABASE_FILE_TYPE,
-					getContentType(), monitor);
+				versionedDb.output(version, outputFile, getName(), DATABASE_FILE_TYPE, contentType,
+					monitor);
 			}
 			else {
-				privateDb.output(outputFile, getName(), DATABASE_FILE_TYPE, getContentType(),
-					monitor);
+				privateDb.output(outputFile, getName(), DATABASE_FILE_TYPE, contentType, monitor);
 			}
 		}
 	}
