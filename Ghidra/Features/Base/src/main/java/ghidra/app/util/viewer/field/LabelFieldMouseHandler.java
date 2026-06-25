@@ -76,8 +76,11 @@ public class LabelFieldMouseHandler implements FieldMouseHandlerExtension {
 		Address addr = location.getAddress();
 		Program program = location.getProgram();
 		Listing listing = program.getListing();
-		CodeUnit cu = listing.getCodeUnitAt(addr);
-		service.showSymbols(cu);
+		CodeUnit cu = listing.getCodeUnitContaining(addr);
+		if (cu != null) {
+			service.showSymbols(cu);
+			return;
+		}
 	}
 
 	private String getText(Object clickedObject) {
