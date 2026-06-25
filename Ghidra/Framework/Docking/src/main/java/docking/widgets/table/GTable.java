@@ -123,6 +123,7 @@ public class GTable extends JTable {
 	private SelectionManager selectionManager;
 	private Integer visibleRowCount;
 
+	private int userDefinedRowPadding;
 	private int userDefinedRowHeight;
 	private TableModelListener rowHeightListener;
 
@@ -576,12 +577,13 @@ public class GTable extends JTable {
 	}
 
 	private int calculatePreferredRowHeight() {
-		if (userDefinedRowHeight != 16) { // default size
-			return userDefinedRowHeight; // prefer user-defined settings
+		int padding = 3; // default padding to look nicer
+		if (userDefinedRowPadding != 0) {
+			padding = userDefinedRowPadding;
 		}
 
 		if (getColumnCount() == 0) {
-			return userDefinedRowHeight; // no columns yet defined
+			return super.getRowHeight() + padding; // no columns yet defined
 		}
 
 		TableCellRenderer defaultRenderer = getDefaultRenderer(String.class);
@@ -589,7 +591,7 @@ public class GTable extends JTable {
 			Component component =
 				defaultRenderer.getTableCellRendererComponent(this, "Ghidra", false, false, 0, 0);
 			Dimension preferredSize = component.getPreferredSize();
-			return preferredSize.height + 3; // What is this fudge?
+			return preferredSize.height + padding;
 		}
 		catch (Throwable t) {
 			// some renderers can't handle being asked to render with dummy data; use default value
@@ -613,8 +615,18 @@ public class GTable extends JTable {
 		return linesPerRow;
 	}
 
-	@Override
-	public void setRowHeight(int height) {
+	/**
+	 * Sets the value to add to the table's preferred row height.  This allows clients to add some
+	 * padding to the height without hard-coding an actual height.  Use this method instead of 
+	 * {@link #setRowHeight(int)} to allow font size changes to resize the table rows correctly.
+	 * @param padding the padding
+	 */
+	public void setRowPadding(int padding) {
+		userDefinedRowPadding = padding;
+		adjustRowHeight();
+	}
+
+	public void setPreferredRowHeight(int height) {
 		doSetRowHeight(height);
 		userDefinedRowHeight = height;
 	}
