@@ -42,7 +42,8 @@ public class XorMemoryScript extends GhidraScript {
 
 		AddressIterator aIter = set.getAddresses(true);
 
-		while (aIter.hasNext() && !monitor.isCancelled()) {
+		while (aIter.hasNext()) {
+			monitor.checkCancelled();
 			Address addr = aIter.next();
 			monitor.setMessage(addr.toString());
 			byte xorValue = xorValues[xorIndex];
