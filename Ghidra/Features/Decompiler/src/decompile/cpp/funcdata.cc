@@ -730,8 +730,9 @@ void Funcdata::encodeTree(Encoder &encoder) const
 /// tree is also emitted.
 /// \param encoder is the stream encoder
 /// \param id is the unique id associated with the function symbol
-/// \param savetree is \b true if the p-code tree should be emitted
-void Funcdata::encode(Encoder &encoder,uint8 id,bool savetree) const
+/// \param saveTree is \b true if the p-code tree should be emitted
+/// \param saveOverrides is \b true if information about overrides should be emitted
+void Funcdata::encode(Encoder &encoder,uint8 id,bool saveTree,bool saveOverrides) const
 
 {
   encoder.openElement(ELEM_FUNCTION);
@@ -747,13 +748,14 @@ void Funcdata::encode(Encoder &encoder,uint8 id,bool savetree) const
     localmap->encodeRecursive(encoder,false);	// Save scope and all subscopes
   }
 
-  if (savetree) {
+  if (saveTree) {
     encodeTree(encoder);
     encodeHigh(encoder);
   }
   encodeJumpTable(encoder);
   funcp.encode(encoder);		// Must be saved after database
-  localoverride.encode(encoder,glb);
+  if (saveOverrides)
+    localoverride.encode(encoder,glb);
   encoder.closeElement(ELEM_FUNCTION);
 }
 

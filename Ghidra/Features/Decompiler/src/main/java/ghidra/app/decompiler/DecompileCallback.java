@@ -223,10 +223,7 @@ public class DecompileCallback {
 			}
 			if (debug != null) {
 				debug.getPcode(addr, instr);
-				FlowOverride fo = instr.getFlowOverride();
-				if (fo != FlowOverride.NONE) {
-					debug.addFlowOverride(addr, fo);
-				}
+				debug.handleOverrides(addr, instr);
 			}
 
 			instr.getPrototype()

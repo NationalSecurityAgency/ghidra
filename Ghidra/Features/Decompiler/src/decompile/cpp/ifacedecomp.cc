@@ -72,6 +72,7 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcProtooverride(),"override","prototype");
   status->registerCom(new IfcJumpOverride(),"override","jumptable");
   status->registerCom(new IfcFlowOverride(),"override","flow");
+  status->registerCom(new IfcDestinationOverride(),"override","destination");
   status->registerCom(new IfcDeadcodedelay(),"deadcode","delay");
   status->registerCom(new IfcGlobalAdd(),"global","add");
   status->registerCom(new IfcGlobalRemove(),"global","remove");
@@ -1933,7 +1934,6 @@ void IfcFlowOverride::execute(istream &s)
 
 {
   int4 discard;
-  uint4 type;
   string token;
 
   if (dcp->fd == (Funcdata *)0)
@@ -1944,12 +1944,37 @@ void IfcFlowOverride::execute(istream &s)
   s >> token;
   if (token.size() == 0)
     throw IfaceParseError("Missing override type");
-  type = Override::stringToType(token);
-  if (type == Override::NONE)
-    throw IfaceParseError("Bad override type");
 
-  dcp->fd->getOverride().insertFlowOverride(addr,type);
-  *status->optr << "Successfully added override" << endl;
+  dcp->fd->getOverride().insertFlowOverride(addr,token);
+  *status->optr << "Successfully added flow override" << endl;
+}
+
+/// \class IfcDestinationOverride
+/// \brief Create an override changing a call destination: `override destination <address> <type> <destaddress>`
+///
+/// The override modifies a branching op-code at \<address\> to have particular destination address,
+/// depending on the \<type\>.
+///   - callind_call converts a CALLIND to CALL (with the destination address)
+///   - callother_call converts a CALLOTHER to a CALL
+///   - callother_branch converts a CALLOTHER to a BRANCH
+///   - call_call converts a CALL to have the specified destination address
+void IfcDestinationOverride::execute(istream &s)
+
+{
+  int4 discard;
+  string token;
+
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function selected");
+
+  s >> ws;
+  Address addr( parse_machaddr(s,discard,*dcp->conf->types));
+  s >> token >> ws;
+  if (token.size() == 0)
+    throw IfaceParseError("Missing override type");
+  Address dest( parse_machaddr(s,discard,*dcp->conf->types));
+  dcp->fd->getOverride().insertDestinationOverride(addr, dest, token);
+  *status->optr << "Successfully added destination override" << endl;
 }
 
 /// \class IfcDeadcodedelay

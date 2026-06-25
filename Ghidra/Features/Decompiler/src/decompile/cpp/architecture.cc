@@ -455,14 +455,27 @@ void Architecture::decodeFlowOverride(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_FLOWOVERRIDELIST);
   for(;;) {
     uint4 subId = decoder.openElement();
-    if (subId != ELEM_FLOW) break;
-    string flowType = decoder.readString(ATTRIB_TYPE);
-    Address funcaddr = Address::decode(decoder);
-    Address overaddr = Address::decode(decoder);
-    Funcdata *fd = symboltab->getGlobalScope()->queryFunction(funcaddr);
-    if (fd != (Funcdata *)0)
-      fd->getOverride().insertFlowOverride(overaddr,Override::stringToType(flowType));
-    decoder.closeElement(subId);
+    if (subId == ELEM_FLOW) {
+      string flowType = decoder.readString(ATTRIB_TYPE);
+      Address funcaddr = Address::decode(decoder);
+      Address overaddr = Address::decode(decoder);
+      Funcdata *fd = symboltab->getGlobalScope()->queryFunction(funcaddr);
+      if (fd != (Funcdata *)0)
+	fd->getOverride().insertFlowOverride(overaddr,flowType);
+      decoder.closeElement(subId);
+    }
+    else if (subId == ELEM_CALLDEST) {
+      string flowType = decoder.readString(ATTRIB_TYPE);
+      Address funcaddr = Address::decode(decoder);
+      Address overaddr = Address::decode(decoder);
+      Address destaddr = Address::decode(decoder);
+      Funcdata *fd = symboltab->getGlobalScope()->queryFunction(funcaddr);
+      if (fd != (Funcdata *)0)
+	fd->getOverride().insertDestinationOverride(overaddr, destaddr, flowType);
+      decoder.closeElement(subId);
+    }
+    else
+      break;
   }
   decoder.closeElement(elemId);
 }

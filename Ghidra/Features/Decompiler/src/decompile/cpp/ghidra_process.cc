@@ -317,7 +317,7 @@ void DecompileAt::rawAction(void)
 	ParamIDAnalysis pidanalysis( fd, false );
 	pidanalysis.encode( encoder, true );
       }
-      fd->encode(encoder,0,ghidra->getSendSyntaxTree());
+      fd->encode(encoder,0,ghidra->getSendSyntaxTree(),false);
       if (ghidra->getSendCCode()&&
 	  (ghidra->allacts.getCurrentName() == "decompile"))
         ghidra->print->docFunction(fd);
