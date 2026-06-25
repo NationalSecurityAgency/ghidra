@@ -167,6 +167,14 @@ def find_enum_member_serial(enum_id: int, member_value: int, member_name: str):
             return ei.get_serial(i)
     return -1
 
+def get_struc_sid(sptr) -> int:
+    """
+    Returns the structure type id for add_struc_member and related legacy APIs.
+    """
+    if isinstance(sptr, ida_typeinf.tinfo_t):
+        return sptr.get_tid()
+    return sptr
+
 
 class Cancelled(Exception):
     pass
@@ -3176,9 +3184,12 @@ class XmlImporter(IdaXml):
             ti.ec.tid = t
             ti.ec.serial = find_enum_member_serial(t, member.value, member.name)
         if flag == ida_bytes.stru_flag():
-            t = idc.get_struc_id(datatype)
-            ti.tid = t
-        error = idc.add_struc_member(sptr, name, offset, flag, ti, size)
+            member_tif = ida_typeinf.tinfo_t()
+            if member_tif.get_named_type(ida_typeinf.get_idati(), datatype):
+                ti.tid = member_tif.get_tid()
+            else:
+                ti.tid = idc.get_struc_id(datatype)
+        error = idc.add_struc_member(get_struc_sid(sptr), name, offset, flag, ti, size)
         mbr = get_member(sptr, offset)
         self.import_member_cmts(member, mbr)
         self.update_counter(MEMBER)
