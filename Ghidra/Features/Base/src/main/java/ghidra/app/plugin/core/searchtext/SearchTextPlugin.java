@@ -102,6 +102,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	private int searchLimit;
 	private SearchTask currentTask;
 	private String lastSearchedText;
+	private LastSearchHit lastSearchHit;
 	private boolean doHighlight;
 	private Navigatable navigatable;
 
@@ -150,15 +151,18 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		if (result == null) {
 			searchDialog.setStatusText("Not found");
 		}
-		else if (result.programLocation().equals(currentLocation)) {
-			searchNext(searchTask.getProgram(), searchNavigatable, textSearcher);
-		}
 		else {
 			searchDialog.setStatusText("");
 			ProgramLocation loc = result.programLocation();
 			if (goToService.goTo(searchNavigatable, loc, program)) {
 				new SearchTextHighlightProvider(searchNavigatable, searchOptions, null, program,
 					result);
+
+				// The navigatable may change its location if it does not have the search result
+				// location visible.  We store that here so we can later detect that case in order
+				// to keep the search from getting stuck.
+				ProgramLocation navigatableLoc = navigatable.getLocation();
+				lastSearchHit = new LastSearchHit(loc, navigatableLoc);
 			}
 		}
 
@@ -262,7 +266,20 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	}
 
 	private ProgramLocation getStartLocation() {
-		return currentLocation = navigatable.getLocation();
+
+		ProgramLocation currentNavLoc = navigatable.getLocation();
+		if (lastSearchHit != null) {
+			ProgramLocation lastNavLoc = lastSearchHit.navigatableLocation();
+
+			// The navigatable's location has not changed since the last search. Use the last search
+			// location as the start point for the next search.  This ensures the searching does not
+			// get stuck when the navigatable cannot display the last search hit.
+			if (lastNavLoc.equals(currentNavLoc)) {
+				return lastSearchHit.searchLocation();
+			}
+		}
+
+		return currentNavLoc;
 	}
 
 	private void searchNext(Program program, Navigatable searchNavigatable, Searcher textSearcher) {
@@ -534,7 +551,12 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 // Inner Classes
 //==================================================================================================
 
-	class TableLoadingListener implements ThreadedTableModelListener {
+	private record LastSearchHit(ProgramLocation searchLocation,
+			ProgramLocation navigatableLocation) {
+		//
+	}
+
+	private class TableLoadingListener implements ThreadedTableModelListener {
 
 		private ThreadedTableModel<?, ?> model;
 		private TableComponentProvider<ProgramLocation> provider;
@@ -572,8 +594,9 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 					"Stopped search after finding " + matchCount + " matches.\n" +
 						"The search limit can be changed at Edit->Tool Options, under Search.");
 			}
+
 			// there was a suggestion that the dialog should not go way after a search all
-//			searchDialog.close();
+			// searchDialog.close();
 		}
 
 		private Component getParentComponent() {
