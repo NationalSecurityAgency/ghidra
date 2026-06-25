@@ -134,14 +134,6 @@ public abstract class RemoteBlockStreamHandle<T extends BlockStream> implements 
 	}
 
 	/**
-	 * Get the preferred socket send/receive buffer size to be used
-	 * @return preferred socket send/receive buffer size
-	 */
-	protected int getPreferredBufferSize() {
-		return (getBlockSize() + 4) * 12;
-	}
-
-	/**
 	 * Generate a random number for use as a block stream authentication token.
 	 * @return random value
 	 */
