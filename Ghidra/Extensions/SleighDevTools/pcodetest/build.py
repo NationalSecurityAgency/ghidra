@@ -32,14 +32,19 @@ class BuildUtil:
 
     def run(self, cmd, stdout=False, stderr=False, verbose=True):
         if isinstance(cmd, str):
-            if stdout and stderr:
-                cmd += ' 1>%s 2>%s' % (stdout, stderr)
-            elif stdout and not stderr:
-                cmd += ' 1>%s 2>&1' % (stdout)
-            elif not stdout and stderr:
-                cmd += ' 2>%s' % (stderr)
             if verbose: self.log_info(cmd)
-            os.system(cmd)
+            stdout_f = open(stdout, 'w') if stdout else None
+            if stdout and not stderr:
+                stderr_f = subprocess.STDOUT
+            elif stderr:
+                stderr_f = open(stderr, 'w')
+            else:
+                stderr_f = None
+            try:
+                subprocess.run(cmd, shell=True, stdout=stdout_f, stderr=stderr_f)
+            finally:
+                if stdout_f: stdout_f.close()
+                if stderr_f and stderr_f != subprocess.STDOUT: stderr_f.close()
         else:
             string = ' '.join(cmd)
             if stdout:
