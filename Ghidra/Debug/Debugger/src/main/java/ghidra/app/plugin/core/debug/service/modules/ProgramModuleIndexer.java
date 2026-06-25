@@ -35,9 +35,7 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.CancelledListener;
-import ghidra.util.task.Task;
-import ghidra.util.task.TaskMonitor;
+import ghidra.util.task.*;
 
 // TODO: Consider making this a front-end plugin?
 public class ProgramModuleIndexer implements DomainFolderChangeListener {
@@ -81,8 +79,7 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 	// TODO: Note language and prefer those from the same processor?
 	// Will get difficult with new OBTR, since I'd need a platform
 	// There's also the WoW64 issue....
-	protected record IndexEntry(String name, String dfID, NameSource source) {
-	}
+	protected record IndexEntry(String name, String dfID, NameSource source) {}
 
 	protected class ModuleChangeListener
 			implements DomainObjectListener, DomainObjectClosedListener {
