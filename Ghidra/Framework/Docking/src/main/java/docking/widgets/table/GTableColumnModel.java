@@ -587,13 +587,27 @@ public class GTableColumnModel
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
+
 		String name = evt.getPropertyName();
-		if ("width".equals(name) || "preferredWidth".equals(name)) {
-			invalidateWidthCache();
-			// This is a misnomer, we're using this method simply to cause a relayout
-			fireColumnMarginChanged();
-			columnModelState.saveState();
+		if (!("width".equals(name) || "preferredWidth".equals(name))) {
+			return;
 		}
+
+		invalidateWidthCache();
+		columnModelState.saveState();
+
+		if (table.isEditing()) {
+			// Calling fireColumnMarginChanged() while the table is editing will end the edit. The 
+			// assumption is that we really only want to trigger a relayout if the column sizes are
+			// changing programmatically.  We may get a propertyChange() callback related to 'width'
+			// and 'preferredWidth' when the is trying to initiate an edit.  Handle that case by 
+			// ignoring the callback with an active edit.
+			return;
+		}
+
+		// This is a misnomer, we're using this method simply to cause a relayout
+		fireColumnMarginChanged();
+
 	}
 
 	@Override
