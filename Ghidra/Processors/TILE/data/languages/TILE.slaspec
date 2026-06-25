@@ -40,5 +40,12 @@
 
 @include "TILEGX.sinc"
 @include "tile_common.sinc"
-
+define ENDIAN "big";
+define ALIGNMENT 2;
+define REGISTER_SIZE "8";
+define BIT_64 "64";
+define XLEN "8";
+define FLEN "8";
+define CONTEXTLEN "12";
+define C_FLAG_REGISTER "r0";
 RES_IS;

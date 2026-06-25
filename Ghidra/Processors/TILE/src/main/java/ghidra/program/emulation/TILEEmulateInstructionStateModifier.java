@@ -36,7 +36,7 @@ import ghidra.program.model.lang.Language;
  *                     EmulateInstructionStateModifier's callback contract.
  */
 @SuppressWarnings("deprecation")
-public class TILEEmulateInstructionStateModifier implements EmulateInstructionStateModifier {
+public class TILEEmulateInstructionStateModifier extends EmulateInstructionStateModifier {
 
 	/** TILE general-purpose register class offset. */
 	private static final long GP_OFFSET = 0x1000;
@@ -54,6 +54,7 @@ public class TILEEmulateInstructionStateModifier implements EmulateInstructionSt
 	 * @param emu the Emulate instance to modify state for
 	 */
 	public TILEEmulateInstructionStateModifier(Emulate emu) {
+		super(emu);
 		this.emulate = emu;
 	}
 

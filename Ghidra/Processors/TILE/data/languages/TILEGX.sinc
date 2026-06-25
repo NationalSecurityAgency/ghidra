@@ -5,11 +5,11 @@ define endian = little;
 
 # ===== Register Classes =====
 # Each register class gets a unique offset and size for proper address resolution
-# Sizes reflect register width (SIZE = 8 means 64-bit registers).
-define register GP    offset = 0x1000 SIZE = 8;  # General purpose registers (r0-r35)
-define register CP    offset = 0x2000 SIZE = 8;  # System registers (sr0-sr40, 41 total)
-define register CP0   offset = 0x3000 SIZE = 8;  # Control registers (c0-c31)
-define register CSR   offset = 0x4000 SIZE = 8;  # Control/status registers
+# Sizes reflect register width (8 means 64-bit registers).
+define register offset = 0x1000 size = 8 GP;
+define register offset = 0x2000 size = 8 CP;
+define register offset = 0x3000 size = 8 CP0;
+define register offset = 0x4000 size = 8 CSR;
 
 # ===== Bit Token Definitions =====
 
@@ -56,15 +56,16 @@ macro rotl32(out, a, b) {
 # The decompiler uses a context state vector for jump table recovery and
 # RETURN PcodeOp tracking. Our architecture uses contextlen = 12, which
 # is well within the decompiler's bounds limit (prevents segfault #9018).
-define context_state_size = 72;  # Safe upper bound (decompiler uses 75 as hard limit)
-define context_state_safe = (context_state_size < 75);
+# context state size (decompiler bounds)
+define context_state_size offset = 72 size = 8;
+define context_state_safe offset = 75 size = 8;
 
 # ===== Global Pointer (gp) Recognition =====
 # Ghidra's Analysis dialog can auto-detect gp if the register space is
 # declared in the cspec global range. TILEGP register is defined below
 # with explicit offset 0x1000 so Ghidra can identify it during analysis.
-define register TILEGP  offset = 0x1000 SIZE = 8;  # Global pointer register (alias to GP)
-define register XMOS    offset = 0x5000 SIZE = 8;  # XMOS XS1/XS2/XS3 tile processor register space
+define register offset = 0x1000 size = 8 TILEGP;
+define register offset = 0x5000 size = 8 XMOS;
 
 # ===== XMOS XS1/XS2/XS3 Identification =====
 # XMOS processors (XS1, XS2, XS3) use tile processor architecture
@@ -78,21 +79,21 @@ define space xmos_reg type=register_space size=8;
 # ===== Common P-code Operations =====
 
 # Arithmetic (I-type)
-define addi op=PADD:z(8):r8:r8:r8;
-define subi op=PSUB:z(8):r8:r8:r8;
-define andi op=PAND:z(8):r8:r8:r8;
-define ori op=POR:z(8):r8:r8:r8;
-define xori op=PXOR:z(8):r8:r8:r8;
+define addi offset = 0 size = 1 op = PADD:z(8):r8:r8:r8;
+define subi offset = 0 size = 1 op = PSUB:z(8):r8:r8:r8;
+define andi offset = 0 size = 1 op = PAND:z(8):r8:r8:r8;
+define ori offset = 0 size = 1 op = POR:z(8):r8:r8:r8;
+define xori offset = 0 size = 1 op = PXOR:z(8):r8:r8:r8;
 
 # Register-register operations (R-type)
-define add op=PADD:z(8):r8:r8:r8;
-define sub op=PSUB:z(8):r8:r8:r8;
-define and op=PAND:z(8):r8:r8:r8;
-define or op=POR:z(8):r8:r8:r8;
-define xor op=PXOR:z(8):r8:r8:r8;
-define slti op=SLT:z(8):r8:r8:r8;
-define srli op=USHRT:z(8):r8:r8:r8;
-define slli op=SHL:z(8):r8:r8:r8;
+define add offset = 0 size = 1 op PADD:z(8):r8:r8:r8;
+define sub offset = 0 size = 1 op PSUB:z(8):r8:r8:r8;
+define and offset = 0 size = 1 op PAND:z(8):r8:r8:r8;
+define or offset = 0 size = 1 op POR:z(8):r8:r8:r8;
+define xor offset = 0 size = 1 op PXOR:z(8):r8:r8:r8;
+define slti offset = 0 size = 1 op SLT:z(8):r8:r8:r8;
+define srli offset = 0 size = 1 op USHRT:z(8):r8:r8:r8;
+define slli offset = 0 size = 1 op SHL:z(8):r8:r8:r8;
 
 # Load/Store
 define lbu op=PLOAD:z(8):r8:m1:r8;
@@ -215,12 +216,12 @@ define opcode : flush     0x72000000  "FLUSH"
 # ===== TILEGX Extended P-code Operations =====
 
 # Extended Multiply P-code
-define mul3 op=PMUL:r8:r8:r8;       # Full multiply: 3 full registers
-define mulif op=PLOAD:z(8):r8:m64:r8;  # Multiply with immediate floating-point
-define mulim op=PLOAD:z(16):r8:m64:r8; # Multiply with 16-bit immediate
-define mulf op=PMUL:r8:r8:r8;        # Floating-point multiply (semantic distinction)
-define mull op=PMUL:r8:r8:r8;        # Multiply with loop semantics
-define mulli op=PLOAD:z(8):r8:m64:r8; # Multiply with immediate
+define mul3 op=PMUL:r8:r8:r8;
+define mulif op=PLOAD:z(8):r8:m64:r8;
+define mulim op=PLOAD:z(16):r8:m64:r8;
+define mulf op=PMUL:r8:r8:r8;
+define mull op=PMUL:r8:r8:r8;
+define mulli op=PLOAD:z(8):r8:m64:r8;
 
 # Extended Compare P-code
 define cmpeqi op=PJMPEQ:r8:r8:r8;
@@ -231,10 +232,10 @@ define cmpgei op=PJMPGE:r8:r8:r8;
 define cmpne32 op=PJMPNE:r4:r4:r4;
 
 # Extended Shift P-code
-define slli32 op=PSL:r8:r8:r8;        # Shift left with 8-bit immediate
-define srli32 op=PSRL:r8:r8:r8;       # Shift right logical with 8-bit immediate
-define srai32 op=PSRA:r8:r8:r8;       # Shift right arithmetic with 8-bit immediate
-define sll32 op=PSL:r8:r8:r8;         # Shift left with register-based shift amount
+define slli32 op=PSL:r8:r8:r8;
+define srli32 op=PSRL:r8:r8:r8;
+define srai32 op=PSRA:r8:r8:r8;
+define sll32 op=PSL:r8:r8:r8;
 
 # Extended SIMD P-code
 define addv op=PADD:r8:r8:r8;
@@ -242,8 +243,8 @@ define subv op=PSUB:r8:r8:r8;
 define andv op=PAND:r8:r8:r8;
 define orv op=POR:r8:r8:r8;
 define xorr op=PXOR:r8:r8:r8;
-define negv op=PNEG:r8:r8:r8;     # Fixed: PSIGN was incorrect; PNEG for negation (0 - rs1)
-define extv op=PLOAD:r8:r8:r8;     # Fixed: PSRL was incorrect; PLOAD for extraction from wider register
+define negv op=PNEG:r8:r8:r8;
+define extv op=PLOAD:r8:r8:r8;
 
 # Extended Memory P-code
 define ldm op=PLOAD:z(8):r8:m64:r8;
@@ -265,8 +266,8 @@ define brc32 op=PBRANCH:r8:r8:r8;
 define brtype32 op=PJUMP:r8;
 
 # Extended Multi-register P-code
-define mr6 op=PLOAD:r8:r8:r8;        # Multi-register read: reads from registers to memory
-define mt6 op=PSAVE:r8:r8:r8;        # Multi-register write: writes to registers from memory
+define mr6 op=PLOAD:r8:r8:r8;
+define mt6 op=PSAVE:r8:r8:r8;
 define mr12 op=PLOAD:r8:r8:r8;
 define mt12 op=PSAVE:r8:r8:r8;
 
@@ -274,9 +275,9 @@ define mt12 op=PSAVE:r8:r8:r8;
 define addfp op=PADD:r8:r8:r8;
 define subfp op=PSUB:r8:r8:r8;
 define mulfp op=PMUL:r8:r8:r8;
-define divfp op=PDIV:r8:r8:r8;     # Fixed: PSIGN was incorrect; PDIV for floating-point division
-define cvtif op=PCVT:r8:r8:r8;     # Fixed: PSIGN was incorrect; PCVT for integer-to-float conversion
-define cvtfi op=PCVT:r8:r8:r8;     # Fixed: PLOAD was generic; PCVT for float-to-integer conversion
+define divfp op=PDIV:r8:r8:r8;
+define cvtif op=PCVT:r8:r8:r8;
+define cvtfi op=PCVT:r8:r8:r8;
 
 # Extended System P-code
 define wfi op=PSPECIAL;
@@ -287,3 +288,5 @@ define flush op=PSPECIAL;
 
 # ===== Include tile_common.sinc =====
 @include "tile_common.sinc"
+
+RES_IS;
