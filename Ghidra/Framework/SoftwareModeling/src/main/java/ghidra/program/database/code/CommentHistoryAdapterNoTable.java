@@ -58,4 +58,14 @@ class CommentHistoryAdapterNoTable extends CommentHistoryAdapter {
 	int getRecordCount() {
 		return 0;
 	}
+
+	@Override
+	void anonymizeAllRecords(String anonymousName) throws IOException {
+		// No-op: no table to anonymize
+	}
+
+	@Override
+	void anonymizeRecordsByAddress(String anonymousName, Address addr) throws IOException {
+		// No-op: no table to anonymize
+	}
 }
