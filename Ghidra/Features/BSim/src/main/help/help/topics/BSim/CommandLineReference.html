@@ -46,6 +46,7 @@
     bsim_ctl dropuser        &lt;/datadir-path&gt; &lt;username&gt;
     bsim_ctl resetpassword   &lt;username&gt;
     bsim_ctl changeauth      &lt;/datadir-path&gt; [--auth|-a&nbsp;pki|password|trust] [--noLocalAuth] [--cafile&nbsp;&lt;/cacert-path&gt;] [--dn&nbsp;"&lt;distinguished-name&gt;"]
+    bsim_ctl listdatabases   &lt;/datadir-path&gt;
     bsim_ctl changeprivilege &lt;username&gt; admin|user
     
     Global Options:
@@ -203,6 +204,13 @@
                 <P><SPAN class="command"><STRONG>--dn&nbsp;</STRONG></SPAN><SPAN class=
                 "emphasis"><EM>&lt;distinguished-name&gt;</EM></SPAN> - specifies the Distinguished Name for the admin
                 user and is required for <SPAN class="command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class="bold"><STRONG>listdatabases</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Retrieves the databases of a PostgreSQL server. The path to the server's
+                data directory must be specified. The server must be running.</P>
               </DD>
 
               <DT><SPAN class="term"><SPAN class=
