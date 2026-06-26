@@ -877,9 +877,8 @@ class XmlExporter(IdaXml):
         cname = idc.get_enum_member_name(cid)
         if cname is None or len(cname) == 0:
             return
-        regcmt = idc.get_enum_member_cmt(cid, False)
-        rptcmt = idc.get_enum_member_cmt(cid, True)
-        has_comment = regcmt is not None
+        cmt = idc.get_enum_member_cmt(cid, False)
+        has_comment = self._normalize_comment_text(cmt) is not None
         self.start_element(ENUM_ENTRY)
         self.write_attribute(NAME, cname)
         value = idc.get_enum_member_value(cid)
@@ -888,11 +887,8 @@ class XmlExporter(IdaXml):
         #if bf:
         #    self.write_numeric_attribute(BIT_MASK, mask)
         self.close_tag(has_comment)
-        if regcmt is not None and len(regcmt) > 0:
-            self.export_regular_cmt(regcmt)
-        if rptcmt is not None and len(rptcmt) > 0:
-            self.export_repeatable_cmt(rptcmt)
-        if (has_comment):
+        if has_comment:
+            self._export_datatype_comment(cmt)
             self.end_element(ENUM_ENTRY)
 
 
@@ -990,12 +986,10 @@ class XmlExporter(IdaXml):
             # BIT_FIELD attribute not supported for ENUM export
             #if bf:
             #    self.write_attribute(BIT_FIELD, "yes")
-            regcmt = idc.get_enum_cmt(eid)
-            tif = ida_typeinf.tinfo_t()
-            tif.get_type_by_tid(tid=eid)
-            rptcmt = tif.get_type_rptcmt()
+            enum_cmt = idc.get_enum_cmt(eid)
+            has_enum_cmt = self._normalize_comment_text(enum_cmt) is not None
             has_children = ((idc.get_enum_size(eid) > 0) or
-                            (regcmt is not None) or (rptcmt is not None) or
+                            has_enum_cmt or
                             (ida_bytes.get_radix(eflags, 0) != 16) or
                             (self.is_signed_data(eflags)))
             self.close_tag(has_children)
@@ -1007,10 +1001,8 @@ class XmlExporter(IdaXml):
                 if self.is_signed_data(eflags):
                     self.write_attribute(SIGNED, "yes")
                 self.close_tag()
-            if regcmt is not None:
-                self.export_regular_cmt(regcmt)
-            if rptcmt is not None:
-                self.export_repeatable_cmt(rptcmt)
+            if has_enum_cmt:
+                self._export_datatype_comment(enum_cmt)
             self.export_enum_members(eid, bf, eflags)
             if (has_children):
                 self.end_element(ENUM)
@@ -1205,15 +1197,10 @@ class XmlExporter(IdaXml):
                 dtype = "%s[%d]" % (arraytype, size//msize)
             self.write_attribute(DATATYPE, dtype)
             self.write_numeric_attribute(SIZE, size*self.cbsize)
-            regcmt = m.cmt if m.is_regcmt() else None
-            rptcmt = m.cmt if not m.is_regcmt() else None
-            hascmt = regcmt is not None or rptcmt is not None
+            hascmt = self._normalize_comment_text(m.cmt) is not None
             self.close_tag(hascmt)
-            if (hascmt):
-                if regcmt is not None:
-                    self.export_regular_cmt(regcmt)
-                if rptcmt is not None:
-                    self.export_repeatable_cmt(rptcmt)
+            if hascmt:
+                self._export_datatype_comment(m.cmt)
                 self.end_element(MEMBER)
 
 
@@ -1514,6 +1501,35 @@ class XmlExporter(IdaXml):
         self.display_cpu_time(timer)
 
 
+    def _normalize_comment_text(self, cmt):
+        """
+        Returns stripped comment text, or None if empty or unset.
+
+        IDA v8+ uses a single comment field for datatypes; empty strings must
+        not be treated as present comments.
+        """
+        if cmt is None:
+            return None
+        text = ida_lines.tag_remove(cmt + " ").strip()
+        if len(text) == 0:
+            return None
+        return text
+
+
+    def _export_datatype_comment(self, cmt):
+        """
+        Exports a datatype comment using IDA v9's single-comment model.
+
+        Datatype comments are written as REGULAR_CMT only (no REPEATABLE_CMT).
+        Returns True if a comment element was written.
+        """
+        text = self._normalize_comment_text(cmt)
+        if text is not None:
+            self.export_regular_cmt(text)
+            return True
+        return False
+
+
     def export_regular_cmt(self, cmt: str) -> None:
         """
         Exports the regular comment for an item.
@@ -1679,15 +1695,13 @@ class XmlExporter(IdaXml):
             self.write_numeric_attribute(SIZE, size)
             if s.is_varstruct():
                 self.write_attribute(VARIABLE_LENGTH, "y")
-            regcmt = s.get_type_cmt()
-            rptcmt = s.get_type_rptcmt()
-            has_contents = regcmt is not None or rptcmt is not None or s.get_udt_nmembers() > 0
+            type_cmt = s.get_type_cmt()
+            has_type_cmt = self._normalize_comment_text(type_cmt) is not None
+            has_contents = has_type_cmt or s.get_udt_nmembers() > 0
             self.close_tag(has_contents)
-            if (has_contents):
-                if regcmt is not None:
-                    self.export_regular_cmt(regcmt)
-                if rptcmt is not None:
-                    self.export_repeatable_cmt(rptcmt)
+            if has_contents:
+                if has_type_cmt:
+                    self._export_datatype_comment(type_cmt)
                 if s.get_udt_nmembers() > 0:
                     self.export_members(s)
                 self.end_element(stype)
