@@ -656,6 +656,13 @@ public class GhidraFileData {
 					DomainFileProxy proxy = new DomainFileProxy(name, parent.getPathname(), doa,
 						DomainFile.DEFAULT_VERSION, fileID, parent.getProjectLocator());
 					proxy.setLastModified(getLastModifiedTime());
+
+					// Notify file manager of in-use domain object.
+					// A link-file object is indirect with tracking intiated by the URL-referenced file.
+					if (!isLink()) {
+						projectData.trackDomainFileInUse(doa);
+					}
+
 					return doa;
 				}
 				myFolderItem = folderItem;
