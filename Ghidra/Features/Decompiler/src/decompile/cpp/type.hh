@@ -551,7 +551,7 @@ public:
   map<uintb,string>::const_iterator beginEnum(void) const { return namemap.begin(); }	///< Beginning of name map
   map<uintb,string>::const_iterator endEnum(void) const { return namemap.end(); }	///< End of name map
   virtual bool hasNamedValue(uintb val) const;			///< Does \b this have a (single) name for the given value
-  virtual void getMatches(uintb val,Representation &rep) const;	///< Recover the named representation
+  virtual void getMatches(uintb val,int4 valSize,int shiftDistance,Representation &representation) const;	///< Recover the named representation
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypeEnum(*this); }
@@ -642,15 +642,15 @@ class TypePartialEnum : public TypeEnum {
   friend class TypeFactory;
   Datatype *stripped;		///< The \e undefined data-type to use if a formal data-type is required.
   TypeEnum *parent;		///< The enumeration data-type \b this is based on
-  int4 offset;			///< Byte offset with the parent enum where \b this starts
+  int4 offset;			///< Bit offset with the parent enum where \b this starts
 public:
   TypePartialEnum(const TypePartialEnum &op);		///< Construct from another TypePartialEnum
   TypePartialEnum(TypeEnum *par,int4 off,int4 sz,Datatype *strip);	///< Constructor
-  int4 getOffset(void) const { return offset; }		///< Get the byte offset into the containing data-type
+  int4 getOffset(void) const { return offset; }		///< Get the bit offset into the containing data-type
   Datatype *getParent(void) const { return parent; }	///< Get the enumeration containing \b this piece
   virtual void printRaw(ostream &s) const;
   virtual bool hasNamedValue(uintb val) const;
-  virtual void getMatches(uintb val,Representation &rep) const;
+  virtual void getMatches(uintb val,int4 valSize,int shiftDistance,Representation &representation) const;
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypePartialEnum(*this); }
