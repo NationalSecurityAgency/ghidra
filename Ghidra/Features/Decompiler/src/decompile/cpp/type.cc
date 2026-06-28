@@ -1571,6 +1571,18 @@ void TypeEnum::getMatches(uintb val,Representation &rep) const
 {
   map<uintb,string>::const_iterator iter;
   int4 count;
+  bool isComplement = false;
+
+  // First match complement if representation would be cleaner (combination of fewer enums)
+  // We'll do this by counting the number of set bits using Brian Kernighan's Algorithm
+  uintb bitsleft = val;
+  for (count=0;bitsleft!=0;++count){
+    bitsleft &= (bitsleft - 1);
+  }
+  if (count > size * 4) {
+    val = val ^ calc_mask(size);	// Switch value we are trying to represent (to complement)
+    isComplement = true;
+  }
 
   for(count=0;count<2;++count) {
     bool allmatch = true;
@@ -1608,10 +1620,11 @@ void TypeEnum::getMatches(uintb val,Representation &rep) const
       allmatch = (bitsleft == 0);
     }
     if (allmatch) {			// If we have a complete representation
-      rep.complement = (count==1);	// Set whether we represented original value or complement
+      rep.complement = isComplement;
       return;
     }
     val = val ^ calc_mask(size);	// Switch value we are trying to represent (to complement)
+    isComplement = !isComplement;
     rep.matchname.clear();		// Clear out old attempt
   }
   // If we reach here, no representation was possible, -matchname- is empty
