@@ -1936,17 +1936,22 @@ define pcodeop stfdpOp;
 @endif
 } 
 
+# stvepx (807) and stvepxl (775) sit on the same encodings Cell/AltiVec use for
+# lvrxl / lvlxl (see altivec.sinc). No chip implements both, so when AltiVec is
+# selected we drop these and let the AltiVec forms decode instead.
+@ifndef INCLUDE_ALTIVEC
 define pcodeop stvepxOp;
 :stvepx S,RA_OR_ZERO,B is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=807 & BIT_0=0  {
 	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
 	*[ram]:16 EA = stvepxOp(S, RA_OR_ZERO, B);
-} 
+}
 
 define pcodeop stvepxlOp;
 :stvepxl S,RA_OR_ZERO,B is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=775 & BIT_0=0  {
 	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
 	*[ram]:16 EA = stvepxlOp(S, RA_OR_ZERO, B);
-} 
+}
+@endif
 
 # binutils-descr: "dquaq",	ZRC(63,3,0),	Z2_MASK,     POWER6,	PPCNONE,	{FRT, FRA, FRB, RMC}
 define pcodeop dquaqOp;
