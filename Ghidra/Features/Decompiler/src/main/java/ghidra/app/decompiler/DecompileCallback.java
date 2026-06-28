@@ -69,6 +69,20 @@ public class DecompileCallback {
 		}
 	}
 
+	/**
+	 * Keeps the local import pointer data with its external reference, since the listing data may
+	 * carry type information that is not stored on the ExternalLocation.
+	 */
+	private static class ExternalReferenceData {
+		private final ExternalReference reference;
+		private final Data pointerData;
+
+		ExternalReferenceData(ExternalReference reference, Data pointerData) {
+			this.reference = reference;
+			this.pointerData = pointerData;
+		}
+	}
+
 	private DecompileDebug debug;
 	private Program program;
 	private Listing listing;
@@ -666,8 +680,8 @@ public class DecompileCallback {
 				encodeHole(resultEncoder, addr);
 			}
 		}
-		else if (obj instanceof ExternalReference) {
-			encodeExternalRef(resultEncoder, addr, (ExternalReference) obj);
+		else if (obj instanceof ExternalReferenceData) {
+			encodeExternalRef(resultEncoder, addr, (ExternalReferenceData) obj);
 		}
 		else if (obj instanceof Symbol) {
 			encodeLabel(resultEncoder, (Symbol) obj, addr);
@@ -689,8 +703,9 @@ public class DecompileCallback {
 			func = cachedFunction;
 		}
 		else {
-			ExternalReference extRef = getExternalReference(addr);
-			if (extRef != null) {
+			ExternalReferenceData extRefData = getExternalReferenceData(addr);
+			if (extRefData != null) {
+				ExternalReference extRef = extRefData.reference;
 				func = listing.getFunctionAt(extRef.getToAddress());
 				if (func == null) {
 					Symbol symbol = extRef.getExternalLocation().getSymbol();
@@ -1005,7 +1020,7 @@ public class DecompileCallback {
 			addr.getUnsignedOffset(), mutability);
 	}
 
-	private void encodeExternalRef(Encoder encoder, Address addr, ExternalReference ref)
+	private void encodeExternalRef(Encoder encoder, Address addr, ExternalReferenceData refData)
 			throws IOException {
 		// The decompiler model was to assume that the ExternalReference
 		// object could resolve the physical address where the dll
@@ -1020,8 +1035,45 @@ public class DecompileCallback {
 		// the address of the reference to hang the function on, and make
 		// no attempt to get a realistic linked address.  This works because
 		// we never read bytes or look up code units at the address.
-		HighSymbol externSymbol = new HighExternalSymbol(ref.getLabel(), addr, addr, dtmanage);
+		ExternalReference ref = refData.reference;
+		DataType dataType = getExternalReferenceDataType(refData);
+		HighSymbol externSymbol =
+			new HighExternalSymbol(ref.getLabel(), addr, addr, dataType, dtmanage);
 		encodeResult(encoder, externSymbol, null);
+	}
+
+	/**
+	 * Get the datatype to attach to the decompiler's external reference symbol. For imported
+	 * external data, the useful user-defined type is often on the local pointer data item, not on
+	 * the ExternalLocation itself.
+	 */
+	private DataType getExternalReferenceDataType(ExternalReferenceData refData) {
+		ExternalLocation location = refData.reference.getExternalLocation();
+		DataType externalType = location.getDataType();
+		if (isDefinedExternalDataType(externalType)) {
+			return externalType;
+		}
+		if (location.isFunction()) {
+			return externalType;
+		}
+		DataType importPointerType = refData.pointerData.getDataType();
+		DataType basePointerType = importPointerType;
+		while (basePointerType instanceof TypeDef) {
+			basePointerType = ((TypeDef) basePointerType).getBaseDataType();
+		}
+		if (basePointerType instanceof Pointer pointer) {
+			DataType referencedType = pointer.getDataType();
+			if (isDefinedExternalDataType(referencedType)) {
+				// Keep the import pointer type intact. The native decompiler wraps external
+				// symbol types in a pointer when materializing the reference address.
+				return importPointerType;
+			}
+		}
+		return externalType;
+	}
+
+	private boolean isDefinedExternalDataType(DataType dataType) {
+		return dataType != null && dataType != DataType.DEFAULT && !Undefined.isUndefined(dataType);
 	}
 
 	private void encodeTrackSet(Encoder encoder, Register reg, long val) throws IOException {
@@ -1053,11 +1105,16 @@ public class DecompileCallback {
 	}
 
 	private ExternalReference getExternalReference(Address addr) {
+		ExternalReferenceData refData = getExternalReferenceData(addr);
+		return refData != null ? refData.reference : null;
+	}
+
+	private ExternalReferenceData getExternalReferenceData(Address addr) {
 		Data data = listing.getDefinedDataAt(addr);
 		if (data != null && data.isPointer()) {
 			Reference ref = data.getPrimaryReference(0);
 			if (ref instanceof ExternalReference) {
-				return (ExternalReference) ref;
+				return new ExternalReferenceData((ExternalReference) ref, data);
 			}
 		}
 		return null;
@@ -1070,9 +1127,9 @@ public class DecompileCallback {
 	 * @return the global object
 	 */
 	private Object lookupSymbol(Address addr) {
-		ExternalReference ref = getExternalReference(addr);
-		if (ref != null) {
-			return ref;
+		ExternalReferenceData refData = getExternalReferenceData(addr);
+		if (refData != null) {
+			return refData;
 		}
 		Function func = getFunctionContaining(addr);
 		if (func != null) {
