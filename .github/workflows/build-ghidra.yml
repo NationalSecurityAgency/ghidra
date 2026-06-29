@@ -10,7 +10,9 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v6
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
   
       - name: Read Ghidra JDK Version
         run: echo "JDK_VER=$(awk -F'=' '$1=="application.java.min" {print $2}' Ghidra/application.properties)" >> $GITHUB_ENV 

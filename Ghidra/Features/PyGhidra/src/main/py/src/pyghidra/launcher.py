@@ -262,6 +262,8 @@ class PyGhidraLauncher:
             if "org.eclipse.jdt.launching.VM_ARGUMENTS" in line:
                 _, _, value = line.partition("value=")
                 value = value.removesuffix("/>")
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1]
                 return html.unescape(value).split()
 
         raise Exception("org.eclipse.jdt.launching.VM_ARGUMENTS not found")
