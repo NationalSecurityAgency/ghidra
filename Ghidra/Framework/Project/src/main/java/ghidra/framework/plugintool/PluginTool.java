@@ -15,24 +15,53 @@
  */
 package ghidra.framework.plugintool;
 
-import static ghidra.framework.model.ToolTemplate.*;
+import static ghidra.framework.model.ToolTemplate.TOOL_INSTANCE_NAME_XML_NAME;
+import static ghidra.framework.model.ToolTemplate.TOOL_NAME_XML_NAME;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FocusTraversalPolicy;
+import java.awt.Image;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.KeyStroke;
 
 import org.jdom2.Element;
 
-import docking.*;
-import docking.action.*;
+import docking.AbstractDockingTool;
+import docking.ActionContext;
+import docking.ActionToGuiHelper;
+import docking.ComponentProvider;
+import docking.DialogComponentProvider;
+import docking.DockingUtils;
+import docking.DockingWindowManager;
+import docking.ErrLogDialog;
+import docking.ErrorReporter;
+import docking.action.ActionContextProvider;
+import docking.action.DockingAction;
+import docking.action.DockingActionIf;
+import docking.action.KeyBindingData;
+import docking.action.MenuData;
 import docking.action.builder.ActionBuilder;
 import docking.actions.PopupActionProvider;
 import docking.actions.ToolActions;
@@ -43,24 +72,48 @@ import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
 import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
+import ghidra.framework.Application;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.UserAgreementDialog;
-import ghidra.framework.model.*;
-import ghidra.framework.options.*;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.Project;
+import ghidra.framework.model.ProjectManager;
+import ghidra.framework.model.ToolListener;
+import ghidra.framework.model.ToolServices;
+import ghidra.framework.model.ToolTemplate;
+import ghidra.framework.options.Options;
+import ghidra.framework.options.OptionsChangeListener;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.dialog.ManagePluginsDialog;
-import ghidra.framework.plugintool.mgr.*;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.mgr.DialogManager;
+import ghidra.framework.plugintool.mgr.EventManager;
+import ghidra.framework.plugintool.mgr.OptionsManager;
+import ghidra.framework.plugintool.mgr.ServiceManager;
+import ghidra.framework.plugintool.mgr.ToolTaskManager;
+import ghidra.framework.plugintool.util.DefaultPluginsConfiguration;
+import ghidra.framework.plugintool.util.PluginEventListener;
+import ghidra.framework.plugintool.util.PluginException;
+import ghidra.framework.plugintool.util.ServiceListener;
+import ghidra.framework.plugintool.util.TransientToolState;
+import ghidra.framework.plugintool.util.UndoRedoToolState;
 import ghidra.framework.project.ProjectDataService;
 import ghidra.framework.project.extensions.ExtensionTableDialog;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.*;
+import ghidra.util.task.Task;
+import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskListener;
+import ghidra.util.task.TaskMonitor;
 import help.Help;
 import help.HelpService;
+import resources.ResourceManager;
 
 /**
  * Base class that is a container to manage plugins and their actions, and to coordinate the
@@ -1152,6 +1205,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 		}
 
 		HelpService help = Help.getHelpService();
+		
+		
 
 		new ActionBuilder("Contents", ToolConstants.TOOL_OWNER)
 				.menuPath(ToolConstants.MENU_HELP, "&Contents")
@@ -1160,6 +1215,18 @@ public abstract class PluginTool extends AbstractDockingTool {
 				.inWindow(ActionBuilder.When.ALWAYS)
 				.onAction(c -> help.showHelp(null, false, getToolFrame()))
 				.buildAndInstall(this);
+		
+		new ActionBuilder("Accessibility", ToolConstants.TOOL_OWNER)
+				.menuPath(ToolConstants.MENU_HELP, "&Accessibility")
+				.menuGroup("ZZZ")
+				.helpLocation(new HelpLocation("Accessibility", "AccessibilityOverview"))
+				.inWindow(ActionBuilder.When.ALWAYS)
+				.onAction(c -> {
+					help.showHelp(new HelpLocation("Accessibility", "AccessibilityOverview"));
+				})
+				.buildAndInstall(this);
+		
+		
 	}
 
 	/**
