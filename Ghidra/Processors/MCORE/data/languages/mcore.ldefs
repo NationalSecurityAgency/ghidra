@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+
+   <language processor="MCORE"
+            endian="big"
+            size="32"
+            variant="default"
+            version="1.0"
+            slafile="mcore.sla"
+            processorspec="mcore.pspec"
+            id="MCORE:BE:32:default">
+    <description>MCORE</description>
+    <compiler name="default" spec="mcore.cspec" id="default"/>
+  </language> 
+
+</language_definitions>
