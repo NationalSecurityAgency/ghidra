@@ -16,6 +16,17 @@
   <language processor="SuperH"
             endian="big"
             size="32"
+            variant="SH-2A-NoFPU"
+            version="1.0"
+            slafile="sh-2a-nofpu.sla"
+            processorspec="superh.pspec"
+            id="SuperH:BE:32:SH-2A-NoFPU">
+    <description>SuperH SH-2A processor 32-bit big-endian without FPU (SH7206, SH7211, SH7214)</description>
+    <compiler name="default" spec="superh2a-nofpu.cspec" id="default"/>
+  </language>
+  <language processor="SuperH"
+            endian="big"
+            size="32"
             variant="SH-2"
             version="1.0"
             slafile="sh-2.sla"

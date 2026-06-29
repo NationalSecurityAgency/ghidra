@@ -1,0 +1,3 @@
+@define SH_VERSION "2A"
+
+@include "superh.sinc"
