@@ -29,6 +29,18 @@
     <external_name tool="gnu" name="z80"/>
     <external_name tool="IDA-PRO" name="z80"/>
   </language>
+  <language processor="Z80e"
+			endian="little"
+			size="16"
+			variant="Z80e"
+			version="1.0"
+			slafile="z80e.sla"
+			processorspec="z80e.pspec"
+			manualindexfile="../manuals/Z80.idx"
+			id="z80e:LE:16:default">
+	<description>Nintendo e-Reader Z80</description>
+	<compiler name="default" spec="z80.cspec" id="default"/>
+  </language>
   <language processor="Z180"
             endian="little"
             size="16"
