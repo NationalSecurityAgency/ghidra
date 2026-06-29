@@ -9,25 +9,27 @@
             version="1.7"
             slafile="tricore.sla"
             processorspec="tricore.pspec"
-	    manualindexfile="../manuals/tricore2.idx"
+      manualindexfile="../manuals/tricore2.idx"
             id="tricore:LE:32:default">
     <description>Infineon Tricore Embedded Processor</description>
     <compiler name="default" spec="tricore.cspec" id="default"/>
     <external_name tool="DWARF.register.mapping.file" name="tricore.dwarf"/>
   </language>
-    <language processor="tricore"
+
+  <language processor="tricore"
             endian="little"
             size="32"
             variant="TC29x"
             version="1.7"
             slafile="tricore.sla"
             processorspec="tc29x.pspec"
-	    manualindexfile="../manuals/tricore2.idx"
+      manualindexfile="../manuals/tricore2.idx"
             id="tricore:LE:32:tc29x">
     <description>Infineon Tricore Embedded Processor TC29x</description>
     <compiler name="default" spec="tricore.cspec" id="default"/>
     <external_name tool="DWARF.register.mapping.file" name="tricore.dwarf"/>
   </language>
+
   <language processor="tricore"
             endian="little"
             size="32"
@@ -35,23 +37,39 @@
             version="1.7"
             slafile="tricore.sla"
             processorspec="tc172x.pspec"
-	    manualindexfile="../manuals/tricore.idx"
+      manualindexfile="../manuals/tricore.idx"
             id="tricore:LE:32:tc172x">
     <description>Infineon Tricore Embedded Processor TC1724/TC1728</description>
     <compiler name="default" spec="tricore.cspec" id="default"/>
     <external_name tool="DWARF.register.mapping.file" name="tricore.dwarf"/>
   </language>
-    <language processor="tricore"
+
+  <language processor="tricore"
             endian="little"
             size="32"
             variant="TC176x"
             version="1.7"
             slafile="tricore.sla"
             processorspec="tc176x.pspec"
-	    manualindexfile="../manuals/tricore.idx"
+      manualindexfile="../manuals/tricore.idx"
             id="tricore:LE:32:tc176x">
     <description>Infineon Tricore Embedded Processor TC1762/TC1766</description>
     <compiler name="default" spec="tricore.cspec" id="default"/>
     <external_name tool="DWARF.register.mapping.file" name="tricore.dwarf"/>
   </language>
+
+  <language processor="tricore"
+            endian="little"
+            size="32"
+            variant="TC36x"
+            version="1.7"
+            slafile="tricore.sla"
+            processorspec="tc36x.pspec"
+      manualindexfile="../manuals/tricore3.idx"
+            id="tricore:LE:32:tc36x">
+    <description>Infineon Tricore Embedded Processor TC36x</description>
+    <compiler name="default" spec="tricore.cspec" id="default"/>
+    <external_name tool="DWARF.register.mapping.file" name="tricore.dwarf"/>
+  </language>
+
 </language_definitions>
