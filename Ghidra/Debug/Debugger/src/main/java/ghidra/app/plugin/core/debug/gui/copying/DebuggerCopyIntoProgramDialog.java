@@ -176,8 +176,7 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		SECTIONS("Sections", String.class, RangeEntry::getSectionNames),
 		SRC_MIN("SrcMin", Address.class, RangeEntry::getSrcMinAddress),
 		SRC_MAX("SrcMax", Address.class, RangeEntry::getSrcMaxAddress),
-		BLOCK("Block", String.class, RangeEntry::getBlockName, RangeEntry::setBlockName,
-				RangeEntry::isCreate),
+		BLOCK("Block", String.class, RangeEntry::getBlockName, RangeEntry::setBlockName, RangeEntry::isCreate),
 		OVERLAY("Overlay", Boolean.class, RangeEntry::isOverlay),
 		DST_MIN("DstMin", Address.class, RangeEntry::getDstMinAddress),
 		DST_MAX("DstMax", Address.class, RangeEntry::getDstMaxAddress);
@@ -470,7 +469,7 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		addCancelButton();
 		addResetButton();
 
-		table.setRowHeight(BUTTON_SIZE);
+		table.setPreferredRowHeight(BUTTON_SIZE);
 	}
 
 	protected void addResetButton() {
