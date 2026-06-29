@@ -28,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
+import ghidra.util.Msg;
 
 /**
  * {@link GhidraObjectInputFilter} provides global serial input filter for use with Ghidra server
@@ -64,11 +65,24 @@ public class GhidraObjectInputFilter implements ObjectInputFilter {
 	private static final String MAXDEPTH = "maxdepth";
 	private static final String MAXBYTES = "maxbytes";
 
+	private static int getMaxArrayFromProperties() {
+		String limitStr = System.getProperty("ghidra.serial.array.limit", "200000");
+		try {
+			return Integer.parseInt(limitStr);
+		}
+		catch (Exception e) {
+			Msg.error(GhidraObjectInputFilter.class,
+				"Could not parse ghidra.serial.array.limit: %s. A decimal integer is required"
+						.formatted(limitStr));
+		}
+		return 200_000;
+	}
+
 	// NOTE: Be sure to update serialFilterREADME.md if values are updated.
-	private int MAXARRAY_DEFAULT = 200_000;
-	private int MAXREFS_DEFAULT = 10_000;
-	private int MAXDEPTH_DEFAULT = 50;
-	private int MAXBYTES_DEFAULT = 32 * 1024 * 1024; // 32MB
+	public static final int MAXARRAY_DEFAULT = getMaxArrayFromProperties();
+	public static final int MAXREFS_DEFAULT = 10_000;
+	public static final int MAXDEPTH_DEFAULT = 50;
+	public static final int MAXBYTES_DEFAULT = 32 * 1024 * 1024; // 32MB
 
 	private long maxArray;
 	private long maxRefs;
