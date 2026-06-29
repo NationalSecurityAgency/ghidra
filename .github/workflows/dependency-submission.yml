@@ -21,7 +21,7 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v5
         with:
-        distribution: 'temurin'
+          distribution: 'temurin'
           java-version: '${{ env.JDK_VER }}'
 
       - name: Fetch Dependencies
