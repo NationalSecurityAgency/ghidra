@@ -1431,7 +1431,7 @@ public interface VtHandler {
 	 * Toggle unsolicited theme-change notifications
 	 * <p>
 	 * This is the Dark and Light Mode detection as documented by the <a
-	 * href=https://contour-terminal.org/vt-extensions/color-palette-update-notifications/">Contour
+	 * href="https://contour-terminal.org/vt-extensions/color-palette-update-notifications/">Contour
 	 * Terminal Emulator</a>.
 	 * 
 	 * @param en true to send notifications of theme changes
@@ -1442,7 +1442,7 @@ public interface VtHandler {
 	 * Solicit the current theme
 	 * <p>
 	 * This is the Dark and Light Mode detection as documented by the <a
-	 * href=https://contour-terminal.org/vt-extensions/color-palette-update-notifications/">Contour
+	 * href="https://contour-terminal.org/vt-extensions/color-palette-update-notifications/">Contour
 	 * Terminal Emulator</a>.
 	 */
 	void handleQueryTheme();
