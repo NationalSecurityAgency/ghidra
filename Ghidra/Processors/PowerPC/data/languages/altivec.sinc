@@ -1850,3 +1850,12 @@ define pcodeop altv300_71;
 :vsrv vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=1796 {
 	vrD = altv300_71(vrA,vrB);
 }
+
+# vmsumudm 000100 ..... ..... ..... ..... 100011
+# Vector Multiply Sum Unsigned Doubleword Modulo
+:vmsumudm vrD,vrA,vrB,vrC			is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=35 {
+	local temp:16 = zext(vrC);
+	temp = temp + zext(vrA[ 0,32])*zext(vrB[ 0,32]);
+	temp = temp + zext(vrA[32,32])*zext(vrB[32,32]);
+	vrD = temp;
+}
