@@ -3996,5 +3996,10 @@ unimpl
 is b_0031=0x00200c20
 unimpl
 
-} # end with ImmS_ImmR_TestSet=1
+# TODO This is a placeholder until the correction instruction implementations can be found
+:und_bkpt
+is b_0031=0xE7FFDEFE
+{
+}
 
+} # end with ImmS_ImmR_TestSet=1
