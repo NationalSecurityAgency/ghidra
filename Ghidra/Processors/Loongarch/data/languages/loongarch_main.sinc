@@ -114,7 +114,7 @@ define register offset=0x1000 size=8 [
 
 @endif #FREGSIZE == 32
 
-# SIMD eXtension 256-bit registers (lsx)
+# SIMD eXtension 128-bit registers (lsx)
 # overlaps the floating point registers above
 define register offset=0x1000 size=16 [
 	v0  _   v1  _   v2  _   v3  _   v4  _   v5  _   v6  _   v7  _
@@ -457,9 +457,9 @@ pcala12: reloffs  is simm5_20 [reloffs = (inst_start & ~0xfff) + (simm5_20 << 12
 
 pcadd18: reloffs  is simm5_20 [reloffs = inst_start + (simm5_20 << 18);] { export *[const]:$(REGSIZE) reloffs; }
 
-Rel16: reloc  is simm10_16            [ reloc = inst_start + (simm10_16 << 2); ]                               { export *:$(ADDRSIZE) reloc; }
-Rel21: reloc  is imm10_16 & simm0_5  [ reloc = inst_start + (((simm0_5 << 16) + imm10_16) << 2); ]   { export *:$(ADDRSIZE) reloc; }
-Rel26: reloc  is imm10_16 & simm0_10 [ reloc = inst_start + (((simm0_10 << 16) | imm10_16) << 2); ] { export *:$(ADDRSIZE) reloc; }
+Rel16: reloc  is simm10_16            [ reloc = inst_start + (simm10_16 << 2); ]                               { export *[ram]:$(ADDRSIZE) reloc; }
+Rel21: reloc  is imm10_16 & simm0_5  [ reloc = inst_start + (((simm0_5 << 16) + imm10_16) << 2); ]   { export *[ram]:$(ADDRSIZE) reloc; }
+Rel26: reloc  is imm10_16 & simm0_10 [ reloc = inst_start + (((simm0_10 << 16) | imm10_16) << 2); ] { export *[ram]:$(ADDRSIZE) reloc; }
 
 RelJ16: RJsrc, simm10_16  is RJsrc & simm10_16 { local tmp:$(ADDRSIZE) = RJsrc + (simm10_16 << 2); export tmp; }
 
@@ -468,6 +468,16 @@ simm12i: immed  is simm5_20  [immed = simm5_20  << 12; ] { export *[const]:$(REG
 simm32i: immed  is simm5_20  [immed = simm5_20  << 32; ] { export *[const]:$(REGSIZE) immed; }
 
 simm52i: immed  is simm10_12 [immed = simm10_12 << 52; ] { export *[const]:$(REGSIZE) immed; }
+
+vrD.B.imm18_4: vrD, val is vrD & imm18_4 [ val = 0x1000 + 32*vrD + imm18_4; ] { export *[register]:1 val; }
+vrD.H.imm18_3: vrD, val is vrD & imm18_3 [ val = 0x1000 + 32*vrD + 2*imm18_3; ] { export *[register]:2 val; }
+vrD.W.imm18_2: vrD, val is vrD & imm18_2 [ val = 0x1000 + 32*vrD + 4*imm18_2; ] { export *[register]:4 val; }
+vrD.D.imm18_1: vrD, val is vrD & imm18_1 [ val = 0x1000 + 32*vrD + 8*imm18_1; ] { export *[register]:8 val; }
+
+vrJ.B.imm18_4: vrJ, val is vrJ & imm18_4 [ val = 0x1000 + 32*vrJ + imm18_4; ] { export *[register]:1 val; }
+vrJ.H.imm18_3: vrJ, val is vrJ & imm18_3 [ val = 0x1000 + 32*vrJ + 2*imm18_3; ] { export *[register]:2 val; }
+vrJ.W.imm18_2: vrJ, val is vrJ & imm18_2 [ val = 0x1000 + 32*vrJ + 4*imm18_2; ] { export *[register]:4 val; }
+vrJ.D.imm18_1: vrJ, val is vrJ & imm18_1 [ val = 0x1000 + 32*vrJ + 8*imm18_1; ] { export *[register]:8 val; }
 
 # general pcodeops
 define pcodeop break;
@@ -500,7 +510,6 @@ define pcodeop rdtime.counter;
 define pcodeop rdtime.counterid;
 define pcodeop syscall;
 
-define pcodeop f_scaleb;
 define pcodeop f_logb;
 define pcodeop f_class;
 define pcodeop round_even;
@@ -576,3 +585,11 @@ macro tzcount64(input, count) {
 	count = count -  1 * zext((v & 0x5555555555555555) != 0);
 }
 
+macro select_value(cond, a, b, value) {
+	if (cond == 0) goto <l1>;
+	goto <l2>;
+	<l1>
+	value = b;
+	<l2>
+	value = a;
+}
