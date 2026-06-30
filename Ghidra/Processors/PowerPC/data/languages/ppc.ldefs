@@ -370,6 +370,7 @@
     <description>Power ISA 3.0 Big Endian w/VLE, EVX and 32-bit Addressing </description>
     <truncate_space space="ram" size="4"/>
     <compiler name="default" spec="ppc_64_32.cspec" id="default"/>
+    <compiler name="EABI" spec="ppc_64_32_eabi.cspec" id="eabi"/>
     <external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
   </language>
