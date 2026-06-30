@@ -21,6 +21,7 @@ import ghidra.app.services.AnalyzerType;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.address.SegmentedAddress;
+import ghidra.program.model.data.GenericCallingConvention;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
@@ -57,9 +58,18 @@ public class SegmentedCallingConventionAnalyzer extends AbstractAnalyzer {
 			catch (MemoryAccessException e) {
 				return;
 			}
+			Function func =
+					program.getFunctionManager().getFunctionContaining(instr.getMinAddress());
+			String conv;
+			if (func != null && func.getCallingConventionName().contains(GenericCallingConvention.pascal.toString())) {
+				conv = "__pascal16";
+			} else {
+				conv = "__stdcall16";
+			}
 			switch (b) {
 				case 0xca:
-					convention = "__stdcall16far";
+//					convention = "__stdcall16far";
+					convention = conv + "far";
 					break;
 				case 0xcb:
 					convention = "__cdecl16far";
@@ -68,15 +78,18 @@ public class SegmentedCallingConventionAnalyzer extends AbstractAnalyzer {
 					convention = "__cdecl16near";
 					break;
 				case 0xc2:
-					convention = "__stdcall16near";
+//					convention = "__stdcall16near";
+					convention = conv + "near";
+					break;
+				default:
 					break;
 			}
 			if (convention != null) {
-				Function func =
-					program.getFunctionManager().getFunctionContaining(instr.getMinAddress());
 				if (func != null) {
 					try {
 						func.setCallingConvention(convention);
+						Msg.debug(this, "Set convention to '" + convention + " for " +
+								((func == null) ? "undefined fn" : func.getSignature()) );
 					}
 					catch (InvalidInputException e) {
 						Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
