@@ -124,7 +124,6 @@ public class GTable extends JTable {
 	private Integer visibleRowCount;
 
 	private int userDefinedRowPadding;
-	private int userDefinedRowHeight;
 	private TableModelListener rowHeightListener;
 
 	private TableColumnModelListener tableColumnModelListener = null;
@@ -595,7 +594,7 @@ public class GTable extends JTable {
 		}
 		catch (Throwable t) {
 			// some renderers can't handle being asked to render with dummy data; use default value
-			return userDefinedRowHeight;
+			return super.getRowHeight() + padding;
 		}
 	}
 
@@ -628,7 +627,6 @@ public class GTable extends JTable {
 
 	public void setPreferredRowHeight(int height) {
 		doSetRowHeight(height);
-		userDefinedRowHeight = height;
 	}
 
 	private void doSetRowHeight(int height) {
