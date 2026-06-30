@@ -37,7 +37,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-class FidServiceLibraryIngest {
+public class FidServiceLibraryIngest {
 	private static final int MAXIMUM_NUMBER_OF_NAME_RESOLUTION_RELATIONS = 12;
 
 	private FidDB fidDb; // The database being populated
@@ -523,7 +523,7 @@ class FidServiceLibraryIngest {
 	 * @return if a terminating flow was found in the function body
 	 * @throws CancelledException if the user cancels
 	 */
-	private static boolean findTerminator(Function function, TaskMonitor monitor)
+	public static boolean findTerminator(Function function, TaskMonitor monitor)
 			throws CancelledException {
 		boolean retFound = false;
 		AddressSetView body = function.getBody();
