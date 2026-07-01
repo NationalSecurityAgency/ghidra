@@ -20,7 +20,7 @@ import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibraryFactory.UseropLibrary;
 
 // This treads on GP-4240 a bit. Still, enough to demonstrate the framework can support it.
-@UseropLibrary("trig")
+@UseropLibrary(id = "trig")
 public class TrigPcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 
 	@Override

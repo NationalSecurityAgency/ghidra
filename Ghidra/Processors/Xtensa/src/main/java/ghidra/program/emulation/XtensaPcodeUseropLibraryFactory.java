@@ -20,7 +20,7 @@ import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibraryFactory.UseropLibrary;
 
-@UseropLibrary("xtensa")
+@UseropLibrary(id = "xtensa")
 public class XtensaPcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	@Override
 	public <T> PcodeUseropLibrary<T> create(SleighLanguage language,

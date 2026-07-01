@@ -15,7 +15,8 @@
  */
 package agent.lldb.rmi;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,7 +88,8 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 	DecompilerProvider decompilerProvider;
 	DecompilerPanel decompilerPanel;
 
-	record LldbAndTrace(LldbAndConnection conn, ManagedDomainObject mdo) implements AutoCloseable {
+	record LldbAndTrace(LldbAndConnection conn, ManagedDomainObject<Trace> mdo)
+			implements AutoCloseable {
 		public void execute(String cmd) {
 			conn.execute(cmd);
 		}
@@ -122,10 +124,10 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 	}
 
 	@SuppressWarnings("resource")
-	protected LldbAndTrace startAndSyncLldb(ManagedDomainObject mdo) throws Exception {
+	protected LldbAndTrace startAndSyncLldb(ManagedDomainObject<Trace> mdo) throws Exception {
 		LldbAndConnection conn = startAndConnectLldb();
 		try {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			tb = new ToyDBTraceBuilder(mdo.get());
 			return new LldbAndTrace(conn, mdo);
 		}
 		catch (Exception e) {
@@ -148,8 +150,8 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 		tool.acceptDomainFiles(dfs);
 
 		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject mdo = new ManagedDomainObject(traceDF, false, false, monitor);
-		resyncMappings((Trace) mdo.get());
+		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
+		resyncMappings(mdo.get());
 		tool.acceptDomainFiles(new DomainFile[] { traceDF });
 
 		programs = openPrograms(dfs);
@@ -178,8 +180,8 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 		tool.acceptDomainFiles(dfs);
 
 		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject mdo = new ManagedDomainObject(traceDF, false, false, monitor);
-		resyncMappings((Trace) mdo.get());
+		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
+		resyncMappings(mdo.get());
 		tool.acceptDomainFiles(new DomainFile[] { traceDF });
 
 		programs = openPrograms(dfs);
@@ -210,8 +212,8 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 		tool.acceptDomainFiles(dfs);
 
 		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject mdo = new ManagedDomainObject(traceDF, false, false, monitor);
-		resyncMappings((Trace) mdo.get());
+		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
+		resyncMappings(mdo.get());
 		tool.acceptDomainFiles(new DomainFile[] { traceDF });
 
 		programs = openPrograms(dfs);
@@ -242,8 +244,8 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 		tool.acceptDomainFiles(dfs);
 
 		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject mdo = new ManagedDomainObject(traceDF, false, false, monitor);
-		resyncMappings((Trace) mdo.get());
+		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
+		resyncMappings(mdo.get());
 		tool.acceptDomainFiles(new DomainFile[] { traceDF });
 
 		programs = openPrograms(dfs);
@@ -271,8 +273,8 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 		tool.acceptDomainFiles(dfs);
 
 		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject mdo = new ManagedDomainObject(traceDF, false, false, monitor);
-		resyncMappings((Trace) mdo.get());
+		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
+		resyncMappings(mdo.get());
 		tool.acceptDomainFiles(new DomainFile[] { traceDF });
 
 		programs = openPrograms(dfs);
@@ -300,8 +302,8 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 		tool.acceptDomainFiles(dfs);
 
 		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject mdo = new ManagedDomainObject(traceDF, false, false, monitor);
-		resyncMappings((Trace) mdo.get());
+		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
+		resyncMappings(mdo.get());
 		tool.acceptDomainFiles(new DomainFile[] { traceDF });
 
 		programs = openPrograms(dfs);

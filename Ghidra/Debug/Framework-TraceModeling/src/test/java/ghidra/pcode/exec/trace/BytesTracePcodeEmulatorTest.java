@@ -26,6 +26,7 @@ import java.util.List;
 import org.junit.Test;
 
 import db.Transaction;
+import generic.Unique;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
 import ghidra.pcode.emu.PcodeEmulator;
@@ -68,7 +69,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			emu.getSharedState().setVar(tb.addr(0x00400000), 0, false, tb.arr());
 			TraceWriter tw = (TraceWriter) writer;
-			assertEquals(tb.set(), tw.memWritten);
+			assertEquals(tb.set(), Unique.assertOne(tw.pieces.entrySet()).getValue().written());
 		}
 	}
 
