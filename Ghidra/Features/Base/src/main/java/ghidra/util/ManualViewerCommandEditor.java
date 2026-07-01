@@ -47,8 +47,11 @@ public class ManualViewerCommandEditor extends PropertyEditorSupport
 		"path to an executable that will be launched to open the processor manual.  " +
 		"Examples include 'firefox', 'netscape', 'open', etc.";
 	private static final String COMMAND_ARGUMENTS_DESCRIPTION =
-		"These are the arguments that will " +
-			"be passed to the command given in the 'Command String' field.";
+		"Arguments passed to the command.\n" +
+			ManualViewerCommandWrappedOption.PAGE_REPLACEMENT_STRING +
+			": replaced with the manual page number\n" +
+			ManualViewerCommandWrappedOption.FILENAME_REPLACEMENT_STRING +
+			": replaced with manual filename; automatically appended if not specified";
 
 	private static final String[] DESCRIPTIONS =
 		{ FILE_FORMAT_DESCRIPTION, COMMAND_STRING_DESCRIPTION, COMMAND_ARGUMENTS_DESCRIPTION };
@@ -69,6 +72,16 @@ public class ManualViewerCommandEditor extends PropertyEditorSupport
 
 	public ManualViewerCommandEditor() {
 		editorComponent = new LaunchDataInputPanel();
+	}
+
+	/**
+	 * Wraps description text in fixed-width HTML so the tooltip wraps across multiple lines rather
+	 * than rendering as a single long line.
+	 * @param text the plain description text
+	 * @return the text wrapped in width-constrained HTML
+	 */
+	private static String toHtmlTooltip(String text) {
+		return "<html><div style=\"width: 384px;\">" + text.replace("\n", "<br>") + "</div></html>";
 	}
 
 	@Override
@@ -205,16 +218,17 @@ public class ManualViewerCommandEditor extends PropertyEditorSupport
 			workPanel.setLayout(new PairLayout());
 
 			JLabel commandLabel = new GDLabel(COMMAND_STRING_LABEL);
-			commandLabel.setToolTipText(COMMAND_STRING_DESCRIPTION);
-			commandField = new JTextField(30);
+			commandField = new JTextField(50);
 
 			JLabel argumentsLabel = new GDLabel(COMMAND_ARGUMENTS_LABEL);
-			argumentsLabel.setToolTipText(COMMAND_ARGUMENTS_DESCRIPTION);
-			argumentsField = new JTextField(20);
+			argumentsLabel.setToolTipText(toHtmlTooltip(COMMAND_ARGUMENTS_DESCRIPTION));
+			argumentsField = new JTextField(50);
+			argumentsField.setToolTipText(toHtmlTooltip(COMMAND_ARGUMENTS_DESCRIPTION));
 
 			JLabel formatLabel = new GDLabel(FILE_FORMAT_LABEL);
-			formatLabel.setToolTipText(FILE_FORMAT_DESCRIPTION);
+			formatLabel.setToolTipText(toHtmlTooltip(FILE_FORMAT_DESCRIPTION));
 			fileFormatComboBox = new GComboBox<>();
+			fileFormatComboBox.setToolTipText(toHtmlTooltip(FILE_FORMAT_DESCRIPTION));
 			fileFormatComboBox.addItem(
 				ManualViewerCommandWrappedOption.HTTP_URL_REPLACEMENT_STRING);
 			fileFormatComboBox.addItem(

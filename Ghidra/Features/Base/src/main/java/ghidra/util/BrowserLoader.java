@@ -17,6 +17,8 @@ package ghidra.util;
 
 import java.io.File;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -153,9 +155,29 @@ public class BrowserLoader {
 		List<String> argumentList = new ArrayList<String>();
 		argumentList.add(option.getCommandString());
 
+		// Substitute ${PAGE} (the manual page, carried as a "#page=N" fragment on the file URL)
+		// and ${FILENAME} (the local file path) tokens into the user-supplied arguments.  
+		// If the user places ${FILENAME} themselves, the file is not also appended at the end below.
+		String pageNumber = getManualPageNumber(fileURL);
+		String fileName = getManualFilePath(fileURL);
+		boolean fileNameInArgs = false;
 		String[] commandArguments = option.getCommandArguments();
 		for (String string : commandArguments) {
+			if (string.contains(ManualViewerCommandWrappedOption.FILENAME_REPLACEMENT_STRING)) {
+				fileNameInArgs = true;
+			}
+			string =
+				string.replace(ManualViewerCommandWrappedOption.PAGE_REPLACEMENT_STRING, pageNumber);
+			if (fileName != null) {
+				string = string.replace(
+					ManualViewerCommandWrappedOption.FILENAME_REPLACEMENT_STRING, fileName);
+			}
 			argumentList.add(string);
+		}
+
+		// The user already positioned the file via the ${FILENAME} token; don't append it again.
+		if (fileNameInArgs) {
+			return argumentList.toArray(new String[argumentList.size()]);
 		}
 
 		String urlString = option.getUrlReplacementString();
@@ -168,12 +190,12 @@ public class BrowserLoader {
 			urlArg = fileURL.toExternalForm();
 		}
 		else {
-			urlArg = new File(fileURL.getFile()).getAbsolutePath();
+			urlArg = fileName;
 		}
 
-		// If launching "cmd.exe /c start URL", surround the URL with double quotes to protect 
+		// If launching "cmd.exe /c start URL", surround the URL with double quotes to protect
 		// against special characters being misinterpreted by the shell.
-		// NOTE: If not already present, a double-quoted title must be inserted since the URL 
+		// NOTE: If not already present, a double-quoted title must be inserted since the URL
 		// argument that follows will start with a double quote.
 		if (commandArguments.length >= 2 && commandArguments[0].equalsIgnoreCase("/c") &&
 			commandArguments[1].equalsIgnoreCase("start")) {
@@ -185,6 +207,39 @@ public class BrowserLoader {
 		argumentList.add(urlArg);
 
 		return argumentList.toArray(new String[argumentList.size()]);
+	}
+
+	/**
+	 * Returns the decoded local file path for the given file URL (without the {@code #page=N}
+	 * fragment, which {@link URL#getPath()} already excludes), so viewers receive a real path
+	 * rather than a percent-encoded one.
+	 * @param fileURL the file URL (may be null)
+	 * @return the absolute local file path, or null if {@code fileURL} is null
+	 */
+	private static String getManualFilePath(URL fileURL) {
+		if (fileURL == null) {
+			return null;
+		}
+		String path = URLDecoder.decode(fileURL.getPath(), StandardCharsets.UTF_8);
+		return new File(path).getAbsolutePath();
+	}
+
+	/**
+	 * Extracts the manual page number from the {@code #page=N} fragment of the given file URL.
+	 * @param fileURL the file URL (may be null)
+	 * @return the page number, or {@code "1"} if none is present
+	 */
+	private static String getManualPageNumber(URL fileURL) {
+		if (fileURL != null) {
+			String ref = fileURL.getRef();
+			if (ref != null && ref.startsWith("page=")) {
+				String page = ref.substring("page=".length());
+				if (!page.isBlank()) {
+					return page;
+				}
+			}
+		}
+		return "1";
 	}
 
 //==================================================================================================
