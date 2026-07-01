@@ -26,8 +26,8 @@ import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.trace.TraceEmulationIntegration.AbstractPropertyBasedPieceHandler;
-import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
-import ghidra.pcode.exec.trace.data.PcodeTracePropertyAccess;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.TraceWriter;
+import ghidra.pcode.exec.trace.data.*;
 import ghidra.program.model.address.*;
 import ghidra.symz3.model.SymValueZ3;
 
@@ -105,9 +105,9 @@ public class SymZ3PieceHandler
 	}
 
 	@Override
-	public void writeDown(PcodeTraceDataAccess into, PcodeThread<?> thread,
+	public void writeDown(TraceWriter writer, PcodeTraceAccess into, PcodeThread<?> thread,
 			PcodeExecutorStatePiece<SymValueZ3, SymValueZ3> piece, AddressSetView written) {
-		super.writeDown(into, thread, piece, written);
+		super.writeDown(writer, into, thread, piece, written);
 		Set<SymZ3Varnode> symWritten = abstractWritten.get(thread);
 		if (symWritten == null) {
 			return;
@@ -128,7 +128,9 @@ public class SymZ3PieceHandler
 		 * abstractly?
 		 */
 		String val = buf.isEmpty() ? null : buf.toString();
-		into.getPropertyAccess(NAME, String.class).put(Address.NO_ADDRESS, val);
+		into.getDataForSharedState()
+				.getPropertyAccess(NAME, String.class)
+				.put(Address.NO_ADDRESS, val);
 	}
 
 	@Override

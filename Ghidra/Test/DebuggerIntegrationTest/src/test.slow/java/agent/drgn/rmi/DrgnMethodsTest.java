@@ -15,6 +15,7 @@
  */
 package agent.drgn.rmi;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
@@ -59,7 +60,7 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 		try (PythonAndConnection conn = startAndConnectDrgn()) {
 			start(conn, null);
 		}
-		try (ManagedDomainObject mdo = openDomainObject(MDO)) {
+		try (ManagedDomainObject<Trace> mdo = openTrace(MDO)) {
 			// Just confirm it's present
 		}
 	}
@@ -72,8 +73,8 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 
 			RemoteMethod attachCore = conn.getMethod("attach_core");
 			RemoteMethod refreshProcesses = conn.getMethod("refresh_processes");
-			try (ManagedDomainObject mdo = openDomainObject(MDO)) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace(MDO)) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				TraceObject processes = Objects.requireNonNull(tb.objAny0("Processes"));
 
 				refreshProcesses.invoke(Map.of("node", processes));
@@ -106,8 +107,8 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 			txPut(conn, "all");
 
 			RemoteMethod refreshEnvironment = conn.getMethod("refresh_environment");
-			try (ManagedDomainObject mdo = openDomainObject(MDO)) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace(MDO)) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				TraceObject envobj = Objects.requireNonNull(tb.objAny0(path));
 
 				refreshEnvironment.invoke(Map.of("node", envobj));
@@ -128,8 +129,8 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 			txCreate(conn, path);
 
 			RemoteMethod refreshThreads = conn.getMethod("refresh_threads");
-			try (ManagedDomainObject mdo = openDomainObject(MDO)) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace(MDO)) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				TraceObject threads = Objects.requireNonNull(tb.objAny0(path));
 
 				refreshThreads.invoke(Map.of("node", threads));
@@ -148,8 +149,8 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod refreshStack = conn.getMethod("refresh_stack");
-			try (ManagedDomainObject mdo = openDomainObject(MDO)) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace(MDO)) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				txPut(conn, "frames");
 				TraceObject stack = Objects.requireNonNull(tb.objAny0(path));
@@ -177,8 +178,8 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 			conn.execute("ghidra_trace_txcommit()");
 
 			RemoteMethod refreshRegisters = conn.getMethod("refresh_registers");
-			try (ManagedDomainObject mdo = openDomainObject(MDO)) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace(MDO)) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject registers = Objects.requireNonNull(tb.objAny(path, Lifespan.at(0)));
 				refreshRegisters.invoke(Map.of("node", registers));
@@ -204,8 +205,8 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 			assumeFalse(out.equals("False"));
 
 			RemoteMethod refreshMappings = conn.getMethod("refresh_mappings");
-			try (ManagedDomainObject mdo = openDomainObject(MDO)) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace(MDO)) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				TraceObject memory = Objects.requireNonNull(tb.objAny0(path));
 
 				refreshMappings.invoke(Map.of("node", memory));
@@ -229,8 +230,8 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 			assumeFalse(out.equals("False"));
 
 			RemoteMethod refreshModules = conn.getMethod("refresh_modules");
-			try (ManagedDomainObject mdo = openDomainObject(MDO)) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace(MDO)) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				TraceObject modules = Objects.requireNonNull(tb.objAny0(path));
 
 				refreshModules.invoke(Map.of("node", modules));
@@ -251,8 +252,8 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod activateThread = conn.getMethod("activate_thread");
-			try (ManagedDomainObject mdo = openDomainObject(MDO)) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace(MDO)) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				txPut(conn, "threads");
 

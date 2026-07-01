@@ -23,7 +23,8 @@ import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.trace.TraceEmulationIntegration;
 import ghidra.pcode.exec.trace.TraceEmulationIntegration.*;
-import ghidra.pcode.exec.trace.data.*;
+import ghidra.pcode.exec.trace.data.PcodeTraceAccess;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.thread.TraceThread;
 
@@ -73,13 +74,41 @@ public enum DebuggerEmulationIntegration {
 	}
 
 	/**
-	 * Create state callbacks that lazily load data and immediately write changes to the given
-	 * access shim.
+	 * Create state callbacks that lazily load data and writes changes to the given access shim.
+	 * <p>
+	 * Reads may be redirected to the target.
+	 * <p>
+	 * Use this instead of {@link #bytesImmediateWriteTarget(PcodeDebuggerAccess)} when interfacing
+	 * directly with a {@link PcodeExecutorState} vice a {@link PcodeEmulator}.
 	 * 
+	 * @see TraceEmulationIntegration#bytesImmediateWrite(PcodeTraceAccess, TraceThread, int)
+	 * @param access the access shim for loads and stores
+	 * @param thread the trace thread for register accesses
+	 * @param frame the frame for register accesses, usually 0
+	 * @param mode determines whether or not writes affect the target
+	 * @return the callbacks
+	 */
+	public static Writer bytesWriteMode(PcodeDebuggerAccess access,
+			TraceThread thread, int frame, Mode mode) {
+		Writer writer = new TraceWriter(access) {
+			@Override
+			protected PcodeTraceDataAccess getDataAccess(PcodeTraceAccess access,
+					AddressSpace space, PcodeThread<?> ignored) {
+				return space.isRegisterSpace()
+						? access.getDataForLocalState(thread, frame)
+						: access.getDataForSharedState();
+			}
+		};
+		writer.putHandler(new TargetBytesPieceHandler(mode));
+		return writer;
+	}
+
+	/**
+	 * Create state callbacks that lazily load data and immediately writes changes to the given
+	 * access shim.
 	 * <p>
 	 * Reads may be redirected to the target. If redirected, writes are immediately sent to the
 	 * target and presumably stored into the trace at the same snapshot as state is sourced.
-	 *
 	 * <p>
 	 * Use this instead of {@link #bytesImmediateWriteTarget(PcodeDebuggerAccess)} when interfacing
 	 * directly with a {@link PcodeExecutorState} vice a {@link PcodeEmulator}.
@@ -92,15 +121,7 @@ public enum DebuggerEmulationIntegration {
 	 */
 	public static PcodeStateCallbacks bytesImmediateWriteTarget(PcodeDebuggerAccess access,
 			TraceThread thread, int frame) {
-		PcodeDebuggerRegistersAccess regAcc = access.getDataForLocalState(thread, frame);
-		Writer writer = new TraceWriter(access) {
-			@Override
-			protected PcodeTraceRegistersAccess getRegAccess(PcodeThread<?> ignored) {
-				return regAcc;
-			}
-		};
-		writer.putHandler(new TargetBytesPieceHandler(Mode.RW));
-		return writer.wrapFor(null);
+		return bytesWriteMode(access, thread, frame, Mode.RW).wrapFor(null);
 	}
 
 	protected static <T> T waitTimeout(CompletableFuture<T> future) {

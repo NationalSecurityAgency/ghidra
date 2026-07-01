@@ -21,12 +21,12 @@ import java.util.function.Consumer;
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.DataConverter;
 import ghidra.util.StringUtilities;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Basic implementation for a pointer dataType
@@ -521,9 +521,22 @@ public class PointerDataType extends BuiltIn implements Pointer {
 						"Address space not defined: " + spaceName + ":" + formatOffset(addrOffset));
 					return null;
 				}
+				if (targetSpace.isNonLoadedMemorySpace()) {
+					errorHandler.accept("Address space is non-loaded: " + spaceName + ":" +
+						formatOffset(addrOffset));
+					return null;
+				}
 			}
 			if (targetSpace == null) {
 				targetSpace = buf.getAddress().getAddressSpace();
+			}
+			if (targetSpace.isRegisterSpace()) {
+				Language language = buf.getLanguage();
+				if (language == null) {
+					errorHandler.accept("Language not specified");
+					return null;
+				}
+				targetSpace = language.getDefaultDataSpace();
 			}
 
 			if (targetSpace instanceof SegmentedAddressSpace) {

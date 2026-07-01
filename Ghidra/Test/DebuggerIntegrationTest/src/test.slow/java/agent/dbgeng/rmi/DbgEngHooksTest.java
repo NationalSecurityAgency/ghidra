@@ -15,9 +15,11 @@
  */
 package agent.dbgeng.rmi;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.util.*;
 
@@ -40,7 +42,7 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 	private static final long RUN_TIMEOUT_MS = 5000;
 	private static final long RETRY_MS = 500;
 
-	record PythonAndTrace(PythonAndConnection conn, ManagedDomainObject mdo)
+	record PythonAndTrace(PythonAndConnection conn, ManagedDomainObject<Trace> mdo)
 			implements AutoCloseable {
 		public void execute(String cmd) {
 			conn.execute(cmd);
@@ -61,19 +63,19 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 	protected PythonAndTrace startAndSyncPython(String exec) throws Exception {
 		PythonAndConnection conn = startAndConnectPython();
 		try {
-			ManagedDomainObject mdo;
+			ManagedDomainObject<Trace> mdo;
 			conn.execute("from ghidradbg.commands import *");
 			conn.execute(
 				"util.set_convenience_variable('ghidra-language', 'x86:LE:64:default')");
 			if (exec != null) {
 				start(conn, exec);
-				mdo = waitDomainObject("/New Traces/pydbg/" + exec);
+				mdo = waitTrace("/New Traces/pydbg/" + exec);
 			}
 			else {
 				conn.execute("ghidra_trace_start()");
-				mdo = waitDomainObject("/New Traces/pydbg/noname");
+				mdo = waitTrace("/New Traces/pydbg/noname");
 			}
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			tb = new ToyDBTraceBuilder(mdo.get());
 			return new PythonAndTrace(conn, mdo);
 		}
 		catch (Exception e) {
@@ -215,6 +217,8 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 	 * For the moment, we favor option (2), as we'd prefer never to display inaccurate data,
 	 * especially as non-stale. The lost observations are a small price to pay, since they're not
 	 * particularly important for the interactive use case.
+	 * 
+	 * @throws Exception because
 	 */
 	@Test
 	public void testOnMemoryChanged() throws Exception {

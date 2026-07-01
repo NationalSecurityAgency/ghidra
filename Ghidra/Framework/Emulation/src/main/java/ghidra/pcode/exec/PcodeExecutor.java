@@ -68,6 +68,16 @@ public class PcodeExecutor<T> {
 	}
 
 	/**
+	 * Construct an executor with the given bindings
+	 * 
+	 * @param state the state, providing arithmetic and storage
+	 * @param reason a reason for reading the state with this executor
+	 */
+	public PcodeExecutor(PcodeExecutorState<T> state, Reason reason) {
+		this((SleighLanguage) state.getLanguage(), state.getArithmetic(), state, reason);
+	}
+
+	/**
 	 * Get the executor's Sleigh language (processor model)
 	 * 
 	 * @return the language
