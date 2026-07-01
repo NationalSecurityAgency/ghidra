@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import ghidra.framework.OperatingSystem;
 import ghidra.pty.linux.LinuxPtyFactory;
+import ghidra.pty.openbsd.OpenBSDPtyFactory;
 import ghidra.pty.macos.MacosPtyFactory;
 import ghidra.pty.windows.ConPtyFactory;
 
@@ -40,6 +41,8 @@ public interface PtyFactory {
 				return MacosPtyFactory.INSTANCE;
 			case LINUX:
 				return LinuxPtyFactory.INSTANCE;
+			case OPEN_BSD:
+				return OpenBSDPtyFactory.INSTANCE;
 			case WINDOWS:
 				return ConPtyFactory.INSTANCE;
 			default:
