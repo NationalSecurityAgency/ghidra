@@ -16,22 +16,13 @@
 // Export function information in various formats (JSON, CSV, DOT)
 //@category Functions
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
 import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
 
 import ghidra.app.script.GhidraScript;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.block.CodeBlockIterator;
 import ghidra.program.model.block.SimpleBlockModel;
@@ -173,8 +164,8 @@ public class ExportFunctionInfoScript extends GhidraScript {
 		summary.addProperty("selection_applied", scope != null);
 		root.add("summary", summary);
 
-		try (FileWriter writer = new FileWriter(outputFile)) {
-			gson.toJson(root, writer);
+		try (FileWriter w = new FileWriter(outputFile)) {
+			gson.toJson(root, w);
 		}
 	}
 
