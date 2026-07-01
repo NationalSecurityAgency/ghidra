@@ -12,6 +12,7 @@
             id="RISCV:LE:64:default">
     <description>RISC-V 64 little default</description>
     <compiler name="gcc" spec="riscv64-fp.cspec" id="gcc"/>
+    <external_name tool="IDA-PRO" name="riscv"/>
     <external_name tool="DWARF.register.mapping.file" name="riscv64.dwarf"/>
     <external_name tool="gnu" name="riscv:rv64"/>
     <external_name tool="qemu" name="qemu-riscv64"/>
@@ -28,6 +29,7 @@
             id="RISCV:LE:32:default">
     <description>RISC-V 32 little default</description>
     <compiler name="gcc" spec="riscv32-fp.cspec" id="gcc"/>
+    <external_name tool="IDA-PRO" name="riscv"/>
     <external_name tool="gnu" name="riscv:rv32"/>
     <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
     <external_name tool="qemu" name="qemu-riscv32"/>
