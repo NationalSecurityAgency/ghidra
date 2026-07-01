@@ -89,4 +89,16 @@ public class SymbolUtilitiesNamingTest {
 				OMIT_BAD_CHARS));
 	}
 
+	@Test
+	public void testExtraChars() {
+		assertTrue(SymbolUtilities.isInvalidCodePoint(0x2800)); // braille blank
+
+		assertTrue(SymbolUtilities.isInvalidCodePoint(0x115f)); // hangul filler chars
+		assertTrue(SymbolUtilities.isInvalidCodePoint(0x1160));
+		assertTrue(SymbolUtilities.isInvalidCodePoint(0x3164));
+		assertTrue(SymbolUtilities.isInvalidCodePoint(0xffa0));
+
+		assertTrue(SymbolUtilities.isInvalidCodePoint(0xfffc)); // unicode object replacement character
+	}
+
 }
