@@ -3931,6 +3931,15 @@ define pcodeop TLBSynchronize; # Outputs/affect TBD
 	A = S ^ (UIMM << 16);
 }
 
+# isel r0,r0,r0	0x7c 00 00 1e
+:isel^CC_X_OPm D,RA_OR_ZERO,B,CC_X_OP  is OP=31 & D & RA_OR_ZERO & B & CC_X_OP & CC_X_OPm & XOP_1_5=15
+{
+	local tmp:$(REGISTER_SIZE) = RA_OR_ZERO;
+	D = B;
+	if (!CC_X_OP) goto inst_next;
+	D = tmp;
+}
+
 
 #TODO:
 # 2) Add simplified mnemonics for all instructions
