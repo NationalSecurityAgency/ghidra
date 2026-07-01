@@ -55,8 +55,8 @@ dependencies {
 	
    	compileOnly "junit:junit:4.13.2"
 	
-	// These have abstract test classes and stubs needed by this module	
-	testImplementation project(path: ':Docking', configuration: 'testArtifacts')
+	// These have abstract test classes and stubs needed by this module
+	api project(':Docking')
 	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
 	testImplementation project(path: ':Project', configuration: 'testArtifacts')
 	testImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')

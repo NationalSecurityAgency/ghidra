@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pattern_constraints>
+  <pattern language="TILE:BE:64:default" arch="TILE" isa="TILEGX"/>
+  <pattern language="TILE:LE:64:default" arch="TILE" isa="TILEGX"/>
+</pattern_constraints>

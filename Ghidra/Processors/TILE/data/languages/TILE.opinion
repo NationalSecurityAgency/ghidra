@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opinions>
+  <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="gcc">
+    <constraint primary="183,184" processor="TILE" size="64" variant="default"/>
+  </constraint>
+</opinions>

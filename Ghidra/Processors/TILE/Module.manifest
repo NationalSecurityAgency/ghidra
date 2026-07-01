@@ -1,0 +1,15 @@
+# Module: Ghidra TILE Processor Support
+# Description: Complete processor support for Tilera TILE-Gx architecture
+# including SLEC language definitions, Java analyzer, emulation support,
+# and p-code userop library management.
+#
+# Packages:
+Package: ghidra.processors.tile          # Core processor loader and language ID
+Package: ghidra.program.emulation        # Emulation state modifier and p-code userop library
+Package: ghidra.app.plugin.core.analysis # TILE address analyzer for decompiler support
+Package: ghidra.test.processors          # Processor emulator test suite
+
+# Dependencies:
+Package: ghidra.base                     # Base Ghidra framework
+Package: ghidra.emulation                # P-code emulation support
+Package: ghidra.softwareModeling         # Software modeling infrastructure
