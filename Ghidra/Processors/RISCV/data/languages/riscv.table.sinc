@@ -617,15 +617,6 @@ rs3: zero is zero & op2731=0 { export 0:$(XLEN); }
 rd: r0711 is r0711 { export r0711; }
 rd: zero is r0711=0 & zero { local tmp:$(XLEN) = 0; export tmp; }
 
-rs1W: r1519 is r1519 { local tmp:$(WXLEN) = r1519:$(WXLEN); export tmp; }
-rs1W: zero  is r1519 & zero & op1519=0 { export 0:$(WXLEN); }
-
-rs2W: r2024 is r2024 { local tmp:$(WXLEN) = r2024:$(WXLEN); export tmp; }
-rs2W: zero is r2024 & zero & op2024=0 { export 0:$(WXLEN); }
-
-rdW: r0711 is r0711 { local tmp:$(WXLEN) = r0711:$(WXLEN); export tmp; }
-rdW: zero is r0711=0 & zero { local tmp:$(WXLEN) = 0; export tmp; }
-
 
 #TODO  does this need to be in an if/endif
 @if ADDRSIZE == "64"
