@@ -40,6 +40,7 @@ import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.Msg;
@@ -172,6 +173,10 @@ public class DebuggerCoordinates {
 	}
 
 	private static TraceThread resolveThread(Trace trace, TraceSchedule time) {
+		TraceThread eventThread = getEventThread(trace, time);
+		if (eventThread != null) {
+			return eventThread;
+		}
 		long snap = time.getSnap();
 		return trace.getThreadManager()
 				.getLiveThreads(snap)
@@ -403,6 +408,15 @@ public class DebuggerCoordinates {
 		return new DebuggerCoordinates(trace, platform, target, thread, view, newTime, frame, path);
 	}
 
+	private static TraceThread getEventThread(Trace trace, TraceSchedule time) {
+		long snap = time.getSnap();
+		TraceTimeManager manager = trace.getTimeManager();
+		TraceSnapshot snapshot = time.isSnapOnly()
+				? manager.getSnapshot(snap, false)
+				: manager.findScratchSnapshot(time);
+		return snapshot == null ? null : snapshot.getEventThread();
+	}
+
 	/**
 	 * Get these same coordinates with time replaced by the given schedule
 	 * 
@@ -417,8 +431,13 @@ public class DebuggerCoordinates {
 			return NOWHERE;
 		}
 		long snap = newTime.getSnap();
+		TraceThread eventThread = getEventThread(trace, newTime);
 		boolean isThreadValid = thread == null ? false : thread.isValid(snap);
-		TraceThread newThread = isThreadValid ? thread : resolveThread(trace, target, newTime);
+		TraceThread newThread = eventThread != null
+				? eventThread
+				: isThreadValid
+						? thread
+						: resolveThread(trace, target, newTime);
 		// This will cause the frame to reset to 0 on every snap change. That's fair....
 		Integer newFrame = resolveFrame(newThread, newTime);
 		KeyPath threadOrFramePath = resolvePath(newThread, newFrame, newTime);
