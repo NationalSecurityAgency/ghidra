@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.instructionsearch.model;
 
 import java.util.*;
 
-import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.instructionsearch.ui.AbstractInstructionTable.OperandState;
 import ghidra.app.plugin.core.instructionsearch.ui.InstructionSearchDialog;
 import ghidra.app.plugin.core.instructionsearch.ui.InstructionTable;
@@ -29,6 +28,7 @@ import ghidra.program.model.lang.OperandType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
@@ -38,6 +38,7 @@ import ghidra.util.task.*;
  * This is the data model that {@link InstructionSearchDialog} instances use
  * when building their displays.
  */
+@SuppressWarnings("deprecation")
 public class InstructionSearchData extends Observable {
 
 	// This is the entire set of instructions that will be searched on when/if the user
@@ -69,9 +70,28 @@ public class InstructionSearchData extends Observable {
 	}
 
 	/**
+	 * Deletes the instruction at the given index
+	 * @param table the table
+	 * @param index the index
+	 */
+	public void deleteInstruction(InstructionTable table, int index) {
+		instructions.remove(index);
+		InstructionTableModel model = (InstructionTableModel) table.getModel();
+
+		@SuppressWarnings("rawtypes")
+		Vector<Vector> data = model.getDataVector();
+		data.remove(index);
+
+		model.fireTableRowsDeleted(index, index);
+
+		modelChanged(UpdateType.UPDATE);
+	}
+
+	/**
 	 * This method ensures that all mask settings in the dialog are applied to
 	 * the {@link #instructions} list.
 	 * 
+	 * @param table the table 
 	 * @see InstructionSearchData
 	 */
 	public void applyMasks(InstructionTable table) {
@@ -89,19 +109,17 @@ public class InstructionSearchData extends Observable {
 	 * 
 	 * @param program the current program
 	 * @param addressRange the addresses to load instructions for
-	 * @throws InvalidInputException if there's an error parsing the
-	 *             instructions
+	 * @throws InvalidInputException if there's an error parsing the instructions
 	 */
 	public void load(Program program, AddressRange addressRange) throws InvalidInputException {
-
-		// first clear out any current instructions.
-		instructions.clear();
 
 		// Do some initial checks on the program and addresses we want to load instructions
 		// for.  If these are invalid, no need to proceed.
 		if (program == null || addressRange == null || addressRange.getLength() == 0) {
 			return;
 		}
+
+		instructions.clear();
 
 		// Now we have to use the sleigh logger to parse each of the code units in the 
 		// requested address set.
@@ -147,69 +165,6 @@ public class InstructionSearchData extends Observable {
 		TaskLauncher.launch(new LoadInstructionsTask(program, addresses));
 
 		modelChanged(UpdateType.RELOAD);
-	}
-
-	private class LoadInstructionsTask extends Task {
-
-		private Program program;
-		private AddressSetView addresses;
-
-		public LoadInstructionsTask(Program program, AddressSetView addresses) {
-			super("Loading Instructions", true, true, true);
-			this.program = program;
-			this.addresses = addresses;
-		}
-
-		@Override
-		public void run(TaskMonitor monitor) throws CancelledException {
-
-			monitor.setIndeterminate(true);
-
-			Listing listing = program.getListing();
-			CodeUnitIterator it = listing.getCodeUnits(addresses, true);
-			while (it.hasNext()) {
-				if (monitor.isCancelled()) {
-					return;
-				}
-
-				CodeUnit cu = it.next();
-
-				InstructionMetadata instructionMetadata;
-
-				// If this CU is an instruction, we can use the Sleigh debug logger to build the 
-				// mask info.  If not, we don't need to create anything complex for masking - it's 
-				// either on or off.
-				if (cu instanceof Instruction) {
-					SleighDebugLogger logger =
-						new SleighDebugLogger(program, cu.getAddress(), SleighDebugMode.VERBOSE);
-					if (logger.parseFailed()) {
-						Msg.showError(this, null, "Parsing error",
-							"Error parsing instruction: " + cu.toString());
-						return;
-					}
-
-					instructionMetadata = getInstructionMetadata(logger, cu);
-					if (instructionMetadata != null) {
-						instructions.add(instructionMetadata);
-					}
-					processOperands(logger, cu, instructionMetadata);
-
-				}
-				else if (cu instanceof Data) {
-					try {
-						instructionMetadata = getInstructionMetadata(cu);
-						if (instructionMetadata != null) {
-							instructions.add(instructionMetadata);
-						}
-					}
-					catch (InvalidInputException e) {
-						Msg.showError(this, null, "Parsing error",
-							"Error parsing data: " + cu.toString());
-						return;
-					}
-				}
-			}
-		}
 	}
 
 	/**
@@ -390,15 +345,16 @@ public class InstructionSearchData extends Observable {
 		}
 
 		// Make sure the column isn't out of bounds.
-		if (col >= instructions.get(row).getOperands().size()) {
+		InstructionMetadata metadata = instructions.get(row);
+		List<OperandMetadata> operands = metadata.getOperands();
+		if (col >= operands.size()) {
 			return;
 		}
 
-		instructions.get(row)
-				.getOperands()
-				.get(col)
-				.setMasked(
-					table.getCellData(row, col + 1).getState().equals(OperandState.MASKED));
+		OperandMetadata operandMetadata = operands.get(col);
+		InstructionTableDataObject data = table.getCellData(row, col + 1);
+		boolean isMasked = data.getState().equals(OperandState.MASKED);
+		operandMetadata.setMasked(isMasked);
 	}
 
 	/**
@@ -425,8 +381,8 @@ public class InstructionSearchData extends Observable {
 	 * 
 	 * @return the mask container object
 	 */
-	private MaskContainer getAllMasks() {
 
+	private MaskContainer getAllMasks() {
 		List<byte[]> masks = new ArrayList<byte[]>();
 		List<byte[]> values = new ArrayList<byte[]>();
 
@@ -510,12 +466,12 @@ public class InstructionSearchData extends Observable {
 			byte[] value, boolean instruction) {
 
 		MaskContainer masks = new MaskContainer(mask, value);
-		InstructionMetadata instructionMetadata = new InstructionMetadata(masks);
+		InstructionMetadata metadata = new InstructionMetadata(masks);
 
-		instructionMetadata.setAddr(codeUnit.getAddress());
-		instructionMetadata.setTextRep(codeUnit.getMnemonicString());
-		instructionMetadata.setIsInstruction(instruction);
-		return instructionMetadata;
+		metadata.setAddr(codeUnit.getAddress());
+		metadata.setTextRep(codeUnit.getMnemonicString());
+		metadata.setIsInstruction(instruction);
+		return metadata;
 	}
 
 	/**
@@ -586,20 +542,24 @@ public class InstructionSearchData extends Observable {
 		if (instruction == null) {
 			return null;
 		}
-		if (instruction.getMaskContainer() == null) {
-			return null;
-		}
-		if (instruction.getMaskContainer().getMask() == null ||
-			instruction.getMaskContainer().getValue() == null) {
+
+		MaskContainer maskContainer = instruction.getMaskContainer();
+		if (maskContainer == null) {
 			return null;
 		}
 
-		// Now Create the mask/value arrays. Populating these is the main point of this method; these 
+		byte[] mask = maskContainer.getMask();
+		byte[] maskValue = maskContainer.getValue();
+		if (mask == null || maskValue == null) {
+			return null;
+		}
+
+		// Now Create the mask/value arrays. Populating these is the main point of this method; they 
 		// will be placed in the return object when we're done. Note that they're initialized to
 		// be the size of the mask/value arrays in the given instruction; these are guaranteed
 		// to be the correct size (if they're not, there's a serious problem).
-		byte[] tempMask = new byte[instruction.getMaskContainer().getMask().length];
-		byte[] tempValue = new byte[instruction.getMaskContainer().getValue().length];
+		byte[] tempMask = new byte[mask.length];
+		byte[] tempValue = new byte[maskValue.length];
 
 		//////////////////
 		// MNEMONIC
@@ -609,8 +569,8 @@ public class InstructionSearchData extends Observable {
 		// mnemonic portion of the arrays set to 0 (they were set to 0 above, when initialized).  If
 		// not masked, then we need to put the actual mnemonic bytes in the temp/value arrays.
 		if (!instruction.isMasked()) {
-			tempValue = instruction.getMaskContainer().getValue();
-			tempMask = instruction.getMaskContainer().getMask();
+			tempValue = maskValue;
+			tempMask = mask;
 		}
 
 		//////////////////
@@ -621,38 +581,32 @@ public class InstructionSearchData extends Observable {
 		// mask/value to the main arrays depending on the mask setting.
 		for (OperandMetadata operand : instruction.getOperands()) {
 
-			// If masked, then just leave the value of the bits at 0.  Continue to the next
-			// operand.
+			// If masked, then just leave the value of the bits at 0.  Continue to the next operand.
 			if (operand.isMasked()) {
 				continue;
 			}
 
 			// Now do some due diligence with null checks...
-			if (operand.getMaskContainer().getValue() == null ||
-				operand.getMaskContainer().getMask() == null || tempValue == null ||
-				tempMask == null) {
+			maskValue = operand.getMaskContainer().getValue();
+			mask = operand.getMaskContainer().getMask();
+			if (maskValue == null || mask == null || tempValue == null || tempMask == null) {
 				continue;
 			}
 
 			// Everything looks good, so apply the operand masks.
-			tempValue = InstructionSearchUtils.byteArrayOr(tempValue,
-				operand.getMaskContainer().getValue());
-			tempMask =
-				InstructionSearchUtils.byteArrayOr(tempMask, operand.getMaskContainer().getMask());
+			tempValue = InstructionSearchUtils.byteArrayOr(tempValue, maskValue);
+			tempMask = InstructionSearchUtils.byteArrayOr(tempMask, mask);
 		}
 
-		// Now create a new struct for the mask and return to the caller.
-		MaskContainer result;
 		try {
-			result = new MaskContainer(tempMask, tempValue);
+			return new MaskContainer(tempMask, tempValue);
 		}
 		catch (IllegalArgumentException e) {
 			// If we're here, then there's a problem with the mask/value arrays we used to 
-			// create the mask container.  Just return null.
+			// create the mask container. 
+			Msg.error(this, e.getMessage(), e);
 			return null;
 		}
-
-		return result;
 	}
 
 	/**
@@ -673,8 +627,8 @@ public class InstructionSearchData extends Observable {
 		// Now figure out the size of the final array we need to construct.  We 
 		// could use ArrayList objects instead but that would be too inefficient.
 		int totalLength = 0;
-		for (int i = 0; i < values.size(); i++) {
-			totalLength += values.get(i).length;
+		for (byte[] value : values) {
+			totalLength += value.length;
 		}
 
 		// This takes the masks and values from each command and concats them together to form
@@ -704,66 +658,53 @@ public class InstructionSearchData extends Observable {
 
 	/**
 	 * Searches through instructions in the given program for a specific byte
-	 * pattern. If found, returns the instruction. i
+	 * pattern. If found, returns the instruction. 
 	 * 
-	 * @param program the program to search
+	 * @param location the current program location 
 	 * @param searchBounds the addresses to search
-	 * @param taskMonitor the task monitor
 	 * @param forwardSearch if true, search through addresses forward
+	 * @param monitor the task monitor
 	 * @throws IllegalArgumentException if there's a problem parsing addresses
 	 * @return the instruction, or null if not found
 	 */
-	public InstructionMetadata search(ProgramPlugin plugin, AddressRange searchBounds,
-			TaskMonitor taskMonitor, boolean forwardSearch) {
+	public InstructionMetadata search(ProgramLocation location, AddressRange searchBounds,
+			boolean forwardSearch, TaskMonitor monitor) {
 
-		if (plugin == null || plugin.getCurrentProgram() == null) {
-			throw new IllegalArgumentException("Program provided to search is null");
-		}
+		monitor = TaskMonitor.dummyIfNull(monitor);
+		Objects.requireNonNull(location);
 
-		// Do a quick check to make sure the search bounds are within the bounds of the 
-		// program.
-		if (searchBounds.getMinAddress()
-				.compareTo(
-					plugin.getCurrentProgram().getMinAddress()) < 0 ||
-			searchBounds.getMaxAddress()
-					.compareTo(
-						plugin.getCurrentProgram().getMaxAddress()) > 0) {
+		Program program = location.getProgram();
+
+		// make sure the search bounds are within the bounds of the program
+
+		if (searchBounds.getMinAddress().compareTo(program.getMinAddress()) < 0 ||
+			searchBounds.getMaxAddress().compareTo(program.getMaxAddress()) > 0) {
 			throw new IllegalArgumentException(
 				"Search bounds are not valid; must be within the bounds of the program.");
 		}
 
-		MaskContainer maskContainer = this.getAllMasks();
-
+		MaskContainer maskContainer = getAllMasks();
 		if (InstructionSearchUtils.containsOnBit(maskContainer.getMask())) {
 			if (forwardSearch) {
-				return searchForward(plugin, searchBounds, taskMonitor, maskContainer);
+				return searchForward(location, searchBounds, maskContainer, monitor);
 			}
 
-			return searchBackward(plugin, searchBounds, taskMonitor, maskContainer);
+			return searchBackward(location, searchBounds, maskContainer, monitor);
 
 		}
 
 		return null;
 	}
 
-	/**
-	 * Searches for a specific byte pattern in the positive direction.
-	 * 
-	 * @param plugin the instruction pattern search plugin
-	 * @param searchBounds the addresses to search
-	 * @param taskMonitor the task monitor
-	 * @param maskContainer the bytes to search for
-	 * @return the instruction, or null if not found
-	 */
-	private InstructionMetadata searchForward(ProgramPlugin plugin, AddressRange searchBounds,
-			TaskMonitor taskMonitor, MaskContainer maskContainer) {
+	private InstructionMetadata searchForward(ProgramLocation location, AddressRange searchBounds,
+			MaskContainer maskContainer, TaskMonitor monitor) {
 
 		Address startAddress = searchBounds.getMinAddress();
 		Address endAddress = searchBounds.getMaxAddress();
-		Address currentPosition = plugin.getProgramLocation().getByteAddress().next();
+		Address currentPosition = location.getByteAddress().next();
 
-		taskMonitor.setShowProgressValue(false);// no need to show the number of bytes
-		taskMonitor.setProgress(0);
+		monitor.setShowProgressValue(false);// no need to show the number of bytes
+		monitor.setProgress(0);
 
 		// The maximum value for the monitor is the number of bytes to be checked - this will 
 		// NOT always be the size of the range passed-in. If the cursor is in the middle of
@@ -773,7 +714,7 @@ public class InstructionSearchData extends Observable {
 		if (currentPosition.compareTo(searchBounds.getMinAddress()) > 0) {
 			max = searchBounds.getMaxAddress().subtract(currentPosition);
 		}
-		taskMonitor.setMaximum(max);
+		monitor.setMaximum(max);
 
 		// Move the cursor to the beginning of the range if it is currently short of it. We don't
 		// want to search for any addresses that aren't in the search bounds.
@@ -781,14 +722,15 @@ public class InstructionSearchData extends Observable {
 			currentPosition = startAddress;
 		}
 
+		Program program = location.getProgram();
 		while (currentPosition.compareTo(endAddress) < 0) {
 
 			// Search program memory for the given mask and val.
-			currentPosition = plugin.getCurrentProgram()
-					.getMemory()
-					.findBytes(currentPosition,
-						endAddress, maskContainer.getValue(), maskContainer.getMask(), true,
-						taskMonitor);
+			Memory memory = program.getMemory();
+			byte[] mask = maskContainer.getMask();
+			byte[] maskValue = maskContainer.getValue();
+			currentPosition =
+				memory.findBytes(currentPosition, endAddress, maskValue, mask, true, monitor);
 
 			// If no match was found, currentPosition will be null.
 			if (currentPosition == null) {
@@ -796,8 +738,7 @@ public class InstructionSearchData extends Observable {
 			}
 
 			// Otherwise construct a new entry to put in our results table.
-			MaskContainer masks =
-				new MaskContainer(maskContainer.getMask(), maskContainer.getValue());
+			MaskContainer masks = new MaskContainer(mask, maskValue);
 			InstructionMetadata temp = new InstructionMetadata(masks);
 			temp.setAddr(currentPosition);
 
@@ -807,24 +748,15 @@ public class InstructionSearchData extends Observable {
 		return null;
 	}
 
-	/**
-	 * Searches for a specific byte pattern in the reverse direction.
-	 * 
-	 * @param plugin the instruction pattern search plugin
-	 * @param searchBounds the addresses to search
-	 * @param taskMonitor the task monitor
-	 * @param maskContainer the bytes to search for
-	 * @return the instruction, or null if not found
-	 */
-	private InstructionMetadata searchBackward(ProgramPlugin plugin, AddressRange searchBounds,
-			TaskMonitor taskMonitor, MaskContainer maskContainer) {
+	private InstructionMetadata searchBackward(ProgramLocation location, AddressRange searchBounds,
+			MaskContainer maskContainer, TaskMonitor monitor) {
 
 		Address startAddress = searchBounds.getMaxAddress();
 		Address endAddress = searchBounds.getMinAddress();
-		Address currentPosition = plugin.getProgramLocation().getByteAddress().previous();
+		Address currentPosition = location.getByteAddress().previous();
 
-		taskMonitor.setShowProgressValue(false);
-		taskMonitor.setProgress(0);
+		monitor.setShowProgressValue(false);
+		monitor.setProgress(0);
 
 		// The maximum value for the monitor is the number of bytes to be checked - this will 
 		// NOT always be the size of the range passed-in. If the cursor is in the middle of
@@ -834,7 +766,7 @@ public class InstructionSearchData extends Observable {
 		if (currentPosition.compareTo(searchBounds.getMaxAddress()) < 0) {
 			max = currentPosition.subtract(searchBounds.getMinAddress());
 		}
-		taskMonitor.setMaximum(max);
+		monitor.setMaximum(max);
 
 		// Move the cursor to the end of the range if it is currently past it. We don't
 		// want to search for any addresses that aren't in the search bounds.
@@ -842,14 +774,15 @@ public class InstructionSearchData extends Observable {
 			currentPosition = startAddress;
 		}
 
+		Program program = location.getProgram();
 		while (currentPosition.compareTo(endAddress) > 0) {
 
 			// Search program memory for the given mask and val.
-			currentPosition = plugin.getCurrentProgram()
-					.getMemory()
-					.findBytes(currentPosition,
-						endAddress, maskContainer.getValue(), maskContainer.getMask(), false,
-						taskMonitor);
+			Memory memory = program.getMemory();
+			byte[] mask = maskContainer.getMask();
+			byte[] maskValue = maskContainer.getValue();
+			currentPosition = memory.findBytes(currentPosition, endAddress, maskValue, mask, false,
+				monitor);
 
 			// If no match was found, currentPosition will be null.
 			if (currentPosition == null) {
@@ -857,8 +790,7 @@ public class InstructionSearchData extends Observable {
 			}
 
 			// Otherwise construct a new entry to put in our results table.
-			MaskContainer masks =
-				new MaskContainer(maskContainer.getMask(), maskContainer.getValue());
+			MaskContainer masks = new MaskContainer(mask, maskValue);
 			InstructionMetadata temp = new InstructionMetadata(masks);
 			temp.setAddr(currentPosition);
 
@@ -930,4 +862,68 @@ public class InstructionSearchData extends Observable {
 
 		return searchResults;
 	}
+
+	private class LoadInstructionsTask extends Task {
+
+		private Program program;
+		private AddressSetView addresses;
+
+		public LoadInstructionsTask(Program program, AddressSetView addresses) {
+			super("Loading Instructions", true, true, true);
+			this.program = program;
+			this.addresses = addresses;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+
+			monitor.setIndeterminate(true);
+
+			Listing listing = program.getListing();
+			CodeUnitIterator it = listing.getCodeUnits(addresses, true);
+			while (it.hasNext()) {
+				if (monitor.isCancelled()) {
+					return;
+				}
+
+				CodeUnit cu = it.next();
+
+				InstructionMetadata instructionMetadata;
+
+				// If this CU is an instruction, we can use the Sleigh debug logger to build the 
+				// mask info.  If not, we don't need to create anything complex for masking - it's 
+				// either on or off.
+				if (cu instanceof Instruction) {
+					SleighDebugLogger logger =
+						new SleighDebugLogger(program, cu.getAddress(), SleighDebugMode.VERBOSE);
+					if (logger.parseFailed()) {
+						Msg.showError(this, null, "Parsing error",
+							"Error parsing instruction: " + cu.toString());
+						return;
+					}
+
+					instructionMetadata = getInstructionMetadata(logger, cu);
+					if (instructionMetadata != null) {
+						instructions.add(instructionMetadata);
+					}
+					processOperands(logger, cu, instructionMetadata);
+
+				}
+				else if (cu instanceof Data) {
+					try {
+						instructionMetadata = getInstructionMetadata(cu);
+						if (instructionMetadata != null) {
+							instructions.add(instructionMetadata);
+						}
+					}
+					catch (InvalidInputException e) {
+						Msg.showError(this, null, "Parsing error",
+							"Error parsing data: " + cu.toString());
+						return;
+					}
+				}
+			}
+		}
+	}
+
 }
