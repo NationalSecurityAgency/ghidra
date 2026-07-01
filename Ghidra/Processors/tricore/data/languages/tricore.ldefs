@@ -26,6 +26,7 @@
             id="tricore:LE:32:tc29x">
     <description>Infineon Tricore Embedded Processor TC29x</description>
     <compiler name="default" spec="tricore.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="tricore"/>
     <external_name tool="DWARF.register.mapping.file" name="tricore.dwarf"/>
   </language>
   <language processor="tricore"
@@ -39,6 +40,7 @@
             id="tricore:LE:32:tc172x">
     <description>Infineon Tricore Embedded Processor TC1724/TC1728</description>
     <compiler name="default" spec="tricore.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="tricore"/>
     <external_name tool="DWARF.register.mapping.file" name="tricore.dwarf"/>
   </language>
     <language processor="tricore"
@@ -52,6 +54,7 @@
             id="tricore:LE:32:tc176x">
     <description>Infineon Tricore Embedded Processor TC1762/TC1766</description>
     <compiler name="default" spec="tricore.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="tricore"/>
     <external_name tool="DWARF.register.mapping.file" name="tricore.dwarf"/>
   </language>
 </language_definitions>
