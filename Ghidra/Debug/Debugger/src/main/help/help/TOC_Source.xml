@@ -72,6 +72,10 @@
 					text="In the Listings"
 					sortgroup="a"
 					target="help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html" />
+
+				<tocdef id="BreakpointTimelinePlugin" text="Breakpoint Timeline"
+					sortgroup="b"
+					target="help/topics/BreakpointTimelinePlugin/BreakpointTimelinePlugin.html" />
 			</tocdef>
 
 			<tocdef id="DebuggerRegionsPlugin" text="Memory Regions"
