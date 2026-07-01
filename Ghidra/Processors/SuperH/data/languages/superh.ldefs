@@ -12,6 +12,7 @@
             id="SuperH:BE:32:SH-2A">
     <description>SuperH SH-2A processor 32-bit big-endian</description>
     <compiler name="default" spec="superh2a.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="sh2a"/>
   </language>
   <language processor="SuperH"
             endian="big"
