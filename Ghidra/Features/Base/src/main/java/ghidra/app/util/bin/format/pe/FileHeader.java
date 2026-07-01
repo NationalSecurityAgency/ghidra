@@ -371,7 +371,7 @@ public class FileHeader implements StructConverter {
 			sectionHeaders = new SectionHeader[numberOfSections];
 			for (int i = 0; i < numberOfSections; ++i) {
 				SectionHeader section =
-					SectionHeader.readSectionHeader(reader, tmpIndex, stringTableOffset);
+					SectionHeader.readSectionHeader(reader, tmpIndex, stringTableOffset, optHeader.getFileAlignment());
 				sectionHeaders[i] = section;
 
 				int pointerToRawData = section.getPointerToRawData();

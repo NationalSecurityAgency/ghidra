@@ -236,6 +236,8 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	private short numberOfLinenumbers;
 	private int characteristics;
 
+	private int fileAlignment;
+
 	private BinaryReader reader;
 
 	/**
@@ -248,7 +250,7 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	 * @throws IOException if error reading data
 	 */
 	public static SectionHeader readSectionHeader(BinaryReader reader, long index,
-			long stringTableOffset) throws IOException {
+			long stringTableOffset, int fileAlignment) throws IOException {
 		SectionHeader result = new SectionHeader();
 
 		result.reader = reader;
@@ -277,6 +279,7 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 		result.numberOfRelocations = reader.readNextShort();
 		result.numberOfLinenumbers = reader.readNextShort();
 		result.characteristics = reader.readNextInt();
+		result.fileAlignment = fileAlignment;
 
 		return result;
 	}
@@ -319,6 +322,7 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 				characteristics |= SectionFlags.IMAGE_SCN_CNT_UNINITIALIZED_DATA.getMask();
 			}
 		}
+		fileAlignment = optHeader.getFileAlignment();
 	}
 
 	/**
@@ -409,7 +413,10 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	 * @return the size (in bytes) of data stored for the section
 	 */
 	public int getSizeOfRawData() {
-		return sizeOfRawData;
+		if(this.fileAlignment <= 0) { // In case of unknown fileAlignment return without adjustment
+			return this.sizeOfRawData;
+		}
+		return Math.ceilDiv(sizeOfRawData, this.fileAlignment) * this.fileAlignment;
 	}
 
 	/**
