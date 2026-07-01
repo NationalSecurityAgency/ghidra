@@ -635,6 +635,7 @@ rs1L: zero is r1519 & zero & op1519=0 { export 0:8; }
 rs2L: r2024 is r2024 { export r2024; }
 rs2L: zero is r2024 & zero & op2024=0 { export 0:8; }
 
+#TODO  dest may be bad, might need an assign macro
 rdL: r0711 is r0711 { export r0711; }
 rdL: zero is r0711=0 & zero { local tmp:8 = 0; export tmp; }
 
@@ -953,6 +954,7 @@ vm: ,v0^".t" is op2525=0 & v0 & vd { vd = vd & v0; }
 vm: "" is op2525=1 { }
 
 simm5: sop1519 is sop1519 { local tmp:$(XLEN) = sop1519; export tmp; }
+uimm5: op1519 is op1519 { local tmp:$(XLEN) = op1519; export tmp; }
 # zimm: op1519 is op1519 { local tmp:$(XLEN) = op1519; export tmp; }
 
 nf: op2931 is op2931 { local tmp:$(XLEN) = op2931; export tmp; }

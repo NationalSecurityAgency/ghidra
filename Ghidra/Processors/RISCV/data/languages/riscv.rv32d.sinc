@@ -61,17 +61,19 @@
 
 
 # fcvt.w.d d,S,m c2000053 fff0007f SIMPLE (0, 0) 
-:fcvt.w.d rdW,frs1D,FRM is frs1D & FRM & rdW & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x61 & op2024=0x0
+:fcvt.w.d rd,frs1D,FRM is frs1D & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x61 & op2024=0x0
 {
-	rdW = trunc(frs1D);
+	local tmp:$(XLEN) = trunc(frs1D);
+	rd = sext(tmp);
 }
 
 
 # fcvt.wu.d d,S,m c2100053 fff0007f SIMPLE (0, 0) 
-:fcvt.wu.d rdW,frs1D,FRM is frs1D & FRM & rdW & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x61 & op2024=0x1
+:fcvt.wu.d rd,frs1D,FRM is frs1D & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x61 & op2024=0x1
 {
 	#TODO  unsigned
-	rdW = trunc(frs1D);
+	local tmp:$(XLEN) = trunc(frs1D);
+	rd = sext(tmp);
 }
 
 
