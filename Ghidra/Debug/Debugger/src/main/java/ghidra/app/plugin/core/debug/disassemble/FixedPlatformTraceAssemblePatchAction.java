@@ -17,37 +17,45 @@ package ghidra.app.plugin.core.debug.disassemble;
 
 import docking.action.MenuData;
 import ghidra.app.plugin.core.assembler.AbstractPatchAction;
-import ghidra.program.model.lang.LanguageID;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.Program;
 import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.model.listing.TraceInstruction;
+import ghidra.trace.model.program.TraceProgramView;
 
-public class FixedPlatformTracePatchInstructionAction extends AbstractTracePatchInstructionAction {
+public class FixedPlatformTraceAssemblePatchAction extends AbstractTraceAssemblePatchAction {
+
 	private final LanguageID altLangID;
 	private final TracePlatform platform;
 
-	public FixedPlatformTracePatchInstructionAction(DebuggerDisassemblerPlugin plugin,
+	public FixedPlatformTraceAssemblePatchAction(DebuggerDisassemblerPlugin plugin,
 			LanguageID altLangID, TracePlatform platform) {
 		this.altLangID = altLangID;
 		this.platform = platform;
-		super(plugin, "Patch Instruction using " + altLangID);
-		setKeyBindingData(null);
+		super(plugin, "Assemble using " + altLangID);
 	}
 
 	@Override
 	protected MenuData createMenuData(String name) {
 		MenuData menuData =
-			new MenuData(new String[] { "Patch Instruction using", altLangID.toString() });
+			new MenuData(new String[] { "Assemble using...", altLangID.toString() });
 		menuData.setParentMenuGroup(AbstractPatchAction.MENU_GROUP);
 		return menuData;
 	}
 
 	@Override
-	protected TracePlatform getPlatform(CodeUnit cu) {
+	protected TracePlatform getPlatform(TraceProgramView view, Address entry) {
 		return platform;
 	}
 
 	@Override
-	protected LanguageID getAlternativeLanguageID(CodeUnit cu) {
-		return altLangID;
+	protected RegisterValue getInitialContext(Instruction ins, Program program, Address entry) {
+		Language language = ins instanceof TraceInstruction tins
+				? tins.getLanguage()
+				: program.getLanguage();
+		return DebuggerDisassemblerPlugin.deriveAlternativeDefaultContext(language, altLangID,
+			entry);
 	}
 }

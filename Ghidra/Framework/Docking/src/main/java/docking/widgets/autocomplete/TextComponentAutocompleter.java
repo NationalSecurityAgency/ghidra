@@ -25,8 +25,7 @@ import java.util.stream.IntStream;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.event.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Caret;
+import javax.swing.text.*;
 
 import docking.DockingUtils;
 import docking.DockingUtils.TreeTraversalResult;
@@ -36,27 +35,28 @@ import generic.util.WindowUtilities;
 import ghidra.util.task.SwingUpdateManager;
 
 /**
- * An autocompleter that may be attached to one or more {@link JTextField}.
+ * An autocompleter that may be attached to one or more {@link JTextComponent}s.
  *
  * <p>
  * Each autocompleter instance has one associated window (displaying the list of suggestions) and
  * one associated model (generating the list of suggestions). Thus, the list can only be active on
- * one of the attached text fields at a time. This is usually the desired behavior, and it allows
- * for one autocompleter to be reused on many fields. Behavior is undefined when multiple
- * autocompleters are attached to the same text field. More likely, you should implement a composite
- * model if you wish to present completions from multiple models on a single text field.
+ * one of the attached text components at a time. This is usually the desired behavior, and it
+ * allows for one autocompleter to be reused on many components. Behavior is undefined when multiple
+ * autocompleters are attached to the same text component. More likely, you should implement a
+ * composite model if you wish to present completions from multiple models on a single text
+ * component.
  *
  * <p>
  * By default, the autocompleter is activated when the user presses CTRL-SPACE, at which point, the
  * model is queried for possible suggestions. The completer gives the model all the text preceding
- * the current field's caret. This behavior can be changed by overriding the
- * {@link #getPrefix(JTextField)} method. This may be useful, e.g., to obtain a prefix for the
- * current word, rather than the full field contents, preceding the caret. The list is displayed
- * such that its top-left corner is placed directly under the current field's caret. As the user
+ * the current component's caret. This behavior can be changed by overriding the
+ * {@link #getPrefix(JTextComponent)} method. This may be useful, e.g., to obtain a prefix for the
+ * current word, rather than the full component contents, preceding the caret. The list is displayed
+ * such that its top-left corner is placed directly under the current component's caret. As the user
  * continues typing, the suggestions are re-computed, and the list tracks with the caret. This
  * positioning behavior can be modified by overriding the {@link #getCompletionWindowPosition()}
- * method. As a convenience, the {@link #getCaretPositionOnScreen(JTextField)} method is available
- * to compute the default position.
+ * method. As a convenience, the {@link #getCaretPositionOnScreen(JTextComponent)} method is
+ * available to compute the default position.
  *
  * <p>
  * Whether or not the list is currently displayed, when the user presses CTRL-SPACE, if only one
@@ -64,8 +64,8 @@ import ghidra.util.task.SwingUpdateManager;
  * until either no suggestions are given, or more than one suggestion is given (or until the
  * autocompleter detects an infinite loop). This behavior can by modified on an item-by-item basis
  * by overriding the {@link #getCompletionCanDefault(Object) getCompletionCanDefault(T)} method.
- * This same behavior can be activated by calling the {@link #startCompletion(JTextField)} method,
- * which may be useful, e.g., to bind a different key sequence to start autocompletion.
+ * This same behavior can be activated by calling the {@link #startCompletion(JTextComponent)}
+ * method, which may be useful, e.g., to bind a different key sequence to start autocompletion.
  *
  * <p>
  * The appearance of each item in the suggestion list can be modified by overriding the various
@@ -94,7 +94,7 @@ import ghidra.util.task.SwingUpdateManager;
  *
  * @param <T> the type of suggestions presented by this autocompleter.
  */
-public class TextFieldAutocompleter<T> {
+public class TextComponentAutocompleter<T> {
 	private static final int DEFAULT_UPDATE_DELAY = 10;
 	private static final int DEFAULT_MAX_UPDATE_DELAY = 2000;
 	// TODO: Maybe compute the default dimensions based on content?
@@ -105,8 +105,8 @@ public class TextFieldAutocompleter<T> {
 
 	// Variables to keep track of state
 	private final AutocompletionModel<T> model;
-	private final Set<JTextField> attachees = new HashSet<>();
-	private JTextField focus;
+	private final Set<JTextComponent> attachees = new HashSet<>();
+	private JTextComponent focus;
 	private List<AutocompletionListener<T>> autocompletionListeners = new ArrayList<>();
 
 	// Swing fodder
@@ -276,7 +276,7 @@ public class TextFieldAutocompleter<T> {
 	 *
 	 * @param model the model giving the suggestions.
 	 */
-	public TextFieldAutocompleter(AutocompletionModel<T> model) {
+	public TextComponentAutocompleter(AutocompletionModel<T> model) {
 		this.model = model;
 	}
 
@@ -410,9 +410,9 @@ public class TextFieldAutocompleter<T> {
 	 * @param field an attached field, usually the one with focus.
 	 * @return the prefix to use as the query.
 	 */
-	protected String getPrefix(JTextField field) {
+	protected String getPrefix(JTextComponent component) {
 		try {
-			return field.getText(0, field.getCaretPosition());
+			return component.getText(0, component.getCaretPosition());
 		}
 		catch (BadLocationException e) {
 			throw new AssertionError("INTERNAL: Should not be here", e);
@@ -423,10 +423,11 @@ public class TextFieldAutocompleter<T> {
 	 * Get the preferred location (on screen) of the completion list window.
 	 *
 	 * <p>
-	 * Typically, this is a location near the focused field. Ideally, it is positioned such that the
-	 * displayed suggestions coincide with the applicable text in the focused field. For example, if
-	 * the suggestions display some portion of the prefix, the window could be positioned such that
-	 * the portion in the suggestion appears directly below the same portion in the field.
+	 * Typically, this is a location near the focused component. Ideally, it is positioned such that
+	 * the displayed suggestions coincide with the applicable text in the focused component. For
+	 * example, if the suggestions display some portion of the prefix, the window could be
+	 * positioned such that the portion in the suggestion appears directly below the same portion in
+	 * the component.
 	 *
 	 * @return the point giving the top-left corner of the completion window
 	 */
@@ -438,7 +439,7 @@ public class TextFieldAutocompleter<T> {
 	 * Get the preferred dimensions of the completion list window.
 	 *
 	 * <p>
-	 * Typically, this is the width of the focused field.
+	 * Typically, this is the width of the focused component.
 	 *
 	 * @return the dimension giving the preferred height and width. A value can be -1 to indicate no
 	 *         preference.
@@ -451,27 +452,28 @@ public class TextFieldAutocompleter<T> {
 	}
 
 	/**
-	 * A convenience function that returns the bottom on-screen position of the given field's caret.
+	 * A convenience function that returns the bottom on-screen position of the given component's
+	 * caret.
 	 *
-	 * @param field the field, typically the one having focus
-	 * @return the on-screen position of the caret's bottom; null if the given field is null
+	 * @param component the component, typically the one having focus
+	 * @return the on-screen position of the caret's bottom; null if the given component is null
 	 */
-	protected Point getCaretPositionOnScreen(JTextField field) {
+	protected Point getCaretPositionOnScreen(JTextComponent component) {
 		if (focus == null) {
 			return null;
 		}
 
-		FontMetrics metrics = field.getFontMetrics(field.getFont());
-		Caret c = field.getCaret();
+		FontMetrics metrics = component.getFontMetrics(component.getFont());
+		Caret c = component.getCaret();
 		Point p = c.getMagicCaretPosition(); // returns a shared reference
 		if (p == null) {
-			p = new Point(0, field.getBaseline(1, 1));
+			p = new Point(0, component.getBaseline(1, 1));
 		}
 		else {
 			p = new Point(p);
 		}
 		p.y += metrics.getHeight();
-		SwingUtilities.convertPointToScreen(p, field);
+		SwingUtilities.convertPointToScreen(p, component);
 		return p;
 	}
 
@@ -492,48 +494,48 @@ public class TextFieldAutocompleter<T> {
 	}
 
 	/**
-	 * Attach the autocompleter to the given text field.
+	 * Attach the autocompleter to the given text component.
 	 *
 	 * <p>
 	 * If this method is never called, then the autocompleter can never appear.
 	 *
-	 * @param field the field that will gain this autocompletion feature
-	 * @return true, if this field is not already attached
+	 * @param component the component that will gain this autocompletion feature
+	 * @return true, if this component is not already attached
 	 */
-	public boolean attachTo(JTextField field) {
-		if (!attachees.add(field)) {
+	public boolean attachTo(JTextComponent component) {
+		if (!attachees.add(component)) {
 			return false;
 		}
 		boolean keep = false;
 		try {
-			field.addFocusListener(listener);
-			field.addCaretListener(listener);
-			field.addKeyListener(listener);
-			field.getDocument().addDocumentListener(listener);
+			component.addFocusListener(listener);
+			component.addCaretListener(listener);
+			component.addKeyListener(listener);
+			component.getDocument().addDocumentListener(listener);
 			keep = true;
 		}
 		finally {
 			if (!keep) {
-				attachees.remove(field);
+				attachees.remove(component);
 			}
 		}
 		return keep;
 	}
 
 	/**
-	 * Deprive the given field of this autocompleter.
+	 * Deprive the given component of this autocompleter.
 	 *
-	 * @param field the field that will lose this autocompletion feature
-	 * @return true, if this field was actually attached
+	 * @param component the component that will lose this autocompletion feature
+	 * @return true, if this component was actually attached
 	 */
-	public boolean detachFrom(JTextField field) {
-		if (!attachees.remove(field)) {
+	public boolean detachFrom(JTextComponent component) {
+		if (!attachees.remove(component)) {
 			return false;
 		}
-		field.removeFocusListener(listener);
-		field.removeCaretListener(listener);
-		field.removeKeyListener(listener);
-		field.getDocument().removeDocumentListener(listener);
+		component.removeFocusListener(listener);
+		component.removeCaretListener(listener);
+		component.removeKeyListener(listener);
+		component.getDocument().removeDocumentListener(listener);
 
 		return true;
 	}
@@ -729,11 +731,11 @@ public class TextFieldAutocompleter<T> {
 	 * Decide whether the given suggestion can be automatically activated.
 	 *
 	 * <p>
-	 * When autocompletion is started (via {@link #startCompletion(JTextField)}) or when the user
-	 * presses CTRL-SPACE, if there is only a single suggestion, it is taken automatically, and the
-	 * process repeats until there is not a sole suggestion. Before the suggestion is taken, though,
-	 * it calls this method. If it returns false, the single suggestion is displayed in a 1-long
-	 * list instead. This is useful to prevent consequential actions from being automatically
+	 * When autocompletion is started (via {@link #startCompletion(JTextComponent)}) or when the
+	 * user presses CTRL-SPACE, if there is only a single suggestion, it is taken automatically, and
+	 * the process repeats until there is not a sole suggestion. Before the suggestion is taken,
+	 * though, it calls this method. If it returns false, the single suggestion is displayed in a
+	 * 1-long list instead. This is useful to prevent consequential actions from being automatically
 	 * activated by the autocompleter.
 	 *
 	 * @param sel the potentially auto-activated suggestion.
@@ -744,27 +746,27 @@ public class TextFieldAutocompleter<T> {
 	}
 
 	/**
-	 * Starts the autocompleter on the given text field.
+	 * Starts the autocompleter on the given text component.
 	 *
 	 * <p>
 	 * First, this repeatedly attempts auto-activation. When there are many suggestions, or when
 	 * auto-activation is prevented (see {@link #getCompletionCanDefault(Object)
 	 * getCompletionCanDefault(T)}), a list is displayed (usually below the caret) containing the
-	 * suggestions given the fields current contents. The list remains open until either the user
-	 * cancels it (usually via ESC) or the user activates a suggestion.
+	 * suggestions given the components current contents. The list remains open until either the
+	 * user cancels it (usually via ESC) or the user activates a suggestion.
 	 *
 	 * <p>
-	 * <b>NOTE:</b> The text field must already be attached.
+	 * <b>NOTE:</b> The text component must already be attached.
 	 *
-	 * @param field the field on which to start autocompletion.
+	 * @param component the component on which to start autocompletion.
 	 */
-	public void startCompletion(JTextField field) {
-		if (!attachees.contains(field)) {
-			throw new IllegalArgumentException("Given field is not attached");
+	public void startCompletion(JTextComponent component) {
+		if (!attachees.contains(component)) {
+			throw new IllegalArgumentException("Given component is not attached");
 		}
 		Set<String> visited = new HashSet<>();
 		while (true) {
-			String before = getPrefix(field);
+			String before = getPrefix(component);
 			if (!visited.add(before)) {
 				return;
 			}
@@ -964,7 +966,7 @@ public class TextFieldAutocompleter<T> {
 			}
 			else if (e.getKeyCode() == KeyEvent.VK_SPACE &&
 				(e.getModifiersEx() & DockingUtils.CONTROL_KEY_MODIFIER_MASK) != 0) {
-				startCompletion((JTextField) e.getComponent());
+				startCompletion((JTextComponent) e.getComponent());
 				e.consume();
 			}
 			else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
@@ -982,19 +984,19 @@ public class TextFieldAutocompleter<T> {
 
 		@Override
 		public void focusGained(FocusEvent e) {
-			focus = (JTextField) e.getComponent();
+			focus = (JTextComponent) e.getComponent();
 			updateDisplayContents();
 		}
 
-		/*test*/ public void fakeFocusGained(JTextField field) {
-			focus = field;
+		/*test*/ public void fakeFocusGained(JTextComponent component) {
+			focus = component;
 		}
 
 		@Override
 		public void focusLost(FocusEvent e) {
 			Component opp = e.getOppositeComponent();
 			if (attachees.contains(opp)) {
-				focus = (JTextField) opp;
+				focus = (JTextComponent) opp;
 			}
 			else if (opp == list) {
 				// Do nothing
@@ -1068,15 +1070,15 @@ public class TextFieldAutocompleter<T> {
 	 * The autocompleter offers the tails from a list of strings that start with the text before the
 	 * caret.
 	 */
-	public static class TextFieldAutocompleterDemo {
+	public static class TextComponentAutocompleterDemo {
 		public static void main(String[] args) {
 			JDialog dialog = new JDialog((Window) null, "Autocompleter Demo");
 			JTextField field = new JTextField();
 
 			dialog.add(field);
 
-			TextFieldAutocompleter<String> auto =
-				new TextFieldAutocompleter<>(new AutocompletionModel<String>() {
+			TextComponentAutocompleter<String> auto =
+				new TextComponentAutocompleter<>(new AutocompletionModel<String>() {
 					Set<String> strings = new HashSet<>(Arrays.asList(new String[] { "Test",
 						"Testing", "Another", "Yet another", "Yet still more" }));
 					{
@@ -1114,7 +1116,8 @@ public class TextFieldAutocompleter<T> {
 	 */
 	public static class DualTextAutocompleterDemo {
 		public static void main(String[] args) {
-			JDialog dialog = new JDialog((Window) null, "MultiTextField with Autocompleter Demo");
+			JDialog dialog =
+				new JDialog((Window) null, "Linked TextFields with Autocompleter Demo");
 
 			Box hbox = Box.createHorizontalBox();
 			dialog.add(hbox);
@@ -1143,10 +1146,10 @@ public class TextFieldAutocompleter<T> {
 					return matching;
 				}
 			};
-			TextFieldAutocompleter<String> auto = new TextFieldAutocompleter<>(model) {
+			TextComponentAutocompleter<String> auto = new TextComponentAutocompleter<>(model) {
 				@Override
-				protected String getPrefix(JTextField field) {
-					return dual.getTextBeforeCursor(field);
+				protected String getPrefix(JTextComponent component) {
+					return dual.getTextBeforeCursor((JTextField) component);
 				}
 			};
 

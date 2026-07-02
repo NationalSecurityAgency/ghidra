@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import ghidra.app.script.GhidraScript;
-import ghidra.program.disassemble.ReDisassembler;
+package ghidra.app.plugin.core.assembler.completion;
 
-public class RepairDisassemblyScript extends GhidraScript {
+/**
+ * Represents a textual suggestion to complete or partially complete an assembly instruction
+ */
+public class SuggestionAssemblyCompletion extends AssemblyCompletion {
+	public SuggestionAssemblyCompletion(String text, String display) {
+		super(text, display, null, 1);
+	}
+
 	@Override
-	protected void run() throws Exception {
-		ReDisassembler dis = new ReDisassembler(currentProgram);
-		dis.disassemble(currentAddress, monitor);
+	public boolean getCanDefault() {
+		return true;
 	}
 }

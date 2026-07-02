@@ -13,31 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.cmd.disassemble;
+package ghidra.app.plugin.core.assembler;
 
-import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.program.disassemble.ReDisassembler;
+import java.util.List;
+
+import ghidra.app.nav.Navigatable;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.Program;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
-public class ReDisassembleCommand extends BackgroundCommand<Program> {
-	private final Address seed;
+public class AssemblePatchDialog extends AbstractAssemblePatchDialog<Program> {
 
-	public ReDisassembleCommand(Address seed) {
-		this.seed = seed;
+	protected AssemblePatchDialog(PluginTool tool, Navigatable navigatable, Program program,
+			Address entry, RegisterValue initialContext) {
+		super(tool, navigatable, program, entry, initialContext);
 	}
 
 	@Override
-	public boolean applyTo(Program program, TaskMonitor monitor) {
-		ReDisassembler dis = new ReDisassembler(program);
-		try {
-			dis.disassemble(seed, monitor);
-			return true;
-		}
-		catch (CancelledException e) {
-			return false;
-		}
+	protected AbstractPatchAssemblyCommand<Program> newPatchCommand(List<String> lines) {
+		return new PatchAssemblyCommand(assembler, lines, entry, initialContext);
 	}
 }

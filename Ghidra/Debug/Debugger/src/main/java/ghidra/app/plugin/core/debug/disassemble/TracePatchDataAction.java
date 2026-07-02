@@ -62,6 +62,7 @@ public class TracePatchDataAction extends PatchDataAction {
 
 			try {
 				editor.setVariable(address, encoded).get(1, TimeUnit.SECONDS);
+				doGoToNext(encoded.length);
 				// Let the trace do everything regarding existing units
 				return true;
 			}

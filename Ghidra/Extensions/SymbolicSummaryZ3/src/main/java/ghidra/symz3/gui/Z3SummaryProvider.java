@@ -15,8 +15,10 @@
  */
 package ghidra.symz3.gui;
 
-import java.awt.BorderLayout;
+import java.awt.*;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import javax.swing.*;
 
@@ -88,8 +90,9 @@ public class Z3SummaryProvider extends ComponentProviderAdapter {
 	String style = "<html>";
 
 	JPanel mainPanel = new JPanel(new BorderLayout());
-	JSplitPane submainPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+	JSplitPane summaryPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	JSplitPane codePanel = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+	JPanel fixPanel = new JPanel(new GridBagLayout());
 
 	Z3SummaryInformationPanel information;
 	Z3SummaryPcodeLogPanel ops;
@@ -120,15 +123,30 @@ public class Z3SummaryProvider extends ComponentProviderAdapter {
 		ops = new Z3SummaryPcodeLogPanel(this);
 		instructions = new Z3SummaryInstructionLogPanel(this);
 
-		JPanel summaryPanel = new JPanel(new BorderLayout());
-		summaryPanel.add(new JScrollPane(information));
 		codePanel.setTopComponent(instructions);
 		codePanel.setBottomComponent(ops);
 		codePanel.setDividerLocation(0.4);
-		submainPanel.setRightComponent(summaryPanel);
-		submainPanel.setLeftComponent(codePanel);
-		mainPanel.add(submainPanel);
-		setFactoryToZ3();
+		summaryPanel.setRightComponent(instructions);
+		summaryPanel.setLeftComponent(codePanel);
+		mainPanel.add(summaryPanel);
+
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridwidth = GridBagConstraints.REMAINDER;
+		gbc.anchor = GridBagConstraints.NORTH;
+		fixPanel.add(new JLabel("""
+				<html>
+				<h1>Z3 Emulator is not active</h1>
+				<p>Press the button below to configure this tool for %s</p>""".formatted(
+			SymZ3EmulatorFactory.TITLE)));
+		JPanel buttons = new JPanel(new GridBagLayout());
+		gbc.anchor = GridBagConstraints.CENTER;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+
+		JButton buttonFix = new JButton("Fix");
+		buttonFix.addActionListener(evt -> setFactoryToZ3());
+		buttons.add(buttonFix);
+		gbc.weighty = 1;
+		fixPanel.add(buttons, gbc);
 	}
 
 	public void updateSummary() {
@@ -148,8 +166,30 @@ public class Z3SummaryProvider extends ComponentProviderAdapter {
 		PcodeMachine<?> emu = emulationService.getCachedEmulator(trace, time);
 		if (emu instanceof SymZ3PcodeEmulator z3Emu) {
 			populateSummaryFromEmulator(z3Emu);
+			ensureMainPanel(summaryPanel);
 		}
+		else {
+			clearSummary();
+			ensureMainPanel(fixPanel);
+		}
+	}
 
+	private static boolean contains(Container container, Component component) {
+		int count = container.getComponentCount();
+		for (int i = 0; i < count; i++) {
+			if (container.getComponent(i) == component) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void ensureMainPanel(Component component) {
+		if (contains(mainPanel, component)) {
+			return;
+		}
+		mainPanel.removeAll();
+		mainPanel.add(component);
 	}
 
 	private void setFactoryToZ3() {
@@ -160,6 +200,12 @@ public class Z3SummaryProvider extends ComponentProviderAdapter {
 				return;
 			}
 		}
+	}
+
+	public void clearSummary() {
+		information.setInformation(Stream.of(), Stream.of());
+		ops.setLog(List.of());
+		instructions.setLog(List.of());
 	}
 
 	public void populateSummaryFromEmulator(SymZ3PcodeEmulator emu) {

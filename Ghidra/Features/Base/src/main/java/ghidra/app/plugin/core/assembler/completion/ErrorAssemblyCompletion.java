@@ -13,13 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import ghidra.app.script.GhidraScript;
-import ghidra.program.disassemble.ReDisassembler;
+package ghidra.app.plugin.core.assembler.completion;
 
-public class RepairDisassemblyScript extends GhidraScript {
+import generic.theme.GThemeDefaults.Colors;
+
+/**
+ * Represents the description of an error encountered during parsing or assembling
+ * 
+ * <p>
+ * <b>NOTE:</b> not used until error descriptions improve
+ */
+public class ErrorAssemblyCompletion extends AssemblyCompletion {
+	private String text;
+
+	public ErrorAssemblyCompletion(String text, String desc) {
+		super(text, desc, Colors.ERROR, 1);
+		this.text = text;
+	}
+
 	@Override
-	protected void run() throws Exception {
-		ReDisassembler dis = new ReDisassembler(currentProgram);
-		dis.disassemble(currentAddress, monitor);
+	public String getText() {
+		return text;
 	}
 }

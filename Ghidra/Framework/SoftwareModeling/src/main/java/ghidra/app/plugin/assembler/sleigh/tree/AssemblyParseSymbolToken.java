@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import ghidra.app.script.GhidraScript;
-import ghidra.program.disassemble.ReDisassembler;
+package ghidra.app.plugin.assembler.sleigh.tree;
 
-public class RepairDisassemblyScript extends GhidraScript {
-	@Override
-	protected void run() throws Exception {
-		ReDisassembler dis = new ReDisassembler(currentProgram);
-		dis.disassemble(currentAddress, monitor);
+import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
+import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyTerminal;
+
+public class AssemblyParseSymbolToken extends AssemblyParseNumericToken {
+	public AssemblyParseSymbolToken(AssemblyGrammar grammar, AssemblyTerminal term, String str,
+			long val) {
+		super(grammar, term, str, val);
 	}
 }
