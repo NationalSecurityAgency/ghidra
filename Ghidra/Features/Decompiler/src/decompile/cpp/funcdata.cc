@@ -402,7 +402,7 @@ void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const 
   // Make sure newconstant and extra preserve origval in address units
   uintb newconstoff = origval - extra;		// everything is already in address units
   newconst = newConstant(sz,newconstoff);
-  newconst->setPtrCheck();	// No longer need to check this constant as a pointer
+  newconst->setSymbolCheck(Varnode::symcheck_complete);	// No longer need to check this constant as symbolref
   if (spaceid->isTruncated())
     addOp->setPtrFlow();
   opSetInput(addOp,spacebase_vn,0);
@@ -425,7 +425,7 @@ void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const 
     else
       opSetOpcode(extraOp,CPUI_INT_ADD);
     Varnode *extconst = newConstant(sz,extra);
-    extconst->setPtrCheck();
+    extconst->setSymbolCheck(Varnode::symcheck_complete);
     opSetInput(extraOp,outvn,0);
     opSetInput(extraOp,extconst,1);
     outvn = extraOp->getOut();

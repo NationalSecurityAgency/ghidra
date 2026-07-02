@@ -1,0 +1,45 @@
+<decompilertest>
+  <!--
+      Function with offcut references to global data
+  -->
+<binaryimage arch="x86:LE:64:default:gcc">
+<bytechunk space="ram" offset="0x100000" readonly="true">
+55534883ec1889fbbf80001000e8ee0f
+000089c583fb01741d83fb02742683fb
+03742f83fb04743c83fb05744589e848
+83c4185b5dc3bf9c001000e8c00f0000
+01c5ebe9bf9c001000e8ba0f000001c5
+ebdb48c744240890001000b890001000
+8d28ebc9bfa4001000e8a20f000089c5
+ebbbbfaa001000e8940f000089c5ebad
+</bytechunk>
+<bytechunk space="ram" offset="0x1000a0" readonly="true">
+0000000068656c6c6f20776f726c6400
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="offcut"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>parse line struct substruct { int4 sub1; int4 sub2; };</com>
+  <com>parse line struct mystruct { int4 a; int4 b; float4 c; substruct d; };</com>
+  <com>map addr r0x100080 substruct glob2</com>
+  <com>map addr r0x100090 mystruct glob1</com>
+  <com>map addr r0x1000a4 char globstring[12]</com>
+  <com>map fun r0x101000 read_sub</com>
+  <com>map fun r0x101008 read_int</com>
+  <com>map fun r0x101010 read_string</com>
+  <com>parse line extern int4 read_sub(substruct *);</com>
+  <com>parse line extern int4 read_int(int4 *);</com>
+  <com>parse line extern int4 read_string(char *);</com>
+  <com>lo fu offcut</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Offcut Symbol Refs #1" min="1" max="1">read_sub\(&amp;glob2\);</stringmatch>
+<stringmatch name="Offcut Symbol Refs #2" min="1" max="1">read_sub\(&amp;glob1\.d\);</stringmatch>
+<stringmatch name="Offcut Symbol Refs #3" min="1" max="1">read_int\(&amp;glob1\.d\.sub1\);</stringmatch>
+<stringmatch name="Offcut Symbol Refs #4" min="1" max="1">iVar. = 0x100090;</stringmatch>
+<stringmatch name="Offcut Symbol Refs #5" min="1" max="1">read_string\("hello world"\);</stringmatch>
+<stringmatch name="Offcut Symbol Refs #6" min="1" max="1">read_string\("world"\);</stringmatch>
+</decompilertest>
