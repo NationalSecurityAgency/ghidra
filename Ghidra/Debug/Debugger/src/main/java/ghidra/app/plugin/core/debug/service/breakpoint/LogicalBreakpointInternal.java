@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.service.breakpoint;
 
+import java.util.List;
+
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
 import ghidra.debug.api.target.Target;
 import ghidra.program.model.address.Address;
@@ -24,6 +26,17 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 
 public interface LogicalBreakpointInternal extends LogicalBreakpoint {
+
+	/**
+	 * Get any or both of the enabled and disabled program bookmarks for this breakpoint, even if
+	 * they are no longer valid.
+	 * <p>
+	 * This is needed to clean up logical breakpoints when the bookmark becomes invalid
+	 * 
+	 * @return the bookmarks
+	 */
+	List<Bookmark> getProgramBookmarksValidOrNot();
+
 	/**
 	 * Set the expected address for trace breakpoints in the given trace
 	 * 

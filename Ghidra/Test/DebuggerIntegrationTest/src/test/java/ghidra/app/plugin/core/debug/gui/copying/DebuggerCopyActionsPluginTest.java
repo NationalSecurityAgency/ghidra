@@ -111,8 +111,8 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		performEnabledAction(copyActionsPlugin.actionCopyIntoCurrentProgram);
 		DebuggerCopyIntoProgramDialog dialog =
 			waitForDialogComponent(DebuggerCopyIntoProgramDialog.class);
-		dialog.setRelocate(false);
-		dialog.reset();
+		runSwing(() -> dialog.setRelocate(false));
+		runSwing(() -> dialog.reset());
 
 		RangeEntry entry = Unique.assertOne(dialog.tableModel.getModelData());
 
@@ -121,7 +121,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		assertEquals(".text", entry.getRegionName());
 		assertEquals(".text", entry.getBlockName());
 		assertTrue(entry.isCreate());
-		dialog.okCallback();
+		runSwing(() -> dialog.okCallback());
 		waitOn(dialog.lastTask);
 		waitForSwing();
 
@@ -175,8 +175,8 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		performEnabledAction(copyActionsPlugin.actionCopyIntoCurrentProgram);
 		DebuggerCopyIntoProgramDialog dialog =
 			waitForDialogComponent(DebuggerCopyIntoProgramDialog.class);
-		dialog.setRelocate(false);
-		dialog.reset();
+		runSwing(() -> dialog.setRelocate(false));
+		runSwing(() -> dialog.reset());
 
 		List<RangeEntry> entries = List.copyOf(dialog.tableModel.getModelData());
 		assertEquals(3, entries.size());
@@ -203,7 +203,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		assertEquals(".straddle", entry.getBlockName());
 		assertTrue(entry.isCreate());
 
-		dialog.okCallback();
+		runSwing(() -> dialog.okCallback());
 		waitOn(dialog.lastTask);
 		waitForSwing();
 
@@ -257,8 +257,8 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		performEnabledAction(copyActionsPlugin.actionCopyIntoCurrentProgram);
 		DebuggerCopyIntoProgramDialog dialog =
 			waitForDialogComponent(DebuggerCopyIntoProgramDialog.class);
-		dialog.setRelocate(true);
-		dialog.reset();
+		runSwing(() -> dialog.setRelocate(true));
+		runSwing(() -> dialog.reset());
 
 		RangeEntry entry = Unique.assertOne(dialog.tableModel.getModelData());
 
@@ -267,7 +267,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		assertEquals(".text", entry.getRegionName());
 		assertEquals(".text *", entry.getBlockName());
 		assertFalse(entry.isCreate());
-		dialog.okCallback();
+		runSwing(() -> dialog.okCallback());
 		waitOn(dialog.lastTask);
 		waitForSwing();
 
@@ -320,9 +320,9 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		performEnabledAction(copyActionsPlugin.actionCopyIntoCurrentProgram);
 		DebuggerCopyIntoProgramDialog dialog =
 			waitForDialogComponent(DebuggerCopyIntoProgramDialog.class);
-		dialog.setRelocate(true);
-		dialog.setUseOverlays(true);
-		dialog.reset();
+		runSwing(() -> dialog.setRelocate(true));
+		runSwing(() -> dialog.setUseOverlays(true));
+		runSwing(() -> dialog.reset());
 
 		RangeEntry entry = Unique.assertOne(dialog.tableModel.getModelData());
 
@@ -331,7 +331,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		assertEquals(".text", entry.getRegionName());
 		assertEquals(".text_2", entry.getBlockName());
 		assertTrue(entry.isCreate());
-		dialog.okCallback();
+		runSwing(() -> dialog.okCallback());
 		waitOn(dialog.lastTask);
 		waitForSwing();
 
@@ -361,7 +361,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		performEnabledAction(copyActionsPlugin.actionCopyIntoNewProgram);
 		DebuggerCopyIntoProgramDialog dialog =
 			waitForDialogComponent(DebuggerCopyIntoProgramDialog.class);
-		dialog.setDestination(DebuggerCopyIntoProgramDialog.TEMP_PROGRAM);
+		runSwing(() -> dialog.setDestination(DebuggerCopyIntoProgramDialog.TEMP_PROGRAM));
 
 		RangeEntry entry = Unique.assertOne(dialog.tableModel.getModelData());
 
@@ -371,7 +371,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		assertEquals(".text", entry.getBlockName());
 		assertTrue(entry.isCreate());
 		entry.setBlockName(".my_text");
-		dialog.okCallback();
+		runSwing(() -> dialog.okCallback());
 		waitOn(dialog.lastTask);
 		waitForSwing();
 
@@ -409,7 +409,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 			waitForDialogComponent(DebuggerCopyIntoProgramDialog.class);
 		assertFalse(dialog.cbCapture.isEnabled());
 		assertFalse(dialog.cbCapture.isSelected());
-		dialog.setDestination(DebuggerCopyIntoProgramDialog.TEMP_PROGRAM);
+		runSwing(() -> dialog.setDestination(DebuggerCopyIntoProgramDialog.TEMP_PROGRAM));
 
 		assertEquals(2, dialog.tableModel.getRowCount());
 		RangeEntry entry;
@@ -428,7 +428,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		assertEquals(".data", entry.getBlockName());
 		assertTrue(entry.isCreate());
 
-		dialog.okCallback();
+		runSwing(() -> dialog.okCallback());
 		waitOn(dialog.lastTask);
 		waitForSwing();
 
@@ -468,7 +468,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 			waitForDialogComponent(DebuggerCopyIntoProgramDialog.class);
 		assertTrue(dialog.cbCapture.isEnabled());
 		assertTrue(dialog.cbCapture.isSelected());
-		dialog.setDestination(DebuggerCopyIntoProgramDialog.TEMP_PROGRAM);
+		runSwing(() -> dialog.setDestination(DebuggerCopyIntoProgramDialog.TEMP_PROGRAM));
 
 		RangeEntry entry = Unique.assertOne(dialog.tableModel.getModelData());
 

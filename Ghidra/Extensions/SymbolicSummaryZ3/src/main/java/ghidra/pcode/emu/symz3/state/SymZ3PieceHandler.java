@@ -25,8 +25,7 @@ import ghidra.pcode.exec.ConcretionError;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
-import ghidra.pcode.exec.trace.TraceEmulationIntegration.AbstractPropertyBasedPieceHandler;
-import ghidra.pcode.exec.trace.TraceEmulationIntegration.TraceWriter;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.*;
 import ghidra.pcode.exec.trace.data.*;
 import ghidra.program.model.address.*;
 import ghidra.symz3.model.SymValueZ3;
@@ -68,21 +67,23 @@ public class SymZ3PieceHandler
 	}
 
 	@Override
-	public void abstractWritten(PcodeTraceDataAccess acc, AddressSet written, PcodeThread<?> thread,
-			PcodeExecutorStatePiece<SymValueZ3, SymValueZ3> piece, AddressSpace space,
-			SymValueZ3 offset, int length, SymValueZ3 value) {
+	public void abstractWritten(Writer writer, PcodeTraceDataAccess acc, AddressSet written,
+			PcodeThread<?> thread, PcodeExecutorStatePiece<SymValueZ3, SymValueZ3> piece,
+			AddressSpace space, SymValueZ3 offset, int length, SymValueZ3 value) {
 		try {
+			@SuppressWarnings("unchecked")
+			PcodeThread<Object> cast = (PcodeThread<Object>) thread;
 			Address address = piece.getAddressArithmetic().toAddress(offset, space, Purpose.STORE);
-			dataWritten(acc, written, thread, piece, address, length, value);
+			writer.dataWritten(cast, piece, address, length, value);
 		}
 		catch (ConcretionError e) {
-			abstractWritten.computeIfAbsent(thread, t -> new HashSet<>())
+			abstractWritten.computeIfAbsent(thread, _ -> new HashSet<>())
 					.add(new SymZ3Varnode(space, offset, length));
 		}
 	}
 
 	@Override
-	public int abstractReadUninit(PcodeTraceDataAccess acc, PcodeThread<?> thread,
+	public int abstractReadUninit(Writer writer, PcodeTraceDataAccess acc, PcodeThread<?> thread,
 			PcodeExecutorStatePiece<SymValueZ3, SymValueZ3> piece, AddressSpace space,
 			SymValueZ3 offset, int length, Reason reason) {
 		String string = acc.getPropertyAccess(NAME, String.class).get(Address.NO_ADDRESS);

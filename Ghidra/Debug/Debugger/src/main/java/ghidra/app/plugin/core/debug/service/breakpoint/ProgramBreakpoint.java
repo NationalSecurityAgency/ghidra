@@ -428,6 +428,19 @@ public class ProgramBreakpoint {
 		return null;
 	}
 
+	public List<Bookmark> getBookmarksValidOrNot() {
+		Bookmark eBookmark = this.eBookmark;
+		Bookmark dBookmark = this.dBookmark;
+		List<Bookmark> result = new ArrayList<>();
+		if (eBookmark != null) {
+			result.add(eBookmark);
+		}
+		if (dBookmark != null) {
+			result.add(dBookmark);
+		}
+		return result;
+	}
+
 	protected String getComment() {
 		Bookmark bookmark = getBookmark();
 		return bookmark == null ? computeComment() : bookmark.getComment();

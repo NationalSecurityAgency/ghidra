@@ -519,10 +519,11 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 
 	private boolean emulateFunctionEnabled(ProgramLocationActionContext ctx) {
 		Program program = ctx.getProgram();
-		if (program == null || program instanceof TraceProgramView) {
+		Address address = ctx.getAddress();
+		if (program == null || program instanceof TraceProgramView || address == null) {
 			return false;
 		}
-		Function function = program.getFunctionManager().getFunctionContaining(ctx.getAddress());
+		Function function = program.getFunctionManager().getFunctionContaining(address);
 		if (function == null) {
 			return false;
 		}
@@ -531,10 +532,11 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 
 	private void emulateFunctionActivated(ProgramLocationActionContext ctx) {
 		Program program = ctx.getProgram();
-		if (program == null) {
+		Address address = ctx.getAddress();
+		if (program == null || address == null) {
 			return;
 		}
-		Function function = program.getFunctionManager().getFunctionContaining(ctx.getAddress());
+		Function function = program.getFunctionManager().getFunctionContaining(address);
 		if (function == null) {
 			return;
 		}

@@ -151,11 +151,12 @@ public enum DebuggerEmulationIntegration {
 		}
 
 		@Override
-		public AddressSetView readUninitialized(PcodeTraceDataAccess acc, PcodeThread<?> thread,
-				PcodeExecutorStatePiece<byte[], byte[]> piece, AddressSetView set) {
+		public AddressSetView readUninitialized(Writer writer, PcodeTraceDataAccess acc,
+				PcodeThread<?> thread, PcodeExecutorStatePiece<byte[], byte[]> piece,
+				AddressSetView set) {
 			AddressSetView unknown = set.subtract(acc.intersectViewKnown(set, false));
 			if (unknown.isEmpty()) {
-				return super.readUninitialized(acc, thread, piece, set);
+				return super.readUninitialized(writer, acc, thread, piece, set);
 			}
 			if (acc instanceof PcodeDebuggerRegistersAccess regsAcc) {
 				if (regsAcc.isLive()) {
@@ -165,13 +166,13 @@ public enum DebuggerEmulationIntegration {
 				 * Pass `set` to super, because even if regsAcc has just read from target into
 				 * trace, we have yet to read from trace into state piece.
 				 */
-				return super.readUninitialized(acc, thread, piece, set);
+				return super.readUninitialized(writer, acc, thread, piece, set);
 			}
 			if (acc instanceof PcodeDebuggerMemoryAccess memAcc) {
 				if (memAcc.isLive() && waitTimeout(memAcc.readFromTargetMemory(unknown))) {
 					unknown = set.subtract(memAcc.intersectViewKnown(set, false));
 					if (unknown.isEmpty()) {
-						return super.readUninitialized(acc, thread, piece, set);
+						return super.readUninitialized(writer, acc, thread, piece, set);
 					}
 				}
 				unknown = unknown.subtract(memAcc.intersectViewKnown(unknown, true));
@@ -183,13 +184,14 @@ public enum DebuggerEmulationIntegration {
 				 */
 				AddressSetView readFromStatic = unknown.subtract(remains);
 				AddressSetView toReadFromTraceToPiece = set.subtract(readFromStatic);
-				return super.readUninitialized(memAcc, thread, piece, toReadFromTraceToPiece);
+				return super.readUninitialized(writer, memAcc, thread, piece,
+					toReadFromTraceToPiece);
 			}
 			throw new AssertionError();
 		}
 
 		@Override
-		public boolean dataWritten(PcodeTraceDataAccess acc, AddressSet written,
+		public boolean dataWritten(Writer writer, PcodeTraceDataAccess acc, AddressSet written,
 				PcodeThread<?> thread, PcodeExecutorStatePiece<byte[], byte[]> piece,
 				Address address, int length, byte[] value) {
 			if (!mode.isWriteTarget()) {
