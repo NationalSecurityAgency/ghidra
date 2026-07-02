@@ -1,0 +1,228 @@
+/*
+ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+
+option classload {
+  column {
+    header "^Loaded^"	/* Number of classes loaded */
+    data (java.cls.loadedClasses + java.cls.sharedLoadedClasses)
+    align right
+    scale raw
+    width 5
+    format "0"
+  }
+  column {
+    header "Time^"	/* Accumulated time for class loading */
+    data sun.cls.time/sun.os.hrt.frequency
+    scale sec
+    align right
+    width 10
+    format "0.000"
+  }
+  column {
+    header "^Inited^"	/* Number of initialized classes */
+    data sun.cls.initializedClasses
+    align right
+    scale raw
+    width 5
+    format "0"
+  }
+  column {
+    header "Time^"	/* Accumulated time for class initialization */
+    data sun.cls.classInitTime.self/sun.os.hrt.frequency
+    scale raw
+    align right
+    width 10
+    format "0.000"
+  }
+  column {
+    header "Shared^"	/* Number of system classes loaded from shared archive */
+    data java.cls.sharedLoadedClasses
+    align right
+    scale raw
+    width 5
+    format "0"
+  }
+  column {
+    header "Kbytes^"	/* Accumulated Size of classes loaded */
+    data sun.cls.sharedLoadedBytes
+    align right
+    scale K
+    width 7
+    format "0.0"
+  }
+  column {
+    header "LoadTime^"	/* Accumulated time for loading classes from shared archive */
+    data sun.cls.sharedClassLoadTime/sun.os.hrt.frequency
+    scale raw
+    align right
+    width 10
+    format "0.000"
+  }
+  column {
+    header "^SysClass^"	/* Number of system classes loaded */
+    data java.cls.loadedClasses
+    align right
+    scale raw
+    width 5
+    format "0"
+  }
+  column {
+    header "Kbytes^"	/* Bytes read from system class files */
+    data sun.cls.sysClassBytes
+    align right
+    scale K
+    width 7
+    format "0.0"
+  }
+  column {
+    header "LoadTime^"	/* Accumulated time for loading non-shared system classes */
+    data sun.cls.sysClassLoadTime/sun.os.hrt.frequency
+    scale raw
+    align right
+    width 10
+    format "0.000"
+  }
+  column {
+    header "Lookup^"	/* Time spent in looking up/reading of system classes */
+    data sun.cls.lookupSysClassTime/sun.os.hrt.frequency
+    scale raw
+    align right
+    width 10
+    format "0.000"
+  }
+  column {
+    header "Parse^"	/* Time spent in parsing system classes */
+    data sun.cls.parseClassTime.self/sun.os.hrt.frequency
+    scale raw
+    align right
+    width 10
+    format "0.000"
+  }
+  column {
+    header "^Linked^"	/* Number of linked classes */
+    data sun.cls.linkedClasses
+    align right
+    scale raw
+    width 5
+    format "0"
+  }
+  column {
+    header "Time^"	/* Accumulated time for class linking */
+    data sun.cls.classInitTime.self/sun.os.hrt.frequency
+    scale raw
+    align right
+    width 10
+    format "0.000"
+  }
+  column {
+    header "^Verified^"	/* Number of verified classes */
+    data sun.cls.verifiedClasses
+    align right
+    scale raw
+    width 5
+    format "0"
+  }
+  column {
+    header "Time^"	/* Accumulated time for class verification */
+    data sun.cls.classVerifyTime.self/sun.os.hrt.frequency
+    scale raw
+    align right
+    width 10
+    format "0.000"
+  }
+  column {
+    header "AppClass^"	/* Number of loaded application classes */
+    data sun.cls.appClassLoadCount
+    align right
+    scale raw
+    width 5
+    format "0"
+  }
+  column {
+    header "Kbytes^"	/* Bytes read from app class files */
+    data sun.cls.appClassBytes
+    align right
+    scale K
+    width 7
+    format "0.0"
+  }
+  column {
+    header "AppCL^"	/* Accumulated time for loading app classes */
+    data sun.cls.appClassLoadTime/sun.os.hrt.frequency
+    scale raw
+    align right
+    width 10
+    format "0.000"
+  }
+  column {
+    header "^DefineClass^"	/* Number of defineClass calls */
+    data sun.cls.defineAppClasses
+    align right
+    scale raw
+    width 5
+    format "0"
+  }
+  column {
+    header "Time^"	/* Accumulated time for defineClass */
+    data sun.cls.defineAppClassTime.self/sun.os.hrt.frequency
+    scale raw
+    align right
+    width 10
+    format "0.000"
+  }
+  column {
+    header "^FindClass^"	/* Number of findClass calls */
+    data sun.classloader.findClasses
+    align right
+    scale raw
+    width 5
+    format "0"
+  }
+  column {
+    header "Time^"	/* Accumulated time for findClass */
+    data sun.classloader.findClassTime/1000000000
+    scale raw
+    align right
+    width 10
+    format "0.000"
+  }
+  column {
+    header "Delegation^"	/* Parent class loader delegation time */
+    data sun.classloader.parentDelegationTime/1000000000
+    scale raw 
+    align right
+    width 10
+    format "0.000"
+  }
+  column {
+    header "URLCL Read^"	/* Accumulated time for URLClassLoader reading bytes */
+    data sun.urlClassLoader.readClassBytesTime/1000000000
+    scale raw
+    align right
+    width 10
+    format "0.000"
+  }
+}
+

@@ -1,0 +1,4 @@
+dumb-color|80-column dumb tty with 256 coors,
+        am,
+        colors#256, cols#80,
+        bel=^G, cr=^M, cud1=^J, ind=^J,

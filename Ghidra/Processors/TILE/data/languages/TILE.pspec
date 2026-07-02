@@ -1,92 +1,95 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <processor_spec>
-  <properties>
-    <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.TILEEmulateInstructionStateModifier"/>
-    <property key="assemblyRating:TILE:BE:64:default" value="PLATINUM"/>
-    <!-- XMOS XS1/XS2/XS3 tile processor identification -->
-    <property key="xmos.support" value="true"/>
-  </properties>
-  <programcounter register="pc"/>
-  <register_data>
-    <register name="pc" width="8" default="true"/>
-    <register name="r0" width="8"/>
-    <register name="r1" width="8"/>
-    <register name="r2" width="8"/>
-    <register name="r3" width="8"/>
-    <register name="r4" width="8"/>
-    <register name="r5" width="8"/>
-    <register name="r6" width="8"/>
-    <register name="r7" width="8"/>
-    <register name="r8" width="8"/>
-    <register name="r9" width="8"/>
-    <register name="r10" width="8"/>
-    <register name="r11" width="8"/>
-    <register name="r12" width="8"/>
-    <register name="r13" width="8"/>
-    <register name="r14" width="8"/>
-    <register name="r15" width="8"/>
-    <register name="r16" width="8"/>
-    <register name="r17" width="8"/>
-    <register name="r18" width="8"/>
-    <register name="r19" width="8"/>
-    <register name="r20" width="8"/>
-    <register name="r21" width="8"/>
-    <register name="r22" width="8"/>
-    <register name="r23" width="8"/>
-    <register name="r24" width="8"/>
-    <register name="r25" width="8"/>
-    <register name="r26" width="8"/>
-    <register name="r27" width="8"/>
-    <register name="r28" width="8"/>
-    <register name="r29" width="8"/>
-    <register name="r30" width="8"/>
-    <register name="r31" width="8"/>
-    <register name="r32" width="8"/>
-    <register name="r33" width="8"/>
-    <register name="r34" width="8"/>
-    <register name="r35" width="8"/>
-    <register name="sr0" width="8"/>
-    <register name="sr1" width="8"/>
-    <register name="sr2" width="8"/>
-    <register name="sr3" width="8"/>
-    <register name="sr4" width="8"/>
-    <register name="sr5" width="8"/>
-    <register name="sr6" width="8"/>
-    <register name="sr7" width="8"/>
-    <register name="sr8" width="8"/>
-    <register name="sr9" width="8"/>
-    <register name="sr10" width="8"/>
-    <register name="sr11" width="8"/>
-    <register name="sr12" width="8"/>
-    <register name="sr13" width="8"/>
-    <register name="sr14" width="8"/>
-    <register name="sr15" width="8"/>
-    <register name="sr16" width="8"/>
-    <register name="sr17" width="8"/>
-    <register name="sr18" width="8"/>
-    <register name="sr19" width="8"/>
-    <register name="sr20" width="8"/>
-    <register name="sr21" width="8"/>
-    <register name="sr22" width="8"/>
-    <register name="sr23" width="8"/>
-    <register name="sr24" width="8"/>
-    <register name="sr25" width="8"/>
-    <register name="sr26" width="8"/>
-    <register name="sr27" width="8"/>
-    <register name="sr28" width="8"/>
-    <register name="sr29" width="8"/>
-    <register name="sr30" width="8"/>
-    <register name="sr31" width="8"/>
-    <register name="sr32" width="8"/>
-    <register name="sr33" width="8"/>
-    <register name="sr34" width="8"/>
-    <register name="sr35" width="8"/>
-    <!-- Extended system registers sr36-sr40 (41 total CP registers) -->
-    <register name="sr36" width="8"/>
-    <register name="sr37" width="8"/>
-    <register name="sr38" width="8"/>
-    <register name="sr39" width="8"/>
-    <register name="sr40" width="8"/>
-  </register_data>
+ <properties>
+  <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.TILEEmulateInstructionStateModifier"/>
+  <property key="assemblyRating:TILE:BE:64:default" value="PLATINUM"/>
+  <property key="xmos.support" value="true"/>
+ </properties>
+ <programcounter register="pc"/>
+ <register_data>
+  <register name="pc"/>
+  <register name="r0"/>
+  <register name="r1"/>
+  <register name="r2"/>
+  <register name="r3"/>
+  <register name="r4"/>
+  <register name="r5"/>
+  <register name="r6"/>
+  <register name="r7"/>
+  <register name="r8"/>
+  <register name="r9"/>
+  <register name="r10"/>
+  <register name="r11"/>
+  <register name="r12"/>
+  <register name="r13"/>
+  <register name="r14"/>
+  <register name="r15"/>
+  <register name="r16"/>
+  <register name="r17"/>
+  <register name="r18"/>
+  <register name="r19"/>
+  <register name="r20"/>
+  <register name="r21"/>
+  <register name="r22"/>
+  <register name="r23"/>
+  <register name="r24"/>
+  <register name="r25"/>
+  <register name="r26"/>
+  <register name="r27"/>
+  <register name="r28"/>
+  <register name="r29"/>
+  <register name="r30"/>
+  <register name="r31"/>
+  <register name="r32"/>
+  <register name="r33"/>
+  <register name="r34"/>
+  <register name="r35"/>
+  <register name="r36"/>
+  <register name="r37"/>
+  <register name="r38"/>
+  <register name="r39"/>
+  <register name="r40"/>
+  <register name="sr0"/>
+  <register name="sr1"/>
+  <register name="sr2"/>
+  <register name="sr3"/>
+  <register name="sr4"/>
+  <register name="sr5"/>
+  <register name="sr6"/>
+  <register name="sr7"/>
+  <register name="sr8"/>
+  <register name="sr9"/>
+  <register name="sr10"/>
+  <register name="sr11"/>
+  <register name="sr12"/>
+  <register name="sr13"/>
+  <register name="sr14"/>
+  <register name="sr15"/>
+  <register name="sr16"/>
+  <register name="sr17"/>
+  <register name="sr18"/>
+  <register name="sr19"/>
+  <register name="sr20"/>
+  <register name="sr21"/>
+  <register name="sr22"/>
+  <register name="sr23"/>
+  <register name="sr24"/>
+  <register name="sr25"/>
+  <register name="sr26"/>
+  <register name="sr27"/>
+  <register name="sr28"/>
+  <register name="sr29"/>
+  <register name="sr30"/>
+  <register name="sr31"/>
+  <register name="sr32"/>
+  <register name="sr33"/>
+  <register name="sr34"/>
+  <register name="sr35"/>
+  <register name="sr36"/>
+  <register name="sr37"/>
+  <register name="sr38"/>
+  <register name="sr39"/>
+  <register name="sr40"/>
+ </register_data>
 </processor_spec>

@@ -1,0 +1,9 @@
+[Unit]
+Description=SERVICE_DESCRIPTION
+
+[Service]
+ExecStart=APPLICATION_LAUNCHER
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

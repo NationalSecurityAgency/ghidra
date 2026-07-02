@@ -100,13 +100,13 @@ if [[ "${SUPPORT_DIR}" = *"!"* ]]; then
 	exit 1
 fi
 
-if [ -f "${SUPPORT_DIR}/../Ghidra/application.properties" ]; then
+if [ -f "${SUPPORT_DIR}/../../application.properties" ]; then
 
 	# Production Environment
-	export INSTALL_DIR="${SUPPORT_DIR}/.."
-	CPATH="${INSTALL_DIR}/Ghidra/Framework/Utility/lib/Utility.jar"
-	LS_CPATH="${SUPPORT_DIR}/LaunchSupport.jar"
-	DEBUG_LOG4J="${SUPPORT_DIR}/debug.log4j.xml"
+	export INSTALL_DIR="/workdir/Ghidra"
+	CPATH="/workdir/Ghidra/Framework/Utility/build/libs/Utility.jar"
+	LS_CPATH="/workdir/Ghidra/Framework/Utility/build/libs/Utility.jar:/workdir/Ghidra/GhidraBuild/LaunchSupport/build/libs/LaunchSupport.jar"
+	DEBUG_LOG4J="/workdir/Ghidra/RuntimeScripts/support/debug.log4j.xml"
 else
 
 	# Development Environment (Eclipse classes or "gradle jar")
@@ -125,14 +125,14 @@ else
 fi
 
 # Identify java command from either JAVA_HOME or PATH, try PATH first
-JAVA_CMD=
+export JAVA_CMD=java
 if [ -x "$(command -v java)" ] ; then
-	JAVA_CMD=java
+	export JAVA_CMD=java
 elif [ -n "${JAVA_HOME}" ] ; then
-	JAVA_CMD="${JAVA_HOME}/bin/java"
+	export JAVA_CMD=java
 	if [ ! -x "${JAVA_CMD}" ] ; then
 		echo "WARNING: JAVA_HOME environment variable is set to an invalid directory: ${JAVA_HOME}"
-		JAVA_CMD=
+		export JAVA_CMD=java
 	fi
 fi
 
@@ -158,7 +158,7 @@ if [ ! $? -eq 0 ]; then
 	"${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -ask
 	
 	# Now that the user chose one, try again to get the JDK that will be used to launch Ghidra
-	LS_JAVA_HOME="$("${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -save)"
+	LS_JAVA_HOME="$("${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "/workdir/Ghidra" ${JAVA_TYPE_ARG} -save)"
 	if [ ! $? -eq 0 ]; then
 		echo
 		echo "ERROR: Failed to find a supported JDK."
@@ -166,7 +166,7 @@ if [ ! $? -eq 0 ]; then
 		exit 1
 	fi
 fi
-JAVA_CMD="${LS_JAVA_HOME}/bin/java"
+export JAVA_CMD=java
 
 # Get the configurable environment variables from the launch properties
 # Only set them if they are currently unset or empty

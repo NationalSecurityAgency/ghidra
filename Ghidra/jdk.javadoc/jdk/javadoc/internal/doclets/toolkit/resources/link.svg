@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
+ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+
+ This code is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License version 2 only, as
+ published by the Free Software Foundation.  Oracle designates this
+ particular file as subject to the "Classpath" exception as provided
+ by Oracle in the LICENSE file that accompanied this code.
+
+ This code is distributed in the hope that it will be useful, but WITHOUT
+ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ version 2 for more details (a copy is included in the LICENSE file that
+ accompanied this code).
+
+ You should have received a copy of the GNU General Public License version
+ 2 along with this work; if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+
+ Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ or visit www.oracle.com if you need additional information or have any
+ questions.
+-->
+
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="#505050">
+    <path d="M32 239.3c18.2 16.7 57.1 15.4 74.5-1.7l30.9-32c8.3-8.8 4.8-15.1.7-19.9-4.7-3-12-8.1-20.4.5l-29.4 29.6a29.4 29.4 0 0 1-39.4.9l-8-7c-8.8-9.4-11-28.3-.8-38.8l49.8-51.3c7.2-6.6 21.3-10 36.1-2.4 6.9 5.4 15.6 15.7 26 6.2 9.9-11.2 2.9-20.4-10-29.3-18.7-12.6-52-14.8-70.4 3.8L17 154.2c-20 20.2-11.3 58 1.7 71.5a69 69 0 0 0 13.2 13.6z"/>
+    <path d="M223.2 17.5c-18.4-16.6-57.3-15.3-74.6 2l-30.8 31.9c-8.3 9-4.8 15.2-.7 20 4.8 3 12.1 8 20.5-.6 4.8-5 29.3-29.6 29.3-29.6a29.4 29.4 0 0 1 39.4-1l8 6.8c8.8 9.5 11 28.3.9 38.9l-49.6 51.4c-7.2 6.7-21.3 10.1-36.1 2.6-7-5.4-15.7-15.7-26.1-6.2-9.8 11.2-2.8 20.4 10.2 29.3 18.7 12.5 52 14.7 70.3-4l54.4-56.5c20-20.3 11.2-58-1.9-71.5a69 69 0 0 0-13.2-13.5Z"/>
+</svg>

@@ -1,0 +1,591 @@
+/*
+*
+* Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+* DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+*
+* This code is free software; you can redistribute it and/or modify it
+* under the terms of the GNU General Public License version 2 only, as
+* published by the Free Software Foundation.  Oracle designates this
+* particular file as subject to the "Classpath" exception as provided
+* by Oracle in the LICENSE file that accompanied this code.
+*
+* This code is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+* FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+* version 2 for more details (a copy is included in the LICENSE file that
+* accompanied this code).
+*
+* You should have received a copy of the GNU General Public License version
+* 2 along with this work; if not, write to the Free Software Foundation,
+* Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+*
+* Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+* or visit www.oracle.com if you need additional information or have any
+* questions.
+*/
+
+/*
+ * This file provides the mappings for renamed counters. The key for the
+ * mapping is the counter name of the counter in the latest release, and
+ * follows the reserved word 'alias'. Following the key counter name is
+ * a white space separated list of counter names from previous releases.
+ * The convention is to order these alias names from newest to oldest
+ * releases, but this is only a convention.
+ *
+ * The counter name aliasing mechanism does not provide for aliases that
+ * are dynamcially generated based on some JVM configuration parameters.
+ * For such cases, the largest possible set of counter names must be
+ * explicitly enumerated in this file. It does not provide for aliases
+ * that have dependencies on the values of other counters, resulting in
+ * one-to-many mappings.
+ */
+
+/***************************** java.* counters *****************************/
+// java.ci
+alias java.ci.totalTime                           // 1.5.0 b39
+	hotspot.ci.total.time                     // 1.4.1
+
+// java.cls
+alias java.cls.loadedClasses                      // 1.5.0 b39
+	hotspot.rt.cl.classes.loaded              // 1.4.1
+alias java.cls.unloadedClasses                    // 1.5.0 b39
+	hotspot.rt.cl.classes.unloaded            // 1.4.1
+
+// java.property
+alias java.property.java.class.path               // 1.5.0 b39
+	java.class.path                           // 1.4.1
+alias java.property.java.endorsed.dirs            // 1.5.0 b39
+	java.endorsed.dirs                        // 1.4.1
+alias java.property.java.ext.dirs                 // 1.5.0 b39
+	java.ext.dirs                             // 1.4.1
+alias java.property.java.home                     // 1.5.0 b39
+	java.home                                 // 1.4.1
+alias java.property.java.library.path             // 1.5.0 b39
+	java.library.path                         // 1.4.1
+alias java.property.java.vm.info                  // 1.5.0 b39
+	java.vm.info                              // 1.4.1
+alias java.property.java.vm.name                  // 1.5.0 b39
+	java.vm.name                              // 1.4.1
+alias java.property.java.vm.specification.name    // 1.5.0 b39
+	java.vm.specification.name                // 1.4.1
+alias java.property.java.vm.specification.vendor  // 1.5.0 b39
+	java.vm.specification.vendor              // 1.4.1
+alias java.property.java.vm.specification.version // 1.5.0 b39
+	java.vm.specification.version             // 1.4.1
+alias java.property.java.vm.vendor                // 1.5.0 b39
+	java.vm.vendor                            // 1.4.1
+alias java.property.java.vm.version               // 1.5.0 b39
+	java.vm.version                           // 1.4.1
+
+// java.rt
+alias java.rt.vmArgs                              // 1.5.0 b39
+	hotspot.vm.args                           // 1.4.1
+alias java.rt.vmFlags                             // 1.5.0 b39
+	hotspot.vm.flags                          // 1.4.1
+
+// java.threads
+alias java.threads.daemon                         // 1.5.0 b39
+	hotspot.threads.daemon.count              // 1.4.1
+alias java.threads.live                           // 1.5.0 b39
+	hotspot.threads.live.count                // 1.4.1
+alias java.threads.livePeak                       // 1.5.0 b39
+	hotspot.threads.live.peak                 // 1.4.1
+alias java.threads.started                        // 1.5.0 b39
+	hotspot.threads.total.created             // 1.4.1
+
+/***************************** com.sun.* counters **************************/
+
+/***************************** sun.* counters ******************************/
+// sun.ci
+alias sun.ci.adapterThread.compiles               // 1.5.0 b39
+	hotspot.ci.AdapterThread.compiles         // 1.4.2
+alias sun.ci.adapterThread.method                 // 1.5.0 b39
+	hotspot.ci.AdapterThread.method           // 1.4.2
+alias sun.ci.adapterThread.time                   // 1.5.0 b39
+	hotspot.ci.AdapterThread.time             // 1.4.2
+alias sun.ci.adapterThread.type                   // 1.5.0 b39
+	hotspot.ci.AdapterThread.type             // 1.4.2
+alias sun.ci.compilerThread.0.compiles            // 1.5.0 b39
+	hotspot.ci.CompilerThread0.compiles       // 1.4.2
+alias sun.ci.compilerThread.0.method              // 1.5.0 b39
+	hotspot.ci.CompilerThread0.method         // 1.4.2
+alias sun.ci.compilerThread.0.time                // 1.5.0 b39
+	hotspot.ci.CompilerThread0.time           // 1.4.2
+alias sun.ci.compilerThread.0.type                // 1.5.0 b39
+	hotspot.ci.CompilerThread0.type           // 1.4.2
+alias sun.ci.compilerThread.1.compiles            // 1.5.0 b39
+	hotspot.ci.CompilerThread1.compiles       // 1.4.2
+alias sun.ci.compilerThread.1.method              // 1.5.0 b39
+	hotspot.ci.CompilerThread1.method         // 1.4.2
+alias sun.ci.compilerThread.1.time                // 1.5.0 b39
+	hotspot.ci.CompilerThread1.time           // 1.4.2
+alias sun.ci.compilerThread.1.type                // 1.5.0 b39
+	hotspot.ci.CompilerThread1.type           // 1.4.2
+alias sun.ci.compilerThread.2.compiles            // 1.5.0 b39
+	hotspot.ci.CompilerThread2.compiles       // 1.4.2
+alias sun.ci.compilerThread.2.method              // 1.5.0 b39
+	hotspot.ci.CompilerThread2.method         // 1.4.2
+alias sun.ci.compilerThread.2.time                // 1.5.0 b39
+	hotspot.ci.CompilerThread2.time           // 1.4.2
+alias sun.ci.compilerThread.2.type                // 1.5.0 b39
+	hotspot.ci.CompilerThread2.type           // 1.4.2
+alias sun.ci.compilerThread.3.compiles            // 1.5.0 b39
+	hotspot.ci.CompilerThread3.compiles       // 1.4.2
+alias sun.ci.compilerThread.3.method              // 1.5.0 b39
+	hotspot.ci.CompilerThread3.method         // 1.4.2
+alias sun.ci.compilerThread.3.time                // 1.5.0 b39
+	hotspot.ci.CompilerThread3.time           // 1.4.2
+alias sun.ci.compilerThread.3.type                // 1.5.0 b39
+	hotspot.ci.CompilerThread3.type           // 1.4.2
+alias sun.ci.lastFailedMethod                     // 1.5.0 b39
+	hotspot.ci.failed.method                  // 1.4.2
+alias sun.ci.lastFailedType                       // 1.5.0 b39
+	hotspot.ci.failed.type                    // 1.4.2
+alias sun.ci.lastInvalidatedMethod                // 1.5.0 b39
+	hotspot.ci.invalidated.method             // 1.4.2
+alias sun.ci.lastInvalidatedType                  // 1.5.0 b39
+	hotspot.ci.invalidated.type               // 1.4.2
+alias sun.ci.lastMethod                           // 1.5.0 b39
+	hotspot.ci.last.method                    // 1.4.2
+alias sun.ci.lastSize                             // 1.5.0 b39
+	hotspot.ci.last.size                      // 1.4.2
+alias sun.ci.lastType                             // 1.5.0 b39
+	hotspot.ci.last.type                      // 1.4.2
+alias sun.ci.nativeCompiles                       // 1.5.0 b39
+        hotspot.ci.native.compiles                // 1.4.2
+alias sun.ci.nativeTime                           // 1.5.0 b39
+        hotspot.ci.native.time                    // 1.4.2
+alias sun.ci.nmethodCodeSize                      // 1.5.0 b39
+        hotspot.ci.nmethod.codesize               // 1.4.2
+alias sun.ci.nmethodSize                          // 1.5.0 b39
+        hotspot.ci.nmethod.size                   // 1.4.2
+alias sun.ci.osrBytes                             // 1.5.0 b39
+        hotspot.ci.osr.bytes                      // 1.4.2
+alias sun.ci.osrCompiles                          // 1.5.0 b39
+        hotspot.ci.osr.compiles                   // 1.4.2
+alias sun.ci.osrTime                              // 1.5.0 b39
+        hotspot.ci.osr.time                       // 1.4.2
+alias sun.ci.standardBytes                        // 1.5.0 b39
+        hotspot.ci.standard.bytes                 // 1.4.2
+alias sun.ci.standardCompiles                     // 1.5.0 b39
+        hotspot.ci.standard.compiles              // 1.4.2
+alias sun.ci.standardTime                         // 1.5.0 b39
+        hotspot.ci.standard.time                  // 1.4.2
+alias sun.ci.threads                              // 1.5.0 b39
+        hotspot.ci.threads                        // 1.4.2
+alias sun.ci.totalBailouts                        // 1.5.0 b39
+        hotspot.ci.total.bailout                  // 1.4.2
+alias sun.ci.totalCompiles                        // 1.5.0 b39
+        hotspot.ci.total.compiles                 // 1.4.2
+alias sun.ci.totalInvalidates                     // 1.5.0 b39
+        hotspot.ci.total.invalid                  // 1.4.2
+
+// sun.cls
+alias sun.cls.classInitTime                       // 1.5.0 b39
+        hotspot.rt.cl.class.init.time             // 1.5.0 b21
+alias sun.cls.classVerifyTime                     // 1.5.0 b39
+        hotspot.rt.cl.class.verify.time           // 1.5.0 b21
+alias sun.cls.initializedClasses                  // 1.5.0 b39
+        hotspot.rt.cl.classes.initialized         // 1.5.0 b21
+alias sun.cls.loadedBytes                         // 1.5.0 b39
+        hotspot.rt.cl.bytes.loaded                // 1.4.2
+alias sun.cls.methodBytes                         // 1.5.0 b39
+        hotspot.rt.cl.methods.size                // 1.4.2
+alias sun.cls.time                                // 1.5.0 b39
+        hotspot.rt.cl.time                        // 1.4.2
+alias sun.cls.unloadedBytes                       // 1.5.0 b39
+        hotspot.rt.cl.bytes.unloaded              // 1.4.2
+
+// sun.gc
+alias sun.gc.cause                                // 1.5.0 b39
+        hotspot.gc.cause                          // 1.4.2_02
+
+// sun.gc.collector.0
+alias sun.gc.collector.0.invocations              // 1.5.0 b39
+        hotspot.gc.collector.0.invocations        // 1.4.2
+	hotspot.gc.new.eden.invocations           // 1.4.1
+alias sun.gc.collector.0.lastEntryTime            // 1.5.0 b39
+        hotspot.gc.collector.0.last_entry         // 1.4.2
+alias sun.gc.collector.0.lastExitTime             // 1.5.0 b39
+        hotspot.gc.collector.0.last_exit          // 1.4.2
+alias sun.gc.collector.0.name                     // 1.5.0 b39
+        hotspot.gc.collector.0.name               // 1.4.2
+alias sun.gc.collector.0.time                     // 1.5.0 b39
+        hotspot.gc.collector.0.time               // 1.4.2
+	hotspot.gc.new.eden.time                  // 1.4.1
+
+// sun.gc.collector.1
+alias sun.gc.collector.1.invocations              // 1.5.0 b39
+        hotspot.gc.collector.1.invocations        // 1.4.2
+	hotspot.gc.new.eden.invocations           // 1.4.1
+alias sun.gc.collector.1.lastEntryTime            // 1.5.0 b39
+        hotspot.gc.collector.1.last_entry         // 1.4.2
+alias sun.gc.collector.1.lastExitTime             // 1.5.0 b39
+        hotspot.gc.collector.1.last_exit          // 1.4.2
+alias sun.gc.collector.1.name                     // 1.5.0 b39
+        hotspot.gc.collector.1.name               // 1.4.2
+alias sun.gc.collector.1.time                     // 1.5.0 b39
+        hotspot.gc.collector.1.time               // 1.4.2
+	hotspot.gc.new.eden.time                  // 1.4.1
+
+// sun.gc.finalizer
+alias sun.gc.finalizer.queue.length               // 1.5.0 b39
+        hotspot.gc.finalizer.queue.length         // 1.4.2
+alias sun.gc.finalizer.queue.maxLength            // 1.5.0 b39
+        hotspot.gc.finalizer.queue.maxlength      // 1.4.2
+alias sun.gc.finalizer.time                       // 1.5.0 b39
+        hotspot.gc.finalizer.ticks                // 1.4.2
+alias sun.gc.finalizer.objects                    // 1.5.0 b39
+        hotspot.gc.finalizer.count                // 1.4.2
+
+// sun.gc.generation.0.agetable
+alias sun.gc.generation.0.agetable.bytes.00       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.00              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.01       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.01              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.02       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.02              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.03       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.03              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.04       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.04              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.05       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.05              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.06       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.06              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.07       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.07              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.08       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.08              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.09       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.09              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.10       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.10              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.11       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.11              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.12       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.12              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.13       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.13              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.14       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.14              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.15       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.15              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.16       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.16              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.17       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.17              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.18       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.18              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.19       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.19              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.20       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.20              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.21       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.21              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.22       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.22              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.23       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.23              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.24       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.24              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.25       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.25              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.26       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.26              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.27       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.27              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.28       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.28              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.29       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.29              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.30       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.30              // 1.4.1
+alias sun.gc.generation.0.agetable.bytes.31       // 1.5.0 b39
+	hotspot.gc.agetable.bytes.31              // 1.4.1
+alias sun.gc.generation.0.agetable.size           // 1.5.0 b39
+	hotspot.gc.agetable.size                  // 1.4.1
+
+// sun.gc.generation.0
+alias sun.gc.generation.0.capacity                // 1.5.0 b39
+	hotspot.gc.generation.0.capacity.current  // 1.4.2
+alias sun.gc.generation.0.maxCapacity             // 1.5.0 b39
+	hotspot.gc.generation.0.capacity.max      // 1.4.2
+alias sun.gc.generation.0.minCapacity             // 1.5.0 b39
+	hotspot.gc.generation.0.capacity.min      // 1.4.2
+alias sun.gc.generation.0.name                    // 1.5.0 b39
+	hotspot.gc.generation.0.name              // 1.4.2
+alias sun.gc.generation.0.space.0.capacity        // 1.5.0 b39
+	hotspot.gc.generation.0.space.0.capacity  // 1.4.2
+	hotspot.gc.new.eden.capacity              // 1.4.1
+alias sun.gc.generation.0.space.0.maxCapacity     // 1.5.0 b39
+	hotspot.gc.generation.0.space.0.size      // 1.4.2
+	hotspot.gc.new.eden.capacity              // 1.4.1
+alias sun.gc.generation.0.space.0.name            // 1.5.0 b39
+	hotspot.gc.generation.0.space.0.name      // 1.4.2
+alias sun.gc.generation.0.space.0.used            // 1.5.0 b39
+	hotspot.gc.generation.0.space.0.used      // 1.4.2
+	hotspot.gc.new.eden.used                  // 1.4.1
+alias sun.gc.generation.0.space.1.capacity        // 1.5.0 b39
+	hotspot.gc.generation.0.space.1.capacity  // 1.4.2
+	hotspot.gc.new.s0.capacity                // 1.4.1
+alias sun.gc.generation.0.space.1.maxCapacity     // 1.5.0 b39
+	hotspot.gc.generation.0.space.1.size      // 1.4.2
+	hotspot.gc.new.s0.capacity                // 1.4.1
+alias sun.gc.generation.0.space.1.name            // 1.5.0 b39
+	hotspot.gc.generation.0.space.1.name      // 1.4.2
+alias sun.gc.generation.0.space.1.used            // 1.5.0 b39
+	hotspot.gc.generation.0.space.1.used      // 1.4.2
+	hotspot.gc.new.s0.used                    // 1.4.1
+alias sun.gc.generation.0.space.2.capacity        // 1.5.0 b39
+	hotspot.gc.generation.0.space.2.capacity  // 1.4.2
+	hotspot.gc.new.s1.capacity                // 1.4.1
+alias sun.gc.generation.0.space.2.maxCapacity     // 1.5.0 b39
+	hotspot.gc.generation.0.space.2.size      // 1.4.2
+	hotspot.gc.new.s1.capacity                // 1.4.1
+alias sun.gc.generation.0.space.2.name            // 1.5.0 b39
+	hotspot.gc.generation.0.space.2.name      // 1.4.2
+alias sun.gc.generation.0.space.2.used            // 1.5.0 b39
+	hotspot.gc.generation.0.space.2.used      // 1.4.2
+	hotspot.gc.new.s1.used                    // 1.4.1
+alias sun.gc.generation.0.spaces                  // 1.5.0 b39
+	hotspot.gc.generation.0.spaces            // 1.4.2
+alias sun.gc.generation.0.threads                 // 1.5.0 b39
+	hotspot.gc.generation.0.threads           // 1.4.2
+
+// sun.gc.generation.1
+alias sun.gc.generation.1.capacity                // 1.5.0 b39
+	hotspot.gc.generation.1.capacity.current  // 1.4.2
+alias sun.gc.generation.1.maxCapacity             // 1.5.0 b39
+	hotspot.gc.generation.1.capacity.max      // 1.4.2
+alias sun.gc.generation.1.minCapacity             // 1.5.0 b39
+	hotspot.gc.generation.1.capacity.min      // 1.4.2
+alias sun.gc.generation.1.name                    // 1.5.0 b39
+	hotspot.gc.generation.1.name              // 1.4.2
+alias sun.gc.generation.1.space.0.capacity        // 1.5.0 b39
+	hotspot.gc.generation.1.space.0.capacity  // 1.4.2
+	hotspot.gc.tenured.capacity               // 1.4.1
+alias sun.gc.generation.1.space.0.maxCapacity     // 1.5.0 b39
+	hotspot.gc.generation.1.space.0.size      // 1.4.2
+	hotspot.gc.tenured.capacity               // 1.4.1
+alias sun.gc.generation.1.space.0.name            // 1.5.0 b39
+	hotspot.gc.generation.1.space.0.name      // 1.4.2
+alias sun.gc.generation.1.space.0.used            // 1.5.0 b39
+	hotspot.gc.generation.1.space.0.used      // 1.4.2
+	hotspot.gc.tenured.used                   // 1.4.1
+alias sun.gc.generation.1.spaces                  // 1.5.0 b39
+	hotspot.gc.generation.1.spaces            // 1.4.2
+
+// sun.gc.generation.2
+alias sun.gc.generation.2.capacity                // 1.5.0 b39
+	hotspot.gc.generation.2.capacity.current  // 1.4.2
+alias sun.gc.generation.2.maxCapacity             // 1.5.0 b39
+	hotspot.gc.generation.2.capacity.max      // 1.4.2
+alias sun.gc.generation.2.minCapacity             // 1.5.0 b39
+	hotspot.gc.generation.2.capacity.min      // 1.4.2
+alias sun.gc.generation.2.name                    // 1.5.0 b39
+	hotspot.gc.generation.2.name              // 1.4.2
+alias sun.gc.generation.2.space.0.capacity        // 1.5.0 b39
+	hotspot.gc.generation.2.space.0.capacity  // 1.4.2
+	hotspot.gc.perm.capacity                  // 1.4.1
+alias sun.gc.generation.2.space.0.maxCapacity     // 1.5.0 b39
+	hotspot.gc.generation.2.space.0.size      // 1.4.2
+	hotspot.gc.perm.capacity                  // 1.4.1
+alias sun.gc.generation.2.space.0.name            // 1.5.0 b39
+	hotspot.gc.generation.2.space.0.name      // 1.4.2
+alias sun.gc.generation.2.space.0.used            // 1.5.0 b39
+	hotspot.gc.generation.2.space.0.used      // 1.4.2
+	hotspot.gc.perm.used                      // 1.4.1
+alias sun.gc.generation.2.spaces                  // 1.5.0 b39
+	hotspot.gc.generation.2.spaces            // 1.4.2
+
+// sun.gc
+alias sun.gc.lastCause                            // 1.5.0 b39
+        hotspot.gc.last_cause                     // 1.4.2_02
+
+// sun.gc.policy
+alias sun.gc.policy.avgBaseFootprint              // 1.5.0 b39
+	hotspot.gc.policy.avg_base_footprint      // 1.5.0 b21
+alias sun.gc.policy.avgMajorIntervalTime          // 1.5.0 b39
+	hotspot.gc.policy.avg_major_interval      // 1.5.0 b21
+alias sun.gc.policy.avgMajorPauseTime             // 1.5.0 b39
+	hotspot.gc.policy.avg_major_pause         // 1.5.0 b21
+alias sun.gc.policy.avgMinorIntervalTime          // 1.5.0 b39
+	hotspot.gc.policy.avg_minor_interval      // 1.5.0 b21
+alias sun.gc.policy.avgMinorPauseTime             // 1.5.0 b39
+	hotspot.gc.policy.avg_minor_pause         // 1.5.0 b21
+alias sun.gc.policy.avgOldLive                    // 1.5.0 b39
+	hotspot.gc.policy.avg_old_live            // 1.5.0 b21
+alias sun.gc.policy.avgPretenuredPaddedAvg          // 1.5.0 b39
+	hotspot.gc.policy.avg_pretenured_padded_avg // 1.5.0 b21
+alias sun.gc.policy.avgPromotedAvg                // 1.5.0 b39
+	hotspot.gc.policy.avg_promoted_avg        // 1.5.0 b21
+alias sun.gc.policy.avgPromotedDev                // 1.5.0 b39
+	hotspot.gc.policy.avg_promoted_dev        // 1.5.0 b21
+alias sun.gc.policy.avgPromotedPaddedAvg          // 1.5.0 b39
+	hotspot.gc.policy.avg_promoted_padded_avg // 1.5.0 b21
+alias sun.gc.policy.avgSurvivedAvg                // 1.5.0 b39
+	hotspot.gc.policy.avg_survived_avg        // 1.5.0 b21
+alias sun.gc.policy.avgSurvivedDev                // 1.5.0 b39
+	hotspot.gc.policy.avg_survived_dev        // 1.5.0 b21
+alias sun.gc.policy.avgSurvivedPaddedAvg          // 1.5.0 b39
+	hotspot.gc.policy.avg_survived_padded_avg // 1.5.0 b21
+alias sun.gc.policy.avgYoungLive                  // 1.5.0 b39
+	hotspot.gc.policy.avg_young_live          // 1.5.0 b21
+alias sun.gc.policy.boundaryMoved                 // 1.5.0 b39
+	hotspot.gc.policy.boundary_moved          // 1.5.0 b21
+alias sun.gc.policy.changeOldGenForMajPauses               // 1.5.0 b39
+	hotspot.gc.policy.change_old_gen_for_maj_pauses    // 1.5.0 b21
+alias sun.gc.policy.changeOldGenForMinPauses               // 1.5.0 b39
+	hotspot.gc.policy.change_old_gen_for_min_pauses    // 1.5.0 b21
+alias sun.gc.policy.changeYoungGenForMajPauses               // 1.5.0 b39
+	hotspot.gc.policy.change_young_gen_for_maj_pauses    // 1.5.0 b21
+alias sun.gc.policy.changeYoungGenForMinPauses               // 1.5.0 b39
+	hotspot.gc.policy.change_young_gen_for_min_pauses    // 1.5.0 b21
+alias sun.gc.policy.collectors                    // 1.5.0 b39
+	hotspot.gc.policy.collectors              // 1.4.2
+alias sun.gc.policy.decideAtFullGc                // 1.5.0 b39
+	hotspot.gc.policy.decide_at_full_gc       // 1.5.0 b21
+alias sun.gc.policy.decreaseForFootprint          // 1.5.0 b39
+	hotspot.gc.policy.decrease_for_footprint  // 1.5.0 b21
+alias sun.gc.policy.decrementTenuringThresholdForGcCost             // 1.5.0 b39
+	hotspot.gc.policy.decrement_tenuring_threshold_for_gc_cost  // 1.5.0 b21
+alias sun.gc.policy.decrementTenuringThresholdForSurvivorLimit             // 1.5.0 b39
+	hotspot.gc.policy.decrement_tenuring_threshold_for_survivor_limit  // 1.5.0 b21
+alias sun.gc.policy.desiredSurvivorSize           // 1.5.0 b39
+	hotspot.gc.policy.desired_survivor_size   // 1.5.0 b21
+	hotspot.gc.agetable.dss                   // 1.4.1
+alias sun.gc.policy.edenSize                      // 1.5.0 b39
+	hotspot.gc.policy.eden_size               // 1.5.0 b21
+alias sun.gc.policy.freeSpace                     // 1.5.0 b39
+	hotspot.gc.policy.free_space              // 1.5.0 b21
+alias sun.gc.policy.fullFollowsScavenge           // 1.5.0 b39
+	hotspot.gc.policy.full_follows_scavenge   // 1.5.0 b21
+alias sun.gc.policy.gcTimeLimitExceeded           // 1.5.0 b39
+	hotspot.gc.policy.gc_time_limit_exceeded  // 1.5.0 b21
+alias sun.gc.policy.generations                   // 1.5.0 b39
+	hotspot.gc.policy.generations             // 1.4.2
+alias sun.gc.policy.increaseOldGenForThroughput           // 1.5.0 b39
+	hotspot.gc.policy.increase_old_gen_for_throughput // 1.5.0 b21
+alias sun.gc.policy.increaseYoungGenForThroughput           // 1.5.0 b39
+	hotspot.gc.policy.increase_young_gen_for_throughput // 1.5.0 b21
+alias sun.gc.policy.incrementTenuringThresholdForGcCost            // 1.5.0 b39
+	hotspot.gc.policy.increment_tenuring_threshold_for_gc_cost // 1.5.0 b21
+alias sun.gc.policy.liveAtLastFullGc              // 1.5.0 b39
+	hotspot.gc.policy.live_at_last_full_gc    // 1.5.0 b21
+alias sun.gc.policy.liveSpace                     // 1.5.0 b39
+	hotspot.gc.policy.live_space              // 1.5.0 b21
+alias sun.gc.policy.majorCollectionSlope          // 1.5.0 b39
+	hotspot.gc.policy.major_collection_slope  // 1.5.0 b21
+alias sun.gc.policy.majorGcCost                   // 1.5.0 b39
+	hotspot.gc.policy.major_gc_cost           // 1.5.0 b21
+alias sun.gc.policy.majorPauseOldSlope            // 1.5.0 b39
+	hotspot.gc.policy.major_pause_old_slope   // 1.5.0 b21
+alias sun.gc.policy.majorPauseYoungSlope          // 1.5.0 b39
+	hotspot.gc.policy.major_pause_young_slope // 1.5.0 b21
+alias sun.gc.policy.maxTenuringThreshold          // 1.5.0 b39
+	hotspot.gc.max_tenuring_threshold         // 1.5.0 b21
+	hotspot.gc.agetable.mtt                   // 1.4.1
+alias sun.gc.policy.minorCollectionSlope          // 1.5.0 b39
+	hotspot.gc.policy.minor_collection_slope  // 1.5.0 b21
+alias sun.gc.policy.minorGcCost                   // 1.5.0 b39
+	hotspot.gc.policy.minor_gc_cost           // 1.5.0 b21
+alias sun.gc.policy.minorPauseOldSlope            // 1.5.0 b39
+	hotspot.gc.policy.minor_pause_old_slope   // 1.5.0 b21
+alias sun.gc.policy.minorPauseYoungSlope          // 1.5.0 b39
+	hotspot.gc.policy.minor_pause_young_slope // 1.5.0 b21
+alias sun.gc.policy.mutatorCost                   // 1.5.0 b39
+	hotspot.gc.policy.mutator_cost            // 1.5.0 b21
+alias sun.gc.policy.name                          // 1.5.0 b39
+	hotspot.gc.policy.name                    // 1.5.0 b21
+alias sun.gc.policy.oldCapacity                   // 1.5.0 b39
+	hotspot.gc.policy.old_capacity            // 1.5.0 b21
+alias sun.gc.policy.oldEdenSize                   // 1.5.0 b39
+	hotspot.gc.policy.old_eden_size           // 1.5.0 b21
+alias sun.gc.policy.oldPromoSize                  // 1.5.0 b39
+	hotspot.gc.policy.old_promo_size          // 1.5.0 b21
+alias sun.gc.policy.promoSize                     // 1.5.0 b39
+	hotspot.gc.policy.promo_size              // 1.5.0 b21
+alias sun.gc.policy.promoted                      // 1.5.0 b39
+	hotspot.gc.policy.promoted                // 1.5.0 b21
+alias sun.gc.policy.scavengeSkipped               // 1.5.0 b39
+	hotspot.gc.policy.scavenge_skipped        // 1.5.0 b21
+alias sun.gc.policy.survived                      // 1.5.0 b39
+	hotspot.gc.policy.survived                // 1.5.0 b21
+alias sun.gc.policy.survivorOverflowed            // 1.5.0 b39
+	hotspot.gc.policy.survivor_overflowed     // 1.5.0 b21
+alias sun.gc.policy.tenuringThreshold             // 1.5.0 b39
+	hotspot.gc.policy.tenuring_threshold      // 1.5.0 b21
+	hotspot.gc.agetable.tt                    // 1.4.1
+alias sun.gc.policy.youngCapacity                 // 1.5.0 b39
+	hotspot.gc.policy.young_capacity          // 1.5.0 b21
+
+// sun.gc.tlab
+alias sun.gc.tlab.alloc                           // 1.5.0 b39
+	hotspot.gc.tlab.alloc                     // 1.5.0 b21
+alias sun.gc.tlab.allocThreads                    // 1.5.0 b39
+	hotspot.gc.tlab.alloc_thrds               // 1.5.0 b21
+alias sun.gc.tlab.fills                           // 1.5.0 b39
+	hotspot.gc.tlab.fills                     // 1.5.0 b21
+alias sun.gc.tlab.gcWaste                         // 1.5.0 b39
+	hotspot.gc.tlab.gcwaste                   // 1.5.0 b21
+alias sun.gc.tlab.maxFills                        // 1.5.0 b39
+	hotspot.gc.tlab.maxfills                  // 1.5.0 b21
+alias sun.gc.tlab.maxGcWaste                      // 1.5.0 b39
+	hotspot.gc.tlab.maxgcwaste                // 1.5.0 b21
+alias sun.gc.tlab.maxSlowAlloc                    // 1.5.0 b39
+	hotspot.gc.tlab.maxslowalloc              // 1.5.0 b21
+alias sun.gc.tlab.maxRefillWaste                  // 17
+	sun.gc.tlab.maxSlowWaste                  // 1.5.0 b39
+	hotspot.gc.tlab.maxslowwaste              // 1.5.0 b21
+alias sun.gc.tlab.slowAlloc                       // 1.5.0 b39
+	hotspot.gc.tlab.slowalloc                 // 1.5.0 b21
+alias sun.gc.tlab.refillWaste                     // 17
+	sun.gc.tlab.slowWaste                     // 1.5.0 b39
+	hotspot.gc.tlab.slowwaste                 // 1.5.0 b21
+
+// sun.os
+alias sun.os.hrt.frequency                        // 1.5.0 b39
+	hotspot.rt.hrt.frequency                  // 1.4.1
+alias sun.os.hrt.ticks                            // 1.5.0 b39
+	hotspot.rt.hrt.ticks                      // 1.4.1
+
+// sun.perfdata
+alias sun.perfdata.overflow                       // 1.5.0 b39
+	hotspot.perfdata.overflow                 // 1.4.1
+alias sun.perfdata.size                           // 1.5.0 b39
+	hotspot.perfdata.size                     // 1.4.1
+alias sun.perfdata.timestamp                      // 1.5.0 b39
+	hotspot.perfdata.timestamp                // 1.4.1
+alias sun.perfdata.used                           // 1.5.0 b39
+	hotspot.perfdata.used                     // 1.4.1
+alias sun.perfdata.majorVersion                   // 1.5.0 b39
+	hotspot.perfdata.version.major            // 1.4.1
+alias sun.perfdata.minorVersion                   // 1.5.0 b39
+	hotspot.perfdata.version.minor            // 1.4.1
+
+// sun.property
+alias sun.property.sun.boot.class.path            // 1.5.0 b39
+	sun.boot.class.path                       // 1.4.1
+alias sun.property.sun.boot.library.path          // 1.5.0 b39
+	sun.boot.library.path                     // 1.4.1
+
+// sun.rt
+alias sun.rt.applicationTime                      // 1.5.0 b39
+	hotspot.rt.application.time               // 1.5.0 b21
+alias sun.rt.createVmBeginTime                    // 1.5.0 b39
+	hotspot.rt.vm.create.begin                // 1.5.0 b21
+alias sun.rt.createVmEndTime                      // 1.5.0 b39
+	hotspot.rt.vm.create.end                  // 1.5.0 b21
+alias sun.rt.internalVersion                      // 1.5.0 b39
+	hotspot.internal.version                  // 1.5.0 b21
+alias sun.rt.javaCommand                          // 1.5.0 b39
+	sun.java.command                          // 1.4.1
+alias sun.rt.safepointSyncTime                    // 1.5.0 b39
+	hotspot.rt.safepoint.sync.time            // 1.5.0 b21
+alias sun.rt.safepointTime                        // 1.5.0 b39
+	hotspot.rt.safepoint.time                 // 1.5.0 b21
+alias sun.rt.safepoints                           // 1.5.0 b39
+	hotspot.rt.safepoint.count                // 1.5.0 b21
+alias sun.rt.vmInitDoneTime                       // 1.5.0 b39
+	hotspot.rt.vm.init.done                   // 1.5.0 b21

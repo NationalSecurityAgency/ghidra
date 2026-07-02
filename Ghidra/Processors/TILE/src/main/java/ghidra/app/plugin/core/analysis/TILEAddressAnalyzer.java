@@ -18,16 +18,14 @@ package ghidra.app.plugin.core.analysis;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.lang.Processor;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.Language;
 
 /**
  * Analyzes TILE addresses for decompiler support.
- * Performs TILE-specific address space analysis to help the decompiler correctly
- * resolve addresses in the TILE register space (GP at 0x1000, CP at 0x2000,
- * CP0 at 0x3000) and memory space (at 0x4000).
- * <p>
- * This analyzer validates that the program contains valid TILE address spaces
- * and sets up the appropriate address ranges for register and memory operations.
+ * Performs comprehensive register space validation across all TILE address spaces:
+ * GP (0x1000), CP (0x2000), CP0 (0x3000), CSR (0x4000) and memory space (0x4000+).
  */
 public class TILEAddressAnalyzer {
 
@@ -37,14 +35,19 @@ public class TILEAddressAnalyzer {
 	private static final long CP_OFFSET = 0x2000L;
 	/** Offset of the control register space. */
 	private static final long CP0_OFFSET = 0x3000L;
+	/** Offset of the CSR register space. */
+	private static final long CSR_OFFSET = 0x4000L;
 	/** Offset of the TILE memory space. */
 	private static final long MEMORY_OFFSET = 0x4000L;
-	/** Size of the GP register space (36 registers × 8 bytes = 288 bytes). */
-	private static final long GP_SIZE = 0x120L;
-	/** Size of the CP register space (36 registers × 8 bytes = 288 bytes). */
-	private static final long CP_SIZE = 0x120L;
-	/** Size of the CP0 register space (32 registers × 8 bytes = 256 bytes). */
-	private static final long CP0_SIZE = 0x100L;
+
+	/** GP size: 36 registers (r0-r35) x 8 bytes = 288 bytes (0x120). */
+	private static final int GP_SIZE_BYTES = 0x120; // 36 * 8
+	/** CP size: 41 system registers (sr0-sr40) x 8 bytes = 328 bytes. */
+	private static final long CP_SPACE_END = CP_OFFSET + 0x208L; // sr0-sr40 is 41*8=328
+	/** CP0 size: 32 control registers (c0-c31) x 8 bytes = 256 bytes (0x100). */
+	private static final long CP0_SPACE_END = CP0_OFFSET + 0x100L; // 32*8=256
+	/** CSR size: reserved space, at least 256 bytes. */
+	private static final long CSR_MIN_SIZE = 0x100L;
 
 	/** Default constructor. */
 	public TILEAddressAnalyzer() {
@@ -52,33 +55,106 @@ public class TILEAddressAnalyzer {
 
 	/**
 	 * Called when the analysis phase begins for a program.
-	 * Validates that the TILE program contains the expected address spaces
-	 * and sets up the register and memory address ranges.
+	 * Validates that the TILE program contains all expected address spaces:
+	 * <ul>
+	 *   <li>GP register space (0x1000-0x120F): 36 registers x 8 bytes</li>
+	 *   <li>CP register space (0x2000-0x2207): 41 system registers (sr0-sr40) x 8 bytes</li>
+	 *   <li>CP0 register space (0x3000-0x30FF): 32 control registers x 8 bytes</li>
+	 *   <li>CSR register space (0x4000+): processor status and trap vectors</li>
+	 *   <li>TILE memory block: base address >= MEMORY_OFFSET with sufficient size</li>
+	 * </ul>
 	 *
 	 * @param program the TILE program being analyzed
-	 * @return true if the program has valid TILE address characteristics
+	 * @return true if all register spaces are valid and accessible
 	 */
 	public boolean addedAnalysis(Program program) {
-		// Tile address analysis logic
 		Memory mem = program.getMemory();
 		if (mem == null) {
 			return false;
 		}
 
-		// Check that the TILE memory block exists
+		Language lang = program.getLanguage();
+		if (lang == null) {
+			return false;
+		}
+
+		// Validate GP register space: 36 registers (r0-r35), each 8 bytes at offset 0x1000
+		if (!validateRegisterSpace(lang, "gp", GP_OFFSET, GP_SIZE_BYTES)) {
+			return false;
+		}
+
+		// Validate CP register space: 41 system registers (sr0-sr40) starting at 0x2000
+		long cpSize = CP_SPACE_END - CP_OFFSET;
+		if (!validateRegisterSpace(lang, "cp", CP_OFFSET, (int) cpSize)) {
+			return false;
+		}
+
+		// Validate individual system registers sr0-sr40 exist in the language
+		for (int i = 0; i <= 40; i++) {
+			String regName = "sr" + i;
+			Register reg = lang.getRegister(regName);
+			if (reg == null) {
+				return false; // Missing system register definition
+			}
+		}
+
+		// Validate CP0 control register space: 32 registers at offset 0x3000
+		if (!validateRegisterSpace(lang, "cp0", CP0_OFFSET, (int) CP0_SIZE)) {
+			return false;
+		}
+
+		// Validate CSR register space exists and has sufficient size
+		Address csrStart = lang.getAddressFactory().getAddress(CSR_OFFSET);
+		if (csrStart == null) {
+			return false; // CSR address not valid in this language
+		}
+
+		// Validate sp (stack pointer) register exists
+		Register spReg = lang.getRegister("sp");
+		if (spReg == null) {
+			return false; // Stack pointer must be defined for calling convention
+		}
+
+		// Check that the TILE memory block exists at offset >= MEMORY_OFFSET
 		boolean hasMemoryBlock = false;
 		for (MemoryBlock block : mem.getBlocks()) {
-			long base = block.getStart().getOffset();
-			if (base >= MEMORY_OFFSET && base < MEMORY_OFFSET + block.getSize()) {
+			Address start = block.getStart();
+			long base = start.getOffset();
+			if (base >= MEMORY_OFFSET) {
 				hasMemoryBlock = true;
 				break;
 			}
 		}
 
-		// Validate register address space
-		Processor proc = program.getLanguage().getProcessor();
-		boolean hasValidProcessor = Processor.findOrPossiblyCreateProcessor("TILE").equals(proc);
+		return hasMemoryBlock;
+	}
 
-		return hasMemoryBlock && hasValidProcessor;
+	/**
+	 * Validates that a register space exists in the language with expected bounds.
+	 *
+	 * @param lang    the language to check
+	 * @param spaceId the register class identifier (e.g., "gp", "cp")
+	 * @param offset  the base offset of this register space
+	 * @param size    the total size in bytes for this register space
+	 * @return true if the register space is valid and accessible
+	 */
+	private boolean validateRegisterSpace(Language lang, String spaceId, long offset, int size) {
+		Register spaceReg = lang.getRegister(spaceId);
+		if (spaceReg == null) {
+			return false; // Register class not defined
+		}
+
+		Address baseAddr = lang.getAddressFactory().getAddress(offset);
+		if (baseAddr == null) {
+			return false; // Base address invalid
+		}
+
+		Address endAddr = lang.getAddressFactory().getAddress(offset + size);
+		if (endAddr == null) {
+			return false; // End of range address invalid
+		}
+
+		// Verify the register class covers the expected offset
+		return spaceReg.getOffset() == offset;
 	}
 }

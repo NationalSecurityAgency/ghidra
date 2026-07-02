@@ -1,0 +1,33 @@
+# SLA specification file for TILE-Gx 64-bit big endian
+#
+# Architecture overview:
+# Tile-Gx is a RISC processor from Tilorea with 32-bit fixed-length instructions,
+# 64-bit registers, and a rich instruction set spanning arithmetic, logical,
+# load/store, branch, multiply, SIMD, and floating-point operations.
+#
+# Instruction encoding:
+#   - 32-bit instruction words, opcode in the top 6 bits of the upper half
+#   - I-type: opcode(6) | rs1(5) | rs2(5) | rd(5) | func3(3) | imm(8)
+#   - R-type: opcode(6) | rs1(5) | rs2(5) | rd(5) | func3(3) | rfmt(8)
+#
+# Register space layout (offset-style):
+#   +-----+-----+--+--------+----------+--------+
+#   | Offset| Width| Description                              |
+#   +-----+-----+--+--------+----------+--------+
+#   | 0x0000|   1B | C flag register (single-bit condition)  |
+#   | 0x1000|   8B | GP - General purpose registers (r0-r35)  |
+#   | 0x2000|   8B | CP - System registers (sr0-sr35)         |
+#   | 0x3000|   8B | CP0 - Control registers (c0-c31)         |
+#   | 0x4000|   8B | CSR - Control/Status registers           |
+#   | 0x4000|     -| RAM - Main memory                          |
+#   +-----+-----+--+--------+----------+--------+
+#
+# Calling convention (__default):
+#   Input arguments: r0-r7 (register passing), then stack (starting at offset 64)
+#   Return value: r0
+#   Stack pointer: sp (separate from r0 first argument register)
+#   Return address: r36
+
+@include "TILEGX.sinc"
+
+RES_IS;

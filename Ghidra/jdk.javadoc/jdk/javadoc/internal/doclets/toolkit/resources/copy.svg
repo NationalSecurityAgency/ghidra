@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+
+ This code is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License version 2 only, as
+ published by the Free Software Foundation.  Oracle designates this
+ particular file as subject to the "Classpath" exception as provided
+ by Oracle in the LICENSE file that accompanied this code.
+
+ This code is distributed in the hope that it will be useful, but WITHOUT
+ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ version 2 for more details (a copy is included in the LICENSE file that
+ accompanied this code).
+
+ You should have received a copy of the GNU General Public License version
+ 2 along with this work; if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+
+ Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ or visit www.oracle.com if you need additional information or have any
+ questions.
+-->
+
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 460" fill="#505050">
+  <path
+     d="M 346,8 H 108 C 90,8 75,23 75,41 v 316 c 0,18 15,33 33,33 h 238 c 18,0 33,-15 33,-33 V 41 C 379,23 364,8 346,8 Z m -8,344 H 116 c -2,0 -3,-1 -3,-3 V 49 c 0,-2 1,-3 3,-3 h 222 c 2,0 3,1 3,3 v 300 h 10e-4 c 0,2 -1,3 -3,3 z"/>
+  <path
+     d="m 290,389 v 26 h 10e-4 c 0,2 -1,3 -3,3 H 49 c -2,0 -3,-1 -3,-3 V 99 c 0,-2 1,-3 3,-3 h 27 v 0 l -5e-4,-38 H 41 C 23,58 8,73 8,91 v 332 c 10e-4,18 15,33 33,33 h 254 c 18,0 33,-15 33,-33 v -34"/>
+</svg>

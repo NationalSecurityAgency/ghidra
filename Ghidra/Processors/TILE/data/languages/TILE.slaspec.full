@@ -1,0 +1,14 @@
+define endian = big;
+#define ALIGNMENT : 2;
+define space register type=register_space size=8 default;
+define register offset = 0x1000 size = 8 [ r0 ];
+define pcodeop nop;
+
+define token instr (32)
+    op0711=(7,11)
+	op0005=(0,8)
+;
+
+:nop "Nop" is op0711=0x0 { nop(); }
+RES_IS:
+RES_IS:

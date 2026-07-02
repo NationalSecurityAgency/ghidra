@@ -1,0 +1,8 @@
+define endian = big;
+#define ALIGNMENT : 2;
+define space register type=register_space size=8 default;
+define pcodeop nop;
+:nop "Nop" is op0711=0x0 { nop(); }
+@include "TILEGX.sinc"
+RES_IS:
+RES_IS:

@@ -1,0 +1,73 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+
+<!ELEMENT Configuration (CanonicalizationMethods , TransformAlgorithms , JCEAlgorithmMappings , Log4J , ResourceBundles , UnitTests , ResourceResolvers , KeyResolvers)>
+
+<!ATTLIST Configuration  xmlns CDATA  #FIXED 'http://www.xmlsecurity.org/NS/#configuration' 
+target        CDATA  #IMPLIED>
+<!ELEMENT CanonicalizationMethods (CanonicalizationMethod+)>
+
+<!ATTLIST CanonicalizationMethods  JAVACLASS CDATA  #FIXED 'com.sun.org.apache.xml.internal.security.c14n.Canonicalizer' >
+<!ELEMENT CanonicalizationMethod EMPTY>
+
+<!ATTLIST CanonicalizationMethod  URI       CDATA  #REQUIRED
+                                    JAVACLASS CDATA  #REQUIRED >
+<!ELEMENT TransformAlgorithms (TransformAlgorithm+)>
+
+<!ATTLIST TransformAlgorithms  JAVACLASS CDATA  #FIXED 'com.sun.org.apache.xml.internal.security.transforms.Transform' >
+<!ELEMENT TransformAlgorithm EMPTY>
+
+<!ATTLIST TransformAlgorithm  URI       CDATA  #REQUIRED
+                                JAVACLASS CDATA  #REQUIRED >
+<!ELEMENT JCEAlgorithmMappings (Providers , Algorithms)>
+
+<!ELEMENT Providers (Provider+)>
+
+<!ELEMENT Provider EMPTY>
+
+<!ATTLIST Provider  Id          ID     #REQUIRED
+                      Class       CDATA  #REQUIRED
+                      Info        CDATA  #IMPLIED
+                      ProviderURL CDATA  #IMPLIED >
+<!ELEMENT Algorithms (Algorithm+)>
+
+<!ELEMENT Algorithm (ProviderAlgo+)>
+
+<!ATTLIST Algorithm  URI            CDATA  #REQUIRED
+                       Description    CDATA  #IMPLIED
+                       AlgorithmClass CDATA  #IMPLIED >
+<!ELEMENT ProviderAlgo EMPTY>
+
+<!ATTLIST ProviderAlgo  ProviderId IDREF  #REQUIRED
+                          JCEName    CDATA  #REQUIRED
+                          JCEAlias   CDATA  #IMPLIED >
+<!ELEMENT Log4J EMPTY>
+
+<!ATTLIST Log4J  configFile CDATA  'data/log4j.xml' >
+<!ELEMENT ResourceBundles (ResourceBundle+)>
+
+<!ATTLIST ResourceBundles  defaultLanguageCode CDATA  'de'
+                             defaultCountryCode  CDATA  'DE' >
+<!ELEMENT ResourceBundle EMPTY>
+
+<!ATTLIST ResourceBundle  LanguageCode CDATA  #REQUIRED
+                            CountryCode  CDATA  #REQUIRED
+                            LOCATION     CDATA  #REQUIRED >
+<!ELEMENT UnitTests (UnitTest+)>
+
+<!ATTLIST UnitTests  JAVACLASS CDATA  #FIXED 'com.sun.org.apache.xml.internal.security.test.AllTests' >
+<!ELEMENT ResourceResolvers (Resolver+)>
+
+<!ELEMENT Resolver EMPTY>
+
+<!ATTLIST Resolver  JAVACLASS   CDATA  #REQUIRED
+                      DESCRIPTION CDATA  #IMPLIED >
+<!ELEMENT KeyResolvers (KeyResolver+)>
+<!ATTLIST KeyResolvers  JAVACLASS CDATA  #FIXED 'com.sun.org.apache.xml.internal.security.keys.KeyResolver' >
+
+<!ELEMENT KeyResolver EMPTY>
+
+<!ATTLIST KeyResolver  URI       CDATA  #REQUIRED
+                         JAVACLASS CDATA  #REQUIRED >
+<!ELEMENT UnitTest (#PCDATA)>
+
+<!ATTLIST UnitTest  JAVACLASS CDATA  #REQUIRED >

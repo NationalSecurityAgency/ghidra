@@ -1,0 +1,73 @@
+# GhidraTest processor's SLA format
+
+define endian = big;
+
+# Ghidra SLA space definition format (from 6502.slaspec)
+define space register type=register_space size=8 default;
+
+# GhidraTest registerdef format (bracketed = creates individual VarnodeSymbols):
+define register offset = 0x0000 size = 8 [ r0 r1 r2 r3 r4 r5 r6 r7
+    r8 r9 r10 r11 r12 r13 r14 r15
+    r16 r17 r18 r19 r20 r21 r22 r23
+    r24 r25 r26 r27 r28 r29 r30 r31 ];
+define register offset = 0x0480 size = 8 [ context_state context_state_safe ];
+define register offset = 0x1000 size = 8 GP;
+define register offset = 0x2000 size = 8 CP;
+define register offset = 0x3000 size = 8 CP0;
+define register offset = 0x4000 size = 8 CSR;
+define register offset = 0x1000 size = 8 TILEGP;
+define register offset = 0x5000 size = 8 XMOS;
+
+# Ghidra SLA space definition format
+define space xmos_ram type=ram_space size=8;
+define space xmos_reg type=register_space size=8;
+
+# Tokens
+define token opbyte (16)
+    rd      = (0, 4)
+    rs1     = (5, 9)
+    rs2     = (10, 14)
+    opcode  = (0, 5)
+;
+
+# Contexts (sz range must be <= 31 for 32-bit context registers)
+define context context_state sz = (0, 31);
+define context context_state_safe sz_safe = (0, 31);
+
+
+#define ALIGNMENT : 2;
+#define BIT_64 = 64;
+#define XLEN = 8;
+#define FLEN = 8;
+#define CONTEXTLEN = 12;
+#define REGISTER_SIZE = "8";
+#define C_FLAG_REGISTER = "r0";
+
+attach variables [ rd rs1 rs2 ] [
+    r0   r1   r2   r3   r4   r5   r6   r7
+    r8   r9 r10  r11  r12  r13  r14  r15
+    r16  r17  r18  r19  r20  r21  r22  r23
+    r24  r25  r26  r27  r28  r29  r30  r31
+];
+
+define pcodeop nop;
+define pcodeop add;
+define pcodeop ld;
+define pcodeop st;
+define pcodeop or;
+define pcodeop mul3;
+define pcodeop cmpeqi;
+
+table : instruction {
+    0x00000000 { result = nop(); }
+}
+@include "tile_common.sinc"
+RES_IS:
+RES_IS:
+RES_IS:
+:op0712 "Test" is op0712=0x2FF;
+RES_IS:
+RES_IS:
+RES_IS:
+RES_IS:
+RES_IS:

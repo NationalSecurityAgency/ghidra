@@ -1,0 +1,209 @@
+# GhidraTest processor's SLA format
+
+define endian = big;
+
+# Ghidra SLA space definition format (from 6502.slaspec)
+define space register type=register_space size=8 default;
+
+# GhidraTest registerdef format (bracketed = creates individual VarnodeSymbols):
+define register offset = 0x0000 size = 8 [ r0 r1 r2 r3 r4 r5 r6 r7
+    r8 r9 r10 r11 r12 r13 r14 r15
+    r16 r17 r18 r19 r20 r21 r22 r23
+    r24 r25 r26 r27 r28 r29 r30 r31 ];
+define register offset = 0x0480 size = 8 [ context_state context_state_safe ];
+define register offset = 0x1000 size = 8 GP;
+define register offset = 0x2000 size = 8 CP;
+define register offset = 0x3000 size = 8 CP0;
+define register offset = 0x4000 size = 8 CSR;
+define register offset = 0x1000 size = 8 TILEGP;
+define register offset = 0x5000 size = 8 XMOS;
+
+# Ghidra SLA space definition format
+define space xmos_ram type=ram_space size=8;
+define space xmos_reg type=register_space size=8;
+
+# Tokens
+define token opbyte (16)
+    rd      = (0, 4)
+    rs1     = (5, 9)
+    rs2     = (10, 14)
+    opcode  = (0, 5)
+;
+
+# Contexts (sz range must be <= 31 for 32-bit context registers)
+define context context_state sz = (0, 31);
+define context context_state_safe sz_safe = (0, 31);
+
+
+#define ALIGNMENT : 2;
+#define BIT_64 = 64;
+#define XLEN = 8;
+#define FLEN = 8;
+#define CONTEXTLEN = 12;
+#define REGISTER_SIZE = "8";
+#define C_FLAG_REGISTER = "r0";
+
+attach variables [ rd rs1 rs2 ] [
+    r0   r1   r2   r3   r4   r5   r6   r7
+    r8   r9 r10  r11  r12  r13  r14  r15
+    r16  r17  r18  r19  r20  r21  r22  r23
+    r24  r25  r26  r27  r28  r29  r30  r31
+];
+
+define pcodeop nop;
+define pcodeop add;
+define pcodeop ld;
+define pcodeop st;
+define pcodeop or;
+define pcodeop mul3;
+define pcodeop cmpeqi;
+
+table : instruction {
+    0x00000000 { result = nop(); }
+}
+@include "tile_common.sinc"
+RES_IS:
+RES_IS:
+RES_IS:
+RES_IS:
+RES_IS:
+RES_IS:
+RES_IS:
+RES_IS:
+RES_IS:
+RES_IS:
+RES_IS:
+# tile_common.sinc - Tile-Gx / TILE32 Common Instruction Definitions
+#
+# Tile-Gx is a RISC processor from Tilera:
+#   - 32-bit fixed-length instructions
+#   - 64-bit registers (TILEGX) or 32-bit (TILE32)
+#   - Big and little endian variants
+#
+# Register Class Details:
+#   GP   (0x1000): r0-r35  - General purpose registers (36 × 8 bytes = 288 bytes)
+#     Used for: arithmetic operands, data pointers, loop counters, return values
+#     Return address stored in r36
+#
+#   CP   (0x2000): sr0-sr35 - System registers (36 × 8 bytes = 288 bytes)
+#     Used for: memory management, cache control, performance monitoring
+#
+#   CP0  (0x3000): c0-c31 - Control registers (32 × 8 bytes = 256 bytes)
+#     Used for: interrupt control, privilege levels, trap vectors
+#
+#   CSR  (0x4000): system registers - Control/Status register space
+#     Used for: processor status, exception handling, power management
+#
+# P-code Operations: PADD, PSUB, PSIGN, PAND, POR, PXOR, PXNOR,
+#                    PSRL, PSRA, PSL, PLOAD, PSAVE, PBRANCH, PJUMP, PJUMPI,
+#                    PLOADU, PSAVEU, PNOOP, PSPECIAL, PJMPNE, PJMPEQ,
+#                    PJMPLT, PJMPGE, PLOADF, PSAVEF, PMUL, PLOADI
+
+# ===== Endianness =====
+
+# ===== Register Class Definitions =====
+define register GP   0x1000;    # General purpose registers
+define register CP   0x2000;    # Control/counter registers
+define register CP0  0x3000;    # CP0 space (CSR registers)
+define register CSR  0x4000;    # Control/status registers
+
+# ===== Data Type Definitions =====
+
+# ===== Opcodes 0x00-0x0F: ARITHMETIC (ADD family) =====
+
+# ===== Opcodes 0x08-0x0F: SUBTRACT (SUB family) =====
+
+# ===== Opcodes 0x10-0x17: LOGICAL (AND, OR, XOR family) =====
+
+# ===== Opcodes 0x18-0x1F: LOAD/STORE =====
+
+# ===== Opcodes 0x20-0x27: BRANCH =====
+
+# ===== Opcodes 0x28-0x2F: MISC/SPECIAL =====
+
+# ===== Opcodes 0x30-0x3F: MULTI-REGISTER (MR/MT family) =====
+
+# ===== Common P-code Operations (TILEGX variant) =====
+
+# Arithmetic
+define : add op=PADD:z(8):r8:r8:r8
+define : addi op=PADD:z(8):r8:r8:z(8)
+define : addif op=PADD:z(8):r8:r8:z(8)
+define : addf op=PADD:z(8):r8:r8:r8
+define : addim op=PADD:z(16):r8:r8:u16
+define : addifim op=PADD:z(16):r8:r8:u16
+define : addim12 op=PADD:z(12):r8:r8:s16
+define : addim16 op=PADD:z(16):r8:r8:u16
+
+define : sub op=PSUB:z(8):r8:r8:r8
+define subf : op=PSUB:z(8):r8:r8:r8
+define : subif op=PSUB:z(8):r8:r8:z(8)
+define : subifim op=PSUB:z(16):r8:r8:u16
+define : subim op=PSUB:z(16):r8:r8:u16
+define : subim12 op=PSUB:z(12):r8:r8:s16
+define : subfim op=PSUB:z(16):r8:r8:u16
+define : subif2 op=PSUB:z(8):r8:r8:z(8)
+
+# Logical
+define : and op=PAND:z(8):r8:r8:r8
+define andi : op=PAND:z(8):r8:r8:z(8)
+define : or op=POR:z(8):r8:r8:r8
+define ori : op=POR:z(8):r8:r8:z(8)
+define : xor op=PXOR:z(8):r8:r8:r8
+define xori : op=PXOR:z(8):r8:r8:z(8)
+define : andim op=PAND:z(16):r8:r8:u16
+define orim : op=POR:z(16):r8:r8:u16
+
+# Load/Store
+define : ld op=PLOAD:z(8):r8:m64:r8
+define ldim : op=PLOAD:z(8):r8:m64:r8
+define ldif : op=PLOAD:z(8):r8:m64:r8
+define : ldifim op=PLOAD:z(16):r8:m64:r8
+define : st op=PSAVE:z(8):r8:m64:r8
+define stim : op=PSAVE:z(8):r8:m64:r8
+define stif : op=PSAVE:z(8):r8:m64:r8
+define : stifim op=PSAVE:z(16):r8:m64:r8
+
+# Branch
+define : br op=PBRANCH:r8:r8:r8
+define : bri op=PJUMPI:r8:r8
+define : bri16 op=PJUMPI:r8:r8
+define : bri12 op=PJUMPI:r8:r8
+define : brc op=PBRANCH:r8:r8:r8
+define brcf : op=PBRANCH:r8:r8:r8
+define : brtype op=PJUMP:r8
+define : brtypef op=PJUMP:r8
+
+# Special
+define : nop op=PNOOP
+define : ecall op=PSPECIAL
+define : ebreak op=PSPECIAL
+define : mret op=PSPECIAL
+define : dsys op=PSPECIAL
+define : isys op=PSPECIAL
+define : mtcr op=PSPECIAL
+define : mfc op=PSPECIAL
+
+# Multi-register
+define : mr3 op=PJMPEQ:r8:r8:r8
+define : mt3 op=PJMPEQ:r8:r8:r8
+define : mr2 op=PJMPEQ:r8:r8:r8
+define : mt2 op=PJMPEQ:r8:r8:r8
+define : mrif op=PLOAD:z(8):r8:m64:r8
+define : mtif op=PSAVE:z(8):r8:m64:r8
+define : mrf op=PLOAD:z(8):r8:m64:r8
+define : mr op=PLOAD:r8:r8:r8
+define : mt op=PSAVE:r8:r8:r8
+define : mri op=PLOAD:z(16):r8:m64:r8
+define : mti op=PSAVE:z(16):r8:m64:r8
+define : mrid op=PLOAD:z(16):r8:m64:r8
+define : mtid op=PSAVE:z(16):r8:m64:r8
+define : mrs op=PLOAD:z(8):r8:r8:r8
+define : mts op=PSAVE:z(8):r8:r8:r8
+
+# Extended (fixed duplicates)
+define : mtif2 op=PSAVE:z(8):r8:r8:r8
+RES_IS:
+RES_IS:
+RES_IS:
+:op0712 "Test" is op0712=0x2FF;

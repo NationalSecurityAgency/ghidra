@@ -59,6 +59,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		NO_ANALYSIS("-noanalysis", false),
 		PROCESSOR("-processor", true, "<languageID>"),
 		CSPEC("-cspec", true, "<compilerSpecID>"),
+		LANGUAGE("-Language", false),
 		ANALYSIS_TIMEOUT_PER_FILE("-analysisTimeoutPerFile", true, "<timeout in seconds>"),
 		KEYSTORE("-keystore", true, "<KeystorePath>"),
 		CONNECT("-connect", false, "[<userID>]"),
@@ -264,6 +265,15 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 			}
 			else if (checkArgument(Arg.PROCESSOR, args, argi)) {
 				languageId = args[++argi];
+			}
+			else if (checkArgument(Arg.LANGUAGE, args, argi)) {
+				if ((argi + 1) < args.length) {
+					arg = args[argi + 1];
+					if (!isExistingArg(arg)) {
+						languageId = arg;
+						++argi;
+					}
+				}
 			}
 			else if (checkArgument(Arg.CSPEC, args, argi)) {
 				compilerSpecId = args[++argi];

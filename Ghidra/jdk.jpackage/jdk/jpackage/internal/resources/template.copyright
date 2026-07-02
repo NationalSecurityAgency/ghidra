@@ -1,0 +1,5 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+
+Files: *
+Copyright: APPLICATION_COPYRIGHT
+License: APPLICATION_LICENSE_TEXT

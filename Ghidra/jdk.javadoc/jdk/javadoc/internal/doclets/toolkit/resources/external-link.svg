@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+
+ This code is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License version 2 only, as
+ published by the Free Software Foundation.  Oracle designates this
+ particular file as subject to the "Classpath" exception as provided
+ by Oracle in the LICENSE file that accompanied this code.
+
+ This code is distributed in the hope that it will be useful, but WITHOUT
+ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ version 2 for more details (a copy is included in the LICENSE file that
+ accompanied this code).
+
+ You should have received a copy of the GNU General Public License version
+ 2 along with this work; if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+
+ Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ or visit www.oracle.com if you need additional information or have any
+ questions.
+-->
+
+<!--
+ A minified version of this file is used as inline SVG icon in the stylesheet.
+ This file serves only for future editing and is not used by javadoc.
+
+ Note that the '#' character in the value of the fill attribute needs to be
+ URL-encoded when inlined in the CSS file.
+-->
+
+<svg version="1.1" viewBox="0 0 768 768" xmlns="http://www.w3.org/2000/svg">
+<path
+  d="M 584,664 H 104 V 184 H 320 V 80 H 0 V 768 H 688 V 448 H 584 Z M 384,0 516,132 276,372 396,492 636,252 768,384 V 0 Z"
+  fill="#4a6782"/>
+</svg>

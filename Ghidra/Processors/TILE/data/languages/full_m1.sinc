@@ -1,0 +1,12 @@
+define endian = big;
+define space register type=register_space size=8 default;
+define register offset = 0x1000 size = 8 GP;
+table : instruction {
+    0x00000000 { result = nop(); }
+}
+@include "tile_common.sinc"
+RES_IS:
+RES_IS:
+RES_IS:
+:op0712 "Test" is op0712=0x2FF;
+RES_IS:

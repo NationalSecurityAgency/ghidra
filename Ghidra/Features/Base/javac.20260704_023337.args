@@ -1,0 +1,5 @@
+-cp
+src/main/java:../Gui/build/libs/Gui.jar:../Docking/build/libs/Docking.jar:../Project/build/libs/Project.jar
+src/main/java/ghidra/app/util/headless/AnalyzeHeadless.java
+-d
+src/main/java

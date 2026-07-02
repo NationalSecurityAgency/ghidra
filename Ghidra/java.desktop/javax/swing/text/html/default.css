@@ -1,0 +1,267 @@
+/*
+ * Copyright (c) 1997, 2005, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+
+/*
+ */
+
+body  {font-size: 14pt;
+       font-family: Serif;
+       font-weight: normal;
+       margin-left: 0;
+       margin-right: 0;
+       color: black}
+
+p   {margin-top: 15}
+
+h1  {font-size: x-large;
+     font-weight: bold;
+     margin-top: 10;
+     margin-bottom: 10}
+
+h2 {font-size: large;
+    font-weight: bold;
+    margin-top: 10;
+    margin-bottom: 10}
+
+h3 {font-size: medium;
+    font-weight: bold;
+    margin-top: 10;
+    margin-bottom: 10}
+
+h4 {font-size: small;
+    font-weight: bold;
+    margin-top: 10;
+    margin-bottom: 10}
+
+h5 {font-size: x-small;
+    font-weight: bold;
+    margin-top: 10;
+    margin-bottom: 10}
+
+h6 {font-size: xx-small;
+    font-weight: bold;
+    margin-top: 10;
+    margin-bottom: 10}
+
+li p {margin-top: 0;
+    margin-bottom: 0}
+
+td p {margin-top: 0}
+
+menu li p {margin-top: 0;
+    margin-bottom: 0}
+
+menu li {margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0}
+
+menu {margin-left-ltr: 40;
+    margin-right-rtl: 40;
+    margin-top: 10;
+    margin-bottom: 10}
+
+dir li p {margin-top: 0;
+    margin-bottom: 0}
+
+dir li {margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0}
+
+dir {margin-left-ltr: 40;
+    margin-right-rtl: 40;
+    margin-top: 10;
+    margin-bottom: 10}
+
+dd {margin-left-ltr: 40;
+    margin-right-rtl: 40;
+    margin-top: 0;
+    margin-bottom: 0}
+
+dd p {margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0}
+
+dt {margin-top: 0;
+    margin-bottom: 0}
+
+dl {margin-left: 0;
+    margin-top: 10;
+    margin-bottom: 10}
+
+ol li {margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0}
+
+ol {
+    margin-top: 10;
+    margin-bottom: 10;
+    margin-left-ltr: 50;
+    margin-right-rtl: 50;
+    list-style-type: decimal
+}
+
+ol li p {margin-top: 0;
+    margin-bottom:0}
+
+ul li {margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0}
+
+ul {margin-top: 10;
+    margin-bottom: 10;
+    margin-left-ltr: 50;
+    margin-right-rtl: 50;
+    list-style-type: disc;
+    -bullet-gap: 10}
+
+ul li ul li {margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0}
+
+ul li ul {list-style-type: circle;
+    margin-left-ltr: 25;
+    margin-right-rtl: 25;}
+
+ul li ul li ul li {margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0}
+
+ul li ul li ul {list-style-type: square;
+    margin-left-ltr: 25;
+    margin-right-rtl: 25}
+
+ul li menu {list-style-type: circle;
+    margin-left-ltr: 25;
+    margin-right-rtl: 25;}
+
+ul li p {margin-top: 0;
+    margin-bottom:0}
+
+a {color: blue;
+   text-decoration: underline}
+
+big {font-size: x-large}
+
+small {font-size: x-small}
+
+samp {font-size: small;
+      font-family: Monospaced}
+
+cite {font-style: italic}
+
+code {font-size: small;
+      font-family: Monospaced}
+
+dfn {font-style: italic}
+
+em {font-style: italic}
+
+i  {font-style: italic}
+
+b  {font-weight: bold}
+
+kbd {font-size: small;
+     font-family: Monospaced}
+
+s {text-decoration: line-through}
+
+strike {text-decoration: line-through}
+
+strong {font-weight: bold}
+
+sub {vertical-align: sub}
+
+sup {vertical-align: sup}
+
+tt {font-family: Monospaced}
+
+u {text-decoration: underline}
+
+var {font-weight: bold;
+     font-style: italic}
+
+table {
+        border-style: outset;
+        border-width: 0;
+}
+
+tr {
+	text-align: left
+}
+
+td {
+        border-width: 0;
+	border-style: inset;
+	padding-left: 3;
+	padding-right: 3;
+	padding-top: 3;
+	padding-bottom: 3
+}
+
+th {
+	text-align: center;
+	font-weight: bold;
+        border-width: 0;
+	border-style: inset;
+	padding-left: 3;
+	padding-right: 3;
+	padding-top: 3;
+	padding-bottom: 3
+}
+
+address {
+	color: blue;
+	font-style: italic
+}
+
+blockquote {
+	margin-top: 5;
+	margin-bottom: 5;
+	margin-left: 35;
+	margin-right: 35
+}
+
+center {text-align: center}
+
+pre {margin-top: 5;
+     margin-bottom: 5;
+     font-family: Monospaced}
+
+pre p {margin-top: 0}
+
+caption {
+    caption-side: top;
+    text-align: center
+}
+
+nobr { white-space: nowrap }
+
