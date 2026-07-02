@@ -654,8 +654,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 			Language language = asm.getLanguage();
 			Register regCtx = language.getContextBaseRegister();
 			Register regT = language.getRegister("T");
-			RegisterValue rvDefault = new RegisterValue(regCtx,
-				asm.getContextAt(entry).toBigInteger(regCtx.getNumBytes()));
+			RegisterValue rvDefault = asm.getContextAt(entry).toRegisterValue(regCtx);
 			RegisterValue rvThumb = rvDefault.assign(regT, BigInteger.ONE);
 			AssemblyPatternBlock ctxThumb = AssemblyPatternBlock.fromRegisterValue(rvThumb);
 
