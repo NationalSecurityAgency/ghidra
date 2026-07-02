@@ -567,7 +567,7 @@ void FunctionSymbol::encode(Encoder &encoder) const
 
 {
   if (fd != (Funcdata *)0)
-    fd->encode(encoder,symbolId,false);	// Save the function itself
+    fd->encode(encoder,symbolId,false,true);	// Save the function itself
   else {
     encoder.openElement(ELEM_FUNCTIONSHELL);
     encoder.writeString(ATTRIB_NAME, name);

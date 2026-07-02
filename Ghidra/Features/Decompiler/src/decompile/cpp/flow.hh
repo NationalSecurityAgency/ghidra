@@ -98,7 +98,7 @@ private:
   Address eaddr;			///< End of range in which we are allowed to flow
   Address minaddr;			///< Start of actual function range
   Address maxaddr;			///< End of actual function range
-  bool flowoverride_present;		///< Does the function have registered flow override instructions
+  bool pcode_override_present;		///< Does the function have registered p-code override instructions
   uint4 flags;				///< Boolean options for flow following
   uint4 baddata_count;			///< Number of instructions that could not be disassembled
   Funcdata *inline_head;		///< First function in the in-lining chain

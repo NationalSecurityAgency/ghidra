@@ -134,8 +134,6 @@ class Funcdata {
   static bool descendantsOutside(Varnode *vn);
   static void encodeVarnode(Encoder &encoder,VarnodeLocSet::const_iterator iter,VarnodeLocSet::const_iterator enditer);
   static bool checkIndirectUse(Varnode *vn);
-  static PcodeOp *findPrimaryBranch(PcodeOpTree::const_iterator iter,PcodeOpTree::const_iterator enditer,
-				    bool findbranch,bool findcall,bool findreturn);
 public:
   Funcdata(const string &nm,const string &disp,Scope *conf,const Address &addr,FunctionSymbol *sym,int4 sz=0);	///< Constructor
   ~Funcdata(void);							///< Destructor
@@ -197,14 +195,13 @@ public:
   void followFlow(const Address &baddr,const Address &eadddr);
   void truncatedFlow(const Funcdata *fd,const FlowInfo *flow);
   int4 inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop);
-  void overrideFlow(const Address &addr,uint4 type);
   void doLiveInject(InjectPayload *payload,const Address &addr,BlockBasic *bl,list<PcodeOp *>::iterator pos);
   
   void printRaw(ostream &s) const;			///< Print raw p-code op descriptions to a stream
   void printVarnodeTree(ostream &s) const;		///< Print a description of all Varnodes to a stream
   void printBlockTree(ostream &s) const;		///< Print a description of control-flow structuring to a stream
   void printLocalRange(ostream &s) const;		///< Print description of memory ranges associated with local scopes
-  void encode(Encoder &encoder,uint8 id,bool savetree) const;	///< Encode a description of \b this function to stream
+  void encode(Encoder &encoder,uint8 id,bool saveTree,bool saveOverrides) const;	///< Encode a description of \b this function to stream
   uint8 decode(Decoder &decoder);			///< Restore the state of \b this function from a stream
   void encodeJumpTable(Encoder &encoder) const;		///< Encode a description of jump-tables to stream
   void decodeJumpTable(Decoder &decoder);		///< Decode jump-tables from a stream
@@ -535,6 +532,8 @@ public:
 
   /// \brief End of all (alive) PcodeOp objects attached to a specific Address
   PcodeOpTree::const_iterator endOp(const Address &addr) const { return obank.end(addr); }
+
+  PcodeOp *findPrimaryBranch(const Address &addr,bool findBranch,bool findCall,bool findCallother,bool findReturn);
 
   bool moveRespectingCover(PcodeOp *op,PcodeOp *lastOp);	///< Move given op past \e lastOp respecting covers if possible
 

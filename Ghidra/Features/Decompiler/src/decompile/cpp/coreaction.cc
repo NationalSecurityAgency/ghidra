@@ -565,9 +565,12 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
     collectLaneSizes(vn,lanedRegister,checkLanes);
   else {
     int4 defaultSize = data.getArch()->types->getSizeOfPointer();		// Default lane size
-    if (defaultSize != 4)
-      defaultSize = 8;
-    checkLanes.addLaneSize(defaultSize);
+    if (defaultSize == 4 && lanedRegister.allowedLane(4))
+      checkLanes.addLaneSize(4);
+    else if (lanedRegister.allowedLane(8))
+      checkLanes.addLaneSize(8);
+    else if (lanedRegister.allowedLane(4))
+      checkLanes.addLaneSize(4);
   }
   LanedRegister::const_iterator enditer = checkLanes.end();
   for(LanedRegister::const_iterator iter=checkLanes.begin();iter!=enditer;++iter) {

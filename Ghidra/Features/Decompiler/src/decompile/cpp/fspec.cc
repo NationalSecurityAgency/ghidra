@@ -5451,7 +5451,7 @@ void FuncCallSpecs::deindirect(Funcdata &data,Funcdata *newfd)
   data.opSetInput(op,vn,0);
   data.opSetOpcode(op,CPUI_CALL);
 
-  data.getOverride().insertIndirectOverride(op->getAddr(),entryaddress);
+  data.getOverride().insertDeindirect(op->getAddr(),entryaddress);
 
   // Try our best to merge existing prototype
   // with the one we have just been handed

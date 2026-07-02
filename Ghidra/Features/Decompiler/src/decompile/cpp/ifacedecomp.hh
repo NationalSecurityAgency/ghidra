@@ -405,6 +405,11 @@ public:
   virtual void execute(istream &s);
 };
 
+class IfcDestinationOverride : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
 class IfcDeadcodedelay : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);

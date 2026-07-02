@@ -39,7 +39,7 @@ FlowInfo::FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,vector<FuncCallSpecs
   insn_count = 0;
   insn_max = ~((uint4)0);
   baddata_count = 0;
-  flowoverride_present = data.getOverride().hasFlowOverride();
+  pcode_override_present = data.getOverride().hasPCodeOverride();
 }
 
 /// Prepare a new flow cloned from an existing flow.
@@ -74,7 +74,7 @@ FlowInfo::FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,vector<FuncCallSpecs
   insn_count = op2->insn_count;
   insn_max = op2->insn_max;
   baddata_count = op2->baddata_count;
-  flowoverride_present = data.getOverride().hasFlowOverride();
+  pcode_override_present = data.getOverride().hasPCodeOverride();
 }
 
 void FlowInfo::clearProperties(void)
@@ -390,7 +390,7 @@ bool FlowInfo::processInstruction(const Address &curaddr,bool &startbasic)
   //  JumpTable *jt;
   list<PcodeOp *>::const_iterator oiter;
   int4 step;
-  uint4 flowoverride;
+  const Override::Record *pCodeOverride;
 
   if (insn_count >= insn_max) {
     if ((flags & error_toomanyinstructions)!=0)
@@ -414,10 +414,10 @@ bool FlowInfo::processInstruction(const Address &curaddr,bool &startbasic)
     oiter = obank.endDead();
     --oiter;
   }
-  if (flowoverride_present)
-    flowoverride = data.getOverride().getFlowOverride(curaddr);
+  if (pcode_override_present)
+    pCodeOverride = data.getOverride().getPCodeOverride(curaddr);
   else
-    flowoverride = Override::NONE;
+    pCodeOverride = (const Override::Record *)0;
 
   try {
     step = glb->translate->oneInstruction(emitter,curaddr); // Generate ops for instruction
@@ -474,8 +474,8 @@ bool FlowInfo::processInstruction(const Address &curaddr,bool &startbasic)
   if (oiter != obank.endDead()) {
     stat.seqnum = (*oiter)->getSeqNum();
     data.opMarkStartInstruction(*oiter); // Mark the first op in the instruction
-    if (flowoverride != Override::NONE)
-      data.overrideFlow(curaddr,flowoverride);
+    if (pCodeOverride != (const Override::Record *)0)
+      pCodeOverride->performOverride(curaddr,data);
     xrefControlFlow(oiter,startbasic,isfallthru,(FuncCallSpecs *)0);
   }
 
