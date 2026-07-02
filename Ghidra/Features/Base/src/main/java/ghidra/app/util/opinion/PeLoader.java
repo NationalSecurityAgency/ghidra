@@ -677,6 +677,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 				int rawPtr = sections[i].getPointerToRawData();
 				long fileBytesSize = fileBytes.getSize();
 				virtualSize = sections[i].getVirtualSize();
+				int unchangedRawPtr = sections[i].getRawPointerToRawData();
 				MemoryBlock block = null;
 
 				if (virtualSize == 0) {
@@ -696,8 +697,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 				}
 
 				// If PointerToRawData and SizeOfRawData are set, make an initialized block from 
-				// the FileBytes
-				if (rawSize != 0 && rawPtr != 0) {
+				// the FileBytes (check PointerToRawData before it was rounded down)
+				if (rawSize != 0 && unchangedRawPtr != 0) {
 					int n = rawSize > virtualSize && virtualSize > 0 ? virtualSize : rawSize;
 					if (rawPtr + n > fileBytesSize) {
 						int orig = n;
