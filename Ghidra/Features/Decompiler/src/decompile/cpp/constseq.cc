@@ -154,6 +154,29 @@ int4 ArraySequence::formByteArray(int4 sz,int4 slot,uint8 rootOff,bool bigEndian
   return count;
 }
 
+/// Check if all collected writes set every byte of the element to the same byte value.
+/// \param slot is the input slot holding the constant value
+/// \param val will hold the repeated byte value
+/// \return \b true if the sequence is a byte fill
+bool ArraySequence::isFill(int4 slot,uint1 &val) const
+
+{
+  if (moveOps.empty()) return false;
+  int4 elSize = charType->getSize();
+  uint8 mask = calc_mask(elSize);
+  uint8 firstVal = moveOps[0].op->getIn(slot)->getOffset() & mask;
+  val = (uint1)(firstVal & 0xff);
+  uint8 fillVal = 0;
+  for(int4 i=0;i<elSize;++i)
+    fillVal = (fillVal << 8) | val;
+  for(int4 i=0;i<moveOps.size();++i) {
+    uint8 curVal = moveOps[i].op->getIn(slot)->getOffset() & mask;
+    if (curVal != fillVal)
+      return false;
+  }
+  return true;
+}
+
 /// Use the \b charType to select the appropriate string copying function.  If a match to the \b charType
 /// doesn't exist, use a built-in \b memcpy function.  The id of the selected built-in function is returned.
 /// The value indicating either the number of characters or number of bytes being copied is also passed back.
@@ -194,8 +217,6 @@ StringSequence::StringSequence(Funcdata &fdata,Datatype *ct,SymbolEntry *ent,Pco
     return;
   int8 off = rootAddr.getOffset() - entry->getFirst();
   if (off >= entry->getSize())
-    return;
-  if (rootOp->getIn(0)->getOffset() == 0)
     return;
   Datatype *parentType = entry->getSymbol()->getType();
   Datatype *arrayType = (Datatype *)0;
@@ -367,6 +388,9 @@ Varnode *StringSequence::constructTypedPointer(PcodeOp *insertPoint)
 PcodeOp *StringSequence::buildStringCopy(void)
 
 {
+  PcodeOp *fillOp = buildFill();
+  if (fillOp != (PcodeOp *)0)
+    return fillOp;
   PcodeOp *insertPoint = moveOps[0].op;		// Earliest COPY in the block
   int4 numBytes = moveOps.size() * charType->getSize();
   Architecture *glb = data.getArch();
@@ -391,6 +415,37 @@ PcodeOp *StringSequence::buildStringCopy(void)
   data.opSetInput(copyOp, lenVn, 3);
   data.opInsertBefore(copyOp, insertPoint);
   return copyOp;
+}
+
+/// A built-in user-op that fills the destination with a repeated byte value is created.
+/// \return the constructed PcodeOp representing the fill, or null if this is not a fill
+PcodeOp *StringSequence::buildFill(void)
+
+{
+  uint1 fillVal;
+  if (!isFill(0, fillVal))
+    return (PcodeOp *)0;
+  if (fillVal >= 0x20 && fillVal < 0x7f)
+    return (PcodeOp *)0;
+  PcodeOp *insertPoint = moveOps[0].op;
+  Architecture *glb = data.getArch();
+  uint4 builtInId = UserPcodeOp::BUILTIN_MEMSET;
+  glb->userops.registerBuiltin(builtInId);
+  PcodeOp *fillOp = data.newOp(4, insertPoint->getAddr());
+  data.opSetOpcode(fillOp, CPUI_CALLOTHER);
+  data.opSetInput(fillOp, data.newConstant(4, builtInId), 0);
+  Varnode *destPtr = constructTypedPointer(insertPoint);
+  data.opSetInput(fillOp, destPtr, 1);
+  if (destPtr->getType()->needsResolution())
+    data.inheritUnionFieldPtr(destPtr->getType(), fillOp, 1, insertPoint, -1);
+  Varnode *valVn = data.newConstant(4, fillVal);
+  valVn->updateType(fillOp->inputTypeLocal(2));
+  data.opSetInput(fillOp, valVn, 2);
+  Varnode *lenVn = data.newConstant(4, moveOps.size() * charType->getSize());
+  lenVn->updateType(fillOp->inputTypeLocal(3));
+  data.opSetInput(fillOp, lenVn, 3);
+  data.opInsertBefore(fillOp, insertPoint);
+  return fillOp;
 }
 
 /// \brief Analyze output descendants of the given PcodeOp being removed
@@ -721,6 +776,9 @@ bool HeapSequence::collectStoreOps(void)
 PcodeOp *HeapSequence::buildStringCopy(void)
 
 {
+  PcodeOp *fillOp = buildFill();
+  if (fillOp != (PcodeOp *)0)
+    return fillOp;
   PcodeOp *insertPoint = moveOps[0].op;		// Earliest STORE in the block
   Datatype *charPtrType = rootOp->getIn(1)->getTypeReadFacing(rootOp);
   int4 numBytes = numElements * charType->getSize();
@@ -786,6 +844,79 @@ PcodeOp *HeapSequence::buildStringCopy(void)
   if (destPtr->getType()->needsResolution())
     data.inheritUnionField(destPtr->getType(), copyOp, 1, immedRead, immedRead->getSlot(destPtr));
   return copyOp;
+}
+
+/// A built-in user-op that fills the destination with a repeated byte value is created.
+/// \return the constructed PcodeOp representing the fill, or null if this is not a fill
+PcodeOp *HeapSequence::buildFill(void)
+
+{
+  uint1 fillVal;
+  if (!isFill(2, fillVal))
+    return (PcodeOp *)0;
+  if (fillVal >= 0x20 && fillVal < 0x7f)
+    return (PcodeOp *)0;
+  PcodeOp *insertPoint = moveOps[0].op;
+  Architecture *glb = data.getArch();
+  Varnode *destPtr = basePointer;
+  if (baseOffset != 0 || !nonConstAdds.empty()) {
+    Varnode *indexVn = (Varnode *)0;
+    Datatype *intType = glb->types->getBase(basePointer->getSize(), TYPE_INT);
+    if (nonConstAdds.size() > 0) {
+      indexVn = nonConstAdds[0];
+      for(int4 i=1;i<nonConstAdds.size();++i) {
+	PcodeOp *addOp = data.newOp(2,insertPoint->getAddr());
+	data.opSetOpcode(addOp, CPUI_INT_ADD);
+	data.opSetInput(addOp, indexVn, 0);
+	data.opSetInput(addOp, nonConstAdds[i],1);
+	indexVn = data.newUniqueOut(indexVn->getSize(), addOp);
+	indexVn->updateType(intType);
+	data.opInsertBefore(addOp, insertPoint);
+      }
+    }
+    if (baseOffset != 0) {
+      uint8 numEl = baseOffset / charType->getAlignSize();
+      Varnode *cvn = data.newConstant(basePointer->getSize(), numEl);
+      cvn->updateType(intType);
+      if (indexVn == (Varnode *)0)
+	indexVn = cvn;
+      else {
+	PcodeOp *addOp = data.newOp(2,insertPoint->getAddr());
+	data.opSetOpcode(addOp, CPUI_INT_ADD);
+	data.opSetInput(addOp, indexVn, 0);
+	data.opSetInput(addOp, cvn,1);
+	indexVn = data.newUniqueOut(indexVn->getSize(), addOp);
+	indexVn->updateType(intType);
+	data.opInsertBefore(addOp, insertPoint);
+      }
+    }
+    PcodeOp *ptrAdd = data.newOp(3,insertPoint->getAddr());
+    data.opSetOpcode(ptrAdd, CPUI_PTRADD);
+    destPtr = data.newUniqueOut(basePointer->getSize(), ptrAdd);
+    data.opSetInput(ptrAdd,basePointer,0);
+    data.opSetInput(ptrAdd,indexVn,1);
+    data.opSetInput(ptrAdd,data.newConstant(basePointer->getSize(), charType->getAlignSize()),2);
+    destPtr->updateType(rootOp->getIn(1)->getTypeReadFacing(rootOp));
+    data.opInsertBefore(ptrAdd, insertPoint);
+    if (basePointer->getType()->needsResolution())
+      data.inheritUnionField(basePointer->getType(), ptrAdd, 0, immedRead, immedRead->getSlot(basePointer));
+  }
+  uint4 builtInId = UserPcodeOp::BUILTIN_MEMSET;
+  glb->userops.registerBuiltin(builtInId);
+  PcodeOp *fillOp = data.newOp(4, insertPoint->getAddr());
+  data.opSetOpcode(fillOp, CPUI_CALLOTHER);
+  data.opSetInput(fillOp, data.newConstant(4, builtInId), 0);
+  data.opSetInput(fillOp, destPtr, 1);
+  Varnode *valVn = data.newConstant(4, fillVal);
+  valVn->updateType(fillOp->inputTypeLocal(2));
+  data.opSetInput(fillOp, valVn, 2);
+  Varnode *lenVn = data.newConstant(4, moveOps.size() * charType->getSize());
+  lenVn->updateType(fillOp->inputTypeLocal(3));
+  data.opSetInput(fillOp, lenVn, 3);
+  data.opInsertBefore(fillOp, insertPoint);
+  if (destPtr->getType()->needsResolution())
+    data.inheritUnionField(destPtr->getType(), fillOp, 1, immedRead, immedRead->getSlot(destPtr));
+  return fillOp;
 }
 
 /// \brief Gather INDIRECT ops attached to the final sequence STOREs and their input/output Varnode pairs
