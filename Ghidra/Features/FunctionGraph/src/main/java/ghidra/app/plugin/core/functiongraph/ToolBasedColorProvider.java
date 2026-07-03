@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.functiongraph;
 
 import java.awt.Color;
 import java.util.List;
+import java.util.function.Supplier;
 
 import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
@@ -25,13 +26,18 @@ import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 
-class ToolBasedColorProvider implements FGColorProvider {
+/**
+ * An implementation of the {@link FGColorProvider} that works using the color services of the tool.
+ * A different implementation will be used if the tool's color services are not installed.
+ */
+public class ToolBasedColorProvider implements FGColorProvider {
 
 	private final ColorizingService service;
-	private final FunctionGraphPlugin plugin;
+	private final Supplier<Program> programSupplier;
 
-	ToolBasedColorProvider(FunctionGraphPlugin plugin, ColorizingService colorizingService) {
-		this.plugin = plugin;
+	public ToolBasedColorProvider(Supplier<Program> programSupplier,
+			ColorizingService colorizingService) {
+		this.programSupplier = programSupplier;
 		this.service = colorizingService;
 	}
 
@@ -42,7 +48,7 @@ class ToolBasedColorProvider implements FGColorProvider {
 
 	@Override
 	public void setVertexColor(FGVertex vertex, Color color) {
-		Program program = plugin.getCurrentProgram();
+		Program program = programSupplier.get();
 		int id = program.startTransaction("Set Background Color");
 		try {
 			service.setBackgroundColor(vertex.getAddresses(), color);
@@ -56,7 +62,7 @@ class ToolBasedColorProvider implements FGColorProvider {
 
 	@Override
 	public void clearVertexColor(FGVertex vertex) {
-		Program program = plugin.getCurrentProgram();
+		Program program = programSupplier.get();
 		int id = program.startTransaction("Set Background Color");
 		try {
 			service.clearBackgroundColor(vertex.getAddresses());

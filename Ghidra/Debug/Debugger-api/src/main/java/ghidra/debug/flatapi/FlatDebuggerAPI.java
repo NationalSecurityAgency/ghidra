@@ -45,6 +45,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryOperations;
@@ -53,7 +54,6 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
-import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.MathUtilities;
@@ -1452,11 +1452,7 @@ public interface FlatDebuggerAPI {
 	}
 
 	default ActionContext createContext(TraceThread thread) {
-		if (thread instanceof TraceObjectThread objThread) {
-			return createContext(objThread.getObject());
-		}
-		return new DebuggerSingleObjectPathActionContext(
-			KeyPath.parse(thread.getPath()));
+		return createContext(thread.getObject());
 	}
 
 	default ActionContext createContext(Trace trace) {
@@ -2179,7 +2175,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointSetSoftwareExecute(ProgramLocation location,
 			String name) {
-		return breakpointSet(location, 1, TraceBreakpointKindSet.SW_EXECUTE, name);
+		return breakpointSet(location, 1, CommonSet.SWX.kinds(), name);
 	}
 
 	/**
@@ -2192,7 +2188,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointSetHardwareExecute(ProgramLocation location,
 			String name) {
-		return breakpointSet(location, 1, TraceBreakpointKindSet.HW_EXECUTE, name);
+		return breakpointSet(location, 1, CommonSet.HWX.kinds(), name);
 	}
 
 	/**
@@ -2209,7 +2205,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointSetRead(ProgramLocation location, int length,
 			String name) {
-		return breakpointSet(location, length, TraceBreakpointKindSet.READ, name);
+		return breakpointSet(location, length, CommonSet.READ.kinds(), name);
 	}
 
 	/**
@@ -2226,7 +2222,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointSetWrite(ProgramLocation location, int length,
 			String name) {
-		return breakpointSet(location, length, TraceBreakpointKindSet.WRITE, name);
+		return breakpointSet(location, length, CommonSet.WRITE.kinds(), name);
 	}
 
 	/**
@@ -2243,7 +2239,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointSetAccess(ProgramLocation location, int length,
 			String name) {
-		return breakpointSet(location, length, TraceBreakpointKindSet.ACCESS, name);
+		return breakpointSet(location, length, CommonSet.ACCESS.kinds(), name);
 	}
 
 	/**

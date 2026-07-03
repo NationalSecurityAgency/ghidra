@@ -147,6 +147,7 @@ def Map<String, List<String>> getIpForModule(Project p) {
 		exclude "buildNatives.gradle"		
 		exclude "**/Misc/Tips.htm"
 		exclude "**/*.sla"
+		exclude "**/*.sla.lock"
 		exclude "**/.gradle/**"
 		exclude "**/.settings/**"
 		exclude "**/data/build.xml" // language build file (generated for dev only)
@@ -217,8 +218,19 @@ def isBashSourceFile(File file) {
 	// NOTE: bash/shell scripts without extension will not utilize a header
 	return filename.endsWith(".py") ||
 			filename.endsWith(".sh") ||
+			filename.endsWith(".ps1") ||
 			filename.endsWith(".bash") ||
 			filename.endsWith(".command");
+}
+
+/*********************************************************************************
+ * checks if a file supports a Windows Batch style header based on its extension.
+ *********************************************************************************/
+def isBatchSourceFile(File file) {
+
+	String filename = file.getName().toLowerCase();
+	
+	return filename.endsWith(".bat");
 }
 
 
@@ -235,6 +247,9 @@ def getIp(File projectDir, File file) {
 		if (ip == null) {
 			ip = getIpForSourceFile(file, "# IP:");
 		}
+	}
+	else if (isBatchSourceFile(file)) {
+		ip = getIpForSourceFile(file, ":: IP:");
 	}
 	if (ip == null) {
 		ip = getIpForNonSourceFile(projectDir, file);

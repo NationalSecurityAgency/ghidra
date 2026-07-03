@@ -268,21 +268,6 @@ public class StubListing implements Listing {
 	}
 
 	@Override
-	public DataIterator getCompositeData(boolean forward) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public DataIterator getCompositeData(Address start, boolean forward) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public DataIterator getCompositeData(AddressSetView addrSet, boolean forward) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Iterator<String> getUserDefinedProperties() {
 		throw new UnsupportedOperationException();
 	}

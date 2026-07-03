@@ -137,6 +137,69 @@ public class MDMangExtraTest extends AbstractGenericTest {
 		assertEquals("_anon_FEDCBA98::a", qualifications.get(1).toString());
 	}
 
+	// Eliminate complex tag in template arguments
+	@Test
+	public void testDemangleNameWithComplexTagInTemplateArgumentsWithBackRef() throws Exception {
+		String mangled = "?Ti@@3V?$Tc@V?$Tb@H@@0@@A";
+		String truth = "class Tc<class Tb<int>,class Tb<int> > Ti";
+		String truth2 = "class Tc<Tb<int>,Tb<int> > Ti";
+
+		MDMangGhidra demangler = new MDMangGhidra();
+		demangler.setMangledSymbol(mangled);
+		demangler.setErrorOnRemainingChars(true);
+		demangler.setDemangleOnlyKnownPatterns(true);
+		MDParsableItem item = demangler.demangle();
+
+		String demangled = item.toString();
+		assertEquals(truth, demangled);
+
+		demangler.getOutputOptions().setApplyUdtArgumentTypeTag(false);
+		demangled = item.toString();
+		assertEquals(truth2, demangled);
+	}
+
+	// Eliminate complex tag in template arguments
+	@Test
+	public void testDemangleTypeWithComplexTagInTemplateArguments() throws Exception {
+		String mangled = ".?AV?$name0@Uname1@@Uname2@@@@";
+		String truth = "class name0<struct name1,struct name2>";
+		String truth2 = "class name0<name1,name2>";
+
+		MDMangGhidra demangler = new MDMangGhidra();
+		demangler.setMangledSymbol(mangled);
+		demangler.setErrorOnRemainingChars(true);
+		MDParsableItem item = demangler.demangleType(); // note demangleType()
+
+		String demangled = item.toString();
+		assertEquals(truth, demangled);
+
+		demangler.getOutputOptions().setApplyUdtArgumentTypeTag(false);
+		demangled = item.toString();
+		assertEquals(truth2, demangled);
+	}
+
+	// Eliminate complex tag in template arguments
+	@Test
+	public void testDemangleTemplateConstructorWithTagInTemplateAndFunctionArguments()
+			throws Exception {
+		String mangled = "??0?$AAA@VBBB@@@ANS@@QAE@VBBB@@@Z";
+		String truth = "public: __thiscall ANS::AAA<class BBB>::AAA<class BBB>(class BBB)";
+		String truth2 = "public: __thiscall ANS::AAA<BBB>::AAA<BBB>(BBB)";
+
+		MDMangGhidra demangler = new MDMangGhidra();
+		demangler.setMangledSymbol(mangled);
+		demangler.setErrorOnRemainingChars(true);
+		demangler.setDemangleOnlyKnownPatterns(true);
+		MDParsableItem item = demangler.demangle();
+
+		String demangled = item.toString();
+		assertEquals(truth, demangled);
+
+		demangler.getOutputOptions().setApplyUdtArgumentTypeTag(false);
+		demangled = item.toString();
+		assertEquals(truth2, demangled);
+	}
+
 	@Test
 	public void testSimpleDemangleType() throws Exception {
 		String mangled = ".?AUname0@name1@@";

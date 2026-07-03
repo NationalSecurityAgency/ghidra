@@ -17,16 +17,23 @@ package ghidra.pcode.emu.jit.gen.op;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 
-import org.objectweb.asm.MethodVisitor;
-
 import ghidra.pcode.emu.jit.JitPassage.DecodeErrorPcodeOp;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.RunFixedLocal;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.JitCodeGenerator.PcGen;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Bot;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
+import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
+import ghidra.pcode.emu.jit.gen.util.Types.TInt;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.pcode.emu.jit.op.JitUnimplementedOp;
 import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.exec.DecodePcodeExecutionException;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.RegisterValue;
 
 /**
  * The generator for a {@link JitUnimplementedOp unimplemented}.
@@ -41,35 +48,38 @@ public enum UnimplementedOpGen implements OpGen<JitUnimplementedOp> {
 	GEN;
 
 	@Override
-	public void generateRunCode(JitCodeGenerator gen, JitUnimplementedOp op, JitBlock block,
-			MethodVisitor rv) {
-		long counter = gen.getAddressForOp(op.op()).getOffset();
-
-		gen.generatePassageExit(block, () -> {
-			rv.visitLdcInsn(counter);
-		}, gen.getExitContext(op.op()), rv);
-
+	public <THIS extends JitCompiledPassage> OpResult genRun(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq,
+			JitCodeGenerator<THIS> gen, JitUnimplementedOp op, JitBlock block, Scope scope) {
+		Address counter = gen.getAddressForOp(op.op());
+		PcGen pcGen = PcGen.loadOffset(counter);
+		RegisterValue ctx = gen.getExitContext(op.op());
 		String message = gen.getErrorMessage(op.op());
+
 		if (op.op() instanceof DecodeErrorPcodeOp) {
-			RunFixedLocal.THIS.generateLoadCode(rv);
-			rv.visitLdcInsn(message);
-			rv.visitLdcInsn(counter);
-			rv.visitMethodInsn(INVOKEINTERFACE, NAME_JIT_COMPILED_PASSAGE, "createDecodeError",
-				MDESC_JIT_COMPILED_PASSAGE__CREATE_DECODE_ERROR, true);
-			rv.visitInsn(ATHROW);
+			return new DeadOpResult(em
+					.emit(gen::genExit, localThis, block, pcGen, ctx)
+					.emit(Op::aload, localThis)
+					.emit(Op::ldc__a, message)
+					.emit(Op::ldc__l, counter.getOffset())
+					.emit(Op::invokeinterface, T_JIT_COMPILED_PASSAGE, "createDecodeError",
+						MDESC_JIT_COMPILED_PASSAGE__CREATE_DECODE_ERROR)
+					.step(Inv::takeArg)
+					.step(Inv::takeArg)
+					.step(Inv::takeObjRef)
+					.step(Inv::ret)
+					.emit(Op::athrow));
 		}
-		else {
-			// [...]
-			rv.visitTypeInsn(NEW, NAME_LOW_LEVEL_ERROR);
-			// [...,error:NEW]
-			rv.visitInsn(DUP);
-			// [...,error:NEW,error:NEW]
-			rv.visitLdcInsn(message);
-			// [...,error:NEW,error:NEW,message]
-			rv.visitMethodInsn(INVOKESPECIAL, NAME_LOW_LEVEL_ERROR, "<init>",
-				MDESC_LOW_LEVEL_ERROR__$INIT, false);
-			// [...,error]
-			rv.visitInsn(ATHROW);
-		}
+		return new DeadOpResult(em
+				.emit(gen::genExit, localThis, block, pcGen, ctx)
+				.emit(Op::new_, T_LOWLEVEL_ERROR)
+				.emit(Op::dup)
+				.emit(Op::ldc__a, message)
+				.emit(Op::invokespecial, T_LOWLEVEL_ERROR, "<init>", MDESC_LOWLEVEL_ERROR__$INIT,
+					false)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::retVoid)
+				.emit(Op::athrow));
 	}
 }

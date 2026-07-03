@@ -322,7 +322,7 @@ public class PropertyListMergeManager implements MergeResolver {
 		Object myValue = getValue(myList, propertyName);
 		Object origValue = getValue(origList, propertyName);
 
-		if (!myValue.equals(origValue)) {
+		if (!Objects.equals(myValue, origValue)) {
 			setValue(resultList, propertyName, myList.getType(propertyName), myValue);
 		}
 

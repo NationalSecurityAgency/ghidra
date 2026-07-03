@@ -306,60 +306,44 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testWilcardEntry2() throws Exception {
 
 		Address addr = getAddr(0x1002d6d);
-		int transactionID = program.startTransaction("test");
-		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
-		try {
-			cu.setComment(CommentType.POST, "********** my entry Exit **********");
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
+		tx(program, () -> {
+			CodeUnit cu = program.getListing().getCodeUnitAt(addr);
+			cu.setComment(CommentType.POST, "** my entry Exit **");
+		});
 
 		JTextField tf = findComponent(container, JTextField.class);
 		assertNotNull(tf);
 
-		setTextAndPressEnter(tf, "********** entry Exit **********");
+		setTextAndPressEnter(tf, "** entry Exit **");
 
 		waitForSearchTasks(dialog);
 
-		waitForSwing();
-		cbPlugin.updateNow();
 		ProgramLocation loc = cbPlugin.getCurrentLocation();
-		assertEquals(addr, loc.getAddress());
+
+		assertEquals(addr, loc.getAddress()); // ** my entry Exit **
+
+		pressSearchButton();
+		assertEquals(addr, loc.getAddress()); // * my entry Exit **
+
+		pressSearchButton();
+		assertEquals(addr, loc.getAddress()); //  my entry Exit **
+
+		pressSearchButton();
+		assertEquals(addr, loc.getAddress()); // my entry Exit **
+
+		pressSearchButton();
+		assertEquals(addr, loc.getAddress()); // y entry Exit **
+
+		pressSearchButton();
+		assertEquals(addr, loc.getAddress()); //  entry Exit **
+
+		pressSearchButton();
+		assertEquals(addr, loc.getAddress()); // entry Exit **
 
 		pressSearchButton();
 
 		assertEquals("Not found", dialog.getStatusText());
 
-	}
-
-	@Test
-	public void testWilcardEntry3() throws Exception {
-
-		Address addr = getAddr(0x1002d6d);
-		int transactionID = program.startTransaction("test");
-		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
-		try {
-			cu.setComment(CommentType.POST, "********** ___sbh_find_block Exit **********");
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
-
-		JTextField tf = findComponent(container, JTextField.class);
-		assertNotNull(tf);
-		setTextAndPressEnter(tf, "********** Exit **********");
-
-		waitForSearchTasks(dialog);
-
-		waitForSwing();
-		cbPlugin.updateNow();
-		ProgramLocation loc = cbPlugin.getCurrentLocation();
-		assertEquals(addr, loc.getAddress());
-
-		pressSearchButton();
-
-		assertEquals("Not found", dialog.getStatusText());
 	}
 
 	@Test
@@ -650,6 +634,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			t = dialog1.getTaskScheduler().getCurrentThread();
 		}
 		waitForSwing();
+		cbPlugin.updateNow();
 	}
 
 	private void selectRadioButton(Container guiContainer, String buttonText) throws Exception {

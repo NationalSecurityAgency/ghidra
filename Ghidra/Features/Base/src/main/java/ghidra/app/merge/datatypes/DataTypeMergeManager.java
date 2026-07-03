@@ -528,7 +528,7 @@ public class DataTypeMergeManager implements MergeResolver {
 			}
 			sb.append(dt.getDisplayName());
 			sb.append(", ");
-			if (info.index < 0) {
+			if (info.resultOrdinal < 0) {
 				if (dt instanceof FunctionDefinition) {
 					sb.append("return-type");
 				}
@@ -539,16 +539,16 @@ public class DataTypeMergeManager implements MergeResolver {
 			else {
 				if (dt instanceof FunctionDefinition) {
 					sb.append("param-");
-					sb.append(info.index);
+					sb.append(info.resultOrdinal);
 				}
 				else if (dt instanceof Union) {
 					sb.append("component-");
-					sb.append(info.index);
+					sb.append(info.resultOrdinal);
 				}
 				else if (dt instanceof Structure) {
 					Structure resultStruct = (Structure) info.ht.get(info.id);
 					sb.append("component-");
-					sb.append(info.index);
+					sb.append(info.resultOrdinal);
 					if (!resultStruct.isPackingEnabled()) {
 						sb.append(", offset-");
 						sb.append("0x");
@@ -556,8 +556,8 @@ public class DataTypeMergeManager implements MergeResolver {
 					}
 				}
 				else {
-					sb.append("index-"); // unknown use case
-					sb.append(info.index);
+					sb.append("resultOrdinal-"); // unknown use case
+					sb.append(info.resultOrdinal);
 				}
 
 			}
@@ -1254,36 +1254,19 @@ public class DataTypeMergeManager implements MergeResolver {
 		// Add each of the defined components back in.
 		DataTypeComponent[] comps = sourceDt.getDefinedComponents();
 
-		// Component sequence must be flipped for components that share the same offset
-		// (i.e., when zero-length components exist) to ensure that the insert at offset
-		// does not alter the intended order.
-		List<DataTypeComponent> compList = new ArrayList<>();
-		int prevOffset = -1;
-		int index = -1;
-		for (DataTypeComponent dtc : comps) {
-			int offset = dtc.getOffset();
-			if (offset == prevOffset) {
-				compList.add(index, dtc);
-			}
-			else {
-				prevOffset = offset;
-				index = compList.size();
-				compList.add(dtc);
-			}
-		}
-		comps = null; // prevent improper use
-
 		// Track dependency errors to avoid duplicate popups
 		HashMap<Long, String> badIdDtMsgs = new HashMap<>();
 
-		for (int i = 0; i < compList.size(); i++) {
+		for (int i = 0; i < comps.length; i++) {
 
-			DataTypeComponent sourceComp = compList.get(i);
+			DataTypeComponent sourceComp = comps[i];
+			DataTypeComponent resultComp;
 
 			DataType sourceCompDt = sourceComp.getDataType();
 			BitFieldDataType bfDt = null;
 			String comment = sourceComp.getComment();
 			DataType resultCompDt = null;
+			boolean fixupRequired = false;
 
 			if (sourceComp.isBitFieldComponent()) {
 				// NOTE: primitive type will be used if unable to resolve base type
@@ -1307,13 +1290,7 @@ public class DataTypeMergeManager implements MergeResolver {
 					// Not added so should be in result if it wasn't deleted there.
 					resultCompDt = dtms[RESULT].getDataType(sourceComponentID);
 				}
-				if (resultCompDt == null) {
-					// Not added/resolved yet
-					// put an entry in the fixup list
-					fixUpList.add(new FixUpInfo(sourceDtID, sourceComponentID,
-						sourceComp.getOrdinal(), sourceComp, resolvedDataTypes));
-					fixUpIDSet.add(sourceDtID);
-				}
+				fixupRequired = (resultCompDt == null);
 				if (bfDt != null &&
 					(resultCompDt == null || !BitFieldDataType.isValidBaseDataType(resultCompDt))) {
 					// use primitive type as fixup placeholder
@@ -1335,7 +1312,8 @@ public class DataTypeMergeManager implements MergeResolver {
 				if (packed) {
 					if (bfDt != null) {
 						try {
-							destStruct.addBitField(resultCompDt, bfDt.getDeclaredBitSize(),
+							resultComp =
+								destStruct.addBitField(resultCompDt, bfDt.getDeclaredBitSize(),
 								sourceComp.getFieldName(), comment);
 						}
 						catch (InvalidDataTypeException e) {
@@ -1345,7 +1323,8 @@ public class DataTypeMergeManager implements MergeResolver {
 							comment = buildDataTypeFailureComment(sourceCompDt, e.getMessage(),
 								sourceComp.getComment());
 							try {
-								destStruct.addBitField(primitiveBaseDt, bfDt.getDeclaredBitSize(),
+								resultComp = destStruct.addBitField(primitiveBaseDt,
+									bfDt.getDeclaredBitSize(),
 									sourceComp.getFieldName(), comment);
 							}
 							catch (InvalidDataTypeException exc) {
@@ -1356,13 +1335,15 @@ public class DataTypeMergeManager implements MergeResolver {
 					else if (badMsg == null) {
 						try {
 							// If I have compDt, it should now be from result DTM.
-							destStruct.add(resultCompDt, length, sourceComp.getFieldName(),
+							resultComp =
+								destStruct.add(resultCompDt, length, sourceComp.getFieldName(),
 								comment);
 						}
 						catch (IllegalArgumentException e) {
 							comment =
 								buildDataTypeFailureComment(sourceCompDt, e.getMessage(), comment);
-							destStruct.add(BadDataType.dataType, sourceComp.getLength(),
+							resultComp =
+								destStruct.add(BadDataType.dataType, sourceComp.getLength(),
 								sourceComp.getFieldName(), comment);
 							if (e.getCause() instanceof DataTypeDependencyException) {
 								badIdDtMsgs.put(dtId, e.getMessage());
@@ -1373,14 +1354,15 @@ public class DataTypeMergeManager implements MergeResolver {
 					else {
 						// Preserve non-fixup ordinal with bad placeholder
 						comment = buildDataTypeFailureComment(sourceCompDt, badMsg, comment);
-						destStruct.add(BadDataType.dataType, sourceComp.getLength(),
+						resultComp = destStruct.add(BadDataType.dataType, sourceComp.getLength(),
 							sourceComp.getFieldName(), badMsg + "; " + comment);
 					}
 				}
 				else if (bfDt != null) {
 					// non-packed bitfield
 					try {
-						destStruct.insertBitFieldAt(sourceComp.getOffset(), sourceComp.getLength(),
+						resultComp = destStruct
+								.insertBitFieldAt(sourceComp.getOffset(), sourceComp.getLength(),
 							bfDt.getBitOffset(), resultCompDt, bfDt.getDeclaredBitSize(),
 							sourceComp.getFieldName(), comment);
 					}
@@ -1391,7 +1373,8 @@ public class DataTypeMergeManager implements MergeResolver {
 						comment = buildDataTypeFailureComment(sourceCompDt, e.getMessage(),
 							sourceComp.getComment());
 						try {
-							destStruct.addBitField(primitiveBaseDt, bfDt.getDeclaredBitSize(),
+							resultComp =
+								destStruct.addBitField(primitiveBaseDt, bfDt.getDeclaredBitSize(),
 								sourceComp.getFieldName(), comment);
 						}
 						catch (InvalidDataTypeException exc) {
@@ -1404,9 +1387,9 @@ public class DataTypeMergeManager implements MergeResolver {
 					if (badMsg == null) {
 						try {
 							// If not last component must constrain length to original component size
-							if (i < compList.size() - 1) {
+							if (i < (comps.length - 1)) {
 								int offset = sourceComp.getOffset();
-								DataTypeComponent nextDtc = compList.get(i + 1);
+								DataTypeComponent nextDtc = comps[i + 1];
 								int available = nextDtc.getOffset() - offset;
 								if (length > available) {
 									// The data type is too big, so adjust the component length to what will fit.
@@ -1423,13 +1406,15 @@ public class DataTypeMergeManager implements MergeResolver {
 								}
 							}
 
-							destStruct.insertAtOffset(sourceComp.getOffset(), resultCompDt, length,
+							resultComp = destStruct.insertAtOffset(sourceComp.getOffset(),
+								resultCompDt, length,
 								sourceComp.getFieldName(), comment);
 						}
 						catch (IllegalArgumentException e) {
 							comment =
 								buildDataTypeFailureComment(sourceCompDt, e.getMessage(), comment);
-							destStruct.insertAtOffset(sourceComp.getOffset(), BadDataType.dataType,
+							resultComp = destStruct.insertAtOffset(sourceComp.getOffset(),
+								BadDataType.dataType,
 								length, sourceComp.getFieldName(), comment);
 
 							if (e.getCause() instanceof DataTypeDependencyException) {
@@ -1441,7 +1426,8 @@ public class DataTypeMergeManager implements MergeResolver {
 					else {
 						// Preserve non-fixup ordinal with bad placeholder
 						comment = buildDataTypeFailureComment(sourceCompDt, badMsg, comment);
-						destStruct.insertAtOffset(sourceComp.getOffset(), BadDataType.dataType,
+						resultComp =
+							destStruct.insertAtOffset(sourceComp.getOffset(), BadDataType.dataType,
 							sourceComp.getLength(), sourceComp.getFieldName(), comment);
 					}
 				}
@@ -1450,14 +1436,21 @@ public class DataTypeMergeManager implements MergeResolver {
 				// Add fixup placeholder to prevent the ordinal values and component sizes from 
 				// changing.  Nothing we can do about packing which may be affected.
 				// These should get fixed-up later.
-				destStruct.add(BadDataType.dataType, sourceComp.getLength(),
+				resultComp = destStruct.add(BadDataType.dataType, sourceComp.getLength(),
 					sourceComp.getFieldName(), comment);
 			}
 			else {
 				// Add fixup placeholder to prevent the ordinal values and component sizes from 
 				// changing.  These should get fixed-up later.
-				destStruct.insertAtOffset(sourceComp.getOffset(), BadDataType.dataType,
+				resultComp = destStruct.insertAtOffset(sourceComp.getOffset(), BadDataType.dataType,
 					sourceComp.getLength(), sourceComp.getFieldName(), comment);
+			}
+
+			if (fixupRequired) {
+				// Component datatype has not been added/resolved yet, put an entry in the fixup list
+				fixUpList.add(new FixUpInfo(sourceDtID, sourceComponentID,
+					resultComp.getOrdinal(), sourceComp, resolvedDataTypes));
+				fixUpIDSet.add(sourceDtID);
 			}
 		}
 		if (!packed) {
@@ -2548,22 +2541,22 @@ public class DataTypeMergeManager implements MergeResolver {
 		long lastChangeTime = fd.getLastChangeTime(); // Don't let the time change.
 		try {
 			if (dt != null) {
-				if (info.index < 0) { // -1 for return type
+				if (info.resultOrdinal < 0) { // -1 for return type
 					fd.setReturnType(dt);
 				}
 				else {
 					ParameterDefinition[] args = fd.getArguments();
-					args[info.index].setDataType(dt);
+					args[info.resultOrdinal].setDataType(dt);
 				}
 				return true;
 			}
 
-			if (info.index < 0) { // -1 for return type
+			if (info.resultOrdinal < 0) { // -1 for return type
 				// nowhere to set error comment
 			}
 			else {
 				ParameterDefinition[] args = fd.getArguments();
-				ParameterDefinition arg = args[info.index];
+				ParameterDefinition arg = args[info.resultOrdinal];
 				String comment =
 					buildDataTypeFailureComment(info.componentDataType, null, arg.getComment());
 				arg.setComment(comment);
@@ -2583,15 +2576,15 @@ public class DataTypeMergeManager implements MergeResolver {
 	 * @return false if component not found, else true
 	 */
 	private boolean fixUpPackedStructureComponent(FixUpInfo info, Structure struct, DataType dt) {
-		int ordinal = info.index;
+		int ordinal = info.resultOrdinal;
 
-		DataTypeComponent dtc = null;
+		DataTypeComponent dtc;
 		if (ordinal >= 0 || ordinal < struct.getNumComponents()) {
 			dtc = struct.getComponent(ordinal);
 		}
-
-		if (dtc == null) {
-			throw new AssertException("Expected bad datatype placeholder");
+		else {
+			throw new AssertException(
+				"Expected fixup component at ordinal " + ordinal + " in " + struct.getPathName());
 		}
 
 		long lastChangeTime = struct.getLastChangeTime(); // Don't let the time change.
@@ -2680,11 +2673,15 @@ public class DataTypeMergeManager implements MergeResolver {
 	private boolean fixUpNonPackedStructureComponent(FixUpInfo info, Structure struct,
 			DataType dt) {
 
-		int ordinal = info.index;
+		int ordinal = info.resultOrdinal;
 
-		DataTypeComponent dtc = null;
+		DataTypeComponent dtc;
 		if (ordinal >= 0 || ordinal < struct.getNumComponents()) {
 			dtc = struct.getComponent(ordinal);
+		}
+		else {
+			throw new AssertException(
+				"Expected fixup component at ordinal " + ordinal + " in " + struct.getPathName());
 		}
 
 		long lastChangeTime = struct.getLastChangeTime(); // Don't let the time change.
@@ -2740,35 +2737,13 @@ public class DataTypeMergeManager implements MergeResolver {
 				}
 
 				// handle non-bitfield component fixup
-				int offset = dtc.getOffset();
-				int dtcLength = dtc.getLength();
 				int length = dt.getLength();
 				if (length <= 0) {
-					length = dtcLength;
-				}
-				int bytesNeeded = length - dtcLength;
-				if (bytesNeeded > 0) {
-					int nextOffset = offset + dtcLength;
-					DataTypeComponent nextDefinedDtc =
-						struct.getDefinedComponentAtOrAfterOffset(nextOffset);
-					if (nextDefinedDtc != null) {
-						int bytesAvailable = nextDefinedDtc.getOffset() - nextOffset;
-						if (bytesAvailable < bytesNeeded) {
-							// The data type is too big, so adjust the component length to what will fit.
-							length = dtcLength + bytesAvailable;
-							// Output a warning indicating the structure has a data type that doesn't fit.
-							String message = "Structure Merge: Not enough undefined bytes to fit " +
-								dt.getPathName() + " in structure " + struct.getPathName() +
-								" at offset 0x" + Integer.toHexString(offset) + "." +
-								"\nIt needs " + (bytesNeeded - bytesAvailable) +
-								" more byte(s) to be able to fit.";
-							Msg.warn(this, message);
-						}
-					}
+					length = dtc.getLength();
 				}
 				try {
-					struct.replaceAtOffset(offset, dt, length, dtc.getFieldName(),
-						dtc.getComment());
+					struct.replace(ordinal, dt, length, dtc.getFieldName(), dtc.getComment());
+					return true;
 				}
 				catch (IllegalArgumentException e) {
 					displayError(struct, e);
@@ -2804,7 +2779,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 		String loc;
 		if (struct.isPackingEnabled()) {
-			loc = "ordinal " + info.index;
+			loc = "ordinal " + info.resultOrdinal;
 		}
 		else {
 			loc = "offset 0x" + Integer.toHexString(info.offset);
@@ -2818,7 +2793,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 		DataType compDt = resolve(info.compID, info.getDataTypeManager(), info.ht);
 
-		int ordinal = info.index;
+		int ordinal = info.resultOrdinal;
 
 		DataTypeComponent dtc = null;
 		if (ordinal >= 0 && ordinal <= union.getNumComponents()) {
@@ -2889,7 +2864,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		}
 		Msg.warn(this,
 			"Union Merge: Failed to resolve data type '" + info.componentDataType.getName() +
-				"' at ordinal " + info.index + " in " + union.getPathName());
+				"' at ordinal " + info.resultOrdinal + " in " + union.getPathName());
 		return false;
 	}
 
@@ -2913,7 +2888,7 @@ public class DataTypeMergeManager implements MergeResolver {
 				FixUpInfo info = fixUpList.get(i); // assume info applies to union
 				if (!fixUpUnionComponent(union, info)) {
 					Msg.warn(this, "Union Merge: Failed to apply data type at ordinal " +
-						info.index + " in " + union.getPathName());
+						info.resultOrdinal + " in " + union.getPathName());
 					unresolvedFixups.add(info);
 				}
 			}
@@ -3447,13 +3422,18 @@ public class DataTypeMergeManager implements MergeResolver {
 	 */
 	private class FixUpInfo implements Comparable<FixUpInfo> {
 
-		final long id;
-		final long compID;
-		final DataType componentDataType;
-		final int index;
+		final long id;						// Souce datatype ID
+		final long compID;					// Source datatype ID for component
+		final DataType componentDataType;	// Source component datatype
+
+		// Result ordinal when id represents a container such as a structure/union or
+		// function definition.  In such cases, 'compID' corresponds to the component datatype.
+		// A -1 may be used when not applicable.
+		final int resultOrdinal;
+
 		final MyIdentityHashMap<Long, DataType> ht;
 
-		// component offset - for display/logging use only
+		// source component offset - for display/logging use only
 		// only meaningful for non-packed structure
 		// may not be unique (e.g., bitfields, 0-length components)
 		int offset = -1;
@@ -3468,16 +3448,16 @@ public class DataTypeMergeManager implements MergeResolver {
 		 * @param id source data type ID needing to be fixed up
 		 * @param compID source datatype ID of either param/component or bitfield base type
 		 * @param componentDataType source component/dependency datatype
-		 * @param index offset into non-packed structure, or ordinal into union or packed
-		 * structure; or parameter/return ordinal; for other data types index is not used (specify -1).
+		 * @param resultOrdinal the result ordinal into a structure/union; or 
+		 *              parameter/return ordinal; or -1 for other cases where index is not used
 		 * @param resolvedDataTypes hashtable used for resolving the data type
 		 */
-		FixUpInfo(long id, long compID, DataType componentDataType, int index,
+		FixUpInfo(long id, long compID, DataType componentDataType, int resultOrdinal,
 				MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 			this.id = id;
 			this.compID = compID;
 			this.componentDataType = componentDataType;
-			this.index = index;
+			this.resultOrdinal = resultOrdinal;
 			this.ht = resolvedDataTypes;
 
 			if (componentDataType instanceof BitFieldDataType) {
@@ -3491,13 +3471,13 @@ public class DataTypeMergeManager implements MergeResolver {
 		 * or components were resolved.
 		 * @param id id of data type needing to be fixed up
 		 * @param compID datatype ID of either param/component or bitfield base type
-		 * @param destOrdinal component ordinal within destination composite
+		 * @param resultOrdinal component ordinal within result composite
 		 * @param sourceDtc associated composite datatype component
 		 * @param resolvedDataTypes hashtable used for resolving the data type
 		 */
-		FixUpInfo(long id, long compID, int destOrdinal, DataTypeComponent sourceDtc,
+		FixUpInfo(long id, long compID, int resultOrdinal, DataTypeComponent sourceDtc,
 				MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
-			this(id, compID, getDataType(sourceDtc), destOrdinal, resolvedDataTypes);
+			this(id, compID, getDataType(sourceDtc), resultOrdinal, resolvedDataTypes);
 			offset = sourceDtc.getOffset();
 			if (sourceDtc.isBitFieldComponent()) {
 				BitFieldDataType bfDt = (BitFieldDataType) sourceDtc.getDataType();
@@ -3516,11 +3496,11 @@ public class DataTypeMergeManager implements MergeResolver {
 
 		@Override
 		public int compareTo(FixUpInfo o) {
-			// Compare such that items are grouped by id and sort such that the greatest index
+			// Compare such that items are grouped by id and sort such that the greatest resultOrdinal
 			// is first within that group.
 			long c = id - o.id;
 			if (c == 0) {
-				c = Integer.toUnsignedLong(o.index) - Integer.toUnsignedLong(index);
+				c = Integer.toUnsignedLong(o.resultOrdinal) - Integer.toUnsignedLong(resultOrdinal);
 			}
 			if (c == 0) {
 				return 0;
@@ -3546,7 +3526,8 @@ public class DataTypeMergeManager implements MergeResolver {
 			}
 			return "\n" + "ID = " + Long.toHexString(id) + ",\ndt = " + dtm.getDataType(id) +
 				",\ncomponent ID = " + Long.toHexString(compID) + ",\ncomponent dt = " +
-				dtm.getDataType(compID) + ",\noffset/index = " + index + ",\n" + bitInfo + "ht = " +
+				dtm.getDataType(compID) + ",\nresultOrdinal = " + resultOrdinal + ",\n" + bitInfo +
+				"ht = " +
 				htStr + "\n";
 		}
 

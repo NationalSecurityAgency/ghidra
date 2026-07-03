@@ -15,6 +15,8 @@
  */
 package ghidra.pcode.emulate;
 
+import ghidra.pcode.emu.PcodeMachine;
+import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary;
 import ghidra.pcode.pcoderaw.PcodeOpRaw;
 import ghidra.program.model.address.Address;
 
@@ -31,7 +33,11 @@ import ghidra.program.model.address.Address;
  *
  * depending on whether the breakpoint is tailored for a particular pcode op or for
  * a machine address.
+ * 
+ * @deprecated Use {@link PcodeMachine#inject(Address, String)}. By injecting a userop invocation,
+ *  you can receive a callback in a {@link AnnotatedPcodeUseropLibrary}.
  */
+@Deprecated(since = "12.1", forRemoval = true)
 public class BreakCallBack {
 	protected Emulate emulate;		// The emulator currently associated with this breakpoint
 

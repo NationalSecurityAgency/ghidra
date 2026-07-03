@@ -43,8 +43,7 @@ import ghidra.program.model.symbol.*;
 public class AutoRenameSimpleLabels extends GhidraScript {
 
 	boolean isDefaultName(Symbol symbol) {
-		return symbol.getSource() == SourceType.DEFAULT ||
-			symbol.getSource() == SourceType.ANALYSIS;
+		return symbol.getSource().isLowerOrEqualPriorityThan(SourceType.ANALYSIS);
 	}
 
 	@Override
@@ -61,6 +60,9 @@ public class AutoRenameSimpleLabels extends GhidraScript {
 			//get this instruction's info
 			Symbol s = iter.next();
 			Address startAddr = s.getAddress();
+			if (!startAddr.isLoadedMemoryAddress()) {
+				continue;
+			}
 
 			// read the instruction type and operand
 			Instruction inst = getInstructionAt(startAddr);
@@ -112,6 +114,10 @@ public class AutoRenameSimpleLabels extends GhidraScript {
 			else if (flow.isJump()) {
 				//println("unconditional jump instruction at " + startAddr.toString(false).toUpperCase() );
 				newName = "branch_" + startAddr.toString(false).toUpperCase() + "_" + operand;
+				// The operand representation can contain characters that are not valid in a
+				// symbol name (e.g. "dword ptr [EBP*0x4 + 0x10029dec]"), which would cause
+				// setName() to throw an InvalidInputException. Sanitize before use.
+				newName = SymbolUtilities.replaceInvalidChars(newName, true);
 				// NOTE: can't end on a hex number for operands that start with 'LAB_CODE' ??
 				// so append '_' 
 				// ???

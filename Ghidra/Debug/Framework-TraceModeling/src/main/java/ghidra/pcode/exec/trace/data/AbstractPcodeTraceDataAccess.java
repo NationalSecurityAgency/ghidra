@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.util.TraceRegisterUtils;
 
 /**
@@ -130,8 +131,7 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 
 		AddressSet hostSet = new AddressSet(toOverlay(hostRange));
 		for (long snap : viewport.getOrderedSnaps()) {
-			hostSet.delete(
-				ops.getAddressesWithState(snap, hostSet, s -> s == TraceMemoryState.KNOWN));
+			hostSet.delete(ops.getAddressesWithState(snap, hostSet, StatePredicate.IS_KNOWN));
 		}
 		return hostSet.isEmpty() ? TraceMemoryState.KNOWN : TraceMemoryState.UNKNOWN;
 	}
@@ -147,32 +147,18 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 		AddressSet hostKnown = new AddressSet();
 		if (useFullSpans) {
 			for (Lifespan span : viewport.getOrderedSpans()) {
-				hostKnown.add(ops.getAddressesWithState(span, hostView,
-					st -> st != null && st != TraceMemoryState.UNKNOWN));
+				hostKnown.add(
+					ops.getAddressesWithState(span, hostView, StatePredicate.IS_KNOWN_OR_ERROR));
 			}
 		}
 		else {
 			for (long snap : viewport.getOrderedSnaps()) {
-				hostKnown.add(ops.getAddressesWithState(snap, hostView,
-					st -> st != null && st != TraceMemoryState.UNKNOWN));
+				hostKnown.add(
+					ops.getAddressesWithState(snap, hostView, StatePredicate.IS_KNOWN_OR_ERROR));
 			}
 		}
 		AddressSetView hostResult =
 			TraceRegisterUtils.getPhysicalSet(hostView.intersect(hostKnown));
-		return platform.mapHostToGuest(hostResult);
-	}
-
-	@Override
-	public AddressSetView intersectUnknown(AddressSetView guestView) {
-		TraceMemoryOperations ops = getMemoryOps(false);
-		if (ops == null) {
-			return guestView;
-		}
-
-		AddressSetView hostView = toOverlay(platform.mapGuestToHost(guestView));
-		AddressSetView hostKnown = ops.getAddressesWithState(snap, hostView,
-			s -> s != null && s != TraceMemoryState.UNKNOWN);
-		AddressSetView hostResult = TraceRegisterUtils.getPhysicalSet(hostView.subtract(hostKnown));
 		return platform.mapHostToGuest(hostResult);
 	}
 

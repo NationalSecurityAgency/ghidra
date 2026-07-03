@@ -87,9 +87,9 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 		// Demangle external symbols after memory symbols.
 		// This is done to compensate for cases where the mangled name on externals may be lost
 		// after demangling when an alternate Ordinal symbol exists.  The external mangled
-		// name is helpful in preserving thunk relationships when a mangled symbols have been
-		// placed on a thunk.  It is assumed that analyzer is presented with entire
-		// EXTERNAL space in set (all or none).
+		// name is helpful in preserving thunk relationships when mangled symbols have been
+		// placed on a thunk.  It is assumed that this analyzer is presented with the entire
+		// EXTERNAL space in the given set (all or none).
 		boolean demangleExternals = set.contains(EXTERNAL_SET.getMinAddress());
 		if (demangleExternals) {
 			set = set.subtract(EXTERNAL_SET);
@@ -126,50 +126,54 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			throws CancelledException {
 
 		int count = initialCount;
-		SymbolTable symbolTable = program.getSymbolTable();
-		// TODO: iterator will continually need to reinitialize due to symbol changes
+
+		// Note: iterator will continually need to reinitialize due to symbol changes
 		//       consider copying primary symbols to alt storage for iteration
+		SymbolTable symbolTable = program.getSymbolTable();
 		SymbolIterator it = symbolTable.getPrimarySymbolIterator(set, true);
 		while (it.hasNext()) {
 			monitor.checkCancelled();
 
 			if (++count % 100 == 0) {
-				monitor.setMessage(getName() + " - " + count + " symbols");
+				monitor.setMessage("%s - %s symbols".formatted(getName(), count));
 			}
 
-			Symbol symbol = it.next();
-			if (skipSymbol(symbol)) {
-				continue;
-			}
+			Symbol primarySymbol = it.next();
+			if (!skipSymbol(primarySymbol)) {
 
-			Address address = symbol.getAddress();
-			MangledContext mangledContext = createMangledContext(program, options, symbol);
-			DemangledObject demangled = demangle(mangledContext, log);
-			if (demangled != null) {
-				apply(mangledContext, demangled, log, monitor);
-				continue;
-			}
-
-			// Only attempt to demangle a non-primary symbol if primary is imported and will
-			// not demangle.
-			if (symbol.getSource() != SourceType.IMPORTED) {
-				continue;
-			}
-
-			for (Symbol altSym : symbolTable.getSymbols(address)) {
-				if (altSym.isPrimary() || skipSymbol(altSym)) {
-					continue;
-				}
-				mangledContext = createMangledContext(program, options, altSym);
-				demangled = demangle(mangledContext, log);
+				MangledContext mangledContext =
+					createMangledContext(program, options, primarySymbol);
+				DemangledObject demangled = demangle(mangledContext, log);
 				if (demangled != null) {
-					apply(mangledContext, demangled, log, monitor);
-					break;
+					apply(mangledContext, demangled, true, log, monitor);
 				}
 			}
 
+			Address address = primarySymbol.getAddress();
+			demangleNonPrimarySymbols(program, address, options, log, monitor);
 		}
+
 		return count;
+	}
+
+	private void demangleNonPrimarySymbols(Program program, Address address,
+			DemanglerOptions options, MessageLog log, TaskMonitor monitor)
+			throws CancelledException {
+
+		SymbolTable symbolTable = program.getSymbolTable();
+		for (Symbol symbol : symbolTable.getSymbols(address)) {
+			monitor.checkCancelled();
+
+			if (symbol.isPrimary() || skipSymbol(symbol)) {
+				continue;
+			}
+
+			MangledContext context = createMangledContext(program, options, symbol);
+			DemangledObject demangled = demangle(context, log);
+			if (demangled != null) {
+				apply(context, demangled, false, log, monitor);
+			}
+		}
 	}
 
 	/**
@@ -224,7 +228,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 		if (symbol.getSymbolType() == SymbolType.FUNCTION) {
 			Function function = (Function) symbol.getObject();
 			if (!function.isThunk() &&
-				function.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
+				function.getSignatureSource().isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
 				return true;
 			}
 		}
@@ -266,15 +270,17 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 		}
 		catch (Throwable e) {
 
-			if (e instanceof DemangledException) {
-				if (((DemangledException) e).isInvalidMangledName()) {
-					//ignore invalid names, consider as not an error
-					return null;
+			if (e instanceof DemangledException de) {
+				if (de.isInvalidMangledName()) {
+					return null; // ignore invalid names, consider as not an error
 				}
 			}
 
-			log.appendMsg(getName(), "Unable to demangle symbol: " + mangledContext.getMangled() +
-				" at " + mangledContext.getAddress() + ".  Message: " + e.getMessage());
+			String mangled = mangledContext.getMangled();
+			Address addr = mangledContext.getAddress();
+			String msg = e.getMessage();
+			log.appendMsg(
+				"Unable to demangle symbol: %s at %s.  Message: %s".formatted(mangled, addr, msg));
 			return null;
 		}
 
@@ -286,22 +292,28 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 	 *
 	 * @param mangledContext the mangled context
 	 * @param demangled the demangled object
-	 * @param log the error log
+	 * @param isPrimary true if the symbol being demangle is the primary symbol
+	 * @param log the error log	 
 	 * @param monitor the task monitor
 	 */
-	protected void apply(MangledContext mangledContext, DemangledObject demangled, MessageLog log,
-			TaskMonitor monitor) {
+	protected void apply(MangledContext mangledContext, DemangledObject demangled,
+			boolean isPrimary, MessageLog log, TaskMonitor monitor) {
+
+		demangled.setPrimary(isPrimary);
+
+		Program program = mangledContext.getProgram();
+		Address addr = mangledContext.getAddress();
+		DemanglerOptions options = mangledContext.getOptions();
 		try {
-			if (demangled.applyTo(mangledContext.getProgram(), mangledContext.getAddress(),
-				mangledContext.getOptions(), monitor)) {
+			if (demangled.applyTo(program, addr, options, monitor)) {
 				return;
 			}
+
 			String errorString = demangled.getErrorMessage();
-			logApplyErrorMessage(log, demangled, mangledContext.getAddress(), null,
-				errorString);
+			logApplyErrorMessage(log, demangled, addr, null, errorString);
 		}
 		catch (Exception e) {
-			logApplyErrorMessage(log, demangled, mangledContext.getAddress(), e, null);
+			logApplyErrorMessage(log, demangled, addr, e, null);
 		}
 
 	}

@@ -56,6 +56,7 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.path.*;
@@ -70,10 +71,12 @@ import ghidra.util.exception.DuplicateFileException;
 
 public class TraceRmiHandler extends AbstractTraceRmiConnection {
 	/**
-	 * NOTE: This can't just be Application.getApplicationVersion(), because the Python client only
-	 * specifies up to the minor, not patch, release.
+	 * NOTE: This can't just be {@link Application#getApplicationVersion()}, because the Python
+	 * client only specifies up to the minor, not patch, release.
 	 */
-	public static final String VERSION = "11.5";
+	public static final String VERSION = "12.2";
+
+	public static final int MAX_MSG_LENGTH = 1 << 16; // 64K should be plenty and not cause OOM
 
 	protected static class VersionMismatchError extends TraceRmiError {
 		public VersionMismatchError(String remote) {
@@ -416,7 +419,11 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 	protected static void sendDelimited(OutputStream out, RootMessage msg, long dbgSeq)
 			throws IOException {
 		ByteBuffer buf = ByteBuffer.allocate(Integer.BYTES);
-		buf.putInt(msg.getSerializedSize());
+		int len = msg.getSerializedSize();
+		if (len > MAX_MSG_LENGTH) {
+			throw new TraceRmiError("Cannot send TraceRmi message with excessive length");
+		}
+		buf.putInt(len);
 		out.write(buf.array());
 		msg.writeTo(out);
 		out.flush();
@@ -441,6 +448,10 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 			return null;
 		}
 		int len = ByteBuffer.wrap(lenBuf).getInt();
+		if (len > MAX_MSG_LENGTH) {
+			throw new TraceRmiError(
+				"Cannot receive TraceRmi message with excessive message length");
+		}
 		byte[] datBuf = recvAll(in, len);
 		if (datBuf == null) {
 			return null;
@@ -504,10 +515,10 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 
 	protected void negotiate() {
 		RootMessage req = receive();
-		RootMessage rep = dispatchNegotiate.handle(req);
 		if (req == null) {
 			throw new TraceRmiError("Could not receive negotiation request");
 		}
+		RootMessage rep = dispatchNegotiate.handle(req);
 		if (!send(rep)) {
 			throw new TraceRmiError("Could not respond during negotiation");
 		}
@@ -926,11 +937,10 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 		TraceMemoryManager memoryManager = open.trace.getMemoryManager();
 		AddressSetView readOnly =
 			memoryManager.getRegionsAddressSetWith(snap, r -> !r.isWrite(snap));
-		AddressSetView everKnown = memoryManager.getAddressesWithState(Lifespan.since(snap),
-			s -> s == TraceMemoryState.KNOWN);
+		AddressSetView everKnown =
+			memoryManager.getAddressesWithState(Lifespan.since(snap), StatePredicate.IS_KNOWN);
 		AddressSetView roEverKnown = new IntersectionAddressSetView(readOnly, everKnown);
-		AddressSetView known =
-			memoryManager.getAddressesWithState(snap, s -> s == TraceMemoryState.KNOWN);
+		AddressSetView known = memoryManager.getAddressesWithState(snap, StatePredicate.IS_KNOWN);
 		AddressSetView disassemblable = new AddressSet(new UnionAddressSetView(known, roEverKnown));
 
 		Address start = open.toAddress(req.getStart(), true);
@@ -948,6 +958,18 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 		return ReplyDisassemble.newBuilder()
 				.setLength(result == null ? 0 : result.getNumAddresses())
 				.build();
+	}
+
+	protected void checkRestoreEvents(OpenTrace open) {
+		final boolean restoreEvents;
+		synchronized (openTxes) {
+			restoreEvents = openTxes.keySet()
+					.stream()
+					.noneMatch(id -> id.doId.equals(open.doId));
+		}
+		if (restoreEvents) {
+			open.trace.setEventsEnabled(true);
+		}
 	}
 
 	protected ReplyEndTx handleEndTx(RequestEndTx req) {
@@ -973,16 +995,8 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 		}
 
 		tx.tx.close();
+		checkRestoreEvents(open);
 
-		final boolean restoreEvents;
-		synchronized (openTxes) {
-			restoreEvents = openTxes.keySet()
-					.stream()
-					.noneMatch(id -> id.doId.domObjId == req.getOid().getId());
-		}
-		if (restoreEvents) {
-			open.trace.setEventsEnabled(true);
-		}
 		Swing.runLater(
 			() -> plugin.listeners.invoke().transactionClosed(this, open.target, req.getAbort()));
 		return ReplyEndTx.getDefaultInstance();
@@ -1329,7 +1343,9 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 
 	@Override
 	public boolean isBusy() {
-		return !openTxes.isEmpty();
+		synchronized (openTxes) {
+			return !openTxes.isEmpty();
+		}
 	}
 
 	@Override
@@ -1339,11 +1355,33 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 			return false;
 		}
 
-		for (Tid tid : openTxes.keySet()) {
-			if (Objects.equals(openTrace.doId, tid.doId)) {
-				return true;
+		synchronized (openTxes) {
+			for (Tid tid : openTxes.keySet()) {
+				if (Objects.equals(openTrace.doId, tid.doId)) {
+					return true;
+				}
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public void forciblyCloseTransactions(Target target) {
+		OpenTrace open = openTraces.getByTrace(target.getTrace());
+		if (open == null || open.target != target) {
+			return;
+		}
+		synchronized (openTxes) {
+			for (OpenTx tx : List.copyOf(openTxes.values())) {
+				if (Objects.equals(open.doId, tx.txId.doId)) {
+					openTxes.remove(tx.txId);
+					tx.tx.commit();
+					tx.tx.close();
+					Swing.runLater(
+						() -> plugin.listeners.invoke().transactionClosed(this, target, false));
+				}
+			}
+		}
+		open.trace.setEventsEnabled(true);
 	}
 }

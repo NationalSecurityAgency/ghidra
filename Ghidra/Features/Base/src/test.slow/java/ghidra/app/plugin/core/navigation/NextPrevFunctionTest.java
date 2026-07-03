@@ -47,7 +47,6 @@ public class NextPrevFunctionTest extends AbstractGhidraHeadedIntegrationTest {
 		return addrFactory.getAddress(address);
 	}
 
-	@SuppressWarnings("unchecked") // we know that bookmarks is of type String
 	@Before
 	public void setUp() throws Exception {
 		env = new TestEnv();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,11 +63,12 @@ public:
 	 error_unimplemented = 8,	///< Throw an exception for flow into unimplemented instructions
 	 error_reinterpreted = 0x10,	///< Throw an exception for flow into previously encountered data at a difference \e cut
 	 error_toomanyinstructions = 0x20,	///< Throw an exception if too many instructions are encountered
-	 unimplemented_present = 0x40,	///< Indicate we have encountered unimplemented instructions
-	 baddata_present = 0x80,	///< Indicate we have encountered flow into unaccessible data
-	 outofbounds_present = 0x100,	///< Indicate we have encountered flow out of the specified range
-	 reinterpreted_present = 0x200,	///< Indicate we have encountered reinterpreted data
-	 toomanyinstructions_present = 0x400, 	///< Indicate the maximum instruction threshold was reached
+	 error_baddata = 0x40,		///< Throw an exception if an instruction cannot be decoded
+	 unimplemented_present = 0x80,	///< Indicate we have encountered unimplemented instructions
+	 baddata_present = 0x100,	///< Indicate we have encountered flow into unaccessible data
+	 outofbounds_present = 0x200,	///< Indicate we have encountered flow out of the specified range
+	 reinterpreted_present = 0x400,	///< Indicate we have encountered reinterpreted data
+	 toomanyinstructions_present = 0x800, 	///< Indicate the maximum instruction threshold was reached
 	 possible_unreachable = 0x1000,	///< Indicate a CALL was converted to a BRANCH and some code may be unreachable
 	 flow_forinline = 0x2000,	///< Indicate flow is being generated to in-line (a function)
 	 record_jumploads = 0x4000	///< Indicate that any jump table recovery should record the table structure
@@ -99,6 +100,7 @@ private:
   Address maxaddr;			///< End of actual function range
   bool flowoverride_present;		///< Does the function have registered flow override instructions
   uint4 flags;				///< Boolean options for flow following
+  uint4 baddata_count;			///< Number of instructions that could not be disassembled
   Funcdata *inline_head;		///< First function in the in-lining chain
   set<Address> *inline_recursion;	///< Active list of addresses for function that are in-lined
   set<Address> inline_base;		///< Storage for addresses of functions that are in-lined
@@ -122,6 +124,7 @@ private:
   void connectBasic(void);				///< Generate edges between basic blocks
   bool setFallthruBound(Address &bound);		///< Find end of the next unprocessed region
   void handleOutOfBounds(const Address &fromaddr,const Address &toaddr);
+  void countBadData(const string &errMsg);		///< Increment bad data counter
   PcodeOp *artificialHalt(const Address &addr,uint4 flag);	///< Create an artificial halt p-code op
   void reinterpreted(const Address &addr);		///< Generate warning message or exception for a \e reinterpreted address
   bool checkForFlowModification(FuncCallSpecs &fspecs);
@@ -138,7 +141,6 @@ private:
   void recoverJumpTables(vector<JumpTable *> &newTables,vector<PcodeOp *> &notreached);
   void deleteCallSpec(FuncCallSpecs *fc);		///< Remove the given call site from the list for \b this function
   void truncateIndirectJump(PcodeOp *op,JumpTable::RecoveryMode mode);  ///< Treat indirect jump as CALLIND/RETURN
-  static bool isInArray(vector<PcodeOp *> &array,PcodeOp *op);
 public:
   FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,vector<FuncCallSpecs *> &q);	///< Constructor
   FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,vector<FuncCallSpecs *> &q,const FlowInfo *op2);	///< Cloning constructor
@@ -148,6 +150,7 @@ public:
   void clearFlags(uint4 val) { flags &= ~val; }	///< Disable a specific option
   PcodeOp *target(const Address &addr) const;	///< Return first p-code op for instruction at given address
   PcodeOp *branchTarget(PcodeOp *op) const;	///< Find the target referred to by a given BRANCH or CBRANCH
+  void updateTarget(PcodeOp *oldOp,PcodeOp *newOp);	///< Update the branch target for an inlined p-code op
   void generateOps(void);			///< Generate raw control-flow from the function's base address
   void generateBlocks(void);			///< Generate basic blocks from the raw control-flow
   bool testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address &retaddr);

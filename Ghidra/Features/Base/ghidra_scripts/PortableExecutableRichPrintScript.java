@@ -16,7 +16,7 @@
 // This script displays data about Microsoft development tools (compilers, linkers, etc.) 
 // used to build objects within program as stored in the Rich header and table.
 //
-//@category Windows
+//@category
 //@keybinding 
 //@menupath 
 //@toolbar 
@@ -80,8 +80,12 @@ public class PortableExecutableRichPrintScript extends GhidraScript {
 			MSProductType prodType = prod == null ? MSProductType.Unknown : prod.getProductType();
 
 			if (prodType != MSProductType.Unknown) {
-				sb.append(prodType).append(" from ").append(prodVersion).append(", build ").append(
-					compid.getBuildNumber());
+				sb.append(prodType)
+						.append(" from ")
+						.append(prodVersion)
+						.append(", build ")
+						.append(
+							compid.getBuildNumber());
 			}
 			else {
 				sb.append(prodVersion);
@@ -154,7 +158,7 @@ public class PortableExecutableRichPrintScript extends GhidraScript {
 				.filter(id -> id > LINKER_VERSION_5_PRODUCTID)
 				.collect(Collectors.counting());		
 		// @formatter:on
-		
+
 		return version5OrGreater != 0;
 	}
 

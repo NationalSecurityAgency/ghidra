@@ -21,9 +21,7 @@ import javax.help.UnsupportedOperationException;
 import javax.swing.Icon;
 
 import ghidra.framework.model.*;
-import ghidra.framework.store.FileSystem;
-import ghidra.framework.store.FolderItem;
-import ghidra.framework.store.local.UnknownFolderItem;
+import ghidra.framework.store.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.exception.CancelledException;

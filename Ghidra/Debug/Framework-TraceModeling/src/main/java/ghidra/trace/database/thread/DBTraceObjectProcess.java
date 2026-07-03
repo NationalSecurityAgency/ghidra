@@ -18,10 +18,10 @@ package ghidra.trace.database.thread;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.thread.TraceObjectProcess;
+import ghidra.trace.model.thread.TraceProcess;
 import ghidra.trace.util.TraceChangeRecord;
 
-public class DBTraceObjectProcess implements TraceObjectProcess, DBTraceObjectInterface {
+public class DBTraceObjectProcess implements TraceProcess, DBTraceObjectInterface {
 	private final DBTraceObject object;
 
 	public DBTraceObjectProcess(DBTraceObject object) {

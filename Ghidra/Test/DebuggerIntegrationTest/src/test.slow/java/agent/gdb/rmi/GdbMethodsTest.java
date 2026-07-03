@@ -15,8 +15,10 @@
  */
 package agent.gdb.rmi;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeFalse;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -31,6 +33,7 @@ import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.debug.api.tracermi.RemoteMethod;
+import ghidra.debug.api.tracermi.TraceRmiError;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.Float10DataType;
@@ -40,7 +43,7 @@ import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.memory.TraceMemoryRegion;
@@ -54,6 +57,8 @@ import ghidra.trace.model.target.path.PathPattern;
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
+	private final static long CAPTURE_PC_TIMEOUT_MILLIS = 3000;
+
 	@Test
 	public void testExecuteCapture() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
@@ -66,20 +71,23 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testExecute() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			RemoteMethod execute = conn.getMethod("execute");
 			execute.invoke(Map.of("cmd", """
-					file bash
-					start
+					file %s
+					%s
 					ghidra trace start
-					kill"""));
+					kill""".formatted(target, PLAT.startCmd())));
 		}
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 			// Just confirm it's present
 		}
 	}
 
 	@Test
 	public void testRefreshAvailable() throws Exception {
+		// NB: Windows gdb probably not sufficiently current
+		assumeFalse(IS_WINDOWS);
 		try (GdbAndConnection conn = startAndConnectGdb()) {
 			conn.execute("""
 					ghidra trace start
@@ -104,14 +112,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testRefreshBreakpoints() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
 					starti"""
-					.formatted(INSTRUMENT_STOPPED));
+					.formatted(target, INSTRUMENT_STOPPED));
 			RemoteMethod refreshBreakpoints = conn.getMethod("refresh_breakpoints");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -137,20 +146,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 				// NB. starti avoid use of temporary main breakpoint
 				assertBreakLoc(infBreakLocVals.get(0), "[1.1]", main, 1,
-					Set.of(TraceBreakpointKind.SW_EXECUTE),
-					"*main");
+					CommonSet.SWX.kinds(), "*main");
 				assertBreakLoc(infBreakLocVals.get(1), "[2.1]", main.add(10), 1,
-					Set.of(TraceBreakpointKind.HW_EXECUTE),
-					"*main+10");
+					CommonSet.HWX.kinds(), "*main+10");
 				assertBreakLoc(infBreakLocVals.get(2), "[3.1]", main.add(20), 1,
-					Set.of(TraceBreakpointKind.WRITE),
-					"-location *((char*)(&main+20))");
+					CommonSet.WRITE.kinds(), "-location *((char*)(&main+20))");
 				assertBreakLoc(infBreakLocVals.get(3), "[4.1]", main.add(30), 8,
-					Set.of(TraceBreakpointKind.READ),
-					"-location *((char(*)[8])(&main+30))");
+					CommonSet.READ.kinds(), "-location *((char(*)[8])(&main+30))");
 				assertBreakLoc(infBreakLocVals.get(4), "[5.1]", main.add(40), 5,
-					Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE),
-					"-location *((char(*)[5])(&main+40))");
+					CommonSet.ACCESS.kinds(), "-location *((char(*)[5])(&main+40))");
 			}
 		}
 	}
@@ -158,15 +162,16 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testRefreshInfBreakpoints() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
 					ghidra trace tx-open "Fake" 'ghidra trace create-obj Inferiors[1].Breakpoints'
 					starti"""
-					.formatted(INSTRUMENT_STOPPED));
+					.formatted(target, INSTRUMENT_STOPPED));
 			RemoteMethod refreshInfBreakpoints = conn.getMethod("refresh_inf_breakpoints");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -192,20 +197,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 				// NB. starti avoid use of temporary main breakpoint
 				assertBreakLoc(infBreakLocVals.get(0), "[1.1]", main, 1,
-					Set.of(TraceBreakpointKind.SW_EXECUTE),
-					"*main");
+					CommonSet.SWX.kinds(), "*main");
 				assertBreakLoc(infBreakLocVals.get(1), "[2.1]", main.add(10), 1,
-					Set.of(TraceBreakpointKind.HW_EXECUTE),
-					"*main+10");
+					CommonSet.HWX.kinds(), "*main+10");
 				assertBreakLoc(infBreakLocVals.get(2), "[3.1]", main.add(20), 1,
-					Set.of(TraceBreakpointKind.WRITE),
-					"-location *((char*)(&main+20))");
+					CommonSet.WRITE.kinds(), "-location *((char*)(&main+20))");
 				assertBreakLoc(infBreakLocVals.get(3), "[4.1]", main.add(30), 8,
-					Set.of(TraceBreakpointKind.READ),
-					"-location *((char(*)[8])(&main+30))");
+					CommonSet.READ.kinds(), "-location *((char(*)[8])(&main+30))");
 				assertBreakLoc(infBreakLocVals.get(4), "[5.1]", main.add(40), 5,
-					Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE),
-					"-location *((char(*)[5])(&main+40))");
+					CommonSet.ACCESS.kinds(), "-location *((char(*)[5])(&main+40))");
 			}
 		}
 	}
@@ -237,14 +237,16 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testRefreshEnvironment() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			String path = "Inferiors[1].Environment";
 			conn.execute("""
-					file bash
+					file %s
 					start
 					ghidra trace start
-					ghidra trace tx-open "Fake" 'ghidra trace create-obj %s'""".formatted(path));
+					ghidra trace tx-open "Fake" 'ghidra trace create-obj %s'""".formatted(target,
+				path));
 			RemoteMethod refreshEnvironment = conn.getMethod("refresh_environment");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				TraceObject env = Objects.requireNonNull(tb.obj(path));
 
@@ -253,7 +255,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				// Assumes GDB on Linux amd64
 				assertEquals("gdb", env.getValue(0, "_debugger").getValue());
 				assertEquals("i386:x86-64", env.getValue(0, "_arch").getValue());
-				assertEquals("GNU/Linux", env.getValue(0, "_os").getValue());
+				assertEquals(PLAT.os(), env.getValue(0, "_os").getValue());
 				assertEquals("little", env.getValue(0, "_endian").getValue());
 			}
 		}
@@ -262,14 +264,16 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testRefreshThreads() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			String path = "Inferiors[1].Threads";
 			conn.execute("""
-					file bash
+					file %s
 					start
 					ghidra trace start
-					ghidra trace tx-open "Fake" 'ghidra trace create-obj %s'""".formatted(path));
+					ghidra trace tx-open "Fake" 'ghidra trace create-obj %s'""".formatted(target,
+				path));
 			RemoteMethod refreshThreads = conn.getMethod("refresh_threads");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				TraceObject threads = Objects.requireNonNull(tb.obj(path));
 
@@ -284,17 +288,18 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testRefreshStack() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expRead");
 			String path = "Inferiors[1].Threads[1].Stack";
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
 					ghidra trace tx-open "Fake" 'ghidra trace create-obj %s'
-					break read
+					break wrapread
 					run"""
-					.formatted(INSTRUMENT_STOPPED, path));
+					.formatted(target, INSTRUMENT_STOPPED, path));
 			RemoteMethod refreshStack = conn.getMethod("refresh_stack");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expRead"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -307,32 +312,33 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 							PathFilter.parse("Inferiors[1].Threads[1].Stack[]"))
 						.map(p -> p.getDestination(null))
 						.toList();
-				assertThat(list.size(), greaterThan(2));
+				assertEquals(list.size(), 2);
 			}
 		}
 	}
 
 	@Test
 	public void testRefreshRegisters() throws Exception {
-		String count = IntStream.iterate(0, i -> i < 32, i -> i + 1)
+		String count = IntStream.iterate(0, i -> i < 16, i -> i + 1)
 				.mapToObj(Integer::toString)
 				.collect(Collectors.joining(",", "{", "}"));
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			String path = "Inferiors[1].Threads[1].Stack[0].Registers";
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
 					ghidra trace tx-open "Fake" 'ghidra trace create-obj %s'
 					start"""
-					.formatted(INSTRUMENT_STOPPED, path));
+					.formatted(target, INSTRUMENT_STOPPED, path));
 			RemoteMethod refreshRegisters = conn.getMethod("refresh_registers");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
 				conn.execute("""
-						set $ymm0.v32_int8 = %s
+						set $xmm0.v16_int8 = %s
 						set $st0 = 1.5
 						""".formatted(count));
 
@@ -345,7 +351,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				TraceMemorySpace regs = tb.trace.getMemoryManager().getMemorySpace(t1f0, false);
 				RegisterValue ymm0 = regs.getValue(snap, tb.reg("ymm0"));
 				// GDB treats registers in arch's endian
-				assertEquals("1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100",
+				assertEquals("f0e0d0c0b0a09080706050403020100",
 					ymm0.getUnsignedValue().toString(16));
 
 				TraceData st0;
@@ -365,14 +371,16 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testRefreshMappings() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			String path = "Inferiors[1].Memory";
 			conn.execute("""
-					file bash
-					start
+					file %s
+					%s
 					ghidra trace start
-					ghidra trace tx-open "Fake" 'ghidra trace create-obj %s'""".formatted(path));
+					ghidra trace tx-open "Fake" 'ghidra trace create-obj %s'""".formatted(target,
+				PLAT.startCmd(), path));
 			RemoteMethod refreshMappings = conn.getMethod("refresh_mappings");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				TraceObject memory = Objects.requireNonNull(tb.obj(path));
 
@@ -381,7 +389,13 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				// Would be nice to control / validate the specifics
 				Collection<? extends TraceMemoryRegion> all =
 					tb.trace.getMemoryManager().getAllRegions();
-				assertThat(all.size(), greaterThan(2));
+				if (IS_WINDOWS) {
+					// NB: "info proc mappings" not supported for current gdb on Windows
+					assertEquals(all.size(), 1);
+				}
+				else {
+					assertThat(all.size(), greaterThan(2));
+				}
 			}
 		}
 	}
@@ -389,14 +403,16 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testRefreshModules() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			String path = "Inferiors[1].Modules";
 			conn.execute("""
-					file bash
+					file %s
 					start
 					ghidra trace start
-					ghidra trace tx-open "Fake" 'ghidra trace create-obj %s'""".formatted(path));
+					ghidra trace tx-open "Fake" 'ghidra trace create-obj %s'""".formatted(target,
+				path));
 			RemoteMethod refreshModules = conn.getMethod("refresh_modules");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				TraceObject modules = Objects.requireNonNull(tb.obj(path));
 
@@ -405,7 +421,8 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				// Would be nice to control / validate the specifics
 				Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
 				TraceModule modBash =
-					Unique.assertOne(all.stream().filter(m -> m.getName(SNAP).contains("bash")));
+					Unique.assertOne(
+						all.stream().filter(m -> m.getName(SNAP).contains("expPrint")));
 				assertNotEquals(tb.addr(0), Objects.requireNonNull(modBash.getBase(SNAP)));
 			}
 		}
@@ -440,18 +457,22 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testActivateThread() throws Exception {
+		// NB: The windows variant does not appear to support multi-process debugging
+		assumeFalse(IS_WINDOWS);
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
 					add-inferior
 					ghidra trace start
-					file bash
-					start
+					file %s
+					%s
 					ghidra trace tx-open Start1 'ghidra trace put-threads'
 					add-inferior
 					inferior 2
-					file bash
-					start
-					ghidra trace tx-open Start2 'ghidra trace put-threads'""");
+					file %s
+					%s
+					ghidra trace tx-open Start2 'ghidra trace put-threads'""".formatted(target,
+				PLAT.startCmd(), target, PLAT.startCmd()));
 			RemoteMethod activateThread = conn.getMethod("activate_thread");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
@@ -478,15 +499,16 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testActivateFrame() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expRead");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					break read
+					break wrapread
 					run"""
-					.formatted(INSTRUMENT_STOPPED));
+					.formatted(target, INSTRUMENT_STOPPED));
 			RemoteMethod activateFrame = conn.getMethod("activate_frame");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expRead"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -497,7 +519,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 							PathFilter.parse("Inferiors[1].Threads[1].Stack[]"))
 						.map(p -> p.getDestination(null))
 						.toList();
-				assertThat(list.size(), greaterThan(2));
+				assertEquals(list.size(), 2);
 
 				for (TraceObject f : list) {
 					activateFrame.invoke(Map.of("frame", f));
@@ -532,7 +554,9 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testAttachObj() throws Exception {
-		String sleep = DummyProc.which("expTraceableSleep");
+		// NB: attach appears to have insufficient permissions here (and available not available)
+		assumeFalse(IS_WINDOWS);
+		String sleep = which("expTraceableSleep");
 		try (DummyProc proc = DummyProc.run(sleep)) {
 			try (GdbAndConnection conn = startAndConnectGdb()) {
 				conn.execute("""
@@ -556,7 +580,9 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testAttachPid() throws Exception {
-		String sleep = DummyProc.which("expTraceableSleep");
+		// NB: attach appears to have insufficient permissions here
+		assumeFalse(IS_WINDOWS);
+		String sleep = which("expTraceableSleep");
 		try (DummyProc proc = DummyProc.run(sleep)) {
 			try (GdbAndConnection conn = startAndConnectGdb()) {
 				conn.execute("""
@@ -578,7 +604,9 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testDetach() throws Exception {
-		String sleep = DummyProc.which("expTraceableSleep");
+		// NB: attach appears to have insufficient permissions here
+		assumeFalse(IS_WINDOWS);
+		String sleep = which("expTraceableSleep");
 		try (DummyProc proc = DummyProc.run(sleep)) {
 			try (GdbAndConnection conn = startAndConnectGdb()) {
 				conn.execute("""
@@ -617,11 +645,11 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				TraceObject inf = Objects.requireNonNull(tb.obj("Inferiors[1]"));
 				launchMain.invoke(Map.ofEntries(
 					Map.entry("inferior", inf),
-					Map.entry("file", "bash")));
+					Map.entry("file", which("expPrint"))));
 				waitStopped();
 
 				String out = conn.executeCapture("info inferiors");
-				assertThat(out, containsString("bash"));
+				assertThat(out, containsString("expPrint"));
 			}
 		}
 	}
@@ -641,11 +669,16 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				TraceObject inf = Objects.requireNonNull(tb.obj("Inferiors[1]"));
 				launchLoader.invoke(Map.ofEntries(
 					Map.entry("inferior", inf),
-					Map.entry("file", "bash")));
+					Map.entry("file", which("expPrint"))));
 				waitStopped();
 
 				String out = conn.executeCapture("frame");
-				assertThat(out, containsString("ld-linux"));
+				if (IS_WINDOWS) {
+					assertThat(out, containsString("ntdll!LdrInit"));
+				}
+				else {
+					assertThat(out, containsString("ld-linux"));
+				}
 			}
 		}
 	}
@@ -666,7 +699,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				TraceObject inf = Objects.requireNonNull(tb.obj("Inferiors[1]"));
 				launchRun.invoke(Map.ofEntries(
 					Map.entry("inferior", inf),
-					Map.entry("file", "bash")));
+					Map.entry("file", which("expSpin"))));
 				waitRunning();
 				Thread.sleep(100); // Give it plenty of time to block on read
 
@@ -674,7 +707,12 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				waitStopped();
 
 				String out = conn.executeCapture("frame");
-				assertThat(out, containsString("read"));
+				if (IS_WINDOWS) {
+					assertThat(out, containsString("DbgBreakPoint"));
+				}
+				else {
+					assertThat(out, containsString("clock"));
+				}
 			}
 		}
 	}
@@ -682,15 +720,16 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testKill() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
 					ghidra trace tx-open Init 'ghidra trace put-inferiors'
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod kill = conn.getMethod("kill");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -705,7 +744,9 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testResumeInterrupt5() throws Exception {
+		assumeFalse(IS_WINDOWS);
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expSpin");
 			RemoteMethod resume = conn.getMethod("resume");
 			RemoteMethod interrupt = conn.getMethod("interrupt");
 			conn.execute("""
@@ -718,13 +759,13 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 					  ghidra trace new-snap After
 					  ghidra trace putreg
 					end
-					file bash
+					file %s
 					ghidra trace start
 					%s
 					%s
 					start"""
-					.formatted(INSTRUMENT_STOPPED, INSTRUMENT_RUNNING));
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+					.formatted(target, INSTRUMENT_STOPPED, INSTRUMENT_RUNNING));
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expSpin"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 				conn.execute("ghidra trace tx-open Before do-put-before");
@@ -755,14 +796,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testStepInto() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod stepInto = conn.getMethod("step_into");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 				conn.execute("ghidra trace tx-open Init 'ghidra trace put-threads'");
@@ -786,21 +828,22 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testStepOver() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod step_over = conn.getMethod("step_over");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 				conn.execute("ghidra trace tx-open Init 'ghidra trace put-threads'");
 
 				TraceObject thread = Objects.requireNonNull(tb.obj("Inferiors[1].Threads[1]"));
 
-				while (!conn.executeCapture("x/1i $pc").contains("call")) {
+				while (!capturePC(conn).contains("call")) {
 					step_over.invoke(Map.of("thread", thread));
 				}
 
@@ -808,23 +851,39 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				long pcNext = Long.decode(dis2.strip().split("\n")[1].strip().split("\\s+")[0]);
 
 				step_over.invoke(Map.of("thread", thread));
-				long pc = Long.decode(conn.executeCapture("print/x $pc").split("\\s+")[2]);
+				long pc = Long.decode(capturePC(conn).split("\\s+")[1]);
 				assertEquals(pcNext, pc);
 			}
 		}
 	}
 
+	private String capturePC(GdbAndConnection conn) {
+		long start = System.currentTimeMillis();
+		while (System.currentTimeMillis() - start < CAPTURE_PC_TIMEOUT_MILLIS) {
+			try {
+				return conn.executeCapture("x/1i $pc");
+			}
+			catch (TraceRmiError e) {
+				if (!e.getMessage().contains("is running")) {
+					throw e;
+				}
+			}
+		}
+		throw new TraceRmiError("Failed capture pc");
+	}
+
 	@Test
 	public void testStepOut() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod stepOut = conn.getMethod("step_out");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 				conn.execute("ghidra trace tx-open Init 'ghidra trace put-threads'");
@@ -845,14 +904,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testStepAdvance() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod stepAdvance = conn.getMethod("step_advance");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 				conn.execute("ghidra trace tx-open Init 'ghidra trace put-threads'");
@@ -873,14 +933,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testStepReturn() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod stepReturn = conn.getMethod("step_return");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 				conn.execute("ghidra trace tx-open Init 'ghidra trace put-threads'");
@@ -900,14 +961,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testBreakSwExecuteAddress() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod breakSwExecuteAddress = conn.getMethod("break_sw_execute_address");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -924,14 +986,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testBreakSwExecuteExpression() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod breakSwExecuteExpression = conn.getMethod("break_sw_execute_expression");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -947,14 +1010,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testBreakHwExecuteAddress() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod breakHwExecuteAddress = conn.getMethod("break_hw_execute_address");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -972,14 +1036,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testBreakHwExecuteExpression() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod breakHwExecuteExpression = conn.getMethod("break_hw_execute_expression");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -995,14 +1060,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testBreakReadRange() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod breakReadRange = conn.getMethod("break_read_range");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -1022,14 +1088,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testBreakReadExpression() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod breakReadExpression = conn.getMethod("break_read_expression");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -1045,14 +1112,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testBreakWriteRange() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod breakWriteRange = conn.getMethod("break_write_range");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -1072,14 +1140,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testBreakWriteExpression() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod breakWriteExpression = conn.getMethod("break_write_expression");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -1095,14 +1164,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testBreakAccessRange() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod breakAccessRange = conn.getMethod("break_access_range");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -1122,14 +1192,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testBreakAccessExpression() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod breakAccessExpression = conn.getMethod("break_access_expression");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -1145,14 +1216,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testBreakExtEvent() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
-					start"""
-					.formatted(INSTRUMENT_STOPPED));
+					%s"""
+					.formatted(target, INSTRUMENT_STOPPED, PLAT.startCmd()));
 			RemoteMethod breakEvent = conn.getMethod("break_ext_event");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
@@ -1171,15 +1243,16 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testToggleBreakpoint() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
 					break main
 					run"""
-					.formatted(INSTRUMENT_STOPPED));
+					.formatted(target, INSTRUMENT_STOPPED));
 			RemoteMethod toggleBreakpoint = conn.getMethod("toggle_breakpoint");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 				conn.execute("ghidra trace tx-open Init 'ghidra trace put-breakpoints'");
@@ -1197,15 +1270,16 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testToggleBreakpointLocation() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
 					break main
 					run"""
-					.formatted(INSTRUMENT_STOPPED));
+					.formatted(target, INSTRUMENT_STOPPED));
 			RemoteMethod toggleBreakpointLocation = conn.getMethod("toggle_breakpoint_location");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 				conn.execute("ghidra trace tx-open Init 'ghidra trace put-breakpoints'");
@@ -1239,15 +1313,16 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testDeleteBreakpoint() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
 					break main
 					run"""
-					.formatted(INSTRUMENT_STOPPED));
+					.formatted(target, INSTRUMENT_STOPPED));
 			RemoteMethod deleteBreakpoint = conn.getMethod("delete_breakpoint");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 				conn.execute("ghidra trace tx-open Init 'ghidra trace put-breakpoints'");
@@ -1264,15 +1339,16 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testReadMem() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
 					break main
 					run"""
-					.formatted(INSTRUMENT_STOPPED));
+					.formatted(target, INSTRUMENT_STOPPED));
 			RemoteMethod readMem = conn.getMethod("read_mem");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 				long snap = 0;
@@ -1296,15 +1372,16 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testWriteMem() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
 					break main
 					run"""
-					.formatted(INSTRUMENT_STOPPED));
+					.formatted(target, INSTRUMENT_STOPPED));
 			RemoteMethod writeMem = conn.getMethod("write_mem");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 				long pcOff = Long.decode(conn.executeCapture("print/x $pc").split("=")[1].strip());
@@ -1325,15 +1402,16 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testWriteReg() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
+			String target = which("expPrint");
 			conn.execute("""
-					file bash
+					file %s
 					ghidra trace start
 					%s
 					break main
 					run"""
-					.formatted(INSTRUMENT_STOPPED));
+					.formatted(target, INSTRUMENT_STOPPED));
 			RemoteMethod writeReg = conn.getMethod("write_reg");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
+			try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 				conn.execute("ghidra trace tx-open Init 'ghidra trace putreg'");

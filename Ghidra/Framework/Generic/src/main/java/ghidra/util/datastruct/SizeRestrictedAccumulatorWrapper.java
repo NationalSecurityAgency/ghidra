@@ -15,7 +15,8 @@
  */
 package ghidra.util.datastruct;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Objects;
 
 public class SizeRestrictedAccumulatorWrapper<T> implements Accumulator<T> {
 
@@ -34,13 +35,8 @@ public class SizeRestrictedAccumulatorWrapper<T> implements Accumulator<T> {
 	}
 
 	@Override
-	public Iterator<T> iterator() {
-		return accumulator.iterator();
-	}
-
-	@Override
 	public void add(T t) {
-		if (accumulator.size() >= maxSize) {
+		if (accumulator.getProgress() >= maxSize) {
 			throw new AccumulatorSizeException(maxSize);
 		}
 		accumulator.add(t);
@@ -49,23 +45,13 @@ public class SizeRestrictedAccumulatorWrapper<T> implements Accumulator<T> {
 	@Override
 	public void addAll(Collection<T> collection) {
 		for (T t : collection) {
-			accumulator.add(t);
+			add(t);
 		}
 	}
 
 	@Override
-	public boolean contains(T t) {
-		return accumulator.contains(t);
-	}
-
-	@Override
-	public Collection<T> get() {
-		return accumulator.get();
-	}
-
-	@Override
-	public int size() {
-		return accumulator.size();
+	public int getProgress() {
+		return accumulator.getProgress();
 	}
 
 }

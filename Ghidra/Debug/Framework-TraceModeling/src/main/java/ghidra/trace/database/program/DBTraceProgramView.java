@@ -58,12 +58,12 @@ import ghidra.trace.model.data.TraceBasedDataTypeManager;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.symbol.*;
-import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.*;
+import ghidra.trace.util.TraceEvents;
+import ghidra.trace.util.TypedEventDispatcher;
 import ghidra.util.*;
-import ghidra.util.datastruct.WeakValueHashMap;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -115,10 +115,6 @@ public class DBTraceProgramView implements TraceProgramView {
 			listenFor(TraceEvents.POST_COMMENT_CHANGED, this::commentPostChanged);
 			listenFor(TraceEvents.PRE_COMMENT_CHANGED, this::commentPreChanged);
 			listenFor(TraceEvents.REPEATABLE_COMMENT_CHANGED, this::commentRepeatableChanged);
-
-			listenFor(TraceEvents.COMPOSITE_DATA_ADDED, this::compositeDataAdded);
-			listenFor(TraceEvents.COMPOSITE_DATA_LIFESPAN_CHANGED, this::compositeLifespanChanged);
-			listenFor(TraceEvents.COMPOSITE_DATA_REMOVED, this::compositeDataRemoved);
 
 			listenFor(TraceEvents.DATA_TYPE_ADDED, this::dataTypeAdded);
 			listenFor(TraceEvents.DATA_TYPE_CHANGED, this::dataTypeChanged);
@@ -175,7 +171,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				type, null, null));
 		}
 
-		private void bookmarkAdded(TraceAddressSpace space, TraceBookmark bm) {
+		private void bookmarkAdded(AddressSpace space, TraceBookmark bm) {
 			DomainObjectEventQueues queues = isBookmarkVisible(space, bm);
 			if (queues == null) {
 				return;
@@ -188,7 +184,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				bm.getAddress(), bm, null, null));
 		}
 
-		private void bookmarkChanged(TraceAddressSpace space, TraceBookmark bm) {
+		private void bookmarkChanged(AddressSpace space, TraceBookmark bm) {
 			DomainObjectEventQueues queues = isBookmarkVisible(space, bm);
 			if (queues == null) {
 				return;
@@ -201,8 +197,8 @@ public class DBTraceProgramView implements TraceProgramView {
 				bm.getAddress(), bm, null, null));
 		}
 
-		private void bookmarkLifespanChanged(TraceAddressSpace space, TraceBookmark bm,
-				Lifespan oldSpan, Lifespan newSpan) {
+		private void bookmarkLifespanChanged(AddressSpace space, TraceBookmark bm, Lifespan oldSpan,
+				Lifespan newSpan) {
 			DomainObjectEventQueues queues = getEventQueues(space);
 			if (queues == null) {
 				return;
@@ -217,7 +213,7 @@ public class DBTraceProgramView implements TraceProgramView {
 			}
 		}
 
-		private void bookmarkDeleted(TraceAddressSpace space, TraceBookmark bm) {
+		private void bookmarkDeleted(AddressSpace space, TraceBookmark bm) {
 			DomainObjectEventQueues queues = isBookmarkVisible(space, bm);
 			if (queues == null) {
 				return;
@@ -253,7 +249,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				null, null, parent, deleted.getName()));
 		}
 
-		private void codeAdded(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void codeAdded(AddressSpace space, TraceAddressSnapRange range,
 				TraceCodeUnit oldIsNull, TraceCodeUnit added) {
 			// NOTE: Added code may be coalesced range. -added- is just first unit.
 			// TODO: The range may contain many units, so this could be broken down
@@ -270,8 +266,8 @@ public class DBTraceProgramView implements TraceProgramView {
 				new ProgramChangeRecord(ProgramEvent.CODE_ADDED, min, max, null, null, null));
 		}
 
-		private void codeLifespanChanged(TraceAddressSpace space, TraceCodeUnit unit,
-				Lifespan oldSpan, Lifespan newSpan) {
+		private void codeLifespanChanged(AddressSpace space, TraceCodeUnit unit, Lifespan oldSpan,
+				Lifespan newSpan) {
 			DomainObjectEventQueues queues = getEventQueues(space);
 			if (queues == null) {
 				return;
@@ -286,7 +282,7 @@ public class DBTraceProgramView implements TraceProgramView {
 			}
 		}
 
-		private void codeRemoved(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void codeRemoved(AddressSpace space, TraceAddressSnapRange range,
 				TraceCodeUnit removed, TraceCodeUnit newIsNull) {
 			// NOTE: Removed code may be coalesced range. -removed- is just first unit.
 			DomainObjectEventQueues queues = isCodeVisible(space, removed);
@@ -302,7 +298,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				new ProgramChangeRecord(ProgramEvent.CODE_REMOVED, min, max, null, removed, null));
 		}
 
-		private void codeFragmentChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void codeFragmentChanged(AddressSpace space, TraceAddressSnapRange range,
 				ProgramFragment oldFragment, ProgramFragment newFragment) {
 			DomainObjectEventQueues queues = isVisible(space, range);
 			if (queues == null) {
@@ -312,7 +308,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				null, range.getX1(), range.getX2()));
 		}
 
-		private void codeDataTypeReplaced(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void codeDataTypeReplaced(AddressSpace space, TraceAddressSnapRange range,
 				Long oldDataTypeID, Long newDataTypeID) {
 			// TODO??: "code" visibility check may not be necessary or advantageous
 			DomainObjectEventQueues queues = isVisible(space, range);
@@ -323,8 +319,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				range.getX2(), null, null, null));
 		}
 
-		private void codeDataTypeSettingsChanged(TraceAddressSpace space,
-				TraceAddressSnapRange range) {
+		private void codeDataTypeSettingsChanged(AddressSpace space, TraceAddressSnapRange range) {
 			DomainObjectEventQueues queues = isVisible(space, range);
 			if (queues == null) {
 				return;
@@ -334,7 +329,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				range.getX1(), range.getX1(), null, null, null));
 		}
 
-		private void commentChanged(CommentType commentType, TraceAddressSpace space,
+		private void commentChanged(CommentType commentType, AddressSpace space,
 				TraceAddressSnapRange range, String oldValue, String newValue) {
 			DomainObjectEventQueues queues = isVisible(space, range);
 			if (queues == null) {
@@ -344,69 +339,30 @@ public class DBTraceProgramView implements TraceProgramView {
 				new CommentChangeRecord(commentType, range.getX1(), oldValue, newValue));
 		}
 
-		private void commentEolChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void commentEolChanged(AddressSpace space, TraceAddressSnapRange range,
 				String oldValue, String newValue) {
 			commentChanged(CommentType.EOL, space, range, oldValue, newValue);
 		}
 
-		private void commentPlateChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void commentPlateChanged(AddressSpace space, TraceAddressSnapRange range,
 				String oldValue, String newValue) {
 			commentChanged(CommentType.PLATE, space, range, oldValue, newValue);
 		}
 
-		private void commentPostChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void commentPostChanged(AddressSpace space, TraceAddressSnapRange range,
 				String oldValue, String newValue) {
 			commentChanged(CommentType.POST, space, range, oldValue, newValue);
 		}
 
-		private void commentPreChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void commentPreChanged(AddressSpace space, TraceAddressSnapRange range,
 				String oldValue, String newValue) {
 			commentChanged(CommentType.PRE, space, range, oldValue, newValue);
 		}
 
-		private void commentRepeatableChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void commentRepeatableChanged(AddressSpace space, TraceAddressSnapRange range,
 				String oldValue, String newValue) {
 			// TODO: The "repeatable" semantics are not implemented, yet.
 			commentChanged(CommentType.REPEATABLE, space, range, oldValue, newValue);
-		}
-
-		private void compositeDataAdded(TraceAddressSpace space, TraceAddressSnapRange range,
-				TraceData oldIsNull, TraceData added) {
-			DomainObjectEventQueues queues = isCodeVisible(space, added);
-			if (queues == null) {
-				return;
-			}
-			queues.fireEvent(new ProgramChangeRecord(ProgramEvent.COMPOSITE_ADDED,
-				added.getMinAddress(), added.getMaxAddress(), null, null, added));
-		}
-
-		private void compositeLifespanChanged(TraceAddressSpace space, TraceData data,
-				Lifespan oldSpan, Lifespan newSpan) {
-			DomainObjectEventQueues queues = getEventQueues(space);
-			if (queues == null) {
-				return;
-			}
-			boolean inOld = isCodeVisible(data, oldSpan);
-			boolean inNew = isCodeVisible(data, newSpan);
-			if (inOld && !inNew) {
-				queues.fireEvent(new ProgramChangeRecord(ProgramEvent.COMPOSITE_REMOVED,
-					data.getMinAddress(), data.getMaxAddress(), null, data, null));
-			}
-			if (!inOld && inNew) {
-				queues.fireEvent(new ProgramChangeRecord(ProgramEvent.COMPOSITE_ADDED,
-					data.getMinAddress(), data.getMaxAddress(), null, null, data));
-			}
-		}
-
-		private void compositeDataRemoved(TraceAddressSpace space, TraceAddressSnapRange range,
-				TraceData removed, TraceData newIsNull) {
-			DomainObjectEventQueues queues = isCodeVisible(space, removed);
-			if (queues == null) {
-				return;
-			}
-			// TODO: ProgramDB doesn't send this.... Should I?
-			queues.fireEvent(new ProgramChangeRecord(ProgramEvent.COMPOSITE_REMOVED,
-				removed.getMinAddress(), removed.getMaxAddress(), null, removed, null));
 		}
 
 		private void dataTypeAdded(long id, DataType oldIsNull, DataType added) {
@@ -443,7 +399,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				null, oldPath, newIsNull));
 		}
 
-		private void instructionFlowOverrideChanged(TraceAddressSpace space,
+		private void instructionFlowOverrideChanged(AddressSpace space,
 				TraceInstruction instruction, FlowOverride oldOverride, FlowOverride newOverride) {
 			DomainObjectEventQueues queues = isCodeVisible(space, instruction);
 			if (queues == null) {
@@ -453,8 +409,8 @@ public class DBTraceProgramView implements TraceProgramView {
 				instruction.getMinAddress(), instruction.getMinAddress(), null, null, null));
 		}
 
-		private void instructionFallThroughChanged(TraceAddressSpace space,
-				TraceInstruction instruction, boolean oldFallThrough, boolean newFallThrough) {
+		private void instructionFallThroughChanged(AddressSpace space, TraceInstruction instruction,
+				boolean oldFallThrough, boolean newFallThrough) {
 			DomainObjectEventQueues queues = isCodeVisible(space, instruction);
 			if (queues == null) {
 				return;
@@ -463,7 +419,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				instruction.getMinAddress(), instruction.getMinAddress(), null, null, null));
 		}
 
-		private void instructionLengthOverrideChanged(TraceAddressSpace space,
+		private void instructionLengthOverrideChanged(AddressSpace space,
 				TraceInstruction instruction, int oldLengthOverride, int newLengthOverride) {
 			DomainObjectEventQueues queues = isCodeVisible(space, instruction);
 			if (queues == null) {
@@ -473,7 +429,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				instruction.getMinAddress(), instruction.getMinAddress(), null, null, null));
 		}
 
-		private void memoryBytesChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void memoryBytesChanged(AddressSpace space, TraceAddressSnapRange range,
 				byte[] oldIsNull, byte[] bytes) {
 			DomainObjectEventQueues queues = isBytesVisible(space, range);
 			if (queues == null) {
@@ -488,22 +444,22 @@ public class DBTraceProgramView implements TraceProgramView {
 				range.getX1(), range.getX2(), null, null, null));
 		}
 
-		private void memoryRegionAdded(TraceAddressSpace space, TraceMemoryRegion region) {
+		private void memoryRegionAdded(AddressSpace space, TraceMemoryRegion region) {
 			// This is handled via another path
 		}
 
-		private void memoryRegionChanged(TraceAddressSpace space, TraceMemoryRegion region) {
+		private void memoryRegionChanged(AddressSpace space, TraceMemoryRegion region) {
 			// Could be a name change, which must get communicated to program.
 			// RESTORED may be duplicative, but should get de-duped by event manager.
 			eventQueues.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 		}
 
-		private void memoryRegionLifespanChanged(TraceAddressSpace space, TraceMemoryRegion region,
+		private void memoryRegionLifespanChanged(AddressSpace space, TraceMemoryRegion region,
 				Lifespan oldSpan, Lifespan newSpan) {
 			// This is handled via another path
 		}
 
-		private void memoryRegionDeleted(TraceAddressSpace space, TraceMemoryRegion region) {
+		private void memoryRegionDeleted(AddressSpace space, TraceMemoryRegion region) {
 			// HACK
 			listing.fragmentsByRegion.remove(region);
 			// END HACK
@@ -521,7 +477,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				null, id, null, null));
 		}
 
-		private void symbolAdded(TraceAddressSpace space, TraceSymbol symbol) {
+		private void symbolAdded(AddressSpace space, TraceSymbol symbol) {
 			DomainObjectEventQueues queues = isSymbolVisible(space, symbol);
 			if (queues == null) {
 				return;
@@ -534,7 +490,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				symbol.getAddress(), null, null, symbol));
 		}
 
-		private void symbolSourceChanged(TraceAddressSpace space, TraceSymbol symbol) {
+		private void symbolSourceChanged(AddressSpace space, TraceSymbol symbol) {
 			DomainObjectEventQueues queues = isSymbolVisible(space, symbol);
 			if (queues == null) {
 				return;
@@ -543,7 +499,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				symbol.getAddress(), symbol.getAddress(), symbol, null, null));
 		}
 
-		private void symbolSetAsPrimary(TraceAddressSpace space, TraceSymbol symbol,
+		private void symbolSetAsPrimary(AddressSpace space, TraceSymbol symbol,
 				TraceSymbol oldPrimary, TraceSymbol newPrimary) {
 			// NOTE symbol == newPrimary
 			DomainObjectEventQueues newQueues = isSymbolVisible(space, symbol);
@@ -559,7 +515,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				symbol.getAddress(), symbol.getAddress(), null, oldPrimary, newPrimary));
 		}
 
-		private void symbolRenamed(TraceAddressSpace space, TraceSymbol symbol, String oldName,
+		private void symbolRenamed(AddressSpace space, TraceSymbol symbol, String oldName,
 				String newName) {
 			DomainObjectEventQueues queues = isSymbolVisible(space, symbol);
 			if (queues == null) {
@@ -569,7 +525,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				symbol.getAddress(), symbol.getAddress(), symbol, oldName, newName));
 		}
 
-		private void symbolParentChanged(TraceAddressSpace space, TraceSymbol symbol,
+		private void symbolParentChanged(AddressSpace space, TraceSymbol symbol,
 				TraceNamespaceSymbol oldParent, TraceNamespaceSymbol newParent) {
 			DomainObjectEventQueues queues = isSymbolVisible(space, symbol);
 			if (queues == null) {
@@ -579,7 +535,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				symbol.getAddress(), symbol.getAddress(), symbol, oldParent, newParent));
 		}
 
-		private void symbolAssociationAdded(TraceAddressSpace space, TraceSymbol symbol,
+		private void symbolAssociationAdded(AddressSpace space, TraceSymbol symbol,
 				TraceReference oldRefIsNull, TraceReference newRef) {
 			DomainObjectEventQueues queues = isSymbolVisible(space, symbol);
 			if (queues == null) {
@@ -590,7 +546,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				newRef.getFromAddress(), newRef.getFromAddress(), newRef, null, symbol));
 		}
 
-		private void symbolAssociationRemoved(TraceAddressSpace space, TraceSymbol symbol,
+		private void symbolAssociationRemoved(AddressSpace space, TraceSymbol symbol,
 				TraceReference oldRef, TraceReference newRefIsNull) {
 			DomainObjectEventQueues queues = isSymbolVisible(space, symbol);
 			if (queues == null) {
@@ -601,7 +557,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				oldRef.getFromAddress(), oldRef.getFromAddress(), oldRef, symbol, null));
 		}
 
-		private void symbolAddressChanged(TraceAddressSpace space, TraceSymbol symbol,
+		private void symbolAddressChanged(AddressSpace space, TraceSymbol symbol,
 				Address oldAddress, Address newAddress) {
 			DomainObjectEventQueues queues = isSymbolVisible(space, symbol);
 			if (queues == null) {
@@ -611,7 +567,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				oldAddress, oldAddress, symbol, oldAddress, newAddress));
 		}
 
-		private void symbolLifespanChanged(TraceAddressSpace space, TraceSymbolWithLifespan symbol,
+		private void symbolLifespanChanged(AddressSpace space, TraceSymbolWithLifespan symbol,
 				Lifespan oldSpan, Lifespan newSpan) {
 			DomainObjectEventQueues queues = getEventQueues(space);
 			if (queues == null) {
@@ -627,7 +583,7 @@ public class DBTraceProgramView implements TraceProgramView {
 			}
 		}
 
-		private void symbolDeleted(TraceAddressSpace space, TraceSymbol symbol) {
+		private void symbolDeleted(AddressSpace space, TraceSymbol symbol) {
 			DomainObjectEventQueues queues = isSymbolVisible(space, symbol);
 			if (queues == null) {
 				return;
@@ -643,7 +599,8 @@ public class DBTraceProgramView implements TraceProgramView {
 	}
 
 	protected static class OverlappingAddressRangeKeyIteratorMerger<T> extends
-			PairingIteratorMerger<Entry<AddressRange, T>, Entry<AddressRange, T>, Entry<AddressRange, T>> {
+			PairingIteratorMerger<Entry<AddressRange, T>, Entry<AddressRange, T>,
+				Entry<AddressRange, T>> {
 
 		protected static <T> Iterable<Pair<Entry<AddressRange, T>, Entry<AddressRange, T>>> iter(
 				Iterable<Entry<AddressRange, T>> left, Iterable<Entry<AddressRange, T>> right) {
@@ -695,8 +652,6 @@ public class DBTraceProgramView implements TraceProgramView {
 	// TODO: How does this work?
 	protected final DBTraceProgramViewChangeSet changes;
 
-	protected final Map<TraceThread, DBTraceProgramViewRegisters> regViewsByThread;
-
 	protected long snap;
 	protected InternalTracePlatform platform;
 	protected final DBTraceTimeViewport viewport;
@@ -721,8 +676,6 @@ public class DBTraceProgramView implements TraceProgramView {
 		this.platform = trace.getPlatformManager().getHostPlatform();
 
 		this.eventQueues = new DomainObjectEventQueues(this, TIME_INTERVAL, trace.getLock());
-
-		this.regViewsByThread = new WeakValueHashMap<>();
 
 		this.bookmarkManager = new DBTraceProgramViewBookmarkManager(this);
 		this.equateTable = new DBTraceProgramViewEquateTable(this);
@@ -762,11 +715,7 @@ public class DBTraceProgramView implements TraceProgramView {
 	}
 
 	protected void fireEventAllViews(DomainObjectChangeRecord ev) {
-		// TODO: Do I need to make copies?
 		eventQueues.fireEvent(ev);
-		for (DBTraceProgramViewRegisters regView : regViewsByThread.values()) {
-			regView.eventQueues.fireEvent(ev);
-		}
 	}
 
 	/**
@@ -804,31 +753,6 @@ public class DBTraceProgramView implements TraceProgramView {
 	@Override
 	public DBTraceProgramViewListing getListing() {
 		return listing;
-	}
-
-	@Override
-	public DBTraceProgramViewRegisters getViewRegisters(TraceThread thread,
-			boolean createIfAbsent) {
-		synchronized (regViewsByThread) {
-			DBTraceProgramViewRegisters regView = regViewsByThread.get(thread);
-			if (regView != null) {
-				return regView;
-			}
-			assert trace.getThreadManager().getAllThreads().contains(thread);
-			DBTraceCodeSpace codeSpace =
-				trace.getCodeManager().getCodeRegisterSpace(thread, createIfAbsent);
-			if (codeSpace == null) {
-				return null;
-			}
-			DBTraceMemorySpace memorySpace =
-				trace.getMemoryManager().getMemoryRegisterSpace(thread, createIfAbsent);
-			if (memorySpace == null) {
-				return null;
-			}
-			regView = new DBTraceProgramViewRegisters(this, codeSpace, memorySpace);
-			regViewsByThread.put(thread, regView);
-			return regView;
-		}
 	}
 
 	@Override
@@ -1486,22 +1410,15 @@ public class DBTraceProgramView implements TraceProgramView {
 		memory.updateBytesChanged(range);
 	}
 
-	protected DomainObjectEventQueues getEventQueues(TraceAddressSpace space) {
-		// TODO: Should there be views on other frames?
-		// IIRC, this was an abandoned experiment for "register listings"
-		TraceThread thread = space == null ? null : space.getThread();
-		if (thread == null) {
-			return eventQueues;
-		}
-		DBTraceProgramViewRegisters viewRegisters;
-		synchronized (regViewsByThread) {
-			viewRegisters = regViewsByThread.get(thread);
-		}
-		return viewRegisters == null ? null : viewRegisters.eventQueues;
+	protected DomainObjectEventQueues getEventQueues(AddressSpace space) {
+		/**
+		 * NOTE: Thought about views on other frames. IIRC, this was an abandoned experiment for
+		 * "register listings"
+		 */
+		return eventQueues;
 	}
 
-	protected DomainObjectEventQueues isVisible(TraceAddressSpace space,
-			TraceAddressSnapRange range) {
+	protected DomainObjectEventQueues isVisible(AddressSpace space, TraceAddressSnapRange range) {
 		return viewport.containsAnyUpper(range.getLifespan()) ? getEventQueues(space) : null;
 	}
 
@@ -1509,7 +1426,7 @@ public class DBTraceProgramView implements TraceProgramView {
 		return viewport.containsAnyUpper(lifespan);
 	}
 
-	protected DomainObjectEventQueues isBookmarkVisible(TraceAddressSpace space, TraceBookmark bm) {
+	protected DomainObjectEventQueues isBookmarkVisible(AddressSpace space, TraceBookmark bm) {
 		return isBookmarkVisible(bm, bm.getLifespan()) ? getEventQueues(space) : null;
 	}
 
@@ -1525,7 +1442,7 @@ public class DBTraceProgramView implements TraceProgramView {
 		return false;
 	}
 
-	protected Occlusion<TraceCodeUnit> getCodeOcclusion(TraceAddressSpace space) {
+	protected Occlusion<TraceCodeUnit> getCodeOcclusion(AddressSpace space) {
 		return new RangeQueryOcclusion<>() {
 			final DBTraceCodeSpace codeSpace = trace.getCodeManager().get(space, false);
 			final DBTraceMemorySpace memSpace = trace.getMemoryManager().get(space, false);
@@ -1537,7 +1454,7 @@ public class DBTraceProgramView implements TraceProgramView {
 					return RangeQueryOcclusion.super.occluded(cu, range, span);
 				}
 				AddressSetView known =
-					memSpace.getAddressesWithState(span, s -> s == TraceMemoryState.KNOWN);
+					memSpace.getAddressesWithState(span, StatePredicate.IS_KNOWN);
 				if (!known.intersects(range.getMinAddress(), range.getMaxAddress())) {
 					return RangeQueryOcclusion.super.occluded(cu, range, span);
 				}
@@ -1600,15 +1517,15 @@ public class DBTraceProgramView implements TraceProgramView {
 			throw new AssertionError(e);
 		}
 		return viewport.isCompletelyVisible(cu.getRange(), lifespan, cu,
-			getCodeOcclusion(cu.getTraceSpace()));
+			getCodeOcclusion(cu.getAddress().getAddressSpace()));
 	}
 
-	protected boolean isCodeVisible(TraceAddressSpace space, TraceAddressSnapRange range) {
+	protected boolean isCodeVisible(AddressSpace space, TraceAddressSnapRange range) {
 		return viewport.isCompletelyVisible(range.getRange(), range.getLifespan(), null,
 			getCodeOcclusion(space));
 	}
 
-	protected DomainObjectEventQueues isCodeVisible(TraceAddressSpace space, TraceCodeUnit cu) {
+	protected DomainObjectEventQueues isCodeVisible(AddressSpace space, TraceCodeUnit cu) {
 		if (!isCodeVisible(cu, cu.getLifespan())) {
 			return null;
 		}
@@ -1623,7 +1540,7 @@ public class DBTraceProgramView implements TraceProgramView {
 		return true;
 	}
 
-	protected DomainObjectEventQueues isSymbolVisible(TraceAddressSpace space, TraceSymbol symbol) {
+	protected DomainObjectEventQueues isSymbolVisible(AddressSpace space, TraceSymbol symbol) {
 		// NB. Most symbols do not occlude each other
 		DomainObjectEventQueues queues = getEventQueues(space);
 		if (queues == null) {
@@ -1636,7 +1553,7 @@ public class DBTraceProgramView implements TraceProgramView {
 		return isSymbolWithLifespanVisible(symWl, symWl.getLifespan()) ? queues : null;
 	}
 
-	protected DomainObjectEventQueues isBytesVisible(TraceAddressSpace space,
+	protected DomainObjectEventQueues isBytesVisible(AddressSpace space,
 			TraceAddressSnapRange range) {
 		// NB. This need not be precise....
 		DomainObjectEventQueues queues = getEventQueues(space);

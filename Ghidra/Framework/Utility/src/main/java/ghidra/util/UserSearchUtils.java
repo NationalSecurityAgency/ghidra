@@ -82,7 +82,6 @@ public class UserSearchUtils {
 	 * <b>Note: </b>This method <b>will</b> escape regular expression
 	 * characters, such as:
 	 * <ul>
-	 * <li>?</li>
 	 * <li>.</li>
 	 * <li>$</li>
 	 * <li>...and many others</li>

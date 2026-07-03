@@ -118,7 +118,7 @@ public class GFileSystemLoadKernelTask extends Task {
 
 		ProjectIndexService projectIndex = ProjectIndexService.getIndexFor(project);
 		DomainFile existingDF = projectIndex.findFirstByFSRL(file.getFSRL());
-		if ( existingDF != null && programManager != null ) {
+		if (existingDF != null && programManager != null) {
 			programManager.openProgram(existingDF);
 			return;
 		}
@@ -138,6 +138,9 @@ public class GFileSystemLoadKernelTask extends Task {
 					AppInfo.getActiveProject().getProjectData().getRootFolder(),
 					file.getParentFile().getPath());
 				String fileName = ProjectDataUtils.getUniqueName(folder, program.getName());
+				if (fileName == null) {
+					throw new IOException("Unable to find unique name for " + program.getName());
+				}
 
 				GhidraProgramUtilities.markProgramAnalyzed(program);
 

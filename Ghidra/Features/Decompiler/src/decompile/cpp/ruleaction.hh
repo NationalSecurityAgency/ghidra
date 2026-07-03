@@ -629,6 +629,16 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
+class RuleScarry : public Rule {
+public:
+  RuleScarry(const string &g) : Rule(g, 0, "scarry") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleScarry(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
 class RuleTrivialShift : public Rule {
 public:
   RuleTrivialShift(const string &g) : Rule(g, 0, "trivialshift") {}	///< Constructor

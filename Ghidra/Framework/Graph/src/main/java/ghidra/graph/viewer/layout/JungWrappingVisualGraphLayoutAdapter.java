@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import com.google.common.base.Function;
 
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.visualization.RenderContext;
 import edu.uci.ics.jung.visualization.renderers.BasicEdgeRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer.EdgeLabel;
 import ghidra.graph.VisualGraph;
@@ -182,7 +183,8 @@ public class JungWrappingVisualGraphLayoutAdapter<V extends VisualVertex,
 	}
 
 	@Override
-	public Function<E, Shape> getEdgeShapeTransformer() {
+	public Function<E, Shape> getEdgeShapeTransformer(RenderContext<V, E> context) {
+		edgeShapeTransformer.setRenderContext(context);
 		return edgeShapeTransformer;
 	}
 
@@ -239,7 +241,7 @@ public class JungWrappingVisualGraphLayoutAdapter<V extends VisualVertex,
 	@Override
 	public void setLocation(V v, Point2D location) {
 		delegate.setLocation(v, location);
-		fireVertexLocationChanged(v, location, ChangeType.USER);
+		fireVertexLocationChanged(v, location, ChangeType.API);
 	}
 
 	@Override

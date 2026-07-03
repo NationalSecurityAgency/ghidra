@@ -57,7 +57,7 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 
 		if (currentProgram.isChanged()) {
 			popup(currentProgram.getName() + " has unsaved changes.  Please save the program" +
-					" before adding it to a BSim database.");
+				" before adding it to a BSim database.");
 			return;
 		}
 
@@ -89,6 +89,16 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 
 			h2Database.initialize();
 			DatabaseInformation dbInfo = h2Database.getInfo();
+
+			// check whether the executable is already in the database
+			// before generating signatures
+			QueryExeInfo exeInfo = new QueryExeInfo();
+			exeInfo.filterMd5 = currentProgram.getExecutableMD5();
+			ResponseExe response = exeInfo.execute(h2Database);
+			if (response.recordCount > 0) {
+				popup(currentProgram.getName() + " is already in the database.");
+				return;
+			}
 
 			LSHVectorFactory vectorFactory = h2Database.getLSHVectorFactory();
 			GenSignatures gensig = null;

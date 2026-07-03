@@ -28,10 +28,8 @@ import ghidra.util.Msg;
 
 /**
  * The handler of parsed ANSI VT control sequences
- * 
  * <p>
  * Here are some of the resources where I found useful documentation:
- * 
  * <ul>
  * <li><a href="https://invisible-island.net/xterm/ctlseqs/ctlseqs.html">XTerm Control
  * Sequences</a></li>
@@ -39,13 +37,11 @@ import ghidra.util.Msg;
  * Terminal Control Escape Sequences</a></li>
  * <li><a href="https://en.wikipedia.org/wiki/ANSI_escape_code">Wikipedia: ANSI escape code</a></li>
  * </ul>
- * 
  * <p>
  * They were incredibly useful, even when experimentation was required to fill in details, because
  * they at least described the sort of behavior I should be looking for. Throughout the referenced
  * documents and within this documentation, the following abbreviations are used for escape
  * sequences:
- * 
  * <table>
  * <tr>
  * <th>Abbreviation</th>
@@ -78,13 +74,11 @@ import ghidra.util.Msg;
  * <td>{@code "\007"}</td>
  * </tr>
  * </table>
- * 
  * <p>
  * The separation between the parser and the handler deals in state management. The parser manages
  * state only of the control sequence parser itself, i.e., the current node in the token parsing
  * state machine. The state of the terminal, e.g., the current attributes, cursor position, etc.,
  * are managed by the handler and its delegates.
- * 
  * <p>
  * For example, the Cursor Position sequence is documented as:
  * <p>
@@ -97,7 +91,6 @@ import ghidra.util.Msg;
  * It will thus invoke the abstract {@link #handleMoveCursor(int, int)} method passing 12 and 39.
  * Note that 1 is subtracted from both parameters, because ANSI specifies 1-up indexing while Java
  * lends itself to 0-up indexing.
- * 
  * <p>
  * The XTerm documentation, which is arguably the most thorough, presents the CSI commands
  * alphabetically by the final byte, in ASCII order. For sanity and consistency, we adopt the same
@@ -122,6 +115,7 @@ public interface VtHandler {
 	// Various parameters for the 'h' and 'l' final CSI bytes
 
 	public static final byte[] _4 = ascii("4");
+	public static final byte[] G0 = ascii(">0");
 	public static final byte[] Q1 = ascii("?1");
 	public static final byte[] Q7 = ascii("?7");
 	public static final byte[] Q12 = ascii("?12");
@@ -134,10 +128,11 @@ public interface VtHandler {
 	public static final byte[] Q1048 = ascii("?1048");
 	public static final byte[] Q1049 = ascii("?1049");
 	public static final byte[] Q2004 = ascii("?2004");
+	public static final byte[] Q2031 = ascii("?2031");
+	public static final byte[] Q9001 = ascii("?9001");
 
 	/**
 	 * An ANSI color specification
-	 *
 	 * <p>
 	 * We avoid going straight to AWT colors, 1) Because it provides better separation between the
 	 * terminal logic and the rendering framework, and 2) Because some specifications, e.g., default
@@ -149,7 +144,6 @@ public interface VtHandler {
 
 	/**
 	 * A singleton representing the default color
-	 *
 	 * <p>
 	 * The actual color selected will depend on context and use. Most notably, the default color
 	 * used for foreground should greatly contrast the default color used for the background.
@@ -160,7 +154,6 @@ public interface VtHandler {
 
 	/**
 	 * One of the eight standard ANSI colors
-	 *
 	 * <p>
 	 * The actual color may be modified by other SGR attributes, notably {@link Intensity}. For
 	 * colors that are described by hue, some thought should be given to how the standard and
@@ -219,7 +212,6 @@ public interface VtHandler {
 
 		/**
 		 * Get the standard color for the given numerical code
-		 * 
 		 * <p>
 		 * For example, the sequence {@code CSI [ 34 m} would use code 4 (blue).
 		 * 
@@ -233,7 +225,6 @@ public interface VtHandler {
 
 	/**
 	 * One of the eight ANSI intense colors
-	 * 
 	 * <p>
 	 * Note that intense colors may also be specified using the standard color with the
 	 * {@link Intensity#BOLD} attribute, depending on the command sequence.
@@ -279,7 +270,6 @@ public interface VtHandler {
 
 		/**
 		 * Get the intense color for the given numerical code
-		 * 
 		 * <p>
 		 * For example, the sequence {@code CSI [ 94 m} would use code 4 (blue).
 		 * 
@@ -335,7 +325,6 @@ public interface VtHandler {
 
 		/**
 		 * Get the dim color for the given numerical code
-		 * 
 		 * <p>
 		 * For example, the sequence {@code CSI [ 34 m} would use code 4 (blue).
 		 * 
@@ -349,32 +338,38 @@ public interface VtHandler {
 
 	/**
 	 * For 8-bit colors, one of the 216 colors from the RGB cube
-	 * 
 	 * <p>
 	 * The r, g, and b fields give the "step" number from 0 to 5, dimmest to brightest.
+	 * 
+	 * @param r red
+	 * @param g green
+	 * @param b blue
 	 */
 	public record Ansi216Color(int r, int g, int b) implements AnsiColor {}
 
 	/**
 	 * For 8-bit colors, one of the 24 grays
-	 * 
 	 * <p>
 	 * The v field is a value from 0 to 23, 0 being the dimmest, but not true black, and 23 being
 	 * the brightest, but not true white.
+	 * 
+	 * @param v value
 	 */
 	public record AnsiGrayscaleColor(int v) implements AnsiColor {}
 
 	/**
 	 * A 24-bit color
-	 * 
 	 * <p>
 	 * The r, g, and b fields are values from 0 to 255 dimmest to brightest.
+	 * 
+	 * @param r red
+	 * @param g green
+	 * @param b blue
 	 */
 	public record Ansi24BitColor(int r, int g, int b) implements AnsiColor {}
 
 	/**
 	 * Modifies the intensity of the character either by color or by font weight.
-	 * 
 	 * <p>
 	 * The renderer may choose a combination of strategies. For example, {@link #NORMAL} may be
 	 * rendered using the standard color and bold type. Then {@link #BOLD} would use the intense
@@ -434,7 +429,6 @@ public interface VtHandler {
 
 	/**
 	 * Causes text to blink
-	 * 
 	 * <p>
 	 * If implemented, renderers should take care not to irritate the user. One option is to make
 	 * {@link #FAST} actually slow, and {@link #SLOW} even slower. Another option is to only blink
@@ -567,7 +561,6 @@ public interface VtHandler {
 
 	/**
 	 * For cursor and keypad, specifies normal or application mode
-	 * 
 	 * <p>
 	 * This affects the codes sent by the terminal.
 	 */
@@ -628,7 +621,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle normal character output, i.e., place the character on the display
-	 * 
 	 * <p>
 	 * This excludes control sequences and control characters, e.g., tab, line feed. While we've not
 	 * tested, in theory, this can instead buffer the byte for decoding from UTF-8. Still, the
@@ -641,7 +633,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle a character not part of an escape sequence.
-	 * 
 	 * <p>
 	 * This may include control characters, which are displatched appropriately by this method.
 	 * Additionally, this handles any exception thrown by {@link #handleChar(byte)}.
@@ -651,29 +642,15 @@ public interface VtHandler {
 	default void handleCharExc(byte b) {
 		try {
 			switch (b) {
-				case 7:
-					handleBell();
-					return;
-				case 8:
-					handleBackSpace();
-					return;
-				case 9:
-					handleTab();
-					return;
-				case 10:
-					handleLineFeed();
-					return;
-				case 13:
-					handleCarriageReturn();
-					return;
-				case 14:
-					handleAltCharset(true);
-					return;
-				case 15:
-					handleAltCharset(false);
-					return;
+				case 7 -> handleBell();
+				case 8 -> handleBackSpace();
+				case 9 -> handleTab();
+				case 10 -> handleLineFeed();
+				case 13 -> handleCarriageReturn();
+				case 14 -> handleAltCharset(true);
+				case 15 -> handleAltCharset(false);
+				default -> handleChar(b);
 			}
-			handleChar(b);
 		}
 		catch (Exception e) {
 			Msg.error(this, "Exception handling terminal character output " + charInfo(b) + ":" + e,
@@ -683,7 +660,6 @@ public interface VtHandler {
 
 	/**
 	 * Parse a sequence of integers in the form {@code <em>n</em> ; <em>m</em> ;} ....
-	 * 
 	 * <p>
 	 * This is designed to replace the {@link String#split(String)} and
 	 * {@link Integer#parseInt(String)} pattern, which should avoid some unnecessary object
@@ -799,6 +775,21 @@ public interface VtHandler {
 		else if (bufEq(csiParam, Q2004)) {
 			handleBracketedPasteMode(en);
 		}
+		else if (bufEq(csiParam, Q2031)) {
+			handleThemeChangeNotification(en);
+		}
+		else if (bufEq(csiParam, Q9001)) {
+			handleWin32InputMode(en);
+		}
+		else {
+			throw new UnknownCsiException();
+		}
+	}
+
+	default void handleQStuff(ByteBuffer csiParam) {
+		if (bufEq(csiParam, G0)) {
+			handleXTVersion();
+		}
 		else {
 			throw new UnknownCsiException();
 		}
@@ -815,49 +806,29 @@ public interface VtHandler {
 			throw new UnknownCsiException();
 		}
 		switch (bits.nextInt()) {
-			case 22: {
+			case 22 -> {
 				switch (bits.nextInt()) {
-					case 0: {
+					case 0 -> {
 						handleSaveIconTitle();
 						handleSaveWindowTitle();
-						return;
 					}
-					case 1: {
-						handleSaveIconTitle();
-						return;
-					}
-					case 2: {
-						handleSaveWindowTitle();
-						return;
-					}
-					default: {
-						throw new UnknownCsiException();
-					}
+					case 1 -> handleSaveIconTitle();
+					case 2 -> handleSaveWindowTitle();
+					default -> throw new UnknownCsiException();
 				}
 			}
-			case 23: {
+			case 23 -> {
 				switch (bits.nextInt()) {
-					case 0: {
+					case 0 -> {
 						handleRestoreIconTitle();
 						handleRestoreWindowTitle();
-						return;
 					}
-					case 1: {
-						handleRestoreIconTitle();
-						return;
-					}
-					case 2: {
-						handleRestoreWindowTitle();
-						return;
-					}
-					default: {
-						throw new UnknownCsiException();
-					}
+					case 1 -> handleRestoreIconTitle();
+					case 2 -> handleRestoreWindowTitle();
+					default -> throw new UnknownCsiException();
 				}
 			}
-			default: {
-				throw new UnknownCsiException();
-			}
+			default -> throw new UnknownCsiException();
 		}
 	}
 
@@ -873,116 +844,98 @@ public interface VtHandler {
 			throws Exception {
 		try {
 			switch (csiFinal) {
-				case '@': { // Insert characters
+				case '@' -> { // Insert characters
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleInsertCharacters(n);
-					return;
 				}
-				case 'A': // Cursor up
-				case 'B': // Cursor down
-				case 'C': // Cursor forward
-				case 'D': /* Cursor back */ {
+				case 'A', 'B', 'C', 'D' -> { // Cursor up, down, forward, back
 					Direction dir = Direction.forCsiFinal(csiFinal);
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleMoveCursor(dir, n);
-					return;
 				}
-				case 'G': { // Cursor character absolute
+				case 'G' -> { // Cursor character absolute
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleMoveCursorCol(n - 1);
-					return;
 				}
-				case 'H': { // Cursor position
+				// Horizontal and Vertical Position (same as CUP), Cursor Position
+				case 'f', 'H' -> {
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					int m = bits.hasNext() ? bits.nextInt() : 1;
 					handleMoveCursor(n - 1, m - 1);
-					return;
 				}
-				case 'J': { // Erase in display
+				case 'J' -> { // Erase in display
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 0;
 					handleErase(Erasure.fromED(n));
-					return;
 				}
-				case 'K': { // Erase in line
+				case 'K' -> { // Erase in line
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 0;
 					handleErase(Erasure.fromEL(n));
-					return;
 				}
-				case 'L': { // Insert lines
+				case 'L' -> { // Insert lines
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleInsertLines(n);
-					return;
 				}
-				case 'M': { // Delete lines
+				case 'M' -> { // Delete lines
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleDeleteLines(n);
-					return;
 				}
-				case 'P': { // Delete characters
+				case 'P' -> { // Delete characters
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleDeleteCharacters(n);
-					return;
 				}
-				case 'S': { // Scroll up lines
+				case 'S' -> { // Scroll up lines
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleScrollLinesUp(n, false);
-					return;
 				}
-				case 'T': { // Scroll down lines
+				case 'T' -> { // Scroll down lines
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleScrollLinesDown(n);
-					return;
 				}
-				case 'X': { // Erase characters
+				case 'X' -> { // Erase characters
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleEraseCharacters(n);
-					return;
 				}
-				case 'Z': { // Cursor backward tabulation
+				case 'Z' -> { // Cursor backward tabulation
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleBackwardTab(n);
-					return;
 				}
-				case 'c': { // Send Device Attributes
-					Msg.trace(this, "TODO: Send Device Attributes");
-					return;
+				case 'b' -> { // Repeat last character
+					OfInt bits = parseCsiInts(csiParam);
+					int n = bits.hasNext() ? bits.nextInt() : 1;
+					handleRepeatChar(n);
 				}
-				case 'd': { // Line position absolute
+				case 'c' -> Msg.trace(this, "TODO: Send Device Attributes");
+				case 'd' -> { // Line position absolute
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleMoveCursorRow(n - 1);
-					return;
 				}
-				case 'h': {
-					handleHOrLStuff(csiParam, true);
-					return;
-				}
-				case 'l': {
-					handleHOrLStuff(csiParam, false);
-					return;
-				}
-				case 'm': { // Select Graphic Rendition (SGR)
+				case 'h' -> handleHOrLStuff(csiParam, true);
+				case 'l' -> handleHOrLStuff(csiParam, false);
+				case 'm' -> { // Select Graphic Rendition (SGR)
 					if (csiParam.hasRemaining()) {
 						switch (csiParam.get(csiParam.position())) {
-							case '>': // Set key modifier options
+							case '>' -> { // Set key modifier options
 								Msg.trace(this, "TODO: Set key modifier options");
 								return;
-							case '?': // Query key modifier options
+							}
+							case '?' -> { // Query key modifier options
 								Msg.trace(this, "TODO: Query key modifier options");
 								return;
+							}
 						}
 					}
 					OfInt bits = parseCsiInts(csiParam);
@@ -992,49 +945,31 @@ public interface VtHandler {
 					while (bits.hasNext()) {
 						handleSgrAttribute(bits);
 					}
-					return;
 				}
-				case 'n': { // Device Status Report
+				case 'n' -> { // Device Status Report
 					OfInt bits = parseCsiInts(csiParam);
 					if (!bits.hasNext()) {
 						throw new UnknownCsiException();
 					}
 					switch (bits.nextInt()) {
-						case 6: // Report Cursor Position
-							handleReportCursorPos();
-							return;
-						case 5: // Status Report (Not implemented)
-						default:
-							throw new UnknownCsiException();
+						case 5 -> throw new UnknownCsiException(); // Status Report (Not implemented)
+						case 6 -> handleReportCursorPos();
+						case 996 -> handleQueryTheme();
+						default -> throw new UnknownCsiException();
 					}
 				}
-				case 'p': { // Soft terminal reset
-					// TODO: Not sure how/if this should differ from "full" reset
-					handleFullReset();
-					return;
-				}
-				case 'r': { // Scroll screen
+				case 'p' -> handleFullReset(); // Really Soft, but how's it different?
+				case 'q' -> handleQStuff(csiParam);
+				case 'r' -> { // Scroll screen
 					OfInt bits = parseCsiInts(csiParam);
 					Integer start = bits.hasNext() ? bits.nextInt() - 1 : null;
 					Integer end = bits.hasNext() ? bits.nextInt() - 1 : null;
 					handleSetScrollRange(start, end);
-					return;
 				}
-				case 's': {
-					handleSaveCursorPos();
-					return;
-				}
-				case 't': { // Window manipulation
-					handleWindowManipulation(csiParam);
-					return;
-				}
-				case 'u': {
-					handleRestoreCursorPos();
-					return;
-				}
-				default: {
-					throw new UnknownCsiException();
-				}
+				case 's' -> handleSaveCursorPos();
+				case 't' -> handleWindowManipulation(csiParam);
+				case 'u' -> handleRestoreCursorPos();
+				default -> throw new UnknownCsiException();
 			}
 		}
 		catch (UnknownCsiException e) {
@@ -1183,7 +1118,6 @@ public interface VtHandler {
 
 	/**
 	 * Decode the 8-bit ANSI color.
-	 * 
 	 * <p>
 	 * Colors 0-15 are the standard + high-intensity. Colors 16-231 come from a 6x6x6 RGB cube.
 	 * Finally, colors 232-255 are 24 steps of gray scale.
@@ -1242,69 +1176,27 @@ public interface VtHandler {
 			return;
 		}
 		switch (code) {
-			case 0:
-				handleResetAttributes();
-				return;
-			case 1:
-				handleIntensity(Intensity.BOLD);
-				return;
-			case 2:
-				handleIntensity(Intensity.DIM);
-				return;
-			case 3:
-				handleFont(AnsiFont.ITALIC);
-				return;
-			case 4:
-				handleUnderline(Underline.SINGLE);
-				return;
-			case 5:
-				handleBlink(Blink.SLOW);
-				return;
-			case 6:
-				handleBlink(Blink.FAST);
-				return;
-			case 7:
-				handleReverseVideo(ReverseVideo.REVERSED);
-				return;
-			case 8:
-				handleHidden(true);
-				return;
-			case 9:
-				handleStrikeThrough(true);
-				return;
-			case 20:
-				handleFont(AnsiFont.BLACK_LETTER);
-				return;
-			case 21:
-				handleUnderline(Underline.DOUBLE);
-				return;
-			case 22:
-				handleIntensity(Intensity.NORMAL);
-				return;
-			case 23:
-				handleFont(AnsiFont.NORMAL);
-				return;
-			case 24:
-				handleUnderline(Underline.NONE);
-				return;
-			case 25:
-				handleBlink(Blink.NONE);
-				return;
-			case 26:
-				handleProportionalSpacing(true);
-				return;
-			case 27:
-				handleReverseVideo(ReverseVideo.NORMAL);
-				return;
-			case 28:
-				handleHidden(false);
-				return;
-			case 29:
-				handleStrikeThrough(false);
-				return;
-			default:
-				Msg.warn(this, "Unrecognized SGR attribute: " + code);
-				return;
+			case 0 -> handleResetAttributes();
+			case 1 -> handleIntensity(Intensity.BOLD);
+			case 2 -> handleIntensity(Intensity.DIM);
+			case 3 -> handleFont(AnsiFont.ITALIC);
+			case 4 -> handleUnderline(Underline.SINGLE);
+			case 5 -> handleBlink(Blink.SLOW);
+			case 6 -> handleBlink(Blink.FAST);
+			case 7 -> handleReverseVideo(ReverseVideo.REVERSED);
+			case 8 -> handleHidden(true);
+			case 9 -> handleStrikeThrough(true);
+			case 20 -> handleFont(AnsiFont.BLACK_LETTER);
+			case 21 -> handleUnderline(Underline.DOUBLE);
+			case 22 -> handleIntensity(Intensity.NORMAL);
+			case 23 -> handleFont(AnsiFont.NORMAL);
+			case 24 -> handleUnderline(Underline.NONE);
+			case 25 -> handleBlink(Blink.NONE);
+			case 26 -> handleProportionalSpacing(true);
+			case 27 -> handleReverseVideo(ReverseVideo.NORMAL);
+			case 28 -> handleHidden(false);
+			case 29 -> handleStrikeThrough(false);
+			default -> Msg.warn(this, "Unrecognized SGR attribute: " + code);
 		}
 	}
 
@@ -1330,6 +1222,15 @@ public interface VtHandler {
 	 * @param n
 	 */
 	void handleBackwardTab(int n);
+
+	/**
+	 * Handle the repeat char sequence: repeat the last character n more times.
+	 * <p>
+	 * If the terminal is not in wrap mode, truncate anything beyond the last column.
+	 * 
+	 * @param n
+	 */
+	void handleRepeatChar(int n);
 
 	/**
 	 * Handle the line feed control code (0x0a), usually just move the cursor down one.
@@ -1398,7 +1299,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle toggling of reverse video
-	 * 
 	 * <p>
 	 * This can be a bit confusing with default colors. In general, this means swapping the
 	 * foreground and background color specifications (not inverting the colors or mirroring or some
@@ -1434,7 +1334,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle toggling insert mode
-	 * 
 	 * <p>
 	 * In insert mode, characters at and to the right of the cursor are shifted right to make room
 	 * for each new character. In replace mode (default), the character at the cursor is replaced
@@ -1467,7 +1366,6 @@ public interface VtHandler {
 
 	/**
 	 * Toggle blinking of the cursor
-	 * 
 	 * <p>
 	 * Renderers should take care not to irritate the user. Some possibilities are to blink slowly,
 	 * blink only for a short period of time after it moves, and/or blink only when the terminal has
@@ -1508,7 +1406,6 @@ public interface VtHandler {
 
 	/**
 	 * Switch to and from the alternate screen buffer, optionally clearing it
-	 * 
 	 * <p>
 	 * This will never clear the normal buffer. If the buffer does not change as a result of this
 	 * call, then the alternate buffer is not cleared, even if clearAlt is specified.
@@ -1529,6 +1426,40 @@ public interface VtHandler {
 	 * @param en true to bracket pasted text is special control sequences
 	 */
 	void handleBracketedPasteMode(boolean en);
+
+	/**
+	 * Toggle unsolicited theme-change notifications
+	 * <p>
+	 * This is the Dark and Light Mode detection as documented by the <a
+	 * href="https://contour-terminal.org/vt-extensions/color-palette-update-notifications/">Contour
+	 * Terminal Emulator</a>.
+	 * 
+	 * @param en true to send notifications of theme changes
+	 */
+	void handleThemeChangeNotification(boolean en);
+
+	/**
+	 * Solicit the current theme
+	 * <p>
+	 * This is the Dark and Light Mode detection as documented by the <a
+	 * href="https://contour-terminal.org/vt-extensions/color-palette-update-notifications/">Contour
+	 * Terminal Emulator</a>.
+	 */
+	void handleQueryTheme();
+
+	/**
+	 * Toggle Win32 input mode
+	 * 
+	 * <p>
+	 * See the Windows Terminal specification:
+	 * https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md.
+	 * It should be safe to ignore this, but could provide us options if we'd like to forward more
+	 * detailed keyboard events to a Windows Console application than is permitted with standard VT
+	 * sequences.
+	 * 
+	 * @param en true to enable Win32 input mode
+	 */
+	void handleWin32InputMode(boolean en);
 
 	/**
 	 * Handle a request to save the cursor position
@@ -1558,7 +1489,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle an absolute cursor row movement command
-	 * 
 	 * <p>
 	 * The column should remain the same, i.e., do <em>not</em> reset the column to 0.
 	 * 
@@ -1580,7 +1510,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle a request to save the terminal window's icon title
-	 * 
 	 * <p>
 	 * "Icon titles" are a concept from the X Windows system. Do the closest equivalent, if anything
 	 * applies at all. The current title is pushed to a stack of limited size.
@@ -1589,7 +1518,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle a request to save the terminal window's title
-	 * 
 	 * <p>
 	 * Window titles are fairly applicable to all desktop windowing systems. The current title is
 	 * pushed to a stack of limited size.
@@ -1598,7 +1526,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle a request to restore the terminal window's icon title
-	 * 
 	 * <p>
 	 * The title is set to the one popped from the stack of saved window icon titles.
 	 * 
@@ -1608,7 +1535,6 @@ public interface VtHandler {
 
 	/**
 	 * Handle a request to restore the terminal window's title
-	 * 
 	 * <p>
 	 * The title is set to the one popped from the stack of saved window titles.
 	 * 
@@ -1632,7 +1558,6 @@ public interface VtHandler {
 
 	/**
 	 * Insert n lines at and below the cursor
-	 * 
 	 * <p>
 	 * Lines within the viewport are shifted down or deleted to make room for the new lines.
 	 * 
@@ -1642,7 +1567,6 @@ public interface VtHandler {
 
 	/**
 	 * Delete n lines at and below the cursor
-	 * 
 	 * <p>
 	 * Lines within the viewport are shifted up, and new lines inserted at the bottom.
 	 * 
@@ -1687,15 +1611,14 @@ public interface VtHandler {
 
 	/**
 	 * Set the range of rows (viewport) involved in scrolling.
-	 * 
 	 * <p>
-	 * This applies not only to {@link #handleScrollUp()} and {@link #handleScrollDown()}, but also
-	 * to when the cursor moves far enough down that the display must scroll. Normally, start is 0
-	 * and end is rows-1 (The parser will adjust the 1-up indices to 0-up) so that the entire
-	 * display is scrolled. If the cursor moves past end (not just the end of the device, but the
-	 * end given here) then the scrolling region must be scrolled. The top line is removed, the
-	 * interior lines are moved up, and the bottom line is cleared. If the terminal is resized, the
-	 * scroll range is reset to the whole display.
+	 * This applies not only to {@link #handleScrollLinesUp(int, boolean)} and
+	 * {@link #handleScrollLinesDown(int)}, but also to when the cursor moves far enough down that
+	 * the display must scroll. Normally, start is 0 and end is rows-1 (The parser will adjust the
+	 * 1-up indices to 0-up) so that the entire display is scrolled. If the cursor moves past end
+	 * (not just the end of the device, but the end given here) then the scrolling region must be
+	 * scrolled. The top line is removed, the interior lines are moved up, and the bottom line is
+	 * cleared. If the terminal is resized, the scroll range is reset to the whole display.
 	 * 
 	 * @param start the first row (0-up) in the scrolling region. If omitted, the first row of the
 	 *            display.
@@ -1706,7 +1629,6 @@ public interface VtHandler {
 
 	/**
 	 * Scroll the display n lines down, considering only those lines in the scrolling range.
-	 * 
 	 * <p>
 	 * To be unambiguous, this of movement of the viewport. The viewport scrolls down, so the lines
 	 * themselves scroll up. The default range is the whole display. The cursor is not moved.
@@ -1721,14 +1643,13 @@ public interface VtHandler {
 	 * Scroll the display n lines up, considering only those lines in the scrolling range.
 	 * 
 	 * @param n the number of lines to scroll
-	 * @see #handleScrollDown()
+	 * @see #handleScrollLinesDown(int)
 	 * @see #handleSetScrollRange(Integer, Integer)
 	 */
 	void handleScrollViewportUp(int n);
 
 	/**
 	 * Scroll the lines n slots down, considering only those lines in the scrolling range.
-	 * 
 	 * <p>
 	 * This is equivalent to scrolling the <em>viewport</em> n lines <em>up</em>. This method exists
 	 * in attempt to reflect "up" and "down" correctly in the documentation. Unfortunately, the
@@ -1744,7 +1665,6 @@ public interface VtHandler {
 
 	/**
 	 * Scroll the lines n slots up, considering only those lines in the scrolling range.
-	 * 
 	 * <p>
 	 * The is equivalent to scrolling the <em>viewport</em> n lines <em>down</em>. This method
 	 * exists in attempt to reflect "up" and "down" correctly in the documentation. Unfortunately,
@@ -1753,7 +1673,7 @@ public interface VtHandler {
 	 * 
 	 * @param n the number of lines to scroll
 	 * @param intoScrollBack specifies whether the top line may flow into the scroll-back buffer
-	 * @see #handleScrollViewportDown(int)
+	 * @see #handleScrollViewportDown(int, boolean)
 	 */
 	default void handleScrollLinesUp(int n, boolean intoScrollBack) {
 		handleScrollViewportDown(n, intoScrollBack);
@@ -1769,10 +1689,14 @@ public interface VtHandler {
 
 	/**
 	 * Handle a request to fully reset the terminal
-	 * 
 	 * <p>
 	 * All buffers should be cleared and all state variables, positions, attributes, etc., should be
 	 * reset to their defaults.
 	 */
 	void handleFullReset();
+
+	/**
+	 * Handle an XTVERSION request
+	 */
+	void handleXTVersion();
 }

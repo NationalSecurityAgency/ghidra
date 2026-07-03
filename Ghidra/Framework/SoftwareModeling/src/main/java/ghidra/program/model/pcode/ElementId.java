@@ -127,6 +127,7 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_WCHAR_SIZE = new ElementId("wchar_size", 65);
 	public static final ElementId ELEM_ZERO_LENGTH_BOUNDARY =
 		new ElementId("zero_length_boundary", 66);
+	public static final ElementId ELEM_BITFIELD = new ElementId("bitfield", 289);
 
 	// database
 	public static final ElementId ELEM_COLLISION = new ElementId("collision", 67);
@@ -289,6 +290,7 @@ public record ElementId(String name, int id) {
 		new ElementId("errortoomanyinstructions", 185);
 	public static final ElementId ELEM_ERRORUNIMPLEMENTED =
 		new ElementId("errorunimplemented", 186);
+	public static final ElementId ELEM_BADDATACOUNT = new ElementId("baddatacount", 290);
 	public static final ElementId ELEM_EXTRAPOP = new ElementId("extrapop", 187);
 	public static final ElementId ELEM_IGNOREUNIMPLEMENTED =
 		new ElementId("ignoreunimplemented", 188);
@@ -457,6 +459,7 @@ public record ElementId(String name, int id) {
 		new ElementId("join_per_primitive", 283);
 	public static final ElementId ELEM_JOIN_DUAL_CLASS = new ElementId("join_dual_class", 285);
 	public static final ElementId ELEM_EXTRA_STACK = new ElementId("extra_stack", 287);
+	public static final ElementId ELEM_CONSUME_REMAINING = new ElementId("consume_remaining", 288);
 
-	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 288);
+	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 291);
 }

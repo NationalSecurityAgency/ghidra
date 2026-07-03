@@ -17,13 +17,14 @@ package ghidra.pcode.emu.jit.analysis;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Stream;
 
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorState;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.op.*;
 import ghidra.pcode.emu.jit.var.*;
+import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
-import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
@@ -223,30 +224,40 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 		 */
 		protected List<JitVal> doGetDefinitions(NavigableMap<Long, JitVal> map, AddressSpace space,
 				long offset, int size) {
+			long end = offset + size;
 			List<JitVal> result = new ArrayList<>();
 			Entry<Long, JitVal> preEntry = map.lowerEntry(offset);
 			long cursor = offset;
 			if (preEntry != null) {
-				if (endOf(preEntry) > offset) {
+				if (endOf(preEntry) > offset) { // Do I intersect the lower entry?
 					JitVal preVal = preEntry.getValue();
 					Varnode preVn = new Varnode(space.getAddress(preEntry.getKey()), preVal.size());
-					int shave = (int) (offset - preEntry.getKey());
-					JitVal truncVal = arithmetic.truncFromLeft(preVn, shave, preVal);
-					cursor = endOf(preEntry);
-					result.add(truncVal);
+					int shaveLeft = (int) (offset - preEntry.getKey());
+					JitVal truncVal = arithmetic.truncFromLeft(preVn, shaveLeft, preVal);
+					if (endOf(preEntry) > end) { // Am I contained in the lower entry?
+						Varnode truncVn = arithmetic.truncVnFromLeft(preVn, shaveLeft);
+						int shaveRight = (int) (endOf(preEntry) - end);
+						truncVal = arithmetic.truncFromRight(truncVn, shaveRight, truncVal);
+						cursor = end;
+						result.add(truncVal);
+					}
+					else {
+						cursor = endOf(preEntry);
+						result.add(truncVal);
+					}
 				}
 			}
-			long end = offset + size;
 			for (Entry<Long, JitVal> entry : map.subMap(offset, end).entrySet()) {
 				if (entry.getKey() > cursor) {
 					result.add(new JitMissingVar(
 						new Varnode(space.getAddress(cursor), (int) (entry.getKey() - cursor))));
 				}
-				if (endOf(entry) > end) {
+				if (endOf(entry) > end) { // Do I have off the end?
 					JitVal postVal = entry.getValue();
 					Varnode postVn = new Varnode(space.getAddress(entry.getKey()), postVal.size());
 					int shave = (int) (endOf(entry) - end);
 					JitVal truncVal = arithmetic.truncFromRight(postVn, shave, postVal);
+					// NOTE: No need to check for contained here. Would have been caught above.
 					cursor = end;
 					result.add(truncVal);
 					break;
@@ -399,6 +410,11 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 		return arithmetic;
 	}
 
+	@Override
+	public Stream<PcodeExecutorStatePiece<?, ?>> streamPieces() {
+		return Stream.of(this);
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * 
@@ -442,6 +458,11 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 		varnodesWritten.add(varnode);
 
 		mini.set(varnode, val);
+	}
+
+	@Override
+	public void setVarInternal(AddressSpace space, JitVal offset, int size, JitVal val) {
+		setVar(space, offset, size, false, val);
 	}
 
 	/**
@@ -519,6 +540,11 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 	}
 
 	@Override
+	public JitVal getVarInternal(AddressSpace space, JitVal offset, int size, Reason reason) {
+		return getVar(space, offset, size, false, reason);
+	}
+
+	@Override
 	public Map<Register, JitVal> getRegisterValues() {
 		throw new UnsupportedOperationException();
 	}
@@ -534,7 +560,7 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 	}
 
 	@Override
-	public PcodeExecutorState<JitVal> fork() {
+	public PcodeExecutorState<JitVal> fork(PcodeStateCallbacks cb) {
 		throw new UnsupportedOperationException();
 	}
 

@@ -44,17 +44,19 @@ dependencies {
 	def ghidraPath = projectDir.getParentFile().getParentFile().path.replace(File.separator, "/") + "/";
 	
 	rootProject.subprojects { p ->
-		p.plugins.withType(JavaPlugin) {
-			def projectPath = p.projectDir.path.replace(File.separator, "/")
-			if (projectPath.startsWith(ghidraPath) && (
-				projectPath.contains("/Framework/") ||
-				projectPath.contains("/Features/") ||
-				projectPath.contains("/Debug/") ||
-				projectPath.contains("/Processors/"))) {
+		def projectPath = p.projectDir.path.replace(File.separator, "/")
+		if (projectPath.startsWith(ghidraPath) && (
+			projectPath.contains("/Framework/") ||
+			projectPath.contains("/Features/") ||
+			projectPath.contains("/Debug/") ||
+			projectPath.contains("/Processors/"))) {
 
+			evaluationDependsOn(p.path)
+
+			p.plugins.withType(JavaPlugin) {
 				api p
 			}
-		}	
+		}
 	}
 
 	// some tests use classes in Base, FunctionGraph and PDB
@@ -85,7 +87,8 @@ task testSpecimenWin_x86_64 {
 	dependsOn 'expCreateThreadExitWin_x86_64Executable'
 	//dependsOn 'expCreateThreadSpinWin_x86_64Executable'
 	dependsOn 'expPrintWin_x86_64Executable'
-	//dependsOn 'expSpinWin_x86_64Executable'
+	dependsOn 'expSpinWin_x86_64Executable'
+	dependsOn 'expReadWin_x86_64Executable'
 	dependsOn 'expRegistersWin_x86_64Executable'
 	dependsOn 'expStackWin_x86_64Executable'
 }
@@ -159,6 +162,7 @@ model {
 		}
 		expRead(NativeExecutableSpec) {
 			targetPlatform "linux_x86_64"
+			targetPlatform "win_x86_64"
 			targetPlatform "mac_arm_64"
 		}
 		expSpin(NativeExecutableSpec) {
@@ -191,6 +195,7 @@ model {
 				linker.args("-lutil")
 			}
 			if (toolChain in VisualCpp) {
+				cCompiler.args("/ZI")
 				cppCompiler.define("VS_PROJECT")
 				// NB. No /SUBSYSTEM:CONSOLE
 				// that creates a subprocess
@@ -220,6 +225,7 @@ integrationTest {
 	dependsOn { project(':Debugger-agent-lldb').assemblePyPackage }
 	dependsOn { project(':Debugger-agent-dbgeng').assemblePyPackage }
 	dependsOn { project(':Debugger-agent-drgn').assemblePyPackage }
+	dependsOn { project(':Debugger-agent-x64dbg').assemblePyPackage }
 
 	if ("linux_x86_64".equals(getCurrentPlatformName())) {
 		dependsOn("testSpecimenLinux_x86_64")

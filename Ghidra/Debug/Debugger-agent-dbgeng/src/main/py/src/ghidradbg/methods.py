@@ -26,7 +26,7 @@ from ghidratrace.client import (MethodRegistry, ParamDesc, Address,
 from pybag import pydbg  # type: ignore
 from pybag.dbgeng import core as DbgEng, exception  # type: ignore
 
-from . import util, commands
+from . import arch, util, commands
 
 
 REGISTRY = MethodRegistry(ThreadPoolExecutor(
@@ -318,6 +318,14 @@ class EventContainer(TraceObject):
 
 
 class ExceptionContainer(TraceObject):
+    pass
+
+
+class Event(TraceObject):
+    pass
+
+
+class Exception(TraceObject):
     pass
 
 
@@ -828,7 +836,7 @@ def read_mem(process: Process, range: AddressRange) -> None:
             display_result=False)
         if result['count'] == 0:
             commands.putmem_state(
-                offset_start, offset_start + range.length() - 1, 'error')
+                offset_start, range.length() - 1, 'error')
 
 
 @REGISTRY.method()
@@ -836,7 +844,7 @@ def read_mem(process: Process, range: AddressRange) -> None:
 def write_mem(process: Process, address: Address, data: bytes) -> None:
     """Write memory."""
     nproc = find_proc_by_obj(process)
-    offset = process.trace.extra.required_mm().map_back(nproc, address)
+    offset = process.trace.extra.require_mm().map_back(nproc, address)
     dbg().write(offset, data)
 
 
@@ -845,9 +853,14 @@ def write_mem(process: Process, address: Address, data: bytes) -> None:
 def write_reg(frame: StackFrame, name: str, value: bytes) -> None:
     """Write a register."""
     f = find_frame_by_obj(frame)
-    util.select_frame(f.FrameNumber)
-    nproc = pydbg.selected_process()
-    dbg().reg._set_register(name, value)
+    current = util.selected_frame()
+    if f.FrameNumber != current:
+        raise Exception("Mismatch on frame")
+    nproc = util.selected_process()
+    trace: Trace[commands.Extra] = frame.trace
+    rv = trace.extra.require_rm().map_value_back(nproc, name, value)
+    rval = int.from_bytes(rv.value, signed=False)
+    dbg().reg._set_register(name, rval)
 
 
 @REGISTRY.method(display='Refresh Events (custom)', condition=util.dbg.IS_TRACE)
@@ -858,6 +871,50 @@ def refresh_trace_events_custom(node: State,
     """Parse TTD objects generated from a LINQ command."""
     with commands.open_tracked_tx('Put Events (custom)'):
         commands.ghidra_trace_put_trace_events_custom(prefix, cmd)
+
+
+@REGISTRY.method(action='add_handler', display='Add Handler')
+def add_handler_breakpoint(node: BreakpointSpec, handler: str) -> None:
+    """
+    Add python handler
+    """
+    mat = PROC_BREAKBPT_PATTERN.fullmatch(node.path)
+    if mat is None:
+        raise TypeError(f"{node} is not {err_msg}")
+    bptnum = int(mat['breaknum'])
+    with commands.open_tracked_tx('Add Exception Handler'):
+        util.BPT_HANDLERS[bptnum] = handler
+        commands.ghidra_trace_put_breakpoints()
+
+
+@REGISTRY.method(action='add_handler', display='Add Handler')
+def add_handler_exception(node: Exception, handler: str) -> None:
+    """
+    Add python handler
+    """
+    mat = PROC_EXCEPTION_PATTERN.fullmatch(node.path)
+    if mat is None:
+        raise TypeError(f"{node} is not {err_msg}")
+    excnum = int(mat['excnum'])
+    with commands.open_tracked_tx('Add Exception Handler'):
+        exc_code = util.EXC_CODES[excnum]
+        util.EXC_HANDLERS[exc_code] = handler
+        commands.ghidra_trace_put_exceptions()
+
+
+# TODO?
+# @REGISTRY.method(action='add_handler', display='Add Handler')
+# def add_handler_event(node: Event, handler: str) -> None:
+#     """
+#     Add python handler
+#     """
+#     mat = PROC_EVENT_PATTERN.fullmatch(node.path)
+#     if mat is None:
+#         raise TypeError(f"{node} is not {err_msg}")
+#     evtnum = int(mat['eventnum'])
+#     with commands.open_tracked_tx('Add Event Handler'):
+#         util.EVT_HANDLERS[evtnum] = handler
+#         commands.ghidra_trace_put_events()
 
 
 def dbg():

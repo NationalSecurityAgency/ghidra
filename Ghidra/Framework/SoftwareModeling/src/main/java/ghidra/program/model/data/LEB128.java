@@ -17,8 +17,10 @@ package ghidra.program.model.data;
 
 import java.io.*;
 
+import ghidra.util.exception.AssertException;
+
 /**
- * Logic for reading LEB128 values.
+ * Logic for reading/writing LEB128 values.
  * <p>
  * LEB128 is a variable length integer encoding that uses 7 bits per byte, with the high bit
  * being reserved as a continuation flag, with the least significant bytes coming first 
@@ -148,6 +150,92 @@ public class LEB128 {
 	public static long decode(byte[] bytes, int offset, boolean isSigned) throws IOException {
 		InputStream is = new ByteArrayInputStream(bytes, offset, bytes.length - offset);
 		return read(is, isSigned);
+	}
+
+	/**
+	 * Encodes a value into a sequence of LEB128 bytes.
+	 * 
+	 * @param value to encode
+	 * @param isSigned boolean flag, if true value is encoded as a signed value, if false value is
+	 * encoded as an unsigned value
+	 * @return byte array containing the LEB128 bytes of the value (max 10)
+	 */
+	public static byte[] encode(long value, boolean isSigned) {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream(MAX_SUPPORTED_LENGTH);
+			write(value, baos, isSigned);
+			return baos.toByteArray();
+		}
+		catch (IOException e) {
+			// should not be able to happen using ByteArrayOutputStream.
+			throw new AssertException(e);
+		}
+	}
+
+	/**
+	 * Writes a value to the stream as a sequence of LEB128 bytes.
+	 * 
+	 * @param value to write
+	 * @param os {@link OutputStream} to write to
+	 * @param isSigned boolean flag, if true value is encoded as a signed value, if false value is
+	 * encoded as an unsigned value
+	 * @return count of bytes written to stream
+	 * @throws IOException if error writing to stream
+	 */
+	public static int write(long value, OutputStream os, boolean isSigned) throws IOException {
+		return isSigned ? writeSigned(value, os) : writeUnsigned(value, os);
+	}
+
+	/**
+	 * Writes a value to the stream as a sequence of LEB128 bytes.
+	 * 
+	 * @param value to write
+	 * @param os {@link OutputStream} to write to
+	 * @return count of bytes written to stream
+	 * @throws IOException if error writing to stream
+	 */
+	public static int writeUnsigned(long value, OutputStream os) throws IOException {
+		int size = 0;
+		boolean done;
+		do {
+			int b = (int) (value & 0x7f);
+			value = value >>> 7;
+			done = value == 0;
+			if (value != 0) {
+				b |= 0x80;
+			}
+			os.write(b);
+			size++;
+		}
+		while (!done);
+		return size;
+	}
+
+	/**
+	 * Writes a value to the stream as a sequence of LEB128 bytes.
+	 * 
+	 * @param value to write
+	 * @param os {@link OutputStream} to write to
+	 * @return count of bytes written to stream
+	 * @throws IOException if error writing to stream
+	 */
+	public static int writeSigned(long value, OutputStream os) throws IOException {
+		long endingVal = value < 0 ? -1 : 0;
+		int hiBit = value < 0 ? 0x40 : 0;
+		int size = 0;
+		boolean more;
+		do {
+			int b = (int) (value & 0x7f);
+			value = value >> 7;
+			more = value != endingVal || ((b & 0x40) != hiBit);
+			if (more) {
+				b |= 0x80;
+			}
+			os.write(b);
+			size++;
+		}
+		while (more);
+		return size;
 	}
 
 }

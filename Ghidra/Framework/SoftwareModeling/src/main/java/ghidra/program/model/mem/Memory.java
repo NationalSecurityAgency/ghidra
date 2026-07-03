@@ -25,7 +25,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.OffsetReference;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -462,16 +461,14 @@ public interface Memory extends AddressSetView {
 	 * @param newStartAddr new start address for block
 	 * @param monitor task monitor so the move block can be canceled
 	 * @throws LockException if exclusive lock not in place (see haveLock())
+	 * @throws MemoryBlockException if block movement is not permitted
 	 * @throws MemoryConflictException if move would cause
 	 * blocks to overlap.
-	 * @throws MemoryBlockException if block movement is not permitted
 	 * @throws AddressOverflowException if block movement would violate bounds of address space
-	 * @throws NotFoundException if memoryBlock does not exist in
-	 *   this memory.
 	 */
 	public void moveBlock(MemoryBlock block, Address newStartAddr, TaskMonitor monitor)
 			throws LockException, MemoryBlockException, MemoryConflictException,
-			AddressOverflowException, NotFoundException;
+			AddressOverflowException;
 
 	/**
 	 * Split a block at the given addr and create a new block
@@ -479,14 +476,11 @@ public interface Memory extends AddressSetView {
 	 * @param block block to be split into two
 	 * @param addr address (within block) that will be the
 	 * start of new block
-	 * @throws LockException if exclusive lock not in place (see haveLock())
-	 * @throws NotFoundException thrown if block does not exist
-	 * in memory
 	 * @throws MemoryBlockException memory split not permitted
+	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws AddressOutOfBoundsException thrown if address is not in the block
 	 */
-	public void split(MemoryBlock block, Address addr)
-			throws MemoryBlockException, LockException, NotFoundException;
+	public void split(MemoryBlock block, Address addr) throws MemoryBlockException, LockException;
 
 	/**
 	 * Join the two blocks to create a single memory block.
@@ -499,7 +493,7 @@ public interface Memory extends AddressSetView {
 	 * not contiguous in the address space,
 	 */
 	public MemoryBlock join(MemoryBlock blockOne, MemoryBlock blockTwo)
-			throws LockException, MemoryBlockException, NotFoundException;
+			throws LockException, MemoryBlockException;
 
 	/**
 	 * Convert an existing uninitialized block with an initialized block.
@@ -512,10 +506,20 @@ public interface Memory extends AddressSetView {
 	 * the same.
 	 */
 	public MemoryBlock convertToInitialized(MemoryBlock uninitializedBlock, byte initialValue)
-			throws LockException, MemoryBlockException, NotFoundException;
+			throws LockException, MemoryBlockException;
 
-	public MemoryBlock convertToUninitialized(MemoryBlock itializedBlock)
-			throws MemoryBlockException, NotFoundException, LockException;
+	/**
+	 * Convert an existing initialized block with an uninitialized block.
+	 * Block will discard any associated memory bytes and drop source info.
+	 * @param initializedBlock uninitialized block to convert
+	 * @return the converted block
+	 * @throws LockException if exclusive lock not in place (see haveLock())
+	 * @throws MemoryBlockException if there is no block in memory
+	 * at the same address as block or if the block lengths are not
+	 * the same.
+	 */
+	public MemoryBlock convertToUninitialized(MemoryBlock initializedBlock)
+			throws MemoryBlockException, LockException;
 
 	/**
 	  * Finds a sequence of contiguous bytes that match the

@@ -17,8 +17,10 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.*;
-import ghidra.util.StringUtilities;
+import ghidra.program.model.data.InternalDataTypeComponent;
 import ghidra.util.exception.VersionException;
 
 /**
@@ -73,12 +75,14 @@ class ComponentDBAdapterV0 extends ComponentDBAdapter {
 
 	@Override
 	DBRecord createRecord(long dataTypeID, long parentID, int length, int ordinal, int offset,
-			String name, String comment) throws IOException {
-		// Don't allow whitespace in field names. Until we change the API to throw an exception
-		// when a field name has whitespace, just silently replace whitespace with underscores.
-		String fieldName = StringUtilities.whitespaceToUnderscores(name);
+			String fieldName, String comment) throws IOException {
 		long key =
 			DataTypeManagerDB.createKey(DataTypeManagerDB.COMPONENT, componentTable.getKey());
+		if (StringUtils.isBlank(comment)) {
+			comment = null;
+		}
+		fieldName = InternalDataTypeComponent.cleanupFieldName(fieldName);
+
 		DBRecord record = ComponentDBAdapter.COMPONENT_SCHEMA.createRecord(key);
 		record.setLongValue(ComponentDBAdapter.COMPONENT_PARENT_ID_COL, parentID);
 		record.setLongValue(ComponentDBAdapter.COMPONENT_OFFSET_COL, offset);

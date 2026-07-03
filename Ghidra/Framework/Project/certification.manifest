@@ -26,6 +26,7 @@ src/main/resources/images/checkNotLatest.gif||GHIDRA||reviewed||END|
 src/main/resources/images/checkex.png||GHIDRA||reviewed||END|
 src/main/resources/images/connected.gif||GHIDRA||reviewed||END|
 src/main/resources/images/disconnected.gif||GHIDRA||reviewed||END|
+src/main/resources/images/green_can.png||GHIDRA||||END|
 src/main/resources/images/link.png||Crystal Clear Icons - LGPL 2.1||||END|
 src/main/resources/images/lock.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/monitor.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
@@ -34,6 +35,7 @@ src/main/resources/images/page_delete.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/page_edit.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/plasma.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/plugin.png||GHIDRA||reviewed||END|
+src/main/resources/images/red_can.png||GHIDRA||||END|
 src/main/resources/images/small_hijack.gif||GHIDRA||reviewed||END|
 src/main/resources/images/undo_hijack.png||GHIDRA||reviewed||END|
 src/main/resources/images/unknownFile.gif||GHIDRA||reviewed||END|

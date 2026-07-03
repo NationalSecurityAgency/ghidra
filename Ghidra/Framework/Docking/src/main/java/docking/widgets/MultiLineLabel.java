@@ -26,7 +26,7 @@ import utilities.util.reflection.ReflectionUtilities;
 
 /**
  *  
- * Class to render a String that has new line characters as a multiline
+ * Class to render a String that has new line characters as a multi-line
  * label. Calculates the resizing and centering characteristics.
  * <p>
  * Not affected by HTML formatting.
@@ -49,12 +49,19 @@ public class MultiLineLabel extends JPanel {
 	protected String[] lines; // lines to text to display
 	protected int num_lines; // number of lines
 	protected int margin_width; // left and right margins
-	protected int margin_height; // top and botton margins
+	protected int margin_height; // top and bottom margins
 	protected int line_height; // total height of font
 	protected int line_ascent; // font height above baseline
 	protected int[] line_widths; // how wide each line is
 	protected int max_width; // width of widest line
 	protected int alignment = CENTER; // default alignment of text
+	private VerticalAlignment verticalAlignment = VerticalAlignment.MIDDLE;
+
+	/** Values for controlling vertical alignment of the text */
+	public enum VerticalAlignment {
+		TOP,
+		MIDDLE;
+	}
 
 	/**
 	 * Default constructor.
@@ -91,9 +98,9 @@ public class MultiLineLabel extends JPanel {
 	}
 
 	/**
-	 * breaks specified label into array of lines.
+	 * Breaks specified label into array of lines.
 	 *
-	 *@param label String to display in canvas.
+	 *@param label String to display.
 	 */
 	protected void newLabel(String label) {
 		if (label == null) {
@@ -119,9 +126,6 @@ public class MultiLineLabel extends JPanel {
 	protected void measure() {
 
 		FontMetrics fm = this.getFontMetrics(this.getFont());
-
-		// if no font metrics yet, just return
-
 		if (fm == null) {
 			return;
 		}
@@ -139,9 +143,9 @@ public class MultiLineLabel extends JPanel {
 	}
 
 	/**
-	 * Set a new label for JPanel
+	 * Set a new label to display.
 	 *
-	 * @param label String to display in canvas
+	 * @param label String to display
 	 */
 	public void setLabel(String label) {
 
@@ -163,7 +167,7 @@ public class MultiLineLabel extends JPanel {
 	}
 
 	/**
-	 * Get the label text.
+	 * {@return the label text.}
 	 */
 	public String getLabel() {
 		StringBuffer sb = new StringBuffer();
@@ -189,11 +193,6 @@ public class MultiLineLabel extends JPanel {
 		repaint();
 	}
 
-	/**
-	 * Sets a new color for Canvas
-	 *
-	 *@param c Color to display in canvas
-	 */
 	@Override
 	public void setForeground(Color c) {
 		super.setForeground(c);
@@ -206,6 +205,15 @@ public class MultiLineLabel extends JPanel {
 	 */
 	public void setAlignment(int a) {
 		alignment = a;
+		repaint();
+	}
+
+	/**
+	 * Sets the vertical alignment of the text.  The default is {@link VerticalAlignment#MIDDLE}.
+	 * @param alignment the alignment
+	 */
+	public void setVerticalAlignment(VerticalAlignment alignment) {
+		this.verticalAlignment = alignment;
 		repaint();
 	}
 
@@ -227,29 +235,20 @@ public class MultiLineLabel extends JPanel {
 		repaint();
 	}
 
-	/**
-	 * Get alignment for text, LEFT, CENTER, RIGHT.
-	 */
 	public final int getAlignment() {
 		return alignment;
 	}
 
-	/**
-	 * Get margin width.
-	 */
 	public final int getMarginWidth() {
 		return margin_width;
 	}
 
-	/**
-	 *Get margin height.
-	 */
 	public final int getMarginHeight() {
 		return margin_height;
 	}
 
 	/**
-	 * This method is invoked after Canvas is first created
+	 * This method is invoked after this class is first created
 	 * but before it can be actually displayed. After we have
 	 * invoked our superclass's addNotify() method, we have font
 	 * metrics and can successfully call measure() to figure out
@@ -257,48 +256,38 @@ public class MultiLineLabel extends JPanel {
 	 */
 	@Override
 	public void addNotify() {
-
 		super.addNotify();
 		measure();
 	}
 
-	/**
-	 * This method is called by a layout manager when it wants
-	 * to know how big we'd like to be
-	 */
 	@Override
-	public java.awt.Dimension getPreferredSize() {
+	public Dimension getPreferredSize() {
 		return new Dimension(max_width + 2 * margin_width,
 			num_lines * line_height + 2 * margin_height);
 
 	}
 
-	/**
-	 * This method is called when layout manager wants to
-	 * know the bare minimum amount of space we need to get by.
-	 */
 	@Override
-	public java.awt.Dimension getMinimumSize() {
+	public Dimension getMinimumSize() {
 
 		return new Dimension(max_width, num_lines * line_height);
 	}
 
-	/**
-	 * This method draws label (applets use same method).
-	 * Note that it handles the margins and the alignment, but
-	 * that is does not have to worry about the color or font --
-	 * the superclass takes care of setting those in the Graphics
-	 * object we've passed.
-	 * @param g the graphics context to paint with.
-	 */
 	@Override
 	public void paint(Graphics g) {
 
-		int x, y;
-		Dimension d = this.getSize();
-//		g.clearRect(0, 0, d.width, d.height);
+		paintBorder(g);
 
-		y = line_ascent + (d.height - num_lines * line_height) / 2;
+		Dimension d = this.getSize();
+
+		int y;
+		if (verticalAlignment == VerticalAlignment.MIDDLE) {
+			y = line_ascent + (d.height - num_lines * line_height) / 2;
+		}
+		else {
+			y = margin_height + line_ascent;
+		}
+		int x;
 		for (int i = 0; i < num_lines; i++, y += line_height) {
 			switch (alignment) {
 				case LEFT:
@@ -313,14 +302,11 @@ public class MultiLineLabel extends JPanel {
 					break;
 
 			}
+
 			GraphicsUtils.drawString(this, g, lines[i], x, y);
 		}
 	}
 
-	/**
-	 * Simple test for the MultiLineLabel class.
-	 * @param args not used
-	 */
 	public static void main(String[] args) {
 
 		MultiLineLabel mlab = new MultiLineLabel(

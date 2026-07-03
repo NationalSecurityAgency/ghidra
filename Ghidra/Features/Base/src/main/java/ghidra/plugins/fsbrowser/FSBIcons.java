@@ -141,7 +141,7 @@ public class FSBIcons {
 		return buildIcon(DEFAULT_ICON, overlays);
 	}
 
-	private Icon buildIcon(Icon base, List<Icon> overlays) {
+	public static Icon buildIcon(Icon base, List<Icon> overlays) {
 		if (overlays == null || overlays.isEmpty()) {
 			return base;
 		}

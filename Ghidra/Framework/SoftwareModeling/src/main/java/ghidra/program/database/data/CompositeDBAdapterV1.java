@@ -135,7 +135,7 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 			oldRec.getBooleanValue(V1_COMPOSITE_IS_UNION_COL));
 		rec.setLongValue(COMPOSITE_CAT_COL, oldRec.getLongValue(V1_COMPOSITE_CAT_COL));
 		rec.setIntValue(COMPOSITE_LENGTH_COL, oldRec.getIntValue(V1_COMPOSITE_LENGTH_COL));
-		rec.setIntValue(COMPOSITE_ALIGNMENT_COL, oldRec.getIntValue(-1));
+		rec.setIntValue(COMPOSITE_ALIGNMENT_COL, -1);
 		rec.setIntValue(COMPOSITE_NUM_COMPONENTS_COL,
 			oldRec.getIntValue(V1_COMPOSITE_NUM_COMPONENTS_COL));
 		rec.setLongValue(COMPOSITE_SOURCE_ARCHIVE_ID_COL,

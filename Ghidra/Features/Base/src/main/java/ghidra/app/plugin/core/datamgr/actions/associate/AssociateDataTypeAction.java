@@ -57,17 +57,33 @@ public class AssociateDataTypeAction extends DockingAction {
 		super("Associate With Archive", plugin.getName());
 		this.plugin = plugin;
 
-		setPopupMenuData(new MenuData(new String[] { "Associate With Archive" }, null, "Sync"));
+		setPopupMenuData(new MenuData(new String[] { "Associate With Archive..." }, null, "Sync"));
 	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		// enable this action if any node is a non-built-in data type
-		return context instanceof DataTypesActionContext dtac &&
-			dtac.getSelectedNodes().stream().anyMatch(node -> {
-				return node instanceof DataTypeNode dtNode &&
-					!(dtNode.getDataType() instanceof BuiltInDataType);
-			});
+		if (!(context instanceof DataTypesActionContext dtac)) {
+			return false;
+		}
+		List<GTreeNode> dtNodes = getDataTypeNodes(dtac);
+		if (dtNodes.isEmpty()) {
+			return false;
+		}
+		Archive singleDTArchive = getSingleDTArchive(dtNodes);
+
+		// NOTE: We only support program-to-archive since other cases become rather complicated
+		// when considering dependencies that must get copied and how their associations shuold be 
+		// handled.
+		return singleDTArchive instanceof ProgramArchive;
+	}
+
+	private List<GTreeNode> getDataTypeNodes(DataTypesActionContext ctx) {
+		List<GTreeNode> allNodes = ctx.getSelectedNodes();
+		return allNodes.stream()
+				.filter(n -> (n instanceof DataTypeNode dtn &&
+					!(dtn.getDataType() instanceof BuiltInDataType)))
+				.collect(Collectors.toList());
 	}
 
 	private boolean isAlreadyAssociated(DataTypesActionContext dtContext) {
@@ -102,31 +118,28 @@ public class AssociateDataTypeAction extends DockingAction {
 		return null;
 	}
 
-	private List<Archive> getDestinationArchives() {
+	private List<Archive> getDestinationArchives(Archive excludedArchive) {
 
 		List<Archive> archives = plugin.getAllArchives();
-		List<Archive> sourceArchives = archives.stream()
+		List<Archive> destArchives = archives.stream()
 				.filter(a -> !(a instanceof ProgramArchive))
 				.filter(a -> !(a instanceof BuiltInArchive))
+				.filter(a -> !a.equals(excludedArchive))
 				.sorted((a1, a2) -> a1.getName().compareToIgnoreCase(a2.getName()))
 				.collect(Collectors.toList());
 
-		return sourceArchives;
+		return destArchives;
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
 
-		List<GTreeNode> allNodes = ((DataTypesActionContext) context).getSelectedNodes();
-		List<GTreeNode> dtNodes = allNodes.stream()
-				.filter(n -> n instanceof DataTypeNode)
-				.collect(Collectors.toList());
-
+		List<GTreeNode> dtNodes = getDataTypeNodes((DataTypesActionContext) context);
+		if (dtNodes.isEmpty()) {
+			return;
+		}
 		Archive dtArchive = getSingleDTArchive(dtNodes);
 		if (dtArchive == null) {
-			Msg.showInfo(this, getProviderComponent(), "Multiple Data Type Archives",
-				"The currently selected nodes are from multiple archives.\n" +
-					"Please select only nodes from a single archvie.");
 			return;
 		}
 
@@ -143,7 +156,7 @@ public class AssociateDataTypeAction extends DockingAction {
 			return;
 		}
 
-		List<Archive> archives = getDestinationArchives();
+		List<Archive> archives = getDestinationArchives(dtArchive);
 		if (archives.isEmpty()) {
 			Msg.showInfo(this, getProviderComponent(), "No Source Archives Open",
 				"No source archives open.  Please open the desired source archive.");

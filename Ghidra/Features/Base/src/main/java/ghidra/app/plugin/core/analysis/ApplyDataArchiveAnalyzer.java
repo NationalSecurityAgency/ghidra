@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.services.*;
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.sourcelanguage.SourceLanguageService;
 import ghidra.framework.Application;
 import ghidra.framework.model.*;
 import ghidra.framework.options.OptionType;
@@ -133,8 +134,9 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 			OPTION_DESCRIPTION_GDT_FILEPATH,
 			() -> new FileChooserEditor(FileDataTypeManager.GDT_FILEFILTER));
 		options.registerOption(OPTION_NAME_PROJECT_PATH, OptionType.STRING_TYPE, null, null,
-			OPTION_DESCRIPTION_PROJECT_PATH, () -> new ProjectPathChooserEditor(
-				"Choose Data Type Archive", DATATYPEARCHIVE_PROJECT_FILTER));
+			OPTION_DESCRIPTION_PROJECT_PATH,
+			() -> new ProjectPathChooserEditor("Choose Data Type Archive",
+				new DefaultDomainFileFilter(DataTypeArchive.class, false)));
 	}
 
 	@Override
@@ -190,6 +192,38 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 					String msg = Objects.requireNonNullElse(e.getMessage(), e.toString());
 					log.appendMsg("Apply Data Archives",
 						"Unexpected Error opening archive %s: %s".formatted(archiveName, msg));
+				}
+			}
+		}
+
+		// Add source language data archives
+		result.addAll(getSourceLanguageDTMs(program, log, monitor));
+
+		return result;
+	}
+
+	private List<DataTypeManager> getSourceLanguageDTMs(Program program, MessageLog log,
+			TaskMonitor monitor) {
+		List<DataTypeManager> result = new ArrayList<>();
+		for (ResourceFile file : SourceLanguageService.getDataArchives(program,
+			program.getSourceLanguageIDs(), log, monitor)) {
+			if (monitor.isCancelled()) {
+				break;
+			}
+			try {
+				DataTypeManager dtm = dtmService.openArchive(file, false);
+				result.add(dtm);
+			}
+			catch (Exception e) {
+				Throwable cause = e.getCause();
+				if (cause instanceof VersionException) {
+					log.appendMsg("Apply Data Archives",
+						"Unable to open archive %s: %s".formatted(file, cause.toString()));
+				}
+				else {
+					String msg = Objects.requireNonNullElse(e.getMessage(), e.toString());
+					log.appendMsg("Apply Data Archives",
+						"Unexpected Error opening archive %s: %s".formatted(file, msg));
 				}
 			}
 		}
@@ -289,6 +323,4 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 				.collect(Collectors.toMap(f -> f.getName(), f -> f));
 	}
 
-	private static final DomainFileFilter DATATYPEARCHIVE_PROJECT_FILTER =
-		df -> DataTypeArchive.class.isAssignableFrom(df.getDomainObjectClass());
 }

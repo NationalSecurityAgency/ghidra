@@ -33,14 +33,15 @@ import docking.action.DockingActionIf;
 import docking.actions.*;
 import docking.tool.util.DockingToolConstants;
 import docking.widgets.*;
-import docking.widgets.label.GIconLabel;
+import docking.widgets.MultiLineLabel.VerticalAlignment;
 import docking.widgets.table.*;
+import generic.theme.GColor;
 import generic.theme.Gui;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.*;
-import ghidra.util.layout.PairLayout;
-import ghidra.util.layout.VerticalLayout;
+import ghidra.framework.plugintool.ServiceProviderStub;
+import ghidra.util.Msg;
+import ghidra.util.Swing;
 import gui.event.MouseBinding;
 import help.Help;
 import help.HelpService;
@@ -51,7 +52,8 @@ import resources.Icons;
  */
 public class KeyBindingsPanel extends JPanel {
 
-	private static final int STATUS_LABEL_HEIGHT = 60;
+	private static final String GETTING_STARTED_MESSAGE =
+		"<html><i>Select an action to change a keybinding";
 
 	private final static int ACTION_NAME = 0;
 	private final static int KEY_BINDING = 1;
@@ -61,25 +63,27 @@ public class KeyBindingsPanel extends JPanel {
 
 	private JTextPane statusLabel;
 	private GTable actionTable;
-	private JPanel infoPanel;
 	private MultiLineLabel collisionLabel;
 	private KeyBindingsTableModel tableModel;
 	private ActionBindingListener actionBindingListener = new ActionBindingListener();
 	private ActionBindingPanel actionBindingPanel;
-	private GTableFilterPanel<DockingActionIf> tableFilterPanel;
+	private GTableFilterPanel<ActionBindingsDescriptor> tableFilterPanel;
 	private EmptyBorderButton helpButton;
 
-	private KeyBindings keyBindings;
+	private KeyBindingsModel keyBindings;
 	private boolean unappliedChanges;
 
 	private PluginTool tool;
 	private boolean firingTableDataChanged;
 	private PropertyChangeListener propertyChangeListener;
 
+	private JPanel gettingStartedPanel;
+	private JPanel activeActionPanel;
+
 	public KeyBindingsPanel(PluginTool tool) {
 		this.tool = tool;
 
-		this.keyBindings = new KeyBindings(tool);
+		this.keyBindings = new KeyBindingsModel(tool);
 
 		createPanelComponents();
 
@@ -110,7 +114,7 @@ public class KeyBindingsPanel extends JPanel {
 			// clear the action to avoid the appearance of editing while restoring
 			actionTable.clearSelection();
 
-			restoreDefaultKeybindings();
+			restoreDefaultKeyBindings();
 		});
 	}
 
@@ -135,122 +139,120 @@ public class KeyBindingsPanel extends JPanel {
 	}
 
 	private void createPanelComponents() {
+
 		setLayout(new BorderLayout(10, 10));
 
-		tableModel = new KeyBindingsTableModel(new ArrayList<>(keyBindings.getUniqueActions()));
+		// A stub panel to take up about the same amount of space as the active panel.  This stub 
+		// panel will get swapped for the active panel when a selection is made in the table.  Using
+		// the stub panel is easier than trying to visually disable the editing widgets.
+		gettingStartedPanel = new JPanel();
+		activeActionPanel = createActiveActionPanel();
+
+		tableModel = new KeyBindingsTableModel(new ArrayList<>(keyBindings.getActionBindings()));
 		actionTable = new GTable(tableModel);
 
-		JScrollPane sp = new JScrollPane(actionTable);
+		JScrollPane actionsScroller = new JScrollPane(actionTable);
 		actionTable.setPreferredScrollableViewportSize(new Dimension(400, 100));
 		actionTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		actionTable.setHTMLRenderingEnabled(true);
+		actionTable.getSelectionModel().addListSelectionListener(new TableSelectionListener());
+
+		actionTable.setDefaultRenderer(String.class, new KeyBindingsRenderer());
 
 		adjustTableColumns();
 
 		// middle panel - filter field and import/export buttons
 		JPanel importExportPanel = createImportExportPanel();
 		tableFilterPanel = new GTableFilterPanel<>(actionTable, tableModel);
-		JPanel middlePanel = new JPanel(new BorderLayout());
-		middlePanel.add(tableFilterPanel, BorderLayout.NORTH);
-		middlePanel.add(importExportPanel, BorderLayout.SOUTH);
+		JPanel filterAndExportsPanel = new JPanel(new BorderLayout());
+		filterAndExportsPanel.add(tableFilterPanel, BorderLayout.NORTH);
+		filterAndExportsPanel.add(importExportPanel, BorderLayout.SOUTH);
 
-		// contains the upper panel (table) and the middle panel)
+		// contains the upper panel (table and the middle panel)
 		JPanel centerPanel = new JPanel(new BorderLayout());
-		centerPanel.add(sp, BorderLayout.CENTER);
-		centerPanel.add(middlePanel, BorderLayout.SOUTH);
+		centerPanel.add(actionsScroller, BorderLayout.CENTER);
+		centerPanel.add(filterAndExportsPanel, BorderLayout.SOUTH);
+
+		add(centerPanel, BorderLayout.CENTER);
+		add(gettingStartedPanel, BorderLayout.SOUTH);
+
+		// make both panels the same size so that as we swap them, the UI doesn't jump
+		Dimension preferredSize = activeActionPanel.getPreferredSize();
+		gettingStartedPanel.setPreferredSize(preferredSize);
+	}
+
+	private JPanel createActiveActionPanel() {
 
 		// lower panel - key entry panel and status panel
 		JPanel keyPanel = createKeyEntryPanel();
-		JComponent statusPanel = createStatusPanel(keyPanel);
+		JPanel collisionAreaPanel = createCollisionArea();
 
-		add(centerPanel, BorderLayout.CENTER);
-		add(statusPanel, BorderLayout.SOUTH);
-
-		actionTable.getSelectionModel().addListSelectionListener(new TableSelectionListener());
+		JPanel parentPanel = new JPanel(new BorderLayout());
+		parentPanel.add(keyPanel, BorderLayout.NORTH);
+		parentPanel.add(collisionAreaPanel, BorderLayout.SOUTH);
+		return parentPanel;
 	}
 
-	private JPanel createStatusPanel(JPanel keyPanel) {
+	private JPanel createStatusPanel() {
 
 		statusLabel = new JTextPane();
 		statusLabel.setEnabled(false);
 		DockingUtils.setTransparent(statusLabel);
 		statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 5));
 		statusLabel.setContentType("text/html"); // render any HTML we find in descriptions
+		statusLabel.setText(GETTING_STARTED_MESSAGE);
 
-		// make sure the label gets enough space
-		statusLabel.setPreferredSize(new Dimension(0, STATUS_LABEL_HEIGHT));
+		// make the label wide enough to show a line of text, but set a limit to force wrapping
+		statusLabel.setPreferredSize(new Dimension(300, 30));
 		statusLabel.setFont(Gui.getFont(FONT_ID));
 
 		helpButton = new EmptyBorderButton(Icons.HELP_ICON);
 		helpButton.setEnabled(false);
 		helpButton.addActionListener(e -> {
-			DockingActionIf action = getSelectedAction();
+			ActionBindingsDescriptor binding = getSelectedBinding();
 			HelpService hs = Help.getHelpService();
-			hs.showHelp(action, false, KeyBindingsPanel.this);
+			hs.showHelp(binding, false, KeyBindingsPanel.this);
 		});
 
-		JPanel helpButtonPanel = new JPanel();
-		helpButtonPanel.setLayout(new BoxLayout(helpButtonPanel, BoxLayout.PAGE_AXIS));
-		helpButtonPanel.add(helpButton);
-		helpButtonPanel.add(Box.createVerticalGlue());
+		JPanel statusPanel = new JPanel();
+		statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.LINE_AXIS));
+		statusPanel.add(helpButton);
+		statusPanel.add(statusLabel);
 
-		JPanel lowerStatusPanel = new JPanel();
-		lowerStatusPanel.setLayout(new BoxLayout(lowerStatusPanel, BoxLayout.X_AXIS));
-		lowerStatusPanel.add(helpButtonPanel);
-		lowerStatusPanel.add(statusLabel);
+		statusPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 0));
 
-		JPanel panel = new JPanel(new VerticalLayout(5));
-		panel.add(keyPanel);
-		panel.add(lowerStatusPanel);
-		return panel;
+		return statusPanel;
 	}
 
 	private JPanel createKeyEntryPanel() {
 		actionBindingPanel = new ActionBindingPanel(actionBindingListener);
 
-		// this is the lower panel that holds the key entry text field
-		JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		p.add(actionBindingPanel);
+		// add some space at the bottom of the input area to separate it from the info area
+		actionBindingPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
 
 		JPanel keyPanel = new JPanel(new BorderLayout());
-
-		JPanel defaultPanel = new JPanel(new BorderLayout());
-
-		// the content of the left-hand side label
-		MultiLineLabel mlabel =
-			new MultiLineLabel("To add or change a key binding, select an action\n" +
-				"and type any key combination.");
-		JPanel labelPanel = new JPanel();
-		labelPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 0));
-		BoxLayout bl = new BoxLayout(labelPanel, BoxLayout.X_AXIS);
-		labelPanel.setLayout(bl);
-		labelPanel.add(Box.createHorizontalStrut(5));
-		labelPanel.add(new GIconLabel(Icons.INFO_ICON));
-		labelPanel.add(Box.createHorizontalStrut(5));
-		labelPanel.add(mlabel);
-
-		// the default panel is the panel that holds left-hand side label
-		defaultPanel.add(labelPanel, BorderLayout.NORTH);
-		defaultPanel.setBorder(BorderFactory.createLoweredBevelBorder());
-
-		// the info panel is the holds the right-hand label and is inside of
-		// a scroll pane
-		infoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-		collisionLabel = new MultiLineLabel(" ");
-		collisionLabel.setName("CollisionLabel");
-
-		infoPanel.add(collisionLabel);
-		JScrollPane sp = new JScrollPane(infoPanel);
-		sp.setPreferredSize(defaultPanel.getPreferredSize());
-
-		// inner panel holds the two label panels
-		JPanel innerPanel = new JPanel(new PairLayout(2, 6));
-		innerPanel.add(defaultPanel);
-		innerPanel.add(sp);
-
-		keyPanel.add(innerPanel, BorderLayout.CENTER);
-		keyPanel.add(p, BorderLayout.SOUTH);
+		keyPanel.add(actionBindingPanel, BorderLayout.NORTH);
 		return keyPanel;
+	}
+
+	private JPanel createCollisionArea() {
+
+		collisionLabel = new MultiLineLabel(" ");
+		collisionLabel.setVerticalAlignment(VerticalAlignment.TOP);
+		collisionLabel.setName("CollisionLabel");
+		JScrollPane collisionScroller = new JScrollPane(collisionLabel);
+		int height = 100; // enough to show the typical number of collisions without scrolling
+		collisionScroller.setPreferredSize(new Dimension(400, height));
+
+		// note: we add a strut so that when the scroll pane is hidden, the size does not change
+		JPanel parentPanel = new JPanel(new BorderLayout());
+		parentPanel.add(collisionScroller, BorderLayout.CENTER);
+		parentPanel.add(Box.createVerticalStrut(height), BorderLayout.WEST);
+
+		JPanel alignmentPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		alignmentPanel.add(parentPanel);
+
+		return alignmentPanel;
 	}
 
 	private JPanel createImportExportPanel() {
@@ -290,11 +292,16 @@ public class KeyBindingsPanel extends JPanel {
 			});
 		});
 
-		JPanel containerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-		containerPanel.add(importButton);
-		containerPanel.add(exportButton);
+		JPanel statusPanel = createStatusPanel();
 
-		return containerPanel;
+		JPanel buttonPanel = new JPanel();
+		buttonPanel.add(importButton);
+		buttonPanel.add(exportButton);
+
+		JPanel parentPanel = new JPanel(new BorderLayout());
+		parentPanel.add(statusPanel, BorderLayout.WEST);
+		parentPanel.add(buttonPanel, BorderLayout.EAST);
+		return parentPanel;
 	}
 
 	private boolean showApplyPrompt() {
@@ -354,7 +361,7 @@ public class KeyBindingsPanel extends JPanel {
 		column.setPreferredWidth(150);
 	}
 
-	private void restoreDefaultKeybindings() {
+	private void restoreDefaultKeyBindings() {
 		keyBindings.restoreOptions();
 
 		// let the table know that changes may have been made
@@ -368,7 +375,7 @@ public class KeyBindingsPanel extends JPanel {
 		unappliedChanges = changes;
 	}
 
-	private DockingActionIf getSelectedAction() {
+	private ActionBindingsDescriptor getSelectedBinding() {
 		if (actionTable.getSelectedRowCount() == 0) {
 			return null;
 		}
@@ -377,7 +384,7 @@ public class KeyBindingsPanel extends JPanel {
 	}
 
 	private String getSelectedActionName() {
-		DockingActionIf action = getSelectedAction();
+		ActionBindingsDescriptor action = getSelectedBinding();
 		if (action == null) {
 			return null;
 		}
@@ -398,13 +405,20 @@ public class KeyBindingsPanel extends JPanel {
 	}
 
 	private void updateCollisionPanel(String text) {
-		infoPanel.removeAll();
-		infoPanel.repaint();
-		collisionLabel = new MultiLineLabel(text);
-		collisionLabel.setName("CollisionLabel");
-		infoPanel.add(collisionLabel);
-		infoPanel.invalidate();
+
+		// Hide the scroll pane when there is nothing to show
+		Container parent = collisionLabel.getParent().getParent();
+		if (text.isBlank()) {
+			parent.setVisible(false);
+		}
+		else {
+			parent.setVisible(true);
+		}
+
+		collisionLabel.setLabel(text);
+		collisionLabel.invalidate();
 		validate();
+		repaint();
 	}
 
 	private void loadKeyBindingsFromImportedOptions(Options keyBindingOptions) {
@@ -446,24 +460,25 @@ public class KeyBindingsPanel extends JPanel {
 	private void updateKeyStroke(KeyStroke ks) {
 		clearInfoPanel();
 
-		DockingActionIf action = getSelectedAction();
-		if (action == null) {
-			statusLabel.setText("No action is selected.");
+		ActionBindingsDescriptor binding = getSelectedBinding();
+		if (binding == null) {
+			statusLabel.setText(GETTING_STARTED_MESSAGE);
 			return;
 		}
 
+		DockingActionIf dockingAction = binding.getRepresentativeAction();
 		ToolActions toolActions = (ToolActions) tool.getToolActions();
-		String errorMessage = toolActions.validateActionKeyBinding(action, ks);
+		String errorMessage = toolActions.validateActionKeyBinding(dockingAction, ks);
 		if (errorMessage != null) {
 			actionBindingPanel.clearKeyStroke();
 			statusLabel.setText(errorMessage);
 			return;
 		}
 
-		String selectedActionName = action.getFullName();
+		String selectedActionName = binding.getFullName();
 		if (setActionKeyStroke(selectedActionName, ks)) {
 			showActionsMappedToKeyStroke(ks);
-			tableModel.fireTableDataChanged();
+			fireRowChanged();
 			changesMade(true);
 		}
 	}
@@ -472,17 +487,23 @@ public class KeyBindingsPanel extends JPanel {
 
 		clearInfoPanel();
 
-		DockingActionIf action = getSelectedAction();
-		if (action == null) {
-			statusLabel.setText("No action is selected.");
+		ActionBindingsDescriptor binding = getSelectedBinding();
+		if (binding == null) {
+			statusLabel.setText(GETTING_STARTED_MESSAGE);
 			return;
 		}
 
-		String selectedActionName = action.getFullName();
+		String selectedActionName = binding.getFullName();
 		if (setMouseBinding(selectedActionName, mb)) {
-			tableModel.fireTableDataChanged();
+			fireRowChanged();
 			changesMade(true);
 		}
+	}
+
+	private void fireRowChanged() {
+		int viewRow = actionTable.getSelectedRow();
+		int modelRow = tableFilterPanel.getModelRow(viewRow);
+		tableModel.fireTableRowsUpdated(modelRow, modelRow);
 	}
 
 	private boolean setMouseBinding(String actionName, MouseBinding mouseBinding) {
@@ -525,9 +546,30 @@ public class KeyBindingsPanel extends JPanel {
 		return keyBindings.getKeyStrokesByFullActionName();
 	}
 
+	private void swapView(JComponent newView) {
+
+		// the lower panel we want to swap is at index 1 (index 0 is the table area)
+		Component component = getComponent(1);
+		if (component == newView) {
+			return; // nothing to do
+		}
+
+		Container parent = getParent();
+		if (parent == null) {
+			// this can happen due to Swing.runLater() calls after we have been disposed
+			return;
+		}
+
+		remove(component);
+		add(newView, BorderLayout.SOUTH);
+		parent.validate();
+		parent.repaint();
+	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
+
 	/**
 	 * Selection listener class for the table model.
 	 */
@@ -539,15 +581,22 @@ public class KeyBindingsPanel extends JPanel {
 			}
 
 			helpButton.setEnabled(false);
-			String fullActionName = getSelectedActionName();
-			if (fullActionName == null) {
-				statusLabel.setText("");
+
+			ActionBindingsDescriptor binding = getSelectedBinding();
+			if (binding == null) {
+				swapView(gettingStartedPanel);
+
+				statusLabel.setText(GETTING_STARTED_MESSAGE);
 				actionBindingPanel.setEnabled(false);
+				helpButton.setToolTipText("Select action in table for help");
 				return;
 			}
 
-			actionBindingPanel.setEnabled(true);
+			String fullActionName = getSelectedActionName();
 
+			swapView(activeActionPanel);
+
+			actionBindingPanel.setEnabled(true);
 			helpButton.setEnabled(true);
 			clearInfoPanel();
 
@@ -559,89 +608,80 @@ public class KeyBindingsPanel extends JPanel {
 			MouseBinding mb = keyBindings.getMouseBinding(fullActionName);
 			actionBindingPanel.setKeyBindingData(ks, mb);
 
-			// make sure the label gets enough space
-			statusLabel.setPreferredSize(
-				new Dimension(statusLabel.getPreferredSize().width, STATUS_LABEL_HEIGHT));
-
-			DockingActionIf action = getSelectedAction();
-			String description = action.getDescription();
-			if (description == null || description.trim().isEmpty()) {
-				description = action.getName();
+			String description = binding.getDescription();
+			if (StringUtils.isBlank(description)) {
+				description = binding.getName();
 			}
 
-			statusLabel.setText("<html>" + HTMLUtilities.escapeHTML(description));
+			// Not sure why we escape the html here. Probably just to be safe.
+			statusLabel.setText("<html>" + description);
+			helpButton.setToolTipText("Help for " + binding.getName());
 		}
 	}
 
-	private class KeyBindingsTableModel extends AbstractSortedTableModel<DockingActionIf> {
-		private final String[] columnNames = { "Action Name", "KeyBinding", "Plugin Name" };
+	private static GColor COLOR_FG_UNREGISTERED =
+		new GColor("color.fg.options.keybindings.table.unregistered");
+	private static GColor COLOR_FG_UNREGISTERED_SELECTED_UNFOCUSED =
+		new GColor("color.fg.options.keybindings.table.unregistered.selected.unfocused");
 
-		private List<DockingActionIf> actions;
+	private class KeyBindingsRenderer extends GTableCellRenderer {
 
-		KeyBindingsTableModel(List<DockingActionIf> actions) {
-			super(0);
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+			Component renderer = super.getTableCellRendererComponent(data);
+			ActionBindingsDescriptor action = (ActionBindingsDescriptor) data.getRowObject();
+			if (!action.isRegistered()) {
+
+				boolean selected = data.isSelected();
+				boolean focused = actionTable.isFocusOwner();
+				setForeground(COLOR_FG_UNREGISTERED);
+
+				if (!focused && selected) {
+					// Selected and not focused; light gray background on some LaFs.  Update the 
+					// foreground to stand out against that color.
+					setForeground(COLOR_FG_UNREGISTERED_SELECTED_UNFOCUSED);
+				}
+			}
+
+			return renderer;
+		}
+	}
+
+	private class KeyBindingsTableModel
+			extends GDynamicColumnTableModel<ActionBindingsDescriptor, Object> {
+
+		private List<ActionBindingsDescriptor> actions;
+
+		public KeyBindingsTableModel(List<ActionBindingsDescriptor> actions) {
+			super(new ServiceProviderStub());
 			this.actions = actions;
 		}
 
 		@Override
+		protected TableColumnDescriptor<ActionBindingsDescriptor> createTableColumnDescriptor() {
+			TableColumnDescriptor<ActionBindingsDescriptor> descriptor =
+				new TableColumnDescriptor<>();
+			descriptor.addVisibleColumn("Action Name", String.class, a -> a.getName(), 1, true);
+			descriptor.addVisibleColumn("Key Binding", String.class, a -> a.getBindingText());
+			descriptor.addVisibleColumn("Owner", String.class, a -> a.getOwnerDescription());
+			descriptor.addHiddenColumn("Description", String.class, a -> a.getDescription());
+			descriptor.addHiddenColumn("Registered?", Boolean.class, a -> a.isRegistered());
+			return descriptor;
+		}
+
+		@Override
 		public String getName() {
-			return "Keybindings";
+			return "Key Bindings";
 		}
 
 		@Override
-		public Object getColumnValueForRow(DockingActionIf action, int columnIndex) {
-
-			String fullName = action.getFullName();
-			switch (columnIndex) {
-				case ACTION_NAME:
-					return action.getName();
-				case KEY_BINDING:
-					String text = "";
-					KeyStroke ks = keyBindings.getKeyStroke(fullName);
-					if (ks != null) {
-						text += KeyBindingUtils.parseKeyStroke(ks);
-					}
-
-					MouseBinding mb = keyBindings.getMouseBinding(fullName);
-					if (mb != null) {
-						text += " (" + mb.getDisplayText() + ")";
-					}
-
-					return text.trim();
-				case PLUGIN_NAME:
-					return action.getOwnerDescription();
-			}
-			return "Unknown Column!";
-		}
-
-		@Override
-		public List<DockingActionIf> getModelData() {
+		public List<ActionBindingsDescriptor> getModelData() {
 			return actions;
 		}
 
 		@Override
-		public boolean isSortable(int columnIndex) {
-			return true;
-		}
-
-		@Override
-		public String getColumnName(int column) {
-			return columnNames[column];
-		}
-
-		@Override
-		public int getColumnCount() {
-			return columnNames.length;
-		}
-
-		@Override
-		public int getRowCount() {
-			return actions.size();
-		}
-
-		@Override
-		public Class<?> getColumnClass(int columnIndex) {
-			return String.class;
+		public Object getDataSource() {
+			return null;
 		}
 	}
 

@@ -19,7 +19,7 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.function.*;
 
-import generic.NestedIterator;
+import generic.util.FlattenedIterator;
 import ghidra.program.model.address.*;
 import ghidra.util.LockHold;
 
@@ -40,16 +40,8 @@ public interface DBTraceDelegatingManager<M> {
 		boolean test(T t) throws E;
 	}
 
-	default void checkIsInMemory(AddressSpace space) {
-		if (!space.isMemorySpace() && space != Address.NO_ADDRESS.getAddressSpace()) {
-			throw new IllegalArgumentException(
-				"Address must be in memory or NO_ADDRESS. Got " + space);
-		}
-	}
-
 	default <T, E extends Throwable> T delegateWrite(AddressSpace space, ExcFunction<M, T, E> func)
 			throws E {
-		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(writeLock())) {
 			M m = getForSpace(space, true);
 			return func.apply(m);
@@ -58,7 +50,6 @@ public interface DBTraceDelegatingManager<M> {
 
 	default <E extends Throwable> void delegateWriteV(AddressSpace space, ExcConsumer<M, E> func)
 			throws E {
-		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(writeLock())) {
 			M m = getForSpace(space, true);
 			func.accept(m);
@@ -66,7 +57,6 @@ public interface DBTraceDelegatingManager<M> {
 	}
 
 	default int delegateWriteI(AddressSpace space, ToIntFunction<M> func) {
-		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(writeLock())) {
 			M m = getForSpace(space, true);
 			return func.applyAsInt(m);
@@ -89,7 +79,6 @@ public interface DBTraceDelegatingManager<M> {
 
 	default <T, E extends Throwable> T delegateRead(AddressSpace space,
 			ExcFunction<M, T, E> func, T ifNull) throws E {
-		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(readLock())) {
 			M m = getForSpace(space, false);
 			if (m == null) {
@@ -101,7 +90,6 @@ public interface DBTraceDelegatingManager<M> {
 
 	default <T, E extends Throwable> T delegateReadOr(AddressSpace space, ExcFunction<M, T, E> func,
 			ExcSupplier<T, E> ifNull) throws E {
-		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(readLock())) {
 			M m = getForSpace(space, false);
 			if (m == null) {
@@ -112,7 +100,6 @@ public interface DBTraceDelegatingManager<M> {
 	}
 
 	default int delegateReadI(AddressSpace space, ToIntFunction<M> func, int ifNull) {
-		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(readLock())) {
 			M m = getForSpace(space, false);
 			if (m == null) {
@@ -123,7 +110,6 @@ public interface DBTraceDelegatingManager<M> {
 	}
 
 	default int delegateReadI(AddressSpace space, ToIntFunction<M> func, IntSupplier ifNull) {
-		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(readLock())) {
 			M m = getForSpace(space, false);
 			if (m == null) {
@@ -134,7 +120,6 @@ public interface DBTraceDelegatingManager<M> {
 	}
 
 	default boolean delegateReadB(AddressSpace space, Predicate<M> func, boolean ifNull) {
-		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(readLock())) {
 			M m = getForSpace(space, false);
 			if (m == null) {
@@ -146,7 +131,6 @@ public interface DBTraceDelegatingManager<M> {
 
 	default <E extends Throwable> void delegateDeleteV(AddressSpace space, ExcConsumer<M, E> func)
 			throws E {
-		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(writeLock())) {
 			M m = getForSpace(space, false);
 			if (m == null) {
@@ -157,7 +141,6 @@ public interface DBTraceDelegatingManager<M> {
 	}
 
 	default boolean delegateDeleteB(AddressSpace space, Predicate<M> func, boolean ifNull) {
-		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(writeLock())) {
 			M m = getForSpace(space, false);
 			if (m == null) {
@@ -191,7 +174,7 @@ public interface DBTraceDelegatingManager<M> {
 		return new AbstractCollection<>() {
 			@Override
 			public Iterator<T> iterator() {
-				return NestedIterator.start(spaces.iterator(), func.andThen(Iterable::iterator));
+				return FlattenedIterator.start(spaces.iterator(), func.andThen(Iterable::iterator));
 			}
 
 			@Override

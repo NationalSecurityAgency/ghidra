@@ -300,6 +300,56 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 		assertTrue(demangled.applyTo(program, addr, options, TaskMonitor.DUMMY));
 
 		String className =
+			"F<E::D::G<E::D::H<bool_(__cdecl*const)(C::B_const&),0>,bool,C::B_const&>_>";
+		String functionName = className + "<E::D::A<bool,C::B_const&>_>";
+
+		Function function = assertFunction(functionName, addr);
+		assertNoBookmarkAt(addr);
+
+		Symbol[] symbols = symbolTable.getSymbols(addr);
+		assertEquals(2, symbols.length);
+		assertEquals(functionName, symbols[0].getName());
+		assertEquals(mangled, symbols[1].getName());
+
+		// Check for the Class 'this' pointer
+		Parameter[] parameters = function.getParameters();
+		assertEquals(2, parameters.length);
+		Parameter p1 = parameters[0];
+		assertEquals("this", p1.getName());
+		assertEquals(className + " *", p1.getDataType().toString());
+
+		Namespace ns = symbols[0].getParentNamespace();
+		assertEquals(className, ns.getName(false));
+		ns = ns.getParentNamespace();
+		assertEquals("E", ns.getName(false));
+	}
+
+	@Test
+	public void testFunctionThisPointerWithTags() throws Exception {
+
+		//
+		// Test a function within a class that has a 'this' pointer
+		//
+
+		String mangled =
+			"??$?0V?$A@_NABW4B@C@@@D@E@@@?$F@V?$G@U?$H@Q6A_NABW4B@C@@@Z$0A@@D@E@@_NABW4B@C@@@D@E@@@E@@QAE@ABV?$F@V?$A@_NABW4B@C@@@D@E@@@1@@Z";
+		Address addr = addr("0x0101");
+
+		SymbolTable symbolTable = program.getSymbolTable();
+		symbolTable.createLabel(addr, mangled, SourceType.IMPORTED);
+
+		MicrosoftDemangler demangler = new MicrosoftDemangler();
+		MangledContext mangledContext =
+			demangler.createMangledContext(mangled,
+				MicrosoftDemanglerOptions.DEFAULT_UNDERLYING_OUTPUT, program, addr);
+		DemanglerOptions options = mangledContext.getOptions();
+		// TODO: need direct way to change "for function" vs. just address and program; which might mean MicrosoftDemanglerContext
+		//mangledContext.setIsFunction(true);
+		DemangledObject demangled = demangler.demangle(mangledContext);
+		assertTrue(demangled instanceof DemangledFunction);
+		assertTrue(demangled.applyTo(program, addr, options, TaskMonitor.DUMMY));
+
+		String className =
 			"F<class_E::D::G<struct_E::D::H<bool_(__cdecl*const)(enum_C::B_const&),0>,bool,enum_C::B_const&>_>";
 		String functionName = className + "<class_E::D::A<bool,enum_C::B_const&>_>";
 

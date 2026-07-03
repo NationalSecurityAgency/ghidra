@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,21 +32,22 @@ public class ComposedPcodeUseropLibrary<T> implements PcodeUseropLibrary<T> {
 	 * 
 	 * @param <T> the type of values processed by the libraries
 	 * @param libraries the libraries whose userops to collect
+	 * @param override allow libraries to the right to override userops from libraries to the left
 	 * @return the resulting map
 	 */
 	public static <T> Map<String, PcodeUseropDefinition<T>> composeUserops(
-			Collection<PcodeUseropLibrary<T>> libraries) {
+			Collection<PcodeUseropLibrary<T>> libraries, boolean override) {
 		Map<String, PcodeUseropDefinition<T>> userops = new HashMap<>();
 		for (PcodeUseropLibrary<T> lib : libraries) {
 			for (PcodeUseropDefinition<T> def : lib.getUserops().values()) {
-				if (userops.put(def.getName(), def) != null) {
+				if (userops.put(def.getName(), def) != null && !override) {
 					throw new IllegalArgumentException(
 						"Cannot compose libraries with conflicting definitions on " +
 							def.getName());
 				}
 			}
 		}
-		return userops;
+		return Collections.unmodifiableMap(userops);
 	}
 
 	private final Map<String, PcodeUseropDefinition<T>> userops;
@@ -55,12 +56,14 @@ public class ComposedPcodeUseropLibrary<T> implements PcodeUseropLibrary<T> {
 	 * Construct a composed userop library from the given libraries
 	 * 
 	 * <p>
-	 * This uses {@link #composeUserops(Collection)}, so its restrictions apply here, too.
+	 * This uses {@link #composeUserops(Collection, boolean)}, so its restrictions apply here, too.
 	 * 
+	 * @param override allow libraries to the right to override userops from libraries to the left
 	 * @param libraries the libraries
 	 */
-	public ComposedPcodeUseropLibrary(Collection<PcodeUseropLibrary<T>> libraries) {
-		this.userops = composeUserops(libraries);
+	public ComposedPcodeUseropLibrary(Collection<PcodeUseropLibrary<T>> libraries,
+			boolean override) {
+		this.userops = composeUserops(libraries, override);
 	}
 
 	@Override

@@ -3,7 +3,10 @@
 <tocroot>
   <tocref id="Ghidra Functionality">
     <tocref id="Scripting">
-      <tocdef id="PyGhidra Interpreter" sortgroup="z" text="PyGhidra Interpreter" target="help/topics/PyGhidra/interpreter.html" />
+    
+      <!-- The sort group places this entry at the bottom of all other entries in the Program
+    	     Annotation section.  'z' puts it at the end.  The rest makes it unique. -->
+      <tocdef id="PyGhidra Interpreter" sortgroup="z_Python_PyGhidra" text="PyGhidra Interpreter" target="help/topics/PyGhidra/interpreter.html" />
     </tocref>
   </tocref>
 </tocroot>

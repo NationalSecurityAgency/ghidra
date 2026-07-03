@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,29 @@
  */
 package ghidra.program.model.lang;
 
+import ghidra.app.util.PseudoInstruction;
 import ghidra.program.disassemble.Disassembler;
 
 public final class GhidraLanguagePropertyKeys {
 	private GhidraLanguagePropertyKeys() {
 	}
+
+	/**
+	 * MAXIMUM_INSTRUCTION_LENGTH specifies the maximum instruction length that a language
+	 * may produce, including any delay slots which may be present.  This value is used
+	 * by {@link PseudoInstruction} in support of Sleigh {@code inst_next2} processing.  If
+	 * not specified a computed estimate is used by each instruction parse.  If the
+	 * Sleigh {@code inst_next2} instruction is used with variable length instructions, it
+	 * is highly recommended that this property be specified.
+	 * 
+	 * NOTE: It is the language (i.e., {@code slaspec/pspec}) author who needs to manually 
+	 * compute this value carefully based upon the largest possible instruction size including 
+	 * any delay slot.  Ghidra will not validate this value.
+	 * 
+	 * NOTE: This property is currently only used by Ghidra when {@code inst_next2} is used 
+	 * within the correspond {@code slaspec}.
+	 */
+	public static final String MAXIMUM_INSTRUCTION_LENGTH = "maximumInstructionLength";
 
 	/**
 	 * CUSTOM_DISASSEMBLER_CLASS is a full class name for a language-specific
@@ -88,6 +106,16 @@ public final class GhidraLanguagePropertyKeys {
 	 */
 	public static final String EMULATE_INSTRUCTION_STATE_MODIFIER_CLASS =
 		"emulateInstructionStateModifierClass";
+
+	/**
+	 * USEROP_LIBS is a string property that indicates keys for matching one or more
+	 * {@code PcodeUseropLibaryFactory}s, which will be composed to form the library of custom
+	 * userop implementations available to an emulator. The default is empty. NOTE: This is
+	 * <em>not</em> the name of a class, but a comma-separated list of IDs. Each factory is also
+	 * tagged with a list of IDs. If any ID matches, then that factory is given a chance to
+	 * contribute userops.
+	 */
+	public static final String USEROP_LIBS = "useropLibs";
 
 	/**
 	 * PCODE_INJECT_LIBRARY_CLASS indicates the classname of a PcodeInjectLibrary implementation

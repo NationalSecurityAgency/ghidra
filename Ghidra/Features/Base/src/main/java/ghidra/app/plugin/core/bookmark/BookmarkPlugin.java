@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.bookmark;
 
-import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.framework.model.DomainObjectEvent.RESTORED;
 import static ghidra.program.util.ProgramEvent.*;
 
 import java.awt.event.KeyEvent;
@@ -34,13 +34,13 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
+import ghidra.app.plugin.core.bookmark.BookmarkPlugin.BookmarkTransientState;
 import ghidra.app.services.*;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.model.DomainObjectListenerBuilder;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.PluginInfo;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -68,7 +68,8 @@ import resources.MultiIconBuilder;
 	eventsProduced = { ProgramSelectionPluginEvent.class }
 )
 //@formatter:on
-public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider, BookmarkService {
+public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider, BookmarkService,
+		PluginWithTransientState<BookmarkTransientState> {
 
 	private final static int MAX_DELETE_ACTIONS = 10;
 
@@ -182,7 +183,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 		DockingAction selectionAction = new DockingAction("Select Bookmark Locations", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				select(provider.getBookmarkLocations());
+				select(provider.getBookmarkSelection());
 			}
 		};
 		icon = new GIcon("icon.plugin.bookmark.select");
@@ -298,12 +299,16 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 		if (type == null) {
 			return null;
 		}
+
 		String typeString = type.getTypeString();
 		BookmarkNavigator nav = bookmarkNavigators.get(typeString);
-		if (nav == null) {
-			nav = new BookmarkNavigator(markerService, currentProgram.getBookmarkManager(), type);
-			bookmarkNavigators.put(typeString, nav);
+		if (nav != null) {
+			return nav;
 		}
+
+		BookmarkManager bookmarkManager = currentProgram.getBookmarkManager();
+		nav = new BookmarkNavigator(markerService, bookmarkManager, type);
+		bookmarkNavigators.put(typeString, nav);
 		return nav;
 	}
 
@@ -388,14 +393,16 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 		bookmarkMgr = null;
 	}
 
+	record BookmarkTransientState(FilterState filterState) {}
+
 	@Override
-	public Object getTransientState() {
-		return provider.getFilterState();
+	public BookmarkTransientState getTransientState() {
+		return new BookmarkTransientState(provider.getFilterState());
 	}
 
 	@Override
-	public void restoreTransientState(Object state) {
-		provider.restoreFilterState((FilterState) state);
+	public void restoreTransientState(BookmarkTransientState state) {
+		provider.restoreFilterState(state.filterState);
 	}
 
 	@Override

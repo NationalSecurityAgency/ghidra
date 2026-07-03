@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.codebrowser;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.context.ListingActionContext;
 import ghidra.program.util.ProgramLocation;
 
@@ -26,5 +28,16 @@ public class CodeViewerActionContext extends ListingActionContext {
 
 	public CodeViewerActionContext(CodeViewerProvider provider, ProgramLocation location) {
 		super(provider, provider, location);
+	}
+
+	@Override
+	public boolean hasSelection() {
+		CodeViewerProvider provider = (CodeViewerProvider) getComponentProvider();
+		String textSelection = provider.getTextSelection();
+		if (!StringUtils.isBlank(textSelection)) {
+			return true;
+		}
+
+		return super.hasSelection();
 	}
 }

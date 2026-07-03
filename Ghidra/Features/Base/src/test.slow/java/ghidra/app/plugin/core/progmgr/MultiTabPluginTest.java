@@ -40,6 +40,7 @@ import ghidra.app.services.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
+import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
@@ -386,7 +387,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		changeRecs
 				.add(new DomainObjectChangeRecord(DomainObjectEvent.RENAMED, oldName, p.getName()));
 		DomainObjectChangedEvent ev = new DomainObjectChangedEvent(p, changeRecs);
-		runSwing(() -> env.getPlugin(MultiTabPlugin.class).domainObjectChanged(ev));
+		runSwing(() -> env.getPlugin(MultiTabPlugin.class).transactionEnded((ProgramDB) p));
 
 		// Check the name on the tab and in the tooltip.
 		JPanel tabPanel = getTabPanel(p);
@@ -553,7 +554,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void selectTab(Program p) {
-		JPanel tab = runSwing(() -> panel.getTab(p));
+		GTab<Program> tab = runSwing(() -> panel.getTab(p));
 		Point point = runSwing(() -> tab.getLocationOnScreen());
 		clickMouse(tab, MouseEvent.BUTTON1, point.x + 1, point.y + 1, 1, 0);
 		assertEquals(p, getSelectedTabValue());

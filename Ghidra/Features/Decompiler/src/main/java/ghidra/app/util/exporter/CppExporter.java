@@ -41,7 +41,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 import util.CollectionUtils;
 
-public class CppExporter extends Exporter {
+public class CppExporter extends ProgramExporter {
 
 	public static final String CREATE_C_FILE = "Create C File (.c)";
 	public static final String CREATE_HEADER_FILE = "Create Header File (.h)";
@@ -90,12 +90,15 @@ public class CppExporter extends Exporter {
 	@Override
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet,
 			TaskMonitor monitor) throws IOException, ExporterException {
-		if (!(domainObj instanceof Program)) {
+
+		Program program;
+		try {
+			program = getProgram(domainObj);
+		}
+		catch (ClassCastException e) {
 			log.appendMsg("Unsupported type: " + domainObj.getClass().getName());
 			return false;
 		}
-
-		Program program = (Program) domainObj;
 
 		configureOptions(program);
 		configureFunctionTags(program);
@@ -295,7 +298,7 @@ public class CppExporter extends Exporter {
 			DataTypeWriter dataTypeWriter =
 				new DataTypeWriter(dtm, headerWriter, isUseCppStyleComments);
 			headerWriter.write(getFakeCTypeDefinitions(dtm.getDataOrganization()));
-			dataTypeWriter.write(dtm, monitor);
+			dataTypeWriter.write(monitor);
 
 			headerWriter.println("");
 			headerWriter.println("");
@@ -308,7 +311,7 @@ public class CppExporter extends Exporter {
 			DataTypeManager dtm = program.getDataTypeManager();
 			DataTypeWriter dataTypeWriter =
 				new DataTypeWriter(dtm, cFileWriter, isUseCppStyleComments);
-			dataTypeWriter.write(dtm, monitor);
+			dataTypeWriter.write(monitor);
 		}
 
 		if (cFileWriter != null) {
@@ -355,13 +358,27 @@ public class CppExporter extends Exporter {
 	@Override
 	public List<Option> getOptions(DomainObjectService domainObjectService) {
 		ArrayList<Option> list = new ArrayList<>();
-		list.add(new Option(CREATE_HEADER_FILE, Boolean.valueOf(isCreateHeaderFile)));
-		list.add(new Option(CREATE_C_FILE, Boolean.valueOf(isCreateCFile)));
-		list.add(new Option(USE_CPP_STYLE_COMMENTS, Boolean.valueOf(isUseCppStyleComments)));
-		list.add(new Option(EMIT_TYPE_DEFINITONS, Boolean.valueOf(emitDataTypeDefinitions)));
-		list.add(new Option(EMIT_REFERENCED_GLOBALS, Boolean.valueOf(emitReferencedGlobals)));
-		list.add(new Option(FUNCTION_TAG_FILTERS, tagOptions));
-		list.add(new Option(FUNCTION_TAG_EXCLUDE, Boolean.valueOf(excludeMatchingTags)));
+		list.add(Option.newBoolean(CREATE_HEADER_FILE)
+				.value(isCreateHeaderFile)
+				.build());
+		list.add(Option.newBoolean(CREATE_C_FILE)
+				.value(isCreateCFile)
+				.build());
+		list.add(Option.newBoolean(USE_CPP_STYLE_COMMENTS)
+				.value(isUseCppStyleComments)
+				.build());
+		list.add(Option.newBoolean(EMIT_TYPE_DEFINITONS)
+				.value(emitDataTypeDefinitions)
+				.build());
+		list.add(Option.newBoolean(EMIT_REFERENCED_GLOBALS)
+				.value(emitReferencedGlobals)
+				.build());
+		list.add(Option.newString(FUNCTION_TAG_FILTERS)
+				.value(tagOptions)
+				.build());
+		list.add(Option.newBoolean(FUNCTION_TAG_EXCLUDE)
+				.value(excludeMatchingTags)
+				.build());
 		return list;
 	}
 

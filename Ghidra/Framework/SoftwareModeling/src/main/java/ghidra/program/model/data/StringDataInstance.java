@@ -34,6 +34,7 @@ import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.mem.*;
 import ghidra.util.*;
+import ghidra.util.charset.CharsetInfoManager;
 
 /**
  * Represents an instance of a string in a {@link MemBuffer}.
@@ -251,7 +252,7 @@ public class StringDataInstance {
 
 	public static final int MAX_STRING_LENGTH = 16 * 1024;
 
-	public static final String DEFAULT_CHARSET_NAME = CharsetInfo.USASCII;
+	public static final String DEFAULT_CHARSET_NAME = CharsetInfoManager.USASCII;
 
 	public static final String UNKNOWN = "??";
 	public static final String UNKNOWN_DOT_DOT_DOT = "??...";
@@ -322,7 +323,7 @@ public class StringDataInstance {
 		settings = (settings == null) ? SettingsImpl.NO_SETTINGS : settings;
 		this.buf = buf;
 		this.charsetName = getCharsetNameFromDataTypeOrSettings(dataType, settings);
-		this.charSize = CharsetInfo.getInstance().getCharsetCharSize(charsetName);
+		this.charSize = CharsetInfoManager.getInstance().getCharsetCharSize(charsetName);
 		// NOTE: for now only handle padding for charSize == 1 and the data type is an array of elements, not a "string" 
 		this.paddedCharSize = (dataType instanceof ArrayStringable) && (charSize == 1) //
 				? getDataOrganization(dataType).getCharSize()
@@ -729,7 +730,7 @@ public class StringDataInstance {
 
 	private AdjustedCharsetInfo getAdjustedCharsetInfo(byte[] bytes) {
 		AdjustedCharsetInfo result = new AdjustedCharsetInfo(charsetName);
-		if (CharsetInfo.isBOMCharset(charsetName)) {
+		if (CharsetInfoManager.isBOMCharset(charsetName)) {
 			result.endian = getEndiannessFromBOM(bytes, charSize);
 			if (result.endian != null) {
 				// skip the BOM char when creating the string
@@ -753,7 +754,7 @@ public class StringDataInstance {
 
 	private String getAdjustedCharsetInfo(ByteBuffer bb) {
 		String result = charsetName;
-		if (CharsetInfo.isBOMCharset(charsetName)) {
+		if (CharsetInfoManager.isBOMCharset(charsetName)) {
 			Endian endian = getEndiannessFromBOM(bb, charSize);
 			if (endian == null) {
 				endian = endianSetting;
@@ -1030,15 +1031,18 @@ public class StringDataInstance {
 		dataTypeMap.put(new Pair<>(NULL_TERMINATED_UNBOUNDED, null),
 			TerminatedStringDataType.dataType);
 
-		dataTypeMap.put(new Pair<>(PASCAL_64k, CharsetInfo.UTF16), PascalUnicodeDataType.dataType);
+		dataTypeMap.put(new Pair<>(PASCAL_64k, CharsetInfoManager.UTF16),
+			PascalUnicodeDataType.dataType);
 
-		dataTypeMap.put(new Pair<>(FIXED_LEN, CharsetInfo.UTF8), StringUTF8DataType.dataType);
-		dataTypeMap.put(new Pair<>(FIXED_LEN, CharsetInfo.UTF16), UnicodeDataType.dataType);
-		dataTypeMap.put(new Pair<>(FIXED_LEN, CharsetInfo.UTF32), Unicode32DataType.dataType);
+		dataTypeMap.put(new Pair<>(FIXED_LEN, CharsetInfoManager.UTF8),
+			StringUTF8DataType.dataType);
+		dataTypeMap.put(new Pair<>(FIXED_LEN, CharsetInfoManager.UTF16), UnicodeDataType.dataType);
+		dataTypeMap.put(new Pair<>(FIXED_LEN, CharsetInfoManager.UTF32),
+			Unicode32DataType.dataType);
 
-		dataTypeMap.put(new Pair<>(NULL_TERMINATED_UNBOUNDED, CharsetInfo.UTF16),
+		dataTypeMap.put(new Pair<>(NULL_TERMINATED_UNBOUNDED, CharsetInfoManager.UTF16),
 			TerminatedUnicodeDataType.dataType);
-		dataTypeMap.put(new Pair<>(NULL_TERMINATED_UNBOUNDED, CharsetInfo.UTF32),
+		dataTypeMap.put(new Pair<>(NULL_TERMINATED_UNBOUNDED, CharsetInfoManager.UTF32),
 			TerminatedUnicode32DataType.dataType);
 	}
 

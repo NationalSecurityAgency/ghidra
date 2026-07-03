@@ -36,6 +36,8 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
+import ghidra.util.MathUtilities;
 import ghidra.util.task.TaskMonitor;
 
 public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
@@ -52,7 +54,8 @@ public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
 	/**
 	 * Automatically read all visible memory
 	 */
-	VISIBLE("1_READ_VISIBLE", AutoReadMemoryAction.NAME_VISIBLE, AutoReadMemoryAction.ICON_VISIBLE) {
+	VISIBLE("1_READ_VISIBLE", AutoReadMemoryAction.NAME_VISIBLE,
+			AutoReadMemoryAction.ICON_VISIBLE) {
 		@Override
 		public CompletableFuture<Boolean> readMemory(PluginTool tool,
 				DebuggerCoordinates coordinates,
@@ -63,7 +66,7 @@ public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
 			Target target = coordinates.getTarget();
 			TraceMemoryManager mm = coordinates.getTrace().getMemoryManager();
 			AddressSetView alreadyKnown = mm.getAddressesWithState(coordinates.getSnap(), visible,
-				s -> s == TraceMemoryState.KNOWN || s == TraceMemoryState.ERROR);
+				StatePredicate.IS_KNOWN_OR_ERROR);
 			AddressSet toRead = visible.subtract(alreadyKnown);
 
 			if (toRead.isEmpty()) {
@@ -77,7 +80,8 @@ public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
 	 * Automatically read all visible memory, unless it is read-only, in which case, only read it if
 	 * it has not already been read.
 	 */
-	VIS_RO_ONCE("2_READ_VIS_RO_ONCE", AutoReadMemoryAction.NAME_VIS_RO_ONCE, AutoReadMemoryAction.ICON_VIS_RO_ONCE) {
+	VIS_RO_ONCE("2_READ_VIS_RO_ONCE", AutoReadMemoryAction.NAME_VIS_RO_ONCE,
+			AutoReadMemoryAction.ICON_VIS_RO_ONCE) {
 		@Override
 		public CompletableFuture<Boolean> readMemory(PluginTool tool,
 				DebuggerCoordinates coordinates,
@@ -88,8 +92,8 @@ public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
 			Target target = coordinates.getTarget();
 			TraceMemoryManager mm = coordinates.getTrace().getMemoryManager();
 			long snap = coordinates.getSnap();
-			AddressSetView alreadyKnown = mm.getAddressesWithState(snap, visible,
-				s -> s == TraceMemoryState.KNOWN || s == TraceMemoryState.ERROR);
+			AddressSetView alreadyKnown =
+				mm.getAddressesWithState(snap, visible, StatePredicate.IS_KNOWN_OR_ERROR);
 			AddressSet toRead = visible.subtract(alreadyKnown);
 
 			if (toRead.isEmpty()) {
@@ -136,8 +140,15 @@ public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
 			// Not terribly efficient, but this is one range most of the time
 			for (AddressRange range : set) {
 				AddressSpace space = range.getAddressSpace();
-				Address min = space.getAddress(range.getMinAddress().getOffset() & blockMask);
-				Address max = space.getAddress(range.getMaxAddress().getOffset() | ~blockMask);
+				long minOffset = range.getMinAddress().getOffset() & blockMask;
+				minOffset = MathUtilities.unsignedMax(minOffset, space.getMinAddress().getOffset());
+				long maxOffset = range.getMaxAddress().getOffset() | ~blockMask;
+				maxOffset = MathUtilities.unsignedMin(maxOffset, space.getMaxAddress().getOffset());
+				if (minOffset > maxOffset) {
+					continue;
+				}
+				Address min = space.getAddress(minOffset);
+				Address max = space.getAddress(maxOffset);
 				result.add(new AddressRangeImpl(min, max));
 			}
 			return result;
@@ -161,8 +172,7 @@ public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
 			AddressSet toRead = new AddressSet(quantize(12, visible));
 			for (Lifespan span : coordinates.getView().getViewport().getOrderedSpans()) {
 				AddressSetView alreadyKnown =
-					mm.getAddressesWithState(span.lmin(), visible,
-						s -> s == TraceMemoryState.KNOWN);
+					mm.getAddressesWithState(span.lmin(), visible, StatePredicate.IS_KNOWN);
 				toRead.delete(alreadyKnown);
 				if (span.lmax() != span.lmin() || toRead.isEmpty()) {
 					break;

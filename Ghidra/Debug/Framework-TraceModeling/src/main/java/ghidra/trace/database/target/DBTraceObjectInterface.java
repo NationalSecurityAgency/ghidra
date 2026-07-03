@@ -15,9 +15,7 @@
  */
 package ghidra.trace.database.target;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
-import ghidra.trace.database.space.DBTraceSpaceKey.DefaultDBTraceSpaceKey;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Lifespan.DefaultLifeSet;
 import ghidra.trace.model.Lifespan.LifeSet;
@@ -78,7 +76,7 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 			// Extension point
 		}
 
-		protected TraceAddressSpace getSpace(LifeSet life) {
+		protected AddressSpace getSpace(LifeSet life) {
 			if (life.isEmpty()) {
 				return null;
 			}
@@ -161,6 +159,51 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 					cast.getNewValue());
 				return new TraceChangeRecord<>(type, getSpace(life), iface, null, null);
 			}
+			if (rec.getEventType() == TraceEvents.VALUE_LIFESPAN_CHANGED) {
+				if (object.isDeleted()) {
+					return null;
+				}
+				TraceEvent<T, ?> type = getChangedType();
+				if (type == null) {
+					return null;
+				}
+				TraceChangeRecord<TraceObjectValue, Lifespan> cast =
+					TraceEvents.VALUE_LIFESPAN_CHANGED.cast(rec);
+				TraceObjectValue affected = cast.getAffectedObject();
+				String key = affected.getEntryKey();
+				if (!appliesToKey(key)) {
+					return null;
+				}
+				assert affected.getParent() == object;
+				if (object.getCanonicalParent(affected.getMaxSnap()) == null) {
+					return null; // Object is not complete
+				}
+				emitExtraValueChanged(affected.getLifespan(), key, null, null);
+				return new TraceChangeRecord<>(type, getSpace(life), iface, null, null);
+			}
+			if (rec.getEventType() == TraceEvents.VALUE_DELETED) {
+				if (object.isDeleted()) {
+					return null;
+				}
+				TraceEvent<T, ?> type = getChangedType();
+				if (type == null) {
+					return null;
+				}
+				TraceChangeRecord<TraceObjectValue, Void> cast =
+					TraceEvents.VALUE_DELETED.cast(rec);
+				TraceObjectValue affected = cast.getAffectedObject();
+				String key = affected.getEntryKey();
+				if (!appliesToKey(key)) {
+					return null;
+				}
+				assert affected.getParent() == object;
+				if (object.getCanonicalParent(affected.getMaxSnap()) == null) {
+					return null; // Object is not complete
+				}
+				emitExtraValueChanged(affected.getLifespan(), key, cast.getOldValue(),
+					cast.getNewValue());
+				return new TraceChangeRecord<>(type, getSpace(life), iface, null, null);
+			}
 			if (rec.getEventType() == TraceEvents.OBJECT_DELETED) {
 				return translateDeleted(life);
 			}
@@ -183,21 +226,12 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 	 */
 	TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec);
 
-	static TraceAddressSpace spaceForValue(TraceObject object, long snap, String key) {
+	static AddressSpace spaceForValue(TraceObject object, long snap, String key) {
 		TraceObjectValue val = object.getAttribute(snap, key);
-		if (val == null) {
-			return null;
-		}
-		if (val.getValue() instanceof Address address) {
-			return new DefaultDBTraceSpaceKey(null, address.getAddressSpace(), 0);
-		}
-		if (val.getValue() instanceof AddressRange range) {
-			return new DefaultDBTraceSpaceKey(null, range.getAddressSpace(), 0);
-		}
-		return null;
+		return val == null ? null : DBTraceObject.spaceForValue(val.getValue());
 	}
 
-	default TraceAddressSpace spaceForValue(long snap, String key) {
+	default AddressSpace spaceForValue(long snap, String key) {
 		return spaceForValue(getObject(), snap, key);
 	}
 

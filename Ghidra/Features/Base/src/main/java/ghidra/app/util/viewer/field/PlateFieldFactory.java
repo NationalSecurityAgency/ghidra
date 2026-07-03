@@ -17,8 +17,9 @@ package ghidra.app.util.viewer.field;
 
 import java.awt.Color;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -209,25 +210,16 @@ public class PlateFieldFactory extends FieldFactory {
 	}
 
 	private String getCommentText(CodeUnit cu, List<String> offcutComments) {
-		String[] comments = cu.getCommentAsArray(CommentType.PLATE);
-		if (comments == null) {
-			return null;
+		Stream<String> commentsStream = Stream.empty();
+		String[] plateComments = cu.getCommentAsArray(CommentType.PLATE);
+		if (plateComments != null) {
+			commentsStream = Arrays.stream(plateComments);
 		}
 
-		StringBuilder buffy = new StringBuilder();
-		for (String comment : comments) {
-			if (buffy.length() != 0) {
-				buffy.append('\n');
-			}
-			buffy.append(comment);
-		}
-		for (String offcut : offcutComments) {
-			if (buffy.length() != 0) {
-				buffy.append('\n');
-			}
-			buffy.append(offcut);
-		}
-		return buffy.toString();
+		Program program = cu.getProgram();
+		Stream<String> comments = Stream.concat(commentsStream, offcutComments.stream());
+		return comments.map(c -> CommentUtils.getDisplayString(c, program))
+				.collect(Collectors.joining("\n"));
 	}
 
 	/*

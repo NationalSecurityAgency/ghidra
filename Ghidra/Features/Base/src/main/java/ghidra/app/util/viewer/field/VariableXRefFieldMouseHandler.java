@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,8 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Supplier;
 
 import ghidra.app.nav.Navigatable;
 import ghidra.app.util.XReferenceUtils;
@@ -39,7 +39,7 @@ public class VariableXRefFieldMouseHandler extends XRefFieldMouseHandler {
 
 	@Override
 	protected Address getFromReferenceAddress(ProgramLocation programLocation) {
-		return ((VariableXRefFieldLocation) programLocation).getRefAddress();
+		return programLocation.getRefAddress();
 	}
 
 	@Override
@@ -63,7 +63,7 @@ public class VariableXRefFieldMouseHandler extends XRefFieldMouseHandler {
 		VariableLocation variableLocation = (VariableLocation) location;
 		Variable variable = variableLocation.getVariable();
 
-		Set<Reference> refs = getVariableRefs(variable);
+		Supplier<Collection<Reference>> refs = () -> getVariableRefs(variable);
 		XReferenceUtils.showXrefs(navigatable, serviceProvider, service, location, refs);
 	}
 

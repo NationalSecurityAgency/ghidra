@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -113,7 +113,7 @@ public class TabListPopup<T> extends JDialog {
 
 			Point centerPoint = WindowUtilities.centerOnComponent(getParent(), this);
 			bounds.setLocation(centerPoint);
-			WindowUtilities.ensureEntirelyOnScreen(getParent(), bounds);
+			WindowUtilities.ensureEntirelyOnScreen(this, bounds);
 			setBounds(bounds);
 			return;
 		}
@@ -125,7 +125,7 @@ public class TabListPopup<T> extends JDialog {
 		bounds.setLocation(x, y);
 
 		// fixes problem where popup gets clipped when going across screens
-		WindowUtilities.ensureOnScreen(component, bounds);
+		WindowUtilities.ensureEntirelyOnScreen(this, bounds);
 		setBounds(bounds);
 	}
 

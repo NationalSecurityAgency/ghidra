@@ -18,7 +18,6 @@ package ghidra.program.database.symbol;
 import java.io.IOException;
 
 import db.DBRecord;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.function.FunctionDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.OldGenericNamespaceAddress;
@@ -28,7 +27,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.VariableNameFieldLocation;
-import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
@@ -47,15 +46,14 @@ public class VariableSymbolDB extends SymbolDB {
 	/**
 	 * Constructs a new VariableSymbol
 	 * @param symbolMgr the symbol manager
-	 * @param cache symbol object cache
 	 * @param type the symbol type.
 	 * @param variableMgr variable storage manager
 	 * @param address the address of the symbol (stack address)
 	 * @param record the record for the symbol
 	 */
-	public VariableSymbolDB(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, SymbolType type,
+	VariableSymbolDB(SymbolManager symbolMgr, SymbolType type,
 			VariableStorageManagerDB variableMgr, Address address, DBRecord record) {
-		super(symbolMgr, cache, address, record);
+		super(symbolMgr, address, record, record.getKey());
 		this.type = type;
 		this.variableMgr = variableMgr;
 	}
@@ -67,15 +65,26 @@ public class VariableSymbolDB extends SymbolDB {
 	}
 
 	public VariableStorage getVariableStorage() {
-		lock.acquire();
-		try {
-			if (!checkIsValid() || variableStorage != null) {
-				return variableStorage;
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
+			VariableStorage local = variableStorage;
+			if (local == null) {
+				local = computeVariableStorage();
 			}
+			return local;
+		}
+	}
+
+	private synchronized VariableStorage computeVariableStorage() {
+		VariableStorage local = variableStorage;
+		if (local != null) {
+			return local;
+		}
+		try {
 			if (address instanceof OldGenericNamespaceAddress) {
 				// old use case for upgrade
 				try {
-					variableStorage = new VariableStorage(symbolMgr.getProgram(),
+					local = new VariableStorage(symbolMgr.getProgram(),
 						((OldGenericNamespaceAddress) address).getGlobalAddress(),
 						getDataType().getLength());
 				}
@@ -84,9 +93,9 @@ public class VariableSymbolDB extends SymbolDB {
 				}
 			}
 			else {
-				variableStorage = variableMgr.getVariableStorage(address);
-				if (variableStorage == null) {
-					variableStorage = (type != SymbolType.PARAMETER) ? VariableStorage.BAD_STORAGE
+				local = variableMgr.getVariableStorage(address);
+				if (local == null) {
+					local = (type != SymbolType.PARAMETER) ? VariableStorage.BAD_STORAGE
 							: VariableStorage.UNASSIGNED_STORAGE;
 				}
 			}
@@ -94,10 +103,8 @@ public class VariableSymbolDB extends SymbolDB {
 		catch (IOException e) {
 			symbolMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
-		return variableStorage;
+		variableStorage = local;
+		return local;
 	}
 
 	@Override
@@ -120,9 +127,8 @@ public class VariableSymbolDB extends SymbolDB {
 
 	@Override
 	public boolean delete() {
-		lock.acquire();
-		try {
-			if (checkIsValid()) {
+		try (Closeable c = lock.write()) {
+			if (refreshIfNeeded()) {
 				FunctionDB fun = getFunction();
 				if (fun != null) {
 					fun.doDeleteVariable(this);
@@ -131,9 +137,6 @@ public class VariableSymbolDB extends SymbolDB {
 				return true;
 			}
 			return false;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -183,7 +186,7 @@ public class VariableSymbolDB extends SymbolDB {
 
 	@Override
 	protected String doGetName() {
-		if (!checkIsValid()) {
+		if (!refreshIfNeeded()) {
 			// TODO: SCR
 			return "[Invalid VariableSymbol - Deleted!]";
 		}
@@ -253,9 +256,7 @@ public class VariableSymbolDB extends SymbolDB {
 	 * @param dt data-type
 	 */
 	public void setStorageAndDataType(VariableStorage newStorage, DataType dt) {
-		Lock myLock = symbolMgr.getLock();
-		myLock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 
 			long dataTypeID = symbolMgr.getProgram().getDataTypeManager().getResolvedID(dt);
@@ -273,9 +274,6 @@ public class VariableSymbolDB extends SymbolDB {
 		}
 		catch (IOException e) {
 			symbolMgr.dbError(e);
-		}
-		finally {
-			myLock.release();
 		}
 	}
 
@@ -306,14 +304,10 @@ public class VariableSymbolDB extends SymbolDB {
 
 	@Override
 	public Reference[] getReferences(TaskMonitor monitor) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			ReferenceManager rm = symbolMgr.getReferenceManager();
 			return rm.getReferencesTo(getObject());
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -327,17 +321,14 @@ public class VariableSymbolDB extends SymbolDB {
 	 * @return the symbol data
 	 */
 	protected int getVariableOffset() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (record != null) {
 				return record.getIntValue(SymbolDatabaseAdapter.SYMBOL_VAROFFSET_COL);
 			}
 			return 0;
 		}
-		finally {
-			lock.release();
-		}
+
 	}
 
 	/**
@@ -346,8 +337,7 @@ public class VariableSymbolDB extends SymbolDB {
 	 * @param offset the value to set as the symbols variable offset. 
 	 */
 	public void setVariableOffset(int offset) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (record != null) {
 				record.setIntValue(SymbolDatabaseAdapter.SYMBOL_VAROFFSET_COL, offset);
@@ -355,17 +345,13 @@ public class VariableSymbolDB extends SymbolDB {
 				symbolMgr.symbolDataChanged(this);
 			}
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	/**
 	 * {@return variable symbol comment}
 	 */
 	public String getSymbolComment() {
-		validate(lock);
-		return record.getString(SymbolDatabaseAdapter.SYMBOL_COMMENT_COL);
+		return lock.withRead(() -> record.getString(SymbolDatabaseAdapter.SYMBOL_COMMENT_COL));
 	}
 
 	/**
@@ -373,14 +359,10 @@ public class VariableSymbolDB extends SymbolDB {
 	 * @param comment variable comment
 	 */
 	public void setSymbolComment(String comment) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			record.setString(SymbolDatabaseAdapter.SYMBOL_COMMENT_COL, comment);
 			updateRecord();
-		}
-		finally {
-			lock.release();
 		}
 	}
 

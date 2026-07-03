@@ -27,7 +27,7 @@ import ghidra.app.util.viewer.field.DummyFieldFactory;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.format.*;
 import ghidra.app.util.viewer.proxy.*;
-import ghidra.app.util.viewer.util.OpenCloseManager;
+import ghidra.app.util.viewer.util.ProgramOpenCloseManager;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.options.OptionsChangeListener;
@@ -38,12 +38,13 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Reference;
 import ghidra.util.datastruct.LRUMap;
 import ghidra.util.task.TaskMonitor;
+import util.CollectionUtils;
 
 public class ProgramBigListingModel implements ListingModel, FormatModelListener,
 		DomainObjectListener, ChangeListener, OptionsChangeListener {
 
 	protected final Program program;
-	private OpenCloseManager openCloseMgr = new OpenCloseManager();
+	private ProgramOpenCloseManager openCloseMgr;
 	private FormatManager formatMgr;
 	private ToolOptions fieldOptions;
 	private boolean showExternalFunctionPointerFormat;
@@ -59,6 +60,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		this.program = program;
 		this.listing = program.getListing();
 		this.formatMgr = formatMgr;
+		openCloseMgr = new ProgramOpenCloseManager(program);
 		dummyFactory = new DummyFieldFactory(formatMgr);
 		formatMgr.addFormatModelListener(this);
 		program.addListener(this);
@@ -160,6 +162,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 			addOpenData(dataList, data, addr);
 			addUnionPostOpenData(dataList, data, addr);
 		}
+		boolean isClosedFunctionAddress = isClosedFunctionAddress(function, addr);
 
 		if (isGapAddress) {
 			format = formatMgr.getDividerModel();
@@ -172,21 +175,30 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		if (function != null) {
 			format = formatMgr.getFunctionFormat();
 			format.addLayouts(list, 0, new FunctionProxy(this, program, addr, function));
-			Parameter[] params = function.getParameters();
-			format = formatMgr.getFunctionVarFormat();
-			format.addLayouts(list, 0,
-				new VariableProxy(this, program, addr, function, function.getReturn()));
-			for (Parameter param : params) {
-				format.addLayouts(list, 0, new VariableProxy(this, program, addr, function, param));
-			}
-			Variable[] vars = function.getLocalVariables();
-			for (Variable var : vars) {
-				format.addLayouts(list, 0, new VariableProxy(this, program, addr, function, var));
+			if (!isClosedFunctionAddress) {
+				format = formatMgr.getFunctionVarFormat();
+				boolean variablesOpen =
+					openCloseMgr.isFunctionVariablesOpen(function.getEntryPoint());
+				if (variablesOpen) {
+					addReturn(addr, list, format, function);
+					addParameters(addr, list, format, function);
+					addLocals(addr, list, format, function);
+				}
+				else {
+					format.addLayouts(list, 0,
+						new ClosedVariableProxy(this, program, addr, function));
+				}
 			}
 		}
 		if (cu != null) {
-			format = formatMgr.getCodeUnitFormat();
-			format.addLayouts(list, 0, new CodeUnitProxy(this, program, cu));
+			if (isClosedFunctionAddress) {
+				format = formatMgr.getDividerModel();
+			}
+			else {
+				format = formatMgr.getCodeUnitFormat();
+			}
+			CodeUnitProxy proxy = new CodeUnitProxy(this, program, cu);
+			format.addLayouts(list, 0, proxy);
 		}
 
 		if (dataList != null) {
@@ -213,6 +225,40 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 
 	}
 
+	private boolean isClosedFunctionAddress(Function function, Address addr) {
+		if (function == null) {
+			function = listing.getFunctionContaining(addr);
+		}
+		if (function == null) {
+			return false;
+		}
+		return !openCloseMgr.isFunctionOpen(function.getEntryPoint());
+	}
+
+	private void addReturn(Address addr, List<RowLayout> list, FieldFormatModel format,
+			Function function) {
+		format.addLayouts(list, 0,
+			new VariableProxy(this, program, addr, function, function.getReturn(), true));
+	}
+
+	private void addLocals(Address addr, List<RowLayout> list, FieldFormatModel format,
+			Function function) {
+		Variable[] vars = function.getLocalVariables();
+		for (Variable var : vars) {
+			format.addLayouts(list, 0,
+				new VariableProxy(this, program, addr, function, var, false));
+		}
+	}
+
+	private void addParameters(Address addr, List<RowLayout> list, FieldFormatModel format,
+			Function function) {
+		Parameter[] params = function.getParameters();
+		for (Parameter param : params) {
+			format.addLayouts(list, 0,
+				new VariableProxy(this, program, addr, function, param, false));
+		}
+	}
+
 	private Function getPointerReferencedFunction(Data data) {
 
 		Reference ref = data.getPrimaryReference(0);
@@ -234,12 +280,41 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 	}
 
 	@Override
+	public Address getAddressBefore(Address addr) {
+		CodeUnit cu = listing.getCodeUnitContaining(addr);
+		if (cu instanceof Data && !addr.equals(cu.getMinAddress()) && isOpenData(cu)) {
+			Address prevAddr = findOpenDataBefore(addr, (Data) cu);
+			if (prevAddr != null) {
+				return prevAddr;
+			}
+			return cu.getMinAddress();
+		}
+
+		cu = listing.getCodeUnitBefore(addr);
+		if (cu == null) {
+			return null;
+		}
+		if (isOpenData(cu)) {
+			return cu.getMaxAddress();
+		}
+		if (!isInClosedFunction(cu)) {
+			return cu.getAddress();
+		}
+		Address firstAddress = getFirstAddressInClosedFunctionRange(cu);
+		cu = listing.getCodeUnitAt(firstAddress);
+		if (!isInClosedFunction(cu)) {
+			return cu.getMinAddress();
+		}
+		return getAddressBefore(firstAddress);
+	}
+
+	@Override
 	public Address getAddressAfter(Address address) {
 		CodeUnit cu = listing.getCodeUnitContaining(address);
 		if (cu instanceof Data) {
 			Data data = (Data) cu;
 			if (data.getNumComponents() > 0) {
-				if (openCloseMgr.isOpen(data.getMinAddress())) {
+				if (openCloseMgr.isDataOpen(data.getMinAddress())) {
 					Address openAddr = findOpenDataAfter(address, data);
 					if (openAddr != null) {
 						return openAddr;
@@ -248,15 +323,58 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 			}
 		}
 		cu = listing.getCodeUnitAfter(address);
-		return cu == null ? null : cu.getMinAddress();
+		if (cu == null) {
+			return null;
+		}
+		if (!isInClosedFunction(cu)) {
+			return cu.getAddress();
+		}
+		Address lastAddress = getLastAddressInClosedFunctionRange(cu);
+		return getAddressAfter(lastAddress);
+	}
+
+	private Address getLastAddressInClosedFunctionRange(CodeUnit cu) {
+		Address address = cu.getAddress();
+		Function f = listing.getFunctionContaining(address);
+		AddressSetView body = f.getBody();
+		AddressRange range = body.getRangeContaining(address);
+		return range.getMaxAddress();
+	}
+
+	private Address getFirstAddressInClosedFunctionRange(CodeUnit cu) {
+		Address address = cu.getAddress();
+		Function f = listing.getFunctionContaining(address);
+		AddressSetView body = f.getBody();
+		AddressRange range = body.getRangeContaining(address);
+		return range.getMinAddress();
+	}
+
+	private boolean isInClosedFunction(CodeUnit cu) {
+		Address a = cu.getAddress();
+		Function f = listing.getFunctionContaining(a);
+		if (f == null) {
+			return false;
+		}
+		Address entryPoint = f.getEntryPoint();
+		if (a.equals(entryPoint)) {
+			return false;
+		}
+		AddressSetView body = f.getBody();
+		AddressRange rangeContaining = body.getRangeContaining(a);
+		if (rangeContaining.getMinAddress().equals(a)) {
+			return false;
+		}
+		if (openCloseMgr.isFunctionOpen(entryPoint)) {
+			return false;
+		}
+		return true;
 	}
 
 	private Address findOpenDataAfter(Address address, Data parent) {
 		Data data;
 		DataType dt = parent.getBaseDataType();
 		if (dt instanceof Union) {
-			int index =
-				openCloseMgr.getOpenIndex(parent.getMinAddress(), parent.getComponentPath());
+			int index = openCloseMgr.getOpenDataIndex(parent);
 			if (index < 0) {
 				return null;
 			}
@@ -288,7 +406,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 			return null;
 		}
 		if (data.getNumComponents() > 0) {
-			if (openCloseMgr.isOpen(data.getMinAddress(), data.getComponentPath())) {
+			if (openCloseMgr.isDataOpen(data)) {
 				Address openAddr = findOpenDataAfter(address, data);
 				if (openAddr != null) {
 					return openAddr;
@@ -321,30 +439,11 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		return null;
 	}
 
-	@Override
-	public Address getAddressBefore(Address addr) {
-		CodeUnit cu = listing.getCodeUnitContaining(addr);
-		if (cu == null || addr.equals(cu.getMinAddress())) {
-			cu = listing.getCodeUnitBefore(addr);
-			if (isOpenData(cu)) {
-				return cu.getMaxAddress();
-			}
-			return cu == null ? null : cu.getMinAddress();
-		}
-		if (isOpenData(cu)) {
-			Address prevAddr = findOpenDataBefore(addr, (Data) cu);
-			if (prevAddr != null) {
-				return prevAddr;
-			}
-		}
-		return cu.getMinAddress();
-	}
-
 	public boolean isOpenData(CodeUnit cu) {
 		if (cu instanceof Data) {
 			Data data = (Data) cu;
 			if (data.getNumComponents() > 0) {
-				if (openCloseMgr.isOpen(data.getMinAddress())) {
+				if (openCloseMgr.isDataOpen(data.getMinAddress())) {
 					return true;
 				}
 			}
@@ -356,27 +455,13 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		if (parent.getAddress().equals(addr)) {
 			return null;
 		}
-		Data data;
-		if (parent.getBaseDataType() instanceof Union) {
-			int index =
-				openCloseMgr.getOpenIndex(parent.getMinAddress(), parent.getComponentPath());
-			if (index < 0) {
-				return null;
-			}
-			data = parent.getComponent(index);
-		}
-		else {
-			int offset = (int) addr.subtract(parent.getMinAddress());
-			List<Data> componentsContaining = parent.getComponentsContaining(offset - 1);
-			data = componentsContaining.isEmpty() ? null
-					: componentsContaining.get(componentsContaining.size() - 1);
-		}
+		Data data = getOpenDataAtAddress(parent, addr);
 		if (data == null) {
 			return addr.previous();
 		}
 
 		if (data.getNumComponents() > 0) {
-			if (openCloseMgr.isOpen(data.getMinAddress(), data.getComponentPath())) {
+			if (openCloseMgr.isDataOpen(data)) {
 				Address openAddr = findOpenDataBefore(addr, data);
 				if (openAddr != null) {
 					return openAddr;
@@ -389,18 +474,37 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 
 		int index = data.getComponentIndex();
 		if (index > 0) {
-			return parent.getComponent(index - 1).getAddress();
+			Address previous = parent.getComponent(index - 1).getAddress();
+			if (!previous.equals(addr)) {
+				return previous;
+			}
 		}
 		return null;
+	}
+	
+	private Data getOpenDataAtAddress(Data parent, Address address) {
+		if (parent.getBaseDataType() instanceof Union) {
+			int index = openCloseMgr.getOpenDataIndex(parent);
+			if (index < 0) {
+				return null;
+			}
+			return parent.getComponent(index);
+		}
+		int offset = (int) address.subtract(parent.getMinAddress());
+		List<Data> components = parent.getComponentsContaining(offset - 1);
+		if (CollectionUtils.isBlank(components)) {
+			return null;
+		}
+		return components.get(components.size() - 1);
 	}
 
 	private void addOpenData(List<Data> list, Data data, Address addr) {
 		Address dataAddr = data.getMinAddress();
-		if (openCloseMgr.isOpen(dataAddr, data.getComponentPath())) {
+		if (openCloseMgr.isDataOpen(data)) {
 			DataType dt = data.getBaseDataType();
 			if (dt instanceof Union) {
 				int openIndex =
-					openCloseMgr.getOpenIndex(data.getMinAddress(), data.getComponentPath());
+					openCloseMgr.getOpenDataIndex(data);
 				int numComps = ((Union) dt).getNumComponents();
 				if (openIndex < 0) {
 					openIndex = numComps;
@@ -437,8 +541,8 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		DataType dt = data.getBaseDataType();
 		if (dt instanceof Union) {
 			Address dataAddr = data.getMinAddress();
-			if (openCloseMgr.isOpen(dataAddr, data.getComponentPath())) {
-				int openIndex = openCloseMgr.getOpenIndex(dataAddr, data.getComponentPath());
+			if (openCloseMgr.isDataOpen(data)) {
+				int openIndex = openCloseMgr.getOpenDataIndex(data);
 				int i = openIndex;
 				int numComps = ((Union) dt).getNumComponents();
 				if (i < 0) {
@@ -459,22 +563,52 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 
 	@Override
 	public boolean isOpen(Data data) {
-		return openCloseMgr.isOpen(data);
+		return openCloseMgr.isDataOpen(data);
 	}
 
 	@Override
 	public void toggleOpen(Data data) {
-		openCloseMgr.toggleOpen(data);
+		openCloseMgr.toggleDataOpen(data);
+	}
+
+	@Override
+	public void setFunctionVariablesOpen(Address functionEntry, boolean open) {
+		openCloseMgr.setFunctionVariablesOpen(functionEntry, open);
+	}
+
+	@Override
+	public void setAllFunctionVariablesOpen(boolean open) {
+		openCloseMgr.setAllFunctionVariablesOpen(open);
+	}
+
+	@Override
+	public boolean areFunctionVariablesOpen(Address functionEntry) {
+		return openCloseMgr.isFunctionVariablesOpen(functionEntry);
+	}
+
+	@Override
+	public boolean isFunctionOpen(Address functionEntry) {
+		return openCloseMgr.isFunctionOpen(functionEntry);
+	}
+
+	@Override
+	public void setFunctionOpen(Address functionEntry, boolean b) {
+		openCloseMgr.setFunctionOpen(functionEntry, b);
+	}
+
+	@Override
+	public void setAllFunctionsOpen(boolean selected) {
+		openCloseMgr.setAllFunctionsOpen(selected);
 	}
 
 	@Override
 	public void openAllData(Data data, TaskMonitor monitor) {
-		openCloseMgr.openAllData(data, monitor);
+		openCloseMgr.openDataRecursively(data, monitor);
 	}
 
 	@Override
 	public void closeAllData(Data data, TaskMonitor monitor) {
-		openCloseMgr.closeAllData(data, monitor);
+		openCloseMgr.closeDataRecursively(data, monitor);
 	}
 
 	@Override
@@ -494,8 +628,8 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 
 	@Override
 	public boolean openData(Data data) {
-		return openCloseMgr.openData(data);
-
+		openCloseMgr.openData(data);
+		return true;
 	}
 
 	protected void notifyDataChanged(boolean updateImmediately) {
@@ -609,4 +743,5 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		model.openCloseMgr = openCloseMgr;
 		return model;
 	}
+
 }

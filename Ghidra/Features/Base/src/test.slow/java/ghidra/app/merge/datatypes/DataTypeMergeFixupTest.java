@@ -367,4 +367,85 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 		//@formatter:on
 	}
 
+	@Test
+	public void testNonPackedZeroLengthComponentFixup() throws Exception {
+
+		// Goal is to fixup zero-length component at end of structure where its ordinal will 
+		// be revised during the merge processing
+
+		final CategoryPath rootPath = new CategoryPath("/");
+
+		mtf.initialize("notepad", new OriginalProgramModifierListener() {
+
+			@Override
+			public void modifyOriginal(ProgramDB program) throws Exception {
+				DataTypeManager dtm = program.getDataTypeManager();
+
+				Union inner = new UnionDataType("inner");
+				inner.add(DWordDataType.dataType);
+				inner = (Union) dtm.addDataType(inner, null);
+
+				Structure other = new StructureDataType("other", 0);
+				other.add(WordDataType.dataType);
+				other = (Structure) dtm.addDataType(other, null);
+
+				Structure outer = new StructureDataType("outer", 20, dtm);
+				outer.replaceAtOffset(0, other, -1, null, null); // prevent size change
+				outer = (Structure) dtm.addDataType(outer, null);
+				assertEquals(20, outer.getLength());
+			}
+
+			@Override
+			public void modifyLatest(ProgramDB program) throws Exception {
+				DataTypeManager dtm = program.getDataTypeManager();
+
+				// Increase size of other struct
+				Structure other = (Structure) dtm.getDataType(rootPath, "other");
+				other.add(DWordDataType.dataType);
+
+				// remove inner to trigger conflict with its modification
+				Union inner = (Union) dtm.getDataType(rootPath, "inner");
+				dtm.remove(inner);
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) throws Exception {
+				DataTypeManager dtm = program.getDataTypeManager();
+				Structure outer = (Structure) dtm.getDataType(rootPath, "outer");
+				Union inner = (Union) dtm.getDataType(rootPath, "inner");
+
+				// change inner to trigger conflict with its removal
+				inner.add(WordDataType.dataType);
+
+				// Add zero-length array at end of struct
+				outer.insertAtOffset(20, new ArrayDataType(inner, 0), -1);
+				assertEquals(20, outer.getLength());
+			}
+		});
+
+		executeMerge();
+
+		chooseOption(DataTypeMergeManager.OPTION_MY); // resolve inner conflict
+
+		chooseOption(DataTypeMergeManager.OPTION_MY); // resolve outer conflict
+
+		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+
+		StructureInternal outer = (StructureInternal) dtm.getDataType(rootPath, "outer");
+		assertNotNull(outer);
+
+		//@formatter:off
+		assertEquals("/outer\n" + 
+			"pack(disabled)\n" + 
+			"Structure outer {\n" + 
+			"   0   other   6      \"\"\n" + 
+			"   20   inner[0]   0      \"\"\n" + 
+			"}\n" + 
+			"Length: 20 Alignment: 1\n", outer.toString());
+		//@formatter:on
+
+	}
+
 }

@@ -72,21 +72,21 @@ public class DexLoader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
-
+	public void load(Program program, ImporterSettings settings) throws IOException {
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
 		monitor.setMessage(getMonitorMessagePrimary());
 		try {
 			Address start = program.getAddressFactory().getDefaultAddressSpace().getAddress(0x0);
-			long length = provider.length();
+			long length = settings.provider().length();
 
-			try (InputStream inputStream = provider.getInputStream(0)) {
+			try (InputStream inputStream = settings.provider().getInputStream(0)) {
 				program.getMemory()
 						.createInitializedBlock(getMemoryBlockName(), start, inputStream, length,
 							monitor, false);
 			}
 
-			BinaryReader reader = new BinaryReader(provider, true);
+			BinaryReader reader = new BinaryReader(settings.provider(), true);
 			DexHeader header = DexHeaderFactory.getDexHeader(reader);
 
 			monitor.setMessage(getMonitorMessageSecondary());
@@ -244,7 +244,7 @@ public class DexLoader extends AbstractProgramWrapperLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 
 		return Collections.emptyList();
 	}

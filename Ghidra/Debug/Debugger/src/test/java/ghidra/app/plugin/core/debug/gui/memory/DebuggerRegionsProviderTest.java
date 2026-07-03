@@ -45,7 +45,6 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryRegion;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
@@ -80,10 +79,10 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 	DebuggerRegionsProvider provider;
 
-	TraceObjectMemoryRegion regionExeText;
-	TraceObjectMemoryRegion regionExeData;
-	TraceObjectMemoryRegion regionLibText;
-	TraceObjectMemoryRegion regionLibData;
+	TraceMemoryRegion regionExeText;
+	TraceMemoryRegion regionExeData;
+	TraceMemoryRegion regionLibText;
+	TraceMemoryRegion regionLibData;
 
 	MemoryBlock blockExeText;
 	MemoryBlock blockExeData;
@@ -109,21 +108,21 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		}
 	}
 
-	protected TraceObjectMemoryRegion addRegion(String name, long loaded, AddressRange range) {
+	protected TraceMemoryRegion addRegion(String name, long loaded, AddressRange range) {
 		boolean isData = name.endsWith(".data");
 		TraceObjectManager om = tb.trace.getObjectManager();
 		KeyPath memPath = KeyPath.parse("Memory");
 		Lifespan span = Lifespan.nowOn(loaded);
-		TraceObjectMemoryRegion region = Objects.requireNonNull(om.createObject(memPath.index(name))
+		TraceMemoryRegion region = Objects.requireNonNull(om.createObject(memPath.index(name))
 				.insert(span, ConflictResolution.TRUNCATE)
 				.getDestination(null)
-				.queryInterface(TraceObjectMemoryRegion.class));
+				.queryInterface(TraceMemoryRegion.class));
 		TraceObject obj = region.getObject();
-		obj.setAttribute(span, TraceObjectMemoryRegion.KEY_DISPLAY, name);
-		obj.setAttribute(span, TraceObjectMemoryRegion.KEY_RANGE, range);
-		obj.setAttribute(span, TraceObjectMemoryRegion.KEY_READABLE, true);
-		obj.setAttribute(span, TraceObjectMemoryRegion.KEY_WRITABLE, isData);
-		obj.setAttribute(span, TraceObjectMemoryRegion.KEY_EXECUTABLE, !isData);
+		obj.setAttribute(span, TraceMemoryRegion.KEY_DISPLAY, name);
+		obj.setAttribute(span, TraceMemoryRegion.KEY_RANGE, range);
+		obj.setAttribute(span, TraceMemoryRegion.KEY_READABLE, true);
+		obj.setAttribute(span, TraceMemoryRegion.KEY_WRITABLE, isData);
+		obj.setAttribute(span, TraceMemoryRegion.KEY_EXECUTABLE, !isData);
 		return region;
 	}
 
@@ -218,7 +217,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 	public void testAddThenActivateTracePopulates() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectMemoryRegion region;
+		TraceMemoryRegion region;
 		try (Transaction tx = tb.startTransaction()) {
 			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 		}
@@ -240,7 +239,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		waitForPass(() -> assertTableSize(0));
 
-		TraceObjectMemoryRegion region;
+		TraceMemoryRegion region;
 		try (Transaction tx = tb.startTransaction()) {
 			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 		}
@@ -257,7 +256,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 	public void testRemoveRegionRemovesFromTable() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectMemoryRegion region;
+		TraceMemoryRegion region;
 		try (Transaction tx = tb.startTransaction()) {
 			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 		}
@@ -284,7 +283,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 	public void testUndoRedo() throws Exception {
 		createAndOpenTrace();
 
-		TraceObjectMemoryRegion region;
+		TraceMemoryRegion region;
 		try (Transaction tx = tb.startTransaction()) {
 			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 		}
@@ -320,7 +319,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		createAndOpenTrace();
 		traceManager.activateTrace(tb.trace);
 
-		TraceObjectMemoryRegion region;
+		TraceMemoryRegion region;
 		try (Transaction tx = tb.startTransaction()) {
 			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 			waitForDomainObject(tb.trace);
@@ -346,7 +345,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		createAndOpenTrace();
 
-		TraceObjectMemoryRegion region;
+		TraceMemoryRegion region;
 		try (Transaction tx = tb.startTransaction()) {
 			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 		}
@@ -465,7 +464,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		createAndOpenTrace();
 
-		TraceObjectMemoryRegion region;
+		TraceMemoryRegion region;
 		try (Transaction tx = tb.startTransaction()) {
 			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 		}
@@ -514,7 +513,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		createAndOpenTrace();
 
-		TraceObjectMemoryRegion region;
+		TraceMemoryRegion region;
 		try (Transaction tx = tb.startTransaction()) {
 			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 		}

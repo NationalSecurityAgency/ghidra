@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,11 @@ import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import ghidra.pcode.emu.DefaultPcodeThread.PcodeThreadExecutor;
 import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary;
+import ghidra.pcode.exec.PcodeExecutor;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.taint.model.*;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 
@@ -59,8 +63,15 @@ public class TaintPcodeUseropLibrary extends AnnotatedPcodeUseropLibrary<Pair<by
 	 * @return the same value, with the generated taint unioned in
 	 */
 	@PcodeUserop
-	public Pair<byte[], TaintVec> taint_var(Pair<byte[], TaintVec> in) {
-		return Pair.of(in.getLeft(), in.getRight().eachUnion(nextVar()));
+	public Pair<byte[], TaintVec> taint_var(Pair<byte[], TaintVec> in, @OpOp PcodeOp op,
+			@OpExecutor PcodeExecutor executor) {
+		if (executor instanceof PcodeThreadExecutor te) {
+			Address counter = te.getThread().getCounter();
+			op = new PcodeOp(counter, op.getSeqnum().getTime(), op.getOpcode(), op.getInputs(),
+				op.getOutput());
+		}
+
+		return Pair.of(in.getLeft(), in.getRight().eachUnion(nextVar()).withOp(op));
 	}
 
 	/**
@@ -72,13 +83,23 @@ public class TaintPcodeUseropLibrary extends AnnotatedPcodeUseropLibrary<Pair<by
 	 * the Sleigh code {@code RAX = taint_arr(RAX)} will cause RAX to be tainted as
 	 * [arr_0_0][arr_0_1]...[arr_0_7].
 	 * 
-	 * @param in
-	 * @return
+	 * @param in the input value
+	 * @param op the taint source
+	 * @param executor the current executor
+	 * @return the same value, with the generated taint unioned in
 	 */
 	@PcodeUserop
-	public Pair<byte[], TaintVec> taint_arr(Pair<byte[], TaintVec> in) {
+	public Pair<byte[], TaintVec> taint_arr(Pair<byte[], TaintVec> in, @OpOp PcodeOp op,
+			@OpExecutor PcodeExecutor executor) {
+		if (executor instanceof PcodeThreadExecutor te) {
+			Address counter = te.getThread().getCounter();
+			op = new PcodeOp(counter, op.getSeqnum().getTime(), op.getOpcode(), op.getInputs(),
+				op.getOutput());
+		}
+
 		TaintVec taint = in.getRight();
-		taint = taint.zipUnion(TaintVec.array(nextArrName(), 0, taint.length));
+		taint = taint.zipUnion(TaintVec.array(nextArrName(), 0, taint.length)).withOp(op);
 		return Pair.of(in.getLeft(), taint);
 	}
+
 }

@@ -130,7 +130,7 @@ public interface ObjectDefaultActionsMixin {
 	default boolean performDefaultAction(TraceObject object) {
 		Set<Class<? extends TraceObjectInterface>> interfaces =
 			object.getSchema().getInterfaces();
-		if (interfaces.contains(TraceObjectActivatable.class)) {
+		if (interfaces.contains(TraceActivatable.class)) {
 			activatePath(object.getCanonicalPath());
 			return true;
 		}
@@ -138,7 +138,7 @@ public interface ObjectDefaultActionsMixin {
 		 * Should I check aliveAndPresent() here? If I do, behavior changes when target is dead,
 		 * which might be unexpected.
 		 */
-		if (interfaces.contains(TraceObjectTogglable.class)) {
+		if (interfaces.contains(TraceTogglable.class)) {
 			toggleObject(object);
 			return true;
 		}

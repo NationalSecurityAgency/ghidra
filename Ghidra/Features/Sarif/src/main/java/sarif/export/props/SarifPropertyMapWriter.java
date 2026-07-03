@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,16 +19,9 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressIterator;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.util.IntPropertyMap;
-import ghidra.program.model.util.LongPropertyMap;
-import ghidra.program.model.util.ObjectPropertyMap;
-import ghidra.program.model.util.PropertyMap;
-import ghidra.program.model.util.StringPropertyMap;
-import ghidra.program.model.util.VoidPropertyMap;
+import ghidra.program.model.util.*;
 import ghidra.util.SaveableColor;
 import ghidra.util.SaveablePoint;
 import ghidra.util.exception.CancelledException;
@@ -78,6 +71,7 @@ public class SarifPropertyMapWriter extends AbstractExtWriter {
 	private void genVoidMap(VoidPropertyMap map, TaskMonitor monitor) throws CancelledException {
 		AddressIterator iter = set != null ? map.getPropertyIterator(set) : map.getPropertyIterator();
 		while (iter.hasNext()) {
+			monitor.checkCancelled();
 			Address addr = iter.next();
 			ExtProperty isf = new ExtProperty(map.getName(), "void", null);
 			SarifObject sarif = new SarifObject(PropertiesSarifMgr.SUBKEY, PropertiesSarifMgr.KEY, getTree(isf), addr,
@@ -90,9 +84,7 @@ public class SarifPropertyMapWriter extends AbstractExtWriter {
 	private void genIntMap(IntPropertyMap map, TaskMonitor monitor) throws CancelledException {
 		AddressIterator iter = set != null ? map.getPropertyIterator(set) : map.getPropertyIterator();
 		while (iter.hasNext()) {
-			if (monitor.isCancelled()) {
-				throw new CancelledException();
-			}
+			monitor.checkCancelled();
 			try {
 				Address addr = iter.next();
 				int value = map.getInt(addr);
@@ -109,9 +101,7 @@ public class SarifPropertyMapWriter extends AbstractExtWriter {
 	private void genLongMap(LongPropertyMap map, TaskMonitor monitor) throws CancelledException {
 		AddressIterator iter = set != null ? map.getPropertyIterator(set) : map.getPropertyIterator();
 		while (iter.hasNext()) {
-			if (monitor.isCancelled()) {
-				throw new CancelledException();
-			}
+			monitor.checkCancelled();
 			try {
 				Address addr = iter.next();
 				long value = map.getLong(addr);
@@ -129,9 +119,7 @@ public class SarifPropertyMapWriter extends AbstractExtWriter {
 	private void genStringMap(StringPropertyMap map, TaskMonitor monitor) throws CancelledException {
 		AddressIterator iter = set != null ? map.getPropertyIterator(set) : map.getPropertyIterator();
 		while (iter.hasNext()) {
-			if (monitor.isCancelled()) {
-				throw new CancelledException();
-			}
+			monitor.checkCancelled();
 			Address addr = iter.next();
 			String value = map.getString(addr);
 			ExtProperty isf = new ExtProperty(map.getName(), "string", value);
@@ -145,9 +133,7 @@ public class SarifPropertyMapWriter extends AbstractExtWriter {
 	private void genObjectMap(ObjectPropertyMap<?> map, TaskMonitor monitor) throws CancelledException {
 		AddressIterator iter = set != null ? map.getPropertyIterator(set) : map.getPropertyIterator();
 		while (iter.hasNext()) {
-			if (monitor.isCancelled()) {
-				throw new CancelledException();
-			}
+			monitor.checkCancelled();
 			Address addr = iter.next();
 			Object value = map.get(addr);
 			ExtProperty isf;

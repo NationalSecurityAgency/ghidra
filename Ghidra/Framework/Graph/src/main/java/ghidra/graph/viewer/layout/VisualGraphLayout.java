@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.awt.geom.Point2D;
 import com.google.common.base.Function;
 
 import edu.uci.ics.jung.algorithms.layout.Layout;
+import edu.uci.ics.jung.visualization.RenderContext;
 import edu.uci.ics.jung.visualization.renderers.BasicEdgeRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import ghidra.graph.VisualGraph;
@@ -91,7 +92,9 @@ public interface VisualGraphLayout<V extends VisualVertex,
 	public VisualGraphLayout<V, E> cloneLayout(VisualGraph<V, E> newGraph);
 
 	/**
-	 * Allows the client to change the location while specifying the type of change
+	 * Allows the client to change the location while specifying the type of change.
+	 * <P>
+	 * Calling {@link #setLocation(Object, Point2D)} will use {@link ChangeType#API}. 
 	 * 
 	 * @param v the vertex
 	 * @param location the new location
@@ -116,9 +119,10 @@ public interface VisualGraphLayout<V extends VisualVertex,
 	/**
 	 * Returns an optional edge shape transformer.  This is used to create shapes for each edge.
 	 * 
+	 * @param context RenderContext needed to get rendering information
 	 * @return an optional edge shape transformer
 	 */
-	public Function<E, Shape> getEdgeShapeTransformer();
+	public Function<E, Shape> getEdgeShapeTransformer(RenderContext<V, E> context);
 
 	/**
 	 * Returns an optional custom edge label renderer.  This is used to add labels to the edges.

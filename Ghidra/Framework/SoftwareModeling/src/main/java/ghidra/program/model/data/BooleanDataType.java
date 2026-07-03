@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.program.model.mem.MemoryAccessException;
  */
 public class BooleanDataType extends AbstractUnsignedIntegerDataType {
 
-	private static SettingsDefinition[] SETTINGS_DEFS = {};
+	private static SettingsDefinition[] BOOLEAN_SETTINGS_DEFS = {};
 
 	public static final BooleanDataType dataType = new BooleanDataType();
 
@@ -95,14 +95,13 @@ public class BooleanDataType extends AbstractUnsignedIntegerDataType {
 		return b.booleanValue() ? "TRUE" : "FALSE";
 	}
 
-	@Override
 	public String getRepresentation(BigInteger bigInt, Settings settings, int bitLength) {
 		return BigInteger.ZERO.equals(bigInt) ? "FALSE" : "TRUE";
 	}
 
 	@Override
 	protected SettingsDefinition[] getBuiltInSettingsDefinitions() {
-		return SETTINGS_DEFS;
+		return BOOLEAN_SETTINGS_DEFS;
 	}
 
 	@Override

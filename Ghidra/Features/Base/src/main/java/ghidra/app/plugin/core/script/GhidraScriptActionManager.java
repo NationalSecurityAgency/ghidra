@@ -285,7 +285,17 @@ class GhidraScriptActionManager {
 	private void chooseScript(ActionContext actioncontext1) {
 
 		List<ScriptInfo> scriptInfos = provider.getScriptInfos();
-		ScriptSelectionDialog dialog = new ScriptSelectionDialog(plugin, scriptInfos);
+
+		// Get the last run script name to pre-populate the dialog
+		String initialScript = null;
+		ResourceFile lastRunScript = provider.getLastRunScript();
+		if (lastRunScript != null) {
+			initialScript = lastRunScript.getName();
+		}
+
+		List<String> recentScripts = provider.getRecentScripts();
+		ScriptSelectionDialog dialog = new ScriptSelectionDialog(plugin, scriptInfos, recentScripts,
+			initialScript);
 		dialog.show();
 
 		ScriptInfo chosenInfo = dialog.getUserChoice();
@@ -430,7 +440,12 @@ class GhidraScriptActionManager {
 					}
 
 					ZipEntry entry = entries.nextElement();
-					monitor.setMessage("Extracting " + entry.getName() + "...");
+					String name = entry.getName();
+					File destination = new File(versionedExtractDir, name);
+					if (!FileUtilities.isPathContainedWithin(versionedExtractDir, destination)) {
+						throw new IOException("Zip entry escapes target directory: " + name);
+					}
+					monitor.setMessage("Extracting " + name + "...");
 					writeZipEntry(versionedExtractDir, entry, zipFileObject.getInputStream(entry));
 					monitor.incrementProgress(1);
 				}

@@ -439,8 +439,8 @@ public class JitControlFlowModelTest extends AbstractJitTest {
 		// For sanity, and so I can reason out the results
 		assertEquals("""
 				<JitPassage:
-				  0,00000000.0: $U800:1 = BOOL_NEGATE Z
-				  1,00000000.1: CBRANCH *[ram]0x2:8, $U800:1
+				  0,00000000.0: $U1000:1 = BOOL_NEGATE Z
+				  1,00000000.1: CBRANCH *[ram]0x2:8, $U1000:1
 				  2,00000000.2: BRANCH *[ram]0x4:8
 				  3,00000002.0: C = COPY 0:1
 				  4,00000002.1: V = COPY 0:1

@@ -18,8 +18,8 @@ package ghidra.program.util;
 import java.io.*;
 import java.util.*;
 
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 
@@ -289,7 +289,8 @@ class OldLanguage implements Language {
 			throw new SAXException("Missing required 'spaces' element");
 		}
 		if (!registersFound) {
-			throw new SAXException("Missing required 'registers' element");
+			// register mapping will not be performed
+			registerMgr = (new RegisterBuilder()).getRegisterManager();
 		}
 	}
 
@@ -328,8 +329,8 @@ class OldLanguage implements Language {
 			throw new SAXException(
 				"Missing required " + element.getName() + " '" + name + "' attribute");
 		}
-		boolean val = valStr.equalsIgnoreCase("yes") | valStr.equalsIgnoreCase("true");
-		if (!val && !valStr.equalsIgnoreCase("no") & !valStr.equalsIgnoreCase("false")) {
+		boolean val = "yes".equalsIgnoreCase(valStr) || "true".equalsIgnoreCase(valStr);
+		if (!val && !"no".equalsIgnoreCase(valStr) && !"false".equalsIgnoreCase(valStr)) {
 			throw new SAXException(
 				"invalid boolean attribute value " + name + "=\"" + valStr + "\"");
 		}
@@ -765,5 +766,10 @@ class OldLanguage implements Language {
 	@Override
 	public AddressSetView getRegisterAddresses() {
 		return registerMgr.getRegisterAddresses();
+	}
+
+	@Override
+	public OptionalInt getMaximumInstructionLength() {
+		return OptionalInt.empty();
 	}
 }

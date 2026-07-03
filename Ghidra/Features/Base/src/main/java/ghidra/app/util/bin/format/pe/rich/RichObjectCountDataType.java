@@ -107,8 +107,4 @@ class RichObjectCountDataType extends DataTypeImpl {
 		// ignored
 	}
 
-	@Override
-	public boolean dependsOn(DataType dt) {
-		return false;
-	}
 }

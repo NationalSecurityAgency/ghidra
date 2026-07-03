@@ -111,6 +111,10 @@ public class SarifController implements ObjectSelectedListener<Map<String, Objec
 
 	public void showTable(String logName, SarifSchema210 sarif) {
 		SarifDataFrame df = new SarifDataFrame(sarif, this, false);
+		int size = df.getTableResults().size();
+		if (size != 0) {
+			logName += "  ["+size+"]";
+		}
 		SarifResultsTableProvider provider =
 			new SarifResultsTableProvider(logName, getPlugin(), this, df);
 		provider.filterTable.addSelectionListener(this);
@@ -278,7 +282,6 @@ public class SarifController implements ObjectSelectedListener<Map<String, Objec
 		return defaultGraphHandler;
 	}
 
-	@SuppressWarnings("unchecked")
 	public void setDefaultGraphHander(Class<? extends SarifGraphRunHandler> clazz) {
 		defaultGraphHandler = clazz;
 	}

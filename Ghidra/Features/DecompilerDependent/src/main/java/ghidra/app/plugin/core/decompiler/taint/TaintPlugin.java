@@ -166,8 +166,6 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 	public static final Icon PROVIDER_ICON = Icons.ARROW_DOWN_RIGHT_ICON;
 	public static final Icon FUNCTION_ICON = new GIcon("icon.plugin.calltree.function");
 	public static final Icon RECURSIVE_ICON = new GIcon("icon.plugin.calltree.recursive");
-	public static final Icon TAINT_TREE_ICON =
-		new GIcon("icon.plugin.functiongraph.layout.nested.code");
 
 	// You may want MANY slice tree gui elements to explore different slices within a program.
 	// This list should keep track of them all.

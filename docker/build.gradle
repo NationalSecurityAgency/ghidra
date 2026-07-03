@@ -23,6 +23,6 @@ rootProject.assembleDistribution {
 
 rootProject.assembleMarkdownToHtml {
 	from ("${this.projectDir}/README.md") {
-		into "."
+		into "docker"
 	}
 }

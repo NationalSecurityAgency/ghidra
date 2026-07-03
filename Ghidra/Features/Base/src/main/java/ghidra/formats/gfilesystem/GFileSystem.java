@@ -22,8 +22,7 @@ import java.util.function.Predicate;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.ByteProviderInputStream;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
-import ghidra.formats.gfilesystem.fileinfo.FileAttribute;
-import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
+import ghidra.formats.gfilesystem.fileinfo.*;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.exception.CancelledException;
@@ -225,15 +224,29 @@ public interface GFileSystem extends Closeable, Iterable<GFile>, ExtensionPoint 
 
 	/**
 	 * Converts the specified (symlink) file into it's destination, or if not a symlink,
-	 * returns the original file unchanged.
+	 * returns the original file unchanged, or null if invalid symlink.
 	 *  
 	 * @param file symlink file to follow
-	 * @return destination of symlink, or original file if not a symlink
-	 * @throws IOException if error following symlink path, typically outside of the hosting
-	 * file system
+	 * @return destination of symlink, or original file if not a symlink, or {@code null} if symlink
+	 * destination was invalid
+	 * @throws IOException if error following symlink path, typically because of recursive paths
 	 */
 	default GFile resolveSymlinks(GFile file) throws IOException {
 		return null;
+	}
+
+	/**
+	 * Returns the {@link FileType} of the specified file.
+	 * 
+	 * @param f {@link GFile} to query
+	 * @param monitor {@link TaskMonitor}
+	 * @return {@link FileType} of the specified file
+	 */
+	default FileType getFileType(GFile f, TaskMonitor monitor) {
+		FileAttributes attrs = getFileAttributes(f, monitor);
+		FileType fileType = attrs.get(FileAttributeType.FILE_TYPE_ATTR, FileType.class,
+			f.isDirectory() ? FileType.DIRECTORY : FileType.FILE);
+		return fileType;
 	}
 
 	/**
@@ -259,7 +272,7 @@ public interface GFileSystem extends Closeable, Iterable<GFile>, ExtensionPoint 
 	 * 
 	 * @return An {@link Iterable} over this {@link GFileSystem}'s {@link GFile files}.
 	 */
-	public default Iterable<GFile> files() {
+	default Iterable<GFile> files() {
 		return () -> new GFileSystemIterator(this);
 	}
 
@@ -271,7 +284,7 @@ public interface GFileSystem extends Closeable, Iterable<GFile>, ExtensionPoint 
 	 * @throws UncheckedIOException if {@code dir} is not a directory
 	 * @return An {@link Iterable} over this {@link GFileSystem}'s {@link GFile files}.
 	 */
-	public default Iterable<GFile> files(GFile dir) throws UncheckedIOException {
+	default Iterable<GFile> files(GFile dir) throws UncheckedIOException {
 		return () -> new GFileSystemIterator(Objects.requireNonNullElse(dir, getRootDir()));
 	}
 
@@ -281,7 +294,7 @@ public interface GFileSystem extends Closeable, Iterable<GFile>, ExtensionPoint 
 	 * @param fileFilter A filter to apply to the {@link GFile files} iterated over
 	 * @return An {@link Iterable} over this {@link GFileSystem}'s {@link GFile files}.
 	 */
-	public default Iterable<GFile> files(Predicate<GFile> fileFilter) {
+	default Iterable<GFile> files(Predicate<GFile> fileFilter) {
 		return () -> new GFileSystemIterator(getRootDir(), fileFilter);
 	}
 
@@ -294,14 +307,14 @@ public interface GFileSystem extends Closeable, Iterable<GFile>, ExtensionPoint 
 	 * @throws UncheckedIOException if {@code dir} is not a directory
 	 * @return An {@link Iterable} over this {@link GFileSystem}'s {@link GFile files}.
 	 */
-	public default Iterable<GFile> files(GFile dir, Predicate<GFile> fileFilter)
+	default Iterable<GFile> files(GFile dir, Predicate<GFile> fileFilter)
 			throws UncheckedIOException {
 		return () -> new GFileSystemIterator(Objects.requireNonNullElse(dir, getRootDir()),
 			fileFilter);
 	}
 
 	@Override
-	public default Iterator<GFile> iterator() {
+	default Iterator<GFile> iterator() {
 		return new GFileSystemIterator(this);
 	}
 

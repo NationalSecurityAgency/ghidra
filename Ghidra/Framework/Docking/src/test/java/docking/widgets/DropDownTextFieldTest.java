@@ -27,6 +27,9 @@ import javax.swing.JWindow;
 
 import org.junit.Test;
 
+import docking.DockingUtils;
+import docking.widgets.DropDownTextFieldDataModel.SearchMode;
+
 /**
  * This test achieves partial coverage of {@link DropDownTextField}.  Further coverage is
  * provided by {@link DropDownSelectionTextFieldTest}, as that test enables item selection 
@@ -212,10 +215,12 @@ public class DropDownTextFieldTest extends AbstractDropDownTextFieldTest<String>
 		runSwing(() -> parentFrame.setLocation(p));
 		waitForSwing();
 
-		JWindow currentMatchingWindow = textField.getActiveMatchingWindow();
-		Point newLocation = runSwing(() -> currentMatchingWindow.getLocationOnScreen());
-		assertNotEquals("The completion window's location did not update when its parent window " +
-			"was moved.", location, newLocation);
+		// we expect the location to change, but there may be a delay
+		waitForCondition(() -> {
+			JWindow currentMatchingWindow = textField.getActiveMatchingWindow();
+			Point newLocation = runSwing(() -> currentMatchingWindow.getLocationOnScreen());
+			return !location.equals(newLocation);
+		});
 	}
 
 	@Test
@@ -468,6 +473,192 @@ public class DropDownTextFieldTest extends AbstractDropDownTextFieldTest<String>
 		// with this setting on, this method should always force the list to show
 		showMatchingList();
 		assertMatchingWindowShowing();
+	}
+
+	@Test
+	public void testSearchMode_Contains() {
+
+		setSearchMode(SearchMode.CONTAINS);
+
+		typeText("1", true);
+		assertMatchesInList("a1", "d1", "e1", "e12", "e123");
+
+		clearText();
+
+		typeText("e1", true);
+		assertMatchesInList("e1", "e12", "e123");
+
+		clearText();
+
+		typeText("z", false);
+		assertMatchingWindowHidden();
+	}
+
+	@Test
+	public void testSearchMode_Contains_CaretPositionDoesNotAffectResults() {
+
+		setSearchMode(SearchMode.CONTAINS);
+
+		typeText("e12", true);
+		assertMatchesInList("e12", "e123");
+
+		left(); // move caret back one position: from e12| to e1|2
+		assertMatchesInList("e12", "e123");
+
+		left(); // move caret back one position: from e1|2 to e|12
+		assertMatchesInList("e12", "e123");
+
+		right(); // move caret back to e1|2
+		assertMatchesInList("e12", "e123");
+
+		right(); // move caret back to e12|
+		assertMatchesInList("e12", "e123");
+	}
+
+	@Test
+	public void testSearchMode_StartsWith_CaretPositionChangesResults() {
+
+		setSearchMode(SearchMode.STARTS_WITH);
+
+		typeText("e12", true);
+		assertMatchesInList("e12", "e123");
+
+		left(); // move caret back one position: from e12| to e1|2
+		assertMatchesInList("e1", "e12", "e123");
+
+		right(); // move caret back to e12|
+		assertMatchesInList("e12", "e123");
+	}
+
+	@Test
+	public void testSearchMode_ChangeModeWithText_ToStartsWith_CaretPositionChangesResults() {
+
+		/*
+		 	The text field honors caret position in 'starts with' mode.  Test that changing modes 
+		 	with text in the field will correctly use the caret position for the given mode.
+		 */
+
+		// start with a search mode that ignores the caret position
+		setSearchMode(SearchMode.CONTAINS);
+		typeText("e12", true);
+		assertMatchesInList("e12", "e123");
+
+		left(); // move caret back one position: from e12| to e1|2
+		assertMatchesInList("e12", "e123"); // same matches in 'contains' mode
+
+		setSearchMode(SearchMode.STARTS_WITH);
+		assertMatchesInList("e1", "e12", "e123"); // caret is at e1|2; matches should change
+
+		setSearchMode(SearchMode.CONTAINS);
+		assertMatchesInList("e12", "e123"); // matches now ignore the caret
+	}
+
+	@Test
+	public void testSearchMode_Contains_CaretPositionDoesNotChangesResults() {
+
+		setSearchMode(SearchMode.CONTAINS);
+
+		typeText("e12", true);
+		assertMatchesInList("e12", "e123");
+
+		left(); // move caret back one position: from e12| to e1|2
+		assertMatchesInList("e12", "e123");
+
+		right(); // move caret back to e12|
+		assertMatchesInList("e12", "e123");
+	}
+
+	@Test
+	public void testChangeSearchMode_ViaKeyBinding() {
+
+		/*
+		 	 Default search mode order:
+		 	 
+		 	 STARTS_WITH, CONTAINS, WILDCARD
+		 */
+
+		assertSearchMode(SearchMode.STARTS_WITH);
+
+		toggleSearchModeViaKeyBinding();
+		assertSearchMode(SearchMode.CONTAINS);
+
+		toggleSearchModeViaKeyBinding();
+		assertSearchMode(SearchMode.WILDCARD);
+
+		toggleSearchModeViaKeyBinding();
+		assertSearchMode(SearchMode.STARTS_WITH);
+
+		toggleSearchModeViaKeyBinding_Backwards();
+		assertSearchMode(SearchMode.WILDCARD);
+
+		toggleSearchModeViaKeyBinding_Backwards();
+		assertSearchMode(SearchMode.CONTAINS);
+	}
+
+	@Test
+	public void testChangeSearchMode_ViaMouse() {
+
+		/*
+		 	 Default search mode order:
+		 	 
+		 	 STARTS_WITH, CONTAINS, WILDCARD
+		 */
+
+		assertSearchMode(SearchMode.STARTS_WITH);
+
+		toggleSearchModeViaMouseClick();
+		assertSearchMode(SearchMode.CONTAINS);
+
+		toggleSearchModeViaMouseClick();
+		assertSearchMode(SearchMode.WILDCARD);
+
+		toggleSearchModeViaMouseClick();
+		assertSearchMode(SearchMode.STARTS_WITH);
+
+		toggleSearchModeViaMouseClick_Backwards();
+		assertSearchMode(SearchMode.WILDCARD);
+
+		toggleSearchModeViaMouseClick_Backwards();
+		assertSearchMode(SearchMode.CONTAINS);
+	}
+
+	private void toggleSearchModeViaMouseClick() {
+		clickSearchMode(false);
+	}
+
+	private void toggleSearchModeViaMouseClick_Backwards() {
+		clickSearchMode(true);
+	}
+
+	private void clickSearchMode(boolean useControlKey) {
+
+		// we have to wait, since the bounds are set when the text field paints
+		DropDownTextField<String>.SearchModeBounds searchModeBounds = waitFor(() -> {
+			return runSwing(() -> textField.getSearchModeBounds());
+		});
+
+		// this point is relative to the text field
+		Point p = searchModeBounds.getLocation();
+
+		long when = System.currentTimeMillis();
+		int mods = useControlKey ? DockingUtils.CONTROL_KEY_MODIFIER_MASK : 0;
+		int x = p.x + 3; // add some fudge
+		int y = p.y + 3; // add some fudge
+		int clickCount = 1;
+		boolean popupTrigger = false;
+		MouseEvent event = new MouseEvent(textField, MouseEvent.MOUSE_CLICKED, when, mods, x, y,
+			clickCount, popupTrigger);
+		runSwing(() -> textField.dispatchEvent(event));
+	}
+
+	private void toggleSearchModeViaKeyBinding() {
+		triggerKey(textField, DockingUtils.CONTROL_KEY_MODIFIER_MASK, KeyEvent.VK_DOWN,
+			KeyEvent.CHAR_UNDEFINED);
+	}
+
+	private void toggleSearchModeViaKeyBinding_Backwards() {
+		triggerKey(textField, DockingUtils.CONTROL_KEY_MODIFIER_MASK, KeyEvent.VK_UP,
+			KeyEvent.CHAR_UNDEFINED);
 	}
 
 	private void showMatchingList() {

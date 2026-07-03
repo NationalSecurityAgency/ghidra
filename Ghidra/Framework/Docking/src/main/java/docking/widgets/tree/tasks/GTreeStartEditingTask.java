@@ -31,12 +31,12 @@ import ghidra.util.task.TaskMonitor;
 public class GTreeStartEditingTask extends GTreeTask {
 
 	private final GTreeNode modelParent;
-	private final GTreeNode editNode;
+	private final GTreeNode modelEditNode;
 
 	public GTreeStartEditingTask(GTree gTree, JTree jTree, GTreeNode editNode) {
 		super(gTree);
 		this.modelParent = tree.getModelNode(editNode.getParent());
-		this.editNode = editNode;
+		this.modelEditNode = tree.getModelNode(editNode);
 	}
 
 	@Override
@@ -55,13 +55,16 @@ public class GTreeStartEditingTask extends GTreeTask {
 	}
 
 	private void edit() {
-		TreePath path = editNode.getTreePath();
+
+		GTreeNode viewEditNode = tree.getViewNode(modelEditNode);
+
+		TreePath path = viewEditNode.getTreePath();
 		CellEditor cellEditor = tree.getCellEditor();
 		cellEditor.addCellEditorListener(new CellEditorListener() {
 			@Override
 			public void editingCanceled(ChangeEvent e) {
 				cellEditor.removeCellEditorListener(this);
-				tree.setSelectedNode(editNode); // reselect the node on cancel
+				tree.setSelectedNode(viewEditNode); // reselect the node on cancel
 			}
 
 			@Override
@@ -71,7 +74,7 @@ public class GTreeStartEditingTask extends GTreeTask {
 
 				// NOTE: there may be cases where this node search fails to correctly
 				// identify the renamed node when name and node class is insufficient to match.
-				Class<?> nodeClass = editNode.getClass();
+				Class<?> nodeClass = viewEditNode.getClass();
 				Predicate<GTreeNode> nodeMatches = n -> {
 					return nodeClass == n.getClass() && n.getName().equals(newName);
 				};
@@ -82,7 +85,7 @@ public class GTreeStartEditingTask extends GTreeTask {
 			}
 		});
 
-		tree.setNodeEditable(editNode);
+		tree.setNodeEditable(viewEditNode);
 		jTree.startEditingAtPath(path);
 
 	}

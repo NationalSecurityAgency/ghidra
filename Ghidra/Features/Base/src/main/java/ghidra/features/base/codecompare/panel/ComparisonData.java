@@ -24,7 +24,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 
 /**
- * ComparisonData is an abstract of items that can be compared in a {@link CodeComparisonPanel}. 
+ * ComparisonData is an abstraction of items that can be compared in a {@link CodeComparisonView}. 
  * Not all comparison panels can handle all types of comparison data. For example, the decompiler
  * comparison only works when the comparison data is a function.
  */
@@ -71,6 +71,7 @@ public interface ComparisonData {
 
 	/**
 	 * Returns the initial program location to put the cursor when the panel is first displayed
+	 * @return the location
 	 */
 	public ProgramLocation getInitialLocation();
 

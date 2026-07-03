@@ -18,9 +18,9 @@ from dataclasses import dataclass
 import os
 import re
 import sys
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Iterator, List, Optional, Union
 
-import lldb
+import lldb #  type: ignore  # no stubs available from upstream/SWIG
 
 
 @dataclass(frozen=True)
@@ -43,6 +43,12 @@ def _compute_lldb_ver() -> LldbVersion:
 
 
 LLDB_VERSION = _compute_lldb_ver()
+if LLDB_VERSION.major < 18:
+    import psutil
+    from psutil import Process
+else:
+    class Process(): # type: ignore # dummy when we're not importing psutil
+        pass
 
 GNU_DEBUGDATA_PREFIX = ".gnu_debugdata for "
 
@@ -177,6 +183,44 @@ def _choose_region_info_reader() -> RegionInfoReader:
 
 REGION_INFO_READER = _choose_region_info_reader()
 
+
+@dataclass
+class Available:
+    pid: int
+    name: str
+    command: str
+
+
+class AvailableInfoReader(object):
+    def available_from_sbprocinfo(self, info: lldb.SBProcessInfo) -> Available:
+        pid = info.GetProcessID()
+        name = info.GetName()
+        command = info.GetExecutableFile()
+        return Available(pid, name, command)
+
+    def get_availables(self) -> Union[List[Available], Iterator[Process]]:
+        availables = []
+        platform = get_debugger().GetPlatformAtIndex(0)
+        err = lldb.SBError()
+        # Quite a hack, but only needed for type annotations
+        if hasattr(platform, 'GetAllProcesses'):
+	        proclist = platform.GetAllProcesses(err)
+	        for i in range(0, proclist.GetSize()):
+	            info = lldb.SBProcessInfo()
+	            success = proclist.GetProcessInfoAtIndex(i, info)
+	            if success:
+	                a = self.available_from_sbprocinfo(info)
+	                availables.append(a)
+	        return availables
+        else:
+	        return psutil.process_iter()
+
+
+def _choose_available_info_reader() -> AvailableInfoReader:
+    return AvailableInfoReader()
+
+
+AVAILABLE_INFO_READER = _choose_available_info_reader()
 
 BREAK_LOCS_CMD = 'breakpoint list {}'
 BREAK_PATTERN = re.compile('')

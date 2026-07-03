@@ -24,9 +24,15 @@ java {
 }
 
 dependencies {
-	api "com.google.code.gson:gson:2.9.0"
+	api "com.google.code.gson:gson:2.13.2"
 }
 
-rootProject.createJsondocs.dependsOn jar
-rootProject.createPythonTypeStubs.dependsOn jar
+def jsonTask = rootProject.tasks.findByName("createJsondocs") ?: rootProject.tasks.findByName("createJsonDocs")
+if (jsonTask != null) {
+    jsonTask.dependsOn(jar)
+}
 
+def stubTask = rootProject.tasks.findByName("createPythonTypeStubs")
+if (stubTask != null) {
+    stubTask.dependsOn(jar)
+}

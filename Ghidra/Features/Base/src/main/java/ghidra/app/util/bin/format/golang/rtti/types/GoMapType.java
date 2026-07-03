@@ -25,12 +25,13 @@ import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 
 /**
- * Golang type info about a specific map type.
+ * Go type info about a specific map type.
  * <p>
- * See {@link GoTypeManager#getMapGoType()} or the "runtime.hmap" type for the definition of
- * a instance of a map variable in memory. 
+ * Maps are passed by address, and in Go sizeof(mapvar) will always be ptrSize
  */
-@StructureMapping(structureName = {"runtime.maptype", "internal/abi.MapType"})
+@StructureMapping(
+	structureName = { "runtime.maptype", "internal/abi.MapType", "internal/abi.OldMapType" }
+)
 public class GoMapType extends GoType {
 
 	@FieldMapping
@@ -41,20 +42,24 @@ public class GoMapType extends GoType {
 	@MarkupReference("getElement")
 	private long elem;	// ptr to type
 
-	@FieldMapping
+	@FieldMapping(presentWhen = "-1.25")
 	@MarkupReference("getBucket")
 	private long bucket;	// ptr to type
+
+	@FieldMapping(presentWhen = "1.26-")
+	@MarkupReference("getGroup")
+	private long group;	// ptr to group type
 
 	@FieldMapping
 	private long hasher;	// pointer to "func(Pointer, pointer) pointer"
 
-	@FieldMapping
+	@FieldMapping(presentWhen = "-1.25")
 	private int keysize;
 
-	@FieldMapping(fieldName = {"elemsize", "ValueSize"})
+	@FieldMapping(fieldName = { "elemsize", "ValueSize" }, presentWhen = "-1.25")
 	private int elemsize;
 
-	@FieldMapping
+	@FieldMapping(presentWhen = "-1.25")
 	private int bucketsize;
 
 	@FieldMapping
@@ -94,19 +99,30 @@ public class GoMapType extends GoType {
 	 */
 	@Markup
 	public GoType getBucket() throws IOException {
-		return programContext.getGoTypes().getType(bucket);
+		return bucket != 0 ? programContext.getGoTypes().getType(bucket) : null;
+	}
+
+	/**
+	 * Returns the GoType that defines the map's group, referenced by the group field's markup annotation
+	 * 
+	 * @return GoType that defines the map's group
+	 * @throws IOException if error reading data
+	 */
+	@Markup
+	public GoType getGroup() throws IOException {
+		return group != 0 ? programContext.getGoTypes().getType(group) : null;
 	}
 
 	@Override
-	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
-		GoType mapGoType = goTypes.getMapGoType();
-		if (mapGoType == null) {
+	public DataType recoverDataType() throws IOException {
+		GoTypeManager goTypes = programContext.getGoTypes();
+		DataType hmapDT = goTypes.findDataType("runtime.hmap");
+		if (hmapDT == null) {
 			// if we couldn't find the underlying/hidden runtime.hmap struct type, just return
 			// a void*
 			return goTypes.getVoidPtrDT();
 		}
-		DataType mapDT = goTypes.getGhidraDataType(mapGoType);
-		Pointer ptrMapDt = goTypes.getDTM().getPointer(mapDT);
+		Pointer ptrMapDt = goTypes.getDTM().getPointer(hmapDT);
 		if (typ.getSize() != ptrMapDt.getLength()) {
 			Msg.warn(this, "Size mismatch between map type and recovered type");
 		}
@@ -153,7 +169,12 @@ public class GoMapType extends GoType {
 
 	@Override
 	public boolean isValid() {
-		return super.isValid() && typ.getSize() == programContext.getPtrSize();
+		return super.isValid() && isValidSize();
+	}
+
+	private boolean isValidSize() {
+		return typ.getSize() == programContext.getPtrSize() &&
+			typ.getPtrBytes() == programContext.getPtrSize();
 	}
 
 }

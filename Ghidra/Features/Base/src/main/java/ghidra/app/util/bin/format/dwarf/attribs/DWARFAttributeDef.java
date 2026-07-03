@@ -56,7 +56,7 @@ public class DWARFAttributeDef<E extends Enum<E>> {
 		int attributeId = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		int formId = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		
-		if (attributeId == DWARFAttribute.EOL && formId == DWARFForm.EOL) {
+		if (attributeId == DWARFAttributeId.EOL && formId == DWARFForm.EOL) {
 			// end of attributespec list
 			return null;
 		}

@@ -261,7 +261,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 	@Test
 	public void testNewInCategory() throws Exception {
 
-		String category = "Memory";
+		String category = "Update";
 		selectCategory(category);
 
 		ResourceFile newScript = createNewScriptUsingGUI();
@@ -292,8 +292,8 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 
 		SaveDialog saveDialog = waitForDialogComponent(SaveDialog.class);
 
-		final ListPanel listPanel =
-			(ListPanel) findComponentByName(saveDialog.getComponent(), "PATH_LIST");
+		final ListPanel<?> listPanel =
+			(ListPanel<?>) findComponentByName(saveDialog.getComponent(), "PATH_LIST");
 		assertNotNull(listPanel);
 		assertTrue(listPanel.isVisible());
 		assertEquals(2, listPanel.getListModel().getSize());

@@ -23,6 +23,7 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import com.google.gson.*;
 
+import generic.hash.HashUtilities;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.formats.gfilesystem.*;
@@ -30,7 +31,6 @@ import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.crypto.CryptoSession;
 import ghidra.formats.gfilesystem.fileinfo.*;
 import ghidra.framework.generic.auth.Password;
-import ghidra.util.HashUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 

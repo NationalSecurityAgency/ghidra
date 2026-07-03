@@ -21,7 +21,7 @@ import docking.widgets.table.*;
 import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.docking.settings.Settings;
 import ghidra.features.base.memsearch.format.SearchFormat;
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
@@ -39,7 +39,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Table model for memory search results.
  */
-public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch> {
+public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch<SearchData>> {
 	private Color CHANGED_COLOR = Tables.ERROR_UNSELECTED;
 	private Color CHANGED_SELECTED_COLOR = Tables.ERROR_SELECTED;
 
@@ -50,8 +50,8 @@ public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch> {
 	}
 
 	@Override
-	protected TableColumnDescriptor<MemoryMatch> createTableColumnDescriptor() {
-		TableColumnDescriptor<MemoryMatch> descriptor = new TableColumnDescriptor<>();
+	protected TableColumnDescriptor<MemoryMatch<SearchData>> createTableColumnDescriptor() {
+		TableColumnDescriptor<MemoryMatch<SearchData>> descriptor = new TableColumnDescriptor<>();
 
 		descriptor.addVisibleColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new AddressTableColumn()), 1, true);
@@ -66,7 +66,7 @@ public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch> {
 	}
 
 	@Override
-	protected void doLoad(Accumulator<MemoryMatch> accumulator, TaskMonitor monitor)
+	protected void doLoad(Accumulator<MemoryMatch<SearchData>> accumulator, TaskMonitor monitor)
 			throws CancelledException {
 		if (loader == null) {
 			return;
@@ -75,6 +75,11 @@ public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch> {
 		loader = null;
 	}
 
+	@Override
+	protected void startInitialLoad() {
+		// Don't start up a load
+	}
+	
 	void setLoader(MemoryMatchTableLoader loader) {
 		this.loader = loader;
 		reload();
@@ -87,7 +92,7 @@ public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch> {
 		}
 
 		ColumnSortState primaryState = sortState.getAllSortStates().get(0);
-		DynamicTableColumn<MemoryMatch, ?, ?> column =
+		DynamicTableColumn<MemoryMatch<SearchData>, ?, ?> column =
 			getColumn(primaryState.getColumnModelIndex());
 		String name = column.getColumnName();
 		if (AddressTableColumn.NAME.equals(name)) {
@@ -103,7 +108,7 @@ public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch> {
 			return null; // we've been disposed
 		}
 
-		DynamicTableColumn<MemoryMatch, ?, ?> column = getColumn(modelColumn);
+		DynamicTableColumn<MemoryMatch<SearchData>, ?, ?> column = getColumn(modelColumn);
 		Class<?> columnClass = column.getClass();
 		if (column instanceof MappedTableColumn mappedColumn) {
 			columnClass = mappedColumn.getMappedColumnClass();
@@ -142,7 +147,7 @@ public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch> {
 	}
 
 	public class MatchBytesColumn
-			extends DynamicTableColumnExtensionPoint<MemoryMatch, String, Program> {
+			extends DynamicTableColumnExtensionPoint<MemoryMatch<SearchData>, String, Program> {
 
 		private ByteArrayRenderer renderer = new ByteArrayRenderer();
 
@@ -152,7 +157,7 @@ public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch> {
 		}
 
 		@Override
-		public String getValue(MemoryMatch match, Settings settings, Program pgm,
+		public String getValue(MemoryMatch<SearchData> match, Settings settings, Program pgm,
 				ServiceProvider service) throws IllegalArgumentException {
 
 			return getByteString(match.getBytes());
@@ -183,7 +188,7 @@ public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch> {
 	}
 
 	public class MatchValueColumn
-			extends DynamicTableColumnExtensionPoint<MemoryMatch, String, Program> {
+			extends DynamicTableColumnExtensionPoint<MemoryMatch<SearchData>, String, Program> {
 
 		private ValueRenderer renderer = new ValueRenderer();
 
@@ -193,11 +198,11 @@ public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch> {
 		}
 
 		@Override
-		public String getValue(MemoryMatch match, Settings settings, Program pgm,
+		public String getValue(MemoryMatch<SearchData> match, Settings settings, Program pgm,
 				ServiceProvider service) throws IllegalArgumentException {
 
-			ByteMatcher byteMatcher = match.getByteMatcher();
-			SearchSettings searchSettings = byteMatcher.getSettings();
+			SearchData searchData = match.getPattern();
+			SearchSettings searchSettings = searchData.getSettings();
 			SearchFormat format = searchSettings.getSearchFormat();
 			return format.getValueString(match.getBytes(), searchSettings);
 		}
@@ -226,7 +231,7 @@ public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch> {
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			super.getTableCellRendererComponent(data);
-			MemoryMatch match = (MemoryMatch) data.getRowObject();
+			MemoryMatch<SearchData> match = (MemoryMatch<SearchData>) data.getRowObject();
 			String text = data.getValue().toString();
 			if (match.isChanged()) {
 				text = getHtmlColoredString(match, data.isSelected());
@@ -235,7 +240,7 @@ public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch> {
 			return this;
 		}
 
-		private String getHtmlColoredString(MemoryMatch match, boolean isSelected) {
+		private String getHtmlColoredString(MemoryMatch<SearchData> match, boolean isSelected) {
 			Color color = isSelected ? Tables.ERROR_SELECTED : Tables.ERROR_UNSELECTED;
 
 			StringBuilder b = new StringBuilder();
@@ -272,7 +277,7 @@ public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch> {
 			super.getTableCellRendererComponent(data);
 			setText((String) data.getValue());
 
-			MemoryMatch match = (MemoryMatch) data.getRowObject();
+			MemoryMatch<SearchData> match = (MemoryMatch<SearchData>) data.getRowObject();
 			if (match.isChanged()) {
 				setForeground(data.isSelected() ? CHANGED_SELECTED_COLOR : CHANGED_COLOR);
 			}

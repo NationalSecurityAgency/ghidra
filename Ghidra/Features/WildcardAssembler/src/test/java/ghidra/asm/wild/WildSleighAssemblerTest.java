@@ -15,8 +15,7 @@
  */
 package ghidra.asm.wild;
 
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -41,6 +40,7 @@ import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.test.ClassicSampleX86ProgramBuilder;
+import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 
 public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -136,10 +136,11 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 	}
 
 	protected void dumpResults(AssemblyResolutionResults results) {
-		System.err.println("results:" + results);
+
+		Msg.trace(this, "results:" + results);
 		for (AssemblyResolution res : results) {
 			if (res instanceof WildAssemblyResolvedPatterns pats) {
-				System.err.println(pats.getInstruction());
+				Msg.trace(this, pats.getInstruction());
 				for (WildOperandInfo info : pats.getOperandInfo()) {
 					var choice_str = "?";
 					var choice = info.choice();
@@ -147,7 +148,7 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 						choice_str = choice.toString();
 					}
 
-					System.err.println(info.location() + ": " + info.wildcard() + " = " +
+					Msg.trace(this, info.location() + ": " + info.wildcard() + " = " +
 						info.expression() + "(" + info.path() + ") == " + choice_str.toString());
 				}
 			}
@@ -317,7 +318,7 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 		toy();
 		Collection<AssemblyParseResult> parses = asmToy.parseLine("add `Q1/r.`, #6");
 		AssemblyParseResult one = Unique.assertOne(parses.stream().filter(p -> !p.isError()));
-		System.err.println("parse: " + one);
+		//System.err.println("parse: " + one);
 
 		Address addr0 = toy.getAddressFactory().getDefaultAddressSpace().getAddress(0);
 		AssemblyResolutionResults results = asmToy.resolveTree(one, addr0);
@@ -334,7 +335,7 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 		toy();
 		Collection<AssemblyParseResult> parses = asmToy.parseLine("add r0, #`Q2[0,2..4]`");
 		AssemblyParseResult one = Unique.assertOne(parses.stream().filter(p -> !p.isError()));
-		System.err.println("parse: " + one);
+		//System.err.println("parse: " + one);
 
 		Address addr0 = toy.getAddressFactory().getDefaultAddressSpace().getAddress(0);
 		AssemblyResolutionResults results = asmToy.resolveTree(one, addr0);
@@ -353,7 +354,7 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 		Address addr0 = toy.getAddressFactory().getDefaultAddressSpace().getAddress(0);
 		var allValidPatterns = new HashSet<AssemblyPatternBlock>();
 		for (AssemblyParseResult p : parses) {
-			System.err.println("parse: " + p);
+			//System.err.println("parse: " + p);
 			AssemblyResolutionResults results = asmToy.resolveTree(p, addr0);
 			dumpResults(results);
 			allValidPatterns.addAll(getInstructionPatterns(results));
@@ -375,7 +376,7 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 		Address addr0 = toy.getAddressFactory().getDefaultAddressSpace().getAddress(0);
 		var allValidPatterns = new HashSet<AssemblyPatternBlock>();
 		for (AssemblyParseResult p : parses) {
-			System.err.println("parse: " + p);
+			//System.err.println("parse: " + p);
 			AssemblyResolutionResults results = asmToy.resolveTree(p, addr0);
 			dumpResults(results);
 			allValidPatterns.addAll(getInstructionPatterns(results));

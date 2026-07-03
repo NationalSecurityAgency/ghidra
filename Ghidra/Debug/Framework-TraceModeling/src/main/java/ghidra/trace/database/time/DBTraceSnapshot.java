@@ -19,11 +19,11 @@ import java.io.IOException;
 
 import db.DBRecord;
 import ghidra.trace.database.target.DBTraceObject;
+import ghidra.trace.database.time.DBTraceTimeManager.DBTraceFork;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
-import ghidra.trace.model.target.iface.TraceObjectEventScope;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.target.iface.TraceEventScope;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -69,6 +69,7 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 
 	private TraceThread eventThread;
 	private TraceSchedule schedule;
+	private boolean isFork;
 
 	public DBTraceSnapshot(DBTraceTimeManager manager, DBCachedObjectStore<?> store,
 			DBRecord record) {
@@ -81,6 +82,7 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 		if (created) {
 			threadKey = -1;
 			scheduleStr = "";
+			isFork = false;
 		}
 		else {
 			eventThread = manager.threadManager.getThread(threadKey);
@@ -93,7 +95,18 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 					// Leave as null (or previous value?)
 				}
 			}
+			isFork = computeIsFork();
 		}
+	}
+
+	protected boolean computeIsFork() {
+		if (key == Long.MIN_VALUE) {
+			return false;
+		}
+		if (schedule == null) {
+			return false;
+		}
+		return schedule.getSnap() != key - 1;
 	}
 
 	@Override
@@ -157,18 +170,18 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 			if (root == null) {
 				return null;
 			}
-			if (!root.getSchema().getInterfaces().contains(TraceObjectEventScope.class)) {
+			if (!root.getSchema().getInterfaces().contains(TraceEventScope.class)) {
 				return null;
 			}
 			TraceObjectValue eventAttr =
-				root.getAttribute(getKey(), TraceObjectEventScope.KEY_EVENT_THREAD);
+				root.getAttribute(getKey(), TraceEventScope.KEY_EVENT_THREAD);
 			if (eventAttr == null) {
 				return null;
 			}
 			if (!(eventAttr.getValue() instanceof TraceObject eventObj)) {
 				return null;
 			}
-			return eventObj.queryInterface(TraceObjectThread.class);
+			return eventObj.queryInterface(TraceThread.class);
 		}
 	}
 
@@ -203,11 +216,28 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 	}
 
 	@Override
+	public boolean isFork() {
+		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
+			return isFork;
+		}
+	}
+
+	@Override
 	public void setSchedule(TraceSchedule schedule) {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			this.schedule = schedule;
 			this.scheduleStr = schedule == null ? "" : schedule.toString(TimeRadix.DEC);
+			this.isFork = computeIsFork();
 			update(SCHEDULE_COLUMN);
+
+			DBTraceFork foundFork = manager.forksBySnap.getOne(key);
+			if (foundFork != null && !isFork) {
+				manager.forkStore.delete(foundFork);
+			}
+			else if (foundFork == null && isFork) {
+				manager.forkStore.create().set(key);
+			}
+
 			manager.notifySnapshotChanged(this);
 		}
 	}
@@ -226,6 +256,28 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 			update(VERSION_COLUMN);
 			manager.notifySnapshotChanged(this);
 		}
+	}
+
+	@Override
+	public boolean isSnapOnly(boolean whenInconsistent) {
+		if (schedule == null && key < 0) {
+			return whenInconsistent;
+		}
+		return schedule == null || schedule.isSnapOnly();
+	}
+
+	@Override
+	public boolean isStale(boolean whenInconsistent) {
+		if (schedule == null) {
+			if (key < 0) {
+				return whenInconsistent;
+			}
+			return false; // A recorded snapshot
+		}
+		if (schedule.isSnapOnly()) {
+			return false;
+		}
+		return version < manager.trace.getEmulatorCacheVersion();
 	}
 
 	@Override

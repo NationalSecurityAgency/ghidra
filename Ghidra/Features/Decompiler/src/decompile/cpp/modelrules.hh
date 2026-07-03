@@ -29,6 +29,12 @@ class ParamEntry;
 class ParamActive;
 
 extern AttributeId ATTRIB_SIZES;	///< Marshaling attribute "sizes"
+extern AttributeId ATTRIB_MAX_PRIMITIVES; ///< Marshaling attribute "maxprimitives"
+extern AttributeId ATTRIB_REVERSESIGNIF; ///< Marshaling attribute "reversesignif"
+extern AttributeId ATTRIB_MATCHSIZE; ///< Marshaling attribute "matchsize"
+extern AttributeId ATTRIB_AFTER_BYTES; ///< Marshaling attribute "afterbytes"
+extern AttributeId ATTRIB_AFTER_STORAGE; ///< Marshaling attribute "afterstorage"
+extern AttributeId ATTRIB_FILL_ALTERNATE; ///< Marshalling attribute "fillalternate"
 
 extern ElementId ELEM_DATATYPE;		///< Marshaling element \<datatype>
 extern ElementId ELEM_CONSUME;		///< Marshaling element \<consume>
@@ -43,6 +49,7 @@ extern ElementId ELEM_HIDDEN_RETURN;	///< Marshaling element \<hidden_return>
 extern ElementId ELEM_JOIN_PER_PRIMITIVE;	///< Marshaling element \<join_per_primitive>
 extern ElementId ELEM_JOIN_DUAL_CLASS;	///< Marshaling element \<join_dual_class>
 extern ElementId ELEM_EXTRA_STACK;	///< Marshaling element \<extra_stack>
+extern ElementId ELEM_CONSUME_REMAINING; ///< Marshaling element \<consume_remaining>
 
 /// \brief Class for extracting primitive elements of a data-type
 ///
@@ -151,10 +158,11 @@ class HomogeneousAggregate : public SizeRestrictedFilter {
   int4 maxPrimitives;			///< Maximum number of primitives in the aggregate
 public:
   HomogeneousAggregate(type_metatype meta);	///< Constructor for use with decode()
-  HomogeneousAggregate(type_metatype meta,int4 maxPrim,int4 min,int4 max);	///< Constructor
+  HomogeneousAggregate(type_metatype meta,int4 maxPrim,int4 minSize,int4 maxSize);	///< Constructor
   HomogeneousAggregate(const HomogeneousAggregate &op2);	///< Copy constructor
   virtual DatatypeFilter *clone(void) const { return new HomogeneousAggregate(*this); }
   virtual bool filter(Datatype *dt) const;
+  virtual void decode(Decoder &decoder);
 };
 
 /// \brief A filter on some aspect of a specific function prototype
@@ -309,7 +317,9 @@ public:
   /// \param decoder is the given stream decoder
   virtual void decode(Decoder &decoder)=0;
   static AssignAction *decodeAction(Decoder &decoder,const ParamListStandard *res);
+  static AssignAction *decodePrecondition(Decoder &decoder, const ParamListStandard *res);
   static AssignAction *decodeSideeffect(Decoder &decoder,const ParamListStandard *res);
+  static void justifyPieces(vector<VarnodeData> &pieces,int4 offset,bool isBigEndian,bool consumeMostSig,bool justifyRight);
 };
 
 /// \brief Action assigning a parameter Address from the next available stack location
@@ -346,6 +356,7 @@ public:
 /// Consumption can spill over onto the stack if desired.
 class MultiSlotAssign : public AssignAction {
   type_class resourceType;		///< Resource list from which to consume
+  bool isBigEndian;			///< True for big endian architectures
   bool consumeFromStack;		///< True if resources should be consumed from the stack
   bool consumeMostSig;			///< True if resources are consumed starting with most significant bytes
   bool enforceAlignment;		///< True if register resources are discarded to match alignment
@@ -390,20 +401,25 @@ public:
 class MultiSlotDualAssign : public AssignAction {
   type_class baseType;			///< Resource list from which to consume general tiles
   type_class altType;			///< Resource list from which to consume alternate tiles
+  bool isBigEndian;			///< True for big endian architectures
+  bool consumeFromStack;        	///< True if resources should be consumed from the stack
   bool consumeMostSig;			///< True if resources are consumed starting with most significant bytes
   bool justifyRight;			///< True if initial bytes are padding for odd data-type sizes
+  bool fillAlternate;             	///< True if a single primitive needs to fill an alternate tile
   int4 tileSize;			///< Number of bytes in a tile
   vector<const ParamEntry *> baseTiles;	///< General registers to be joined
   vector<const ParamEntry *> altTiles;	///< Alternate registers to be joined
+  const ParamEntry *stackEntry;		///< The stack resource
   void initializeEntries(void);		///< Cache specific ParamEntry needed by the action
   int4 getFirstUnused(int4 iter,const vector<const ParamEntry *> &tiles,vector<int4> &status) const;
   int4 getTileClass(const PrimitiveExtractor &primitives,int4 off,int4 &index) const;
 public:
   MultiSlotDualAssign(const ParamListStandard *res);		///< Constructor for use with decode
-  MultiSlotDualAssign(type_class baseStore,type_class altStore,bool mostSig,bool justRight,
-		      const ParamListStandard *res);	///< Constructor
+  MultiSlotDualAssign(type_class baseStore,type_class altStore,bool stack,bool mostSig,
+              bool justRight,bool fillAlt,const ParamListStandard *res);	///< Constructor
   virtual AssignAction *clone(const ParamListStandard *newResource) const {
-    return new MultiSlotDualAssign(baseType,altType,consumeMostSig,justifyRight,newResource); }
+    return new MultiSlotDualAssign(baseType,altType,consumeFromStack,consumeMostSig,justifyRight,
+              fillAlternate,newResource); }
   virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
 			      vector<int4> &status,ParameterPieces &res) const;
   virtual bool fillinOutputMap(ParamActive *active) const;
@@ -478,15 +494,37 @@ public:
 /// stack resources as if the parameter were allocated to the stack.  If the current parameter was
 /// already assigned a stack address, no additional action is taken.
 class ExtraStack : public AssignAction {
+  int4 afterBytes; ///< Activate side effect after given number of bytes consumed
+  type_class afterStorage; ///< Activate side effect after given amount of this storage consumed
   const ParamEntry *stackEntry;	///< Parameter Entry corresponding to the stack
   void initializeEntry(void);	///< Find stack entry in resource list
 public:
-  ExtraStack(const ParamListStandard *res,int4 val);	///< Constructor for use with decode
-  ExtraStack(const ParamListStandard *res);	///< Constructor
+  ExtraStack(const ParamListStandard *res);	///< Constructor for use with decode
+  ExtraStack(type_class storage,int4 offset,const ParamListStandard *res);	///< Constructor
   virtual AssignAction *clone(const ParamListStandard *newResource) const {
-    return new ExtraStack(newResource); }
+    return new ExtraStack(afterStorage,afterBytes,newResource); }
   virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
 			      vector<int4> &status,ParameterPieces &res) const;
+  virtual void decode(Decoder &decoder);
+};
+
+/// \brief Consume all the remaining registers from a given resource list
+/// 
+/// This action is a side-effect and doesn't assign an address for the current parameter.
+/// The resource list, resourceType, is specified. If the side-effect is triggered, all register
+/// resources from this list are consumed, until no registers remain. If all registers are already
+/// consumed, no action is taken.
+class ConsumeRemaining : public AssignAction {
+  type_class resourceType; ///< The other resource list to consume from
+  vector<const ParamEntry *> tiles; ///< List of registers that can be consumed
+  void initializeEntries(void); ///< Cache specific ParamEntry needed by the action
+public:
+  ConsumeRemaining(const ParamListStandard *res); ///< Constructor for use with decode
+  ConsumeRemaining(type_class store, const ParamListStandard *res); ///< Constructor
+  virtual AssignAction *clone(const ParamListStandard *newResource) const {
+	return new ConsumeRemaining(resourceType,newResource); }
+  virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
+                  vector<int4> &status,ParameterPieces &res) const;
   virtual void decode(Decoder &decoder);
 };
 
@@ -500,6 +538,7 @@ class ModelRule {
   DatatypeFilter *filter;		///< Which data-types \b this rule applies to
   QualifierFilter *qualifier;		///< Additional qualifiers for when the rule should apply (if non-null)
   AssignAction *assign;			///< How the Address should be assigned
+  vector<AssignAction *> preconditions; ///< Extra actions that happen before assignment, discarded on failure
   vector<AssignAction *> sideeffects;	///< Extra actions that happen on success
 public:
   ModelRule(void) {

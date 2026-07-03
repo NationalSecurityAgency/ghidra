@@ -19,48 +19,50 @@ import static ghidra.trace.model.target.info.TraceObjectInterfaceFactory.ctor;
 
 import java.util.List;
 
-import ghidra.trace.database.breakpoint.DBTraceObjectBreakpointLocation;
-import ghidra.trace.database.breakpoint.DBTraceObjectBreakpointSpec;
+import ghidra.trace.database.breakpoint.DBTraceBreakpointLocation;
+import ghidra.trace.database.breakpoint.DBTraceBreakpointSpec;
 import ghidra.trace.database.memory.*;
-import ghidra.trace.database.module.*;
-import ghidra.trace.database.stack.DBTraceObjectStack;
-import ghidra.trace.database.stack.DBTraceObjectStackFrame;
+import ghidra.trace.database.module.DBTraceModule;
+import ghidra.trace.database.module.DBTraceSection;
+import ghidra.trace.database.stack.DBTraceStack;
+import ghidra.trace.database.stack.DBTraceStackFrame;
 import ghidra.trace.database.target.iface.*;
 import ghidra.trace.database.thread.DBTraceObjectProcess;
-import ghidra.trace.database.thread.DBTraceObjectThread;
-import ghidra.trace.model.breakpoint.TraceObjectBreakpointLocation;
-import ghidra.trace.model.breakpoint.TraceObjectBreakpointSpec;
+import ghidra.trace.database.thread.DBTraceThread;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
+import ghidra.trace.model.breakpoint.TraceBreakpointSpec;
 import ghidra.trace.model.memory.*;
-import ghidra.trace.model.modules.TraceObjectModule;
-import ghidra.trace.model.stack.TraceObjectStack;
-import ghidra.trace.model.stack.TraceObjectStackFrame;
+import ghidra.trace.model.modules.TraceModule;
+import ghidra.trace.model.modules.TraceSection;
+import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.iface.*;
-import ghidra.trace.model.thread.TraceObjectProcess;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.thread.TraceProcess;
+import ghidra.trace.model.thread.TraceThread;
 
 public class BuiltinTraceObjectInterfaceFactory implements TraceObjectInterfaceFactory {
 
 	private static final List<Constructor<?>> BUILTINS = List.of(
-		ctor(TraceObjectActivatable.class, DBTraceObjectActivatable::new),
-		ctor(TraceObjectAggregate.class, DBTraceObjectAggregate::new),
-		ctor(TraceObjectBreakpointLocation.class, DBTraceObjectBreakpointLocation::new),
-		ctor(TraceObjectBreakpointSpec.class, DBTraceObjectBreakpointSpec::new),
-		ctor(TraceObjectEnvironment.class, DBTraceObjectEnvironment::new),
-		ctor(TraceObjectEventScope.class, DBTraceObjectEventScope::new),
-		ctor(TraceObjectExecutionStateful.class, DBTraceObjectExecutionStateful::new),
-		ctor(TraceObjectFocusScope.class, DBTraceObjectFocusScope::new),
-		ctor(TraceObjectMemory.class, DBTraceObjectMemory::new),
-		ctor(TraceObjectMemoryRegion.class, DBTraceObjectMemoryRegion::new),
-		ctor(TraceObjectMethod.class, DBTraceObjectMethod::new),
-		ctor(TraceObjectModule.class, DBTraceObjectModule::new),
-		ctor(TraceObjectProcess.class, DBTraceObjectProcess::new),
-		ctor(TraceObjectRegister.class, DBTraceObjectRegister::new),
-		ctor(TraceObjectRegisterContainer.class, DBTraceObjectRegisterContainer::new),
-		ctor(TraceObjectSection.class, DBTraceObjectSection::new),
-		ctor(TraceObjectStack.class, DBTraceObjectStack::new),
-		ctor(TraceObjectStackFrame.class, DBTraceObjectStackFrame::new),
-		ctor(TraceObjectThread.class, DBTraceObjectThread::new),
-		ctor(TraceObjectTogglable.class, DBTraceObjectTogglable::new));
+		ctor(TraceActivatable.class, DBTraceObjectActivatable::new),
+		ctor(TraceAggregate.class, DBTraceObjectAggregate::new),
+		ctor(TraceBreakpointLocation.class, DBTraceBreakpointLocation::new),
+		ctor(TraceBreakpointSpec.class, DBTraceBreakpointSpec::new),
+		ctor(TraceEnvironment.class, DBTraceObjectEnvironment::new),
+		ctor(TraceEventScope.class, DBTraceObjectEventScope::new),
+		ctor(TraceExecutionStateful.class, DBTraceObjectExecutionStateful::new),
+		ctor(TraceFocusScope.class, DBTraceObjectFocusScope::new),
+		ctor(TraceMemory.class, DBTraceObjectMemory::new),
+		ctor(TraceMemoryRegion.class, DBTraceMemoryRegion::new),
+		ctor(TraceMethod.class, DBTraceObjectMethod::new),
+		ctor(TraceModule.class, DBTraceModule::new),
+		ctor(TraceProcess.class, DBTraceObjectProcess::new),
+		ctor(TraceRegister.class, DBTraceObjectRegister::new),
+		ctor(TraceRegisterContainer.class, DBTraceObjectRegisterContainer::new),
+		ctor(TraceSection.class, DBTraceSection::new),
+		ctor(TraceStack.class, DBTraceStack::new),
+		ctor(TraceStackFrame.class, DBTraceStackFrame::new),
+		ctor(TraceThread.class, DBTraceThread::new),
+		ctor(TraceTogglable.class, DBTraceObjectTogglable::new));
 
 	@Override
 	public List<Constructor<?>> getInterfaceConstructors() {

@@ -34,7 +34,6 @@ import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.util.MathUtilities;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -305,31 +304,31 @@ public class DBTraceGuestPlatformMappedMemory implements Memory {
 	@Override
 	public void moveBlock(MemoryBlock block, Address newStartAddr, TaskMonitor monitor)
 			throws LockException, MemoryBlockException, MemoryConflictException,
-			AddressOverflowException, NotFoundException {
+			AddressOverflowException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void split(MemoryBlock block, Address addr)
-			throws MemoryBlockException, LockException, NotFoundException {
+			throws MemoryBlockException, LockException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock join(MemoryBlock blockOne, MemoryBlock blockTwo)
-			throws LockException, MemoryBlockException, NotFoundException {
+			throws LockException, MemoryBlockException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock convertToInitialized(MemoryBlock uninitializedBlock, byte initialValue)
-			throws LockException, MemoryBlockException, NotFoundException {
+			throws LockException, MemoryBlockException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock convertToUninitialized(MemoryBlock itializedBlock)
-			throws MemoryBlockException, NotFoundException, LockException {
+			throws MemoryBlockException, LockException {
 		throw new UnsupportedOperationException();
 	}
 

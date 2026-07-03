@@ -1313,7 +1313,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	break(mic_code:2);
 }
 
-:sdbbp16 SDB16								is ISA_MODE=1 & RELP=0 & mic_op=0b100010 & SDB16 & ((mic_break=0b101100 & REL6=0) | (mic_breakr6=0b111011 & REL6=1))  {
+:sdbbp16 SDB16								is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & SDB16 & ((mic_break=0b101100 & REL6=0) | (mic_breakr6=0b111011 & REL6=1))  {
 	break(SDB16);
 }
 
@@ -2369,7 +2369,8 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 :jalx Abs26_mic2						is ISA_MODE=1 & RELP=0 & mic_op=0b111100 & REL6=0 & mic_code ; Abs26_mic2 [ ext_32_code = mic_code; ISA_MODE = 0; globalset(Abs26_mic2, ISA_MODE);] {
     ra = inst_next | 0x1; 
     delayslot( 1 );
-    ISAModeSwitch = 0; 
+    ISAModeSwitch = 0;
+    setISAMode(ISAModeSwitch);
     call Abs26_mic2;
 }
 

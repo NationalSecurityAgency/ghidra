@@ -218,6 +218,7 @@ public class ApplicationUtilities {
 				case WINDOWS -> new File(getEnvFile("LOCALAPPDATA", true), appName);
 				case LINUX -> new File("/var/tmp/" + userDirName);
 				case FREE_BSD -> new File("/var/tmp/" + userDirName);
+				case OPEN_BSD -> new File("/var/tmp/" + userDirName);
 				case MAC_OS_X -> new File("/var/tmp/" + userDirName);
 				default -> throw new FileNotFoundException(
 					"Failed to find the user cache directory: Unsupported operating system.");
@@ -275,6 +276,7 @@ public class ApplicationUtilities {
 			case WINDOWS -> new File(getEnvFile("APPDATA", true), versionedSubdir);
 			case LINUX -> new File(userHomeDir, ".config/" + versionedSubdir);
 			case FREE_BSD -> new File(userHomeDir, ".config/" + versionedSubdir);
+			case OPEN_BSD -> new File(userHomeDir, ".config/" + versionedSubdir);
 			case MAC_OS_X -> new File(userHomeDir, "Library/" + versionedSubdir);
 			default -> throw new FileNotFoundException(
 				"Failed to find the user settings directory: Unsupported operating system.");
@@ -341,7 +343,7 @@ public class ApplicationUtilities {
 	 * @throws FileNotFoundException if Java's user home directory is not defined or it is not an
 	 *   absolute path
 	 */
-	private static File getJavaUserHomeDir() throws FileNotFoundException {
+	public static File getJavaUserHomeDir() throws FileNotFoundException {
 		return getSystemPropertyFile("user.home", true);
 	}
 

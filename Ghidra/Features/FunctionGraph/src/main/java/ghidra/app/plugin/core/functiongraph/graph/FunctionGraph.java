@@ -18,7 +18,7 @@ package ghidra.app.plugin.core.functiongraph.graph;
 import java.awt.Point;
 import java.util.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import edu.uci.ics.jung.graph.Graph;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayout;
@@ -173,7 +173,7 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 
 	@Override
 	public void vertexLocationChanged(FGVertex v, Point point, ChangeType changeType) {
-		if (changeType == ChangeType.USER) {
+		if (!changeType.isTransitional()) {
 			settings.putVertexLocation(v, point);
 		}
 	}

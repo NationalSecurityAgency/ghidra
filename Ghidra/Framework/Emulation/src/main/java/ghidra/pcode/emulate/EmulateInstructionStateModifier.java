@@ -19,6 +19,8 @@ import java.util.*;
 
 import ghidra.pcode.emulate.callother.OpBehaviorOther;
 import ghidra.pcode.error.LowlevelError;
+import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary;
+import ghidra.pcode.exec.PcodeUseropLibrary;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.RegisterValue;
@@ -30,7 +32,10 @@ import ghidra.program.model.pcode.Varnode;
  * emulation with adjusting the current execution state, providing support for custom pcodeop's
  * (i.e., CALLOTHER). The implementation of this interface must provide a public constructor which
  * takes a single Emulate argument.
+ * 
+ * @deprecated Use {@link PcodeUseropLibrary} or {@link AnnotatedPcodeUseropLibrary} instead
  */
+@Deprecated(since = "12.1", forRemoval = true)
 public abstract class EmulateInstructionStateModifier {
 
 	protected final Emulate emu;
@@ -80,7 +85,12 @@ public abstract class EmulateInstructionStateModifier {
 		if (opBehaviorOther == null) {
 			return false;
 		}
-		opBehaviorOther.evaluate(emu, op.getOutput(), inputs);
+
+		// Strip-off first input before passing inputs to OpBehaviorOther
+		Varnode[] callOtherInputs = new Varnode[inputs.length - 1];
+		System.arraycopy(inputs, 1, callOtherInputs, 0, callOtherInputs.length);
+
+		opBehaviorOther.evaluate(emu, op.getOutput(), callOtherInputs);
 		return true;
 	}
 

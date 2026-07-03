@@ -40,10 +40,11 @@ public final class DWARFLineProgramExecutor implements Closeable {
 	private final int lineBase;
 	private final int minInstrLen;
 	private final boolean defaultIsStatement;
+	private final boolean addr0IsTombstone;
 
 	public DWARFLineProgramExecutor(BinaryReader reader, long streamEnd, int pointerSize,
 			int opcodeBase, int lineBase, int lineRange, int minInstrLen,
-			boolean defaultIsStatement) {
+			boolean defaultIsStatement, boolean addr0IsTombstone) {
 		this.reader = reader;
 		this.streamEnd = streamEnd;
 		this.pointerSize = pointerSize;
@@ -52,6 +53,7 @@ public final class DWARFLineProgramExecutor implements Closeable {
 		this.lineRange = lineRange;
 		this.minInstrLen = minInstrLen;
 		this.defaultIsStatement = defaultIsStatement;
+		this.addr0IsTombstone = addr0IsTombstone;
 	}
 
 	@Override
@@ -90,7 +92,7 @@ public final class DWARFLineProgramExecutor implements Closeable {
 	/**
 	 * Read the next instruction and executes it
 	 * 
-	 * @return 
+	 * @return next {@link DWARFLineProgramInstruction}
 	 * @throws IOException if an i/o error occurs
 	 */
 	public DWARFLineProgramInstruction step() throws IOException {
@@ -161,12 +163,19 @@ public final class DWARFLineProgramExecutor implements Closeable {
 				break;
 			case DW_LNE_set_address:
 				state.address = reader.readNextUnsignedValue(pointerSize);
+
+				// set tombstone flag when an absolute 0 is set for the address.  (will not catch
+				// relative offsets that evaluate to 0, but that is not a pattern that has been seen)
+				// Following instructions that have relative offset changes to the address value
+				// will inherit this value in each row object that is cloned
+				state.tombstone = addr0IsTombstone && (state.address == 0);
+
 				operands = List.of(state.address);
 				break;
 			case DW_LNE_define_file: {
 				// this instruction is deprecated in v5+, and not fully supported in this
 				// impl
-				String sourceFilename = reader.readNextUtf8String();
+				String sourceFilename = reader.readNextUtf8String(); // TODO: this is not used, but to be 100% should use dwarfprog's charset 
 				int dirIndex = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 				long lastMod = reader.readNext(LEB128::unsigned);
 				long fileLen = reader.readNext(LEB128::unsigned);

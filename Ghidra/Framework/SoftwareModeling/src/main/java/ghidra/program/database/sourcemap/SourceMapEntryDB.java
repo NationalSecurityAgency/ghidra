@@ -21,6 +21,7 @@ import db.DBRecord;
 import ghidra.program.database.map.AddressMapDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.sourcemap.SourceMapEntry;
+import ghidra.util.Lock.Closeable;
 
 /**
  * Database implementation of {@link SourceMapEntry} interface.
@@ -43,8 +44,7 @@ public class SourceMapEntryDB implements SourceMapEntry {
 	 * @param addrMap address map
 	 */
 	SourceMapEntryDB(SourceFileManagerDB manager, DBRecord record, AddressMapDB addrMap) {
-		manager.lock.acquire();
-		try {
+		try (Closeable c = manager.lock.read()) {
 			long fileAndLine = record.getLongValue(SourceMapAdapter.FILE_LINE_COL);
 			lineNumber = (int) (fileAndLine & 0xffffffff);
 			sourceFile = manager.getSourceFile(fileAndLine >> 32);
@@ -62,9 +62,6 @@ public class SourceMapEntryDB implements SourceMapEntry {
 				}
 				range = new AddressRangeImpl(baseAddress, max);
 			}
-		}
-		finally {
-			manager.lock.release();
 		}
 	}
 

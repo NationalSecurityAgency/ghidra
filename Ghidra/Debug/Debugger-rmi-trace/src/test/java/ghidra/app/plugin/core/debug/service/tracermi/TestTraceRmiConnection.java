@@ -277,4 +277,8 @@ public abstract class TestTraceRmiConnection extends AbstractTraceRmiConnection 
 	public boolean isBusy(Target target) {
 		return false;
 	}
+
+	@Override
+	public void forciblyCloseTransactions(Target target) {
+	}
 }

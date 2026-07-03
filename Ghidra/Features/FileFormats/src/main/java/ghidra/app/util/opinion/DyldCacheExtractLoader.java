@@ -26,7 +26,6 @@ import ghidra.file.formats.ios.dyldcache.DyldCacheExtractor;
 import ghidra.file.formats.ios.dyldcache.DyldCacheFileSystem;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.Project;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.listing.Group;
 import ghidra.program.model.listing.Program;
@@ -77,14 +76,14 @@ public class DyldCacheExtractLoader extends MachoLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
+	public void load(Program program, ImporterSettings settings) throws IOException {
 
 		try {
-			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
-			MachoExtractProgramBuilder.buildProgram(program, provider, fileBytes, false, log,
-				monitor);
-			addOptionalComponents(program, options, log, monitor);
+			FileBytes fileBytes =
+				MemoryBlockUtils.createFileBytes(program, settings.provider(), settings.monitor());
+			MachoExtractProgramBuilder.buildProgram(program, settings.provider(), fileBytes, false,
+				settings.log(), settings.monitor());
+			addOptionalComponents(program, settings.options(), settings.log(), settings.monitor());
 		}
 		catch (CancelledException e) {
 			return;
@@ -98,20 +97,20 @@ public class DyldCacheExtractLoader extends MachoLoader {
 	}
 
 	@Override
-	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Program program, TaskMonitor monitor)
+	protected void loadProgramInto(Program program, ImporterSettings settings)
 			throws IOException, LoadException, CancelledException {
-		FSRL fsrl = provider.getFSRL();
+		FSRL fsrl = settings.provider().getFSRL();
 		Group[] children = program.getListing().getDefaultRootModule().getChildren();
 		if (Arrays.stream(children).anyMatch(e -> e.getName().contains(fsrl.getPath()))) {
-			log.appendMsg("%s has already been added".formatted(fsrl.getPath()));
+			settings.log().appendMsg("%s has already been added".formatted(fsrl.getPath()));
 			return;
 		}
 		try {
-			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
-			MachoExtractProgramBuilder.buildProgram(program, provider, fileBytes, true, log,
-				monitor);
-			addOptionalComponents(program, options, log, monitor);
+			FileBytes fileBytes =
+				MemoryBlockUtils.createFileBytes(program, settings.provider(), settings.monitor());
+			MachoExtractProgramBuilder.buildProgram(program, settings.provider(), fileBytes, true,
+				settings.log(), settings.monitor());
+			addOptionalComponents(program, settings.options(), settings.log(), settings.monitor());
 		}
 		catch (CancelledException e) {
 			return;
@@ -141,26 +140,40 @@ public class DyldCacheExtractLoader extends MachoLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		List<Option> list = new ArrayList<>();
-		list.add(new Option(LIBOBJC_OPTION_NAME, !loadIntoProgram && LIBOBJC_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-libobjc"));
-		list.add(new Option(AUTH_DATA_OPTION_NAME, !loadIntoProgram && AUTH_DATA_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-authData"));
-		list.add(new Option(DIRTY_DATA_OPTION_NAME, !loadIntoProgram && DIRTY_DATA_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-dirtyData"));
-		list.add(new Option(CONST_DATA_OPTION_NAME, !loadIntoProgram && CONST_DATA_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-constData"));
-		list.add(new Option(TEXT_STUBS_OPTION_NAME, !loadIntoProgram && TEXT_STUBS_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-textStubs"));
-		list.add(new Option(CONFIG_DATA_OPTION_NAME, !loadIntoProgram && CONFIG_DATA_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-configData"));
-		list.add(new Option(READ_ONLY_DATA_OPTION_NAME,
-			!loadIntoProgram && READ_ONLY_DATA_OPTION_DEFAULT, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-readOnlyData"));
-		list.add(new Option(CONST_TPRO_DATA_OPTION_NAME,
-			!loadIntoProgram && CONST_TPRO_DATA_OPTION_DEFAULT, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-constTproData"));
+		list.add(Option.newBoolean(LIBOBJC_OPTION_NAME)
+				.value(!loadIntoProgram && LIBOBJC_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-libobjc"))
+				.build());
+		list.add(Option.newBoolean(AUTH_DATA_OPTION_NAME)
+				.value(!loadIntoProgram && AUTH_DATA_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-authData"))
+				.build());
+		list.add(Option.newBoolean(DIRTY_DATA_OPTION_NAME)
+				.value(!loadIntoProgram && DIRTY_DATA_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-dirtyData"))
+				.build());
+		list.add(Option.newBoolean(CONST_DATA_OPTION_NAME)
+				.value(!loadIntoProgram && CONST_DATA_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-constData"))
+				.build());
+		list.add(Option.newBoolean(TEXT_STUBS_OPTION_NAME)
+				.value(!loadIntoProgram && TEXT_STUBS_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-textStubs"))
+				.build());
+		list.add(Option.newBoolean(CONFIG_DATA_OPTION_NAME)
+				.value(!loadIntoProgram && CONFIG_DATA_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-configData"))
+				.build());
+		list.add(Option.newBoolean(READ_ONLY_DATA_OPTION_NAME)
+				.value(!loadIntoProgram && READ_ONLY_DATA_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-readOnlyData"))
+				.build());
+		list.add(Option.newBoolean(CONST_TPRO_DATA_OPTION_NAME)
+				.value(!loadIntoProgram && CONST_TPRO_DATA_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-constTproData"))
+				.build());
 		return list;
 	}
 
@@ -185,19 +198,18 @@ public class DyldCacheExtractLoader extends MachoLoader {
 	}
 
 	@Override
-	protected boolean isLoadLibraries(List<Option> options) {
+	protected boolean isLoadLibraries(ImporterSettings settings) {
 		return false;
 	}
 
 	@Override
-	protected boolean shouldSearchAllPaths(Program program, List<Option> options, MessageLog log) {
+	protected boolean shouldSearchAllPaths(Program program, ImporterSettings settings) {
 		return false;
 	}
 
 	@Override
-	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
-			LoadSpec loadSpec, List<Option> options, MessageLog messageLog, TaskMonitor monitor)
-			throws CancelledException, IOException {
+	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms,
+			ImporterSettings settings) throws CancelledException, IOException {
 		// Do nothing
 	}
 

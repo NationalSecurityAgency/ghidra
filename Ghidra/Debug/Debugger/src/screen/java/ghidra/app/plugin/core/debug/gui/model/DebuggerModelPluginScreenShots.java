@@ -19,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 import org.junit.Test;
 
 import db.Transaction;
@@ -33,7 +33,7 @@ import ghidra.trace.database.target.DBTraceObjectValue;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.target.iface.TraceObjectEventScope;
+import ghidra.trace.model.target.iface.TraceEventScope;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
@@ -180,7 +180,7 @@ public class DebuggerModelPluginScreenShots extends GhidraScreenShotGenerator {
 						proc.child("Modules");
 					}
 				}
-				root.value(TraceObjectEventScope.KEY_EVENT_THREAD, l.thread);
+				root.value(TraceEventScope.KEY_EVENT_THREAD, l.thread);
 			}
 
 			traceManager.openTrace(tb.trace);

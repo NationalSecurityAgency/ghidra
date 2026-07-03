@@ -20,10 +20,10 @@ import java.io.IOException;
 import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -39,15 +39,13 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	private SettingsDefinition[] settingsDef; // lazy initialization
 
 	/**
-	 * Construct TypeDefDB instance
+	 * Constructor
 	 * @param dataMgr datatype manager
-	 * @param cache DataTypeDB cache
 	 * @param adapter TypeDef record adapter
 	 * @param record TypeDefDB record
 	 */
-	public TypedefDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
-			TypedefDBAdapter adapter, DBRecord record) {
-		super(dataMgr, cache, record);
+	TypedefDB(DataTypeManagerDB dataMgr, TypedefDBAdapter adapter, DBRecord record) {
+		super(dataMgr, record);
 		this.adapter = adapter;
 		this.defaultSettings = null; // ensure lazy initialization
 	}
@@ -65,8 +63,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		if (isAutoNamed()) {
 			return;
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 
 			String oldName = getName();
@@ -98,25 +95,15 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		catch (IOException e) {
 			dataMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public boolean isAutoNamed() {
-		int flags = getFlags();
-		if (isInvalid()) {
-			lock.acquire();
-			try {
-				checkIsValid();
-				flags = getFlags();
-			}
-			finally {
-				lock.release();
-			}
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
+			int flags = getFlags();
+			return (flags & TypedefDBAdapter.TYPEDEF_FLAG_AUTONAME) != 0;
 		}
-		return (flags & TypedefDBAdapter.TYPEDEF_FLAG_AUTONAME) != 0;
 	}
 
 	@Override
@@ -183,60 +170,53 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
-		lock.acquire();
-		try {
-			if (checkIsValid() && dt == getDataType()) {
+		if (deleting) {
+			return;
+		}
+		try (Closeable c = lock.write()) {
+			checkDeleted();
+			if (dt == getDataType()) {
 				notifySizeChanged(true);
 			}
 		}
-		finally {
-			lock.release();
-		}
+
 	}
 
 	@Override
 	public void dataTypeAlignmentChanged(DataType dt) {
-		lock.acquire();
-		try {
-			if (checkIsValid() && dt == getDataType()) {
+		if (deleting) {
+			return;
+		}
+		try (Closeable c = lock.write()) {
+			checkDeleted();
+			if (dt == getDataType()) {
 				notifyAlignmentChanged(true);
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public DataType getBaseDataType() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			DataType dataType = getDataType();
 			if (dataType instanceof TypeDef) {
 				return ((TypeDef) dataType).getBaseDataType();
 			}
 			return dataType;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public DataType getDataType() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			long dataTypeID = record.getLongValue(TypedefDBAdapter.TYPEDEF_DT_ID_COL);
 			DataType dt = dataMgr.getDataType(dataTypeID);
 			if (dt == null) {
 				dt = DataType.DEFAULT;
 			}
 			return dt;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -314,12 +294,16 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-		if (newDt == this || (newDt instanceof Dynamic) || (newDt instanceof FactoryDataType)) {
-			newDt = DataType.DEFAULT;
+		if (deleting) {
+			return;
 		}
-		lock.acquire();
-		try {
-			if (checkIsValid() && getDataType() == oldDt) {
+		try (Closeable c = lock.write()) {
+			checkDeleted();
+			if (oldDt == getDataType()) {
+				DataTypeUtilities.checkValidReplacement(oldDt, newDt);
+				if (newDt == this) {
+					newDt = DataType.DEFAULT;
+				}
 				settingsDef = null;
 				defaultSettings = null;
 				oldDt.removeParent(this);
@@ -344,22 +328,32 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 				}
 			}
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public void dataTypeDeleted(DataType dt) {
-		if (getDataType() == dt) {
-			dataMgr.addDataTypeToDelete(key);
+		if (deleting) {
+			return;
+		}
+		try (Closeable c = lock.write()) {
+			checkDeleted();
+			if (dt == getDataType()) {
+				dataMgr.addDataTypeToDelete(this, key);
+				deleting = true;
+			}
 		}
 	}
 
 	@Override
 	public void dataTypeNameChanged(DataType dt, String oldName) {
-		if (getDataType() == dt) {
-			updateAutoName(true);
+		if (deleting) {
+			return;
+		}
+		try (Closeable c = lock.write()) {
+			checkDeleted();
+			if (dt == getDataType()) {
+				updateAutoName(true);
+			}
 		}
 	}
 
@@ -370,13 +364,16 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	}
 
 	@Override
-	protected boolean refresh() {
+	protected boolean refresh(DBRecord rec) {
 		try {
-			DBRecord rec = adapter.getRecord(key);
+			if (rec == null) {
+				rec = adapter.getRecord(key);
+			}
 			if (rec != null) {
 				settingsDef = null;
 				record = rec;
-				return super.refresh();
+				completeRefresh();
+				return true;
 			}
 		}
 		catch (IOException e) {
@@ -387,9 +384,8 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 
 	@Override
 	public SettingsDefinition[] getSettingsDefinitions() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (settingsDef == null) {
 				DataType dt = getDataType();
 				SettingsDefinition[] settingsDefinitions = dt.getSettingsDefinitions();
@@ -403,9 +399,6 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 					settingsDefinitions.length, typeDefSettingsDefinitions.length);
 			}
 			return settingsDef;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -498,8 +491,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 
 	@Override
 	protected void setUniversalID(UniversalID id) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			record.setLongValue(TypedefDBAdapter.TYPEDEF_UNIVERSAL_DT_ID_COL, id.getValue());
 			adapter.updateRecord(record, false);
@@ -507,9 +499,6 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -520,8 +509,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 
 	@Override
 	protected void setSourceArchiveID(UniversalID id) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			record.setLongValue(TypedefDBAdapter.TYPEDEF_SOURCE_ARCHIVE_ID_COL, id.getValue());
 			adapter.updateRecord(record, false);
@@ -530,15 +518,11 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		catch (IOException e) {
 			dataMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public void setLastChangeTime(long lastChangeTime) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			record.setLongValue(TypedefDBAdapter.TYPEDEF_LAST_CHANGE_TIME_COL, lastChangeTime);
 			adapter.updateRecord(record, false);
@@ -547,15 +531,11 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		catch (IOException e) {
 			dataMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public void setLastChangeTimeInSourceArchive(long lastChangeTimeInSourceArchive) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			record.setLongValue(TypedefDBAdapter.TYPEDEF_SOURCE_SYNC_TIME_COL,
 				lastChangeTimeInSourceArchive);
@@ -564,9 +544,6 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -578,15 +555,11 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		if (dataType == this) {
 			return;
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			TypeDef td = (TypeDef) dataType;
 			dataTypeReplaced(getDataType(), td.getDataType());
 			TypedefDataType.copyTypeDefSettings(td, this, true);
 			// NOTE: as with the name, auto-name setting is left unchanged
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -638,9 +611,8 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	}
 
 	boolean updateAutoName(boolean notify) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.write()) {
+			checkDeleted();
 
 			if (!isAutoNamed()) {
 				return false;
@@ -662,9 +634,6 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return true;
 	}

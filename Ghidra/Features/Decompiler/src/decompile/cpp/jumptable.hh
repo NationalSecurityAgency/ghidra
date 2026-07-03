@@ -21,6 +21,7 @@
 
 #include "emulateutil.hh"
 #include "rangeutil.hh"
+#include "expression.hh"
 
 namespace ghidra {
 
@@ -97,6 +98,7 @@ public:
   Varnode *getOpParent(int4 i) const { return commonVn[ opMeld[i].rootVn ]; }	///< Get the split-point for the i-th PcodeOp
   PcodeOp *getOp(int4 i) const { return opMeld[i].op; }		///< Get the i-th PcodeOp
   PcodeOp *getEarliestOp(int4 pos) const;		///< Find \e earliest PcodeOp that has a specific common Varnode as input
+  bool isLoadInPath(int4 i) const;			///< Return \b true if a LOAD exists in the common path
   bool empty(void) const { return commonVn.empty(); }	///< Return \b true if \b this container holds no paths
 };
 
@@ -382,6 +384,7 @@ protected:
   static int4 getStride(Varnode *vn);	///< Get the step/stride associated with the Varnode
   static uintb backup2Switch(Funcdata *fd,uintb output,Varnode *outvn,Varnode *invn);
   static uintb getMaxValue(Varnode *vn);	///< Get maximum value associated with the given Varnode
+  static bool duplicateVarnodes(const vector<Varnode *> &arr);	///< Return \b true if all array elements are the same Varnode
   void findDeterminingVarnodes(PcodeOp *op,int4 slot);
   void analyzeGuards(BlockBasic *bl,int4 pathout);
   void calcRange(Varnode *vn,CircleRange &rng) const;
@@ -546,6 +549,9 @@ public:
     fail_callother = 4		///< Address formed by CALLOTHER
   };
 private:
+  static constexpr uint4 maxaddsub = 1;		///< Maximum ADDs or SUBs to normalize
+  static constexpr uint4 maxleftright = 1;	///< Maximum shifts to normalize
+  static constexpr uint4 maxext = 1;		///< Maximum extensions to normalize
   /// \brief An address table index and its corresponding out-edge
   struct IndexPair {
     int4 blockPosition;				///< Out-edge index for the basic-block
@@ -554,7 +560,6 @@ private:
     bool operator<(const IndexPair &op2) const;	///< Compare by position then by index
     static bool compareByPosition(const IndexPair &op1,const IndexPair &op2);	///< Compare just by position
   };
-  Architecture *glb;		///< Architecture under which this jump-table operates
   JumpModel *jmodel;		///< Current model of how the jump table is implemented in code
   JumpModel *origmodel;		///< Initial jump table model, which may be incomplete
   vector<Address> addresstable; ///< Raw addresses in the jump-table
@@ -566,9 +571,8 @@ private:
   uintb switchVarConsume;	///< Bits of the switch variable being consumed
   int4 defaultBlock;		///< The out-edge corresponding to the \e default switch destination (-1 = undefined)
   int4 lastBlock;		///< Block out-edge corresponding to last entry in the address table
-  uint4 maxaddsub;		///< Maximum ADDs or SUBs to normalize
-  uint4 maxleftright;		///< Maximum shifts to normalize
-  uint4 maxext;			///< Maximum extensions to normalize
+  int4 recoverCount;		///< Number of times recovery attempted on \b this table
+  uint4 displayFormat;		///< Display format for integer \e case values
   bool partialTable;		///< Set to \b true if \b this table is incomplete and needs additional recovery steps
   bool collectloads;		///< Set to \b true if information about in-memory model data is/should be collected
   bool defaultIsFolded;		///< The \e default block is the target of a folded CBRANCH (and cannot have a label)
@@ -577,11 +581,12 @@ private:
   void clearSavedModel(void);	///< Clear any saved model
   void recoverModel(Funcdata *fd);	///< Attempt recovery of the jump-table model
   void trivialSwitchOver(void);	///< Switch \b this table over to a trivial model
+  bool isThunk(Funcdata *fd) const;	///< Return \b true if the function looks like a thunk
   void sanityCheck(Funcdata *fd,vector<int4> *loadpoints);	///< Perform sanity check on recovered address targets
   int4 block2Position(const FlowBlock *bl) const;	///< Convert a basic-block to an out-edge index from the switch.
   static bool isReachable(PcodeOp *op);	///< Check if the given PcodeOp still seems reachable in its function
 public:
-  JumpTable(Architecture *g,Address ad=Address());	///< Constructor
+  JumpTable(Address ad=Address());			///< Constructor
   JumpTable(const JumpTable *op2);			///< Copy constructor
   ~JumpTable(void);					///< Destructor
   bool isRecovered(void) const { return !addresstable.empty(); }	///< Return \b true if a model has been recovered
@@ -595,12 +600,14 @@ public:
   const Address &getOpAddress(void) const { return opaddress; }	///< Get the address of the BRANCHIND for the switch
   PcodeOp *getIndirectOp(void) const { return indirect; }	///< Get the BRANCHIND PcodeOp
   void setIndirectOp(PcodeOp *ind) { opaddress = ind->getAddr(); indirect = ind; }	///< Set the BRANCHIND PcodeOp
-  void setNormMax(uint4 maddsub,uint4 mleftright,uint4 mext) {
-    maxaddsub = maddsub; maxleftright = mleftright; maxext = mext; }	///< Set the switch variable normalization model restrictions
+  uint4 getDisplayFormat(void) const { return displayFormat; }		///< Get the display format for integer cases
+  void setDisplayFormat(uint4 format) { displayFormat = format; }	///< Set the display format to use for integer case values
   void setOverride(const vector<Address> &addrtable,const Address &naddr,uintb h,uintb sv);
   int4 numIndicesByBlock(const FlowBlock *bl) const;
   int4 getIndexByBlock(const FlowBlock *bl,int4 i) const;
   Address getAddressByIndex(int4 i) const { return addresstable[i]; }	///< Get the i-th address table entry
+  int4 getRecoverCount(void) const { return recoverCount; }		///< Get number of times a recovery has been attempted
+  void incrementRecoveryCount(void) { recoverCount += 1; }		///< Record that another round of recovery is being attempted
   void setLastAsDefault(void);		///< Set the \e default jump-table target to be the last address in the table
   void setDefaultBlock(int4 bl) { defaultBlock = bl; }		///< Set out-edge of the switch destination considered to be \e default
   void setLoadCollect(bool val) { collectloads = val; }		///< Set whether LOAD records should be collected

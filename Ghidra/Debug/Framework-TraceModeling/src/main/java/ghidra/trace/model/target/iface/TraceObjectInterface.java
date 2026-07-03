@@ -17,11 +17,11 @@ package ghidra.trace.model.target.iface;
 
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.info.TraceObjectInfo;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.thread.TraceThread;
 
 /**
  * A common interface for object-based implementations of other trace manager entries, e.g.,
- * {@link TraceObjectThread}.
+ * {@link TraceThread}.
  */
 @TraceObjectInfo(
 	schemaName = "OBJECT",

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,14 +21,15 @@ import java.util.*;
 import javax.swing.JComponent;
 import javax.swing.tree.TreePath;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
+import docking.actions.DockingToolActions;
+import docking.actions.SharedDockingActionPlaceholder;
 import docking.options.OptionsService;
 import docking.options.editor.OptionsDialog;
 import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
 import ghidra.framework.options.*;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.dialog.KeyBindingsPanel;
 import ghidra.util.HelpLocation;
@@ -39,9 +40,12 @@ import ghidra.util.exception.AssertException;
  * Created by PluginTool to manage the set of Options for each category.
  */
 public class OptionsManager implements OptionsService, OptionsChangeListener {
+
 	private OptionsDialog optionsDialog;
 	private PluginTool tool;
 	private Map<String, ToolOptions> optionsMap;
+
+	private OptionsSharedActionPlaceholder toggleActionPlaceholder;
 
 	/**
 	 * Constructor
@@ -50,6 +54,19 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 	public OptionsManager(PluginTool tool) {
 		this.tool = tool;
 		optionsMap = new HashMap<>();
+	}
+
+	private void createActions() {
+
+		if (toggleActionPlaceholder != null) {
+			return;
+		}
+
+		// This action is created later in the OptionsPanel
+		toggleActionPlaceholder =
+			new OptionsSharedActionPlaceholder(OptionsDialog.TOGGLE_EDITOR_ACTION_NAME);
+		DockingToolActions toolActions = tool.getToolActions();
+		toolActions.registerSharedActionPlaceholder(toggleActionPlaceholder);
 	}
 
 	public void dispose() {
@@ -111,32 +128,12 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 	public ToolOptions[] getOptions() {
 		ToolOptions[] opt = new ToolOptions[optionsMap.size()];
 		int idx = 0;
-		Iterator<String> iter = optionsMap.keySet().iterator();
-		while (iter.hasNext()) {
-			String key = iter.next();
+		for (String key : optionsMap.keySet()) {
 			opt[idx] = optionsMap.get(key);
 			++idx;
 		}
 		Arrays.sort(opt, new OptionsComparator());
 		return opt;
-	}
-
-	/**
-	 * Deregister the owner from the options; if options are empty, then
-	 * remove the options from the map.
-	 * @param ownerPlugin the owner plugin
-	 */
-	public void deregisterOwner(Plugin ownerPlugin) {
-		List<String> deleteList = new ArrayList<>();
-		Iterator<String> iter = optionsMap.keySet().iterator();
-		while (iter.hasNext()) {
-			String key = iter.next();
-			ToolOptions opt = optionsMap.get(key);
-			if (opt.getOptionNames().isEmpty()) {
-				deleteList.add(opt.getName());
-			}
-		}
-		removeUnusedOptions(deleteList);
 	}
 
 	/**
@@ -146,9 +143,7 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 	 */
 	public Element getConfigState() {
 		Element root = new Element("OPTIONS");
-		Iterator<String> iter = optionsMap.keySet().iterator();
-		while (iter.hasNext()) {
-			String key = iter.next();
+		for (String key : optionsMap.keySet()) {
 			ToolOptions opt = optionsMap.get(key);
 			if (hasNonDefaultValues(opt)) {
 				root.addContent(opt.getXmlRoot(false));
@@ -170,9 +165,7 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 	public void removeUnusedOptions() {
 		// 1st clean up any unused options before saving...
 		List<String> deleteList = new ArrayList<>();
-		Iterator<String> iter = optionsMap.keySet().iterator();
-		while (iter.hasNext()) {
-			String key = iter.next();
+		for (String key : optionsMap.keySet()) {
 			ToolOptions opt = optionsMap.get(key);
 			opt.removeUnusedOptions();
 			if (opt.getOptionNames().isEmpty()) {
@@ -228,6 +221,8 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 			return null;
 		}
 
+		createActions();
+
 		Options keyBindingOptions = getOptions(DockingToolConstants.KEY_BINDINGS);
 		TreePath path = null;
 		if (optionsDialog != null) {
@@ -239,9 +234,9 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 		}
 
 		keyBindingOptions.registerOptionsEditor(() -> new KeyBindingOptionsEditor());
-		OptionsDialog dialog =
-			new OptionsDialog("Options for " + tool.getName(), "Options", getEditableOptions(),
-				null, true);
+		String optionsName = "Options for " + tool.getName();
+		Options[] options = getEditableOptions();
+		OptionsDialog dialog = new OptionsDialog(optionsName, "Options", options, null, true);
 		dialog.setSelectedPath(path);
 		dialog.setHelpLocation(
 			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "ToolOptions_Dialog"));
@@ -259,6 +254,15 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 		}
 	}
 
+	@Override
+	public void optionsChanged(ToolOptions options, String name, Object oldValue, Object newValue) {
+		tool.setConfigChanged(true);
+	}
+
+//=================================================================================================
+// Inner Classes
+//=================================================================================================	
+
 	private class OptionsComparator implements Comparator<ToolOptions> {
 		@Override
 		public int compare(ToolOptions o1, ToolOptions o2) {
@@ -269,10 +273,6 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 	private class KeyBindingOptionsEditor implements OptionsEditor {
 
 		private KeyBindingsPanel panel;
-
-		KeyBindingOptionsEditor() {
-			panel = new KeyBindingsPanel(tool);
-		}
 
 		@Override
 		public void apply() {
@@ -291,7 +291,9 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 
 		@Override
 		public void dispose() {
-			panel.dispose();
+			if (panel != null) {
+				panel.dispose();
+			}
 		}
 
 		@Override
@@ -302,12 +304,31 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 
 		@Override
 		public void setOptionsPropertyChangeListener(PropertyChangeListener listener) {
+			if (panel == null) {
+				panel = new KeyBindingsPanel(tool);
+			}
 			panel.setOptionsPropertyChangeListener(listener);
 		}
 	}
 
-	@Override
-	public void optionsChanged(ToolOptions options, String name, Object oldValue, Object newValue) {
-		tool.setConfigChanged(true);
+	// Small class to register actions by name before the various editors have been shown. We need
+	// this for the OptionsDialog actions to appear in the key binding options.
+	private class OptionsSharedActionPlaceholder implements SharedDockingActionPlaceholder {
+
+		private String name;
+
+		OptionsSharedActionPlaceholder(String name) {
+			this.name = name;
+		}
+
+		@Override
+		public String getOwner() {
+			return OptionsDialog.OPTIONS_OWNER;
+		}
+
+		@Override
+		public String getName() {
+			return name;
+		}
 	}
 }

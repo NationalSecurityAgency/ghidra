@@ -14,14 +14,9 @@
 # limitations under the License.
 ##
 find-app-properties() {
-	local simple="$GHIDRA_HOME/Ghidra/application.properties"
-	if [ -f "$simple" ]; then
-		echo $simple
-		return 0
-	fi
-	local dev2="$GHIDRA_HOME/ghidra/Ghidra/application.properties"
-	if [ -f "$dev2" ]; then
-		echo $dev2
+	local props="$GHIDRA_HOME/application.properties"
+	if [ -f "$props" ]; then
+		echo $props
 		return 0
 	fi
 	echo >&2 "Cannot find application.properties"
@@ -45,19 +40,21 @@ get-ghidra-version() {
 }
 
 ghidra-module-pypath() {
-	installed="$GHIDRA_HOME/Ghidra/$1/pypkg/src"
+	local modhomename
+	if [ -z "$1" ] || [ "$1" == "<SELF>" ]; then
+		modhomename='MODULE_HOME'
+	else
+		modhomename="MODULE_${1//-/_}_HOME"
+	fi
+	local modhome="${!modhomename}"
+	local installed="$modhome/pypkg/src"
 	if [ -d "$installed" ]; then
 		echo $installed
 		return 0
 	fi
-	dev1="$GHIDRA_HOME/Ghidra/$1/build/pypkg/src"
-	if [ -d "$dev1" ]; then
-		echo $dev1
-		return 0
-	fi
-	dev2="$GHIDRA_HOME/ghidra/Ghidra/$1/build/pypkg/src"
-	if [ -d "$dev2" ]; then
-		echo $dev2
+	local dev="$modhome/build/pypkg/src"
+	if [ -d "$dev" ]; then
+		echo $dev
 		return 0
 	fi
 	echo >&2 "Cannot find Python source for $1. Try gradle assemblePyPackage?"
@@ -65,19 +62,21 @@ ghidra-module-pypath() {
 }
 
 ghidra-module-pydist() {
-	installed="$GHIDRA_HOME/Ghidra/$1/pypkg/dist"
+	local modhomename
+	if [ -z "$1" ] || [ "$1" == "<SELF>" ]; then
+		modhomename='MODULE_HOME'
+	else
+		modhomename="MODULE_${1//-/_}_HOME"
+	fi
+	local modhome="${!modhomename}"
+	local installed="$modhome/pypkg/dist"
 	if [ -d "$installed" ]; then
 		echo $installed
 		return 0
 	fi
-	dev1="$GHIDRA_HOME/Ghidra/$1/build/pypkg/dist"
-	if [ -d "$dev1" ]; then
-		echo $dev1
-		return 0
-	fi
-	dev2="$GHIDRA_HOME/ghidra/Ghidra/$1/build/pypkg/dist"
-	if [ -d "$dev2" ]; then
-		echo $dev2
+	local dev="$modhome/build/pypkg/dist"
+	if [ -d "$dev" ]; then
+		echo $dev
 		return 0
 	fi
 	echo >&2 "Cannot find Python package for $1. Try gradle buildPyPackage?"
@@ -91,7 +90,6 @@ compute-ssh-args() {
 	printf -v qargs '%q ' "$@"
 
 	sshargs+=("$OPT_SSH_PATH")
-	sshargs+=(-t)
 	if [ "$forward" == "true" ]; then
 		sshargs+=("-R$OPT_REMOTE_PORT:$GHIDRA_TRACE_RMI_ADDR")
 	fi
@@ -99,7 +97,19 @@ compute-ssh-args() {
 		sshargs+=($OPT_EXTRA_SSH_ARGS)
 	fi
 	sshargs+=("$OPT_HOST")
-	sshargs+=("TERM='$TERM' $qargs")
+	if [ "$OPT_OS_WINDOWS" ] && [ "$OPT_OS_WINDOWS" == true ]; then
+		sshargs+=("$@")
+	else 
+		sshargs+=("TERM='$TERM' $qargs")
+	fi
+}
+
+compute-scp-args() {
+	tmpfile=$1
+
+	scpargs+=$(echo $OPT_SSH_PATH | sed 's/ssh/scp/g')
+	scpargs+=("$tmpfile")
+	scpargs+=("$OPT_HOST:~/")
 }
 
 check-result-and-prompt-mitigation() {
@@ -129,6 +139,9 @@ mitigate-scp-pymodules() {
 	local -a scpargs
 	for mod in "$@"; do
 		dist=$(ghidra-module-pydist "$mod")
+		if [ "$?" -ne "0" ]; then
+			return 1
+		fi
 		scpargs+=("$dist"/*)
 	done
 	scp "${scpargs[@]}" "$OPT_HOST:~/"

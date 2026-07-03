@@ -201,9 +201,8 @@ public class BinaryReader {
 	 * Returns the length of the underlying file.
 	 * 
 	 * @return returns the length of the underlying file
-	 * @exception IOException if an I/O error occurs
 	 */
-	public long length() throws IOException {
+	public long length() {
 		return provider.length();
 	}
 
@@ -659,7 +658,7 @@ public class BinaryReader {
 	 * @return the string
 	 * @exception IOException if an I/O error occurs
 	 */
-	private String readNextString(Charset charset, int charLen) throws IOException {
+	public String readNextString(Charset charset, int charLen) throws IOException {
 		byte[] bytes = readUntilNullTerm(currentIndex, charLen);
 		currentIndex += bytes.length + charLen;
 
@@ -681,7 +680,7 @@ public class BinaryReader {
 	 * @return the string
 	 * @exception IOException if an I/O error occurs
 	 */
-	private String readNextString(int charCount, Charset charset, int charLen) throws IOException {
+	public String readNextString(int charCount, Charset charset, int charLen) throws IOException {
 		if (charCount < 0) {
 			throw new IllegalArgumentException(String.format("Invalid charCount: %d", charCount));
 		}
@@ -946,7 +945,7 @@ public class BinaryReader {
 	 * @return the string
 	 * @exception IOException if an I/O error occurs
 	 */
-	private String readString(long index, int charCount, Charset charset, int charLen)
+	public String readString(long index, int charCount, Charset charset, int charLen)
 			throws IOException {
 		if (charCount < 0) {
 			throw new IllegalArgumentException(String.format("Invalid charCount: %d", charCount));
@@ -968,7 +967,7 @@ public class BinaryReader {
 	 * @return the string
 	 * @exception IOException if an I/O error occurs
 	 */
-	private String readString(long index, Charset charset, int charLen) throws IOException {
+	public String readString(long index, Charset charset, int charLen) throws IOException {
 		byte[] bytes = readUntilNullTerm(index, charLen);
 
 		String result = new String(bytes, charset);

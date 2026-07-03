@@ -20,7 +20,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.LEB128Info;
+import ghidra.app.util.bin.format.dwarf.DWARFUtil;
+import ghidra.app.util.bin.format.golang.structmapping.MarkupSession;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.LEB128;
+import ghidra.program.model.data.UnsignedLeb128DataType;
+import ghidra.program.model.listing.CommentType;
 
 /**
  * Evaluates a sequence of (value_delta,pc_delta) leb128 pairs to calculate a value for a certain 
@@ -31,6 +37,7 @@ public class GoPcValueEvaluator {
 	private final long funcEntry;
 	private final BinaryReader reader;
 	private final long startPosition;
+	private final long pctabOffset;
 
 	private int value = -1;
 	private long pc;
@@ -49,6 +56,7 @@ public class GoPcValueEvaluator {
 		this.pcquantum = moduledata.getGoBinary().getMinLC();
 		this.reader = moduledata.getPcValueTable().getElementReader(1, (int) offset);
 		this.startPosition = reader.getPointerIndex();
+		this.pctabOffset = offset;
 
 		this.funcEntry = func.getFuncAddress().getOffset();
 		this.pc = funcEntry;
@@ -126,4 +134,55 @@ public class GoPcValueEvaluator {
 
 		return true;
 	}
+
+	public void markup(MarkupSession session) throws IOException {
+		Address startAddr = session.getMappingContext().getDataAddress(startPosition);
+		if (session.getMarkedupAddresses().contains(startAddr)) {
+			return;
+		}
+		session.labelAddress(startAddr, "pctab[0x%x]".formatted(pctabOffset));
+		int count = 0;
+		while (markupStep(session)) {
+			count++;
+		}
+		long size = reader.getPointerIndex() - startPosition;
+		String msg = "stepcount=%d,size=%d".formatted(count, size);
+		DWARFUtil.appendComment(session.getProgram(), startAddr, CommentType.PRE, "", msg, ",");
+	}
+
+	private boolean markupStep(MarkupSession session) throws IOException {
+		LEB128Info uvdeltaInfo = reader.readNext(LEB128Info::unsigned);
+		Address uvdeltaAddr = session.getMappingContext().getDataAddress(uvdeltaInfo.getOffset());
+		if (session.getMarkedupAddresses().contains(uvdeltaAddr)) {
+			return false;
+		}
+		session.markupAddress(uvdeltaAddr, UnsignedLeb128DataType.dataType,
+			uvdeltaInfo.getLength());
+
+		int uvdelta = uvdeltaInfo.asUInt32();
+		if (uvdelta == 0 && pc != funcEntry) {
+			// a delta of 0 is only valid on the first element
+			DWARFUtil.appendComment(session.getProgram(), uvdeltaAddr, CommentType.EOL, "", "end",
+				",");
+			return false;
+		}
+
+		int vdelta = -(uvdelta & 1) ^ (uvdelta >> 1);
+		value += vdelta;
+		String msg = "value+%d=0x%x".formatted(vdelta, value);
+		DWARFUtil.appendComment(session.getProgram(), uvdeltaAddr, CommentType.EOL, "", msg, ",");
+
+		LEB128Info pcdeltaInfo = reader.readNext(LEB128Info::unsigned);
+		Address pcdeltaAddr = session.getMappingContext().getDataAddress(pcdeltaInfo.getOffset());
+		session.markupAddress(pcdeltaAddr, UnsignedLeb128DataType.dataType,
+			pcdeltaInfo.getLength());
+
+		int pcdelta = pcdeltaInfo.asUInt32();
+		pc += pcdelta * pcquantum;
+		msg = "pc+0x%x=+0x%08x".formatted(pcdelta * pcquantum, pc - funcEntry);
+		DWARFUtil.appendComment(session.getProgram(), pcdeltaAddr, CommentType.EOL, "", msg, ",");
+
+		return true;
+	}
+
 }

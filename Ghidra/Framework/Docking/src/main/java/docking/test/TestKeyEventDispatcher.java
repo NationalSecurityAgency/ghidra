@@ -22,7 +22,6 @@ import javax.swing.SwingUtilities;
 
 import docking.FocusOwnerProvider;
 import generic.test.TestUtils;
-import ghidra.util.Msg;
 
 /**
  * A class that helps to delegate key events to the system override key event dispatcher.  This
@@ -64,30 +63,22 @@ public class TestKeyEventDispatcher {
 	}
 
 	private static KeyEventDispatcher getOverriddenKeyEventDispatcher() {
-
 		// Note: our custom key event dispatcher has package access, so we cannot refer to 
 		//       it directly
-		try {
-			Class<?> clazz = Class.forName("docking.KeyBindingOverrideKeyEventDispatcher");
-			Object customDispatcher = TestUtils.getInstanceField("instance", clazz);
-			if (customDispatcher == null) {
-				return null; // not installed
-			}
-
-			//
-			// Dependency Inject our own focus provider so that we can force the event 
-			// dispatcher to deliver events to our component
-			// 
-			TestUtils.invokeInstanceMethod("setFocusOwnerProvider", customDispatcher,
-				FocusOwnerProvider.class, focusProvider);
-
-			return (KeyEventDispatcher) customDispatcher;
+		Class<?> clazz = docking.KeyBindingOverrideKeyEventDispatcher.class;
+		Object customDispatcher = TestUtils.getInstanceField("instance", clazz);
+		if (customDispatcher == null) {
+			return null; // not installed
 		}
-		catch (ClassNotFoundException e) {
-			Msg.error(TestKeyEventDispatcher.class, "Unable to find the system KeyEventDispatcher",
-				e);
-			return null;
-		}
+
+		//
+		// Dependency Inject our own focus provider so that we can force the event 
+		// dispatcher to deliver events to our component
+		// 
+		TestUtils.invokeInstanceMethod("setFocusOwnerProvider", customDispatcher,
+			FocusOwnerProvider.class, focusProvider);
+
+		return (KeyEventDispatcher) customDispatcher;
 	}
 
 	private static class TestFocusOwnerProvider implements FocusOwnerProvider {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,8 +47,13 @@ class ReferencePanel extends JPanel {
 		refTable = threadedTablePanel.getTable();
 		refTable.setAutoLookupColumn(SymbolReferenceModel.LABEL_COL);
 		refTable.setPreferredScrollableViewportSize(new Dimension(250, 200));
-		refTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		refTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		refTable.installNavigation(provider.getTool());
+		refTable.getSelectionModel().addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting()) {
+				provider.contextChanged();
+			}
+		});
 
 		this.listener = e -> referenceProvider.updateTitle();
 		refTable.getModel().addTableModelListener(listener);

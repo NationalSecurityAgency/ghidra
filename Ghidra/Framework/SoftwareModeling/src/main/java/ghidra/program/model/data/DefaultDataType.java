@@ -85,6 +85,11 @@ public class DefaultDataType extends DataTypeImpl {
 	}
 
 	@Override
+	public Class<?> getValueClass(Settings settings) {
+		return Scalar.class;
+	}
+
+	@Override
 	public DataType clone(DataTypeManager dtm) {
 		return this;
 	}

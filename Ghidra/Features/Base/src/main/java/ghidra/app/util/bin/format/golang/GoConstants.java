@@ -26,11 +26,9 @@ public class GoConstants {
 	public static final String GOLANG_CSPEC_NAME = "golang";
 
 	/**
-	 * Category path to place golang types in
+	 * Category path to place Go types in
 	 */
 	public static final CategoryPath GOLANG_CATEGORYPATH = new CategoryPath("/golang");
-	public static final CategoryPath GOLANG_BOOTSTRAP_FUNCS_CATEGORYPATH =
-		GOLANG_CATEGORYPATH.extend("functions");
 	public static final CategoryPath GOLANG_RECOVERED_TYPES_CATEGORYPATH =
 		new CategoryPath("/golang-recovered");
 

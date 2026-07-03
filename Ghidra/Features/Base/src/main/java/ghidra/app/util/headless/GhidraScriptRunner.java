@@ -16,12 +16,10 @@
 package ghidra.app.util.headless;
 
 import java.io.*;
-import java.util.List;
 
 import generic.jar.ResourceFile;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
-import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.*;
 import ghidra.framework.Application;
 import ghidra.framework.HeadlessGhidraApplicationConfiguration;
@@ -36,7 +34,6 @@ import utility.application.ApplicationLayout;
  */
 public class GhidraScriptRunner implements GhidraLaunchable {
 
-	private List<String> scriptPaths;
 	private String propertiesFilePath;
 
 	@Override
@@ -47,13 +44,13 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 			System.exit(0);
 		}
 		String logFile = null; //TODO get from arguments?
-		GhidraScriptUtil.initialize(new BundleHost(), scriptPaths);
+		GhidraScriptUtil.acquireBundleHostReference();
 		try {
 			initialize(layout, logFile, true);
 			runScript(args[0]);
 		}
 		finally {
-			GhidraScriptUtil.dispose();
+			GhidraScriptUtil.releaseBundleHostReference();
 		}
 	}
 

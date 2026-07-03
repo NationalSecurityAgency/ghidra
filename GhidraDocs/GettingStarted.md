@@ -1,5 +1,5 @@
 # Getting Started with Ghidra
-The information provided in this document is effective as of Ghidra 11.4 and is subject to change 
+The information provided in this document is effective as of Ghidra 12.1 and is subject to change 
 with future releases.
 
 ## Table of Contents
@@ -36,7 +36,7 @@ with future releases.
     * [macOS](#macos)
 
 ## Platforms Supported
-* Windows 10 or later
+* Windows 10 (build 1809 or later)
 * Linux
 * macOS 10.13 or later
 
@@ -51,20 +51,22 @@ a specific need.
 * Dual monitors strongly suggested
 
 ### Software
-* Java 21 64-bit Runtime and Development Kit (JDK) (see [Java Notes](#java-notes))
-  * Free long term support (LTS) versions of JDK 21 are provided by:
+* Java 25 64-bit Runtime and Development Kit (JDK) (see [Java Notes](#java-notes))
+  * Free long term support (LTS) versions of JDK 25 are provided by:
     * [Adoptium Temurin](https://adoptium.net/temurin/releases)
-    * [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html)
-* Python3 (3.9 to 3.13)
-  * Python 3.7 to 3.13 for [Debugger support](#debugger-notes)
-  * Python 3.9 to 3.13 for [PyGhidra support](#pyghidra-mode)
+    * [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-25-ug/downloads-list.html)
+* Python3 (3.9 to 3.14)
+  * Python 3.7 to 3.14 for [Debugger support](#debugger-notes)
+  * Python 3.9 to 3.14 for [PyGhidra support](#pyghidra-mode)
   * This is available from [Python.org](https://python.org) or most operating system's app stores or
     software repositories.  For Linux it is recommended that the system's package repository be used
-    to install a suitable version of Python.
+    to install a suitable version of Python with pip support.
 
 ## Installing Ghidra
 To install Ghidra, simply extract the Ghidra distribution file to the desired filesystem destination
 using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRAR, etc).
+
+__NOTE:__ Do not extract Ghidra on top of an existing installation.
 
 ### Installation Notes
 * Ghidra does not use a traditional installer program.  Instead, the Ghidra distribution file is
@@ -159,17 +161,16 @@ using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRAR, etc).
   environment variable in order for Ghidra to use the `JAVA_HOME_OVERRIDE` property.
 
 ### Debugger Notes
-The Debugger now uses Python to connect to the host platform's native debuggers. This requires
+The Debugger uses Python to connect to the host platform's native debuggers. This requires
 a [supported](#minimum-requirements) version of Python and some additional packages. These packages
 are included in the distribution, but you may still install them from PyPI if you prefer:
-* psutil
-* protobuf==3.20.3
-* Pybag>=2.2.12 (for WinDbg support)
+* protobuf>=3.20.3
+* Pybag>=2.2.16 (for WinDbg support)
 
 Different native debuggers have varying requirements, so you do not necessarily have to install all
 of the above packages. Each connector will inform you of its specific requirements and where they
 must be installed. In some cases, you may need to install packages on the target system.  
-For more information, see `<GhidraInstallDir>/docs/GhidraClass/Debugger/A1=GettingStarted.html`
+For more information, see `<GhidraInstallDir>/docs/GhidraClass/Debugger/A1-GettingStarted.html`
 
 ## Ghidra Installation Directory Layout
 When Ghidra is installed, the runnable software gets extracted to a new directory we will refer
@@ -195,26 +196,28 @@ public Ghidra release includes native binaries for the following platforms:
 * Windows 10 or later, x86 64-bit
 * Windows 10 or later, ARM 64-bit (using x86 emulation)
 * Linux x86 64-bit
-* macOS x86 64-bit (may be omitted for some non-public builds)
-* macOS ARM 64-bit (may be omitted for some non-public builds)
 
 Ghidra supports running on the following additional platforms with user-built native binaries:
+* macOS x86 64-bit
+* macOS ARM 64-bit
 * Linux ARM 64-bit
 * FreeBSD x86 64-bit (no debugger support)
 * FreeBSD ARM 64-bit (no debugger support)
+* OpenBSD x86 64-bit (no debugger support)
+* OpenBSD ARM 64-bit (no debugger support)
 
 For supported systems where native binaries have not been supplied, or those that are supplied fail
 to run properly, it may be necessary to build the native Ghidra binaries. In order to build native
 binaries for your platform, you will need the following installed on your system:
 * A [supported](#minimum-requirements) version of a Java Development Kit
-* [Gradle 8.5+](https://gradle.org/releases) (or supplied Gradle wrapper with Internet connection)
+* [Gradle 9.1.0+](https://gradle.org/releases) (or supplied Gradle wrapper with Internet connection)
 * Software C/C++ build tools and library packages
   * __macOS:__ _Xcode_ or the abbreviated _Command Line Tools for Xcode_. Assuming you are connected
     to the Internet, _Xcode_ (which includes the command tools) may be installed directly from the
     App Store while _Command Line Tools for Xcode_ may be installed using the command:
     `xcode-select --install`.
-  * __Linux/FreeBSD:__ the 64-bit versions of the following packages should installed:
-    * gcc/g++ or clang
+  * __Linux/FreeBSD/OpenBSD:__ the 64-bit versions of the following packages should installed:
+    * GCC or Clang
     * make
   * __Windows:__
       [Microsoft Visual Studio](https://visualstudio.microsoft.com/vs/community) 2017 or later, or 
@@ -316,7 +319,10 @@ can be found in the `<GhidraInstallDir>/Extensions` directory:
 * Ghidra extensions are designed to be installed and uninstalled from the Ghidra front-end GUI:
   1. Click `File -> Install Extensions`
   2. Check boxes to install extensions; uncheck boxes to uninstall extensions
-  3. Restart Ghidra for the changes to take effect
+  3. External extensions will generally not appear in the default location (Ghidra/Extensions) used for 
+  internal extensions included with the Ghidra distribution.  To add a new external extension from
+  this GUI, click the green plus toolbar button to locate and select an external extension zip file.
+  4. Restart Ghidra for the changes to take effect
 
 * Extensions installed from the Ghidra front-end GUI get installed at `<UserSettings>/Extensions`, 
   where `<UserSettings>` can be looked up in the Ghidra front-end GUI under 
@@ -453,6 +459,10 @@ There are several ways you can get help with using Ghidra:
 * GUI icons may not render correctly in some configurations of Linux. Setting 
   `VMARGS=-Dsun.java2d.opengl` to `true` in `<GhidraInstallDir>/support/launch.properties` may fix 
   this issue.
+* Non-reparenting window managers such as XMonad and Sway may render Ghidra windows as blank. This
+  is a known java issue (https://bugs.openjdk.org/browse/JDK-8058197) which can be addressed by
+  uncommenting `#ENVVARS_LINUX=_JAVA_AWT_WM_NONREPARENTING=1` in 
+  `<GhidraInstallDir>/support/launch.properties`.
 
 ### macOS
 * Building new Ghidra module extensions on macOS (OS X) using a network drive (including a

@@ -18,10 +18,11 @@ import platform
 import os
 import sys
 import subprocess
+from subprocess import DEVNULL
 import sysconfig
 from pathlib import Path
 from itertools import chain
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional  
 
 def get_application_properties(install_dir: Path) -> Dict[str, str]:
     app_properties_path: Path = install_dir / 'Ghidra' / 'application.properties'
@@ -38,7 +39,7 @@ def get_application_properties(install_dir: Path) -> Dict[str, str]:
 
 def get_launch_properties(install_dir: Path, dev: bool) -> List[str]:
     if dev:
-        launch_properties_path: Path = install_dir / 'Ghidra' / 'RuntimeScripts' / 'Common' / 'support' / 'launch.properties'
+        launch_properties_path: Path = install_dir / 'Ghidra' / 'RuntimeScripts' / 'support' / 'launch.properties'
     else:
         launch_properties_path: Path = install_dir / 'support' / 'launch.properties'
     props: List[str] = []
@@ -57,7 +58,9 @@ def get_user_settings_dir(install_dir: Path, dev: bool) -> Path:
     app_release_name: str = app_props['application.release.name']
     versioned_name: str = f'{app_name}_{app_version}_{app_release_name}'
     if dev:
-        versioned_name += f'_location_{install_dir.parent.name}'
+        ghidra_repos_config = install_dir / 'ghidra.repos.config'
+        dir_name = install_dir.parent.name if ghidra_repos_config.is_file() else install_dir.name
+        versioned_name += f'_location_{dir_name}'
 
     # Check for application.settingsdir in launch.properties
     for launch_prop in get_launch_properties(install_dir, dev):
@@ -102,6 +105,8 @@ def find_supported_python_exe(install_dir: Path, dev: bool) -> List[str]:
                 return cmd
         except FileNotFoundError:
             pass
+        except NotADirectoryError:
+            pass
         
     return None
     
@@ -126,7 +131,24 @@ def get_venv_exe(venv_dir: Path) -> List[str]:
 
 def get_ghidra_venv(install_dir: Path, dev: bool) -> Path:
     return (install_dir / 'build' if dev else get_user_settings_dir(install_dir, dev)) / 'venv'
-    
+
+def check_module(python_cmd: List[str], module_name: str) -> bool:
+    return subprocess.run(python_cmd + ['-c', f'import {module_name}'], stdout=DEVNULL, stderr=DEVNULL).returncode == 0
+
+def check_venv(python_cmd: List[str]) -> bool:
+    if check_module(python_cmd, 'ensurepip'):
+        return True
+    print('A virtual environment cannot be created because "ensurepip" is not available.')
+    print('You likely need to install the appropriate "venv" package for your platform and python version.')
+    return False
+
+def check_pip(python_cmd: List[str]) -> bool:
+    if check_module(python_cmd, 'pip'):
+        return True
+    print('pip is not present in the current environment.')
+    print("Please install pip, remove your virtual environment if applicable, and relaunch PyGhidra.")
+    return False
+
 def create_ghidra_venv(python_cmd: List[str], venv_dir: Path) -> None:
     print(f'Creating Ghidra virtual environment at {venv_dir}...')
     subprocess.run(python_cmd + ['-m', 'venv', venv_dir.absolute()])
@@ -137,16 +159,10 @@ def version_tuple(v: str) -> Tuple[str, ...]:
         filled.append(point.zfill(8))
     return tuple(filled)
 
-def get_package_version(python_cmd: List[str], package: str) -> str:
-    version = None
-    result = subprocess.run(python_cmd + ['-m', 'pip', 'show', package], capture_output=True, text=True)
-    for line in result.stdout.splitlines():
-        line = line.strip()
-        print(line)
-        key, value = line.split(':', 1)
-        if key == 'Version':
-            version = value.strip()
-    return version
+def get_package_version(python_cmd: List[str], package: str) -> Optional[str]:
+    source = f'import importlib.metadata as m; print(m.version("{package}"))'
+    result = subprocess.run(python_cmd + ['-c', source], capture_output=True, text=True)
+    return result.stdout.strip() if result.returncode == 0 else None
 
 def get_saved_python_cmd(install_dir: Path, dev: bool) -> List[str]:
     user_settings_dir: Path = get_user_settings_dir(install_dir, dev)
@@ -173,6 +189,8 @@ def install(install_dir: Path, python_cmd: List[str], pip_args: List[str], offer
         if offer_venv:
             ghidra_venv_choice: str = input('Install into new Ghidra virtual environment (y/n)? ')
             if ghidra_venv_choice.lower() in ('y', 'yes'):
+                if not check_venv(python_cmd):
+                    return None
                 venv_dir = get_ghidra_venv(install_dir, False)
                 create_ghidra_venv(python_cmd, venv_dir)
                 python_cmd = get_venv_exe(venv_dir)
@@ -185,6 +203,8 @@ def install(install_dir: Path, python_cmd: List[str], pip_args: List[str], offer
             else:
                 print('Please answer yes or no.')
                 return None 
+        if not check_pip(python_cmd):
+            return None
         subprocess.check_call(python_cmd + pip_args)
         return python_cmd
     elif not install_choice.lower() in ('n', 'no'):
@@ -199,8 +219,14 @@ def upgrade(python_cmd: List[str], pip_args: List[str], dist_dir: Path, current_
     included_version = included_pyghidra.name.split('-')[1]
     current_version = current_pyghidra_version
     if version_tuple(included_version) > version_tuple(current_version):
+        print(f'PyGhidra upgrade available: {current_version} -> {included_version}')
+        if is_externally_managed():
+            print(f'Automated upgrade is not supported in an externally managed environment')
+            return False
         choice: str = input(f'Do you wish to upgrade PyGhidra {current_version} to {included_version} (y/n)? ')
         if choice.lower() in ('y', 'yes'):
+            if not check_pip(python_cmd):
+                return False
             pip_args.append('-U')
             subprocess.check_call(python_cmd + pip_args)
             return True
@@ -223,7 +249,7 @@ def main() -> None:
     dist_dir: Path = pyghidra_dir / 'pypkg' / 'dist'
     venv_dir = get_ghidra_venv(install_dir, args.dev)
     python_cmd: List[str] = find_supported_python_exe(install_dir, args.dev)
-    
+      
     if python_cmd is not None:
         print(f'Using Python command: "{" ".join(python_cmd)}"')
     else:
@@ -237,11 +263,11 @@ def main() -> None:
     if args.dev:
         # If in dev mode, launch PyGhidra from the source tree using the development virtual environment
         if not venv_dir.is_dir():
-            print('Virtual environment not found!')
-            print('Run "gradle prepdev" and try again.')
+            print('Development virtual environment not found!')
+            print('Run "gradle prepPyGhidra" and try again.')
             sys.exit(1)
         python_cmd = get_venv_exe(venv_dir)
-        print(f'Switching to Ghidra virtual environment: {venv_dir}')
+        print(f'Switching to Ghidra development virtual environment: {venv_dir}')
     else:
         # If in release mode, offer to install or upgrade PyGhidra before launching from user-controlled environment
         pip_args: List[str] = ['-m', 'pip', 'install', '--no-index', '-f', str(dist_dir), 'pyghidra']
@@ -250,7 +276,7 @@ def main() -> None:
         # 1) If we are already in a virtual environment, use that
         # 2) If the Ghidra user settings virtual environment exists, use that
         # 3) If we are "externally managed", automatically create/use the Ghidra user settings virtual environment
-        offer_venv: bool = False
+        offer_venv = False
         if in_venv():
             # If we are already in a virtual environment, assume that's where the user wants to be
             python_cmd = get_venv_exe(Path(sys.prefix))
@@ -260,10 +286,17 @@ def main() -> None:
             python_cmd = get_venv_exe(venv_dir)
             print(f'Switching to Ghidra virtual environment: {venv_dir}')
         elif is_externally_managed():
-            print('Externally managed environment detected!')
-            create_ghidra_venv(python_cmd, venv_dir)
-            python_cmd = get_venv_exe(venv_dir)
-            print(f'Switching to Ghidra virtual environment: {venv_dir}')
+            print('Externally managed environment detected')
+            current_pyghidra_version = get_package_version(python_cmd, 'pyghidra')
+            if current_pyghidra_version is None:
+                if not check_venv(python_cmd):
+                    sys.exit(1)
+                create_ghidra_venv(python_cmd, venv_dir)
+                python_cmd = get_venv_exe(venv_dir)
+                print(f'Switching to Ghidra virtual environment: {venv_dir}')
+            else:
+                print(f'Using externally managed PyGhidra {current_pyghidra_version}')
+
         else:
             offer_venv = True
 
@@ -279,16 +312,16 @@ def main() -> None:
 
     # Launch PyGhidra
     save_python_cmd(install_dir, python_cmd, args.dev)
-    py_args: List[str] = python_cmd + ['-m', 'pyghidra.ghidra_launch', '--install-dir', str(install_dir)]
+    py_args: List[str] = python_cmd + ['-m']
     if args.headless:
-        py_args += ['ghidra.app.util.headless.AnalyzeHeadless']
+        py_args += ['pyghidra.ghidra_launch', '--install-dir', str(install_dir), 'ghidra.app.util.headless.AnalyzeHeadless']
     else:
-        py_args += ['-g', 'ghidra.GhidraRun']
+        py_args += ['pyghidra', '-g', '--install-dir', str(install_dir)]
     if args.console:
         subprocess.call(py_args + remaining)
     else:
         creation_flags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
-        subprocess.Popen(py_args + remaining, creationflags=creation_flags, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
- 
+        subprocess.Popen(py_args + remaining, creationflags=creation_flags, stdout=DEVNULL, stderr=DEVNULL)
+
 if __name__ == "__main__":
     main()

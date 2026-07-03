@@ -67,9 +67,16 @@ public class TimeTypeOverviewColorService implements TimeOverviewColorService {
 	@Override
 	public Color getColor(Long snap) {
 		Set<Pair<TimeType, String>> types = plugin.getTypes(snap);
-		Color c = Colors.BACKGROUND;
+		Color c = colorMap.get(TimeType.UNDEFINED);
+		if (c == null) {
+			c = Colors.BACKGROUND;
+		}
 		for (Pair<TimeType, String> pair : types) {
-			c = ColorUtils.addColors(c, pair.getLeft().getDefaultColor());
+			Color color = colorMap.get(pair.getLeft());
+			if (color == null) {
+				color = pair.getLeft().getDefaultColor();
+			}
+			c = ColorUtils.addColors(c, color);
 		}
 		return c;
 	}
@@ -103,11 +110,11 @@ public class TimeTypeOverviewColorService implements TimeOverviewColorService {
 	public List<DockingActionIf> getActions() {
 		List<DockingActionIf> actions = new ArrayList<>();
 		actions.add(new ActionBuilder("Show Legend", getName())
-				.popupMenuPath("Show Legend")
+				.popupMenuPath("Show " + getName() + " Legend")
 				.description("Show types and associated colors")
 				.helpLocation(getHelpLocation())
 				.enabledWhen(c -> c.getContextObject() == overviewComponent)
-				.onAction(c -> tool.showDialog(getLegendDialog()))
+				.onAction(c -> tool.showDialog(getLegendDialog(overviewComponent)))
 				.build());
 
 		return actions;
@@ -151,11 +158,12 @@ public class TimeTypeOverviewColorService implements TimeOverviewColorService {
 	public void setColor(TimeType type, Color newColor) {
 		ToolOptions options = tool.getOptions(OPTIONS_NAME);
 		options.setColor(type.getDescription(), newColor);
+		colorMap.put(type, newColor);
 	}
 
-	private DialogComponentProvider getLegendDialog() {
+	private DialogComponentProvider getLegendDialog(TimeOverviewColorComponent component) {
 		if (legendDialog == null) {
-			legendPanel = new TimeTypeOverviewLegendPanel(this);
+			legendPanel = new TimeTypeOverviewLegendPanel(this, component);
 
 			legendDialog =
 				new OverviewColorLegendDialog("Overview Legend", legendPanel, getHelpLocation());

@@ -23,7 +23,6 @@ import org.junit.Test;
 import ghidra.program.database.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * More data type merge tests.
@@ -122,17 +121,10 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					Union union = (Union) dt;
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				Union union = (Union) dt;
+				union.add(new FloatDataType(), "Float Field", "my comments");
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
 			}
 		});
 		executeMerge();
@@ -190,17 +182,11 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					Union union = (Union) dt;
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				Union union = (Union) dt;
+				union.add(new FloatDataType(), "Float Field", "my comments");
+
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
 			}
 		});
 		executeMerge();
@@ -1209,26 +1195,18 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					Union union = (Union) dt;
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/Category1"), "TD_DLL_Table", s);
-					Pointer p = PointerDataType.getPointer(td, 4);
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(p);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				Union union = (Union) dt;
+				union.add(new FloatDataType(), "Float Field", "my comments");
+
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+				TypeDef td = new TypedefDataType(new CategoryPath("/Category1"), "TD_DLL_Table", s);
+				Pointer p = PointerDataType.getPointer(td, 4);
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(p);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -1287,23 +1265,16 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					Union union = (Union) dt;
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				Union union = (Union) dt;
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -1375,28 +1346,20 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
-					enumm.add("one", 1);
-					enumm.add("two", 2);
-					enumm.add("three", 3);
-					union.add(enumm);
+				union.add(new FloatDataType(), "Float Field", "my comments");
+				Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
+				enumm.add("one", 1);
+				enumm.add("two", 2);
+				enumm.add("three", 3);
+				union.add(enumm);
 
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -1447,28 +1410,21 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
-					enumm.add("one", 1);
-					enumm.add("two", 2);
-					enumm.add("three", 3);
-					union.add(enumm);
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
+				enumm.add("one", 1);
+				enumm.add("two", 2);
+				enumm.add("three", 3);
+				union.add(enumm);
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -1529,28 +1485,21 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
-					enumm.add("one", 1);
-					enumm.add("two", 2);
-					enumm.add("three", 3);
-					union.add(enumm);
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
+				enumm.add("one", 1);
+				enumm.add("two", 2);
+				enumm.add("three", 3);
+				union.add(enumm);
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -1601,30 +1550,23 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
-					enumm.add("one", 1);
-					enumm.add("two", 2);
-					enumm.add("three", 3);
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnum", enumm);
-					union.add(td);
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
+				enumm.add("one", 1);
+				enumm.add("two", 2);
+				enumm.add("three", 3);
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnum", enumm);
+				union.add(td);
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -1704,33 +1646,26 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
-					enumm.add("one", 1);
-					enumm.add("two", 2);
-					enumm.add("three", 3);
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnum", enumm);
-					Pointer p = PointerDataType.getPointer(td, 4);// TD_MyEnum *
-					p = PointerDataType.getPointer(p, 4);// TD_MyEnum * *
-					p = PointerDataType.getPointer(p, 4);// TD_MyEnum * * *
-					union.add(p);
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
+				enumm.add("one", 1);
+				enumm.add("two", 2);
+				enumm.add("three", 3);
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnum", enumm);
+				Pointer p = PointerDataType.getPointer(td, 4);// TD_MyEnum *
+				p = PointerDataType.getPointer(p, 4);// TD_MyEnum * *
+				p = PointerDataType.getPointer(p, 4);// TD_MyEnum * * *
+				union.add(p);
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -1790,37 +1725,29 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				Union union =
 					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
-				try {
-					DataTypeComponent dtc = union.add(new FloatDataType());
-					dtc.setComment("my comments");
-					dtc.setFieldName("Float Field");
-					Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
-					enumm.add("one", 1);
-					enumm.add("two", 2);
-					enumm.add("three", 3);
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnum", enumm);
-					Pointer p = PointerDataType.getPointer(td, 4);// TD_MyEnum *
-					p = PointerDataType.getPointer(p, 4);// TD_MyEnum * *
-					p = PointerDataType.getPointer(p, 4);// TD_MyEnum * * *
+				union.add(new FloatDataType(), "Float Field", "my comments");
 
-					// create an array of TD_MyEnum * * *
-					Array array = new ArrayDataType(p, 5, p.getLength());
-					dtc = union.add(array);
-					dtc.setComment("an array");
-					dtc.setFieldName("array field name");
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
+				Enum enumm = new EnumDataType(new CategoryPath("/Category1"), "MyEnum", 1);
+				enumm.add("one", 1);
+				enumm.add("two", 2);
+				enumm.add("three", 3);
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnum", enumm);
+				Pointer p = PointerDataType.getPointer(td, 4);// TD_MyEnum *
+				p = PointerDataType.getPointer(p, 4);// TD_MyEnum * *
+				p = PointerDataType.getPointer(p, 4);// TD_MyEnum * * *
 
-					union =
-						new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
-					union.add(s);
-					union.add(new ByteDataType());
-					dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail("Got Duplicate name exception!");
-				}
+				// create an array of TD_MyEnum * * *
+				Array array = new ArrayDataType(p, 5, p.getLength());
+				union.add(array, "array field name", "an array");
+
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
+
+				union = new UnionDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
+				union.add(s);
+				union.add(new ByteDataType());
+				dtm.addDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();

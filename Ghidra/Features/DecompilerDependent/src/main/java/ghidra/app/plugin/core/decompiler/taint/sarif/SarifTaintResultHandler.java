@@ -216,14 +216,22 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 		protected void doRun(TaskMonitor monitor) {
 			int[] selected = tableProvider.filterTable.getTable().getSelectedRows();
 			Map<Address, Set<TaintQueryResult>> map = new HashMap<>();
+			AddressSet set = new AddressSet();
 			for (int row : selected) {
 				Map<String, Object> r = tableProvider.getRow(row);
 				String kind = (String) r.get("kind");
+				if (kind == null) {
+					continue;
+				}
 				if (kind.equals("member") || kind.startsWith("path ")) {
 					getTaintedInstruction(map, r);
 				}
 				if (kind.equals("variable")) {
 					getTaintedVariable(map, r);
+				}
+				Address addr = (Address) r.get("Address");
+				if (addr != null) {
+					set.add(addr);
 				}
 			}
 
@@ -231,6 +239,7 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			TaintService service = tool.getService(TaintService.class);
 			if (service != null) {
 				service.setVarnodeMap(map, true, taskType);
+				service.setAddressSet(set, false);
 			}
 		}
 

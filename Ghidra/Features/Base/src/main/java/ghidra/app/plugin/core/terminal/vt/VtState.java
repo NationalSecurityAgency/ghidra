@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,48 +38,60 @@ public enum VtState {
 	ESC {
 		@Override
 		protected VtState handleNext(byte b, VtParser parser, VtHandler handler) {
-			switch (b) {
-				case '7':
+			return switch (b) {
+				case '7' -> {
 					handler.handleSaveCursorPos();
-					return CHAR;
-				case '8':
+					yield CHAR;
+				}
+				case '8' -> {
 					handler.handleRestoreCursorPos();
-					return CHAR;
-				case '(':
+					yield CHAR;
+				}
+				case '(' -> {
 					parser.csG = G.G0;
-					return CHARSET;
-				case ')':
+					yield CHARSET;
+				}
+				case ')' -> {
 					parser.csG = G.G1;
-					return CHARSET;
-				case '*':
+					yield CHARSET;
+				}
+				case '*' -> {
 					parser.csG = G.G2;
-					return CHARSET;
-				case '+':
+					yield CHARSET;
+				}
+				case '+' -> {
 					parser.csG = G.G3;
-					return CHARSET;
-				case '[':
-					return CSI_PARAM;
-				case ']':
-					return OSC_PARAM;
-				case '=':
+					yield CHARSET;
+				}
+				case 'P' -> DCS_PARAM;
+				case '[' -> CSI_PARAM;
+				case ']' -> OSC_PARAM;
+				case '\\' -> CHAR; // ST, just go back to CHAR
+				case '=' -> {
 					handler.handleKeypadMode(KeyMode.APPLICATION);
-					return CHAR;
-				case '>':
+					yield CHAR;
+				}
+				case '>' -> {
 					handler.handleKeypadMode(KeyMode.NORMAL);
-					return CHAR;
-				case 'D':
+					yield CHAR;
+				}
+				case 'D' -> {
 					handler.handleScrollViewportDown(1, true);
-					return CHAR;
-				case 'M':
+					yield CHAR;
+				}
+				case 'M' -> {
 					handler.handleScrollViewportUp(1);
-					return CHAR;
-				case 'c':
+					yield CHAR;
+				}
+				case 'c' -> {
 					handler.handleFullReset();
-					return CHAR;
-			}
-			handler.handleCharExc((byte) 0x1b);
-			handler.handleCharExc(b);
-			return CHAR;
+					yield CHAR;
+				}
+				default -> {
+					handler.handleCharExc((byte) 0x1b); // Is this correct?
+					yield parser.doProcessByte(CHAR, b);
+				}
+			};
 		}
 	},
 	/**
@@ -89,67 +101,78 @@ public enum VtState {
 	CHARSET {
 		@Override
 		protected VtState handleNext(byte b, VtParser parser, VtHandler handler) {
-			switch (b) {
-				case '"':
-					return CHARSET_QUOTE;
-				case '%':
-					return CHARSET_PERCENT;
-				case '&':
-					return CHARSET_AMPERSAND;
-				case 'A':
+			return switch (b) {
+				case '"' -> CHARSET_QUOTE;
+				case '%' -> CHARSET_PERCENT;
+				case '&' -> CHARSET_AMPERSAND;
+				case 'A' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.UK);
-					return CHAR;
-				case 'B':
+					yield CHAR;
+				}
+				case 'B' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.USASCII);
-					return CHAR;
-				case 'C':
-				case '5':
+					yield CHAR;
+				}
+				case 'C', '5' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.FINNISH);
-					return CHAR;
-				case 'H':
-				case '7':
+					yield CHAR;
+				}
+				case 'H', '7' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.SWEDISH);
-					return CHAR;
-				case 'K':
+					yield CHAR;
+				}
+				case 'K' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.GERMAN);
-					return CHAR;
-				case 'Q':
-				case '9':
+					yield CHAR;
+				}
+				case 'Q', '9' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.FRENCH_CANADIAN);
-					return CHAR;
-				case 'R':
-				case 'f':
+					yield CHAR;
+				}
+				case 'R', 'f' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.FRENCH);
-					return CHAR;
-				case 'Y':
+					yield CHAR;
+				}
+				case 'Y' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.ITALIAN);
-					return CHAR;
-				case 'Z':
+					yield CHAR;
+				}
+				case 'Z' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.SPANISH);
-					return CHAR;
-				case '4':
+					yield CHAR;
+				}
+				case '4' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.DUTCH);
-					return CHAR;
-				case '=':
+					yield CHAR;
+				}
+				case '=' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.SWISS);
-					return CHAR;
-				case '`':
-				case 'E':
-				case '6':
+					yield CHAR;
+				}
+				case '`', 'E', '6' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.NORWEGIAN_DANISH);
-					return CHAR;
-				case '0':
+					yield CHAR;
+				}
+				case '0' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.DEC_SPECIAL_LINES);
-					return CHAR;
-				case '<':
+					yield CHAR;
+				}
+				case '<' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.DEC_SUPPLEMENTAL);
-					return CHAR;
-				case '>':
+					yield CHAR;
+				}
+				case '>' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.DEC_TECHNICAL);
-					return CHAR;
-			}
-			handler.handleCharExc((byte) 0x1b);
-			return parser.doProcessByte(parser.doProcessByte(CHAR, parser.csG.b), b);
+					yield CHAR;
+				}
+				default -> {
+					handler.handleCharExc((byte) 0x1b);
+					VtState st = CHAR;
+					st = parser.doProcessByte(st, parser.csG.b);
+					st = parser.doProcessByte(st, b);
+					yield st;
+				}
+			};
 		}
 	},
 	/**
@@ -158,20 +181,28 @@ public enum VtState {
 	CHARSET_QUOTE {
 		@Override
 		protected VtState handleNext(byte b, VtParser parser, VtHandler handler) {
-			switch (b) {
-				case '>':
+			return switch (b) {
+				case '>' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.GREEK);
-					return CHAR;
-				case '4':
+					yield CHAR;
+				}
+				case '4' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.DEC_HEBREW);
-					return CHAR;
-				case '?':
+					yield CHAR;
+				}
+				case '?' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.DEC_GREEK);
-					return CHAR;
-			}
-			handler.handleCharExc((byte) 0x1b);
-			return parser.doProcessByte(
-				parser.doProcessByte(parser.doProcessByte(CHAR, parser.csG.b), (byte) '"'), b);
+					yield CHAR;
+				}
+				default -> {
+					handler.handleCharExc((byte) 0x1b);
+					VtState st = CHAR;
+					st = parser.doProcessByte(st, parser.csG.b);
+					st = parser.doProcessByte(st, (byte) '"');
+					st = parser.doProcessByte(st, b);
+					yield st;
+				}
+			};
 		}
 	},
 	/**
@@ -180,26 +211,36 @@ public enum VtState {
 	CHARSET_PERCENT {
 		@Override
 		protected VtState handleNext(byte b, VtParser parser, VtHandler handler) {
-			switch (b) {
-				case '2':
+			return switch (b) {
+				case '2' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.TURKISH);
-					return CHAR;
-				case '6':
+					yield CHAR;
+				}
+				case '6' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.PORTUGESE);
-					return CHAR;
-				case '=':
+					yield CHAR;
+				}
+				case '=' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.HEBREW);
-					return CHAR;
-				case '0':
+					yield CHAR;
+				}
+				case '0' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.DEC_TURKISH);
-					return CHAR;
-				case '5':
+					yield CHAR;
+				}
+				case '5' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.DEC_SUPPLEMENTAL_GRAPHICS);
-					return CHAR;
-			}
-			handler.handleCharExc((byte) 0x1b);
-			return parser.doProcessByte(
-				parser.doProcessByte(parser.doProcessByte(CHAR, parser.csG.b), (byte) '%'), b);
+					yield CHAR;
+				}
+				default -> {
+					handler.handleCharExc((byte) 0x1b);
+					VtState st = CHAR;
+					st = parser.doProcessByte(st, parser.csG.b);
+					st = parser.doProcessByte(st, (byte) '%');
+					st = parser.doProcessByte(st, b);
+					yield st;
+				}
+			};
 		}
 	},
 	/**
@@ -208,14 +249,35 @@ public enum VtState {
 	CHARSET_AMPERSAND {
 		@Override
 		protected VtState handleNext(byte b, VtParser parser, VtHandler handler) {
-			switch (b) {
-				case '4':
+			return switch (b) {
+				case '4' -> {
 					handler.handleSetCharset(parser.csG, VtCharset.DEC_CYRILLIC);
-					return CHAR;
-			}
-			handler.handleCharExc((byte) 0x1b);
-			return parser.doProcessByte(
-				parser.doProcessByte(parser.doProcessByte(CHAR, parser.csG.b), (byte) '&'), b);
+					yield CHAR;
+				}
+				default -> {
+					handler.handleCharExc((byte) 0x1b);
+					VtState st = CHAR;
+					st = parser.doProcessByte(st, parser.csG.b);
+					st = parser.doProcessByte(st, (byte) '&');
+					st = parser.doProcessByte(st, b);
+					yield st;
+				}
+			};
+		}
+	},
+	/**
+	 * We've encountered {@code DCS}
+	 * <p>
+	 * This implementation is entirely incorrect, but it's here to clean up all the VT-100 (or not)
+	 * garbage that Claude Code emits.
+	 */
+	DCS_PARAM {
+		@Override
+		protected VtState handleNext(byte b, VtParser parser, VtHandler handler) {
+			return switch (b) {
+				case 0x1b -> CHAR; // This is really supposed to be terminated by ST (ESC \)
+				default -> DCS_PARAM;
+			};
 		}
 	},
 	/**
@@ -284,8 +346,8 @@ public enum VtState {
 		}
 	},
 	/**
-	 * We've encountered {@code ESC} part of , so now we're parsing parameters until we encounter
-	 * {@code BEL} or {@code ST}.
+	 * We've encountered the {@code ESC} part of {@code OSC}, so now we're parsing parameters until
+	 * we encounter {@code BEL} or {@code ST}.
 	 */
 	OSC_ESC {
 		@Override

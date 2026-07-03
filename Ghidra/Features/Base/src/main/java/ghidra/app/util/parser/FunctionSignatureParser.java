@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.services.DataTypeQueryService;
+import ghidra.app.util.SymbolPath;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
@@ -56,7 +57,8 @@ public class FunctionSignatureParser {
 	private DataTypeParser dataTypeParser;
 	private Map<String, DataType> dtMap = new HashMap<>();
 
-	private Map<String, String> nameMap = new HashMap<>();
+	/** Stores parameter names that required name fixup for parsing to work correctly */
+	private Map<String, String> replacedNameMap = new HashMap<>();
 	private DataTypeManager destDataTypeManager;
 	private ParserDataTypeManagerService dtmService;
 
@@ -96,8 +98,16 @@ public class FunctionSignatureParser {
 	 */
 	public FunctionDefinitionDataType parse(FunctionSignature originalSignature,
 			String signatureText) throws ParseException, CancelledException {
+
+		FsParseResult result = parseWithNamespace(originalSignature, signatureText);
+		return result.functionDefinition();
+	}
+
+	public FsParseResult parseWithNamespace(FunctionSignature originalSignature,
+			String signatureText) throws ParseException, CancelledException {
+
 		dtMap.clear();
-		nameMap.clear();
+		replacedNameMap.clear();
 		if (dtmService != null) {
 			dtmService.clearCache(); // clear datatype selection cache
 		}
@@ -108,14 +118,18 @@ public class FunctionSignatureParser {
 		}
 
 		String functionName = extractFunctionName(signatureText);
+		SymbolPath path = new SymbolPath(functionName);
+		SymbolPath nsPath = path.getParent();
+		String name = path.getName();
+
 		FunctionDefinitionDataType function =
-			new FunctionDefinitionDataType(functionName, destDataTypeManager);
+			new FunctionDefinitionDataType(name, destDataTypeManager);
 
 		function.setReturnType(extractReturnType(signatureText));
 		function.setArguments(extractArguments(signatureText));
 		function.setVarArgs(hasVarArgs(signatureText));
 
-		return function;
+		return new FsParseResult(nsPath, function);
 	}
 
 	private void initDataTypeMap(FunctionSignature signature) {
@@ -247,7 +261,7 @@ public class FunctionSignatureParser {
 		if (canParseName(name)) {
 			return text;
 		}
-		nameMap.put(replacementName, name);
+		replacedNameMap.put(replacementName, name);
 		return substitute(text, name, replacementName);
 	}
 
@@ -299,8 +313,8 @@ public class FunctionSignatureParser {
 	}
 
 	private String resolveName(String name) throws ParseException {
-		if (nameMap.containsKey(name)) {
-			return nameMap.get(name);
+		if (replacedNameMap.containsKey(name)) {
+			return replacedNameMap.get(name);
 		}
 		if (!canParseName(name)) {
 			throw new ParseException("Can't parse name: " + name);
@@ -319,6 +333,14 @@ public class FunctionSignatureParser {
 	private boolean canParseType(String text) {
 		return !StringUtils.containsAny(text, "()<>,");
 	}
+
+	/**
+	 * A simple object to hold data for the results of parsing the function signature text
+	 * @param namespace the namespace; may be null
+	 * @param functionDefinition the function definition; will not be null
+	 */
+	public record FsParseResult(SymbolPath namespace,
+			FunctionDefinitionDataType functionDefinition) {}
 
 	/**
 	 * Provides a simple caching datatype manager service wrapper.<br>

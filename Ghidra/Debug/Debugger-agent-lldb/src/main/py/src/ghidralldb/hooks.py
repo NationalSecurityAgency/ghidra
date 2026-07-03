@@ -18,7 +18,7 @@ import threading
 import time
 from typing import Any, Optional, Union
 
-import lldb
+import lldb #  type: ignore  # no stubs available from upstream/SWIG
 
 from . import commands, util
 
@@ -68,6 +68,8 @@ class ProcessState(object):
             commands.put_threads()
             self.threads = False
         thread = util.selected_thread()
+        if not thread.GetProcess().is_alive:
+            return
         if thread is not None:
             if first or thread.GetThreadID() not in self.visited:
                 commands.put_frames()
@@ -111,10 +113,11 @@ class ProcessState(object):
         commands.put_processes()
         commands.put_threads()
 
-    def record_exited(self, exit_code):
+    def record_exited(self, exit_code: int):
         proc = util.get_process()
         ipath = commands.PROCESS_PATTERN.format(procnum=proc.GetProcessID())
-        procobj = commands.STATE.trace.proxy_object_path(ipath)
+        trace = commands.STATE.require_trace()
+        procobj = trace.proxy_object_path(ipath)
         procobj.set_value('Exit Code', exit_code)
         procobj.set_value('State', 'TERMINATED')
 
@@ -287,35 +290,25 @@ class EventThread(threading.Thread):
         rc = cli.GetBroadcaster().AddListener(listener, ALL_EVENTS)
         if not rc:
             print("add listener for cli failed")
-            # return
         rc = target.GetBroadcaster().AddListener(listener, ALL_EVENTS)
         if not rc:
             print("add listener for target failed")
-            # return
         rc = proc.GetBroadcaster().AddListener(listener, ALL_EVENTS)
         if not rc:
             print("add listener for process failed")
-            # return
 
-        # Not sure what effect this logic has
-        rc = cli.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
+        rc = listener.StartListeningForEventClass(
+            util.get_debugger(), lldb.SBTarget.GetBroadcasterClassName(), ALL_EVENTS)
         if not rc:
-            print("add initial events for cli failed")
-            # return
-        rc = target.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
+            print("add listener for targets failed")
+        rc = listener.StartListeningForEventClass(
+            util.get_debugger(), lldb.SBProcess.GetBroadcasterClassName(), ALL_EVENTS)
         if not rc:
-            print("add initial events for target failed")
-            # return
-        rc = proc.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
-        if not rc:
-            print("add initial events for process failed")
-            # return
-
+            print("add listener for processes failed")
         rc = listener.StartListeningForEventClass(
             util.get_debugger(), lldb.SBThread.GetBroadcasterClassName(), ALL_EVENTS)
         if not rc:
             print("add listener for threads failed")
-            # return
         # THIS WILL NOT WORK: listener = util.get_debugger().GetListener()
 
         while True:
@@ -337,8 +330,6 @@ class EventThread(threading.Thread):
                             print(e)
                     event_recvd = True
             proc = util.get_process()
-            if proc is not None and not proc.is_alive:
-                break
         return
 
 
@@ -506,8 +497,8 @@ def on_stop(event: lldb.SBEvent) -> bool:
     proc = lldb.SBProcess.GetProcessFromEvent(
         event) if event is not None else util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        print("not in state")
-        return False
+        enable_current_process()
+        commands.put_processes()
     trace = commands.STATE.trace
     if trace is None:
         print("no trace")
@@ -521,6 +512,7 @@ def on_stop(event: lldb.SBEvent) -> bool:
             commands.put_threads()
             commands.put_frames()
             commands.activate()
+            commands.put_breakpoints()
     return True
 
 

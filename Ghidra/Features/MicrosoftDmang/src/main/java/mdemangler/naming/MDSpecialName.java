@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package mdemangler.naming;
 
 import mdemangler.*;
+import mdemangler.datatype.MDDataType;
 import mdemangler.datatype.MDDataTypeParser;
 import mdemangler.object.MDObjectCPP;
 
@@ -53,6 +54,8 @@ public class MDSpecialName extends MDParsableItem {
 	private int rttiNumber = -1;
 	private MDString mstring;
 	private String castTypeString;
+	private MDQualifier xtorQual;
+	private MDDataType castType;
 
 	public MDSpecialName(MDMang dmang, int startIndexOffset) {
 		super(dmang, startIndexOffset);
@@ -66,8 +69,16 @@ public class MDSpecialName extends MDParsableItem {
 		return name;
 	}
 
+	public void setXtorQual(MDQualifier xtorQual) {
+		this.xtorQual = xtorQual;
+	}
+
 	public void setCastTypeString(String castTypeString) {
 		this.castTypeString = castTypeString;
+	}
+
+	public void setCastType(MDDataType castType) {
+		this.castType = castType;
 	}
 
 	public boolean isConstructor() {
@@ -108,10 +119,36 @@ public class MDSpecialName extends MDParsableItem {
 
 	@Override
 	public void insert(StringBuilder builder) {
-		dmang.insertString(builder, name);
-		if (isTypeCast && castTypeString != null) {
-			dmang.appendString(builder, " ");
-			dmang.appendString(builder, castTypeString);
+		if (isConstructor) {
+			if (xtorQual != null) {
+				xtorQual.insert(builder);
+			}
+			else {
+				dmang.insertString(builder, "ctor");
+			}
+		}
+		else if (isDestructor) {
+			if (xtorQual != null) {
+				xtorQual.insert(builder);
+			}
+			else {
+				dmang.insertString(builder, "dtor");
+			}
+			dmang.insertString(builder, "~");
+		}
+		else {
+			dmang.insertString(builder, name);
+		}
+		if (isTypeCast) {
+			if (castType != null) {
+				dmang.appendString(builder, " ");
+				castType.insert(builder);
+
+			}
+			else if (castTypeString != null) {
+				dmang.appendString(builder, " ");
+				dmang.appendString(builder, castTypeString);
+			}
 		}
 	}
 
@@ -600,7 +637,8 @@ public class MDSpecialName extends MDParsableItem {
 							}
 								break;
 							case 'F': {
-								dmang.parseInfoPush(3, "dynamic atexit destructor operator");
+								dmang.parseInfoPush(3,
+									"dynamic atexit destructor operator for [Object]");
 								StringBuilder builder = new StringBuilder();
 								// TODO... 20160812: This looks like new ObjectCPP and ObjectC
 								if (dmang.peek() == '?') {
@@ -635,17 +673,17 @@ public class MDSpecialName extends MDParsableItem {
 							}
 								break;
 							case 'G':
-								dmang.parseInfoPush(3, "vector copy constructor");
+								dmang.parseInfoPush(3, "vector copy constructor iterator");
 								name = "`vector copy constructor iterator'";
 								dmang.parseInfoPop();
 								break;
 							case 'H':
-								dmang.parseInfoPush(3, "vector vbase copy constructor");
+								dmang.parseInfoPush(3, "vector vbase copy constructor iterator");
 								name = "`vector vbase copy constructor iterator'";
 								dmang.parseInfoPop();
 								break;
 							case 'I':
-								dmang.parseInfoPush(3, "managed vector copy constructor");
+								dmang.parseInfoPush(3, "managed vector copy constructor iterator");
 								name = "`managed vector copy constructor iterator'";
 								dmang.parseInfoPop();
 								break;
@@ -655,7 +693,7 @@ public class MDSpecialName extends MDParsableItem {
 								dmang.parseInfoPop();
 								break;
 							case 'K':
-								dmang.parseInfoPush(3, "udl");
+								dmang.parseInfoPush(3, "user defined literal");
 								// Our test has manufactured symbol "??__Kabc@def@@3HA"
 								// 20170329: Confirmed that this is not a MDReusableName with
 								// manufactured symbol "??__Kabc@def@0@3HA"

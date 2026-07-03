@@ -25,10 +25,10 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 import org.xml.sax.*;
 
 import generic.jar.ResourceFile;
@@ -92,7 +92,8 @@ public class XmlUtilities {
 			int codePoint = xml.codePointAt(offset);
 			offset += Character.charCount(codePoint);
 
-			if ((codePoint < ' ') && (codePoint != 0x09) && (codePoint != 0x0A) && (codePoint != 0x0D)) {
+			if ((codePoint < ' ') && (codePoint != 0x09) && (codePoint != 0x0A) &&
+				(codePoint != 0x0D)) {
 				continue;
 			}
 			if (codePoint >= 0x7F) {
@@ -163,7 +164,7 @@ public class XmlUtilities {
 	public static byte[] xmlToByteArray(Element root) {
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
 		Document doc = new Document(root);
-		XMLOutputter xmlOut = new GenericXMLOutputter();
+		XMLOutputter xmlOut = GenericXMLOutputter.getInstance();
 		try {
 			xmlOut.output(doc, os);
 			os.close();
@@ -182,17 +183,17 @@ public class XmlUtilities {
 	 * @return String translation of the given element
 	 */
 	public static String toString(Element root) {
-		XMLOutputter outputter = new GenericXMLOutputter();
+		XMLOutputter outputter = GenericXMLOutputter.getInstance();
 		return outputter.outputString(root);
 	}
 
 	/**
 	 * Convert a String into a JDOM {@link Element}.
 	 * 
-	 * @param s
-	 * @return
-	 * @throws JDOMException
-	 * @throws IOException
+	 * @param s the xml string
+	 * @return an element
+	 * @throws JDOMException if there is an exception building the element
+	 * @throws IOException if there is an exception building the element
 	 */
 	public static Element fromString(String s) throws JDOMException, IOException {
 		SAXBuilder sax = createSecureSAXBuilder(false, false);
@@ -547,7 +548,7 @@ public class XmlUtilities {
 
 	/**
 	 * Parses the given string into a boolean value. Acceptable inputs are
-	 * y,n,true,fase. A null input string will return false (useful if optional
+	 * y,n,true,false. A null input string will return false (useful if optional
 	 * boolean attribute is false by default)
 	 * 
 	 * @param boolStr the string to parse into a boolean value

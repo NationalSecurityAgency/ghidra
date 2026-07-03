@@ -194,8 +194,15 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			ms2013Truth);
 	}
 
-	private void demangleAndTestFunction() throws Exception {
+	private void demangleAndTestFunction32Bit() throws Exception {
 		testConfiguration.setIsFunction(true);
+		testConfiguration.setArchitectureSize(32);
+		testConfiguration.demangleAndTest(testName, mangled, mdTruth, msTruth, ghTruth,
+			ms2013Truth);
+	}
+
+	private void demangleAndTest16Bit() throws Exception {
+		testConfiguration.setArchitectureSize(16);
 		testConfiguration.demangleAndTest(testName, mangled, mdTruth, msTruth, ghTruth,
 			ms2013Truth);
 	}
@@ -3236,6 +3243,26 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		demangleAndTest();
 	}
 
+	//=====================
+	// $2 template constants
+	//
+	// We seem to have two different encodings for $2 template constant.  An older form that
+	//  encodes floating point numbers that works in undname from vs2017 and a newer form that
+	//  encodes type constants with initializers that works in undname from vs2022.  The 2017
+	//  mangled strings do not demangle under 2022 and the 2022 strings do not demangle under
+	//  2017.  I have not checked other VS versions.  Probably no longer need to encode floating
+	//  point type the same way, as they could probably be encoded with the newer format, which
+	//  should offer a broader encoding scheme.  We don't know if both encoding styles can
+	//  coexist or whether we need to offer different demangling versions (e.g., see MDMangVS2015).
+	//  We haven't pursued fleshing out the differences between versions, but if we did, then we
+	//  could offer the user the options of choosing or we could detect from PE header, PDB, or
+	//  other analysis.  Probably best if we can make all coexist. (Note: we still have other
+	//  issues where LLVM or Clang don't adhere exactly to some MSFT encoding standards; this
+	//  was partially worked around, but is still a mess.)
+	//
+	// ALSO... gaining evidence that there are many more $ codes for template constants than
+	//  what we have implemented.  Seems like it might be a lot of work to tackle all of them.
+
 	//manufactured symbol: $2 Blank (zero) exponent
 	@Test
 	public void testSpecialTemplateParameters_dollar2_blankzeroexp() throws Exception {
@@ -3358,6 +3385,56 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mdTruth = msTruth;
 		demangleAndTest();
 	}
+
+	// Newer $2 template constant encodings below.  See note at top of $2 section
+
+	// real symbol with $2 non-floating point template constant with initializers
+	// From template_op_lit/tol64
+	// mstruth here is from vs2022 undname
+	@Category(MDMangFailingTestCategory.class)
+	@Test
+	public void testTemplateConstantParameterWithInitializers1() throws Exception {
+		mangled =
+			"??$?__K_x2@$2U?$DoubleString@$03@@3D0GB@@0GC@@0GD@@0GB@@0GC@@0GD@@0A@@@@@@YA?A_PXZ";
+		msTruth =
+			"auto __cdecl operator \"\" _x2<struct DoubleString<4>{char{97,98,99,97,98,99,0}}>(void)";
+		mdTruth = msTruth;
+		demangleAndTest16Bit();
+	}
+
+	// This is fuzzed counterpoint to the real $2 template constant, above
+	// mstruth here is from vs2022 undname
+	@Category(MDMangFailingTestCategory.class)
+	@Test
+	public void testTemplateConstantParameterWithInitializers1_counterpoint1() throws Exception {
+		mangled = "??$?M$2H@@@YA?AXXZ";
+		msTruth = "void __cdecl operator<<int{}>(void)";
+		mdTruth = msTruth;
+		demangleAndTest16Bit();
+	}
+
+	// This is fuzzed counterpoint to the real $2 template constant, above.  This does not have $2
+	// mstruth here is from both vs2022 and vs2017 undname
+	@Test
+	public void testTemplateConstantParameterWithInitializers1_counterpoint2() throws Exception {
+		mangled = "??$?MH@@YAXXZ";
+		msTruth = "void __cdecl operator<<int>(void)";
+		mdTruth = msTruth;
+		demangleAndTest16Bit();
+	}
+
+	// This is fuzzed counterpoint to the real $2 template constant, above.  This does not have $2
+	//  probably don't need since we just figured out ?A (we already process)
+	// mstruth here is from both vs2022 and vs2017 undname
+	@Test
+	public void testTemplateConstantParameterWithInitializers1_counterpoint3() throws Exception {
+		mangled = "??$?MH@@YA?AXXZ";
+		msTruth = "void __cdecl operator<<int>(void)";
+		mdTruth = msTruth;
+		demangleAndTest16Bit();
+	}
+
+	//=====================
 
 	//real symbol: $D
 	@Test
@@ -5042,6 +5119,22 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mdTruth = msTruth;
 		demangleAndTest();
 	}
+
+	//manufactured symbol
+	// We have no real symbols and haven't been able to get undname to produce results,
+	//  which means that we might not have all the right pieces for a ??_W symbol to parse.
+	//  If we find/produce a symbol that undname works on, the we should delete and
+	//  replace this test and change the demangler to properly parse the symbol (which should
+	//  also cause this current test to fail).
+	@Test
+	public void testSpecialNames_W() throws Exception {
+		mangled = "??_WAA@@QAAXXZ";
+		msTruth = "";
+		mdTruth = "public: void __cdecl AA::`omni callsig'(void)";
+		demangleAndTest();
+	}
+	// ??_WAA@@QAAXXZ
+	// public: void __cdecl AA::`omni callsig'(void)
 
 	//manufactured symbol
 	@Test
@@ -15362,7 +15455,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mangled = "_name";
 		mdTruth = "name";
 		msTruth = "";
-		demangleAndTestFunction();
+		demangleAndTestFunction32Bit();
 	}
 
 	@Test
@@ -15378,7 +15471,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mangled = "_name@12";
 		mdTruth = "__stdcall name,12";
 		msTruth = "";
-		demangleAndTestFunction();
+		demangleAndTestFunction32Bit();
 	}
 
 	@Test
@@ -15394,7 +15487,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mangled = "@name@12";
 		mdTruth = "__fastcall name,12";
 		msTruth = "";
-		demangleAndTestFunction();
+		demangleAndTestFunction32Bit();
 	}
 
 	@Test
@@ -15410,7 +15503,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mangled = "name@@12";
 		mdTruth = "__vectorcall name,12";
 		msTruth = "";
-		demangleAndTestFunction();
+		demangleAndTestFunction32Bit();
 	}
 
 	@Test
@@ -15419,6 +15512,247 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mdTruth = "";
 		msTruth = "";
 		demangleAndTest();
+	}
+
+	//=====================
+	/*
+	 * Following are tests involving functions and function pointers for functions that take and
+	 *  return function pointers
+	 */
+
+	@Test
+	public void testFunctionWithFunctionPointers1() throws Exception {
+		mangled = "?fxa@@3PAP6AP6AHH@ZP6ADD@Z@ZA";
+		msTruth = "int (__cdecl*(__cdecl** fxa)(char (__cdecl*)(char)))(int)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testFunctionWithFunctionPointers2() throws Exception {
+		mangled = "?f2@@YAP6AP6AHH@ZP6ADD@Z@ZAAP6AP6AHH@Z0@Z@Z";
+		msTruth =
+			"int (__cdecl*(__cdecl*__cdecl f2(int (__cdecl*(__cdecl*&)(char (__cdecl*)(char)))(int)))(char (__cdecl*)(char)))(int)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	//=====================
+	/*
+	 * Follow are hand-crafted vcall modifiers with 16-bit architecture.
+	 * These use the architectures size for parsing both the vcall modifier as well as the
+	 * __based() attributes for those that use a based attribute
+	 */
+
+	// hand-crafted... this test is a 32-bit counterpoint test for the 16-bit test after it
+	@Test
+	public void testVCallA32() throws Exception {
+		mangled = "??_9name0@@$BBII@AA";
+		msTruth = "[thunk]: __cdecl name0::`vcall'{392,{flat}}' }'";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallA16() throws Exception {
+		mangled = "??_9name0@@$BBII@AA";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__near this, __near call, __near vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	@Test
+	public void testVCallB16() throws Exception {
+		mangled = "??_9name0@@$BBII@BA";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__near this, __far call, __near vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallC16() throws Exception {
+		mangled = "??_9name0@@$BBII@CA";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__far this, __near call, __near vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallD16() throws Exception {
+		mangled = "??_9name0@@$BBII@DA";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__far this, __far call, __near vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallE16() throws Exception {
+		mangled = "??_9name0@@$BBII@EA";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__near this, __near call, __far vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallF16() throws Exception {
+		mangled = "??_9name0@@$BBII@FA";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__near this, __far call, __far vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallG16() throws Exception {
+		mangled = "??_9name0@@$BBII@GA";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__far this, __near call, __far vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallH16() throws Exception {
+		mangled = "??_9name0@@$BBII@HA";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__far this, __far call, __far vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallI016() throws Exception {
+		mangled = "??_9name0@@$BBII@I0A";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__near this, __near call, __based(void) vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallJ016() throws Exception {
+		mangled = "??_9name0@@$BBII@J0A";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__near this, __far call, __based(void) vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallK016() throws Exception {
+		mangled = "??_9name0@@$BBII@K0A";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__far this, __near call, __based(void) vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallL016() throws Exception {
+		mangled = "??_9name0@@$BBII@L0A";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__far this, __far call, __based(void) vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallL116() throws Exception {
+		mangled = "??_9name0@@$BBII@L1A";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__far this, __far call, __based(__self) vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallL216() throws Exception {
+		mangled = "??_9name0@@$BBII@L2A";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__far this, __far call, __based(NYI:__near*) vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallL316() throws Exception {
+		mangled = "??_9name0@@$BBII@L3A";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__far this, __far call, __based(NYI:__far*) vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallL416() throws Exception {
+		mangled = "??_9name0@@$BBII@L4A";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__far this, __far call, __based(NYI:__huge*) vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallL516() throws Exception {
+		mangled = "??_9name0@@$BBII@L5A";
+		// This expected result is even more questionable... need real output for based 5 code with
+		// 16-bit model
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__far this, __far call, vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallL616() throws Exception {
+		mangled = "??_9name0@@$BBII@L6A";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__far this, __far call, __based(NYI:__segment) vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallL716() throws Exception {
+		mangled = "??_9name0@@$BBII@L7name1@A";
+		// Need special attention to mangled and demangled for this hand-crafted test
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__far this, __far call, __based(__segmname(\"name1\")) vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
+	}
+
+	// hand-crafted
+	@Test
+	public void testVCallL816() throws Exception {
+		mangled = "??_9name0@@$BBII@L8A";
+		mdTruth =
+			"[thunk]: __cdecl name0::`vcall'{392,{__far this, __far call, __based(NYI:<segment-address-of-variable>) vfptr}}' }'";
+		msTruth = mdTruth; // TODO: Need a 16-bit machine to determine actual mdTruth
+		demangleAndTest16Bit();
 	}
 
 	//=====================

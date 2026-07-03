@@ -28,9 +28,10 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
@@ -91,9 +92,9 @@ public class DebuggerCopyPlan {
 				AddressSet rngAsSet = new AddressSet(fromRange);
 				TraceMemoryManager mm = from.getTrace().getMemoryManager();
 				AddressSetView knownSet = mm.getAddressesWithState(from.getSnap(), rngAsSet,
-					s -> s == TraceMemoryState.KNOWN);
+					StatePredicate.IS_KNOWN);
 				AddressSetView errorSet = mm.getAddressesWithState(from.getSnap(), rngAsSet,
-					s -> s == TraceMemoryState.ERROR);
+					StatePredicate.IS_ERROR);
 				AddressSetView staleSet = rngAsSet.subtract(knownSet).subtract(errorSet);
 				setShifted(map, fromRange.getMinAddress(), intoAddress, errorSet,
 					DebuggerResources.COLOR_BACKGROUND_ERROR.getRGB());
@@ -220,7 +221,7 @@ public class DebuggerCopyPlan {
 			public void copy(TraceProgramView from, AddressRange fromRange, Program into,
 					Address intoAddress, TaskMonitor monitor) throws Exception {
 				long snap = from.getSnap();
-				for (TraceBreakpoint bpt : from.getTrace()
+				for (TraceBreakpointLocation bpt : from.getTrace()
 						.getBreakpointManager()
 						.getBreakpointsIntersecting(Lifespan.at(from.getSnap()), fromRange)) {
 					monitor.checkCancelled();

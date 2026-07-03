@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.references;
 
-import static ghidra.framework.main.DataTreeDialogType.*;
-
 import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -29,12 +27,12 @@ import docking.ActionContext;
 import docking.DefaultActionContext;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.dialogs.InputDialog;
-import docking.widgets.table.AbstractSortedTableModel;
+import docking.widgets.table.AbstractGTableModel;
 import generic.theme.GIcon;
 import ghidra.app.cmd.refs.*;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.cmd.CompoundCmd;
-import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.main.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -53,6 +51,8 @@ import resources.Icons;
 public class ExternalReferencesProvider extends ComponentProviderAdapter {
 	private static Icon ADD_ICON = Icons.ADD_ICON;
 	private static Icon DELETE_ICON = Icons.DELETE_ICON;
+	private static Icon UP_ICON = Icons.UP_ICON;
+	private static Icon DOWN_ICON = Icons.DOWN_ICON;
 	private static Icon EDIT_ICON = new GIcon("icon.base.edit.bytes");
 	private static Icon CLEAR_ICON = Icons.CLEAR_ICON;
 
@@ -98,6 +98,22 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 				.toolBarIcon(DELETE_ICON)
 				.enabledWhen(ac -> hasSelectedRows())
 				.onAction(ac -> deleteExternalProgram())
+				.buildAndInstallLocal(this);
+
+		new ActionBuilder("Move Library Up", getOwner())
+				.popupMenuPath("Move Library Up")
+				.popupMenuIcon(UP_ICON)
+				.toolBarIcon(UP_ICON)
+				.enabledWhen(ac -> canDecrementSelectedLibraryOrdinal())
+				.onAction(ac -> adjustLibraryOrdinal(true))
+				.buildAndInstallLocal(this);
+
+		new ActionBuilder("Move Library Down", getOwner())
+				.popupMenuPath("Move Library Down")
+				.popupMenuIcon(DOWN_ICON)
+				.toolBarIcon(DOWN_ICON)
+				.enabledWhen(ac -> canIncrementSelectedLibraryOrdinal())
+				.onAction(ac -> adjustLibraryOrdinal(false))
 				.buildAndInstallLocal(this);
 
 		new ActionBuilder("Set External Name Association", getOwner())
@@ -157,11 +173,18 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 		JPanel panel = new JPanel(new BorderLayout());
 		tableModel = new ExternalNamesTableModel();
 		table = new GhidraTable(tableModel);
+		table.getSelectionModel().addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting()) {
+				return;
+			}
 
-		JScrollPane sp = new JScrollPane(table);
+			contextChanged();
+		});
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		ToolTipManager.sharedInstance().registerComponent(table);
+
+		JScrollPane sp = new JScrollPane(table);
 		panel.add(sp, BorderLayout.CENTER);
 
 		String namePrefix = "External Programs";
@@ -233,11 +256,53 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	private void adjustLibraryOrdinal(boolean moveUp) {
+		if ((moveUp && !canDecrementSelectedLibraryOrdinal()) ||
+			(!moveUp && !canIncrementSelectedLibraryOrdinal())) {
+			return;
+		}
+		int ordinalAdjustment = moveUp ? -1 : 1;
+		List<String> selectedExternalNames = getSelectedExternalNames();
+		String externalName = selectedExternalNames.get(0);	// must be exactly one for us to be enabled.
+		ExternalManager externalManager = program.getExternalManager();
+		Library externalLibrary = externalManager.getExternalLibrary(externalName);
+		if (externalLibrary != null) {
+			program.withTransaction("Adjust Library Order", () -> {
+				int ordinal = externalManager.getLibraryOrdinal(externalName);
+				if (ordinal < 0) {
+					Msg.showError(this, mainPanel, "Library Ordering Change Error",
+						"Failed to update Library ordinal for: " + externalName);
+					return;
+				}
+				externalManager.setLibraryOrdinal(externalName, ordinal + ordinalAdjustment);
+			});
+		}
+	}
+
+	private boolean canDecrementSelectedLibraryOrdinal() {
+		int[] selectedRows = table.getSelectedRows();
+		if (selectedRows.length == 1 && selectedRows[0] != 0) {
+			ExternalNamesRow rowBefore = tableModel.getRowObject(selectedRows[0] - 1);
+			return !Library.UNKNOWN.equals(rowBefore.getName()); // cannot displace UNKNOWN Library
+		}
+		return false;
+	}
+
+	private boolean canIncrementSelectedLibraryOrdinal() {
+		int lastRow = table.getRowCount() - 1;
+		int[] selectedRows = table.getSelectedRows();
+		if (selectedRows.length == 1 && selectedRows[0] != lastRow) {
+			ExternalNamesRow row = tableModel.getRowObject(selectedRows[0]);
+			return !Library.UNKNOWN.equals(row.getName()); // cannot alter UNKNOWN Library ordinal
+		}
+		return false;
+	}
+
 	private void setExternalProgramAssociation() {
 		List<String> selectedExternalNames = getSelectedExternalNames();
 		String externalName = selectedExternalNames.get(0);	// must be exactly one for us to be enabled.
-		DataTreeDialog dialog = new DataTreeDialog(mainPanel,
-			"Choose External Program (" + externalName + ")", OPEN);
+		DataTreeDialog dialog = new ProgramFileChooser(mainPanel,
+			"Choose External Program (" + externalName + ")", AppInfo.getActiveProject());
 
 		dialog.setSearchText(externalName);
 
@@ -263,7 +328,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 	private void clearExternalAssociation() {
 		CompoundCmd<Program> cmd = new CompoundCmd<>("Clear External Program Associations");
 		for (String externalName : getSelectedExternalNames()) {
-			cmd.add(new ClearExternalNameCmd(externalName));
+			cmd.add(new ClearExternalPathCmd(externalName));
 		}
 		getTool().execute(cmd, program);
 	}
@@ -320,7 +385,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 
 	}
 
-	class ExternalNamesTableModel extends AbstractSortedTableModel<ExternalNamesRow> {
+	class ExternalNamesTableModel extends AbstractGTableModel<ExternalNamesRow> {
 
 		final static int NAME_COL = 0;
 		final static int PATH_COL = 1;
@@ -331,18 +396,18 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 		private List<ExternalNamesRow> paths = new ArrayList<>();
 
 		void updateTableData() {
+
 			paths.clear();
 
 			if (program != null && isVisible()) {
 				ExternalManager extMgr = program.getExternalManager();
+				// NOTE: Keep table in ordinal sequence as provided by external manager
 				String[] programNames = extMgr.getExternalLibraryNames();
-				Arrays.sort(programNames);
 
 				for (String programName : programNames) {
 					if (Library.UNKNOWN.equals(programName)) {
 						continue;
 					}
-
 					ExternalNamesRow path = new ExternalNamesRow(programName,
 						extMgr.getExternalLibraryPath(programName));
 					paths.add(path);
@@ -384,11 +449,6 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 		@Override
 		public String getName() {
 			return "External Programs Model";
-		}
-
-		@Override
-		public boolean isSortable(int columnIndex) {
-			return true;
 		}
 
 		@Override
@@ -441,21 +501,6 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 			if (!tool.execute(cmd, program)) {
 				tool.setStatusInfo(cmd.getStatusMsg());
 			}
-		}
-
-		@Override
-		protected Comparator<ExternalNamesRow> createSortComparator(int columnIndex) {
-			if (columnIndex == PATH_COL) {
-				// force the path column to have a secondary compare using the name column
-				// to ensure a 'stable' sort.  Without this during analysis
-				// the constant updates cause the table to sort randomly when
-				// there are lots of empty path values. 
-				Comparator<ExternalNamesRow> c1 =
-					(r1, r2) -> Objects.requireNonNullElse(r1.getPath(), "")
-							.compareTo(Objects.requireNonNullElse(r2.getPath(), ""));
-				return c1.thenComparing((r1, r2) -> r1.getName().compareTo(r2.getName()));
-			}
-			return super.createSortComparator(columnIndex);
 		}
 
 	}

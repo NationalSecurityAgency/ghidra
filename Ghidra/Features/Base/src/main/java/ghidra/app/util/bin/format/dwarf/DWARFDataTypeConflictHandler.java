@@ -62,11 +62,10 @@ public class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 	}
 
 	/**
-	 * Returns true if src can overwrite the target composite based on size
+	 * {@return true if src can overwrite the target composite based on size}
 	 * 
-	 * @param src
-	 * @param target
-	 * @return
+	 * @param src {@link Composite} data type
+	 * @param target {@link Composite} data type
 	 */
 	private boolean isSizeCompatible(Composite src, Composite target) {
 		return target.isNotYetDefined() || (src.getLength() == target.getLength());
@@ -115,14 +114,14 @@ public class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 		}
 
 		Map<String, DataTypeComponent> fullComponentsByName = new HashMap<>();
-		for (DataTypeComponent dtc : full.getComponents()) {
+		for (DataTypeComponent dtc : full.getDefinedComponents()) {
 			String name = dtc.getFieldName();
 			if (name == null) {
 				name = dtc.getDefaultFieldName();
 			}
 			fullComponentsByName.put(name, dtc);
 		}
-		for (DataTypeComponent dtc : part.getComponents()) {
+		for (DataTypeComponent dtc : part.getDefinedComponents()) {
 			String name = dtc.getFieldName();
 			if (name == null) {
 				name = dtc.getDefaultFieldName();

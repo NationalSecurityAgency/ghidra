@@ -19,6 +19,7 @@ data/languages/toy64-long8.cspec||GHIDRA||||END|
 data/languages/toy64.cspec||GHIDRA||||END|
 data/languages/toy64_be.slaspec||GHIDRA||||END|
 data/languages/toy64_be_harvard.slaspec||GHIDRA||||END|
+data/languages/toy64_be_harvard_rev.slaspec||GHIDRA||||END|
 data/languages/toy64_le.slaspec||GHIDRA||||END|
 data/languages/toyInstructions.sinc||GHIDRA||||END|
 data/languages/toyPosStack.cspec||GHIDRA||||END|

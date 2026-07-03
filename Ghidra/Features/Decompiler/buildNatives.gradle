@@ -38,12 +38,15 @@ model {
 									
 			// these tell gradle for which platforms to build a decompiler executable.
 			targetPlatform "win_x86_64"
+			targetPlatform "win_arm_64"
 			targetPlatform "linux_x86_64"
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
 			targetPlatform "freebsd_x86_64"
 			targetPlatform "freebsd_arm_64"
+			targetPlatform "openbsd_x86_64"
+			targetPlatform "openbsd_arm_64"
 			sources {
 				cpp {
 					// NOTE: The bison/flex generated files are assumed to be up-to-date.
@@ -86,6 +89,7 @@ model {
 		                include "emulateutil.cc"
 		                include "flow.cc"
 		                include "userop.cc"
+		                include "expression.cc"
 		                include "multiprecision.cc"
 		                include "funcdata.cc"
 		                include "funcdata_block.cc"
@@ -103,6 +107,7 @@ model {
 		                include "merge.cc"
 		                include "double.cc"
 		                include "constseq.cc"
+		                include "bitfield.cc"
 		                include "coreaction.cc"
 		                include "condexe.cc"
 		                include "override.cc"
@@ -147,12 +152,15 @@ model {
 		
 		sleigh(NativeExecutableSpec) {
 			targetPlatform "win_x86_64"
+			targetPlatform "win_arm_64"
 			targetPlatform "linux_x86_64"
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
 			targetPlatform "freebsd_x86_64"
 			targetPlatform "freebsd_arm_64"
+			targetPlatform "openbsd_x86_64"
+			targetPlatform "openbsd_arm_64"
 			sources {
 				cpp {
 					// NOTE: The bison/flex generated files are assumed to be up-to-date.

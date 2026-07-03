@@ -241,6 +241,9 @@
         <register name="d15"/>
       </unaffected>
       <killedbycall>
+        <register name="x0"/>
+        <register name="x1"/>
+        <register name="q0"/>
         <!-- x8: indirect result location register, which is not
          reflected in the pentry list -->
         <register name="x8"/>

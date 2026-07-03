@@ -232,17 +232,18 @@ database containing the breakpoint. Again, because the module has not
 been imported yet, this column is blank.</li>
 <li>The next column <strong>Length</strong> gives the length of the
 breakpoint. In GDB, this generally applies to watchpoints only.</li>
-<li>The next column <strong>Kinds</strong> gives the kinds of
+<li>The next column <strong>Kind</strong> gives the kind(s) of
 breakpoint. Most breakpoints are software execution breakpoints,
-indicated by “SW_EXECUTE.” That is, they are implemented by patching the
-target’s memory with a special instruction that traps execution —
-<code>INT3</code> on x86. There are also hardware execution breakpoints
-indicated by “HW_EXECUTE,” and access breakpoints indicated by “HW_READ”
-and/or “HW_WRITE”. <strong>NOTE</strong>: GDB would call access
-breakpoints <em>watchpoints</em>. An advantage to software breakpoints
-is that you can have a practically unlimited number of them. Some
-disadvantages are they can be detected easily, and they are limited to
-execution breakpoints.</li>
+indicated by (lower case) <code>x</code>. That is, they are implemented
+by patching the target’s memory with a special instruction that traps
+execution — <code>INT3</code> on x86. There are also hardware execution
+breakpoints indicated by (upper case) <code>X</code> and access
+breakpoints indicated by <code>R</code> and/or <code>W</code>.
+<strong>NOTE</strong>: GDB would call access breakpoints
+<em>watchpoints</em>. An advantage to software breakpoints is that you
+can have a practically unlimited number of them. Some disadvantages are
+they can be detected easily, and they are limited to execution
+breakpoints.</li>
 <li>The next column <strong>Locations</strong> counts the number of
 locations for the breakpoint. For a single-target session, this is most
 likely 1.</li>
@@ -261,9 +262,9 @@ back-end.</li>
 <li>The <strong>Trace</strong> column indicates which target contains
 the location. The text here should match one of the tabs from the
 Dynamic Listing panel.</li>
-<li>The <strong>Comment</strong> column is a user-defined comment. Its
-default value is the specification that generated it, e.g.,
-<code>srand</code>.</li>
+<li>The <strong>Comment</strong> column is a user-defined comment.</li>
+<li>The <strong>Expression</strong> column is the expression given when
+specifying the breakpoint, e.g., <code>srand</code>.</li>
 </ul>
 </section>
 <section id="toggling-the-breakpoints" class="level3">
@@ -422,7 +423,7 @@ course.</p>
 </section>
 <section id="exercise-diagram-the-mines" class="level3">
 <h3>Exercise: Diagram the Mines</h3>
-<p>You goal is to capture the location of all the mines. You will
+<p>Your goal is to capture the location of all the mines. You will
 probably want to disable the breakpoints on <code>rand</code> and
 <code>srand</code> for now. Devise a strategy using breakpoints and the
 control buttons (Step, Resume, etc.) so that you can observe the

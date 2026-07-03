@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.collections4.map.ReferenceMap;
 
+import generic.hash.HashUtilities;
 import ghidra.app.util.bin.*;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;

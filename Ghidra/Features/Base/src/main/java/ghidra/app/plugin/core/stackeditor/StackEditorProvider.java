@@ -82,7 +82,6 @@ public class StackEditorProvider
 		plugin.getTool().addComponentProvider(this, true);
 
 		addActionsToTool();
-		editorPanel.getTable().requestFocus();
 	}
 
 	@Override
@@ -235,7 +234,7 @@ public class StackEditorProvider
 						}
 						break;
 					case SYMBOL_PRIMARY_STATE_CHANGED:
-						sym = (Symbol) ((ProgramChangeRecord) rec).getNewValue();
+						sym = (Symbol) rec.getNewValue();
 						if (sym.getAddress().equals(function.getEntryPoint())) {
 							scheduleRefreshName = true;
 							delayedUpdateMgr.updateLater();

@@ -17,6 +17,8 @@ package ghidra.app.util.pdb.classtype;
 
 import java.util.*;
 
+import ghidra.app.cmd.label.SetLabelPrimaryCmd;
+import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.demangler.DemangledException;
 import ghidra.app.util.demangler.DemangledObject;
@@ -29,10 +31,10 @@ import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.gclass.ClassID;
 import ghidra.program.model.gclass.ClassUtils;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 import mdemangler.MDParsableItem;
 import mdemangler.naming.MDQualification;
@@ -53,10 +55,11 @@ import mdemangler.typeinfo.*;
  * {@link #createVirtualTable(CategoryPath, String, Address, TaskMonitor)} methods demangle
  * the strings and created tables within a owner/parentage tree based on the demangled information.
  * <p><p>
- * The {@link #findVbt(ClassID, List, Integer)} and {@link #findVft(ClassID, List, Integer)} methods
- * attempt to find the VF/VB tables by finding the appropriate node in the tree based upon owner
- * and at-times-mismatched parentage information from the user.  This mismatch is not necessarily
- * the fault of the user, but more due to what parentage is incorporated into the mangled name.
+ * The {@link #findCreateVbt(ClassID, List, Integer)} and
+ * {@link #findCreateVft(ClassID, List, Integer)} methods attempt to find the VF/VB tables by
+ * finding the appropriate node in the tree based upon owner and at-times-mismatched parentage
+ * information from the user.  This mismatch is not necessarily the fault of the user, but more
+ * due to what parentage is incorporated into the mangled name.
  * <p><p>
  * <B> DESIGN of find mechanism</B>
  * <p>
@@ -176,7 +179,8 @@ public class MsVxtManager extends VxtManager {
 	public void createTables(DataTypeManager dtm, ClearDataMode mode) {
 		for (VirtualBaseTable vbt : vbtsByOwnerParentage.values()) {
 			ClassID id = vbt.getOwner();
-			Structure table = vbt.createDataType(dtm, ClassUtils.getClassInternalsPath(id));
+			vbt.build(dtm, ClassUtils.getClassPath(id));
+			Structure table = vbt.getDataType();
 			if (mode == null) {
 				continue;
 			}
@@ -190,10 +194,20 @@ public class MsVxtManager extends VxtManager {
 			catch (CodeUnitInsertionException e) {
 				Msg.warn(this, "Could not place VBT at address: " + addr);
 			}
+//			SymbolPath symbolPath = vbt.getVbtSymbolPath();
+//			try {
+//				createSymbol(addr, symbolPath, true);
+//			}
+//			catch (InvalidInputException | IllegalArgumentException e) {
+//				Msg.warn(this, "Could not place VBT at symbol address: " + addr);
+//			}
+//			String comment = vbt.getVbTableComment();
+//			createPlateComment(addr, comment);
 		}
 		for (VirtualFunctionTable vft : vftsByOwnerParentage.values()) {
 			ClassID id = vft.getOwner();
-			Structure table = vft.createDataType(dtm, ClassUtils.getClassInternalsPath(id));
+			vft.build(dtm, ClassUtils.getClassPath(id));
+			Structure table = vft.getDataType();
 			if (mode == null) {
 				continue;
 			}
@@ -207,6 +221,33 @@ public class MsVxtManager extends VxtManager {
 			catch (CodeUnitInsertionException e) {
 				Msg.warn(this, "Could not place VFT at address: " + addr);
 			}
+//			SymbolPath symbolPath = vft.getVftSymbolPath();
+//			try {
+//				createSymbol(addr, symbolPath, true);
+//			}
+//			catch (InvalidInputException | IllegalArgumentException e) {
+//				Msg.warn(this, "Could not place VFT at symbol address: " + addr);
+//			}
+		}
+	}
+
+	// Possibly move this to VxtManager?
+	// (Also... copied/modified from DefaultPdbApplicator)
+	private void createSymbol(Address address, SymbolPath symbolPath, boolean makePrimary)
+			throws InvalidInputException, IllegalArgumentException {
+		Namespace namespace = program.getGlobalNamespace();
+		String name = symbolPath.getName();
+		String namespacePath = symbolPath.getParentPath();
+		if (namespacePath != null) {
+			namespace = NamespaceUtils.createNamespaceHierarchy(namespacePath, namespace,
+				program, address, SourceType.IMPORTED);
+		}
+		Symbol symbol =
+			program.getSymbolTable().createLabel(address, name, namespace, SourceType.IMPORTED);
+		if (makePrimary && !symbol.isPrimary()) {
+			SetLabelPrimaryCmd cmd =
+				new SetLabelPrimaryCmd(address, symbol.getName(), symbol.getParentNamespace());
+			cmd.applyTo(program);
 		}
 	}
 
@@ -338,7 +379,7 @@ public class MsVxtManager extends VxtManager {
 	 * @param ordinal ordinal of table for owner as sorted by address
 	 * @return the table
 	 */
-	public VirtualBaseTable findVbt(ClassID owner, List<ClassID> parentage, Integer ordinal) {
+	public VirtualBaseTable findCreateVbt(ClassID owner, List<ClassID> parentage, Integer ordinal) {
 		OwnerParentage op = new OwnerParentage(owner, parentage);
 		VirtualBaseTable vbt = vbtsByOwnerParentage.get(op);
 		if (vbt != null) {
@@ -424,7 +465,8 @@ public class MsVxtManager extends VxtManager {
 	 * @param ordinal ordinal of table for owner as sorted by address
 	 * @return the table
 	 */
-	public VirtualFunctionTable findVft(ClassID owner, List<ClassID> parentage, Integer ordinal) {
+	public VirtualFunctionTable findCreateVft(ClassID owner, List<ClassID> parentage,
+			Integer ordinal) {
 		OwnerParentage op = new OwnerParentage(owner, parentage);
 		VirtualFunctionTable vft = vftsByOwnerParentage.get(op);
 		if (vft != null) {

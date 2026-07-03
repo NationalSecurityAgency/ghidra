@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.assembler.sleigh;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.util.*;
 
@@ -25,10 +25,8 @@ import org.junit.Before;
 
 import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.assembler.*;
-import ghidra.app.plugin.assembler.sleigh.parse.*;
+import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseResult;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
-import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseTreeNode;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.processors.sleigh.SleighInstructionPrototype;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.util.PseudoInstruction;
@@ -39,7 +37,6 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.Msg;
-import ghidra.util.NumericUtilities;
 
 /**
  * A test for assembly of a particular SLEIGH language
@@ -52,7 +49,6 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 
 	// note: disable debug output in batch mode--over 15M of output to the test log
 
-	static final DbgTimer dbg = BATCH_MODE ? DbgTimer.INACTIVE : DbgTimer.ACTIVE;
 	static String setupLangID = "";
 
 	/**
@@ -87,32 +83,6 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 	private static SleighLanguage getLanguage(LanguageID langID) throws LanguageNotFoundException {
 		LanguageService languageService = DefaultLanguageService.getLanguageService();
 		return (SleighLanguage) languageService.getLanguage(langID);
-	}
-
-	/**
-	 * Print a collection of parse trees to the debug printer
-	 *
-	 * @param trees the trees
-	 */
-	protected static void dbgPrintTrees(Collection<AssemblyParseResult> trees) {
-		dbg.println("Got " + trees.size() + " tree(s).");
-		Set<String> suggestions = new TreeSet<>();
-		for (AssemblyParseResult result : trees) {
-			if (!result.isError()) {
-				AssemblyParseAcceptResult acc = (AssemblyParseAcceptResult) result;
-				AssemblyParseTreeNode tree = acc.getTree();
-				tree.print(dbg);
-			}
-			else {
-				AssemblyParseErrorResult err = (AssemblyParseErrorResult) result;
-				dbg.println(err);
-				if (err.getBuffer().equals("")) {
-					suggestions.addAll(err.getSuggestions());
-				}
-			}
-		}
-		dbg.println("Proposals: " + suggestions);
-
 	}
 
 	/**
@@ -168,7 +138,6 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 	 */
 	protected void checkOneCompat(String instr, AssemblyResolutionResults rr) {
 		AssemblyPatternBlock ins = AssemblyPatternBlock.fromString(instr);
-		dbg.println("Checking against: " + ins);
 		Set<AssemblyResolvedError> errs = new TreeSet<>(); // Display in order, I guess
 		Set<AssemblyResolvedPatterns> misses = new TreeSet<>();
 		for (AssemblyResolution ar : rr) {
@@ -182,15 +151,6 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 				return;
 			}
 			misses.add(rescon);
-		}
-
-		dbg.println("Errors:");
-		for (AssemblyResolution ar : errs) {
-			dbg.println(ar.toString("  "));
-		}
-		dbg.println("Mismatches:");
-		for (AssemblyResolution ar : misses) {
-			dbg.println(ar.toString("  "));
 		}
 		fail("No result matched the desired instruction bytes");
 	}
@@ -209,7 +169,6 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 		Address address = lang.getDefaultSpace().getAddress(addr);
 		final AssemblyPatternBlock ctx = (ctxstr == null ? context.getDefaultAt(address)
 				: AssemblyPatternBlock.fromString(ctxstr)).fillMask();
-		dbg.println("Checking each: " + disassembly + " ctx:" + ctx);
 		boolean gotOne = false;
 		boolean failedOne = false;
 		Set<AssemblyResolvedError> errs = new TreeSet<>(); // Display in order, I guess.
@@ -223,13 +182,10 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 			}
 			AssemblyResolvedPatterns rp = (AssemblyResolvedPatterns) ar;
 			try {
-				dbg.println("  " + rp.lineToString());
 				for (byte[] ins : rp.possibleInsVals(ctx)) {
-					dbg.println("    " + NumericUtilities.convertBytesToString(ins));
 					PseudoInstruction pi = disassemble(addr, ins, ctx.getVals());
 					String cons = dumpConstructorTree(pi);
 					String dis = pi.toString();
-					dbg.println("      " + dis);
 					if (!disassembly.contains(dis.trim())) {
 						failedOne = true;
 						misTxtToCons.put(dis, cons);
@@ -243,24 +199,9 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 			}
 		}
 		if (failedOne) {
-			dbg.println("Disassembly Mismatches:");
-			for (String dis : misTxtToCons.keySet()) {
-				dbg.println("  " + dis);
-				for (String cons : misTxtToCons.get(dis)) {
-					for (AssemblyResolvedPatterns rc : misTxtConsToRes.get(dis + cons)) {
-						dbg.println("    d:" + cons);
-						dbg.println("    a:" + rc.dumpConstructorTree());
-						dbg.println(rc.toString("      "));
-					}
-				}
-			}
 			fail("At least one result did not disassemble to the given text");
 		}
 		if (!gotOne) {
-			dbg.println("Errors:");
-			for (AssemblyResolution ar : errs) {
-				dbg.println(ar.toString("  "));
-			}
 			fail("Did not get any matches");
 		}
 	}
@@ -288,8 +229,6 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 			if (ar.isError()) {
 				continue;
 			}
-			dbg.println("Got:");
-			dbg.println(ar.toString("  "));
 			fail("All results were expected to be errors");
 		}
 	}
@@ -356,7 +295,7 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 			@Override
 			public Collection<AssemblyParseResult> filterParse(
 					Collection<AssemblyParseResult> parse) throws AssemblySyntaxException {
-				dbgPrintTrees(parse);
+				AssemblyTestCase.dbgPrintTrees(parse);
 				if (checkAllSyntaxErrs) {
 					checkAllSyntaxErrs(parse);
 				}
@@ -458,7 +397,7 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 	}
 
 	/**
-	 * Like {@link #assertOneCompatRestExact(String, String, String, long), except a context is
+	 * Like {@link #assertOneCompatRestExact(String, String, long, String)}, except a context is
 	 * given
 	 *
 	 * @param assembly the input assembly
@@ -493,7 +432,7 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 	}
 
 	/**
-	 * Like {@link # assertAllSemanticErrors(String), but a context is given
+	 * Like {@link #assertAllSemanticErrors(String)}, but a context is given
 	 *
 	 * @param assembly the input assembly
 	 * @param ctxstr the context pattern for assembly

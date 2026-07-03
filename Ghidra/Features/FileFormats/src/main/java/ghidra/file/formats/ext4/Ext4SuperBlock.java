@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -125,15 +125,15 @@ public class Ext4SuperBlock implements StructConverter {
 	}
 	
 	public Ext4SuperBlock( BinaryReader reader ) throws IOException {
-		s_inodes_count = reader.readNextInt();
+		s_inodes_count = reader.readNextUnsignedIntExact(); // error if more than 2.1billion
 		s_blocks_count_lo = reader.readNextInt();
 		s_r_blocks_count_lo = reader.readNextInt();
 		s_free_blocks_count_lo = reader.readNextInt();
 		s_free_inodes_count = reader.readNextInt();
 		s_first_data_block = reader.readNextInt();
-		s_log_block_size = reader.readNextInt();
+		s_log_block_size = reader.readNextUnsignedIntExact();
 		s_log_cluster_size = reader.readNextInt();
-		s_blocks_per_group = reader.readNextInt();
+		s_blocks_per_group = reader.readNextUnsignedIntExact();
 		s_clusters_per_group = reader.readNextInt();
 		s_inodes_per_group = reader.readNextInt();
 		s_mtime = reader.readNextInt();
@@ -254,12 +254,35 @@ public class Ext4SuperBlock implements StructConverter {
 		return s_log_block_size;
 	}
 
+	public int getBlockSize() throws IOException {
+		if (s_log_block_size > 6) {
+			throw new IOException("Blocksize out of range: " + s_log_block_size);
+		}
+		int result = 1 << (10 + s_log_block_size);
+		return result;
+	}
+
 	public int getS_log_cluster_size() {
 		return s_log_cluster_size;
 	}
 
 	public int getS_blocks_per_group() {
 		return s_blocks_per_group;
+	}
+
+	private static final int MAX_BLOCKS_PER_GROUP = 1 << 19;
+
+	public long getNumGroups() throws IOException {
+		int bs = getBlockSize();
+		if (s_blocks_per_group < bs || s_blocks_per_group > MAX_BLOCKS_PER_GROUP) {
+			throw new IOException("Bad blocks per group: " + s_blocks_per_group);
+		}
+		long blockCount = getS_blocks_count();
+		long numGroups = blockCount / s_blocks_per_group;
+		if (blockCount % s_blocks_per_group != 0) {
+			numGroups++;
+		}
+		return numGroups;
 	}
 
 	public int getS_clusters_per_group() {
@@ -359,15 +382,25 @@ public class Ext4SuperBlock implements StructConverter {
 	}
 
 	public String getVolumeName() {
-		int i = 0;
-		while (i < s_volume_name.length && s_volume_name[i] != '\0') {
-			i++;
-		}
-		return new String(s_volume_name, 0, i, Ext4FileSystem.EXT4_DEFAULT_CHARSET);
+		return getSBString(s_volume_name);
 	}
 
 	public byte[] getS_last_mounted() {
 		return s_last_mounted;
+	}
+
+	public String getLastMountedString() {
+		return getSBString(s_last_mounted);
+	}
+
+	private String getSBString(byte[] bytes) {
+		try {
+			BinaryReader br = new BinaryReader(new ByteArrayProvider(bytes), true);
+			return br.readNextString(bytes.length, Ext4FileSystem.EXT4_DEFAULT_CHARSET, 1);
+		}
+		catch (IOException e) {
+			return "";
+		}
 	}
 
 	public int getS_algorithm_usage_bitmap() {

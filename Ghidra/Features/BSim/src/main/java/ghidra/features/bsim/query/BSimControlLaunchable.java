@@ -30,6 +30,7 @@ import javax.naming.ldap.Rdn;
 import javax.security.auth.DestroyFailedException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.postgresql.core.Utils;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 
@@ -38,7 +39,7 @@ import ghidra.GhidraLaunchable;
 import ghidra.features.bsim.query.ingest.BSimLaunchable;
 import ghidra.framework.*;
 import ghidra.framework.client.ClientUtil;
-import ghidra.net.ApplicationKeyManagerUtils;
+import ghidra.net.PKIUtils;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -390,7 +391,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 				if (line == null) {
 					break;
 				}
-				if (line.startsWith(ApplicationKeyManagerUtils.BEGIN_CERT)) {
+				if (line.startsWith(PKIUtils.BEGIN_CERT)) {
 					return true;
 				}
 			}
@@ -557,11 +558,10 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		PasswordProtection pp = new PasswordProtection(password);
 		try {
 			// TODO: should subjectAlternativeNames be supported?
-			KeyStore keyStore = ApplicationKeyManagerUtils.createKeyStore(alias, "CN=BSimServer",
-				365 * 2, null, null, "JKS", null, password);
+			KeyStore keyStore = PKIUtils.createKeyStore(alias, "CN=BSimServer", 365 * 2, null,
+				null, "JKS", null, password);
 
-			ApplicationKeyManagerUtils.exportX509Certificates(keyStore.getCertificateChain(alias),
-				certFile);
+			PKIUtils.exportX509Certificates(keyStore.getCertificateChain(alias), certFile);
 			Key key = keyStore.getKey(alias, password);
 
 			try (FileOutputStream fout = new FileOutputStream(passFile);
@@ -609,7 +609,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	private Connection createLocalConnection() throws SQLException, IOException {
 		Properties properties = new Properties();
 		properties.setProperty("sslmode", "require");
-		properties.setProperty("sslfactory", "ghidra.net.ApplicationSSLSocketFactory");
+		properties.setProperty("sslfactory", "ghidra.net.DefaultSSLSocketFactory");
 		properties.setProperty("user", connectingUserName);
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("jdbc:postgresql://localhost");
@@ -688,6 +688,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	 */
 	private int runCommand(File directory, List<String> command, String envvar, String value)
 			throws IOException, InterruptedException {
+		System.out.println("Command: " + command);
 		ProcessBuilder processBuilder = new ProcessBuilder(command);
 		processBuilder.directory(directory);		// Set the working directory
 		if (envvar != null) {
@@ -1153,9 +1154,9 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		localConnection = getOrCreateLocalConnection();
 
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("CREATE ROLE \"");
-		buffer.append(specifiedUserName);
-		buffer.append("\" WITH LOGIN");
+		buffer.append("CREATE ROLE ");
+		Utils.escapeIdentifier(buffer, specifiedUserName);
+		buffer.append(" WITH LOGIN");
 
 		try (Statement st = localConnection.createStatement()) {
 			st.executeUpdate(buffer.toString());
@@ -1217,9 +1218,8 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		boolean userDoesNotExist = false;
 		localConnection = getOrCreateLocalConnection();
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("DROP ROLE \"");
-		buffer.append(specifiedUserName);
-		buffer.append('\"');
+		buffer.append("DROP ROLE ");
+		Utils.escapeIdentifier(buffer, specifiedUserName);
 
 		try (Statement st = localConnection.createStatement()) {
 			st.executeUpdate(buffer.toString());
@@ -1359,9 +1359,9 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	 */
 	private void resetPassword(Connection pdb, String username) throws SQLException {
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("ALTER ROLE \"");
-		buffer.append(username);
-		buffer.append("\" WITH PASSWORD '");
+		buffer.append("ALTER ROLE ");
+		Utils.escapeIdentifier(buffer, username);
+		buffer.append(" WITH PASSWORD '");
 		buffer.append(DEFAULT_PASSWORD);
 		buffer.append('\'');
 		executeSQLStatement(pdb, buffer.toString());
@@ -1389,16 +1389,17 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	private void changePrivilegeCommand() throws Exception {
 		localConnection = getOrCreateLocalConnection();
 		try {
+			StringBuilder buffer = new StringBuilder("ALTER ROLE ");
+			Utils.escapeIdentifier(buffer, specifiedUserName);
 			if (adminPrivilegeRequested) {
 				System.out.println("Granting admin privileges to " + specifiedUserName);
-				executeSQLStatement(localConnection,
-					"ALTER ROLE " + specifiedUserName + " SUPERUSER CREATEROLE CREATEDB");
+				buffer.append(" SUPERUSER CREATEROLE CREATEDB");
 			}
 			else {
 				System.out.println("Revoking admin privileges from " + specifiedUserName);
-				executeSQLStatement(localConnection,
-					"ALTER ROLE " + specifiedUserName + " NOSUPERUSER NOCREATEROLE NOCREATEDB");
+				buffer.append(" NOSUPERUSER NOCREATEROLE NOCREATEDB");
 			}
+			executeSQLStatement(localConnection, buffer.toString());
 		}
 		finally {
 			localConnection.close();

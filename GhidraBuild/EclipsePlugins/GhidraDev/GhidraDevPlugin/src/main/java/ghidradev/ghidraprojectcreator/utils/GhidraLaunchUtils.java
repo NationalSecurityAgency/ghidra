@@ -30,6 +30,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.launching.*;
 
 import ghidra.Ghidra;
+import ghidradev.EclipseMessageUtils;
 
 /**
  * Utility methods for working with Ghidra launchers in Eclipse.
@@ -54,6 +55,12 @@ public class GhidraLaunchUtils {
 	 * plugin.xml.
 	 */
 	public static final String PYGHIDRA_GUI_LAUNCH = "PyGhidraGuiLaunchConfigurationType";
+
+	/**
+	 * Launch configuration ID for a PyGhidra Headless launch. Must match corresponding value in 
+	 * plugin.xml.
+	 */
+	public static final String PYGHIDRA_HEADLESS_LAUNCH = "PyGhidraHeadlessLaunchConfigurationType";
 
 	/**
 	 * Program arguments that will get passed to the launched Ghidra.  These will be appended
@@ -276,5 +283,19 @@ public class GhidraLaunchUtils {
 		LaunchHistory debugHistory = mgr.getLaunchHistory(IDebugUIConstants.ID_DEBUG_LAUNCH_GROUP);
 		runHistory.addFavorite(launchConfig);
 		debugHistory.addFavorite(launchConfig);
+	}
+
+	/**
+	 * Notifies the user that a headless launch is being performed without any command line
+	 * arguments
+	 * 
+	 * @param configuration The headless launch configuration
+	 */
+	public static void notifyAboutHeadlessWithNoArgs(ILaunchConfiguration configuration) {
+		EclipseMessageUtils.showInfoDialog("Ghidra Run Configuration",
+			"Headless launch is being performed without any command line arguments!\n\n" +
+				"Edit the \"" + configuration.getName() +
+				"\" run configuration's program arguments to customize headless behavior. " +
+				"See support/analyzeHeadlessREADME.html for more information.");
 	}
 }

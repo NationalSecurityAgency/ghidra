@@ -593,45 +593,27 @@ define pcodeop VectorDivideWordUnsigned2;
 # evldd RT,D(RA)
 # ISA-cmt: Vector Load Double Word into Double Word
 # evldd rD,d(rA)
-define pcodeop VectorLoadDoubleWordIntoDoubleWord;
-# TODO: defined in evx.sinc
-# if (RA == 0) {
-#    b = 0;
-# } else {
-#    b = RA;
-# }
-# EA    = b + EXTZ(UI*8);
-# RT    = MEM(EA,8);
-
-#:evldd D,A is OP=4 & D & A & XOP_0_10=769 & BITS_11_15=0 { 
-    # TODO: defined in evx.sinc
-#    VectorLoadDoubleWordIntoDoubleWord(D,A); 
-#}
+:evldd RT,dUI16PlusRAOrZeroAddress is OP=4 & RT & dUI16PlusRAOrZeroAddress & XOP_0_10=769
+{
+   ea:$(REGISTER_SIZE) = dUI16PlusRAOrZeroAddress;
+   RT = *:8 ($(EATRUNC));
+}
 
 # evlddx RT,RA,RB
 # ISA-cmt: Vector Load Double Word into Double Word Indexed
 # evlddx
-# define pcodeop vectorLoadDoubleWordIntoDoubleWordIndexed1;
-# TODO: defined in evx.sinc
-# if (RA == 0) {
-#     b = 0;
-# } else {
-#     b = RA;
-# }
-# EA    = b + RB;
-# RT    = MEM(EA, 8);
-
-# :evlddx S,A,B is OP=4 & S & A & B & XOP_0_10=768 { 
-#    TODO: defined in evx.sinc
-#    vectorLoadDoubleWordIntoDoubleWordIndexed1(S,A,B); 
-#}
+:evlddx RT,RA_OR_ZERO,RB is OP=4 & RT & RA_OR_ZERO & RB & XOP_0_10=768
+{
+    ea:$(REGISTER_SIZE) = RA_OR_ZERO + RB;
+    RT = *:8 ($(EATRUNC));
+}
 
 # evldh RT,D(RA)
 # ISA-cmt: Vector Load Double into Four Halfwords
 # evldh rD,rA 011 0000 0101
 
 
-:evldh RT,EVUIMM_8_RAt is OP=4 & A & D & RT & EVUIMM_8 & EVUIMM_8_RAt & XOP_0_10=0x305 { 
+:evldh RT,EVUIMM_8_RAt is OP=4 & RT & EVUIMM_8_RAt & XOP_0_10=0x305 { 
 # if (RA == 0) {
 #     b    = 0;
 # } else {
@@ -643,7 +625,7 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # RT.S2     = MEM(EA+4, 2);
 # RT.S3     = MEM(EA+6, 2);
 
-    EA:8    = A + zext(EVUIMM_8_RAt);
+    EA:8    = EVUIMM_8_RAt;
     *:2 (RT) = *:2 ((EA) & $(MEMMASK));
     *:2 (RT+2) = *:2 ((EA+2) & $(MEMMASK));
     *:2 (RT+4) = *:2 ((EA+4) & $(MEMMASK));
@@ -676,7 +658,7 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # evldw RT,D(RA)
 # ISA-cmt: Vector Load Double into Two Words
 # evldw rD,rA 011 0000 0011
-:evldw RT,EVUIMM_8_RAt is OP=4 & A & D & RT & EVUIMM_8 & EVUIMM_8_RAt & XOP_0_10=0x303 { 
+:evldw RT,EVUIMM_8_RAt is OP=4 & RT & EVUIMM_8_RAt & XOP_0_10=0x303 { 
 # if (RA == 0) {
 #    b    = 0;
 # } else {
@@ -686,7 +668,7 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # RT.l      = MEM(EA, 4);
 # RT.h      = MEM(EA+4, 4);
 
-    EA:$(REGISTER_SIZE)   = A + zext(EVUIMM_8_RAt);
+    EA:$(REGISTER_SIZE)   = EVUIMM_8_RAt;
     *:4 (RT) = *:4 ((EA) & $(MEMMASK));
     *:4 (RT+4) = *:4 ((EA+4) & $(MEMMASK));
 }
@@ -712,7 +694,7 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # evlhhesplat RT,D(RA)
 # ISA-cmt: Vector Load Halfword into Halfwords Even and Splat
 # evlhhesplat rD,rA 011 0000 1001
-:evlhhesplat RT,EVUIMM_2_RAt is OP=4 & A & RT & EVUIMM_2_RAt & D & XOP_0_10=0x309 { 
+:evlhhesplat RT,EVUIMM_2_RAt is OP=4 & RT & EVUIMM_2_RAt & XOP_0_10=0x309 { 
 # if (RA == 0) {
 #     b    = 0;
 # } else {
@@ -724,7 +706,7 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # RT.S2    = MEM(EA,2);
 # RT.S3    = 0x0000;
 
-     EA:$(REGISTER_SIZE)  = A + zext(EVUIMM_2_RAt);
+     EA:$(REGISTER_SIZE)  = EVUIMM_2_RAt;
      *:2 (RT) = *:2 ((EA) & $(MEMMASK));
      *:2 (RT+2) = 0x0000;
      *:2 (RT+4) = *:2 ((EA) & $(MEMMASK));
@@ -756,7 +738,7 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # evlhhossplat RT,D(RA)
 # ISA-cmt: Vector Load Halfword into Halfword Odd Signed and Splat
 # evlhhossplat rD,rA 011 0000 1111
-:evlhhossplat RT,EVUIMM_2_RAt is OP=4 & A & RT & EVUIMM_2_RAt & D & XOP_0_10=0x30F { 
+:evlhhossplat RT,EVUIMM_2_RAt is OP=4 & RT & EVUIMM_2_RAt & XOP_0_10=0x30F { 
 # if (RA == 0) {
 #     b    = 0;
 # } else {
@@ -766,7 +748,7 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # RT.l  = EXTS(MEM(EA, 2));
 # RT.h  = EXTS(MEM(EA, 2));
 
-    EA:$(REGISTER_SIZE)  = A + zext(EVUIMM_2_RAt);
+    EA:$(REGISTER_SIZE)  = EVUIMM_2_RAt;
     *:4 (RT) = sext( *:2 (((EA) & $(MEMMASK))));
     *:4 (RT+4) = sext( *:2 (((EA) & $(MEMMASK))));
 }
@@ -792,7 +774,7 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # evlhhousplat RT,D(RA)
 # ISA-cmt: Vector Load Halfword into Halfword Odd Unsigned and Splat
 # evlhhousplat rD,rA 011 0000 1101
-:evlhhousplat RT,EVUIMM_2_RAt  is OP=4 & A & RT & EVUIMM_2_RAt & D & XOP_0_10=0x30D { 
+:evlhhousplat RT,EVUIMM_2_RAt  is OP=4 & RT & EVUIMM_2_RAt & XOP_0_10=0x30D { 
 # if (RA == 0) {
 #     b    = 0;
 # } else {
@@ -802,7 +784,7 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # RT.l   = EXTZ(MEM(EA, 2));
 # RT.h   = EXTZ(MEM(EA, 2));
 
-    EA:$(REGISTER_SIZE)  = A + zext(EVUIMM_2_RAt);
+    EA:$(REGISTER_SIZE)  = EVUIMM_2_RAt;
     *:4 (RT) = zext( *:2 (((EA) & $(MEMMASK))));
     *:4 (RT+4) = zext( *:2 (((EA) & $(MEMMASK))));
 }
@@ -871,7 +853,7 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # evlwhos RT,D(RA)
 # ISA-cmt: Vector Load Word into Two Halfwords Odd Signed (with sign extension)
 # evlwhos rD,rA 011 0001 0111
-:evlwhos RT,EVUIMM_4_RAt is OP=4 & A & EVUIMM_4_RAt & RT & D & XOP_0_10=0x317 { 
+:evlwhos RT,EVUIMM_4_RAt is OP=4 & EVUIMM_4_RAt & RT & XOP_0_10=0x317 { 
 # if (RA == 0) {
 #     b    = 0;
 # } else {
@@ -881,7 +863,7 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # RT.l  = EXTS(MEM(EA, 2));
 # RT.h  = EXTS(MEM(EA+2, 2));
 
-    EA:$(REGISTER_SIZE)  = A + zext(EVUIMM_4_RAt);
+    EA:$(REGISTER_SIZE)  = EVUIMM_4_RAt;
     *:4 (RT) = sext( *:2 (((EA) & $(MEMMASK))));
     *:4 (RT+4) = sext( *:2 (((EA+2) & $(MEMMASK))));
 }
@@ -907,7 +889,7 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # evlwhou RT,D(RA)
 # ISA-cmt: Vector Load Word into Two Halfwords Odd Unsigned (zero-extended)
 # evlwhou rD,rA 011 0001 0101
-:evlwhou RT,EVUIMM_4_RAt is OP=4 & A & EVUIMM_4_RAt & RT & D & XOP_0_10=0x315 { 
+:evlwhou RT,EVUIMM_4_RAt is OP=4 & EVUIMM_4_RAt & RT & XOP_0_10=0x315 { 
 # if (RA == 0) { 
 #     b    = 0;
 # } else {
@@ -917,7 +899,7 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # RT.l  = EXTZ(MEM(EA, 2));
 # RT.h  = EXTZ(MEM(EA+2, 2));
 
-    EA:$(REGISTER_SIZE)  = A + zext(EVUIMM_4_RAt);
+    EA:$(REGISTER_SIZE)  = EVUIMM_4_RAt;
     *:4 (RT) = zext( *:2 (((EA) & $(MEMMASK))));
     *:4 (RT+4) = zext( *:2 (((EA+2) & $(MEMMASK))));
 }
@@ -943,7 +925,7 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # evlwhsplat RT,D(RA)
 # ISA-cmt: Vector Load Word into Two Halfwords and Splat
 # evlwhsplat rD,rA 011 0001 1101
-:evlwhsplat RS,EVUIMM_4_RAt is OP=4 & A & B & D & XOP_0_10=0x31D & EVUIMM_4_RAt & RS { 
+:evlwhsplat RS,EVUIMM_4_RAt is OP=4 & XOP_0_10=0x31D & EVUIMM_4_RAt & RS { 
 # if (RA == 0) {
 #     b    = 0;
 # } else {
@@ -955,7 +937,7 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # RT.S2  = MEM(EA+2,2);
 # RT.S3  = MEM(EA+2,2);
 
-    EA:$(REGISTER_SIZE)   = A + zext(EVUIMM_4_RAt);
+    EA:$(REGISTER_SIZE)   = EVUIMM_4_RAt;
     *:2 (RS) = *:2 ((EA) & $(MEMMASK));
     *:2 (RS+2) = *:2 ((EA) & $(MEMMASK));
     *:2 (RS+4) = *:2 ((EA+2) & $(MEMMASK));
@@ -1023,64 +1005,38 @@ define pcodeop VectorLoadDoubleWordIntoDoubleWord;
 # evmergehi RT,RA,RB
 # ISA-cmt: Vector Merge High
 # evmergehi rD,rA,rB 010 0010 1100
-# defined evx.sinc XXX
-# define pcodeop VectorMergeHigh;
-# :evmergehi D,A,B is OP=4 & A & B & D & XOP_0_10=0x22C { 
-# RT.l    = RA.l;
-# RT.h    = RB.h;
-
-# VectorMergeHigh(D,A,B); 
-# }
+@if REGISTER_SIZE=="8"
+:evmergehi S,A,B        is OP=4 & S & A & B & XOP_0_10=556
+{
+	S[32,32] = A[32,32];
+	S[ 0,32] = B[32,32];
+}
 
 # evmergehilo RT,RA,RB
 # ISA-cmt: Vector Merge High/Low
 # evmergehilo rD,rA,rB 010 0010 1110
-#define pcodeop VectorMergeHighLow;
-#:evmergehilo D,A,B is OP=4 & A & B & D & XOP_0_10=0x22E {
-# RT.l    = RA.l;
-# RT.h    = RA.h;
-
-# lo = (A & 0x00000000FFFFFFFF);
-# hi = ((A & 0xFFFFFFFF00000000) >> 32);
-# b_lo = (B & 0x00000000FFFFFFFF);
-# b_hi = ((B & 0xFFFFFFFF00000000) >> 32);
-#
-# lo = lo;
-# hi = b_hi;
-#
-# D = ((hi << 32) | lo);
-#}
+:evmergehilo S,A,B is OP=4 & S & A & B & XOP_0_10=558 {
+	S[32,32] = A[32,32];
+	S[ 0,32] = B[ 0,32];
+}
 
 # evmergelo RT,RA,RB
 # ISA-cmt: Vector Merge Low
 # evmergelo rD,rA,rB 010 0010 1101
-# defined evx.sinc XXX
-# define pcodeop VectorMergeLow;
-# :evmergelo D,A,B is OP=4 & A & B & D & XOP_0_10=0x22D { 
-# RT.l    = RA.h;
-# RT.h    = RA.l;
-
-# VectorMergeLow(D,A,B); 
-# }
+:evmergelo S,A,B        is OP=4 & S & A & B & XOP_0_10=557
+{
+	S[32,32] = A[0,32];
+	S[ 0,32] = B[0,32];
+}
 
 # evmergelohi RT,RA,RB
 # ISA-cmt: Vector Merge Low/High
 # evmergelohi rD,rA,rB 010 0010 1111
-#:evmergelohi D,A,B is OP=4 & D & A & B & XOP_0_10=0x22F {
-# RT.l    = RA.h;
-# RT.h    = RA.l;
-
-# lo = (A & 0x00000000FFFFFFFF);
-# hi = ((A & 0xFFFFFFFF00000000) >> 32);
-# b_lo = (B & 0x00000000FFFFFFFF);
-# b_hi = ((B & 0xFFFFFFFF00000000) >> 32);
-#
-# lo = lo;
-# hi = b_lo;
-#
-# D = ((hi << 32) | lo);
-#}
-
+:evmergelohi S,A,B is OP=4 & S & A & B & XOP_0_10=559 {
+ 	S[32,32] = A[ 0,32];
+	S[ 0,32] = B[32,32];
+}
+@endif
 
 # evmhegsmfaa RT,RA,RB
 # ISA-cmt: Vector Multiply Halfwords, Even, Guarded, Signed, Modulo, Fractional and Accumulate
@@ -1962,17 +1918,11 @@ define pcodeop VectorMultiplyHalfWordsOddUnsignedSaturateIntegerAndAccumulateNeg
 # evmra RT,RA
 # ISA-cmt: Initialize Accumulator
 # evmra rD,rA 100 1100 0100
-# defined evx.sinc
-# define pcodeop InitializeAccumulator;
-# :evmra D,A is OP=4 & A & D & XOP_0_10=0x4C4 { 
-# ACC       = RA;
-# RT        = RA;
-
-#    ACC      = A;
-#    D        = A;
-
-#    InitializeAccumulator(D,A); 
-# }
+:evmra RT,RA        is OP=4 & RT & RA & BITS_11_15=0 & XOP_0_10=1220
+{
+	ACC = zext(RA);
+	RT = RA;
+}
 
 # evmwhsmf RT,RA,RB
 # ISA-cmt: Vector Multiply Word High Signed, Modulo, Fractional
@@ -2088,9 +2038,9 @@ define pcodeop VectorMultiplyWordHighSignedSaturateFractionalToAccumulator2;
 # RT.h        = temp.l;
 
     lo:$(REGISTER_SIZE)      = (( A & (0x0000000000000000) ) >> 32) * (( B & (0x0000000000000000) ) >> 32);
-    lo      = lo:4;
+    lo      = zext(lo:4);
     hi:$(REGISTER_SIZE)      = (( A & (0xFFFFFFFF00000000) ) >> 32) * (( B & (0xFFFFFFFF00000000) ) >> 32);
-    hi      = hi:4;
+    hi      = zext(hi:4);
     D       = (( zext(hi) << 32) | zext(lo)  );
 }
 
@@ -2106,9 +2056,9 @@ define pcodeop VectorMultiplyWordHighSignedSaturateFractionalToAccumulator2;
 # ACC        = RT;
 
     lo:$(REGISTER_SIZE)      = (( A & (0x0000000000000000) ) >> 32) * (( B & (0x0000000000000000) ) >> 32);
-    lo      = lo:4;
+    lo      = zext(lo:4);
     hi:$(REGISTER_SIZE)      = (( A & (0xFFFFFFFF00000000) ) >> 32) * (( B & (0xFFFFFFFF00000000) ) >> 32);
-    hi      = hi:4;
+    hi      = zext(hi:4);
     D       = (( zext(hi) << 32) | zext(lo)  );
     ACC     = D;
 }
@@ -2452,53 +2402,6 @@ define pcodeop VectorMultiplyWordSignedSaturateFractionalAndAccumulateNegative2;
     spr200 = spr200 | (flags & (0x1000000000000));
 }
 
-# evmwumi RT,RA,RB
-# ISA-cmt: Vector Multiply Word Unsigned, Modulo, Integer
-# evmwumi rD,rA,rB 100 01A1 1000 A=0
-# evmwumi confict with machhwo
-# define pcodeop VectorMultiplyWordUnsignedModuloInteger;
-# :evmwumi D,A,B is OP=4 & A & B & D & XOP_0_10=0x458 { 
-# RT        = RA.h *ui RB.h;
-#    VectorMultiplyWordUnsignedModuloInteger(D,A,B,ACC); 
-# }
-
-# evmwumia RT,RA,RB
-# ISA-cmt: Vector Multiply Word Unsigned, Modulo, Integer to Accumulator
-# evmwumia rD,rA,rB 100 01A1 1000 A=1
-:evmwumia D,A,B is OP=4 & A & B & D & XOP_0_10=0x478 {
-# RT        = RA.h *ui RB.h;
-# ACC        = RT;
-
-    D   = (( A & (0xFFFFFFFF00000000) ) >> 32) * (( B & (0xFFFFFFFF00000000) ) >> 32);
-    ACC = D;
-}
-
-# evmwumiaa RT,RA,RB
-# ISA-cmt: Vector Multiply Word Unsigned, Modulo, Integer and Accumulate
-# evmwumiaa rD,rA,rB 101 0101 1000
-# evmwumiaa confict with macchwo
-# :evmwumiaa D,A,B is OP=4 & A & B & D & XOP_0_10=0x558 { 
-# u64 temp;
-# temp    = RA.h *ui RB.h;
-# RT      = ACC + temp;
-# ACC     = RT;
-
-#    VectorMultiplyWordUnsignedModuloIntegerAndAccumulate2(D,A,B,ACC); 
-# }
-
-# evmwumian RT,RA,RB
-# ISA-cmt: Vector Multiply Word Unsigned, Modulo, Integer and Accumulate Negative
-# evmwumian rD,rA,rB 101 1101 1000
-# evmwumian confict with macchwso
-# :evmwumian D,A,B is OP=4 & A & B & D & XOP_0_10=0x5D8 { 
-# u64 temp;
-# temp  = RA.h *ui RB.h;
-# RT    = ACC - temp;
-# ACC   = RT;
-
-#    VectorMultiplyWordUnsignedModuloIntegerAndAccumulateNegative(D,A,B,ACC); 
-# }
-
 # =================================================================
 # Page D-15
 
@@ -2712,85 +2615,52 @@ define pcodeop VectorShiftRightWordImmediateUnsigned;
     D    = VectorShiftRightWordImmediateUnsigned(A); 
 }
 
-# evsrws RT,RA,RB
-# ISA-cmt: Vector Shift Right Word Signed
-# evsrws rD,rA,rB 010 0010 0001
-:evsrws D,A,B is OP=4 & A & B & D & XOP_0_10=0x221 { 
-# nh    = RB.bsub(26:31);
-# hl    = RB.bsub(58:63);
-# RT.l  = EXTS(RA.bsub(0:32-nh));
-# RT.h  = EXTS(RA.bsub(32:63-nl));
-
-    nh:$(REGISTER_SIZE)   = 32-((B & 0x00000000fc000000) >> 26);
-    nl:$(REGISTER_SIZE)   = 63-((B & 0xfc00000000000000) >> 58);
-    tmp:$(REGISTER_SIZE)  = (A & ((0xFFFFFFFFFFFFFFFF >> (64 - ((nh) - (0) + 1))) << (0)) >> 0);
-    lo:8 = sext(tmp:4);
-    tmp  = (A & ((0xFFFFFFFFFFFFFFFF >> (64 - ((nl) - (32) + 1))) << (32)) >> 32);
-    hi:8 = sext(tmp:4);
-    D    = (( zext(hi) << 32) | zext(lo)  );
+@if REGISTER_SIZE=="8"
+:evsrws S,A,B        is OP=4 & S & A & B & XOP_0_10=545
+{
+	local low:4 = A[0,32];
+	local high:4 = A[32,32];
+	local low_shift:1 = B[0,5];
+	local high_shift:1 = B[32,5];
+	S[0,32] = low s>> zext(low_shift);
+	S[32,32] = high s>> zext(high_shift);
 }
 
-# evsrwu RT,RA,RB
-# ISA-cmt: Vector Shift Right Word Unsigned
-# evsrwu rD,rA,rB 010 0010 0000
-:evsrwu D,A,B is OP=4 & A & B & D & XOP_0_10=0x220 { 
-# nh    = RB.bsub(26:31);
-# nl    = RB.bsub(58:63);
-# RT.l  = EXTZ(RA.bsub(0:32-nh));
-# RT.h  = EXTZ(RA.bsub(32:63-nl));
-
-    nh:$(REGISTER_SIZE)   = 32-((B & 0x00000000fc000000) >> 26);
-    nl:$(REGISTER_SIZE)   = 63-((B & 0xfc00000000000000) >> 58);
-    tmp:$(REGISTER_SIZE)  = (A & ((0xFFFFFFFFFFFFFFFF >> (64 - ((nh) - (0) + 1))) << (0)) >> 0);
-    lo:8 = zext(tmp:4);
-    tmp  = (A & ((0xFFFFFFFFFFFFFFFF >> (64 - ((nl) - (32) + 1))) << (32)) >> 32);
-    hi:8 = zext(tmp:4);
-    D    = (( zext(hi) << 32) | zext(lo)  );
+:evsrwu S,A,B        is OP=4 & S & A & B & XOP_0_10=544
+{
+	local low:4 = A[0,32];
+	local high:4 = A[32,32];
+	local low_shift:1 = B[0,5];
+	local high_shift:1 = B[32,5];
+	S[0,32] = low >> zext(low_shift);
+	S[32,32] = high >> zext(high_shift);
 }
+@endif
+
 
 # evstdd RS,D(RA)
 # ISA-cmt: Vector Store Double of Double
 # evstdd rD,rA,EVUIMM_8 011 0010 0001
-# defined evx.sinc EJ XXX
-#define pcodeop VectorStoreDoubleOfDouble;
-#:evstdd D,A,EVUIMM_8 is OP=4 & A & D & EVUIMM_8 & XOP_0_10=0x321 { 
-# if (RA == 0) {
-#     b     = 0;
-# } else {
-#     b    = RA;
-# }
-# EA            = b + EXTZ(UI*8);
-# MEM(EA,8)    = RS;
-
-#     VectorStoreDoubleOfDouble(D,A); 
-# }
+:evstdd RS,dUI16PlusRAOrZeroAddress is OP=4 & RS & dUI16PlusRAOrZeroAddress & XOP_0_10=801 
+{
+   ea:$(REGISTER_SIZE) = dUI16PlusRAOrZeroAddress;
+   *:8 ($(EATRUNC)) = RS;
+}
 
 # evstddx RS,RA,RB
 # ISA-cmt: Vector Store Double of Double Indexed
 # evstddx rS,rA,rB 011 0010 0000
-# defined evx.sinc EJ XXX
-# define pcodeop VectorStoreDoubleOfDoubleIndexed;
-# :evstddx S,A,B is OP=4 & A & S & B & XOP_0_10=0x320 { 
-# if (RA == 0) {
-#     b    = 0;
-# } else {
-#     b    = RA;
-# }
-# EA            = b + RB;
-# MEM(EA,8)     = RS;
+:evstddx RS,RA_OR_ZERO,RB        is OP=4 & RS & RA_OR_ZERO & RB & XOP_0_10=800
+{
+    ea:$(REGISTER_SIZE) = RA_OR_ZERO + RB;
+    *:8 ($(EATRUNC)) = RS;
+}
 
-#     VectorStoreDoubleOfDoubleIndexed(S,A,B); 
-# }
-# :evstddx RS,RA_OR_ZERO,RB        is OP=4 & RS & RA_OR_ZERO & RB & XOP_0_10=800
-# {
-#     ea = RA_OR_ZERO + RB;
-#     *:8 ($(EATRUNC)) = RS;
-# }
 
 # evstdh RS,D(RA)
 # ISA-cmt: Vector Store Double of Four Halfwords
 # evstdh rS,rA,EVUIMM_8 011 0010 0101
-:evstdh S,EVUIMM_8_RAt is OP=4 & A & S & EVUIMM_8 & EVUIMM_8_RAt & XOP_0_10=0x325 { 
+:evstdh S,EVUIMM_8_RAt is OP=4 & S & EVUIMM_8_RAt & XOP_0_10=0x325 { 
 # if (RA == 0) {
 #     b     = 0;
 # } else {
@@ -2802,7 +2672,7 @@ define pcodeop VectorShiftRightWordImmediateUnsigned;
 # MEM(EA+4,2)   = RS.S2;
 # MEM(EA+6,2)   = RS.S3;
 
-    EA:$(REGISTER_SIZE)  = A + zext(EVUIMM_8_RAt);
+    EA:$(REGISTER_SIZE)  = EVUIMM_8_RAt;
     *:2 (EA) = *:2 ((S) & $(MEMMASK));
     *:2 (EA+2) = *:2 ((S+2) & $(MEMMASK));
     *:2 (EA+4) = *:2 ((S+4) & $(MEMMASK));
@@ -2834,7 +2704,7 @@ define pcodeop VectorShiftRightWordImmediateUnsigned;
 # evstdw RS,D(RA)
 # ISA-cmt: Vector Store Double of Two Words
 # evstdw rS,rA,EVUIMM_8 011 0010 0011
-:evstdw S,EVUIMM_8_RAt is OP=4 & A & S & EVUIMM_8 & EVUIMM_8_RAt & XOP_0_10=0x323 { 
+:evstdw S,EVUIMM_8_RAt is OP=4 & S & EVUIMM_8_RAt & XOP_0_10=0x323 { 
 # if (RA == 0) {
 #     b    = 0;
 # } else {
@@ -2844,7 +2714,7 @@ define pcodeop VectorShiftRightWordImmediateUnsigned;
 # MEM(EA,4)     = RS.l;
 # MEM(EA+4,4)   = RS.h;
 
-    EA:$(REGISTER_SIZE)   = A + zext(EVUIMM_8_RAt);
+    EA:$(REGISTER_SIZE)   = EVUIMM_8_RAt;
     *:4 (EA) = *:4 ((S) & $(MEMMASK));
     *:4 (EA+4) = *:4 ((S+4) & $(MEMMASK));
 }
@@ -2870,7 +2740,7 @@ define pcodeop VectorShiftRightWordImmediateUnsigned;
 # evstwhe RS,D(RA)
 # ISA-cmt: Vector Store Word of Two Halfwords from Even
 # evstwhe rS,rA,EVUIMM_4 011 0011 0001
-:evstwhe S,EVUIMM_4_RAt is OP=4 & A & S & EVUIMM_4_RAt & XOP_0_10=0x331 { 
+:evstwhe S,EVUIMM_4_RAt is OP=4 & S & EVUIMM_4_RAt & XOP_0_10=0x331 { 
 # if (RA == 0) {
 #     b    = 0;
 # } else {
@@ -2880,7 +2750,7 @@ define pcodeop VectorShiftRightWordImmediateUnsigned;
 # MEM(EA,2)     = RS.S0;
 # MEM(EA+2,2)   = RS.S2;
 
-    EA:$(REGISTER_SIZE)   = A + zext(EVUIMM_4_RAt);
+    EA:$(REGISTER_SIZE)   = EVUIMM_4_RAt;
     *:2 (EA) = *:2 ((S) & $(MEMMASK));
     *:2 (EA+2) = *:2 ((S+2) & $(MEMMASK));
 }
@@ -2906,7 +2776,7 @@ define pcodeop VectorShiftRightWordImmediateUnsigned;
 # evstwho RS,D(RA)
 # ISA-cmt: Vector Store Word of Two Halfwords from Odd
 # evstwho rS,rA,EVUIMM_4 011 0011 0101
-:evstwho S,EVUIMM_4_RAt is OP=4 & A & S & EVUIMM_4_RAt & XOP_0_10=0x335 { 
+:evstwho S,EVUIMM_4_RAt is OP=4 & S & EVUIMM_4_RAt & XOP_0_10=0x335 { 
 # if (RA == 0) {
 #     b    = 0;
 # } else {
@@ -2916,7 +2786,7 @@ define pcodeop VectorShiftRightWordImmediateUnsigned;
 # MEM(EA,2)     = RS.S1;
 # MEM(EA+2,2)   = RS.S3;
 
-    EA:$(REGISTER_SIZE)   = A + zext(EVUIMM_4_RAt);
+    EA:$(REGISTER_SIZE)   = EVUIMM_4_RAt;
     *:2 (EA) = *:2 ((S+2) & $(MEMMASK));
     *:2 (EA+2) = *:2 ((S+6) & $(MEMMASK));
 }
@@ -2924,7 +2794,7 @@ define pcodeop VectorShiftRightWordImmediateUnsigned;
 # evstwhox RS,RA,RB
 # ISA-cmt: Vector Store Word of Two Halfwords from Odd Indexed
 # evstwhox rS,rA,rB 011 0011 0100
-:evstwhox S,A,B is OP=4 & A & B & S & XOP_0_10=0x334 { 
+:evstwhox S,RA_OR_ZERO,B is OP=4 & RA_OR_ZERO & B & S & XOP_0_10=0x334 { 
 # if (RA == 0) {
 #     b    = 0;
 # } else {
@@ -2934,47 +2804,33 @@ define pcodeop VectorShiftRightWordImmediateUnsigned;
 # MEM(EA,2)     = RS.S1;
 # MEM(EA+2,2)   = RS.S3;
    
-    EA:$(REGISTER_SIZE)   = A + B;
+    EA:$(REGISTER_SIZE)   = RA_OR_ZERO + B;
     *:2 (EA) = *:2 ((S+2) & $(MEMMASK));
     *:2 (EA+2) = *:2 ((S+6) & $(MEMMASK));
 }
 
 # evstwwe RS,D(RA)
 # ISA-cmt: Vector Store Word of Word from Even
-# evstwwe rS,rA,EVUIMM_4 011 0011 1001
-#define pcodeop VectorStoreWordOfWordFromEven;
-#:evstwwe S,EVUIMM_4_RAt is OP=4 & A & S & EVUIMM_4_RAt & XOP_0_10=0x339 { 
-# if (RA == 0) {
-#     b    = 0;
-# } else {
-#     b    = RA;
-# }
-# EA        = b + EXTZ(UI*4);
-# MEM(EA,4) = RS;
-
-#     VectorStoreWordOfWordFromEven(S,A); 
-# }
+# evstwwe rS,rA,UIMM 011 0011 1001
+:evstwwe S,EVUIMM_4_RAt is OP=4 & S & EVUIMM_4_RAt & UI & XOP_0_10=0x339
+{
+   ea:$(REGISTER_SIZE) = EVUIMM_4_RAt;
+   *:4 ($(EATRUNC)) = S:4;
+}
 
 # evstwwex RS,RA,RB
 # ISA-cmt: Vector Store Word of Word from Even Indexed
 # evstwwex rS,rA,rB 011 0011 1000
-#define pcodeop VectorStoreWordOfWordFromEvenIndexed;
-#:evstwwex S,A,B is OP=4 & A & B & S & XOP_0_10=0x338 { 
-# if (RA == 0) {
-#     b    = 0;
-# } else {
-#     b    = RA;
-# }
-# EA        = b + RB;
-# MEM(EA,4) = RS;
-
-#    VectorStoreWordOfWordFromEvenIndexed(S,A,B); 
-# }
+:evstwwex S,RA_OR_ZERO,RB is OP=4 & S & RA_OR_ZERO & RB & XOP_0_10=0x338
+{
+    ea:$(REGISTER_SIZE) = RA_OR_ZERO + RB;
+    *:4 ($(EATRUNC)) = S:4;
+}
 
 # evstwwo RS,D(RA)
 # ISA-cmt: Vector Store Word of Word from Odd
 # evstwwo rS,rA,EVUIMM_4 011 0011 1101
-:evstwwo S,EVUIMM_4_RAt is OP=4 & A & S & EVUIMM_4_RAt & XOP_0_10=0x33D { 
+:evstwwo S,EVUIMM_4_RAt is OP=4 & S & EVUIMM_4_RAt & UI & XOP_0_10=0x33D { 
 # if (RA == 0) {
 #     b    = 0;
 # } else {
@@ -2983,7 +2839,7 @@ define pcodeop VectorShiftRightWordImmediateUnsigned;
 # EA        = b + EXTZ(UI*4);
 # MEM(EA,4)    = RS.h;
 
-    EA:$(REGISTER_SIZE)    = A + zext(EVUIMM_4_RAt);
+    EA:$(REGISTER_SIZE)    = EVUIMM_4_RAt;
     *:4 (EA) = *:4 ((S+4) & $(MEMMASK));
 }
 
@@ -3105,19 +2961,10 @@ define pcodeop VectorSubtractUnsignedSaturateIntegerToAccumulatorWord2;
 # evxor RT,RA,RB
 # ISA-cmt: Vector XOR
 # evxor rD,rA,rB 010 0001 0110
-# defined evx.sinc EJ XXX
-# define pcodeop VectorXOR;
-# :    D    = 64From2_32(hi,lo);
-# :evxor S,A,B is OP=4 & S & A & B & XOP_0_10=0x216 {
-# RT.l     = RA.l ^ RB.l;
-# RT.h    = RA.h ^ RB.h;
-
-# VectorXOR(S,A,B);
-# lo = A:2 ^ B:2;
-# hi = A(2) ^ B(2);
-# D:2 = lo;
-# D(2) = hi;
-# }
+:evxor vrD_64_0,vrA_64_0,vrB_64_0        is OP=4 & vrD_64_0 & vrA_64_0 & vrB_64_0 & XOP_0_10=534
+{
+    vrD_64_0 = vrA_64_0 ^ vrB_64_0;
+}
 
 # TODO evmwlssianw RT,RA,RB
 # TODO complicated

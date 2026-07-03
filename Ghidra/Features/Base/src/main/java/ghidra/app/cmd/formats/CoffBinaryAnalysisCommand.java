@@ -51,7 +51,8 @@ public class CoffBinaryAnalysisCommand extends FlatProgramAPI
 
 			ByteProvider provider =
 				MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
-			new CoffFileHeader(provider);
+			CoffFileHeader header = new CoffFileHeader(provider);
+			header.parseSectionHeaders();
 			return true;
 		}
 		catch (Exception e) {

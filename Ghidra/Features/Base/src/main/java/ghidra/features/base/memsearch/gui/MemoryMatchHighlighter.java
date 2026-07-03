@@ -27,6 +27,7 @@ import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.SearchConstants;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.proxy.ProxyObj;
+import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
@@ -38,10 +39,10 @@ import ghidra.program.model.listing.Program;
 public class MemoryMatchHighlighter implements ListingHighlightProvider {
 	private Navigatable navigatable;
 	private Program program;
-	private List<MemoryMatch> sortedResults;
+	private List<MemoryMatch<SearchData>> sortedResults;
 	private MemoryMatchTableModel model;
 	private MemorySearchOptions options;
-	private MemoryMatch selectedMatch;
+	private MemoryMatch<SearchData> selectedMatch;
 
 	public MemoryMatchHighlighter(Navigatable navigatable, MemoryMatchTableModel model,
 			MemorySearchOptions options) {
@@ -92,7 +93,7 @@ public class MemoryMatchHighlighter implements ListingHighlightProvider {
 
 		Address minAddr = cu.getMinAddress();
 		Address maxAddr = cu.getMaxAddress();
-		List<MemoryMatch> results = getMatchesInRange(minAddr, maxAddr);
+		List<MemoryMatch<SearchData>> results = getMatchesInRange(minAddr, maxAddr);
 		if (results.isEmpty()) {
 			return NO_HIGHLIGHTS;
 		}
@@ -100,13 +101,14 @@ public class MemoryMatchHighlighter implements ListingHighlightProvider {
 		return getHighlights(text, minAddr, results);
 	}
 
-	private Highlight[] getHighlights(String text, Address minAddr, List<MemoryMatch> results) {
+	private Highlight[] getHighlights(String text, Address minAddr,
+			List<MemoryMatch<SearchData>> results) {
 
 		Highlight[] highlights = new Highlight[results.size()];
 		int selectedMatchIndex = -1;
 
 		for (int i = 0; i < highlights.length; i++) {
-			MemoryMatch match = results.get(i);
+			MemoryMatch<SearchData> match = results.get(i);
 			Color highlightColor = SearchConstants.SEARCH_HIGHLIGHT_COLOR;
 			if (match == selectedMatch) {
 				selectedMatchIndex = i;
@@ -124,7 +126,8 @@ public class MemoryMatchHighlighter implements ListingHighlightProvider {
 		return highlights;
 	}
 
-	private Highlight createHighlight(MemoryMatch match, Address start, String text, Color color) {
+	private Highlight createHighlight(MemoryMatch<SearchData> match, Address start, String text,
+			Color color) {
 		int highlightLength = match.getLength();
 		Address address = match.getAddress();
 		int startByteOffset = (int) address.subtract(start);
@@ -152,7 +155,7 @@ public class MemoryMatchHighlighter implements ListingHighlightProvider {
 		return Math.min(text.length() - 1, pos);
 	}
 
-	List<MemoryMatch> getMatches() {
+	List<MemoryMatch<SearchData>> getMatches() {
 
 		if (sortedResults != null) {
 			return sortedResults;
@@ -162,7 +165,7 @@ public class MemoryMatchHighlighter implements ListingHighlightProvider {
 			return Collections.emptyList();
 		}
 
-		List<MemoryMatch> modelData = model.getModelData();
+		List<MemoryMatch<SearchData>> modelData = model.getModelData();
 		if (model.isSortedOnAddress()) {
 			return modelData;
 		}
@@ -173,8 +176,8 @@ public class MemoryMatchHighlighter implements ListingHighlightProvider {
 		return sortedResults;
 	}
 
-	private List<MemoryMatch> getMatchesInRange(Address start, Address end) {
-		List<MemoryMatch> matches = getMatches();
+	private List<MemoryMatch<SearchData>> getMatchesInRange(Address start, Address end) {
+		List<MemoryMatch<SearchData>> matches = getMatches();
 		int startIndex = findFirstIndex(matches, start, end);
 		if (startIndex < 0) {
 			return Collections.emptyList();
@@ -185,15 +188,15 @@ public class MemoryMatchHighlighter implements ListingHighlightProvider {
 			endIndex++; // end index is non-inclusive and we want to include direct hit
 		}
 
-		List<MemoryMatch> resultList = matches.subList(startIndex, endIndex);
+		List<MemoryMatch<SearchData>> resultList = matches.subList(startIndex, endIndex);
 		return resultList;
 	}
 
-	private int findFirstIndex(List<MemoryMatch> matches, Address start, Address end) {
+	private int findFirstIndex(List<MemoryMatch<SearchData>> matches, Address start, Address end) {
 
 		int startIndex = findIndexAtOrGreater(matches, start);
 		if (startIndex > 0) { // see if address before extends into this range.
-			MemoryMatch resultBefore = matches.get(startIndex - 1);
+			MemoryMatch<SearchData> resultBefore = matches.get(startIndex - 1);
 			Address beforeAddr = resultBefore.getAddress();
 			int length = resultBefore.getLength();
 			if (start.hasSameAddressSpace(beforeAddr) && start.subtract(beforeAddr) < length) {
@@ -205,7 +208,7 @@ public class MemoryMatchHighlighter implements ListingHighlightProvider {
 			return -1;
 		}
 
-		MemoryMatch result = matches.get(startIndex);
+		MemoryMatch<SearchData> result = matches.get(startIndex);
 		Address addr = result.getAddress();
 		if (end.compareTo(addr) >= 0) {
 			return startIndex;
@@ -213,9 +216,9 @@ public class MemoryMatchHighlighter implements ListingHighlightProvider {
 		return -1;
 	}
 
-	private int findIndexAtOrGreater(List<MemoryMatch> matches, Address address) {
+	private int findIndexAtOrGreater(List<MemoryMatch<SearchData>> matches, Address address) {
 
-		MemoryMatch key = new MemoryMatch(address);
+		MemoryMatch<SearchData> key = new MemoryMatch<>(address);
 		int index = Collections.binarySearch(matches, key);
 		if (index < 0) {
 			index = -index - 1;

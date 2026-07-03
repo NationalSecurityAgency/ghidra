@@ -25,10 +25,12 @@
 #@menu-group gdb
 #@icon icon.debugger
 #@help gdb#rr
+#@depends Debugger-rmi-trace
 #@enum StartCmd:str run start starti
 #@enum Endian:str auto big little
 #@arg :file "Trace Dir" "The target trace directory (e.g. .local/share/rr/trace)"
 #@env OPT_RR_PATH:file="rr" "rr command" "The path to rr. Omit the full path to resolve using the system PATH."
+#@env OPT_RR_ARGS:str="" "rr cmd args" "Arguments passed to rr (versus the target)"
 #@env OPT_ARCH:str="i386:x86-64" "Architecture" "Target architecture"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 #@env OPT_EXTRA_TTY:bool=false "Inferior TTY" "Provide a separate terminal emulator for the target."
@@ -36,8 +38,8 @@
 
 . ../support/gdbsetuputils.sh
 
-pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
-pypathGdb=$(ghidra-module-pypath "Debug/Debugger-agent-gdb")
+pypathTrace=$(ghidra-module-pypath "Debugger-rmi-trace")
+pypathGdb=$(ghidra-module-pypath)
 export PYTHONPATH=$pypathGdb:$pypathTrace:$PYTHONPATH
 
 target_trace="$1"
@@ -61,5 +63,5 @@ set confirm on
 set pagination on
 ' > $RRINIT
 
-"$OPT_RR_PATH" replay -x $RRINIT "$target_trace"
+"$OPT_RR_PATH" $OPT_RR_ARGS replay -x $RRINIT "$target_trace"
 

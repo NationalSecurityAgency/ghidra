@@ -23,7 +23,7 @@ import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.data.DataType;
 
 /**
- * Represents a golang "name" construct, which isn't represented in go as a normal structure
+ * Represents a Go "name" construct, which isn't represented in Go itself as a normal structure
  * since it is full of variable length and optional fields.
  * <pre>
  * struct {
@@ -102,27 +102,21 @@ public class GoName implements StructureReader<GoName>, StructureMarkup<GoName> 
 	}
 
 	/**
-	 * Returns the name value.
-	 * 
-	 * @return name string
+	 * {@return the name value}
 	 */
 	public String getName() {
 		return name.getString();
 	}
 
 	/**
-	 * Returns the tag string.
-	 * 
-	 * @return tag string
+	 * {@return the tag string}
 	 */
 	public String getTag() {
 		return tag != null ? tag.getString() : "";
 	}
 
 	/**
-	 * Returns the package path string, or null if not present.
-	 * 
-	 * @return package path string, or null if not present
+	 * {@return the package path string, or null if not present}
 	 * @throws IOException if error reading data
 	 */
 	@Markup
@@ -135,17 +129,16 @@ public class GoName implements StructureReader<GoName>, StructureMarkup<GoName> 
 	 * from the fieldoutput annotation.
 	 * 
 	 * @return Ghidra data type needed to store the pkg path offset field, or null if not present 
+	 * @throws IOException 
 	 */
-	public DataType getPkgPathDataType() {
+	public DataType getPkgPathDataType() throws IOException {
 		return Flag.HAS_PKGPATH.isSet(flags)
-				? programContext.getGoTypes().getInt32DT()
+				? programContext.getGoTypes().findDataType("int32")
 				: null;
 	}
 
 	/**
-	 * Returns a descriptive string containing the full name value.
-	 * 
-	 * @return descriptive string
+	 * {@return a descriptive string containing the full name value}
 	 */
 	public String getFullNameString() {
 		String packagePathString = "";
@@ -160,9 +153,7 @@ public class GoName implements StructureReader<GoName>, StructureMarkup<GoName> 
 	}
 
 	/**
-	 * Returns the flags found in this structure.
-	 * 
-	 * @return flags, as an int
+	 * {@return the flags found in this structure, as an int}
 	 */
 	public int getFlags() {
 		return flags;

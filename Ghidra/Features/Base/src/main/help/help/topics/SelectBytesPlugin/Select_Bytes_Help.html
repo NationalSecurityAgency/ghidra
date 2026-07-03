@@ -1,0 +1,98 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>Select Bytes</title>
+<link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+</head>
+
+<body>
+
+<h1 align="center">Select Bytes</h1>
+<p>
+This tool allows the user to select a range of bytes starting from the cursor position.
+</p>
+
+
+	<TABLE x-use-null-cells="" width="100%">
+	  <TBODY>
+	    <TR>
+	      <TD align="center" width="100%"><IMG border="1" src="images/Dialog.png" /></TD>
+	    </TR>
+	  </TBODY>
+	</TABLE>
+
+
+  <h3>By Method Options</h3>
+  <blockquote>
+    <p><i><b>Select All: 
+    </b></i></p>
+    <p>Makes a selection that covers all of the bytes in a file.
+    <i><b>
+	</p>
+	
+	<p><i><b>	
+    To Address: 
+    </b></i></p>
+    <p>Makes a selection from current cursor position to a selected address, if
+    the address exists. &nbsp;If the address is an invalid address, the user is
+    prompted to select another address. &nbsp;If the address is outside of the
+    current program's memory, the selection will contain bytes from the cursor
+    position to the beginning or end of the program's memory.
+	<p>
+    <i><b>
+    Select Forward: &nbsp;
+    </b></i></p>
+    <p>Default direction. &nbsp;Makes a selection of size <i>n </i>from
+    the cursor position to <i>n-1</i> number of bytes.
+	</p>
+	<p>
+    <i><b>
+    Select Backward: &nbsp;
+    </b></i></p>
+    <p>Makes a selection of size <i>m</i> from the cursor position to <i>m-1</i>
+    number of bytes.
+    </p>
+  </blockquote>
+  
+  <h3>Byte Selection</h3>
+  <blockquote>
+    <p><i><b>Ending Address: &nbsp;
+    </b></i></p>
+    <p>Enter an appropriate address that will be either the ending address of the bytes (if
+    the selected address is greater than the current address) or the starting
+    address of the bytes (if the selected address is lower than the current
+    address).  This value may be in either <b>hex</b> or <b>decimal</b>
+	</p>    	
+    <p><i><b>Length: &nbsp;
+    </b></i></p>
+    <p>Enter an appropriate length (number of bytes to be contained in the
+    selection) that will point to either the ending address of the bytes (if
+    the selected address is greater than the current address) or the starting
+    address of the bytes (if the selected address is lower than the current
+    address).  This value may be in either <b>hex</b> or <b>decimal</b>    
+	</p>
+  </blockquote>
+  
+  <h3>Error Messages</h3>
+  <blockquote>
+
+  	<img src="images/ToBadAddr.png" alt="Error Message">
+
+
+<p align="left">This occurs only when an invalid address is entered. The
+user is prompted to enter a valid address.
+</p>
+
+  
+</blockquote>
+<p class="providedbyplugin">Provided By: <i>Select Bytes</i> Plugin</p>                                                       
+<p class="relatedtopic">Related Topics</p>
+                            	                           
+<ul>
+	<li><a href="help/topics/Selection/Selecting.htm">Selection</a></li>                  
+</ul>
+</body>
+
+</html>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.graph.viewer;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
 import java.awt.*;
@@ -37,7 +38,6 @@ import generic.test.TestUtils;
 import generic.util.WindowUtilities;
 import ghidra.graph.graphs.*;
 import ghidra.graph.support.*;
-import ghidra.util.Msg;
 import util.CollectionUtils;
 
 public class GraphComponentTest extends AbstractVisualGraphTest {
@@ -197,21 +197,6 @@ public class GraphComponentTest extends AbstractVisualGraphTest {
 		AbstractTestVertex v = CollectionUtils.any(vertices);
 
 		twinkle(v);
-
-		// TODO debug
-		if (v.hasBeenEmphasised()) {
-
-			// below, once we are zoomed-out, then the emphasis should happen
-			Msg.debug(this, "No vertice should have been emphasized, since we are zoomed in " +
-				" - twinkled vertex: " + v + "; all vertex states: ");
-			vertices.forEach(vertex -> {
-				Msg.debug(this, vertex + " - " + vertex.hasBeenEmphasised());
-			});
-
-			// maybe the graph was scaled??
-			Msg.debug(this, "graph scale (should be 1.0): " +
-				GraphViewerUtils.getGraphScale(graphComponent.getPrimaryViewer()));
-		}
 
 		assertFalse(v.hasBeenEmphasised());
 

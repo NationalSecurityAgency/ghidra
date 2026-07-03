@@ -259,8 +259,8 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 				int nameOffset = Integer.parseInt(result.name.substring(1));
 				result.name = reader.readAsciiString(stringTableOffset + nameOffset);
 			}
-			catch (NumberFormatException nfe) {
-				// ignore error, section name will remain as it was
+			catch (NumberFormatException | IOException nfe) {
+				// ignore format or out-of-bounds errors...section name will remain as it was
 			}
 		}
 
@@ -487,6 +487,15 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	 */
 	public InputStream getDataStream() throws IOException {
 		return reader.getByteProvider().getInputStream(getPointerToRawData());
+	}
+
+	/**
+	 * Returns a ByteProvider to underlying bytes of this section.
+	 * @return a ByteProvider to underlying bytes of this section
+	 */
+	public ByteProvider getDataByteProvider()  {
+		return new ByteProviderWrapper(reader.getByteProvider(), getPointerToRawData(),
+			getSizeOfRawData());
 	}
 
 	/**

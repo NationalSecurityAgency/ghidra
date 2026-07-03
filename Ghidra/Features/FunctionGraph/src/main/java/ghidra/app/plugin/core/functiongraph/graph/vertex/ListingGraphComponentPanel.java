@@ -331,7 +331,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 				controller.showXRefsDialog();
 			}
 		};
-		xrefsAction.setDescription("Jump to a XRef");
+		xrefsAction.setDescription("Jump to XRef");
 		Icon imageIcon = new GIcon("icon.plugin.functiongraph.action.vertex.xrefs");
 		xrefsAction.setToolBarData(new ToolBarData(imageIcon, firstGroup));
 		xrefsAction.setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Vertex_Action_XRefs"));
@@ -744,7 +744,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		@Override
 		protected void showPopup(JComponent comp, Field field, MouseEvent event,
 				Rectangle fieldBounds) {
-			if (!controller.arePopupsEnabled()) {
+			if (!controller.arePopupsVisible()) {
 				return;
 			}
 

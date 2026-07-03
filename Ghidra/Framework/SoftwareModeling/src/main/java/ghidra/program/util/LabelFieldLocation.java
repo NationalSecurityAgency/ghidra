@@ -54,12 +54,16 @@ public class LabelFieldLocation extends CodeUnitLocation {
 			Namespace namespace, int row, int charOffset) {
 
 		super(program, addr, componentPath, row, 0, charOffset);
-		if (namespace == null || namespace.isGlobal()) {
-			symbolPath = new SymbolPath(label);
+		SymbolPath nsPath = null;
+		if (namespace != null && !namespace.isGlobal()) {
+			nsPath = new SymbolPath(namespace.getSymbol());
 		}
-		else {
-			symbolPath = new SymbolPath(new SymbolPath(namespace.getSymbol()), label);
-		}
+
+		// Note: use the constructor that does not parse the name.  Assume all label field 
+		// locations are for existing symbol names or those that otherwise should not need to be
+		// parsed.  Parsing for existing symbols may incorrectly split on namespace delimiters that
+		// are part of the symbol name.
+		symbolPath = new SymbolPath(nsPath, label);
 	}
 
 	/**
@@ -168,15 +172,19 @@ public class LabelFieldLocation extends CodeUnitLocation {
 	}
 
 	@Override
-	public void saveState(SaveState obj) {
-		super.saveState(obj);
-		obj.putStrings("_SYMBOL_PATH", symbolPath.asArray());
+	public void saveState(SaveState ss) {
+		super.saveState(ss);
+		ss.putStrings("_SYMBOL_PATH", symbolPath.asArray());
 	}
 
 	@Override
-	public void restoreState(Program p, SaveState obj) {
-		super.restoreState(p, obj);
-		String[] symbolPathArray = obj.getStrings("_SYMBOL_PATH", null);
-		symbolPath = symbolPathArray == null ? new SymbolPath("") : new SymbolPath(symbolPathArray);
+	public void restoreState(Program p, SaveState ss) {
+		super.restoreState(p, ss);
+		String[] symbolPathArray = ss.getStrings("_SYMBOL_PATH", null);
+		if (symbolPathArray == null) {
+			throw new IllegalArgumentException("SaveState does not contain a SymbolPath");
+		}
+
+		symbolPath = new SymbolPath(symbolPathArray);
 	}
 }

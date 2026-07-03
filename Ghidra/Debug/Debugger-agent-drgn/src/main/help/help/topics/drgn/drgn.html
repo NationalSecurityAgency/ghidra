@@ -66,8 +66,19 @@ echo 0 &gt; /proc/sys/kernel/yama/ptrace_scope
 
     <H3>Setup</H3>
 
-    <P>You must have Meta's <B>drgn</B> installed on the local system. No other setup is required.
-    Note: requires root access - you will be prompted for a password in the Terminal.</P>
+    <P>You must have Meta's <B>drgn</B> installed on the local system. Symbols for the running kernel
+	should also be installed, as described in the <B>drgn</B> documentation, e.g. using:</P>
+	    <UL style="list-style-type: none">
+	      <LI>
+<PRE>
+sudo dnf debuginfo-install kernel-$(uname -r)
+</PRE>
+	      </LI>
+	    </UL>
+
+    <P>Note: this launcher requires root access - you will be prompted for a password in the Terminal. 
+	Also note: running <B>drgn</B> as root may leave artifacts in the active python cache with root
+    permissions, which may need to be deleted manually when rebuilding.</P>
 
     <H3>Options</H3>
 

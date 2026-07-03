@@ -31,6 +31,7 @@ import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -42,6 +43,7 @@ import ghidra.util.task.TaskMonitor;
  * as the execution address is set, either explicitly, or via branches and fallthrus.  There
  * are additional methods for inspecting the pcode ops in the current instruction as a sequence.
  */
+@Deprecated(since = "12.1", forRemoval = true)
 public class Emulate {
 
 	private MemoryState memstate; // the memory state of the emulator.
@@ -112,18 +114,10 @@ public class Emulate {
 			return;
 		}
 		try {
-			Class<?> c = Class.forName(classname);
-			if (!EmulateInstructionStateModifier.class.isAssignableFrom(c)) {
-				Msg.error(this,
-					"Language " + language.getLanguageID() + " does not specify a valid " +
-						GhidraLanguagePropertyKeys.EMULATE_INSTRUCTION_STATE_MODIFIER_CLASS);
-				throw new RuntimeException(classname + " does not implement interface " +
-					EmulateInstructionStateModifier.class.getName());
-			}
-			Class<? extends EmulateInstructionStateModifier> instructionStateModifierClass =
-				(Class<? extends EmulateInstructionStateModifier>) c;
+			Class<? extends EmulateInstructionStateModifier> c = ClassSearcher.forNameSafe(
+				classname, EmulateInstructionStateModifier.class, getClass().getClassLoader());
 			Constructor<? extends EmulateInstructionStateModifier> constructor =
-				instructionStateModifierClass.getConstructor(Emulate.class);
+				c.getConstructor(Emulate.class);
 			instructionStateModifier = constructor.newInstance(this);
 		}
 		catch (Exception e) {

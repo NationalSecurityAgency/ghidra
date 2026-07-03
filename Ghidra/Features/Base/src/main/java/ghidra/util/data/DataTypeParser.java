@@ -127,7 +127,7 @@ public class DataTypeParser {
 	/**
 	 * Parse a data-type string specification
 	 * @param dataTypeString a known data-type name followed by zero or more pointer/array decorations.
-	 * @return parsed data-type or null if not found
+	 * @return parsed data-type
 	 * @throws InvalidDataTypeException if data-type string is invalid or length exceeds specified maxSize
 	 * @throws CancelledException parse cancelled through user interaction
 	 */
@@ -141,7 +141,7 @@ public class DataTypeParser {
 	 * the dataTypeManagerService will not be queried.
 	 * @param dataTypeString a known data-type name followed by zero or more pointer/array decorations.
 	 * @param category known path of data-type or null if unknown
-	 * @return parsed data-type or null if not found
+	 * @return parsed data-type
 	 * @throws InvalidDataTypeException if data type string is invalid or length exceeds specified 
 	 *         maxSize
 	 * @throws CancelledException parse cancelled through user interaction (only if parser 
@@ -166,7 +166,7 @@ public class DataTypeParser {
 	 * @param dataTypeString a base data-type followed by a sequence of zero or more pointer/array 
 	 *        decorations to be applied.
 	 * The string may start with the baseDataType's name.
-	 * @return parsed data-type or null if not found
+	 * @return parsed data-type
 	 * @throws InvalidDataTypeException if data-type string is invalid or length exceeds specified 
 	 *         maxSize
 	 * @throws CancelledException parse cancelled through user interaction (only if parser 

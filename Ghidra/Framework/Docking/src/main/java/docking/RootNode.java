@@ -16,14 +16,14 @@
 package docking;
 
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import generic.util.WindowUtilities;
 import ghidra.framework.OperatingSystem;
@@ -150,9 +150,7 @@ class RootNode extends WindowNode {
 	void setToolName(String toolName) {
 		this.toolName = toolName;
 		windowWrapper.setTitle(toolName);
-		Iterator<DetachedWindowNode> it = detachedWindows.iterator();
-		while (it.hasNext()) {
-			DetachedWindowNode windowNode = it.next();
+		for (DetachedWindowNode windowNode : detachedWindows) {
 			windowNode.updateTitle();
 		}
 
@@ -186,9 +184,7 @@ class RootNode extends WindowNode {
 	void setIcon(ImageIcon icon) {
 		Image iconImage = icon.getImage();
 		setFrameIcon(windowWrapper.getParentFrame(), iconImage);
-		Iterator<DetachedWindowNode> it = detachedWindows.iterator();
-		while (it.hasNext()) {
-			DetachedWindowNode windowNode = it.next();
+		for (DetachedWindowNode windowNode : detachedWindows) {
 			windowNode.setIcon(iconImage);
 		}
 	}
@@ -206,9 +202,7 @@ class RootNode extends WindowNode {
 			WindowUtilities.ensureOnScreen(mainWindow);
 		}
 
-		Iterator<DetachedWindowNode> it = detachedWindows.iterator();
-		while (it.hasNext()) {
-			DetachedWindowNode windowNode = it.next();
+		for (DetachedWindowNode windowNode : detachedWindows) {
 			windowNode.setVisible(state);
 		}
 	}
@@ -224,14 +218,31 @@ class RootNode extends WindowNode {
 	 * @param loc the location for the new window.
 	 */
 	void addToNewWindow(ComponentPlaceholder placeholder, Point loc) {
+		DockableComponent component = placeholder.getComponent();
+		Dimension placeholderSize = null;
+		if (component != null) {
+			Dimension size = component.getSize();
+			Dimension preferredSize = component.getPreferredSize();
+
+			placeholderSize = new Dimension(size);
+			int area = size.width * size.height;
+			int preferredArea = preferredSize.width * preferredSize.height;
+			if (preferredArea > area) {
+				placeholderSize.width = preferredSize.width;
+				placeholderSize.height = preferredSize.height;
+			}
+		}
+
 		ComponentNode node = new ComponentNode(winMgr);
 		placeholder.setNode(node);
 		node.parent = this;
 		DetachedWindowNode windowNode =
 			new DetachedWindowNode(winMgr, this, node, dropTargetFactory);
-		if (loc != null) {
-			windowNode.setInitialLocation(loc.x, loc.y);
-		}
+
+		Point location = loc == null ? new Point() : loc;
+		Dimension size = placeholderSize == null ? new Dimension() : placeholderSize;
+		windowNode.setWindowContentsBounds(new Rectangle(location, size));
+
 		detachedWindows.add(windowNode);
 		placeholder.getNode().add(placeholder);
 		placeholder.requestFocusWhenReady();
@@ -266,7 +277,8 @@ class RootNode extends WindowNode {
 			}
 			child.parent = this;
 		}
-		placeholder.getNode().add(placeholder);
+
+		node.add(placeholder);
 	}
 
 	/**
@@ -302,9 +314,7 @@ class RootNode extends WindowNode {
 		if (child != null && child.contains(info)) {
 			return windowWrapper.getWindow();
 		}
-		Iterator<DetachedWindowNode> iter = detachedWindows.iterator();
-		while (iter.hasNext()) {
-			DetachedWindowNode winNode = iter.next();
+		for (DetachedWindowNode winNode : detachedWindows) {
 			if (winNode.contains(info)) {
 				return winNode.getWindow();
 			}
@@ -319,9 +329,7 @@ class RootNode extends WindowNode {
 		if (invalid) {
 			clearContextTypes();
 			updateChild();
-			Iterator<DetachedWindowNode> it = detachedWindows.iterator();
-			while (it.hasNext()) {
-				DetachedWindowNode windowNode = it.next();
+			for (DetachedWindowNode windowNode : detachedWindows) {
 				windowNode.update();
 			}
 			invalid = false;
@@ -332,9 +340,7 @@ class RootNode extends WindowNode {
 	}
 
 	void updateDialogs() {
-		Iterator<DetachedWindowNode> it = detachedWindows.iterator();
-		while (it.hasNext()) {
-			DetachedWindowNode windowNode = it.next();
+		for (DetachedWindowNode windowNode : detachedWindows) {
 			windowNode.updateDialog();
 		}
 	}
@@ -438,9 +444,7 @@ class RootNode extends WindowNode {
 		if (child != null) {
 			root.addContent(child.saveToXML());
 		}
-		Iterator<DetachedWindowNode> it = detachedWindows.iterator();
-		while (it.hasNext()) {
-			DetachedWindowNode windowNode = it.next();
+		for (DetachedWindowNode windowNode : detachedWindows) {
 			root.addContent(windowNode.saveToXML());
 		}
 		return root;
@@ -510,10 +514,7 @@ class RootNode extends WindowNode {
 		});
 
 		List<ComponentPlaceholder> restoredPlaceholders = new ArrayList<>();
-		Iterator<?> elementIterator = rootNodeElement.getChildren().iterator();
-		while (elementIterator.hasNext()) {
-			Element elem = (Element) elementIterator.next();
-
+		for (Element elem : rootNodeElement.getChildren()) {
 			if (elem.getName().equals("WINDOW_NODE")) {
 				Node node = new DetachedWindowNode(elem, winMgr, this, dropTargetFactory,
 					restoredPlaceholders);
@@ -555,9 +556,7 @@ class RootNode extends WindowNode {
 			rootDropTargetHandler.dispose();
 		}
 
-		Iterator<DetachedWindowNode> it = detachedWindows.iterator();
-		while (it.hasNext()) {
-			DetachedWindowNode windowNode = it.next();
+		for (DetachedWindowNode windowNode : detachedWindows) {
 			notifyWindowRemoved(windowNode);
 			windowNode.dispose();
 		}
@@ -571,9 +570,7 @@ class RootNode extends WindowNode {
 		if (child != null && child.contains(info)) {
 			return true;
 		}
-		Iterator<DetachedWindowNode> iter = detachedWindows.iterator();
-		while (iter.hasNext()) {
-			DetachedWindowNode winNode = iter.next();
+		for (DetachedWindowNode winNode : detachedWindows) {
 			if (winNode.contains(info)) {
 				return true;
 			}
@@ -606,9 +603,7 @@ class RootNode extends WindowNode {
 
 		statusBar.clearStatusMessages();
 
-		Iterator<DetachedWindowNode> iter = detachedWindows.iterator();
-		while (iter.hasNext()) {
-			DetachedWindowNode winNode = iter.next();
+		for (DetachedWindowNode winNode : detachedWindows) {
 			winNode.clearStatusMessages();
 		}
 	}
@@ -620,9 +615,7 @@ class RootNode extends WindowNode {
 
 		statusBar.setStatusText(text);
 
-		Iterator<DetachedWindowNode> iter = detachedWindows.iterator();
-		while (iter.hasNext()) {
-			DetachedWindowNode winNode = iter.next();
+		for (DetachedWindowNode winNode : detachedWindows) {
 			winNode.setStatusText(text);
 		}
 	}
@@ -673,22 +666,10 @@ class RootNode extends WindowNode {
 		abstract String getTitle();
 
 		/**
-		 * Stores the given bounds if they are not the maximized bounds
+		 * Stores the given bounds.  These should not be the maximized bounds.
 		 * @param bounds the bounds
 		 */
 		public void setLastBounds(Rectangle bounds) {
-			Rectangle screenBounds = WindowUtilities.getScreenBounds(getWindow());
-			if (screenBounds == null) {
-				return;
-			}
-
-			Rectangle boundsSize = new Rectangle(bounds.getSize());
-			Rectangle screenSize = new Rectangle(screenBounds.getSize());
-			if (boundsSize.contains(screenSize)) {
-				// This can happen when the bounds being set are the full screen bounds.  We only 
-				// wish to save the non-maximized bounds.
-				return;
-			}
 			this.lastBounds = bounds;
 		}
 
@@ -732,11 +713,6 @@ class RootNode extends WindowNode {
 					winMgr.setActive(wrappedDialog, true);
 				}
 
-				@Override
-				public void windowStateChanged(WindowEvent e) {
-					// this is called when transitioning in and out of the full-screen state
-					setLastBounds(wrappedDialog.getBounds());
-				}
 			};
 
 			dialog.addWindowListener(windowListener);
@@ -842,9 +818,24 @@ class RootNode extends WindowNode {
 				@Override
 				public void windowStateChanged(WindowEvent e) {
 					// this is called when transitioning in and out of the full-screen state
-					setLastBounds(wrappedFrame.getBounds());
+					int newState = e.getNewState();
+					if (newState != Frame.MAXIMIZED_BOTH) {
+						// don't save the bounds when in full-screen mode; these bounds are later 
+						// used to restore the non-full-screen state
+						setLastBounds(wrappedFrame.getBounds());
+					}
 				}
 			};
+
+			wrappedFrame.addComponentListener(new ComponentAdapter() {
+				@Override
+				public void componentMoved(ComponentEvent e) {
+					int state = wrappedFrame.getExtendedState();
+					if (state != Frame.MAXIMIZED_BOTH) {
+						setLastBounds(wrappedFrame.getBounds());
+					}
+				}
+			});
 
 			wrappedFrame.addWindowListener(windowListener);
 			wrappedFrame.addWindowStateListener(windowListener);

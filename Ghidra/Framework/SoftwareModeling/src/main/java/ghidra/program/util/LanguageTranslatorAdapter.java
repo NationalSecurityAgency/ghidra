@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -225,9 +225,7 @@ public abstract class LanguageTranslatorAdapter implements LanguageTranslator {
 	protected static AddressSpace findSpaceSameName(AddressSpace oldSpace,
 			ArrayList<AddressSpace> newSpaces) throws IncompatibleLanguageException {
 
-		Iterator<AddressSpace> it = newSpaces.iterator();
-		while (it.hasNext()) {
-			AddressSpace space = it.next();
+		for (AddressSpace space : newSpaces) {
 			if (space.getName().equals(oldSpace.getName())) {
 				if (oldSpace.getSize() > space.getSize()) {
 					throw new IncompatibleLanguageException("Old language space (" +

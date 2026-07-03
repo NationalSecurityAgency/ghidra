@@ -18,14 +18,11 @@ package ghidra.util;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.StringUtils;
-
-import util.CollectionUtils;
 
 public final class NumericUtilities {
 	public static final BigInteger MAX_UNSIGNED_LONG = new BigInteger("ffffffffffffffff", 16);
@@ -38,23 +35,9 @@ public final class NumericUtilities {
 	private final static String BIN_PREFIX = "0B";
 	private final static String OCT_PREFIX = "0";
 
-	private final static Set<Class<? extends Number>> INTEGER_TYPES = new HashSet<>();
-	static {
-		INTEGER_TYPES.add(Byte.class);
-		INTEGER_TYPES.add(Short.class);
-		INTEGER_TYPES.add(Integer.class);
-		INTEGER_TYPES.add(Long.class);
-	}
-	private static final Set<Class<? extends Number>> FLOATINGPOINT_TYPES = new HashSet<>();
-	static {
-		FLOATINGPOINT_TYPES.add(Float.class);
-		FLOATINGPOINT_TYPES.add(Double.class);
-	}
-
 	// @formatter:off
-	private static IntegerRadixRenderer SIGNED_INTEGER_RENDERER = new SignedIntegerRadixRenderer();
-	private static IntegerRadixRenderer UNSIGNED_INTEGER_RENDERER = new UnsignedIntegerRadixRenderer();
-	private static IntegerRadixRenderer DEFAULT_INTEGER_RENDERER = new DefaultIntegerRadixRenderer();
+	private final static Set<Class<? extends Number>> INTEGER_TYPES = Set.of(Byte.class, Short.class, Integer.class, Long.class);
+	private static final Set<Class<? extends Number>> FLOATINGPOINT_TYPES = Set.of(Float.class, Double.class);
 	// @formatter:on
 
 	private NumericUtilities() {
@@ -678,7 +661,7 @@ public final class NumericUtilities {
 	/**
 	 * Provide renderings of <code>number</code> in different bases:
 	 * <ul>
-	 * <li><code>0</code> - renders <code>number</code> as an escaped character sequence</li>
+	 * <li><code>0</code> - renders <code>number</code> as a big endian escaped character sequence</li>
 	 * <li><code>2</code> - renders <code>number</code> as a <code>base-2</code> integer</li>
 	 * <li><code>8</code> - renders <code>number</code> as a <code>base-8</code> integer</li>
 	 * <li><code>10</code> - renders <code>number</code> as a <code>base-10</code> integer</li>
@@ -807,32 +790,16 @@ public final class NumericUtilities {
 	 */
 	public static String formatNumber(long number, int radix, SignednessFormatMode mode) {
 		if (radix == 0) {
-			byte[] bytes = new byte[8];
-			bytes[0] = (byte) (number >> 56);
-			bytes[1] = (byte) (number >> 48);
-			bytes[2] = (byte) (number >> 40);
-			bytes[3] = (byte) (number >> 32);
-			bytes[4] = (byte) (number >> 24);
-			bytes[5] = (byte) (number >> 16);
-			bytes[6] = (byte) (number >> 8);
-			bytes[7] = (byte) (number >> 0);
+			byte[] bytes = BigEndianDataConverter.INSTANCE.getBytes(number);
 			return StringUtilities.toQuotedString(bytes);
 		}
 
-		IntegerRadixRenderer renderer = null;
-		switch (mode) {
-			case SIGNED:
-				renderer = SIGNED_INTEGER_RENDERER;
-				break;
-			case UNSIGNED:
-				renderer = UNSIGNED_INTEGER_RENDERER;
-				break;
-			case DEFAULT:
-				renderer = DEFAULT_INTEGER_RENDERER;
-				break;
-		}
-		return renderer.toString(number, radix);
-
+		BiFunction<Long, Integer, String> renderer = switch (mode) {
+			case SIGNED -> NumericUtilities::signedIntegerRadixToString;
+			case UNSIGNED -> NumericUtilities::unsignedIntegerRadixToString;
+			case DEFAULT -> NumericUtilities::defaultIntegerRadixToString;
+		};
+		return renderer.apply(number, radix);
 	}
 
 	/**
@@ -889,41 +856,24 @@ public final class NumericUtilities {
 	}
 
 	/**
-	 * Convert the given byte into a two character String, padding with a leading 0 if needed.
-	 *
-	 * @param b the byte
-	 * @return the byte string
-	 */
-	public static String toString(byte b) {
-		String bs = Integer.toHexString(b & 0xff);
-		if (bs.length() == 1) {
-			return "0" + bs;
-		}
-		return bs;
-	}
-
-	/**
 	 * Convert a byte array into a hexadecimal string.
 	 *
 	 * @param bytes byte array
 	 * @return hex string representation
 	 */
 	public static String convertBytesToString(byte[] bytes) {
-		return convertBytesToString(bytes, null);
+		return bytes != null ? convertBytesToString(bytes, 0, bytes.length, null) : null;
 	}
 
 	/**
 	 * Convert a byte array into a hexadecimal string.
 	 *
 	 * @param bytes byte array
-	 * @param delimeter the text between byte strings
+	 * @param delimiter the text between byte strings, {@code null} ok
 	 * @return hex string representation
 	 */
-	public static String convertBytesToString(byte[] bytes, String delimeter) {
-		if (bytes == null) {
-			return null;
-		}
-		return convertBytesToString(bytes, 0, bytes.length, delimeter);
+	public static String convertBytesToString(byte[] bytes, String delimiter) {
+		return bytes != null ? convertBytesToString(bytes, 0, bytes.length, delimiter) : null;
 	}
 
 	/**
@@ -932,49 +882,77 @@ public final class NumericUtilities {
 	 * @param bytes byte array
 	 * @param start start index
 	 * @param len number of bytes to convert
-	 * @param delimeter the text between byte strings
+	 * @param delimiter the text between byte strings, {@code null} ok
 	 * @return hex string representation
 	 */
-	public static String convertBytesToString(byte[] bytes, int start, int len, String delimeter) {
+	public static String convertBytesToString(byte[] bytes, int start, int len, String delimiter) {
+		if (bytes == null) {
+			return null;
+		}
+		delimiter = Objects.requireNonNullElse(delimiter, "");
 
-		Iterator<Byte> iterator = IteratorUtils.arrayIterator(bytes, start, start + len);
-		return convertBytesToString(iterator, delimeter);
+		int end = start + len;
+		Objects.checkFromToIndex(start, end, bytes.length);
+
+		StringBuilder sb = new StringBuilder(len * (2 + delimiter.length()));
+		for (int i = start; i < end; i++) {
+			if (!sb.isEmpty()) {
+				sb.append(delimiter);
+			}
+			String s = Integer.toHexString(Byte.toUnsignedInt(bytes[i]));
+			if (s.length() < 2) {
+				sb.append('0');
+			}
+			sb.append(s);
+		}
+		return sb.toString();
 	}
 
 	/**
-	 * Convert a bytes into a hexadecimal string.
+	 * Convert bytes into a hexadecimal string.
 	 *
 	 * @param bytes an iterator of bytes
-	 * @param delimiter the text between byte strings; null is allowed
+	 * @param delimiter the text between byte strings, {@code null} ok
 	 * @return hex string representation
 	 */
 	public static String convertBytesToString(Iterator<Byte> bytes, String delimiter) {
+		delimiter = Objects.requireNonNullElse(delimiter, "");
 
-		return convertBytesToString(() -> bytes, delimiter);
+		StringBuilder sb = new StringBuilder();
+		while (bytes.hasNext()) {
+			Byte b = bytes.next();
+			if (!sb.isEmpty()) {
+				sb.append(delimiter);
+			}
+			String s = Integer.toHexString(Byte.toUnsignedInt(b));
+			if (s.length() < 2) {
+				sb.append('0');
+			}
+			sb.append(s);
+		}
+		return sb.toString();
 	}
 
 	/**
-	 * Convert a bytes into a hexadecimal string.
+	 * Convert bytes into a hexadecimal string.
 	 *
 	 * @param bytes an iterable of bytes
-	 * @param delimiter the text between byte strings; null is allowed
+	 * @param delimiter the text between byte strings, {@code null} ok
 	 * @return hex string representation
 	 */
 	public static String convertBytesToString(Iterable<Byte> bytes, String delimiter) {
-		return convertBytesToString(CollectionUtils.asStream(bytes), delimiter);
+		return convertBytesToString(bytes.iterator(), delimiter);
 	}
 
 	/**
-	 * Convert a bytes into a hexadecimal string.
+	 * Convert bytes into a hexadecimal string.
 	 *
 	 * @param bytes an stream of bytes
-	 * @param delimiter the text between byte strings; null is allowed
+	 * @param delimiter the text between byte strings, {@code null} ok
 	 * @return hex string representation
 	 */
 	public static String convertBytesToString(Stream<Byte> bytes, String delimiter) {
-
-		delimiter = (delimiter == null) ? "" : delimiter;
-		return bytes.map(NumericUtilities::toString).collect(Collectors.joining(delimiter));
+		return convertBytesToString(bytes.iterator(), delimiter);
 	}
 
 	/**
@@ -1020,94 +998,53 @@ public final class NumericUtilities {
 	}
 
 	/**
-	 * Provides the protocol for rendering integer-type numbers in different signed-ness modes.
+	 * Renders provided numbers as signed values.
+	 * 
+	 * @param number value
+	 * @param radix 2,8,10,16
+	 * @return formatted string
 	 */
-	private static interface IntegerRadixRenderer {
-		/**
-		 * Format the given number in the provided radix base.
-		 *
-		 * @param number the number to render
-		 * @param radix the base in which to render
-		 * @return a string representing the provided number in the given base
-		 */
-		public String toString(long number, int radix);
-
+	private static String signedIntegerRadixToString(long number, int radix) {
+		return switch (radix) {
+			case 2 -> Long.toString(number, radix) + "b";
+			case 8 -> Long.toString(number, radix) + "o";
+			case 10 -> Long.toString(number, radix);
+			case 16 -> Long.toString(number, radix) + "h";
+			default -> throw new IllegalArgumentException("Unsupported radix " + radix);
+		};
 	}
 
 	/**
-	 * Renders provided numbers as signed values
+	 * Renders provided numbers as unsigned values.
+	 * 
+	 * @param number value
+	 * @param radix 2,8,10,16
+	 * @return formatted string
 	 */
-	private final static class SignedIntegerRadixRenderer implements IntegerRadixRenderer {
-		/**
-		 * {@inheritDoc}
-		 * <p>
-		 * All values are rendered in their <i>signed</i> form
-		 **/
-		@Override
-		public String toString(long number, int radix) {
-			switch (radix) {
-				case 2:
-					return Long.toString(number, radix) + "b";
-				case 8:
-					return Long.toString(number, radix) + "o";
-				case 10:
-					return Long.toString(number, radix);
-				case 16:
-					return Long.toString(number, radix) + "h";
-			}
-			throw new IllegalArgumentException("Unsupported radix");
-		}
-	}
-
-	/**
-	 * Renders provided numbers as unsigned values
-	 */
-	private final static class UnsignedIntegerRadixRenderer implements IntegerRadixRenderer {
-		/**
-		 * {@inheritDoc}
-		 * <p>
-		 * All values are rendered in their <i>unsigned</i> form
-		 **/
-		@Override
-		public String toString(long number, int radix) {
-			switch (radix) {
-				case 2:
-					return Long.toBinaryString(number) + "b";
-				case 8:
-					return Long.toOctalString(number) + "o";
-				case 10:
-					return Long.toUnsignedString(number);
-				case 16:
-					return Long.toHexString(number) + "h";
-			}
-			throw new IllegalArgumentException("Unsupported radix");
-		}
+	private static String unsignedIntegerRadixToString(long number, int radix) {
+		return switch (radix) {
+			case 2 -> Long.toBinaryString(number) + "b";
+			case 8 -> Long.toOctalString(number) + "o";
+			case 10 -> Long.toUnsignedString(number);
+			case 16 -> Long.toHexString(number) + "h";
+			default -> throw new IllegalArgumentException("Unsupported radix " + radix);
+		};
 	}
 
 	/**
 	 * Renders provided numbers in a more human-friendly manner
+	 * 
+	 * @param number value
+	 * @param radix 2,8,10,16
+	 * @return formatted string
 	 */
-	private final static class DefaultIntegerRadixRenderer implements IntegerRadixRenderer {
-		/**
-		 * {@inheritDoc}
-		 * <p>
-		 * Values to be rendered in binary, octal, or hexadecimal bases are rendered as unsigned,
-		 * numbers rendered in decimal are rendered as signed.
-		 */
-		@Override
-		public String toString(long number, int radix) {
-			switch (radix) {
-				case 2:
-					return new UnsignedIntegerRadixRenderer().toString(number, radix);
-				case 8:
-					return new UnsignedIntegerRadixRenderer().toString(number, radix);
-				case 10:
-					return new SignedIntegerRadixRenderer().toString(number, radix);
-				case 16:
-					return new UnsignedIntegerRadixRenderer().toString(number, radix);
-			}
-			throw new IllegalArgumentException("Unsupported radix");
-		}
+	private static String defaultIntegerRadixToString(long number, int radix) {
+		return switch (radix) {
+			case 2 -> unsignedIntegerRadixToString(number, radix);
+			case 8 -> unsignedIntegerRadixToString(number, radix);
+			case 10 -> signedIntegerRadixToString(number, radix);
+			case 16 -> unsignedIntegerRadixToString(number, radix);
+			default -> throw new IllegalArgumentException("Unsupported radix " + radix);
+		};
 	}
-
 }

@@ -1,3 +1,18 @@
+## ###
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##
 #@title gdb + qemu-system
 #@image-opt env:OPT_TARGET_IMG
 #@desc <html><body width="300px">
@@ -11,20 +26,22 @@
 #@menu-group gdb
 #@icon icon.debugger
 #@help gdb#qemu
+#@depends Debugger-rmi-trace
 #@enum Endian:str auto big little
 #@env OPT_TARGET_IMG:file!="" "Image" "The target binary executable image"
 #@env GHIDRA_LANG_EXTTOOL_qemu_system:file="" "QEMU command" "The path to qemu-system for the target architecture."
 #@env QEMU_GDB:int=1234 "QEMU Port" "Port for gdb connection to qemu"
 #@env OPT_EXTRA_QEMU_ARGS:str="" "Extra qemu arguments" "Extra arguments to pass to qemu. Use with care."
 #@env OPT_GDB_PATH:file="gdb-multiarch" "gdb command" "The path to gdb. Omit the full path to resolve using the system PATH."
+#@env OPT_GDB_ARGS:str="" "gdb cmd args" "Arguments passed to gdb (versus the target)"
 #@env OPT_ARCH:str="auto" "Architecture" "Target architecture"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 #@env OPT_EXTRA_TTY:bool=false "QEMU TTY" "Provide a separate terminal emulator for qemu."
 
 . ..\support\gdbsetuputils.ps1
 
-$pypathTrace = Ghidra-Module-PyPath "Debug/Debugger-rmi-trace"
-$pypathGdb = Ghidra-Module-PyPath "Debug/Debugger-agent-gdb"
+$pypathTrace = Ghidra-Module-PyPath "Debugger-rmi-trace"
+$pypathGdb = Ghidra-Module-PyPath
 $Env:PYTHONPATH = "$pypathGdb;$pypathTrace;$Env:PYTHONPATH"
 
 $qemuargs = @("`"$Env:GHIDRA_LANG_EXTTOOL_qemu_system`"")

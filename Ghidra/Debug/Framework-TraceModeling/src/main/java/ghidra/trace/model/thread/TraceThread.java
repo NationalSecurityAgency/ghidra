@@ -19,11 +19,30 @@ import java.util.List;
 
 import ghidra.program.model.lang.Register;
 import ghidra.trace.model.*;
+import ghidra.trace.model.target.iface.TraceExecutionStateful;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.info.TraceObjectInfo;
 
 /**
  * A thread in a trace
+ * 
+ * <p>
+ * This object must be associated with a suitable {@link TraceExecutionStateful}. In most
+ * cases, the object should just implement it.
  */
-public interface TraceThread extends TraceUniqueObject {
+@TraceObjectInfo(
+	schemaName = "Thread",
+	shortName = "thread",
+	attributes = {
+		TraceThread.KEY_TID,
+	},
+	fixedKeys = {
+		TraceObjectInterface.KEY_DISPLAY,
+		TraceObjectInterface.KEY_COMMENT,
+	})
+public interface TraceThread extends TraceUniqueObject, TraceObjectInterface {
+	/** The key that gives the TID, as assigned by the target's platform */
+	String KEY_TID = "_tid";
 
 	/**
 	 * Get the trace containing this thread
@@ -57,7 +76,15 @@ public interface TraceThread extends TraceUniqueObject {
 	/**
 	 * Set the "short name" of this thread
 	 * 
-	 * @param snap the snap
+	 * @param lifespan the span of time
+	 * @param name the name
+	 */
+	void setName(Lifespan lifespan, String name);
+
+	/**
+	 * Set the "short name" of this thread
+	 * 
+	 * @param snap the starting snap
 	 * @param name the name
 	 */
 	void setName(long snap, String name);

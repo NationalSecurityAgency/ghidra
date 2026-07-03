@@ -16,7 +16,6 @@
 package ghidra.framework.main;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
@@ -28,13 +27,15 @@ import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.PasswordChangeDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
+import generic.hash.HashUtilities;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.remote.User;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 
 class ProjectActionManager {
 	private final static String CLOSE_ALL_OPEN_VIEWS = "Close All Read-Only Views";
@@ -535,11 +536,11 @@ class ProjectActionManager {
 
 		String urlStr = Preferences.getProperty(LAST_VIEWED_REPOSITORY_URL);
 		URL lastURL = null;
-		if (urlStr != null) {
+		if (GhidraURL.isGhidraURL(urlStr)) {
 			try {
-				lastURL = new URL(urlStr);
+				lastURL = GhidraURL.toURL(urlStr);
 			}
-			catch (MalformedURLException e) {
+			catch (IllegalArgumentException e) {
 				// ignore
 			}
 		}
@@ -569,7 +570,7 @@ class ProjectActionManager {
 			ProjectManager projectManager = tool.getProjectManager();
 			projectManager.forgetViewedProject(view);
 			Msg.showError(getClass(), tool.getToolFrame(), "Error Adding View",
-				"Failed to view project/repository: " + e.getMessage(), e);
+				"Failed to view project/repository: " + e.getMessage());
 		}
 	}
 

@@ -19,6 +19,7 @@ import java.net.URL;
 
 import ghidra.framework.data.ContentHandler;
 import ghidra.framework.model.DomainFile;
+import ghidra.framework.protocol.ghidra.GhidraURLQuery.LinkFileControl;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -35,7 +36,7 @@ public class ContentTypeQueryTask extends GhidraURLQueryTask {
 	 * (see {@link GhidraURL}).
 	 */
 	public ContentTypeQueryTask(URL ghidraUrl) {
-		super("Query URL Content Type", ghidraUrl);
+		super("Query URL Content Type", ghidraUrl, null, LinkFileControl.NO_FOLLOW);
 	}
 
 	/**
@@ -54,4 +55,5 @@ public class ContentTypeQueryTask extends GhidraURLQueryTask {
 	public void processResult(DomainFile domainFile, URL url, TaskMonitor monitor) {
 		contentType = domainFile.getContentType();
 	}
+
 }

@@ -112,12 +112,15 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 					.build();
 		addAction(eventAction);
 
-		toggleFollowFocusAction = new ToggleActionBuilder("Follow Focus", ACTION_OWNER)
-				.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
-				.description("On causes component table to constant repopulate as focus changes")
-				.onAction(c -> toggleFollowFocus())
-				.selected(true)
-				.build();
+		toggleFollowFocusAction =
+			new ToggleActionBuilder("Navigate on Incoming Location Changes", ACTION_OWNER)
+					.sharedKeyBinding()
+					.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
+					.description(
+						"On causes component table to constant repopulate as focus changes")
+					.onAction(c -> toggleFollowFocus())
+					.selected(true)
+					.build();
 		addAction(toggleFollowFocusAction);
 	}
 

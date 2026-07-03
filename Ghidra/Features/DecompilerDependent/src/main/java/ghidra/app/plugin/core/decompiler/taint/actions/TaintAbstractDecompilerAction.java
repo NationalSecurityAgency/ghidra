@@ -18,18 +18,15 @@ package ghidra.app.plugin.core.decompiler.taint.actions;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.KeyBindingType;
-import ghidra.app.decompiler.*;
-import ghidra.app.decompiler.component.DecompilerUtils;
+import ghidra.app.decompiler.ClangFieldToken;
+import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilePlugin;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
-import ghidra.program.model.symbol.*;
-import ghidra.util.UndefinedFunction;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 
 /**
@@ -137,48 +134,6 @@ public abstract class TaintAbstractDecompilerAction extends DockingAction {
 	public void actionPerformed(ActionContext context) {
 		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
 		decompilerActionPerformed(decompilerContext);
-	}
-
-	protected Symbol getSymbol(DecompilerActionContext context) {
-
-		// prefer the decompiler's function reference over the program location's address
-		Function function = getFunction(context);
-		if (function != null && !(function instanceof UndefinedFunction)) {
-			return function.getSymbol();
-		}
-
-		Program program = context.getProgram();
-		SymbolTable symbolTable = program.getSymbolTable();
-		Address address = context.getAddress();
-		if (address == null) {
-			return null;
-		}
-		return symbolTable.getPrimarySymbol(address);
-	}
-
-	/**
-	 * Get the function corresponding to the specified decompiler context.
-	 * 
-	 * @param context decompiler action context
-	 * @return the function associated with the current context token or null if none identified.
-	 */
-	protected Function getFunction(DecompilerActionContext context) {
-		ClangToken token = context.getTokenAtCursor();
-
-		Function f = null;
-		if (token instanceof ClangFuncNameToken) {
-			f = DecompilerUtils.getFunction(context.getProgram(), (ClangFuncNameToken) token);
-		}
-		else {
-			HighSymbol highSymbol = token.getHighSymbol(context.getHighFunction());
-			if (highSymbol instanceof HighFunctionShellSymbol) {
-				f = (Function) highSymbol.getSymbol().getObject();
-			}
-		}
-		while (f != null && f.isThunk() && f.getSymbol().getSource() == SourceType.DEFAULT) {
-			f = f.getThunkedFunction(false);
-		}
-		return f;
 	}
 
 	protected abstract boolean isEnabledForDecompilerContext(DecompilerActionContext context);

@@ -15,16 +15,34 @@
  */
 package ghidra.app.util.demangler.gnu;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import ghidra.framework.*;
+import com.google.common.util.concurrent.SimpleTimeLimiter;
+
+import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
+import ghidra.framework.Application;
+import ghidra.framework.OSFileNotFoundException;
+import ghidra.framework.Platform;
 import ghidra.util.Msg;
 
 /**
@@ -113,16 +131,39 @@ public class GnuDemanglerNativeProcess {
 		createProcess();
 	}
 
+	/**
+	 * {@return the demangled string}
+	 * 
+	 * @param mangled The string to demangle
+	 * @throws IOException if an IO-related error occurred
+	 */
 	public synchronized String demangle(String mangled) throws IOException {
+		return demangle(mangled, true, null);
+	}
+
+	/**
+	 * {@return the demangled string}
+	 * 
+	 * @param mangled The string to demangle
+	 * @param timeoutSeconds The number of seconds to attempt the demangle, or {@code null} for no
+	 *   timeout
+	 * @throws IOException if a timeout or IO-related error occurred
+	 */
+	public synchronized String demangle(String mangled, Long timeoutSeconds) throws IOException {
 		if (isDisposed) {
 			throw new IOException("Demangled process has been terminated.");
 		}
-		return demangle(mangled, true);
+		return demangle(mangled, true, timeoutSeconds);
 	}
 
-	private String demangle(String mangled, boolean restart) throws IOException {
+	private String demangle(String mangled, boolean restart, Long timeoutSeconds)
+			throws IOException {
 		try {
-			return doDemangle(mangled);
+			return doDemangle(mangled, timeoutSeconds);
+		}
+		catch (TimeoutException e) {
+			dispose();
+			throw new IOException("Timeout reached", e);
 		}
 		catch (IOException e) {
 			dispose();
@@ -130,14 +171,25 @@ public class GnuDemanglerNativeProcess {
 				throw new IOException("Demangler process is not running.", e);
 			}
 			createProcess();
-			return demangle(mangled, false);
+			return demangle(mangled, false, timeoutSeconds);
 		}
 	}
 
-	private String doDemangle(String mangled) throws IOException {
+	private String doDemangle(String mangled, Long timeoutSeconds)
+			throws TimeoutException, IOException {
 		writer.println(mangled);
 		writer.flush();
-		return reader.readLine();
+		try {
+			return timeoutSeconds != null
+					? SimpleTimeLimiter
+							.create(AutoAnalysisManager.getSharedAnalsysThreadPool()
+									.getExecutorService())
+							.callWithTimeout(reader::readLine, timeoutSeconds, TimeUnit.SECONDS)
+					: reader.readLine();
+		}
+		catch (ExecutionException | InterruptedException e) {
+			throw new IOException(e);
+		}
 	}
 
 	public void dispose() {
@@ -161,6 +213,7 @@ public class GnuDemanglerNativeProcess {
 		}
 	}
 
+	@SuppressWarnings("resource")
 	private void createProcess() throws IOException {
 
 		String[] command = buildCommand();
@@ -227,9 +280,14 @@ public class GnuDemanglerNativeProcess {
 		// Send a test string over and read the result.   If the test string is blank, then
 		// there was an error.
 		//
-		String testResult = doDemangle("test");
-		if (!StringUtils.isBlank(testResult)) {
-			return;
+		try {
+			String testResult = doDemangle("test", null);
+			if (!StringUtils.isBlank(testResult)) {
+				return;
+			}
+		}
+		catch (TimeoutException e) {
+			throw new IOException(e);
 		}
 
 		InputStream err = process.getErrorStream();

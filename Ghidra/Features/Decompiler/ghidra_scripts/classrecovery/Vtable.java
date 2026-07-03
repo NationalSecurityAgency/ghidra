@@ -317,7 +317,7 @@ public class Vtable {
 		// if it has a primary non-default symbol and it isn't "vftable" then it isn't a vftable
 		Symbol primarySymbol = symbolTable.getPrimarySymbol(topAddress);
 		if (primarySymbol != null && primarySymbol.getSource() != SourceType.DEFAULT &&
-			!primarySymbol.getName().contains("vftable")) {
+			!primarySymbol.getName().toLowerCase().contains("vftable")) {
 			return numFunctionPointers;
 		}
 		MemoryBlock currentBlock = program.getMemory().getBlock(topAddress);

@@ -56,9 +56,10 @@ public class DatatypeCategorySearchAndReplaceHandler extends SearchAndReplaceHan
 			Matcher matcher = pattern.matcher(category.getName());
 			if (matcher.find()) {
 				String newName = matcher.replaceAll(query.getReplacementText());
-				RenameCategoryQuickFix item = new RenameCategoryQuickFix(program, category, newName);
+				RenameCategoryQuickFix item =
+					new RenameCategoryQuickFix(program, category, newName);
 				accumulator.add(item);
-				if (accumulator.size() >= query.getSearchLimit()) {
+				if (accumulator.getProgress() >= query.getSearchLimit()) {
 					return;
 				}
 			}

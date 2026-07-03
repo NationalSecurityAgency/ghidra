@@ -1,3 +1,902 @@
+# Ghidra 12.1.2 Change History (June 2026)
+
+### Improvements
+* _MachineLearning_. Upgraded the Machine Learning extension's olcut jars to 5.3.1. (GP-6894)
+* _Multi-User_. Data buffers transferred to and from a Ghidra Server are now compressed by default.  The default was previously inconsistent for the two directions. (GP-6915)
+
+### Bugs
+* _Decompiler_. Fixed infinite loop in Decompiler analysis that was triggered by bitfield data-types. (GP-6850, Issue #9185)
+* _Importer:ELF_. Improved ELF GNU Hash table bounds-checking to avoid potential hang. (GP-6887)
+* _Multi-User_. Corrected severe regression error with Ghidra Server 12.1.1 block-stream compression. (GP-6903)
+
+# Ghidra 12.1.1 Change History (May 2026)
+
+### Improvements
+* _MachineLearning_. Upgraded the Machine Learning extension's Tribuo jars to 4.3.2. (GP-6838)
+* _Multi-User_. Made Ghidra Server security improvements. (GP-6832)
+* _Scripting_. Removed the `support/jythonRun(.bat)` launch capability. (GP-6826)
+
+### Bugs
+* _Analysis_. Changed non-returning function detection analyzer to ignore callfixup targets with fall-through behavior. (GP-6791, Issue #9154)
+* _Data Types_. Fixed the Data Type Preview to show the typedef data type before the typedef name. (GP-6858)
+* _Debugger:Agents_. Patched a possible out-of-memory vulnerability in TraceRmi. (GP-6718)
+* _Debugger:Listing_. Added __Disassemble as MIPS__:_:16e__ for the dynamic listing. (GP-6655)
+* _Framework_. Changed potentially unsafe calls to `Class.forName` to perform additional checks prior to instantiation. (GP-6717)
+* _Multi-User_. Increased the default value for serialization filter `maxarray` limit from 32,000 to 200,000.  This was done to avoid related class serialization errors when communicating with the Ghidra Server for large repository database files.  See `Ghidra/Framework/FileSystem/data/serialFilterREADME.md` - it may be necessary to specify an increased `maxarray` value if related serialization errors occur. (GP-6842)
+* _Multi-User_. Corrected memory leak issue related to Ghidra Server, affecting both client and server.  Buffer compression logic failed to properly release system resources. (GP-6862)
+* _Multi-User:Merge_. Corrected bug in Property List Merge which could cause an exception. (GP-6854)
+* _Processors_. Fixed several issues with x86 instruction semantics for numerous instructions. (GP-6675, Issue #9097)
+* _Processors_. Corrected MIPS signed offsets which were incorrectly interpreted as unsigned. (GP-6697)
+* _Processors_. Fixed issue with the CIP-51 variant language definition. (GP-6798)
+* _Processors_. Corrected issue with RISC-V attempting to write to constants. (GP-6849, Issue #9198)
+* _PyGhidra_. Handled a possible `NotADirectoryError` in `pyghidra_launcher.py`. (GP-6825)
+
+### Notable API Changes
+* _BSim_. (GP-6866) The unused methods `FunctionDatabase.getConfigurationTemplates` and `FunctionDatabase.isConfigTemplate` have been removed.
+* _Framework_. (GP-6717) Added `ClassSearcher.forNameSafe` method.
+
+# Ghidra 12.1 Change History (May 2026)
+
+### New Features
+* _Byte Viewer_. Added support for other-than-ASCII character encodings in the ByteViewer. (GP-5689)
+* _Data Types_. Added ability to merge non-conflicting structures, unions, or enums. (GP-5808, 
+  Issue #2461)
+* _Debugger:Agents_. Enabled synchronization between x64dbg and Ghidra. (GP-5972)
+* _Debugger:Time_. Added a margin bar and new BreakpointTimelinePlugin that displays breakpoint hits 
+  across the whole execution of a trace. (GP-5895)
+* _DWARF_. Added support for querying `debuginfod` servers for files. (GP-5924, Issue #8407)
+* _ELF_. Added markup for `.gnu.build.attributes` in ELF binaries. (GP-5929)
+* _GUI_. Updated the Data Type Manager provider to remember the program archive's selected data type 
+  when switching between program tabs. (GP-2370)
+* _GUI_. Added a __Hide Filter__ action for Tables and Trees.  This action can be bound to the 
+  `Escape` key to close the filter. (GP-6336, Issue #8771)
+* _GUI_. Updated the __Find References__ action to appear in tables that have addresses. (GP-6365, 
+  Issue #8899)
+* _Importer:Trace_. Added a loader for Tenet trace files. (GP-6382)
+* _Processors_. Added the Hexagon Language module with modified instruction syntax.  Modified syntax 
+  was used to better fit Ghidra's mnemonic/operand Listing API.  This processor also introduces the 
+  first use of Ghidra's Sleigh `crossbuild` feature which is used for weaving pcode for parallel 
+  processor architectures such as the Hexagon. (GP-6621, Issue #1595)
+* _Scripting_. Added `AddVfunctionCallRefScript`, which, if the cursor is on a vftable->function 
+  token in the Decompiler, will create a CALL reference to the associated function in the Listing, 
+  if it can be determined. (GP-6693)
+* _Search_. Added the ability to scan using the results from one progam rebased on another. (GP-6260)
+
+### Improvements
+* _Analysis_. More Swift type metadata has been marked up. (GP-6281)
+* _Analysis_. Improved Golang analyzer to handle some obfuscation techniques. (GP-6291, Issue #8804)
+* _Analysis_. Improved Objective-C analysis with such things as providing `msgSend` support. (GP-6327, 
+  Issue #5938)
+* _Basic Infrastructure_. Environment variables can now be set in `launch.properties` using 
+  `ENVVARS=` or `ENVVARS_[PLATFORM]=`. (GP-6193)
+* _Basic Infrastructure_. Ghidra's maximum heap size can now be set via external environment 
+  variables.  See each of the various launch shell scripts for usage information. (GP-6213)
+* _Basic Infrastructure_. Ghidra's Java options (system properties) can now be set via external 
+  environment variables.  See each of the various launch shell scripts for usage information. 
+  (GP-6350, Issue #4960, #8885, #8942)
+* _Basic Infrastructure_. Upgraded JDOM to 2.0.6.1. (GP-6370)
+* _Basic Infrastructure_. Fixed an issue that occurred when expanding environment variables that 
+  contained regular expression characters in `launch.properties`. (GP-6704, Issue #9061)
+* _Build_. Ghidra can now be built on Windows on ARM (requires Gradle 9.2 or later). (GP-6126)
+* _Data Types_. Change was made which consistently allows duplicate component/field naming within 
+  Structure/Union datatypes.  When editing a name within the GUI, the user will be warned and must 
+  confirm use of a duplicate name. (GP-3564, Issue #5249)
+* _Data Types_. A datatype which gets removed will no longer attempt to update itself as a result of 
+  dependency changes.  This may reduce the number of superfluous listener callbacks and events that 
+  occur during the removal process. (GP-5882)
+* _Debugger_. Added parameter for custom arguments to gdb/lldb. (GP-6112, Issue #8565)
+* _Debugger_. Better available lists are provided for gdb/lldb. (GP-6273, Issue #8711)
+* _Debugger_. Added remote option for x64dbg. (GP-6401, Issue #8929)
+* _Debugger_. Added the ability to launch lldb/gdb from Windows via ssh targeting Windows on the 
+  remote machine. (GP-6423)
+* _Debugger:Emulator_. Provided GUI additions to expose Emulator Taint. (GP-6129)
+* _Debugger:Emulator_. Created `Save` state for Emulator, as the choice of Emulator was not being 
+  saved. (GP-6163)
+* _Debugger:LLDB_. Created new launcher for android attach. (GP-6174, Issue #6386, #8225)
+* _Debugger:LLDB_. Rerunning the target in lldb is now allowed. (GP-6422, Issue #8945)
+* _Debugger:LLDB_. Added the ability to attach to _available_ process for lldb. (GP-6474)
+* _Debugger:Time_. Provided better color management for Time overviews. (GP-6440)
+* _Decompiler_. The Decompiler now displays structure bitfields in expressions. (GP-2493, Issue #647)
+* _Decompiler_. Extended Abstract Interpretation logic to high pcode. (GP-5921)
+* _Decompiler_. The display format for integer case labels can now be set for individual switch 
+  statements from the Decompiler window. (GP-5922, Issue #4438, #8196, #8726)
+* _Decompiler_. Added a Decompiler action to toggle the __Disable printing of type casts__ option. 
+  (GP-6199, Issue #7452)
+* _Decompiler_. Added setter methods to the DecompilerOptions class.  These can be used by script 
+  writers to control the Decompiler's behavior. (GP-6266, Issue #8812)
+* _Demangler_. Created Output options for Microsoft Demangler that control output of anonymous 
+  namespace encoding and control the emitting of tags for user-defined types when found as template 
+  or function arguments. (GP-4901)
+* _Demangler_. Updated the Rust Demangler to use code ported from the official Rust-based Demangler. 
+  (GP-6108, Issue #8609)
+* _Demangler_. Updated the Gnu Demangler v2.24 to support the `static` modifier for functions. (GP-6394)
+* _Emulator_. Introduced a default `LOCK` userop definition for x86, and a default 
+  `ExclusiveMonitorPass` for ARM, as well as for other userops and processors. (GP-4241, Issue #6089, 
+  #7495)
+* _Emulator:JIT_. Optimized handling of multi-precision integers; i.e., varnodes of size greater 
+  than 8 bytes. (GP-5980)
+* _Function Compare_. Fixed the Function Comparison provider so that it saves changes made to the 
+  Listing View fields.  The provider will now also remember the last view tab selected. (GP-6016)
+* _GUI_. Added a Data Type Manager action to search for enums by value. (GP-1914)
+* _GUI_. Added popup menu items __Close Other__, __Close Tabs to the Right__, and 
+  __Close Tabs to the Left__ to docking window tabs. (GP-4961)
+* _GUI_. Added namespace chooser to Add/Edit Label Dialog. (GP-5806, Issue #8263)
+* _GUI_. Changed the Log Viewer to a window instead of a dialog so that it can be maximized. 
+  (GP-6044)
+* _GUI_. Added a __Find All__ button in the Find Dialog used in many component providers. (GP-6076)
+* _GUI_. Updated the Listing Snapshots to include the Flow Arrows, Margin Markers, and Overview 
+  Markers. (GP-6085, Issue #8601)
+* _GUI_. Added an action to the Symbol Tree to allow users to toggle outgoing navigation events. 
+  (GP-6101, Issue #8618)
+* _GUI_. Added a generic __Mem Source__ table column to assist in filtering compatible tables based 
+  on the source from where the memory addresses originated. (GP-6147, Issue #8548)
+* _GUI_. Added a `modify()` method to the Annotation class so clients can perform their own 
+  annotation transformations. (GP-6451, Issue #8928)
+* _Importer_. The `ElfLoader` can now recognize Swift and golang binaries. (GP-3960, Issue #8795)
+* _Importer_. The `NeLoader` can now load binaries that used Phar Lap’s 286/DOS-Extender. (GP-6537, 
+  Issue #1905, #2493)
+* _Importer:PE_. The PE loader now sets up thunk functions for export forwarders. (GP-5900)
+* _Importer:PE_. The PE Dynamic Value Relocation Table (DVRT) is now parsed and marked up. (GP-6502)
+* _Jython_. Jython support is now delivered as a Ghidra Extension, which means an extra step is 
+  required to install it. If Jython is required, the user should simply go to 
+  __File -> Install Extensions__ in the Ghidra Front End GUI and check __Jython__. The user must 
+  restart Ghidra to complete the enablement of Jython. (GP-6754)
+* _Languages_. More Swift type metadata has been parsed and marked up. (GP-6137, Issue #8607)
+* _Listing_. Added a feature to allow function bodies to be closed in the Listing. (GP-5987)
+* _Listing_. Changed offcut string references to use the existing non-default label at the string 
+  beginning instead of the default name created from the string's offcut location. If no label is 
+  defined, the default offcut string naming scheme is used (`s_[substring]` instead of 
+  `[label name]+offset`). (GP-6345, Issue #8882)
+* _Multi-User_. Improved Ghidra Server serialization filters and added serialization filters to 
+  client-side Ghidra applications.  We may have missed something in our testing so let us know if 
+  you encounter an `InvalidClassException`.  The log will identify a class which fails to pass the 
+  filter rules. (GP-6719)
+* _Processors_. Corrected behavior of ARM thumb `branchWritePC` macro. (GP-6333, Issue #8585)
+* _Processors_. Added `maximumInstructionLength` language property in support of `inst_next2` use. 
+  (GP-6613, Issue #8941)
+* _Processors_. Corrected operand order for MIPS162e `movn` and `movz` instructions. (GP-6766)
+* _Project_. Expanded on the set of allowed special characters for a local Ghidra project path name 
+  to include the following: `'.'`, `'-'`, `'='`, `'@'`, `' '`, `'_'`, `'('`, `')'`, `'['`, `']'`, and 
+  `'~'`. (GP-6681)
+* _PyGhidra_. PyGhidra will now, by default, restore `sys.modules` to its prior state after a 
+  PyGhidra script is run (or the interactive interpreter is reset) so the next time a script is run, 
+  it freshly loads all of its imported modules again. This default behavior can be disabled by 
+  setting the `pyghidra.sys.modules.restore.disable` Java system property to true, which can be done in 
+  the `support/launch.properties` file. (GP-6288)
+* _Scripting_. Made some improvements to the `RecoverClassesFromRTTIScript` for GCC programs. (GP-6670)
+* _Search_. Fixed an issue where some matches were not found when doing a regular expression search 
+  using the regex _lookbehind_ clause. (GP-6070)
+* _Search_. Updated MemoryBytePatternSearcher to correctly handle mapped blocks. (GP-6308)
+* _Sleigh_. Fixed the Sleigh `goto` statement to accept 64-bit literals. Added range-checking for 
+  literals in Sleigh compiler. This fixes an Emulator issue where edits to the `pc` register were 
+  truncated to 32 bits. (GP-6328, Issue #8875)
+* _Symbol Table_. In the Symbol Table's __Symbol References__ table, the user can now select 
+  multiple refs in the refs table to delete more than one reference at a time.  There is also a new 
+  action in the Symbol Table popup action to allow the user to delete all references to a symbol, 
+  found under __References -> Delete All__.  Finally, there is a new __Make Selection__ action in 
+  the popup menu of the References Table to select, in the Listing, all references to a symbol. (GP-6430)
+* _Testing_. Upgraded jacoco to 0.8.14. (GP-6504)
+* _Version Tracking_. Improved Version Tracking so that when applying `thiscall` function signatures, 
+  the source's class structure is copied to the destination program, if appropriate, given the 
+  chosen apply options. (GP-5709, Issue #8127)
+* _Version Tracking_. Updated Version Tracking to allow replacing of existing function label 
+  namespaces. (GP-5996)
+
+### Bugs
+* _Analysis_. Added support for Windows DLLs generated by Golang. (GP-6325)
+* _Analysis_. Corrected `AutoAnalysisManager.removeCancelledListenter()` to call `removeCancelledListener()` 
+  instead of incorrectly calling `addCancelledListener()`.  This addresses a potential memory leak 
+  within Ghidra. (GP-6789)
+* _BSim_. Improved string sanitization in PostgresFunctionDatabase.java. (GP-6722)
+* _BSim_. Escaped values used to create BSim filters. (GP-6736)
+* _Build_. Gradle 9 no longer fails when passed the `--parallel` command line argument. (GP-6385, 
+  Issue #8621, #8622)
+* _Byte Viewer_. Fixed a bug in the Byte Viewer where the last byte in the program could not be 
+  selected in some views. (GP-6178)
+* _Byte Viewer_. Changed the Byte Viewer to give a visual clue (foreground color is gray) when a 
+  multi-byte value spans adjacent memory blocks. (GP-6184)
+* _Byte Viewer_. Fixed a minor alignment issue in Byte Viewer when a column could not populate the 
+  first line of a memory block. (GP-6204)
+* _Byte Viewer_. Updated the Byte Viewer's configure options dialog to handle programs with no 
+  minimum address. (GP-6227, Issue #8762, #8763)
+* _Data Types_. The Data Type Tree's __Associate with Archive__ action is now only available for 
+  selected Program datatypes.  A normal copy or datatype drag-n-drop may still be used between all 
+  datatype archives. (GP-6362)
+* _Data Types_. Corrected Structure Editor __Unpackage Component__ action which was misplacing 
+  components. (GP-6574, Issue #9041)
+* _Data Types_. Corrected Structure `insertAtOffset` behavior when inserting at an offset which 
+  precedes a zero-length component. (GP-6576)
+* _Data Types_. Corrected upgrade failure which can occur for Project Data Type Archives. (GP-6649)
+* _Data Types_. Fixed `CreateUEFIGDTArchivesScript`, which parses UEFI header files for extracting 
+  data types. (GP-6690)
+* _Debugger_. Fixed bug in the tree logic encountered when searching for an appropriate Trace 
+  Object. (GP-6173, Issue #8702)
+* _Debugger_. Fixed a hang in the Debugger UI when closing a session under certain conditions. 
+  (GP-6299)
+* _Debugger_. Provided a fix to allow register queries for non-active threads. (GP-6375, 
+  Issue #8903)
+* _Debugger_. Fixed an error where breakpoints were ineffective for x64dbg. (GP-6468, Issue #8989)
+* _Debugger_. Fixed bugs in x64dbg write methods. (GP-6482, Issue #9003)
+* _Debugger:Agents_. Provided better end-of-life story for the x64dbg agent. (GP-6148)
+* _Debugger:Agents_. Changed Debugger defaults to listen on localhost rather than all interfaces. 
+  (GP-6716)
+* _Debugger:Breakpoints_. Fixed a `ClosedException` in the logical breakpoint service. (GP-6572, 
+  Issue #8904)
+* _Debugger:dbgeng.dll_. Handlers should not force break. They now return `DEBUG_STATUS_NO_CHANGE`. 
+  (GP-6190, Issue #8738)
+* _Debugger:dbgeng.dll_. Added python handlers for dbgeng. (GP-6374)
+* _Debugger:Emulator_. Fixed an issue where AUX emulators, e.g., the Taint Emulator, did not 
+  recognize the `emu_*` userops in injections. (GP-6018)
+* _Debugger:Emulator_. Better default behavior for Z3 plugin is provided, especially upon removal. 
+  (GP-6312)
+* _Decompiler_. Updated the Decompiler's __Set Equate__ action to not prompt users twice. (GP-6205, 
+  Issue #8736)
+* _Decompiler_. Fixed a bug in the Decompiler when analyzing expressions of the form 
+  `val & bitmask >> const != 0`. (GP-6318, Issue #8717, #8718)
+* _Decompiler_. Fixed infinite loop triggered during multistage jump table analysis. (GP-6610, 
+  Issue #8968)
+* _Decompiler_. Updated the Decompiler to not re-decompile when creating a snapshot of the current 
+  function. (GP-6629)
+* _Demangler_. Updated the legacy GnuDemangler v2.24 to handle qualifiers being used along with the 
+  `F` character. (GP-6363)
+* _Emulator_. Fixed crash issue that occurred if a script, userop, or similar ever called 
+  `state.getVar()` with size of 0. (GP-6654)
+* _Emulator:JIT_. Fixed several bugs discovered when converting `EmuX86GccDeobfuscateHookExampleScript`. 
+  (GP-6397)
+* _Emulator:JIT_. Fixed a bug in multi-precision-integer-addition code generation. (GP-6457)
+* _Function_. Corrected possible exception within Function Editor when applying simple parameter 
+  renames made within table. (GP-6746)
+* _GUI_. Fixed table header not painting edges on the Windows theme. (GP-6053, Issue #8564)
+* _GUI_. Fixed a keyboard focus issue related to modal dialogs. (GP-6069, Issue #8571)
+* _GUI_. Updated the __Choose Data Type__ action to use the actual data type at the current location 
+  instead of the base data type. (GP-6192, Issue #8734)
+* _GUI_. Updated Program Tabs to better show the current active program. (GP-6323)
+* _GUI_. Fixed stack trace in Symbol Tree when converting a Namespace to a Class. (GP-6326, 
+  Issue #8869)
+* _GUI_. Improved the appearance of the Script Quick Launch dialog. (GP-6335, Issue #8759)
+* _GUI_. Fixed key bindings that use the `Alt` key so that the right `Alt` key works in addition to 
+  the left `Alt` key.  This is now an option that can be disabled for users that prefer to keep the 
+  right `Alt` key independent of the left `Alt` key. (GP-6450, Issue #8205, #8969)
+* _GUI_. Fixed Add/Edit Label behavior on symbol names that contain the `"::"` namespace separator. 
+  (GP-6488)
+* _GUI_. Fixed a bug in the Listing open-union display that caused a `NullPointerException`. (GP-6536)
+* _GUI_. Corrected behavior of Function Call Tree when traversing thunk functions. (GP-6653)
+* _GUI_. Fixed Data Type Manager filter bugs. (GP-6749)
+* _GUI_. Fixed __Save As__ dialog not allowing users to select a folder. (GP-6756)
+* _Listing_. Fixed a bug where files were not marked as having unsaved changes in the Listing tabs 
+  after performing __Analyze All Open__ action. (GP-5953)
+* _Logging_. Fixed a bug that prevented GhidraScript output from being directed to either the 
+  default or user-specified `script.log` file. (GP-6532)
+* _Memory_. Corrected various issues related to improper use of Addresses from one program in 
+  another program's AddressMap. (GP-6150)
+* _Multi-User_. Corrected potential security concern with Ghidra Server PKI Authentication.  If 
+  using PKI Authentication mode (`-a2`) for the server install, the user should upgrade the server.  
+  See reported Ghidra GitHub Pull Request #9109 for more details. (GP-6678, Issue #9109)
+* _Multi-User_. Added Ghidra Server `-ipAlt` option to address self-signed certificate issues 
+  affecting docker container deployments where a formal certificate was not used (see `server.conf` 
+  and `svrREADME.md`). (GP-6811)
+* _Processors_. Fixed ARM `ldrsh.w` and `ldrsb.w` instruction semantics. (GP-4651, Issue #6564)
+* _Processors_. Reworded Tricore processor description. (GP-5243, Issue #7170)
+* _Processors_. Corrected AVR32 `ICALL` instruction behavior when `rd0` is the `LR` register. 
+  (GP-5306, Issue #5718)
+* _Processors_. Corrected the signed offset parameter of PowerPC `LQ` instruction. (GP-5508, Issue 
+  #6827)
+* _Processors_. Fixed disassembly for ARM Neon `vmvn` and `vmov` immediate instructions. (GP-5849, 
+  Issue #8319)
+* _Processors_. Added support for CIP-51 microprocessor variant of the 8051 language. (GP-6000, 
+  Issue #8130)
+* _Processors_. Added several missing ARM v8m instructions. (GP-6145, Issue #8652)
+* _Processors_. Corrected PIC-18 disassembly for certain addressing modes when the destination 
+  operand is a banked register. (GP-6591, Issue #9051)
+* _Processors_. Corrected disassembly error with ARM Neon `vmov.i32` instruction. (GP-6750)
+* _Project_. Eliminated the maximum 60-character length naming restriction imposed on various Ghidra 
+  elements, including: project name, repository name,  project archive filename, and Ghidra tool 
+  config names.  Efforts have been made to allow for the use of foreign-language-naming of these 
+  elements.  Support for Ghidra projects stored on a Windows UNC shared drive has also been added. 
+  (GP-6402, Issue #8731)
+* _Search_. Fixed __Context__-column-sorting in the __Find References__ results table. (GP-6421, 
+  Issue #8943)
+* _Version Tracking_. Fixed a Version Tracking oversight that would not correctly replace return 
+  types or parameter types when the __Replace If Undefined__ option was set and the datatype to 
+  replace was an undefined pointer. (GP-5722)
+
+### Notable API Changes
+* _API_. (GP-6039) Revised `ProgramUtilities.parseAddress(Program, String)` to handle the parsing of 
+  external addresses (e.g., `EXTERNAL:000000100`).  Support for memory block style addresses has been 
+  eliminated for this method (e.g., `<blockName>:<offsetWithinAddressSpace>`).  Memory block style 
+  addresses should not be used.
+* _Basic Infrastructure_. (GP-6370) `GenericXMLOutputter` is now instantiated with a static 
+  `getInstance()` method rather than a constructor.
+* _Byte Viewer_. (GP-5689) ByteViewer's `DataFormatModel.replaceValue()` has been moved to the new 
+  `MutableDataFormatModel` interface, and `DataFormatModel.isEditable()` has been removed.  
+  `DataFormatModel.validateBytesPerLine()` has been replaced with `validateByteViewerConfigOptions()`. 
+  `DataFormatModel.setByteViewerConfigOptions()` has been added and `(get/set)GroupSize()` has been 
+  removed.
+* _Data Types_. (GP-3564) Eliminated throwing `DuplicateNameException` from 
+  `DataTypeComponent.setFieldName`.   Added `Composite.findComponent(String name)` and 
+  `Composite.findComponents(String name)` API methods.
+* _Debugger:dbgeng.dll_. (GP-6190) `dbgeng` handlers return `DEBUG_STATUS_NO_CHANGE`.
+* _Debugger:Emulator_. (GP-6129) PcodeOp was added to many Emulator methods.
+* _Debugger:Emulator_. (GP-6131) Managers in the `Trace` API now permit operating directly on 
+  register overlay spaces, where applicable.
+* _Debugger:Emulator_. (GP-6159) Removed `PcodeUseropDefinition.execute(PcodeExecutor, PcodeUseropLibrary, Varnode, List)` 
+  in favor of one taking `PcodeOp` as well.
+* _Emulator_. (GP-4241) Converted each now-deprecated `XxxEmulateInstructionStateModifer` to a 
+  `XxxPcodeUseropLibraryFactory`.
+* _Emulator_. (GP-6158) `AnnotatedPcodeUseropLibrary` now allows static methods to be marked 
+  `@PcodeUserop`. Both interpretation and JIT emulators can invoke them.
+* _Emulator_. (GP-6234) Deprecated `EmulatorHelper` and related.
+* _GUI_. (GP-6451) Added a `modify()` method to the Annotation class so clients can perform their own 
+  annotation transformations.
+* _Project_. (GP-6402) Overhauled GhidraURL utility class which now uses URI to generate URLs to 
+  ensure that proper encoding and decoding is performed.  Added `GhidaURL.resolve` method which 
+  simplifies creating a new Ghidra URL derived from another Ghidra URL to the same project or 
+  repository.
+* _Search_. (GP-6261) Various classes related to searching memory for byte patterns have been 
+  changed to use generics to make them generally more useful.
+* _Search_. (GP-6309) `SequenceSearchState` is renamed to `BulkPatternSearcher` and its API has changed. 
+  Also, it and related classes have been changed to use generics and support different kinds of 
+  patterns.
+
+# Ghidra 12.0.4 Change History (March 2026)
+
+### Improvements
+* _Analysis_. Updated the RTTI Analyzer to better handle the case where class names cannot be demangled correctly. Previously, class members would end up in global namespace. Now, a class namespace with the mangled name will be created so that items in that class can be correctly grouped together. (GP-6431, Issue #8944)
+* _GUI_. Fixed a potential zip path traversal vulnerability when importing Ghidra theme zip files. (GP-6455)
+* _Scripting_. Improved RTTI Windows script vbtable discovery to recognize some invalid tables. (GP-6446, Issue #8944)
+
+### Bugs
+* _Analysis_. Fixed constant analysis performance issue with processors that have named instruction sections for crossbuilds. (GP-6424)
+* _Analysis_. Fixed an issue with constants from one function finding their way into another function that is jumped to, and in the middle of constant propagation, the jump is turned into a call. (GP-6442)
+* _Analysis_. Corrected analysis problem which failed to properly link thunk functions in the EXTERNAL memory block to existing External library symbols instead of creating new external functions in the unknown external library. (GP-6465)
+* _Bookmarks_. Corrected potential _"Missing bookmark table"_ exception which could occur if bookmarks were ever deleted. (GP-6517)
+* _Debugger_. Fixed a deadlock when saving Traces from the __Close Project__ dialog. (GP-6392)
+* _Debugger:Memory_. Fixed a bug in the Memory viewer when looking at multiple address spaces. (GP-6449, Issue #8982)
+* _Disassembly_. Refactored `PseudoDisassembler` to use the normal high level Disassembler instead of calling `Language.parse()`. (GP-6496)
+* _Exporter_. Enabled cancellation for SARIF exports. (GP-6469)
+* _Listing_. Fixed Listing display to show single string operands. (GP-6095)
+* _Processors_. Fixed the semantics of the AARCH64 `ldpsw` instruction. (GP-5590, Issue #6469, #8008)
+* _Processors_. Fixed issue with PIC-18 instructions double-incrementing/decrementing. (GP-6004, Issue #3342, #8501)
+* _Processors_. Corrected Xtensa slapsec token field naming. (GP-6080)
+* _Processors_. Corrected semantics for the CR16 `tbit` instruction. (GP-6181, Issue #8716)
+* _Processors_. Corrected mnemonic and semantics for eBPF atomic compare-and-exchange instructions. (GP-6182, Issue #8721)
+* _Processors_. Added missing definition for PowerPC Altivec `vadduws` instruction that was mistakenly commented out. (GP-6268, Issue #8821)
+* _Processors_. Added support for AARCH64 Common Short Sequence Compression (CSSC) instructions. (GP-6448, Issue #8973, #8979)
+* _Processors_. Fixed semantics of AARCH64 `ldar` instruction. (GP-6473, Issue #6467, #8014)
+* _Processors_. Corrected disassembly for MIPS instruction `sdbbp16`. (GP-6489)
+* _Processors_. Added MIPS32 `save` and `restore` instructions, and refactored coprocessor register read/write. (GP-6501)
+
+### Notable API Changes
+* _GUI_. (GP-6480) The resultsLimit and minLength parameters of the AddressRangeTableModel constructor have been removed.
+
+# Ghidra 12.0.3 Change History (February 2026)
+
+### New Features
+* _Listing_. In order to mitigate possible security risks, auto comments will not longer render annotations in such a way as to make them valid annotation links.  Normal comments will continue to work as usual. (GP-6414)
+
+### Improvements
+* _Demangler_. The __Demangler GNU__ analyzer now has a timeout option. (GP-6408)
+* _GUI_. Corrected Ghidra GUI to fail-fast in headless environment and avoid stack traces. (GP-6399)
+* _Listing_. The `@execute` annotation is no longer supported. (GP-6413)
+
+### Bugs
+* _Data Types_. Corrected multi-user merge issues related to non-packed structures which could negatively affect merge results. (GP-6320, Issue #8776)
+* _Debugger_. Fixed a `NullPointerException` that could occur upon closing the Debugger. (GP-6376)
+* _Debugger:Breakpoints_. Fixed an issue where restarting a target (e.g., the `run` command from GDB's CLI) caused duplicate breakpoint entries and GUI glitches. (GP-6027)
+* _Decompiler_. Fixed _"PTRSUB off of non structured pointer type"_ exceptions caused by `void *` data-type. (GP-6388, Issue #8887)
+* _Decompiler_. Fixed source of _"Forced merge caused intersection"_ exceptions when decompiling optimized string copies. (GP-6393, Issue #8651)
+* _Multi-User_. Revised Ghidra Server self-signed certificate generation to include all associated FQDNs and IP addresses as subject alternative names.  This will address the forced hostname check imposed with the release of JDK 21.0.10.  To benefit from this change the Ghidra Server will need to be upgraded to this release.  A client-side workaround is to set the following JVM property within `support/launch.properties` by adding the line: `VMARGS=-Djdk.rmi.ssl.client.enableEndpointIdentification=false`. (GP-6426, Issue #8940)
+* _Processors_. Fixed bug in AARCH64 `sha1h` instruction to shift instead of rotate bits. (GP-4501, Issue #6398)
+* _Processors_. Fixed 80251 disassembly errors for instructions referencing the SPX register. (GP-5905, Issue #8395)
+* _Processors_. Fixed disassembly of MIPS16e2 `lui` instruction to only parse on extended words. (GP-6419)
+* _Search_. Fixed a memory leak in the `Find References...` action. (GP-6395, Issue #8921)
+
+### Notable API Changes
+* _Data Types_. (GP-6320) Structure offset-based insert methods `Structure.insertAtOffset` will now skip forward over existing zero-length components at the insert offset before performing insert of new component.
+
+# Ghidra 12.0.2 Change History (January 2026)
+
+### New Features
+* _Emulator_. Fixed the Emulator's evaluation of `inst_next2`. (GP-6134, Issue #8646)
+
+### Improvements
+* _Basic Infrastructure_. Upgraded `commons-lang3` , `log4j`, and `postgresql` jars. (GP-6243)
+* _Debugger_. Several Address and Value columns are now displayed in fixed-width font: Register Value, Stack PC, Snapshot PC, and Watch Value. (GP-6025)
+* _Debugger:Breakpoints_. Added __Expression__ column to __Breakpoints__ locations table. (GP-6026)
+* _Documentation_. Updated Debugger tutorial to reflect the addition of the Comment column to the Watches panel, and the moving of the schedule display to trace tabs instead of the Threads panel title bar. (GP-6032)
+* _Extensions_. Fixed a potential zip path traversal vulnerability when unzipping Ghidra Extension archives. (GP-6354)
+* _Multi-User_. Upgraded yajsw to 13.18. (GP-6364)
+
+### Bugs
+* _Data Types_. Corrected a Union update notification issue which impacted proper archive sync indicators and related operations. (GP-6359, Issue #8884)
+* _Debugger_. Fixed missing __Dynamic Listing__ entry in Window menu, when the Dynamic Listing is closed. (GP-6086, Issue #8604)
+* _Debugger:Emulator_. Fixed a silent infinite-read loop during some situations in an emulator forked from a live target. (GP-6340)
+* _Demangler_. Fixed Gnu Demangler failure to parse a global guard variable. (GP-6371, Issue #8900)
+* _GUI_. Updated the Symbol Tree's filter to fix an issue that sometimes caused it to not get painted. (GP-6366, Issue #2448)
+* _Processors_. Corrected AARCH64 `ldapr` instruction semantics to properly read memory. (GP-6358, Issue #6593)
+* _Processors_. Corrected PowerPC VLE `se_blrl` instruction semantics. (GP-6379, Issue #6207)
+* _Processors_. Corrected issue with ARM `ldrexd` instruction when the operands are the same register. (GP-6381, Issue #6590)
+
+### Notable API Changes
+* _Debugger:Emulator_. (GP-6340) Removed `PcodeTraceDataAccess.intersectUnknown` in favor of `intersectViewKnown` with sutract.
+* _Emulator_. (GP-6134) Added `InstructionPrototype.hasNext2Dependency()`.
+
+# Ghidra 12.0.1 Change History (January 2026)
+
+### Improvements
+* _Build_. Upgraded Ghidra's local copies of the `packaging`, `setuptools`, and `wheel` Python wheels. (GP-6284, Issue #8852)
+* _CodeBrowser_. Fixed an issue with stack depth following across indirect function calls which would occur in windows external indirect calls. (GP-6315, Issue #8837)
+* _Debugger:Emulator_. The emulator will now use the nearest snapshot, allowing it to resume more quickly after restarting Ghidra. (GP-6236, Issue #8767)
+* _Debugger:Time_. Invalidated rows in Time Panel are now displayed in gray. This is to indicate that navigating to it will require re-emulation. (GP-6244)
+* _Decompiler_. Added abstract interpretation via the Software and System Verification (SSV) group @ Università Ca' Foscari's Library for Static Analysis (LiSA).  This capability was meant for the previous release, as noted in the 12.0 Change History. (GP-6225)
+
+### Bugs
+* _Assembler_. Fixed issue preventing some PPC VLE instructions from assembling. (GP-6109, Issue #8624)
+* _Assembler_. Fixed an issue with Assembler corrupting instructions that followed, especially when ISA mode is involved. (GP-6295, Issue #8826)
+* _Debugger:Emulator_. Fixed some crash cases in Taint emulator regarding mismatched op sizes. (GP-6287)
+* _Debugger:Emulator_. Fixed issues in P-code Stepper: Uniques table crashed if unique was not yet written. Stepping backward emptied p-code listing and uniques table. (GP-6294)
+* _Debugger:Emulator_. Fixed a `NullPointerException` in the emulation service when forking from a live target. (GP-6298)
+* _Decompiler_. Fixed a Decompiler bug that caused _"Deleting op with descendants"_ exceptions. (GP-6090, Issue #8594)
+* _Decompiler_. Fixed Decompiler bug that occurred when splitting LOAD and STORE operations of laned registers. (GP-6130, Issue #8620)
+* _Decompiler_. Fixed bug preventing the display of a nested field access when using an offset pointer. (GP-6133, Issue #8630)
+* _Decompiler_. Fixed a Decompiler regression that caused _"Free varnode has multiple descendants"_ exceptions. (GP-6201, Issue #8743)
+* _Decompiler_. Fixed a bug in the Decompiler producing _"PTRSUB off of non structured pointer type"_ exceptions. (GP-6224, Issue #8745)
+* _Emulator_. Corrected regression error to pcode emulation for cases where named pcodeops were used (i.e., CALLOTHER pcodeop) and argument indexing within the java pcode implementation was incorrect. (GP-6229)
+* _Emulator_. Fixed crash seen in P-code Stepper when reading a unique varnode before it is written. (GP-6253)
+* _GUI_. Fixed a `NullPointerException` in function graph middle-mouse highlighter. (GP-6254, Issue #8798)
+* _Importer:ELF_. Corrected improper ELF relocation processing for PowerPC-32 types `R_PPC_ADDR16_HA(6)` and `R_PPC_ADDR16_LO(4)`. (GP-6329)
+* _Listing_. Fixed a Listing bug that caused text, copied from the memory block header, to be off by one character. (GP-6263, Issue #8797)
+* _Processors_. Fixed operand consistency issue in M68000 processor. (GP-5334, Issue #4358)
+* _Scripting_. Fixed issue in `RecoverClassesFromRTTIScript` where it could get into an infinite loop if the option to shorten template names in structures is set and there are exact template names in multiple parent namespaces. (GP-6183, Issue #8199)
+* _Scripting_. Fixed a PyGhidra `AttributeError` when performing a `from pyghidra import *`. (GP-6241, Issue #8789)
+* _Scripting_. Released PyGhidra 3.0.2, which contains fixes to `pyghidra.analysis_properties()` and exceptions being inadvertently squashed by some API functions. (GP-6283, Issue #8018)
+* _Scripting_. PyGhidra should now always exit the Python processes cleanly, no longer being kept alive by a potentially running task monitor timer. (GP-6301, Issue #8858)
+* _Sleigh_. Corrected Sleigh compiler regression error affecting unique subpiece semantics for certain cases which produced invalid unique varnode offsets. (GP-6237, Issue #8784)
+* _Terminal_. Implemented `repeat the preceding graphics character (REP)` (`CSI Ps b`) terminal code logic, as such sequences were breaking the Terminal. (GP-6191)
+
+### Notable API Changes
+* _BSim_. (GP-6250) The `ghidra.net.ApplicationSSLSocketFactory` has been replaced by `ghidra.net.DefaultSSLSocketFactory`.  This is currently used by BSim when communicating with a <I>postgresql</I> server.
+* _Debugger:Emulator_. (GP-6236) Added `TraceTimeManager.findSnapshotWithNearestPrefix()`. Several new methods in `TraceSchedule`, including: `hasPSteps`, `stepCount`, `dropLastStep`, `lastStep`, `truncateToSteps`.
+* _Debugger:Emulator_. (GP-6298) Added `TraceSnapshot.isSnapOnly()` and `.isStale()`.
+* _Emulator_. (GP-6229) The emulation support method for CALLOTHER `OpBehaviorOther.evaluate` implementations has dropped the first input varnode which was used to identify the `OpBehaviorOther` implementation.  Only the inputs which are specified by the arguments passed to the named pcodeop within the slapsec are now passed to this method.  NOTE: The actual API change occurred within Ghidra 11.3 with GP-4643 change.
+
+# Ghidra 12.0 Change History (December 2025)
+
+### New Features
+* _Data Types_. Added `RGB16` and `RGB32` Color primitive datatypes which have been implemented as unsigned integer types and will render a color patch for Data within the Listing.  These default, respectively, to `RGB_565` and `ARGB_8888` encodings but can adopt a different RGB Encoding through the use of a Typedef and a default Setting. (GP-4310, Issue #6191)
+* _Decompiler_. Implemented low-pcode-based abstract interpretation via the Università Ca’ Foscari's Library for Static Analysis (LiSA). (GP-5566)
+* _Emulator_. Added an experimental Z3 Symbolic emulator with a summarization GUI. This feature is distributed as an installable extension. (GP-5727)
+* _FileSystems_. Add support for zstd compression in GFileSystem via user-provided zstd or 7-Zip command line tools. (GP-5842)
+* _Graphing_. Added a Function Graph tab to the Function Comparison widget.   This allows users to see two functions side-by-side in Function Graph views, such as when viewing BSim functions. (GP-3648, Issue #1154)
+* _Graphing_. Created a new prototype __Data Graph__ graphing feature with nodes that display data structures and values and edges that link one data structure to another via a pointer reference. (GP-5481)
+* _GUI_. Updated the Xrefs Table to allow the user to delete references to the current location. (GP-2140, Issue #4317)
+* _GUI_. Added a shared project repository connection status indicator to the root node of the project data tree.   A popup menu action was also added to the root node allowing the connection to be established when in a disconnected state. (GP-5333)
+* _GUI_. Added ability to toggle the displaying of function variables (parameters and locals) that are normally displayed just below the function signature. The variables display can be turned on/off globally or individually per function. (GP-5886, Issue #8385)
+* _Importer_. Created an importer for the Decompiler debug format which is produced by the Decompiler. (GP-3947)
+* _Importer_. Added an option to mirror the local filesystem when importing programs and their libraries. Programs and libraries that exist on the local filesystem as symbolic links will have both their corresponding link file and resolved program file mirrored in the project. (GP-5343, Issue #7430)
+* _Importer_. Added a new loader for HP-UX PA-RISC __System Object Module__ (SOM) binaries. (GP-5942)
+* _Processors_. Added support for the NDS32 Processor. (GP-6007, Issue #1778)
+* _Project_. Added expanded support for project link-files with the introduction of internal project folder and file links.  The links behave similar to Linux symbolic links and allow a single folder or file to be referenced by alternative project paths.   The GUI Project Tree and related project file chooser have also been improved with the ability to expand folder-links like folders (subject to filter restrictions at the API level).  The main Project Tree will continue to rely on project views for following external folder-links.  Some of the project tree's recursive traversal actions do not follow folder-links (e.g., Expand All).  NOTE: Although Ghidra permits files and folders to have the same name, this should be avoided when utilizing link-files or Ghidra URLs due to the path ambiguity it can cause.  This change also introduces a new file storage format which can create issues within a project if opened with an older version of Ghidra.  While this version remains compatible with older Ghidra Server versions, adding link files to a repository will require a Ghidra Server upgrade to the latest version. (GP-3551)
+
+### Improvements
+* _Accessibility_. Fixed tooltips in the Symbol Tree to not read HTML markup to screen readers. (GP-5741, Issue #8228)
+* _Analysis_. Added `ENDBR64` and `ENDBR32` to function start patterns for x86 gcc. (GP-5287)
+* _Analysis_. Added support for Golang 1.24 and 1.25.  Changed method of bootstrapping Go type info to use json Go snapshot files instead of gdt files. (GP-5470)
+* _Analysis_. Fixed PowerPC 64-bit thunk patterns using prepatterns analyzer pattern files. (GP-6120)
+* _API_. Corrected ELF ppc64 import issues related to use of 32-bit-addressing language variants.  Improved handling of ELFv1 vs. ELFv2 binary markup.  Eliminated EXTERNAL `.pltgot.` symbols. (GP-3091, Issue #570)
+* _API_. Updated various `SourceType` checks which should avoid use of equality checks in favor of priority checks when covering a range of sources. (GP-6008)
+* _Basic Infrastructure_. The `support/launch.properties` now supports expansion of `${var}`-style environment variables. (GP-6022)
+* _BSim_. Added `getmetadata` subcommand to `bsim` command-line utility. (GP-5748, Issue #8176)
+* _BSim_. Updated BSim Elasticsearch extension support to version 8.19.7. (GP-6146, Issue #8611)
+* _Calling Conventions_. Added a compiler specification for Apple platforms on ARM64. (GP-3139, Issue #2723, #8032)
+* _Calling Conventions_. Corrected handling of  parameters for the AVR8 calling convention. Expanded abilities of Decompiler model rules for expressing calling conventions in XML cspec files. (GP-4356)
+* _Calling Conventions_. Added `max_primitives` filter to homogeneous aggregate type in cspec files. (GP-5367)
+* _Calling Conventions_. Added callfixups to x86 gcc compiler spec for pc_thunk functions using the `DI` register. (GP-5958, Issue #8416)
+* _CodeBrowser_. Replaced __Dynamic Update__ checkbox in __Instruction Info__ window with a toolbar toggle action. (GP-5650)
+* _CodeCompare_. Added actions to transfer variable and callee function names and datatypes from the dual Decompiler function comparison window. (GP-4007)
+* _Data_. Improved the Listing's __Create Structure__ action, giving the ability to choose the data type category. (GP-5327, Issue #6713)
+* _Data Types_. Added utility methods to the `DataTypeQueryService` for clients to have more flexibility in how they retrieve data types. (GP-5694, Issue #8157)
+* _Debugger:Agents_. Upgraded to `protobuf-java 4.31.0` and `protobuf 6.31.0` for Python. (GP-5456)
+* _Debugger:Agents_. Improved debug-connection failure-detection when the back-end terminates early. (GP-5700)
+* _Debugger:Emulator_. Added Help for `PcodeStepperPlugin`. (GP-5772)
+* _Debugger:Emulator_. Fixed an issue with emulation when the program has block/sections with brackets in the name. (GP-5897, Issue #8398)
+* _Debugger:LLDB_. Fixed variable name typos in the `lldbsetuputils.ps1` script. (GP-5973, Issue #8498)
+* _Debugger:Trace_. Removed legacy mode from the Trace database. (GP-5194)
+* _Debugger:Watches_. Added a __Comment__ column to the __Watch__ window. (GP-5795, Issue #8302)
+* _Decompiler_. The Decompiler now propagates constants through conditional branches in more situations. (GP-5950, Issue #8455)
+* _Demangler_. Modified Microsoft Demangler to process virtual call modifiers and based pointers for 16-bit programs. (GP-5776)
+* _Disassembly_. Added quick toggle action (`Ctrl-Shift-1`) for __PCode__ field in the Listing display. (GP-5930)
+* _Documentation_. Fixed missing javadocs for Debugger-related APIs. (GP-5891)
+* _DWARF_. The DWARF analyzer now records all source files, including source files without source map information. (GP-5773)
+* _DWARF_. Added code for parsing DWARF `.debug_macro` sections and example script, `DWARFMacroScript`. (GP-5792)
+* _DWARF_. Add support for specifying the charset of DWARF debug strings. (GP-5871, Issue #8346)
+* _DWARF_. The DWARF analyzer can now create enums from macro information recorded in DWARF debug data (DWARF v5 only). (GP-5984)
+* _ELF_. Added partial support for AARCH64 ELF loading of object modules with GOT allocation capability.  Added support for the following relocation types which rely on this revised relocation handler capability: `R_AARCH64_ADR_GOT_PAGE`, `R_AARCH64_P32_ADR_GOT_PAGE`, `R_AARCH64_P32_LD32_GOT_LO12_NC`, and `R_AARCH64_LD64_GOT_LO12_NC`. (GP-5815, Issue #8253)
+* _Emulator_. Refactored the p-code emulator to use composition instead of inheritance for UI integration. This should simplify development of extended emulators and permit easier integration of those emulators with the UI. (GP-5879)
+* _Emulator:JIT_. Added support for multi-precision integers (varnodes of size 9 or greater) to the JIT-accelerated p-code emulator. (GP-5214)
+* _Exporter_. Updated the IDA Pro exporter to work with IDA Pro 9.x. (GP-5873, Issue #7392)
+* _FID_. Updated the FID plugin to delay loading of FID DB resources.  This will improve the tool load time when there are many FID DB objects in use. (GP-6073, Issue #8593)
+* _Graphing_. Update the Program Graph __Compact Hierarchical__ layout to have less space between nodes. (GP-4741)
+* _GUI_. Added ability to remember last user ID specified for server login prompts such as the Ghidra Server authentication prompt. (GP-5579, Issue #7454)
+* _GUI_. Added ability to reorder program tabs via drag-n-drop. (GP-5646, Issue #8099)
+* _GUI_. Updated the Data Type Manager to increase performance in deleting data types. (GP-5654, Issue #8104)
+* _GUI_. Updated the Structure Editor's __Find Uses of__ action to work on fields with no name or data type. (GP-5711, Issue #8171)
+* _GUI_. Added modes to the drop-down text fields to control how matches are found.  Choices will now typically include __Starts With__ and __Contains__ modes. (GP-5720, Issue #4725, #8203)
+* _GUI_. Update the Data Type Manager's __Collapse__ toolbar action to stop any post-filter state-restoring. (GP-5761, Issue #8244)
+* _GUI_. Updated dialogs wth combo boxes to have consistent behavior when pressing the `Enter` key. (GP-5769, Issue #8280)
+* _GUI_. Updated the Ghidra File Chooser to not lock the UI for folders that contain many files. (GP-5807, Issue #4725, #8284)
+* _GUI_. Reduced some excessive Symbol Tree updates seen while performing auto-analysis. (GP-5826)
+* _GUI_. Fixed bug in Memory Search where some GUI options were not initialized correctly to the last-used options. (GP-5883)
+* _GUI_. Updated the __Next Instruction__ action to jump to the function entry point when the action is invoked from the function signature. (GP-5885, Issue #8385)
+* _GUI_. Added full data type path to Decompiler and Listing hovers. (GP-5913)
+* _GUI_. Created new theme value for the Decompiler's middle-mouse highlight color so that the Listing and Decompiler colors may change independently. (GP-5947)
+* _GUI_. Added convenience methods to `TableColumnDescriptor` to create simple columns using only a name, column type, and a function to map from the row object to the column object. (GP-5963, Issue #7346)
+* _GUI_. Added key-binding navigation support to the File Chooser. (GP-5964, Issue #6310, #7129, #7130)
+* _GUI_. Updated the Tool Options' Key Binding view to have a simpler screen. (GP-5967, Issue #7024)
+* _GUI_. Updated key-binding support to allow for usage of the right `Alt` key independently from the left `Alt` key. (GP-5978, Issue #8205)
+* _GUI_. Added accelerator mnemonics to the Memory Search dialog to help reduce manual navigation issues. (GP-5979, Issue #8264)
+* _Headless_. The user can now specify headless loader options independently of what loader is being used. The headless importer will ignore loader options that are unsupported by the active loader. (GP-5545)
+* _Help_. Added Processor, Language, and Compiler specification file names to __About Program__ dialog. (GP-5716, Issue #8163)
+* _Importer:COFF_. Added support for importing big-endian COFF binaries. (GP-5645, Issue #1398, #8042)
+* _Importer:PE_. The PeLoader no longer fails to import if a Data Directory does not parse successfully. (GP-4881, Issue #6864)
+* _Languages_. Corrected handling of small integer parameters and structured data-type parameters  for the PowerPC 64-bit default calling convention. (GP-4029)
+* _Languages_. Added support for mixed integer/floating-point parameters and structured data-type parameters for MIPS calling conventions. (GP-4030)
+* _MachineLearning_. Updated __RandomForestFunctionFinderPlugin__ with improved model training performance, the ability to apply a model to a program selection, and the addition of disassembly to the similar-starts table. (GP-4400)
+* _PDB_. Modified handling of PDB thunks so that for when Ghidra does not consider the function to be a thunk, which would normally cause the thunk to get the same signature as the thunked function, the Demangler is enabled to set the proper function signature and name.  This affects C++-related functions, for example, such as vtordisps and adjustors. (GP-5713)
+* _Processors_. Added initial implementation of ARM Neon `VLD`/`VSTn` instructions. (GP-5853)
+* _Processors_. Added support for MIPS16e2 instructions. (GP-5902, Issue #8406)
+* _Processors_. Refactored RISCV context and moved CSR registers into a CSR memory space to support custom instructions and RISCV variants.  Also added sample RISCV variant Andestar. (GP-5975)
+* _Processors_. Corrected AArch64 `fmadd` operand semantics ordering. (GP-6121, Issue #8454, #8625)
+* _ProgramDB_. Improved performance of Symbol Table and its storage of `ExternalLocation` data. (GP-5498)
+* _Scripting_. Condensed the script categories into a better-organized subset of categories. (GP-3952)
+* _Scripting_. Python scripts that do not declare a `@runtime` metadata comment now default to PyGhidra instead of Jython. Jython scripts will need to include the "`# @runtime Jython`" script header in order to continue running within the Jython environment. (GP-5415, Issue #7856)
+* _Scripting_. Released PyGhidra 3.0.0. (GP-5637, Issue #6914, #6915)
+* _Scripting_. Made a few speed improvements to the RecoverClassesFromRTTIScript. (GP-5831, Issue #8199)
+* _Scripting_. Added new script methods to allow script writers to color the console output: `print(String, Color)` and `println(String, Color)`. (GP-5970, Issue #2849)
+* _Scripting_. Fixed an issue in the `RecoverClassesFromRTTIScript` where pure virtual functions were not handled correctly in GCC programs. (GP-5993)
+* _Sleigh_. Temporary (`unique`) variables can be accessed within a Sleigh language piece-wise using a direct varnode offset and length rather than masking which had inherent size limitations. (GP-5581)
+
+### Bugs
+* _Analysis_. Fixed an issue where __Apply Data Archives__ analyzer replaced functions that had the same `SourceType` priority. (GP-5661)
+* _Analysis_. Fixed the Non-Returning Functions analyzer to consider external functions.  Also added check for the function called right before an `INT3` as possibly being non-returning. (GP-5763)
+* _Analysis_. Fixed handling of `segment()` op in stack analysis when segment op is unknown stack segment SS. (GP-6078, Issue #8584)
+* _Assembler_. Added help anchor for Assembler's exhaust-or-zero-fill toggle. (GP-4478)
+* _Assembler_. Removed debug messaging from the assembler, speeding it up significantly. (GP-5800, Issue #8308, #8309)
+* _Calling Conventions_. Corrected handling of long integer parameters and structured data-type parameters  for the RISCV 32-bit and 64-bit default calling conventions. (GP-5211)
+* _Debugger_. Fixed issues related to register editing with lldb. (GP-6084, Issue #8598)
+* _Debugger_. Fixed issue where register panel used stale register objects when switching between similar assembly languages. (GP-6105)
+* _Decompiler_. Fixed _"Overlapping input varnodes"_ exceptions in the Decompiler caused by the use of the XMM0 register as a function input. (GP-5863)
+* _Decompiler_. Allowed the __Rename Global__ action in the Decompiler to create a primary symbol if it didn't exist. (GP-5866, Issue #4864, #8121)
+* _Decompiler_. Eliminated the unsound `SBORROW(0,x) => 0` simplification rule from Decompiler analysis. (GP-5934, Issue #8396, #8400)
+* _Decompiler_. Fixed a bug that prevented overlapping functions from being correctly decompiled. (GP-5983)
+* _Decompiler_. Fixed a bug in the Decompiler's __Force Union__ action that caused _"Could not recover p-code op"_ exceptions. (GP-5989, Issue #7466)
+* _DWARF_. Improved DWARF location expression evaluation, which has bearing on a number of areas including the placement of local variables. (GP-4069, Issue #2322, #5311, #5982, #6974)
+* _DWARF_. Fixed issue with importing 64-bit DWARF when subsections of the DWARF line info were marked as 32-bit. (GP-5931)
+* _FID_. Added a temporary fix to identify the `security_check_cookie()` function in VS2022 binaries.  If the function is not identified, the return type is incorrectly recovered by the Decompiler. (GP-5998, Issue #2743)
+* _Function_. Fixed thunk detection and thunk address calculation for thunks with an internal call/branch to the next instruction in order to load the current PC into an LR register. (GP-6072)
+* _GUI_. Updated the Plate Comment field to render annotations' display text instead of raw annotation text. (GP-3756)
+* _GUI_. Fixed potential deadlock in Ghidra tables that use the __Code Unit__ table column. (GP-5724, Issue #8208)
+* _GUI_. Fixed bug that caused an incorrect tab to be selected when closing docked component provider tabs via the __x__ button. (GP-5821, Issue #8303)
+* _GUI_. Fixed the Decompiler's __Edit Data Type__ action to correctly scroll the structure field being edited. (GP-6045, Issue #8522)
+* _Languages_. Fixed issue with importing 32-bit RUST binaries for x86 Windows- and Unix-based systems. (GP-4711, Issue #6042)
+* _Navigation_. Changed __Next Function__ / __Previous Function__ actions to skip functions that are not in memory. This prevents the actions from becoming _stuck_ until the user manually moves to an new address past the non-memory function. (GP-5712)
+* _PDB_. Fixed an issue where the function arguments list record was a NOTYPE, which caused the analyzer to terminate. (GP-6010)
+* _Processors_. Fixed ARM `vmvn` instruction semantics. (GP-4650, Issue #6544)
+* _Processors_. Fixed SuperH4 `FSCA` instruction destination operand and FPU-register ABI-ordering for little-endian. (GP-5759, Issue #8192)
+* _Processors_. Corrected 80251 `ANL` instruction variant disassembling as `ADD`. (GP-5903, Issue #8393)
+* _Processors_. Fixed 80251 `ANL Areg,Data` source-mode disassembly bug. (GP-5904, Issue #8394)
+* _Processors_. Added support for the eBPF `CALLX` instruction. (GP-5909, Issue #7972)
+* _Processors_. Corrected PowerPC branch conditional instruction semantics. (GP-6049, Issue #8424)
+* _Processors_. Fixed disassembly of various Xtensa big-endian instructions. (GP-6050, Issue #8537, #8544)
+* _Processors_. Fixed pcode for SuperH `bclr` instruction. (GP-6065, Issue #8579)
+* _Processors_. Fixed several issues including ARM `cpy` instruction setting the PC, incorrect function start pattern, and spurious references when saving the PC at function entry. (GP-6079)
+* _Project_. Corrected issues related to failed attempts at removal of multiple folders from project tree via a selection. (GP-5907)
+* _Project_. Improved project tree change listener to handle link status updates when such links reference non-visited regions of the project tree. (GP-5908)
+* _Scripting_. Fixed the `GhidraScript.writer` member variable to properly get used in the various `GhidraScript.print*()` methods. (GP-5737)
+* _Scripting_. Updated vxWorks symbol-table-finding script to better filter out runs of pointers when trying to locate the table.  Also, deleted old scripts and fixed demangling and labeling issues. (GP-5969, Issue #8024)
+* _Scripting_. Jython scripts invoked via `runScript()` now have their local variables properly reset to a fresh state. (GP-5981)
+* _Scripting_. Fixed a bug that prevented OSGi scripting bundles from running with newer versions of Java. (GP-6014)
+* _Scripting_. Fixed a bug that prevented PyGhidra from redirecting output from  `print()` and `sys.stdout.write()` to the Ghidra GUI scripting console. (GP-6021, Issue #8524)
+* _Scripting_. Fixed a bug in the the PyGhidra headless analyzer that resulted in the wrong exception being thrown when a script tries to import a module that isn't found. (GP-6132, Issue #8610)
+* _Symbol Tree_. Updated the Symbol Tree to respond to external program path changes. (GP-5793)
+* _Symbol Tree_. Fixed a bug where opening a folder in the Symbol Tree caused navigation to occur in the Listing. (GP-5914)
+
+### Notable API Changes
+* _API_. (GP-5600) The `AutoImporter` class has been deprecated. Use the new `ProgramLoader.Builder` class instead. The returned `Loaded` class should now be managed with a _try-with-resources_ pattern.  If a `DomainObject` is extracted from a `Loaded` object, it must be released independly of closing the `Loaded` object.
+* _Assembler_. (GP-5800) Deleted `DbgTimer`.
+* _Data Types_. (GP-5694) Deprecated `DataTypeQueryService.getDataType()`.   This method has been replaced by `promptForDataType()`.
+* _Debugger:Agents_. (GP-5700) Launcher scripts `GHIDRA_HOME` now points to `<ghidra-install>/Ghidra`. `MODULE_HOME` now points to containing module root. Can request `MODULE_Xxx_HOME` pointing to module `Xxx` root by placing `@depends Xxx` in header.
+* _Debugger:Trace_. (GP-5194) Objects mode is now the normal mode for Trace databases. The legacy mode has been removed. As a result, the root object must be created early, since other managers require it. Merged methods from `TraceObjectX` interfaces into `TraceX` (only those derived from `TraceObjectInterface`). To avoid confusion, renamed `TraceMethod` (in Java TraceRmi Client) to `TraceRmiMethod`. Renamed `TraceBreakpoint` to `TraceBreakpointLocation`. Added `TraceBreakpointSpecification`, `TraceBreakpointCommon`. Deleted `TraceAddressSpace` in favor of `AddressSpace`. Added `DebuggerCoordinates.isRegisterSpace()`. Space-based managers, e.g., `TraceMemoryManager`, no longer have special tables for register spaces. They all use the overlay-named-after-register-container convention. Added `TraceBaseCodeUnitsView.get(platform,snap,register,forward)`. Memory region management is moved from `TraceMemoryOperations` to `TraceMemoryManager`. Removed experimental and incomplete `TraceProgramView.getViewRegisters()` method and related. Removed `thread` parameter from `TraceLabelSymbolView.add/create`. Added variant of `TraceLabelSymbolView.add/create` that takes `platform(optional),thread,register` (and similar with getters in `TraceSymbolWithLocationView`). Added methods to `DefaultSchemaContext` and related builders to more easily build a context derived from an existing one. Added `TraceObjectManager.requireRootSchema()`. Added `TraceRegisterUtils.getRegisterContainer`, `getRegisterAddressSpace`, `getThread`, and `getFrameLevel`.
+* _Debugger:Trace_. (GP-5926) Added `TraceReference.getToRange`. Added `TraceReferenceOperations.addMemoryReference(...AddressRange toRange...)`. Added `TraceReferenceOperations.getReference(...AddressRange toRange...)`. Added `TraceReferenceOperations.getReferencesToRange(...order)`.
+* _Debugger:Watches_. (GP-5795) Added `WatchRow.get/setComment`.
+* _Emulator_. (GP-5727) Added `SymZ3PcodeEmulator` and related.
+* _Emulator_. (GP-5864) Added `EmulatorUtilities`.
+* _Emulator_. (GP-5879) <B>Primary changes</B>: Added `PcodeEmulationCallbacks`, `PcodeStateCallbacks`, `ComposedPcodeEmulationCallbacks`. Added `Writer` and `TraceWriter`. Added `PieceHandler` and implementations for `byte[]`, `TaintVec`, and `SymValueZ3`. Added `TraceEmulationIntegration`. Added `DebuggerEmulationIntegration`. Deleted `TracePcodeMachine`, `DebuggerPcodeMachine` and all implementations. `PcodeMachine` is used with a `Writer`/callbacks instead. Deleted `TracePcodeExecutorStatePiece` and all implementations. `PcodeExecutorStatePiece` is used with callbacks instead. Deleted `AbstractDebuggerPcodeEmulatorFactory`. `EmulatorFactory` is used instead. Deleted `TraceEmulatorPartsFactory`, `DebuggerEmulatorPartsFactory` and all implementations. `EmulatorPartsFactory` is used instead. Changed constructor of `AbstractPcodeMachine` to require callbacks. Changed constructor of `AbstractLongOffsetPcodeExecutorStatePiece` and derivatives to require callbacks. Changed signature of `PcodeExecutorStatePiece.fork` to require callbacks. Changed signature of `EmulatorFactory.create` to accept a `Writer`. Changed signatures of several methods in `EmulatorPartsFactory` to accept callbacks. 
+<BR><B>Secondary changes</B>: Added `PcodeTraceAccess.deriveForWrite(snap)`. Added `PcodeTracePropertyAccess.getEntry/put`. The `put` method is also modified to clear if `value` is null. Added `PcodeArithmetic.getDomain`. Added `PcodeExecutorStatePiece.streamPieces`. Added `AbstractPcodeExecutorState`. Added `PcodeExecutorStatePiece.get/setVarInternal`. Added `PcodeExecutorStatePiece.getNextEntryInternal`. Renamed `DebuggerPcodeEmulatorFactory` to `EmulatorFactory`. Changed signature of `PcodeDebuggerMemoryAccess.readFromStaticImages`. Several changes to `AbstractLongOffsetPcodeExecutorStatePiece` and its derivatives. See stock implementations for updates. In particular, removed all notion of "backing" including the type parameter `B`.
+* _Emulator:JIT_. (GP-5214) Added `PcodeUseropDefinition.getOutputType()`. `AnnotatedPcodeUseropLibrary` allows `@PcodUserop` methods to take `int[]` parameters, including for the `@OpOutput` parameter.
+* _FileSystems_. (GP-5825) Removed GFilesystem `LocalFileSystemSub` class.
+* _FileSystems_. (GP-5842) Removed `throws IOException` from `ByteProvider.length()` method.
+* _Graphing_. (GP-3648) The `CodeComparisonPanel` extension point has been renamed to `CodeComparisonViewer`.   Any clients subclassing `CodeComparisonPanel` will need to rename their parent class reference and also rename their extension to end with `CodeComparisonView` instead of `CodeComparisonPanel`.
+* _GUI_. (GP-5769) Removed the `GhidraComboBox.setEnterKeyForwarding(boolean)` method.  Any clients calling this method with a value of `true` may simply delete the call to maintain the previous behavior,  Any clients calling this with a value of `false` will need to change how the combo box responds to `Enter` key presses in a way that preserves effect of not passing the `Enter` key press up to the parent container.
+* _GUI_. (GP-5963) Added convenience methods to `TableColumnDescriptor` to create simple columns using only a name, column type, and a function to map from the row object to the column object.
+* _Importer_. (GP-3947) Added `XmlElement.isStart(String string)`, which checks that the element is a starting element and also that its name matches the passed string.
+* _Importer_. (GP-5343) The `Loader.load()` and `Loader.loadInto()` interface definitions have been simplified to take in a new `ImporterSettings` record.  The `Loader.getDefaultOptions()` definition has also been changed to accept a new `mirrorFsLayout` parameter.  These changes trickle down the loader class hierarchy, so all 3rd party loaders will need to be updated to work with Ghidra 12.0.
+* _ProgramDB_. (GP-5498) Revised `ExternalManager` interface including removal of previously deprecated methods which have new method names.  The `getExternalLocations` now returns a `Set` of locations instead of a `List`.
+* _ProgramDB_. (GP-5990) Eliminated the various forms of the `Listing.getCompositeData` method and associated map table from the Program database.  These methods were never used within Ghidra and were found to be the source of unnecessary overhead.For infrequent needs, a defined-data iterator can be used to identify locations where composites exist.  In addition, the following related Program and Trace events were eliminated: `ProgramEvent.COMPOSITE_ADDED`, `ProgramEvent.COMPOSITE_REMOVED`
+`ChangeManager.DOCR_COMPOSITE_ADDED`, 
+`ChangeManager.DOCR_COMPOSITE_REMOVED`,`ProgramEvent.COMPOSITE_ADDED`, `ProgramEvent.COMPOSITE_ADDED`.
+* _Project_. (GP-3551) Made significant changes to `ProjectDataUtils` in support of folder and file links.  This utility's static methods should be used in place of directly instantiating `DomainFileIterator` or `DomainFolderIterator`.   Significant changes have been made to `ProjectData` storage and interface to accommodate expanded link-file support.  The `getFile` and `getFolder` methods have been overloaded with an optional filter to control treatment of such link-files where the pre-existing method forms will ignore external links.  Extensive changes have also been made to the Project Data Tree component which now has the ability to render and follow folder and file links.  Since a folder link exists as a `DomainFile`, and all link-files rely on unique content-types, additional logic is needed to follow such links.  `LinkFileInfo` can be obtained from a `DomainFile` although the use of `ProjectData` and `ProjectDataUtils` will simplify the use of link-files.
+* _Scripting_. (GP-5737) Added a `GhidraScript.set()` method that takes a new `ScriptControls` object which provides more control over how scripts write to stdout and stderr.
+* _Scripting_. (GP-5961) Deprecated `pyghidra.open_program` and `pyghidra.run_script`.
+
+# Ghidra 11.4.3 Change History (December 2025)
+
+### Improvements
+* _Analysis_. Added the ability to restrict function start pattern matches per named section and added a pattern for thunks in the `.plt` so that they are marked up very early. (GP-5526)
+* _Analysis_. Added several known PE-related, non-returning, named functions. (GP-5985)
+* _Decompiler_. Restored the Decompiler's middle-mouse highlight functionality for if/else keywords. (GP-5951, Issue #8419)
+* _Multi-User_. Updated `ghidraSvr` script and `server.conf` with improvements to restrict service wrapper memory consumption. (GP-6067)
+* _Processors_. Added support for x86 SSE4a instructions. (GP-5906, Issue #8335)
+
+### Bugs
+* _Exporter_. Fixed missing reference type in the ASCII and HTML exporters. (GP-5957, Issue #8468)
+* _PDB_. Fixed a `NullPointerException` that occurred during PDB load/analysis that was caused by a function null container class. (GP-6100, Issue #8596)
+* _ProgramDB_. Corrected dynamic label bug which produced a stack overflow exception when a pointer reference loop existed. (GP-5995, Issue #8510)
+* _Scripting_. Fixed OSGi-related errors that occurred when script-related directories were not readable. (GP-5965, Issue #8466)
+
+# Ghidra 11.4.2 Change History (August 2025)
+
+### Improvements
+* _Build_. Ghidra now supports Gradle 9. (GP-5901)
+* _Decompiler_. Improved Decompiler's analysis of switches where the guard condition has been duplicated across multiple basic blocks that all feed into the same switch calculation. (GP-5889)
+* _Processors_. Added the SuperH GBR register to the unaffected list in the `.cspec` so that the Decompiler sees the value as preserved across subroutine calls. (GP-5912, Issue #4387)
+
+### Bugs
+* _Analysis_. Fixed switch recovery analysis speed degredation on functions with multiple potential switches. (GP-5917)
+* _Decompiler_. Fixed a bug in the Decompiler's analysis of duplicated boolean expressions that could reverse the meaning of an expression. (GP-5915, Issue #8310)
+* _Decompiler_. Fixed an uncaught exception in the Decompiler that resulted when `highSymbol` was null. (GP-5919, Issue #8413)
+* _Exporter_. The `IntelHexExpoter` no longer fails due to falsely identifying a 32-bit program as 64-bit.  Additionally, the address space option is no longer hidden. (GP-5910, Issue #8409)
+* _Importer:ELF_. Corrected ELF MIPS-64 packed REL relocation processing issue seen when the relocation type R_MIPS_REL32 is included (e.g., packed type 0x1203).  When 64-bit pointers are used, this relocation must read 8 bytes from memory instead of 4 bytes to produce the correct addend value. (GP-5918)
+* _Importer:PE_. Fixed a regression that caused bad functions to be created in the middle of good functions in PE files with chained `IMAGE_FUNCTION_RUNTIME_ENTRY`s, and prevented some PE binaries from importing. (GP-5916, Issue #8414)
+* _Importer:PE_. The `IMAGE_RESOURCE_DIRECTORY_ENTRY` data type is now correctly defined as a structure instead of a union. (GP-5935, Issue #8446)
+* _PDB_. Fixed structure member issue, broken with 11.4 release, that could cause improper structure layout and Decompiler low-level errors. (GP-5928)
+* _Processors_. Added additional SPE and APU instructions to e500 PowerPC variant. (GP-5945)
+
+# Ghidra 11.4.1 Change History (July 2025)
+
+### Improvements
+* _Debugger_. Added a __Forcibly Close Transactions__ maintenance action to the __Connections__ window. (GP-5788, Issue #8298)
+* _Debugger:GDB_. Added mapping from GDB's armv5te to Ghidra's ARM:LE:32:v5t. (GP-5738)
+* _Decompiler_. Improved Decompiler analysis of small variables through the INT_LEFT operator. (GP-5718)
+* _Importer:Mach-O_. Added support for importing and extracting from the iOS 26 BETA dyld_shared_cache. (GP-5767, Issue #8283)
+* _Importer:PE_. PE `IMAGE_FUNCTION_RUNTIME_ENTRY`s are now all marked as functions. (GP-5811, Issue #8321)
+* _Processors_. Fixed AAPCS calling convention and added soft float calling convention (`__stdcall_softfp`) for 32-bit ARM. (GP-4989, Issue #6958)
+* _Scripting_. Added option to the RecoverClassesFromRTTIScript to not change vfunctions to thiscalls. (GP-5764, Issue #8163)
+* _Scripting_. The new PyGhidra 2.2.1 no longer gets confused by the presense of a random `ghidra` or `java` directory on the current working directory. (GP-5810, Issue #8190)
+
+### Bugs
+* _Analysis_. The symbolic constant evaluation, `SymbolicPropogator`, has been changed to record pre/post values at the beginning and end of instructions by default.  This affected the `ResolveX86orX64LinuxSyscallsScript` and `GolangSymbolAnalyzer`. (GP-5804)
+* _Analysis_. Fixed a potential infinite looping problem that could occur during MIPS or PPC constant analysis.  The issue could occur on undefined functions when __Assume T9 set to Function entry__ option is set. (GP-5833)
+* _Analysis_. Adding MIPS64 instruction start patterns. (GP-5843)
+* _Assembler_. Fixed an issue with Debugger __Patch Data__ action being misapplied to the static Listing. (GP-5859)
+* _Assembler_. Fixed an issue with __Patch Instruction__ in certain Harvard architectures. (GP-5877, Issue #8382)
+* _CodeCompare_. Corrected occasional `IndexOutOfBoundsException` in decompiled code comparison algorithm. (GP-5361, Issue #7028, #8125, #8289)
+* _Debugger:Emulator_. The __Event Thread__, __PC__, and __Function__ columns are now populated for emulation traces. (GP-5796, Issue #8293)
+* _Debugger:GDB_. Fixed an issue with zero-length modules. (GP-5789)
+* _Debugger:Memory_. Fixed an issue with pc/watch-tracking in Debugger/Emulator's __Memory Bytes__ viewer. (GP-5852, Issue #8333)
+* _Debugger:Modules_. Fixed `NullPointerException` on __Select Current Module__ action when the cursor is not in a module. (GP-5790)
+* _Debugger:Objects_. Refrain from timing-out back-end actions when a Cancel button is displayed. The user can decide when it's had enough time. (GP-5553)
+* _Debugger:Scripting_. Fixed `NullPointerException` in example `InstallCustomLibraryScript.java`. (GP-5799, Issue #8296)
+* _Decompiler_. Fixed an error in the Decompiler's constant propagation that would occasionally prevent a function's parameters from being committed. (GP-5736, Issue #8183)
+* _Decompiler_. Fixed a regression in the Decompiler's recovery of the return value for AARCH64 and ARM. (GP-5816)
+* _Decompiler_. Fixed Decompiler bug where inlined functions cause _"Could not find op at target address"_ exceptions. (GP-5832, Issue #7383)
+* _Decompiler_. Provided a fix for an infinite loop problem in the Decompiler caused by `RulePtrsubUndo`. (GP-5856, Issue #7997)
+* _Eclipse Integration_. GhidraDev 5.0.1 fixes a bug that prevented Ghidra from discovering the Ghidra module project when launched with the PyGhidra run configuration. (GP-5836)
+* _ELF_. Corrected severe ELF-relocation-processing bug for MIPS 64-bit. (GP-5827)
+* _GUI_. Fixed the __Install Extensions__ dialog toolbar action enablement. (GP-5777, Issue #8294)
+* _GUI_. Corrected regression problem with __Set Comments__ dialog which should keep last tab selected when re-opened. (GP-5797)
+* _GUI_. Fixed the __Install Extensions__ dialog toolbar action enablement.  Previously, after pressing the plus toolbar button, the actions would get disabled and could not be re-enabled. (GP-5828, Issue #8294)
+* _Importer:ELF_. Corrected ELF PowerPC 64-bit relocation-processing bugs that affected ELFv2 use and R_PPC64_JMP_SLOT relocation. (GP-5846)
+* _Languages_. Fixed issue of missing characters at the end of instruction operands; for example, closing parenthesis added in a base sleigh instruction constructor. (GP-5752, Issue #8345)
+* _PDB_. Fixed an issue where Microsoft symbol truncation led to improper namespace parsing and PDB analysis error.  Also made changes to Microsoft Demangler to make the prefix dot character an optional character for mangled data type strings. (GP-5861, Issue #8358)
+* _Processors_. Fixed 6805 and HCS 08 X-indexed jump addresses. (GP-5336, Issue #7064, #7065)
+* _Processors_. Added eBPF ISA v4 instructions. (GP-5592, Issue #7982)
+* _Processors_. Corrected semantics for eBPF byte-swap instructions. (GP-5593, Issue #7985)
+* _Processors_. Corrected operand encoding for x86 AVX512 `vex.1vvv` operands. (GP-5766)
+* _Processors_. Corrected eBPF processor load instructions to correctly zero-extend. (GP-5857, Issue #7979)
+* _Processors_. Corrected eBPF `call` instruction operand decoding. (GP-5858, Issue #7929)
+* _References_. Fixed __Add Reference__ dialog to create memory references based on the word size of the address space. (GP-5865)
+* _Scripting_. Fixed a timing issue that prevented `FlatProgramAPI.analyzeAll(Program)` from picking up analyzer options set in the script. (GP-5802, Issue #8287)
+* _Scripting_. Fixed an issue that prevented Visual Studio Code projects from being recognized as Java projects. (GP-5820, Issue #8322)
+* _Version Tracking_. Fixed a table column `UnsupportedOperationException` seen when using Version Tracking. (GP-5876, Issue #8094)
+
+### Notable API Changes
+* _Debugger_. (GP-5788) Added `Target.forciblyCloseTransactions()`.
+* _Languages_. (GP-5752) Removed the second parameter of `InstructionPrototype.getSeparator()`, as it was unused.
+
+# Ghidra 11.4 Change History (June 2025)
+
+### New Features
+* _Basic Infrastructure_. Implemented Dockerized Ghidra. See `docker/README.md` for information about how to build the docker image for Ghidra and how to run the Ghidra container. This feature includes `headless`, `ghidra-server`, `bsim-server`, `bsim`, `pyghidra`, and `gui` entrypoints. (GP-3579)
+* _Debugger_. Added support for Meta's drgn debugger, undertaken as a test case to generate new Debugger documentation. (GP-326)
+* _Debugger_. Added time overview to the Dynamic Listing. (GP-870)
+* _Debugger_. Implemented remote options for dbgeng targets. (GP-4732)
+* _Debugger_. Added event/exception handling for the dbgeng. (GP-4786)
+* _Debugger_. Added support for `rr` via gdb. (GP-5452, Issue #3133)
+* _Debugger:Agents_. Provided additional `catch` methods for gdb. (GP-5466)
+* _Debugger:Listing_. Support for 32-bit pointers on WoW64 targets is now added. The pointer size is automatically determined by the PE header of the module containing the PC. (GP-616, Issue #4127)
+* _Debugger:Time_. Added actions to __Debugger__ menu to set the display radix for snapshot keys and time schedules. (GP-5523)
+* _Importer_. Provided new loader for the `Unix A.out` binary file format. (GP-3182, Issue #4943, #5004)
+* _Search_. Added new Search-and-Replace feature. This feature make it easy to globally rename many different types of program elements and update related comments. (GP-5310)
+
+### Improvements
+* _Accessibility_. Provided accessible names for most dialog components. (GP-4555)
+* _Analysis_. Added support for Golang closures and generic functions.  Added support for applying function signatures to core Golang library functions that were captured and stored in API snapshot files. (GP-2432, Issue #6367)
+* _Analysis_. Improved speed of constant reference analysis and stack analysis. (GP-4512)
+* _Analysis_. Improved decompilation of Golang functions by eliminating compiler-generated boilerplate calls to internal garbage-collection functions. (GP-5373, Issue #7484)
+* _Analysis_. Updated the IMAGE_RUNTIME_FUNCTION_ENTRY structure for x86 programs to change the EndAddress type from an ImageBaseOffset32 to a DWORD.  This helps prevent references and code from being incorrectly created at the address after each listed function. (GP-5430)
+* _Analysis_. Improved how Golang interface methods are modeled. (GP-5455, Issue #7529)
+* _Analysis_. The __Rust String Analyzer__ no longer clears and converts strings defined in the header to character arrays. (GP-5643, Issue #8019)
+* _API_. Updated some Decompiler locations to better navigate the Listing. (GP-5453, Issue #7518)
+* _Basic Infrastructure_. Upgraded 3rd party jars for Bouncy Castle, Apache Commons Compress, Apache Commons Lang3, Apache Commons IO, and JUnit. (GP-5631)
+* _BSim_. The BSim `support/make-postgres.sh` script now runs on linux_arm_64 and mac_arm_64 platforms. (GP-5282, Issue #7287)
+* _BSim_. Made BSim installed by default. (GP-5435)
+* _BSim_. Added checks to `AddProgramToH2BSimDatabaseScript` to prevent the generation of signatures when a program has unsaved changes or no functions. (GP-5562, Issue #7897)
+* _BSim_. Function names in the BSim Overview Results table now update if they are changed in the program. (GP-5604, Issue #7903)
+* _BSim_. Upgraded Postgres for BSim to version 15.13 and JDBC driver to 42.7.6.  This resolves issues with building PostgreSQL server on newer releases of Linux and compiler toolchains which compile with `-std=c23` option by default. (GP-5680, Issue #8122)
+* _Byte Viewer_. Byteviewer now centers the cursor on the screen when going to a new offscreen location instead of putting the cursor at the top or bottom. (GP-2148)
+* _Calling Conventions_. Corrected specifications for parameter and return storage of homogeneous float aggregate types in AARCH64.cspec. Made a number of improvements and corrections to AARCH64_win.cspec. (GP-5192, Issue #8016)
+* _Data Types_. Improved handling of datatype removal and the impact it can have within Structure and Union components.  Previously, affected components were removed, causing unknown loss of information.  With this change, components will be preserved with the use of a `BadDataType`, allowing their size and field names to be preserved.  Each affected component comment will also be updated to indicate the name of the datatype that was removed.  A similar situation for a Structure bit-field will revert its base datatype to an appropriate primitive integer type if it had been based upon a deleted Enum or Typedef. (GP-2949)
+* _Data Types_. Fixed issue where a datatype node in the datatype tree had a stale tool tip if a datatype it contained was renamed. (GP-5434)
+* _Data Types_. Improved Structure Editor `unpack` action to include typedef of arrays and structures.  This change also corrects unpacking of structures which contain zero-length components. (GP-5527, Issue #7528)
+* _Debugger_. Fixed issue where, when hovering over struct members, the left-hand side of assignment statements gave incorrect values. (GP-3450, Issue #5337)
+* _Debugger_. Provided better launcher defaults. (GP-4611)
+* _Debugger_. Added various Debugger launchers, especially Windows equivalents of existing Linux launchers.  Fixed launch logic for targets and arguments with spaces in their paths. (GP-5360, Issue #4977)
+* _Debugger:Agents_. Integrated timeline for `dbgeng-trace` connector. Navigating in the __Time__ window or using the __Go-To Time__ action now issues the corresponding `!tt` command, and vice versa. (GP-4209)
+* _Debugger:Agents_. Replaced the experimental pyTTD implementation with direct use of the Microsoft DLLs;  enables heap / memory visualization based on LINQ queries in the Memview Display. (GP-5407)
+* _Debugger:Agents_. Added __Image__ option to __remote gdb__ and __remote lldb__ connectors. (GP-5538, Issue #7955)
+* _Debugger:Agents_. The connectors will now prompt to automatically remedy some missing setup steps. (GP-5551)
+* _Debugger:Breakpoints_. Added __Set Breakpoint__ drop-down action. (GP-4546)
+* _Debugger:dbgeng.dll_. Added a few more options for dbgeng targets. (GP-5270)
+* _Debugger:drgn_. Added type annotations to drgn. (GP-5511)
+* _Debugger:Emulator_. Moved display of the current time (schedule) from Threads to the Listing's tabs. (GP-5265)
+* _Debugger:Listing_. Fixed issue where Dynamic and Static Listings could get out of sync when another component directed navigation (i.e., not directly input-driven). (GP-5548)
+* _Debugger:LLDB_. Added documentation to bootstrap pip into the Android NDK's lldb. (GP-5533)
+* _Debugger:Memory_. The primary __Dynamic Listing__ and __Memory Bytes__ windows are now synchronized. (GP-3405)
+* _Debugger:Stack_. Improved stack unwinder to handle the ARM `bx` instruction. (GP-3771, Issue #5658)
+* _Debugger:Targets_. Added a __busy__ indicator to each connection and target. (GP-4080)
+* _Debugger:Time_. Added __PC__, __Function__, and __Module__ columns to the __Time__ window. Changed default visibility and widths. (GP-5264)
+* _Debugger:Time_. Added a __Time__ column to the __Time__ window. Hid the __Snap__ and __Snapshot__ columns by default. (GP-5499)
+* _Debugger:Time_. Double-clicking or pressing `Enter` on a row in the __Time Selection__ dialog now confirms the dialog. (GP-5674)
+* _Decompiler_. The Decompiler simplifies new situations where optimized code packs multiple variables into a single register. (GP-5240, Issue #7277)
+* _Decompiler_. Updated Decompiler highlighting to ignore syntax tokens. (GP-5414, Issue #7527)
+* _Decompiler_. Fixed a performance issue seen in the Decompiler when using a large number of custom global highlighters. (GP-5477, Issue #7520)
+* _Decompiler_. Enabled optimizations for C++ source files when compiling native executables on Windows. (GP-5543, Issue #7953)
+* _Decompiler_. Updated the Decompiler to now show a warning when executing DockingActions while the Decompiler is busy. (GP-5572, Issue #7893)
+* _Documentation_. Updated BSim documentation to mention PostgreSQL support on arm64. (GP-5384, Issue #7387, #7388)
+* _Documentation_. Renamed `InstallationGuide.md` to `GettingStarted.md`. (GP-5598)
+* _DWARF_. DWARF analyzer now imports symbols found in external debug files. (GP-5570)
+* _Emulator:JIT_. Fixed an issue with transition to THUMB on indirect branches. (GP-5301)
+* _Exporter_. The C/C++ exporter now has an option to export declarations for referenced global variables (on by default). (GP-4123, Issue #2635)
+* _Function Tags_. Added __Make Selection__ action to Function Tags Window. (GP-5354)
+* _GhidraGo_. Improved GhidraGo CLI to print correct usage upon invalid/missing GhidraURL argument. (GP-5504)
+* _Graphing_. Added __Truncate Function Name__ option to the Function Call Graph to control name truncation, which was previously always enabled. (GP-2307, Issue #1684)
+* _GUI_. Added the ability to search for text in the Console. (GP-3858, Issue #2567, #7136)
+* _GUI_. Added more data type filter options to the Data Types provider. (GP-3870, Issue #5734)
+* _GUI_. Updated Listing Label hovers to show symbol type and source type. (GP-4393)
+* _GUI_. Updated the Function Editor dialog to find the next editable table cell when initiating a table edit via `F2` on an uneditable cell. (GP-5316, Issue #7241)
+* _GUI_. Added the __Copy Formatted__ action to most trees to allow a copy operation that maintains tree node indentation. (GP-5317, Issue #7417)
+* _GUI_. Added an __Edit Structure Field__ action to allow changing the name, datatype, and comment for a structure (or union) at the same time. (GP-5326, Issue #7407)
+* _GUI_. Improved function parameter/return custom storage editor to employ a filtered pull-down combo-box for register selection. (GP-5369)
+* _GUI_. Symbol Tree - Improved event handling to maintain user view position; added an option for organization node group threshold; fixed missing nodes under classes; updated tree to maintain user selection. (GP-5474, Issue #7889, #7891)
+* _GUI_. Updated the Decompiler's rename dialog to pick the correct parent namespace. (GP-5565, Issue #7507)
+* _Importer_. The MapLoader now parses and applies the symbols found in the `Static symbols` section of a MAP file. (GP-5530, Issue #7945)
+* _Importer:Mach-O_. The `dyld_shared_cache` filesystem no longer throws exceptions when trying to perform slide fixups on very large cache files. (GP-5357)
+* _Importer:Mach-O_. The extracted dyld_shared_cache component loader now has options to automatically add common components that contribute to better analysis such as libobjc.dylib, constant data, and text stubs. (GP-5396, Issue #7289, #7469)
+* _Importer:Mach-O_. The Mach-O loader now properly handles the `LC_REEXPORT_DYLIB` load command, transitively exporting the exported symbols from one library to another. (GP-5429, Issue #7537)
+* _Importer:Mach-O_. Mach-O files contained within a Universal Binary container can now be directly imported without having to go through the File System Browser. Use the __Language__ field of the import dialog to select the architecture to import. (GP-5552)
+* _Listing_. Changed Listing comment fields to now display offcut comments. Offcut comments are comments at addresses in the middle of an instruction or data item instead of at the start address. They are displayed in red to distinguish them from non-offcut comments. (GP-4037)
+* _Navigation_. Added previously missing navigation history when using __Repeat Memory Search__ action. (GP-5440, Issue #7445)
+* _PDB_. Added a post-analysis pop-up message for when PDB file could not be found. (GP-5697)
+* _Performance_. Fixed performance issue with __Defined Strings__ table when other very large data types are present in the program. (GP-2941, Issue #3498, #5726, #8134)
+* _Processors_. Added support for ARM Cortex stack limit register instructions (GP-4731, Issue #5255, #5256, #6667)
+* _Processors_. Improved display of x87 floating-point operands. (GP-5030, Issue #6786)
+* _Processors_. Updated appropriate x87 instructions to modify the FPU instruction pointer. (GP-5191, Issue #7205, #7508)
+* _Processors_. Added support for ARM additional VFP system registers. (GP-5469, Issue #6573)
+* _Processors_. Added implementation of additional x86 AVX512 instructions. (GP-5537)
+* _Processors_. Improved pcode generated for certain x86 `PUSH FS` and `PUSH GS` variants. (GP-5638, Issue #6602)
+* _ProgramDB_. Provided various locking-related speed improvements for multi-threaded access. (GP-5619)
+* _Scripting_. Changed __In Tool__ option in the Script Manager table to automatically add actions to the global menu bar under a __Scripts__ menu if not already specified to be placed in another location specified by `@menupath`. (GP-5428)
+* _Scripting_. Removed old prototype `GccAnalysisScript` since it is no longer maintained and has been long since replaced with the `RecoverClassesFromRTTIScript`. (GP-5451, Issue #7871)
+* _Scripting_. PyGhidra can now open projects created with the Ghidra GUI by setting the `nested_project_location` optional parameter to `False`. (GP-5627, Issue #8040)
+* _SourceMatching_. The actions to create SourceFile transforms now use file choosers. (GP-5255)
+* _Version Tracking_. Made Version Tracking Wizard more efficient when choosing programs to be compared if either one is versioned or needs to be upgraded. (GP-4151)
+* _Version Tracking_. Changed the minimum function length in the Auto Version Tracker for the duplicate instruction correlator to be larger to improve the correlator speed. Users can change this option in the Auto Version Tracking options folder. (GP-5762)
+
+### Bugs
+* _Analysis_. Fixed an issue with a missing magic value for Golang 1.20+ that could cause a failure in finding the root `moduledata` structure and subsequently all RTTI and function information in stripped PE binaries. (GP-5728, Issue #8213)
+* _Basic Infrastructure_. Fixed a bug that prevented new installations of Ghidra from applying preferences found in older installed versions of Ghidra. (GP-5633, Issue #8107)
+* _Calling Conventions_. Added compiler specification support for the ARM APCS calling convention. (GP-4923, Issue #7434)
+* _Calling Conventions_. Corrected specifications of return storage locations of structures for the default prototypes in x86gcc.cspec and x86-64-win.cspec.  Made a number of improvements to the `MSABI` prototype in x86-64-gcc.cspec. (GP-5183)
+* _Debugger_. Fixed a bug that occurred when editing memory after closing and re-opening a trace in another tool. (GP-5314, Issue #7413)
+* _Debugger_. Fixed an issue where object key re-use caused incorrect merging of objects. Often, this led to stale values being used or displayed in parts of the UI. In particular, this caused breakpoints to appear at incorrect addresses. (GP-5379, Issue #7497)
+* _Debugger_. Provided a fix such that Debugger image defaults are not applied if there is a program. (GP-5607)
+* _Debugger:Breakpoints_. Fixed a bug with removing and re-adding the `BreakpointMarkerPlugin`. (GP-5364)
+* _Debugger:Breakpoints_. Fixed an issue with breakpoint state consistency when the containing program image is not mapped. (GP-5671)
+* _Debugger:dbgeng.dll_. Fixed a bug in the exception handler for dbgeng that caused stopping despite the settings. (GP-5606, Issue #8029)
+* _Debugger:dbgeng.dll_. For dbgeng-backed targets, if reading the PE-header to determine x86/x64 mode times out, the error is now in the Debug Console instead of a popup dialog. This automatic memory read is now also modulated by the main Listing's __Auto-Read Target Memory__ setting. (GP-5678, Issue #8155)
+* _Debugger:GDB_. Provided fix for signed/unsigned address errors in gdb. (GP-5331, Issue #6787)
+* _Debugger:GDB_. Fixed an issue where gdb connector couldn't list sections if any had zero length. (GP-5612)
+* _Debugger:Listing_. Fixed an issue with __Select All__ and similar actions in the __Dynamic Listing__. (GP-5438)
+* _Debugger:Listing_. Fixed `NullPointerException` in tab panel when exiting. (GP-5540, Issue #7956)
+* _Debugger:Memory_. Fixed a performance issue for long-lived (many snapshots) targets. (GP-5494, Issue #4940)
+* _Debugger:Objects_. Fixed an issue where __Refresh__ actions on Model view expansion were getting mixed up. (GP-5425)
+* _Debugger:Registers_. Fixed hang at launch when the __Registers__ table had a filter. (GP-5673)
+* _Debugger:Targets_. Fixed an issue that required user to click the __trace tab__ when launching without an Image; e.g., to attach manually. (GP-5668)
+* _Decompiler_. Upgraded taint analysis to interface with CTADL v0.11.0. (GP-5573)
+* _Decompiler_. Fixed issue preventing decompilation of certain functions containing a FLOAT_NAN pcode op. (GP-5676, Issue #8092)
+* _Demangler_. Fixed GnuDemangler to support the mangled TLS init function. (GP-5642, Issue #8105)
+* _Documentation_. Fixed some typos in the Debugger Course. (GP-5670)
+* _DWARF_. Fixed DWARF analyzer to handle Apple Mach-O truncation of DWARF5 section names.  Fixed DWARF analyzer to handle DW_TAG_atomic_type. (GP-5755)
+* _Framework_. Fixed an issue where the installation directory was incorrectly reported in development mode. (GP-5698, Issue #8146)
+* _GUI_. Fixed  a bug that caused the Symbol Tree to be blank when shown with a filter applied. (GP-5258, Issue #7365)
+* _GUI_. Fixed a table filter bug that caused some escaped glob characters to prevent items from passing the filter. (GP-5337, Issue #7444)
+* _GUI_. Fixed sporadic Decompiler function color bug that caused bad function colors to oscillate. (GP-5346, Issue #7453)
+* _GUI_. Fixed an issue with program tabs when the panel is size-restricted. (GP-5578, Issue #7915)
+* _GUI_. Fixed an issue where toolbar buttons sometimes got spaced far apart. (GP-5584, Issue #7984)
+* _GUI_. Fixed bug in __Search Memory__ that created a bad component title which ultimately prevented the tool from saving. (GP-5597, Issue #8015)
+* _GUI_. Fixed a bug that prevented the correct clearing of the `Esc` keybinding after restarting Ghidra. (GP-5599)
+* _GUI_. Fixed a bug in GoTo dialog where entering a backslash (`\`) caused a stack trace. (GP-5615, Issue #8038)
+* _GUI_. Fixed a bug on the Mac that caused `Ctrl-Mouse-Click` to clear the table selection when showing the popup menu. (GP-5618, Issue #7902)
+* _GUI_. Fixed a bug that introduced duplicate data when renaming functions with a filter. (GP-5620, Issue #8031)
+* _GUI_. Fixed the Data Type Manager's __Find Structures by Size...__ action so that it can find zero-length structures. (GP-5634, Issue #8096)
+* _Importer:ELF_. Added ELF SH4 partial in-place relocation processing for R_SH_DIR32 and R_SH_REL32 relocations.  This was done in response to observed cases for VxWorks binaries. (GP-5605, Issue #8021)
+* _Importer:Mach-O_. The `dyld_shared_cache` filesystem now exposes a complete set of files that encompass the cache's entire address space.  Performing an __Add To Program__ on broken references should no longer result in the address not being found. (GP-5349)
+* _Importer:Mach-O_. Fixed an issue in the Mach-O loader that prevented uninitialized segments from being mapped into memory. (GP-5532, Issue #7949)
+* _Importer:Mach-O_. Fixed a bug that resulted in incorrect external addresses of Mach-O undefined symbols. (GP-5554, Issue #5941)
+* _Languages_. Corrected x86-16 Protected Mode / System Management Mode language upgrade issues which could cause problems.  This has been a long-standing problem which may have gone unnoticed but in some cases may have failed during the upgrade. (GP-5704, Issue #8140)
+* _Multi-User:Merge_. Corrected various Multi-User Merge issues related to data types, including handling of missing/deleted datatypes, zero-length Structure components, and bit-field components. (GP-5421)
+* _Multi-User:Merge_. Corrected various __Merge Tool__ Listing rendering issues related to external symbols. (GP-5480)
+* _Multi-User:Merge_. Corrected possible exception during Bookmark merging. (GP-5626)
+* _Processors_. Corrected patterns for x86 `INCSS`/`RDSSP` instructions. (GP-5267, Issue #6520)
+* _Processors_. Corrected issue with AARCH64 `LDnR` instructions only writing to one register. (GP-5286, Issue #6470)
+* _Processors_. Corrected `PUSHF` and `POPF` constructors in x86. (GP-5424, Issue #6601)
+* _Processors_. Fixed instruction parsing for AARCH64 `dsb` instruction. (GP-5587, Issue #7996)
+* _Processors_. Improved semantics for several AARCH64 Neon instructions. (GP-5622, Issue #5217)
+* _Processors_. Fixed z80 `sub` instruction semantics. (GP-5659, Issue #8144)
+* _Processors_. Corrected pcode for x86 `CVTTSD2SI` instruction. (GP-5665, Issue #8004, #8151)
+* _Processors_. Corrected disassembly for several x86 AVX512 instructions missing immediate operands. (GP-5725)
+* _Processors_. Corrected disassembly for RISC-V `max` and `minu` instructions. (GP-5729, Issue #8215)
+* _Project_. Corrected project-folder-rename problem which was preventing subsequent use of decedent files.  This change also corrected related project file refresh and corrects invalid file index data which could prevent file creation after a combination of folder-renaming and file-versioning control actions. (GP-5660)
+* _SARIF_. Corrected various SARIF import/export failures. (GP-5749)
+* _Scripting_. Fixed a bug in the VxWorksSymTab_Finder script when run in headless mode. (GP-5682, Issue #8156)
+* _Scripting_. Fixed a bug that prevented PyGhidra from properly using the user's already-active virtual environment. (GP-5710, Issue #8180)
+* _Testing_. Updated pcodetest scripts to Python3. (GP-4995)
+
+### Notable API Changes
+* _API_. (GP-5458) `GhidraProject.openProject()` now throws `NotFoundException, NotOwnerException, LockException`.
+* _API_. (GP-5591) Removed unused and unsupported `DataType.getDocs()` method.
+* _Debugger_. (GP-2040) Deleted `AbstractAsyncServer`, `AsyncClaimQueue`, `AsyncLock`, `AsyncLoop`, `AsyncPairingCache`, `AsyncRace`, `AsyncSequence*`, `BitmaskSet`, `DebugByteChannel`, `TypeSpec` and related, without replacements.
+* _Debugger_. (GP-3450) Added `UnwoundFrame.evaluate(Program, Varnode, AddressSetView)`.
+* _Debugger_. (GP-5379) Most accessor methods on `TraceUniqueObject` derivatives now require a `snap` argument. For getters, this is the snap for which the value is sought. For setters, this implies the effect is from that snap onward. In most cases, the GUI's current snap is suitable. (The deprecated legacy-mode objects ignore the argument.) This required argument has cascaded throughout many other parts of the API: `DebuggerStaticMappingService`, `AutoMapSpec`, `MapProposal.MapEntry`, `DebuggerStaticMappingService`, `ProgramModuleIndexer`, `DebuggerObjectActionContext`, `DebugerSectionActionContext`, `BreakpointActionSet`, and `*EmuBreakpointActionItem`. Additionally, `getLifespan` and similar, including setters and "split-and-set," have been removed from most `TraceObjectUnique` derivatives. For cases where you need to check if the object is valid at a particular time, use `isValid(long)`. For cases where you need to enumerate (e.g., to plot) the life, use the underlying `TraceObject`. To truncate the life of an object, use `remove(long)`. For `TraceThread` in particular, the destruction snap is now considered part of its life, which is consistent with how every other object has been treated. Connectors should (and already have been) using `remove`, which sets the "destruction snap" to the one preceding the current.
+* _Debugger:Agents_. (GP-4209) On the Python side: The ghidratrace package is now type-checked using mypy. As a result, the annotations used for the method registry now use `typing.Annotated` when parameters need additional description. `Client.create_trace()` now also requires a named parameter `extra`. On the Java side: Added `TraceTimeManager.findScratchSnapshot`. The trace-rmi protocol has also changed.
+* _Debugger:Agents_. (GP-5538) Powershell is now supported as a debug launcher language on Windows.
+* _Debugger:Breakpoints_. (GP-4546) TraceRmi methods with `action="break_ext"` now appear in the new drop-down. TraceRmi methods can now also specify their menu icon, as well as the text for their confirmation button in parameter dialogs. These are the `icon` and `ok_text` attributes, respectively. The `icon` attribute should be the id of an icon given in a theme.properties file.
+* _Debugger:dbgeng.dll_. (GP-5678) Added `DebuggerListingService.getAutoReadMemorySpec()`. Moved `AutoReadMemorySpec` into the Debugger-api module. Created `AutoReadMemorySpecFactory` and refactored accordingly.
+* _Debugger:Listing_. (GP-616) Added `Trace.getBaseDataTypeManager()` method.  Added `TracePlatform.getDataTypeManager()` method.  Added `TraceBasedDataTypeManager.getPlatform()` method.  `TraceDefinedDataView.create()` now takes optional `platform` argument.  Added `TraceVariableSnapProgramView.setPlatform()` method.  `DebuggerPlatformService.setCurrentMapperFor()` has an additional `focus` parameter.  Most methods in `DebuggerPlatformMapper` now take both `object` and `snap` parameters.  Added `AbstractDebuggerPlatformMapper.getDisassemblyPlatform()` method.  `DbgengX64DisassemblyInject.Mode` and related methods moved to `DbgengDebuggerPlatformOpinion`.
+* _Debugger:Listing_. (GP-5548) Added `DebuggerStaticSyncService` interface and its Plugin implementation. Moved `DebuggerOpenProgramActionContext` into API project. Added `DebuggerConsolePlugin.clear()` method.
+* _Debugger:Memory_. (GP-3405) Added `TraceHighlightEvent`.
+Added `TrackingChangedPluginEvent`.
+Added `AbstractLocation/Selection/HighlightPluginEvent`.
+* _Debugger:Objects_. (GP-5425) Several protected abstract methods in `AbstractTarget` are removed without replacement. `Target.collectActions` now requires an argument specifying how its object arguments are gathered.
+* _Debugger:Stack_. (GP-3771) Added `UnwindInfo.maskOfReturn`.
+* _Debugger:Time_. (GP-5523) Added `TimeRadix` class. Added `TraceTimeManager.set/getTimeRadix` methods. `TraceSchedule.toString` and `.parse` methods now accept radix argument. `Span.toString` can now accept custom endpoint formatter.
+* _Decompiler_. (GP-5477) Added new methods to the DecompilerHighlightService to allow function-specific highlights.
+* _Framework_. (GP-5436) Deleted the Debug/Framework-AsyncComm project/module. Most of its few remaining classes were moved to Framework/Generic.
+* _GUI_. (GP-5375) `GTree.forceNewNodeIntoView()` has been replaced by `GTree.whenNodeIsReady()`.
+* _ProgramDB_. (GP-5742) Deprecated the use of `int` to indicate a CommentType in favor of the newly created enum.
+* _Version Tracking_. (GP-4151) The Dialog Wizard API has been completely rewritten.
+
 # Ghidra 11.3.2 Change History (April 2025)
 
 ### Improvements
@@ -1269,7 +2168,7 @@ Added API method `Structure.setLength(int length)` which allows the size of a no
 * _Processors_. Fixed operand parsing of ARM Neon `vld` and `vst` instructions. (GP-3043, Issue #4814)
 * _Processors_. Corrected x86 `MOV REX, MOFFS64` disassembly with address size prefix. (GP-3078, Issue #4942)
 * _Processors_. Corrected x86 `FBLD` instruction semantics. (GP-3079, Issue #2427)
-* _Processors_. Fixed ARM neon `VMOV.U16` instruction decode. (GP-3096)
+* _Processors_. Fixed ARM Neon `VMOV.U16` instruction decode. (GP-3096)
 * _Processors_. Fixed issue with ARM Thumb `push {register_list}` not disassembling when the last two registers in the list are `r2` and `r3`. (GP-3132, Issue #5024)
 * _Processors_. Supplied additional register field support to AARCH64 `MSR` instruction. (GP-3156)
 * _Processors_. Fixed issue with ARM Thumb Neon `vqdmull` instruction not disassembling. (GP-3157, Issue #5053)
@@ -2047,7 +2946,7 @@ Added API method `Structure.setLength(int length)` which allows the size of a no
 * _Processors_. Corrected semantics for MIPS `INS` instruction. (GP-1290, Issue #3405)
 * _Processors_. Corrected MIPS64 `DINS` instruction semantics. (GP-1291, Issue #2232)
 * _Processors_. Corrected semantics of PA-RISC shift conditions, which was incorrectly using the register size in bytes, as opposed to bits. (GP-1292)
-* _Processors_. Corrected ARM neon `vmrs` instruction disassembly. (GP-1322, Issue #3446)
+* _Processors_. Corrected ARM Neon `vmrs` instruction disassembly. (GP-1322, Issue #3446)
 * _Processors_. Corrected SuperH `bld` and `movemu` instruction semantics. (GP-1331, Issue #3449)
 * _Processors_. Removed deprecated ARM condition code 15. (GP-1332)
 * _Processors_. Corrected issue with x86 `call` instructions when stack pointer is used as a reference. (GP-1357, Issue #3455)
@@ -2411,7 +3310,7 @@ Added API method `Structure.setLength(int length)` which allows the size of a no
 * _PDB_. Changed return type applied to constructors by PDB Universal from `void` to `Undefined`, allowing the Decompiler to determine the type. (GP-791)
 * _Processors_. Added missing `RFE` instruction in MIPS up to version R3000. (GP-33, Issue #1766)
 * _Processors_. ARM instruction `VMUL` now decodes correctly. (GP-627, Issue #2677)
-* _Processors_. Added missing `CFINV` instruction to AARCH64 processor specification and added definitions for locals in neon instructions. (GP-655, Issue #2710)
+* _Processors_. Added missing `CFINV` instruction to AARCH64 processor specification and added definitions for locals in Neon instructions. (GP-655, Issue #2710)
 * _Scripting_. Fixed analyzeHeadless `-scriptPath` option that didn't work for Python and other non-Java scripts located in non-default directories. (GP-528, Issue #2561)
 * _Scripting_. Fixed concurrency issue with management of scripting bundle paths. (GP-576)
 * _Scripting_. Corrected handling for Ghidra Script files which are symlinks that were broken in Ghidra 9.2. (GP-650, Issue #2698)
@@ -2554,7 +3453,7 @@ Added API method `Structure.setLength(int length)` which allows the size of a no
 * _Processors_. Changed RISC-V jump instructions to the more appropriate `goto` instead of `call`. (GP-54, Issue #2120)
 * _Processors_. Updated AARCH64 to v8.5, including new MTE instructions. (GP-124)
 * _Processors_. Added support for floating point params and return for SH4 processor calling conventions. (GP-183, Issue #2218)
-* _Processors_. Added semantic support for many AARCH64 neon instructions. Addresses for register lanes are now precalculated, reducing the amount of p-code generated. (GP-343)
+* _Processors_. Added semantic support for many AARCH64 Neon instructions. Addresses for register lanes are now precalculated, reducing the amount of p-code generated. (GP-343)
 * _Processors_. Updated RISCV processor to include reorganization, new instructions, and fixes to several instructions. (GP-358, Issue #2333)
 * _Program API_. Improved multi-threaded ProgramDB access performance. (GT-3262)
 * _Scripting_. Improved ImportSymbolScript.py to import functions in addition to generic labels. (GT-3249, Issue #946)

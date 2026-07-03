@@ -146,6 +146,7 @@ public:
   int4 getSlot(const Address &addr,int4 skip) const;
   AddrSpace *getSpace(void) const { return spaceid; }	///< Get the address space containing \b this entry
   uintb getBase(void) const { return addressbase; }	///< Get the starting offset of \b this entry
+  Address getAddrBySlot(int4 &slot, int4 sz, int4 typeAlign, bool justifyRight) const;
   Address getAddrBySlot(int4 &slot,int4 sz,int4 typeAlign) const;
   void decode(Decoder &decoder,bool normalstack,bool grouped,list<ParamEntry> &curList);
   bool isParamCheckHigh(void) const { return ((flags & extracheck_high)!=0); }	///< Return \b true if there is a high overlap
@@ -290,6 +291,7 @@ class ParamActive {
   bool isfullychecked;		///< True if all trials are fully examined (and no new trials are expected)
   bool needsfinalcheck;		///< Should a final pass be made on trials (to take into account control-flow changes)
   bool recoversubcall;		///< True if \b this is being used to recover prototypes of a sub-function call
+  bool joinReverse;		///< True if varnodes should be joined in reverse order
 public:
   ParamActive(bool recoversub);	///< Construct an empty container
   void clear(void);		///< Reset to an empty container
@@ -300,6 +302,8 @@ public:
   int4 whichTrial(const Address &addr,int4 sz) const;		///< Get the trial overlapping with the given memory range
   bool needsFinalCheck(void) const { return needsfinalcheck; }	///< Is a final check required
   void markNeedsFinalCheck(void) { needsfinalcheck = true; }	///< Mark that a final check is required
+  bool isJoinReverse(void) const { return joinReverse; }	///< Do Varnodes need to be joined in reverse order
+  void setJoinReverse(void) { joinReverse = true; }		///< Mark that varnodes need to be joined in reverse order
   bool isRecoverSubcall(void) const { return recoversubcall; }	///< Are these trials for a call to a sub-function
   bool isFullyChecked(void) const { return isfullychecked; }	///< Are all trials checked with no new trials expected
   void markFullyChecked(void) { isfullychecked = true; }	///< Mark that all trials are checked
@@ -310,6 +314,7 @@ public:
   void setMaxPass(int4 val) { maxpass = val; }			///< Set the maximum number of passes
   void finishPass(void) { numpasses += 1; }			///< Mark that an analysis pass has completed
   void sortTrials(void) { sort(trial.begin(),trial.end()); }	///< Sort the trials in formal parameter order
+  void sortFixedPosition(void) {sort(trial.begin(),trial.end(),ParamTrial::fixedPositionCompare);}  ///< sort the trials by fixed position then <
   void deleteUnusedTrials(void);				///< Remove trials that were found not to be parameters
   void splitTrial(int4 i,int4 sz);				///< Split the given trial in two
   void joinTrial(int4 slot,const Address &addr,int4 sz);	///< Join adjacent parameter trials
@@ -329,8 +334,6 @@ public:
   /// \param addr is the new range's starting address
   /// \param sz is the new range's size in bytes
   void shrink(int4 i,const Address &addr,int4 sz) { trial[i].setAddress(addr,sz); }
-
-  void sortFixedPosition(void) {sort(trial.begin(),trial.end(),ParamTrial::fixedPositionCompare);}  ///< sort the trials by fixed position then <
 };
 
 /// \brief A special space for encoding FuncCallSpecs
@@ -615,6 +618,7 @@ public:
   ParamListStandard(const ParamListStandard &op2);			///< Copy constructor
   virtual ~ParamListStandard(void);
   const list<ParamEntry> &getEntry(void) const { return entry; }	///< Get the list of parameter entries
+  bool isBigEndian(void) const { return entry.front().getSpace()->isBigEndian(); }	///< Return \b true if resources are big endian
   void extractTiles(vector<const ParamEntry *> &tiles,type_class type) const;	///< Get registers of given storage class
   const ParamEntry *getStackEntry(void) const;	///< Get the stack entry
   uint4 assignAddressFallback(type_class resource,Datatype *tp,bool matchExact,vector<int4> &status,

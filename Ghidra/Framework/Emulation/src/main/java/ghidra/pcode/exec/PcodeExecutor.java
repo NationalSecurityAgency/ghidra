@@ -307,11 +307,24 @@ public class PcodeExecutor<T> {
 	/**
 	 * Extension point: logic preceding a load
 	 * 
+	 * @param op the op performing the load
 	 * @param space the address space to be loaded from
 	 * @param offset the offset about to be loaded from
 	 * @param size the size in bytes to be loaded
 	 */
-	protected void checkLoad(AddressSpace space, T offset, int size) {
+	protected void beforeLoad(PcodeOp op, AddressSpace space, T offset, int size) {
+	}
+
+	/**
+	 * Extension point: logic proceeding a load
+	 * 
+	 * @param op the op performing the load
+	 * @param space the address space loaded from
+	 * @param offset the offset about loaded from
+	 * @param size the size in bytes loaded
+	 * @param value the value loaded
+	 */
+	protected void afterLoad(PcodeOp op, AddressSpace space, T offset, int size, T value) {
 	}
 
 	/**
@@ -345,21 +358,35 @@ public class PcodeExecutor<T> {
 		Varnode inOffset = getLoadStoreOffset(op);
 		T offset = state.getVar(inOffset, reason);
 		Varnode outVar = op.getOutput();
-		checkLoad(space, offset, outVar.getSize());
+		beforeLoad(op, space, offset, outVar.getSize());
 
 		T out = state.getVar(space, offset, outVar.getSize(), true, reason);
 		T mod = arithmetic.modAfterLoad(op, space, offset, out);
 		state.setVar(outVar, mod);
+		afterLoad(op, space, offset, outVar.getSize(), mod);
 	}
 
 	/**
 	 * Extension point: logic preceding a store
 	 * 
+	 * @param op the op performing the store
 	 * @param space the address space to be stored to
 	 * @param offset the offset about to be stored to
 	 * @param size the size in bytes to be stored
 	 */
-	protected void checkStore(AddressSpace space, T offset, int size) {
+	protected void beforeStore(PcodeOp op, AddressSpace space, T offset, int size, T value) {
+	}
+
+	/**
+	 * Extension point: logic proceeding a store
+	 * 
+	 * @param op the op performing the store
+	 * @param space the address space to be stored to
+	 * @param offset the offset about to be stored to
+	 * @param size the size in bytes to be stored
+	 * @param value the value stored
+	 */
+	protected void afterStore(PcodeOp op, AddressSpace space, T offset, int size, T value) {
 	}
 
 	/**
@@ -382,11 +409,12 @@ public class PcodeExecutor<T> {
 		Varnode inOffset = getLoadStoreOffset(op);
 		T offset = state.getVar(inOffset, reason);
 		Varnode valVar = getStoreValue(op);
-		checkStore(space, offset, valVar.getSize());
-
 		T val = state.getVar(valVar, reason);
 		T mod = arithmetic.modBeforeStore(op, space, offset, val);
+		beforeStore(op, space, offset, valVar.getSize(), mod);
+
 		state.setVar(space, offset, valVar.getSize(), true, mod);
+		afterStore(op, space, offset, valVar.getSize(), mod);
 	}
 
 	/**

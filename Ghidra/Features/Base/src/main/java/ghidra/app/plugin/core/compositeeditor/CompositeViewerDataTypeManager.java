@@ -22,7 +22,7 @@ import java.util.TreeSet;
 import javax.help.UnsupportedOperationException;
 
 import db.util.ErrorHandler;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.ProgramArchitecture;
 import ghidra.util.Swing;
@@ -231,7 +231,7 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 			return viewComposite;
 		}
 		DataType resolvedDt = super.resolve(dataType, handler);
-		if ((dataType instanceof DatabaseObject) && originalDTM.contains(dataType)) {
+		if ((dataType instanceof DbObject) && originalDTM.contains(dataType)) {
 			long originalId = originalDTM.getID(dataType);
 			long myId = getID(resolvedDt);
 			dataTypeIDMap.put(myId, originalId);
@@ -247,14 +247,14 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 			throw new IllegalArgumentException("datatype is not from this manager");
 		}
 
-		if (existingViewDt instanceof DatabaseObject) {
+		if (existingViewDt instanceof DbObject) {
 			dataTypeIDMap.remove(getID(existingViewDt));
 		}
 
 		DataType newResolvedDt =
 			super.replaceDataType(existingViewDt, replacementDt, updateCategoryPath);
 
-		if (newResolvedDt instanceof DatabaseObject &&
+		if (newResolvedDt instanceof DbObject &&
 			replacementDt.getDataTypeManager() == originalDTM) {
 			long originalId = originalDTM.getID(replacementDt);
 			long myId = getID(newResolvedDt);
@@ -271,7 +271,7 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 			throw new IllegalArgumentException("datatype is not from this manager");
 		}
 
-		if (existingViewDt instanceof DatabaseObject) {
+		if (existingViewDt instanceof DbObject) {
 			dataTypeIDMap.remove(getID(existingViewDt));
 		}
 
@@ -293,7 +293,7 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 				Iterator<DataType> allDataTypes = getAllDataTypes();
 				while (allDataTypes.hasNext()) {
 					DataType dt = allDataTypes.next();
-					if (dt == viewComposite || !(dt instanceof DatabaseObject)) {
+					if (dt == viewComposite || !(dt instanceof DbObject)) {
 						continue;
 					}
 
@@ -396,7 +396,7 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 			long id = orphanIds.removeFirst();
 			if (!hasParent(id)) {
 				DataType dt = getDataType(id);
-				if (dt instanceof DatabaseObject) {
+				if (dt instanceof DbObject) {
 
 					if (dt == viewComposite) {
 						continue;
@@ -485,7 +485,7 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 		if (existingViewDt.getDataTypeManager() != this) {
 			throw new IllegalArgumentException("datatype is not from this manager");
 		}
-		if (!(existingViewDt instanceof DatabaseObject)) {
+		if (!(existingViewDt instanceof DbObject)) {
 			return false;
 		}
 		return dataTypeIDMap.getOriginalIDFromViewID(getID(existingViewDt)) != null;

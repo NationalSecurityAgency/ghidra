@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.server;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.junit.*;
 
@@ -50,7 +51,13 @@ public class RepositoryTest extends AbstractGhidraHeadedIntegrationTest {
 		serverRoot.mkdir();
 
 		mgr = new RepositoryManager(serverRoot, false, 0, false);
-		mgr.getUserManager().addUser(userName);
+		UserManager userManager = mgr.getUserManager();
+		userManager.addUser(userName);
+
+		userManager.addUser("user-a");
+		userManager.addUser("user-b");
+		userManager.addUser("user-c");
+		userManager.addUser("user-d");
 
 		repository = mgr.createRepository(userName, REPOSITORY_NAME);
 	}
@@ -94,17 +101,10 @@ public class RepositoryTest extends AbstractGhidraHeadedIntegrationTest {
 			Assert.fail("Should not have been able to change current user's access!");
 		}
 		catch (UserAccessException e) {
+			// expected
 		}
 
-		users[3] = new User("user-x", User.ADMIN);
-		try {
-			repository.setUserList(userName, users, false);
-			Assert.fail("Should not have been able to set the user list!");
-		}
-		catch (UserAccessException e) {
-		}
-
-		users[4] = new User(userName, User.ADMIN);
+		users[4] = new User(userName, User.ADMIN); // restore current users Admin access
 		repository.setUserList(userName, users, false);
 
 		User[] reportedUsers = repository.getUserList(userName);
@@ -112,6 +112,15 @@ public class RepositoryTest extends AbstractGhidraHeadedIntegrationTest {
 		for (int i = 0; i < users.length; i++) {
 			assertEquals(users[i].getName(), reportedUsers[i].getName());
 			assertEquals(users[i].getPermissionType(), reportedUsers[i].getPermissionType());
+		}
+
+		users[3] = new User("user-x", User.ADMIN);
+		try {
+			repository.setUserList(userName, users, false);
+			Assert.fail("Should not have been able to specify unknown user");
+		}
+		catch (IOException e) {
+			// expected
 		}
 	}
 

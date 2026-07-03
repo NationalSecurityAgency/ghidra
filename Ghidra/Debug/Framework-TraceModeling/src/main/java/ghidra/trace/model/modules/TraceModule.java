@@ -19,15 +19,32 @@ import java.util.Collection;
 
 import ghidra.program.model.address.*;
 import ghidra.trace.model.*;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.info.TraceObjectInfo;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * A module loaded in a target process
+ * A binary module loaded by the target and/or debugger
  * 
  * <p>
- * This also serves as a namespace for storing the module's sections.
+ * This also serves as a namespace for storing the module's sections. If the debugger cares to parse
+ * the modules for section information, those sections should be presented as successors to the
+ * module.
  */
-public interface TraceModule extends TraceUniqueObject {
+@TraceObjectInfo(
+	schemaName = "Module",
+	shortName = "module",
+	attributes = {
+		TraceModule.KEY_RANGE,
+		TraceModule.KEY_MODULE_NAME,
+	},
+	fixedKeys = {
+		TraceModule.KEY_DISPLAY,
+		TraceModule.KEY_RANGE,
+	})
+public interface TraceModule extends TraceUniqueObject, TraceObjectInterface {
+	String KEY_RANGE = "_range";
+	String KEY_MODULE_NAME = "_module_name";
 
 	/**
 	 * Get the trace containing this module
@@ -69,7 +86,7 @@ public interface TraceModule extends TraceUniqueObject {
 	 */
 	default TraceSection addSection(long snap, String sectionPath, AddressRange range)
 			throws DuplicateNameException {
-		return addSection(snap, sectionPath, sectionPath, range);
+		return addSection(snap, sectionPath, null, range);
 	}
 
 	/**
@@ -83,6 +100,18 @@ public interface TraceModule extends TraceUniqueObject {
 	 * @return the path
 	 */
 	String getPath();
+
+	/**
+	 * Set the "short name" of this module
+	 * 
+	 * <p>
+	 * The given name is typically the file system path of the module's image, which is considered
+	 * suitable for display on the screen.
+	 * 
+	 * @param lifespan the span of time
+	 * @param name the name
+	 */
+	void setName(Lifespan lifespan, String name);
 
 	/**
 	 * Set the "short name" of this module
@@ -106,6 +135,18 @@ public interface TraceModule extends TraceUniqueObject {
 	 * @return the name
 	 */
 	String getName(long snap);
+
+	/**
+	 * Set the address range of the module
+	 * 
+	 * <p>
+	 * Typically, the minimum address in this range is the module's base address. If sections are
+	 * given, this range should enclose all sections mapped into memory.
+	 * 
+	 * @param lifespan the span of time
+	 * @param range the address range.
+	 */
+	void setRange(Lifespan lifespan, AddressRange range);
 
 	/**
 	 * Set the address range of the module

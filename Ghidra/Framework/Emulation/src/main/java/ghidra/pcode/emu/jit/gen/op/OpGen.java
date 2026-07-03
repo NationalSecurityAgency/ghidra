@@ -15,14 +15,29 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import org.objectweb.asm.MethodVisitor;
+import static ghidra.pcode.emu.jit.gen.GenConsts.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.objectweb.asm.Opcodes;
 
 import ghidra.pcode.emu.jit.analysis.*;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
+import ghidra.pcode.emu.jit.analysis.JitType.IntJitType;
+import ghidra.pcode.emu.jit.analysis.JitType.MpIntJitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.Ext;
+import ghidra.pcode.emu.jit.gen.opnd.SimpleOpnd;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.*;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
+import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
+import ghidra.pcode.emu.jit.gen.util.Types.TInt;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.pcode.emu.jit.op.*;
 import ghidra.pcode.emu.jit.var.*;
@@ -164,13 +179,13 @@ import ghidra.program.model.pcode.PcodeOp;
  * <td>{@link PcodeOp#INT_ZEXT int_zext}</td>
  * <td>{@link JitIntZExtOp}</td>
  * <td>{@link IntZExtOpGen}</td>
- * <td>none; defers to {@link VarGen} and {@link TypeConversions}</td>
+ * <td>none; defers to {@link VarGen} and {@link Opnd}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_SEXT int_sext}</td>
  * <td>{@link JitIntSExtOp}</td>
  * <td>{@link IntSExtOpGen}</td>
- * <td>{@link Opcodes#ISHL ishl}, {@link Opcodes#ISHR ishr}, etc.</td>
+ * <td>none; defers to {@link VarGen} and {@link Opnd}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_ADD int_add}</td>
@@ -482,7 +497,7 @@ import ghidra.program.model.pcode.PcodeOp;
  * 
  * @param <T> the class of p-code op node in the use-def graph
  */
-public interface OpGen<T extends JitOp> extends Opcodes {
+public interface OpGen<T extends JitOp> {
 	/**
 	 * Lookup the generator for a given p-code op use-def node
 	 * 
@@ -563,14 +578,64 @@ public interface OpGen<T extends JitOp> extends Opcodes {
 	}
 
 	/**
-	 * Emit bytecode into the class constructor.
+	 * For debugging: emit code to print the values of the given operand to stderr.
 	 * 
-	 * @param gen the code generator
-	 * @param op the p-code op (use-def node) to translate
-	 * @param iv the visitor for the class constructor
+	 * @param <N> the incoming stack
+	 * @param em the emitter typed with the incoming stack
+	 * @param opnd the operand whose values to print
+	 * @return the emitter typed with the incoming stack
 	 */
-	default void generateInitCode(JitCodeGenerator gen, T op, MethodVisitor iv) {
+	static <N extends Next> Emitter<N> generateSyserrInts(Emitter<N> em, Opnd<MpIntJitType> opnd) {
+		List<SimpleOpnd<TInt, IntJitType>> legs = opnd.type().castLegsLE(opnd);
+		String fmt = legs.stream().map(l -> "%08x").collect(Collectors.joining(":"));
+		var emArr = em
+				.emit(Op::getstatic, T_SYSTEM, "err", T_PRINT_STREAM)
+				.emit(Op::ldc__a, fmt)
+				.emit(Op::ldc__i, legs.size())
+				.emit(Op::anewarray, T_OBJECT);
+		for (int i = 0; i < legs.size(); i++) {
+			SimpleOpnd<TInt, IntJitType> leg = legs.get(i);
+			emArr = emArr
+					.emit(Op::dup)
+					.emit(Op::ldc__i, i)
+					.emit(leg::read)
+					.emit(Op::invokestatic, TR_INTEGER, "valueOf", MDESC_INTEGER__VALUE_OF,
+						false)
+					.step(Inv::takeArg)
+					.step(Inv::ret)
+					.emit(Op::aastore);
+		}
+		return emArr
+				.emit(Op::invokevirtual, T_STRING, "formatted", MDESC_STRING__FORMATTED, false)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::ret)
+				.emit(Op::invokevirtual, T_PRINT_STREAM, "println", MDESC_PRINT_STREAM__PRINTLN,
+					false)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::retVoid);
 	}
+
+	/**
+	 * The result of emitting code for a p-code op
+	 */
+	sealed interface OpResult {
+	}
+
+	/**
+	 * The result when bytecode after that emitted is reachable
+	 * 
+	 * @param em the emitter typed with the empty stack
+	 */
+	record LiveOpResult(Emitter<Bot> em) implements OpResult {}
+
+	/**
+	 * The result when bytecode after that emitted is not reachable
+	 * 
+	 * @param em the dead emitter
+	 */
+	record DeadOpResult(Emitter<Dead> em) implements OpResult {}
 
 	/**
 	 * Emit bytecode into the {@link JitCompiledPassage#run(int) run} method.
@@ -579,14 +644,23 @@ public interface OpGen<T extends JitOp> extends Opcodes {
 	 * This method must emit the code needed to load any input operands, convert them to the
 	 * appropriate type, perform the actual operation, and then if applicable, store the output
 	 * operand. The implementations should delegate to
-	 * {@link JitCodeGenerator#generateValReadCode(JitVal, JitTypeBehavior)},
-	 * {@link JitCodeGenerator#generateVarWriteCode(JitVar, JitType)}, and {@link TypeConversions}
-	 * appropriately.
+	 * {@link JitCodeGenerator#genReadToStack(Emitter, Local, JitVal, ghidra.pcode.emu.jit.analysis.JitType.SimpleJitType, Ext)},
+	 * {@link JitCodeGenerator#genWriteFromStack(Emitter, Local, JitVar, ghidra.pcode.emu.jit.analysis.JitType.SimpleJitType, Ext, Scope)}
+	 * or similar for mp-int types.
 	 * 
+	 * @param <THIS> the type of the generated passage
+	 * @param em the emitter typed with the empty stack
+	 * @param localThis a handle to the local holding the {@code this} reference
+	 * @param localCtxmod a handle to the local holding {@code ctxmod}
+	 * @param retReq an indication of what must be returned by this
+	 *            {@link JitCompiledPassage#run(int)} method.
 	 * @param gen the code generator
 	 * @param op the p-code op (use-def node) to translate
 	 * @param block the basic block containing the p-code op
-	 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method.
+	 * @param scope a scope for generating temporary local storage
+	 * @return the result of emitting the p-code op's bytecode
 	 */
-	void generateRunCode(JitCodeGenerator gen, T op, JitBlock block, MethodVisitor rv);
+	<THIS extends JitCompiledPassage> OpResult genRun(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq,
+			JitCodeGenerator<THIS> gen, T op, JitBlock block, Scope scope);
 }

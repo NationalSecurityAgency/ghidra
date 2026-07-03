@@ -15,6 +15,7 @@
  */
 package ghidra.features.base.memsearch.gui;
 
+import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
@@ -26,10 +27,10 @@ import ghidra.util.table.ProgramLocationTableRowMapper;
  * table columns.
  */
 public class MemoryMatchToAddressTableRowMapper
-		extends ProgramLocationTableRowMapper<MemoryMatch, Address> {
+		extends ProgramLocationTableRowMapper<MemoryMatch<SearchData>, Address> {
 
 	@Override
-	public Address map(MemoryMatch rowObject, Program data, ServiceProvider serviceProvider) {
+	public Address map(MemoryMatch<SearchData> rowObject, Program data, ServiceProvider serviceProvider) {
 		return rowObject.getAddress();
 	}
 

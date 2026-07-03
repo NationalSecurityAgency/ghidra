@@ -216,9 +216,13 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand<Program> {
 					monitor.checkCancelled();
 					Symbol[] syms = symTable.getSymbols(addr);
 					for (Symbol sym : syms) {
+						// TODO: GP-5872 This code is suspect - should it be restricted to LABELS only.
+						// Why would we remove a non-default function that had references?
 						if (sym.getSource() == SourceType.DEFAULT) {
 							break;
 						}
+						// TODO: GP-5872 If one of many labels at a location has a direct reference why
+						// would we bail when we may have already removed a few that did not.
 						if (sym.hasReferences()) {
 							continue;
 						}
@@ -713,11 +717,14 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand<Program> {
 						continue; // do not include data
 					}
 					Symbol s = symbolTable.getPrimarySymbol(blockAddr);
-					if (s != null && s.getSymbolType() == SymbolType.FUNCTION) {
-						SourceType source = s.getSource();
-						if (source == SourceType.USER_DEFINED || source == SourceType.IMPORTED) {
-							continue; // keep imported or user-defined function
-						}
+					if (s != null && s.getSymbolType() == SymbolType.FUNCTION &&
+						s.getSource().isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
+						continue;
+						// TODO: GP-5872 Clearing thunks explicitly created by loader or pattern
+						// generally have default SourceType and may not have references
+						// to them.  We need to prevent these thunks from getting cleared.
+						// PowerPC64 ELF extension was forced to rename thunks it created to 
+						// avoid this where the thunk rename has its own set of issues.
 					}
 
 					if (clearOffcut && !destAddrs.contains(blockAddr)) {

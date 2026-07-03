@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,8 @@
  */
 package ghidra.feature.vt.gui.provider.impliedmatches;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -299,15 +300,8 @@ public class VTImpliedMatchesTableProvider extends ComponentProviderAdapter
 		TableColumn statusColumn = columnModel.getColumn(statusColumnIndex);
 		statusColumn.setCellRenderer(new MatchStatusRenderer());
 
-		// override the default behavior so we see our columns in their preferred size
-		Dimension size = impliedMatchesTable.getPreferredScrollableViewportSize();
-		Dimension preferredSize = impliedMatchesTable.getPreferredSize();
-
-		// ...account for the scroll bar width
-		JScrollBar scrollBar = new JScrollBar(Adjustable.VERTICAL);
-		Dimension scrollBarSize = scrollBar.getMinimumSize();
-		size.width = preferredSize.width + scrollBarSize.width;
-		impliedMatchesTable.setPreferredScrollableViewportSize(size);
+		// a reasonable starting size picked by trial-and-error
+		impliedMatchesTable.setPreferredScrollableViewportSize(new Dimension(1100, 600));
 
 		return impliedMatchTablePanel;
 	}

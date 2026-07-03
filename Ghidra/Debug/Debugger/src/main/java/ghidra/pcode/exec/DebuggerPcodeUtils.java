@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,19 +18,23 @@ package ghidra.pcode.exec;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Stream;
+
+import org.antlr.runtime.CharStream;
+import org.antlr.runtime.tree.CommonTreeNodeStream;
 
 import ghidra.app.nav.NavigationUtils;
-import ghidra.app.plugin.core.debug.service.emulation.*;
+import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationIntegration;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.pcode.emu.ThreadPcodeExecutorState;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.SleighProgramCompiler.ErrorCollectingPcodeParser;
+import ghidra.pcode.exec.SleighUtils.LitIdMode;
 import ghidra.pcode.exec.trace.*;
 import ghidra.pcode.exec.trace.data.DefaultPcodeTraceAccess;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
@@ -45,7 +49,7 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.program.util.ProgramLocation;
-import ghidra.sleigh.grammar.Location;
+import ghidra.sleigh.grammar.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.guest.TracePlatform;
@@ -64,53 +68,127 @@ public enum DebuggerPcodeUtils {
 	 * A p-code parser that can resolve labels from a trace or its mapped programs.
 	 */
 	public static class LabelBoundPcodeParser extends ErrorCollectingPcodeParser {
-		record ProgSym(String sourceName, String nm, Address address) {
-		}
+		record ProgSym(String sourceName, String nm, Address address) {}
 
 		private final DebuggerStaticMappingService mappings;
 		private final DebuggerCoordinates coordinates;
+		private final VarnodeSymbol current;
+		private final LitIdMode mode;
+
+		private SleighCompiler sc;
 
 		/**
 		 * Construct a parser bound to the given coordinates
 		 * 
 		 * @param provider the service provider (usually the tool)
 		 * @param coordinates the current coordinates for context
+		 * @param current the current address for the "." symbol
+		 * @param mode the mode for parsing integer literals and ids
 		 */
-		public LabelBoundPcodeParser(ServiceProvider provider, DebuggerCoordinates coordinates) {
+		public LabelBoundPcodeParser(ServiceProvider provider, DebuggerCoordinates coordinates,
+				Address current, LitIdMode mode) {
 			super((SleighLanguage) coordinates.getPlatform().getLanguage());
 			this.mappings = provider.getService(DebuggerStaticMappingService.class);
 			this.coordinates = coordinates;
+			this.current = current == null ? null : createSleighConstant("built-in", ".", current);
+			this.mode = mode;
 		}
 
-		protected SleighSymbol createSleighConstant(String sourceName, String nm, Address address) {
+		@Override
+		protected SleighLexer newSleighLexer(CharStream input) {
+			return SleighUtils.lexerFor(mode, input);
+		}
+
+		@Override
+		protected SleighCompiler newSleighCompiler(CommonTreeNodeStream nodes) {
+			return sc = super.newSleighCompiler(nodes);
+		}
+
+		protected VarnodeSymbol createSleighConstant(String sourceName, String nm,
+				Address address) {
 			return new VarnodeSymbol(new Location(sourceName, 0), nm, getConstantSpace(),
 				address.getOffset(), address.getAddressSpace().getPointerSize());
 		}
 
 		@Override
-		public SleighSymbol findSymbol(String nm) {
-			SleighSymbol symbol = null;
+		public RadixBigInteger parseIntegerLiteral(Location loc, String text) {
+			if (mode == LitIdMode.NORMAL) {
+				return super.parseIntegerLiteral(loc, text);
+			}
+			return new RadixBigInteger(loc, text, mode.radix);
+		}
+
+		@Override
+		public int getDefaultConstantSize() {
+			if (mode == LitIdMode.NORMAL) {
+				return 0;
+			}
+			return current.getSize();
+		}
+
+		public SleighSymbol tryIntegerLiteral(Location loc, String nm, boolean check) {
 			try {
-				symbol = super.findSymbol(nm);
+				RadixBigInteger value = parseIntegerLiteral(loc, nm);
+				if (check) {
+					sc.check(value);
+				}
+				else if (!sc.passesCheck(value)) {
+					return null;
+				}
+				return new VarnodeSymbol(value.location, nm, getConstantSpace(),
+					value.longValue(), current.getSize());
+			}
+			catch (NumberFormatException e) {
+				return null;
+			}
+		}
+
+		@Override
+		public SleighSymbol findSymbol(Location loc, String nm) {
+			if (!mode.preferId) {
+				SleighSymbol symbol = tryIntegerLiteral(loc, nm, true);
+				if (symbol != null) {
+					return symbol;
+				}
+			}
+
+			try {
+				SleighSymbol symbol = super.findSymbol(loc, nm);
+				if (symbol != null) {
+					return symbol;
+				}
 			}
 			catch (SleighException e) {
-				// leave null
+				// fall through
 			}
-			if (symbol == null) {
-				symbol = findUserSymbol(nm);
+
+			if (".".equals(nm)) {
+				return current;
 			}
-			if (symbol == null) {
-				/**
-				 * TODO: This may break things that check for the absence of a symbol
-				 * 
-				 * I don't think it'll affect expressions, but it could later affect user Sleigh
-				 * libraries that an expression might like to use. The better approach would be to
-				 * incorporate a better error message into the Sleigh compiler, but it won't always
-				 * know the use case for a clear message.
-				 */
-				throw new SleighException("Unknown register or label: '" + nm + "'");
+
+			{
+				SleighSymbol symbol = findUserSymbol(nm);
+				if (symbol != null) {
+					return symbol;
+				}
 			}
-			return symbol;
+
+			if (mode.preferId) {
+				SleighSymbol symbol = tryIntegerLiteral(loc, nm, false);
+				if (symbol != null) {
+					return symbol;
+				}
+			}
+
+			/**
+			 * NOTE: This may break things that check for the absence of a symbol
+			 * 
+			 * I don't think it'll affect expressions, but it could later affect user Sleigh
+			 * libraries that an expression might like to use. The better approach might be to pass
+			 * a parameter indicating whether absence is good or bad.
+			 */
+			sc.reportError(loc, "Unknown register or label '%s'".formatted(nm));
+			throw new SleighException("Unknown register or label: '" + nm + "'");
 		}
 
 		protected SleighSymbol tryMap(String nm, Trace trace, long snap, Program program,
@@ -131,7 +209,7 @@ public enum DebuggerPcodeUtils {
 
 		protected SleighSymbol tryExternalLinkage(String nm, Trace trace, long snap,
 				Program program, Symbol symbol, List<SleighSymbol> externals) {
-			if (!(symbol.getObject() instanceof Function func)) {
+			if (!(symbol.getObject() instanceof Function)) {
 				return null;
 			}
 			// This covers refs and thunks
@@ -160,20 +238,23 @@ public enum DebuggerPcodeUtils {
 				return createSleighConstant(trace.getName(), nm, symbol.getAddress());
 			}
 			List<SleighSymbol> externals = new ArrayList<>();
-			for (Program program : mappings.getOpenMappedProgramsAtSnap(trace, snap)) {
-				for (Symbol symbol : program.getSymbolTable().getSymbols(nm)) {
-					if (symbol.getSymbolType() != SymbolType.FUNCTION &&
-						symbol.getSymbolType() != SymbolType.LABEL) {
-						continue;
-					}
-					SleighSymbol mapped =
-						tryMap(nm, trace, snap, program, symbol, symbol.getAddress(), externals);
-					if (mapped != null) {
-						return mapped;
-					}
-					mapped = tryExternalLinkage(nm, trace, snap, program, symbol, externals);
-					if (mapped != null) {
-						return mapped;
+			if (mappings != null) {
+				for (Program program : mappings.getOpenMappedProgramsAtSnap(trace, snap)) {
+					for (Symbol symbol : program.getSymbolTable().getSymbols(nm)) {
+						if (symbol.getSymbolType() != SymbolType.FUNCTION &&
+							symbol.getSymbolType() != SymbolType.LABEL) {
+							continue;
+						}
+						SleighSymbol mapped =
+							tryMap(nm, trace, snap, program, symbol, symbol.getAddress(),
+								externals);
+						if (mapped != null) {
+							return mapped;
+						}
+						mapped = tryExternalLinkage(nm, trace, snap, program, symbol, externals);
+						if (mapped != null) {
+							return mapped;
+						}
 					}
 				}
 			}
@@ -201,11 +282,28 @@ public enum DebuggerPcodeUtils {
 	 *      PcodeUseropLibrary)
 	 */
 	public static PcodeProgram compileProgram(ServiceProvider provider,
-			DebuggerCoordinates coordinates,
-			String sourceName, String source, PcodeUseropLibrary<?> library) {
+			DebuggerCoordinates coordinates, String sourceName, String source,
+			PcodeUseropLibrary<?> library) {
 		return SleighProgramCompiler.compileProgram(
-			new LabelBoundPcodeParser(provider, coordinates),
+			new LabelBoundPcodeParser(provider, coordinates, null, LitIdMode.NORMAL),
 			(SleighLanguage) coordinates.getPlatform().getLanguage(), sourceName, source, library);
+	}
+
+	/**
+	 * Compile the given Sleigh expression into a p-code program, resolving user labels
+	 *
+	 * <p>
+	 * This has the same limitations as
+	 * {@link #compileProgram(ServiceProvider, DebuggerCoordinates, String, String, PcodeUseropLibrary)}
+	 * 
+	 * @param mode the mode for parsing integer literals and ids
+	 * @see SleighProgramCompiler#compileExpression(PcodeParser, SleighLanguage, String)
+	 */
+	public static PcodeExpression compileExpression(ServiceProvider provider,
+			DebuggerCoordinates coordinates, Address current, String source, LitIdMode mode) {
+		return SleighProgramCompiler.compileExpression(
+			new LabelBoundPcodeParser(provider, coordinates, current, mode),
+			(SleighLanguage) coordinates.getPlatform().getLanguage(), source);
 	}
 
 	/**
@@ -218,10 +316,8 @@ public enum DebuggerPcodeUtils {
 	 * @see SleighProgramCompiler#compileExpression(PcodeParser, SleighLanguage, String)
 	 */
 	public static PcodeExpression compileExpression(ServiceProvider provider,
-			DebuggerCoordinates coordinates, String source) {
-		return SleighProgramCompiler.compileExpression(
-			new LabelBoundPcodeParser(provider, coordinates),
-			(SleighLanguage) coordinates.getPlatform().getLanguage(), source);
+			DebuggerCoordinates coordinates, Address current, String source) {
+		return compileExpression(provider, coordinates, current, source, LitIdMode.NORMAL);
 	}
 
 	/**
@@ -242,28 +338,15 @@ public enum DebuggerPcodeUtils {
 			throw new IllegalArgumentException("Coordinates have no trace");
 		}
 		TracePlatform platform = coordinates.getPlatform();
-		Language language = platform.getLanguage();
-		if (!(language instanceof SleighLanguage)) {
+		if (!(platform.getLanguage() instanceof SleighLanguage language)) {
 			throw new IllegalArgumentException(
 				"Given trace or platform does not use a Sleigh language");
 		}
 		DefaultPcodeDebuggerAccess access = new DefaultPcodeDebuggerAccess(provider,
 			coordinates.getTarget(), platform, coordinates.getViewSnap());
-		PcodeExecutorState<byte[]> shared =
-			new RWTargetMemoryPcodeExecutorState(access.getDataForSharedState(), Mode.RW);
-		if (coordinates.getThread() == null) {
-			return shared;
-		}
-		PcodeExecutorState<byte[]> local = new RWTargetRegistersPcodeExecutorState(
-			access.getDataForLocalState(coordinates.getThread(), coordinates.getFrame()),
-			Mode.RW);
-		return new ThreadPcodeExecutorState<>(shared, local) {
-			@Override
-			public void clear() {
-				shared.clear();
-				local.clear();
-			}
-		};
+		PcodeStateCallbacks cb = DebuggerEmulationIntegration.bytesImmediateWriteTarget(access,
+			coordinates.getThread(), coordinates.getFrame());
+		return new BytesPcodeExecutorState(language, cb);
 	}
 
 	/**
@@ -280,9 +363,8 @@ public enum DebuggerPcodeUtils {
 	public static PcodeExecutor<byte[]> executorForCoordinates(ServiceProvider provider,
 			DebuggerCoordinates coordinates) {
 		PcodeExecutorState<byte[]> state = executorStateForCoordinates(provider, coordinates);
-
-		SleighLanguage slang = (SleighLanguage) state.getLanguage();
-		return new PcodeExecutor<>(slang, BytesPcodeArithmetic.forLanguage(slang), state,
+		SleighLanguage language = (SleighLanguage) state.getLanguage();
+		return new PcodeExecutor<>(language, BytesPcodeArithmetic.forLanguage(language), state,
 			Reason.INSPECT);
 	}
 
@@ -447,8 +529,8 @@ public enum DebuggerPcodeUtils {
 	 * A p-code arithmetic on watch values
 	 * 
 	 * <p>
-	 * This is just a composition of four arithmetics. Using Pair<A,Pair<B,Pair<C,D>> would be
-	 * unwieldy.
+	 * This is just a composition of four arithmetics. Using {@code Pair<A,Pair<B,Pair<C,D>>} would
+	 * be unwieldy.
 	 */
 	public enum WatchValuePcodeArithmetic implements PcodeArithmetic<WatchValue> {
 		BIG_ENDIAN(BytesPcodeArithmetic.BIG_ENDIAN, LocationPcodeArithmetic.BIG_ENDIAN),
@@ -474,6 +556,11 @@ public enum DebuggerPcodeUtils {
 				LocationPcodeArithmetic location) {
 			this.bytes = bytes;
 			this.location = location;
+		}
+
+		@Override
+		public Class<WatchValue> getDomain() {
+			return WatchValue.class;
 		}
 
 		@Override
@@ -591,9 +678,25 @@ public enum DebuggerPcodeUtils {
 		}
 
 		@Override
-		public WatchValuePcodeExecutorStatePiece fork() {
+		public Stream<PcodeExecutorStatePiece<?, ?>> streamPieces() {
+			return Stream.of(bytesPiece, statePiece, locationPiece, readsPiece);
+		}
+
+		@Override
+		public WatchValuePcodeExecutorStatePiece fork(PcodeStateCallbacks cb) {
 			return new WatchValuePcodeExecutorStatePiece(
-				bytesPiece.fork(), statePiece.fork(), locationPiece.fork(), readsPiece.fork());
+				bytesPiece.fork(cb),
+				statePiece.fork(cb),
+				locationPiece.fork(cb),
+				readsPiece.fork(cb));
+		}
+
+		@Override
+		public void setVarInternal(AddressSpace space, byte[] offset, int size, WatchValue val) {
+			bytesPiece.setVarInternal(space, offset, size, val.bytes.bytes);
+			statePiece.setVarInternal(space, offset, size, val.state);
+			locationPiece.setVarInternal(space, offset, size, val.location);
+			readsPiece.setVarInternal(space, offset, size, val.reads);
 		}
 
 		@Override
@@ -614,6 +717,17 @@ public enum DebuggerPcodeUtils {
 				statePiece.getVar(space, offset, size, quantize, reason),
 				locationPiece.getVar(space, offset, size, quantize, reason),
 				readsPiece.getVar(space, offset, size, quantize, reason));
+		}
+
+		@Override
+		public WatchValue getVarInternal(AddressSpace space, byte[] offset, int size,
+				Reason reason) {
+			return new WatchValue(
+				new PrettyBytes(getLanguage().isBigEndian(),
+					bytesPiece.getVarInternal(space, offset, size, reason)),
+				statePiece.getVarInternal(space, offset, size, reason),
+				locationPiece.getVarInternal(space, offset, size, reason),
+				readsPiece.getVarInternal(space, offset, size, reason));
 		}
 
 		@Override
@@ -647,54 +761,21 @@ public enum DebuggerPcodeUtils {
 		}
 	}
 
-	public static class WatchValuePcodeExecutorState implements PcodeExecutorState<WatchValue> {
-		private WatchValuePcodeExecutorStatePiece piece;
+	public static class WatchValuePcodeExecutorState
+			extends AbstractPcodeExecutorState<byte[], WatchValue> {
 
-		public WatchValuePcodeExecutorState(WatchValuePcodeExecutorStatePiece piece) {
-			this.piece = piece;
+		public WatchValuePcodeExecutorState(PcodeExecutorStatePiece<byte[], WatchValue> piece) {
+			super(piece);
 		}
 
 		@Override
-		public Language getLanguage() {
-			return piece.getLanguage();
+		protected byte[] extractAddress(WatchValue value) {
+			return value.bytes.bytes;
 		}
 
 		@Override
-		public PcodeArithmetic<WatchValue> getArithmetic() {
-			return piece.arithmetic;
-		}
-
-		@Override
-		public WatchValuePcodeExecutorState fork() {
-			return new WatchValuePcodeExecutorState(piece.fork());
-		}
-
-		@Override
-		public void setVar(AddressSpace space, WatchValue offset, int size, boolean quantize,
-				WatchValue val) {
-			piece.setVar(space, offset.bytes.bytes, size, quantize, val);
-		}
-
-		@Override
-		public WatchValue getVar(AddressSpace space, WatchValue offset, int size,
-				boolean quantize,
-				Reason reason) {
-			return piece.getVar(space, offset.bytes.bytes, size, quantize, reason);
-		}
-
-		@Override
-		public Map<Register, WatchValue> getRegisterValues() {
-			return piece.getRegisterValues();
-		}
-
-		@Override
-		public MemBuffer getConcreteBuffer(Address address, Purpose purpose) {
-			return piece.getConcreteBuffer(address, purpose);
-		}
-
-		@Override
-		public void clear() {
-			piece.clear();
+		public WatchValuePcodeExecutorState fork(PcodeStateCallbacks cb) {
+			return new WatchValuePcodeExecutorState(piece.fork(cb));
 		}
 	}
 

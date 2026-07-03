@@ -26,6 +26,7 @@ import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.dyld.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.DyldCacheUtils.DyldCacheImageRecord;
 import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
@@ -109,6 +110,9 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 				}
 			}
 
+			// Process DYLIBs
+			processDylibs(splitDyldCache, localSymbolsPresent);
+
 			// Perform additional DYLD processing
 			for (int i = 0; i < splitDyldCache.size(); i++) {
 				DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
@@ -118,7 +122,6 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 				markupHeaders(header);
 				markupBranchIslands(header, bp);
 				createLocalSymbols(header);
-				processDylibs(splitDyldCache, header, bp, localSymbolsPresent);
 			}
 		}
 	}
@@ -310,27 +313,26 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * Processes the DYLD Cache's DYLIB files.  This will mark up the DYLIB files, added them to the
 	 * program tree, and make memory blocks for them.
 	 * 
-	 * @param dyldCacheHeader The {@link DyldCacheHeader}
-	 * @param bp The corresponding {@link ByteProvider}
 	 * @param localSymbolsPresent True if DYLD local symbols are present; otherwise, false
 	 * @throws Exception if there was a problem processing the DYLIB files
 	 */
-	private void processDylibs(SplitDyldCache splitDyldCache, DyldCacheHeader dyldCacheHeader,
-			ByteProvider bp, boolean localSymbolsPresent) throws Exception {
+	private void processDylibs(SplitDyldCache splitDyldCache, boolean localSymbolsPresent)
+			throws Exception {
 		// Create an "info" object for each DyldCache DYLIB, which will make processing them 
 		// easier.  Save off the "libobjc" DYLIB for additional processing later.
 		monitor.setMessage("Parsing DYLIB's...");
 		DyldCacheMachoInfo libobjcInfo = null;
 		TreeSet<DyldCacheMachoInfo> infoSet =
 			new TreeSet<>((a, b) -> a.headerAddr.compareTo(b.headerAddr));
-		List<DyldCacheImage> mappedImages = dyldCacheHeader.getMappedImages();
-		monitor.initialize(mappedImages.size());
-		for (DyldCacheImage mappedImage : mappedImages) {
+		List<DyldCacheImageRecord> imageRecords = splitDyldCache.getImageRecords();
+		monitor.initialize(imageRecords.size());
+		for (DyldCacheImageRecord imageRecord : imageRecords) {
 			monitor.checkCancelled();
 			monitor.incrementProgress(1);
-			DyldCacheMachoInfo info = new DyldCacheMachoInfo(splitDyldCache, bp,
-				mappedImage.getAddress() - dyldCacheHeader.getBaseAddress(),
-				space.getAddress(mappedImage.getAddress()), mappedImage.getPath());
+			DyldCacheImage image = imageRecord.image();
+			DyldCacheMachoInfo info =
+				new DyldCacheMachoInfo(splitDyldCache, splitDyldCache.getMacho(imageRecord),
+					space.getAddress(image.getAddress()), image.getPath());
 			infoSet.add(info);
 			if (libobjcInfo == null && info.name.contains("libobjc.")) {
 				libobjcInfo = info;
@@ -427,15 +429,15 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		 * Creates a new {@link DyldCacheMachoInfo} object with the given parameters.
 		 * 
 		 * @param splitDyldCache The {@link SplitDyldCache}
-		 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes
-		 * @param offset The offset in the provider to the start of the Mach-O
+		 * @param header The {@link MachHeader#parse(SplitDyldCache) unparsed} {@link MachHeader}
 		 * @param headerAddr The Mach-O's header address
 		 * @param path The path of the Mach-O
 		 * @throws Exception If there was a problem handling the Mach-O info
 		 */
-		public DyldCacheMachoInfo(SplitDyldCache splitDyldCache, ByteProvider provider, long offset, Address headerAddr, String path) throws Exception {
+		public DyldCacheMachoInfo(SplitDyldCache splitDyldCache, MachHeader header,
+				Address headerAddr, String path) throws Exception {
 			this.headerAddr = headerAddr;
-			this.header = new MachHeader(provider, offset, false);
+			this.header = header;
 			this.header.parse(splitDyldCache);
 			this.path = path;
 			this.name = new File(path).getName();

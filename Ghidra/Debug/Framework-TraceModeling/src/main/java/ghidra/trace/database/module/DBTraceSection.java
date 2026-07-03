@@ -15,173 +15,154 @@
  */
 package ghidra.trace.database.module;
 
-import java.io.IOException;
-import java.util.Objects;
+import java.util.*;
 
-import db.DBRecord;
 import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressSpace;
-import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
-import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
+import ghidra.trace.database.target.DBTraceObject;
+import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
-import ghidra.trace.util.TraceChangeRecord;
-import ghidra.trace.util.TraceEvents;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
+import ghidra.trace.util.*;
 import ghidra.util.LockHold;
-import ghidra.util.database.DBCachedObjectStore;
-import ghidra.util.database.DBObjectColumn;
-import ghidra.util.database.annot.*;
-import ghidra.util.exception.DuplicateNameException;
 
-@DBAnnotatedObjectInfo(version = 0)
-public class DBTraceSection extends AbstractDBTraceAddressSnapRangePropertyMapData<DBTraceSection>
-		implements TraceSection {
-	private static final String TABLE_NAME = "Sections";
+public class DBTraceSection implements TraceSection, DBTraceObjectInterface {
 
-	static final String MODULE_COLUMN_NAME = "Module";
-	static final String PATH_COLUMN_NAME = "Path";
-	static final String NAME_COLUMN_NAME = "Name";
+	protected class SectionTranslator extends Translator<TraceSection> {
+		private static final Map<TraceObjectSchema, Set<String>> KEYS_BY_SCHEMA =
+			new WeakHashMap<>();
 
-	@DBAnnotatedColumn(MODULE_COLUMN_NAME)
-	static DBObjectColumn MODULE_COLUMN;
-	@DBAnnotatedColumn(PATH_COLUMN_NAME)
-	static DBObjectColumn PATH_COLUMN;
-	@DBAnnotatedColumn(NAME_COLUMN_NAME)
-	static DBObjectColumn NAME_COLUMN;
+		private final Set<String> keys;
 
-	static String tableName(AddressSpace space) {
-		return DBTraceUtils.tableName(TABLE_NAME, space, -1, 0);
-	}
-
-	@DBAnnotatedField(column = MODULE_COLUMN_NAME, indexed = true)
-	private long moduleKey;
-	@DBAnnotatedField(column = PATH_COLUMN_NAME, indexed = true)
-	private String path;
-	@DBAnnotatedField(column = NAME_COLUMN_NAME)
-	private String name;
-
-	final DBTraceModuleSpace space;
-
-	private DBTraceModule module;
-
-	public DBTraceSection(DBTraceModuleSpace space,
-			DBTraceAddressSnapRangePropertyMapTree<DBTraceSection, ?> tree,
-			DBCachedObjectStore<?> store, DBRecord record) {
-		super(tree, store, record);
-		this.space = space;
-	}
-
-	@Override
-	protected void setRecordValue(DBTraceSection value) {
-		// Nothing. This is the record
-	}
-
-	@Override
-	protected DBTraceSection getRecordValue() {
-		return this;
-	}
-
-	@Override
-	protected void fresh(boolean created) throws IOException {
-		super.fresh(created);
-		if (created) {
-			return;
+		protected SectionTranslator(DBTraceObject object, TraceSection iface) {
+			super(KEY_RANGE, object, iface);
+			TraceObjectSchema schema = object.getSchema();
+			synchronized (KEYS_BY_SCHEMA) {
+				keys = KEYS_BY_SCHEMA.computeIfAbsent(schema, s -> Set.of(
+					s.checkAliasedAttribute(KEY_RANGE),
+					s.checkAliasedAttribute(KEY_DISPLAY)));
+			}
 		}
-		/**
-		 * TODO: This may cause a problem when modules span multiple spaces. Well, the whole "unique
-		 * path" thing may already be a problem in that case, since each module is allowed one
-		 * address range. Maybe unique names within spaces only, and somehow a module comprises all
-		 * its entries among the spaces.
-		 */
-		this.module = space.doGetModuleById(moduleKey);
+
+		@Override
+		protected TraceEvent<TraceSection, Void> getAddedType() {
+			return TraceEvents.SECTION_ADDED;
+		}
+
+		@Override
+		protected TraceEvent<TraceSection, Lifespan> getLifespanChangedType() {
+			return null; // it's the module's lifespan that matters.
+		}
+
+		@Override
+		protected TraceEvent<TraceSection, Void> getChangedType() {
+			return TraceEvents.SECTION_CHANGED;
+		}
+
+		@Override
+		protected boolean appliesToKey(String key) {
+			return keys.contains(key);
+		}
+
+		@Override
+		protected TraceEvent<TraceSection, Void> getDeletedType() {
+			return TraceEvents.SECTION_DELETED;
+		}
 	}
 
-	void set(DBTraceModule module, String path, String name) {
-		this.moduleKey = module.getKey();
-		this.path = path;
-		this.name = name;
-		update(MODULE_COLUMN, PATH_COLUMN, NAME_COLUMN);
+	private final DBTraceObject object;
+	private final SectionTranslator translator;
 
-		this.module = module;
+	public DBTraceSection(DBTraceObject object) {
+		this.object = object;
+
+		translator = new SectionTranslator(object, this);
 	}
 
 	@Override
 	public Trace getTrace() {
-		return space.trace;
+		return object.getTrace();
 	}
 
 	@Override
-	public DBTraceModule getModule() {
-		return module;
-	}
-
-	@Override // Expose to this package
-	protected void doSetLifespan(Lifespan lifespan) {
-		super.doSetLifespan(lifespan);
-	}
-
-	@Override
-	public String getPath() {
-		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return path;
+	public TraceModule getModule() {
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return object.queryCanonicalAncestorsInterface(TraceModule.class)
+					.findAny()
+					.orElseThrow();
 		}
 	}
 
 	@Override
-	public void setName(long snap, String name) throws DuplicateNameException {
-		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			if (Objects.equals(this.name, name)) {
-				return;
-			}
-			DBTraceSection exists = space.manager.doGetSectionByName(moduleKey, name);
-			if (exists != null) {
-				throw new DuplicateNameException(name + " (in " + module + ")");
-			}
-			this.name = name;
-			update(NAME_COLUMN);
-			module.space.trace
-					.setChanged(new TraceChangeRecord<>(TraceEvents.SECTION_CHANGED, null, this));
+	public String getPath() {
+		return object.getCanonicalPath().toString();
+	}
+
+	@Override
+	public void setName(Lifespan lifespan, String name) {
+		object.setValue(lifespan, KEY_DISPLAY, name);
+	}
+
+	@Override
+	public void setName(long snap, String name) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			setName(Lifespan.nowOn(snap), name);
 		}
 	}
 
 	@Override
 	public String getName(long snap) {
-		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return name;
+		String key = object.getCanonicalPath().key();
+		String index = KeyPath.parseIfIndex(key);
+		return TraceObjectInterfaceUtils.getValue(object, snap, KEY_DISPLAY, String.class, index);
+	}
+
+	@Override
+	public void setRange(Lifespan lifespan, AddressRange range) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.setValue(lifespan, KEY_RANGE, range);
 		}
 	}
 
 	@Override
 	public AddressRange getRange(long snap) {
-		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return range;
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return TraceObjectInterfaceUtils.getValue(object, snap, KEY_RANGE,
+				AddressRange.class, null);
 		}
 	}
 
 	@Override
 	public void delete() {
-		space.sectionMapSpace.deleteData(this);
-		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.SECTION_DELETED, null, this));
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(Lifespan.ALL);
+		}
 	}
 
 	@Override
 	public void remove(long snap) {
-		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			if (snap <= lifespan.lmin()) {
-				delete();
-			}
-			else if (snap <= lifespan.lmax()) {
-				doSetLifespan(lifespan.withMax(snap - 1));
-			}
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(Lifespan.nowOn(snap));
 		}
 	}
 
 	@Override
 	public boolean isValid(long snap) {
-		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return lifespan.contains(snap);
-		}
+		return object.isAlive(snap);
+	}
+
+	@Override
+	public TraceObject getObject() {
+		return object;
+	}
+
+	@Override
+	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
+		return translator.translate(rec);
 	}
 }

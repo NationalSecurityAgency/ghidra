@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.gui.memory;
 
-import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
 
@@ -62,6 +61,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.stack.DBTraceStackManager;
@@ -71,6 +71,7 @@ import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.SystemUtilities;
 
@@ -112,13 +113,22 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		return data;
 	}
 
+	protected SchemaContext buildContext() {
+		return new ToySchemaBuilder()
+				.noRegisterGroups()
+				.useRegistersPerFrame()
+				.build();
+	}
+
 	@Test
 	public void testBytesViewIsRegionsActivateThenAdd() throws Exception {
 		createAndOpenTrace();
 		traceManager.activateTrace(tb.trace);
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+				tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 		waitForDomainObject(tb.trace);
@@ -133,8 +143,10 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	public void testBytesViewIsRegionsAddThenActivate() throws Exception {
 		createAndOpenTrace();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+				tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 		waitForDomainObject(tb.trace);
@@ -149,10 +161,13 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	public void testRegisterTrackingOnRegisterChange() throws Exception {
 		createAndOpenTrace();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+				tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			TraceThread thread = tb.getOrAddThread("Thread1", 0);
+			TraceThread thread = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			waitForDomainObject(tb.trace);
 			traceManager.activateThread(thread);
 			waitForSwing(); // Ensure the open/activate events are processed first
@@ -175,10 +190,13 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	public void testRegisterTrackingOnSnapChange() throws Exception {
 		createAndOpenTrace();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+				tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			TraceThread thread = tb.getOrAddThread("Thread1", 0);
+			TraceThread thread = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			waitForDomainObject(tb.trace);
 			traceManager.activateThread(thread);
 			waitForSwing(); // Ensure the open/activate events are processed first
@@ -209,11 +227,15 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		TraceThread thread1;
 		TraceThread thread2;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+				tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			thread1 = tb.getOrAddThread("Thread1", 0);
-			thread2 = tb.getOrAddThread("Thread2", 0);
+			thread1 = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread1, Lifespan.nowOn(0), tb.host, 1);
+			thread2 = tb.getOrAddThread("Threads[2]", 0);
+			tb.createObjectsFramesAndRegs(thread2, Lifespan.nowOn(0), tb.host, 1);
 
 			// NOTE: PC-tracking should be the default for the main bytes viewer
 			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
@@ -255,11 +277,15 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 					true))
 				.get();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+				tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			thread1 = tb.getOrAddThread("Thread1", 0);
-			thread2 = tb.getOrAddThread("Thread2", 0);
+			thread1 = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread1, Lifespan.nowOn(0), tb.host, 1);
+			thread2 = tb.getOrAddThread("Threads[2]", 0);
+			tb.createObjectsFramesAndRegs(thread2, Lifespan.nowOn(0), tb.host, 1);
 
 			// NOTE: PC-tracking should be the default for the main bytes viewer
 			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
@@ -291,12 +317,15 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	public void testRegisterTrackingOnTrackingSpecChange() throws Exception {
 		createAndOpenTrace();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+				tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			memory.addRegion("[stack]", Lifespan.nowOn(0), tb.range(0x01000000, 0x01ffffff),
+			memory.addRegion("Memory[stack]", Lifespan.nowOn(0), tb.range(0x01000000, 0x01ffffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
-			TraceThread thread = tb.getOrAddThread("Thread1", 0);
+			TraceThread thread = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			waitForDomainObject(tb.trace);
 			traceManager.activateThread(thread);
 			waitForSwing(); // Ensure the open/activate events are processed first
@@ -329,11 +358,14 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			TraceThread t1, t2;
 
 			try (Transaction tx = b1.startTransaction()) {
+				b1.createRootObject(buildContext(), "Target");
 				b1.trace.getTimeManager().createSnapshot("First snap");
 				DBTraceMemoryManager memory = b1.trace.getMemoryManager();
-				memory.addRegion("exe:.text", Lifespan.nowOn(0), b1.range(0x00400000, 0x0040ffff),
+				memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+					b1.range(0x00400000, 0x0040ffff),
 					TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-				t1 = b1.getOrAddThread("Thread1", 0);
+				t1 = b1.getOrAddThread("Threads[1]", 0);
+				b1.createObjectsFramesAndRegs(t1, Lifespan.nowOn(0), b1.host, 1);
 
 				Register pc = b1.trace.getBaseLanguage().getProgramCounter();
 				TraceMemorySpace regs = memory.getMemoryRegisterSpace(t1, true);
@@ -341,11 +373,14 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			}
 			waitForDomainObject(b1.trace);
 			try (Transaction tx = b2.startTransaction()) {
+				b2.createRootObject(buildContext(), "Target");
 				b2.trace.getTimeManager().createSnapshot("First snap");
 				DBTraceMemoryManager memory = b2.trace.getMemoryManager();
-				memory.addRegion("exe:.text", Lifespan.nowOn(0), b2.range(0x00400000, 0x0040ffff),
+				memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+					b2.range(0x00400000, 0x0040ffff),
 					TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-				t2 = b2.getOrAddThread("Thread2", 0);
+				t2 = b2.getOrAddThread("Threads[2]", 0);
+				b2.createObjectsFramesAndRegs(t2, Lifespan.nowOn(0), b2.host, 1);
 
 				Register pc = b2.trace.getBaseLanguage().getProgramCounter();
 				TraceMemorySpace regs = memory.getMemoryRegisterSpace(t2, true);
@@ -380,11 +415,14 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			TraceThread t1, t2;
 
 			try (Transaction tx = b1.startTransaction()) {
+				b1.createRootObject(buildContext(), "Target");
 				b1.trace.getTimeManager().createSnapshot("First snap");
 				DBTraceMemoryManager memory = b1.trace.getMemoryManager();
-				memory.addRegion("exe:.text", Lifespan.nowOn(0), b1.range(0x00400000, 0x0040ffff),
+				memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+					b1.range(0x00400000, 0x0040ffff),
 					TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-				t1 = b1.getOrAddThread("Thread1", 0);
+				t1 = b1.getOrAddThread("Threads[1]", 0);
+				b1.createObjectsFramesAndRegs(t1, Lifespan.nowOn(0), b1.host, 1);
 
 				Register pc = b1.trace.getBaseLanguage().getProgramCounter();
 				TraceMemorySpace regs = memory.getMemoryRegisterSpace(t1, true);
@@ -392,11 +430,14 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			}
 			waitForDomainObject(b1.trace);
 			try (Transaction tx = b2.startTransaction()) {
+				b2.createRootObject(buildContext(), "Target");
 				b2.trace.getTimeManager().createSnapshot("First snap");
 				DBTraceMemoryManager memory = b2.trace.getMemoryManager();
-				memory.addRegion("exe:.text", Lifespan.nowOn(0), b2.range(0x00400000, 0x0040ffff),
+				memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+					b2.range(0x00400000, 0x0040ffff),
 					TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-				t2 = b2.getOrAddThread("Thread2", 0);
+				t2 = b2.getOrAddThread("Threads[2]", 0);
+				b2.createObjectsFramesAndRegs(t2, Lifespan.nowOn(0), b2.host, 1);
 
 				Register pc = b2.trace.getBaseLanguage().getProgramCounter();
 				TraceMemorySpace regs = memory.getMemoryRegisterSpace(t2, true);
@@ -412,7 +453,6 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			waitForSwing();
 
 			assertEquals(b1.trace.getProgramView(), memBytesProvider.getProgram());
-			// TODO: Assert thread?
 
 			traceManager.activateThread(t2);
 			waitForSwing();
@@ -452,13 +492,16 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+				tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			// To keep gray out of the color equation
 			memory.setState(0, tb.range(0x00401233, 0x00401235), TraceMemoryState.KNOWN);
 
-			thread = tb.getOrAddThread("Thread1", 0);
+			thread = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
 			TraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00401234)));
@@ -534,8 +577,10 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+				tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			memory.setState(0, tb.addr(0x00401234), TraceMemoryState.KNOWN);
 			memory.setState(0, tb.addr(0x00401235), TraceMemoryState.ERROR);
@@ -597,10 +642,12 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		createAndOpenTrace();
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			mm.addRegion("Memory[exe:.text]", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			thread = tb.getOrAddThread("Thread 1", 0);
+			thread = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
 			Register r0 = tb.language.getRegister("r0");
 			regs.setValue(0, new RegisterValue(r0, new BigInteger("00401234", 16)));
@@ -641,12 +688,14 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		createAndOpenTrace();
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			mm.addRegion("Memory[exe:.text]", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			mm.addRegion("[stack]", Lifespan.nowOn(0), tb.range(0x1f000000, 0x1fffffff),
+			mm.addRegion("Memory[stack]", Lifespan.nowOn(0), tb.range(0x1f000000, 0x1fffffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
-			thread = tb.getOrAddThread("Thread 1", 0);
+			thread = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
 			Register pc = tb.language.getProgramCounter();
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00401234", 16)));
@@ -682,23 +731,20 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	@Ignore("Haven't specified this action, yet")
-	public void testActionTrackOtherRegister() {
-		// TODO: Actually, can we make this an arbitrary (pcode/sleigh?) expression.
-		TODO();
-	}
-
-	@Test
 	public void testActionFollowsCurrentThread() throws Exception {
 		createAndOpenTrace();
 		TraceThread thread1;
 		TraceThread thread2;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+				tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			thread1 = tb.getOrAddThread("Thread1", 0);
-			thread2 = tb.getOrAddThread("Thread2", 0);
+			thread1 = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread1, Lifespan.nowOn(0), tb.host, 1);
+			thread2 = tb.getOrAddThread("Threads[2]", 0);
+			tb.createObjectsFramesAndRegs(thread2, Lifespan.nowOn(0), tb.host, 1);
 
 			// NOTE: PC-tracking should be the default for the main dynamic listing
 			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
@@ -821,26 +867,30 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		assertEquals("(nowhere)", memBytesProvider.locationLabel.getText());
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			tb.trace.getMemoryManager()
-					.addRegion("test_region", Lifespan.nowOn(0), tb.range(0x55550000, 0x555502ff),
+					.addRegion("Memory[test_region]", Lifespan.nowOn(0),
+						tb.range(0x55550000, 0x555502ff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 		waitForDomainObject(tb.trace);
 		// TODO: This initial goTo should not really be needed
 		goToDyn(tb.addr(0x55550000));
-		waitForPass(() -> assertEquals("test_region", memBytesProvider.locationLabel.getText()));
+		waitForPass(
+			() -> assertEquals("test_region", memBytesProvider.locationLabel.getText()));
 
 		TraceModule modExe;
 		try (Transaction tx = tb.startTransaction()) {
 			modExe = tb.trace.getModuleManager()
-					.addModule("modExe", "modExe", tb.range(0x55550000, 0x555501ff),
+					.addModule("Modules[modExe]", "modExe", tb.range(0x55550000, 0x555501ff),
 						Lifespan.nowOn(0));
 		}
 		waitForDomainObject(tb.trace);
 		waitForPass(() -> assertEquals("modExe", memBytesProvider.locationLabel.getText()));
 
 		try (Transaction tx = tb.startTransaction()) {
-			modExe.addSection(0, ".text", tb.range(0x55550000, 0x555500ff));
+			modExe.addSection(0, "Modules[modExe].Sections[.text]",
+				tb.range(0x55550000, 0x555500ff));
 		}
 		waitForDomainObject(tb.trace);
 		waitForPass(() -> assertEquals("modExe:.text", memBytesProvider.locationLabel.getText()));
@@ -856,11 +906,15 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		TraceThread thread1;
 		TraceThread thread2;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			mm.addRegion("Memory[exe:.text]", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			thread1 = tb.getOrAddThread("Thread 1", 0);
-			thread2 = tb.getOrAddThread("Thread 2", 0);
+			thread1 = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread1, Lifespan.nowOn(0), tb.host, 1);
+			thread2 = tb.getOrAddThread("Threads[2]", 0);
+			tb.createObjectsFramesAndRegs(thread2, Lifespan.nowOn(0), tb.host, 1);
+
 			TraceMemorySpace regs1 = mm.getMemoryRegisterSpace(thread1, true);
 			regs1.setValue(0, new RegisterValue(pc, new BigInteger("00401234", 16)));
 			TraceMemorySpace regs2 = mm.getMemoryRegisterSpace(thread2, true);
@@ -887,10 +941,12 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		Register pc = tb.language.getProgramCounter();
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			mm.addRegion("Memory[exe:.text]", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			thread = tb.getOrAddThread("Thread 1", 0);
+			thread = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00401234", 16)));
 			regs.setValue(1, new RegisterValue(pc, new BigInteger("00404321", 16)));
@@ -915,10 +971,11 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		createAndOpenTrace();
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			mm.addRegion("Memory[exe:.text]", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			thread = tb.getOrAddThread("Thread 1", 0);
+			thread = tb.getOrAddThread("Threads[1]", 0);
 			DBTraceStackManager sm = tb.trace.getStackManager();
 			TraceStack stack = sm.getStack(thread, 0, true);
 			stack.getFrame(0, 0, true).setProgramCounter(Lifespan.ALL, tb.addr(0x00401234));
@@ -946,9 +1003,11 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		Register pc = tb.language.getProgramCounter();
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
-			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			tb.createRootObject(buildContext(), "Target");
+			mm.addRegion("Memory[exe:.text]", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			thread = tb.getOrAddThread("Thread 1", 0);
+			thread = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00401234", 16)));
 		}
@@ -977,15 +1036,13 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		Register pc = tb.language.getProgramCounter();
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
-			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			tb.createRootObject(buildContext(), "Target");
+			mm.addRegion("Memory[exe:.text]", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			thread = tb.getOrAddThread("Thread 1", 0);
+			thread = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00401234", 16)));
-
-			DBTraceStackManager sm = tb.trace.getStackManager();
-			TraceStack stack = sm.getStack(thread, 0, true);
-			stack.getFrame(0, 0, true);
 		}
 		waitForDomainObject(tb.trace);
 		traceManager.activate(DebuggerCoordinates.NOWHERE.thread(thread).snap(0));
@@ -1011,10 +1068,12 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		DBTraceStackManager sm = tb.trace.getStackManager();
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			mm.addRegion("Memory[exe:.text]", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			thread = tb.getOrAddThread("Thread 1", 0);
+			thread = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			TraceStack stack = sm.getStack(thread, 0, true);
 			stack.getFrame(0, 0, true).setProgramCounter(Lifespan.ALL, tb.addr(0x00401234));
 		}
@@ -1190,6 +1249,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
+	@Ignore("Enable manually")
 	public void testPerformanceManuallyWithManyManySnaps() throws Exception {
 		assumeFalse(SystemUtilities.isInTestingBatchMode());
 		createAndOpenTrace();
@@ -1197,6 +1257,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		// LATER (GP-5594): 100_000 without checkStateMapIntegrity will crash.
 		final long snapCount = 100_000;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(SCHEMA_CTX);
 			tb.trace.getMemoryManager()
 					.addRegion("Processes[1].Memory[exe:.text]", Lifespan.nowOn(0L),
 						tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,

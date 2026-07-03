@@ -41,7 +41,7 @@ public interface Enum extends DataType {
 	/**
 	 * Returns all names that map to the given value.
 	 * @param value value for the enum entries.
-	 * @return all names; null if there is not name for the given value.
+	 * @return all names; null if there is no name for the given value.
 	 */
 	public String[] getNames(long value);
 
@@ -159,5 +159,8 @@ public interface Enum extends DataType {
 	 * it's current values
 	 */
 	public int getMinimumPossibleLength();
+
+	@Override
+	public Enum clone(DataTypeManager dtm);
 
 }

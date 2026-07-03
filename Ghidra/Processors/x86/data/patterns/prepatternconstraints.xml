@@ -7,6 +7,15 @@
   	<compiler id="borlandcpp">
   	  <patternfile>x86win_prepatterns.xml</patternfile>
   	</compiler>
+  	<compiler id="gcc">
+  	  <patternfile>x86gcc_prepatterns.xml</patternfile>
+  	</compiler>
   </language>
-
+  
+  <language id="x86:LE:64:default">
+  	<compiler id="gcc">
+  	  <patternfile>x86gcc_prepatterns.xml</patternfile>
+  	</compiler>
+  </language>
+  
 </patternconstraints>

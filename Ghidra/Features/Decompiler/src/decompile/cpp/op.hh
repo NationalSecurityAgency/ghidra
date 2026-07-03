@@ -116,7 +116,8 @@ public:
     hold_output = 0x80,		///< Output varnode (of call) should not be removed if it is unread
     concat_root = 0x100,	///< Output of \b this is root of a CONCAT tree
     no_indirect_collapse = 0x200,	///< Do not collapse \b this INDIRECT (via RuleIndirectCollapse)
-    store_unmapped = 0x400	///< If STORE collapses to a stack Varnode, force it to be unmapped
+    store_unmapped = 0x400,	///< If STORE collapses to a stack Varnode, force it to be unmapped
+    immed_copy = 0x800		///< Copy has propagated into input of \b this op
   };
 private:
   TypeOp *opcode;		///< Pointer to class providing behavioral details of the operation
@@ -224,6 +225,8 @@ public:
   void setNoIndirectCollapse(void) { addlflags |= no_indirect_collapse; }	///< Prevent collapse of INDIRECT
   bool isStoreUnmapped(void) const { return ((addlflags & store_unmapped)!=0); }	///< Is STORE location supposed to be unmapped
   void setStoreUnmapped(void) const { addlflags |= store_unmapped; }	///< Mark that STORE location should be unmapped
+  void setCopyImmed(int4 slot);		///< Mark that a COPY propagation from the immediate input block has happened
+  bool hasCopyImmed(int4 slot) const;	///< Return \b true if a COPY propagation from an immediate input block has happened
   /// \brief Return \b true if this LOADs or STOREs from a dynamic \e spacebase pointer
   bool usesSpacebasePtr(void) const { return ((flags&PcodeOp::spacebase_ptr)!=0); }
   uintm getCseHash(void) const;	///< Return hash indicating possibility of common subexpression elimination
@@ -233,6 +236,7 @@ public:
   OpCode code(void) const { return opcode->getOpcode(); } ///< Get the opcode id (enum) for this op
   bool isCommutative(void) const { return ((flags & PcodeOp::commutative)!=0); } ///< Return \b true if inputs commute
   uintb collapse(bool &markedInput) const;	///< Calculate the constant output produced by this op
+  uintb executeSimple(uintb *in,bool &evalError) const;		///< Execute \b this operation on the given input values
   void collapseConstantSymbol(Varnode *newConst) const;	///< Propagate constant symbol from inputs to given output
   PcodeOp *nextOp(void) const;	///< Return the next op in the control-flow from this or \e null
   PcodeOp *previousOp(void) const; ///< Return the previous op within this op's basic block or \e null
@@ -249,18 +253,6 @@ public:
 
   Datatype *outputTypeLocal(void) const { return opcode->getOutputLocal(this); } ///< Calculate the local output type
   Datatype *inputTypeLocal(int4 slot) const { return opcode->getInputLocal(this,slot); }	///< Calculate the local input type
-};
-
-/// \brief An edge in a data-flow path or graph
-///
-/// A minimal node for traversing expressions in the data-flow
-struct PcodeOpNode {
-  PcodeOp *op;		///< The p-code end-point of the edge
-  int4 slot;		///< Slot indicating the input Varnode end-point of the edge
-  PcodeOpNode(void) { op = (PcodeOp *)0; slot = 0; }	///< Unused constructor
-  PcodeOpNode(PcodeOp *o,int4 s) { op = o; slot = s; }	///< Constructor
-  bool operator<(const PcodeOpNode &op2) const;		///< Simple comparator for putting edges in a sorted container
-  static bool compareByHigh(const PcodeOpNode &a,const PcodeOpNode &b);	///< Compare Varnodes by their HighVariable
 };
 
 /// \brief A node in a tree structure of CPUI_PIECE operations
@@ -329,6 +321,7 @@ public:
   bool empty(void) const { return optree.empty(); }	///< Return \b true if there are no PcodeOps in \b this container
   PcodeOp *target(const Address &addr) const;		///< Find the first executing PcodeOp for a target address
   PcodeOp *findOp(const SeqNum &num) const;		///< Find a PcodeOp by sequence number
+  PcodeOp *findLastOp(const Address &addr) const;	///< Find the last PcodeOp in sequence for the given address
   PcodeOp *fallthru(const PcodeOp *op) const;		///< Find the PcodeOp considered a \e fallthru of the given PcodeOp
 
   /// \brief Start of all PcodeOps in sequence number order
@@ -361,50 +354,6 @@ public:
   /// \brief End of all PcodeOps sharing the given op-code
   list<PcodeOp *>::const_iterator end(OpCode opc) const;
 };
-
-extern int4 functionalEqualityLevel(Varnode *vn1,Varnode *vn2,Varnode **res1,Varnode **res2);
-extern bool functionalEquality(Varnode *vn1,Varnode *vn2);
-extern bool functionalDifference(Varnode *vn1,Varnode *vn2,int4 depth);
-
-/// \brief Static methods for determining if two boolean expressions are the \b same or \b complementary
-///
-/// Traverse (upto a specific depth) the two boolean expressions consisting of BOOL_AND, BOOL_OR, and
-/// BOOL_XOR operations.  Leaf operators in the expression can be other operators with boolean output (INT_LESS,
-/// INT_SLESS, etc.).
-class BooleanMatch {
-  static bool sameOpComplement(PcodeOp *bin1op, PcodeOp *bin2op);
-  static bool varnodeSame(Varnode *a,Varnode *b);
-public:
-  enum {
-    same = 1,			///< Pair always hold the same value
-    complementary = 2,		///< Pair always hold complementary values
-    uncorrelated = 3		///< Pair values are uncorrelated
-  };
-  static int4 evaluate(Varnode *vn1,Varnode *vn2,int4 depth);
-};
-
-/// Compare PcodeOps (as pointers) first, then slot
-/// \param op2 is the other edge to compare with \b this
-/// \return true if \b this should come before the other PcodeOp
-inline bool PcodeOpNode::operator<(const PcodeOpNode &op2) const
-
-{
-  if (op != op2.op)
-    return (op->getSeqNum().getTime() < op2.op->getSeqNum().getTime());
-  if (slot != op2.slot)
-    return (slot < op2.slot);
-  return false;
-}
-
-/// Allow a sorting that groups together input Varnodes with the same HighVariable
-/// \param a is the first Varnode to compare
-/// \param b is the second Varnode to compare
-/// \return true is \b a should come before \b b
-inline bool PcodeOpNode::compareByHigh(const PcodeOpNode &a, const PcodeOpNode &b)
-
-{
-  return a.op->getIn(a.slot)->getHigh() < b.op->getIn(b.slot)->getHigh();
-}
 
 } // End namespace ghidra
 #endif

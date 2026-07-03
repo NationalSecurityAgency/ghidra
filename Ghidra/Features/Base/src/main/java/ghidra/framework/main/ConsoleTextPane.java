@@ -15,8 +15,10 @@
  */
 package ghidra.framework.main;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.util.LinkedList;
+import java.util.Objects;
 
 import javax.swing.JTextPane;
 import javax.swing.text.*;
@@ -81,6 +83,10 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 
 	public void addPartialMessage(String message) {
 		doAddMessage(new MessageWrapper(message));
+	}
+
+	public void addPartialMessage(String message, Color c) {
+		doAddMessage(new MessageWrapper(message, getFont(), c));
 	}
 
 	public void addErrorMessage(String message) {
@@ -280,13 +286,19 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 //==================================================================================================
 
 	private static class MessageWrapper {
-		private final StringBuilder message;
+		protected final StringBuilder message;
+		private Color color;
+		private Font font;
 
 		private MessageWrapper(String message) {
-			if (message == null) {
-				throw new AssertException("Attempted to log a null message.");
-			}
+			Objects.requireNonNull(message, "Attempted to log a null message");
 			this.message = new StringBuilder(message);
+		}
+
+		public MessageWrapper(String message, Font font, Color color) {
+			this(message);
+			this.font = Objects.requireNonNull(font);
+			this.color = Objects.requireNonNull(color);
 		}
 
 		CharSequence getMessage() {
@@ -297,12 +309,30 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 			if (getClass() != other.getClass()) {
 				return false;
 			}
+
+			if (!Objects.equals(color, other.color)) {
+				return false;
+			}
+
 			message.append(other.message);
 			return true;
 		}
 
 		AttributeSet getAttributes() {
+			if (color != null) {
+				GAttributes attrs = new GAttributes(font, color);
+				attrs.addAttribute(CUSTOM_ATTRIBUTE_KEY, OUTPUT_ATTRIBUTE_VALUE);
+				return attrs;
+			}
 			return outputAttributes;
+		}
+
+		@Override
+		public String toString() {
+			if (color == null) {
+				return message.toString();
+			}
+			return "[color=" + color + "] " + message.toString();
 		}
 	}
 
@@ -315,6 +345,10 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 		AttributeSet getAttributes() {
 			return errorAttributes;
 		}
-	}
 
+		@Override
+		public String toString() {
+			return "[error] " + message.toString();
+		}
+	}
 }

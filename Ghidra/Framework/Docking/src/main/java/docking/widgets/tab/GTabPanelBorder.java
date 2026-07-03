@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,9 +25,11 @@ import javax.swing.border.EmptyBorder;
 public class GTabPanelBorder extends EmptyBorder {
 	public static final int MARGIN_SIZE = 2;
 	public static final int BOTTOM_SOLID_COLOR_SIZE = 3;
+	private GTabPanel<?> tabPanel;
 
-	public GTabPanelBorder() {
+	public GTabPanelBorder(GTabPanel<?> tabPanel) {
 		super(0, 0, BOTTOM_SOLID_COLOR_SIZE, 0);
+		this.tabPanel = tabPanel;
 	}
 
 	/**
@@ -40,9 +42,10 @@ public class GTabPanelBorder extends EmptyBorder {
 		Color oldColor = g.getColor();
 		g.translate(x, y);
 
-		Color highlight = GTab.TAB_BG_COLOR.brighter().brighter();
+		Color highlight = GTab.BG_COLOR_UNSELECTED.brighter().brighter();
 
-		g.setColor(GTab.SELECTED_TAB_BG_COLOR);
+		Color color = tabPanel.getSelectedTabColor();
+		g.setColor(color);
 		g.fillRect(insets.left, h - insets.bottom, w - insets.right - 1, insets.bottom);
 
 		g.setColor(highlight);

@@ -221,7 +221,8 @@ public class ApplicationVersion implements Comparable<ApplicationVersion> {
 		}
 		catch (NumberFormatException e) {
 			throw new IllegalArgumentException(
-				"Failed to convert " + versionPartName + " version to integer");
+				"Failed to convert version to integer: '" + versionPartName + "' value '" +
+					versionPart + "'");
 		}
 	}
 }

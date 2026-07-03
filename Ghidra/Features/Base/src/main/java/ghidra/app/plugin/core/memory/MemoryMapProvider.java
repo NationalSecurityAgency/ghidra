@@ -25,6 +25,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.action.builder.ToggleActionBuilder;
@@ -336,14 +337,16 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		action.getToolBarData().setToolBarGroup("B"); // the other actions are in group 'A'
 		tool.addLocalAction(this, action);
 
-		toggleNavigateAction = new ToggleActionBuilder("Memory Map Navigation", plugin.getName())
-				.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
-				.selected(false)
-				.helpLocation(new HelpLocation("MemoryMapPlugin", "Navigation"))
-				.description(HTMLUtilities.toHTML("Toggle <b>on</b> means to select the block" +
-					" that contains the current location"))
-				.onAction(c -> followLocationChanges = toggleNavigateAction.isSelected())
-				.buildAndInstallLocal(this);
+		toggleNavigateAction =
+			new ToggleActionBuilder("Navigate on Incoming Location Changes", plugin.getName())
+					.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
+					.selected(false)
+					.sharedKeyBinding()
+					.helpLocation(new HelpLocation("MemoryMapPlugin", "Navigation"))
+					.description(HTMLUtilities.toHTML("Toggle <b>on</b> means to select the block" +
+						" that contains the current location"))
+					.onAction(c -> followLocationChanges = toggleNavigateAction.isSelected())
+					.buildAndInstallLocal(this);
 	}
 
 	private boolean checkExclusiveAccess() {
@@ -563,7 +566,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			setStatusText("");
 			if (!e.isPopupTrigger()) {
 				if ((e.getModifiersEx() &
-					(InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
+					(DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
 					navigateToAddress();
 				}
 			}

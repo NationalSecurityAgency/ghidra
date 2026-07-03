@@ -75,6 +75,25 @@ public class FcgVertexShapeProvider extends CircleWithLabelVertexShapeProvider {
 		setTogglesVisible(false);
 	}
 
+	public FcgVertexShapeProvider cloneProvider(FcgVertex newVertex,
+			FcgVertexExpansionListener newListener) {
+		FcgVertexShapeProvider newProvider =
+			new FcgVertexShapeProvider(newVertex, newListener);
+
+		newProvider.hasIncomingReferences = hasIncomingReferences;
+		newProvider.hasOutgoingReferences = hasOutgoingReferences;
+		newProvider.tooManyIncomingReferences = tooManyIncomingReferences;
+		newProvider.tooManyOutgoingReferences = tooManyOutgoingReferences;
+
+		newProvider.toggleInsButton.setIcon(toggleInsButton.getIcon());
+		newProvider.toggleInsButton.setToolTipText(toggleInsButton.getToolTipText());
+
+		newProvider.toggleOutsButton.setIcon(toggleOutsButton.getIcon());
+		newProvider.toggleOutsButton.setToolTipText(toggleOutsButton.getToolTipText());
+
+		return newProvider;
+	}
+
 	private void createPaints() {
 
 		Color vertexShapeColor = getDefaultVertexShapeColor();
@@ -324,7 +343,7 @@ public class FcgVertexShapeProvider extends CircleWithLabelVertexShapeProvider {
 	}
 
 	@Override
-	protected void setTogglesVisible(boolean visible) {
+	public void setTogglesVisible(boolean visible) {
 
 		boolean isIn = isInDirection();
 		boolean turnOn = isIn && hasIncomingReferences && visible;

@@ -15,11 +15,15 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
+import ghidra.pcode.emu.jit.analysis.JitType.MpIntJitType;
+import ghidra.pcode.emu.jit.gen.GenConsts;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.Ext;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Bot;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.pcode.emu.jit.op.JitBinOp;
 
 /**
@@ -30,61 +34,110 @@ import ghidra.pcode.emu.jit.op.JitBinOp;
 public interface BinOpGen<T extends JitBinOp> extends OpGen<T> {
 
 	/**
-	 * Emit code between reading the left and right operands
-	 * 
-	 * <p>
-	 * This is invoked immediately after emitting code to push the left operand onto the stack,
-	 * giving the implementation an opportunity to perform any manipulations of that operand
-	 * necessary to set up the operation, before code to push the right operand is emitted.
-	 * 
-	 * @param gen the code generator
-	 * @param op the operator
-	 * @param lType the actual type of the left operand
-	 * @param rType the actual type of the right operand
-	 * @param rv the method visitor
-	 * @return the new actual type of the left operand
+	 * A choice of static method parameter to take as operator output
 	 */
-	default JitType afterLeft(JitCodeGenerator gen, T op, JitType lType, JitType rType,
-			MethodVisitor rv) {
-		return lType;
+	enum TakeOut {
+		/**
+		 * The out (first) parameter
+		 */
+		OUT,
+		/**
+		 * The left (second) parameter
+		 */
+		LEFT;
 	}
 
 	/**
-	 * Emit code for the binary operator
+	 * Emit bytecode that implements an mp-int binary operator via delegation to a static method on
+	 * {@link JitCompiledPassage}. The method must have the signature:
+	 * 
+	 * <pre>
+	 * void method(int[] out, int[] inL, int[] inR);
+	 * </pre>
 	 * 
 	 * <p>
-	 * At this point both operands are on the stack. After this returns, code to write the result
-	 * from the stack into the destination operand will be emitted.
+	 * This method presumes that the left operand's legs are at the top of the stack,
+	 * least-significant leg on top, followed by the right operand legs, also least-significant leg
+	 * on top. This will allocate the output array, move the operands into their respective input
+	 * arrays, invoke the method, and then place the result legs on the stack, least-significant leg
+	 * on top.
 	 * 
+	 * @param <THIS> the type of the generated passage
+	 * @param em the emitter typed with the empty stack
 	 * @param gen the code generator
-	 * @param op the operator
-	 * @param block the block containing the operator
-	 * @param lType the actual type of the left operand
-	 * @param rType the actual type of the right operand
-	 * @param rv the method visitor
-	 * @return the actual type of the result
+	 * @param localThis a handle to the local holding the {@code this} reference
+	 * @param type the type of the operands
+	 * @param methodName the name of the method in {@link JitCompiledPassage} to invoke
+	 * @param op the p-code op
+	 * @param slackLeft the number of extra ints to allocate for the left operand's array. This is
+	 *            to facilitate Knuth's division algorithm, which may require an extra leading leg
+	 *            in the dividend after normalization.
+	 * @param takeOut indicates which operand of the static method to actually take for the output.
+	 *            This is to facilitate the remainder operator, because Knuth's algorithm leaves the
+	 *            remainder where there dividend was.
+	 * @param scope a scope for generating temporary local storage
+	 * @return the emitter typed with the empty stack
 	 */
-	JitType generateBinOpRunCode(JitCodeGenerator gen, T op, JitBlock block, JitType lType,
-			JitType rType, MethodVisitor rv);
+	default <THIS extends JitCompiledPassage> Emitter<Bot> genMpDelegationToStaticMethod(
+			Emitter<Bot> em, JitCodeGenerator<THIS> gen, Local<TRef<THIS>> localThis,
+			MpIntJitType type, String methodName, JitBinOp op, int slackLeft, TakeOut takeOut,
+			Scope scope) {
+		/**
+		 * The strategy here will be to allocate an array for each of the operands (output and 2
+		 * inputs) and then invoke a static method to do the actual operation. It might be nice to
+		 * generate inline code for small multiplications, but we're going to leave that for later.
+		 */
+		int legCount = type.legsAlloc();
+
+		var emParams = switch (takeOut) {
+			case OUT -> em
+					.emit(Op::ldc__i, legCount)
+					.emit(Op::newarray, Types.T_INT)
+					.emit(Op::dup)
+					.emit(gen::genReadToArray, localThis, op.l(), type, ext(), scope, slackLeft)
+					.emit(gen::genReadToArray, localThis, op.r(), type, rExt(), scope, 0);
+			case LEFT -> em
+					.emit(Op::aconst_null, Types.T_INT_ARR)
+					.emit(gen::genReadToArray, localThis, op.l(), type, ext(), scope, slackLeft)
+					.emit(Op::dup_x1)
+					.emit(gen::genReadToArray, localThis, op.r(), type, rExt(), scope, 0);
+		};
+		return emParams
+				.emit(Op::invokestatic, GenConsts.T_JIT_COMPILED_PASSAGE, methodName,
+					GenConsts.MDESC_JIT_COMPILED_PASSAGE__MP_INT_BINOP, true)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::retVoid)
+				.emit(gen::genWriteFromArray, localThis, op.out(), type, ext(), scope);
+	}
 
 	/**
-	 * {@inheritDoc}
-	 * 
+	 * Whether this operator is signed
 	 * <p>
-	 * This default implementation emits code to load the left operand, invokes the
-	 * {@link #afterLeft(JitCodeGenerator, JitBinOp, JitType, JitType, MethodVisitor) after-left}
-	 * hook point, emits code to load the right operand, invokes
-	 * {@link #generateBinOpRunCode(JitCodeGenerator, JitBinOp, JitBlock, JitType, JitType, MethodVisitor)
-	 * generate-binop}, and finally emits code to write the destination operand.
+	 * In many cases, the operator itself is not affected by the signedness of the operands;
+	 * however, if size adjustments to the operands are needed, this can determine how those
+	 * operands are extended.
+	 * 
+	 * @return true for signed, false if not
 	 */
-	@Override
-	default void generateRunCode(JitCodeGenerator gen, T op, JitBlock block, MethodVisitor rv) {
-		JitType lType = gen.generateValReadCode(op.l(), op.lType());
-		JitType rType = op.rType().resolve(gen.getTypeModel().typeOf(op.r()));
-		lType = afterLeft(gen, op, lType, rType, rv);
-		JitType checkRType = gen.generateValReadCode(op.r(), op.rType());
-		assert checkRType == rType;
-		JitType outType = generateBinOpRunCode(gen, op, block, lType, rType, rv);
-		gen.generateVarWriteCode(op.out(), outType);
+	boolean isSigned();
+
+	/**
+	 * When loading and storing variables, the kind of extension to apply
+	 * 
+	 * @return the extension kind
+	 */
+	default Ext ext() {
+		return Ext.forSigned(isSigned());
+	}
+
+	/**
+	 * When loading the right operand, the kind of extension to apply
+	 * 
+	 * @return the extension kind
+	 */
+	default Ext rExt() {
+		return ext();
 	}
 }

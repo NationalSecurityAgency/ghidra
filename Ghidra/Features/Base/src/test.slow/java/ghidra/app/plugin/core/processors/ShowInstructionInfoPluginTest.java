@@ -22,7 +22,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.*;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
 
 import org.junit.*;
 
@@ -150,6 +151,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 		DockingActionIf infoAction = getAction(plugin, "Show Instruction Info");
 		// show the window
 		performAction(infoAction, cb.getProvider(), true);
+		InstructionInfoProvider provider = waitForComponentProvider(InstructionInfoProvider.class);
 
 		// make sure we are at an invalid Instruction
 		ListingActionContext context = getCurrentContext();
@@ -176,14 +178,8 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 			componentProviderTablesHaveData());
 
 		// verify dynamic update has changed the window's contents
-		ComponentProvider componentProvider = getCurrentComponentProviderFromPlugin();
-		JComponent comp = componentProvider.getComponent();
-
-		final JCheckBox dynamicCheckBox = findComponent(comp, JCheckBox.class);
 		// make sure dynamic update is enabled
-		if (!dynamicCheckBox.isSelected()) {
-			runSwing(() -> dynamicCheckBox.doClick());
-		}
+		runSwing(() -> provider.setDynamic(true));
 
 		// change to another valid Instruction
 		currentInstruction = changeLocationToAddress("01000006");
@@ -200,7 +196,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 		verifyAddressWithTableModels(currentInstruction.getMinAddress(), true, true);
 
 		// turn off dynamic update
-		runSwing(() -> dynamicCheckBox.doClick());
+		runSwing(() -> provider.setDynamic(false));
 
 		// change to another valid Instruction
 		currentInstruction = changeLocationToAddress("01000009");
@@ -223,7 +219,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 		// place
 
 		// turn dynamic update back on
-		runSwing(() -> dynamicCheckBox.doClick());
+		runSwing(() -> provider.setDynamic(true));
 
 		// move to a valid location that has yet to be disassembled
 		currentInstruction = changeLocationToAddress("01000ffe");
@@ -269,13 +265,9 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 		DockingActionIf infoAction = getAction(plugin, "Show Instruction Info");
 		// show the window
 		performAction(infoAction, cb.getProvider(), true);
+		InstructionInfoProvider provider = waitForComponentProvider(InstructionInfoProvider.class);
 
-		ComponentProvider componentProvider = getCurrentComponentProviderFromPlugin();
-		JComponent comp = componentProvider.getComponent();
-
-		final JCheckBox dynamicCheckBox = findComponent(comp, JCheckBox.class);
-		// turn off the checkbox
-		runSwing(() -> dynamicCheckBox.setSelected(false));
+		runSwing(() -> provider.setDynamic(false));
 
 		changeLocationToAddress("01000006");
 		performAction(infoAction, cb.getProvider(), true);
@@ -352,7 +344,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 
 	private void callGetUrl(ListingActionContext context, Language language) {
 		runSwing(() -> {
-	
+
 			try {
 				plugin.getValidUrl(context, language);
 			}
@@ -363,12 +355,10 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 	}
 
 	/**
-	 * Moves the program location to the given address and returns the 
-	 * instruction at that location.
+	 * Moves the program location to the given address and returns the instruction at that location.
 	 * 
 	 * @param addressString The address location to move to.
-	 * @return The instruction at the new location or null if there is no
-	 *         instruction.
+	 * @return The instruction at the new location or null if there is no instruction.
 	 */
 	private Instruction changeLocationToAddress(String addressString) throws Exception {
 		CodeBrowserPlugin cbp = env.getPlugin(CodeBrowserPlugin.class);
@@ -395,18 +385,15 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 	}
 
 	/**
-	 * Tests the addresses of the table models of the "Instruction Info" dialog.
-	 * The method will fail the current test if the result is not as 
-	 * expected by the caller of this method.  For example, if 
-	 * {@code expectedSame} is true, then the method expects the values to
-	 * be the same when compared with the given address and will fail if 
-	 * they are not.  If {@code expectedSame} is false, then the method will
-	 * fail if the test values are the same.
+	 * Tests the addresses of the table models of the "Instruction Info" dialog. The method will
+	 * fail the current test if the result is not as expected by the caller of this method. For
+	 * example, if {@code expectedSame} is true, then the method expects the values to be the same
+	 * when compared with the given address and will fail if they are not. If {@code expectedSame}
+	 * is false, then the method will fail if the test values are the same.
 	 * 
-	 * @param instructionAddress The address to compare against the address
-	 *        stored in the table model of the dialog.
-	 * @param expectedSame True means a match is expected; false means a 
-	 *        match is not expected.
+	 * @param instructionAddress The address to compare against the address stored in the table
+	 *            model of the dialog.
+	 * @param expectedSame True means a match is expected; false means a match is not expected.
 	 */
 	private void verifyAddressWithTableModels(Address instructionAddress, boolean fromConnected,
 			boolean expectedSame) {
@@ -447,8 +434,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 	}
 
 	/**
-	 * A simple method to test that the tables of the "Instruction Info"
-	 * dialog contain data.
+	 * A simple method to test that the tables of the "Instruction Info" dialog contain data.
 	 * 
 	 * @return True if either of the tables have data.
 	 */
@@ -459,9 +445,9 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 	}
 
 	/**
-	 * Gets data from the two tables of the "Instruction Info" dialog. 
+	 * Gets data from the two tables of the "Instruction Info" dialog.
 	 * 
-	 * @return data from the two tables of the "Instruction Info" dialog. 
+	 * @return data from the two tables of the "Instruction Info" dialog.
 	 */
 	private Object[] getComponentProviderTableData(boolean fromConnected) {
 		ComponentProvider provider = fromConnected ? getCurrentComponentProviderFromPlugin()

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -99,18 +99,17 @@ void GhidraCommand::loadParameters(void)
 
   if (ghidra == (ArchitectureGhidra *)0)
     throw JavaError("decompiler","No architecture registered with decompiler");
-  ghidra->clearWarnings();
 }
 
-/// This method sends any warnings accumulated during execution back, but it can be overloaded
-/// to send back any kind of information. Individual records are sent using
-/// the message protocol.
-void GhidraCommand::sendResult(void)
+/// This method can be overloaded to send back any kind of information as a string. Individual records
+/// are sent using the message protocol. If the command failed, a string describing the error is passed in.
+/// \param errorMsg is, if not empty, the error causing the commmand to fail
+void GhidraCommand::sendResult(const string &errorMsg)
 
 {
   if (ghidra != (ArchitectureGhidra *)0) {
     sout.write("\000\000\001\020",4);
-    sout << ghidra->getWarnings();
+    sout << errorMsg;
     sout.write("\000\000\001\021",4);
   }
 }
@@ -127,6 +126,7 @@ int4 GhidraCommand::doit(void)
 {
   status = 0;
   sout.write("\000\000\001\006",4); // Command response header
+  string errorMsg;
   try {
     loadParameters();
     int4 type = ArchitectureGhidra::readToAnyBurst(sin);
@@ -135,25 +135,19 @@ int4 GhidraCommand::doit(void)
     rawAction();
   }
   catch(DecoderError &err) {
-    string errmsg;
-    errmsg = "Marshaling error: " + err.explain;
-    ghidra->printMessage( errmsg );
+    errorMsg = "Marshaling error: " + err.explain;
   }
   catch(JavaError &err) {
     ArchitectureGhidra::passJavaException(sout,err.type,err.explain);
     return status;			// Abort sending any results
   }
   catch(RecovError &err) {
-    string errmsg;
-    errmsg = "Recoverable Error: " + err.explain;
-    ghidra->printMessage( errmsg );
+    errorMsg = "Recoverable Error: " + err.explain;
   }
   catch(LowlevelError &err) {
-    string errmsg;
-    errmsg = "Low-level Error: " + err.explain;
-    ghidra->printMessage( errmsg );
+    errorMsg = "Low-level Error: " + err.explain;
   }
-  sendResult();
+  sendResult(errorMsg);
   sout.write("\000\000\001\007",4); // Command response closer
   sout.flush();
   return status;
@@ -200,13 +194,13 @@ void RegisterProgram::rawAction(void)
   archid = open;
 }
 
-void RegisterProgram::sendResult(void)
+void RegisterProgram::sendResult(const string &errorMsg)
 
 {
   sout.write("\000\000\001\016",4);
   sout << dec << archid;
   sout.write("\000\000\001\017",4);
-  GhidraCommand::sendResult();
+  GhidraCommand::sendResult(errorMsg);
 }
 
 void DeregisterProgram::loadParameters(void)
@@ -225,7 +219,6 @@ void DeregisterProgram::loadParameters(void)
 
   if (ghidra == (ArchitectureGhidra *)0)
     throw JavaError("decompiler","No architecture registered with decompiler");
-  ghidra->clearWarnings();
 }
 
 void DeregisterProgram::rawAction(void)
@@ -250,13 +243,13 @@ void DeregisterProgram::rawAction(void)
     res = 0;
 }
 
-void DeregisterProgram::sendResult(void)
+void DeregisterProgram::sendResult(const string &errorMsg)
 
 {
   sout.write("\000\000\001\016",4);
   sout << dec << res;
   sout.write("\000\000\001\017",4);
-  GhidraCommand::sendResult();
+  GhidraCommand::sendResult(errorMsg);
 }
 
 void FlushNative::rawAction(void)
@@ -272,13 +265,13 @@ void FlushNative::rawAction(void)
   res = 0;
 }
 
-void FlushNative::sendResult(void)
+void FlushNative::sendResult(const string &errorMsg)
 
 {
   sout.write("\000\000\001\016",4);
   sout << dec << res;
   sout.write("\000\000\001\017",4);
-  GhidraCommand::sendResult();
+  GhidraCommand::sendResult(errorMsg);
 }
 
 void DecompileAt::loadParameters(void)
@@ -405,14 +398,14 @@ void SetAction::rawAction(void)
   res = true;
 }
 
-void SetAction::sendResult(void)
+void SetAction::sendResult(const string &errorMsg)
 
 {
   if (res)
     ArchitectureGhidra::writeStringStream(sout,"t");
   else
     ArchitectureGhidra::writeStringStream(sout,"f");
-  GhidraCommand::sendResult();
+  GhidraCommand::sendResult(errorMsg);
 }
 
 void SetOptions::loadParameters(void)
@@ -444,14 +437,14 @@ void SetOptions::rawAction(void)
   res = true;
 }
 
-void SetOptions::sendResult(void)
+void SetOptions::sendResult(const string &errorMsg)
 
 {
   if (res)
     ArchitectureGhidra::writeStringStream(sout,"t");
   else
     ArchitectureGhidra::writeStringStream(sout,"f");
-  GhidraCommand::sendResult();
+  GhidraCommand::sendResult(errorMsg);
 }
 
 /// A command is read from the Ghidra client.  The matching GhidraCommand object is
@@ -505,6 +498,14 @@ void GhidraDecompCapability::initialize(void)
   commandmap["setOptions"] = new SetOptions();
 }
 
+/// Catch the signal so the OS doesn't pop up a dialog
+/// \param sig is the OS signal (should always be SIGSEGV)
+static void segvHandler(int4 sig)
+
+{
+  _Exit(1);	// Don't do any cleanup, just die - prevents OS from popping-up a dialog
+}
+
 } // End namespace ghidra
 
 int main(int argc,char **argv)
@@ -512,7 +513,7 @@ int main(int argc,char **argv)
 {
   using namespace ghidra;
 
-  signal(SIGSEGV, &ArchitectureGhidra::segvHandler);  // Exit on SEGV errors
+  signal(SIGSEGV, &segvHandler);  // Exit on SEGV errors
 #ifdef _WINDOWS
   // Force i/o streams to be in binary mode
   _setmode(_fileno(stdin), _O_BINARY);

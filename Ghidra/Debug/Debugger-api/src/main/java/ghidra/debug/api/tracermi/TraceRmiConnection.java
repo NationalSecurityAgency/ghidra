@@ -171,8 +171,19 @@ public interface TraceRmiConnection extends AutoCloseable {
 	/**
 	 * Check if the given target has a transaction open
 	 * 
-	 * @param target
+	 * @param target the target
 	 * @return true if busy
 	 */
 	boolean isBusy(Target target);
+
+	/**
+	 * Forcibly commit all transactions this connection has on the given trace
+	 * 
+	 * <p>
+	 * This may cause undefined behavior in the back-end, especially if it still needs the
+	 * transaction.
+	 * 
+	 * @param target the the target
+	 */
+	void forciblyCloseTransactions(Target target);
 }

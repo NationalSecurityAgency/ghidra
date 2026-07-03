@@ -23,6 +23,7 @@ import javax.swing.*;
 
 import docking.action.*;
 import docking.menu.*;
+import generic.theme.CloseIcon;
 import generic.theme.GColor;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
@@ -32,7 +33,7 @@ import ghidra.util.task.SwingUpdateManager;
  */
 class DockableToolBarManager {
 	private static final Color BUTTON_COLOR = new GColor("color.fg.button");
-	private static final Icon CLOSE_ICON = new CloseIcon(false, BUTTON_COLOR);
+	private static final Icon CLOSE_ICON = new CloseIcon(false);
 	private Icon MENU_ICON = new DropDownMenuIcon(BUTTON_COLOR);
 	private GenericHeader dockableHeader;
 	private ToolBarManager toolBarManager;

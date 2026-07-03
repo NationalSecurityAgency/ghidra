@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-. ../../../Debugger-rmi-trace/data/support/setuputils.sh
+. $MODULE_Debugger_rmi_trace_HOME/data/support/setuputils.sh
 
 add-gdb-init-args() {
 	args+=(-q)
@@ -24,6 +24,7 @@ add-gdb-init-args() {
 	args+=(-ex "python if not 'ghidragdb' in locals(): exit(253)")
 	args+=(-ex "set architecture $OPT_ARCH")
 	args+=(-ex "set endian $OPT_ENDIAN")
+	args+=($OPT_GDB_ARGS)
 }
 
 add-gdb-image-and-args() {
@@ -64,7 +65,7 @@ add-gdb-start-if-image() {
 
 add-gdb-tail-args() {
 	args+=(-ex "set confirm on")
-	args+=(-ex "set pagination on")
+#	args+=(-ex "set pagination on")
 }
 
 compute-gdb-usermode-args() {

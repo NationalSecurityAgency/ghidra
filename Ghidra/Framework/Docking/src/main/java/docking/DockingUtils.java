@@ -124,6 +124,10 @@ public class DockingUtils {
 	private static final KeyStroke REDO_KEYSTROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_Y, CONTROL_KEY_MODIFIER_MASK);
 
+	private static boolean globalTooltipsEnabled = true;
+
+	private static boolean useCombinedAltKeysEnabled;
+
 	public static JSeparator createToolbarSeparator() {
 		Dimension sepDim = new Dimension(2, ICON_SIZE + 2);
 		JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
@@ -355,11 +359,34 @@ public class DockingUtils {
 	}
 
 	/**
-	 * Sets the application-wide Java tooltip enablement.  
-	 * @param enabled true if enabled; false prevents all Java tooltips
+	 * Not meant for public consumption.   This is for application code to control tooltips on 
+	 * behalf of the user.
+	 * @param enabled true if enabled
 	 */
-	public static void setTipWindowEnabled(boolean enabled) {
+	public static void setGlobalTooltipEnabledOption(boolean enabled) {
+		globalTooltipsEnabled = enabled;
 		Swing.runLater(() -> ToolTipManager.sharedInstance().setEnabled(enabled));
+	}
+
+	/**
+	 * Not meant for public consumption.   This is for application code to control how key bindings
+	 * that use the Alt key get mapped.  When true, a key binding that uses the Alt key will get 
+	 * mapped to the left and right alt keys. 
+	 * @param enabled true if enabled
+	 */
+	public static void setCombinedAltKeysEnabled(boolean enabled) {
+		useCombinedAltKeysEnabled = enabled;
+	}
+
+	/** 
+	 * Note: calling this method has no effect
+	 * @param enabled true if enabled; false prevents all Java tooltips
+	 * @deprecated this method is not longer supported; controlling application tooltips should be
+	 * done through tool options in the UI
+	 */
+	@Deprecated(forRemoval = true, since = "12")
+	public static void setTipWindowEnabled(boolean enabled) {
+		// no-op
 	}
 
 	/**
@@ -367,7 +394,20 @@ public class DockingUtils {
 	 * @return true if application-wide Java tooltips are enabled.
 	 */
 	public static boolean isTipWindowEnabled() {
-		return Swing.runNow(() -> ToolTipManager.sharedInstance().isEnabled());
+		// Note: using this call would allow for client code to control tooltip enablement.  We use
+		// tool options to control enablement, which is reflected in the boolean used below.
+		// return Swing.runNow(() -> ToolTipManager.sharedInstance().isEnabled());
+
+		return globalTooltipsEnabled;
+	}
+
+	/**
+	 * True if the application should map Alt key binding usage to the left and right key. 
+	 * @return true if the application should map Alt key binding usage to the left and right key.
+	 * @see #setCombinedAltKeysEnabled(boolean)
+	 */
+	public static boolean isCombineAltKeysEnabled() {
+		return useCombinedAltKeysEnabled;
 	}
 
 	/** Hides any open tooltip window */

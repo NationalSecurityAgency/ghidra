@@ -255,6 +255,9 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 
 		CommentFieldLocation cfLoc = (CommentFieldLocation) loc;
 		CommentType type = cfLoc.getCommentType();
+		if (type == null) {
+			return;
+		}
 		switch (type) {
 			case PRE:
 				action.getPopupMenuData()

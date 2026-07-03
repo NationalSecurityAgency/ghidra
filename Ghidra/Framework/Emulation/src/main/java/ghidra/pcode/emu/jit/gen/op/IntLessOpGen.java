@@ -15,15 +15,24 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
+import ghidra.pcode.emu.jit.analysis.JitType.IntJitType;
+import ghidra.pcode.emu.jit.analysis.JitType.LongJitType;
+import ghidra.pcode.emu.jit.gen.util.Emitter;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Op;
+import ghidra.pcode.emu.jit.gen.util.Types.TInt;
+import ghidra.pcode.emu.jit.gen.util.Types.TLong;
 import ghidra.pcode.emu.jit.op.JitIntLessOp;
 
 /**
  * The generator for a {@link JitIntLessOp int_less}.
  * 
  * <p>
- * This uses the integer comparison operator generator and simply emits {@link #IFLT}.
+ * This uses the (unsigned) integer comparison operator generator and simply emits
+ * {@link Op#iflt(Emitter) iflt}.
  */
-public enum IntLessOpGen implements CompareIntBinOpGen<JitIntLessOp> {
+public enum IntLessOpGen implements IntCompareBinOpGen<JitIntLessOp> {
 	/** The generator singleton */
 	GEN;
 
@@ -33,12 +42,14 @@ public enum IntLessOpGen implements CompareIntBinOpGen<JitIntLessOp> {
 	}
 
 	@Override
-	public int icmpOpcode() {
-		throw new AssertionError();
+	public <N2 extends Next, N1 extends Ent<N2, TInt>, N0 extends Ent<N1, TInt>>
+			Emitter<Ent<N2, TInt>> opForInt(Emitter<N0> em, IntJitType type) {
+		return genIntViaUcmpThenIf(em, Op::iflt);
 	}
 
 	@Override
-	public int ifOpcode() {
-		return IFLT;
+	public <N2 extends Next, N1 extends Ent<N2, TLong>, N0 extends Ent<N1, TLong>>
+			Emitter<Ent<N2, TInt>> opForLong(Emitter<N0> em, LongJitType type) {
+		return genLongViaUcmpThenIf(em, Op::iflt);
 	}
 }

@@ -40,8 +40,9 @@ class DBTraceObjectValueWriteBehindCache {
 	private final AsyncReference<Boolean, Void> busy = new AsyncReference<>(false);
 	private volatile boolean flushing = false;
 
-	private final Map<DBTraceObject, Map<String, NavigableMap<Long, DBTraceObjectValueBehind>>> cachedValues =
-		new HashMap<>();
+	private final Map<DBTraceObject,
+		Map<String, NavigableMap<Long, DBTraceObjectValueBehind>>> cachedValues =
+			new HashMap<>();
 
 	public DBTraceObjectValueWriteBehindCache(DBTraceObjectManager manager) {
 		this.manager = manager;
@@ -51,7 +52,7 @@ class DBTraceObjectValueWriteBehindCache {
 	}
 
 	private void workLoop() {
-		while (!manager.trace.isClosed()) {
+		while (!manager.trace.isClosing()) {
 			try {
 				synchronized (cachedValues) {
 					if (cachedValues.isEmpty()) {
@@ -69,7 +70,7 @@ class DBTraceObjectValueWriteBehindCache {
 						cachedValues.wait(left);
 					}
 				}
-				if (manager.trace.isClosed()) {
+				if (manager.trace.isClosing()) {
 					break;
 				}
 				writeBatch();

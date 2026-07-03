@@ -41,18 +41,30 @@ public class GoParamStorageAllocator {
 	private String archDescription;
 
 	/**
-	 * Creates a new golang function call storage allocator for the specified Ghidra Language.
+	 * Creates a new Go function call storage allocator for the specified Ghidra Language.
 	 * <p>
 	 * See {@link GoRegisterInfoManager#getRegisterInfoForLang(Language, GoVer)}
 	 * 
 	 * @param program {@link Program}
-	 * @param goVersion version of go used to create the program
+	 * @param goVersion version of Go used to create the program
 	 */
 	public GoParamStorageAllocator(Program program, GoVer goVersion) {
 		Language lang = program.getLanguage();
 
 		this.callspecInfo =
 			GoRegisterInfoManager.getInstance().getRegisterInfoForLang(lang, goVersion);
+		this.stackOffset = callspecInfo.getStackInitialOffset();
+		this.regs = List.of(callspecInfo.getIntRegisters(), callspecInfo.getFloatRegisters());
+		this.isBigEndian = lang.isBigEndian();
+		this.archDescription =
+			"%s_%d".formatted(lang.getLanguageDescription().getProcessor().toString(),
+				lang.getLanguageDescription().getSize());
+	}
+
+	public GoParamStorageAllocator(GoRegisterInfo callspecInfo, Program program) {
+		Language lang = program.getLanguage();
+
+		this.callspecInfo = callspecInfo;
 		this.stackOffset = callspecInfo.getStackInitialOffset();
 		this.regs = List.of(callspecInfo.getIntRegisters(), callspecInfo.getFloatRegisters());
 		this.isBigEndian = lang.isBigEndian();

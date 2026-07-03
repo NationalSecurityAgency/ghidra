@@ -85,14 +85,9 @@ public class LibrarySearchPathManager {
 				}
 			}
 			catch (MalformedURLException e) {
-				try {
-					File f = new File(path);
-					if (f.exists() && f.isAbsolute()) {
-						fsrl = fsService.getLocalFSRL(f.getCanonicalFile());
-					}
-				}
-				catch (IOException e2) {
-					log.appendException(e2);
+				File f = new File(path);
+				if (f.exists() && f.isAbsolute()) {
+					fsrl = fsService.getLocalFSRL(f);
 				}
 			}
 			if (fsrl != null) {

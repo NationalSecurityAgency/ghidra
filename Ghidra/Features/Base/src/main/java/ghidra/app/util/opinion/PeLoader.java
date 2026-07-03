@@ -19,10 +19,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
+import org.apache.commons.io.FilenameUtils;
+
 import com.google.common.primitives.Bytes;
 
-import ghidra.app.plugin.core.analysis.rust.RustConstants;
-import ghidra.app.plugin.core.analysis.rust.RustUtilities;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
@@ -37,7 +37,6 @@ import ghidra.app.util.bin.format.pe.ImageCor20Header.ImageCor20Flags;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugDirectoryParser;
-import ghidra.app.util.bin.format.swift.SwiftUtils;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
@@ -103,16 +102,18 @@ public class PeLoader extends AbstractPeDebugLoader {
 	}
 
 	@Override
-	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log)
+	protected void load(Program program, ImporterSettings settings)
 			throws IOException, CancelledException {
+
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
 
 		if (monitor.isCancelled()) {
 			return;
 		}
 
-		PortableExecutable pe = new PortableExecutable(provider, getSectionLayout(), false,
-			shouldParseCliHeaders(options));
+		PortableExecutable pe = new PortableExecutable(settings.provider(), getSectionLayout(),
+			false, shouldParseCliHeaders(settings.options()));
 
 		NTHeader ntHeader = pe.getNTHeader();
 		if (ntHeader == null) {
@@ -121,7 +122,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		OptionalHeader optionalHeader = ntHeader.getOptionalHeader();
 
 		monitor.setMessage("Completing PE header parsing...");
-		FileBytes fileBytes = createFileBytes(provider, program, monitor);
+		FileBytes fileBytes = createFileBytes(settings.provider(), program, monitor);
 		try {
 			Map<SectionHeader, Address> sectionToAddress =
 				processMemoryBlocks(pe, program, fileBytes, monitor, log);
@@ -146,14 +147,16 @@ public class PeLoader extends AbstractPeDebugLoader {
 			processImports(optionalHeader, program, monitor, log);
 			processDelayImports(optionalHeader, program, monitor, log);
 			processRelocations(optionalHeader, program, monitor, log);
-			processDebug(optionalHeader, ntHeader, sectionToAddress, program, options, monitor);
+			processDebug(optionalHeader, ntHeader, sectionToAddress, program, settings.options(),
+				monitor);
 			processProperties(optionalHeader, ntHeader, program, monitor);
 			processComments(program.getListing(), monitor);
 			processSymbols(ntHeader, sectionToAddress, program, monitor, log);
 
 			processEntryPoints(ntHeader, program, monitor);
 			String compiler =
-				CompilerOpinion.getOpinion(pe, provider, program, monitor, log).toString();
+				CompilerOpinion.getOpinion(pe, settings.provider(), program, monitor, log)
+						.toString();
 			program.setCompiler(compiler);
 		}
 		catch (AddressOverflowException e) {
@@ -183,12 +186,14 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
-		List<Option> list =
-			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
+		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
+			loadIntoProgram, mirrorFsLayout);
 		if (!loadIntoProgram) {
-			list.add(new Option(PARSE_CLI_HEADERS_OPTION_NAME, PARSE_CLI_HEADERS_OPTION_DEFAULT,
-				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-parseCliHeaders"));
+			list.add(Option.newBoolean(PARSE_CLI_HEADERS_OPTION_NAME)
+					.value(PARSE_CLI_HEADERS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-parseCliHeaders"))
+					.build());
 		}
 		return list;
 	}
@@ -210,8 +215,9 @@ public class PeLoader extends AbstractPeDebugLoader {
 	}
 
 	@Override
-	protected boolean isCaseInsensitiveLibraryFilenames() {
-		return true;
+	protected Comparator<String> getLibraryNameComparator() {
+		return (s1, s2) -> String.CASE_INSENSITIVE_ORDER.compare(FilenameUtils.getName(s1),
+			FilenameUtils.getName(s2));
 	}
 
 	private boolean shouldParseCliHeaders(List<Option> options) {
@@ -534,13 +540,26 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return;
 		}
 
-		AddressFactory af = program.getAddressFactory();
-		AddressSpace space = af.getDefaultAddressSpace();
+		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
 		SymbolTable symTable = program.getSymbolTable();
-		Listing listing = program.getListing();
 		ReferenceManager refManager = program.getReferenceManager();
+		ExternalManager extManager = program.getExternalManager();
+		FunctionManager funcManager = program.getFunctionManager();
 
+		// If we have any forwarders, set up the EXTERNAL block
 		ExportInfo[] exports = edd.getExports();
+		Address extAddr = null;
+		long forwardedCount = Arrays.stream(exports).filter(ExportInfo::isForwarded).count();
+		if (forwardedCount > 0) {
+			try {
+				extAddr = MemoryBlockUtils.addExternalBlock(program,
+					forwardedCount * program.getDefaultPointerSize(), log);
+			}
+			catch (Exception e) {
+				log.appendException(e);
+			}
+		}
+
 		for (ExportInfo export : exports) {
 			if (monitor.isCancelled()) {
 				return;
@@ -548,65 +567,51 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 			Address address = space.getAddress(export.getAddress());
 			setComment(CommentType.PRE, address, export.getComment());
-			symTable.addExternalEntryPoint(address);
 
-			String name = export.getName();
-			try {
-				symTable.createLabel(address, name, SourceType.IMPORTED);
-			}
-			catch (InvalidInputException e) {
-				// Don't create invalid symbol
-			}
-
-			try {
-				symTable.createLabel(address, SymbolUtilities.ORDINAL_PREFIX + export.getOrdinal(),
-					SourceType.IMPORTED);
-			}
-			catch (InvalidInputException e) {
-				// Don't create invalid symbol
-			}
-
-			// When exported symbol is a forwarder,
-			// a string exists at the address of the export
-			// Therefore, create a string data object to prevent
-			// disassembler from attempting to create
-			// code here. If code was created, it would be incorrect
-			// and offcut.
 			if (export.isForwarded()) {
-				try {
-					listing.createData(address, TerminatedStringDataType.dataType, -1);
-					Data data = listing.getDataAt(address);
-					if (data != null) {
-						Object obj = data.getValue();
-						if (obj instanceof String) {
-							String str = (String) obj;
-							int dotpos = str.indexOf('.');
+				Data data =
+					PeUtils.createData(program, address, TerminatedStringDataType.dataType, log);
+				if (extAddr != null && data != null && data.getValue() instanceof String str) {
+					int dotpos = str.indexOf('.');
+					if (dotpos < 0) {
+						dotpos = 0; // TODO
+					}
+					String libName = str.substring(0, dotpos) + ".dll";
+					String extSymbolName = str.substring(dotpos + 1);
 
-							if (dotpos < 0) {
-								dotpos = 0;//TODO
-							}
-
-							// get the name of the dll
-							String dllName = str.substring(0, dotpos) + ".dll";
-
-							// get the name of the symbol
-							String expName = str.substring(dotpos + 1);
-
-							try {
-								refManager.addExternalReference(address, dllName.toUpperCase(),
-									expName, null, SourceType.IMPORTED, 0, RefType.DATA);
-							}
-							catch (DuplicateNameException e) {
-								log.appendMsg("External location not created: " + e.getMessage());
-							}
-							catch (InvalidInputException e) {
-								log.appendMsg("External location not created: " + e.getMessage());
-							}
-						}
+					try {
+						symTable.addExternalEntryPoint(extAddr);
+						Function function = funcManager.createFunction(export.getName(), extAddr,
+							new AddressSet(extAddr), SourceType.IMPORTED);
+						ExternalLocation loc = extManager.addExtLocation(libName.toUpperCase(),
+							extSymbolName, null, SourceType.IMPORTED);
+						function.setThunkedFunction(loc.createFunction());
+						symTable.createLabel(extAddr,
+							SymbolUtilities.ORDINAL_PREFIX + export.getOrdinal(),
+							SourceType.IMPORTED);
+						refManager.addMemoryReference(address, extAddr, RefType.DATA,
+							SourceType.IMPORTED, 0);
+						setComment(CommentType.PLATE, extAddr, export.getComment());
+					}
+					catch (InvalidInputException | DuplicateNameException
+							| OverlappingFunctionException e) {
+						log.appendMsg("External location not created: " + e.getMessage());
+					}
+					finally {
+						extAddr = extAddr.add(program.getDefaultPointerSize());
 					}
 				}
-				catch (CodeUnitInsertionException e) {
-					// Nothing to do...just continue on
+			}
+			else {
+				symTable.addExternalEntryPoint(address);
+
+				try {
+					symTable.createLabel(address, export.getName(), SourceType.IMPORTED);
+					symTable.createLabel(address,
+						SymbolUtilities.ORDINAL_PREFIX + export.getOrdinal(), SourceType.IMPORTED);
+				}
+				catch (InvalidInputException e) {
+					// Don't create invalid symbol
 				}
 			}
 		}
@@ -668,67 +673,69 @@ public class PeLoader extends AbstractPeDebugLoader {
 				x = ((sections[i].getCharacteristics() &
 					SectionFlags.IMAGE_SCN_MEM_EXECUTE.getMask()) != 0x0);
 
-				int rawDataSize = sections[i].getSizeOfRawData();
-				int rawDataPtr = sections[i].getPointerToRawData();
+				int rawSize = sections[i].getSizeOfRawData();
+				int rawPtr = sections[i].getPointerToRawData();
+				long fileBytesSize = fileBytes.getSize();
 				virtualSize = sections[i].getVirtualSize();
 				MemoryBlock block = null;
-				if (rawDataSize != 0 && rawDataPtr != 0) {
-					int dataSize =
-						((rawDataSize > virtualSize && virtualSize > 0) || rawDataSize < 0)
-								? virtualSize
-								: rawDataSize;
-					if (ntHeader.checkRVA(dataSize) ||
-						(0 < dataSize && dataSize < pe.getFileLength())) {
-						if (!ntHeader.checkRVA(dataSize)) {
-							Msg.warn(this, "OptionalHeader.SizeOfImage < size of " +
-								sections[i].getName() + " section");
-						}
-						block = MemoryBlockUtils.createInitializedBlock(prog, false, sectionName,
-							address, fileBytes, rawDataPtr, dataSize, "", "", r, w, x, log);
-						sectionToAddress.put(sections[i], address);
-					}
-					if (rawDataSize == virtualSize) {
-						continue;
-					}
-					else if (rawDataSize > virtualSize) {
-						// virtual size fully initialized
-						continue;
-					}
-					// remainder of virtual size is uninitialized
-					if (rawDataSize < 0) {
-						Msg.error(this,
-							"Section[" + i + "] has invalid size " +
-								Integer.toHexString(rawDataSize) + " (" +
-								Integer.toHexString(virtualSize) + ")");
-						break;
-					}
-					virtualSize -= rawDataSize;
-					address = address.add(rawDataSize);
-				}
 
 				if (virtualSize == 0) {
-					Msg.error(this, "Section[" + i + "] has size zero");
+					Msg.error(this, "Section '%s' has size zero".formatted(sectionName));
 				}
-				else {
-					int dataSize = (virtualSize > 0 || rawDataSize < 0) ? virtualSize : 0;
-					if (dataSize > 0) {
-						if (block != null) {
-							MemoryBlock paddingBlock = MemoryBlockUtils.createInitializedBlock(prog,
-								false, sectionName, address, dataSize, "", "", r, w, x, log);
-							if (paddingBlock != null) {
-								try {
-									prog.getMemory().join(block, paddingBlock);
-								}
-								catch (Exception e) {
-									log.appendMsg(e.getMessage());
-								}
+
+				// Malware can deliberately set invalid or abnormally large values of SizeOfRawData 
+				// to break static analysis. If we suspect that is happening, default to the
+				// VirtualSize. This may result in padding bytes being replaced by garbage bytes,
+				// but it will allow the binary to be imported and analyzed.
+				if (rawSize < 0) {
+					log.appendMsg("WARNING: Section '%s' has negative SizeOfRawData (0x%x)"
+							.formatted(sectionName, rawSize));
+					log.appendMsg("Using '%s' VirtualSize (0x%x) in its place"
+							.formatted(sectionName, virtualSize));
+					rawSize = virtualSize;
+				}
+
+				// If PointerToRawData and SizeOfRawData are set, make an initialized block from 
+				// the FileBytes
+				if (rawSize != 0 && rawPtr != 0) {
+					int n = rawSize > virtualSize && virtualSize > 0 ? virtualSize : rawSize;
+					if (rawPtr + n > fileBytesSize) {
+						int orig = n;
+						n = (int) (fileBytesSize - rawPtr);
+						log.appendMsg(
+							"WARNING: Section '%s' (0x%x) extends beyond end of file...truncating to 0x%x"
+									.formatted(sectionName, orig, n));
+					}
+					if (n > 0) {
+						block = MemoryBlockUtils.createInitializedBlock(prog, false, sectionName,
+							address, fileBytes, rawPtr, n, "", "", r, w, x, log);
+						sectionToAddress.put(sections[i], address);
+						virtualSize -= n;
+						address = address.add(n);
+					}
+				}
+
+				// If there is any virtual size left, map in the padding bytes
+				if (virtualSize > 0) {
+					if (block != null) {
+						// Put the padding bytes in the same block we created above
+						MemoryBlock paddingBlock = MemoryBlockUtils.createInitializedBlock(prog,
+							false, sectionName, address, virtualSize, "", "", r, w, x, log);
+						if (paddingBlock != null) {
+							try {
+								prog.getMemory().join(block, paddingBlock);
+							}
+							catch (Exception e) {
+								log.appendMsg(e.getMessage());
 							}
 						}
-						else {
-							MemoryBlockUtils.createUninitializedBlock(prog, false, sectionName,
-								address, dataSize, "", "", r, w, x, log);
-							sectionToAddress.putIfAbsent(sections[i], address);
-						}
+					}
+					else {
+						// We didn't create an initialized block above. Put all the padding in a
+						// new uninitialized block.
+						MemoryBlockUtils.createUninitializedBlock(prog, false, sectionName,
+							address, virtualSize, "", "", r, w, x, log);
+						sectionToAddress.putIfAbsent(sections[i], address);
 					}
 				}
 
@@ -738,7 +745,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			if (optionalHeader.getFileAlignment() != optionalHeader.getSectionAlignment()) {
 				throw new IllegalStateException(ise);
 			}
-			Msg.warn(this, "Section header processing aborted");
+			log.appendMsg("Section header processing aborted");
 		}
 
 		return sectionToAddress;
@@ -917,9 +924,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			BorlandCpp("borland:c++", "borlandcpp"),
 			BorlandUnk("borland:unknown", "borlandcpp"),
 			CLI("cli", "cli"),
-			Rustc(RustConstants.RUST_COMPILER, RustConstants.RUST_COMPILER),
 			GOLANG("golang", "golang"),
-			Swift(SwiftUtils.SWIFT_COMPILER, SwiftUtils.SWIFT_COMPILER),
 			Unknown("unknown", "unknown"),
 
 			// The following values represent the presence of ambiguous indicators
@@ -972,34 +977,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 			BinaryReader br = new BinaryReader(provider, true);
 
 			DOSHeader dh = pe.getDOSHeader();
-
-			// Check for Rust.  Program object is required, which may be null.
-			try {
-				if (program != null && RustUtilities.isRust(program,
-					program.getMemory().getBlock(".rdata"), monitor)) {
-					try {
-						int extensionCount = RustUtilities.addExtensions(program, monitor,
-							RustConstants.RUST_EXTENSIONS_WINDOWS);
-						log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
-					}
-					catch (IOException e) {
-						log.appendMsg("Rust error: " + e.getMessage());
-					}
-					return CompilerEnum.Rustc;
-				}
-			}
-			catch (CancelledException e) {
-				// Move on
-			}
-
-			// Check for Swift
-			List<String> sectionNames =
-				Arrays.stream(pe.getNTHeader().getFileHeader().getSectionHeaders())
-						.map(section -> section.getName())
-						.toList();
-			if (SwiftUtils.isSwift(sectionNames)) {
-				return CompilerEnum.Swift;
-			}
 
 			// Check for managed code (.NET)
 			if (pe.getNTHeader().getOptionalHeader().isCLI()) {
@@ -1154,8 +1131,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 			SectionHeader dataSection = pe.getNTHeader().getFileHeader().getSectionHeader(".data");
 			if (dataSection != null) {
-				try (InputStream is = dataSection.getDataStream()) {
-					buildInfoPresent = GoBuildInfo.isPresent(is);
+				try (ByteProvider bp = dataSection.getDataByteProvider()) {
+					buildInfoPresent = GoBuildInfo.findGoBuildInfoOffset(bp, 512) != -1;
 				}
 				catch (IOException e) {
 					// fail

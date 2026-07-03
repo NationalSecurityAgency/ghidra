@@ -15,6 +15,7 @@
 # limitations under the License.
 ##
 #@title drgn core
+#@image-opt env:OPT_TARGET_IMG
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>drgn-core</tt></h3>
 #@desc   <p>
@@ -25,6 +26,7 @@
 #@menu-group drgn
 #@icon icon.debugger
 #@help drgn#core
+#@depends Debugger-rmi-trace
 #@env OPT_TARGET_IMG:file!="" "Core dump" "The target core dump"
 
 export OPT_TARGET_KIND="coredump" 

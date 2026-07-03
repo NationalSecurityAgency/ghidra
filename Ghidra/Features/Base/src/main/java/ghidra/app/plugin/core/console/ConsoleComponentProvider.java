@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.console;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.PrintWriter;
+import java.io.*;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -26,9 +26,10 @@ import docking.*;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.FindDialog;
-import docking.widgets.TextComponentSearcher;
+import docking.widgets.search.TextComponentSearcher;
 import generic.theme.GIcon;
 import generic.theme.Gui;
+import ghidra.app.script.DecoratingPrintWriter;
 import ghidra.app.services.*;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.main.ConsoleTextPane;
@@ -68,7 +69,6 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 	private Address currentAddress;
 
 	private FindDialog findDialog;
-	private TextComponentSearcher searcher;
 
 	public ConsoleComponentProvider(PluginTool tool, String owner) {
 		super(tool, "Console", owner);
@@ -95,8 +95,8 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 	}
 
 	void init() {
-		stderr = new PrintWriter(new ConsoleWriter(this, true));
-		stdin = new PrintWriter(new ConsoleWriter(this, false));
+		stderr = new ConsolePrintWriter(true);
+		stdin = new ConsolePrintWriter(false);
 
 		/* call this before build() -- we get our Font here */
 		setVisible(true);
@@ -191,8 +191,8 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 
 	private void showFindDialog() {
 		if (findDialog == null) {
-			searcher = new TextComponentSearcher(textPane);
-			findDialog = new FindDialog("Find", searcher);
+			TextComponentSearcher searcher = new TextComponentSearcher(textPane);
+			findDialog = new FindDialog("Console Find", searcher);
 		}
 		getTool().showDialog(findDialog);
 	}
@@ -219,8 +219,8 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 		checkVisible();
 		textPane.setText("");
 
-		if (searcher != null) {
-			searcher.clearHighlights();
+		if (findDialog != null) {
+			findDialog.close(); // this will also dispose of any search highlights
 		}
 	}
 
@@ -228,6 +228,11 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 	public void print(String msg) {
 		checkVisible();
 		textPane.addPartialMessage(msg);
+	}
+
+	public void print(String msg, Color c) {
+		checkVisible();
+		textPane.addPartialMessage(msg, c);
 	}
 
 	@Override
@@ -329,6 +334,84 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 //=================================================================================================
 // Inner Classes
 //=================================================================================================
+
+	private class ConsolePrintWriter extends DecoratingPrintWriter {
+
+		private ColoringConsoleWriter writer;
+
+		ConsolePrintWriter(boolean error) {
+			this(new ColoringConsoleWriter(error));
+		}
+
+		private ConsolePrintWriter(ColoringConsoleWriter writer) {
+			super(writer);
+			this.writer = writer;
+		}
+
+		@Override
+		public void println(String s, Color c) {
+			try {
+				writer.setColor(c);
+				print(s);
+				println();
+			}
+			finally {
+				writer.setColor(null);
+			}
+		}
+
+		@Override
+		public void print(String s, Color c) {
+			try {
+				writer.setColor(c);
+				print(s);
+			}
+			finally {
+				writer.setColor(null);
+			}
+		}
+	}
+
+	private class ColoringConsoleWriter extends Writer {
+
+		private Color color;
+		private boolean error;
+
+		public ColoringConsoleWriter(boolean error) {
+			this.error = error;
+		}
+
+		void setColor(Color color) {
+			this.color = color;
+		}
+
+		@Override
+		public void write(char[] cbuf, int off, int len) throws IOException {
+			String s = new String(cbuf, off, len);
+			if (error) {
+				printError(s);
+				return;
+			}
+
+			if (color == null) {
+				print(s);
+				return;
+			}
+
+			print(s, color);
+		}
+
+		@Override
+		public void flush() throws IOException {
+			// stub
+		}
+
+		@Override
+		public void close() throws IOException {
+			clearMessages();
+		}
+
+	}
 
 	private class GoToMouseListener extends MouseAdapter {
 		@Override

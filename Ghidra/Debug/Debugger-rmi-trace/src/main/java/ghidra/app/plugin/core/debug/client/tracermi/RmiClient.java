@@ -22,7 +22,7 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.*;
 
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 
 import com.google.protobuf.ByteString;
 

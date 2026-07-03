@@ -15,9 +15,9 @@
  */
 package ghidra.app.plugin.core.format;
 
-import ghidra.util.HelpLocation;
-
 import java.math.BigInteger;
+
+import ghidra.util.HelpLocation;
 
 /**
  * Converts byte values to Integer representation in decimal format.
@@ -28,8 +28,7 @@ public class IntegerFormatModel implements UniversalDataFormatModel {
 	private int symbolSize;
 
 	public IntegerFormatModel() {
-
-		symbolSize = 11; // 1 char for sign
+		this.symbolSize = 11; // 1 char for sign
 	}
 
 	/**
@@ -93,59 +92,8 @@ public class IntegerFormatModel implements UniversalDataFormatModel {
 		// determine what bytes to get
 		int i = block.getInt(index);
 
-		String str = Integer.toString(i);
+		return DataFormatModel.pad(Integer.toString(i), symbolSize, " ");
 
-		return pad(str);
-
-	}
-
-	/**
-	 * Returns false to allow no values to be changed.
-	 */
-	@Override
-	public boolean isEditable() {
-		return false;
-	}
-
-	/**
-	 * Overwrite a value in a ByteBlock.
-	 * @param block block to change
-	 * @param index byte index into the block
-	 * @param pos The position within the unit where c will be the
-	 * new character.
-	 * @param c new character to put at pos param
-	 * @return true if the replacement is legal, false if the
-	 * replacement value would not make sense for this format, e.g.
-	 * attempt to put a 'z' in a hex unit.
-	 * @throws ByteBlockAccessException if the block cannot be updated
-	 * @throws IndexOutOfBoundsException if index is not valid for the
-	 * block
-	 */
-	@Override
-	public boolean replaceValue(ByteBlock block, BigInteger index, int pos, char c)
-			throws ByteBlockAccessException {
-
-		return false;
-	}
-
-	/**
-	 * Get number of units in a group. A group may represent
-	 * multiple units shown as one entity. This format does not
-	 * support groups.
-	 */
-	@Override
-	public int getGroupSize() {
-		return 1;
-	}
-
-	/**
-	 * Set the number of units in a group. This format does not
-	 * support groups.
-	 * @throws UnsupportedOperationException 
-	 */
-	@Override
-	public void setGroupSize(int groupSize) {
-		throw new UnsupportedOperationException("groups are not supported");
 	}
 
 	/**
@@ -156,46 +104,8 @@ public class IntegerFormatModel implements UniversalDataFormatModel {
 		return 1;
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.format.DataFormatModel#validateBytesPerLine(int)
-	 */
-	@Override
-	public boolean validateBytesPerLine(int bytesPerLine) {
-		return bytesPerLine % 4 == 0;
-	}
-
-	/////////////////////////////////////////////////////////////////
-	// *** private methods ***
-	/////////////////////////////////////////////////////////////////
-
-	/**
-	 * Returns value with leading zeros if the value
-	 * represents a positive number; returns value
-	 * with leading blanks if the value represents a
-	 * negative number.
-	 */
-	private String pad(String value) {
-		StringBuffer sb = new StringBuffer();
-		int len = symbolSize - value.length();
-
-		for (int i = 0; i < len; i++) {
-			sb.append(" ");
-		}
-		sb.append(value);
-		return (sb.toString());
-	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.format.DataFormatModel#getHelpLocation()
-	 */
 	@Override
 	public HelpLocation getHelpLocation() {
 		return new HelpLocation("ByteViewerPlugin", "Integer");
 	}
-
-	@Override
-	public void dispose() {
-		// nothing to do
-	}
-
 }

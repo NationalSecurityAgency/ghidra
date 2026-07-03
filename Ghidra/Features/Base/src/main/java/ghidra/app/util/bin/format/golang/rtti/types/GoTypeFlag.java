@@ -18,37 +18,66 @@ package ghidra.app.util.bin.format.golang.rtti.types;
 import java.util.EnumSet;
 import java.util.Set;
 
+import ghidra.app.util.bin.format.golang.GoVer;
+import ghidra.app.util.bin.format.golang.GoVerRange;
+
 /**
  * Enum defining the various bitflags held in a GoType's tflag
  */
 public enum GoTypeFlag {
-	Uncommon(1 << 0),		// 1
-	ExtraStar(1 << 1),		// 2
-	Named(1 << 2),			// 4
-	RegularMemory(1 << 3);	// 8
+
+	Uncommon(1 << 0, GoVerRange.ALL),						// 1
+	ExtraStar(1 << 1, GoVerRange.ALL),						// 2
+	Named(1 << 2, GoVerRange.ALL),							// 4
+	RegularMemory(1 << 3, GoVerRange.ALL),					// 8
+	UnrolledBitmap(1 << 4, GoVerRange.parse("1.22-1.23")),	// 16
+	GCMaskOnDemand(1 << 4, GoVerRange.parse("1.24-")),		// 16
+
+	// FUTURE: "value of this type is stored directly in the data field of an interface instead of
+	// indirectly", same as testing Size_ == PtrBytes == goarch.PtrSize
+	DirectIFace(1 << 5, GoVerRange.parse("1.24-"));			// 32
 
 	private final int value;
+	private GoVerRange validVersions;
 
-	GoTypeFlag(int i) {
+	GoTypeFlag(int i, GoVerRange validVersions) {
 		this.value = i;
+		this.validVersions = validVersions;
 	}
 
 	public int getValue() {
 		return value;
 	}
 
-	public boolean isSet(int i) {
-		return (i & value) != 0;
+	/**
+	 * Returns true if this enum instance is set in the supplied integer
+	 * (for the specified go version)
+	 * 
+	 * @param i int packed flag
+	 * @param ver version of this binary
+	 * @return boolean true if this flag is set
+	 */
+	public boolean isSet(int i, GoVer ver) {
+		return validVersions.contains(ver) && (i & value) != 0;
 	}
 
-	public static boolean isValid(int b) {
-		return b <= 15; // TODO: make better const
+	//----------------------------------------------------------
+
+	private static final GoTypeFlag[] lookupvalues = values();
+
+	public static boolean isValid(int b, GoVer ver) {
+		for (GoTypeFlag flag : lookupvalues) {
+			if (flag.validVersions.contains(ver)) {
+				b &= ~flag.value;
+			}
+		}
+		return b == 0;
 	}
 
-	public static Set<GoTypeFlag> parseFlags(int b) {
+	public static Set<GoTypeFlag> parseFlags(int b, GoVer ver) {
 		EnumSet<GoTypeFlag> result = EnumSet.noneOf(GoTypeFlag.class);
-		for (GoTypeFlag flag : values()) {
-			if (flag.isSet(b)) {
+		for (GoTypeFlag flag : lookupvalues) {
+			if (flag.isSet(b, ver)) {
 				result.add(flag);
 			}
 		}

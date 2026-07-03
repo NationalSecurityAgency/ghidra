@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.collections4.*;
+import org.apache.commons.collections4.map.LazyMap;
 
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
@@ -241,10 +241,7 @@ class ArticulatedEdgeRouter<V extends VisualVertex, E extends VisualEdge<V>>
 		Layout<V, E> layout = viewer.getGraphLayout();
 		Graph<V, E> graph = layout.getGraph();
 
-		Set<V> prototype = new HashSet<>();
-		Factory<Set<V>> factory = FactoryUtils.prototypeFactory(prototype);
-		Map<E, Set<V>> map = MapUtils.lazyMap(new HashMap<E, Set<V>>(), factory);
-
+		LazyMap<E, Set<V>> map = LazyMap.lazyMap(new HashMap<E, Set<V>>(), () -> new HashSet<>());
 		Map<V, Rectangle> vertexBoundsMap = getVertexBounds();
 		Set<Entry<V, Rectangle>> entrySet = vertexBoundsMap.entrySet();
 		for (Entry<V, Rectangle> entry : entrySet) {

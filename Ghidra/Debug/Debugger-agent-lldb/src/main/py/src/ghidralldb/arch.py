@@ -15,7 +15,7 @@
 ##
 from typing import Dict, List, Optional, Tuple
 from ghidratrace.client import Address, RegVal
-import lldb
+import lldb #  type: ignore  # no stubs available from upstream/SWIG
 
 from . import util
 
@@ -308,6 +308,8 @@ class DefaultRegisterMapper(object):
 
     def map_value_back(self, proc: lldb.SBProcess, name: str,
                        value: bytes) -> RegVal:
+        if self.byte_order == 'little':
+            value = bytes(reversed(value))
         return RegVal(self.map_name_back(proc, name), value)
 
 

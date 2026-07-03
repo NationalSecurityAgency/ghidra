@@ -37,6 +37,7 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.model.util.PropertyMap;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.SaveableColor;
 import ghidra.util.exception.NoValueException;
 import ghidra.util.task.TaskMonitor;
@@ -992,8 +993,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 		ProgramDB pdb = (ProgramDB) program;
 		Lock lock = pdb.getLock();
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 
 			Instruction instructionAt = pdb.getListing().getInstructionAt(addr(0x2000));
 			assertEquals(FlowOverride.NONE, instructionAt.getFlowOverride());
@@ -1007,9 +1007,6 @@ public class CodeManagerTest extends AbstractGenericTest {
 			instructionAt = pdb.getListing().getInstructionAt(addr(0x2000));
 			assertEquals(FlowOverride.CALL, instructionAt.getFlowOverride());
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Test
@@ -1020,9 +1017,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 		ProgramDB pdb = (ProgramDB) program;
 		Lock lock = pdb.getLock();
 
-		lock.acquire();
-		try {
-
+		try (Closeable c = lock.write()) {
 			Instruction instructionAt = pdb.getListing().getInstructionAt(addr(0x2000));
 			assertEquals(FlowOverride.NONE, instructionAt.getFlowOverride());
 
@@ -1030,9 +1025,6 @@ public class CodeManagerTest extends AbstractGenericTest {
 
 			instructionAt = pdb.getListing().getInstructionAt(addr(0x2002));
 			assertEquals(null, instructionAt);
-		}
-		finally {
-			lock.release();
 		}
 	}
 

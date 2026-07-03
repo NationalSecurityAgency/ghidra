@@ -26,18 +26,20 @@
 #@menu-group lldb
 #@icon icon.debugger
 #@help lldb#local
+#@depends Debugger-rmi-trace
 #@enum StartCmd:str "process launch" "process launch --stop-at-entry"
 #@arg :file "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_LLDB_PATH:file="lldb" "lldb command" "The path to lldb. Omit the full path to resolve using the system PATH."
+#@env OPT_LLDB_ARGS:str="" "lldb cmd args" "Arguments passed to lldb (versus the target)"
 #@env OPT_START_CMD:StartCmd="process launch" "Run command" "The lldb command to actually run the target."
 #@env OPT_EXTRA_TTY:bool=false "Target TTY" "Provide a separate terminal emulator for the target."
 #@tty TTY_TARGET if env:OPT_EXTRA_TTY
 
 . ../support/lldbsetuputils.sh
 
-pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
-pypathLldb=$(ghidra-module-pypath "Debug/Debugger-agent-lldb")
+pypathTrace=$(ghidra-module-pypath "Debugger-rmi-trace")
+pypathLldb=$(ghidra-module-pypath)
 export PYTHONPATH=$pypathLldb:$pypathTrace:$PYTHONPATH
 
 target_image="$1"

@@ -24,7 +24,6 @@ import ghidra.framework.remote.User;
 import ghidra.framework.store.*;
 import ghidra.framework.store.local.*;
 import ghidra.server.Repository;
-import ghidra.server.RepositoryManager;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.UserAccessException;
 
@@ -39,7 +38,7 @@ public class RepositoryFile {
 	private LocalFileSystem fileSystem;
 	private RepositoryFolder parent;
 	private String name;
-	private LocalDatabaseItem databaseItem;
+	private LocalFolderItem folderItem;
 	private RepositoryItem repositoryItem;
 	private boolean deleted = false;
 
@@ -69,22 +68,19 @@ public class RepositoryFile {
 			if (deleted) {
 				throw new FileNotFoundException(getPathname() + " not found");
 			}
-			if (databaseItem == null) {
+			if (folderItem == null) {
 				repositoryItem = null;
-				LocalFolderItem folderItem = fileSystem.getItem(parent.getPathname(), name);
-				if (folderItem == null || !folderItem.isVersioned() ||
-					!(folderItem instanceof LocalDatabaseItem)) {
+				folderItem = fileSystem.getItem(parent.getPathname(), name);
+				if (folderItem == null) {
 					// must build pathname just in case folderItem does not exist
 					String pathname = parent.getPathname();
 					if (pathname.length() != 1) {
 						pathname += "/";
 					}
 					pathname += name;
-					RepositoryManager.log(repository.getName(), pathname,
-						"file is corrupt or unsupported", null);
+					repository.log(pathname, "file is corrupt or unsupported", null);
 					throw new FileNotFoundException(pathname + " is corrupt or unsupported");
 				}
-				this.databaseItem = (LocalDatabaseItem) folderItem;
 			}
 		}
 	}
@@ -127,16 +123,33 @@ public class RepositoryFile {
 		synchronized (fileSystem) {
 			try {
 				validate();
-				if (repositoryItem == null) {
-					repositoryItem =
-						new RepositoryItem(parent.getPathname(), name, databaseItem.getFileID(),
-							RepositoryItem.DATABASE, databaseItem.getContentType(),
-							databaseItem.getCurrentVersion(), databaseItem.lastModified());
+				if (repositoryItem == null && folderItem != null) {
+					String textData = null;
+					int itemType = -1;
+					if (folderItem instanceof DatabaseItem) {
+						itemType = RepositoryItem.DATABASE;
+					}
+					else if (folderItem instanceof TextDataItem textItem) {
+						itemType = RepositoryItem.TEXT_DATA_FILE;
+						textData = textItem.getTextData();
+					}
+					else {
+						repository.log(getPathname(),
+							"Unsupported item type: " + folderItem.getClass().getSimpleName(),
+							null);
+					}
+
+					repositoryItem = new RepositoryItem(parent.getPathname(), name,
+						folderItem.getFileID(), itemType, folderItem.getContentType(),
+						folderItem.getCurrentVersion(), folderItem.lastModified(), textData);
 				}
 			}
 			catch (IOException e) {
+				repository.log(getPathname(), "Item failure: " + e.getMessage(), null);
+			}
+			if (repository == null) {
 				repositoryItem = new RepositoryItem(parent.getPathname(), name, null,
-					RepositoryItem.DATABASE, "INVALID", 0, 0);
+					RepositoryItem.FILE, "INVALID", 0, 0, null);
 			}
 			return repositoryItem;
 		}
@@ -157,9 +170,13 @@ public class RepositoryFile {
 		synchronized (fileSystem) {
 			validate();
 			repository.validateReadPrivilege(user);
+			if (!(folderItem instanceof LocalDatabaseItem databaseItem)) {
+				throw new IOException(
+					"Unsupported operation for " + folderItem.getClass().getSimpleName());
+			}
 			LocalManagedBufferFile bf = databaseItem.open(version, minChangeDataVer);
 			repository.log(getPathname(), "version " +
-				(version < 0 ? databaseItem.getCurrentVersion() : version) + " opened read-only",
+					(version < 0 ? folderItem.getCurrentVersion() : version) + " opened read-only",
 				user);
 			return bf;
 		}
@@ -177,7 +194,11 @@ public class RepositoryFile {
 		synchronized (fileSystem) {
 			validate();
 			repository.validateWritePrivilege(user);
-			ItemCheckoutStatus coStatus = databaseItem.getCheckout(checkoutId);
+			if (!(folderItem instanceof LocalDatabaseItem databaseItem)) {
+				throw new IOException(
+					"Unsupported operation for " + folderItem.getClass().getSimpleName());
+			}
+			ItemCheckoutStatus coStatus = folderItem.getCheckout(checkoutId);
 			if (coStatus == null) {
 				throw new IOException("Illegal checkin");
 			}
@@ -202,7 +223,7 @@ public class RepositoryFile {
 		synchronized (fileSystem) {
 			validate();
 			repository.validateReadPrivilege(user);
-			return databaseItem.getVersions();
+			return folderItem.getVersions();
 		}
 	}
 
@@ -216,7 +237,7 @@ public class RepositoryFile {
 	public long length() throws IOException {
 		synchronized (fileSystem) {
 			validate();
-			return databaseItem.length();
+			return folderItem.length();
 		}
 	}
 
@@ -234,7 +255,7 @@ public class RepositoryFile {
 			User userObj = repository.validateWritePrivilege(user);
 
 			if (!userObj.isAdmin()) {
-				Version[] versions = databaseItem.getVersions();
+				Version[] versions = folderItem.getVersions();
 				if (deleteVersion == -1) {
 					for (Version version : versions) {
 						if (!user.equals(version.getUser())) {
@@ -259,21 +280,13 @@ public class RepositoryFile {
 					throw new IOException("Only the oldest or latest version may be deleted");
 				}
 			}
-			String oldPath = getPathname();
-			if (databaseItem == null) {
-				// forced removal by repo Admin
 
-			}
-			else {
-				databaseItem.delete(deleteVersion, user);
+			if (folderItem != null) {
+				folderItem.delete(deleteVersion, user);
 			}
 			deleted = true;
 			repositoryItem = null;
 			parent.fileDeleted(this);
-			RepositoryFile newRf = parent.getFile(name);
-			if (newRf == null) {
-				RepositoryManager.log(repository.getName(), oldPath, "file deleted", user);
-			}
 			parent = null;
 		}
 	}
@@ -300,7 +313,7 @@ public class RepositoryFile {
 			parent.fileMoved(this, oldName, newParent);
 			parent = newParent;
 			pathChanged();
-			RepositoryManager.log(repository.getName(), oldPath, "file moved to " + getPathname(),
+			repository.log(oldPath, "file moved to " + getPathname(),
 				user);
 		}
 	}
@@ -320,7 +333,7 @@ public class RepositoryFile {
 		synchronized (fileSystem) {
 			validate();
 			repository.validateWritePrivilege(user); // don't allow checkout if read-only 
-			ItemCheckoutStatus coStatus = databaseItem.checkout(checkoutType, user, projectPath);
+			ItemCheckoutStatus coStatus = folderItem.checkout(checkoutType, user, projectPath);
 			if (coStatus != null && checkoutType != CheckoutType.NORMAL && repositoryItem != null &&
 				repositoryItem.getFileID() == null) {
 				repositoryItem = null; // force refresh since fileID should get reset
@@ -340,7 +353,8 @@ public class RepositoryFile {
 			throws IOException {
 		synchronized (fileSystem) {
 			validate();
-			databaseItem.updateCheckoutVersion(checkoutId, checkoutVersion, user);
+			repository.validateWritePrivilege(user); // don't allow update if read-only 
+			folderItem.updateCheckoutVersion(checkoutId, checkoutVersion, user);
 		}
 	}
 
@@ -354,14 +368,15 @@ public class RepositoryFile {
 	public void terminateCheckout(long checkoutId, String user, boolean notify) throws IOException {
 		synchronized (fileSystem) {
 			validate();
-			ItemCheckoutStatus coStatus = databaseItem.getCheckout(checkoutId);
+			repository.validateWritePrivilege(user); // don't allow update if read-only 
+			ItemCheckoutStatus coStatus = folderItem.getCheckout(checkoutId);
 			if (coStatus != null) {
 				User userObj = repository.getUser(user);
 				if (!userObj.isAdmin() && !coStatus.getUser().equals(user)) {
 					throw new IOException(
 						"Undo-checkout not permitted, checkout was made by " + coStatus.getUser());
 				}
-				databaseItem.terminateCheckout(checkoutId, notify);
+				folderItem.terminateCheckout(checkoutId, notify);
 			}
 		}
 	}
@@ -378,7 +393,7 @@ public class RepositoryFile {
 		synchronized (fileSystem) {
 			validate();
 			repository.validateReadPrivilege(user);
-			return databaseItem.getCheckout(checkoutId);
+			return folderItem.getCheckout(checkoutId);
 		}
 	}
 
@@ -393,7 +408,7 @@ public class RepositoryFile {
 		synchronized (fileSystem) {
 			validate();
 			repository.validateReadPrivilege(user);
-			return databaseItem.getCheckouts();
+			return folderItem.getCheckouts();
 		}
 	}
 
@@ -405,7 +420,7 @@ public class RepositoryFile {
 	public boolean hasCheckouts() throws IOException {
 		synchronized (fileSystem) {
 			validate();
-			return databaseItem.hasCheckouts();
+			return folderItem.hasCheckouts();
 		}
 	}
 
@@ -417,7 +432,7 @@ public class RepositoryFile {
 	public boolean isCheckinActive() throws IOException {
 		synchronized (fileSystem) {
 			validate();
-			return databaseItem.isCheckinActive();
+			return folderItem.isCheckinActive();
 		}
 	}
 
@@ -436,7 +451,7 @@ public class RepositoryFile {
 	void pathChanged() {
 		synchronized (fileSystem) {
 			repositoryItem = null;
-			databaseItem = null;
+			folderItem = null;
 		}
 	}
 

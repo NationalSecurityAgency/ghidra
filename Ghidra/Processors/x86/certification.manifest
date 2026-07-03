@@ -1,11 +1,6 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
 README.md||GHIDRA||||END|
-data/extensions/rust/unix/cc.xml||GHIDRA||||END|
-data/extensions/rust/unix/probe_fixup.xml||GHIDRA||||END|
-data/extensions/rust/unix/try_fixup.xml||GHIDRA||||END|
-data/extensions/rust/windows/probe_fixup.xml||GHIDRA||||END|
-data/extensions/rust/windows/try_fixup.xml||GHIDRA||||END|
 data/languages/adx.sinc||GHIDRA||||END|
 data/languages/avx.sinc||GHIDRA||||END|
 data/languages/avx2.sinc||GHIDRA||||END|
@@ -17,6 +12,7 @@ data/languages/bmi1.sinc||GHIDRA||||END|
 data/languages/bmi2.sinc||GHIDRA||||END|
 data/languages/cet.sinc||GHIDRA||||END|
 data/languages/clwb.sinc||GHIDRA||||END|
+data/languages/cmpccxadd.sinc||GHIDRA||||END|
 data/languages/fma.sinc||GHIDRA||||END|
 data/languages/ia.sinc||GHIDRA||||END|
 data/languages/lockable.sinc||GHIDRA||||END|
@@ -56,6 +52,7 @@ data/languages/old/x86smmV2.trans||GHIDRA||||END|
 data/languages/old/x86smmV3.lang||GHIDRA||||END|
 data/languages/old/x86smmV3.trans||GHIDRA||||END|
 data/languages/pclmulqdq.sinc||GHIDRA||||END|
+data/languages/rao.sinc||GHIDRA||||END|
 data/languages/rdrand.sinc||GHIDRA||||END|
 data/languages/sgx.sinc||GHIDRA||||END|
 data/languages/sha.sinc||GHIDRA||||END|
@@ -70,7 +67,6 @@ data/languages/x86-64-compat32.pspec||GHIDRA||||END|
 data/languages/x86-64-gcc.cspec||GHIDRA||||END|
 data/languages/x86-64-golang.cspec||GHIDRA||||END|
 data/languages/x86-64-golang.register.info||GHIDRA||||END|
-data/languages/x86-64-swift.cspec||GHIDRA||||END|
 data/languages/x86-64-win.cspec||GHIDRA||||END|
 data/languages/x86-64.dwarf||GHIDRA||||END|
 data/languages/x86-64.pspec||GHIDRA||||END|
@@ -92,5 +88,6 @@ data/patterns/x86-64gcc_patterns.xml||GHIDRA||||END|
 data/patterns/x86-64win_patterns.xml||GHIDRA||||END|
 data/patterns/x86delphi_patterns.xml||GHIDRA||||END|
 data/patterns/x86gcc_patterns.xml||GHIDRA||||END|
+data/patterns/x86gcc_prepatterns.xml||GHIDRA||||END|
 data/patterns/x86win_patterns.xml||GHIDRA||||END|
 data/patterns/x86win_prepatterns.xml||GHIDRA||||END|

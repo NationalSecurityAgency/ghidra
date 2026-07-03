@@ -89,6 +89,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 	 * to notify listeners.  If false, blocking notification will be performed.
 	 * @param create if true a new folder will be created.
 	 * @throws FileNotFoundException if specified rootPath does not exist
+	 * @throws IndexReadException failure occured reading index file
 	 * @throws IOException if error occurs while reading/writing index files
 	 */
 	IndexedLocalFileSystem(String rootPath, boolean isVersioned, boolean readOnly,
@@ -440,11 +441,21 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 
 	public static int readIndexVersion(String rootPath) throws IOException {
 		File indexFile = new File(rootPath, INDEX_FILE);
+
+		if (indexFile.exists() && indexFile.length() == 0) {
+			return 0; // will trigger index rebuild
+		}
+
 		BufferedReader indexReader = null;
 		try {
 			indexReader = new BufferedReader(new InputStreamReader(
 				new BufferedInputStream(new FileInputStream(indexFile)), "UTF8"));
-			return getIndexVersion(indexReader.readLine());
+			int ver = getIndexVersion(indexReader.readLine());
+			if (ver >= 0 && ver < LATEST_INDEX_VERSION) {
+				Msg.warn(LocalFileSystem.class,
+					"Using deprecated Indexed filesystem (V0): " + rootPath);
+			}
+			return ver;
 		}
 		finally {
 			if (indexReader != null) {
@@ -462,6 +473,10 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 
 		// TODO: current implementation does not attempt to avoid concurrent read/write
 		// access to index/journal files
+
+		if (indexFile.length() == 0) {
+			throw new IndexReadException("empty index: " + indexFile);
+		}
 
 		MessageDigest messageDigest = null;
 		try {
@@ -485,7 +500,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 				new BufferedInputStream(new FileInputStream(indexFile)), "UTF8"));
 			String line = indexReader.readLine();
 			if (checkIndexVersion(line)) {
-				// version line consumed - read next line
+				// version line consumed - read next line - Version-0 lacked VERSION line
 				line = indexReader.readLine();
 			}
 			Folder currentFolder = null;
@@ -598,7 +613,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		}
 	}
 
-	private boolean addFileToIndex(PropertyFile pfile) throws IOException, NotFoundException {
+	private boolean addFileToIndex(ItemPropertyFile pfile) throws IOException, NotFoundException {
 
 		String parentPath = pfile.getParentPath();
 		String name = pfile.getName();
@@ -832,7 +847,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		catch (NotFoundException e) {
 			// ignore - handled below
 		}
-		throw new FileNotFoundException("Item not found: " + folderPath + SEPARATOR + itemName);
+		throw new FileNotFoundException("Item not found: " + getPath(folderPath, itemName));
 	}
 
 	/**
@@ -1207,7 +1222,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		String newFolderPath = folder.getPathname();
 		for (Item item : folder.items.values()) {
 			ItemStorage itemStorage = item.itemStorage;
-			PropertyFile pfile = item.itemStorage.getPropertyFile();
+			ItemPropertyFile pfile = item.itemStorage.getPropertyFile();
 			pfile.moveTo(itemStorage.dir, itemStorage.storageName, newFolderPath,
 				itemStorage.itemName);
 			itemStorage.folderPath = newFolderPath;
@@ -1236,7 +1251,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 			folder = getFolder(folderPath, GetFolderOption.READ_ONLY);
 			if (folder.parent.folders.get(newFolderName) != null) {
 				throw new DuplicateFileException(
-					parentPath + SEPARATOR + newFolderName + " already exists.");
+					getPath(parentPath, newFolderName) + " already exists.");
 			}
 
 			indexJournal.moveFolder(folderPath, getPath(parentPath, newFolderName));
@@ -1462,7 +1477,6 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		}
 
 		private void replayJournal() throws IndexReadException {
-			Msg.info(this, "restoring data storage index...");
 			int lineNum = 0;
 			BufferedReader journalReader = null;
 			try {
@@ -1715,6 +1729,8 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 	/**
 	 * Get the V0 indexed-file-system instance.  File system storage should first be 
 	 * pre-qualified as an having indexed storage using the {@link #isIndexed(String)} method.
+	 * <p>
+	 * NOTE: If there is a index read error a forced migration to V1 may occur
 	 * @param rootPath
 	 * @param isVersioned
 	 * @param readOnly
@@ -1736,39 +1752,14 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 			Msg.error(LocalFileSystem.class, "Indexed filesystem error: " + e.getMessage());
 
 			Msg.info(LocalFileSystem.class, "Attempting index rebuild: " + rootPath);
-			if (!IndexedLocalFileSystem.rebuild(new File(rootPath))) {
+			if (!IndexedV1LocalFileSystem.rebuild(new File(rootPath))) {
 				throw e;
 			}
 
 			// retry after index rebuild
-			return new IndexedLocalFileSystem(rootPath, isVersioned, readOnly,
+			return new IndexedV1LocalFileSystem(rootPath, isVersioned, readOnly,
 				enableAsyncronousDispatching, false);
 		}
-	}
-
-	/**
-	 * Completely rebuild filesystem index using item information contained
-	 * within indexed property files.  Empty folders will be lost.
-	 * @param rootDir
-	 * @throws IOException
-	 */
-	public static boolean rebuild(File rootDir) throws IOException {
-
-		verifyIndexedFileStructure(rootDir);
-
-		IndexedLocalFileSystem fs = new IndexedLocalFileSystem(rootDir.getAbsolutePath());
-		fs.rebuildIndex();
-		fs.cleanupAfterConstruction();
-		fs.dispose();
-
-		File errorFile = new File(rootDir, REBUILD_ERROR_FILE);
-		if (errorFile.exists()) {
-			Msg.error(LocalFileSystem.class,
-				"Indexed filesystem rebuild failed, see log for details: " + errorFile);
-			return false;
-		}
-		Msg.info(LocalFileSystem.class, "Index rebuild completed: " + rootDir);
-		return true;
 	}
 
 	static class IndexedItemStorage extends ItemStorage {
@@ -1778,7 +1769,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		}
 
 		@Override
-		PropertyFile getPropertyFile() throws IOException {
+		ItemPropertyFile getPropertyFile() throws IOException {
 			return new IndexedPropertyFile(dir, storageName, folderPath, itemName);
 		}
 	}

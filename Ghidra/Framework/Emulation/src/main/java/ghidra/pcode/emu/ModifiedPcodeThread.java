@@ -31,8 +31,10 @@ import ghidra.pcode.memstate.MemoryBank;
 import ghidra.pcode.memstate.MemoryState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassSearcher;
 
 /**
  * A p-code thread which incorporates per-architecture state modifiers
@@ -121,7 +123,7 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 
 			@Override
 			public void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library,
-					Varnode outVar, List<Varnode> inVars) {
+					PcodeOp op, Varnode outVar, List<Varnode> inVars) {
 				behavior.evaluate(emulate, outVar, inVars.toArray(Varnode[]::new));
 			}
 
@@ -143,6 +145,11 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 			@Override
 			public boolean canInlinePcode() {
 				return false;
+			}
+
+			@Override
+			public Class<?> getOutputType() {
+				return void.class;
 			}
 
 			@Override
@@ -226,16 +233,11 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 			return null;
 		}
 		try {
-			Class<?> c = Class.forName(classname);
-			if (!EmulateInstructionStateModifier.class.isAssignableFrom(c)) {
-				Msg.error(this,
-					"Language " + language.getLanguageID() + " does not specify a valid " +
-						GhidraLanguagePropertyKeys.EMULATE_INSTRUCTION_STATE_MODIFIER_CLASS);
-				throw new RuntimeException(classname + " does not implement interface " +
-					EmulateInstructionStateModifier.class.getName());
-			}
-			Constructor<?> constructor = c.getConstructor(Emulate.class);
-			return (EmulateInstructionStateModifier) constructor.newInstance(emulate);
+			Class<? extends EmulateInstructionStateModifier> c = ClassSearcher.forNameSafe(
+				classname, EmulateInstructionStateModifier.class, getClass().getClassLoader());
+			Constructor<? extends EmulateInstructionStateModifier> constructor =
+				c.getConstructor(Emulate.class);
+			return constructor.newInstance(emulate);
 		}
 		catch (Exception e) {
 			Msg.error(this, "Language " + language.getLanguageID() + " does not specify a valid " +
@@ -248,7 +250,7 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 
 	@Override
 	protected PcodeUseropLibrary<T> createUseropLibrary() {
-		return super.createUseropLibrary().compose(new ModifierUseropLibrary());
+		return new ModifierUseropLibrary().compose(super.createUseropLibrary(), true);
 	}
 
 	@Override

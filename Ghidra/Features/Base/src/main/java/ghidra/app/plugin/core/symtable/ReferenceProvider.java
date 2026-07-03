@@ -16,6 +16,8 @@
 package ghidra.app.plugin.core.symtable;
 
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -23,10 +25,13 @@ import javax.swing.JComponent;
 import docking.ActionContext;
 import docking.WindowPosition;
 import generic.theme.GIcon;
+import ghidra.app.cmd.refs.RemoveReferenceCmd;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.util.SymbolInspector;
+import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
@@ -72,7 +77,21 @@ class ReferenceProvider extends ComponentProviderAdapter {
 		if (program == null) {
 			return null;
 		}
-		return new ProgramActionContext(this, program);
+
+		List<Reference> selectedReferences = getSelectedReferences();
+		return new ReferenceTableContext(this, selectedReferences);
+	}
+
+	private List<Reference> getSelectedReferences() {
+
+		List<Reference> list = new ArrayList<>();
+		GhidraTable table = getTable();
+		int[] rows = table.getSelectedRows();
+		for (int row : rows) {
+			Reference ref = referenceKeyModel.getRowObject(row);
+			list.add(ref);
+		}
+		return list;
 	}
 
 	void setCurrentSymbol(Symbol symbol) {
@@ -104,6 +123,10 @@ class ReferenceProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	Program getProgram() {
+		return referenceKeyModel.getProgram();
+	}
+
 	void reload() {
 		if (isVisible()) {
 			referenceKeyModel.reload();
@@ -124,6 +147,17 @@ class ReferenceProvider extends ComponentProviderAdapter {
 
 	public GhidraTable getTable() {
 		return referencePanel.getTable();
+	}
+
+	void deleteRows(List<Reference> refs) {
+
+		CompoundCmd<Program> compoundCmd = new CompoundCmd<>("Delete References");
+		for (Reference ref : refs) {
+			RemoveReferenceCmd cmd = new RemoveReferenceCmd(ref);
+			compoundCmd.add(cmd);
+			referenceKeyModel.removeObject(ref);
+		}
+		tool.execute(compoundCmd, getProgram());
 	}
 
 	private String generateSubTitle() {

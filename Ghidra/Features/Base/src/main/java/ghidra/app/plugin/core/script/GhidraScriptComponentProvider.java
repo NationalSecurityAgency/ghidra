@@ -54,8 +54,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
-import ghidra.util.datastruct.WeakDataStructureFactory;
-import ghidra.util.datastruct.WeakSet;
+import ghidra.util.datastruct.*;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.task.*;
 import util.CollectionUtils;
@@ -67,6 +66,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private static final double TOP_PREFERRED_RESIZE_WEIGHT = .80;
 	private static final String DESCRIPTION_DIVIDER_LOCATION = "DESCRIPTION_DIVIDER_LOCATION";
 	private static final String FILTER_TEXT = "FILTER_TEXT";
+	private static final String RECENT_SCRIPTS = "RECENT_SCRIPTS";
+	private static final int MAX_RECENT_SCRIPTS = 10;
 
 	private Map<ResourceFile, GhidraScriptEditorComponentProvider> editorMap = new HashMap<>();
 	private final GhidraScriptMgrPlugin plugin;
@@ -88,6 +89,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private String[] previousCategory;
 
 	private ResourceFile lastRunScript;
+	private LRUSet<String> recentScripts = new LRUSet<String>(MAX_RECENT_SCRIPTS);
 	private WeakSet<RunScriptTask> runningScriptTaskSet =
 		WeakDataStructureFactory.createCopyOnReadWeakSet();
 	private TaskListener cleanupTaskSetListener = new TaskListener() {
@@ -311,6 +313,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		String filterText = saveState.getString(FILTER_TEXT, "");
 		tableFilterPanel.setFilterText(filterText);
+
+		String[] scripts = saveState.getStrings(RECENT_SCRIPTS, new String[0]);
+		recentScripts.clear();
+		for (String script : scripts) {
+			recentScripts.add(script);
+		}
 	}
 
 	/**
@@ -332,6 +340,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		String filterText = tableFilterPanel.getFilterText();
 		saveState.putString(FILTER_TEXT, filterText);
+
+		String[] scripts = recentScripts.toList().toArray(new String[0]);
+		saveState.putStrings(RECENT_SCRIPTS, scripts);
 	}
 
 	void dispose() {
@@ -362,6 +373,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	Map<ResourceFile, GhidraScriptEditorComponentProvider> getEditorMap() {
 		return editorMap;
+	}
+
+	List<String> getRecentScripts() {
+		return recentScripts.toList();
 	}
 
 	void assignKeyBinding() {
@@ -641,7 +656,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			}
 		}
 		catch (IOException e) {
-			Msg.showError(this, getComponent(), getName(), e.getMessage(), e);
+			Msg.showError(this, getComponent(), getName(), "Unexpected exception loading script",
+				e);
 		}
 	}
 
@@ -664,6 +680,11 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	void runScript(ResourceFile scriptFile, TaskListener listener) {
 		lastRunScript = scriptFile;
+
+		// Update recent scripts list
+		String scriptName = scriptFile.getName();
+		recentScripts.add(scriptName);
+
 		GhidraScript script = doGetScriptInstance(scriptFile);
 		if (script != null) {
 			doRunScript(script, listener);

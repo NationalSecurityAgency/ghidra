@@ -278,8 +278,14 @@ public:
   /// \brief Build a logical whole from register pairs
   Address constructJoinAddress(const Translate *translate,const Address &hiaddr,int4 hisz,const Address &loaddr,int4 losz);
 
+  /// \brief Build a logical whole representing a range that \e wraps from a high address to a low address
+  Address constructWrappingAddress(const Address &addr,int4 size);
+
   /// \brief Make sure a possibly offset \e join address has a proper JoinRecord
   void renormalizeJoinAddress(Address &addr,int4 size);
+
+  /// \brief Create an Address by stripping a piece from a JoinRecord
+  const VarnodeData &stripJoinPiece(JoinRecord *join,int4 index);
 
   /// \brief Parse a string with just an \e address \e space name and a hex offset
   Address parseAddressSimple(const string &val);

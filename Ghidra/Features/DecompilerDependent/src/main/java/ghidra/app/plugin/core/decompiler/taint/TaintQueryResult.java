@@ -119,6 +119,9 @@ public record TaintQueryResult(String name,String fqname, Address iaddr, Address
 				if (fqname.contains(":"+hvName)) {
 					return hvName;
 				}
+				if (fqname.contains(":"+ast.getAddress())) {
+					return hvName;
+				}
 			}
 		}
 		

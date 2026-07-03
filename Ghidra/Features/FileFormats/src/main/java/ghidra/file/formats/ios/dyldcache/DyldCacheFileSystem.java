@@ -28,6 +28,7 @@ import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.commands.SegmentCommand;
 import ghidra.app.util.bin.format.macho.dyld.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.DyldCacheUtils.DyldCacheImageRecord;
 import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
@@ -78,26 +79,23 @@ public class DyldCacheFileSystem extends AbstractFileSystem<DyldCacheEntry> {
 		RangeSet<Long> allDylibRanges = TreeRangeSet.create();
 
 		// Find the DYLIB's and add them as files
-		monitor.initialize(splitDyldCache.size(), "Find DYLD DYLIBs...");
-		for (int i = 0; i < splitDyldCache.size(); i++) {
+		List<DyldCacheImageRecord> imageRecords = splitDyldCache.getImageRecords();
+		monitor.initialize(imageRecords.size(), "Find DYLD DYLIBs...");
+		for (DyldCacheImageRecord imageRecord : imageRecords) {
 			monitor.increment();
-			DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
-			ByteProvider p = splitDyldCache.getProvider(i);
-			for (DyldCacheImage mappedImage : header.getMappedImages()) {
-				MachHeader machHeader =
-					new MachHeader(p, mappedImage.getAddress() - header.getBaseAddress());
-				RangeSet<Long> rangeSet = TreeRangeSet.create();
-				for (SegmentCommand segment : machHeader.parseSegments()) {
-					Range<Long> range = Range.openClosed(segment.getVMaddress(),
-						segment.getVMaddress() + segment.getVMsize());
-					rangeSet.add(range);
-				}
-				DyldCacheEntry entry =
-					new DyldCacheEntry(mappedImage.getPath(), i, rangeSet, null, null, -1);
-				rangeSet.asRanges().forEach(r -> rangeMap.put(r, entry));
-				allDylibRanges.addAll(rangeSet);
-				fsIndex.storeFile(mappedImage.getPath(), fsIndex.getFileCount(), false, -1, entry);
+			DyldCacheImage image = imageRecord.image();
+			MachHeader machHeader = splitDyldCache.getMacho(imageRecord);
+			RangeSet<Long> rangeSet = TreeRangeSet.create();
+			for (SegmentCommand segment : machHeader.parseSegments()) {
+				Range<Long> range = Range.openClosed(segment.getVMaddress(),
+					segment.getVMaddress() + segment.getVMsize());
+				rangeSet.add(range);
 			}
+			DyldCacheEntry entry = new DyldCacheEntry(image.getPath(),
+				imageRecord.splitCacheIndex(), rangeSet, null, null, -1);
+			rangeSet.asRanges().forEach(r -> rangeMap.put(r, entry));
+			allDylibRanges.addAll(rangeSet);
+			fsIndex.storeFile(image.getPath(), fsIndex.getFileCount(), false, -1, entry);
 		}
 
 		// Find and store all the mappings for all of the subcaches. We need to remove the DYLIB's

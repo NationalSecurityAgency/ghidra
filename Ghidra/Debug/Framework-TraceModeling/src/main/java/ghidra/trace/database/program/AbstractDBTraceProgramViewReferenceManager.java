@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import java.util.function.Predicate;
 
 import javax.help.UnsupportedOperationException;
 
-import generic.NestedIterator;
+import generic.util.FlattenedIterator;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Variable;
@@ -242,7 +242,7 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 	protected Iterator<Reference> getReferenceIteratorForSnap(long snap, Address startAddr) {
 		AddressIterator addresses =
 			refs.getReferenceSources(Lifespan.at(snap)).getAddresses(startAddr, true);
-		return NestedIterator.start(addresses, a -> {
+		return FlattenedIterator.start(addresses, a -> {
 			return refs.getReferencesFrom(snap, a).iterator();
 		});
 	}

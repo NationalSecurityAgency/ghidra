@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.program;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,11 +60,14 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	public LanguageTestWatcher testLanguage = new LanguageTestWatcher();
 
 	@Before
-	public void setUp() throws IOException {
+	public void setUp() throws Exception {
 		b = new ToyDBTraceBuilder("Testing", testLanguage.getLanguage());
+
 		try (Transaction tx = b.startTransaction()) {
+			b.createRootObject("Target");
 			b.trace.getTimeManager().createSnapshot("Initialize");
 		}
+
 		view = b.trace.getProgramView();
 	}
 
@@ -78,7 +81,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 			DuplicateNameException, TraceOverlappedRegionException {
 		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memoryManager = b.trace.getMemoryManager();
-			memoryManager.createRegion("Region", 0, b.range(0x4000, 0x4fff),
+			memoryManager.createRegion("Memory[Region]", 0, b.range(0x4000, 0x4fff),
 				TraceMemoryFlag.EXECUTE, TraceMemoryFlag.READ);
 			// NOTE: Disassembler gathers initialized ranges at construction.
 			Disassembler dis = Disassembler.getDisassembler(view, true, true, false,
@@ -146,7 +149,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	public void testThumbSampleProgramDB() throws Exception {
 		ProgramBuilder b = new ProgramBuilder(getName(), ProgramBuilder._ARM);
 		try (Transaction tx = b.getProgram().openTransaction("Disassemble (THUMB)")) {
-			MemoryBlock text = b.createMemory(".text", "b6fa2cd0", 32, "Sample", (byte) 0);
+			MemoryBlock text = b.createMemory("Memory[.text]", "b6fa2cd0", 32, "Sample", (byte) 0);
 			text.putBytes(b.addr(0xb6fa2cdc), new byte[] {
 				// GDB: stmdb sp!,  {r4,r5,r6,r7,r8,lr}
 				(byte) 0x2d, (byte) 0xe9, (byte) 0xf0, (byte) 0x41,
@@ -173,7 +176,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	public void testThumbSampleDBTrace() throws Exception {
 		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
-			memory.createRegion(".text", 0, b.range(0xb6fa2cd0, 0xb6fa2cef),
+			memory.createRegion("Memory[.text]", 0, b.range(0xb6fa2cd0, 0xb6fa2cef),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 			memory.putBytes(0, b.addr(0xb6fa2cdc), b.buf(
 				// GDB: stmdb sp!,  {r4,r5,r6,r7,r8,lr}
@@ -199,7 +202,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	public void testDelaySlotSampleDBTrace() throws Exception {
 		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
-			memory.createRegion(".text", 0, b.range(0x120000000L, 0x120010000L),
+			memory.createRegion("Memory[.text]", 0, b.range(0x120000000L, 0x120010000L),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 			memory.putBytes(0, b.addr(0x1200035b4L), b.buf(
 				// bal LAB_1200035bc
@@ -225,7 +228,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	public void test64BitX86DBTrace() throws Exception {
 		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
-			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
+			memory.createRegion("Memory[.text]", 0, b.range(0x00400000, 0x00400fff));
 			memory.putBytes(0, b.addr(0x00400000), b.buf(
 				// MOV RCX,RAX; Same encoding as DEC EAX; MOV ECX,EAX outside long mode
 				0x48, 0x89, 0xc1));
@@ -255,7 +258,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	public void test32BitX64CompatDBTrace() throws Exception {
 		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
-			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
+			memory.createRegion("Memory[.text]", 0, b.range(0x00400000, 0x00400fff));
 			memory.putBytes(0, b.addr(0x00400000), b.buf(
 				// DEC EAX; but REX.W if context not heeded
 				0x48,
@@ -291,7 +294,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	public void test32BitX86DBTrace() throws Exception {
 		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
-			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
+			memory.createRegion("Memory[.text]", 0, b.range(0x00400000, 0x00400fff));
 			memory.putBytes(0, b.addr(0x00400000), b.buf(
 				// DEC EAX
 				0x48,
@@ -311,8 +314,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 		}
 	}
 
-	record Repetition(Lifespan lifespan, boolean overwrite) {
-	}
+	record Repetition(Lifespan lifespan, boolean overwrite) {}
 
 	protected <T> List<T> toList(Iterable<? extends T> it) {
 		return StreamSupport.stream(it.spliterator(), false).collect(Collectors.toList());
@@ -323,7 +325,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
 			DBTraceCodeManager code = b.trace.getCodeManager();
 
-			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
+			memory.createRegion("Memory[.text]", 0, b.range(0x00400000, 0x00400fff));
 			Assembler asm = Assemblers.getAssembler(b.language);
 			Address entry = b.addr(0x00400000);
 			AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
@@ -414,7 +416,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
 			DBTraceCodeManager code = b.trace.getCodeManager();
 
-			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
+			memory.createRegion("Memory[.text]", 0, b.range(0x00400000, 0x00400fff));
 			Assembler asm = Assemblers.getAssembler(b.language);
 			Address entry = b.addr(0x00400000);
 			AssemblyBuffer buf = new AssemblyBuffer(asm, entry);

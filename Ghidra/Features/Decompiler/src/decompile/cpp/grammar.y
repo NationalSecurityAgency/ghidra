@@ -39,7 +39,7 @@ static CParse *parse;
 
 // Grammar taken from ISO/IEC 9899
 
-%token DOTDOTDOT BADTOKEN STRUCT UNION ENUM DECLARATION_RESULT PARAM_RESULT
+%token DOTDOTDOT BADTOKEN STRUCT UNION ENUM DECLARATION_RESULT PARAM_RESULT SCOPERES
 %token <i> NUMBER
 %token <str> IDENTIFIER
 %token <str> STORAGE_CLASS_SPECIFIER TYPE_QUALIFIER FUNCTION_SPECIFIER
@@ -56,6 +56,7 @@ static CParse *parse;
 %type <type> type_specifier struct_or_union_specifier enum_specifier
 %type <enumer> enumerator
 %type <vecenum> enumerator_list
+%type <str> var_identifier
 %%
 
 document:
@@ -127,7 +128,7 @@ struct_declarator_list:
 
 struct_declarator:
   declarator { $$ = $1; }
-// declarator ':' NUMBER
+  | declarator ':' NUMBER { $$ = $1; $1->setNumBits((int4)*$3); }
 ;
 
 enum_specifier:
@@ -153,8 +154,13 @@ declarator:
   | pointer direct_declarator { $$ = parse->mergePointer($1,$2); }
 ;
 
+var_identifier:
+  IDENTIFIER { $$ = $1; }
+  | var_identifier SCOPERES IDENTIFIER { $$ = $1; $$->append("::"); $$->append(*$3); }
+;
+
 direct_declarator:
-  IDENTIFIER { $$ = parse->newDeclarator($1); }
+  var_identifier { $$ = parse->newDeclarator($1); }
   | '(' declarator ')' { $$ = $2; }
   | direct_declarator '[' type_qualifier_list assignment_expression ']' { $$ = parse->newArray($1,$3,$4); }
   | direct_declarator '[' assignment_expression ']' { $$ = parse->newArray($1,0,$3); }
@@ -361,6 +367,9 @@ uint4 GrammarLexer::moveState(char lookahead)
       state = punctuation;
       bufstart = bufend-1;
       break;
+    case ':':
+      state = scoperes1;
+      break;
     case '-':
     case '0':
     case '1':
@@ -469,6 +478,19 @@ uint4 GrammarLexer::moveState(char lookahead)
     state = start;
     res = GrammarToken::dotdotdot;
     break;
+  case scoperes1:
+    if (lookahead == ':') {
+      state = scoperes2;
+    }
+    else {
+      state = start;
+      res = ':';
+    }
+    break;
+  case scoperes2:
+    state = start;
+    res = GrammarToken::scoperes;
+    break;
   case punctuation:
     state = start;
     res = (uint4)buffer[bufstart];
@@ -529,7 +551,7 @@ uint4 GrammarLexer::moveState(char lookahead)
     }
     else if ((lookahead>='a')&&(lookahead<='z')) {
     }
-    else if (lookahead == '_' || lookahead == ':') {
+    else if (lookahead == '_') {
     }
     else {
       state = start;
@@ -1035,6 +1057,8 @@ Datatype *CParse::newStruct(const string &ident,vector<TypeDeclarator *> *declis
 { // Build a new structure
   TypeStruct *res = glb->types->getTypeStruct(ident); // Create stub (for recursion)
   vector<TypeField> sublist;
+  vector<TypeBitField> bitlist;
+  bool isBigEndian = glb->getDefaultDataSpace()->isBigEndian();
 
   for(uint4 i=0;i<declist->size();++i) {
     TypeDeclarator *decl = (*declist)[i];
@@ -1043,14 +1067,14 @@ Datatype *CParse::newStruct(const string &ident,vector<TypeDeclarator *> *declis
       glb->types->destroyType(res);
       return (Datatype *)0;
     }
-    sublist.emplace_back(0,-1,decl->getIdentifier(),decl->buildType(glb));
+    if (decl->getNumBits() != 0)
+      bitlist.emplace_back(sublist.size(),decl->getNumBits(),isBigEndian,decl->getIdentifier(),decl->buildType(glb));
+    else
+      sublist.emplace_back(0,-1,decl->getIdentifier(),decl->buildType(glb));
   }
 
   try {
-    int4 newSize;
-    int4 newAlign;
-    TypeStruct::assignFieldOffsets(sublist,newSize,newAlign);
-    glb->types->setFields(sublist,res,newSize,newAlign,0);
+    glb->types->assignRawFields(res,sublist,bitlist);
   }
   catch (LowlevelError &err) {
     setError(err.explain);
@@ -1086,10 +1110,7 @@ Datatype *CParse::newUnion(const string &ident,vector<TypeDeclarator *> *declist
   }
 
   try {
-    int4 newSize;
-    int4 newAlign;
-    TypeUnion::assignFieldOffsets(sublist,newSize,newAlign,res);
-    glb->types->setFields(sublist,res,newSize,newAlign,0);
+    glb->types->assignRawFields(res,sublist);
   }
   catch (LowlevelError &err) {
     setError(err.explain);
@@ -1282,6 +1303,8 @@ int4 CParse::lex(void)
     return BADTOKEN;
   case GrammarToken::dotdotdot:
     return DOTDOTDOT;
+  case GrammarToken::scoperes:
+    return SCOPERES;
   case GrammarToken::badtoken:
     setError(lexer.getError());	// Error from lexer
     return BADTOKEN;

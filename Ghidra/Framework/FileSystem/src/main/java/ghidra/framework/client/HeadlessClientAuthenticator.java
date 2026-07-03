@@ -27,7 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.framework.remote.AnonymousCallback;
 import ghidra.framework.remote.SSHSignatureCallback;
 import ghidra.framework.remote.security.SSHKeyManager;
-import ghidra.net.ApplicationKeyManagerFactory;
+import ghidra.net.DefaultKeyManagerFactory;
 import ghidra.util.Msg;
 
 /**
@@ -169,7 +169,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 			}
 			catch (InvalidKeyException e) { // keyfile is not a valid SSH private key format
 				// does not appear to be an SSH private key - try PKI keystore parse
-				if (ApplicationKeyManagerFactory.setKeyStore(keystorePath, false)) {
+				if (DefaultKeyManagerFactory.setDefaultKeyStore(keystorePath, false)) {
 					success = true;
 					Msg.info(HeadlessClientAuthenticator.class,
 						"Loaded PKI keystore: " + keystorePath);

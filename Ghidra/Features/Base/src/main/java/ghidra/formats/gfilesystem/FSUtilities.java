@@ -31,12 +31,15 @@ import java.util.Map.Entry;
 import org.apache.commons.io.FilenameUtils;
 
 import docking.widgets.OptionDialog;
+import generic.hash.HashUtilities;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
+import ghidra.formats.gfilesystem.factory.FileSystemFactoryDependencyException;
 import ghidra.formats.gfilesystem.fileinfo.FileType;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
+import ghidra.util.task.CancelledListener;
 import ghidra.util.task.TaskMonitor;
 import util.CollectionUtils;
 import utilities.util.FileUtilities;
@@ -301,7 +304,12 @@ public class FSUtilities {
 			displayCryptoException(originator, parent, title, message, (CryptoException) throwable);
 		}
 		else {
-			Msg.showError(originator, parent, title, message, throwable);
+			if (throwable instanceof FileSystemFactoryDependencyException) {
+				Msg.showError(originator, parent, title, message + "\n\n" + throwable.getMessage());
+			}
+			else {
+				Msg.showError(originator, parent, title, message, throwable);
+			}
 		}
 	}
 
@@ -367,14 +375,21 @@ public class FSUtilities {
 		byte buffer[] = new byte[FileUtilities.IO_BUFFER_SIZE];
 		int bytesRead;
 		long totalBytesCopied = 0;
-		while ((bytesRead = is.read(buffer)) > 0) {
-			os.write(buffer, 0, bytesRead);
-			totalBytesCopied += bytesRead;
-			monitor.setProgress(totalBytesCopied);
-			monitor.checkCancelled();
+		CancelledListener l = () -> FSUtilities.uncheckedClose(is, null);
+		monitor.addCancelledListener(l);
+		try {
+			while ((bytesRead = is.read(buffer)) > 0) {
+				os.write(buffer, 0, bytesRead);
+				totalBytesCopied += bytesRead;
+				monitor.setProgress(totalBytesCopied);
+				monitor.checkCancelled();
+			}
+			os.flush();
+			return totalBytesCopied;
 		}
-		os.flush();
-		return totalBytesCopied;
+		finally {
+			monitor.removeCancelledListener(l);
+		}
 	}
 
 	/**
@@ -649,6 +664,36 @@ public class FSUtilities {
 			// fall thru
 		}
 		return FileType.UNKNOWN;
+	}
+
+	/**
+	 * Splits the given path into its individual directory and filename components. For example,
+	 * {@code "/dir/dir/dir/file"} becomes {@code ["", "dir", "dir", "dir", "file"]}.
+	 * 
+	 * @param path The path to split
+	 * @return The split path
+	 */
+	public static String[] splitPath(String path) {
+		return Objects.requireNonNullElse(path, "").replace('\\', '/').split("/");
+	}
+
+	/**
+	 * Converts the given path to a valid mirrored project path. Care must be taken to minimize
+	 * project path collisions, allowing them only when completely necessary.
+	 * 
+	 * @param path The path to convert
+	 * @return The mirrored project path
+	 */
+	public static String mirroredProjectPath(String path) {
+		path = FSUtilities.normalizeNativePath(path);
+
+		// If it looks like an absolute Windows path, drop the colon from the drive letter. The
+		// colon is not a valid project character.
+		if (path.length() >= 3 && path.charAt(0) == '/' && Character.isLetter(path.charAt(1)) &&
+			path.charAt(2) == ':') {
+			path = "/" + path.charAt(1) + path.substring(3);
+		}
+		return path;
 	}
 
 }

@@ -63,17 +63,18 @@ public class TarFileSystem extends AbstractFileSystem<TarMetadata> {
 		try (TarArchiveInputStream tarInput =
 			new TarArchiveInputStream(provider.getInputStream(0))) {
 			TarArchiveEntry tarEntry;
-			while ((tarEntry = tarInput.getNextTarEntry()) != null) {
+			while ((tarEntry = tarInput.getNextEntry()) != null) {
 				monitor.setMessage(tarEntry.getName());
 				monitor.checkCancelled();
 
 				int fileNum = fileCount++;
 				String linkName = tarEntry.getLinkName();
+				TarMetadata tmd = new TarMetadata(tarEntry, fileNum);
 				GFile newFile = !tarEntry.isSymbolicLink()
 						? fsIndex.storeFile(tarEntry.getName(), fileCount, tarEntry.isDirectory(),
-							tarEntry.getSize(), new TarMetadata(tarEntry, fileNum))
-						: fsIndex.storeSymlink(tarEntry.getName(), fileCount,
-							linkName, linkName.length(), new TarMetadata(tarEntry, fileNum));
+							tarEntry.getSize(), tmd)
+						: fsIndex.storeSymlink(tarEntry.getName(), fileCount, linkName,
+							linkName.length(), tmd);
 
 				if (!tarEntry.isSymbolicLink() &&
 					tarEntry.getSize() < FileCache.MAX_INMEM_FILESIZE) {
@@ -114,6 +115,8 @@ public class TarFileSystem extends AbstractFileSystem<TarMetadata> {
 		TarArchiveEntry blob = tmd.tarArchiveEntry;
 		return FileAttributes.of(
 			FileAttribute.create(NAME_ATTR, FilenameUtils.getName(blob.getName())),
+			FileAttribute.create(PATH_ATTR,
+				FilenameUtils.getFullPathNoEndSeparator(blob.getName())),
 			FileAttribute.create(SIZE_ATTR, blob.getSize()),
 			FileAttribute.create(MODIFIED_DATE_ATTR, blob.getLastModifiedDate()),
 			FileAttribute.create(FILE_TYPE_ATTR, tarToFileType(blob)),
@@ -138,6 +141,12 @@ public class TarFileSystem extends AbstractFileSystem<TarMetadata> {
 			return FileType.FILE;
 		}
 		return FileType.UNKNOWN;
+	}
+
+	@Override
+	public FileType getFileType(GFile f, TaskMonitor monitor) {
+		TarMetadata tmd = fsIndex.getMetadata(f);
+		return tmd != null ? tarToFileType(tmd.tarArchiveEntry) : FileType.UNKNOWN;
 	}
 
 	@Override

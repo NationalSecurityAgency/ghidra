@@ -19,10 +19,14 @@ import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 import static org.objectweb.asm.Opcodes.*;
 
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
 
 import ghidra.pcode.emu.jit.analysis.JitDataFlowUseropLibrary;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
@@ -37,7 +41,7 @@ import ghidra.program.model.pcode.Varnode;
  * @param vn the varnode to pre-construct
  * @see JitDataFlowUseropLibrary
  */
-public record FieldForVarnode(Varnode vn) implements StaticFieldReq {
+public record FieldForVarnode(Varnode vn) implements StaticFieldReq<TRef<Varnode>> {
 	@Override
 	public String name() {
 		Address addr = vn.getAddress();
@@ -56,16 +60,22 @@ public record FieldForVarnode(Varnode vn) implements StaticFieldReq {
 	 * </pre>
 	 */
 	@Override
-	public void generateClinitCode(JitCodeGenerator gen, ClassVisitor cv, MethodVisitor sv) {
-		cv.visitField(ACC_PRIVATE | ACC_STATIC | ACC_FINAL, name(), TDESC_VARNODE, null, null);
-
-		sv.visitFieldInsn(GETSTATIC, gen.nameThis, "ADDRESS_FACTORY", TDESC_ADDRESS_FACTORY);
-		sv.visitLdcInsn(vn.getAddress().getAddressSpace().getName());
-		sv.visitLdcInsn(vn.getAddress().getOffset());
-		sv.visitLdcInsn(vn.getSize());
-		sv.visitMethodInsn(INVOKESTATIC, NAME_JIT_COMPILED_PASSAGE, "createVarnode",
-			MDESC_JIT_COMPILED_PASSAGE__CREATE_VARNODE, true);
-		sv.visitFieldInsn(PUTSTATIC, gen.nameThis, name(), TDESC_VARNODE);
+	public <N extends Next> Emitter<N> genClInitCode(Emitter<N> em, JitCodeGenerator<?> gen,
+			ClassVisitor cv) {
+		Fld.decl(cv, ACC_PRIVATE | ACC_STATIC | ACC_FINAL, T_VARNODE, name());
+		return em
+				.emit(Op::getstatic, gen.typeThis, "ADDRESS_FACTORY", T_ADDRESS_FACTORY)
+				.emit(Op::ldc__a, vn.getAddress().getAddressSpace().getName())
+				.emit(Op::ldc__l, vn.getAddress().getOffset())
+				.emit(Op::ldc__i, vn.getSize())
+				.emit(Op::invokestatic, T_JIT_COMPILED_PASSAGE, "createVarnode",
+					MDESC_JIT_COMPILED_PASSAGE__CREATE_VARNODE, true)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::ret)
+				.emit(Op::putstatic, gen.typeThis, name(), T_VARNODE);
 	}
 
 	/**
@@ -79,7 +89,9 @@ public record FieldForVarnode(Varnode vn) implements StaticFieldReq {
 	 * 
 	 */
 	@Override
-	public void generateLoadCode(JitCodeGenerator gen, MethodVisitor rv) {
-		rv.visitFieldInsn(GETSTATIC, gen.nameThis, name(), TDESC_VARNODE);
+	public <N extends Next> Emitter<Ent<N, TRef<Varnode>>> genLoad(Emitter<N> em,
+			JitCodeGenerator<?> gen) {
+		return em
+				.emit(Op::getstatic, gen.typeThis, name(), T_VARNODE);
 	}
 }

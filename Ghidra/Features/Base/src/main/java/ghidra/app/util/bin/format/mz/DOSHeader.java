@@ -19,11 +19,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.ne.InvalidWindowsHeaderException;
-import ghidra.app.util.bin.format.ne.WindowsHeader;
-import ghidra.app.util.bin.format.pe.InvalidNTHeaderException;
-import ghidra.app.util.bin.format.pe.NTHeader;
-import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.program.model.data.*;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
@@ -62,7 +57,8 @@ import ghidra.util.exception.DuplicateNameException;
 public class DOSHeader extends OldDOSHeader {
 	
     /** The name to use when converting into a structure data type. */
-    public final static String NAME = "IMAGE_DOS_HEADER";
+	@SuppressWarnings("hiding")
+	public final static String NAME = "IMAGE_DOS_HEADER";
     
 	public final static int SIZEOF_DOS_HEADER = 64;
 
@@ -75,7 +71,8 @@ public class DOSHeader extends OldDOSHeader {
 	private byte [] stubBytes;
 
     /**
-	 * Constructs a new DOS header.
+	 * Constructs a new {@link DOSHeader}
+	 * 
 	 * @param reader the binary reader
 	 * @throws IOException if there was an IO-related error
 	 */
@@ -84,87 +81,40 @@ public class DOSHeader extends OldDOSHeader {
     }
 
 	/**
-     * Returns the reserved words.
-     * @return the reserved words
-     */
+	 * {@return the reserved words}
+	 */
     public short [] e_res() {
         return e_res;
     }
-    /**
-     * Returns the OEM identifier (for e_oeminfo).
-     * @return the OEM identifier (for e_oeminfo)
-     */
+    
+	/**
+	 * {@return the OEM identifier (for e_oeminfo)}
+	 */
     public short e_oemid() {
         return e_oemid;
     }
-    /**
-     * Returns the OEM information; e_oemid specific.
-     * @return the OEM information; e_oemid specific
-     */
+    
+	/**
+	 * {@return the OEM information; e_oemid specific}
+	 */
     public short e_oeminfo() {
         return e_oeminfo;
     }
-    /**
-     * Returns the reserved words (2).
-     * @return the reserved words (2)
-     */
+    
+	/**
+	 * {@return the reserved words (2)}
+	 */
     public short [] e_res2() {
         return e_res2;
     }
-    /**
-     * Returns the file address of new EXE header.
-     * @return the file address of new EXE header
-     */
+    
+	/**
+	 * {@return the file address of new EXE header}
+	 */
     public int e_lfanew() {
         return e_lfanew;
     }
     
-	/**
-	 * Returns true if a new EXE header exists.
-	 * @return true if a new EXE header exists
-	 */
-    @Override
-	public boolean hasNewExeHeader() {
-        if (e_lfanew >= 0 && e_lfanew <= 0x10000) {
-        	if (e_lfarlc() == 0x40) {
-				// There are some non-NE files out there than may have e_lfarlc == 0x40, so we need 
-				// to actually read the bytes at e_lfanew and check for the required NE signature.
-				try {
-					new WindowsHeader(reader, null, (short) e_lfanew);
-					return true;
-				}
-				catch (InvalidWindowsHeaderException | IOException e) {
-					return false;
-				}
-        	}
-        }
-        return false;
-    }
-
-	/**
-	 * Returns true if a PE header exists.
-	 * @return true if a PE header exists
-	 */
-    @Override
-	public boolean hasPeHeader() {
-		if (e_lfanew >= 0 && e_lfanew <= 0x1000000) {
-			try {
-				NTHeader ntHeader =
-					new NTHeader(reader, e_lfanew, SectionLayout.FILE, false);
-				if (ntHeader.getOptionalHeader() != null) {
-					return true;
-				}
-			}
-			catch (InvalidNTHeaderException | IOException e) {
-				// Fall through and return false
-			}
-		}
-		return false;
-	}
-
-    /**
-     * @see ghidra.app.util.bin.StructConverter#toDataType()
-     */
     @Override
 	public DataType toDataType() throws DuplicateNameException {
 		StructureDataType struct = (StructureDataType)super.toDataType();
@@ -199,24 +149,16 @@ public class DOSHeader extends OldDOSHeader {
         return struct;
     }
     
-    /**
-	 * Helper to override the value of name
-	 * @return The name of the header
-	 */
     @Override
     public String getName() {
     	return NAME;
     }
 
     /**
-     * Returns the length (in bytes) of the DOS
-     * program.
-     * <p>
-     * In other words:
-     * <code>e_lfanew() - SIZEOF_DOS_HEADER</code>
-     * 
-     * @return  the length (in bytes)
-     */
+	 * {@return the length (in bytes) of the DOS program}
+	 * <p>
+	 * In other words: {@code e_lfanew() - SIZEOF_DOS_HEADER}
+	 */
     public int getProgramLen() {
         return stubBytes == null ? 0 : stubBytes.length;
     }
@@ -261,9 +203,6 @@ public class DOSHeader extends OldDOSHeader {
 		}
 	}
 
-	/**
-	 * @see ghidra.app.util.bin.format.Writeable#write(java.io.RandomAccessFile, ghidra.util.DataConverter)
-	 */
 	@Override
 	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
 		super.write(raf, dc);

@@ -16,10 +16,12 @@
 package ghidra.app.plugin.core.navigation.locationreferences;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
+import docking.widgets.table.actions.DeleteTableRowAction;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramClosedPluginEvent;
@@ -38,7 +40,6 @@ import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import ghidra.util.table.actions.DeleteTableRowAction;
 
 /**
  * Plugin to show a list of references to the item represented by the location of the cursor.
@@ -133,7 +134,7 @@ public class LocationReferencesPlugin extends Plugin
 			return; // not sure if this can happen
 		}
 
-		Set<Reference> refs = XReferenceUtils.getAllXrefs(location);
+		Supplier<Collection<Reference>> refs = () -> XReferenceUtils.getAllXrefs(location);
 		XReferenceUtils.showXrefs(lac.getNavigatable(), tool, service, location, refs);
 	}
 

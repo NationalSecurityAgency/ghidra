@@ -23,21 +23,23 @@ WORKDIR /ghidra
 
 # update and install dependencies used to both build and run ghidra
 RUN apk update \
-        && apk add openjdk21 python3 \
+        && apk add openjdk21 python3 py3-pip \
         bash gcompat \
         fontconfig msttcorefonts-installer \
         linux-headers libressl-dev \
-        && update-ms-fonts
+        && update-ms-fonts \
+        && pip install --break-system-packages --upgrade pip
 
 FROM base AS build
 
 # install additional dependencies used to build ghidra
 RUN apk add gradle \
-		python3-dev py-pip \
+		python3-dev \
         alpine-sdk \
         build-base \
         gcc g++ make libc-dev zlib-dev musl-dev \
         zip readline-dev
+
 # copy the contents of the release into the current working dir.
 COPY . .
 

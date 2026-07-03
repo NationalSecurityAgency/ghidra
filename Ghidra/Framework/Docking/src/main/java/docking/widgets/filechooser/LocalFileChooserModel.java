@@ -20,6 +20,7 @@ import java.io.FileFilter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import javax.swing.Icon;
 import javax.swing.filechooser.FileSystemView;
@@ -31,10 +32,11 @@ import utility.function.Callback;
 
 /**
  * A default implementation of the file chooser model that browses the local file system.
- * 
  */
 public class LocalFileChooserModel implements GhidraFileChooserModel {
 	private static final Icon PROBLEM_FILE_ICON = Icons.WARNING_ICON;
+	private static final Icon ICON_DIR_DEFAULT = new GIcon("icon.filechooser.default.directory");
+	private static final Icon ICON_FILE_DEFAULT = new GIcon("icon.filechooser.default.file");
 	private static final Icon PENDING_ROOT_ICON = new GIcon("icon.drive");
 
 	private static final FileSystemRootInfo FS_ROOT_INFO = new FileSystemRootInfo();
@@ -48,17 +50,16 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 	 * next time the user hits refresh or navigates into a directory. 
 	 */
 	private Map<File, Icon> fileIconMap = new HashMap<>();
-
 	private Callback callback;
+	private Supplier<GhidraFileChooser> chooserSupplier;
+
+	LocalFileChooserModel(Supplier<GhidraFileChooser> chooserSupplier) {
+		this.chooserSupplier = chooserSupplier;
+	}
 
 	@Override
 	public char getSeparator() {
 		return File.separatorChar;
-	}
-
-	@Override
-	public void setModelUpdateCallback(Callback callback) {
-		this.callback = callback;
 	}
 
 	@Override
@@ -119,10 +120,25 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 		if (FS_ROOT_INFO.isRoot(file)) {
 			return FS_ROOT_INFO.getRootIcon(file);
 		}
-		Icon result = (file != null && file.exists())
-				? fileIconMap.computeIfAbsent(file, this::getSystemIcon)
-				: null;
-		return (result != null) ? result : PROBLEM_FILE_ICON;
+
+		if (file == null || !file.exists()) {
+			return PROBLEM_FILE_ICON;
+		}
+
+		//
+		// This code is called from within the Java List UI to calculate the preferred dimension.
+		// This becomes an issue with a large number of files, since the UI gets the icon for every
+		// file in the directory.  Directories can have 10s of thousands of files.   In such a 
+		// scenario,  pulling icons from the file system view can cause the UI to lockup 
+		// indeterminately.  Instead of delegating to the system in that case, we can just return 
+		// default icons for files and folders, which seems like a reasonable workaround.
+		//
+		GhidraFileChooser gfc = chooserSupplier.get();
+		if (gfc.hasBigData()) {
+			return file.isDirectory() ? ICON_DIR_DEFAULT : ICON_FILE_DEFAULT;
+		}
+
+		return fileIconMap.computeIfAbsent(file, this::getSystemIcon);
 	}
 
 	private Icon getSystemIcon(File file) {
@@ -132,7 +148,7 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 		catch (Exception e) {
 			// ignore, return null
 		}
-		return null;
+		return PROBLEM_FILE_ICON;
 	}
 
 	@Override

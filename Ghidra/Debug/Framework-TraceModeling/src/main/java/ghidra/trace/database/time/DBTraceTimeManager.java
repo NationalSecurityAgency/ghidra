@@ -16,12 +16,12 @@
 package ghidra.trace.database.time;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
+import db.DBRecord;
 import ghidra.framework.data.OpenMode;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
@@ -31,16 +31,39 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
-import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.*;
 import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
+import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
+
+	@DBAnnotatedObjectInfo(version = 0)
+	public static class DBTraceFork extends DBAnnotatedObject {
+		protected static final String TABLE_NAME = "Forks";
+
+		protected static final String SNAP_COLUMN_NAME = "Snap";
+
+		@DBAnnotatedColumn(SNAP_COLUMN_NAME)
+		static DBObjectColumn SNAP_COLUMN;
+
+		@DBAnnotatedField(column = SNAP_COLUMN_NAME, indexed = true)
+		long snap;
+
+		public DBTraceFork(DBCachedObjectStore<?> store, DBRecord record) {
+			super(store, record);
+		}
+
+		protected void set(long snap) {
+			this.snap = snap;
+			update(SNAP_COLUMN);
+		}
+	}
 
 	protected final ReadWriteLock lock;
 	protected final DBTrace trace;
@@ -48,6 +71,9 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 
 	protected final DBCachedObjectStore<DBTraceSnapshot> snapshotStore;
 	protected final DBCachedObjectIndex<String, DBTraceSnapshot> snapshotsBySchedule;
+
+	protected final DBCachedObjectStore<DBTraceFork> forkStore;
+	protected final DBCachedObjectIndex<Long, DBTraceFork> forksBySnap;
 
 	public DBTraceTimeManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, DBTrace trace, DBTraceThreadManager threadManager)
@@ -61,6 +87,10 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 		snapshotStore = factory.getOrCreateCachedStore(DBTraceSnapshot.TABLE_NAME,
 			DBTraceSnapshot.class, (s, r) -> new DBTraceSnapshot(this, s, r), true);
 		snapshotsBySchedule = snapshotStore.getIndex(String.class, DBTraceSnapshot.SCHEDULE_COLUMN);
+
+		forkStore = factory.getOrCreateCachedStore(DBTraceFork.TABLE_NAME, DBTraceFork.class,
+			DBTraceFork::new, true);
+		forksBySnap = forkStore.getIndex(long.class, DBTraceFork.SNAP_COLUMN);
 	}
 
 	@Override
@@ -133,6 +163,23 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 	}
 
 	@Override
+	public long getMostRecentFork(long snap) {
+		try (LockHold hold = LockHold.lock(lock.readLock())) {
+			Entry<Long, DBTraceFork> foundFork = forksBySnap.floorEntry(snap);
+			if (foundFork == null) {
+				if (snap < 0) {
+					return Long.MIN_VALUE;
+				}
+				return 0;
+			}
+			if (foundFork.getKey() < 0 && snap >= 0) {
+				return 0;
+			}
+			return foundFork.getValue().snap;
+		}
+	}
+
+	@Override
 	public Collection<? extends TraceSnapshot> getSnapshotsWithSchedule(TraceSchedule schedule) {
 		return snapshotsBySchedule.get(schedule.toString());
 	}
@@ -155,6 +202,95 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 		TraceSnapshot snapshot = getSnapshot(snap, true);
 		snapshot.setSchedule(schedule);
 		return snapshot;
+	}
+
+	protected DBTraceSnapshot doGetValidSnapshotBySchedule(String key, long version) {
+		for (DBTraceSnapshot snapshot : snapshotsBySchedule.get(key)) {
+			if (snapshot.getVersion() >= version) {
+				return snapshot;
+			}
+		}
+		return null;
+	}
+
+	protected DBTraceSnapshot doFindNearest(TraceSchedule schedule, long version) {
+		// Base case
+		if (schedule.isSnapOnly()) {
+			return snapshotStore.getObjectAt(schedule.getSnap()); // may be null
+		}
+
+		// Inductive case
+		DBTraceSnapshot best = null;
+		TraceSchedule dropped = schedule.dropLastStep();
+		String strDropped = dropped.toString();
+		for (Iterator<String> it =
+			snapshotsBySchedule.tail(strDropped, true).keys().iterator(); it.hasNext();) {
+			String key = it.next();
+			if (!key.startsWith(strDropped)) {
+				break;
+			}
+			TraceSchedule candidateSchedule = TraceSchedule.parse(key);
+			// We're in a chunk of too-advanced (and probably unrelated) schedules
+			if (candidateSchedule.stepCount() > schedule.stepCount()) {
+				TraceSchedule candidateTrunc =
+					candidateSchedule.truncateToSteps(schedule.stepCount());
+				Step candidateStep = candidateTrunc.lastStep().step();
+				TraceSchedule candidateDropped = candidateTrunc.dropLastStep();
+				// Hack the lexicographic indexing
+				String extra = switch (candidateStep) {
+					case PatchStep s -> "t%d-%c".formatted(s.getThreadKey(), '{' + 1);
+					default -> "%s%c".formatted(candidateStep, ';' + 1);
+				};
+				String newTailKey = (candidateDropped.isSnapOnly() ? "%s:%s" : "%s;%s")
+						.formatted(candidateDropped, extra);
+				it = snapshotsBySchedule.tail(newTailKey, true).keys().iterator();
+				continue;
+			}
+
+			// We have a potential nearest. Must be related and less than, but better than best
+			CompareResult cmp = candidateSchedule.compareSchedule(schedule);
+			if (!cmp.related || cmp.compareTo > 0) {
+				continue;
+			}
+			if (best != null && best.getSchedule().compareTo(candidateSchedule) >= 0) {
+				continue;
+			}
+			// Checking validity requires loading the record. Do this filter last.
+			DBTraceSnapshot valid = doGetValidSnapshotBySchedule(key, version);
+			if (valid != null) {
+				best = valid;
+			}
+		}
+
+		if (best != null) {
+			return best;
+		}
+
+		return doFindNearest(dropped, version);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @implNote Because the index is lexicographic, we have to hack a bit. Consider that 20 would
+	 *           come before 3 in the index. That said, all the steps leading up to the last would
+	 *           have to be equal for it to be a prefix, so I don't think any weird lexicographic
+	 *           stuff comes into play except in the final step.
+	 * @implNote Even if the index were numeric, we have to worry about non-related schedules
+	 *           appearing between related ones, e.g., {@code 0:t0-2, 0:t0-3;t1-1}, when searching
+	 *           for {@code 0:t0-4}.
+	 */
+	@Override
+	public TraceSnapshot findSnapshotWithNearestPrefix(TraceSchedule schedule) {
+		long version = trace.getEmulatorCacheVersion();
+		TraceSchedule noPSteps = schedule.dropPSteps();
+		Optional<? extends TraceSnapshot> exists = getSnapshotsWithSchedule(noPSteps).stream()
+				.filter(s -> s.getVersion() >= version)
+				.findFirst();
+		if (exists.isPresent()) {
+			return exists.get();
+		}
+		return doFindNearest(noPSteps, version);
 	}
 
 	@Override
@@ -181,7 +317,11 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 
 	public void deleteSnapshot(DBTraceSnapshot snapshot) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+			DBTraceFork foundFork = forksBySnap.getOne(snapshot.getKey());
 			snapshotStore.delete(snapshot);
+			if (foundFork != null) {
+				forkStore.delete(foundFork);
+			}
 			notifySnapshotDeleted(snapshot);
 		}
 	}

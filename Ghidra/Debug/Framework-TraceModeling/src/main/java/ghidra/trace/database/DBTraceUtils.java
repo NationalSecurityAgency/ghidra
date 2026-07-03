@@ -433,18 +433,9 @@ public enum DBTraceUtils {
 	 * 
 	 * @param baseName the base name of the table group
 	 * @param space the address space
-	 * @param threadKey the thread key, -1 usually indicating "no thread"
-	 * @param frameLevel the frame level
 	 * @return the table name
 	 */
-	public static String tableName(String baseName, AddressSpace space, long threadKey,
-			int frameLevel) {
-		if (space.isRegisterSpace()) {
-			if (frameLevel == 0) {
-				return baseName + "_" + space.getName() + "_" + threadKey;
-			}
-			return baseName + "_" + space.getName() + "_" + threadKey + "_" + frameLevel;
-		}
+	public static String tableName(String baseName, AddressSpace space) {
 		return baseName + "_" + space.getName();
 	}
 

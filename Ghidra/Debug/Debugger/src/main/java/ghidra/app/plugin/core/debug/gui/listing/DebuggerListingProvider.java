@@ -31,10 +31,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jdom.Element;
+import org.jdom2.Element;
 
-import docking.ActionContext;
-import docking.WindowPosition;
+import docking.*;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.action.builder.ToggleActionBuilder;
@@ -68,6 +67,7 @@ import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.debug.api.action.*;
 import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.listing.DebuggerListing;
 import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -91,10 +91,11 @@ import ghidra.util.datastruct.ListenerSet;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
 
-public class DebuggerListingProvider extends CodeViewerProvider {
+public class DebuggerListingProvider extends CodeViewerProvider implements DebuggerListing {
 
-	private static final AutoConfigState.ClassHandler<DebuggerListingProvider> CONFIG_STATE_HANDLER =
-		AutoConfigState.wireHandler(DebuggerListingProvider.class, MethodHandles.lookup());
+	private static final AutoConfigState.ClassHandler<
+		DebuggerListingProvider> CONFIG_STATE_HANDLER =
+			AutoConfigState.wireHandler(DebuggerListingProvider.class, MethodHandles.lookup());
 	private static final String KEY_DEBUGGER_COORDINATES = "DebuggerCoordinates";
 
 	protected static boolean sameCoordinates(DebuggerCoordinates a, DebuggerCoordinates b) {
@@ -130,13 +131,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 	}
 
-	protected class MarkerSetChangeListener implements ChangeListener {
-		@Override
-		public void stateChanged(ChangeEvent e) {
-			getListingPanel().getFieldPanel().repaint();
-		}
-	}
-
 	protected class ForStaticSyncMappingChangeListener
 			implements DebuggerStaticMappingChangeListener {
 		@Override
@@ -168,6 +162,12 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		protected boolean goToAddress(Address address) {
 			return getListingPanel().goTo(address);
 		}
+
+		@Override
+		protected Address getCurrentAddress() {
+			ProgramLocation location = DebuggerListingProvider.this.getLocation();
+			return location == null ? null : location.getByteAddress();
+		}
 	}
 
 	protected class ForListingTrackingTrait extends DebuggerTrackLocationTrait {
@@ -179,15 +179,15 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 
 		@Override
-		protected void specChanged(LocationTrackingSpec spec) {
+		protected void specChanged(LocationTrackingSpec lts) {
 			if (isMainListing()) {
-				plugin.firePluginEvent(new TrackingChangedPluginEvent(getName(), spec));
+				plugin.firePluginEvent(new TrackingChangedPluginEvent(getName(), lts));
 			}
 			updateTitle();
 			trackingLabel.setText("");
 			trackingLabel.setToolTipText("");
 			trackingLabel.setForeground(Colors.FOREGROUND);
-			trackingSpecChangeListeners.invoke().locationTrackingSpecChanged(spec);
+			trackingSpecChangeListeners.invoke().locationTrackingSpecChanged(lts);
 		}
 
 		@Override
@@ -335,7 +335,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	protected final JLabel trackingLabel = new JLabel();
 
 	protected final MultiBlendedListingBackgroundColorModel colorModel;
-	protected final MarkerSetChangeListener markerChangeListener = new MarkerSetChangeListener();
 	protected MarkerServiceBackgroundColorModel markerServiceColorModel;
 	protected MarkerMarginProvider markerMarginProvider;
 	protected MarkerOverviewProvider markerOverviewProvider;
@@ -354,6 +353,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	protected final boolean isMainListing;
 
 	private long countAddressesInIndex;
+
+	private TabContextListener contextListener;
 
 	public DebuggerListingProvider(DebuggerListingPlugin plugin, FormatManager formatManager,
 			boolean isConnected) {
@@ -386,6 +387,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 		if (isConnected) {
 			traceTabs = new DebuggerTraceTabPanel(plugin);
+			contextListener = new TabContextListener();
+			DockingWindowManager dwm = tool.getWindowManager();
+			dwm.addContextListener(contextListener);
 		}
 		else {
 			traceTabs = null;
@@ -452,6 +456,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	}
 
 	@Override
+	public boolean isPrimary() {
+		return isMainListing();
+	}
+
+	@Override
 	public boolean isReadOnly() {
 		if (controlService == null) {
 			return true;
@@ -498,10 +507,13 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		CONFIG_STATE_HANDLER.writeConfigState(this, saveState);
 		trackingTrait.writeConfigState(saveState);
 		readsMemTrait.writeConfigState(saveState);
+		if (!isMainListing() && getTitle() != null) {
+			saveState.putString("title", getTitle());
+		}
 	}
 
 	void readConfigState(SaveState saveState) {
-		// TODO: Override and invoke super.readState, but it's package private
+		// LATER: Override and invoke super.readState, but it's package private
 
 		Element formatManagerElement = saveState.getXmlElement("formatManager");
 		if (formatManagerElement != null) {
@@ -512,7 +524,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
 		trackingTrait.readConfigState(saveState);
 		readsMemTrait.readConfigState(saveState);
-
+		if (!isMainListing() && saveState.hasValue("title")) {
+			setTitle(saveState.getString("title", ""));
+		}
 		if (isMainListing()) {
 			followsCurrentThread = true;
 		}
@@ -573,28 +587,13 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	@AutoServiceConsumed
 	private void setMarkerService(MarkerService markerService) {
-		if (this.markerService != null) {
-			this.markerService.removeChangeListener(markerChangeListener);
-			removeMarginProvider(markerMarginProvider);
-			markerMarginProvider = null;
-			removeOverviewProvider(markerOverviewProvider);
-			markerOverviewProvider = null;
-		}
+		ListingPanel listingPanel = getListingPanel();
+		listingPanel.setMarkerService(markerService);
+
 		removeOldStaticTrackingMarker();
 		this.markerService = markerService;
 		createNewStaticTrackingMarker();
 		updateMarkerServiceColorModel();
-
-		if (this.markerService != null && !isMainListing()) {
-			// NOTE: Connected provider marker listener is taken care of by CodeBrowserPlugin
-			this.markerService.addChangeListener(markerChangeListener);
-		}
-		if (this.markerService != null) {
-			markerMarginProvider = markerService.createMarginProvider();
-			addMarginProvider(markerMarginProvider);
-			markerOverviewProvider = markerService.createOverviewProvider();
-			addOverviewProvider(markerOverviewProvider);
-		}
 	}
 
 	@AutoServiceConsumed
@@ -831,7 +830,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 					!gotoProgram.getMemory().contains(location.getAddress())) {
 					return false;
 				}
-				if (super.goTo(gotoProgram, location)) {
+				if (super.goTo(gotoProgram, location) &&
+					!isEffectivelyDifferent(getLocation(), location)) {
 					return true;
 				}
 				return false;
@@ -951,6 +951,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 		else {
 			trackingLabel.setForeground(Colors.ERROR);
+			trackingTrait.clearTrackedLocation();
 		}
 	}
 
@@ -1066,4 +1067,44 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 		return new DebuggerByteSource(tool, current.getView(), current.getTarget(), readsMemTrait);
 	}
+
+	private class TabContextListener implements DockingContextListener {
+
+		@Override
+		public void contextChanged(ActionContext localContext) {
+
+			DockingWindowManager dwm = tool.getWindowManager();
+			DebuggerProgramLocationActionContext defaultContext =
+				(DebuggerProgramLocationActionContext) dwm
+						.getDefaultActionContext(DebuggerProgramLocationActionContext.class);
+			Trace myTrace = null;
+			if (defaultContext != null) {
+				TraceProgramView tpv = defaultContext.getProgram();
+				myTrace = tpv.getTrace();
+			}
+
+			if (!(localContext instanceof DebuggerProgramLocationActionContext dlac)) {
+
+				// Future: We would like to make the debugger be the default context in this case, 
+				// but we need a way to have the static and dynamic views to decide who is in charge.
+				// For now, assume it should always be the static non-debugger listing view, which
+				// means making the trace tabs inactive.
+				traceTabs.setActive(false);
+				return;
+			}
+
+			TraceProgramView localTraceProgramView = dlac.getProgram();
+			Trace localTrace = localTraceProgramView.getTrace();
+			if (myTrace != localTrace || !dlac.isActiveProgram()) {
+				// A different trace is in the local context; deactivate out tabs.
+				traceTabs.setActive(false);
+				return;
+			}
+
+			// Signal that the trace from our default context is the active trace.
+			traceTabs.setActive(true);
+		}
+
+	}
+
 }

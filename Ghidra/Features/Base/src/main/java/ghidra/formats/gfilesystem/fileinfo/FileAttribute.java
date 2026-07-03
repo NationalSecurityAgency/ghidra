@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,8 +49,7 @@ public class FileAttribute<T> {
 	 * type specified in {@link FileAttributeType#getValueType()}) 
 	 * @return new FileAttribute instance
 	 */
-	public static <T> FileAttribute<T> create(FileAttributeType attributeType,
-			T attributeValue) {
+	public static <T> FileAttribute<T> create(FileAttributeType attributeType, T attributeValue) {
 		return create(attributeType, attributeType.getDisplayName(), attributeValue);
 	}
 
@@ -67,9 +66,12 @@ public class FileAttribute<T> {
 	 */
 	public static <T> FileAttribute<T> create(FileAttributeType attributeType,
 			String attributeDisplayName, T attributeValue) {
+		if (attributeValue == null) {
+			return null;
+		}
 		if (!attributeType.getValueType().isInstance(attributeValue)) {
-			throw new IllegalArgumentException("FileAttribute type " + attributeType +
-				" does not match value: " + attributeValue.getClass());
+			throw new IllegalArgumentException("FileAttribute type %s does not match value: %s"
+					.formatted(attributeType, attributeValue.getClass()));
 		}
 		return new FileAttribute<>(attributeType, attributeDisplayName, attributeValue);
 	}

@@ -550,11 +550,6 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 			triggerActionInCellEditor(KeyEvent.VK_UP);
 			waitForSwing();
 			rowNum--;
-//			DataTypeComponent dtc = model.getComponent(rowNum);
-//			if (dtc.getOffset() < ((StackEditorModel) model).getParameterOffset()) {
-//				assertNotEditingField();
-//				break;
-//			}
 			assertIsEditingField(rowNum, colNum);
 		}
 		while (rowNum > 0) {

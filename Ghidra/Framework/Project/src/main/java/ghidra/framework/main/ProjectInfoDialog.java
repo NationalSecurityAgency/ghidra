@@ -30,6 +30,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.button.GButton;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import docking.widgets.textfield.ElidingFilePathTextField;
 import docking.wizard.WizardDialog;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.client.*;
@@ -66,7 +67,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 	private JLabel userAccessLabel;
 	private JButton changeConvertButton;
 	private JButton convertStorageButton;
-	private JLabel projectDirLabel;
+	private JTextField projectDirField;
 	private JLabel serverLabel;
 	private JLabel portLabel;
 	private JLabel repNameLabel;
@@ -135,9 +136,10 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		dirLabel.setToolTipText("Directory where your project files reside.");
 		dirLabel.getAccessibleContext().setAccessibleName("Directory");
 		infoPanel.add(dirLabel);
-		projectDirLabel = new GDLabel(dir.getAbsolutePath());
-		projectDirLabel.getAccessibleContext().setAccessibleName("Project Directory");
-		infoPanel.add(projectDirLabel);
+		projectDirField = new ElidingFilePathTextField(dir.getAbsolutePath());
+		projectDirField.setEditable(false);
+		projectDirField.getAccessibleContext().setAccessibleName("Project Directory");
+		infoPanel.add(projectDirField);
 
 		infoPanel.add(new GLabel("Project Storage Type:", SwingConstants.RIGHT));
 		Class<? extends LocalFileSystem> fsClass = project.getProjectData().getLocalStorageClass();

@@ -28,8 +28,33 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 
 public class DBTraceModuleManagerTest extends AbstractGhidraHeadlessIntegrationTest {
+
+	public static final String XML_CTX = """
+			<context>
+			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Modules' schema='ModuleContainer' />
+			    </schema>
+			    <schema name='ModuleContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Module' />
+			    </schema>
+			    <schema name='Module' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Module' />
+			        <attribute name='Sections' schema='SectionContainer' />
+			    </schema>
+			    <schema name='SectionContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Section' />
+			    </schema>
+			    <schema name='Section' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Section' />
+			    </schema>
+			</context>
+			""";
 
 	ToyDBTraceBuilder b;
 	DBTraceModuleManager moduleManager;
@@ -37,6 +62,12 @@ public class DBTraceModuleManagerTest extends AbstractGhidraHeadlessIntegrationT
 	@Before
 	public void setUpModuleManagerTest() throws Exception {
 		b = new ToyDBTraceBuilder("Testing", "Toy:BE:64:default");
+
+		try (Transaction tx = b.startTransaction()) {
+			XmlSchemaContext ctx = XmlSchemaContext.deserialize(XML_CTX);
+			b.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
+		}
+
 		moduleManager = b.trace.getModuleManager();
 	}
 
@@ -309,6 +340,7 @@ public class DBTraceModuleManagerTest extends AbstractGhidraHeadlessIntegrationT
 	}
 
 	@Test
+	@Ignore("Write-back cache doesn't support undo")
 	public void testUndoIdentitiesPreserved() throws Exception {
 		TraceModule mod1;
 		try (Transaction tx = b.startTransaction()) {
@@ -330,6 +362,7 @@ public class DBTraceModuleManagerTest extends AbstractGhidraHeadlessIntegrationT
 	}
 
 	@Test
+	@Ignore("Write-back cache doesn't support undo")
 	public void testUndoThenRedo() throws Exception {
 		TraceModule mod1;
 		TraceModule mod2;

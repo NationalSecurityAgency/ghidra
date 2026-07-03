@@ -17,15 +17,11 @@ from concurrent.futures import Future
 from contextlib import contextmanager
 import inspect
 import os.path
+import re
 import socket
 import time
 from typing import (Any, Callable, Dict, Generator, List, Optional, Sequence,
                     Tuple, Type, TypeVar, Union)
-
-try:
-    import psutil
-except ImportError:
-    print(f"Unable to import 'psutil' - check that it has been installed")
 
 from ghidratrace import sch
 from ghidratrace.client import (Client, Address, AddressRange, Lifespan,
@@ -240,9 +236,9 @@ def ghidra_trace_listen(address: Optional[str] = None, *, is_mi: bool,
 
     Takes an optional address for the host and port on which to listen.
     Either the form 'host:port' or just 'port'. If omitted, it will bind
-    to an ephemeral port on all interfaces. If only the port is given,
-    it will bind to that port on all interfaces. This command will block
-    until the connection is established.
+    to an ephemeral port on localhost. If only the port is given, it will
+    bind to that port on localhost. This command will block until the
+    connection is established.
     """
 
     STATE.require_no_client()
@@ -251,13 +247,13 @@ def ghidra_trace_listen(address: Optional[str] = None, *, is_mi: bool,
     if address is not None:
         parts = address.split(':')
         if len(parts) == 1:
-            host, port = '0.0.0.0', parts[0]
+            host, port = '127.0.0.1', parts[0]
         elif len(parts) == 2:
             host, port = parts
         else:
             raise gdb.GdbError("address must be 'port' or 'host:port'")
     else:
-        host, port = '0.0.0.0', 0
+        host, port = '127.0.0.1', 0
     try:
         s = socket.socket()
         s.bind((host, int(port)))
@@ -287,7 +283,7 @@ def compute_name() -> str:
     if progname is None:
         return 'gdb/noname'
     else:
-        return 'gdb/' + progname.split('/')[-1]
+        return 'gdb/' + re.split(r'(/|\\)', progname)[-1]
 
 
 def start_trace(name: str) -> None:
@@ -300,10 +296,12 @@ def start_trace(name: str) -> None:
     frame = inspect.currentframe()
     if frame is None:
         raise AssertionError("cannot locate schema.xml")
+
     parent = os.path.dirname(inspect.getfile(frame))
     schema_fn = os.path.join(parent, 'schema.xml')
     with open(schema_fn, 'r') as schema_file:
         schema_xml = schema_file.read()
+
     with STATE.trace.open_tx("Create Root Object"):
         root = STATE.trace.create_root_object(schema_xml, 'GdbSession')
         root.set_value('_display', 'GNU gdb ' + util.GDB_VERSION.full)
@@ -566,6 +564,8 @@ def ghidra_trace_putval(value: str, pages: bool = True, *, is_mi: bool,
 
     STATE.require_tx()
     val = gdb.parse_and_eval(value)
+    if val.address is None:
+        raise gdb.GdbError(f"Value '{value}' has no address")
     try:
         start = int(val.address)
     except gdb.error as e:
@@ -633,12 +633,15 @@ def putreg(frame: gdb.Frame, reg_descs: Sequence[
     # NB: This command will fail if the process is running
     for desc in reg_descs:
         v = frame.read_register(desc.name)
-        rv = mapper.map_value(inf, desc.name, v)
-        values.append(rv)
-        # Mapper has converted to big endian.
-        # Display value should interpret it as such.
-        value = hex(int.from_bytes(rv.value, byteorder='big'))
-        cobj.set_value(desc.name, str(value))
+        try:
+            rv = mapper.map_value(inf, desc.name, v)
+            values.append(rv)
+            # Mapper has converted to big endian.
+            # Display value should interpret it as such.
+            value = hex(int.from_bytes(rv.value, byteorder='big'))
+            cobj.set_value(desc.name, str(value))
+        except Exception as e:
+            cobj.set_value(desc.name, str(v))
         keys.append(desc.name)
     cobj.retain_values(keys)
     # TODO: Memorize registers that failed for this arch, and omit later.
@@ -1071,17 +1074,15 @@ def ghidra_trace_put_inferiors(*, is_mi: bool, **kwargs) -> None:
 
 
 def put_available() -> None:
-    # TODO: Compared to -list-thread-groups --available:
-    #     Is that always from the host, or can that pslist a remote target?
-    #     psutil will always be from the host.
     trace = STATE.require_trace()
+    availables = util.AVAILABLE_INFO_READER.get_availables()
     keys = []
-    for proc in psutil.process_iter():
+    for proc in availables:
         ppath = AVAILABLE_PATTERN.format(pid=proc.pid)
         procobj = trace.create_object(ppath)
         keys.append(AVAILABLE_KEY_PATTERN.format(pid=proc.pid))
         procobj.set_value('PID', proc.pid)
-        procobj.set_value('_display', f'{proc.pid} {proc.name()}')
+        procobj.set_value('_display', f'{proc.pid} {proc.command}')
         procobj.insert()
     trace.proxy_object_path(AVAILABLES_PATH).retain_values(keys)
 
@@ -1105,22 +1106,22 @@ def put_single_breakpoint(b: gdb.Breakpoint, ibobj: TraceObject,
     brkobj.set_value('Enabled', b.enabled)
     if b.type == gdb.BP_BREAKPOINT:
         brkobj.set_value('Expression', b.location)
-        brkobj.set_value('Kinds', 'SW_EXECUTE')
+        brkobj.set_value('Kinds', 'x')
     elif b.type == gdb.BP_HARDWARE_BREAKPOINT:
         brkobj.set_value('Expression', b.location)
-        brkobj.set_value('Kinds', 'HW_EXECUTE')
+        brkobj.set_value('Kinds', 'X')
     elif b.type == gdb.BP_WATCHPOINT:
         brkobj.set_value('Expression', b.expression)
-        brkobj.set_value('Kinds', 'WRITE')
+        brkobj.set_value('Kinds', 'W')
     elif b.type == gdb.BP_HARDWARE_WATCHPOINT:
         brkobj.set_value('Expression', b.expression)
-        brkobj.set_value('Kinds', 'WRITE')
+        brkobj.set_value('Kinds', 'W')
     elif b.type == gdb.BP_READ_WATCHPOINT:
         brkobj.set_value('Expression', b.expression)
-        brkobj.set_value('Kinds', 'READ')
+        brkobj.set_value('Kinds', 'R')
     elif b.type == gdb.BP_ACCESS_WATCHPOINT:
         brkobj.set_value('Expression', b.expression)
-        brkobj.set_value('Kinds', 'READ,WRITE')
+        brkobj.set_value('Kinds', 'RW')
     else:
         brkobj.set_value('Expression', '(unknown)')
         brkobj.set_value('Kinds', '')
@@ -1280,7 +1281,10 @@ def put_modules(modules: Optional[Dict[str, util.Module]] = None,
         base_base, base_addr = mapper.map(inf, m.base)
         if base_base != base_addr.space:
             trace.create_overlay_space(base_base, base_addr.space)
-        modobj.set_value('Range', base_addr.extend(m.max - m.base))
+        if m.max == m.base:
+            modobj.set_value('Base', m.base)
+        else:
+            modobj.set_value('Range', base_addr.extend(m.max - m.base))
         if sections:
             sec_keys = []
             for sk, s in m.sections.items():
@@ -1395,6 +1399,8 @@ def put_threads() -> None:
         tobj.set_value('_short_display', f'[{inf.num}.{t.num}:{tidstr}]')
         tobj.set_value('_display', compute_thread_display(t))
         tobj.insert()
+        stackobj = trace.create_object(tpath+".Stack")
+        stackobj.insert()
     trace.proxy_object_path(
         THREADS_PATTERN.format(infnum=inf.num)).retain_values(keys)
 

@@ -15,6 +15,14 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
+import ghidra.pcode.emu.jit.analysis.JitType.IntJitType;
+import ghidra.pcode.emu.jit.analysis.JitType.LongJitType;
+import ghidra.pcode.emu.jit.gen.util.Emitter;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Op;
+import ghidra.pcode.emu.jit.gen.util.Types.TInt;
+import ghidra.pcode.emu.jit.gen.util.Types.TLong;
 import ghidra.pcode.emu.jit.op.JitBoolOrOp;
 import ghidra.pcode.opbehavior.OpBehaviorBoolOr;
 
@@ -24,18 +32,23 @@ import ghidra.pcode.opbehavior.OpBehaviorBoolOr;
  * @implNote It is the responsibility of the slaspec author to ensure boolean values are 0 or 1.
  *           This allows us to use bitwise logic instead of having to check for any non-zero value,
  *           just like {@link OpBehaviorBoolOr}. Thus, this is identical to {@link IntOrOpGen}.
+ * @implNote Because having bits other than the least significant set in the inputs is "undefined
+ *           behavior," we could technically optimize this by only ANDing the least significant leg
+ *           when we're dealing with mp-ints.
  */
-public enum BoolOrOpGen implements BitwiseBinOpGen<JitBoolOrOp> {
+public enum BoolOrOpGen implements IntBitwiseBinOpGen<JitBoolOrOp> {
 	/** The generator singleton */
 	GEN;
 
 	@Override
-	public int intOpcode() {
-		return IOR;
+	public <N2 extends Next, N1 extends Ent<N2, TInt>, N0 extends Ent<N1, TInt>>
+			Emitter<Ent<N2, TInt>> opForInt(Emitter<N0> em, IntJitType type) {
+		return Op.ior(em);
 	}
 
 	@Override
-	public int longOpcode() {
-		return LOR;
+	public <N2 extends Next, N1 extends Ent<N2, TLong>, N0 extends Ent<N1, TLong>>
+			Emitter<Ent<N2, TLong>> opForLong(Emitter<N0> em, LongJitType type) {
+		return Op.lor(em);
 	}
 }

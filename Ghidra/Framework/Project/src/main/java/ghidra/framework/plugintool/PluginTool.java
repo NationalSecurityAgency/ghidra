@@ -29,7 +29,7 @@ import java.util.function.Function;
 
 import javax.swing.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.*;
 import docking.action.*;
@@ -55,7 +55,7 @@ import ghidra.framework.plugintool.dialog.ManagePluginsDialog;
 import ghidra.framework.plugintool.mgr.*;
 import ghidra.framework.plugintool.util.*;
 import ghidra.framework.project.ProjectDataService;
-import ghidra.framework.project.extensions.ExtensionTableProvider;
+import ghidra.framework.project.extensions.ExtensionTableDialog;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -339,7 +339,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * Displays the extensions installation dialog.
 	 */
 	public void showExtensions() {
-		showDialog(new ExtensionTableProvider(this));
+		showDialog(new ExtensionTableDialog(this));
 	}
 
 	/**

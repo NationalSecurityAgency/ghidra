@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -109,8 +109,9 @@ public class PefAnalyzer extends AbstractAnalyzer {
 			}
 			Function function = functions.next();
 			try {
-				program.getProgramContext().setRegisterValue(function.getEntryPoint(),
-					function.getEntryPoint(), regVal);
+				program.getProgramContext()
+						.setRegisterValue(function.getEntryPoint(), function.getEntryPoint(),
+							regVal);
 			}
 			catch (ContextChangeException e) {
 				// should never happen when changing r2 register
@@ -149,11 +150,8 @@ public class PefAnalyzer extends AbstractAnalyzer {
 			return;
 		}
 		Function function = listing.getFunctionContaining(instruction.getMinAddress());
-		if (function == null) {
-			return;
-		}
-		if (function.getSymbol().getSource() == SourceType.IMPORTED ||
-			function.getSymbol().getSource() == SourceType.USER_DEFINED) {
+		if (function == null ||
+			function.getSymbol().getSource().isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
 			return;
 		}
 		Symbol symbol = symbolTable.getPrimarySymbol(symbolAddress);

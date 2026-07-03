@@ -27,9 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import generic.timer.ExpiringSwingTimer;
-import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
-import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Class to hold information about a dockable component with respect to its position within the
@@ -97,8 +95,15 @@ public class ComponentPlaceholder {
 	}
 
 	/**
-	 * Returns the componentNode containing this placeholder
-	 * @return the node
+	 * Sets the componentNode containing this placeholder
+	 * @param node the component node containing this placeholder.
+	 */
+	void setNode(ComponentNode node) {
+		compNode = node;
+	}
+
+	/**
+	 * {@return the componentNode containing this placeholder}
 	 */
 	ComponentNode getNode() {
 		return compNode;
@@ -111,24 +116,6 @@ public class ComponentPlaceholder {
 
 	boolean isHeaderShowing() {
 		return showHeader;
-	}
-
-	/**
-	 * Sets the componentNode containing this placeholder
-	 * @param node the component node containing this placeholder.
-	 */
-	void setNode(ComponentNode node) {
-
-		if (node != null && disposed) {
-			//
-			// TODO Hack Alert!  (When this is removed, also update ComponentNode)
-			//
-			// This should not happen!  We have seen this bug recently
-			Msg.debug(this, "Found disposed component that was not removed from the hierarchy " +
-				"list: " + this, ReflectionUtilities.createJavaFilteredThrowable());
-		}
-
-		compNode = node;
 	}
 
 	boolean isParented() {
@@ -210,8 +197,7 @@ public class ComponentPlaceholder {
 	 * are restored from XML as being visible, but then no provider can be found for them.
 	 */
 	void reset() {
-		isShowing = false;
-		invalidate();
+		show(false);
 	}
 
 	/**
@@ -224,21 +210,46 @@ public class ComponentPlaceholder {
 		}
 
 		isShowing = doShow;
+
 		invalidate();
 	}
 
+	private void hideComponent() {
+		if (componentProvider == null) {
+			return;
+		}
+
+		JComponent component = componentProvider.getComponent();
+		if (component == null) {
+			return; // can happen during initialization
+		}
+
+		Container parent = component.getParent();
+		if (parent != null) {
+			parent.remove(component);
+		}
+	}
+
 	private void invalidate() {
+		// Hide the component provider's component before clearing the UI.  If we later dispose the
+		// component provider and the component is still visible, it may get repainted after being
+		// disposed, which can trigger exceptions.
+		hideComponent();
 		invalidateComponentNode();
+		disposeDockableComponent();
+		notifyProviderVisibilityIsChanging();
+	}
 
-		disposeComponent();
+	private void notifyProviderVisibilityIsChanging() {
+		if (componentProvider == null) {
+			return;
+		}
 
-		if (componentProvider != null) {
-			if (isShowing) {
-				componentProvider.componentShown();
-			}
-			else {
-				componentProvider.componentHidden();
-			}
+		if (isShowing) {
+			componentProvider.componentShown();
+		}
+		else {
+			componentProvider.componentHidden();
 		}
 	}
 
@@ -247,14 +258,15 @@ public class ComponentPlaceholder {
 	}
 
 	void dispose() {
-
 		disposed = true;
+		disposeDockableComponent();
+		disposeNode();
+	}
 
-		if (comp != null) {
-			comp.dispose();
-			comp = null;
-		}
-
+	/**
+	 * Performs a final removal of this placeholder from its {@link ComponentNode}.
+	 */
+	private void disposeNode() {
 		if (compNode == null) {
 			return;
 		}
@@ -268,7 +280,11 @@ public class ComponentPlaceholder {
 		compNode = null;
 	}
 
-	private void disposeComponent() {
+	/**
+	 * Disposes the active {@link DockableComponent}.  The component may later get recreated in the
+	 * call to {@link #getComponent()}.
+	 */
+	private void disposeDockableComponent() {
 		if (comp == null) {
 			return;
 		}
@@ -277,11 +293,18 @@ public class ComponentPlaceholder {
 		comp = null;
 	}
 
+	/**
+	 * {@return true if this placeholder has a component that can take focus.  This placeholder 
+	 * cannot take focus if it does not yet have a DockableComponent.}
+	 */
+	boolean canTakeFocus() {
+		return comp != null;
+	}
+
 	void toFront() {
 		if (comp != null) {
 			compNode.makeSelectedTab(this);
 		}
-
 	}
 
 	/**
@@ -297,7 +320,7 @@ public class ComponentPlaceholder {
 		activateWindow();
 
 		// make sure the tab has time to become active before trying to request focus
-		ExpiringSwingTimer.runWhen(this::isShowing, 750, () -> {
+		ExpiringSwingTimer.runWhen(this::isShowing, () -> {
 			doRequestFocus(tmp);
 		});
 	}
@@ -350,6 +373,7 @@ public class ComponentPlaceholder {
 		if (compNode != null) {
 			isDocking = compNode.winMgr.isDocking();
 		}
+
 		if (comp == null && isShowing) {
 			comp = new DockableComponent(this, isDocking);
 		}
@@ -448,13 +472,14 @@ public class ComponentPlaceholder {
 	 * @param newProvider the new provider
 	 */
 	void setProvider(ComponentProvider newProvider) {
+
 		this.componentProvider = newProvider;
 		actions.clear();
 		if (newProvider != null) {
 			updateInfo(newProvider);
 		}
 
-		disposeComponent();
+		disposeDockableComponent();
 	}
 
 	public void update() {
@@ -548,13 +573,16 @@ public class ComponentPlaceholder {
 			return; // disposed
 		}
 
-		ActionContext actionContext = componentProvider.getActionContext(null);
-		if (actionContext == null) {
-			actionContext = new DefaultActionContext(componentProvider, null);
+		ActionContext context = componentProvider.getActionContext(null);
+		if (context == null) {
+			context = new DefaultActionContext(componentProvider, null);
 		}
-		for (DockingActionIf action : actions) {
-			action.setEnabled(
-				action.isValidContext(actionContext) && action.isEnabledForContext(actionContext));
+
+		context.setContextProvider(componentProvider);
+
+		for (DockingActionIf a : actions) {
+			boolean enabled = a.isValidContext(context) && a.isEnabledForContext(context);
+			a.setEnabled(enabled);
 		}
 	}
 

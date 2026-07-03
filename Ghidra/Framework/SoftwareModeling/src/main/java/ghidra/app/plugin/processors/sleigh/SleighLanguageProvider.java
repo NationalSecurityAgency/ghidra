@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,19 +17,18 @@ package ghidra.app.plugin.processors.sleigh;
 
 import static utilities.util.FileUtilities.*;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
-import java.util.regex.Pattern;
 
 import org.xml.sax.*;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.pcode.DecoderException;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 import utilities.util.FileResolutionResult;
@@ -39,38 +38,30 @@ import utilities.util.FileResolutionResult;
  * specifications
  */
 public class SleighLanguageProvider implements LanguageProvider {
-
 	/**
-	 * <pre>
-	 * Raw:     .*(\/|\\)\.\.?(\/|\\)|\.(\/|\\)|\.\.(\/|\\)
-	 * Parts:   .*(\/|\\)\.\.?(\/|\\) - optional text followed by a forward or back slash, 
-	 *                                  followed by one or two literal dots, followed
-	 *                                  by a forward or back slash
-	 *      OR
-	 *          \.(\/|\\)             - a literal dot followed by a forward or back slash
-	 *      OR 
-	 *          \.\.(\/|\\)           - two literal dots followed by a forward or back slash
-	 * </pre>
+	 * Returns a singleton instance of a {@link SleighLanguageProvider}.
+	 * 
+	 * @return singleton {@link SleighLanguageProvider}
 	 */
-	private static final Pattern RELATIVE_PATHS_PATTERN =
-		Pattern.compile(".*(\\/|\\\\)\\.\\.?(\\/|\\\\)|\\.(\\/|\\\\)|\\.\\.(\\/|\\\\)");
-
-	private final LinkedHashMap<LanguageID, SleighLanguage> languages =
-		new LinkedHashMap<LanguageID, SleighLanguage>();
-	private final LinkedHashMap<LanguageID, SleighLanguageDescription> descriptions =
-		new LinkedHashMap<LanguageID, SleighLanguageDescription>();
-	private int failureCount = 0;
-
-	public final static String LANGUAGE_DIR_NAME = "languages";
-
-	private static SleighLanguageProvider instance; // sleigh language provider instance (singleton)
-
 	public static synchronized SleighLanguageProvider getSleighLanguageProvider() {
 		if (instance == null) {
 			instance = new SleighLanguageProvider();
 		}
 		return instance;
 	}
+
+	private static SleighLanguageProvider instance; // sleigh language provider instance (singleton)
+
+	/**
+	 * Property that can be set as a jvm startup option to control the sla lock timeout duration.
+	 * <p>
+	 * See {@link #LANGUAGE_LOCK_TIMEOUT}.
+	 */
+	public static final String LANGUAGE_LOCK_TIMEOUT_PROPNAME =
+		"ghidra.app.plugin.processors.sleigh.SleighLanguageProvider.LANGUAGE_LOCK_TIMEOUT_MS";
+
+	private final Map<LanguageID, LanguageRec> languages = new LinkedHashMap<>(); // preserve load order
+	private int failureCount = 0;
 
 	/**
 	 * Construct sleigh language provider (singleton use)
@@ -81,7 +72,7 @@ public class SleighLanguageProvider implements LanguageProvider {
 		}
 		catch (Exception e) {
 			Msg.error(SleighLanguageProvider.class,
-				"Sleigh language provider initiailization failed", e);
+				"Sleigh language provider initialization failed", e);
 		}
 	}
 
@@ -109,8 +100,14 @@ public class SleighLanguageProvider implements LanguageProvider {
 		}
 		catch (SleighException e) {
 			++failureCount;
-			Msg.showError(this, null, "Problem loading " + file.getName(),
-				"Validation error: " + e.getMessage(), e);
+			if (e instanceof SleighFileException) {
+				// no need for stack trace
+				Msg.showError(this, null, "Problem loading " + file.getName(), e.getMessage());
+			}
+			else {
+				Msg.showError(this, null, "Problem loading " + file.getName(),
+					"Validation error: " + e.getMessage(), e);
+			}
 		}
 	}
 
@@ -121,83 +118,52 @@ public class SleighLanguageProvider implements LanguageProvider {
 
 	@Override
 	public boolean isLanguageLoaded(LanguageID languageId) {
-		return languages.get(languageId) != null;
+		return languages.getOrDefault(languageId, LanguageRec.NOT_FOUND).lang != null;
 	}
 
 	@Override
-	public Language getLanguage(LanguageID languageId) {
-		SleighLanguageDescription description = descriptions.get(languageId);
-		SleighLanguage lang = languages.get(languageId);
-		if (lang == null && description != null) {
-			try {
-				lang = new SleighLanguage(description);
-				languages.put(languageId, lang);
+	public SleighLanguage getLanguage(LanguageID languageId, TaskMonitor monitor)
+			throws LanguageNotFoundException {
+		LanguageRec langRec = languages.getOrDefault(languageId, LanguageRec.NOT_FOUND);
+		if (langRec != LanguageRec.NOT_FOUND && langRec.lang == null) {
+			if (langRec.isRepeatFailedLangFile()) {
+				throw new LanguageNotFoundException(languageId, langRec.th);
 			}
-			catch (SleighException e) {
-				Msg.showError(this, null, "Error",
-					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
-				throw e;
-			}
-			catch (DecoderException e) {
-				Msg.showError(this, null, "Error",
-					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
-				throw new SleighException("Format violation in the .sla file", e);
-			}
-			catch (FileNotFoundException e) {
-				Msg.showError(this, null, "Error",
-					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
-				throw new SleighException(
-					"File not found - language probably did not compile properly", e);
-			}
-			catch (SAXException e) {
-				Msg.showError(this, null, "Error",
-					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
-				throw new SleighException(
-					"SAXException - language probably did not compile properly", e);
-			}
-			catch (IOException e) {
-				Msg.showError(this, null, "Error",
-					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
-				throw new SleighException(
-					"IOException - language probably did not compile properly", e);
-			}
+			langRec.loadLanguage(monitor);
 		}
-		return lang;
+		return langRec.lang;
 	}
 
-	void unloadLanguage(LanguageID languageID) {
-		if (languages.containsKey(languageID)) {
-			languages.put(languageID, null);
+
+	/**
+	 * Returns the {@link SleighLanguageDescription language description} of the specified language
+	 * 
+	 * @param languageId {@link LanguageID}
+	 * @return {@link SleighLanguageDescription}
+	 */
+	public SleighLanguageDescription getLanguageDescription(LanguageID languageId) {
+		return languages.getOrDefault(languageId, LanguageRec.NOT_FOUND).langDesc;
+	}
+
+	void unloadLanguage(LanguageID languageId) {
+		LanguageRec langRec = languages.get(languageId);
+		if (langRec != null) {
+			langRec.unloadLanguage();
 		}
 	}
 
 	@Override
 	public LanguageDescription[] getLanguageDescriptions() {
-		LanguageDescription[] d = new LanguageDescription[descriptions.size()];
-		descriptions.values().toArray(d);
-		return d;
+		return languages.values()
+				.stream()
+				.map(langRec -> langRec.langDesc)
+				.toArray(LanguageDescription[]::new);
 	}
 
-	private void createLanguageDescriptions(final ResourceFile specFile)
+	private void createLanguageDescriptions(ResourceFile specFile)
 			throws SAXException, IOException {
-		ErrorHandler errHandler = new ErrorHandler() {
-			@Override
-			public void error(SAXParseException exception) throws SAXException {
-				Msg.error(SleighLanguageProvider.this, "Error parsing " + specFile, exception);
-			}
-
-			@Override
-			public void fatalError(SAXParseException exception) throws SAXException {
-				Msg.error(SleighLanguageProvider.this, "Fatal error parsing " + specFile,
-					exception);
-			}
-
-			@Override
-			public void warning(SAXParseException exception) throws SAXException {
-				Msg.warn(SleighLanguageProvider.this, "Warning parsing " + specFile, exception);
-			}
-		};
-		XmlPullParser parser = XmlPullParserFactory.create(specFile, errHandler, false);
+		XmlPullParser parser =
+			XmlPullParserFactory.create(specFile, loggingErrorHandler(specFile), false);
 		try {
 			read(parser, specFile.getParentFile(), specFile.getName());
 		}
@@ -294,17 +260,12 @@ public class SleighLanguageProvider implements LanguageProvider {
 			}
 			while ((compiler = parser.softStart("compiler")) != null) {
 				String compilerID = compiler.getAttribute("id");
-				final CompilerSpecID compilerSpecID = new CompilerSpecID(compilerID);
-				final String compilerSpecName = compiler.getAttribute("name");
-				final String compilerSpecFilename = compiler.getAttribute("spec");
-				final ResourceFile compilerSpecFile =
-					findFile(parentDirectory, compilerSpecFilename, ".cspec");
-				FileResolutionResult result = existsAndIsCaseDependent(compilerSpecFile);
-				if (!result.isOk()) {
-					throw new SleighException("cspec file " + compilerSpecFile +
-						" is not properly case dependent: " + result.getMessage());
-				}
-				final SleighCompilerSpecDescription sleighCompilerSpecDescription =
+				CompilerSpecID compilerSpecID = new CompilerSpecID(compilerID);
+				String compilerSpecName = compiler.getAttribute("name");
+				String compilerSpecFilename = compiler.getAttribute("spec");
+				ResourceFile compilerSpecFile = SleighLanguageFile
+						.getLanguageResourceFile(parentDirectory, compilerSpecFilename, ".cspec");
+				SleighCompilerSpecDescription sleighCompilerSpecDescription =
 					new SleighCompilerSpecDescription(compilerSpecID, compilerSpecName,
 						compilerSpecFile);
 				compilerSpecs.add(sleighCompilerSpecDescription);
@@ -343,58 +304,26 @@ public class SleighLanguageProvider implements LanguageProvider {
 					" is not properly case dependent: " + result.getMessage());
 			}
 			description.setDefsFile(defsFile);
-			final ResourceFile specFile = findFile(parentDirectory, pspec, ".pspec");
-			result = existsAndIsCaseDependent(specFile);
-			if (!result.isOk()) {
-				throw new SleighException("pspec file " + specFile +
-					" is not properly case dependent: " + result.getMessage());
-			}
+
+			ResourceFile specFile =
+				SleighLanguageFile.getLanguageResourceFile(parentDirectory, pspec, ".pspec");
 			description.setSpecFile(specFile);
 
-			ResourceFile slaFile;
-			try {
-				slaFile = findFile(parentDirectory, slafilename, ".slaspec");
-				result = existsAndIsCaseDependent(slaFile);
-				if (!result.isOk()) {
-					throw new SleighException("sla file " + slaFile +
-						" is not properly case dependent: " + result.getMessage());
-				}
-				description.setSlaFile(slaFile);
-			}
-			catch (SleighException e) {
-				int index = slafilename.lastIndexOf('.');
-				String slabase = slafilename.substring(0, index);
-
-				String slaspecfilename = slabase + ".slaspec";
-
-				ResourceFile slaspecFile = findFile(parentDirectory, slaspecfilename, ".slaspec");
-				result = existsAndIsCaseDependent(slaspecFile);
-				if (!result.isOk()) {
-					throw new SleighException("sla file source " + slaspecFile +
-						" is not properly case dependent: " + result.getMessage());
-				}
-
-				slaFile = new ResourceFile(slaspecFile.getParentFile(), slafilename);
-				description.setSlaFile(slaFile);
-			}
+			SleighLanguageFile langFile =
+				SleighLanguageFile.fromSlaFilename(parentDirectory, slafilename);
+			description.setLanguageFile(langFile);
 
 			try {
 				if (manualindexfile != null) {
-					ResourceFile manualIndexFile =
-						findFile(parentDirectory, manualindexfile, ".idx");
-					result = existsAndIsCaseDependent(manualIndexFile);
-					if (result.isOk()) {
-						description.setManualIndexFile(manualIndexFile);
-					}
-					else {
-						throw new SleighException(result.getMessage());
-					}
+					ResourceFile manualIndexFile = SleighLanguageFile
+							.getLanguageResourceFile(parentDirectory, manualindexfile, ".idx");
+					description.setManualIndexFile(manualIndexFile);
 				}
 			}
 			catch (SleighException ex) { // Error with the manual shouldn't prevent language from loading
 				Msg.error(this, ex.getMessage());
 			}
-			if (descriptions.put(id, description) != null) {
+			if (languages.put(id, new LanguageRec(description)) != null) {
 				Msg.showError(this, null, "Duplicate Sleigh Language ID",
 					"Language " + id + " previously defined: " + defsFile);
 			}
@@ -402,48 +331,155 @@ public class SleighLanguageProvider implements LanguageProvider {
 		parser.end(start);
 	}
 
-	private ResourceFile findFile(ResourceFile parentDir, String fileNameOrRelativePath,
-			String extension) throws SleighException {
-		ResourceFile file = new ResourceFile(parentDir, fileNameOrRelativePath);
-		if (file.exists()) {
-			return file;
-		}
-		String fileName = getFileNameFromPath(fileNameOrRelativePath);
-		List<ResourceFile> files = findFiles(fileName, extension);
-		if (files.size() == 1) {
-			return files.get(0);
-		}
+	//---------------------------------------------------------------------------------------------
+	/**
+	 * Timeout used when trying to acquire the sla file lock.  (Default: 60 seconds)
+	 * <p> 
+	 * The sla lock is acquired and held during .sla file checking and writing (compiling).
+	 * Currently parsing the sla xml is done after releasing the lock.
+	 * <p>
+	 * If a Ghidra process is trying to fetch a sleigh language, which requires acquiring the lock 
+	 * on a sla file, and it times out before succeeding, the caller will get a 
+	 * {@link LanguageNotFoundException} exception.
+	 * <p>
+	 * This timeout should be long enough to allow the process that has the lock to finish
+	 * compiling and writing the slaspec so that the waiting process does not give up too quickly
+	 * and give an error to the user.
+	 * 
+	 * See {@link #LANGUAGE_LOCK_TIMEOUT_PROPNAME}.
+	 */
+	public static final Duration LANGUAGE_LOCK_TIMEOUT = getLanguageLockTimeout();
 
-		String relativePath = discardRelativePath(fileNameOrRelativePath);
-		for (ResourceFile resourceFile : files) {
-			if (file.getAbsolutePath().endsWith(relativePath)) {
-				return resourceFile;
+	private static final int DEFAULT_LOCK_TIMEOUT_SECS = 60;
+
+	private static Duration getLanguageLockTimeout() {
+		String langLockTimeoutOverride = System.getProperty(LANGUAGE_LOCK_TIMEOUT_PROPNAME);
+		if (langLockTimeoutOverride != null) {
+			try {
+				return Duration.ofMillis(Long.parseLong(langLockTimeoutOverride));
+			}
+			catch (NumberFormatException e) {
+				// fallthru
 			}
 		}
-		ResourceFile missingFile = new ResourceFile(parentDir, fileNameOrRelativePath);
-		throw new SleighException("Missing sleigh file: " + missingFile.getAbsolutePath());
+		return Duration.ofSeconds(DEFAULT_LOCK_TIMEOUT_SECS);
 	}
 
-	private String discardRelativePath(String str) {
-		return RELATIVE_PATHS_PATTERN.matcher(str).replaceFirst("");
-	}
+	private static class LanguageRec {
+		static final LanguageRec NOT_FOUND = new LanguageRec(null);
 
-	private List<ResourceFile> findFiles(String fileName, String extension) {
-		List<ResourceFile> matches = new ArrayList<ResourceFile>();
-		List<ResourceFile> files = Application.findFilesByExtensionInApplication(extension);
-		for (ResourceFile resourceFile : files) {
-			if (resourceFile.getName().equals(fileName)) {
-				matches.add(resourceFile);
+		SleighLanguage lang;
+		SleighLanguageDescription langDesc;
+		Long badSlaspecTS;
+		Throwable th;
+
+		LanguageRec(SleighLanguageDescription langDesc) {
+			this.langDesc = langDesc;
+		}
+
+		void markLangFileFailed(Throwable e) {
+			ResourceFile slaSpecFile = langDesc.getLanguageFile().getSlaSpecFile();
+			badSlaspecTS = slaSpecFile.lastModified();
+			th = e;
+		}
+
+		boolean isRepeatFailedLangFile() {
+			if (th instanceof SleighFileLockException) {
+				// allow user to retry getting langauge because the exception would have had a built-in delay				
+				return false;
+			}
+			// Prevents trying to load the same language over and over again, but still allows the
+			// user/developer to fix a slaspec file (and change its timestamp) and try to load it
+			// again without having to restart ghidra.  Does not consider timestamps of sinc files.
+			if (badSlaspecTS != null) {
+				ResourceFile slaSpecFile = langDesc.getLanguageFile().getSlaSpecFile();
+				long slaSpecTS = slaSpecFile.lastModified();
+				if (slaSpecTS != badSlaspecTS) {
+					badSlaspecTS = null;
+				}
+			}
+			return badSlaspecTS != null;
+		}
+
+		/**
+		 * Loads the language.
+		 *  
+		 * @param monitor {@link TaskMonitor}.  See 
+		 * {@link SleighLanguage#SleighLanguage(SleighLanguageDescription, TaskMonitor)} for notes
+		 * about how the TaskMonitor's settings are modified during loading.
+		 * @throws LanguageNotFoundException if error reading language info
+		 */
+		void loadLanguage(TaskMonitor monitor) throws LanguageNotFoundException {
+			try {
+				lang = new SleighLanguage(langDesc, monitor);
+				badSlaspecTS = null;
+			}
+			catch (SleighException e) {
+				markLangFileFailed(e);
+				if (!(e instanceof SleighFileException)) {
+					// don't force showing error if its just a missing file because it will be displayed elsewhere
+					Msg.showError(this, null, "Error",
+						"Failed to read language %s".formatted(langDesc.getLanguageFile()), e);
+				}
+				throw new LanguageNotFoundException(langDesc.getLanguageID(), e);
 			}
 		}
-		return matches;
+
+		void unloadLanguage() {
+			lang = null;
+			badSlaspecTS = null;
+			th = null;
+		}
 	}
 
-	private String getFileNameFromPath(String fileNameOrRelativePath) {
-		int lastIndexOf = fileNameOrRelativePath.lastIndexOf("/");
-		if (lastIndexOf < 0) {
-			return fileNameOrRelativePath;
-		}
-		return fileNameOrRelativePath.substring(lastIndexOf + 1);
+	/**
+	 * Creates a SAX ErrorHandler that re-throws the exceptions, ignores the warning
+	 * 
+	 * @return new {@link ErrorHandler}
+	 */
+	static ErrorHandler throwingErrorHandler() {
+		return new ErrorHandler() {
+			@Override
+			public void warning(SAXParseException exception) throws SAXException {
+				// ignore
+			}
+
+			@Override
+			public void fatalError(SAXParseException exception) throws SAXException {
+				throw exception;
+			}
+
+			@Override
+			public void error(SAXParseException exception) throws SAXException {
+				throw exception;
+			}
+		};
 	}
+
+	/**
+	 * Creates a SAX ErrorHandler that logs the exceptions
+	 * 
+	 * @param specFile the input file 
+	 * @return new {@link ErrorHandler}
+	 */
+	static ErrorHandler loggingErrorHandler(ResourceFile specFile) {
+		return new ErrorHandler() {
+			@Override
+			public void error(SAXParseException exception) throws SAXException {
+				Msg.error(SleighLanguageProvider.class, "Error parsing " + specFile, exception);
+			}
+
+			@Override
+			public void fatalError(SAXParseException exception) throws SAXException {
+				Msg.error(SleighLanguageProvider.class, "Fatal error parsing " + specFile,
+					exception);
+			}
+
+			@Override
+			public void warning(SAXParseException exception) throws SAXException {
+				Msg.warn(SleighLanguageProvider.class, "Warning parsing " + specFile, exception);
+			}
+		};
+	}
+
 }

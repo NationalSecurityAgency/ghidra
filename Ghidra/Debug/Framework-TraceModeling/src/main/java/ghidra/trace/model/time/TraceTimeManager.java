@@ -17,6 +17,7 @@ package ghidra.trace.model.time;
 
 import java.util.Collection;
 
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 
@@ -50,6 +51,22 @@ public interface TraceTimeManager {
 	TraceSnapshot getMostRecentSnapshot(long snap);
 
 	/**
+	 * Get the most recent fork snapshot key since a given key
+	 * 
+	 * <p>
+	 * This searches the snapshots for one where {@link TraceSnapshot#isFork()} is true. Note that
+	 * conventionally, negative snaps are <em>scratch</em> space. If a non-negative snap is given,
+	 * then the return fork snap must also be non-negative, i.e., if no non-negative fork snapshot
+	 * is found, this will return 0, the initial snapshot. If a negative snap is given, then the
+	 * return fork snap must also be negative, i.e., if no negative fork snapshot is found, this
+	 * will return {@value Long#MIN_VALUE}, even if that snapshot does not actually exist.
+	 * 
+	 * @param snap the snapshot key
+	 * @return the fork snapshot key
+	 */
+	long getMostRecentFork(long snap);
+
+	/**
 	 * Get all snapshots with the given schedule
 	 * 
 	 * <p>
@@ -75,6 +92,22 @@ public interface TraceTimeManager {
 	 * @return the snapshot
 	 */
 	TraceSnapshot findScratchSnapshot(TraceSchedule schedule);
+
+	/**
+	 * Find the nearest related snapshot whose schedule is a prefix of the given schedule
+	 * 
+	 * <p>
+	 * This finds a snapshot that can be used as the initial state of an emulator to materialize the
+	 * state at the given schedule. The one it returns is the one that would require the fewest
+	 * instruction steps. Note that since an emulator cannot be initialized into the middle of an
+	 * instruction, snapshots whose schedules contain p-code op steps are ignored. Additionally,
+	 * this will ignore any snapshots whose version is less than the emulator cache version.
+	 * 
+	 * @param schedule the desired schedule
+	 * @return the found snapshot, or null
+	 * @see Trace#getEmulatorCacheVersion()
+	 */
+	TraceSnapshot findSnapshotWithNearestPrefix(TraceSchedule schedule);
 
 	/**
 	 * List all snapshots in the trace
@@ -129,5 +162,4 @@ public interface TraceTimeManager {
 	 * @return radix the radix
 	 */
 	TimeRadix getTimeRadix();
-
 }

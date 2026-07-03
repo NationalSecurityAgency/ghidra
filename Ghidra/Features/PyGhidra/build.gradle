@@ -55,9 +55,9 @@ distributePyDep("jpype1-1.5.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_
 distributePyDep("jpype1-1.5.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl")
 distributePyDep("jpype1-1.5.2-cp39-cp39-macosx_10_9_x86_64.whl")
 distributePyDep("jpype1-1.5.2.tar.gz")
-distributePyDep("packaging-23.2-py3-none-any.whl")
-distributePyDep("setuptools-68.0.0-py3-none-any.whl")
-distributePyDep("wheel-0.37.1-py2.py3-none-any.whl")
+distributePyDep("packaging-25.0-py3-none-any.whl")
+distributePyDep("setuptools-80.9.0-py3-none-any.whl")
+distributePyDep("wheel-0.45.1-py3-none-any.whl")
 
 // Install JPype into the development virtual environment
 task installJPype(type: Exec) {

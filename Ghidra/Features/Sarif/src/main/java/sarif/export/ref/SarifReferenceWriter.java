@@ -23,12 +23,7 @@ import java.util.List;
 import com.google.gson.JsonArray;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.symbol.ExternalLocation;
-import ghidra.program.model.symbol.ExternalReference;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.ReferenceManager;
-import ghidra.program.model.symbol.ShiftedReference;
-import ghidra.program.model.symbol.StackReference;
+import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import sarif.export.AbstractExtWriter;
@@ -63,9 +58,7 @@ public class SarifReferenceWriter extends AbstractExtWriter {
 		for (Address addr : references) {
 			Reference[] refs = referenceManager.getReferencesFrom(addr);
 			for (int i = 0; i < refs.length; i++) {
-				if (monitor.isCancelled()) {
-					throw new CancelledException();
-				}
+				monitor.checkCancelled();
 				Reference ref = refs[i];
 				if (ref.isRegisterReference()) {
 					ExtRegisterReference mref = new ExtRegisterReference(ref);

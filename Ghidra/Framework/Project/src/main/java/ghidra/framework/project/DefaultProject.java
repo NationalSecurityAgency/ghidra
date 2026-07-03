@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,9 @@ import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
 
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.XMLOutputter;
 
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.data.DefaultProjectData;
@@ -40,6 +40,7 @@ import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.NotFoundException;
 import ghidra.util.xml.GenericXMLOutputter;
 import ghidra.util.xml.XmlUtilities;
 
@@ -103,11 +104,13 @@ public class DefaultProject implements Project {
 	 * @param resetOwner if true, set the owner to the current user
 	 * @throws FileNotFoundException project directory not found
 	 * @throws IOException if I/O error occurs.
+	 * @throws NotFoundException if project does not exist
 	 * @throws NotOwnerException if userName is not the owner of the project.
 	 * @throws LockException if unable to establish project lock
 	 */
 	protected DefaultProject(DefaultProjectManager projectManager, ProjectLocator projectLocator,
-			boolean resetOwner) throws IOException, NotOwnerException, LockException {
+			boolean resetOwner)
+			throws IOException, NotFoundException, NotOwnerException, LockException {
 
 		this.projectManager = projectManager;
 		this.projectLocator = projectLocator;
@@ -285,6 +288,10 @@ public class DefaultProject implements Project {
 				throw new IOException("Invalid Ghidra URL specified: " + url);
 			}
 
+			if (url.equals(projectLocator.getURL())) {
+				return projectData;
+			}
+
 			ProjectData viewedProjectData = otherViewsMap.get(url);
 			if (viewedProjectData == null) {
 				viewedProjectData = openProjectView(url);
@@ -295,6 +302,18 @@ public class DefaultProject implements Project {
 			}
 
 			return viewedProjectData;
+		}
+	}
+
+	@Override
+	public ProjectData getProjectData(URL url) {
+
+		if (url.equals(projectLocator.getURL())) {
+			return projectData;
+		}
+
+		synchronized (otherViewsMap) {
+			return otherViewsMap.get(url);
 		}
 	}
 
@@ -469,7 +488,7 @@ public class DefaultProject implements Project {
 			while (it.hasNext()) {
 				Element elem = (Element) it.next();
 				String urlStr = elem.getAttributeValue("URL");
-				URL url = new URL(urlStr);
+				URL url = GhidraURL.toURL(urlStr);
 				try {
 					addProjectView(url, true);
 				}
@@ -562,7 +581,7 @@ public class DefaultProject implements Project {
 			File saveFile = new File(projectData.getProjectDir(), PROJECT_STATE);
 			OutputStream os = new FileOutputStream(saveFile);
 			Document doc = new Document(root);
-			XMLOutputter xmlOut = new GenericXMLOutputter();
+			XMLOutputter xmlOut = GenericXMLOutputter.getInstance();
 			xmlOut.output(doc, os);
 			os.close();
 

@@ -36,6 +36,7 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceIterator;
 import ghidra.util.Msg;
+import ghidra.util.datastruct.FixedSizeHashMap;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -76,8 +77,16 @@ public class VarnodeContext implements ProcessorContext {
 	// temp values for individual instruction computation before being merged into
 	// the end flow state for an instruction
 	private HashMap<Address, Varnode> tempVals = new HashMap<>();
-	protected HashMap<Address, Varnode> tempUniqueVals = new HashMap<>();
+	protected HashMap<Address, Varnode> tempUniqueVals;
 	protected boolean keepTempUniqueValues = false;
+	
+	// During tracing of paths, unique values need to be stored if the language has crossbuilds.
+	// MaxCrossBuilds is the general number of uniques with values that should be stored in the cache.
+	// The maxUniqueBytes is the number of actual entries (bytes) in the cache to keep. This is based
+	// on the size of a pointer, which is in general the size of a register.  This is not intended
+	// to support general computation of values, and is more geared to 32/64 bit contstants and pointers.
+	private static final int MaxCrossBuilds = 200;    // maximum instructions worth of uniques
+	private int maxUniqueBytes = 0;                  // number of bytes worth of uniques to keep
 
 	// Values that must be cleared from final instruction flow state
 	protected HashSet<Varnode> clearVals = new HashSet<>();
@@ -126,15 +135,15 @@ public class VarnodeContext implements ProcessorContext {
 
 	boolean isBE = false;
 	
-	boolean trackStartEndState = false;
+	boolean recordStartEndState = false;
 
 	public boolean debug = false;
 
 	public VarnodeContext(Program program, ProgramContext programContext,
-			ProgramContext spaceProgramContext, boolean trackStartEndState) {
+			ProgramContext spaceProgramContext, boolean recordStartEndState) {
 		this.program = program;
 		this.isBE = program.getLanguage().isBigEndian();
-		this.trackStartEndState = trackStartEndState;
+		this.recordStartEndState = recordStartEndState;
 
 		// make a copy, because we could be making new spaces.
 		this.addrFactory = new OffsetAddressFactory(program);
@@ -158,7 +167,10 @@ public class VarnodeContext implements ProcessorContext {
 
 		memoryVals.push(new HashMap<Address, Varnode>());
 		regVals.push((new HashMap<Address, Varnode>()));
-		uniqueVals.push(new HashMap<Address, Varnode>());
+		
+		maxUniqueBytes = MaxCrossBuilds * program.getDefaultPointerSize();
+		tempUniqueVals = new HashMap<Address,Varnode>();
+		uniqueVals.push(new FixedSizeHashMap<Address, Varnode>(maxUniqueBytes));
 
 		setupValidSymbolicStackNames(program);
 
@@ -169,6 +181,9 @@ public class VarnodeContext implements ProcessorContext {
 		if (language instanceof SleighLanguage) {
 			// Must preserve temp values if named pcode sections exist (i.e., cross-builds are used)
 			keepTempUniqueValues = ((SleighLanguage) language).numSections() != 0;
+			if (keepTempUniqueValues) {
+				tempUniqueVals = new FixedSizeHashMap<Address, Varnode>(maxUniqueBytes);
+			}
 		}
 	}
 
@@ -237,7 +252,7 @@ public class VarnodeContext implements ProcessorContext {
 	public void flowStart(Address toAddr) {
 		currentAddress = toAddr;
 		
-		if (trackStartEndState) {
+		if (recordStartEndState) {
 			addrStartState.put(toAddr,new TraceDepthState(regVals.size(),regVals));
 			regVals.push(new HashMap<Address, Varnode>());
 		}
@@ -247,7 +262,7 @@ public class VarnodeContext implements ProcessorContext {
 	 * End flow and save any necessary end flow state for the current instruction at address
 	 */
 	public void flowEnd(Address address) {
-		if (trackStartEndState) {
+		if (recordStartEndState) {
 			addrEndState.put(address,new TraceDepthState(regVals.size(),regVals));
 		}
 		currentAddress = null;
@@ -419,9 +434,13 @@ public class VarnodeContext implements ProcessorContext {
 		Varnode rvnode = null;
 		if (varnode.isUnique()) {
 			rvnode = getMemoryValue(tempUniqueVals,varnode,signed);
-			if (rvnode == null && keepTempUniqueValues) {
-				rvnode = getMemoryValue(uniqueVals,0,varnode,signed);
-			}
+			// TODO: if doing full cross build tracking, need to
+			//       look back at uniqueVals stack.  For now,
+			//       since any cross builds are flushed on branches
+			//       just use tempUniqueVals
+			// if (rvnode == null && keepTempUniqueValues) {
+			//	rvnode = getMemoryValue(uniqueVals,0,varnode,signed);
+			//}
 		}
 		else {
 			rvnode = getMemoryValue(tempVals, varnode, signed);
@@ -1029,9 +1048,13 @@ public class VarnodeContext implements ProcessorContext {
 		// merge tempvals to top of regVals
 		regVals.peek().putAll(tempVals);
 
-		if (keepTempUniqueValues) {
-			uniqueVals.peek().putAll(tempUniqueVals);
-		}
+		// TODO: if doing full cross build tracking, need to
+		//       save tmpuniques into uniqueVals.  For now,
+		//       since any cross builds are flushed on branches
+		//       just use tempUniqueVals
+		//if (keepTempUniqueValues) {
+		//	uniqueVals.peek().putAll(tempUniqueVals);
+		//}
 		
 		if (clearContext) {
 			if (!keepTempUniqueValues) {
@@ -1272,7 +1295,7 @@ public class VarnodeContext implements ProcessorContext {
 	 * Get the value (value, space, size) of a register at the end of the last execution
 	 * flow taken for the instruction at toAddr.
 	 *
-	 * Note: This can only be called if trackStartEndState flag is true.
+	 * Note: This can only be called if recordStartEndState flag is true.
 	 * 
 	 * @param reg register to retrieve the end value
 	 * @param fromAddr flow from address (not used currently, future use to retrieve multiple flows)
@@ -1281,13 +1304,13 @@ public class VarnodeContext implements ProcessorContext {
 	 * 
 	 * @return instruction end state value for register, or null if no known state
 	 * 
-	 * @throws UnsupportedOperationException trackStartEndState == false at construction
+	 * @throws UnsupportedOperationException recordStartEndState == false at construction
 	 */
 	public Varnode getEndRegisterVarnodeValue(Register reg, Address fromAddr, Address toAddr,
 			boolean signed) {
 		
-		if (!trackStartEndState) {
-			throw new UnsupportedOperationException("Must construct class with trackStartEndState == true");
+		if (!recordStartEndState) {
+			throw new UnsupportedOperationException("Must construct class with recordStartEndState == true");
 		}
 		
 		if (reg == null) {
@@ -1329,7 +1352,7 @@ public class VarnodeContext implements ProcessorContext {
 
 	/**
 	 * Get the current value of the register at the address.
-	 * Note: If trackStartEndState flag is false, then this will return the current value.
+	 * Note: If recordStartEndState flag is false, then this will return the current value.
 	 * 
 	 * @param reg value of register to get
 	 * @param toAddr value of register at a location
@@ -1343,7 +1366,7 @@ public class VarnodeContext implements ProcessorContext {
 	/**
 	 * Get the value of a register that was set coming from an address to an
 	 * another address.
-	 * Note: If trackStartEndState flag is false, then this will return the current value.
+	 * Note: If recordStartEndState flag is false, then this will return the current value.
 	 * 
 	 * @param reg value of register to get
 	 * @param fromAddr location the value came from
@@ -1768,7 +1791,7 @@ public class VarnodeContext implements ProcessorContext {
 	public RegisterValue getRegisterValue(Register register) {
 		Varnode regVnode = trans.getVarnode(register);
 		Varnode value = this.getValue(regVnode, false, null);
-		if (isConstant(value)) {
+		if (value != null && isConstant(value)) {
 			return new RegisterValue(register, BigInteger.valueOf(value.getOffset()));
 		}
 		return null;
@@ -1836,6 +1859,9 @@ public class VarnodeContext implements ProcessorContext {
 	 * @return true if  the varnode is a symbolic location
 	 */
 	public boolean isSymbol(Varnode varnode) {
+		if (varnode == null) {
+			return false;
+		}
 		return isSymbolicSpace(varnode.getAddress().getAddressSpace());
 	}
 
@@ -1846,6 +1872,9 @@ public class VarnodeContext implements ProcessorContext {
 	 * @return true if the varnode is associated with a register
 	 */
 	public boolean isRegister(Varnode varnode) {
+		if (varnode == null) {
+			return false;
+		}
 		return varnode.isRegister() || trans.getRegister(varnode) != null;
 	}
 
@@ -1856,6 +1885,9 @@ public class VarnodeContext implements ProcessorContext {
 	 * @return true if should be treated as a constant for most purposes
 	 */
 	public boolean isConstant(Varnode varnode) {
+		if (varnode == null) {
+			return false;
+		}
 		if (varnode.isConstant()) {
 			return true;
 		}
@@ -1869,6 +1901,9 @@ public class VarnodeContext implements ProcessorContext {
 	 * @return true if should be treated as a constant for most purposes
 	 */
 	public boolean isBadAddress(Varnode v) {
+		if (v == null) {
+			return false;
+		}
 		return v.getAddress().equals(BAD_ADDRESS) || v.getSpace() == BAD_OFFSET_SPACEID;
 	}
 
@@ -1878,11 +1913,14 @@ public class VarnodeContext implements ProcessorContext {
 	 * Suspect constants act like constants, but are in a Suspicious
 	 * address space instead of the constant space.
 	 * 
-	 * @param val1 varnode to check
+	 * @param varnode varnode to check
 	 * @return true if varnode is a suspect constant
 	 */
-	public boolean isSuspectConstant(Varnode val1) {
-		return val1.getSpace() == SUSPECT_OFFSET_SPACEID;
+	public boolean isSuspectConstant(Varnode varnode) {
+		if (varnode == null) {
+			return false;
+		}
+		return varnode.getSpace() == SUSPECT_OFFSET_SPACEID;
 	}
 
 	/**
@@ -1893,6 +1931,9 @@ public class VarnodeContext implements ProcessorContext {
 	 * @return true if this varnode is stored in the symbolic stack space
 	 */
 	public boolean isStackSymbolicSpace(Varnode varnode) {
+		if (varnode == null) {
+			return false;
+		}
 		// symbolic spaces are off of a register, find the space
 		AddressSpace regSpace = addrFactory.getAddressSpace(varnode.getSpace());
 
@@ -1953,18 +1994,33 @@ public class VarnodeContext implements ProcessorContext {
 
 	/**
 	 * Save the current memory state
+	 * @param saveTempUniques  - if internal branching, must save the tempUniques as well
+	 * Note: currently unique values do not survive in the sleigh parser for crossbuild
+	 * lookback if any branch is taken.  In the future crossbuilds may be path based.
+	 * This will need to be re-worked and the unique value state treated as other path
+	 * tracing and stored in uniqueVals.
 	 */
-	public void pushMemState() {
+	public void pushMemState(boolean saveTempUniques) {
 		Stack<HashMap<Address, Varnode>> newRegValsTrace =
 			(Stack<HashMap<Address, Varnode>>) regVals.clone();
 		regTraces.push(newRegValsTrace);
 		regVals.push(new HashMap<Address, Varnode>());
 		
-// TODO: only save if need to
 		Stack<HashMap<Address, Varnode>> newUniqueValsTrace =
 				(Stack<HashMap<Address, Varnode>>) uniqueVals.clone();
 		uniqueTraces.push(newUniqueValsTrace);
-		uniqueVals.push(new HashMap<Address, Varnode>());
+		FixedSizeHashMap<Address, Varnode> uniqueValsState = new FixedSizeHashMap<Address, Varnode>(maxUniqueBytes);
+		// if pushing state for internal branching, must save unique state for restored path
+		// For now, only put temp unique values if internally branching.
+		// Note: saved tempUniqueVals are stored at the top of the trace stack, this is different than
+		//       than other trace stacks, as those trace stacks, the top of the stack is the current
+		//       state and the older stack entries are existing old states before a branch occurred.
+		if (saveTempUniques) {
+			newUniqueValsTrace.push((HashMap<Address, Varnode>) tempUniqueVals.clone());
+		} else {
+			newUniqueValsTrace.push(new FixedSizeHashMap<>(maxUniqueBytes));
+		}
+		uniqueVals.push(uniqueValsState);
 		
 		Stack<HashMap<Address, Varnode>> newMemValsTrace =
 			(Stack<HashMap<Address, Varnode>>) memoryVals.clone();
@@ -1981,9 +2037,14 @@ public class VarnodeContext implements ProcessorContext {
 	public void popMemState() {
 		regVals = regTraces.pop();
 		memoryVals = memTraces.pop();
-		
-// TODO: only save if need to
+
+		// restore old temp values if any was saved
+		tempUniqueVals = uniqueTraces.peek().peek();
 		uniqueVals = uniqueTraces.pop();
+		if (tempUniqueVals == null) {
+			// if no tempUnique values stored for this path
+			tempUniqueVals = new FixedSizeHashMap<>(maxUniqueBytes);
+		}
 		
 		lastSet = lastSetSaves.pop();
 

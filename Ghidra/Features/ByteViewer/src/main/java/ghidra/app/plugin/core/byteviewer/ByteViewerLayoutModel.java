@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.SingleRowLayout;
 import ghidra.app.plugin.core.format.DataFormatModel;
+import ghidra.util.datastruct.ListenerSet;
 
 /**
  * Implements the LayoutModel for ByteViewer Components.
@@ -36,20 +37,18 @@ import ghidra.app.plugin.core.format.DataFormatModel;
 public class ByteViewerLayoutModel implements LayoutModel {
 	private int width;
 	private IndexMap indexMap;
-	private List<LayoutModelListener> listeners;
+	private ListenerSet<LayoutModelListener> listeners =
+		new ListenerSet<>(LayoutModelListener.class, false);
 	private FieldFactory[] factorys;
-	private BigInteger numIndexes;
 
 	public ByteViewerLayoutModel() {
 		factorys = new FieldFactory[0];
-		listeners = new ArrayList<LayoutModelListener>(1);
-		numIndexes = BigInteger.ZERO;
 	}
 
 	void dispose() {
 		indexMap = null;
-		listeners = null;
 		factorys = null;
+		listeners.clear();
 	}
 
 	void setFactorys(FieldFactory[] fieldFactorys, DataFormatModel dataModel, int margin) {
@@ -75,31 +74,19 @@ public class ByteViewerLayoutModel implements LayoutModel {
 			return;
 		}
 		this.indexMap = indexMap;
-		if (indexMap == null) {
-			numIndexes = BigInteger.ZERO;
-		}
-		else {
-			numIndexes = indexMap.getNumIndexes();
-		}
 		indexSetChanged();
 	}
 
 	public void indexSetChanged() {
-		for (LayoutModelListener listener : listeners) {
-			listener.modelSizeChanged(IndexMapper.IDENTITY_MAPPER);
-		}
+		listeners.invoke().modelSizeChanged(IndexMapper.IDENTITY_MAPPER);
 	}
 
 	public void layoutChanged() {
-		for (LayoutModelListener listener : listeners) {
-			listener.dataChanged(BigInteger.ZERO, numIndexes);
-		}
+		listeners.invoke().dataChanged(BigInteger.ZERO, getNumIndexes());
 	}
 
 	public void dataChanged(BigInteger startIndex, BigInteger endIndex) {
-		for (LayoutModelListener listener : listeners) {
-			listener.dataChanged(startIndex, endIndex);
-		}
+		listeners.invoke().dataChanged(startIndex, endIndex);
 	}
 
 	@Override
@@ -117,12 +104,12 @@ public class ByteViewerLayoutModel implements LayoutModel {
 	 */
 	@Override
 	public BigInteger getNumIndexes() {
-		return numIndexes;
+		return indexMap != null ? indexMap.getNumIndexes() : BigInteger.ZERO;
 	}
 
 	@Override
 	public Layout getLayout(BigInteger index) {
-		if (index.compareTo(numIndexes) >= 0) {
+		if (index.compareTo(BigInteger.ZERO) < 0 || index.compareTo(getNumIndexes()) >= 0) {
 			return null;
 		}
 		List<Field> fields = new ArrayList<Field>(factorys.length);
@@ -135,9 +122,11 @@ public class ByteViewerLayoutModel implements LayoutModel {
 		if (fields.size() == 0) {
 			if (factorys.length > 0) {
 				FontMetrics fm = factorys[0].getMetrics();
-				int height = fm.getMaxAscent() + fm.getMaxDescent();
-				fields.add(
-					new EmptyTextField(height, factorys[0].getStartX(), 0, factorys[0].getWidth()));
+				int heightAbove = fm.getMaxAscent();
+				int heightBelow = fm.getMaxDescent();
+				int x = factorys[0].getStartX();
+				int w = factorys[0].getWidth();
+				fields.add(new EmptyTextField(heightAbove, heightBelow, x, w));
 			}
 			else {
 				fields.add(new EmptyTextField(20, 0, 0, 10));
@@ -158,17 +147,10 @@ public class ByteViewerLayoutModel implements LayoutModel {
 		listeners.add(listener);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.LayoutModel#getIndexAfter(int)
-	 */
-	public int getIndexAfter(int index) {
-		return index + 1;
-	}
-
 	@Override
 	public BigInteger getIndexAfter(BigInteger index) {
 		BigInteger nextIndex = index.add(BigInteger.ONE);
-		if (nextIndex.compareTo(numIndexes) >= 0) {
+		if (nextIndex.compareTo(getNumIndexes()) >= 0) {
 			return null;
 		}
 		return nextIndex;
@@ -176,13 +158,15 @@ public class ByteViewerLayoutModel implements LayoutModel {
 
 	@Override
 	public BigInteger getIndexBefore(BigInteger index) {
+		BigInteger numIndexes = getNumIndexes();
+		if (numIndexes.compareTo(BigInteger.ZERO) <= 0 || index.compareTo(BigInteger.ZERO) <= 0) {
+			return null;
+		}
+
 		if (index.compareTo(numIndexes) > 0) {
 			return numIndexes.subtract(BigInteger.ONE);
 		}
 		BigInteger previousIndex = index.subtract(BigInteger.ONE);
-		if (previousIndex.compareTo(BigInteger.ZERO) < 0) {
-			return null;
-		}
 		return previousIndex;
 	}
 

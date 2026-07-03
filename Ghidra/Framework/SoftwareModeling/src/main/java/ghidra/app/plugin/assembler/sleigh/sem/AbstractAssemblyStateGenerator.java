@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseTreeNode;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 
 /**
  * Base class for generating prototype nodes ("states") from a parse tree node
@@ -29,7 +28,6 @@ import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
  * @param <N> the type of parse tree node to process
  */
 public abstract class AbstractAssemblyStateGenerator<N extends AssemblyParseTreeNode> {
-	protected static final DbgTimer DBG = AbstractAssemblyTreeResolver.DBG;
 
 	/**
 	 * Context to pass along as states are generated
@@ -72,15 +70,6 @@ public abstract class AbstractAssemblyStateGenerator<N extends AssemblyParseTree
 			List<AssemblyConstructorSemantic> path = new ArrayList<>(this.path);
 			path.add(cons);
 			return new GeneratorContext(path, this.shift + shift);
-		}
-
-		/**
-		 * Print a debug line
-		 * 
-		 * @param string the message
-		 */
-		public void dbg(String string) {
-			DBG.println(pathToString(path) + ":" + string);
 		}
 	}
 

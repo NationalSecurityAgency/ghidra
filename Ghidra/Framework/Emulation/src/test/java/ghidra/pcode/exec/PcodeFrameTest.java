@@ -15,7 +15,7 @@
  */
 package ghidra.pcode.exec;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.File;
 
@@ -128,8 +128,8 @@ public class PcodeFrameTest extends AbstractGTest {
 				<PcodeProgram:
 				<0>
 				  r0 = INT_ADD r0, 1:8
-				  $U280:1 = INT_EQUAL r0, r1
-				  CBRANCH <0>, $U280:1
+				  $U300:1 = INT_EQUAL r0, r1
+				  CBRANCH <0>, $U300:1
 				>""",
 			program.toString());
 	}
@@ -215,8 +215,8 @@ public class PcodeFrameTest extends AbstractGTest {
 				<p-code frame: index=0 {
 				  <0>
 				 -> r0 = INT_ADD r0, 1:8
-				    $U280:1 = INT_EQUAL r0, r1
-				    CBRANCH <0>, $U280:1
+				    $U300:1 = INT_EQUAL r0, r1
+				    CBRANCH <0>, $U300:1
 				}>""",
 			frame.toString());
 	}

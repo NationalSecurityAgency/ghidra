@@ -44,12 +44,17 @@ from pybag.dbgeng import core as DbgEng  # type: ignore
 from pybag.dbgeng import exception  # type: ignore
 from pybag.dbgeng import util as DbgUtil  # type: ignore
 from pybag.dbgeng.callbacks import DbgEngCallbacks  # type: ignore
+from pybag.dbgeng.idebugbreakpoint import DebugBreakpoint  # type: ignore
 from pybag.dbgeng.idebugclient import DebugClient  # type: ignore
 
 DESCRIPTION_PATTERN = '[{major:X}:{minor:X}] {type}'
 
 DbgVersion = namedtuple('DbgVersion', ['full', 'name', 'dotted', 'arch'])
 
+BPT_HANDLERS: Dict[int, str] = {}
+EXC_CODES: Dict[int, str] = {}
+EXC_HANDLERS: Dict[str, str] = {}
+EVT_HANDLERS: Dict[int, str] = {}
 
 class StdInputCallbacks(CoClass):
     # This is the UUID listed for IDebugInputCallbacks in DbgEng.h
@@ -499,6 +504,12 @@ def get_breakpoints() -> Iterable[Tuple[str, str, str, str, str]]:
         width_set.append(width)
         stat_set.append(status)
     return zip(offset_set, expr_set, prot_set, width_set, stat_set)
+
+
+@dbg.eng_thread
+def get_breakpoint_id(bp: DbgEng.IDebugBreakpoint) -> int:
+    bpt = DebugBreakpoint(bp)
+    return bpt.GetId()
 
 
 @dbg.eng_thread

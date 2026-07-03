@@ -102,7 +102,9 @@ public:
     f_whiledo_overflow = 0x8000,///< Set if the conditional block of a whiledo is too big to print as while(cond) { ...
     f_flip_path = 0x10000,      ///< If true, out edges have been flipped since last time path was traced
     f_joined_block = 0x20000,	///< Block is a merged form of original basic blocks
-    f_duplicate_block = 0x40000	///< Block is a duplicated version of an original basic block
+    f_duplicate_block = 0x40000,	///< Block is a duplicated version of an original basic block
+    f_delayed_donothing = 0x80000,	///< Potential \e do \e nothing block whose removal has been delayed
+    f_final_transform = 0x100000	///< Has the final transform been run
   };
   /// \brief Boolean properties on edges
   enum edge_flags {
@@ -114,7 +116,8 @@ public:
     f_forward_edge = 0x20,	///< An edge that jumps forward in the spanning tree
     f_cross_edge = 0x40,	///< An edge that crosses subtrees in the spanning tree
     f_back_edge = 0x80,		///< Within (reducible) graph, a back edge defining a loop
-    f_loop_exit_edge = 0x100	///< Edge exits the body of a loop
+    f_loop_exit_edge = 0x100,	///< Edge exits the body of a loop
+    f_immed_copy = 0x200	///< Copy propagation has happened across the edge
   };
 private:
   uint4 flags;			///< Collection of block_flags
@@ -154,6 +157,7 @@ private:
 protected:
   void setFlag(uint4 fl) { flags |= fl; }	///< Set a boolean property
   void clearFlag(uint4 fl) { flags &= ~fl; }	///< Clear a boolean property
+  void clearAllFlags(void) { flags = 0; }	///< Clear all properties of \b this block
 public:
   FlowBlock(void);				///< Construct a block with no edges
   virtual ~FlowBlock(void) {}			///< Destructor
@@ -210,6 +214,14 @@ public:
   /// \param s is the given stream to write to
   virtual void printRaw(ostream &s) const {}
 
+  /// \brief If the \e out block of \b this is not the given next block, print an implied \b goto to the out block
+  ///
+  /// In order to see where \b this block is flowing to, if there is no explicit branch op, and if the next block
+  /// being printed is \e not the fallthru branch, print the destination block as an implied \b goto op.
+  /// \param s is the output stream
+  /// \param nextBlock is the given nextBlock being printed
+  virtual void printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const {}
+
   virtual void emit(PrintLanguage *lng) const;	///<Emit the instructions in \b this FlowBlock as structured code
 
   /// \brief Get the leaf block from which \b this block exits
@@ -231,9 +243,9 @@ public:
   virtual PcodeOp *lastOp(void) const { return (PcodeOp *)0; }
 
   virtual bool negateCondition(bool toporbottom);	///< Flip the condition computed by \b this
-  virtual bool preferComplement(Funcdata &data);	///< Rearrange \b this hierarchy to simplify boolean expressions
+  virtual bool preferComplement(Funcdata &data,bool allowOpRemoval);	///< Rearrange \b this hierarchy to simplify boolean expressions
   virtual FlowBlock *getSplitPoint(void);		///< Get the leaf splitting block
-  virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist) const;
+  virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist,bool allowOpRemoval) const;
   virtual void flipInPlaceExecute(void);
 
   /// \brief Is \b this too complex to be a condition (BlockCondition)
@@ -246,7 +258,8 @@ public:
   /// \brief Do any structure driven final transforms
   ///
   /// \param data is the function to transform
-  virtual void finalTransform(Funcdata &data) {}
+  /// \param allowOpMoves is \b true if ops may be moved within their basic block
+  virtual void finalTransform(Funcdata &data,bool allowOpMoves) {}
 
   /// \brief Make any final configurations necessary to emit the block
   ///
@@ -286,6 +299,8 @@ public:
   void setLoopExit(int4 i) { setOutEdgeFlag(i,f_loop_exit_edge); }	///< Label the edge exiting \b this as a loop
   void clearLoopExit(int4 i) { clearOutEdgeFlag(i,f_loop_exit_edge); }	///< Clear the loop exit edge
   void setBackEdge(int4 i) { setOutEdgeFlag(i,f_back_edge); }		///< Label the \e back edge of a loop
+  void setImmedCopyEdge(int4 i) { setOutEdgeFlag(i,f_immed_copy); }	///< Mark that an immediate COPY has propagated across the edge
+  bool hasImmedCopyEdge(int4 i) const { return ((outofthis[i].label & f_immed_copy)!=0); }	///< Has an immediate COPY propagated across the edge
   bool getFlipPath(void) const { return ((flags & f_flip_path)!=0); }	///< Have out edges been flipped
   bool isJumpTarget(void) const;		///< Return \b true if non-fallthru jump flows into \b this
   FlowBlock *getFalseOut(void) const { return outofthis[0].point; }	///< Get the \b false output FlowBlock
@@ -338,6 +353,7 @@ public:
   bool isGotoIn(int4 i) const { return ((intothis[i].label & (f_irreducible|f_goto_edge))!=0); }	///< Is the i-th incoming edge unstructured
   bool isGotoOut(int4 i) const { return ((outofthis[i].label & (f_irreducible|f_goto_edge))!=0); }	///< Is the i-th outgoing edge unstructured
   JumpTable *getJumptable(void) const;	///< Get the JumpTable associated \b this block
+  void printShortHeader(ostream &s) const;		///< Print a short identifier for the block
   static block_type nameToType(const string &name);	///< Get the block_type associated with a name string
   static string typeToName(block_type bt);		///< Get the name string associated with a block_type
   static bool compareBlockIndex(const FlowBlock *bl1,const FlowBlock *bl2);	///< Compare FlowBlock by index
@@ -380,10 +396,11 @@ public:
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
   virtual void printTree(ostream &s,int4 level) const;
   virtual void printRaw(ostream &s) const;
+  void printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockGraph(this); }
   virtual PcodeOp *firstOp(void) const;
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
-  virtual void finalTransform(Funcdata &data);
+  virtual void finalTransform(Funcdata &data,bool allowOpMoves);
   virtual void finalizePrinting(Funcdata &data) const;
   virtual void encodeBody(Encoder &encoder) const;
   virtual void decodeBody(Decoder &decoder);
@@ -428,6 +445,7 @@ public:
   void calcLoop(void);								///< Calculate loop edges
   void collectReachable(vector<FlowBlock *> &res,FlowBlock *bl,bool un) const;	///< Collect reachable/unreachable FlowBlocks from a given start FlowBlock
   void structureLoops(vector<FlowBlock *> &rootlist);				///< Label loop edges
+  bool hasFinalTransform(void) const { return ((getFlags() & f_final_transform) != 0); }	///< Return \b true if finalTransform() has been run on \b this
 #ifdef BLOCKCONSISTENT_DEBUG
   bool isConsistent(void) const;						///< Check consistency of \b this BlockGraph
 #endif
@@ -473,16 +491,19 @@ public:
   virtual void decodeBody(Decoder &decoder);
   virtual void printHeader(ostream &s) const;
   virtual void printRaw(ostream &s) const;
+  virtual void printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockBasic(this); }
   virtual const FlowBlock *getExitLeaf(void) const { return this; }
   virtual PcodeOp *firstOp(void) const;
   virtual PcodeOp *lastOp(void) const;
   virtual bool negateCondition(bool toporbottom);
   virtual FlowBlock *getSplitPoint(void);
-  virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist) const;
+  virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist,bool allowOpRemoval) const;
   virtual void flipInPlaceExecute(void);
   virtual bool isComplex(void) const;
-  bool unblockedMulti(int4 outslot) const;		///< Check if \b this block can be removed without introducing inconsistencies
+  virtual void finalTransform(Funcdata &data,bool allowOpMoves);
+  bool unblockedMulti(int4 outslot) const;	///< Check if \b this block can be removed without introducing inconsistencies
+  bool hasNoImmediateCopy(int4 outslot) const;	///< Check if there have been immediate COPYs out of \b this block
   bool hasOnlyMarkers(void) const;		///< Does \b this block contain only MULTIEQUAL and INDIRECT ops
   bool isDoNothing(void) const;			///< Should \b this block should be removed
   list<PcodeOp *>::iterator beginOp(void) { return op.begin(); }	///< Return an iterator to the beginning of the PcodeOps
@@ -493,6 +514,9 @@ public:
   bool noInterveningStatement(void) const;
   PcodeOp *findMultiequal(const vector<Varnode *> &varArray);		///< Find MULTIEQUAL with given inputs
   PcodeOp *earliestUse(Varnode *vn);
+  void setDelayedDonothing(void) { setFlag(f_delayed_donothing); }	///< Mark as \e do \e nothing block with delayed removal
+  void clearDelayedDonothing(void) { clearFlag(f_delayed_donothing); }	///< Clear mark for delayed removal
+  bool isDelayedDonothing(void) const { return ((getFlags() & f_delayed_donothing) != 0); }	///< Is block marked for delayed removal
   static bool liftVerifyUnroll(vector<Varnode *> &varArray,int4 slot);	///< Verify given Varnodes are defined with same PcodeOp
 };
 
@@ -515,6 +539,7 @@ public:
   virtual void printHeader(ostream &s) const;
   virtual void printTree(ostream &s,int4 level) const;
   virtual void printRaw(ostream &s) const { copy->printRaw(s); }
+  virtual void printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const { copy->printRawImpliedGoto(s, nextBlock); }
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockCopy(this); }
   virtual const FlowBlock *getExitLeaf(void) const { return this; }
   virtual PcodeOp *firstOp(void) const { return copy->firstOp(); }
@@ -522,6 +547,7 @@ public:
   virtual bool negateCondition(bool toporbottom) { bool res = copy->negateCondition(true); FlowBlock::negateCondition(toporbottom); return res; }
   virtual FlowBlock *getSplitPoint(void) { return copy->getSplitPoint(); }
   virtual bool isComplex(void) const { return copy->isComplex(); }
+  virtual void finalTransform(Funcdata &data,bool allowOpMoves) { return copy->finalTransform(data,allowOpMoves); }
   virtual void encodeHeader(Encoder &encoder) const;
 };
 
@@ -617,7 +643,7 @@ public:
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockCondition(this); }
   virtual bool negateCondition(bool toporbottom);
   virtual FlowBlock *getSplitPoint(void) { return this; }
-  virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist) const;
+  virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist,bool allowOpRemoval) const;
   virtual void flipInPlaceExecute(void);
   virtual PcodeOp *lastOp(void) const;
   virtual bool isComplex(void) const { return getBlock(0)->isComplex(); }
@@ -656,7 +682,7 @@ public:
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
   virtual void printHeader(ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockIf(this); }
-  virtual bool preferComplement(Funcdata &data);
+  virtual bool preferComplement(Funcdata &data,bool allowOpRemoval);
   virtual const FlowBlock *getExitLeaf(void) const;
   virtual PcodeOp *lastOp(void) const;
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
@@ -698,7 +724,7 @@ public:
   virtual void printHeader(ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockWhileDo(this); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
-  virtual void finalTransform(Funcdata &data);
+  virtual void finalTransform(Funcdata &data,bool allowOpMoves);
   virtual void finalizePrinting(Funcdata &data) const;
 };
 
@@ -778,6 +804,7 @@ public:
   uint4 getGotoType(int4 i) const { return caseblocks[i].gototype; }	///< Get the edge type for the i-th \e case block
   bool isExit(int4 i) const { return caseblocks[i].isexit; }		///< Does the i-th \e case block exit the switch?
   const Datatype *getSwitchType(void) const;				///< Get the data-type of the switch variable
+  uint4 getDisplayFormat(void) const { return jump->getDisplayFormat(); }	///< Get any integer display format for cases
   virtual block_type getType(void) const { return t_switch; }
   virtual void markUnstructured(void);
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
@@ -818,8 +845,9 @@ inline void FlowBlock::emit(PrintLanguage *lng) const
 /// For the instructions in this block, decide if the control-flow structure
 /// can be rearranged so that boolean expressions come out more naturally.
 /// \param data is the function to analyze
+/// \param allowOpRemoval if \b true, changes can include removal of ops
 /// \return \b true if a change was made
-inline bool FlowBlock::preferComplement(Funcdata &data)
+inline bool FlowBlock::preferComplement(Funcdata &data,bool allowOpRemoval)
 
 {
   return false;
@@ -838,15 +866,17 @@ inline FlowBlock *FlowBlock::getSplitPoint(void)
 /// \brief Test normalizing the conditional branch in \b this
 ///
 /// Find the set of PcodeOp objects that need to be adjusted to flip
-/// the condition \b this FlowBlock calculates.
+/// the condition \b this FlowBlock calculates.  If \b allowOpRemoval is set,
+/// the adjustment can include the removal of (BOOL_NEGATE) ops.
 ///
 /// Return:
 ///   - 0 if the flip would normalize the condition
-///   - 1 if the flip doesn't affect normalization of the condition
-///   - 2 if the flip produces an unnormalized condition
+///   - 1 if the flip denormalizes (or doesn't affect normalization)
+///   - 2 if a flip is not possible
 /// \param fliplist will contain the PcodeOps that need to be adjusted
+/// \param allowOpRemoval if \b true adjustments can include removal of ops
 /// \return 0 if the condition will be normalized, 1 or 2 otherwise
-inline int4 FlowBlock::flipInPlaceTest(vector<PcodeOp *> &fliplist) const
+inline int4 FlowBlock::flipInPlaceTest(vector<PcodeOp *> &fliplist,bool allowOpRemoval) const
 
 {
   return 2;	// By default a block will not normalize

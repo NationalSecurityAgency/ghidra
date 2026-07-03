@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ public class DataBuffer implements Buffer, Externalizable {
 		"db.buffers.DataBuffer.compressedOutput";
 
 	private static boolean enableCompressedSerializationOutput =
-		Boolean.parseBoolean(System.getProperty(COMPRESSED_SERIAL_OUTPUT_PROPERTY, "false"));
+		Boolean.parseBoolean(System.getProperty(COMPRESSED_SERIAL_OUTPUT_PROPERTY, "true"));
 
 	public static void enableCompressedSerializationOutput(boolean enable) {
 		System.setProperty(COMPRESSED_SERIAL_OUTPUT_PROPERTY, Boolean.toString(enable));
@@ -330,23 +330,29 @@ public class DataBuffer implements Buffer, Externalizable {
 	 */
 	private static int deflateData(byte[] data, byte[] compressedData) {
 
-		Deflater deflate = new Deflater(Deflater.BEST_COMPRESSION, true);
-		deflate.setStrategy(Deflater.HUFFMAN_ONLY);
-		deflate.setInput(data, 0, data.length);
-		deflate.finish();
+		// Deflater must be consistent with inflateData nowrap option and should
+		// not be changed since client/server must match.
+		// NOTE: compression mode may be adjusted to optimize performance
+		Deflater deflate = new Deflater(Deflater.BEST_SPEED, true);
+		try {
+			deflate.setInput(data, 0, data.length);
+			deflate.finish();
 
-		int compressedDataOffset = 0;
-
-		while (!deflate.finished() && compressedDataOffset < compressedData.length) {
-			compressedDataOffset += deflate.deflate(compressedData, compressedDataOffset,
-				compressedData.length - compressedDataOffset, Deflater.SYNC_FLUSH);
+			int compressedDataOffset = 0;
+	
+			while (!deflate.finished() && compressedDataOffset < compressedData.length) {
+				compressedDataOffset += deflate.deflate(compressedData, compressedDataOffset,
+					compressedData.length - compressedDataOffset);
+			}
+	
+			if (!deflate.finished()) {
+				return -1;
+			}
+			
+			return compressedDataOffset;
+		} finally {
+			deflate.end();  // get rid of any native memory rather than waiting for GC
 		}
-
-		if (!deflate.finished()) {
-			return -1;
-		}
-
-		return compressedDataOffset;
 	}
 
 	@Override
@@ -412,10 +418,11 @@ public class DataBuffer implements Buffer, Externalizable {
 	 */
 	private static void inflateData(byte[] compressedData, byte[] data) throws IOException {
 
+		// Inflater must be consistent with deflateData nowrap option and should
+		// not be changed since client/server must match.
 		Inflater inflater = new Inflater(true);
-		inflater.setInput(compressedData, 0, compressedData.length);
-
 		try {
+			inflater.setInput(compressedData);
 			int off = 0;
 			while (!inflater.finished() && off < data.length) {
 				off += inflater.inflate(data, off, data.length - off);
@@ -429,6 +436,9 @@ public class DataBuffer implements Buffer, Externalizable {
 		}
 		catch (DataFormatException e) {
 			throw new IOException("DataBuffer inflation failed", e);
+		}
+		finally {
+			inflater.end();  // get rid of any native memory rather than waiting for GC
 		}
 	}
 

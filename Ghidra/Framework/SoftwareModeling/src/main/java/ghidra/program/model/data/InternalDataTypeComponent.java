@@ -15,8 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import org.apache.commons.lang3.StringUtils;
-
 import ghidra.util.StringUtilities;
 
 public interface InternalDataTypeComponent extends DataTypeComponent {
@@ -56,16 +54,29 @@ public interface InternalDataTypeComponent extends DataTypeComponent {
 	}
 
 	/**
-	 * Internal method for cleaning up field names. 
-	 * @param name the new field name
-	 * @return the name with bad chars removed and also set back to null in the event
-	 * the new name is the default name.
+	 * Modify field name to transform whitespace chars to underscores after triming and checking
+	 * for empty string.  Empty string is returned as null for storage to indicate default name use. 
+	 * @param name original field name (may be null) 
+	 * @return revised field name (may be null)
 	 */
-	public default String cleanupFieldName(String name) {
-		// For now, silently convert whitespace to underscores
-		String fieldName = StringUtilities.whitespaceToUnderscores(name);
-		if (StringUtils.isBlank(fieldName)) {
-			fieldName = null;
+	public static String cleanupFieldName(String name) {
+		String fieldName = name;
+		if (name != null) {
+
+			// Trim field name and ensure empty string is stored as null to indicate default field name
+			fieldName = name.trim();
+
+			if (fieldName.length() == 0) {
+				fieldName = null;
+			}
+			else {
+				// NOTE: Should we be checking for default field name pattern and disallow.
+				// If so, additional parameters would be required (e.g., struct vs union, is packed struct)
+
+				// Don't allow whitespace in field names. Until we change the API to throw an exception
+				// when a field name has whitespace, just silently replace whitespace with underscores.
+				fieldName = StringUtilities.whitespaceToUnderscores(fieldName);
+			}
 		}
 		return fieldName;
 	}

@@ -25,6 +25,7 @@ import ghidra.app.plugin.core.assembler.AssemblyDualTextField;
 import ghidra.app.plugin.core.assembler.PatchInstructionAction;
 import ghidra.app.services.DebuggerControlService;
 import ghidra.app.services.DebuggerControlService.StateEditor;
+import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.CodeUnit;
@@ -32,6 +33,8 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractTracePatchInstructionAction extends PatchInstructionAction {
 	protected final DebuggerDisassemblerPlugin plugin;
@@ -116,37 +119,55 @@ public abstract class AbstractTracePatchInstructionAction extends PatchInstructi
 		return Assemblers.getAssembler(language);
 	}
 
+	class PatchInstructionCommand extends BackgroundCommand<TraceProgramView> {
+		private final byte[] data;
+
+		public PatchInstructionCommand(byte[] data) {
+			this.data = data;
+		}
+
+		@Override
+		public boolean applyTo(TraceProgramView view, TaskMonitor monitor) {
+			DebuggerControlService controlService = tool.getService(DebuggerControlService.class);
+			if (controlService == null) {
+				return true;
+			}
+			StateEditor editor = controlService.createStateEditor(view);
+			Address address = getAddress();
+
+			// Get code unit and dependencies before invalidating it.
+			CodeUnit cu = getCodeUnit();
+			RegisterValue contextValue = getContextValue(cu);
+			TracePlatform platform = getPlatform(cu);
+
+			try {
+				editor.setVariable(address, data).get(1, TimeUnit.SECONDS);
+			}
+			catch (InterruptedException | ExecutionException | TimeoutException e) {
+				setStatusMsg("Couldn't patch: " + e);
+				Msg.error(this, "Couldn't patch", e);
+				return false;
+			}
+
+			AddressSetView set = new AddressSet(address, address.add(data.length - 1));
+			TraceDisassembleCommand dis = new TraceDisassembleCommand(platform, address, set);
+			if (contextValue != null) {
+				dis.setInitialContext(contextValue);
+			}
+			dis.run(tool, view);
+
+			return true;
+		}
+	}
+
 	@Override
 	protected void applyPatch(byte[] data) throws MemoryAccessException {
 		TraceProgramView view = getView();
 		if (view == null) {
 			return;
 		}
-		DebuggerControlService controlService = tool.getService(DebuggerControlService.class);
-		if (controlService == null) {
-			return;
-		}
-		StateEditor editor = controlService.createStateEditor(view);
-		Address address = getAddress();
-
-		// Get code unit and dependencies before invalidating it.
-		CodeUnit cu = getCodeUnit();
-		RegisterValue contextValue = getContextValue(cu);
-		TracePlatform platform = getPlatform(cu);
-
-		try {
-			editor.setVariable(address, data).get(1, TimeUnit.SECONDS);
-		}
-		catch (InterruptedException | ExecutionException | TimeoutException e) {
-			throw new MemoryAccessException("Couldn't patch", e);
-		}
-
-		AddressSetView set = new AddressSet(address, address.add(data.length - 1));
-		TraceDisassembleCommand dis = new TraceDisassembleCommand(platform, address, set);
-		if (contextValue != null) {
-			dis.setInitialContext(contextValue);
-		}
-		dis.run(tool, view);
+		PatchInstructionCommand patch = new PatchInstructionCommand(data);
+		patch.run(tool, view);
 	}
 
 	protected TraceProgramView getView() {

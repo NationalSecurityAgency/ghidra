@@ -265,7 +265,7 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 
 		state.setTaskType(taskType);
 		AddressSet taintAddressSet = state.getTaintAddressSet();
-		Msg.info(this, "setTaint(): " + taintAddressSet.toString());
+		//Msg.info(this, "setTaint(): " + taintAddressSet.toString());
 
 		// sets the selection in the LISTING?
 		// TODO: should we not set select and only highlight in the decompilation.

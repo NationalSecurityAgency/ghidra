@@ -31,7 +31,7 @@
 //
 // NOTE:  Adresses must be hex values -- without "0x" prefixes.
 //
-//@category CustomerSubmission.Analysis
+//@category Customer Submission.Analysis
 //@keybinding alt Z
 
 import java.util.List;
@@ -62,6 +62,7 @@ public class ZapBCTRScript extends GhidraScript {
 		// first try input as class and search for symbol "<class>::__vtbl"
 		List<Symbol> symbols = currentProgram.getSymbolTable()
 				.getSymbols("__vtbl", getNamespace(null, classNameOrAddr));
+		
 		// if symbol found, then vtblAddr is the symbol's address
 		if (symbols.size() == 1) {
 			vtblAddr = symbols.get(0).getAddress();

@@ -39,6 +39,7 @@ import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
+import ghidra.app.plugin.core.symboltree.actions.NavigateOnIncomingAction;
 import ghidra.app.plugin.core.symboltree.nodes.*;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.PluginTool;
@@ -73,7 +74,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	private DockingActionIf selectionAction;
 	private DockingActionIf createNamespaceAction;
 	private DockingActionIf createClassAction;
-	private DockingActionIf goToToggleAction;
+	private DockingActionIf navigateIncomingAction;
 	private DockingActionIf goToExtLocAction;
 	private DockingActionIf createLibraryAction;
 	private DockingActionIf setExternalProgramAction;
@@ -508,8 +509,8 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		DefaultTreeCellEditor cellEditor = (DefaultTreeCellEditor) tree.getCellEditor();
 		JTree jTree = (JTree) AbstractGenericTest.getInstanceField("tree", tree);
 
-		Container container = (Container) cellEditor.getTreeCellEditorComponent(jTree, newNsNode,
-			true, true, true, row);
+		Container container = (Container) runSwing(
+			() -> cellEditor.getTreeCellEditorComponent(jTree, newNsNode, true, true, true, row));
 		JTextField textField = (JTextField) container.getComponent(0);
 		assertEquals("NewNamespace", textField.getText());
 	}
@@ -915,8 +916,8 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		editExternalLocationAction = getAction(plugin, "Edit External Location");
 		assertNotNull(editExternalLocationAction);
 
-		goToToggleAction = getAction(plugin, "Navigation");
-		assertNotNull(goToToggleAction);
+		navigateIncomingAction = getAction(plugin, NavigateOnIncomingAction.NAME);
+		assertNotNull(navigateIncomingAction);
 
 		goToExtLocAction = getAction(plugin, "Go To External Location");
 		assertNotNull(goToExtLocAction);

@@ -20,6 +20,7 @@ import java.util.stream.StreamSupport;
 import docking.widgets.table.AbstractDynamicTableColumn;
 import docking.widgets.table.TableColumnDescriptor;
 import ghidra.docking.settings.Settings;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
@@ -43,20 +44,23 @@ public class AddressRangeTableModel extends GhidraProgramTableModel<AddressRange
 	private static final int MAX_ADDRESS_COLUMN_INDEX = 1;
 
 	private ProgramSelection selection;
-	private int resultsLimit;
-	private long minLength;
+	private PluginTool tool;
 
-	protected AddressRangeTableModel(PluginTool tool, Program program, ProgramSelection selection,
-			int resultsLimit, long minLength) {
+	protected AddressRangeTableModel(PluginTool tool, Program program, ProgramSelection selection) {
 		super("Selected Ranges in " + program.getName(), tool, program, null);
 		this.selection = selection;
-		this.resultsLimit = resultsLimit;
-		this.minLength = minLength;
+		this.tool = tool;
 	}
 
 	@Override
 	protected void doLoad(Accumulator<AddressRangeInfo> accumulator, TaskMonitor monitor)
 			throws CancelledException {
+		ToolOptions options = tool.getOptions(CodeBrowserSelectionPlugin.OPTION_CATEGORY_NAME);
+		int resultsLimit = options.getInt(CodeBrowserSelectionPlugin.RANGES_LIMIT_OPTION_NAME,
+			CodeBrowserSelectionPlugin.RANGES_LIMIT_DEFAULT);
+		long minLength = options.getLong(CodeBrowserSelectionPlugin.MIN_RANGE_SIZE_OPTION_NAME,
+			CodeBrowserSelectionPlugin.MIN_RANGE_SIZE_DEFAULT);
+
 		AddressRangeIterator rangeIter = selection.getAddressRanges();
 		ReferenceManager refManager = program.getReferenceManager();
 		while (rangeIter.hasNext()) {
@@ -86,7 +90,7 @@ public class AddressRangeTableModel extends GhidraProgramTableModel<AddressRange
 				range.getMaxAddress(), range.getLength(), isSameByte, numRefsTo, numRefsFrom);
 
 			accumulator.add(info);
-			if (accumulator.size() >= resultsLimit) {
+			if (accumulator.getProgress() >= resultsLimit) {
 				Msg.showWarn(this, null, "Results Truncated",
 					"Results are limited to " + resultsLimit + " address ranges.\n" +
 						"This limit can be changed by the tool option \"" +
@@ -95,17 +99,12 @@ public class AddressRangeTableModel extends GhidraProgramTableModel<AddressRange
 				break;
 			}
 		}
-		if (accumulator.isEmpty()) {
+		if (accumulator.getProgress() == 0) {
 			Msg.showWarn(this, null, "No Ranges to Display",
 				"No ranges to display - consider adjusting \"" +
 					CodeBrowserSelectionPlugin.OPTION_CATEGORY_NAME + " -> " +
 					CodeBrowserSelectionPlugin.MIN_RANGE_SIZE_OPTION_NAME + "\".");
 		}
-	}
-
-	@Override
-	public void refresh() {
-		reload();
 	}
 
 	@Override

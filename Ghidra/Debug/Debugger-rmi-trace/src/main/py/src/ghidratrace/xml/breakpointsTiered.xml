@@ -1,0 +1,44 @@
+<context>
+	<schema name="BreakpointContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<element schema="BreakpointSpec" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="BreakpointSpec" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="BreakpointSpec" />
+		<interface name="Togglable" />
+		<element schema="BreakpointLocation" />
+		<attribute name="Expression" schema="STRING" hidden="yes" />
+		<attribute-alias from="_expression" to="Expression" />
+		<attribute name="Kinds" schema="STRING" required="yes" hidden="yes" />
+		<attribute-alias from="_kinds" to="Kinds" />
+		<attribute name="Enabled" schema="BOOL" required="yes" />
+		<attribute-alias from="_enabled" to="Enabled" />
+		<attribute name="Commands" schema="STRING" />
+		<attribute name="Condition" schema="STRING" />
+		<attribute name="Hit Count" schema="INT" />
+		<attribute name="Ignore Count" schema="INT" />
+		<attribute name="Pending" schema="BOOL" />
+		<attribute name="Silent" schema="BOOL" />
+		<attribute name="Temporary" schema="BOOL" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="ANY" />
+	</schema>
+	<schema name="BreakpointLocation" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="BreakpointLocation" />
+		<element schema="VOID" />
+		<attribute name="Range" schema="RANGE" />
+		<attribute-alias from="_range" to="Range" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="Enabled" schema="BOOL" />
+		<attribute-alias from="_enabled" to="Enabled" />
+		<attribute schema="ANY" />
+	</schema>
+	<schema name="BreakpointLocationContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<element schema="BreakpointLocation" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+</context>

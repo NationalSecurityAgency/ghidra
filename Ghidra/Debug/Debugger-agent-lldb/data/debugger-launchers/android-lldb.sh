@@ -26,19 +26,21 @@
 #@menu-group lldb
 #@icon icon.debugger
 #@help lldb#android
+#@depends Debugger-rmi-trace
 #@enum StartCmd:str "process launch" "process launch --stop-at-entry"
 #@arg :file "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"
-#@env OPT_HOST:str="localhost" "Host" "The hostname of the target"
+#@env OPT_DEVICE:str="" "Device" "The device name (e.g. from 'adb devices')"
 #@env OPT_PORT:str="9999" "Port" "The host's listening port"
 #@env OPT_ARCH:str="" "Architecture" "Target architecture override"
 #@env OPT_LLDB_PATH:file="lldb" "lldb command" "The path to lldb on the local system. Omit the full path to resolve using the system PATH."
+#@env OPT_LLDB_ARGS:str="" "lldb cmd args" "Arguments passed to lldb (versus the target)"
 #@env OPT_START_CMD:StartCmd="process launch" "Run command" "The lldb command to actually run the target."
 
 . ../support/lldbsetuputils.sh
 
-pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
-pypathLldb=$(ghidra-module-pypath "Debug/Debugger-agent-lldb")
+pypathTrace=$(ghidra-module-pypath "Debugger-rmi-trace")
+pypathLldb=$(ghidra-module-pypath)
 export PYTHONPATH=$pypathLldb:$pypathTrace:$PYTHONPATH
 
 target_image="$1"
@@ -47,7 +49,7 @@ target_args="$@"
 
 function launch-lldb() {
 	local -a args
-	compute-lldb-platform-args "$target_image" remote-android "connect://$OPT_HOST:$OPT_PORT" "$GHIDRA_TRACE_RMI_ADDR" "$@"
+	compute-lldb-platform-args "$target_image" remote-android "connect://$OPT_DEVICE:$OPT_PORT" "$GHIDRA_TRACE_RMI_ADDR" "$@"
 
 	"${args[@]}"
 }

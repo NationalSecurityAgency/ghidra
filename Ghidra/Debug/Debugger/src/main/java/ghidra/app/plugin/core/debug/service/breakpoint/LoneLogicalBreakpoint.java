@@ -27,8 +27,8 @@ import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 
 public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	private final Set<Trace> justThisTrace;
@@ -111,12 +111,12 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public Set<TraceBreakpoint> getTraceBreakpoints() {
+	public Set<TraceBreakpointLocation> getTraceBreakpoints() {
 		return breaks.getBreakpoints();
 	}
 
 	@Override
-	public Set<TraceBreakpoint> getTraceBreakpoints(Trace trace) {
+	public Set<TraceBreakpointLocation> getTraceBreakpoints(Trace trace) {
 		return breaks.getTrace() != trace ? Set.of() : getTraceBreakpoints();
 	}
 
@@ -165,7 +165,7 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public State computeStateForLocation(TraceBreakpoint loc) {
+	public State computeStateForLocation(TraceBreakpointLocation loc) {
 		if (!breaks.getBreakpoints().contains(loc)) {
 			return State.NONE;
 		}
@@ -278,7 +278,7 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public boolean canMerge(TraceBreakpoint breakpoint, long snap) {
+	public boolean canMerge(TraceBreakpointLocation breakpoint, long snap) {
 		if (!Objects.equals(kinds, breakpoint.getKinds(snap))) {
 			return false;
 		}
@@ -291,7 +291,7 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public boolean trackBreakpoint(TraceBreakpoint breakpoint) {
+	public boolean trackBreakpoint(TraceBreakpointLocation breakpoint) {
 		return breaks.add(breakpoint);
 	}
 
@@ -301,7 +301,7 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public boolean untrackBreakpoint(TraceBreakpoint breakpoint) {
+	public boolean untrackBreakpoint(TraceBreakpointLocation breakpoint) {
 		return breaks.remove(breakpoint);
 	}
 }

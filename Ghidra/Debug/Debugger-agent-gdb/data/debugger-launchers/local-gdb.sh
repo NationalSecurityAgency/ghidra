@@ -26,11 +26,13 @@
 #@menu-group gdb
 #@icon icon.debugger
 #@help gdb#local
+#@depends Debugger-rmi-trace
 #@enum StartCmd:str run start starti
 #@enum Endian:str auto big little
 #@arg :file "Image" "The target binary executable image, empty for no target"
 #@args "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_GDB_PATH:file="gdb" "gdb command" "The path to gdb. Omit the full path to resolve using the system PATH."
+#@env OPT_GDB_ARGS:str="" "gdb cmd args" "Arguments passed to gdb (versus the target)"
 #@env OPT_START_CMD:StartCmd="starti" "Run command" "The gdb command to actually run the target."
 #@env OPT_ARCH:str="i386:x86-64" "Architecture" "Target architecture"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
@@ -39,8 +41,8 @@
 
 . ../support/gdbsetuputils.sh
 
-pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
-pypathGdb=$(ghidra-module-pypath "Debug/Debugger-agent-gdb")
+pypathTrace=$(ghidra-module-pypath "Debugger-rmi-trace")
+pypathGdb=$(ghidra-module-pypath)
 export PYTHONPATH=$pypathGdb:$pypathTrace:$PYTHONPATH
 
 target_image="$1"

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.function.*;
 import ghidra.util.Msg;
 import utilities.util.reflection.ReflectionUtilities;
 import utility.function.Callback;
+import utility.function.Dummy;
 
 /**
  * Base class for creating a compact and efficient {@link DomainObjectListener}s. See
@@ -33,6 +34,7 @@ import utility.function.Callback;
 public abstract class AbstractDomainObjectListenerBuilder<R extends DomainObjectChangeRecord, B extends AbstractDomainObjectListenerBuilder<R, B>> {
 	private String name;
 	private BooleanSupplier ignoreCheck;
+	private Consumer<DomainObjectChangedEvent> debugConsumer;
 	private List<EventTrigger> terminateList = new ArrayList<>();
 	private List<EventTrigger> onAnyList = new ArrayList<>();
 	private Map<EventType, TypedRecordConsumer<? extends DomainObjectChangeRecord>> onEachMap =
@@ -62,6 +64,17 @@ public abstract class AbstractDomainObjectListenerBuilder<R extends DomainObject
 	}
 
 	protected abstract B self();
+
+	/**
+	 * Sets a consumer of events that is intended to be used for clients to add a callback for each
+	 * event.  This is useful for temporarily inspecting events and adding breakpoints.
+	 * @param consumer the consumer to add
+	 * @return this builder (for chaining)
+	 */
+	public B debug(Consumer<DomainObjectChangedEvent> consumer) {
+		this.debugConsumer = consumer;
+		return self();
+	}
 
 	/**
 	 * Sets a boolean supplier that can be checked to see if the client is in a state where
@@ -121,6 +134,7 @@ public abstract class AbstractDomainObjectListenerBuilder<R extends DomainObject
 
 		BuilderDomainObjectListener listener = new BuilderDomainObjectListener(name);
 		listener.setIgnoreCheck(ignoreCheck);
+		listener.setDebugConsumer(debugConsumer);
 		if (!terminateList.isEmpty()) {
 			listener.setTerminateList(terminateList);
 		}
@@ -306,10 +320,11 @@ public abstract class AbstractDomainObjectListenerBuilder<R extends DomainObject
 	static class BuilderDomainObjectListener implements DomainObjectListener {
 		private String name;
 		private BooleanSupplier ignoreCheck = () -> false;
+		private Consumer<DomainObjectChangedEvent> debugConsumer = Dummy.consumer();
 		private List<EventTrigger> terminateList;
 		private List<EventTrigger> onAnyList;
 		private Map<EventType, TypedRecordConsumer<? extends DomainObjectChangeRecord>> onEachMap;
-		private EventType[] eachEventTypes;		// all the "onEach" event types
+		private EventType[] eachEventTypes;		// all the "onEach" event types		
 
 		BuilderDomainObjectListener(String name) {
 			this.name = name;
@@ -321,6 +336,10 @@ public abstract class AbstractDomainObjectListenerBuilder<R extends DomainObject
 
 		void setIgnoreCheck(BooleanSupplier supplier) {
 			this.ignoreCheck = supplier != null ? supplier : () -> false;
+		}
+
+		void setDebugConsumer(Consumer<DomainObjectChangedEvent> debugConsumer) {
+			this.debugConsumer = Dummy.ifNull(debugConsumer);
 		}
 
 		void setTerminateList(List<EventTrigger> terminatEventList) {
@@ -339,10 +358,15 @@ public abstract class AbstractDomainObjectListenerBuilder<R extends DomainObject
 
 		@Override
 		public void domainObjectChanged(DomainObjectChangedEvent event) {
+
+			// a way for clients to add conditional debug, print statements and breakpoints
+			debugConsumer.accept(event);
+
 			// check if events are being ignored
 			if (ignoreCheck.getAsBoolean()) {
 				return;
 			}
+
 			// check for terminating events first
 			if (terminateList != null && processTerminateList(event)) {
 				return;

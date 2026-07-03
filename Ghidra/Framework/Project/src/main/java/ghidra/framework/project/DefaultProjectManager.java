@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -54,6 +55,8 @@ public class DefaultProjectManager implements ProjectManager {
 	private static final String VIEWED_PROJECTS = "ViewedProjects";
 	private static final String SERVER_INFO = "ServerInfo";
 	private static final int RECENT_PROJECTS_LIMIT = 6;
+
+	private static final String PROJECT_CLOSED_BY_USER_VALUE = "PROJECT_CLOSED;NO_PROJECT_OPEN";
 	private static String PROJECT_PATH_SEPARATOR = ";";
 
 	private List<ProjectLocator> recentlyOpenedProjectsList;
@@ -127,20 +130,9 @@ public class DefaultProjectManager implements ProjectManager {
 			throw new LockException(msg);
 		}
 
-		if (!projectLocator.getMarkerFile().exists()) {
-			forgetProject(projectLocator);
-			throw new NotFoundException(
-				"Project marker file not found: " + projectLocator.getMarkerFile());
-		}
-
-		if (!projectLocator.getProjectDir().isDirectory()) {
-			forgetProject(projectLocator);
-			throw new NotFoundException(
-				"Project directory not found: " + projectLocator.getProjectDir());
-		}
-
 		try {
 			currentProject = new DefaultProject(this, projectLocator, resetOwner);
+			AppInfo.setActiveProject(currentProject);
 			if (doRestore) {
 				currentProject.restore();
 			}
@@ -164,7 +156,6 @@ public class DefaultProjectManager implements ProjectManager {
 			throw e;
 		}
 		finally {
-			AppInfo.setActiveProject(currentProject);
 			if (currentProject == null) {
 				File dirFile = projectLocator.getProjectDir();
 				if (!dirFile.exists() || !dirFile.isDirectory()) {
@@ -198,20 +189,26 @@ public class DefaultProjectManager implements ProjectManager {
 	@Override
 	public ProjectLocator getLastOpenedProject() {
 		String projectPath = Preferences.getProperty(LAST_OPENED_PROJECT, null, true);
-		if (projectPath == null || projectPath.trim().length() == 0) {
+		if (StringUtils.isBlank(projectPath)) {
 			return null;
 		}
+
+		if (PROJECT_CLOSED_BY_USER_VALUE.equals(projectPath)) {
+			return null;
+		}
+
 		return getLocatorFromProjectPath(projectPath);
 	}
 
-	/**
-	 * Update the last opened project preference.
-	 */
 	@Override
 	public void setLastOpenedProject(ProjectLocator projectLocator) {
 
-		Preferences.setProperty(LAST_OPENED_PROJECT,
-			projectLocator != null ? projectLocator.toString() : null);
+		String value = PROJECT_CLOSED_BY_USER_VALUE;
+		if (projectLocator != null) {
+			value = projectLocator.toString();
+		}
+
+		Preferences.setProperty(LAST_OPENED_PROJECT, value);
 		Preferences.store();
 	}
 
@@ -546,7 +543,7 @@ public class DefaultProjectManager implements ProjectManager {
 			}
 		}
 		catch (IllegalArgumentException e) {
-			Msg.error(this, "Invalid project path: " + path);
+			Msg.error(this, "Invalid project path: " + path, e);
 		}
 		return null;
 	}
@@ -562,7 +559,7 @@ public class DefaultProjectManager implements ProjectManager {
 			String urlStr = (String) st.nextElement();
 			try {
 				URL url = GhidraURL.toURL(urlStr);
-				if (GhidraURL.isLocalProjectURL(url) && !GhidraURL.localProjectExists(url)) {
+				if (GhidraURL.isLocalURL(url) && !GhidraURL.localProjectExists(url)) {
 					continue;
 				}
 				list.add(url);
@@ -588,8 +585,13 @@ public class DefaultProjectManager implements ProjectManager {
 			Preferences.setProperty(SERVER_INFO,
 				serverInfo.getServerName() + ":" + serverInfo.getPortNumber());
 		}
-		Preferences.setProperty(LAST_OPENED_PROJECT,
-			lastOpenedProject != null ? lastOpenedProject.toString() : null);
+
+		String value = PROJECT_CLOSED_BY_USER_VALUE;
+		if (lastOpenedProject != null) {
+			value = lastOpenedProject.toString();
+		}
+		Preferences.setProperty(LAST_OPENED_PROJECT, value);
+
 		Preferences.store();
 	}
 

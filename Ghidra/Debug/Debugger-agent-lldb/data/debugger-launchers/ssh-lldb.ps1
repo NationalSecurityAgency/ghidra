@@ -1,4 +1,18 @@
-#@timeout 60000
+## ###
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##
 #@title lldb via ssh
 #@image-opt arg:1
 #@desc <html><body width="300px">
@@ -11,6 +25,7 @@
 #@menu-group lldb
 #@icon icon.debugger
 #@help lldb#ssh
+#@depends Debugger-rmi-trace
 #@enum StartCmd:str "process launch" "process launch --stop-at-entry"
 #@enum Endian:str auto big little
 #@arg :str "Image" "The target binary executable image on the remote system"
@@ -20,6 +35,7 @@
 #@env OPT_REMOTE_PORT:int=12345 "Remote Trace RMI Port" "A free port on the remote end to receive and forward the Trace RMI connection."
 #@env OPT_EXTRA_SSH_ARGS:str="" "Extra ssh arguments" "Extra arguments to pass to ssh. Use with care."
 #@env OPT_LLDB_PATH:str="lldb" "lldb command" "The path to lldb on the remote system. Omit the full path to resolve using the system PATH."
+#@env OPT_LLDB_ARGS:str="" "lldb cmd args" "Arguments passed to lldb (versus the target)"
 #@env OPT_START_CMD:StartCmd="process launch" "Run command" "The lldb command to actually run the target."
 #@env OPT_ARCH:str="x86_64" "Architecture" "Target architecture"
 
@@ -60,7 +76,7 @@ finished, try launching again.
 
 if ($answer) {
 	Write-Host "Copying Wheels to $Env:OPT_HOST"
-	Mitigate-Scp-PyModules "Debug/Debugger-rmi-trace" "Debug/Debugger-agent-lldb"
+	Mitigate-Scp-PyModules "Debugger-rmi-trace" "<SELF>"
 
 	Write-Host "Installing Wheels into LLDB's embedded Python"
 	$arglist = Compute-Lldb-PipInstall-Args "'-f'" "os.environ['HOME']" "'ghidralldb>=$version'"

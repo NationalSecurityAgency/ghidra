@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -101,7 +101,7 @@ public class AddViewToProjectTest extends AbstractGhidraHeadlessIntegrationTest 
 		// make sure we have projects to use as the project view...
 		Project project = ProjectTestUtils.getProject(DIRECTORY_NAME, PROJECT_VIEW1);
 		try {
-			ToyProgramBuilder builder = new ToyProgramBuilder("Test", true);
+			ToyProgramBuilder builder = new ToyProgramBuilder();
 			DomainFolder rootFolder = project.getProjectData().getRootFolder();
 			rootFolder.createFile("Test", builder.getProgram(), TaskMonitor.DUMMY);
 			builder.dispose();

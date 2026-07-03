@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,14 +19,14 @@ import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.util.image.ToolIconURL;
-import ghidra.framework.model.Project;
-import ghidra.framework.model.ToolTemplate;
+import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
+import ghidra.util.classfinder.ClassSearcher;
 
 /**
  * Implementation for a tool template that has the class names of the
@@ -130,11 +130,13 @@ public class GhidraToolTemplate implements ToolTemplate {
 	public void restoreFromXml(Element root) {
 		java.util.List<?> list = root.getChildren("SUPPORTED_DATA_TYPE");
 		java.util.List<Class<?>> dtList = new ArrayList<>();
+		ClassLoader loader = getClass().getClassLoader();
 		for (int i = 0; i < list.size(); ++i) {
 			Element elem = (Element) list.get(i);
 			String className = elem.getAttribute(CLASS_NAME_XML_NAME).getValue();
 			try {
-				dtList.add(Class.forName(className));
+				dtList.add(ClassSearcher
+						.forNameSafe(className, DomainObject.class, loader));
 			}
 			catch (ClassNotFoundException e) {
 				Msg.warn(this, "Tool supported content class not found: " + className);
@@ -180,8 +182,7 @@ public class GhidraToolTemplate implements ToolTemplate {
 			iconElem.setText(NumericUtilities.convertBytesToString(iconURL.getIconBytes()));
 		}
 		root.addContent(iconElem);
-
-		root.addContent((Element) (toolElement.clone()));
+		root.addContent(toolElement.clone());
 
 		return root;
 	}

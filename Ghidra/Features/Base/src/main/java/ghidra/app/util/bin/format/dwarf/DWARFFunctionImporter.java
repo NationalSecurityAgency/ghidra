@@ -15,19 +15,27 @@
  */
 package ghidra.app.util.bin.format.dwarf;
 
+import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
+
 import java.io.IOException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 import ghidra.app.util.bin.format.dwarf.DWARFFunction.CommitMode;
+import ghidra.app.util.bin.format.dwarf.expression.DWARFExpression;
 import ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionException;
+import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
+import ghidra.util.table.field.AddressBasedLocation;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -108,11 +116,11 @@ public class DWARFFunctionImporter {
 						}
 						break;
 					case DW_TAG_variable:
-						// only process variable definitions that are static variables
-						// (ie. they are children of the compunit root, ie. depth == 1).
-						// Local variables should be children of dw_tag_subprograms
-						// and will be handled in processFuncChildren()
-						if (diea.getDepth() == 1) {
+						// Only process variable definitions that are global static variables
+						// (not nested under a subprogram DIE)
+						// Static variables scoped inside a function should be children of 
+						// dw_tag_subprograms and will be handled in processFuncChildren()
+						if (diea.findAncestor(DW_TAG_subprogram) == null) {
 							outputGlobal(DWARFVariable.readGlobalVariable(diea));
 						}
 						break;
@@ -133,20 +141,6 @@ public class DWARFFunctionImporter {
 					th);
 				Msg.info(this, "DIE info:\n" + diea.toString());
 			}
-		}
-		logImportErrorSummary();
-
-
-	}
-
-	private void logImportErrorSummary() {
-		if (!importSummary.unknownRegistersEncountered.isEmpty()) {
-			Msg.error(this, "Found %d unknown registers referenced in DWARF expression operands:"
-					.formatted(importSummary.unknownRegistersEncountered.size()));
-			List<Integer> sortedUnknownRegs =
-				new ArrayList<>(importSummary.unknownRegistersEncountered);
-			Collections.sort(sortedUnknownRegs);
-			Msg.error(this, "  unknown registers: %s".formatted(sortedUnknownRegs));
 		}
 	}
 
@@ -269,6 +263,33 @@ public class DWARFFunctionImporter {
 			appendPlateComment(dfunc.address, "DWARF signature update mode: ",
 				dfunc.signatureCommitMode.toString());
 		}
+		if (importOptions.isShowVariableStorageInfo()) {
+			try {
+				DWARFLocationList frameBaseLocs = dfunc.diea.getLocationList(DW_AT_frame_base);
+				if (!frameBaseLocs.isEmpty()) {
+					DWARFLocation frameLoc =
+						frameBaseLocs.getLocationContaining(dfunc.getEntryPc());
+					// get the framebase register, find where the frame is finally setup.
+					if (frameLoc != null) {
+						DWARFCompilationUnit cu = dfunc.diea.getCompilationUnit();
+						DWARFExpression expr = DWARFExpression.read(frameLoc.getExpr(), cu);
+						Varnode frameBaseVal = dfunc.funcEntryFrameBaseLoc != null
+								? dfunc.funcEntryFrameBaseLoc.getResolvedValue()
+								: null;
+						AddressBasedLocation abl = frameBaseVal != null
+								? new AddressBasedLocation(currentProgram,
+									frameBaseVal.getAddress())
+								: null;
+						String fbDestStr = abl != null ? abl.toString() : "???";
+						appendPlateComment(dfunc.address, "DWARF frame base: ",
+							expr.toString(cu) + "=" + fbDestStr);
+					}
+				}
+			}
+			catch (DWARFExpressionException | IOException e) {
+				// skip
+			}
+		}
 
 		if (dfunc.name.isNameModified()) {
 			appendPlateComment(dfunc.address, "DWARF original name: ",
@@ -283,6 +304,25 @@ public class DWARFFunctionImporter {
 			appendPlateComment(dfunc.address, "DWARF original prototype: ", origFuncDefStr);
 		}
 
+		if (dfunc.getBody().getNumAddressRanges() > 1) {
+			String mainFuncAnnotate = AddressAnnotatedStringHandler
+					.createAddressAnnotationString(dfunc.address.getOffset(), dfunc.name.getName());
+			int rngNum = 0;
+			for (AddressRange rng : dfunc.getBody().getAddressRanges()) {
+				String rngMinAnnotate = AddressAnnotatedStringHandler.createAddressAnnotationString(
+					rng.getMinAddress().getOffset(), rng.getMinAddress().toString());
+				String comment = rngMinAnnotate + " (" + rng.getLength() + " bytes)";
+				appendPlateComment(dfunc.address, "DWARF func body range[" + rngNum + "]: ",
+					comment);
+				if (rngNum != 0) {
+					appendPlateComment(rng.getMinAddress(), "DWARF: ",
+						mainFuncAnnotate + " disjoint block " + rngNum);
+				}
+				rngNum++;
+			}
+
+		}
+
 
 	}
 
@@ -292,19 +332,29 @@ public class DWARFFunctionImporter {
 		// offsetFromFuncStart will be -1 if the containing block didn't have location info
 
 		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren()) {
-			DIEAggregate childDIEA = prog.getAggregate(childEntry);
+			DIEAggregate childDIEA = prog.getDIEContainer().getAggregate(childEntry);
 
 			switch (childDIEA.getTag()) {
 				case DW_TAG_variable: {
 					if (offsetFromFuncStart >= 0) {
 						DWARFVariable localVar =
 							DWARFVariable.readLocalVariable(childDIEA, dfunc, offsetFromFuncStart);
-						if (localVar != null) {
+						if (!localVar.isMissingStorage()) {
 							if (prog.getImportOptions().isImportLocalVariables() ||
 								localVar.isRamStorage()) {
 								// only retain the local var if option is turned on, or global/static variable
 								dfunc.localVars.add(localVar);
 							}
+						}
+						else {
+							String s = "%s %s@[%s]".formatted(localVar.type.getName(),
+								localVar.name.getName(),
+								localVar.comment != null && !localVar.comment.isEmpty()
+										? localVar.comment
+										: "???");
+							DWARFUtil.appendComment(currentProgram,
+								dfunc.address.add(offsetFromFuncStart), CommentType.PRE,
+								"Unresolved local var: ", s, "\n");
 						}
 					}
 					break;
@@ -339,6 +389,11 @@ public class DWARFFunctionImporter {
 		Namespace namespace = globalVar.name.getParentNamespace(currentProgram);
 		String name = globalVar.name.getName();
 		Address address = globalVar.getRamAddress();
+		if (prog.isZeroDataAddress(address)) {
+			// skip, its probably an incomplete DIE with a zero-d out location / address
+			// we can't create a bookmark with a warning since we don't have a good address.
+			return;
+		}
 		DataType dataType = globalVar.type;
 
 		SymbolTable symbolTable = currentProgram.getSymbolTable();

@@ -19,8 +19,8 @@ import org.apache.tools.ant.filters.*
  * distribution.gradle
  *
  * This contains gradle tasks for packaging Ghidra artifacts for distribution. To
- * run a full distribution, execute the buildGhidra task. This will build for the
- * current platform only. Add -PallPlatforms to build a multiplatform build.
+ * run a full distribution, execute the buildGhidra task. This will build native
+ * components for the current platform only.
  *
  *********************************************************************************/
 
@@ -540,25 +540,23 @@ task assembleSource (type: Copy) {
 
 /************************************************************************************
  *
- * Copies a markdown file and a generaterated html file into the distribution folder.
+ * Copies markdown files and generaterate html files into the distribution folder.
  *
  ************************************************************************************/
 task assembleMarkdownToHtml (type: Copy) {
 	group = 'private'
-	description = "Copies a markdown file and a generaterated html file into the distribution folder"
+	description = "Copies markdown files and generaterate html files into the distribution folder"
 	
 	dependsOn ':MarkdownSupport:classes'
 	outputs.upToDateWhen {false}
 	destinationDir = file(DISTRIBUTION_DIR.getPath() + "/" +  ZIP_DIR_PREFIX)
-	
-	def markdownSuppportProject = project(':MarkdownSupport')
 	
 	eachFile { f ->
 		def htmlName = f.sourceName[0..-3] + "html"
 		def htmlPath = f.relativePath.replaceLastName(htmlName).pathString 
 		
 		providers.javaexec {		
-			classpath = markdownSuppportProject.sourceSets.main.runtimeClasspath
+			classpath =  rootProject.files(rootProject.ext.markdownDeps)
 			mainClass = 'ghidra.markdown.MarkdownToHtml'
 			args f.file
 			args file("${destinationDir.path}/${htmlPath}")
@@ -647,12 +645,9 @@ task assembleAll() {
 	dependsOn assembleDistribution
 	dependsOn assembleSource
 	dependsOn assembleMarkdownToHtml
-	dependsOn "assembleDistribution_$currentPlatform"
-
-	if (project.hasProperty("allPlatforms")) {
-		project.PLATFORMS.each { platform ->
-			dependsOn ":assembleDistribution_${platform.name}"
-		}
+	
+	project.PLATFORMS.each { platform ->
+		dependsOn ":assembleDistribution_${platform.name}"
 	}
 
 	doFirst {
@@ -683,12 +678,8 @@ task createInstallationZip(type: Zip) { t ->
 
 	dependsOn assembleAll
 
-	if (project.hasProperty("allPlatforms")) {
-		archiveFileName = "${ZIP_NAME_PREFIX}.zip"
-	}
-	else {
-		archiveFileName = "${ZIP_NAME_PREFIX}_${currentPlatform}.zip"
-	}
+	archiveFileName = "${ZIP_NAME_PREFIX}.zip"
+
 	destinationDirectory = DISTRIBUTION_DIR
 
 	// Make sure that we don't try to copy the same file with the same path.

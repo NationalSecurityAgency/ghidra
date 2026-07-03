@@ -9,7 +9,7 @@
     </listAttribute>
     <mapAttribute key="org.eclipse.debug.core.environmentVariables">
         <mapEntry key="GHIDRA_INSTALL_DIR" value="${project_loc:/___root}"/>
-        <mapEntry key="JAVA_HOME_OVERRIDE" value="${ee_home:JavaSE-21}"/>
+        <mapEntry key="JAVA_HOME_OVERRIDE" value="${ee_home:JavaSE-25}"/>
         <mapEntry key="PYGHIDRA_DEBUG" value="1"/>
     </mapAttribute>
     <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="${workspace_loc:Features PyGhidra/src/main/py/src/pyghidra}"/>

@@ -16,6 +16,7 @@
 package ghidra.framework.main.wizard.project;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 
 import javax.swing.*;
 
@@ -54,5 +55,9 @@ public class ProjectTypePanel extends JPanel {
 
 	boolean isSharedProject() {
 		return sharedRB.isSelected();
+	}
+
+	public Component getDefaultFocusComponent() {
+		return nonSharedRB;
 	}
 }

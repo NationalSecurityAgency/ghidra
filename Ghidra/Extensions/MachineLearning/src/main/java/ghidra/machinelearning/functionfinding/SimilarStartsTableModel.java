@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,8 @@ import java.util.List;
 
 import docking.widgets.table.AbstractDynamicTableColumn;
 import docking.widgets.table.TableColumnDescriptor;
+import ghidra.app.util.PseudoDisassembler;
+import ghidra.app.util.PseudoInstruction;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -75,6 +77,7 @@ public class SimilarStartsTableModel extends AddressBasedTableModel<SimilarStart
 		descriptor.addVisibleColumn(new AddressTableColumn());
 		descriptor.addVisibleColumn(new SimilarityTableColumn(), 1, false);
 		descriptor.addVisibleColumn(new ByteStringTableColumn());
+		descriptor.addVisibleColumn(new DisassemblyTableColumn());
 		return descriptor;
 	}
 
@@ -161,4 +164,47 @@ public class SimilarStartsTableModel extends AddressBasedTableModel<SimilarStart
 			return sb.toString();
 		}
 	}
+
+	private class DisassemblyTableColumn
+			extends AbstractDynamicTableColumn<SimilarStartRowObject, String, Object> {
+
+		@Override
+		public String getColumnName() {
+			return "Disassembly";
+		}
+
+		@Override
+		public String getColumnDescription() {
+			return "Disassembly (ignoring pre-bytes)";
+		}
+
+		@Override
+		public String getValue(SimilarStartRowObject rowObject, Settings settings, Object data,
+				ServiceProvider services) throws IllegalArgumentException {
+			PseudoDisassembler disasm = new PseudoDisassembler(program);
+
+			StringBuilder sb = new StringBuilder();
+			try {
+				Address addr = rowObject.funcStart();
+				while (addr.compareTo(
+					rowObject.funcStart().add(randomForestRow.getNumInitialBytes())) < 0) {
+					PseudoInstruction instr = disasm.disassemble(addr);
+					if (instr.isValid()) {
+						sb.append(instr.toString());
+						sb.append("  ");
+					}
+					else {
+						sb.append("?  ");
+					}
+					addr = instr.getMaxAddress().add(1);
+				}
+			}
+			catch (Exception e) {
+				sb = new StringBuilder("??");
+			}
+
+			return sb.toString();
+		}
+	}
+
 }

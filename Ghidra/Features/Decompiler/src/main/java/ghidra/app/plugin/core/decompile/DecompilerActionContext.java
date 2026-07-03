@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.decompile;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.RestrictedAddressSetContext;
 import ghidra.app.decompiler.*;
@@ -145,6 +147,18 @@ public class DecompilerActionContext extends NavigatableActionContext
 
 	public void setStatusMessage(String msg) {
 		getComponentProvider().getController().setStatusMessage(msg);
+	}
+
+	@Override
+	public boolean hasSelection() {
+
+		DecompilerProvider provider = getComponentProvider();
+		String textSelection = provider.getTextSelection();
+		if (!StringUtils.isBlank(textSelection)) {
+			return true;
+		}
+
+		return super.hasSelection();
 	}
 
 	// allows this Decompiler action context to signal the location is on a function

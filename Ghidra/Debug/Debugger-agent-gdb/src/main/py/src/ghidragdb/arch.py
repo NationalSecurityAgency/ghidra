@@ -36,6 +36,7 @@ language_map: Dict[str, List[str]] = {
     'armv4t': ['ARM:BE:32:v4t', 'ARM:LE:32:v4t'],
     'armv5': ['ARM:BE:32:v5', 'ARM:LE:32:v5'],
     'armv5t': ['ARM:BE:32:v5t', 'ARM:LE:32:v5t'],
+    'armv5te': ['ARM:BE:32:v5t', 'ARM:LE:32:v5t'],
     'armv5tej': ['ARM:BE:32:v5t', 'ARM:LE:32:v5t'],
     'armv6': ['ARM:BE:32:v6', 'ARM:LE:32:v6'],
     'armv6-m': ['ARM:BE:32:Cortex', 'ARM:LE:32:Cortex'],

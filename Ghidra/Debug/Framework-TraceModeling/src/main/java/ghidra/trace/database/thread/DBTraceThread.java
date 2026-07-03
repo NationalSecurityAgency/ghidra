@@ -15,163 +15,146 @@
  */
 package ghidra.trace.database.thread;
 
-import java.io.IOException;
+import java.util.*;
 
-import db.DBRecord;
+import ghidra.trace.database.target.DBTraceObject;
+import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceChangeRecord;
-import ghidra.trace.util.TraceEvents;
+import ghidra.trace.util.*;
 import ghidra.util.LockHold;
-import ghidra.util.database.*;
-import ghidra.util.database.annot.*;
 
-@DBAnnotatedObjectInfo(version = 0)
-public class DBTraceThread extends DBAnnotatedObject implements TraceThread {
-	protected static final String TABLE_NAME = "Threads";
+public class DBTraceThread implements TraceThread, DBTraceObjectInterface {
 
-	static final String PATH_COLUMN_NAME = "Path";
-	static final String NAME_COLUMN_NAME = "Name";
-	static final String CREATION_SNAP_COLUMN_NAME = "CreatedAt";
-	static final String DESTRUCTION_SNAP_COLUMN_NAME = "DestroyedAt";
-	static final String COMMENT_COLUMN_NAME = "Comment";
+	protected class ThreadChangeTranslator extends Translator<TraceThread> {
+		private static final Map<TraceObjectSchema, Set<String>> KEYS_BY_SCHEMA =
+			new WeakHashMap<>();
 
-	@DBAnnotatedColumn(PATH_COLUMN_NAME)
-	static DBObjectColumn PATH_COLUMN;
-	@DBAnnotatedColumn(NAME_COLUMN_NAME)
-	static DBObjectColumn NAME_COLUMN;
-	@DBAnnotatedColumn(CREATION_SNAP_COLUMN_NAME)
-	static DBObjectColumn CREATION_SNAP_COLUMN;
-	@DBAnnotatedColumn(DESTRUCTION_SNAP_COLUMN_NAME)
-	static DBObjectColumn DESTRUCTION_SNAP_COLUMN;
-	@DBAnnotatedColumn(COMMENT_COLUMN_NAME)
-	static DBObjectColumn COMMENT_COLUMN;
+		private final Set<String> keys;
 
-	@DBAnnotatedField(column = PATH_COLUMN_NAME, indexed = true)
-	private String path;
-	@DBAnnotatedField(column = NAME_COLUMN_NAME)
-	private String name;
-	@DBAnnotatedField(column = CREATION_SNAP_COLUMN_NAME)
-	private long creationSnap;
-	@DBAnnotatedField(column = DESTRUCTION_SNAP_COLUMN_NAME)
-	private long destructionSnap;
-	@DBAnnotatedField(column = COMMENT_COLUMN_NAME)
-	private String comment;
-
-	public final DBTraceThreadManager manager;
-
-	private Lifespan lifespan;
-
-	protected DBTraceThread(DBTraceThreadManager manager, DBCachedObjectStore<?> store,
-			DBRecord record) {
-		super(store, record);
-		this.manager = manager;
-	}
-
-	public void set(String path, String name, Lifespan lifespan) {
-		this.path = path;
-		this.name = name;
-		this.creationSnap = lifespan.lmin();
-		this.destructionSnap = lifespan.lmax();
-		update(PATH_COLUMN, NAME_COLUMN, CREATION_SNAP_COLUMN, DESTRUCTION_SNAP_COLUMN);
-
-		this.lifespan = lifespan;
-	}
-
-	@Override
-	protected void fresh(boolean created) throws IOException {
-		if (created) {
-			return;
+		protected ThreadChangeTranslator(DBTraceObject object, TraceThread iface) {
+			super(null, object, iface);
+			TraceObjectSchema schema = object.getSchema();
+			synchronized (KEYS_BY_SCHEMA) {
+				keys = KEYS_BY_SCHEMA.computeIfAbsent(schema, s -> Set.of(
+					s.checkAliasedAttribute(KEY_COMMENT),
+					s.checkAliasedAttribute(KEY_DISPLAY)));
+			}
 		}
-		lifespan = Lifespan.span(creationSnap, destructionSnap);
+
+		@Override
+		protected TraceEvent<TraceThread, Void> getAddedType() {
+			return TraceEvents.THREAD_ADDED;
+		}
+
+		@Override
+		protected TraceEvent<TraceThread, Lifespan> getLifespanChangedType() {
+			return TraceEvents.THREAD_LIFESPAN_CHANGED;
+		}
+
+		@Override
+		protected TraceEvent<TraceThread, Void> getChangedType() {
+			return TraceEvents.THREAD_CHANGED;
+		}
+
+		@Override
+		protected boolean appliesToKey(String key) {
+			return keys.contains(key);
+		}
+
+		@Override
+		protected TraceEvent<TraceThread, Void> getDeletedType() {
+			return TraceEvents.THREAD_DELETED;
+		}
+	}
+
+	private final DBTraceObject object;
+	private final ThreadChangeTranslator translator;
+
+	public DBTraceThread(DBTraceObject object) {
+		this.object = object;
+
+		translator = new ThreadChangeTranslator(object, this);
 	}
 
 	@Override
-	public String toString() {
-		return "TraceThread: " + getName(0);
-	}
-
-	protected void doSetLifespan(Lifespan lifespan) {
-		this.creationSnap = lifespan.lmin();
-		this.destructionSnap = lifespan.lmax();
-		update(CREATION_SNAP_COLUMN, DESTRUCTION_SNAP_COLUMN);
-
-		this.lifespan = lifespan;
+	public DBTraceObject getObject() {
+		return object;
 	}
 
 	@Override
 	public Trace getTrace() {
-		return manager.trace;
+		return object.getTrace();
+	}
+
+	@Override
+	public long getKey() {
+		return object.getKey();
 	}
 
 	@Override
 	public String getPath() {
-		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			return path;
-		}
+		return object.getCanonicalPath().toString();
 	}
 
 	@Override
 	public String getName(long snap) {
-		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			return name;
-		}
+		return TraceObjectInterfaceUtils.getValue(object, snap, KEY_DISPLAY, String.class, "");
+	}
+
+	@Override
+	public void setName(Lifespan lifespan, String name) {
+		object.setValue(lifespan, KEY_DISPLAY, name);
 	}
 
 	@Override
 	public void setName(long snap, String name) {
-		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			this.name = name;
-			update(NAME_COLUMN);
-			manager.trace
-					.setChanged(new TraceChangeRecord<>(TraceEvents.THREAD_CHANGED, null, this));
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			setName(Lifespan.nowOn(snap), name);
 		}
 	}
 
 	@Override
 	public void setComment(long snap, String comment) {
-		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			this.comment = comment;
-			update(COMMENT_COLUMN);
-			manager.trace
-					.setChanged(new TraceChangeRecord<>(TraceEvents.THREAD_CHANGED, null, this));
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.setValue(Lifespan.nowOn(snap), KEY_COMMENT, comment);
 		}
 	}
 
 	@Override
 	public String getComment(long snap) {
-		return comment;
+		return TraceObjectInterfaceUtils.getValue(object, snap, KEY_COMMENT, String.class, "");
 	}
 
 	@Override
 	public void delete() {
-		manager.deleteThread(this);
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(Lifespan.ALL);
+		}
 	}
 
 	@Override
 	public void remove(long snap) {
-		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			if (snap <= lifespan.lmin()) {
-				manager.deleteThread(this);
-			}
-			else if (snap <= lifespan.lmax()) {
-				doSetLifespan(lifespan.withMax(snap - 1));
-			}
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(Lifespan.nowOn(snap));
 		}
 	}
 
 	@Override
 	public boolean isValid(long snap) {
-		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			return lifespan.contains(snap);
-		}
+		return object.isAlive(snap);
 	}
 
 	@Override
 	public boolean isAlive(Lifespan span) {
-		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			return lifespan.intersects(span);
-		}
+		return object.isAlive(span);
+	}
+
+	@Override
+	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
+		return translator.translate(rec);
 	}
 }

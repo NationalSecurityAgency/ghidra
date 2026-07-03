@@ -392,6 +392,8 @@
 
       <H3><A name="Demangler_Analyzer"></A>Demangler Analyzer</H3>
 
+	  <H3>Demangler GNU or Demangeler Microsoft</H3>
+	  
       <BLOCKQUOTE>
         <P>This analyzer examines the name of the newly created function. If the name appears to be
         a <I>GCC v3</I> or <I>Microsoft Visual Studio</I> mangled symbol, then it will demangle the
@@ -422,7 +424,7 @@
 				</TD>				
 			</TR>
 			<TR>
-				<TD>Only Demangle Known Mangled Symbols
+				<TD>Demangle Only Known Mangled Symbols
 				</TD>
 				<TD>
 				Only demangle symbols that follow known compiler mangling patterns. 
@@ -451,6 +453,13 @@
 		<B>The GNU Demangler</B> adds the following analysis options:
 		
 		<BLOCKQUOTE>
+		<P>
+			<U><B>Timeout (seconds)</B></U> -
+				The maximum amount of seconds to allow the native GNU Demangler process to 
+				attempt to demangle a mangled string before failing. Some inputs to the
+				native GNU Demangler program have been shown to not terminate and consume excessive
+				resources. This timeout protects against these inputs.
+		</P>
 		<P>
 			<U><B>Use Deprecated Demangler</B></U> -
 				By default, GCC symbols will be demangled using the most up-to-date demangler
@@ -502,7 +511,7 @@
 		<BR>
 		<BR>
       	<P><A name="Microsoft_Demangler_Options">
-		<B>The Microsoft Demangler</B></H4> adds the following analysis option:
+		<B>The Microsoft Demangler</B></H4> adds the following analysis options:
 		
 		<BLOCKQUOTE>
 			<P>
@@ -529,6 +538,33 @@
 		</P>
 		</BLOCKQUOTE>
 
+		<BLOCKQUOTE>
+			<P>
+			<U><B>Use Encoded Anonymous Namespace</B></U> -
+				This output option is used to create a more unique namespace node from the
+				standard anonymous namespaces node output, thus helping to prevent collisions
+				between multiple types of the same name, but each in their own unique anonymous
+				namespace. When turned on, variations of the standard namespace
+				<B>`anonymous namespace'</B> will be replaced with a more specific namespace of
+				the form <B>_anon_ABCD1234</B> where the hexadecimal number comes from a number
+				encoded in the mangled string. The trade-off is that when this option is turned on,
+				the resultant namespace will not match non-mangled names that have the standard,
+				non-specific anonymous namespace.  
+			</P>
+		</BLOCKQUOTE>
+
+		<BLOCKQUOTE>
+			<P>
+			<U><B>Apply UDT Argument Type Tags</B></U> -
+				This output option controls whether user-defined type tags (e.g., class, enum,
+				struct, union) are placed in front of the named type when the type is used as a
+				template or function argument.  When turned on, the demangled string matches the
+				common demangler standard. When turned off, the standard demangled strings of
+				<B>struct AAA&lt;class BBB&gt;</B> and <B>struct AAA&lt;struct BBB&gt;</B> would
+				both be reduced to <B>struct AAA&lt;BBB&gt;</B>.  
+			</P>
+		</BLOCKQUOTE>
+
         
       </BLOCKQUOTE>
 
@@ -543,25 +579,14 @@
 
         <P><U>Started By:</U> Importing or adding to a program, Auto Analyze command</P>
       </BLOCKQUOTE>
-      <H3><A name="Format_String_Analyzer"></A>Format String Analyzer</H3>
+
+
+      <H3><A name="Image"></A>Embedded Media Analyzer</H3>
 
       <BLOCKQUOTE>
-        <P>This analyzer detects variadic function calls in the bodies of each function that intersect 
-        the current selection. It then parses their format string arguments to infer the correct function 
-        call signatures. Currently, this analyzer only supports printf, scanf, and their variants (e.g., snprintf, fscanf). 
-        If the current selection is empty, it searches through every function within the binary. Once 
-        the signatures are inferred, they are overridden.</P>
-
-        <P><U>Started By:</U> Importing or adding to a program, Auto Analyze command</P>
-
-      </BLOCKQUOTE>
-
-      <H3><A name="Image"></A>Image Analyzer</H3>
-
-      <BLOCKQUOTE>
-        <P>This analyzer searches the program for images. If a valid image is found an appropriate
-        image data type is applied at that location with the corresponding visual representation of
-        the image. Also, a bookmark is added to indicate an image.</P>
+        <P>Finds embedded media data types (e.g., png, gif, jpeg, wav). If a valid image is found an 
+		appropriate image data type is applied at that location with the corresponding visual 
+		representation of image. Also, a bookmark is added to indicate an image.</P>
 
         <P><U>Started By</U>: Importing or adding to a program, Auto Analyze command</P>
       </BLOCKQUOTE>
@@ -693,6 +718,22 @@
 
         <P><U>Started By</U>: Auto Analyze command</P>
       </BLOCKQUOTE>
+	  
+	  <H3><A name="Format_String_Analyzer"></A>Format String Analyzer</H3>
+	  <H3>(Variadic Function Signature Override)</H3>
+
+	  <BLOCKQUOTE>
+	    <P>This analyzer detects variadic function calls in the bodies of each function that intersect 
+	    the current selection. It then parses their format string arguments to infer the correct function 
+	    call signatures. Currently, this analyzer only supports printf, scanf, and their variants (e.g., snprintf, fscanf). 
+	    If the current selection is empty, it searches through every function within the binary. Once 
+	    the signatures are inferred, they are overridden.</P>
+
+	    <P><U>Started By:</U> Importing or adding to a program, Auto Analyze command</P>
+
+	  </BLOCKQUOTE>
+	  
+	  
     </BLOCKQUOTE>
 
     <P class="providedbyplugin">Provided by: <I>AutoAnalysisPlugin</I><BR>

@@ -963,7 +963,7 @@ public class TextFieldAutocompleter<T> {
 				}
 			}
 			else if (e.getKeyCode() == KeyEvent.VK_SPACE &&
-				(e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0) {
+				(e.getModifiersEx() & DockingUtils.CONTROL_KEY_MODIFIER_MASK) != 0) {
 				startCompletion((JTextField) e.getComponent());
 				e.consume();
 			}

@@ -236,7 +236,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(EolCommentFieldLocation.class, loc.getClass());
 		bfloc = (EolCommentFieldLocation) loc;
 		assertEquals(0, bfloc.getRow());
-		assertEquals(70, bfloc.getCharOffset());
+		assertEquals(72, bfloc.getCharOffset());
 	}
 
 	@Test
@@ -273,7 +273,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(EolCommentFieldLocation.class, loc.getClass());
 		bfloc = (EolCommentFieldLocation) loc;
 		assertEquals(1, bfloc.getRow());
-		assertEquals(42, bfloc.getCharOffset());
+		assertEquals(43, bfloc.getCharOffset());
 	}
 
 	@Test

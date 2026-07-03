@@ -133,7 +133,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 	 * using a shared transaction manager.  If either or both is already shared,
 	 * a transition to a single shared transaction manager will be
 	 * performed.
-	 * @param domainObj
+	 * @param domainObj the domain object to synchronize with
 	 * @throws LockException if lock or open transaction is active on either
 	 * this or the specified domain object
 	 */
@@ -184,7 +184,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 	}
 
 	/**
-	 * Returns the open handle to the underlying database.
+	 * {@return the open handle to the underlying database}
 	 */
 	public DBHandle getDBHandle() {
 		return dbh;
@@ -259,16 +259,16 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 		return transactionMgr.lock(reason);
 	}
 
-	void prepareToSave() {
-		int txId = transactionMgr.startTransaction(this, "Update Metadata", null, true, true);
-		try {
+	/**
+	 * Prepare to save and store any last minute DB data.  The default behavior is to invoke
+	 * {@link #updateMetadata()}.
+	 */
+	protected void prepareToSave() {
+		try (Transaction tx = openForcedTransaction("Update Metadata")) {
 			updateMetadata();
 		}
 		catch (IOException e) {
 			dbError(e);
-		}
-		finally {
-			transactionMgr.endTransaction(this, txId, true, true);
 		}
 	}
 
@@ -310,24 +310,40 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 		transactionMgr.unlock(handler);
 	}
 
+	private class DomainObjectTransaction extends Transaction {
+		private final int txId;
+
+		DomainObjectTransaction(int txId) {
+			this.txId = txId;
+		}
+
+		@Override
+		protected boolean endTransaction(boolean commit) {
+			DomainObjectAdapterDB.this.endTransaction(txId, commit);
+			return commit;
+		}
+
+		@Override
+		public boolean isSubTransaction() {
+			return true;
+		}
+	}
+
+	/**
+	 * Open forced transaction which bypasses any lock checking, although method should only be
+	 * used in very controlled situations where a save lock is in place.
+	 * @param description transaction description
+	 * @return {@link AutoCloseable} transaction object
+	 */
+	protected Transaction openForcedTransaction(String description) {
+		int txId = transactionMgr.startTransaction(this, description, null, true, true);
+		return new DomainObjectTransaction(txId);
+	}
+
 	@Override
 	public Transaction openTransaction(String description)
 			throws TerminatedTransactionException, IllegalStateException {
-		return new Transaction() {
-
-			int txId = startTransaction(description);
-
-			@Override
-			protected boolean endTransaction(boolean commit) {
-				DomainObjectAdapterDB.this.endTransaction(txId, commit);
-				return commit;
-			}
-
-			@Override
-			public boolean isSubTransaction() {
-				return true;
-			}
-		};
+		return new DomainObjectTransaction(startTransaction(description));
 	}
 
 	@Override
@@ -348,7 +364,8 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 
 		while (true) {
 			try {
-				return transactionMgr.startTransaction(this, description, listener, true);
+				return transactionMgr.startTransactionChecked(this, description, listener,
+					true);
 			}
 			catch (DomainObjectLockedException e) {
 				if (!exceptionHandler.apply(e)) {

@@ -272,6 +272,21 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 		}
 
 		@Override
+		public void setFunctionVariablesOpen(Address functionAddress, boolean open) {
+			models[modelID].setFunctionVariablesOpen(functionAddress, open);
+		}
+
+		@Override
+		public void setAllFunctionVariablesOpen(boolean open) {
+			models[modelID].setAllFunctionVariablesOpen(open);
+		}
+
+		@Override
+		public boolean areFunctionVariablesOpen(Address FunctionAddress) {
+			return models[modelID].areFunctionVariablesOpen(FunctionAddress);
+		}
+
+		@Override
 		public boolean openData(Data data) {
 			return models[modelID].openData(data);
 		}
@@ -335,6 +350,21 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 		@Override
 		public ListingModel copy() {
 			return models[modelID].copy();
+		}
+
+		@Override
+		public boolean isFunctionOpen(Address functionAddress) {
+			return models[modelID].isFunctionOpen(functionAddress);
+		}
+
+		@Override
+		public void setFunctionOpen(Address functionAddress, boolean b) {
+			models[modelID].setFunctionOpen(functionAddress, b);
+		}
+
+		@Override
+		public void setAllFunctionsOpen(boolean selected) {
+			models[modelID].setAllFunctionsOpen(selected);
 		}
 
 	}

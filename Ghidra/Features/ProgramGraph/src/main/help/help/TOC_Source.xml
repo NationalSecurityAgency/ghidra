@@ -51,7 +51,7 @@
 <tocroot>
 
 	<tocref id="Graphing">
-		<tocdef id="Graphing the Program" text="Graphing the Program"  target="help/topics/ProgramGraphPlugin/ProgramGraph.htm" />
+		<tocdef id="Program Graph" text="Program Graph"  target="help/topics/ProgramGraphPlugin/ProgramGraph.htm" />
 	</tocref>
 	
 </tocroot>             

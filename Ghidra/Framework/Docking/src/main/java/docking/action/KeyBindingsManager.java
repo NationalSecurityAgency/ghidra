@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -145,27 +145,42 @@ public class KeyBindingsManager implements PropertyChangeListener {
 		return null;
 	}
 
+	private void doAddKeyBinding(ComponentProvider provider, DockingActionIf action,
+			KeyStroke keyStroke) {
+		doAddKeyBinding(provider, action, keyStroke, keyStroke);
+	}
+
 	private void fixupAltGraphKeyStrokeMapping(ComponentProvider provider, DockingActionIf action,
 			KeyStroke keyStroke) {
+
+		KeyStroke altGraphKs = maybeGenerateAltGraphKeyStroke(keyStroke);
+		if (altGraphKs != null) {
+			doAddKeyBinding(provider, action, altGraphKs, keyStroke);
+		}
+	}
+
+	/**
+	 * Some operating systems allow the left and right Alt keys to be mapped separately.  Some users
+	 * find it convenient to be able to use both Alt keys for a single key binding.
+	 * @param keyStroke the key stroke
+	 * @return a new key stroke that uses the AltGraph key or null if not appropriate
+	 */
+	private KeyStroke maybeGenerateAltGraphKeyStroke(KeyStroke keyStroke) {
+		if (!DockingUtils.isCombineAltKeysEnabled()) {
+			return null;
+		}
 
 		// special case
 		int modifiers = keyStroke.getModifiers();
 		if ((modifiers & InputEvent.ALT_DOWN_MASK) == InputEvent.ALT_DOWN_MASK) {
-			//
-			// Also register the 'Alt' binding with the 'Alt Graph' mask.  This fixes the but
-			// on Windows (https://bugs.openjdk.java.net/browse/JDK-8194873)
-			// that have different key codes for the left and right Alt keys.
-			//
+			// Also register the Alt binding with the 'Alt Graph' mask.  Some operating systems 
+			// allow the left and right Alt keys to be mapped separately.  Some users find it 
+			// convenient to be able to use both Alt keys for a single key binding.
 			modifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;
-			KeyStroke updateKeyStroke =
-				KeyStroke.getKeyStroke(keyStroke.getKeyCode(), modifiers, false);
-			doAddKeyBinding(provider, action, updateKeyStroke, keyStroke);
+			return KeyStroke.getKeyStroke(keyStroke.getKeyCode(), modifiers, false);
 		}
-	}
 
-	private void doAddKeyBinding(ComponentProvider provider, DockingActionIf action,
-			KeyStroke keyStroke) {
-		doAddKeyBinding(provider, action, keyStroke, keyStroke);
+		return null;
 	}
 
 	private void doAddKeyBinding(ComponentProvider provider, DockingActionIf action,
@@ -230,6 +245,17 @@ public class KeyBindingsManager implements PropertyChangeListener {
 			return;
 		}
 
+		removeKeyBindingFromCache(action, keyStroke);
+
+		// also remove any secondarily mapped Alt key stroke
+		KeyStroke altGraphKs = maybeGenerateAltGraphKeyStroke(keyStroke);
+		if (altGraphKs != null) {
+			removeKeyBindingFromCache(action, altGraphKs);
+		}
+	}
+
+	private void removeKeyBindingFromCache(DockingActionIf action, KeyStroke keyStroke) {
+
 		DockingKeyBindingAction existingAction = dockingKeyMap.get(keyStroke);
 		if (existingAction == null) {
 			return;
@@ -238,9 +264,7 @@ public class KeyBindingsManager implements PropertyChangeListener {
 		if (existingAction instanceof SystemKeyBindingAction) {
 			dockingKeyMap.remove(keyStroke);
 		}
-		else if (existingAction instanceof MultipleKeyAction) {
-
-			MultipleKeyAction mkAction = (MultipleKeyAction) existingAction;
+		else if (existingAction instanceof MultipleKeyAction mkAction) {
 			mkAction.removeAction(action);
 			if (mkAction.isEmpty()) {
 				dockingKeyMap.remove(keyStroke);

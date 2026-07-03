@@ -18,7 +18,7 @@ from collections import namedtuple
 import bisect
 from dataclasses import dataclass
 import re
-from typing import Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Callable, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import gdb
 
@@ -88,6 +88,13 @@ class Section:
         attrs = dict.fromkeys(self.attrs)
         attrs.update(dict.fromkeys(other.attrs))
         return Section(self.name, start, end, offset, list(attrs))
+
+
+@dataclass(frozen=True)
+class Available:
+    pid: int
+    user: str
+    command: str
 
 
 @dataclass(frozen=True)
@@ -296,6 +303,54 @@ def _choose_region_info_reader() -> RegionInfoReader:
 REGION_INFO_READER = _choose_region_info_reader()
 
 
+AVAILABLES_CMD = 'info os processes'
+AVAILABLE_PATTERN = re.compile("\\s*" +
+                               "(?P<pid>[0-9]+)\\s+" +
+                               "(?P<user>[0-9,A-Z,a-z]+)\\s+" +
+                               "(?P<command>.*)")
+
+
+class AvailableInfoReader(object):
+    cmd = AVAILABLES_CMD
+    available_pattern = AVAILABLE_PATTERN
+
+    def available_from_line(self, line: str, max_addr: int) -> Optional[Available]:
+        mat = self.available_pattern.fullmatch(line)
+        if mat is None:
+            return None
+        pid = mat['pid']
+        user = mat['user']
+        command = mat['command']
+        return Available(int(pid), user, command)
+
+    def get_availables(self) -> List[Available]:
+        availables: List[Available] = []
+        try:
+            out = gdb.execute(self.cmd, to_string=True)
+            max_addr = compute_max_addr()
+        except:
+            return availables
+        for line in out.split('\n'):
+            a = self.available_from_line(line, max_addr)
+            if a is None:
+                continue
+            availables.append(a)
+        return availables
+
+    def have_changed(self, availables: List[Available]) -> Tuple[bool, Optional[List[Available]]]:
+        new_availables = self.get_availables()
+        if new_availables == availables and len(new_availables) > 0:
+            return False, None
+        return True, new_availables
+
+
+def _choose_available_info_reader() -> AvailableInfoReader:
+    return AvailableInfoReader()
+
+
+AVAILABLE_INFO_READER = _choose_available_info_reader()
+
+
 BREAK_LOCS_CMD = 'info break {}'
 BREAK_PATTERN = re.compile('')
 BREAK_LOC_PATTERN = re.compile('')
@@ -310,12 +365,12 @@ class BreakpointLocation:
 
 # Quite a hack, but only needed for type annotations
 if not hasattr(gdb, 'BreakpointLocation'):
-    gdb.BreakpointLocation = BreakpointLocation
+    gdb.BreakpointLocation = BreakpointLocation  # type: ignore
 
 
 class BreakpointLocationInfoReader(object):
     @abstractmethod
-    def get_locations(self, breakpoint: gdb.Breakpoint) -> List[Union[
+    def get_locations(self, breakpoint: gdb.Breakpoint) -> Sequence[Union[
             BreakpointLocation, gdb.BreakpointLocation]]:
         pass
 
@@ -341,8 +396,10 @@ class BreakpointLocationInfoReaderV9(BreakpointLocationInfoReader):
         if breakpoint.location is None:
             return []
         try:
-            address = int(gdb.parse_and_eval(
-                breakpoint.location).address) & compute_max_addr()
+            loc_eval = gdb.parse_and_eval(breakpoint.location)
+            if loc_eval.address is None:
+                return []
+            address = int(loc_eval.address) & compute_max_addr()
             loc = BreakpointLocation(
                 address, breakpoint.enabled, thread_groups)
             return [loc]
@@ -352,7 +409,7 @@ class BreakpointLocationInfoReaderV9(BreakpointLocationInfoReader):
 
 
 class BreakpointLocationInfoReaderV13(BreakpointLocationInfoReader):
-    def get_locations(self, breakpoint: gdb.Breakpoint) -> List[Union[
+    def get_locations(self, breakpoint: gdb.Breakpoint) -> Sequence[Union[
             BreakpointLocation, gdb.BreakpointLocation]]:
         return breakpoint.locations
 

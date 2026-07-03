@@ -26,6 +26,7 @@
 #@menu-group gdb
 #@icon icon.debugger
 #@help gdb#remote
+#@depends Debugger-rmi-trace
 #@enum TargetType:str remote extended-remote
 #@enum Endian:str auto big little
 #@arg :file "Image" "The target binary executable image (a copy on the local system)"
@@ -33,13 +34,14 @@
 #@env OPT_HOST:str="localhost" "Host" "The hostname of the target"
 #@env OPT_PORT:int=9999 "Port" "The host's listening port"
 #@env OPT_GDB_PATH:file="gdb" "gdb command" "The path to gdb on the local system. Omit the full path to resolve using the system PATH."
+#@env OPT_GDB_ARGS:str="" "gdb cmd args" "Arguments passed to gdb (versus the target)"
 #@env OPT_ARCH:str="auto" "Architecture" "Target architecture override"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 
 . ../support/gdbsetuputils.sh
 
-pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
-pypathGdb=$(ghidra-module-pypath "Debug/Debugger-agent-gdb")
+pypathTrace=$(ghidra-module-pypath "Debugger-rmi-trace")
+pypathGdb=$(ghidra-module-pypath)
 export PYTHONPATH=$pypathGdb:$pypathTrace:$PYTHONPATH
 
 target_image="$1"

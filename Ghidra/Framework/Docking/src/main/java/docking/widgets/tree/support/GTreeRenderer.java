@@ -27,7 +27,6 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.theme.GColor;
 import generic.theme.GColorUIResource;
-import ghidra.util.HTMLUtilities;
 
 public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent {
 
@@ -71,10 +70,16 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 		GTreeNode node = (GTreeNode) value;
 		String text = node.getDisplayText();
 		setText(text);
+
 		String toolTip = node.getToolTip();
 		setToolTipText(toolTip);
-		String fromHTML = HTMLUtilities.fromHTML(toolTip);
-		getAccessibleContext().setAccessibleDescription(fromHTML);
+
+		// Note: attempting to use the tooltip text here by removing the html formatting can be 
+		// too slow for large functions.  Also, the full preview text for larger symbol tool tips
+		// can be overwhelming for screen readers.   The text of the node is a reasonable value 
+		// to provide for screen readers.
+		// String fromHTML = HTMLUtilities.fromHTML(toolTip);
+		getAccessibleContext().setAccessibleDescription(node.getDisplayText());
 
 		Icon icon = getNodeIcon(node, expanded);
 		if (icon == null) {

@@ -15,7 +15,10 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.context.ListingActionContext;
+import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.debug.gui.action.DebuggerProgramLocationActionContext;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -40,5 +43,30 @@ public class DebuggerListingActionContext extends ListingActionContext
 	@Override
 	public TraceProgramView getProgram() {
 		return (TraceProgramView) super.getProgram();
+	}
+
+	@Override
+	public boolean hasSelection() {
+		CodeViewerProvider provider = (CodeViewerProvider) getComponentProvider();
+		String textSelection = provider.getTextSelection();
+		if (!StringUtils.isBlank(textSelection)) {
+			return true;
+		}
+
+		return super.hasSelection();
+	}
+
+	/**
+	 * Overridden to signal that this navigatable's program may not be the same as the globally 
+	 * active program.  This is done to signal that this navigatable can supply default context.
+	 * 
+	 * @return false
+	 */
+	@Override
+	public boolean isActiveProgram() {
+		// The active program for the debugger listing is the on in the  'main listing'.  We cannot
+		// use Navigatable.isConnected() here, since that always returns false for the debugger.
+		DebuggerListingProvider dlp = (DebuggerListingProvider) getComponentProvider();
+		return dlp.isMainListing();
 	}
 }

@@ -15,6 +15,7 @@
  */
 #include "variable.hh"
 #include "op.hh"
+#include "expression.hh"
 #include "database.hh"
 
 namespace ghidra {
@@ -388,7 +389,7 @@ Varnode *HighVariable::getTypeRepresentative(void) const
       if (vn->isTypeLock())
 	rep = vn;
     }
-    else if (0>vn->getType()->typeOrderBool(*rep->getType()))
+    else if (0>vn->getType()->typeOrderFormal(*rep->getType()))
       rep = vn;
   }
   return rep;
@@ -528,6 +529,19 @@ void HighVariable::remove(Varnode *vn)
       return;
     }
   }
+}
+
+/// \b this is assigned directly to the Varnode, losing any reference to a previous HighVariable,
+/// so the caller must take this into account.
+/// \param newvn is the Varnode to add to \b this
+/// \param mergeGroup is the group to associate with this merge
+void HighVariable::insert(Varnode *newvn,int2 mergeGroup)
+
+{
+  vector<Varnode *>::iterator iter;
+  iter = lower_bound(inst.begin(),inst.end(),newvn,compareJustLoc);
+  inst.insert(iter,newvn);
+  newvn->setHigh(this,mergeGroup);
 }
 
 /// Assuming there is a Symbol attached to \b this, run through the Varnode members
@@ -1120,8 +1134,11 @@ void HighIntersectTest::moveIntersectTests(HighVariable *high1,HighVariable *hig
   iter = highedgemap.lower_bound( HighEdge(high1,(HighVariable *)0) );
   while((iter!=highedgemap.end())&&((*iter).first.a == high1)) {
     if (!(*iter).second) {	// If test is intersection==false
-      if (!(*iter).first.b->isMark()) // and there was no test with high2
-	highedgemap.erase( iter++ ); // Delete the test
+      if (!(*iter).first.b->isMark()) {	// and there was no test with high2
+	// Delete both edges of the test
+	highedgemap.erase( HighEdge( (*iter).first.b, (*iter).first.a) );
+	highedgemap.erase( iter++ );
+      }
       else
 	++iter;
     }

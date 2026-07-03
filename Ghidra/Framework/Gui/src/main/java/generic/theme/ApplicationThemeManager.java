@@ -291,8 +291,8 @@ public class ApplicationThemeManager extends ThemeManager {
 		update(() -> {
 			updateChangedValuesMap(currentValue, newValue);
 			currentValues.addColor(newValue);
-			notifyThemeChanged(new ColorChangedThemeEvent(currentValues, newValue));
 			lookAndFeelManager.colorsChanged();
+			notifyThemeChanged(new ColorChangedThemeEvent(currentValues, newValue));
 		});
 	}
 

@@ -44,13 +44,13 @@ public class GridLocationMap<V, E> {
 
 	protected Map<E, List<GridPoint>> edgePoints = new HashMap<>();
 	private GridBounds gridBounds = new GridBounds();
-	// Tree based algorithms might want to track the column of the root node as it changes when
-	// the grid is shifted or merged.Useful for determining the position of a parent node when
+	// Tree based algorithms might want to track the location of the root node as it changes when
+	// the grid is shifted or merged. Useful for determining the position of a parent node when
 	// building bottom up.
-	private int rootColumn = 0;
+	private GridPoint rootPoint;
 
 	public GridLocationMap() {
-		rootColumn = 0;
+		rootPoint = new GridPoint(0, 0);
 	}
 
 	/**
@@ -60,7 +60,7 @@ public class GridLocationMap<V, E> {
 	 * @param col the column for the initial vertex. 
 	 */
 	public GridLocationMap(V root, int row, int col) {
-		this.rootColumn = col;
+		rootPoint = new GridPoint(row, col);
 		set(root, new GridPoint(row, col));
 	}
 
@@ -69,7 +69,15 @@ public class GridLocationMap<V, E> {
 	 * @return the column of the initial vertex in this grid
 	 */
 	public int getRootColumn() {
-		return rootColumn;
+		return rootPoint.col;
+	}
+
+	/**
+	 * Returns the row of the initial vertex in this grid.
+	 * @return the row of the initial vertex in this grid
+	 */
+	public int getRootRow() {
+		return rootPoint.row;
 	}
 
 	public Set<V> vertices() {
@@ -245,7 +253,8 @@ public class GridLocationMap<V, E> {
 			p.row += rowShift;
 			p.col += colShift;
 		}
-		rootColumn += colShift;
+		rootPoint.row += rowShift;
+		rootPoint.col += colShift;
 		gridBounds.shift(rowShift, colShift);
 
 	}
@@ -290,6 +299,30 @@ public class GridLocationMap<V, E> {
 			rowRanges[p.row].add(p.col);
 		}
 		return rowRanges;
+	}
+
+	/**
+	 * Returns the minimum/max row for all columns in the grid. This method is only defined for
+	 * grids that have no negative columns. This is because the array returned will be 0 based, with
+	 * the entry at index 0 containing the row bounds for column 0 and so on.
+	 * @return the minimum/max row for all columns in the grid
+	 * @throws IllegalStateException if this method is called on a grid with negative rows.
+	 */
+	public GridRange[] getVertexRowRanges() {
+		if (gridBounds.minCol() < 0) {
+			throw new IllegalStateException(
+				"getVertexColumnRanges not defined for grids with negative rows!");
+		}
+		GridRange[] colRanges = new GridRange[width()];
+
+		for (int i = 0; i < colRanges.length; i++) {
+			colRanges[i] = new GridRange();
+		}
+
+		for (GridPoint p : vertexPoints.values()) {
+			colRanges[p.col].add(p.row);
+		}
+		return colRanges;
 	}
 
 	public boolean containsVertex(V v) {
@@ -371,7 +404,7 @@ public class GridLocationMap<V, E> {
 
 	private GridLocationMap<V, E> copy() {
 		GridLocationMap<V, E> map = new GridLocationMap<>();
-		map.rootColumn = rootColumn;
+		map.rootPoint = new GridPoint(rootPoint.row, rootPoint.col);
 
 		Set<Entry<V, GridPoint>> entries = vertexPoints.entrySet();
 		for (Entry<V, GridPoint> entry : entries) {

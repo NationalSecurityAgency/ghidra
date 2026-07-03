@@ -1,0 +1,12 @@
+<patternlist>
+  <patternpairs totalbits="18" postbits="9">
+    <prepatterns>
+        <data>0xfc 1....... </data>  <!-- pop25 sx,# -->
+        <data>0xdd 0x9e</data>       <!-- ret5 lp -->
+    </prepatterns>
+    <postpatterns>
+       <data>0xfc 0....... </data>  <!-- push25 sx,# -->
+       <funcstart/>
+    </postpatterns>
+  </patternpairs>
+</patternlist>

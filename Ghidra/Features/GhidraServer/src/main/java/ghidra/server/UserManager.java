@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,9 +25,10 @@ import javax.security.auth.x500.X500Principal;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import generic.hash.HashUtilities;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.local.LocalFileSystem;
-import ghidra.util.*;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -91,7 +92,8 @@ public class UserManager {
 		try {
 			readUserListIfNeeded();
 			clearExpiredPasswords();
-			log.info("User file contains " + userList.size() + " entries");
+			int size = userList.size();
+			log.info("User file contains " + size + (size == 1 ? "entry" : "entries"));
 		}
 		catch (FileNotFoundException e) {
 			log.error("Existing User file not found.");
@@ -749,20 +751,19 @@ public class UserManager {
 	}
 
 	/*
-	 * Regex: matches if the entire string is alpha, digit, ".", "-", "_", fwd or back slash.
+	 * Regex: matches if the entire string is alpha, digit, ".", "-", "_".
 	 */
 	private static final Pattern VALID_USERNAME_REGEX =
-		Pattern.compile("[a-zA-Z0-9][a-zA-Z0-9.\\-_/\\\\]*");
+		Pattern.compile("[a-zA-Z0-9][a-zA-Z0-9.\\-_]*");
 
 	/**
-	 * Ensures a name only contains valid characters and meets length limitations.
+	 * Ensures a name only contains valid characters.
 	 * 
 	 * @param s name string
 	 * @return boolean true if valid name, false if not valid
 	 */
 	public static boolean isValidUserName(String s) {
-		return VALID_USERNAME_REGEX.matcher(s).matches() &&
-			s.length() <= NamingUtilities.MAX_NAME_LENGTH;
+		return VALID_USERNAME_REGEX.matcher(s).matches();
 	}
 
 }

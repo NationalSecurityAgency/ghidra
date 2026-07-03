@@ -4,6 +4,7 @@
 # 16 bytes. Customizable, if found they should be flagged.
 
 define pcodeop flix;
-:FLIX u_4_23 is op0=0xe & u_4_23 {
+# Care probably needs to be taken here with BE support if any FLIX instructions are ever defined
+:FLIX flix_i20 is op0=0xe & flix_i20 {
 	flix();
 }

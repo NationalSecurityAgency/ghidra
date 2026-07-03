@@ -23,6 +23,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelListener;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import generic.theme.GIcon;
@@ -217,7 +218,7 @@ public class PropertyManagerProvider extends ComponentProviderAdapter {
 				Rectangle rowBounds =
 					table.getCellRect(row, PropertyManagerTableModel.PROPERTY_NAME_COLUMN, true);
 				if (rowBounds.contains(event.getPoint())) {
-					return createContext(rowBounds);
+					return new DefaultActionContext(this).setContextObject(rowBounds);
 				}
 			}
 		}

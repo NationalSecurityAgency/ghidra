@@ -244,6 +244,12 @@ public class SchemaBuilder {
 		return schema;
 	}
 
+	public TraceObjectSchema buildAndReplace() {
+		TraceObjectSchema schema = build();
+		context.replaceSchema(schema);
+		return schema;
+	}
+
 	public TraceObjectSchema build() {
 		return new DefaultTraceObjectSchema(
 			context, name, type, interfaces, isCanonicalContainer,

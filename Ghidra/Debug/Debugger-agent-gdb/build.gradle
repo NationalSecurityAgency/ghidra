@@ -26,3 +26,7 @@ dependencies {
 	// Only for Help :/
 	api project(':Debugger-rmi-trace')
 }
+
+tasks.typeCheckPyPackage {
+	environment("PYTHONPATH", project(":Debugger-rmi-trace").file("build/pypkg/src"))
+}

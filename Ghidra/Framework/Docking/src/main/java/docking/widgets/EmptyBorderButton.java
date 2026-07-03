@@ -130,7 +130,7 @@ public class EmptyBorderButton extends JButton {
 
 	@Override
 	public void setBorder(Border border) {
-		// To keep UI from installing a non-appropriate border (such as when switching themes),
+		// To keep UI from installing an incorrect border (such as when switching themes),
 		// only allow borders created by this class to be set.
 		if (border == RAISED_BUTTON_BORDER || border == LOWERED_BUTTON_BORDER ||
 			border == FOCUSED_BUTTON_BORDER || border == NO_BUTTON_BORDER) {
@@ -169,6 +169,12 @@ public class EmptyBorderButton extends JButton {
 
 	public void clearBorder() {
 		setBorder(NO_BUTTON_BORDER);
+	}
+
+	@Override
+	public void setEnabled(boolean b) {
+		setBorder(NO_BUTTON_BORDER);
+		super.setEnabled(b);
 	}
 
 	protected void updateBorderBasedOnState() {

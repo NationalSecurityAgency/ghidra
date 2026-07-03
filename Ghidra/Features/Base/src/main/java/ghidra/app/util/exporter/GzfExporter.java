@@ -42,7 +42,8 @@ public class GzfExporter extends Exporter {
 
 	@Override
 	public boolean canExportDomainFile(DomainFile domainFile) {
-		return canExportDomainObject(domainFile.getDomainObjectClass());
+		// Avoid exporting link-file itself or non-Program files
+		return !domainFile.isLink() && canExportDomainObject(domainFile.getDomainObjectClass());
 	}
 
 	@Override
@@ -58,6 +59,9 @@ public class GzfExporter extends Exporter {
 	@Override
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet,
 			TaskMonitor monitor) {
+		if (!canExportDomainObject(domainObj.getClass())) {
+			throw new UnsupportedOperationException("only ProgramDB objects are supported");
+		}
 		try {
 			file.delete();
 			domainObj.saveToPackedFile(file, monitor);

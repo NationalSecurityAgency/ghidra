@@ -17,25 +17,35 @@ package docking.widgets;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.font.FontRenderContext;
+import java.awt.font.GlyphVector;
+import java.awt.geom.Rectangle2D;
 import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.event.*;
+import javax.swing.text.Caret;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.DockingWindowManager;
+import docking.widgets.DropDownTextFieldDataModel.SearchMode;
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.list.GList;
 import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import generic.theme.GThemeDefaults.Colors.Tooltips;
 import generic.util.WindowUtilities;
-import ghidra.util.StringUtilities;
-import ghidra.util.SystemUtilities;
+import ghidra.framework.options.PreferenceState;
+import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.task.SwingUpdateManager;
+import help.Help;
+import help.HelpService;
 import util.CollectionUtils;
 
 /**
@@ -60,6 +70,8 @@ import util.CollectionUtils;
  */
 public class DropDownTextField<T> extends JTextField implements GComponent {
 
+	private static final Cursor CURSOR_HAND = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+	private static final Cursor CURSOR_DEFAULT = Cursor.getDefaultCursor();
 	private static final int DEFAULT_MAX_UPDATE_DELAY = 2000;
 	private static final int MIN_HEIGHT = 300;
 	private static final int MIN_WIDTH = 200;
@@ -90,7 +102,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 	protected boolean internallyDrivenUpdate;
 	private boolean consumeEnterKeyPress = true; // consume Enter presses by default
 	private boolean ignoreEnterKeyPress = false; // do not ignore enter by default
-	private boolean ignoreCaretChanges;
+	private boolean textFieldNotFocused;
 	private boolean showMachingListOnEmptyText;
 
 	// We use an update manager to buffer requests to update the matches.  This allows us to be
@@ -105,6 +117,16 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 	 * the list, which will change the contents of the text field, but not the list of matches.
 	 */
 	private String currentMatchingText;
+
+	/**
+	 * Search mode support.  Clients specify search modes that allow the user to change how results
+	 * are matched. For backward compatibility, this will be empty for clients that have not 
+	 * specified search modes.
+	 */
+	private List<SearchMode> searchModes = new ArrayList<>();
+	private boolean searchModeIsHovered;
+	private SearchMode searchMode = SearchMode.UNKNOWN;
+	private SearchModeBounds searchModeBounds;
 
 	/**
 	* Constructor.
@@ -132,7 +154,36 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 		init(updateMinDelay);
 	}
 
+	@Override
+	public void updateUI() {
+
+		// reset the hint bounds; this value is based on the current font
+		searchModeBounds = null;
+
+		super.updateUI();
+	}
+
 	private void init(int updateMinDelay) {
+
+		List<SearchMode> modes = dataModel.getSupportedSearchModes();
+		for (SearchMode mode : modes) {
+			if (mode != SearchMode.UNKNOWN && !searchModes.contains(mode)) {
+				searchModes.add(mode);
+
+				// pick the first mode to use
+				if (searchMode == SearchMode.UNKNOWN) {
+					searchMode = mode;
+				}
+			}
+		}
+
+		installSearchModeDisplay();
+
+		// add a one-time listener to this field to restore any saved state, like the search mode
+		DockingWindowManager.registerComponentLoadedListener(this, (dwm, provider) -> {
+			loadPreferenceState();
+		});
+
 		updateManager = new SwingUpdateManager(updateMinDelay, DEFAULT_MAX_UPDATE_DELAY,
 			"Drop Down Selection Text Field Update Manager", () -> {
 				if (pendingTextUpdate == null) {
@@ -151,6 +202,121 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 		initDataList();
 
 		getAccessibleContext().setAccessibleName("Data Type Editor");
+
+		HelpService help = Help.getHelpService();
+		help.registerDynamicHelp(this, new SearchModeHelpLocation());
+	}
+
+	private void installSearchModeDisplay() {
+
+		if (!hasMultipleSearchModes()) {
+			return;
+		}
+
+		addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentResized(ComponentEvent e) {
+				// when resized, update the location of the search mode hint when we get repainted
+				searchModeBounds = null;
+			}
+		});
+
+		SearchModeMouseListener mouseListener = new SearchModeMouseListener();
+		addMouseMotionListener(mouseListener);
+		addMouseListener(mouseListener);
+	}
+
+	private boolean hasMultipleSearchModes() {
+		return searchModes.size() > 1;
+	}
+
+	private boolean isOverSearchMode(MouseEvent e) {
+		if (searchModeBounds == null) {
+			return false; // have not yet been painted
+		}
+
+		Point p = e.getPoint();
+		return searchModeBounds.isHovered(p);
+	}
+
+	public SearchMode getSearchMode() {
+		return searchMode;
+	}
+
+	public void setSearchMode(SearchMode newMode) {
+
+		if (!searchModes.contains(newMode)) {
+			throw new IllegalArgumentException(
+				"Search mode is not supported by this texts field: " + newMode);
+		}
+		doSetSearchMode(newMode);
+	}
+
+	private void doSetSearchMode(SearchMode newMode) {
+		searchMode = newMode;
+		searchModeBounds = null;
+		repaint();
+
+		savePreferenceState();
+
+		maybeUpdateDisplayContents(true);
+	}
+
+	private void toggleSearchMode(boolean forward) {
+
+		if (!hasMultipleSearchModes()) {
+			return;
+		}
+
+		int index = searchModes.indexOf(searchMode);
+		int next = forward ? index + 1 : index - 1;
+		if (forward) {
+			if (next == searchModes.size()) {
+				next = 0;
+			}
+		}
+		else {
+			if (next == -1) {
+				next = searchModes.size() - 1;
+			}
+		}
+
+		SearchMode newMode = searchModes.get(next);
+		doSetSearchMode(newMode);
+	}
+
+	private void savePreferenceState() {
+
+		String preferenceKey = dataModel.getClass().getSimpleName();
+		PreferenceState state = new PreferenceState();
+		state.putEnum("searchMode", searchMode);
+
+		// We are in the UI at this point, so we have a valid window manager.  (The window manager 
+		// may be null in testing.)
+		DockingWindowManager dwm = DockingWindowManager.getInstance(this);
+		if (dwm != null) {
+			dwm.putPreferenceState(preferenceKey, state);
+		}
+	}
+
+	private void loadPreferenceState() {
+		String preferenceKey = dataModel.getClass().getSimpleName();
+
+		// We are in the UI at this point, so we have a valid window manager.  (The window manager 
+		// may be null in testing.)
+		DockingWindowManager dwm = DockingWindowManager.getInstance(this);
+		if (dwm == null) {
+			return;
+		}
+
+		PreferenceState state = dwm.getPreferenceState(preferenceKey);
+		if (state == null) {
+			return;
+		}
+
+		searchMode = state.getEnum("searchMode", searchMode);
+		searchModeBounds = null;
+		repaint();
 	}
 
 	protected ListSelectionModel createListSelectionModel() {
@@ -300,11 +466,44 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 		updateManager.updateLater();
 	}
 
-	private void maybeUpdateDisplayContents(String userText) {
-		if (SystemUtilities.isEqual(userText, pendingTextUpdate)) {
+	private void maybeUpdateDisplayContents(boolean force) {
+		if (textFieldNotFocused) {
 			return;
 		}
-		updateDisplayContents(userText);
+
+		String text = getText();
+		if (StringUtils.isBlank(text)) {
+			return;
+		}
+
+		// caret position only matters with 'starts with', as the user can arrow through the text
+		// to change which text the 'starts with' matches
+		if (!isStartsWithSearch()) {
+			if (force || isDifferentText(text)) {
+				updateDisplayContents(text);
+			}
+			return;
+		}
+
+		Caret caret = getCaret();
+		int dot = caret.getDot();
+		String textToCaret = text.substring(0, dot);
+		if (force || isDifferentText(textToCaret)) {
+			updateDisplayContents(textToCaret);
+		}
+	}
+
+	private boolean isDifferentText(String newText) {
+		return !CollectionUtils.isOneOf(newText, currentMatchingText, pendingTextUpdate);
+	}
+
+	private boolean isStartsWithSearch() {
+		if (hasMultipleSearchModes()) {
+			return searchMode == SearchMode.STARTS_WITH;
+		}
+
+		return searchMode == SearchMode.STARTS_WITH ||
+			searchMode == SearchMode.UNKNOWN; // backward compatibility 
 	}
 
 	private void doUpdateDisplayContents(String userText) {
@@ -367,7 +566,13 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 		Cursor previousCursor = getCursor();
 		try {
 			setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-			return dataModel.getMatchingData(searchText);
+
+			if (searchMode == SearchMode.UNKNOWN) {
+				// backward compatible
+				return dataModel.getMatchingData(searchText);
+			}
+			return dataModel.getMatchingData(searchText, searchMode);
+
 		}
 		finally {
 			setCursor(previousCursor);
@@ -383,12 +588,13 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 
 	/**
 	 * Shows the matching list.  This can be used to show all data when the user has not typed any
-	 * text.
+	 * text.  For data models that have large data sets, this call may not show the matching list.
+	 * This behavior is determine by the current data model.
 	 */
 	public void showMatchingList() {
 
 		//
-		//  We temporarily enable this list to show for empty text, even if the text is not empty.
+		// We temporarily enable this list to show for empty text, even if the text is not empty.
 		// This handles the default setting, which has this feature off.  We can refactor this class
 		// to allow us to make a direct call instead of using this temporary setting.  This seems
 		// simple enough for now.
@@ -702,6 +908,66 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 		windowVisibilityListener = Objects.requireNonNull(l);
 	}
 
+	@Override
+	protected void paintComponent(Graphics g) {
+		super.paintComponent(g);
+
+		if (searchMode == SearchMode.UNKNOWN) {
+			return;
+		}
+
+		String modeHint = searchMode.getHint();
+		searchModeBounds = calculateSearchModeBounds(modeHint, g);
+
+		Color textColor = searchModeIsHovered ? Colors.FOREGROUND : Messages.HINT;
+
+		Graphics2D g2 = (Graphics2D) g;
+		g2.setColor(textColor);
+		g2.setFont(g2.getFont().deriveFont(Font.ITALIC));
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+		Dimension size = getSize();
+		Insets insets = getInsets();
+		int bottomPad = 3;
+		int x = searchModeBounds.getTextStartX();
+		int y = size.height - (insets.bottom + bottomPad); // strings paint bottom-up
+
+		g2.drawString(modeHint, x, y);
+
+		// debug
+		// g.setColor(Color.ORANGE);
+		// g2.draw(searchModeBounds.hoverAreaBounds);
+	}
+
+	private SearchModeBounds calculateSearchModeBounds(String text, Graphics g) {
+		if (searchModeBounds != null) {
+			return searchModeBounds;
+		}
+
+		Graphics2D g2d = (Graphics2D) g;
+		Font f = g.getFont();
+		FontRenderContext frc = g2d.getFontRenderContext();
+		char[] chars = text.toCharArray();
+		int n = text.length();
+		GlyphVector gv = f.layoutGlyphVector(frc, chars, 0, n, Font.LAYOUT_LEFT_TO_RIGHT);
+		Rectangle2D bounds2d = gv.getVisualBounds();
+
+		searchModeBounds = new SearchModeBounds(bounds2d.getBounds());
+		return searchModeBounds;
+	}
+
+	/**
+	 * Returns the search mode bounds.  This is the area of the text field that shows the current 
+	 * search mode.   This area can be hovered and clicked by the user.  If there are not multiple
+	 * search modes available, then this area is not painted and the bounds will be null.  This 
+	 * value will get updated as this text field is resized.
+	 * 
+	 * @return the search mode bounds
+	 */
+	public SearchModeBounds getSearchModeBounds() {
+		return searchModeBounds;
+	}
+
 //=================================================================================================
 // Inner Classes
 //=================================================================================================
@@ -738,13 +1004,13 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 				return;
 			}
 
-			ignoreCaretChanges = true;
+			textFieldNotFocused = true;
 			hideMatchingWindow();
 		}
 
 		@Override
 		public void focusGained(FocusEvent e) {
-			ignoreCaretChanges = false;
+			textFieldNotFocused = false;
 		}
 	}
 
@@ -777,21 +1043,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 	private class UpdateCaretListener implements CaretListener {
 		@Override
 		public void caretUpdate(CaretEvent event) {
-			if (ignoreCaretChanges) {
-				return;
-			}
-
-			String text = getText();
-			if (text == null || text.isEmpty()) {
-				return;
-			}
-
-			String textToCaret = text.substring(0, event.getDot());
-			if (textToCaret.equals(currentMatchingText)) {
-				return; // nothing to do
-			}
-
-			maybeUpdateDisplayContents(textToCaret);
+			maybeUpdateDisplayContents(false);
 		}
 	}
 
@@ -910,21 +1162,33 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 
 	private void handleArrowKey(KeyEvent event) {
 
+		if (getMatchingWindow().isShowing()) {
+			handleArrowKeyForMatchingWindow(event);
+			return;
+		}
+
+		// Contrl-Up/Down is for toggling the search mode
+		if (event.isControlDown()) {
+			int keyCode = event.getKeyCode();
+			boolean forward = keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_KP_DOWN;
+			toggleSearchMode(forward);
+			return;
+		}
+
+		updateDisplayContents(getText());
+		event.consume();
+	}
+
+	private void handleArrowKeyForMatchingWindow(KeyEvent event) {
 		int keyCode = event.getKeyCode();
-		if (!getMatchingWindow().isShowing()) {
-			updateDisplayContents(getText());
-			event.consume();
+		if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_KP_UP) {
+			decrementListSelection();
 		}
-		else { // update the window if it is showing
-			if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_KP_UP) {
-				decrementListSelection();
-			}
-			else {
-				incrementListSelection();
-			}
-			event.consume();
-			setTextFromSelectedListItemAndKeepMatchingWindowOpen();
+		else {
+			incrementListSelection();
 		}
+		event.consume();
+		setTextFromSelectedListItemAndKeepMatchingWindowOpen();
 	}
 
 	private void incrementListSelection() {
@@ -1038,6 +1302,108 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 		public void setLeadSelectionIndex(int leadIndex) {
 			// stub
 		}
-
 	}
+
+	private class SearchModeMouseListener extends MouseAdapter {
+
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			if (e.getClickCount() != 1) {
+				return;
+			}
+
+			if (!isOverSearchMode(e)) {
+				return;
+			}
+
+			boolean forward = !e.isControlDown();
+			toggleSearchMode(forward);
+		}
+
+		private void updateSearchModeHover(MouseEvent e) {
+			searchModeIsHovered = isOverSearchMode(e);
+			String tip =
+				searchModeIsHovered ? "Search Mode: " + searchMode.getDisplayName() : null;
+			setToolTipText(tip);
+			setCursor(searchModeIsHovered ? CURSOR_HAND : CURSOR_DEFAULT);
+			repaint();
+		}
+
+		@Override
+		public void mouseMoved(MouseEvent e) {
+			updateSearchModeHover(e);
+		}
+
+		@Override
+		public void mouseEntered(MouseEvent e) {
+			updateSearchModeHover(e);
+		}
+
+		@Override
+		public void mouseExited(MouseEvent e) {
+			updateSearchModeHover(e);
+		}
+	}
+
+	private class SearchModeHelpLocation implements DynamicHelpLocation {
+
+		// Note the help for this generic field currently lives in the help for the Data Type 
+		// chooser, which is a bit odd, but convenient.  To fix this, we would need a separate help
+		// page for the generic text field.
+		private HelpLocation helpLocation = new HelpLocation("DataTypeEditors", "SearchMode");
+
+		@Override
+		public HelpLocation getActiveHelpLocation() {
+			if (searchModeIsHovered) {
+				return helpLocation;
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * Represents the bounds of the search mode area in this text field.  This also tracks the text
+	 * position within the search mode bounds.
+	 */
+	public class SearchModeBounds {
+		private Rectangle textBounds;
+		private Rectangle hoverAreaBounds;
+
+		SearchModeBounds(Rectangle textBounds) {
+			this.textBounds = textBounds;
+
+			Dimension size = getSize();
+			Insets insets = getInsets();
+			hoverAreaBounds = new Rectangle(textBounds);
+			hoverAreaBounds.width += 10; // add some padding
+
+			// same height as this field
+			hoverAreaBounds.height = getHeight() - (insets.top + insets.bottom);
+
+			// move away from the end of this field
+			hoverAreaBounds.x = size.width - insets.right - hoverAreaBounds.width;
+			hoverAreaBounds.y = insets.top;
+		}
+
+		public Rectangle getHoverAreaBounds() {
+			return hoverAreaBounds;
+		}
+
+		boolean isHovered(Point p) {
+			return hoverAreaBounds.contains(p);
+		}
+
+		Point getLocation() {
+			return hoverAreaBounds.getLocation();
+		}
+
+		int getTextWidth() {
+			return textBounds.width;
+		}
+
+		int getTextStartX() {
+			return (int) hoverAreaBounds.getCenterX() - (getTextWidth() / 2);
+		}
+	}
+
 }

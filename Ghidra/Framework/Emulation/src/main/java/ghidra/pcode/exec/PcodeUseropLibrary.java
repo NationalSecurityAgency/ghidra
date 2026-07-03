@@ -21,6 +21,7 @@ import java.util.*;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.OpOutput;
 import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.PcodeUserop;
 import ghidra.pcodeCPort.slghsymbol.UserOpSymbol;
 import ghidra.program.model.pcode.PcodeOp;
@@ -47,6 +48,11 @@ public interface PcodeUseropLibrary<T> {
 		@Override
 		public Map<String, PcodeUseropDefinition<Object>> getUserops() {
 			return Map.of();
+		}
+
+		@Override
+		public PcodeUseropLibrary<Object> compose(PcodeUseropLibrary<Object> lib) {
+			return lib;
 		}
 	}
 
@@ -125,13 +131,14 @@ public interface PcodeUseropLibrary<T> {
 		 * @param executor the executor invoking this userop.
 		 * @param library the complete library for this execution. Note the library may have been
 		 *            composed from more than the one defining this userop.
+		 * @param op the {@link PcodeOp#CALLOTHER} op
 		 * @param outVar if invoked as an rval, the destination varnode for the userop's output.
 		 *            Otherwise, {@code null}.
 		 * @param inVars the input varnodes as ordered in the source.
 		 * @see AnnotatedPcodeUseropLibrary.AnnotatedPcodeUseropDefinition
 		 */
-		void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library, Varnode outVar,
-				List<Varnode> inVars);
+		void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library, PcodeOp op,
+				Varnode outVar, List<Varnode> inVars);
 
 		/**
 		 * Invoke/execute the raw userop.
@@ -146,7 +153,7 @@ public interface PcodeUseropLibrary<T> {
 		 * @param op the {@link PcodeOp#CALLOTHER} op
 		 */
 		default void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library, PcodeOp op) {
-			execute(executor, library, op.getOutput(),
+			execute(executor, library, op, op.getOutput(),
 				Arrays.asList(op.getInputs()).subList(1, op.getNumInputs()));
 		}
 
@@ -220,6 +227,17 @@ public interface PcodeUseropLibrary<T> {
 		boolean canInlinePcode();
 
 		/**
+		 * If this userop is defined as a java callback, get the type of the output
+		 * 
+		 * <p>
+		 * If the method has a {@code @}{@link OpOutput} annotation, this is the type of the output
+		 * parameter. Otherwise, this is the method's return type.
+		 * 
+		 * @return the output type
+		 */
+		Class<?> getOutputType();
+
+		/**
 		 * If this userop is defined as a java callback, get the method
 		 * 
 		 * @return the method, or null
@@ -256,13 +274,24 @@ public interface PcodeUseropLibrary<T> {
 	 * Compose this and the given library into a new library.
 	 * 
 	 * @param lib the other library
+	 * @param override allow the given library to override userops from this library
+	 * @return a new library having all userops defined between the two
+	 */
+	default PcodeUseropLibrary<T> compose(PcodeUseropLibrary<T> lib, boolean override) {
+		if (lib == null || lib == NIL) {
+			return this;
+		}
+		return new ComposedPcodeUseropLibrary<>(List.of(this, lib), override);
+	}
+
+	/**
+	 * Compose this and the given library into a new library, forbidding overrides
+	 * 
+	 * @param lib the other library
 	 * @return a new library having all userops defined between the two
 	 */
 	default PcodeUseropLibrary<T> compose(PcodeUseropLibrary<T> lib) {
-		if (lib == null) {
-			return this;
-		}
-		return new ComposedPcodeUseropLibrary<>(List.of(this, lib));
+		return compose(lib, false);
 	}
 
 	/**

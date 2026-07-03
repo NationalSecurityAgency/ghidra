@@ -25,9 +25,14 @@ import ghidra.pcode.emu.jit.op.JitIntRightOp;
  * This uses the integer shift operator generator and simply invokes
  * {@link JitCompiledPassage#intRight(int, int)}, etc. depending on the types.
  */
-public enum IntRightOpGen implements ShiftIntBinOpGen<JitIntRightOp> {
+public enum IntRightOpGen implements IntShiftBinOpGen<JitIntRightOp> {
 	/** The generator singleton */
 	GEN;
+
+	@Override
+	public boolean isSigned() {
+		return false;
+	}
 
 	@Override
 	public String methodName() {

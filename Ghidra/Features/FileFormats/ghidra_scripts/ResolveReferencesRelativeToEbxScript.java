@@ -15,7 +15,7 @@
  */
 //Resolves relative references computed off EBX. 
 //This will resolve references to strings in the "__cstring" section.
-//@category Mac OS X
+//@category Apple.Mac OS X
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
@@ -36,19 +36,19 @@ public class ResolveReferencesRelativeToEbxScript extends GhidraScript {
 
 		FunctionIterator functions = currentProgram.getListing().getFunctions(true);
 
-		while ( functions.hasNext() ) {
+		while (functions.hasNext()) {
 
-			if ( monitor.isCancelled() ) {
+			if (monitor.isCancelled()) {
 				break;
 			}
 
 			Function function = functions.next();
 
-			monitor.setMessage( function.getName() );
+			monitor.setMessage(function.getName());
 
-			loopOverInstructionsInFunction( function );
+			loopOverInstructionsInFunction(function);
 
-			function = getFunctionAfter( function );
+			function = getFunctionAfter(function);
 		}
 	}
 
@@ -57,50 +57,53 @@ public class ResolveReferencesRelativeToEbxScript extends GhidraScript {
 
 		long ebx = -1;
 
-		InstructionIterator instructions = currentProgram.getListing().getInstructions( function.getBody(), true ) ;
+		InstructionIterator instructions =
+			currentProgram.getListing().getInstructions(function.getBody(), true);
 
-		while ( instructions.hasNext() ) {
+		while (instructions.hasNext()) {
 
 			Instruction instruction = instructions.next();
 
-			if ( monitor.isCancelled() ) {
+			if (monitor.isCancelled()) {
 				break;
 			}
 
-			if ( ebx == -1 ) {
-				ebx = getValueForEBX( instruction );
+			if (ebx == -1) {
+				ebx = getValueForEBX(instruction);
 			}
 
-			if ( ebx == -1 ) {
+			if (ebx == -1) {
 				continue;
 			}
 
-			for (int i = 0 ; i < instruction.getNumOperands() ; ++i ) {
+			for (int i = 0; i < instruction.getNumOperands(); ++i) {
 
-				Object [] opObjects = instruction.getOpObjects(i);
+				Object[] opObjects = instruction.getOpObjects(i);
 
-				if ( opObjects.length == 2 ) {
+				if (opObjects.length == 2) {
 
-					if (opObjects[ 0 ] instanceof Scalar && opObjects[ 1 ] instanceof Register ) {
+					if (opObjects[0] instanceof Scalar && opObjects[1] instanceof Register) {
 
- 						Scalar scalar = (Scalar) opObjects[ 0 ];
+						Scalar scalar = (Scalar) opObjects[0];
 
-						Register register = (Register) opObjects[ 1 ];
+						Register register = (Register) opObjects[1];
 
-						if ( register.equals( EBX ) ) {
+						if (register.equals(EBX)) {
 
 							Address address =
 								toAddr((ebx + scalar.getUnsignedValue()) & 0x00000000ffffffffL);
 
-							if ( isValid( address ) ) {
+							if (isValid(address)) {
 
 								removeReferencesFrom(instruction);
 
-								Reference reference = createMemoryReference( instruction, 1, address, RefType.DATA );
+								Reference reference =
+									createMemoryReference(instruction, 1, address, RefType.DATA);
 
-								setReferencePrimary( reference );
+								setReferencePrimary(reference);
 
-								println( "Creating reference from " + instruction.getMinAddress() + " to " + address );
+								println("Creating reference from " + instruction.getMinAddress() +
+									" to " + address);
 							}
 						}
 					}
@@ -111,43 +114,43 @@ public class ResolveReferencesRelativeToEbxScript extends GhidraScript {
 
 	private boolean isValid(Address address) {
 
-		Instruction instruction = getInstructionContaining( address );
-		if ( instruction != null ) {
+		Instruction instruction = getInstructionContaining(address);
+		if (instruction != null) {
 			Address min = instruction.getMinAddress();
-			if ( address.compareTo( min ) > 0 ) {
+			if (address.compareTo(min) > 0) {
 				return false; //off-cut
 			}
 		}
 
-		Data data = getDataContaining( address );
-		if ( data != null ) {
+		Data data = getDataContaining(address);
+		if (data != null) {
 			Address min = data.getMinAddress();
-			if ( address.compareTo( min ) > 0 ) {
+			if (address.compareTo(min) > 0) {
 				return false; //off-cut
 			}
 		}
 
-		return currentProgram.getMemory().contains( address );
+		return currentProgram.getMemory().contains(address);
 	}
 
 	private void removeReferencesFrom(Instruction instruction) {
-		Reference [] referencesFrom = instruction.getReferencesFrom();
+		Reference[] referencesFrom = instruction.getReferencesFrom();
 		for (Reference reference : referencesFrom) {
-			removeReference( reference );
+			removeReference(reference);
 		}
 	}
 
 	private long getValueForEBX(Instruction instruction) {
 
-		if ( instruction.getMnemonicString().equals( "CALL" ) ) {
+		if (instruction.getMnemonicString().equals("CALL")) {
 
-			Address nextInstructionAddress = instruction.getMaxAddress().add( 1 );
+			Address nextInstructionAddress = instruction.getMaxAddress().add(1);
 
-			Reference [] referencesFrom = instruction.getReferencesFrom();
+			Reference[] referencesFrom = instruction.getReferencesFrom();
 
-			if ( referencesFrom.length == 1) {
+			if (referencesFrom.length == 1) {
 
-				if ( referencesFrom[0].getToAddress().equals( nextInstructionAddress ) ) {
+				if (referencesFrom[0].getToAddress().equals(nextInstructionAddress)) {
 
 					return nextInstructionAddress.getOffset();
 				}

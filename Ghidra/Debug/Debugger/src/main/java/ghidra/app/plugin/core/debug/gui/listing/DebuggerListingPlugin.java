@@ -15,15 +15,18 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.GROUP_TRANSIENT_VIEWS;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.ActionContext;
+import docking.ComponentProvider;
 import docking.action.MenuData;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -32,18 +35,22 @@ import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractNewListingAction;
-import ghidra.app.plugin.core.debug.gui.action.*;
+import ghidra.app.plugin.core.debug.gui.action.DebuggerProgramLocationActionContext;
+import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.debug.api.action.AutoReadMemorySpec;
 import ghidra.debug.api.action.LocationTrackingSpec;
+import ghidra.debug.api.listing.DebuggerListing;
 import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.pcode.exec.SleighUtils.LitIdMode;
 import ghidra.program.model.address.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -84,6 +91,10 @@ import ghidra.trace.model.program.TraceProgramView;
 	})
 public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerListingProvider>
 		implements DebuggerListingService {
+
+	private static final AutoConfigState.ClassHandler<DebuggerListingPlugin> CONFIG_STATE_HANDLER =
+		AutoConfigState.wireHandler(DebuggerListingPlugin.class, MethodHandles.lookup());
+
 	private static final String KEY_CONNECTED_PROVIDER = "connectedProvider";
 	private static final String KEY_DISCONNECTED_COUNT = "disconnectedCount";
 	private static final String PREFIX_DISCONNECTED_PROVIDER = "disconnectedProvider";
@@ -119,6 +130,9 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	// NOTE: This plugin doesn't extend AbstractDebuggerPlugin
 	@SuppressWarnings("unused")
 	private AutoService.Wiring autoServiceWiring;
+
+	@AutoConfigStateField
+	protected LitIdMode goToSleighMode = LitIdMode.HEX;
 
 	private DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 
@@ -180,6 +194,22 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
+	public DebuggerListing createNewListing() {
+		return createNewDisconnectedProvider();
+	}
+
+	public String findNextCustomTitle() {
+		List<String> allTitles = disconnectedProviders.stream().map(ComponentProvider::getTitle).toList();
+		int i;
+		for (i = 0; i < allTitles.size(); i++) {
+			if (!allTitles.contains("Dynamic %d".formatted(i))) {
+				return "Dynamic %d".formatted(i);
+			}
+		}
+		return "Dynamic %d".formatted(i);
+	}
+
+	@Override
 	protected void setView(AddressSetView addrSet) {
 		TraceProgramView view = current.getView();
 		if (view == null) {
@@ -196,7 +226,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
-	public void locationChanged(CodeViewerProvider provider, ProgramLocation location) {
+	public void broadcastLocationChanged(CodeViewerProvider provider, ProgramLocation location) {
 		// TODO: Fix cursor?
 		// Do not fire ProgramLocationPluginEvent.
 		if (provider == connectedProvider) {
@@ -205,7 +235,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
-	public void selectionChanged(CodeViewerProvider provider, ProgramSelection selection) {
+	public void broadcastSelectionChanged(CodeViewerProvider provider, ProgramSelection selection) {
 		if (provider != connectedProvider) {
 			return;
 		}
@@ -218,7 +248,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
-	public void highlightChanged(CodeViewerProvider provider, ProgramSelection highlight) {
+	public void broadcastHighlightChanged(CodeViewerProvider provider, ProgramSelection highlight) {
 		if (provider != connectedProvider) {
 			return;
 		}
@@ -351,31 +381,22 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 		return goTo(loc, centerOnScreen);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * <p>
-	 * This is only used by the ProgramManager. I don't need state per program. It would be nice to
-	 * have state per Trace, but this facility is usurped only for the ProgramManager. Here, it gets
-	 * in my way, since it restores previous, now incorrect, state on program switch. It tends to
-	 * override the static sync.
-	 */
 	@Override
-	public Object getTransientState() {
-		// ProgramManager does all this for programs. I don't need that here.
-		return new Object[] {};
+	public void setGoToSleighMode(LitIdMode mode) {
+		goToSleighMode = mode;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @see #getTransientState()
-	 */
 	@Override
-	public void restoreTransientState(Object objectState) {
-		/*try (Suppression supp = cbGoTo.suppress(null)) {
-			super.restoreTransientState(objectState);
-		}*/
+	public LitIdMode getGoToSleighMode() {
+		return goToSleighMode;
+	}
+
+	@Override
+	public List<DebuggerListing> getAllListings() {
+		final List<DebuggerListing> ret = new ArrayList<>();
+		ret.add(connectedProvider);
+		ret.addAll(disconnectedProviders);
+		return ret;
 	}
 
 	@Override
@@ -450,6 +471,9 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	@Override
 	public void writeConfigState(SaveState saveState) {
+		super.writeConfigState(saveState);
+		CONFIG_STATE_HANDLER.writeConfigState(this, saveState);
+
 		SaveState connectedProviderState = new SaveState();
 		connectedProvider.writeConfigState(connectedProviderState);
 		saveState.putXmlElement(KEY_CONNECTED_PROVIDER, connectedProviderState.saveToXml());
@@ -470,6 +494,9 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	@Override
 	public void readConfigState(SaveState saveState) {
+		super.readConfigState(saveState);
+		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
+
 		Element connectedProviderElement = saveState.getXmlElement(KEY_CONNECTED_PROVIDER);
 		if (connectedProviderElement != null) {
 			SaveState connectedProviderState = new SaveState(connectedProviderElement);

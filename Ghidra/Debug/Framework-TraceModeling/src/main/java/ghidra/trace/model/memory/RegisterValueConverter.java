@@ -71,7 +71,7 @@ public class RegisterValueConverter {
 
 	int getRegisterValueBitLength() throws RegisterValueException {
 		Object objBitLength = registerValue.getParent()
-				.getValue(registerValue.getMinSnap(), TraceObjectRegister.KEY_BITLENGTH)
+				.getValue(registerValue.getMinSnap(), TraceRegister.KEY_BITLENGTH)
 				.getValue();
 		if (!(objBitLength instanceof Number numBitLength)) {
 			throw new RegisterValueException(

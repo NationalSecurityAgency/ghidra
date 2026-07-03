@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,6 @@ import ghidra.program.model.data.TypeDefSettingsDefinition;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.database.data.DBTraceDataSettingsOperations;
-import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.util.*;
@@ -63,7 +62,7 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 	@Override
 	default void removeValueReference(Address refAddr) {
 		try (LockHold hold = getTrace().lockWrite()) {
-			DBTraceReference ref = getTrace().getReferenceManager()
+			TraceReference ref = getTrace().getReferenceManager()
 					.getReference(getStartSnap(),
 						getAddress(), refAddr, DATA_OP_INDEX);
 			if (ref == null) {
@@ -96,7 +95,7 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 			getSettingsSpace(true).setLong(getLifespan(), getAddress(), name, value);
 		}
 		getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.CODE_DATA_SETTINGS_CHANGED,
-			getTraceSpace(), this.getBounds(), null, null));
+			getAddressSpace(), this.getBounds(), null, null));
 	}
 
 	@Override
@@ -120,7 +119,7 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 			getSettingsSpace(true).setString(getLifespan(), getAddress(), name, value);
 		}
 		getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.CODE_DATA_SETTINGS_CHANGED,
-			getTraceSpace(), this.getBounds(), null, null));
+			getAddressSpace(), this.getBounds(), null, null));
 	}
 
 	@Override
@@ -145,7 +144,7 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 			getSettingsSpace(true).setValue(getLifespan(), getAddress(), name, value);
 		}
 		getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.CODE_DATA_SETTINGS_CHANGED,
-			getTraceSpace(), this.getBounds(), null, null));
+			getAddressSpace(), this.getBounds(), null, null));
 	}
 
 	@Override
@@ -173,7 +172,7 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 			space.clear(getLifespan(), getAddress(), name);
 		}
 		getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.CODE_DATA_SETTINGS_CHANGED,
-			getTraceSpace(), this.getBounds(), null, null));
+			getAddressSpace(), this.getBounds(), null, null));
 	}
 
 	@Override
@@ -186,7 +185,7 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 			space.clear(getLifespan(), getAddress(), null);
 		}
 		getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.CODE_DATA_SETTINGS_CHANGED,
-			getTraceSpace(), this.getBounds(), null, null));
+			getAddressSpace(), this.getBounds(), null, null));
 	}
 
 	@Override

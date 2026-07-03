@@ -721,8 +721,8 @@ Varnode *GuardRecord::quasiCopy(Varnode *vn,int4 &bitsPreserved)
 {
   bitsPreserved = mostsigbit_set(vn->getNZMask()) + 1;
   if (bitsPreserved == 0) return vn;
-  uintb mask = 1;
-  mask <<= bitsPreserved;
+  uintb mask = 1 << 1;
+  mask <<= (bitsPreserved - 1);
   mask -= 1;
   PcodeOp *op = vn->getDef();
   Varnode *constVn;
@@ -1030,6 +1030,21 @@ PcodeOp *PathMeld::getEarliestOp(int4 pos) const
   return (PcodeOp *)0;
 }
 
+/// Search for a Varnode in the common path, prior to the given point, defined by a LOAD operation.
+/// \param i is the given point in the path
+/// \return \b true if a LOAD is present
+bool PathMeld::isLoadInPath(int4 i) const
+
+{
+  while(i > 0) {
+    i -= 1;
+    Varnode *vn = commonVn[i];
+    if (!vn->isWritten()) continue;
+    if (vn->getDef()->code() == CPUI_LOAD) return true;
+  }
+  return false;
+}
+
 /// \brief Analyze CBRANCHs leading up to the given basic-block as a potential switch \e guard.
 ///
 /// In general there is only one path to the switch, and the given basic-block will
@@ -1180,8 +1195,10 @@ void JumpBasic::findSmallestNormal(uint4 matchsize)
     calcRange(pathMeld.getVarnode(i),rng);
     sz = rng.getSize();
     if (sz < maxsize) {
-      // Don't let a 1-byte switch variable get thru without a guard
-      if ((sz != 256)||(pathMeld.getVarnode(i)->getSize()!=1)) {
+      // Don't accept a 1-byte switch variable unless there is an explicit guard
+      // or a table lookup between the byte and the indirect jump.
+      // "goto *(#const + byteVar)" should not be interpreted as 256 case switch
+      if (sz != 256 || pathMeld.getVarnode(i)->getSize()!=1 || pathMeld.isLoadInPath(i)) {
 	varnodeIndex = i;
 	maxsize = sz;
 	jrange->setRange(rng);
@@ -1284,6 +1301,18 @@ bool JumpBasic::flowsOnlyToModel(Varnode *vn,PcodeOp *trailOp)
   return true;
 }
 
+/// \param arr is the array of Varnodes
+/// \return \b true if all elements are the same
+bool JumpBasic::duplicateVarnodes(const vector<Varnode *> &arr)
+
+{
+  Varnode *vn = arr[0];
+  for(int4 i=1;i<arr.size();++i) {
+    if (arr[i] != vn) return false;
+  }
+  return true;
+}
+
 /// All CBRANCHs in addition to flowing to the given block, must also flow to another common block,
 /// and each boolean value must select between the given block and the common block in the same way.
 /// If this flow exists, \b true is returned and the boolean Varnode inputs to each CBRANCH are passed back.
@@ -1338,9 +1367,14 @@ void JumpBasic::checkUnrolledGuard(BlockBasic *bl,int4 maxpullback,bool usenzmas
   int4 indpathstore = bl->getIn(0)->getFlipPath() ? 1-indpath : indpath;
   PcodeOp *readOp = cbranch;
   for(int4 j=0;j<maxpullback;++j) {
-    PcodeOp *multiOp = bl->findMultiequal(varArray);
-    if (multiOp != (PcodeOp *)0) {
-      selectguards.push_back(GuardRecord(cbranch,readOp,indpathstore,rng,multiOp->getOut(),true));
+    if (duplicateVarnodes(varArray)) {
+      selectguards.push_back(GuardRecord(cbranch,readOp,indpathstore,rng,varArray[0],true));
+    }
+    else {
+      PcodeOp *multiOp = bl->findMultiequal(varArray);
+      if (multiOp != (PcodeOp *)0) {
+	selectguards.push_back(GuardRecord(cbranch,readOp,indpathstore,rng,multiOp->getOut(),true));
+      }
     }
     Varnode *markup;		// Throw away markup information
     Varnode *vn = varArray[0];
@@ -2237,9 +2271,10 @@ void JumpTable::clearSavedModel(void)
 void JumpTable::recoverModel(Funcdata *fd)
 
 {
+  uint4 maxTableSize = fd->getArch()->max_jumptable_size;
   if (jmodel != (JumpModel *)0) {
     if (jmodel->isOverride()) {	// If preexisting model is override
-      jmodel->recoverModel(fd,indirect,0,glb->max_jumptable_size);
+      jmodel->recoverModel(fd,indirect,0,maxTableSize);
       return;
     }
     delete jmodel;		// Otherwise this is an old attempt we should remove
@@ -2250,21 +2285,41 @@ void JumpTable::recoverModel(Funcdata *fd)
     if (op->code() == CPUI_CALLOTHER) {
       JumpAssisted *jassisted = new JumpAssisted(this);
       jmodel = jassisted;
-      if (jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size))
+      if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxTableSize))
 	return;
     }
   }
   JumpBasic *jbasic = new JumpBasic(this);
   jmodel = jbasic;
-  if (jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size))
+  if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxTableSize))
     return;
   jmodel = new JumpBasic2(this);
   ((JumpBasic2 *)jmodel)->initializeStart(jbasic->getPathMeld());
   delete jbasic;
-  if (jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size))
+  if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxTableSize))
     return;
   delete jmodel;
   jmodel = (JumpModel *)0;
+}
+
+/// If the function is just a sequence of absolute jumps ending in an indirect jump that recovers
+/// to a single address, return \b true.
+/// \param fd is the function to test
+/// \return \b true if the function looks like a thunk
+bool JumpTable::isThunk(Funcdata *fd) const
+
+{
+  if (addresstable.size() != 1) return false;
+  Address addr = addresstable[0];
+  if (addr.getOffset()==0)
+    return true;
+  list<PcodeOp *>::const_iterator iter;
+  for(iter = fd->beginOpAlive(); iter != fd->endOpAlive(); ++iter) {
+    OpCode opc = (*iter)->code();
+    if (opc != CPUI_BRANCHIND && opc != CPUI_BRANCH)
+      return false;
+  }
+  return true;
 }
 
 /// Check that the BRANCHIND is still reachable, if not throw JumptableNotReachableError.
@@ -2284,24 +2339,8 @@ void JumpTable::sanityCheck(Funcdata *fd,vector<int4> *loadcounts)
 
   if (!isReachable(indirect))
     partialTable = true;		// If the jumptable is not reachable, mark as incomplete
-  if (addresstable.size() == 1) { 	// One entry is likely some kind of thunk
-    bool isthunk = false;
-    uintb diff;
-    Address addr = addresstable[0];
-    if (addr.getOffset()==0) 
-      isthunk = true;
-    else {
-      Address addr2 = indirect->getAddr();
-      diff = (addr.getOffset() < addr2.getOffset()) ?
-	(addr2.getOffset() - addr.getOffset()) :
-	(addr.getOffset() - addr2.getOffset());
-      if (diff > 0xffff)
-	isthunk = true;
-    }
-    if (isthunk) {
-      throw JumptableThunkError("Likely thunk");
-    }
-  }
+  if (isThunk(fd))
+    throw JumptableThunkError("Likely thunk");
   if (!jmodel->sanityCheck(fd,indirect,addresstable,loadpoints,loadcounts)) {
     ostringstream err;
     err << "Jumptable at " << opaddress << " did not pass sanity check.";
@@ -2358,21 +2397,18 @@ bool JumpTable::isReachable(PcodeOp *op)
   return true;
 }
 
-/// \param g is the Architecture the table exists within
 /// \param ad is the Address of the BRANCHIND \b this models
-JumpTable::JumpTable(Architecture *g,Address ad)
+JumpTable::JumpTable(Address ad)
   : opaddress(ad)
 {
-  glb = g;
   jmodel = (JumpModel *)0;
   origmodel = (JumpModel *)0;
   indirect = (PcodeOp *)0;
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
   lastBlock = -1;
-  maxaddsub = 1;
-  maxleftright = 1;
-  maxext = 1;
+  recoverCount = 0;
+  displayFormat = 0;
   partialTable = false;
   collectloads = false;
   defaultIsFolded = false;
@@ -2384,16 +2420,14 @@ JumpTable::JumpTable(Architecture *g,Address ad)
 JumpTable::JumpTable(const JumpTable *op2)
 
 {
-  glb = op2->glb;
   jmodel = (JumpModel *)0;
   origmodel = (JumpModel *)0;
   indirect = (PcodeOp *)0;
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
   lastBlock = op2->lastBlock;
-  maxaddsub = op2->maxaddsub;
-  maxleftright = op2->maxleftright;
-  maxext = op2->maxext;
+  recoverCount = op2->recoverCount;
+  displayFormat = op2->displayFormat;
   partialTable = op2->partialTable;
   collectloads = op2->collectloads;
   defaultIsFolded = false;
@@ -2452,11 +2486,11 @@ void JumpTable::setOverride(const vector<Address> &addrtable,const Address &nadd
   if (jmodel != (JumpModel *)0)
     delete jmodel;
 
-  JumpBasicOverride *override;
-  jmodel = override = new JumpBasicOverride(this);
-  override->setAddresses(addrtable);
-  override->setNorm(naddr,h);
-  override->setStartingValue(sv);
+  JumpBasicOverride *jumpOverride;
+  jmodel = jumpOverride = new JumpBasicOverride(this);
+  jumpOverride->setAddresses(addrtable);
+  jumpOverride->setNorm(naddr,h);
+  jumpOverride->setStartingValue(sv);
 }
 
 /// \brief Get the index of the i-th address table entry that corresponds to the given basic-block
@@ -2709,7 +2743,7 @@ void JumpTable::recoverLabels(Funcdata *fd)
   }
   else {
     jmodel = new JumpModelTrivial(this);
-    jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size);
+    jmodel->recoverModel(fd,indirect,addresstable.size(),fd->getArch()->max_jumptable_size);
     jmodel->buildAddresses(fd,indirect,addresstable,(vector<LoadTable> *)0,(vector<int4> *)0);
     trivialSwitchOver();
     jmodel->buildLabels(fd,addresstable,label,origmodel);
@@ -2737,8 +2771,9 @@ void JumpTable::clear(void)
   indirect = (PcodeOp *)0;
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
+  recoverCount = 0;
   partialTable = false;
-  // -opaddress- -maxtablesize- -maxaddsub- -maxleftright- -maxext- -collectloads- are permanent
+  // -opaddress- -maxtablesize- -collectloads- are permanent
 }
 
 /// The recovered addresses and case labels are encode to the stream.
@@ -2751,6 +2786,8 @@ void JumpTable::encode(Encoder &encoder) const
     throw LowlevelError("Trying to save unrecovered jumptable");
 
   encoder.openElement(ELEM_JUMPTABLE);
+  if (displayFormat != 0)
+    encoder.writeUnsignedInteger(ATTRIB_FORMAT, displayFormat);
   opaddress.encode(encoder);
   for(int4 i=0;i<addresstable.size();++i) {
     encoder.openElement(ELEM_DEST);
@@ -2780,6 +2817,8 @@ void JumpTable::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_JUMPTABLE);
+  if (decoder.getNextAttributeId() == ATTRIB_FORMAT)
+    displayFormat = decoder.readUnsignedInteger();
   opaddress = Address::decode( decoder );
   bool missedlabel = false;
   for(;;) {
@@ -2833,6 +2872,7 @@ bool JumpTable::checkForMultistage(Funcdata *fd)
   if (addresstable.size()!=1) return false;
   if (partialTable) return false;
   if (indirect == (PcodeOp *)0) return false;
+  if (recoverCount > 1) return false;
 
   if (fd->getOverride().queryMultistageJumptable(indirect->getAddr())) {
     partialTable = true;		// Mark that we need additional recovery

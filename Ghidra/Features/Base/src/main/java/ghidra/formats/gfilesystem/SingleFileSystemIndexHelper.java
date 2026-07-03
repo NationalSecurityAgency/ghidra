@@ -18,6 +18,8 @@ package ghidra.formats.gfilesystem;
 import java.io.IOException;
 import java.util.*;
 
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
+
 /**
  * A helper class used by GFilesystem implementors that have a single file to handle lookups
  * and requests for that file.
@@ -27,6 +29,7 @@ import java.util.*;
 public class SingleFileSystemIndexHelper {
 	private GFile rootDir;
 	private GFileImpl payloadFile;
+	private FileAttributes payloadAttrs;
 
 	/**
 	 * Creates a new instance.
@@ -163,6 +166,14 @@ public class SingleFileSystemIndexHelper {
 		// with existing data that have malformed fsrls without a leading slash in the path) 
 		return nameComp.compare(path, payloadFile.getFSRL().getPath()) == 0 ||
 			nameComp.compare(path, payloadFile.getFSRL().getName()) == 0 ? payloadFile : null;
+	}
+
+	public void setPayloadFileAttributes(FileAttributes attrs) {
+		this.payloadAttrs = attrs;
+	}
+
+	public FileAttributes getFileAttributes(GFile file) {
+		return payloadAttrs != null && isPayloadFile(file) ? payloadAttrs : FileAttributes.EMPTY;
 	}
 
 	@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -697,7 +697,7 @@ public class ElfHeader implements StructConverter {
 			// p_vaddr to find it relative to a PT_LOAD segment
 			long vaddr = dynamicHeaders[0].getVirtualAddress();
 			if (vaddr == 0 || dynamicHeaders[0].getFileSize() == 0) {
-				Msg.warn(this, "ELF Dynamic table appears to have been stripped from binary");
+				logError("ELF Dynamic table appears to have been stripped from binary");
 				return;
 			}
 
@@ -931,7 +931,7 @@ public class ElfHeader implements StructConverter {
 			!dynamicTable.containsDynamicValue(ElfDynamicType.DT_SYMENT) ||
 			dynamicHashType == null) {
 			if (dynamicStringTable != null) {
-				Msg.warn(this, "Failed to parse DT_SYMTAB, missing dynamic dependency");
+				logError("Failed to parse DT_SYMTAB, missing dynamic dependency");
 			}
 			return null;
 		}
@@ -1012,14 +1012,26 @@ public class ElfHeader implements StructConverter {
 	private int deriveGnuHashDynamicSymbolCount(long gnuHashTableOffset) throws IOException {
 		int numBuckets = reader.readInt(gnuHashTableOffset);
 		int symbolBase = reader.readInt(gnuHashTableOffset + 4);
-		int bloomSize = reader.readInt(gnuHashTableOffset + 8);
+		long bloomSize = reader.readUnsignedInt(gnuHashTableOffset + 8);
 		// int bloomShift = reader.readInt(gnuHashTableOffset + 12);
-		int bloomWordSize = is64Bit() ? 8 : 4;
+		long bloomWordSize = is64Bit() ? 8 : 4;
 		long bucketsOffset = gnuHashTableOffset + 16 + (bloomWordSize * bloomSize);
+
+
+		// Identify restricted region which contains GNU hash table (arbitrary min-length)
+		long maxOffset = getMaxOffsetForLoadedRegionContaining(gnuHashTableOffset, 12);
+		if (maxOffset <= 0) {
+			logError("Failed to idenitify loaded GNU Hash table");
+			return 0;
+		}
 
 		long bucketOffset = bucketsOffset;
 		int maxSymbolIndex = 0;
 		for (int i = 0; i < numBuckets; i++) {
+			if (bucketOffset < gnuHashTableOffset || bucketOffset > maxOffset) {
+				logError("Error occured while inspecting GNU Hash table");
+				return 0;
+			}
 			int symbolIndex = reader.readInt(bucketOffset);
 			if (symbolIndex > maxSymbolIndex) {
 				maxSymbolIndex = symbolIndex;
@@ -1032,6 +1044,10 @@ public class ElfHeader implements StructConverter {
 		++maxSymbolIndex;
 		long chainOffset = bucketOffset + (4 * chainIndex); // chains immediately follow buckets
 		while (true) {
+			if (chainOffset < gnuHashTableOffset || chainOffset > maxOffset) {
+				logError("Error occured while inspecting GNU Hash table");
+				return 0;
+			}
 			int chainValue = reader.readInt(chainOffset);
 			if ((chainValue & 1) != 0) {
 				break;
@@ -1040,6 +1056,25 @@ public class ElfHeader implements StructConverter {
 			chainOffset += 4;
 		}
 		return maxSymbolIndex;
+	}
+
+	private long getMaxOffsetForLoadedRegionContaining(long offset, long minSize) {
+		long maxOffset = -1;
+		if (e_shnum != 0) {
+			ElfSectionHeader sectionContaining =
+				getSectionHeaderContainingFileRange(offset, minSize);
+			if (sectionContaining != null) {
+				maxOffset = sectionContaining.getOffset() + sectionContaining.getSize() - 1;
+			}
+		}
+		else {
+			ElfProgramHeader containingSegment =
+				getProgramLoadHeaderContainingFileOffset(offset);
+			if (containingSegment != null) {
+				maxOffset = containingSegment.getOffset() + containingSegment.getFileSize() - 1;
+			}
+		}
+		return maxOffset;
 	}
 
 	/**
@@ -1067,15 +1102,10 @@ public class ElfHeader implements StructConverter {
 	 * @return true if provider contains specified byte offset range
 	 */
 	private boolean providerContainsRegion(long offset, int length) {
-		try {
-			return offset >= 0 && (offset + length) <= provider.length();
-		}
-		catch (IOException e) {
-			return false;
-		}
+		return offset >= 0 && (offset + length) <= provider.length();
 	}
 
-	protected void parseSectionHeaders() throws IOException {
+	public void parseSectionHeaders() throws IOException {
 		if (reader == null) {
 			throw new IOException("ELF binary reader is null!");
 		}
@@ -1301,6 +1331,7 @@ public class ElfHeader implements StructConverter {
 			}
 		}
 		catch (IOException e) {
+			logError("Elf prelink read failure (see log)");
 			Msg.error(this, "Elf prelink read failure", e);
 		}
 		return preLinkImageBase;
@@ -1606,14 +1637,13 @@ public class ElfHeader implements StructConverter {
 	 * @return the section header that contains the address
 	 */
 	public ElfSectionHeader getSectionLoadHeaderContaining(long address) {
-// FIXME: verify 
 		for (ElfSectionHeader sectionHeader : sectionHeaders) {
 			if (!sectionHeader.isAlloc()) {
 				continue;
 			}
 			long start = sectionHeader.getAddress();
 			long end = start + sectionHeader.getSize();
-			if (start <= address && address <= end) {
+			if (start <= address && address < end) {
 				return sectionHeader;
 			}
 		}

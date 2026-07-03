@@ -25,7 +25,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 public class MyTestMemory extends AddressSet implements Memory {
@@ -153,30 +152,30 @@ public class MyTestMemory extends AddressSet implements Memory {
 
 	@Override
 	public void moveBlock(MemoryBlock block, Address newStartAddr, TaskMonitor monitor)
-			throws MemoryConflictException, AddressOverflowException, NotFoundException {
+			throws MemoryConflictException, AddressOverflowException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void split(MemoryBlock block, Address addr) throws NotFoundException {
+	public void split(MemoryBlock block, Address addr) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock join(MemoryBlock blockOne, MemoryBlock blockTwo)
-			throws MemoryBlockException, NotFoundException {
+			throws MemoryBlockException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock convertToInitialized(MemoryBlock uninitializedBlock, byte initialValue)
-			throws MemoryBlockException, NotFoundException {
+			throws MemoryBlockException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock convertToUninitialized(MemoryBlock initializedBlock)
-			throws MemoryBlockException, NotFoundException {
+			throws MemoryBlockException {
 		throw new UnsupportedOperationException();
 	}
 

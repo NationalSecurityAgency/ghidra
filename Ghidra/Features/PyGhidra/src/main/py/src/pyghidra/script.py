@@ -22,7 +22,7 @@ import traceback
 from collections.abc import ItemsView, KeysView
 from importlib.machinery import ModuleSpec, SourceFileLoader
 from pathlib import Path
-from jpype import JClass, JImplementationFor
+from jpype import JClass, JImplementationFor, JException
 from typing import List
 
 
@@ -204,12 +204,13 @@ class PyGhidraScript(dict):
 
     def get_static_view(self):
         return _StaticMap(self)
-
-    def set(self, state, monitor, writer):
+    
+    def set(self, state, monitor, writer, error_writer):
         """
         see GhidraScript.set
         """
-        self._script.set(state, monitor, writer)
+        from ghidra.app.script import ScriptControls
+        self._script.set(state, ScriptControls(writer, error_writer, monitor))
 
     def run(self, script_path: str = None, script_args: List[str] = None):
         """
@@ -218,6 +219,8 @@ class PyGhidraScript(dict):
         :param script_path: The path of the python script
         :param script_args: The arguments for the python script
         """
+        from java.lang import Boolean # type:ignore @UnresolvedImport
+        
         sf = self._script.getSourceFile()
         if sf is None and script_path is None:
             return
@@ -231,6 +234,7 @@ class PyGhidraScript(dict):
             self._script.setScriptArgs(script_args)
 
         orig_argv = sys.argv
+        orig_modules = sys.modules.copy()
         script_root = str(Path(script_path).parent)
 
         # honor the python safe_path flag introduced in 3.11
@@ -251,20 +255,14 @@ class PyGhidraScript(dict):
                 spec.loader.exec_module(m)
             # pylint: disable=bare-except
             except:
-                # filter the traceback so that it stops at the script
-                exc_type, exc_value, exc_tb = sys.exc_info()
-                i = 0
-                tb = traceback.extract_tb(exc_tb)
-                for fs in tb:
-                    if fs.filename == script_path:
-                        break
-                    i += 1
-                ss = traceback.StackSummary.from_list(tb[i:])
-                e = traceback.TracebackException(exc_type, exc_value, exc_tb)
-                e.stack = ss
-                self._script.printerr(''.join(e.format()))
+                print_stacktrace(self._script, script_path)
+                raise
         finally:
             sys.argv = orig_argv
+
+            if not Boolean.getBoolean("pyghidra.sys.modules.restore.disable"):
+                for k in list(set(sys.modules) - set(orig_modules)):
+                    sys.modules.pop(k, None)
 
             if not safe_path:
                 sys.path.remove(script_root)
@@ -312,3 +310,22 @@ def get_current_interpreter():
 
     except ImportError:
         return None
+    
+    
+def print_stacktrace(script, script_path):
+    exc_type, exc_value, exc_tb = sys.exc_info()
+    i = 0
+    tb = traceback.extract_tb(exc_tb)
+    for fs in tb:
+        if fs.filename == script_path:
+            break
+        i += 1
+    ss = traceback.StackSummary.from_list(tb[i:])
+    te = traceback.TracebackException(exc_type, exc_value, exc_tb)
+    te.stack = ss
+    output = ''.join(te.format())
+    if isinstance(exc_type, JException):
+        # Remove the first line of the Java stack trace...it's already output
+        output += exc_value.stacktrace().partition('\n')[2]
+    script.printerr(output)
+

@@ -28,10 +28,10 @@ import ghidra.program.model.address.SegmentedAddressSpace;
 public class SegmentTable {
     private Segment [] segments;
 
-	SegmentTable(BinaryReader reader, SegmentedAddress baseAddr, short index, short segmentCount,
+	SegmentTable(BinaryReader reader, SegmentedAddress baseAddr, int index, short segmentCount,
 			short shiftAlignCount) throws IOException {
         long oldIndex = reader.getPointerIndex();
-        reader.setPointerIndex(Short.toUnsignedInt(index));
+        reader.setPointerIndex(index);
 
         //create a value of the shift count...
         shiftAlignCount = (short)(0x01 << shiftAlignCount);

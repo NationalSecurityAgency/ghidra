@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.util.charset.CharsetInfoManager;
+
 /**
  * A fixed-length UTF-16 string {@link DataType}.
  */
@@ -33,7 +35,7 @@ public class UnicodeDataType extends AbstractStringDataType {
 			"UNI", // default label prefix
 			"u", // default abbrev label prefix
 			"String (Fixed Length UTF-16 Unicode)", // description
-			CharsetInfo.UTF16, // charset
+			CharsetInfoManager.UTF16, // charset
 			WideChar16DataType.dataType, // replacement data type
 			StringLayoutEnum.FIXED_LEN, // StringLayoutEnum
 			dtm// data type manager

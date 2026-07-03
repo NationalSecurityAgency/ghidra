@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,8 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.*;
 
 import db.*;
@@ -42,7 +44,10 @@ import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
+import ghidra.util.database.spatial.DBTreeRecord;
 import ghidra.util.database.spatial.SpatialMap;
+import ghidra.util.database.spatial.rect.Abstract2DRStarTree.XAxis;
+import ghidra.util.database.spatial.rect.Abstract2DRStarTree.YAxis;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.ConsoleTaskMonitor;
@@ -81,15 +86,15 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 
 		protected void loadSpaces() throws VersionException, IOException {
 			try (Transaction tx = this.openTransaction("Create Tables")) {
-				this.space1 = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries1", factory,
-					getReadWriteLock(), toy.getDefaultSpace(), null, 0, MyEntry.class,
-					MyEntry::new);
-				this.space2 = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries2", factory,
-					getReadWriteLock(), toy.getDefaultSpace(), null, 0, MyEntry.class,
-					MyEntry::new);
-				this.space3 = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries3", factory,
-					getReadWriteLock(), toy.getDefaultSpace(), null, 0, AltEntry.class,
-					AltEntry::new);
+				this.space1 =
+					new DBTraceAddressSnapRangePropertyMapSpace<>("Entries1", null, factory,
+						getReadWriteLock(), toy.getDefaultSpace(), MyEntry.class, MyEntry::new);
+				this.space2 =
+					new DBTraceAddressSnapRangePropertyMapSpace<>("Entries2", null, factory,
+						getReadWriteLock(), toy.getDefaultSpace(), MyEntry.class, MyEntry::new);
+				this.space3 =
+					new DBTraceAddressSnapRangePropertyMapSpace<>("Entries3", null, factory,
+						getReadWriteLock(), toy.getDefaultSpace(), AltEntry.class, AltEntry::new);
 			}
 		}
 
@@ -110,7 +115,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 
 		@Override
 		protected void clearCache(boolean all) {
-			try (LockHold hold = LockHold.lock(rwLock.writeLock())) {
+			try (LockHold hold = LockHold.lock(lock.writeLock())) {
 				// TODO: Should each space have an invalidateCache method?
 				super.clearCache(all);
 				try {
@@ -224,11 +229,6 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 	@Test
 	public void testGetAddressSpace() {
 		assertEquals(toy.getDefaultSpace(), obj.space1.getAddressSpace());
-	}
-
-	@Test
-	public void testGetThread() {
-		assertNull(obj.space1.getThread());
 	}
 
 	@Test
@@ -415,5 +415,56 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 		obj.undo();
 
 		assertEquals(ent(0x1000, 5, entry1), obj.space1.firstEntry());
+	}
+
+	@Test
+	public void testSplitChoiceLinear() throws Exception {
+		int total = DBTraceAddressSnapRangePropertyMapTree.MAX_CHILDREN + 1;
+
+		try (Transaction tx = obj.openTransaction("Create entries")) {
+			List<DBTreeRecord<?, ? extends TraceAddressSnapRange>> entries = new ArrayList<>();
+			for (int i = 0; i < total; i++) {
+				entries.add(
+					obj.space1.put(new ImmutableTraceAddressSnapRange(addr(0x1000 + i), 5), null));
+			}
+			/**
+			 * NOTE: Because we're using MAX+1, the internal tree will already have split by this
+			 * time. That shouldn't matter. We must use MAX+1, because this choose-axis function
+			 * assumes that number of children given in the list.
+			 */
+			Comparator<TraceAddressSnapRange> axis = obj.space1.tree.doChooseSplitAxis(entries);
+			MatcherAssert.assertThat(axis, Matchers.instanceOf(XAxis.class));
+
+			int index = obj.space1.tree.doChooseSplitIndex(entries, axis);
+			assertEquals(total / 2, index);
+		}
+	}
+
+	@Test
+	public void testSplitChoiceTwoLines() throws Exception {
+		int total = DBTraceAddressSnapRangePropertyMapTree.MAX_CHILDREN + 1;
+		int cut = total / 2;
+
+		try (Transaction tx = obj.openTransaction("Create entries")) {
+			List<DBTreeRecord<?, ? extends TraceAddressSnapRange>> entries = new ArrayList<>();
+			for (int i = 0; i < total / 2; i++) {
+				entries.add(obj.space1
+						.put(new ImmutableTraceAddressSnapRange(addr(0x1000 + i), 0), null));
+			}
+			for (int i = cut; i < total; i++) {
+				entries.add(obj.space1
+						.put(new ImmutableTraceAddressSnapRange(addr(0x1000 - cut + i), 10), null));
+			}
+			/**
+			 * NOTE: Because we're using MAX+1, the internal tree will already have split by this
+			 * time. That shouldn't matter. We must use MAX+1, because this choose-axis function
+			 * assumes that number of children given in the list.
+			 */
+			Comparator<TraceAddressSnapRange> axis = obj.space1.tree.doChooseSplitAxis(entries);
+			MatcherAssert.assertThat(axis, Matchers.instanceOf(YAxis.class));
+
+			int index = obj.space1.tree.doChooseSplitIndex(entries, axis);
+			assertEquals(cut, index);
+		}
 	}
 }

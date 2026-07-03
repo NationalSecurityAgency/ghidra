@@ -64,7 +64,6 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		implements ClipboardContentProviderService, OptionsChangeListener {
 
 	protected static final PaintContext PAINT_CONTEXT = new PaintContext();
-	private static int[] COMMENT_TYPESx = CommentTypes.getTypes();
 
 	public static final ClipboardType ADDRESS_TEXT_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Address");
@@ -130,9 +129,9 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	private String stringContent;
 	private boolean includeQuotesForStringData;
 
-	public CodeBrowserClipboardProvider(PluginTool tool, ComponentProvider codeViewerProvider) {
+	public CodeBrowserClipboardProvider(PluginTool tool, ComponentProvider componentProvider) {
 		this.tool = tool;
-		this.componentProvider = codeViewerProvider;
+		this.componentProvider = componentProvider;
 
 		PAINT_CONTEXT.setTextCopying(true);
 
@@ -140,7 +139,6 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		includeQuotesForStringData =
 			!options.getBoolean(ClipboardPlugin.REMOVE_QUOTES_OPTION, false);
 		options.addOptionsChangeListener(this);
-
 	}
 
 	@Override
@@ -494,6 +492,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	protected Transferable copyCode(TaskMonitor monitor) {
 
 		AddressSetView addressSet = getSelectedAddresses();
+
 		ListingModel listingModel = getListingModel();
 		TextLayoutGraphics g = new TextLayoutGraphics();
 		LayoutBackgroundColorManager colorMap =
@@ -760,8 +759,10 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 			CommentFieldLocation commentFieldLocation = (CommentFieldLocation) currentLocation;
 			Address address = commentFieldLocation.getAddress();
 			CommentType commentType = commentFieldLocation.getCommentType();
-			SetCommentCmd cmd = new SetCommentCmd(address, commentType, string);
-			return tool.execute(cmd, currentProgram);
+			if (commentType != null) {
+				SetCommentCmd cmd = new SetCommentCmd(address, commentType, string);
+				return tool.execute(cmd, currentProgram);
+			}
 		}
 		return false;
 	}

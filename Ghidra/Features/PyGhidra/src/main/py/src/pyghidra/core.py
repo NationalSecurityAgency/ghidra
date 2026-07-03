@@ -14,41 +14,17 @@
 # limitations under the License.
 ##
 import contextlib
-from typing import Union, TYPE_CHECKING, Tuple, ContextManager, List, Optional
+import warnings
+from typing import Union, TYPE_CHECKING, Tuple, Generator, List, Optional
 
 from pyghidra.converters import *  # pylint: disable=wildcard-import, unused-wildcard-import
 
 
 if TYPE_CHECKING:
-    from pyghidra.launcher import PyGhidraLauncher
     from ghidra.base.project import GhidraProject
     from ghidra.program.flatapi import FlatProgramAPI
     from ghidra.program.model.lang import CompilerSpec, Language, LanguageService
     from ghidra.program.model.listing import Program
-
-
-def start(verbose=False, *, install_dir: Path = None) -> "PyGhidraLauncher":
-    """
-    Starts the JVM and fully initializes Ghidra in Headless mode.
-
-    :param verbose: Enable verbose output during JVM startup (Defaults to False)
-    :param install_dir: The path to the Ghidra installation directory.
-        (Defaults to the GHIDRA_INSTALL_DIR environment variable or "lastrun" file)
-    :return: The PyGhidraLauncher used to start the JVM
-    """
-    from pyghidra.launcher import HeadlessPyGhidraLauncher
-    launcher = HeadlessPyGhidraLauncher(verbose=verbose,  install_dir=install_dir)
-    launcher.start()
-    return launcher
-
-
-def started() -> bool:
-    """
-    Whether the PyGhidraLauncher has already started.
-    """
-    from pyghidra.launcher import PyGhidraLauncher
-    return PyGhidraLauncher.has_launched()
-
 
 def _get_language(lang_id: str) -> "Language":
     from ghidra.program.util import DefaultLanguageService
@@ -176,7 +152,7 @@ def _setup_script(project: "GhidraProject", program: "Program"):
             location = ProgramLocation(program, mem.getMinAddress())
     state = GhidraState(None, project, program, location, None, None)
     script = PyGhidraScript()
-    script.set(state, TaskMonitor.DUMMY, PrintWriter(System.out))
+    script.set(state, TaskMonitor.DUMMY, PrintWriter(System.out), PrintWriter(System.err))
     return script
 
 
@@ -187,10 +163,7 @@ def _analyze_program(flat_api, program):
         GhidraScriptUtil.acquireBundleHostReference()
         try:
             flat_api.analyzeAll(program)
-            if hasattr(GhidraProgramUtilities, "markProgramAnalyzed"):
-                GhidraProgramUtilities.markProgramAnalyzed(program)
-            else:
-                GhidraProgramUtilities.setAnalyzedFlag(program, True)  # @UndefinedVariable
+            GhidraProgramUtilities.markProgramAnalyzed(program)
         finally:
             GhidraScriptUtil.releaseBundleHostReference()
 
@@ -206,7 +179,7 @@ def open_program(
         loader: Union[str, JClass] = None,
         program_name: str = None,
         nested_project_location = True
-) -> ContextManager["FlatProgramAPI"]: # type: ignore
+) -> Generator["FlatProgramAPI", None, None]:
     """
     Opens given binary path (or optional program name) in Ghidra and returns FlatProgramAPI object.
 
@@ -233,7 +206,12 @@ def open_program(
     :raises ValueError: If the provided language, compiler or loader is invalid.
     :raises TypeError: If the provided loader does not implement `ghidra.app.util.opinion.Loader`.
     """
-
+    warnings.warn(
+        "open_program() is deprecated, use open_project() and program_context() or program_loader() instead.",
+        DeprecationWarning,
+        stacklevel=3
+    )
+    
     from pyghidra.launcher import PyGhidraLauncher, HeadlessPyGhidraLauncher
 
     if not PyGhidraLauncher.has_launched():
@@ -389,6 +367,12 @@ def run_script(
     :raises ValueError: If the provided language, compiler or loader is invalid.
     :raises TypeError: If the provided loader does not implement `ghidra.app.util.opinion.Loader`.
     """
+    warnings.warn(
+        "run_script() is deprecated, use open_project() and ghidra_script() instead.",
+        DeprecationWarning,
+        stacklevel=3
+    )
+    
     script_path = str(script_path)
     args = binary_path, project_location, project_name, verbose, analyze, lang, compiler, loader, program_name, nested_project_location
     with _flat_api(*args, install_dir=install_dir) as script:

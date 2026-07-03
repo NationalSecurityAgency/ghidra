@@ -342,8 +342,7 @@ void Architecture::clearAnalysis(Funcdata *fd)
 
 /// Symbols do not necessarily need to be available for the decompiler.
 /// This routine loads all the \e load \e image knows about into the symbol table
-/// \param delim is the delimiter separating namespaces from symbol base names
-void Architecture::readLoaderSymbols(const string &delim)
+void Architecture::readLoaderSymbols(void)
 
 {
   if (loadersymbols_parsed) return; // already read
@@ -352,7 +351,7 @@ void Architecture::readLoaderSymbols(const string &delim)
   LoadImageFunc record;
   while(loader->getNextSymbol(record)) {
     string basename;
-    Scope *scope = symboltab->findCreateScopeFromSymbolName(record.name, delim, basename, (Scope *)0);
+    Scope *scope = symboltab->findCreateScopeFromSymbolName(record.name, basename, (Scope *)0);
     scope->addFunction(record.address,basename);
   }
   loader->closeSymbols();
@@ -393,7 +392,7 @@ void Architecture::setPrototype(const PrototypePieces &pieces)
 
 {
   string basename;
-  Scope *scope = symboltab->resolveScopeFromSymbolName(pieces.name, "::", basename, (Scope *)0);
+  Scope *scope = symboltab->resolveScopeFromSymbolName(pieces.name, basename, (Scope *)0);
   if (scope == (Scope *)0)
     throw ParseError("Unknown namespace: " + pieces.name);
   Funcdata *fd = scope->queryFunction( basename );
@@ -624,8 +623,9 @@ void Architecture::postSpecFile(void)
 void Architecture::restoreFromSpec(DocumentStorage &store)
 
 {
-  Translate *newtrans = buildTranslator(store); // Once language is described we can build translator
-  newtrans->initialize(store);
+  unique_ptr<Translate> utrans(buildTranslator(store)); // Once language is described we can build translator
+  utrans->initialize(store);
+  Translate *newtrans = utrans.release();
   translate = newtrans;
   modifySpaces(newtrans);	// Give architecture chance to modify spaces, before copying
   copySpaces(newtrans);
@@ -741,23 +741,21 @@ void Architecture::decodeDynamicRule(Decoder &decoder)
 ProtoModel *Architecture::decodeProto(Decoder &decoder)
 
 {
-  ProtoModel *res;
+  unique_ptr<ProtoModel> model;
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_PROTOTYPE)
-    res = new ProtoModel(this);
+    model.reset(new ProtoModel(this));
   else if (elemId == ELEM_RESOLVEPROTOTYPE)
-    res = new ProtoModelMerged(this);
+    model.reset(new ProtoModelMerged(this));
   else
     throw LowlevelError("Expecting <prototype> or <resolveprototype> tag");
 
-  res->decode(decoder);
+  model->decode(decoder);
   
-  ProtoModel *other = getModel(res->getName());
-  if (other != (ProtoModel *)0) {
-    string errMsg = "Duplicate ProtoModel name: " + res->getName();
-    delete res;
-    throw LowlevelError(errMsg);
-  }
+  ProtoModel *other = getModel(model->getName());
+  if (other != (ProtoModel *)0)
+    throw LowlevelError("Duplicate ProtoModel name: " + model->getName());
+  ProtoModel *res = model.release();
   protoModels[res->getName()] = res;
   return res;
 }
@@ -1422,6 +1420,7 @@ void Architecture::resetDefaultsInternal(void)
   max_basetype_size = 10;	// Needs to be 8 or bigger
   flowoptions = FlowInfo::error_toomanyinstructions;
   max_instructions = 100000;
+  max_baddata = 4;
   infer_pointers = true;
   analyze_for_loops = true;
   readonlypropagate = false;

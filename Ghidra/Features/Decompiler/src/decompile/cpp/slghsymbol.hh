@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,6 +76,8 @@ class SymbolTable {
   SymbolScope *skipScope(int4 i) const;
   SleighSymbol *findSymbolInternal(SymbolScope *scope,const string &nm) const;
   void renumber(void);
+  static constexpr int8 MAX_TABLES = 0x100000;
+  static constexpr int8 MAX_SYMBOLS = 0x1000000;
 public:
   SymbolTable(void) { curscope = (SymbolScope *)0; }
   ~SymbolTable(void);
@@ -90,7 +92,10 @@ public:
   SleighSymbol *findSymbol(const string &nm) const { return findSymbolInternal(curscope,nm); }
   SleighSymbol *findSymbol(const string &nm,int4 skip) const { return findSymbolInternal(skipScope(skip),nm); }
   SleighSymbol *findGlobalSymbol(const string &nm) const { return findSymbolInternal(table[0],nm); }
-  SleighSymbol *findSymbol(uintm id) const { return symbollist[id]; }
+  SleighSymbol *findSymbol(uintm id) const {
+    if (id >= symbollist.size())
+      throw SleighError("Bad symbol id");
+    return symbollist[id]; }
   void replaceSymbol(SleighSymbol *a,SleighSymbol *b);
   void encode(Encoder &encoder) const;
   void decode(Decoder &decoder,SleighBase *trans);
@@ -326,7 +331,7 @@ private:
   void setVariableLength(void) { flags |= variable_len; }
   bool isVariableLength(void) const { return ((flags&variable_len)!=0); }
 public:
-  OperandSymbol(void) {}	// For use with decode
+  OperandSymbol(void) : localexp(nullptr), defexp(nullptr) {}	// For use with decode
   OperandSymbol(const string &nm,int4 index,Constructor *ct);
   uint4 getRelativeOffset(void) const { return reloffset; }
   int4 getOffsetBase(void) const { return offsetbase; }
@@ -448,8 +453,8 @@ class ContextOp : public ContextChange {
   int4 shift;			// Number of bits to shift value into place
 public:
   ContextOp(int4 startbit,int4 endbit,PatternExpression *pe);
-  ContextOp(void) {}		// For use with decode
-  virtual ~ContextOp(void) { PatternExpression::release(patexp); }
+  ContextOp(void) : patexp(nullptr) {}		// For use with decode
+  virtual ~ContextOp(void) { if (patexp) PatternExpression::release(patexp); }
   virtual void validate(void) const;
   virtual void encode(Encoder &encoder) const;
   virtual void decode(Decoder &decoder,SleighBase *trans);

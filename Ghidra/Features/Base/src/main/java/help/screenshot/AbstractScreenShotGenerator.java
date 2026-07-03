@@ -15,7 +15,8 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
@@ -63,8 +64,8 @@ import ghidra.app.util.viewer.field.AddressFieldFactory;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.format.FormatManager;
+import ghidra.app.util.viewer.listingpanel.ListingMarginProvider;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.app.util.viewer.listingpanel.MarginProvider;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.framework.ToolUtils;
 import ghidra.framework.plugintool.Plugin;
@@ -80,6 +81,7 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.ColorUtils;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskMonitor;
@@ -87,7 +89,7 @@ import resources.ResourceManager;
 
 public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIntegrationTest {
 
-	private static final String SCREENSHOT_USER_NAME = "User-1";
+	protected static final String SCREENSHOT_USER_NAME = "User-1";
 
 	static {
 		System.setProperty("user.name", "User-1");
@@ -692,6 +694,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		Assert.assertNotNull("Did not find a dialog to capture for class: " + clazz,
 			dialogProvider);
 		JDialog dialog = (JDialog) getInstanceField("dialog", dialogProvider);
+		dialog.toFront();
 		waitForSwing();
 		paintFix(dialog);
 		runSwing(() -> generateImage(dialog));
@@ -702,7 +705,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		Assert.assertNotNull("Dialog cannot be null", provider);
 
 		JDialog dialog = (JDialog) getInstanceField("dialog", provider);
-
+		dialog.toFront();
 		paintFix(dialog);
 
 		runSwing(() -> generateImage(dialog));
@@ -1247,9 +1250,9 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 			CodeBrowserPlugin plugin = getPlugin(tool, CodeBrowserPlugin.class);
 			ListingPanel listingPanel = plugin.getListingPanel();
 			@SuppressWarnings("unchecked")
-			List<MarginProvider> list =
-				(List<MarginProvider>) getInstanceField("marginProviders", listingPanel);
-			for (MarginProvider marginProvider : list) {
+			List<ListingMarginProvider> list =
+				(List<ListingMarginProvider>) getInstanceField("marginProviders", listingPanel);
+			for (ListingMarginProvider marginProvider : list) {
 				listingPanel.removeMarginProvider(marginProvider);
 			}
 		});
@@ -1354,10 +1357,9 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 
 	public Plugin loadPlugin(String className) {
 		try {
-			Class<?> clazz = Class.forName(className);
-			@SuppressWarnings("unchecked")
-			Class<? extends Plugin> pluginClazz = (Class<? extends Plugin>) clazz;
-			return loadPlugin(pluginClazz);
+			Class<? extends Plugin> clazz =
+				ClassSearcher.forNameSafe(className, Plugin.class, getClass().getClassLoader());
+			return loadPlugin(clazz);
 		}
 		catch (ClassCastException e) {
 			e.printStackTrace();

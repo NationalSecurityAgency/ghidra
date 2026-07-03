@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,8 @@ import java.util.*;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -120,6 +120,9 @@ public class ExtensionUtils {
 		return success;
 	}
 
+	/**
+	 * {@return all installed extensions that are not marked for uninstall}
+	 */
 	public static Set<ExtensionDetails> getActiveInstalledExtensions() {
 		return getAllInstalledExtensions().getActiveExtensions();
 	}
@@ -242,8 +245,8 @@ public class ExtensionUtils {
 		}
 
 		Set<ExtensionDetails> results = new HashSet<>();
-		findExtensionsInZips(archiveFiles, results);
-		findExtensionsInFolder(archiveDir.getFile(false), results);
+		findExtensionsInArchiveZips(archiveFiles, results);
+		findExtensionsInArchiveSubfolder(archiveDir.getFile(false), results);
 
 		return results;
 	}
@@ -258,14 +261,14 @@ public class ExtensionUtils {
 		}
 	}
 
-	public static ExtensionDetails createExtensionDetailsFromArchive(ResourceFile resourceFile) {
+	private static ExtensionDetails createExtensionDetailsFromArchive(ResourceFile resourceFile) {
 
 		File file = resourceFile.getFile(false);
 		if (!isZip(file)) {
 			return null;
 		}
 
-		try (ZipFile zipFile = new ZipFile(file)) {
+		try (ZipFile zipFile = new ZipFile.Builder().setFile(file).get()) {
 			Properties props = getProperties(zipFile);
 			if (props != null) {
 				ExtensionDetails extension = createExtensionDetails(props);
@@ -279,7 +282,7 @@ public class ExtensionUtils {
 		return null;
 	}
 
-	private static void findExtensionsInZips(ResourceFile[] archiveFiles,
+	private static void findExtensionsInArchiveZips(ResourceFile[] archiveFiles,
 			Set<ExtensionDetails> results) {
 		for (ResourceFile file : archiveFiles) {
 			ExtensionDetails extension = ExtensionUtils.createExtensionDetailsFromArchive(file);
@@ -318,7 +321,7 @@ public class ExtensionUtils {
 		return null;
 	}
 
-	private static void findExtensionsInFolder(File dir, Set<ExtensionDetails> results) {
+	private static void findExtensionsInArchiveSubfolder(File dir, Set<ExtensionDetails> results) {
 		List<File> propFiles = findExtensionPropertyFiles(dir);
 		for (File propFile : propFiles) {
 			ExtensionDetails extension = ExtensionUtils.createExtensionFromProperties(propFile);
@@ -326,8 +329,8 @@ public class ExtensionUtils {
 				continue;
 			}
 
-			// We found this extension in the installation directory, so set the archive path
-			// property and add to the final set.
+			// We found this extension in the installation archive directory, so set the archive 
+			// path property and add to the final set.
 			File extDir = propFile.getParentFile();
 			extension.setArchivePath(extDir.getAbsolutePath());
 
@@ -359,7 +362,7 @@ public class ExtensionUtils {
 		// eg: DatabaseTools/extension.properties is valid
 		//     DatabaseTools/foo/extension.properties is not.
 		if (isZip(file)) {
-			try (ZipFile zipFile = new ZipFile(file)) {
+			try (ZipFile zipFile = new ZipFile.Builder().setFile(file).get()) {
 				Properties props = getProperties(zipFile);
 				if (props != null) {
 					return createExtensionDetails(props);
@@ -561,15 +564,21 @@ public class ExtensionUtils {
 
 		log.trace("Unzipping extension from " + file);
 
+		String extName = extension.getName();
+		if (extName.contains("..")) {
+			Msg.error(ExtensionUtils.class, "Invalid extension name; name contains path elements");
+			return false;
+		}
+
 		ApplicationLayout layout = Application.getApplicationLayout();
 		ResourceFile installDir = layout.getExtensionInstallationDirs().get(0);
 		File installDirRoot = installDir.getFile(false);
-		File destinationFolder = new File(installDirRoot, extension.getName());
+		File destinationFolder = new File(installDirRoot, extName);
 		if (hasExistingExtension(destinationFolder, monitor)) {
 			return false;
 		}
 
-		try (ZipFile zipFile = new ZipFile(file)) {
+		try (ZipFile zipFile = new ZipFile.Builder().setFile(file).get()) {
 
 			Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
 			while (entries.hasMoreElements()) {
@@ -578,6 +587,9 @@ public class ExtensionUtils {
 				ZipArchiveEntry entry = entries.nextElement();
 				String filePath = installDir + File.separator + entry.getName();
 				File destination = new File(filePath);
+				if (!FileUtilities.isPathContainedWithin(installDirRoot, destination)) {
+					throw new IOException("Zip entry escapes target directory: " + entry.getName());
+				}
 				if (entry.isDirectory()) {
 					destination.mkdirs();
 				}
@@ -585,6 +597,15 @@ public class ExtensionUtils {
 					writeZipEntryToFile(zipFile, entry, destination);
 				}
 			}
+		}
+		catch (IOException e) {
+			if (!FileUtilities.deleteDir(destinationFolder)) {
+				throw new IOException(
+					"Failed to clean up partially installed extension directory: " +
+						destinationFolder,
+					e);
+			}
+			throw e;
 		}
 
 		extension.setInstallDir(destinationFolder);

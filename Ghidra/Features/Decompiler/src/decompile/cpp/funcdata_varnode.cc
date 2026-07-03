@@ -51,6 +51,8 @@ HighVariable *Funcdata::assignHigh(Varnode *vn)
   if ((flags & highlevel_on)!=0) {
     if (vn->hasCover())
       vn->calcCover();
+    if (vn->getType()->hasWarning())
+      issueDatatypeWarning(vn->getType());
     if (!vn->isAnnotation()) {
       return new HighVariable(vn);
     }
@@ -104,8 +106,15 @@ Varnode *Funcdata::newUnique(int4 s,Datatype *ct)
 Varnode *Funcdata::newVarnodeOut(int4 s,const Address &m,PcodeOp *op)
 
 {
+  Varnode *vn;
   Datatype *ct = glb->types->getBase(s,TYPE_UNKNOWN);
-  Varnode *vn = vbank.createDef(s,m,ct,op);
+  if (m.isValidRange(s)) {
+    vn = vbank.createDef(s,m,ct,op);
+  }
+  else {
+    Address addr = glb->constructWrappingAddress(m, s);
+    vn = vbank.createDef(s,addr,ct,op);
+  }
   op->setOutput(vn);
   assignHigh(vn);
 
@@ -152,8 +161,13 @@ Varnode *Funcdata::newVarnode(int4 s,const Address &m,Datatype *ct)
 
   if (ct == (const Datatype *)0)
     ct = glb->types->getBase(s,TYPE_UNKNOWN);
-
-  vn = vbank.create(s,m,ct);
+  if (m.isValidRange(s)) {
+    vn = vbank.create(s,m,ct);
+  }
+  else {
+    Address addr = glb->constructWrappingAddress(m, s);
+    vn = vbank.create(s,addr,ct);
+  }
   assignHigh(vn);
 
   if (s >= minLanedSize)
@@ -536,6 +550,22 @@ void Funcdata::adjustInputVarnodes(const Address &addr,int4 sz)
   }
 }
 
+/// If the Varnode has descendants or is address forced, this method does nothing.
+/// Otherwise, the Varnode is destroyed as is its defining PcodeOp.  Any dead inputs to the PcodeOp are
+/// then destroyed recursively.
+/// \param vn is the Varnode to destroy
+void Funcdata::destroyVarnodeRecursive(Varnode *vn)
+
+{
+  if (vn->isAutoLive() || !vn->hasNoDescend()) return;
+  if (!vn->isWritten()) {
+    vbank.destroy(vn);
+    return;
+  }
+  vector<PcodeOp *> scratch;
+  opDestroyRecursive(vn->getDef(), scratch);
+}
+
 /// All p-code ops that read the Varnode are transformed so that they read
 /// a special constant instead (associate with unreachable block removal).
 /// \param vn is the given Varnode
@@ -610,11 +640,17 @@ void Funcdata::setHighLevel(void)
 /// Properties like boolean flags and \e consume bits are copied as appropriate.
 /// \param vn is the existing Varnode
 /// \param newVn is the new Varnode that has its properties set
-/// \param lsbOffset is the significance offset of the new Varnode within the exising
+/// \param lsbOffset is the significance offset of the new Varnode within the existing Varnode
 void Funcdata::transferVarnodeProperties(Varnode *vn,Varnode *newVn,int4 lsbOffset)
 
 {
-  uintb newConsume = (vn->getConsume() >> 8*lsbOffset) & calc_mask(newVn->getSize());
+  uintb newConsume = ~((uintb)0);	// Make sure any bits shifted in above the precision of Varnode::consume are set
+  if (lsbOffset < sizeof(uintb)) {
+    uintb fillBits = 0;
+    if (lsbOffset != 0)
+      fillBits = newConsume << 8*(sizeof(uintb) - lsbOffset);
+    newConsume = ((vn->getConsume() >> 8*lsbOffset) | fillBits) & calc_mask(newVn->getSize());
+  }
 
   uint4 vnFlags = vn->getFlags() & (Varnode::directwrite|Varnode::addrforce);
 
@@ -882,6 +918,9 @@ void Funcdata::calcNZMask(void)
       if (!vn->isWritten()) {
 	if (vn->isConstant())
 	  vn->nzm = vn->getOffset();
+	else if (vn->isTypeLock() && vn->getType()->getMetatype() == TYPE_BOOL) {
+	  vn->nzm = 1;
+	}
 	else {
 	  vn->nzm = calc_mask(vn->getSize());
 	  if (vn->isSpacebase())
@@ -1631,15 +1670,40 @@ void Funcdata::coverVarnodes(SymbolEntry *entry,vector<Varnode *> &list)
 bool Funcdata::applyUnionFacet(SymbolEntry *entry,DynamicHash &dhash)
 
 {
-  Symbol *sym = entry->getSymbol();
+  UnionFacetSymbol *sym = (UnionFacetSymbol *)entry->getSymbol();
+  if (sym->isAddrBased()) {
+    ResolvedUnion resolve(sym->getType(), sym->getFieldNumber(), *glb->types);
+    resolve.setLock(true);
+    int4 slot = DynamicHash::getSlotFromHash(entry->getHash());
+    return setAddressBasedUnionField(sym->getType(), entry->getFirstUseAddress(), slot, resolve);
+  }
   PcodeOp *op = dhash.findOp(this, entry->getFirstUseAddress(), entry->getHash());
   if (op == (PcodeOp *)0)
     return false;
   int4 slot = DynamicHash::getSlotFromHash(entry->getHash());
-  int4 fldNum = ((UnionFacetSymbol *)sym)->getFieldNumber();
-  ResolvedUnion resolve(sym->getType(), fldNum, *glb->types);
+  const ResolvedUnion *res = getUnionResolution(sym->getType(), op, slot);
+  if (res != (const ResolvedUnion *)0 && res->getFieldNum() == sym->getFieldNumber())
+    return false;
+  Varnode *vn = (slot < 0) ? op->getOut() : op->getIn(slot);
+  Datatype *unresType = sym->getType();
+  Datatype *dt = vn->getType();
+  if (dt->getMetatype() == TYPE_PTR) {
+    if (((TypePointer *)dt)->getPtrTo() == unresType) {
+      unresType = dt;
+    }
+  }
+  else if (dt->getMetatype() == TYPE_PARTIALSTRUCT) {
+    if (((TypePartialStruct *)dt)->getParent() == unresType)
+      unresType = dt;
+  }
+  else if (dt->getMetatype() == TYPE_PARTIALUNION) {
+    if (((TypePartialUnion *)dt)->getParentUnion() == unresType)
+      unresType = dt;
+  }
+  ResolvedUnion resolve(unresType,sym->getFieldNumber(), *glb->types);
   resolve.setLock(true);
-  return setUnionField(sym->getType(),op,slot,resolve);
+  setUnionField(unresType,op,slot,resolve);
+  return true;
 }
 
 /// Search for \e addrtied Varnodes whose storage falls in the global Scope, then

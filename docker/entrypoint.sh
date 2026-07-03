@@ -35,7 +35,7 @@ elif [[ $MODE == "ghidra-server" ]] then
 elif [[ $MODE == "bsim" ]] then
 	LAUNCH_MODE=${LAUNCH_MODE:=fg}
 	VMARG_LIST=${VMARG_LIST:="-Djava.awt.headless=true "}
-	/ghidra/support/launch.sh $LAUNCH_MODE jdk "BSim" "${MAXMEM}" "" ghidra.features.bsim.query.ingest.BSimLaunchable "$@"
+	/ghidra/support/launch.sh $LAUNCH_MODE jdk "BSim" "${MAXMEM}" "${VMARG_LIST}" ghidra.features.bsim.query.ingest.BSimLaunchable "$@"
 elif [[ $MODE == "bsim-server" ]] then
 	LAUNCH_MODE=${LAUNCH_MODE:=fg}
 	VMARG_LIST=${VMARG_LIST:="-Djava.awt.headless=true -Xshare:off"}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package ghidra.file.eclipse;
 import java.io.*;
 import java.util.List;
 
-import org.jdom.*;
+import org.jdom2.*;
 
 import generic.jar.ResourceFile;
 import ghidra.app.util.bin.ByteProvider;
@@ -115,8 +115,7 @@ public class AndroidProjectCreator {
 	}
 
 	private void processListing(File outputDirectory, GFileSystem fs, List<GFile> listing,
-			TaskMonitor monitor)
-			throws IOException, CancelledException {
+			TaskMonitor monitor) throws IOException, CancelledException {
 		for (GFile child : listing) {
 
 			String childName = child.getName();
@@ -131,6 +130,10 @@ public class AndroidProjectCreator {
 					continue;
 				}
 				File subDir = new File(outputDirectory, childName);
+				if (!FileUtilities.isPathContainedWithin(outputDirectory, subDir)) {
+					Msg.error(this, "Skipping directory with path traversal: " + childName);
+					continue;
+				}
 				FileUtilities.checkedMkdir(subDir);
 				processListing(subDir, fs, child.getListing(), monitor);
 				continue;
@@ -220,6 +223,9 @@ public class AndroidProjectCreator {
 		try (InputStream is = inputFile.getInputStream()) {
 			FileUtilities.checkedMkdirs(outputDirectory);
 			File destFile = new File(outputDirectory, outputName);
+			if (!FileUtilities.isPathContainedWithin(outputDirectory, destFile)) {
+				throw new IOException("Path traversal detected in entry name: " + outputName);
+			}
 
 			monitor.setMessage("Copying [" + inputFile.getName() + "] to Eclipse project...");
 			FileUtilities.copyStreamToFile(is, destFile, false, monitor);

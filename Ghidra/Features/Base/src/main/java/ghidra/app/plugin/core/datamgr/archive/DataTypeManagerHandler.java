@@ -77,7 +77,7 @@ public class DataTypeManagerHandler {
 	private Map<UniversalID, InvalidFileArchive> invalidArchives = new HashMap<>();
 
 	private boolean treeDialogCancelled = false;
-	private DomainFileFilter createArchiveFileFilter;
+	private DomainFileFilter archiveFileFilter;
 
 	private DataTypeIndexer dataTypeIndexer;
 	private List<ArchiveManagerListener> archiveManagerlisteners = new ArrayList<>();
@@ -107,18 +107,7 @@ public class DataTypeManagerHandler {
 		dataTypeIndexer.addDataTypeManager(builtInDataTypesManager);
 		openArchives.add(new BuiltInArchive(this, builtInDataTypesManager));
 
-		createArchiveFileFilter = new DomainFileFilter() {
-
-			@Override
-			public boolean accept(DomainFile df) {
-				return DataTypeArchive.class.isAssignableFrom(df.getDomainObjectClass());
-			}
-
-			@Override
-			public boolean followLinkedFolders() {
-				return false;
-			}
-		};
+		archiveFileFilter = new DefaultDomainFileFilter(DataTypeArchive.class, true);
 
 		folderListener = new MyFolderListener();
 		tool.getProject().getProjectData().addDomainFolderChangeListener(folderListener);
@@ -1454,7 +1443,7 @@ public class DataTypeManagerHandler {
 	}
 
 	private DataTreeDialog getSaveDialog() {
-		DataTreeDialog dialog = new DataTreeDialog(null, "Save As", SAVE, createArchiveFileFilter);
+		DataTreeDialog dialog = new DataTreeDialog(null, "Save As", SAVE, archiveFileFilter);
 
 		ActionListener listener = event -> {
 			DomainFolder folder = dialog.getDomainFolder();
@@ -1486,7 +1475,7 @@ public class DataTypeManagerHandler {
 	private CreateDataTypeArchiveDataTreeDialog getCreateDialog() {
 
 		CreateDataTypeArchiveDataTreeDialog dialog = new CreateDataTypeArchiveDataTreeDialog(null,
-			"Create", CREATE, createArchiveFileFilter);
+			"Create", CREATE, archiveFileFilter);
 
 		ActionListener listener = event -> {
 			DomainFolder folder = dialog.getDomainFolder();
@@ -1726,7 +1715,7 @@ public class DataTypeManagerHandler {
 			}
 			catch (VersionException e) {
 				VersionExceptionHandler.showVersionError(null, newDomainFile.getName(), contentType,
-					"Re-open", e);
+					"Re-open", false, e);
 			}
 			catch (CancelledException e) {
 				throw new AssertException(e);
@@ -1766,7 +1755,7 @@ public class DataTypeManagerHandler {
 			Throwable cause = t.getCause();
 			if (cause instanceof VersionException) {
 				VersionExceptionHandler.showVersionError(null, archiveFile.getName(), "Archive",
-					"open", (VersionException) cause);
+					"open", false, (VersionException) cause);
 			}
 			else {
 				Msg.showError(plugin, plugin.getProvider().getComponent(), "Open Archive Failed",

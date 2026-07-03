@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import functioncalls.plugin.FunctionCallGraphPlugin;
 import ghidra.graph.graphs.FilteringVisualGraph;
 import ghidra.graph.viewer.layout.VisualGraphLayout;
 import ghidra.program.model.listing.Function;
+import util.CollectionUtils;
 
 /**
  * A graph for the {@link FunctionCallGraphPlugin}
@@ -44,7 +45,7 @@ public class FunctionCallGraph extends FilteringVisualGraph<FcgVertex, FcgEdge> 
 	 */
 	public void setSource(FcgVertex source) {
 		if (this.source != null) {
-			throw new IllegalStateException("Cannot change graph source once it has been created");
+			throw new IllegalStateException("Cannot change graph source once it has been set");
 		}
 
 		this.source = source;
@@ -121,16 +122,8 @@ public class FunctionCallGraph extends FilteringVisualGraph<FcgVertex, FcgEdge> 
 
 	@Override
 	public FunctionCallGraph copy() {
-
 		FunctionCallGraph newGraph = new FunctionCallGraph();
-		for (FcgVertex v : vertices.keySet()) {
-			newGraph.addVertex(v);
-		}
-
-		for (FcgEdge e : edges.keySet()) {
-			newGraph.addEdge(e);
-		}
-
+		doCopy(newGraph);
 		return newGraph;
 	}
 
@@ -156,6 +149,64 @@ public class FunctionCallGraph extends FilteringVisualGraph<FcgVertex, FcgEdge> 
 			verticesByLevel.get(v.getLevel()).remove(v);
 		}
 		super.verticesRemoved(removed);
+	}
+
+	/**
+	 * Clones this graph and vertices and edges.
+	 * 
+	 * @param expansionListener the listener needed to create a new vertex
+	 * @return the new graph
+	 */
+	public FunctionCallGraph cloneGraph(FcgVertexExpansionListener expansionListener) {
+
+		FunctionCallGraph newGraph = new FunctionCallGraph();
+		newGraph.layout = layout.cloneLayout(newGraph);
+
+		Map<FcgVertex, FcgVertex> oldToNewVertices = new HashMap<>();
+		Map<FcgEdge, FcgEdge> oldToNewEdges = new HashMap<>();
+
+		Iterator<FcgVertex> allVertices = getAllVertices();
+		for (FcgVertex v : CollectionUtils.asIterable(allVertices)) {
+			FcgVertex newv = v.cloneVertex(expansionListener);
+			oldToNewVertices.put(v, newv);
+			newGraph.addVertex(newv);
+		}
+
+		Iterator<FcgEdge> allEdges = getAllEdges();
+		for (FcgEdge e : CollectionUtils.asIterable(allEdges)) {
+			FcgVertex oldStart = e.getStart();
+			FcgVertex oldEnd = e.getEnd();
+			FcgVertex newStart = oldToNewVertices.get(oldStart);
+			FcgVertex newEnd = oldToNewVertices.get(oldEnd);
+			FcgEdge newe = e.cloneEdge(newStart, newEnd);
+			oldToNewEdges.put(e, newe);
+			newGraph.addEdge(newe);
+		}
+
+		Iterator<FcgVertex> oldFilteredVertices = getFilteredVertices();
+		List<FcgVertex> filteredVertices = new LinkedList<>();
+		for (FcgVertex v : CollectionUtils.asIterable(oldFilteredVertices)) {
+			FcgVertex newv = oldToNewVertices.get(v);
+			filteredVertices.add(newv);
+		}
+
+		newGraph.filterVertices(filteredVertices);
+
+		Iterator<FcgEdge> oldFilteredEdges = getFilteredEdges();
+		List<FcgEdge> filteredEdges = new LinkedList<>();
+		for (FcgEdge e : CollectionUtils.asIterable(oldFilteredEdges)) {
+			FcgEdge newe = oldToNewEdges.get(e);
+			filteredEdges.add(newe);
+		}
+
+		newGraph.filterEdges(filteredEdges);
+
+		if (source != null) {
+			FcgVertex newSource = oldToNewVertices.get(source);
+			newGraph.setSource(newSource);
+		}
+
+		return newGraph;
 	}
 
 }

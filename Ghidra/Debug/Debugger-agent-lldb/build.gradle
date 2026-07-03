@@ -27,3 +27,7 @@ dependencies {
 	api project(':Debugger-rmi-trace')
 	api project(':Debugger-agent-gdb')
 }
+
+tasks.typeCheckPyPackage {
+	environment("PYTHONPATH", project(":Debugger-rmi-trace").file("build/pypkg/src"))
+}

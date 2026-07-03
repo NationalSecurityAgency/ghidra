@@ -26,6 +26,7 @@ import docking.DialogComponentProvider;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
+import ghidra.framework.preferences.Preferences;
 import ghidra.util.MessageType;
 import ghidra.util.layout.PairLayout;
 
@@ -42,6 +43,7 @@ public class PasswordDialog extends DialogComponentProvider {
 	private JCheckBox anonymousAccess;
 	private boolean okPressed = false;
 	private String defaultUserId;
+	private String userIdPreferenceKey;
 
 	/**
 	 * Construct a new PasswordDialog which may include user ID specification/prompt, if either
@@ -181,8 +183,12 @@ public class PasswordDialog extends DialogComponentProvider {
 		}
 
 		if (allowUserIdEntry) {
+			String userId = defaultUserId;
+			if (serverName != null) {
+				userId = getPreferredUserId(serverType, serverName);
+			}
 			workPanel.add(new GLabel(userIdPrompt));
-			nameField = new JTextField(defaultUserId, 16);
+			nameField = new JTextField(userId, 16);
 			nameField.setName("NAME-ENTRY-COMPONENT");
 			nameField.getAccessibleContext().setAccessibleName("Name");
 			workPanel.add(nameField);
@@ -261,6 +267,36 @@ public class PasswordDialog extends DialogComponentProvider {
 	}
 
 	/**
+	 * Get the {@link Preferences} key used to retain the last used user ID for a specific server.
+	 * Values supplied must match those used to instantiate password dialog.
+	 * @param serverType server type string
+	 * @param serverName server name (e.g., hostname, IP address).
+	 * @return preference key
+	 */
+	public static String getPreferredUserIdPreferenceKey(String serverType, String serverName) {
+		return "UserID_" + sanitizeString(serverType) + "_" + sanitizeString(serverName);
+	}
+
+	private static String sanitizeString(String str) {
+		if (str == null) {
+			return "_";
+		}
+		String newStr = str.replaceAll("[^a-zA-Z0-9_-]", "");
+		return newStr.length() == 0 ? "_" : newStr;
+	}
+
+	private String getPreferredUserId(String serverType, String serverName) {
+		userIdPreferenceKey = getPreferredUserIdPreferenceKey(serverType, serverName);
+		return Preferences.getProperty(userIdPreferenceKey, defaultUserId);
+	}
+
+	private void savePreferredUserId(String userId) {
+		if (userIdPreferenceKey != null) {
+			Preferences.setProperty(userIdPreferenceKey, userId);
+		}
+	}
+
+	/**
 	 * Display error status
 	 * @param text the text
 	 */
@@ -292,7 +328,12 @@ public class PasswordDialog extends DialogComponentProvider {
 	 * @return the user ID / Name entered in the password field
 	 */
 	public String getUserID() {
-		return nameField != null ? nameField.getText().trim() : defaultUserId;
+		String userId = defaultUserId;
+		if (nameField != null) {
+			userId = nameField.getText().trim();
+			savePreferredUserId(userId);
+		}
+		return userId;
 	}
 
 	/**

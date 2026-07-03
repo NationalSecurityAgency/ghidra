@@ -1,0 +1,8 @@
+<patternconstraints>
+  <language id="PowerPC:BE:*:*">
+    <patternfile>PPC_BE_prepatterns.xml</patternfile>
+  </language>
+  <language id="PowerPC:LE:*:*">
+    <patternfile>PPC_LE_prepatterns.xml</patternfile>
+  </language>
+</patternconstraints>

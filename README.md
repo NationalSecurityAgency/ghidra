@@ -33,21 +33,24 @@ To install an official pre-built multi-platform Ghidra release:
     `ghidra_<version>_<release>_<date>.zip` which can be found under the "Assets" drop-down.
     Downloading either of the files named "Source Code" is not correct for this step.
 * Extract the Ghidra release file
+  - **NOTE:** Do not extract on top of an existing installation
 * Launch Ghidra: `./ghidraRun` (`ghidraRun.bat` for Windows)
-  - or launch [PyGhidra][pyghidra]: `./support/pyGhidraRun` (`support\pyGhidraRun.bat` for Windows)
+  - or launch [PyGhidra][pyghidra]: `./support/pyghidraRun` (`support\pyghidraRun.bat` for Windows)
 
 For additional information and troubleshooting tips about installing and running a Ghidra release, 
 please refer to the [Getting Started][gettingstarted] document which can be found at the root of a 
 Ghidra installation directory. 
 
 ## Build
+[![Build Ghidra][build-ghidra-badge]][build-ghidra-action]
+
 To create the latest development build for your platform from this source repository:
 
 ##### Install build tools:
-* [JDK 21 64-bit][jdk]
-* [Gradle 8.5+][gradle] (or provided Gradle wrapper if Internet connection is available)
-* [Python3][python3] (version 3.9 to 3.13) with bundled pip
-* make, gcc/g++ or clang (Linux/macOS-only)
+* [JDK 25 64-bit][jdk]
+* [Gradle 9.1.0+][gradle] (or provided Gradle wrapper if Internet connection is available)
+* [Python3][python3] (version 3.9 to 3.14) with bundled pip
+* GCC or Clang, and make (Linux/macOS-only)
 * [Microsoft Visual Studio][vs] 2017+ or [Microsoft C++ Build Tools][vcbuildtools] with the
   following components installed (Windows-only):
   - MSVC
@@ -64,8 +67,10 @@ cd ghidra-master
 repository: `git clone https://github.com/NationalSecurityAgency/ghidra.git`
 
 ##### Download additional build dependencies into source repository:
-**NOTE:** If an Internet connection is available and you did not install Gradle, the following 
-`gradle` commands may be replaced with `./gradle(.bat)`.
+**NOTE:** If an Internet connection is available and you did not install Gradle, the 
+`./gradlew` (or `gradlew.bat`) command may be used in place of the `gradle` command in the following
+instructions.
+
 ```
 gradle -I gradle/support/fetchDependencies.gradle
 ```
@@ -76,7 +81,7 @@ gradle buildGhidra
 ```
 The compressed development build will be located at `build/dist/`.
 
-For more detailed information on building Ghidra, please read the [Developer Guide][devguide].
+For more detailed information on building Ghidra, please read the [Developer's Guide][devguide].
 
 For issues building, please check the [Known Issues][known-issues] section for possible solutions.
 
@@ -117,14 +122,15 @@ gradle prepdev eclipse buildNatives
 When Eclipse finishes building the projects, Ghidra can be launched and debugged with the provided
 **Ghidra** Eclipse *run configuration*.
 
-For more detailed information on developing Ghidra, please read the [Developer Guide][devguide].
+For more detailed information on developing Ghidra, please read the [Developer's Guide][devguide].
 
 ## Contribute
 If you would like to contribute bug fixes, improvements, and new features back to Ghidra, please 
-take a look at our [Contributor Guide][contrib] to see how you can participate in this open 
+take a look at our [Contributor's Guide][contrib] to see how you can participate in this open 
 source project.
 
-
+[build-ghidra-action]: https://github.com/NationalSecurityAgency/ghidra/actions/workflows/build-ghidra.yml
+[build-ghidra-badge]: https://github.com/NationalSecurityAgency/ghidra/actions/workflows/build-ghidra.yml/badge.svg
 [nsa]: https://www.nsa.gov
 [contrib]: CONTRIBUTING.md
 [devguide]: DevGuide.md

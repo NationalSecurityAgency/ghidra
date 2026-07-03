@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.data.*;
 
 /**
@@ -62,7 +63,19 @@ public class OmfUtils {
 	 */
 	public static OmfString readString(BinaryReader reader) throws IOException {
 		int count = reader.readNextUnsignedByte();
-		return new OmfString(count, reader.readNextAsciiString(count));
+		return new OmfString(count, count != 0 ? reader.readNextAsciiString(count) : "");
+	}
+
+	/**
+	 * Read the OMF big string format: 2-byte length, followed by that many ascii characters
+	 * 
+	 * @param reader A {@link BinaryReader} positioned at the start of the string
+	 * @return the read OMF big string
+	 * @throws IOException if an IO-related error occurred
+	 */
+	public static OmfString readBigString(BinaryReader reader) throws IOException {
+		int count = reader.readNextUnsignedShort();
+		return new OmfString(count, count != 0 ? reader.readNextAsciiString(count) : "", true);
 	}
 
 	/**
@@ -114,19 +127,29 @@ public class OmfUtils {
 	 * {@link AbstractOmfRecordFactory}
 	 * 
 	 * @param factory The {@link AbstractOmfRecordFactory}
+	 * @param log The log
 	 * @return A {@link List} of read {@link OmfRecord records}
 	 * @throws IOException if there was an IO-related error
 	 * @throws OmfException if there was a problem with the OMF specification
 	 */
-	public static List<OmfRecord> readRecords(AbstractOmfRecordFactory factory)
+	public static List<OmfRecord> readRecords(AbstractOmfRecordFactory factory, MessageLog log)
 			throws OmfException, IOException {
 		List<OmfRecord> records = new ArrayList<>();
 		factory.reset();
 
 		while (true) {
-			OmfRecord rec = factory.readNextRecord();
-			records.add(rec);
-			if (rec.getRecordType() == factory.getEndRecordType()) {
+			try {
+				OmfRecord rec = factory.readNextRecord();
+				if (!rec.validCheckSum()) {
+					log.appendMsg("OMF record [%s] has an invalid checksum".formatted(rec));
+				}
+				records.add(rec);
+				if (rec.getRecordType() == factory.getEndRecordType()) {
+					break;
+				}
+			}
+			catch (IOException e) {
+				log.appendException(e);
 				break;
 			}
 		}

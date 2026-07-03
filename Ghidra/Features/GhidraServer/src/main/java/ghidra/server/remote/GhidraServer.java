@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,9 +25,10 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.*;
 import java.security.cert.CertificateException;
-import java.util.Enumeration;
-import java.util.List;
+import java.security.cert.X509Certificate;
+import java.util.*;
 
+import javax.net.ssl.X509ExtendedKeyManager;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import javax.rmi.ssl.SslRMIServerSocketFactory;
 import javax.security.auth.Subject;
@@ -37,16 +38,17 @@ import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.x500.X500Principal;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.asn1.x509.GeneralName;
 
 import generic.jar.ResourceFile;
 import generic.random.SecureRandomFactory;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.framework.remote.*;
-import ghidra.net.ApplicationKeyManagerFactory;
-import ghidra.net.SSLContextInitializer;
+import ghidra.net.*;
 import ghidra.server.RepositoryManager;
 import ghidra.server.UserManager;
 import ghidra.server.security.*;
@@ -71,9 +73,6 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	private static final String TLS_SERVER_PROTOCOLS_PROPERTY = "ghidra.tls.server.protocols";
 	private static final String TLS_ENABLED_CIPHERS_PROPERTY = "jdk.tls.server.cipherSuites";
 
-	private static final String SERIALIZATION_FILTER_DISABLED_PROPERTY =
-		"ghidra.server.serialization.filter.disabled";
-
 	private static SslRMIServerSocketFactory serverSocketFactory;
 	private static SslRMIClientSocketFactory clientSocketFactory;
 	private static InetAddress bindAddress;
@@ -82,7 +81,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 	private static String HELP_FILE = "ServerHelp.txt";
 	private static String USAGE_ARGS =
-		"[-ip <hostname>] [-i #.#.#.#] [-p#] [-n] [-a#] [-d<ad_domain>] [-e<days>] [-jaas <config_file>] [-u] [-autoProvision] [-anonymous] [-ssh] <repository_path>";
+		"[-ip <hostname>] [-ipAlt <hostname>[,...]] [-i #.#.#.#] [-p#] [-n] [-a#] [-d<ad_domain>]" +
+			" [-e<days>] [-jaas <config_file>] [-u] [-autoProvision] [-anonymous] [-ssh] <repository_path>";
 
 	private static final String RMI_SERVER_PROPERTY = "java.rmi.server.hostname";
 
@@ -211,9 +211,6 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 		GhidraServer.server = this;
 
-		// Establish serialization filter to address deserialization vulnerabity concerns.
-		setGlobalSerializationFilter();
-
 		// Start block stream server - use RMI serverSocketFactory
 		blockStreamServer = BlockStreamServer.getBlockStreamServer();
 		ServerSocket streamServerSocket;
@@ -245,26 +242,26 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		}
 		catch (Throwable t) {
 			log.error("Failed to generate authentication callbacks", t);
-			throw new RemoteException("Failed to generate authentication callbacks", t);
+			throw new RemoteException("Failed to generate authentication callbacks");
 		}
 	}
 
 	@Override
-	public void checkCompatibility(int serverInterfaceVersion) throws RemoteException {
-		if (serverInterfaceVersion > INTERFACE_VERSION) {
+	public void checkCompatibility(int clientInterfaceVersion) throws RemoteException {
+		if (clientInterfaceVersion > SERVER_INTERFACE_VERSION) {
 			throw new RemoteException(
 				"Incompatible server interface, a newer Ghidra Server version is required.");
 		}
-		else if (serverInterfaceVersion < INTERFACE_VERSION) {
+		else if (clientInterfaceVersion < SERVER_MIN_CLIENT_INTERFACE_VERSION) {
 			throw new RemoteException(
 				"Incompatible server interface, the minimum supported Ghidra version is " +
-					MIN_GHIDRA_VERSION);
+					ALT_GHIDRA_BIND_VERSION);
 		}
 	}
 
 	@Override
 	public RemoteRepositoryServerHandle getRepositoryServer(Subject user, Callback[] authCallbacks)
-			throws LoginException, RemoteException {
+			throws FailedLoginException, RemoteException {
 
 		System.gc();
 
@@ -279,29 +276,29 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			anonymousAuthModule.anonymousAccessRequested(authCallbacks)) {
 			username = UserManager.ANONYMOUS_USERNAME;
 			anonymousAccess = true;
-			RepositoryManager.log(null, null, "Anonymous access allowed", principal.getName());
+			RemoteLoggingUtil.log("Anonymous access allowed", principal.getName());
 		}
 		else if (authModule != null) {
 			NameCallback nameCb =
 				AuthenticationModule.getFirstCallbackOfType(NameCallback.class, authCallbacks);
 			if (nameCb != null) {
 				if (!authModule.isNameCallbackAllowed()) {
-					RepositoryManager.log(null, null,
+					RemoteLoggingUtil.log(
 						"Illegal authentication callback: NameCallback not permitted", username);
-					throw new LoginException("Illegal authentication callback");
+					throw new FailedLoginException("Illegal authentication callback");
 				}
 				String name = nameCb.getName();
 				if (name == null) {
-					RepositoryManager.log(null, null,
+					RemoteLoggingUtil.log(
 						"Illegal authentication callback: NameCallback must specify login name",
 						username);
-					throw new LoginException("Illegal authentication callback");
+					throw new FailedLoginException("Illegal authentication callback");
 				}
 				username = name;
 			}
 		}
 
-		RepositoryManager.log(null, null, "Repository server handle requested", username);
+		RemoteLoggingUtil.log("Repository server handle requested", username);
 
 		boolean supportPasswordChange = false;
 		if (!anonymousAccess) {
@@ -311,10 +308,11 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 					username =
 						sshAuthModule.authenticate(mgr.getUserManager(), user, authCallbacks);
 				}
-				catch (LoginException e) {
-					RepositoryManager.log(null, null,
-						"SSH Authentication failed (" + e.getMessage() + ")", username);
-					throw e;
+				catch (FailedLoginException e) {
+					RemoteLoggingUtil.log("SSH Authentication failed (" + e.getMessage() + ")",
+						username);
+					// Create new exceptions so we don't leak config info to the client.
+					throw new FailedLoginException("SSH authentication failed");
 				}
 			}
 			else if (authModule != null) {
@@ -326,14 +324,13 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 							if (autoProvisionAuthedUsers) {
 								try {
 									mgr.getUserManager().addUser(username);
-									RepositoryManager.log(null, null,
+									RemoteLoggingUtil.log(
 										"User '" + username + "' successful auto provision",
 										username);
 								}
 								catch (DuplicateNameException | IOException e) {
-									RepositoryManager.log(
-										null, null, "User '" + username +
-											"' auto provision failed.  Cause: " + e.getMessage(),
+									RemoteLoggingUtil.log("User '" + username +
+										"' auto provision failed.  Cause: " + e.getMessage(),
 										username);
 									throw new LoginException(
 										"Error when trying to auto provision successfully authenticated user: " +
@@ -341,7 +338,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 								}
 							}
 							else {
-								RepositoryManager.log(null, null,
+								RemoteLoggingUtil.log(
 									"User successfully authenticated, but does not exist in Ghidra user list: " +
 										username,
 									null);
@@ -352,36 +349,42 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 								throw new LoginException("Unknown user: " + username);
 							}
 						}
-						RepositoryManager.log(null, null, "User '" + username + "' authenticated",
+						RemoteLoggingUtil.log("User '" + username + "' authenticated",
 							principal.getName());
 					}
 				}
 				catch (LoginException e) {
-					RepositoryManager.log(null, null, "Login failed (" + e.getMessage() + ")",
+					RemoteLoggingUtil.log("Login failed (" + e.getMessage() + ")",
 						username);
 					// Create new exceptions so we don't leak config info to the client.
-					if (e instanceof FailedLoginException) {
-						throw new FailedLoginException("User authentication failed");
-					}
-					throw new LoginException("User login system failure");
+					throw new FailedLoginException("Authentication failed");
 				}
 				if (authModule instanceof PasswordFileAuthenticationModule) {
 					supportPasswordChange = true;
 				}
 			}
 			else if (!mgr.getUserManager().isValidUser(username)) {
-				FailedLoginException e = new FailedLoginException("Unknown user: " + username);
-				RepositoryManager.log(null, null, "Login failed (" + e.getMessage() + ")",
+				RemoteLoggingUtil.log("Login failed (Unknown user: " + username + ")",
 					username);
-				throw e;
+				// Create new exceptions so we don't leak config info to the client.
+				throw new FailedLoginException("Authentication failed");
 			}
 		}
 		if (anonymousAccess) {
-			RepositoryManager.log(null, null, "Anonymous server access granted", null);
+			RemoteLoggingUtil.log("Anonymous server access granted", null);
 		}
 
-		return new RepositoryServerHandleImpl(username, anonymousAccess, mgr,
-			supportPasswordChange);
+		try {
+			return new RepositoryServerHandleImpl(username, anonymousAccess, mgr,
+				supportPasswordChange);
+		}
+		catch (RemoteException e) {
+			RemoteLoggingUtil.log(
+				"Failed to instantiate RepositoryServerHandleImpl: " + e.getMessage(),
+				username);
+			e.printStackTrace();
+			throw new RemoteException("Remote server handle error (see server log)");
+		}
 	}
 
 	/**
@@ -473,7 +476,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 	private static String initRemoteAccessHostname() throws UnknownHostException {
 		String hostname = System.getProperty(RMI_SERVER_PROPERTY);
-		if (hostname == null) {
+		if (StringUtils.isBlank(hostname)) {
 			if (bindAddress != null) {
 				hostname = bindAddress.getHostAddress();
 			}
@@ -482,7 +485,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				if (localhost.isLoopbackAddress()) {
 					localhost = findHost();
 					if (localhost == null) {
-						log.fatal("Can't find host ip address!");
+						log.fatal("Failed to identify host interface IP address");
 						System.exit(-1);
 					}
 				}
@@ -500,7 +503,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		}
 
 		ResourceFile serverRoot = new ResourceFile(Application.getInstallationDirectory(),
-			SystemUtilities.isInDevelopmentMode() ? "ghidra/Ghidra/RuntimeScripts/Common/server"
+			SystemUtilities.isInDevelopmentMode() ? "ghidra/Ghidra/RuntimeScripts/server"
 					: "server");
 		if (serverRoot.getFile(false) == null) {
 			System.err.println(
@@ -540,6 +543,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		int defaultPasswordExpiration = -1;
 		boolean autoProvision = false;
 		File jaasConfigFile = null;
+		Set<String> altNames = new TreeSet<>();
 
 		// Network name resolution disabled by default
 		InetNameLookup.setLookupEnabled(false);
@@ -551,8 +555,9 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			configuration.setInitializeLogging(false);
 			Application.initializeApplication(layout, configuration);
 		}
-		catch (IOException e) {
+		catch (Throwable t) {
 			System.err.println("Failed to initialize the application!");
+			t.printStackTrace();
 			System.exit(-1);
 		}
 
@@ -588,6 +593,24 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 					System.exit(-1);
 				}
 			}
+			else if (s.startsWith("-ipAlt")) { // self-signed cert alt subject names
+				int nextArgIndex = i + 1;
+				String hostname;
+				if (s.length() == 6 && nextArgIndex < args.length) {
+					hostname = args[++i];
+				}
+				else {
+					hostname = s.substring(6);
+				}
+				for (String h : hostname.trim().split(";")) {
+					h = h.trim();
+					if (h.length() == 0 || h.startsWith("-")) {
+						displayUsage("Missing -ipAlt altName");
+						System.exit(-1);
+					}
+					altNames.add(h);
+				}
+			}
 			else if (s.startsWith("-ip")) { // setting server remote access hostname
 				int nextArgIndex = i + 1;
 				String hostname;
@@ -620,9 +643,18 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				}
 				try {
 					bindAddress = InetAddress.getByName(bindIp);
+					if (NetworkInterface.getByInetAddress(bindAddress) == null) {
+						System.err.println("Unknown -i interface bind address: " + bindIp);
+						System.exit(-1);
+					}
 				}
 				catch (UnknownHostException e) {
-					System.err.println("Unknown server interface bind address: " + bindIp);
+					System.err.println("Invalid -i interface bind address: " + bindIp);
+					System.exit(-1);
+				}
+				catch (SocketException e) {
+					System.err.println(
+						"Failed to resolve -i interface bind address: " + e.getMessage());
 					System.exit(-1);
 				}
 			}
@@ -690,7 +722,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			}
 		}
 
-		if (rootPath == null) {
+		if (StringUtils.isBlank(rootPath)) {
 			displayUsage("Repository directory must be specified!");
 			System.exit(-1);
 		}
@@ -730,10 +762,21 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		File serverLogFile = new File(serverRoot, "server.log");
 		Application.initializeLogging(serverLogFile, serverLogFile);
 
-		// In the absence of module initialization - we must invoke directly
-		SSLContextInitializer.initialize();
-
 		log = LogManager.getLogger(GhidraServer.class); // init log *after* initializing log system
+
+		// Establish serialization filter to address deserialization vulnerabity concerns
+		try {
+			ResourceFile serialFilterFile = Application.getModuleDataFile(SERIAL_FILTER_FILE);
+			GhidraObjectInputFilter.configureServerSerialFilter(serialFilterFile,
+				() -> RepositoryManager.getRMIClient());
+		}
+		catch (Throwable t) {
+			log.fatal("Failed to initialize serialization filter", t);
+			System.exit(-1);
+		}
+
+		// In the absence of module initialization - we must invoke directly
+		DefaultSSLContextInitializer.initialize();
 
 		ServerPortFactory.setBasePort(basePort);
 
@@ -752,24 +795,6 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			// Ensure that remote access hostname is properly set for RMI registration
 			String hostname = initRemoteAccessHostname();
 
-			if (ApplicationKeyManagerFactory.getPreferredKeyStore() == null) {
-				// keystore has not been identified - use self-signed certificate
-				ApplicationKeyManagerFactory
-						.setDefaultIdentity(new X500Principal("CN=GhidraServer"));
-				ApplicationKeyManagerFactory.addSubjectAlternativeName(hostname);
-			}
-			if (!ApplicationKeyManagerFactory.initialize()) {
-				log.fatal("Failed to initialize PKI/SSL keystore");
-				System.exit(0);
-				return;
-			}
-
-			// RMIClassServer.startServer(classSvrPort);
-
-			// String codeBaseProp = "http://" +
-			// localhost.getCanonicalHostName() + ":" + classSvrPort + "/";
-			// System.setProperty(RMI_CODEBASE_PROPERTY, codeBaseProp);
-
 			log.info("Ghidra Server " + Application.getApplicationVersion());
 			log.info("   Server remote access address: " + hostname);
 			if (bindAddress == null) {
@@ -778,14 +803,38 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			else {
 				log.info("   Server listening on interface: " + bindAddress.getHostAddress());
 			}
+
+			String preferredKeyStore = DefaultKeyManagerFactory.getPreferredKeyStore();
+			if (StringUtils.isBlank(preferredKeyStore)) {
+				// keystore has not been identified - use self-signed certificate
+				log.info("   Generating self-signed certificate...");
+				initSelfSignedCertificateData(hostname, altNames);
+			}
+			else {
+				log.info("   Using server certificate keystore: " + preferredKeyStore);
+				if (!altNames.isEmpty()) {
+					log.warn("   -ipAlt use ignored with installed server certificate");
+				}
+			}
+
+			if (!DefaultKeyManagerFactory.initialize()) {
+				log.fatal("Failed to initialize PKI/SSL keystore");
+				System.exit(0);
+			}
+			
+			int signingKeyCount = logServerCertificates("RSA") + logServerCertificates("ECDSA");
+			if (signingKeyCount == 0) {
+				log.fatal("Failed to locate a certificate with digital-signature usage");
+				System.exit(0);
+			}
+
 			log.info("   RMI Registry port: " + ServerPortFactory.getRMIRegistryPort());
 			log.info("   RMI SSL port: " + ServerPortFactory.getRMISSLPort());
 			log.info("   Block Stream port: " + ServerPortFactory.getStreamPort());
 			log.info("   Block Stream compression: " +
 				(RemoteBlockStreamHandle.enableCompressedSerializationOutput ? "enabled"
 						: "disabled"));
-//			log.info("   Class server port: " + ??);
-			log.info("   Root: " + rootPath);
+			log.info("   Root: " + serverRoot.getAbsolutePath());
 			log.info("   Auth: " + authMode.getDescription());
 			if (authMode == PASSWORD_FILE_LOGIN && defaultPasswordExpiration >= 0) {
 				log.info("   Default password expiration: " +
@@ -831,20 +880,125 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 			Registry registry = LocateRegistry.createRegistry(
 				ServerPortFactory.getRMIRegistryPort(), clientSocketFactory, serverSocketFactory);
+
+			StringBuilder bindVersions = new StringBuilder(" (");
+			bindVersions.append(GHIDRA_BIND_VERSION);
 			registry.bind(BIND_NAME, svr);
 
-			log.info("Registered Ghidra Server.");
+			if (!BIND_NAME.equals(ALT_BIND_NAME)) {
+				// Include alternate binding in support of older Ghidra client versions
+				bindVersions.append(", ");
+				bindVersions.append(ALT_GHIDRA_BIND_VERSION);
+				registry.bind(ALT_BIND_NAME, svr);
+			}
+			bindVersions.append(")");
 
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-			log.error(e.getMessage());
-			System.exit(-1);
+			log.info("Registered Ghidra Server" + bindVersions);
+
 		}
 		catch (Throwable t) {
 			log.fatal("Server error: " + t.getMessage(), t);
 			System.exit(-1);
 		}
+	}
+	
+	private static void initSelfSignedCertificateData(String preferredHostname,
+			Set<String> altNames) throws SocketException {
+
+		DefaultKeyManagerFactory.setDefaultIdentity(new X500Principal("CN=GhidraServer"));
+		DefaultKeyManagerFactory.addSubjectAlternativeName(preferredHostname);
+
+		// Collect alternate hostnames for inclusion in certificate
+		Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+		while (nets.hasMoreElements()) {
+			NetworkInterface netint = nets.nextElement();
+			Enumeration<InetAddress> addrs = netint.getInetAddresses();
+			while (addrs.hasMoreElements()) {
+				InetAddress addr = addrs.nextElement();
+				altNames.add(addr.getHostAddress());
+				altNames.add(addr.getHostName());
+				altNames.add(addr.getCanonicalHostName());
+			}
+		}
+		altNames.remove(preferredHostname); // already added as first entry
+		for (String name : altNames) {
+			DefaultKeyManagerFactory.addSubjectAlternativeName(name);
+		}
+	}
+
+	/**
+	 * Log server certiifcates
+	 * @param keyType
+	 * @return number of certificates that support signing
+	 */
+	private static int logServerCertificates(String keyType) {
+
+		X509ExtendedKeyManager km = DefaultKeyManagerFactory.getKeyManager();
+		String[] aliases = km.getServerAliases(keyType, null);
+		if (aliases == null) {
+			return 0;
+		}
+
+		String pad = "      ";
+		Date now = new Date();
+		int signingCount = 0;
+
+		for (String alias : aliases) {
+
+			X509Certificate[] certificateChain = km.getCertificateChain(alias);
+			X509Certificate x509Cert = certificateChain[certificateChain.length - 1];
+
+			if (x509Cert.getKeyUsage()[0]) {
+				++signingCount;
+			}
+
+			X500Principal subj = x509Cert.getSubjectX500Principal();
+			X500Principal issuer = x509Cert.getIssuerX500Principal();
+
+			String label = "'" + alias + "' (" + keyType + "): ";
+			if (now.compareTo(x509Cert.getNotAfter()) > 0) {
+				log.error(
+					pad + label + subj + ", issued by " + issuer +
+						", S/N " + x509Cert.getSerialNumber().toString(16) + ", expired " +
+						x509Cert.getNotAfter() + " **EXPIRED**");
+			}
+			else {
+				log.info(
+					pad + label + subj + ", issued by " + issuer +
+						", S/N " + x509Cert.getSerialNumber().toString(16) + ", expires " +
+						x509Cert.getNotAfter());
+			}
+
+			log.info(pad + "Key Usage: " + PKIUtils.formatKeyUsage(x509Cert));
+
+			boolean foundEntries = false;
+			try {
+				Collection<List<?>> sanList = x509Cert.getSubjectAlternativeNames();
+				if (sanList != null) {
+					for (List<?> sanEntry : sanList) {
+					Integer type = (Integer) sanEntry.get(0);
+					Object value = sanEntry.get(1);
+					if (type == GeneralName.iPAddress || type == GeneralName.dNSName) {
+						if (!foundEntries) {
+							log.info(pad + "Subject Alternative Names:");
+						}
+						foundEntries = true;
+						log.info(pad + "   " + value);
+					}
+				}
+			}
+			}
+			catch (Exception e) {
+				log.fatal("Error reading certificate SANs: " + e.getMessage());
+				System.exit(-1);
+			}
+
+			// Generally a server signing cert needs SAN entries
+			if (x509Cert.getKeyUsage()[0] && !foundEntries) {
+				log.warn(pad + "** No Hostname or IP Address SANs are defined **");
+			}
+		}
+		return signingCount;
 	}
 
 	private static String[] getEnabledTlsProtocols() {
@@ -869,130 +1023,12 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		server.dispose();
 	}
 
-	public static RMIServerSocketFactory getRMIServerSocketFactory() {
+	static RMIServerSocketFactory getRMIServerSocketFactory() {
 		return serverSocketFactory;
 	}
 
-	public static RMIClientSocketFactory getRMIClientSocketFactory() {
+	static RMIClientSocketFactory getRMIClientSocketFactory() {
 		return clientSocketFactory;
-	}
-
-	private static void setGlobalSerializationFilter() throws IOException {
-
-		// NOTE: Serialization filter may need to be disabled when profiling with VisualVM
-		String disabledStr = System.getProperty(SERIALIZATION_FILTER_DISABLED_PROPERTY);
-		if (Boolean.valueOf(disabledStr)) {
-			return;
-		}
-
-		ObjectInputFilter patternFilter = readSerialFilterPatternFile();
-
-		ObjectInputFilter filter = new ObjectInputFilter() {
-
-			@Override
-			public Status checkInput(FilterInfo info) {
-
-				Class<?> clazz = info.serialClass();
-
-				// Give serial filter patterns first shot
-				Status status = patternFilter.checkInput(info);
-				if (status != Status.UNDECIDED) {
-					if (status == Status.REJECTED) {
-						return serialReject(info, "failed by serial.filter pattern");
-					}
-					return status;
-				}
-
-				if (clazz == null) {
-					return Status.ALLOWED;
-				}
-
-				Class<?> componentType = clazz.getComponentType();
-				if (componentType != null && componentType.isPrimitive()) {
-					return Status.ALLOWED; // allow all primitive arrays
-				}
-
-				return serialReject(info, "not allowed");
-			}
-
-			private Status serialReject(FilterInfo info, String reason) {
-				String clientHost = RepositoryManager.getRMIClient();
-				StringBuilder buf = new StringBuilder();
-				buf.append("Rejected class serialization");
-				if (clientHost != null) {
-					buf.append(" from ");
-					buf.append(clientHost);
-				}
-				buf.append("(");
-				buf.append(reason);
-				buf.append(")");
-
-				Class<?> serialClass = info.serialClass();
-				if (serialClass != null) {
-					buf.append(": ");
-					buf.append(serialClass.getCanonicalName());
-					buf.append(" ");
-					if (serialClass.getComponentType() != null) {
-						buf.append("(");
-						buf.append("array-length=");
-						buf.append(info.arrayLength());
-						buf.append(")");
-					}
-				}
-
-				log.error(buf.toString());
-				return Status.REJECTED;
-			}
-
-		};
-
-		// Install global serial class filter
-		ObjectInputFilter.Config.setSerialFilter(filter);
-	}
-
-	/**
-	 * Read serial.filter file content removing any comments and newlines and generate 
-	 * corresponding {@link ObjectInputFilter}.  See {@link java.io.ObjectInputFilter.Config#createFilter(String)}
-	 * for filter syntax.
-	 * @return serial filter content 
-	 * @throws IOException if file error occurs
-	 */
-	private static ObjectInputFilter readSerialFilterPatternFile() throws IOException {
-
-		File serialFilterFile = Application.getModuleDataFile(SERIAL_FILTER_FILE).getFile(false);
-		if (serialFilterFile == null) {
-			// jar mode not supported
-			throw new FileNotFoundException(SERIAL_FILTER_FILE + " not found");
-		}
-		try {
-			StringBuilder buf = new StringBuilder();
-			try (FileReader fr = new FileReader(serialFilterFile);
-					BufferedReader r = new BufferedReader(fr)) {
-
-				for (String line = r.readLine(); line != null; line = r.readLine()) {
-					int ix = line.indexOf('#');
-					if (ix >= 0) {
-						// strip comment
-						line = line.substring(0, ix);
-					}
-					line = line.trim();
-					if (line.length() == 0) {
-						continue;
-					}
-					if (!line.endsWith(";")) {
-						throw new IllegalArgumentException(
-							"all filter statements must end with `;`");
-					}
-					if (line.length() != 0) {
-						buf.append(line);
-					}
-				}
-			}
-			return ObjectInputFilter.Config.createFilter(buf.toString());
-		}
-		catch (Exception e) {
-			throw new IOException("Failed to parse " + SERIAL_FILTER_FILE, e);
-		}
 	}
 
 }

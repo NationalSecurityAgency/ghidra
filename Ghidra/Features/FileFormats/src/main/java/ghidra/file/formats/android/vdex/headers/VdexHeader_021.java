@@ -25,7 +25,8 @@ import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.DexHeader;
 import ghidra.file.formats.android.vdex.*;
 import ghidra.file.formats.android.vdex.sections.DexSectionHeader_002;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Structure;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -79,6 +80,9 @@ public class VdexHeader_021 extends VdexHeader {
 				DexHeader cdexHeader = DexHeaderFactory.getDexHeader(wrappedReader);
 				dexHeaderList.add(cdexHeader);
 
+				if (cdexHeader.getFileSize() <= 0) {
+					throw new IOException("Bad cdex header length: " + cdexHeader.getFileSize());
+				}
 				reader.setPointerIndex(index + cdexHeader.getFileSize());
 			}
 		}

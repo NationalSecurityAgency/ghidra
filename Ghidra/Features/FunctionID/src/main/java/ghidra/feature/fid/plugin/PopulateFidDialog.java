@@ -257,7 +257,7 @@ public class PopulateFidDialog extends DialogComponentProvider {
 		List<FidFile> fidFileList = FidFileManager.getInstance().getUserAddedFiles();
 		FidFile[] files = fidFileList.toArray(new FidFile[fidFileList.size()]);
 		fidFileComboBox = new GComboBox<>(files);
-		fidFileComboBox.addActionListener(e -> updateLibraryChoices());
+		fidFileComboBox.addItemListener(e -> updateLibraryChoices());
 		fidFileComboBox.getAccessibleContext().setAccessibleName("Fid File");
 		return fidFileComboBox;
 	}

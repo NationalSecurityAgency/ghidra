@@ -41,7 +41,7 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.trace.model.stack.TraceObjectStackFrame;
+import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectManager;
@@ -417,7 +417,7 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 			args);
 	}
 
-	protected void handleWriteRegInvocation(TraceObjectStackFrame frame, String name, long value)
+	protected void handleWriteRegInvocation(TraceStackFrame frame, String name, long value)
 			throws Throwable {
 		Map<String, Object> args = rmiMethodWriteReg.expect();
 		rmiMethodWriteReg.result(null);

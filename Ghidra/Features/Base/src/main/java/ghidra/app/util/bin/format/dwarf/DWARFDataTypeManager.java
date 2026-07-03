@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.bin.format.dwarf;
 
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -24,6 +24,8 @@ import java.util.regex.Pattern;
 
 import ghidra.app.util.bin.format.dwarf.DWARFDataTypeImporter.DWARFDataType;
 import ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionException;
+import ghidra.program.database.DbObject;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.Program;
@@ -130,25 +132,28 @@ public class DWARFDataTypeManager {
 		DataType post =
 			dataTypeManager.resolve(pre.dataType, DWARFDataTypeConflictHandler.INSTANCE);
 
-		// While walking the pre and post DataType graph in lockstep, use the mapping of
-		// pre_impl->offset to cache offset->post_datatype for later re-use.
-		DataTypeGraphComparator.compare(pre.dataType, post, (dt1, dt2) -> {
+		// If the data type was already in the database, we don't need to correlate pre&post
+		if (!(pre.dataType instanceof DbObject)) {
+			// While walking the pre and post DataType graph in lockstep, use the mapping of
+			// pre_impl->offset to cache offset->post_datatype for later re-use.
+			DataTypeGraphComparator.compare(pre.dataType, post, (dt1, dt2) -> {
 
-			DWARFDataType currentDDT = ddtImporter.getDDTByInstance(dt1);
+				DWARFDataType currentDDT = ddtImporter.getDDTByInstance(dt1);
 
-			// if we find the pre_datatype metadata, add permanent mapping
-			// of offset->db_datatype
-			if (currentDDT != null) {
-				if (currentDDT.dataType == dt1) {
-					for (Long offset : currentDDT.offsets) {
-						cacheOffsetToDataTypeMapping(offset, dt2);
+				// if we find the pre_datatype metadata, add permanent mapping
+				// of offset->db_datatype
+				if (currentDDT != null) {
+					if (currentDDT.dataType == dt1) {
+						for (Long offset : currentDDT.offsets) {
+							cacheOffsetToDataTypeMapping(offset, dt2);
+						}
 					}
+					saveDWARFSourceInfo(dt2, currentDDT.dsi);
 				}
-				saveDWARFSourceInfo(dt2, currentDDT.dsi);
-			}
 
-			return true;
-		});
+				return true;
+			});
+		}
 
 		cacheOffsetToDataTypeMapping(diea.getOffset(), post);
 		saveDWARFSourceInfo(post, pre.dsi);
@@ -276,8 +281,8 @@ public class DWARFDataTypeManager {
 	 * Iterate all {@link DataType}s that match the CategoryPath / name given
 	 * in the {@link DataTypePath} parameter, including "conflict" datatypes
 	 * that have a ".CONFLICTxx" suffix.
-	 * @param dtp
-	 * @return
+	 * @param dtp {@link DataTypePath}
+	 * @return {@link Iterable} of DataTypes that match
 	 */
 	public Iterable<DataType> forAllConflicts(DataTypePath dtp) {
 		Category cat = dataTypeManager.getCategory(dtp.getCategoryPath());
@@ -312,8 +317,8 @@ public class DWARFDataTypeManager {
 	 * Returns a Ghidra {@link DataType datatype} that corresponds to a type
 	 * that can be used to represent an offset.
 	 * 
-	 * @param size
-	 * @return
+	 * @param size (in bytes) of desired offset type
+	 * @return DataType that can be used as an offset value
 	 */
 	public DataType getOffsetType(int size) {
 		return findMatchingDataTypeBySize(baseDataTypeUntyped, size);
@@ -326,6 +331,23 @@ public class DWARFDataTypeManager {
 	 */
 	public DataType getVoidType() {
 		return baseDataTypeVoid;
+	}
+
+	public DataType getUnspecifiedArrayType() {
+		DataTypePath dtp = new DataTypePath(DWARFProgram.DWARF_ROOT_CATPATH, ".unknown_array");
+
+		DataType dt = dataTypeManager.getDataType(dtp);
+		if (dt == null) {
+			StructureDataType unspecifiedElementArray = new StructureDataType(dtp.getCategoryPath(),
+				dtp.getDataTypeName(), 0, dataTypeManager);
+			unspecifiedElementArray.setToDefaultPacking();
+			unspecifiedElementArray.setDescription(
+				"Zero length data type for arrays that do not have element info");
+
+			dt = dataTypeManager.resolve(unspecifiedElementArray,
+				DataTypeConflictHandler.DEFAULT_HANDLER);
+		}
+		return dt;
 	}
 
 	/**
@@ -366,16 +388,16 @@ public class DWARFDataTypeManager {
 	 * Any newly created Ghidra data types will be cached and the same instance will be returned
 	 * if the same DWARF named base type is requested again.
 	 * 
-	 * @param name
-	 * @param dwarfSize
-	 * @param dwarfEncoding
-	 * @param isBigEndian
+	 * @param name name of DWARF base type
+	 * @param dwarfSize size of DWARF base type
+	 * @param dwarfEncoding from {@link DWARFEncoding} const 'enum'
+	 * @param isBigEndian boolean flag, true = BE, false = LE
 	 * @param isExplictSize boolean flag, if true the returned data type will not be linked to
 	 * the dataOrganization's compiler specified data types (eg. if type is something like int32_t, 
 	 * the returned type should never change size, even if the dataOrg changes).  If false,
 	 * the returned type will be linked to the dataOrg's compiler specified data types if possible,
 	 * except for data types that have a name that include a bitsize in the name, such as "int64_t". 
-	 * @return
+	 * @return DataType that corresponds to the named DWARF base type
 	 */
 	public DataType getBaseType(String name, int dwarfSize, int dwarfEncoding,
 			boolean isBigEndian, boolean isExplictSize) {
@@ -422,7 +444,9 @@ public class DWARFDataTypeManager {
 		}
 
 		if (name != null /* mangledName also will be non-null */) {
-			dt = new TypedefDataType(prog.getRootDNI().asCategoryPath(), name, dt, dataTypeManager);
+			TypedefDataType typedef =
+				new TypedefDataType(prog.getRootDNI().asCategoryPath(), name, dt, dataTypeManager);
+			dt = DataTypeUtilities.getTypedefReplacement(typedef, true);
 
 			dt = dataTypeManager.addDataType(dt, DataTypeConflictHandler.DEFAULT_HANDLER);
 

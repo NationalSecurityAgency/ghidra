@@ -15,9 +15,9 @@
  */
 package ghidra.app.plugin.core.decompiler.taint.actions;
 
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
+import docking.DockingUtils;
 import docking.action.KeyBindingData;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
 import ghidra.app.plugin.core.decompiler.taint.TaintState.QueryType;
@@ -27,7 +27,8 @@ public class TaintQueryCustomAction extends TaintAbstractQueryAction {
 	public TaintQueryCustomAction(TaintPlugin plugin) {
 		super(plugin, "CustomQuery", "Custom Taint Query", "Run custom taint query");
 		queryType = QueryType.CUSTOM;
-		setKeyBindingData(new KeyBindingData(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK));
+		setKeyBindingData(
+			new KeyBindingData(KeyEvent.VK_Y, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 	}
 
 }

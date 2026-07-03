@@ -115,6 +115,8 @@ public class DataTypeMerge8Test extends AbstractDataTypeMergeTest {
 		// choose MY for Bar conflict
 		chooseOption(DataTypeMergeManager.OPTION_MY);
 
+		pressButtonByName(waitForWindow("Structure Update Failed"), "OK"); // expected dependency error on ABC
+
 		waitForCompletion();
 
 		FrontEndPlugin frontEndPlugin = getPlugin(frontEndTool, FrontEndPlugin.class);
@@ -122,8 +124,9 @@ public class DataTypeMerge8Test extends AbstractDataTypeMergeTest {
 		JLabel label = (JLabel) TestUtils.getInstanceField("label", logPanel);
 		String statusText = label.getText();
 		String expectedText =
-			"Structure Merge: Not enough undefined bytes to fit /XYZ in structure " +
-				"/MISC/ABC at offset 0x4. It needs 3 more byte(s) to be able to fit.";
+			"Structure Update Failed: Some of your changes to ABC cannot be merged. " +
+				"Problem: Not enough undefined bytes to fit /XYZ in structure /MISC/ABC at " +
+				"offset 0x4. It needs 3 more byte(s) to be  able to fit.";
 		assertTrue("Wrong status text: " + statusText, statusText.contains(expectedText));
 	}
 }

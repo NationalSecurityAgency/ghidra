@@ -468,11 +468,13 @@ public class DiffTest extends DiffTestAdapter {
 		JTree tree = getProgramTree();
 		selectTreeNodeByText(tree, ".data");
 
-		runSwing(() -> setView.actionPerformed(programTreeProvider.getActionContext(null)));
+		ActionContext context1 = createActionContext(programTreeProvider);
+		runSwing(() -> setView.actionPerformed(context1));
 
 		selectTreeNodeByText(tree, ".rsrc");
 
-		runSwing(() -> goToView.actionPerformed(programTreeProvider.getActionContext(null)));
+		ActionContext context2 = createActionContext(programTreeProvider);
+		runSwing(() -> goToView.actionPerformed(context2));
 
 		topOfFile(fp1);
 		assertEquals(addr("1008000"), cb.getCurrentAddress());
@@ -536,7 +538,7 @@ public class DiffTest extends DiffTestAdapter {
 		openDiff(diffTestP1, diffTestP2);
 		JTree tree = getProgramTree();
 		selectTreeNodeByText(tree, "DiffTestPgm1");
-		ActionContext context = runSwing(() -> programTreeProvider.getActionContext(null));
+		ActionContext context = runSwing(() -> createActionContext(programTreeProvider));
 		performAction(removeView, context, true);
 		AddressSet viewSet = new AddressSet();
 		assertEquals(viewSet, cb.getView());

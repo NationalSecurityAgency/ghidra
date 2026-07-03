@@ -15,16 +15,16 @@
  */
 package ghidra.trace.database.listing;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.apache.commons.collections4.IteratorUtils;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRangeImpl;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.CommentType;
@@ -39,7 +39,6 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.property.*;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.symbol.TraceSymbol;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
 import ghidra.util.Saveable;
 import ghidra.util.exception.NoValueException;
@@ -58,13 +57,7 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 
 	@Override
 	default TraceProgramView getProgram() {
-		TraceThread thread = getThread();
-		TraceProgramView view = getTrace().getProgramView();
-		if (thread == null) {
-			return view;
-		}
-		// Non-null: How could a unit be here otherwise?
-		return Objects.requireNonNull(view.getViewRegisters(thread, false));
+		return getTrace().getProgramView();
 	}
 
 	// TODO: Do I delete comments when code unit is deleted?
@@ -88,12 +81,17 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 		}
 	}
 
+	default AddressSpace getAddressSpace() {
+		return getAddress().getAddressSpace();
+	}
+
 	@Override
 	default <T> void setProperty(String name, Class<T> valueClass, T value) {
 		try (LockHold hold = LockHold.lock(getTrace().getReadWriteLock().writeLock())) {
 			TracePropertyMap<? super T> map = getTrace().getInternalAddressPropertyManager()
 					.getOrCreatePropertyMapSuper(name, valueClass);
-			TracePropertyMapSpace<? super T> space = map.getPropertyMapSpace(getTraceSpace(), true);
+			TracePropertyMapSpace<? super T> space =
+				map.getPropertyMapSpace(getAddressSpace(), true);
 			space.set(getLifespan(), getAddress(), value);
 		}
 	}
@@ -107,7 +105,6 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 
 	@Override
 	default void setProperty(String name, Saveable value) {
-		// TODO: It'd be better if the CodeUnit interface took a valueClass variable...
 		setTypedProperty(name, value);
 	}
 
@@ -135,7 +132,7 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 				return null;
 			}
 			TracePropertyMapSpace<? extends T> space =
-				map.getPropertyMapSpace(getTraceSpace(), false);
+				map.getPropertyMapSpace(getAddressSpace(), false);
 			if (space == null) {
 				return null;
 			}
@@ -185,7 +182,7 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 			if (map == null) {
 				return false;
 			}
-			TracePropertyMapSpace<Void> space = map.getPropertyMapSpace(getTraceSpace(), false);
+			TracePropertyMapSpace<Void> space = map.getPropertyMapSpace(getAddressSpace(), false);
 			if (space == null) {
 				return false;
 			}
@@ -224,9 +221,8 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 	@Override
 	default Symbol[] getSymbols() {
 		try (LockHold hold = getTrace().lockRead()) {
-			Collection<? extends TraceSymbol> at = getTrace().getSymbolManager()
-					.labels()
-					.getAt(getStartSnap(), getThread(), getAddress(), true);
+			Collection<? extends TraceSymbol> at =
+				getTrace().getSymbolManager().labels().getAt(getStartSnap(), getAddress(), true);
 			return at.toArray(new TraceSymbol[at.size()]);
 		}
 	}
@@ -234,9 +230,8 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 	@Override
 	default Symbol getPrimarySymbol() {
 		try (LockHold hold = getTrace().lockRead()) {
-			Collection<? extends TraceSymbol> at = getTrace().getSymbolManager()
-					.labels()
-					.getAt(getStartSnap(), getThread(), getAddress(), true);
+			Collection<? extends TraceSymbol> at =
+				getTrace().getSymbolManager().labels().getAt(getStartSnap(), getAddress(), true);
 			if (at.isEmpty()) {
 				return null;
 			}

@@ -16,12 +16,21 @@
 package ghidra.pcode.emu.jit.gen;
 
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
+
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.Emitter;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Local;
+import ghidra.pcode.emu.jit.gen.util.Types.BNonVoid;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 
 /**
  * An instance field request initialized in the class constructor
+ * 
+ * @param <T> the JVM type of the field
  */
-public interface InstanceFieldReq extends FieldReq {
+public interface InstanceFieldReq<T extends BNonVoid> extends FieldReq<T> {
 	/**
 	 * Emit the field declaration and its initialization bytecode
 	 * 
@@ -29,9 +38,27 @@ public interface InstanceFieldReq extends FieldReq {
 	 * The declaration is emitted into the class definition, and the initialization code is emitted
 	 * into the class constructor.
 	 * 
+	 * @param <THIS> the type of the compiled passage
+	 * @param <N> the incoming stack
+	 * @param em the emitter typed with the incoming stack
+	 * @param localThis a handle to the local holding the {@code this} reference
 	 * @param gen the code generator
 	 * @param cv the visitor for the class definition
-	 * @param iv the visitor for the class constructor
+	 * @return the emitter typed with the incoming stack
 	 */
-	void generateInitCode(JitCodeGenerator gen, ClassVisitor cv, MethodVisitor iv);
+	<THIS extends JitCompiledPassage, N extends Next> Emitter<N> genInit(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, ClassVisitor cv);
+
+	/**
+	 * Emit code to load the field onto the JVM stack
+	 * 
+	 * @param <THIS> the type of the compiled passage
+	 * @param <N> the incoming stack
+	 * @param em the emitter typed with the incoming stack
+	 * @param localThis a handle to the local holding the {@code this} reference
+	 * @param gen the code generator
+	 * @return the emitter typed with the resulting stack, i.e., having pushed the value
+	 */
+	<THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, T>> genLoad(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen);
 }

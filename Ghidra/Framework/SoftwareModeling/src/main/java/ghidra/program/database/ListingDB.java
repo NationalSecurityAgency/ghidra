@@ -236,22 +236,6 @@ class ListingDB implements Listing {
 	}
 
 	@Override
-	public DataIterator getCompositeData(boolean forward) {
-		return codeMgr.getCompositeData(forward ? program.getMinAddress() : program.getMaxAddress(),
-			forward);
-	}
-
-	@Override
-	public DataIterator getCompositeData(Address start, boolean forward) {
-		return codeMgr.getCompositeData(start, forward);
-	}
-
-	@Override
-	public DataIterator getCompositeData(AddressSetView addrSet, boolean forward) {
-		return codeMgr.getCompositeData(addrSet, forward);
-	}
-
-	@Override
 	public Iterator<String> getUserDefinedProperties() {
 		return codeMgr.getUserDefinedProperties();
 	}

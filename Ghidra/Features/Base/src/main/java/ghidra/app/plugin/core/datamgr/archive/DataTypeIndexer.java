@@ -17,9 +17,8 @@ package ghidra.app.plugin.core.datamgr.archive;
 
 import java.util.*;
 
-import javax.swing.SwingUtilities;
-
 import ghidra.program.model.data.*;
+import ghidra.util.Swing;
 import ghidra.util.task.*;
 
 /**
@@ -30,12 +29,14 @@ import ghidra.util.task.*;
  * changed.
  */
 public class DataTypeIndexer {
-	private List<DataTypeManager> dataTypeManagers = new ArrayList<>();
-	private List<DataType> dataTypeList = Collections.emptyList();
-	private DataTypeIndexUpdateListener listener = new DataTypeIndexUpdateListener();
 
+	private static final DataCache EMPTY_CACHE =
+		new DataCache(Collections.emptyList(), Collections.emptyList());
 	private volatile boolean isStale = true;
-	private List<CategoryPath> categoryPathList = Collections.emptyList();
+	private volatile DataCache dataCache;
+
+	private List<DataTypeManager> dataTypeManagers = new ArrayList<>();
+	private DataTypeIndexUpdateListener listener = new DataTypeIndexUpdateListener();
 
 	// Note: synchronizing here prevents concurrent mod issues with the managers list
 	public synchronized void addDataTypeManager(DataTypeManager dataTypeManager) {
@@ -65,20 +66,8 @@ public class DataTypeIndexer {
 	 * @return a sorted list of the data types open in the current tool.
 	 */
 	public synchronized List<DataType> getSortedDataTypeList() {
-
-		List<DataType> newList = updateDataTypeList();
-
-		if (isStale) {
-			//
-			// 					Unusual Code Alert!
-			// Don't save the list we just made, as it is already stale again due to changes
-			// to the Data Type Managers that happened while we were building.
-			//
-			return newList;
-		}
-
-		dataTypeList = newList;
-		return Collections.unmodifiableList(newList);
+		DataCache currentCache = updateDataCache();
+		return currentCache.dataTypes();
 	}
 
 	/**
@@ -88,46 +77,70 @@ public class DataTypeIndexer {
 	 * @return a list of the {@link CategoryPath} associated with the data types open in the 
 	 * current tool.
 	 */
-	public List<CategoryPath> getSortedCategoryPathList() {
-		updateDataTypeList(); // the category list is quietly updated in the background 
-		return categoryPathList;
+	public synchronized List<CategoryPath> getSortedCategoryPathList() {
+		DataCache currentCache = updateDataCache();
+		return currentCache.categories();
 	}
 
-	private List<DataType> updateDataTypeList() {
+	private synchronized DataCache updateDataCache() {
+
+		/*
+		 	This method is super complicated due to the fact that our cache can be invalidated in a
+		 	non-synchronized call.  This method is synchronized to prevent multiple external clients
+		 	from triggering a data load when the cache is stale.  However, system events may 
+		 	invalidate the cache while we are in the process of getting new data.  We let those 
+		 	events clear the cache outside of a synchronized block to avoid blocking the swing 
+		 	thread.  
+		 */
+		DataCache currentCache = dataCache;
 		if (!isStale) {
-			return dataTypeList;
+			return currentCache; // the current cache is not stale; no need to rebuild
 		}
 
-		// set the flag here to handle the case where changes are made while we are building
+		// mark as not stale (this can be changed at any time from external events)
 		isStale = false;
 
 		IndexerTask task = new IndexerTask();
-		if (SwingUtilities.isEventDispatchThread()) {
+		if (Swing.isSwingThread()) {
 			TaskLauncher.launch(task);
 		}
 		else {
 			task.run(TaskMonitor.DUMMY);
 		}
 
-		List<DataType> newDataTypeList = task.getList();
-		categoryPathList = task.getCategoryPathList();
-		return newDataTypeList;
+		// Store the new results, but check below to see if they were marked as stale while working.
+		// Either way, we will return these new results below.
+		DataCache newCache = new DataCache(task.getDataTypes(), task.getCategoryPaths());
+		dataCache = newCache;
+
+		if (isStale) {
+			// There is a chance, while we were working, the cache was marked as stale.  Assign the
+			// new cache and then clear it here if we hit that case.  The results we return below
+			// will be valid for the client for this call only.
+			// Note: we have guilty knowledge of the markStale() method, which sets the flag first
+			//       and then clears the cache.
+			dataCache = EMPTY_CACHE;
+		}
+
+		return newCache;
 	}
 
-	// Note: purposefully not synchronized for speed
+	// Note: intentionally not synchronized for speed; called from system events
 	private void markStale() {
 		isStale = true;
 
-		// Deleting this when stale allows us to free the memory.  This is useful, since it
-		// is possible that once marked stale, we may never have another request for this data
-		// again.
-		dataTypeList = Collections.emptyList();
-		categoryPathList = Collections.emptyList();
+		// Deleting this when stale allows us to free the memory.  This is useful, since it is 
+		// possible that once marked stale, we may never have another request for this data again.
+		dataCache = EMPTY_CACHE;
 	}
 
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
+
+	private record DataCache(List<DataType> dataTypes, List<CategoryPath> categories) {
+
+	}
 
 	// We use a case-insensitive sort on the data since clients may perform case-insensitive 
 	// searches.  This class was using the DataTypeComparator.INSTANCE for sorting, which is 
@@ -239,11 +252,11 @@ public class DataTypeIndexer {
 			}
 		}
 
-		List<DataType> getList() {
+		List<DataType> getDataTypes() {
 			return dataTypes;
 		}
 
-		List<CategoryPath> getCategoryPathList() {
+		List<CategoryPath> getCategoryPaths() {
 			return categories;
 		}
 	}

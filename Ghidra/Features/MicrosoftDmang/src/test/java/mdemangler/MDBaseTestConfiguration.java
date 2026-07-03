@@ -45,6 +45,7 @@ public class MDBaseTestConfiguration {
 	protected String mangled;
 	protected MDParsableItem demangItem;
 	protected boolean isFunction = false;
+	protected int archSize = 64;
 
 	protected String demangled;
 	protected String truth;
@@ -64,6 +65,10 @@ public class MDBaseTestConfiguration {
 
 	public void setIsFunction(boolean isFunctionArg) {
 		isFunction = isFunctionArg;
+	}
+
+	public void setArchitectureSize(int size) {
+		archSize = size;
 	}
 
 	/**
@@ -91,6 +96,8 @@ public class MDBaseTestConfiguration {
 		}
 
 		mdm.setIsFunction(isFunction);
+		mdm.setArchitectureSize(archSize);
+
 		// Meant to be overridden, as needed by extended classes
 		demangItem = doDemangleSymbol(mdm, mangled);
 		demangled = (demangItem == null) ? "" : demangItem.toString();

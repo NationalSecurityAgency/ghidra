@@ -53,12 +53,22 @@ abstract class SymbolDatabaseAdapter {
 	static final int SYMBOL_EXTERNAL_PROG_ADDR_COL = 10;
 	static final int SYMBOL_COMMENT_COL = 11;
 	static final int SYMBOL_LIBPATH_COL = 12;
+	static final int SYMBOL_LIB_ORDINAL_COL = 13;
 
-	static final Schema SYMBOL_SCHEMA = SymbolDatabaseAdapterV4.V4_SYMBOL_SCHEMA;
+	static final Schema SYMBOL_SCHEMA = SymbolDatabaseAdapterV5.V5_SYMBOL_SCHEMA;
 
-	// Bits 0 & 1 are used for the source of the symbol.
-	static final byte SYMBOL_SOURCE_BITS = (byte) 0x3;
+	// Bits 0, 1 and 3 are used for the source of the symbol.
+	// NOTE: On the next V5 adapter revision the source type bits should be made contiguous
+	static final byte SYMBOL_SOURCE_LO_BITS = (byte) 0x3; // bits 0-1 of SourceType storage ID
 	static final byte SYMBOL_PINNED_FLAG = (byte) 0x4; // Bit 2 is flag for "anchored to address".
+	static final byte SYMBOL_SOURCE_HI_BIT = (byte) 0x8; // bit-3 of SourceType storage ID
+
+	static final byte SYMBOL_SOURCE_MASK = (byte) 0xB; // (01011) Storage mask for SourceType storage ID
+
+	static final int SYMBOL_SOURCE_LO_BITS_SHIFT = 0;
+	static final int SYMBOL_SOURCE_HI_BIT_SHIFT = 3;
+
+	static final int MAX_SOURCE_VALUE = 7; // value limit based upon 3-bit storage capacity
 
 	// Symbol type constants
 	static final int SYMBOL_TYPE_LABEL = SymbolType.LABEL.getID();
@@ -88,11 +98,11 @@ abstract class SymbolDatabaseAdapter {
 			throws VersionException, CancelledException, IOException {
 
 		if (openMode == OpenMode.CREATE) {
-			return new SymbolDatabaseAdapterV4(dbHandle, addrMap, true);
+			return new SymbolDatabaseAdapterV5(dbHandle, addrMap, true);
 		}
 
 		try {
-			SymbolDatabaseAdapter adapter = new SymbolDatabaseAdapterV4(dbHandle, addrMap, false);
+			SymbolDatabaseAdapter adapter = new SymbolDatabaseAdapterV5(dbHandle, addrMap, false);
 			return adapter;
 		}
 		catch (VersionException e) {
@@ -113,6 +123,13 @@ abstract class SymbolDatabaseAdapter {
 
 	private static SymbolDatabaseAdapter findReadOnlyAdapter(DBHandle handle, AddressMap addrMap)
 			throws VersionException {
+
+		try {
+			return new SymbolDatabaseAdapterV4(handle, addrMap.getOldAddressMap());
+		}
+		catch (VersionException e) {
+			// failed try older version
+		}
 
 		try {
 			return new SymbolDatabaseAdapterV3(handle, addrMap.getOldAddressMap());
@@ -160,7 +177,7 @@ abstract class SymbolDatabaseAdapter {
 
 			dbHandle.deleteTable(SYMBOL_TABLE_NAME);
 
-			SymbolDatabaseAdapter newAdapter = new SymbolDatabaseAdapterV4(dbHandle, addrMap, true);
+			SymbolDatabaseAdapter newAdapter = new SymbolDatabaseAdapterV5(dbHandle, addrMap, true);
 
 			copyTempToNewAdapter(tmpAdapter, newAdapter, monitor);
 			return newAdapter;
@@ -176,17 +193,17 @@ abstract class SymbolDatabaseAdapter {
 
 		AddressMap oldAddrMap = addrMap.getOldAddressMap();
 
-		long nextKey = 1; // only used for V0 upgrade if a record with key 0 is encountered	
+		long zeroIdRemap = -1; // only used for V0 upgrade if a record with key 0 is encountered	
 		if (oldAdapter instanceof SymbolDatabaseAdapterV0) {
 			// V0 is so old that there is not enough info in the current record to create new
 			// records. So store the current info in a temp database table and complete the upgrade
 			// when SymbolManager.programReady() is called. The missing info can be retrieved from
 			// other managers in the program at that point.
-			nextKey =
+			zeroIdRemap =
 				((SymbolDatabaseAdapterV0) oldAdapter).extractLocalSymbols(tmpHandle, monitor);
 		}
 
-		SymbolDatabaseAdapterV4 tmpAdapter = new SymbolDatabaseAdapterV4(tmpHandle, addrMap, true);
+		SymbolDatabaseAdapterV5 tmpAdapter = new SymbolDatabaseAdapterV5(tmpHandle, addrMap, true);
 		RecordIterator iter = oldAdapter.getSymbols();
 		while (iter.hasNext()) {
 			monitor.checkCancelled();
@@ -196,8 +213,9 @@ abstract class SymbolDatabaseAdapter {
 
 			// We don't allow 0 keys starting with V1, set its key to next available
 			// which we got from the call to extractLocalSymbols() above
-			if (rec.getKey() == 0) {
-				rec.setKey(Math.max(1, nextKey));
+			if (zeroIdRemap > 0 && rec.getKey() == 0) {
+				// NOTE: V0 did not have concept of parent relationship
+				rec.setKey(zeroIdRemap);
 			}
 
 			tmpAdapter.updateSymbolRecord(rec);
@@ -217,6 +235,34 @@ abstract class SymbolDatabaseAdapter {
 			newAdapter.updateSymbolRecord(iter.next());
 			monitor.incrementProgress(1);
 		}
+	}
+
+	/**
+	 * Transforms source type storage ID to V4 flag bits.
+	 * @param sourceType source type
+	 * @return storage ID flag bits
+	 */
+	static byte getSourceTypeFlagsBits(SourceType sourceType) {
+		// Encode SourceType value into split storage flags
+		int sourceTypeId = sourceType.getStorageId();
+		if (sourceTypeId > MAX_SOURCE_VALUE) {
+			throw new RuntimeException("Unsupported SourceType storage ID: " + sourceTypeId);
+		}
+		int sourceTypeLoBits = (sourceTypeId & 0x3) << SYMBOL_SOURCE_LO_BITS_SHIFT; // bits 0-1
+		int sourceTypeHiBit = (sourceTypeId >>> 2) << SYMBOL_SOURCE_HI_BIT_SHIFT; // remaining hi-bit
+		return (byte) (sourceTypeHiBit | sourceTypeLoBits);
+	}
+
+	/**
+	 * Decode V4 flags source type
+	 * @param flags symbol flags
+	 * @return source type
+	 */
+	static SourceType decodeSourceTypeFromFlags(byte flags) {
+		int sourceTypeLoBits = (flags & SYMBOL_SOURCE_LO_BITS) >>> SYMBOL_SOURCE_LO_BITS_SHIFT; // bits 0-1
+		int sourceTypeHiBit = (flags & SYMBOL_SOURCE_HI_BIT) >>> (SYMBOL_SOURCE_HI_BIT_SHIFT - 2); // remaining HI-bit
+		int sourceTypeId = sourceTypeHiBit | sourceTypeLoBits;
+		return SourceType.getSourceType(sourceTypeId);
 	}
 
 	/**

@@ -97,7 +97,7 @@ public abstract class AbstractFlowChartLayout<V extends VisualVertex, E extends 
 		LayoutPositions<V, E> positions = LayoutPositions.createNewPositions(vertexMap, edgeMap);
 
 		// DEGUG triggers grid lines to be printed; useful for debugging
-		// VisualGraphRenderer.setGridPainter(new GridPainter(layoutMap.getGridCoordinates()));
+//		VisualGraphRenderer.setGridPainter(new GridPainter(layoutMap.getGridCoordinates()));
 
 		layoutMap.dispose();
 		return positions;

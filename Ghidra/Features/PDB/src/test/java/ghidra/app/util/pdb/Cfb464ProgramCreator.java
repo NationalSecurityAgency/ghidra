@@ -920,10 +920,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8""";
@@ -935,15 +935,20 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructA1());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryA1() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft []	[A1NS::A1]");
+	private static String getExpectedSourceHierarchyA1() {
+		String expected = "struct A1NS::A1";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryA1() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft []	[A1NS::A1]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsA1() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructA1_00000000());
+	private static Map<Long, String> getExpectedVxtStructsA1() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructA1_00000000());
 		return results;
 	}
 
@@ -951,16 +956,22 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/A1NS/A1/!internal/VTABLE_00000000
+			/A1NS/A1/vftable
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsA1() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f490", "A1NS::A1::vftable", "/A1NS/A1/vftable"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -990,10 +1001,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/A2NS::A2
+			/A2NS/A2
 			pack()
-			Structure A2NS::A2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a2   ""
 			}
 			Length: 16 Alignment: 8""";
@@ -1005,15 +1016,20 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructA2());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryA2() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft []	[A2NS::A2]");
+	private static String getExpectedSourceHierarchyA2() {
+		String expected = "struct A2NS::A2";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryA2() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft []	[A2NS::A2]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsA2() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructA2_00000000());
+	private static Map<Long, String> getExpectedVxtStructsA2() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructA2_00000000());
 		return results;
 	}
 
@@ -1021,16 +1037,22 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/A2NS/A2/!internal/VTABLE_00000000
+			/A2NS/A2/vftable
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   A2NS::A2::fa2_1   ""
-			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
-			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
+			Structure vftable {
+			   0   _func___thiscall_int *   8   fa2_1   ""
+			   8   _func___thiscall_int *   8   fa2_2   ""
+			   16   _func___thiscall_int *   8   fa2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsA2() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f4b0", "A2NS::A2::vftable", "/A2NS/A2/vftable"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -1089,33 +1111,33 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ANS::A
+			/ANS/A
 			pack()
-			Structure ANS::A {
-			   0   ANS::A   24      "Self Base"
-			   24   A1NS::A1   16      "Virtual Base"
-			   40   A2NS::A2   16      "Virtual Base"
+			Structure A {
+			   0   A   24      "Self Base"
+			   24   A1   16      "Virtual Base"
+			   40   A2   16      "Virtual Base"
 			}
 			Length: 56 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/A2NS::A2
+			/A2NS/A2
 			pack()
-			Structure A2NS::A2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a2   ""
 			}
 			Length: 16 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -1127,18 +1149,18 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ANS::A
+			/ANS/A
 			pack()
-			Structure ANS::A {
-			   0   ANS::A   24      "Self Base"
-			   24   char[32]   32      "Filler for 2 Unplaceable Virtual Bases: A1NS::A1; A2NS::A2"
+			Structure A {
+			   0   A   24      "Self Base"
+			   24   char[32]   32      "Filler for 2 Unplaceable Virtual Bases: A1; A2"
 			}
 			Length: 56 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -1150,21 +1172,26 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructA());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryA() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft [ANS::A]	[ANS::A]");
-		results.put("VTABLE_00000008", "     8 vbt []	[ANS::A]");
-		results.put("VTABLE_00000018", "    24 vft [A1NS::A1]	[ANS::A, A1NS::A1]");
-		results.put("VTABLE_00000028", "    40 vft [A2NS::A2]	[ANS::A, A2NS::A2]");
+	private static String getExpectedSourceHierarchyA() {
+		String expected = "struct ANS::A : virtual A1NS::A1, virtual A2NS::A2";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryA() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft [ANS::A]	[ANS::A]");
+		results.put(0x00000008L, "     8 vbt []	[ANS::A]");
+		results.put(0x00000018L, "    24 vft [A1NS::A1]	[ANS::A, A1NS::A1]");
+		results.put(0x00000028L, "    40 vft [A2NS::A2]	[ANS::A, A2NS::A2]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsA() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructA_00000000());
-		results.put("VTABLE_00000008", getVxtStructA_00000008());
-		results.put("VTABLE_00000018", getVxtStructA_00000018());
-		results.put("VTABLE_00000028", getVxtStructA_00000028());
+	private static Map<Long, String> getExpectedVxtStructsA() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructA_00000000());
+		results.put(0x00000008L, getVxtStructA_00000008());
+		results.put(0x00000018L, getVxtStructA_00000018());
+		results.put(0x00000028L, getVxtStructA_00000028());
 		return results;
 	}
 
@@ -1172,10 +1199,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ANS/A/!internal/VTABLE_00000000
+			/ANS/A/vftable{for_ANS::A}
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   ANS::A::fa_1   ""
+			Structure vftable{for_ANS::A} {
+			   0   _func___thiscall_int *   8   fa_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -1186,13 +1213,14 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ANS/A/!internal/VTABLE_00000008
+			/ANS/A/vbtable
 			pack()
-			Structure VTABLE_00000008 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
+			Structure vbtable {
+			   0   int   4   offset_A   "/ANS/A/!internal/A"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -1201,12 +1229,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ANS/A/!internal/VTABLE_00000018
+			/ANS/A/vftable{for_A1NS::A1}
 			pack()
-			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   ANS::A::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable{for_A1NS::A1} {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -1217,16 +1245,28 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ANS/A/!internal/VTABLE_00000028
+			/ANS/A/vftable{for_A2NS::A2}
 			pack()
-			Structure VTABLE_00000028 {
-			   0   _func___thiscall_int *   8   ANS::A::fa2_1   ""
-			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
-			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
+			Structure vftable{for_A2NS::A2} {
+			   0   _func___thiscall_int *   8   fa2_1   ""
+			   8   _func___thiscall_int *   8   fa2_2   ""
+			   16   _func___thiscall_int *   8   fa2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsA() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f4d0", "ANS::A::vftable{for_ANS::A}",
+			"/ANS/A/vftable{for_ANS::A}"));
+		results.add(new ListingResult("14006f518", "ANS::A::vbtable", "/ANS/A/vbtable"));
+		results.add(new ListingResult("14006f4e0", "ANS::A::vftable{for_A1NS::A1}",
+			"/ANS/A/vftable{for_A1NS::A1}"));
+		results.add(new ListingResult("14006f500", "ANS::A::vftable{for_A2NS::A2}",
+			"/ANS/A/vftable{for_A2NS::A2}"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -1256,10 +1296,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/B1NS::B1
+			/B1NS/B1
 			pack()
-			Structure B1NS::B1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b1   ""
 			}
 			Length: 16 Alignment: 8""";
@@ -1271,15 +1311,20 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructB1());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryB1() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft []	[B1NS::B1]");
+	private static String getExpectedSourceHierarchyB1() {
+		String expected = "struct B1NS::B1";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryB1() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft []	[B1NS::B1]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsB1() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructB1_00000000());
+	private static Map<Long, String> getExpectedVxtStructsB1() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructB1_00000000());
 		return results;
 	}
 
@@ -1287,16 +1332,22 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/B1NS/B1/!internal/VTABLE_00000000
+			/B1NS/B1/vftable
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   B1NS::B1::fb1_1   ""
-			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
-			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
+			Structure vftable {
+			   0   _func___thiscall_int *   8   fb1_1   ""
+			   8   _func___thiscall_int *   8   fb1_2   ""
+			   16   _func___thiscall_int *   8   fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsB1() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f530", "B1NS::B1::vftable", "/B1NS/B1/vftable"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -1326,10 +1377,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/B2NS::B2
+			/B2NS/B2
 			pack()
-			Structure B2NS::B2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b2   ""
 			}
 			Length: 16 Alignment: 8""";
@@ -1341,15 +1392,20 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructB2());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryB2() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft []	[B2NS::B2]");
+	private static String getExpectedSourceHierarchyB2() {
+		String expected = "struct B2NS::B2";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryB2() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft []	[B2NS::B2]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsB2() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructB2_00000000());
+	private static Map<Long, String> getExpectedVxtStructsB2() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructB2_00000000());
 		return results;
 	}
 
@@ -1357,16 +1413,22 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/B2NS/B2/!internal/VTABLE_00000000
+			/B2NS/B2/vftable
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   B2NS::B2::fb2_1   ""
-			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
-			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
+			Structure vftable {
+			   0   _func___thiscall_int *   8   fb2_1   ""
+			   8   _func___thiscall_int *   8   fb2_2   ""
+			   16   _func___thiscall_int *   8   fb2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsB2() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f550", "B2NS::B2::vftable", "/B2NS/B2/vftable"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -1425,33 +1487,33 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/BNS::B
+			/BNS/B
 			pack()
-			Structure BNS::B {
-			   0   BNS::B   24      "Self Base"
-			   24   B1NS::B1   16      "Virtual Base"
-			   40   B2NS::B2   16      "Virtual Base"
+			Structure B {
+			   0   B   24      "Self Base"
+			   24   B1   16      "Virtual Base"
+			   40   B2   16      "Virtual Base"
 			}
 			Length: 56 Alignment: 8
-			/B1NS::B1
+			/B1NS/B1
 			pack()
-			Structure B1NS::B1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b1   ""
 			}
 			Length: 16 Alignment: 8
-			/B2NS::B2
+			/B2NS/B2
 			pack()
-			Structure B2NS::B2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b2   ""
 			}
 			Length: 16 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -1463,18 +1525,18 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/BNS::B
+			/BNS/B
 			pack()
-			Structure BNS::B {
-			   0   BNS::B   24      "Self Base"
-			   24   char[32]   32      "Filler for 2 Unplaceable Virtual Bases: B1NS::B1; B2NS::B2"
+			Structure B {
+			   0   B   24      "Self Base"
+			   24   char[32]   32      "Filler for 2 Unplaceable Virtual Bases: B1; B2"
 			}
 			Length: 56 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -1486,21 +1548,26 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructB());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryB() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft [BNS::B]	[BNS::B]");
-		results.put("VTABLE_00000008", "     8 vbt []	[BNS::B]");
-		results.put("VTABLE_00000018", "    24 vft [B1NS::B1]	[BNS::B, B1NS::B1]");
-		results.put("VTABLE_00000028", "    40 vft [B2NS::B2]	[BNS::B, B2NS::B2]");
+	private static String getExpectedSourceHierarchyB() {
+		String expected = "struct BNS::B : virtual B1NS::B1, virtual B2NS::B2";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryB() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft [BNS::B]	[BNS::B]");
+		results.put(0x00000008L, "     8 vbt []	[BNS::B]");
+		results.put(0x00000018L, "    24 vft [B1NS::B1]	[BNS::B, B1NS::B1]");
+		results.put(0x00000028L, "    40 vft [B2NS::B2]	[BNS::B, B2NS::B2]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsB() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructB_00000000());
-		results.put("VTABLE_00000008", getVxtStructB_00000008());
-		results.put("VTABLE_00000018", getVxtStructB_00000018());
-		results.put("VTABLE_00000028", getVxtStructB_00000028());
+	private static Map<Long, String> getExpectedVxtStructsB() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructB_00000000());
+		results.put(0x00000008L, getVxtStructB_00000008());
+		results.put(0x00000018L, getVxtStructB_00000018());
+		results.put(0x00000028L, getVxtStructB_00000028());
 		return results;
 	}
 
@@ -1508,10 +1575,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/BNS/B/!internal/VTABLE_00000000
+			/BNS/B/vftable{for_BNS::B}
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   BNS::B::fb_1   ""
+			Structure vftable{for_BNS::B} {
+			   0   _func___thiscall_int *   8   fb_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -1522,13 +1589,14 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/BNS/B/!internal/VTABLE_00000008
+			/BNS/B/vbtable
 			pack()
-			Structure VTABLE_00000008 {
-			   0   int   4      "B1NS::B1"
-			   4   int   4      "B2NS::B2"
+			Structure vbtable {
+			   0   int   4   offset_B   "/BNS/B/!internal/B"
+			   4   int   4   offset_B1   "/B1NS/B1"
+			   8   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -1537,12 +1605,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/BNS/B/!internal/VTABLE_00000018
+			/BNS/B/vftable{for_B1NS::B1}
 			pack()
-			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   BNS::B::fb1_1   ""
-			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
-			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
+			Structure vftable{for_B1NS::B1} {
+			   0   _func___thiscall_int *   8   fb1_1   ""
+			   8   _func___thiscall_int *   8   fb1_2   ""
+			   16   _func___thiscall_int *   8   fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -1553,16 +1621,28 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/BNS/B/!internal/VTABLE_00000028
+			/BNS/B/vftable{for_B2NS::B2}
 			pack()
-			Structure VTABLE_00000028 {
-			   0   _func___thiscall_int *   8   BNS::B::fb2_1   ""
-			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
-			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
+			Structure vftable{for_B2NS::B2} {
+			   0   _func___thiscall_int *   8   fb2_1   ""
+			   8   _func___thiscall_int *   8   fb2_2   ""
+			   16   _func___thiscall_int *   8   fb2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsB() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f570", "BNS::B::vftable{for_BNS::B}",
+			"/BNS/B/vftable{for_BNS::B}"));
+		results.add(new ListingResult("14006f5b8", "BNS::B::vbtable", "/BNS/B/vbtable"));
+		results.add(new ListingResult("14006f580", "BNS::B::vftable{for_B1NS::B1}",
+			"/BNS/B/vftable{for_B1NS::B1}"));
+		results.add(new ListingResult("14006f5a0", "BNS::B::vftable{for_B2NS::B2}",
+			"/BNS/B/vftable{for_B2NS::B2}"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -1649,49 +1729,49 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/CNS::C
+			/CNS/C
 			pack()
-			Structure CNS::C {
-			   0   CNS::C   24      "Self Base"
-			   24   A1NS::A1   16      "Virtual Base"
-			   40   A2NS::A2   16      "Virtual Base"
-			   56   B1NS::B1   16      "Virtual Base"
-			   72   B2NS::B2   16      "Virtual Base"
+			Structure C {
+			   0   C   24      "Self Base"
+			   24   A1   16      "Virtual Base"
+			   40   A2   16      "Virtual Base"
+			   56   B1   16      "Virtual Base"
+			   72   B2   16      "Virtual Base"
 			}
 			Length: 88 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/A2NS::A2
+			/A2NS/A2
 			pack()
-			Structure A2NS::A2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a2   ""
 			}
 			Length: 16 Alignment: 8
-			/B1NS::B1
+			/B1NS/B1
 			pack()
-			Structure B1NS::B1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b1   ""
 			}
 			Length: 16 Alignment: 8
-			/B2NS::B2
+			/B2NS/B2
 			pack()
-			Structure B2NS::B2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b2   ""
 			}
 			Length: 16 Alignment: 8
-			/CNS::C/!internal/CNS::C
+			/CNS/C/!internal/C
 			pack()
-			Structure CNS::C {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure C {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   c   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -1703,18 +1783,18 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/CNS::C
+			/CNS/C
 			pack()
-			Structure CNS::C {
-			   0   CNS::C   24      "Self Base"
-			   24   char[64]   64      "Filler for 4 Unplaceable Virtual Bases: A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2"
+			Structure C {
+			   0   C   24      "Self Base"
+			   24   char[64]   64      "Filler for 4 Unplaceable Virtual Bases: A1; A2; B1; B2"
 			}
 			Length: 88 Alignment: 8
-			/CNS::C/!internal/CNS::C
+			/CNS/C/!internal/C
 			pack()
-			Structure CNS::C {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure C {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   c   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -1726,25 +1806,31 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructC());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryC() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft [CNS::C]	[CNS::C]");
-		results.put("VTABLE_00000008", "     8 vbt []	[CNS::C]");
-		results.put("VTABLE_00000018", "    24 vft [A1NS::A1]	[CNS::C, A1NS::A1]");
-		results.put("VTABLE_00000028", "    40 vft [A2NS::A2]	[CNS::C, A2NS::A2]");
-		results.put("VTABLE_00000038", "    56 vft [B1NS::B1]	[CNS::C, B1NS::B1]");
-		results.put("VTABLE_00000048", "    72 vft [B2NS::B2]	[CNS::C, B2NS::B2]");
+	private static String getExpectedSourceHierarchyC() {
+		String expected =
+			"struct CNS::C : virtual A1NS::A1, virtual A2NS::A2, virtual B1NS::B1, virtual B2NS::B2";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryC() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft [CNS::C]	[CNS::C]");
+		results.put(0x00000008L, "     8 vbt []	[CNS::C]");
+		results.put(0x00000018L, "    24 vft [A1NS::A1]	[CNS::C, A1NS::A1]");
+		results.put(0x00000028L, "    40 vft [A2NS::A2]	[CNS::C, A2NS::A2]");
+		results.put(0x00000038L, "    56 vft [B1NS::B1]	[CNS::C, B1NS::B1]");
+		results.put(0x00000048L, "    72 vft [B2NS::B2]	[CNS::C, B2NS::B2]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsC() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructC_00000000());
-		results.put("VTABLE_00000008", getVxtStructC_00000008());
-		results.put("VTABLE_00000018", getVxtStructC_00000018());
-		results.put("VTABLE_00000028", getVxtStructC_00000028());
-		results.put("VTABLE_00000038", getVxtStructC_00000038());
-		results.put("VTABLE_00000048", getVxtStructC_00000048());
+	private static Map<Long, String> getExpectedVxtStructsC() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructC_00000000());
+		results.put(0x00000008L, getVxtStructC_00000008());
+		results.put(0x00000018L, getVxtStructC_00000018());
+		results.put(0x00000028L, getVxtStructC_00000028());
+		results.put(0x00000038L, getVxtStructC_00000038());
+		results.put(0x00000048L, getVxtStructC_00000048());
 		return results;
 	}
 
@@ -1752,10 +1838,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/CNS/C/!internal/VTABLE_00000000
+			/CNS/C/vftable{for_CNS::C}
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   CNS::C::fc_1   ""
+			Structure vftable{for_CNS::C} {
+			   0   _func___thiscall_int *   8   fc_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -1766,15 +1852,16 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/CNS/C/!internal/VTABLE_00000008
+			/CNS/C/vbtable
 			pack()
-			Structure VTABLE_00000008 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
-			   8   int   4      "B1NS::B1"
-			   12   int   4      "B2NS::B2"
+			Structure vbtable {
+			   0   int   4   offset_C   "/CNS/C/!internal/C"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
+			   12   int   4   offset_B1   "/B1NS/B1"
+			   16   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 16 Alignment: 4""";
+			Length: 20 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -1783,12 +1870,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/CNS/C/!internal/VTABLE_00000018
+			/CNS/C/vftable{for_A1NS::A1}
 			pack()
-			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
-			   8   _func___thiscall_int *   8   CNS::C::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable{for_A1NS::A1} {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -1799,12 +1886,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/CNS/C/!internal/VTABLE_00000028
+			/CNS/C/vftable{for_A2NS::A2}
 			pack()
-			Structure VTABLE_00000028 {
-			   0   _func___thiscall_int *   8   CNS::C::fa2_1   ""
-			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
-			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
+			Structure vftable{for_A2NS::A2} {
+			   0   _func___thiscall_int *   8   fa2_1   ""
+			   8   _func___thiscall_int *   8   fa2_2   ""
+			   16   _func___thiscall_int *   8   fa2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -1815,12 +1902,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/CNS/C/!internal/VTABLE_00000038
+			/CNS/C/vftable{for_B1NS::B1}
 			pack()
-			Structure VTABLE_00000038 {
-			   0   _func___thiscall_int *   8   B1NS::B1::fb1_1   ""
-			   8   _func___thiscall_int *   8   CNS::C::fb1_2   ""
-			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
+			Structure vftable{for_B1NS::B1} {
+			   0   _func___thiscall_int *   8   fb1_1   ""
+			   8   _func___thiscall_int *   8   fb1_2   ""
+			   16   _func___thiscall_int *   8   fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -1831,16 +1918,32 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/CNS/C/!internal/VTABLE_00000048
+			/CNS/C/vftable{for_B2NS::B2}
 			pack()
-			Structure VTABLE_00000048 {
-			   0   _func___thiscall_int *   8   CNS::C::fb2_1   ""
-			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
-			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
+			Structure vftable{for_B2NS::B2} {
+			   0   _func___thiscall_int *   8   fb2_1   ""
+			   8   _func___thiscall_int *   8   fb2_2   ""
+			   16   _func___thiscall_int *   8   fb2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsC() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f5d0", "CNS::C::vftable{for_CNS::C}",
+			"/CNS/C/vftable{for_CNS::C}"));
+		results.add(new ListingResult("14006f658", "CNS::C::vbtable", "/CNS/C/vbtable"));
+		results.add(new ListingResult("14006f5e0", "CNS::C::vftable{for_A1NS::A1}",
+			"/CNS/C/vftable{for_A1NS::A1}"));
+		results.add(new ListingResult("14006f600", "CNS::C::vftable{for_A2NS::A2}",
+			"/CNS/C/vftable{for_A2NS::A2}"));
+		results.add(new ListingResult("14006f620", "CNS::C::vftable{for_B1NS::B1}",
+			"/CNS/C/vftable{for_B1NS::B1}"));
+		results.add(new ListingResult("14006f640", "CNS::C::vftable{for_B2NS::B2}",
+			"/CNS/C/vftable{for_B2NS::B2}"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -1958,74 +2061,74 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/DNS::D
+			/DNS/D
 			pack()
-			Structure DNS::D {
-			   0   DNS::D   80      "Self Base"
-			   80   A1NS::A1   16      "Virtual Base"
-			   96   A2NS::A2   16      "Virtual Base"
-			   112   B1NS::B1   16      "Virtual Base"
-			   128   B2NS::B2   16      "Virtual Base"
+			Structure D {
+			   0   D   80      "Self Base"
+			   80   A1   16      "Virtual Base"
+			   96   A2   16      "Virtual Base"
+			   112   B1   16      "Virtual Base"
+			   128   B2   16      "Virtual Base"
 			}
 			Length: 144 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/A2NS::A2
+			/A2NS/A2
 			pack()
-			Structure A2NS::A2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a2   ""
 			}
 			Length: 16 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/B1NS::B1
+			/B1NS/B1
 			pack()
-			Structure B1NS::B1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b1   ""
 			}
 			Length: 16 Alignment: 8
-			/B2NS::B2
+			/B2NS/B2
 			pack()
-			Structure B2NS::B2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b2   ""
 			}
 			Length: 16 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8
-			/CNS::C/!internal/CNS::C
+			/CNS/C/!internal/C
 			pack()
-			Structure CNS::C {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure C {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   c   ""
 			}
 			Length: 24 Alignment: 8
-			/DNS::D/!internal/DNS::D
+			/DNS/D/!internal/D
 			pack()
-			Structure DNS::D {
-			   0   CNS::C   24      "Base"
-			   24   ANS::A   24      "Base"
-			   48   BNS::B   24      "Base"
+			Structure D {
+			   0   C   24      "Base"
+			   24   A   24      "Base"
+			   48   B   24      "Base"
 			   72   int   4   d   ""
 			}
 			Length: 80 Alignment: 8""";
@@ -2037,43 +2140,43 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/DNS::D
+			/DNS/D
 			pack()
-			Structure DNS::D {
-			   0   DNS::D   80      "Self Base"
-			   80   char[64]   64      "Filler for 4 Unplaceable Virtual Bases: A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2"
+			Structure D {
+			   0   D   80      "Self Base"
+			   80   char[64]   64      "Filler for 4 Unplaceable Virtual Bases: A1; A2; B1; B2"
 			}
 			Length: 144 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8
-			/CNS::C/!internal/CNS::C
+			/CNS/C/!internal/C
 			pack()
-			Structure CNS::C {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure C {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   c   ""
 			}
 			Length: 24 Alignment: 8
-			/DNS::D/!internal/DNS::D
+			/DNS/D/!internal/D
 			pack()
-			Structure DNS::D {
-			   0   CNS::C   24      "Base"
-			   24   ANS::A   24      "Base"
-			   48   BNS::B   24      "Base"
+			Structure D {
+			   0   C   24      "Base"
+			   24   A   24      "Base"
+			   48   B   24      "Base"
 			   72   int   4   d   ""
 			}
 			Length: 80 Alignment: 8""";
@@ -2085,33 +2188,38 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructD());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryD() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft [CNS::C]	[DNS::D, CNS::C]");
-		results.put("VTABLE_00000008", "     8 vbt [CNS::C]	[DNS::D, CNS::C]");
-		results.put("VTABLE_00000018", "    24 vft [ANS::A]	[DNS::D, ANS::A]");
-		results.put("VTABLE_00000020", "    32 vbt [ANS::A]	[DNS::D, ANS::A]");
-		results.put("VTABLE_00000030", "    48 vft [BNS::B]	[DNS::D, BNS::B]");
-		results.put("VTABLE_00000038", "    56 vbt [BNS::B]	[DNS::D, BNS::B]");
-		results.put("VTABLE_00000050", "    80 vft [A1NS::A1]	[DNS::D, CNS::C, A1NS::A1]");
-		results.put("VTABLE_00000060", "    96 vft [A2NS::A2]	[DNS::D, CNS::C, A2NS::A2]");
-		results.put("VTABLE_00000070", "   112 vft [B1NS::B1]	[DNS::D, CNS::C, B1NS::B1]");
-		results.put("VTABLE_00000080", "   128 vft [B2NS::B2]	[DNS::D, CNS::C, B2NS::B2]");
+	private static String getExpectedSourceHierarchyD() {
+		String expected = "struct DNS::D : CNS::C, ANS::A, BNS::B";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryD() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft [CNS::C]	[DNS::D, CNS::C]");
+		results.put(0x00000008L, "     8 vbt [CNS::C]	[DNS::D, CNS::C]");
+		results.put(0x00000018L, "    24 vft [ANS::A]	[DNS::D, ANS::A]");
+		results.put(0x00000020L, "    32 vbt [ANS::A]	[DNS::D, ANS::A]");
+		results.put(0x00000030L, "    48 vft [BNS::B]	[DNS::D, BNS::B]");
+		results.put(0x00000038L, "    56 vbt [BNS::B]	[DNS::D, BNS::B]");
+		results.put(0x00000050L, "    80 vft [A1NS::A1]	[DNS::D, CNS::C, A1NS::A1]");
+		results.put(0x00000060L, "    96 vft [A2NS::A2]	[DNS::D, CNS::C, A2NS::A2]");
+		results.put(0x00000070L, "   112 vft [B1NS::B1]	[DNS::D, CNS::C, B1NS::B1]");
+		results.put(0x00000080L, "   128 vft [B2NS::B2]	[DNS::D, CNS::C, B2NS::B2]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsD() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructD_00000000());
-		results.put("VTABLE_00000008", getVxtStructD_00000008());
-		results.put("VTABLE_00000018", getVxtStructD_00000018());
-		results.put("VTABLE_00000020", getVxtStructD_00000020());
-		results.put("VTABLE_00000030", getVxtStructD_00000030());
-		results.put("VTABLE_00000038", getVxtStructD_00000038());
-		results.put("VTABLE_00000050", getVxtStructD_00000050());
-		results.put("VTABLE_00000060", getVxtStructD_00000060());
-		results.put("VTABLE_00000070", getVxtStructD_00000070());
-		results.put("VTABLE_00000080", getVxtStructD_00000080());
+	private static Map<Long, String> getExpectedVxtStructsD() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructD_00000000());
+		results.put(0x00000008L, getVxtStructD_00000008());
+		results.put(0x00000018L, getVxtStructD_00000018());
+		results.put(0x00000020L, getVxtStructD_00000020());
+		results.put(0x00000030L, getVxtStructD_00000030());
+		results.put(0x00000038L, getVxtStructD_00000038());
+		results.put(0x00000050L, getVxtStructD_00000050());
+		results.put(0x00000060L, getVxtStructD_00000060());
+		results.put(0x00000070L, getVxtStructD_00000070());
+		results.put(0x00000080L, getVxtStructD_00000080());
 		return results;
 	}
 
@@ -2119,10 +2227,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/DNS/D/!internal/VTABLE_00000000
+			/DNS/D/vftable{for_CNS::C}
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   CNS::C::fc_1   ""
+			Structure vftable{for_CNS::C} {
+			   0   _func___thiscall_int *   8   fc_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -2133,15 +2241,16 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/DNS/D/!internal/VTABLE_00000008
+			/DNS/D/vbtable{for_CNS::C}
 			pack()
-			Structure VTABLE_00000008 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
-			   8   int   4      "B1NS::B1"
-			   12   int   4      "B2NS::B2"
+			Structure vbtable{for_CNS::C} {
+			   0   int   4   offset_D   "/DNS/D/!internal/D"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
+			   12   int   4   offset_B1   "/B1NS/B1"
+			   16   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 16 Alignment: 4""";
+			Length: 20 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -2150,10 +2259,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/DNS/D/!internal/VTABLE_00000018
+			/DNS/D/vftable{for_ANS::A}
 			pack()
-			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   ANS::A::fa_1   ""
+			Structure vftable{for_ANS::A} {
+			   0   _func___thiscall_int *   8   fa_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -2164,13 +2273,14 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/DNS/D/!internal/VTABLE_00000020
+			/DNS/D/vbtable{for_ANS::A}
 			pack()
-			Structure VTABLE_00000020 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
+			Structure vbtable{for_ANS::A} {
+			   0   int   4   offset_A   "/ANS/A/!internal/A"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -2179,10 +2289,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/DNS/D/!internal/VTABLE_00000030
+			/DNS/D/vftable{for_BNS::B}
 			pack()
-			Structure VTABLE_00000030 {
-			   0   _func___thiscall_int *   8   BNS::B::fb_1   ""
+			Structure vftable{for_BNS::B} {
+			   0   _func___thiscall_int *   8   fb_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -2193,13 +2303,14 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/DNS/D/!internal/VTABLE_00000038
+			/DNS/D/vbtable{for_BNS::B}
 			pack()
-			Structure VTABLE_00000038 {
-			   0   int   4      "B1NS::B1"
-			   4   int   4      "B2NS::B2"
+			Structure vbtable{for_BNS::B} {
+			   0   int   4   offset_B   "/BNS/B/!internal/B"
+			   4   int   4   offset_B1   "/B1NS/B1"
+			   8   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -2208,12 +2319,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/DNS/D/!internal/VTABLE_00000050
+			/DNS/D/vftable{for_A1NS::A1}
 			pack()
-			Structure VTABLE_00000050 {
-			   0   _func___thiscall_int *   8   ANS::A::fa1_1   ""
-			   8   _func___thiscall_int *   8   CNS::C::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable{for_A1NS::A1} {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -2224,12 +2335,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/DNS/D/!internal/VTABLE_00000060
+			/DNS/D/vftable{for_A2NS::A2}
 			pack()
-			Structure VTABLE_00000060 {
-			   0   _func___thiscall_int *   8   DNS::D::fa2_1   ""
-			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
-			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
+			Structure vftable{for_A2NS::A2} {
+			   0   _func___thiscall_int *   8   fa2_1   ""
+			   8   _func___thiscall_int *   8   fa2_2   ""
+			   16   _func___thiscall_int *   8   fa2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -2240,12 +2351,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/DNS/D/!internal/VTABLE_00000070
+			/DNS/D/vftable{for_B1NS::B1}
 			pack()
-			Structure VTABLE_00000070 {
-			   0   _func___thiscall_int *   8   BNS::B::fb1_1   ""
-			   8   _func___thiscall_int *   8   CNS::C::fb1_2   ""
-			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
+			Structure vftable{for_B1NS::B1} {
+			   0   _func___thiscall_int *   8   fb1_1   ""
+			   8   _func___thiscall_int *   8   fb1_2   ""
+			   16   _func___thiscall_int *   8   fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -2256,16 +2367,41 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/DNS/D/!internal/VTABLE_00000080
+			/DNS/D/vftable{for_B2NS::B2}
 			pack()
-			Structure VTABLE_00000080 {
-			   0   _func___thiscall_int *   8   DNS::D::fb2_1   ""
-			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
-			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
+			Structure vftable{for_B2NS::B2} {
+			   0   _func___thiscall_int *   8   fb2_1   ""
+			   8   _func___thiscall_int *   8   fb2_2   ""
+			   16   _func___thiscall_int *   8   fb2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsD() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f678", "DNS::D::vftable{for_CNS::C}",
+			"/DNS/D/vftable{for_CNS::C}"));
+		results.add(new ListingResult("14006f720", "DNS::D::vbtable{for_CNS::C}",
+			"/DNS/D/vbtable{for_CNS::C}"));
+		results.add(new ListingResult("14006f688", "DNS::D::vftable{for_ANS::A}",
+			"/DNS/D/vftable{for_ANS::A}"));
+		results.add(new ListingResult("14006f734", "DNS::D::vbtable{for_ANS::A}",
+			"/DNS/D/vbtable{for_ANS::A}"));
+		results.add(new ListingResult("14006f698", "DNS::D::vftable{for_BNS::B}",
+			"/DNS/D/vftable{for_BNS::B}"));
+		results.add(new ListingResult("14006f740", "DNS::D::vbtable{for_BNS::B}",
+			"/DNS/D/vbtable{for_BNS::B}"));
+		results.add(new ListingResult("14006f6a8", "DNS::D::vftable{for_A1NS::A1}",
+			"/DNS/D/vftable{for_A1NS::A1}"));
+		results.add(new ListingResult("14006f6c8", "DNS::D::vftable{for_A2NS::A2}",
+			"/DNS/D/vftable{for_A2NS::A2}"));
+		results.add(new ListingResult("14006f6e8", "DNS::D::vftable{for_B1NS::B1}",
+			"/DNS/D/vftable{for_B1NS::B1}"));
+		results.add(new ListingResult("14006f708", "DNS::D::vftable{for_B2NS::B2}",
+			"/DNS/D/vftable{for_B2NS::B2}"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -2369,65 +2505,65 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ENS::E
+			/ENS/E
 			pack()
-			Structure ENS::E {
-			   0   ENS::E   32      "Self Base"
-			   32   A1NS::A1   16      "Virtual Base"
-			   48   A2NS::A2   16      "Virtual Base"
-			   64   B1NS::B1   16      "Virtual Base"
-			   80   B2NS::B2   16      "Virtual Base"
-			   96   BNS::B   24      "Virtual Base"
+			Structure E {
+			   0   E   32      "Self Base"
+			   32   A1   16      "Virtual Base"
+			   48   A2   16      "Virtual Base"
+			   64   B1   16      "Virtual Base"
+			   80   B2   16      "Virtual Base"
+			   96   B   24      "Virtual Base"
 			}
 			Length: 120 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/A2NS::A2
+			/A2NS/A2
 			pack()
-			Structure A2NS::A2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a2   ""
 			}
 			Length: 16 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/B1NS::B1
+			/B1NS/B1
 			pack()
-			Structure B1NS::B1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b1   ""
 			}
 			Length: 16 Alignment: 8
-			/B2NS::B2
+			/B2NS/B2
 			pack()
-			Structure B2NS::B2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b2   ""
 			}
 			Length: 16 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8
-			/ENS::E/!internal/ENS::E
+			/ENS/E/!internal/E
 			pack()
-			Structure ENS::E {
-			   0   ANS::A   24      "Base"
+			Structure E {
+			   0   A   24      "Base"
 			   24   int   4   e   ""
 			}
 			Length: 32 Alignment: 8""";
@@ -2439,25 +2575,25 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ENS::E
+			/ENS/E
 			pack()
-			Structure ENS::E {
-			   0   ENS::E   32      "Self Base"
-			   32   char[88]   88      "Filler for 5 Unplaceable Virtual Bases: BNS::B; A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2"
+			Structure E {
+			   0   E   32      "Self Base"
+			   32   char[88]   88      "Filler for 5 Unplaceable Virtual Bases: B; A1; A2; B1; B2"
 			}
 			Length: 120 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/ENS::E/!internal/ENS::E
+			/ENS/E/!internal/E
 			pack()
-			Structure ENS::E {
-			   0   ANS::A   24      "Base"
+			Structure E {
+			   0   A   24      "Base"
 			   24   int   4   e   ""
 			}
 			Length: 32 Alignment: 8""";
@@ -2469,29 +2605,34 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructE());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryE() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft [ANS::A]	[ENS::E, ANS::A]");
-		results.put("VTABLE_00000008", "     8 vbt [ANS::A]	[ENS::E, ANS::A]");
-		results.put("VTABLE_00000020", "    32 vft [A1NS::A1]	[ENS::E, ANS::A, A1NS::A1]");
-		results.put("VTABLE_00000030", "    48 vft [A2NS::A2]	[ENS::E, ANS::A, A2NS::A2]");
-		results.put("VTABLE_00000040", "    64 vft [B1NS::B1]	[ENS::E, BNS::B, B1NS::B1]");
-		results.put("VTABLE_00000050", "    80 vft [B2NS::B2]	[ENS::E, BNS::B, B2NS::B2]");
-		results.put("VTABLE_00000060", "    96 vft [BNS::B]	[ENS::E, BNS::B]");
-		results.put("VTABLE_00000068", "   104 vbt [BNS::B]	[ENS::E, BNS::B]");
+	private static String getExpectedSourceHierarchyE() {
+		String expected = "struct ENS::E : ANS::A, virtual BNS::B";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryE() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft [ANS::A]	[ENS::E, ANS::A]");
+		results.put(0x00000008L, "     8 vbt [ANS::A]	[ENS::E, ANS::A]");
+		results.put(0x00000020L, "    32 vft [A1NS::A1]	[ENS::E, ANS::A, A1NS::A1]");
+		results.put(0x00000030L, "    48 vft [A2NS::A2]	[ENS::E, ANS::A, A2NS::A2]");
+		results.put(0x00000040L, "    64 vft [B1NS::B1]	[ENS::E, BNS::B, B1NS::B1]");
+		results.put(0x00000050L, "    80 vft [B2NS::B2]	[ENS::E, BNS::B, B2NS::B2]");
+		results.put(0x00000060L, "    96 vft [BNS::B]	[ENS::E, BNS::B]");
+		results.put(0x00000068L, "   104 vbt [BNS::B]	[ENS::E, BNS::B]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsE() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructE_00000000());
-		results.put("VTABLE_00000008", getVxtStructE_00000008());
-		results.put("VTABLE_00000020", getVxtStructE_00000020());
-		results.put("VTABLE_00000030", getVxtStructE_00000030());
-		results.put("VTABLE_00000040", getVxtStructE_00000040());
-		results.put("VTABLE_00000050", getVxtStructE_00000050());
-		results.put("VTABLE_00000060", getVxtStructE_00000060());
-		results.put("VTABLE_00000068", getVxtStructE_00000068());
+	private static Map<Long, String> getExpectedVxtStructsE() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructE_00000000());
+		results.put(0x00000008L, getVxtStructE_00000008());
+		results.put(0x00000020L, getVxtStructE_00000020());
+		results.put(0x00000030L, getVxtStructE_00000030());
+		results.put(0x00000040L, getVxtStructE_00000040());
+		results.put(0x00000050L, getVxtStructE_00000050());
+		results.put(0x00000060L, getVxtStructE_00000060());
+		results.put(0x00000068L, getVxtStructE_00000068());
 		return results;
 	}
 
@@ -2499,10 +2640,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ENS/E/!internal/VTABLE_00000000
+			/ENS/E/vftable{for_ANS::A}
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   ANS::A::fa_1   ""
+			Structure vftable{for_ANS::A} {
+			   0   _func___thiscall_int *   8   fa_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -2513,16 +2654,17 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ENS/E/!internal/VTABLE_00000008
+			/ENS/E/vbtable{for_ANS::A}
 			pack()
-			Structure VTABLE_00000008 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
-			   8   int   4      "B1NS::B1"
-			   12   int   4      "B2NS::B2"
-			   16   int   4      "BNS::B"
+			Structure vbtable{for_ANS::A} {
+			   0   int   4   offset_E   "/ENS/E/!internal/E"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
+			   12   int   4   offset_B1   "/B1NS/B1"
+			   16   int   4   offset_B2   "/B2NS/B2"
+			   20   int   4   offset_B   "/BNS/B/!internal/B"
 			}
-			Length: 20 Alignment: 4""";
+			Length: 24 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -2531,12 +2673,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ENS/E/!internal/VTABLE_00000020
+			/ENS/E/vftable{for_A1NS::A1}
 			pack()
-			Structure VTABLE_00000020 {
-			   0   _func___thiscall_int *   8   ENS::E::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable{for_A1NS::A1} {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -2547,12 +2689,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ENS/E/!internal/VTABLE_00000030
+			/ENS/E/vftable{for_A2NS::A2}
 			pack()
-			Structure VTABLE_00000030 {
-			   0   _func___thiscall_int *   8   ANS::A::fa2_1   ""
-			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
-			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
+			Structure vftable{for_A2NS::A2} {
+			   0   _func___thiscall_int *   8   fa2_1   ""
+			   8   _func___thiscall_int *   8   fa2_2   ""
+			   16   _func___thiscall_int *   8   fa2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -2563,12 +2705,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ENS/E/!internal/VTABLE_00000040
+			/ENS/E/vftable{for_B1NS::B1}
 			pack()
-			Structure VTABLE_00000040 {
-			   0   _func___thiscall_int *   8   BNS::B::fb1_1   ""
-			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
-			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
+			Structure vftable{for_B1NS::B1} {
+			   0   _func___thiscall_int *   8   fb1_1   ""
+			   8   _func___thiscall_int *   8   fb1_2   ""
+			   16   _func___thiscall_int *   8   fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -2579,12 +2721,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ENS/E/!internal/VTABLE_00000050
+			/ENS/E/vftable{for_B2NS::B2}
 			pack()
-			Structure VTABLE_00000050 {
-			   0   _func___thiscall_int *   8   BNS::B::fb2_1   ""
-			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
-			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
+			Structure vftable{for_B2NS::B2} {
+			   0   _func___thiscall_int *   8   fb2_1   ""
+			   8   _func___thiscall_int *   8   fb2_2   ""
+			   16   _func___thiscall_int *   8   fb2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -2595,10 +2737,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ENS/E/!internal/VTABLE_00000060
+			/ENS/E/vftable{for_BNS::B}
 			pack()
-			Structure VTABLE_00000060 {
-			   0   _func___thiscall_int *   8   BNS::B::fb_1   ""
+			Structure vftable{for_BNS::B} {
+			   0   _func___thiscall_int *   8   fb_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -2609,15 +2751,37 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ENS/E/!internal/VTABLE_00000068
+			/ENS/E/vbtable{for_BNS::B}
 			pack()
-			Structure VTABLE_00000068 {
-			   0   int   4      "B1NS::B1"
-			   4   int   4      "B2NS::B2"
+			Structure vbtable{for_BNS::B} {
+			   0   int   4   offset_B   "/BNS/B/!internal/B"
+			   4   int   4   offset_B1   "/B1NS/B1"
+			   8   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsE() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f758", "ENS::E::vftable{for_ANS::A}",
+			"/ENS/E/vftable{for_ANS::A}"));
+		results.add(new ListingResult("14006f7f0", "ENS::E::vbtable{for_ANS::A}",
+			"/ENS/E/vbtable{for_ANS::A}"));
+		results.add(new ListingResult("14006f768", "ENS::E::vftable{for_A1NS::A1}",
+			"/ENS/E/vftable{for_A1NS::A1}"));
+		results.add(new ListingResult("14006f788", "ENS::E::vftable{for_A2NS::A2}",
+			"/ENS/E/vftable{for_A2NS::A2}"));
+		results.add(new ListingResult("14006f7a8", "ENS::E::vftable{for_B1NS::B1}",
+			"/ENS/E/vftable{for_B1NS::B1}"));
+		results.add(new ListingResult("14006f7c8", "ENS::E::vftable{for_B2NS::B2}",
+			"/ENS/E/vftable{for_B2NS::B2}"));
+		results.add(new ListingResult("14006f7e8", "ENS::E::vftable{for_BNS::B}",
+			"/ENS/E/vftable{for_BNS::B}"));
+		results.add(new ListingResult("14006f808", "ENS::E::vbtable{for_BNS::B}",
+			"/ENS/E/vbtable{for_BNS::B}"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -2655,24 +2819,24 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/FNS::F
+			/FNS/F
 			pack()
-			Structure FNS::F {
-			   0   FNS::F   16      "Self Base"
-			   16   A1NS::A1   16      "Virtual Base"
+			Structure F {
+			   0   F   16      "Self Base"
+			   16   A1   16      "Virtual Base"
 			}
 			Length: 32 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/FNS::F/!internal/FNS::F
+			/FNS/F/!internal/F
 			pack()
-			Structure FNS::F {
-			   0   pointer   8   {vbptr}   ""
+			Structure F {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   f   ""
 			}
 			Length: 16 Alignment: 8""";
@@ -2684,17 +2848,17 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/FNS::F
+			/FNS/F
 			pack()
-			Structure FNS::F {
-			   0   FNS::F   16      "Self Base"
-			   16   char[16]   16      "Filler for 1 Unplaceable Virtual Base: A1NS::A1"
+			Structure F {
+			   0   F   16      "Self Base"
+			   16   char[16]   16      "Filler for 1 Unplaceable Virtual Base: A1"
 			}
 			Length: 32 Alignment: 8
-			/FNS::F/!internal/FNS::F
+			/FNS/F/!internal/F
 			pack()
-			Structure FNS::F {
-			   0   pointer   8   {vbptr}   ""
+			Structure F {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   f   ""
 			}
 			Length: 16 Alignment: 8""";
@@ -2706,17 +2870,22 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructF());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryF() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vbt []	[FNS::F]");
-		results.put("VTABLE_00000010", "    16 vft []	[FNS::F, A1NS::A1]");
+	private static String getExpectedSourceHierarchyF() {
+		String expected = "struct FNS::F : virtual A1NS::A1";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryF() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vbt []	[FNS::F]");
+		results.put(0x00000010L, "    16 vft []	[FNS::F, A1NS::A1]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsF() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructF_00000000());
-		results.put("VTABLE_00000010", getVxtStructF_00000010());
+	private static Map<Long, String> getExpectedVxtStructsF() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructF_00000000());
+		results.put(0x00000010L, getVxtStructF_00000010());
 		return results;
 	}
 
@@ -2724,12 +2893,13 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/FNS/F/!internal/VTABLE_00000000
+			/FNS/F/vbtable
 			pack()
-			Structure VTABLE_00000000 {
-			   0   int   4      "A1NS::A1"
+			Structure vbtable {
+			   0   int   4   offset_F   "/FNS/F/!internal/F"
+			   4   int   4   offset_A1   "/A1NS/A1"
 			}
-			Length: 4 Alignment: 4""";
+			Length: 8 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -2738,16 +2908,23 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/FNS/F/!internal/VTABLE_00000010
+			/FNS/F/vftable
 			pack()
-			Structure VTABLE_00000010 {
-			   0   _func___thiscall_int *   8   FNS::F::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsF() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f838", "FNS::F::vbtable", "/FNS/F/vbtable"));
+		results.add(new ListingResult("14006f820", "FNS::F::vftable", "/FNS/F/vftable"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -2789,31 +2966,31 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/GNS::G
+			/GNS/G
 			pack()
-			Structure GNS::G {
-			   0   GNS::G   24      "Self Base"
-			   24   A1NS::A1   16      "Virtual Base"
+			Structure G {
+			   0   G   24      "Self Base"
+			   24   A1   16      "Virtual Base"
 			}
 			Length: 40 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/FNS::F/!internal/FNS::F
+			/FNS/F/!internal/F
 			pack()
-			Structure FNS::F {
-			   0   pointer   8   {vbptr}   ""
+			Structure F {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   f   ""
 			}
 			Length: 16 Alignment: 8
-			/GNS::G/!internal/GNS::G
+			/GNS/G/!internal/G
 			pack()
-			Structure GNS::G {
-			   0   FNS::F   16      "Base"
+			Structure G {
+			   0   F   16      "Base"
 			   16   int   4   g   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -2825,24 +3002,24 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/GNS::G
+			/GNS/G
 			pack()
-			Structure GNS::G {
-			   0   GNS::G   24      "Self Base"
-			   24   char[16]   16      "Filler for 1 Unplaceable Virtual Base: A1NS::A1"
+			Structure G {
+			   0   G   24      "Self Base"
+			   24   char[16]   16      "Filler for 1 Unplaceable Virtual Base: A1"
 			}
 			Length: 40 Alignment: 8
-			/FNS::F/!internal/FNS::F
+			/FNS/F/!internal/F
 			pack()
-			Structure FNS::F {
-			   0   pointer   8   {vbptr}   ""
+			Structure F {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   f   ""
 			}
 			Length: 16 Alignment: 8
-			/GNS::G/!internal/GNS::G
+			/GNS/G/!internal/G
 			pack()
-			Structure GNS::G {
-			   0   FNS::F   16      "Base"
+			Structure G {
+			   0   F   16      "Base"
 			   16   int   4   g   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -2854,17 +3031,22 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructG());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryG() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vbt []	[GNS::G, FNS::F]");
-		results.put("VTABLE_00000018", "    24 vft []	[GNS::G, FNS::F, A1NS::A1]");
+	private static String getExpectedSourceHierarchyG() {
+		String expected = "struct GNS::G : FNS::F";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryG() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vbt []	[GNS::G, FNS::F]");
+		results.put(0x00000018L, "    24 vft []	[GNS::G, FNS::F, A1NS::A1]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsG() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructG_00000000());
-		results.put("VTABLE_00000018", getVxtStructG_00000018());
+	private static Map<Long, String> getExpectedVxtStructsG() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructG_00000000());
+		results.put(0x00000018L, getVxtStructG_00000018());
 		return results;
 	}
 
@@ -2872,12 +3054,13 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/GNS/G/!internal/VTABLE_00000000
+			/GNS/G/vbtable
 			pack()
-			Structure VTABLE_00000000 {
-			   0   int   4      "A1NS::A1"
+			Structure vbtable {
+			   0   int   4   offset_G   "/GNS/G/!internal/G"
+			   4   int   4   offset_A1   "/A1NS/A1"
 			}
-			Length: 4 Alignment: 4""";
+			Length: 8 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -2886,16 +3069,23 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/GNS/G/!internal/VTABLE_00000018
+			/GNS/G/vftable
 			pack()
-			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   GNS::G::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsG() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f860", "GNS::G::vbtable", "/GNS/G/vbtable"));
+		results.add(new ListingResult("14006f848", "GNS::G::vftable", "/GNS/G/vftable"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -2937,31 +3127,31 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/HNS::H
+			/HNS/H
 			pack()
-			Structure HNS::H {
-			   0   HNS::H   24      "Self Base"
-			   24   A1NS::A1   16      "Virtual Base"
+			Structure H {
+			   0   H   24      "Self Base"
+			   24   A1   16      "Virtual Base"
 			}
 			Length: 40 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/FNS::F/!internal/FNS::F
+			/FNS/F/!internal/F
 			pack()
-			Structure FNS::F {
-			   0   pointer   8   {vbptr}   ""
+			Structure F {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   f   ""
 			}
 			Length: 16 Alignment: 8
-			/HNS::H/!internal/HNS::H
+			/HNS/H/!internal/H
 			pack()
-			Structure HNS::H {
-			   0   FNS::F   16      "Base"
+			Structure H {
+			   0   F   16      "Base"
 			   16   int   4   h   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -2973,24 +3163,24 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/HNS::H
+			/HNS/H
 			pack()
-			Structure HNS::H {
-			   0   HNS::H   24      "Self Base"
-			   24   char[16]   16      "Filler for 1 Unplaceable Virtual Base: A1NS::A1"
+			Structure H {
+			   0   H   24      "Self Base"
+			   24   char[16]   16      "Filler for 1 Unplaceable Virtual Base: A1"
 			}
 			Length: 40 Alignment: 8
-			/FNS::F/!internal/FNS::F
+			/FNS/F/!internal/F
 			pack()
-			Structure FNS::F {
-			   0   pointer   8   {vbptr}   ""
+			Structure F {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   f   ""
 			}
 			Length: 16 Alignment: 8
-			/HNS::H/!internal/HNS::H
+			/HNS/H/!internal/H
 			pack()
-			Structure HNS::H {
-			   0   FNS::F   16      "Base"
+			Structure H {
+			   0   F   16      "Base"
 			   16   int   4   h   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -3002,17 +3192,22 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructH());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryH() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vbt []	[HNS::H, FNS::F]");
-		results.put("VTABLE_00000018", "    24 vft []	[HNS::H, FNS::F, A1NS::A1]");
+	private static String getExpectedSourceHierarchyH() {
+		String expected = "struct HNS::H : FNS::F";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryH() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vbt []	[HNS::H, FNS::F]");
+		results.put(0x00000018L, "    24 vft []	[HNS::H, FNS::F, A1NS::A1]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsH() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructH_00000000());
-		results.put("VTABLE_00000018", getVxtStructH_00000018());
+	private static Map<Long, String> getExpectedVxtStructsH() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructH_00000000());
+		results.put(0x00000018L, getVxtStructH_00000018());
 		return results;
 	}
 
@@ -3020,12 +3215,13 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/HNS/H/!internal/VTABLE_00000000
+			/HNS/H/vbtable
 			pack()
-			Structure VTABLE_00000000 {
-			   0   int   4      "A1NS::A1"
+			Structure vbtable {
+			   0   int   4   offset_H   "/HNS/H/!internal/H"
+			   4   int   4   offset_A1   "/A1NS/A1"
 			}
-			Length: 4 Alignment: 4""";
+			Length: 8 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -3034,16 +3230,23 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/HNS/H/!internal/VTABLE_00000018
+			/HNS/H/vftable
 			pack()
-			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   HNS::H::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsH() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f888", "HNS::H::vbtable", "/HNS/H/vbtable"));
+		results.add(new ListingResult("14006f870", "HNS::H::vftable", "/HNS/H/vftable"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -3102,46 +3305,46 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/INS::I
+			/INS/I
 			pack()
-			Structure INS::I {
-			   0   INS::I   56      "Self Base"
-			   56   A1NS::A1   16      "Virtual Base"
+			Structure I {
+			   0   I   56      "Self Base"
+			   56   A1   16      "Virtual Base"
 			}
 			Length: 72 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/FNS::F/!internal/FNS::F
+			/FNS/F/!internal/F
 			pack()
-			Structure FNS::F {
-			   0   pointer   8   {vbptr}   ""
+			Structure F {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   f   ""
 			}
 			Length: 16 Alignment: 8
-			/GNS::G/!internal/GNS::G
+			/GNS/G/!internal/G
 			pack()
-			Structure GNS::G {
-			   0   FNS::F   16      "Base"
+			Structure G {
+			   0   F   16      "Base"
 			   16   int   4   g   ""
 			}
 			Length: 24 Alignment: 8
-			/HNS::H/!internal/HNS::H
+			/HNS/H/!internal/H
 			pack()
-			Structure HNS::H {
-			   0   FNS::F   16      "Base"
+			Structure H {
+			   0   F   16      "Base"
 			   16   int   4   h   ""
 			}
 			Length: 24 Alignment: 8
-			/INS::I/!internal/INS::I
+			/INS/I/!internal/I
 			pack()
-			Structure INS::I {
-			   0   GNS::G   24      "Base"
-			   24   HNS::H   24      "Base"
+			Structure I {
+			   0   G   24      "Base"
+			   24   H   24      "Base"
 			   48   int   4   i   ""
 			}
 			Length: 56 Alignment: 8""";
@@ -3153,39 +3356,39 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/INS::I
+			/INS/I
 			pack()
-			Structure INS::I {
-			   0   INS::I   56      "Self Base"
-			   56   char[16]   16      "Filler for 1 Unplaceable Virtual Base: A1NS::A1"
+			Structure I {
+			   0   I   56      "Self Base"
+			   56   char[16]   16      "Filler for 1 Unplaceable Virtual Base: A1"
 			}
 			Length: 72 Alignment: 8
-			/FNS::F/!internal/FNS::F
+			/FNS/F/!internal/F
 			pack()
-			Structure FNS::F {
-			   0   pointer   8   {vbptr}   ""
+			Structure F {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   f   ""
 			}
 			Length: 16 Alignment: 8
-			/GNS::G/!internal/GNS::G
+			/GNS/G/!internal/G
 			pack()
-			Structure GNS::G {
-			   0   FNS::F   16      "Base"
+			Structure G {
+			   0   F   16      "Base"
 			   16   int   4   g   ""
 			}
 			Length: 24 Alignment: 8
-			/HNS::H/!internal/HNS::H
+			/HNS/H/!internal/H
 			pack()
-			Structure HNS::H {
-			   0   FNS::F   16      "Base"
+			Structure H {
+			   0   F   16      "Base"
 			   16   int   4   h   ""
 			}
 			Length: 24 Alignment: 8
-			/INS::I/!internal/INS::I
+			/INS/I/!internal/I
 			pack()
-			Structure INS::I {
-			   0   GNS::G   24      "Base"
-			   24   HNS::H   24      "Base"
+			Structure I {
+			   0   G   24      "Base"
+			   24   H   24      "Base"
 			   48   int   4   i   ""
 			}
 			Length: 56 Alignment: 8""";
@@ -3197,19 +3400,24 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructI());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryI() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vbt [GNS::G]	[INS::I, GNS::G, FNS::F]");
-		results.put("VTABLE_00000018", "    24 vbt [HNS::H]	[INS::I, HNS::H, FNS::F]");
-		results.put("VTABLE_00000038", "    56 vft []	[INS::I, GNS::G, FNS::F, A1NS::A1]");
+	private static String getExpectedSourceHierarchyI() {
+		String expected = "struct INS::I : GNS::G, HNS::H";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryI() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vbt [GNS::G]	[INS::I, GNS::G, FNS::F]");
+		results.put(0x00000018L, "    24 vbt [HNS::H]	[INS::I, HNS::H, FNS::F]");
+		results.put(0x00000038L, "    56 vft []	[INS::I, GNS::G, FNS::F, A1NS::A1]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsI() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructI_00000000());
-		results.put("VTABLE_00000018", getVxtStructI_00000018());
-		results.put("VTABLE_00000038", getVxtStructI_00000038());
+	private static Map<Long, String> getExpectedVxtStructsI() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructI_00000000());
+		results.put(0x00000018L, getVxtStructI_00000018());
+		results.put(0x00000038L, getVxtStructI_00000038());
 		return results;
 	}
 
@@ -3217,12 +3425,13 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/INS/I/!internal/VTABLE_00000000
+			/INS/I/vbtable{for_GNS::G}
 			pack()
-			Structure VTABLE_00000000 {
-			   0   int   4      "A1NS::A1"
+			Structure vbtable{for_GNS::G} {
+			   0   int   4   offset_I   "/INS/I/!internal/I"
+			   4   int   4   offset_A1   "/A1NS/A1"
 			}
-			Length: 4 Alignment: 4""";
+			Length: 8 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -3231,12 +3440,13 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/INS/I/!internal/VTABLE_00000018
+			/INS/I/vbtable{for_HNS::H}
 			pack()
-			Structure VTABLE_00000018 {
-			   0   int   4      "A1NS::A1"
+			Structure vbtable{for_HNS::H} {
+			   0   int   4   offset_H   "/HNS/H/!internal/H"
+			   4   int   4   offset_A1   "/A1NS/A1"
 			}
-			Length: 4 Alignment: 4""";
+			Length: 8 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -3245,16 +3455,26 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/INS/I/!internal/VTABLE_00000038
+			/INS/I/vftable
 			pack()
-			Structure VTABLE_00000038 {
-			   0   _func___thiscall_int *   8   INS::I::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsI() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f8b0", "INS::I::vbtable{for_GNS::G}",
+			"/INS/I/vbtable{for_GNS::G}"));
+		results.add(new ListingResult("14006f8b8", "INS::I::vbtable{for_HNS::H}",
+			"/INS/I/vbtable{for_HNS::H}"));
+		results.add(new ListingResult("14006f898", "INS::I::vftable", "/INS/I/vftable"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -3292,24 +3512,24 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/JNS::J
+			/JNS/J
 			pack()
-			Structure JNS::J {
-			   0   JNS::J   16      "Self Base"
-			   16   A1NS::A1   16      "Virtual Base"
+			Structure J {
+			   0   J   16      "Self Base"
+			   16   A1   16      "Virtual Base"
 			}
 			Length: 32 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/JNS::J/!internal/JNS::J
+			/JNS/J/!internal/J
 			pack()
-			Structure JNS::J {
-			   0   pointer   8   {vbptr}   ""
+			Structure J {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   j   ""
 			}
 			Length: 16 Alignment: 8""";
@@ -3321,17 +3541,17 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/JNS::J
+			/JNS/J
 			pack()
-			Structure JNS::J {
-			   0   JNS::J   16      "Self Base"
-			   16   char[16]   16      "Filler for 1 Unplaceable Virtual Base: A1NS::A1"
+			Structure J {
+			   0   J   16      "Self Base"
+			   16   char[16]   16      "Filler for 1 Unplaceable Virtual Base: A1"
 			}
 			Length: 32 Alignment: 8
-			/JNS::J/!internal/JNS::J
+			/JNS/J/!internal/J
 			pack()
-			Structure JNS::J {
-			   0   pointer   8   {vbptr}   ""
+			Structure J {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   j   ""
 			}
 			Length: 16 Alignment: 8""";
@@ -3343,17 +3563,22 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructJ());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryJ() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vbt []	[JNS::J]");
-		results.put("VTABLE_00000010", "    16 vft []	[JNS::J, A1NS::A1]");
+	private static String getExpectedSourceHierarchyJ() {
+		String expected = "struct JNS::J : virtual A1NS::A1";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryJ() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vbt []	[JNS::J]");
+		results.put(0x00000010L, "    16 vft []	[JNS::J, A1NS::A1]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsJ() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructJ_00000000());
-		results.put("VTABLE_00000010", getVxtStructJ_00000010());
+	private static Map<Long, String> getExpectedVxtStructsJ() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructJ_00000000());
+		results.put(0x00000010L, getVxtStructJ_00000010());
 		return results;
 	}
 
@@ -3361,12 +3586,13 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/JNS/J/!internal/VTABLE_00000000
+			/JNS/J/vbtable
 			pack()
-			Structure VTABLE_00000000 {
-			   0   int   4      "A1NS::A1"
+			Structure vbtable {
+			   0   int   4   offset_J   "/JNS/J/!internal/J"
+			   4   int   4   offset_A1   "/A1NS/A1"
 			}
-			Length: 4 Alignment: 4""";
+			Length: 8 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -3375,16 +3601,23 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/JNS/J/!internal/VTABLE_00000010
+			/JNS/J/vftable
 			pack()
-			Structure VTABLE_00000010 {
-			   0   _func___thiscall_int *   8   JNS::J::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsJ() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f8e0", "JNS::J::vbtable", "/JNS/J/vbtable"));
+		results.add(new ListingResult("14006f8c8", "JNS::J::vftable", "/JNS/J/vftable"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -3426,31 +3659,31 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/KNS::K
+			/KNS/K
 			pack()
-			Structure KNS::K {
-			   0   KNS::K   24      "Self Base"
-			   24   A1NS::A1   16      "Virtual Base"
+			Structure K {
+			   0   K   24      "Self Base"
+			   24   A1   16      "Virtual Base"
 			}
 			Length: 40 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/JNS::J/!internal/JNS::J
+			/JNS/J/!internal/J
 			pack()
-			Structure JNS::J {
-			   0   pointer   8   {vbptr}   ""
+			Structure J {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   j   ""
 			}
 			Length: 16 Alignment: 8
-			/KNS::K/!internal/KNS::K
+			/KNS/K/!internal/K
 			pack()
-			Structure KNS::K {
-			   0   JNS::J   16      "Base"
+			Structure K {
+			   0   J   16      "Base"
 			   16   int   4   k   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -3462,24 +3695,24 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/KNS::K
+			/KNS/K
 			pack()
-			Structure KNS::K {
-			   0   KNS::K   24      "Self Base"
-			   24   char[16]   16      "Filler for 1 Unplaceable Virtual Base: A1NS::A1"
+			Structure K {
+			   0   K   24      "Self Base"
+			   24   char[16]   16      "Filler for 1 Unplaceable Virtual Base: A1"
 			}
 			Length: 40 Alignment: 8
-			/JNS::J/!internal/JNS::J
+			/JNS/J/!internal/J
 			pack()
-			Structure JNS::J {
-			   0   pointer   8   {vbptr}   ""
+			Structure J {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   j   ""
 			}
 			Length: 16 Alignment: 8
-			/KNS::K/!internal/KNS::K
+			/KNS/K/!internal/K
 			pack()
-			Structure KNS::K {
-			   0   JNS::J   16      "Base"
+			Structure K {
+			   0   J   16      "Base"
 			   16   int   4   k   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -3491,17 +3724,22 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructK());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryK() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vbt []	[KNS::K, JNS::J]");
-		results.put("VTABLE_00000018", "    24 vft []	[KNS::K, JNS::J, A1NS::A1]");
+	private static String getExpectedSourceHierarchyK() {
+		String expected = "struct KNS::K : JNS::J";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryK() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vbt []	[KNS::K, JNS::J]");
+		results.put(0x00000018L, "    24 vft []	[KNS::K, JNS::J, A1NS::A1]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsK() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructK_00000000());
-		results.put("VTABLE_00000018", getVxtStructK_00000018());
+	private static Map<Long, String> getExpectedVxtStructsK() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructK_00000000());
+		results.put(0x00000018L, getVxtStructK_00000018());
 		return results;
 	}
 
@@ -3509,12 +3747,13 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/KNS/K/!internal/VTABLE_00000000
+			/KNS/K/vbtable
 			pack()
-			Structure VTABLE_00000000 {
-			   0   int   4      "A1NS::A1"
+			Structure vbtable {
+			   0   int   4   offset_K   "/KNS/K/!internal/K"
+			   4   int   4   offset_A1   "/A1NS/A1"
 			}
-			Length: 4 Alignment: 4""";
+			Length: 8 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -3523,16 +3762,23 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/KNS/K/!internal/VTABLE_00000018
+			/KNS/K/vftable
 			pack()
-			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   KNS::K::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsK() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f908", "KNS::K::vbtable", "/KNS/K/vbtable"));
+		results.add(new ListingResult("14006f8f0", "KNS::K::vftable", "/KNS/K/vftable"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -3578,38 +3824,38 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/LNS::L
+			/LNS/L
 			pack()
-			Structure LNS::L {
-			   0   LNS::L   32      "Self Base"
-			   32   A1NS::A1   16      "Virtual Base"
+			Structure L {
+			   0   L   32      "Self Base"
+			   32   A1   16      "Virtual Base"
 			}
 			Length: 48 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/JNS::J/!internal/JNS::J
+			/JNS/J/!internal/J
 			pack()
-			Structure JNS::J {
-			   0   pointer   8   {vbptr}   ""
+			Structure J {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   j   ""
 			}
 			Length: 16 Alignment: 8
-			/KNS::K/!internal/KNS::K
+			/KNS/K/!internal/K
 			pack()
-			Structure KNS::K {
-			   0   JNS::J   16      "Base"
+			Structure K {
+			   0   J   16      "Base"
 			   16   int   4   k   ""
 			}
 			Length: 24 Alignment: 8
-			/LNS::L/!internal/LNS::L
+			/LNS/L/!internal/L
 			pack()
-			Structure LNS::L {
-			   0   KNS::K   24      "Base"
+			Structure L {
+			   0   K   24      "Base"
 			   24   int   4   l   ""
 			}
 			Length: 32 Alignment: 8""";
@@ -3621,31 +3867,31 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/LNS::L
+			/LNS/L
 			pack()
-			Structure LNS::L {
-			   0   LNS::L   32      "Self Base"
-			   32   char[16]   16      "Filler for 1 Unplaceable Virtual Base: A1NS::A1"
+			Structure L {
+			   0   L   32      "Self Base"
+			   32   char[16]   16      "Filler for 1 Unplaceable Virtual Base: A1"
 			}
 			Length: 48 Alignment: 8
-			/JNS::J/!internal/JNS::J
+			/JNS/J/!internal/J
 			pack()
-			Structure JNS::J {
-			   0   pointer   8   {vbptr}   ""
+			Structure J {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   j   ""
 			}
 			Length: 16 Alignment: 8
-			/KNS::K/!internal/KNS::K
+			/KNS/K/!internal/K
 			pack()
-			Structure KNS::K {
-			   0   JNS::J   16      "Base"
+			Structure K {
+			   0   J   16      "Base"
 			   16   int   4   k   ""
 			}
 			Length: 24 Alignment: 8
-			/LNS::L/!internal/LNS::L
+			/LNS/L/!internal/L
 			pack()
-			Structure LNS::L {
-			   0   KNS::K   24      "Base"
+			Structure L {
+			   0   K   24      "Base"
 			   24   int   4   l   ""
 			}
 			Length: 32 Alignment: 8""";
@@ -3657,17 +3903,22 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructL());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryL() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vbt []	[LNS::L, KNS::K, JNS::J]");
-		results.put("VTABLE_00000020", "    32 vft []	[LNS::L, KNS::K, JNS::J, A1NS::A1]");
+	private static String getExpectedSourceHierarchyL() {
+		String expected = "struct LNS::L : KNS::K";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryL() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vbt []	[LNS::L, KNS::K, JNS::J]");
+		results.put(0x00000020L, "    32 vft []	[LNS::L, KNS::K, JNS::J, A1NS::A1]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsL() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructL_00000000());
-		results.put("VTABLE_00000020", getVxtStructL_00000020());
+	private static Map<Long, String> getExpectedVxtStructsL() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructL_00000000());
+		results.put(0x00000020L, getVxtStructL_00000020());
 		return results;
 	}
 
@@ -3675,12 +3926,13 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/LNS/L/!internal/VTABLE_00000000
+			/LNS/L/vbtable
 			pack()
-			Structure VTABLE_00000000 {
-			   0   int   4      "A1NS::A1"
+			Structure vbtable {
+			   0   int   4   offset_L   "/LNS/L/!internal/L"
+			   4   int   4   offset_A1   "/A1NS/A1"
 			}
-			Length: 4 Alignment: 4""";
+			Length: 8 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -3689,16 +3941,23 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/LNS/L/!internal/VTABLE_00000020
+			/LNS/L/vftable
 			pack()
-			Structure VTABLE_00000020 {
-			   0   _func___thiscall_int *   8   LNS::L::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsL() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f930", "LNS::L::vbtable", "/LNS/L/vbtable"));
+		results.add(new ListingResult("14006f918", "LNS::L::vftable", "/LNS/L/vftable"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -3726,10 +3985,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/N1NS::N1
+			/N1NS/N1
 			pack()
-			Structure N1NS::N1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure N1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   n1   ""
 			}
 			Length: 16 Alignment: 8""";
@@ -3741,15 +4000,20 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructN1());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryN1() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft []	[N1NS::N1]");
+	private static String getExpectedSourceHierarchyN1() {
+		String expected = "struct N1NS::N1";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryN1() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft []	[N1NS::N1]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsN1() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructN1_00000000());
+	private static Map<Long, String> getExpectedVxtStructsN1() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructN1_00000000());
 		return results;
 	}
 
@@ -3757,15 +4021,21 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/N1NS/N1/!internal/VTABLE_00000000
+			/N1NS/N1/vftable
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   N1NS::N1::fn1_1   ""
-			   8   _func___thiscall_int *   8   N1NS::N1::fn1_2   ""
+			Structure vftable {
+			   0   _func___thiscall_int *   8   fn1_1   ""
+			   8   _func___thiscall_int *   8   fn1_2   ""
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsN1() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f940", "N1NS::N1::vftable", "/N1NS/N1/vftable"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -3793,10 +4063,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/N2NS::N2
+			/N2NS/N2
 			pack()
-			Structure N2NS::N2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure N2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   n2   ""
 			}
 			Length: 16 Alignment: 8""";
@@ -3808,15 +4078,20 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructN2());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryN2() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft []	[N2NS::N2]");
+	private static String getExpectedSourceHierarchyN2() {
+		String expected = "struct N2NS::N2";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryN2() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft []	[N2NS::N2]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsN2() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructN2_00000000());
+	private static Map<Long, String> getExpectedVxtStructsN2() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructN2_00000000());
 		return results;
 	}
 
@@ -3824,15 +4099,21 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/N2NS/N2/!internal/VTABLE_00000000
+			/N2NS/N2/vftable
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   N2NS::N2::fn2_1   ""
-			   8   _func___thiscall_int *   8   N2NS::N2::fn2_2   ""
+			Structure vftable {
+			   0   _func___thiscall_int *   8   fn2_1   ""
+			   8   _func___thiscall_int *   8   fn2_2   ""
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsN2() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f958", "N2NS::N2::vftable", "/N2NS/N2/vftable"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -4066,158 +4347,158 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS::M
+			/MNS/M
 			pack()
-			Structure MNS::M {
-			   0   MNS::M   208      "Self Base"
-			   208   N1NS::N1   16      "Virtual Base"
-			   224   A1NS::A1   16      "Virtual Base"
-			   240   A2NS::A2   16      "Virtual Base"
-			   256   B1NS::B1   16      "Virtual Base"
-			   272   B2NS::B2   16      "Virtual Base"
-			   288   BNS::B   24      "Virtual Base"
-			   312   N2NS::N2   16      "Virtual Base"
+			Structure M {
+			   0   M   208      "Self Base"
+			   208   N1   16      "Virtual Base"
+			   224   A1   16      "Virtual Base"
+			   240   A2   16      "Virtual Base"
+			   256   B1   16      "Virtual Base"
+			   272   B2   16      "Virtual Base"
+			   288   B   24      "Virtual Base"
+			   312   N2   16      "Virtual Base"
 			}
 			Length: 328 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/A2NS::A2
+			/A2NS/A2
 			pack()
-			Structure A2NS::A2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a2   ""
 			}
 			Length: 16 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/B1NS::B1
+			/B1NS/B1
 			pack()
-			Structure B1NS::B1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b1   ""
 			}
 			Length: 16 Alignment: 8
-			/B2NS::B2
+			/B2NS/B2
 			pack()
-			Structure B2NS::B2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b2   ""
 			}
 			Length: 16 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8
-			/CNS::C/!internal/CNS::C
+			/CNS/C/!internal/C
 			pack()
-			Structure CNS::C {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure C {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   c   ""
 			}
 			Length: 24 Alignment: 8
-			/DNS::D/!internal/DNS::D
+			/DNS/D/!internal/D
 			pack()
-			Structure DNS::D {
-			   0   CNS::C   24      "Base"
-			   24   ANS::A   24      "Base"
-			   48   BNS::B   24      "Base"
+			Structure D {
+			   0   C   24      "Base"
+			   24   A   24      "Base"
+			   48   B   24      "Base"
 			   72   int   4   d   ""
 			}
 			Length: 80 Alignment: 8
-			/ENS::E/!internal/ENS::E
+			/ENS/E/!internal/E
 			pack()
-			Structure ENS::E {
-			   0   ANS::A   24      "Base"
+			Structure E {
+			   0   A   24      "Base"
 			   24   int   4   e   ""
 			}
 			Length: 32 Alignment: 8
-			/FNS::F/!internal/FNS::F
+			/FNS/F/!internal/F
 			pack()
-			Structure FNS::F {
-			   0   pointer   8   {vbptr}   ""
+			Structure F {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   f   ""
 			}
 			Length: 16 Alignment: 8
-			/GNS::G/!internal/GNS::G
+			/GNS/G/!internal/G
 			pack()
-			Structure GNS::G {
-			   0   FNS::F   16      "Base"
+			Structure G {
+			   0   F   16      "Base"
 			   16   int   4   g   ""
 			}
 			Length: 24 Alignment: 8
-			/HNS::H/!internal/HNS::H
+			/HNS/H/!internal/H
 			pack()
-			Structure HNS::H {
-			   0   FNS::F   16      "Base"
+			Structure H {
+			   0   F   16      "Base"
 			   16   int   4   h   ""
 			}
 			Length: 24 Alignment: 8
-			/INS::I/!internal/INS::I
+			/INS/I/!internal/I
 			pack()
-			Structure INS::I {
-			   0   GNS::G   24      "Base"
-			   24   HNS::H   24      "Base"
+			Structure I {
+			   0   G   24      "Base"
+			   24   H   24      "Base"
 			   48   int   4   i   ""
 			}
 			Length: 56 Alignment: 8
-			/JNS::J/!internal/JNS::J
+			/JNS/J/!internal/J
 			pack()
-			Structure JNS::J {
-			   0   pointer   8   {vbptr}   ""
+			Structure J {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   j   ""
 			}
 			Length: 16 Alignment: 8
-			/KNS::K/!internal/KNS::K
+			/KNS/K/!internal/K
 			pack()
-			Structure KNS::K {
-			   0   JNS::J   16      "Base"
+			Structure K {
+			   0   J   16      "Base"
 			   16   int   4   k   ""
 			}
 			Length: 24 Alignment: 8
-			/LNS::L/!internal/LNS::L
+			/LNS/L/!internal/L
 			pack()
-			Structure LNS::L {
-			   0   KNS::K   24      "Base"
+			Structure L {
+			   0   K   24      "Base"
 			   24   int   4   l   ""
 			}
 			Length: 32 Alignment: 8
-			/MNS::M/!internal/MNS::M
+			/MNS/M/!internal/M
 			pack()
-			Structure MNS::M {
-			   0   ENS::E   32      "Base"
-			   32   DNS::D   80      "Base"
-			   112   INS::I   56      "Base"
-			   168   LNS::L   32      "Base"
+			Structure M {
+			   0   E   32      "Base"
+			   32   D   80      "Base"
+			   112   I   56      "Base"
+			   168   L   32      "Base"
 			   200   int   4   m   ""
 			}
 			Length: 208 Alignment: 8
-			/N1NS::N1
+			/N1NS/N1
 			pack()
-			Structure N1NS::N1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure N1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   n1   ""
 			}
 			Length: 16 Alignment: 8
-			/N2NS::N2
+			/N2NS/N2
 			pack()
-			Structure N2NS::N2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure N2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   n2   ""
 			}
 			Length: 16 Alignment: 8""";
@@ -4229,110 +4510,110 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS::M
+			/MNS/M
 			pack()
-			Structure MNS::M {
-			   0   MNS::M   208      "Self Base"
-			   208   char[120]   120      "Filler for 7 Unplaceable Virtual Bases: N1NS::N1; N2NS::N2; A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2; BNS::B"
+			Structure M {
+			   0   M   208      "Self Base"
+			   208   char[120]   120      "Filler for 7 Unplaceable Virtual Bases: N1; N2; A1; A2; B1; B2; B"
 			}
 			Length: 328 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8
-			/CNS::C/!internal/CNS::C
+			/CNS/C/!internal/C
 			pack()
-			Structure CNS::C {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure C {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   c   ""
 			}
 			Length: 24 Alignment: 8
-			/DNS::D/!internal/DNS::D
+			/DNS/D/!internal/D
 			pack()
-			Structure DNS::D {
-			   0   CNS::C   24      "Base"
-			   24   ANS::A   24      "Base"
-			   48   BNS::B   24      "Base"
+			Structure D {
+			   0   C   24      "Base"
+			   24   A   24      "Base"
+			   48   B   24      "Base"
 			   72   int   4   d   ""
 			}
 			Length: 80 Alignment: 8
-			/ENS::E/!internal/ENS::E
+			/ENS/E/!internal/E
 			pack()
-			Structure ENS::E {
-			   0   ANS::A   24      "Base"
+			Structure E {
+			   0   A   24      "Base"
 			   24   int   4   e   ""
 			}
 			Length: 32 Alignment: 8
-			/FNS::F/!internal/FNS::F
+			/FNS/F/!internal/F
 			pack()
-			Structure FNS::F {
-			   0   pointer   8   {vbptr}   ""
+			Structure F {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   f   ""
 			}
 			Length: 16 Alignment: 8
-			/GNS::G/!internal/GNS::G
+			/GNS/G/!internal/G
 			pack()
-			Structure GNS::G {
-			   0   FNS::F   16      "Base"
+			Structure G {
+			   0   F   16      "Base"
 			   16   int   4   g   ""
 			}
 			Length: 24 Alignment: 8
-			/HNS::H/!internal/HNS::H
+			/HNS/H/!internal/H
 			pack()
-			Structure HNS::H {
-			   0   FNS::F   16      "Base"
+			Structure H {
+			   0   F   16      "Base"
 			   16   int   4   h   ""
 			}
 			Length: 24 Alignment: 8
-			/INS::I/!internal/INS::I
+			/INS/I/!internal/I
 			pack()
-			Structure INS::I {
-			   0   GNS::G   24      "Base"
-			   24   HNS::H   24      "Base"
+			Structure I {
+			   0   G   24      "Base"
+			   24   H   24      "Base"
 			   48   int   4   i   ""
 			}
 			Length: 56 Alignment: 8
-			/JNS::J/!internal/JNS::J
+			/JNS/J/!internal/J
 			pack()
-			Structure JNS::J {
-			   0   pointer   8   {vbptr}   ""
+			Structure J {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   j   ""
 			}
 			Length: 16 Alignment: 8
-			/KNS::K/!internal/KNS::K
+			/KNS/K/!internal/K
 			pack()
-			Structure KNS::K {
-			   0   JNS::J   16      "Base"
+			Structure K {
+			   0   J   16      "Base"
 			   16   int   4   k   ""
 			}
 			Length: 24 Alignment: 8
-			/LNS::L/!internal/LNS::L
+			/LNS/L/!internal/L
 			pack()
-			Structure LNS::L {
-			   0   KNS::K   24      "Base"
+			Structure L {
+			   0   K   24      "Base"
 			   24   int   4   l   ""
 			}
 			Length: 32 Alignment: 8
-			/MNS::M/!internal/MNS::M
+			/MNS/M/!internal/M
 			pack()
-			Structure MNS::M {
-			   0   ENS::E   32      "Base"
-			   32   DNS::D   80      "Base"
-			   112   INS::I   56      "Base"
-			   168   LNS::L   32      "Base"
+			Structure M {
+			   0   E   32      "Base"
+			   32   D   80      "Base"
+			   112   I   56      "Base"
+			   168   L   32      "Base"
 			   200   int   4   m   ""
 			}
 			Length: 208 Alignment: 8""";
@@ -4344,158 +4625,158 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS::M
+			/MNS/M
 			pack()
-			Structure MNS::M {
-			   0   MNS::M   208      "Self Base"
-			   208   A1NS::A1   16      "Virtual Base - Speculative Placement"
-			   224   A2NS::A2   16      "Virtual Base - Speculative Placement"
-			   240   B1NS::B1   16      "Virtual Base - Speculative Placement"
-			   256   B2NS::B2   16      "Virtual Base - Speculative Placement"
-			   272   BNS::B   24      "Virtual Base - Speculative Placement"
-			   296   N1NS::N1   16      "Virtual Base - Speculative Placement"
-			   312   N2NS::N2   16      "Virtual Base - Speculative Placement"
+			Structure M {
+			   0   M   208      "Self Base"
+			   208   A1   16      "Virtual Base - Speculative Placement"
+			   224   A2   16      "Virtual Base - Speculative Placement"
+			   240   B1   16      "Virtual Base - Speculative Placement"
+			   256   B2   16      "Virtual Base - Speculative Placement"
+			   272   B   24      "Virtual Base - Speculative Placement"
+			   296   N1   16      "Virtual Base - Speculative Placement"
+			   312   N2   16      "Virtual Base - Speculative Placement"
 			}
 			Length: 328 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/A2NS::A2
+			/A2NS/A2
 			pack()
-			Structure A2NS::A2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a2   ""
 			}
 			Length: 16 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/B1NS::B1
+			/B1NS/B1
 			pack()
-			Structure B1NS::B1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b1   ""
 			}
 			Length: 16 Alignment: 8
-			/B2NS::B2
+			/B2NS/B2
 			pack()
-			Structure B2NS::B2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b2   ""
 			}
 			Length: 16 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8
-			/CNS::C/!internal/CNS::C
+			/CNS/C/!internal/C
 			pack()
-			Structure CNS::C {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure C {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   c   ""
 			}
 			Length: 24 Alignment: 8
-			/DNS::D/!internal/DNS::D
+			/DNS/D/!internal/D
 			pack()
-			Structure DNS::D {
-			   0   CNS::C   24      "Base"
-			   24   ANS::A   24      "Base"
-			   48   BNS::B   24      "Base"
+			Structure D {
+			   0   C   24      "Base"
+			   24   A   24      "Base"
+			   48   B   24      "Base"
 			   72   int   4   d   ""
 			}
 			Length: 80 Alignment: 8
-			/ENS::E/!internal/ENS::E
+			/ENS/E/!internal/E
 			pack()
-			Structure ENS::E {
-			   0   ANS::A   24      "Base"
+			Structure E {
+			   0   A   24      "Base"
 			   24   int   4   e   ""
 			}
 			Length: 32 Alignment: 8
-			/FNS::F/!internal/FNS::F
+			/FNS/F/!internal/F
 			pack()
-			Structure FNS::F {
-			   0   pointer   8   {vbptr}   ""
+			Structure F {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   f   ""
 			}
 			Length: 16 Alignment: 8
-			/GNS::G/!internal/GNS::G
+			/GNS/G/!internal/G
 			pack()
-			Structure GNS::G {
-			   0   FNS::F   16      "Base"
+			Structure G {
+			   0   F   16      "Base"
 			   16   int   4   g   ""
 			}
 			Length: 24 Alignment: 8
-			/HNS::H/!internal/HNS::H
+			/HNS/H/!internal/H
 			pack()
-			Structure HNS::H {
-			   0   FNS::F   16      "Base"
+			Structure H {
+			   0   F   16      "Base"
 			   16   int   4   h   ""
 			}
 			Length: 24 Alignment: 8
-			/INS::I/!internal/INS::I
+			/INS/I/!internal/I
 			pack()
-			Structure INS::I {
-			   0   GNS::G   24      "Base"
-			   24   HNS::H   24      "Base"
+			Structure I {
+			   0   G   24      "Base"
+			   24   H   24      "Base"
 			   48   int   4   i   ""
 			}
 			Length: 56 Alignment: 8
-			/JNS::J/!internal/JNS::J
+			/JNS/J/!internal/J
 			pack()
-			Structure JNS::J {
-			   0   pointer   8   {vbptr}   ""
+			Structure J {
+			   0   pointer   8   vbptr   ""
 			   8   int   4   j   ""
 			}
 			Length: 16 Alignment: 8
-			/KNS::K/!internal/KNS::K
+			/KNS/K/!internal/K
 			pack()
-			Structure KNS::K {
-			   0   JNS::J   16      "Base"
+			Structure K {
+			   0   J   16      "Base"
 			   16   int   4   k   ""
 			}
 			Length: 24 Alignment: 8
-			/LNS::L/!internal/LNS::L
+			/LNS/L/!internal/L
 			pack()
-			Structure LNS::L {
-			   0   KNS::K   24      "Base"
+			Structure L {
+			   0   K   24      "Base"
 			   24   int   4   l   ""
 			}
 			Length: 32 Alignment: 8
-			/MNS::M/!internal/MNS::M
+			/MNS/M/!internal/M
 			pack()
-			Structure MNS::M {
-			   0   ENS::E   32      "Base"
-			   32   DNS::D   80      "Base"
-			   112   INS::I   56      "Base"
-			   168   LNS::L   32      "Base"
+			Structure M {
+			   0   E   32      "Base"
+			   32   D   80      "Base"
+			   112   I   56      "Base"
+			   168   L   32      "Base"
 			   200   int   4   m   ""
 			}
 			Length: 208 Alignment: 8
-			/N1NS::N1
+			/N1NS/N1
 			pack()
-			Structure N1NS::N1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure N1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   n1   ""
 			}
 			Length: 16 Alignment: 8
-			/N2NS::N2
+			/N2NS/N2
 			pack()
-			Structure N2NS::N2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure N2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   n2   ""
 			}
 			Length: 16 Alignment: 8""";
@@ -4503,108 +4784,120 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryM() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft [ANS::A, ENS::E]	[MNS::M, ENS::E, ANS::A]");
-		results.put("VTABLE_00000008", "     8 vbt [ANS::A, ENS::E]	[MNS::M, ENS::E, ANS::A]");
-		results.put("VTABLE_00000020", "    32 vft [CNS::C]	[MNS::M, DNS::D, CNS::C]");
-		results.put("VTABLE_00000028", "    40 vbt [CNS::C]	[MNS::M, DNS::D, CNS::C]");
-		results.put("VTABLE_00000038", "    56 vft [ANS::A, DNS::D]	[MNS::M, DNS::D, ANS::A]");
-		results.put("VTABLE_00000040", "    64 vbt [ANS::A, DNS::D]	[MNS::M, DNS::D, ANS::A]");
-		results.put("VTABLE_00000050", "    80 vft [BNS::B, DNS::D]	[MNS::M, DNS::D, BNS::B]");
-		results.put("VTABLE_00000058", "    88 vbt [BNS::B, DNS::D]	[MNS::M, DNS::D, BNS::B]");
-		results.put("VTABLE_00000070", "   112 vbt [GNS::G]	[MNS::M, INS::I, GNS::G, FNS::F]");
-		results.put("VTABLE_00000088", "   136 vbt [HNS::H]	[MNS::M, INS::I, HNS::H, FNS::F]");
-		results.put("VTABLE_000000a8", "   168 vbt []	[MNS::M, LNS::L, KNS::K, JNS::J]");
-		results.put("VTABLE_000000d0", "   208 vft [N1NS::N1]	[MNS::M, N1NS::N1]");
-		results.put("VTABLE_000000e0",
+	private static String getExpectedSourceHierarchyM() {
+		String expected =
+			"struct MNS::M : virtual N1NS::N1, ENS::E, DNS::D, INS::I, LNS::L, virtual N2NS::N2";
+		return expected;
+	}
+
+	private static String getSpeculatedSourceHierarchyM() {
+		String expected =
+			"struct MNS::M : ENS::E, DNS::D, INS::I, LNS::L, virtual N1NS::N1, virtual N2NS::N2";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryM() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft [ANS::A, ENS::E]	[MNS::M, ENS::E, ANS::A]");
+		results.put(0x00000008L, "     8 vbt [ANS::A, ENS::E]	[MNS::M, ENS::E, ANS::A]");
+		results.put(0x00000020L, "    32 vft [CNS::C]	[MNS::M, DNS::D, CNS::C]");
+		results.put(0x00000028L, "    40 vbt [CNS::C]	[MNS::M, DNS::D, CNS::C]");
+		results.put(0x00000038L, "    56 vft [ANS::A, DNS::D]	[MNS::M, DNS::D, ANS::A]");
+		results.put(0x00000040L, "    64 vbt [ANS::A, DNS::D]	[MNS::M, DNS::D, ANS::A]");
+		results.put(0x00000050L, "    80 vft [BNS::B, DNS::D]	[MNS::M, DNS::D, BNS::B]");
+		results.put(0x00000058L, "    88 vbt [BNS::B, DNS::D]	[MNS::M, DNS::D, BNS::B]");
+		results.put(0x00000070L, "   112 vbt [GNS::G]	[MNS::M, INS::I, GNS::G, FNS::F]");
+		results.put(0x00000088L, "   136 vbt [HNS::H]	[MNS::M, INS::I, HNS::H, FNS::F]");
+		results.put(0x000000a8L, "   168 vbt []	[MNS::M, LNS::L, KNS::K, JNS::J]");
+		results.put(0x000000d0L, "   208 vft [N1NS::N1]	[MNS::M, N1NS::N1]");
+		results.put(0x000000e0L,
 			"   224 vft [A1NS::A1]	[MNS::M, ENS::E, ANS::A, A1NS::A1]");
-		results.put("VTABLE_000000f0",
+		results.put(0x000000f0L,
 			"   240 vft [A2NS::A2]	[MNS::M, ENS::E, ANS::A, A2NS::A2]");
-		results.put("VTABLE_00000100",
+		results.put(0x00000100L,
 			"   256 vft [B1NS::B1]	[MNS::M, ENS::E, BNS::B, B1NS::B1]");
-		results.put("VTABLE_00000110",
+		results.put(0x00000110L,
 			"   272 vft [B2NS::B2]	[MNS::M, ENS::E, BNS::B, B2NS::B2]");
-		results.put("VTABLE_00000120", "   288 vft [BNS::B, ENS::E]	[MNS::M, ENS::E, BNS::B]");
-		results.put("VTABLE_00000128", "   296 vbt [BNS::B, ENS::E]	[MNS::M, ENS::E, BNS::B]");
-		results.put("VTABLE_00000138", "   312 vft [N2NS::N2]	[MNS::M, N2NS::N2]");
+		results.put(0x00000120L, "   288 vft [BNS::B, ENS::E]	[MNS::M, ENS::E, BNS::B]");
+		results.put(0x00000128L, "   296 vbt [BNS::B, ENS::E]	[MNS::M, ENS::E, BNS::B]");
+		results.put(0x00000138L, "   312 vft [N2NS::N2]	[MNS::M, N2NS::N2]");
 		return results;
 	}
 
-	private static Map<String, String> getSpeculatedVxtPtrSummaryM() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft [ANS::A, ENS::E]	[MNS::M, ENS::E, ANS::A]");
-		results.put("VTABLE_00000008", "     8 vbt [ANS::A, ENS::E]	[MNS::M, ENS::E, ANS::A]");
-		results.put("VTABLE_00000020", "    32 vft [CNS::C]	[MNS::M, DNS::D, CNS::C]");
-		results.put("VTABLE_00000028", "    40 vbt [CNS::C]	[MNS::M, DNS::D, CNS::C]");
-		results.put("VTABLE_00000038", "    56 vft [ANS::A, DNS::D]	[MNS::M, DNS::D, ANS::A]");
-		results.put("VTABLE_00000040", "    64 vbt [ANS::A, DNS::D]	[MNS::M, DNS::D, ANS::A]");
-		results.put("VTABLE_00000050", "    80 vft [BNS::B, DNS::D]	[MNS::M, DNS::D, BNS::B]");
-		results.put("VTABLE_00000058", "    88 vbt [BNS::B, DNS::D]	[MNS::M, DNS::D, BNS::B]");
-		results.put("VTABLE_00000070", "   112 vbt [GNS::G]	[MNS::M, INS::I, GNS::G, FNS::F]");
-		results.put("VTABLE_00000088", "   136 vbt [HNS::H]	[MNS::M, INS::I, HNS::H, FNS::F]");
-		results.put("VTABLE_000000a8", "   168 vbt []	[MNS::M, LNS::L, KNS::K, JNS::J]");
-		results.put("VTABLE_000000d0",
+	private static Map<Long, String> getSpeculatedVxtPtrSummaryM() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft [ANS::A, ENS::E]	[MNS::M, ENS::E, ANS::A]");
+		results.put(0x00000008L, "     8 vbt [ANS::A, ENS::E]	[MNS::M, ENS::E, ANS::A]");
+		results.put(0x00000020L, "    32 vft [CNS::C]	[MNS::M, DNS::D, CNS::C]");
+		results.put(0x00000028L, "    40 vbt [CNS::C]	[MNS::M, DNS::D, CNS::C]");
+		results.put(0x00000038L, "    56 vft [ANS::A, DNS::D]	[MNS::M, DNS::D, ANS::A]");
+		results.put(0x00000040L, "    64 vbt [ANS::A, DNS::D]	[MNS::M, DNS::D, ANS::A]");
+		results.put(0x00000050L, "    80 vft [BNS::B, DNS::D]	[MNS::M, DNS::D, BNS::B]");
+		results.put(0x00000058L, "    88 vbt [BNS::B, DNS::D]	[MNS::M, DNS::D, BNS::B]");
+		results.put(0x00000070L, "   112 vbt [GNS::G]	[MNS::M, INS::I, GNS::G, FNS::F]");
+		results.put(0x00000088L, "   136 vbt [HNS::H]	[MNS::M, INS::I, HNS::H, FNS::F]");
+		results.put(0x000000a8L, "   168 vbt []	[MNS::M, LNS::L, KNS::K, JNS::J]");
+		results.put(0x000000d0L,
 			"   208 vft [A1NS::A1]	[MNS::M, ENS::E, ANS::A, A1NS::A1]");
-		results.put("VTABLE_000000e0",
+		results.put(0x000000e0L,
 			"   224 vft [A2NS::A2]	[MNS::M, ENS::E, ANS::A, A2NS::A2]");
-		results.put("VTABLE_000000f0",
+		results.put(0x000000f0L,
 			"   240 vft [B1NS::B1]	[MNS::M, ENS::E, BNS::B, B1NS::B1]");
-		results.put("VTABLE_00000100",
+		results.put(0x00000100L,
 			"   256 vft [B2NS::B2]	[MNS::M, ENS::E, BNS::B, B2NS::B2]");
-		results.put("VTABLE_00000110",
+		results.put(0x00000110L,
 			"   272 vft [BNS::B, ENS::E]	[MNS::M, ENS::E, BNS::B]");
-		results.put("VTABLE_00000118", "   280 vbt [BNS::B, ENS::E]	[MNS::M, ENS::E, BNS::B]");
-		results.put("VTABLE_00000128", "   296 vft [N1NS::N1]	[MNS::M, N1NS::N1]");
-		results.put("VTABLE_00000138", "   312 vft [N2NS::N2]	[MNS::M, N2NS::N2]");
+		results.put(0x00000118L, "   280 vbt [BNS::B, ENS::E]	[MNS::M, ENS::E, BNS::B]");
+		results.put(0x00000128L, "   296 vft [N1NS::N1]	[MNS::M, N1NS::N1]");
+		results.put(0x00000138L, "   312 vft [N2NS::N2]	[MNS::M, N2NS::N2]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsM() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructM_00000000());
-		results.put("VTABLE_00000008", getVxtStructM_00000008());
-		results.put("VTABLE_00000020", getVxtStructM_00000020());
-		results.put("VTABLE_00000028", getVxtStructM_00000028());
-		results.put("VTABLE_00000038", getVxtStructM_00000038());
-		results.put("VTABLE_00000040", getVxtStructM_00000040());
-		results.put("VTABLE_00000050", getVxtStructM_00000050());
-		results.put("VTABLE_00000058", getVxtStructM_00000058());
-		results.put("VTABLE_00000070", getVxtStructM_00000070());
-		results.put("VTABLE_00000088", getVxtStructM_00000088());
-		results.put("VTABLE_000000a8", getVxtStructM_000000a8());
-		results.put("VTABLE_000000d0", getVxtStructM_000000d0());
-		results.put("VTABLE_000000e0", getVxtStructM_000000e0());
-		results.put("VTABLE_000000f0", getVxtStructM_000000f0());
-		results.put("VTABLE_00000100", getVxtStructM_00000100());
-		results.put("VTABLE_00000110", getVxtStructM_00000110());
-		results.put("VTABLE_00000120", getVxtStructM_00000120());
-		results.put("VTABLE_00000128", getVxtStructM_00000128());
-		results.put("VTABLE_00000138", getVxtStructM_00000138());
+	private static Map<Long, String> getExpectedVxtStructsM() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructM_00000000());
+		results.put(0x00000008L, getVxtStructM_00000008());
+		results.put(0x00000020L, getVxtStructM_00000020());
+		results.put(0x00000028L, getVxtStructM_00000028());
+		results.put(0x00000038L, getVxtStructM_00000038());
+		results.put(0x00000040L, getVxtStructM_00000040());
+		results.put(0x00000050L, getVxtStructM_00000050());
+		results.put(0x00000058L, getVxtStructM_00000058());
+		results.put(0x00000070L, getVxtStructM_00000070());
+		results.put(0x00000088L, getVxtStructM_00000088());
+		results.put(0x000000a8L, getVxtStructM_000000a8());
+		results.put(0x000000d0L, getVxtStructM_000000d0());
+		results.put(0x000000e0L, getVxtStructM_000000e0());
+		results.put(0x000000f0L, getVxtStructM_000000f0());
+		results.put(0x00000100L, getVxtStructM_00000100());
+		results.put(0x00000110L, getVxtStructM_00000110());
+		results.put(0x00000120L, getVxtStructM_00000120());
+		results.put(0x00000128L, getVxtStructM_00000128());
+		results.put(0x00000138L, getVxtStructM_00000138());
 		return results;
 	}
 
-	private static Map<String, String> getSpeculatedVxtStructsM() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructM_00000000());
-		results.put("VTABLE_00000008", getVxtStructM_00000008());
-		results.put("VTABLE_00000020", getVxtStructM_00000020());
-		results.put("VTABLE_00000028", getVxtStructM_00000028());
-		results.put("VTABLE_00000038", getVxtStructM_00000038());
-		results.put("VTABLE_00000040", getVxtStructM_00000040());
-		results.put("VTABLE_00000050", getVxtStructM_00000050());
-		results.put("VTABLE_00000058", getVxtStructM_00000058());
-		results.put("VTABLE_00000070", getVxtStructM_00000070());
-		results.put("VTABLE_00000088", getVxtStructM_00000088());
-		results.put("VTABLE_000000a8", getVxtStructM_000000a8());
-		results.put("VTABLE_000000d0", getVxtStructM_000000d0_speculated());
-		results.put("VTABLE_000000e0", getVxtStructM_000000e0_speculated());
-		results.put("VTABLE_000000f0", getVxtStructM_000000f0_speculated());
-		results.put("VTABLE_00000100", getVxtStructM_00000100_speculated());
-		results.put("VTABLE_00000110", getVxtStructM_00000110_speculated());
-		results.put("VTABLE_00000118", getVxtStructM_00000118_speculated());
-		results.put("VTABLE_00000128", getVxtStructM_00000128_speculated());
-		results.put("VTABLE_00000138", getVxtStructM_00000138_speculated());
+	private static Map<Long, String> getSpeculatedVxtStructsM() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructM_00000000());
+		results.put(0x00000008L, getVxtStructM_00000008());
+		results.put(0x00000020L, getVxtStructM_00000020());
+		results.put(0x00000028L, getVxtStructM_00000028());
+		results.put(0x00000038L, getVxtStructM_00000038());
+		results.put(0x00000040L, getVxtStructM_00000040());
+		results.put(0x00000050L, getVxtStructM_00000050());
+		results.put(0x00000058L, getVxtStructM_00000058());
+		results.put(0x00000070L, getVxtStructM_00000070());
+		results.put(0x00000088L, getVxtStructM_00000088());
+		results.put(0x000000a8L, getVxtStructM_000000a8());
+		results.put(0x000000d0L, getVxtStructM_000000d0_speculated());
+		results.put(0x000000e0L, getVxtStructM_000000e0_speculated());
+		results.put(0x000000f0L, getVxtStructM_000000f0_speculated());
+		results.put(0x00000100L, getVxtStructM_00000100_speculated());
+		results.put(0x00000110L, getVxtStructM_00000110_speculated());
+		results.put(0x00000118L, getVxtStructM_00000118_speculated());
+		results.put(0x00000128L, getVxtStructM_00000128_speculated());
+		results.put(0x00000138L, getVxtStructM_00000138_speculated());
 		return results;
 	}
 
@@ -4612,10 +4905,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000000
+			/MNS/M/vftable{for_ANS::A's_ENS::E}
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   ANS::A::fa_1   ""
+			Structure vftable{for_ANS::A's_ENS::E} {
+			   0   _func___thiscall_int *   8   fa_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -4626,18 +4919,19 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000008
+			/MNS/M/vbtable{for_ANS::A's_ENS::E}
 			pack()
-			Structure VTABLE_00000008 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
-			   8   int   4      "B1NS::B1"
-			   12   int   4      "B2NS::B2"
-			   16   int   4      "BNS::B"
-			   20   int   4      "N1NS::N1"
-			   24   int   4      "N2NS::N2"
+			Structure vbtable{for_ANS::A's_ENS::E} {
+			   0   int   4   offset_M   "/MNS/M/!internal/M"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
+			   12   int   4   offset_B1   "/B1NS/B1"
+			   16   int   4   offset_B2   "/B2NS/B2"
+			   20   int   4   offset_B   "/BNS/B/!internal/B"
+			   24   int   4   offset_N1   "/N1NS/N1"
+			   28   int   4   offset_N2   "/N2NS/N2"
 			}
-			Length: 28 Alignment: 4""";
+			Length: 32 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -4646,10 +4940,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000020
+			/MNS/M/vftable{for_CNS::C}
 			pack()
-			Structure VTABLE_00000020 {
-			   0   _func___thiscall_int *   8   CNS::C::fc_1   ""
+			Structure vftable{for_CNS::C} {
+			   0   _func___thiscall_int *   8   fc_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -4660,15 +4954,16 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000028
+			/MNS/M/vbtable{for_CNS::C}
 			pack()
-			Structure VTABLE_00000028 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
-			   8   int   4      "B1NS::B1"
-			   12   int   4      "B2NS::B2"
+			Structure vbtable{for_CNS::C} {
+			   0   int   4   offset_D   "/DNS/D/!internal/D"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
+			   12   int   4   offset_B1   "/B1NS/B1"
+			   16   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 16 Alignment: 4""";
+			Length: 20 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -4677,10 +4972,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000038
+			/MNS/M/vftable{for_ANS::A's_DNS::D}
 			pack()
-			Structure VTABLE_00000038 {
-			   0   _func___thiscall_int *   8   ANS::A::fa_1   ""
+			Structure vftable{for_ANS::A's_DNS::D} {
+			   0   _func___thiscall_int *   8   fa_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -4691,13 +4986,14 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000040
+			/MNS/M/vbtable{for_ANS::A's_DNS::D}
 			pack()
-			Structure VTABLE_00000040 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
+			Structure vbtable{for_ANS::A's_DNS::D} {
+			   0   int   4   offset_A   "/ANS/A/!internal/A"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -4706,10 +5002,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000050
+			/MNS/M/vftable{for_BNS::B's_DNS::D}
 			pack()
-			Structure VTABLE_00000050 {
-			   0   _func___thiscall_int *   8   BNS::B::fb_1   ""
+			Structure vftable{for_BNS::B's_DNS::D} {
+			   0   _func___thiscall_int *   8   fb_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -4720,13 +5016,14 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000058
+			/MNS/M/vbtable{for_BNS::B's_DNS::D}
 			pack()
-			Structure VTABLE_00000058 {
-			   0   int   4      "B1NS::B1"
-			   4   int   4      "B2NS::B2"
+			Structure vbtable{for_BNS::B's_DNS::D} {
+			   0   int   4   offset_B   "/BNS/B/!internal/B"
+			   4   int   4   offset_B1   "/B1NS/B1"
+			   8   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -4735,12 +5032,13 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000070
+			/MNS/M/vbtable{for_GNS::G}
 			pack()
-			Structure VTABLE_00000070 {
-			   0   int   4      "A1NS::A1"
+			Structure vbtable{for_GNS::G} {
+			   0   int   4   offset_I   "/INS/I/!internal/I"
+			   4   int   4   offset_A1   "/A1NS/A1"
 			}
-			Length: 4 Alignment: 4""";
+			Length: 8 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -4749,12 +5047,13 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000088
+			/MNS/M/vbtable{for_HNS::H}
 			pack()
-			Structure VTABLE_00000088 {
-			   0   int   4      "A1NS::A1"
+			Structure vbtable{for_HNS::H} {
+			   0   int   4   offset_H   "/HNS/H/!internal/H"
+			   4   int   4   offset_A1   "/A1NS/A1"
 			}
-			Length: 4 Alignment: 4""";
+			Length: 8 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -4763,12 +5062,13 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_000000a8
+			/MNS/M/vbtable
 			pack()
-			Structure VTABLE_000000a8 {
-			   0   int   4      "A1NS::A1"
+			Structure vbtable {
+			   0   int   4   offset_L   "/LNS/L/!internal/L"
+			   4   int   4   offset_A1   "/A1NS/A1"
 			}
-			Length: 4 Alignment: 4""";
+			Length: 8 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -4777,11 +5077,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_000000d0
+			/MNS/M/vftable{for_N1NS::N1}
 			pack()
-			Structure VTABLE_000000d0 {
-			   0   _func___thiscall_int *   8   MNS::M::fn1_1   ""
-			   8   _func___thiscall_int *   8   N1NS::N1::fn1_2   ""
+			Structure vftable{for_N1NS::N1} {
+			   0   _func___thiscall_int *   8   fn1_1   ""
+			   8   _func___thiscall_int *   8   fn1_2   ""
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
@@ -4792,12 +5092,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_000000e0
+			/MNS/M/vftable{for_A1NS::A1}
 			pack()
-			Structure VTABLE_000000e0 {
-			   0   _func___thiscall_int *   8   MNS::M::fa1_1   ""
-			   8   _func___thiscall_int *   8   CNS::C::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable{for_A1NS::A1} {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -4808,12 +5108,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_000000f0
+			/MNS/M/vftable{for_A2NS::A2}
 			pack()
-			Structure VTABLE_000000f0 {
-			   0   _func___thiscall_int *   8   MNS::M::fa2_1   ""
-			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
-			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
+			Structure vftable{for_A2NS::A2} {
+			   0   _func___thiscall_int *   8   fa2_1   ""
+			   8   _func___thiscall_int *   8   fa2_2   ""
+			   16   _func___thiscall_int *   8   fa2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -4824,12 +5124,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000100
+			/MNS/M/vftable{for_B1NS::B1}
 			pack()
-			Structure VTABLE_00000100 {
-			   0   _func___thiscall_int *   8   MNS::M::fb1_1   ""
-			   8   _func___thiscall_int *   8   CNS::C::fb1_2   ""
-			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
+			Structure vftable{for_B1NS::B1} {
+			   0   _func___thiscall_int *   8   fb1_1   ""
+			   8   _func___thiscall_int *   8   fb1_2   ""
+			   16   _func___thiscall_int *   8   fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -4840,12 +5140,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000110
+			/MNS/M/vftable{for_B2NS::B2}
 			pack()
-			Structure VTABLE_00000110 {
-			   0   _func___thiscall_int *   8   MNS::M::fb2_1   ""
-			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
-			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
+			Structure vftable{for_B2NS::B2} {
+			   0   _func___thiscall_int *   8   fb2_1   ""
+			   8   _func___thiscall_int *   8   fb2_2   ""
+			   16   _func___thiscall_int *   8   fb2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -4856,10 +5156,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000120
+			/MNS/M/vftable{for_BNS::B's_ENS::E}
 			pack()
-			Structure VTABLE_00000120 {
-			   0   _func___thiscall_int *   8   BNS::B::fb_1   ""
+			Structure vftable{for_BNS::B's_ENS::E} {
+			   0   _func___thiscall_int *   8   fb_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -4870,13 +5170,14 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000128
+			/MNS/M/vbtable{for_BNS::B's_ENS::E}
 			pack()
-			Structure VTABLE_00000128 {
-			   0   int   4      "B1NS::B1"
-			   4   int   4      "B2NS::B2"
+			Structure vbtable{for_BNS::B's_ENS::E} {
+			   0   int   4   offset_B   "/BNS/B/!internal/B"
+			   4   int   4   offset_B1   "/B1NS/B1"
+			   8   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -4885,27 +5186,71 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000138
+			/MNS/M/vftable{for_N2NS::N2}
 			pack()
-			Structure VTABLE_00000138 {
-			   0   _func___thiscall_int *   8   N2NS::N2::fn2_1   ""
-			   8   _func___thiscall_int *   8   N2NS::N2::fn2_2   ""
+			Structure vftable{for_N2NS::N2} {
+			   0   _func___thiscall_int *   8   fn2_1   ""
+			   8   _func___thiscall_int *   8   fn2_2   ""
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
 		return expected;
 	}
 
+	private static List<ListingResult> getExpectedVxtListingResultsM() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006f970", "MNS::M::vftable{for_ANS::A's_ENS::E}",
+			"/MNS/M/vftable{for_ANS::A's_ENS::E}"));
+		results.add(new ListingResult("14006fa68", "MNS::M::vbtable{for_ANS::A's_ENS::E}",
+			"/MNS/M/vbtable{for_ANS::A's_ENS::E}"));
+		results.add(new ListingResult("14006f980", "MNS::M::vftable{for_CNS::C}",
+			"/MNS/M/vftable{for_CNS::C}"));
+		results.add(new ListingResult("14006fa88", "MNS::M::vbtable{for_CNS::C}",
+			"/MNS/M/vbtable{for_CNS::C}"));
+		results.add(new ListingResult("14006f990", "MNS::M::vftable{for_ANS::A's_DNS::D}",
+			"/MNS/M/vftable{for_ANS::A's_DNS::D}"));
+		results.add(new ListingResult("14006fa9c", "MNS::M::vbtable{for_ANS::A's_DNS::D}",
+			"/MNS/M/vbtable{for_ANS::A's_DNS::D}"));
+		results.add(new ListingResult("14006f9a0", "MNS::M::vftable{for_BNS::B's_DNS::D}",
+			"/MNS/M/vftable{for_BNS::B's_DNS::D}"));
+		results.add(new ListingResult("14006faa8", "MNS::M::vbtable{for_BNS::B's_DNS::D}",
+			"/MNS/M/vbtable{for_BNS::B's_DNS::D}"));
+		results.add(new ListingResult("14006fab4", "MNS::M::vbtable{for_GNS::G}",
+			"/MNS/M/vbtable{for_GNS::G}"));
+		results.add(new ListingResult("14006fabc", "MNS::M::vbtable{for_HNS::H}",
+			"/MNS/M/vbtable{for_HNS::H}"));
+		results.add(new ListingResult("14006fac4", "MNS::M::vbtable", "/MNS/M/vbtable"));
+		results.add(new ListingResult("14006f9b0", "MNS::M::vftable{for_N1NS::N1}",
+			"/MNS/M/vftable{for_N1NS::N1}"));
+		results.add(new ListingResult("14006f9c8", "MNS::M::vftable{for_A1NS::A1}",
+			"/MNS/M/vftable{for_A1NS::A1}"));
+		results.add(new ListingResult("14006f9e8", "MNS::M::vftable{for_A2NS::A2}",
+			"/MNS/M/vftable{for_A2NS::A2}"));
+		results.add(new ListingResult("14006fa08", "MNS::M::vftable{for_B1NS::B1}",
+			"/MNS/M/vftable{for_B1NS::B1}"));
+		results.add(new ListingResult("14006fa28", "MNS::M::vftable{for_B2NS::B2}",
+			"/MNS/M/vftable{for_B2NS::B2}"));
+		results.add(new ListingResult("14006fa48", "MNS::M::vftable{for_BNS::B's_ENS::E}",
+			"/MNS/M/vftable{for_BNS::B's_ENS::E}"));
+		results.add(new ListingResult("14006facc", "MNS::M::vbtable{for_BNS::B's_ENS::E}",
+			"/MNS/M/vbtable{for_BNS::B's_ENS::E}"));
+		results.add(new ListingResult("14006fa58", "MNS::M::vftable{for_N2NS::N2}",
+			"/MNS/M/vftable{for_N2NS::N2}"));
+		return results;
+	}
+
+	//====
+
 	private static String getVxtStructM_000000d0_speculated() {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_000000d0
+			/MNS/M/vftable{for_A1NS::A1}
 			pack()
-			Structure VTABLE_000000d0 {
-			   0   _func___thiscall_int *   8   MNS::M::fa1_1   ""
-			   8   _func___thiscall_int *   8   CNS::C::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable{for_A1NS::A1} {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -4916,12 +5261,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_000000e0
+			/MNS/M/vftable{for_A2NS::A2}
 			pack()
-			Structure VTABLE_000000e0 {
-			   0   _func___thiscall_int *   8   MNS::M::fa2_1   ""
-			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
-			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
+			Structure vftable{for_A2NS::A2} {
+			   0   _func___thiscall_int *   8   fa2_1   ""
+			   8   _func___thiscall_int *   8   fa2_2   ""
+			   16   _func___thiscall_int *   8   fa2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -4932,12 +5277,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_000000f0
+			/MNS/M/vftable{for_B1NS::B1}
 			pack()
-			Structure VTABLE_000000f0 {
-			   0   _func___thiscall_int *   8   MNS::M::fb1_1   ""
-			   8   _func___thiscall_int *   8   CNS::C::fb1_2   ""
-			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
+			Structure vftable{for_B1NS::B1} {
+			   0   _func___thiscall_int *   8   fb1_1   ""
+			   8   _func___thiscall_int *   8   fb1_2   ""
+			   16   _func___thiscall_int *   8   fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -4948,12 +5293,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000100
+			/MNS/M/vftable{for_B2NS::B2}
 			pack()
-			Structure VTABLE_00000100 {
-			   0   _func___thiscall_int *   8   MNS::M::fb2_1   ""
-			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
-			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
+			Structure vftable{for_B2NS::B2} {
+			   0   _func___thiscall_int *   8   fb2_1   ""
+			   8   _func___thiscall_int *   8   fb2_2   ""
+			   16   _func___thiscall_int *   8   fb2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -4964,10 +5309,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000110
+			/MNS/M/vftable{for_BNS::B's_ENS::E}
 			pack()
-			Structure VTABLE_00000110 {
-			   0   _func___thiscall_int *   8   BNS::B::fb_1   ""
+			Structure vftable{for_BNS::B's_ENS::E} {
+			   0   _func___thiscall_int *   8   fb_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -4978,13 +5323,14 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000118
+			/MNS/M/vbtable{for_BNS::B's_ENS::E}
 			pack()
-			Structure VTABLE_00000118 {
-			   0   int   4      "B1NS::B1"
-			   4   int   4      "B2NS::B2"
+			Structure vbtable{for_BNS::B's_ENS::E} {
+			   0   int   4   offset_B   "/BNS/B/!internal/B"
+			   4   int   4   offset_B1   "/B1NS/B1"
+			   8   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -4993,11 +5339,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000128
+			/MNS/M/vbtable{for_BNS::B's_ENS::E}
 			pack()
-			Structure VTABLE_00000128 {
-			   0   _func___thiscall_int *   8   MNS::M::fn1_1   ""
-			   8   _func___thiscall_int *   8   N1NS::N1::fn1_2   ""
+			Structure vbtable{for_BNS::B's_ENS::E} {
+			   0   _func___thiscall_int *   8   fn1_1   ""
+			   8   _func___thiscall_int *   8   fn1_2   ""
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
@@ -5008,11 +5354,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/MNS/M/!internal/VTABLE_00000138
+			/MNS/M/vftable for N2NS::N2
 			pack()
-			Structure VTABLE_00000138 {
-			   0   _func___thiscall_int *   8   N2NS::N2::fn2_1   ""
-			   8   _func___thiscall_int *   8   N2NS::N2::fn2_2   ""
+			Structure vftable for N2NS::N2 {
+			   0   _func___thiscall_int *   8   fn2_1   ""
+			   8   _func___thiscall_int *   8   fn2_2   ""
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
@@ -5120,65 +5466,65 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O1NS::O1
+			/O1NS/O1
 			pack()
-			Structure O1NS::O1 {
-			   0   O1NS::O1   56      "Self Base"
-			   56   A1NS::A1   16      "Virtual Base"
-			   72   A2NS::A2   16      "Virtual Base"
-			   88   B1NS::B1   16      "Virtual Base"
-			   104   B2NS::B2   16      "Virtual Base"
+			Structure O1 {
+			   0   O1   56      "Self Base"
+			   56   A1   16      "Virtual Base"
+			   72   A2   16      "Virtual Base"
+			   88   B1   16      "Virtual Base"
+			   104   B2   16      "Virtual Base"
 			}
 			Length: 120 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/A2NS::A2
+			/A2NS/A2
 			pack()
-			Structure A2NS::A2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a2   ""
 			}
 			Length: 16 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/B1NS::B1
+			/B1NS/B1
 			pack()
-			Structure B1NS::B1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b1   ""
 			}
 			Length: 16 Alignment: 8
-			/B2NS::B2
+			/B2NS/B2
 			pack()
-			Structure B2NS::B2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b2   ""
 			}
 			Length: 16 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8
-			/O1NS::O1/!internal/O1NS::O1
+			/O1NS/O1/!internal/O1
 			pack()
-			Structure O1NS::O1 {
-			   0   ANS::A   24      "Base"
-			   24   BNS::B   24      "Base"
+			Structure O1 {
+			   0   A   24      "Base"
+			   24   B   24      "Base"
 			   48   int   4   o1   ""
 			}
 			Length: 56 Alignment: 8""";
@@ -5190,34 +5536,34 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O1NS::O1
+			/O1NS/O1
 			pack()
-			Structure O1NS::O1 {
-			   0   O1NS::O1   56      "Self Base"
-			   56   char[64]   64      "Filler for 4 Unplaceable Virtual Bases: A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2"
+			Structure O1 {
+			   0   O1   56      "Self Base"
+			   56   char[64]   64      "Filler for 4 Unplaceable Virtual Bases: A1; A2; B1; B2"
 			}
 			Length: 120 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8
-			/O1NS::O1/!internal/O1NS::O1
+			/O1NS/O1/!internal/O1
 			pack()
-			Structure O1NS::O1 {
-			   0   ANS::A   24      "Base"
-			   24   BNS::B   24      "Base"
+			Structure O1 {
+			   0   A   24      "Base"
+			   24   B   24      "Base"
 			   48   int   4   o1   ""
 			}
 			Length: 56 Alignment: 8""";
@@ -5229,29 +5575,34 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructO1());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryO1() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft [ANS::A]	[O1NS::O1, ANS::A]");
-		results.put("VTABLE_00000008", "     8 vbt [ANS::A]	[O1NS::O1, ANS::A]");
-		results.put("VTABLE_00000018", "    24 vft [BNS::B]	[O1NS::O1, BNS::B]");
-		results.put("VTABLE_00000020", "    32 vbt [BNS::B]	[O1NS::O1, BNS::B]");
-		results.put("VTABLE_00000038", "    56 vft [A1NS::A1]	[O1NS::O1, ANS::A, A1NS::A1]");
-		results.put("VTABLE_00000048", "    72 vft [A2NS::A2]	[O1NS::O1, ANS::A, A2NS::A2]");
-		results.put("VTABLE_00000058", "    88 vft [B1NS::B1]	[O1NS::O1, BNS::B, B1NS::B1]");
-		results.put("VTABLE_00000068", "   104 vft [B2NS::B2]	[O1NS::O1, BNS::B, B2NS::B2]");
+	private static String getExpectedSourceHierarchyO1() {
+		String expected = "struct O1NS::O1 : ANS::A, BNS::B";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryO1() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft [ANS::A]	[O1NS::O1, ANS::A]");
+		results.put(0x00000008L, "     8 vbt [ANS::A]	[O1NS::O1, ANS::A]");
+		results.put(0x00000018L, "    24 vft [BNS::B]	[O1NS::O1, BNS::B]");
+		results.put(0x00000020L, "    32 vbt [BNS::B]	[O1NS::O1, BNS::B]");
+		results.put(0x00000038L, "    56 vft [A1NS::A1]	[O1NS::O1, ANS::A, A1NS::A1]");
+		results.put(0x00000048L, "    72 vft [A2NS::A2]	[O1NS::O1, ANS::A, A2NS::A2]");
+		results.put(0x00000058L, "    88 vft [B1NS::B1]	[O1NS::O1, BNS::B, B1NS::B1]");
+		results.put(0x00000068L, "   104 vft [B2NS::B2]	[O1NS::O1, BNS::B, B2NS::B2]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsO1() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructO1_00000000());
-		results.put("VTABLE_00000008", getVxtStructO1_00000008());
-		results.put("VTABLE_00000018", getVxtStructO1_00000018());
-		results.put("VTABLE_00000020", getVxtStructO1_00000020());
-		results.put("VTABLE_00000038", getVxtStructO1_00000038());
-		results.put("VTABLE_00000048", getVxtStructO1_00000048());
-		results.put("VTABLE_00000058", getVxtStructO1_00000058());
-		results.put("VTABLE_00000068", getVxtStructO1_00000068());
+	private static Map<Long, String> getExpectedVxtStructsO1() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructO1_00000000());
+		results.put(0x00000008L, getVxtStructO1_00000008());
+		results.put(0x00000018L, getVxtStructO1_00000018());
+		results.put(0x00000020L, getVxtStructO1_00000020());
+		results.put(0x00000038L, getVxtStructO1_00000038());
+		results.put(0x00000048L, getVxtStructO1_00000048());
+		results.put(0x00000058L, getVxtStructO1_00000058());
+		results.put(0x00000068L, getVxtStructO1_00000068());
 		return results;
 	}
 
@@ -5259,11 +5610,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O1NS/O1/!internal/VTABLE_00000000
+			/O1NS/O1/vftable{for_ANS::A}
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   ANS::A::fa_1   ""
-			   8   _func___thiscall_int *   8   O1NS::O1::fo1_1   ""
+			Structure vftable{for_ANS::A} {
+			   0   _func___thiscall_int *   8   fa_1   ""
+			   8   _func___thiscall_int *   8   fo1_1   ""
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
@@ -5274,15 +5625,16 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O1NS/O1/!internal/VTABLE_00000008
+			/O1NS/O1/vbtable{for_ANS::A}
 			pack()
-			Structure VTABLE_00000008 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
-			   8   int   4      "B1NS::B1"
-			   12   int   4      "B2NS::B2"
+			Structure vbtable{for_ANS::A} {
+			   0   int   4   offset_O1   "/O1NS/O1/!internal/O1"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
+			   12   int   4   offset_B1   "/B1NS/B1"
+			   16   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 16 Alignment: 4""";
+			Length: 20 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -5291,10 +5643,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O1NS/O1/!internal/VTABLE_00000018
+			/O1NS/O1/vftable{for_BNS::B}
 			pack()
-			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   BNS::B::fb_1   ""
+			Structure vftable{for_BNS::B} {
+			   0   _func___thiscall_int *   8   fb_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -5305,13 +5657,14 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O1NS/O1/!internal/VTABLE_00000020
+			/O1NS/O1/vbtable{for_BNS::B}
 			pack()
-			Structure VTABLE_00000020 {
-			   0   int   4      "B1NS::B1"
-			   4   int   4      "B2NS::B2"
+			Structure vbtable{for_BNS::B} {
+			   0   int   4   offset_B   "/BNS/B/!internal/B"
+			   4   int   4   offset_B1   "/B1NS/B1"
+			   8   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -5320,12 +5673,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O1NS/O1/!internal/VTABLE_00000038
+			/O1NS/O1/vftable{for_A1NS::A1}
 			pack()
-			Structure VTABLE_00000038 {
-			   0   _func___thiscall_int *   8   ANS::A::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable{for_A1NS::A1} {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -5336,12 +5689,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O1NS/O1/!internal/VTABLE_00000048
+			/O1NS/O1/vftable{for_A2NS::A2}
 			pack()
-			Structure VTABLE_00000048 {
-			   0   _func___thiscall_int *   8   O1NS::O1::fa2_1   ""
-			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
-			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
+			Structure vftable{for_A2NS::A2} {
+			   0   _func___thiscall_int *   8   fa2_1   ""
+			   8   _func___thiscall_int *   8   fa2_2   ""
+			   16   _func___thiscall_int *   8   fa2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -5352,12 +5705,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O1NS/O1/!internal/VTABLE_00000058
+			/O1NS/O1/vftable{for_B1NS::B1}
 			pack()
-			Structure VTABLE_00000058 {
-			   0   _func___thiscall_int *   8   BNS::B::fb1_1   ""
-			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
-			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
+			Structure vftable{for_B1NS::B1} {
+			   0   _func___thiscall_int *   8   fb1_1   ""
+			   8   _func___thiscall_int *   8   fb1_2   ""
+			   16   _func___thiscall_int *   8   fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -5368,16 +5721,37 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O1NS/O1/!internal/VTABLE_00000068
+			/O1NS/O1/vftable{for_B2NS::B2}
 			pack()
-			Structure VTABLE_00000068 {
-			   0   _func___thiscall_int *   8   BNS::B::fb2_1   ""
-			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
-			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
+			Structure vftable{for_B2NS::B2} {
+			   0   _func___thiscall_int *   8   fb2_1   ""
+			   8   _func___thiscall_int *   8   fb2_2   ""
+			   16   _func___thiscall_int *   8   fb2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsO1() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006fae0", "O1NS::O1::vftable{for_ANS::A}",
+			"/O1NS/O1/vftable{for_ANS::A}"));
+		results.add(new ListingResult("14006fb80", "O1NS::O1::vbtable{for_ANS::A}",
+			"/O1NS/O1/vbtable{for_ANS::A}"));
+		results.add(new ListingResult("14006faf8", "O1NS::O1::vftable{for_BNS::B}",
+			"/O1NS/O1/vftable{for_BNS::B}"));
+		results.add(new ListingResult("14006fb94", "O1NS::O1::vbtable{for_BNS::B}",
+			"/O1NS/O1/vbtable{for_BNS::B}"));
+		results.add(new ListingResult("14006fb08", "O1NS::O1::vftable{for_A1NS::A1}",
+			"/O1NS/O1/vftable{for_A1NS::A1}"));
+		results.add(new ListingResult("14006fb28", "O1NS::O1::vftable{for_A2NS::A2}",
+			"/O1NS/O1/vftable{for_A2NS::A2}"));
+		results.add(new ListingResult("14006fb48", "O1NS::O1::vftable{for_B1NS::B1}",
+			"/O1NS/O1/vftable{for_B1NS::B1}"));
+		results.add(new ListingResult("14006fb68", "O1NS::O1::vftable{for_B2NS::B2}",
+			"/O1NS/O1/vftable{for_B2NS::B2}"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -5483,65 +5857,65 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O2NS::O2
+			/O2NS/O2
 			pack()
-			Structure O2NS::O2 {
-			   0   O2NS::O2   32      "Self Base"
-			   32   A1NS::A1   16      "Virtual Base"
-			   48   A2NS::A2   16      "Virtual Base"
-			   64   B1NS::B1   16      "Virtual Base"
-			   80   B2NS::B2   16      "Virtual Base"
-			   96   BNS::B   24      "Virtual Base"
+			Structure O2 {
+			   0   O2   32      "Self Base"
+			   32   A1   16      "Virtual Base"
+			   48   A2   16      "Virtual Base"
+			   64   B1   16      "Virtual Base"
+			   80   B2   16      "Virtual Base"
+			   96   B   24      "Virtual Base"
 			}
 			Length: 120 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/A2NS::A2
+			/A2NS/A2
 			pack()
-			Structure A2NS::A2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a2   ""
 			}
 			Length: 16 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/B1NS::B1
+			/B1NS/B1
 			pack()
-			Structure B1NS::B1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b1   ""
 			}
 			Length: 16 Alignment: 8
-			/B2NS::B2
+			/B2NS/B2
 			pack()
-			Structure B2NS::B2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b2   ""
 			}
 			Length: 16 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8
-			/O2NS::O2/!internal/O2NS::O2
+			/O2NS/O2/!internal/O2
 			pack()
-			Structure O2NS::O2 {
-			   0   ANS::A   24      "Base"
+			Structure O2 {
+			   0   A   24      "Base"
 			   24   int   4   o2   ""
 			}
 			Length: 32 Alignment: 8""";
@@ -5553,25 +5927,25 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O2NS::O2
+			/O2NS/O2
 			pack()
-			Structure O2NS::O2 {
-			   0   O2NS::O2   32      "Self Base"
-			   32   char[88]   88      "Filler for 5 Unplaceable Virtual Bases: BNS::B; A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2"
+			Structure O2 {
+			   0   O2   32      "Self Base"
+			   32   char[88]   88      "Filler for 5 Unplaceable Virtual Bases: B; A1; A2; B1; B2"
 			}
 			Length: 120 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/O2NS::O2/!internal/O2NS::O2
+			/O2NS/O2/!internal/O2
 			pack()
-			Structure O2NS::O2 {
-			   0   ANS::A   24      "Base"
+			Structure O2 {
+			   0   A   24      "Base"
 			   24   int   4   o2   ""
 			}
 			Length: 32 Alignment: 8""";
@@ -5583,29 +5957,34 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructO2());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryO2() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft [ANS::A]	[O2NS::O2, ANS::A]");
-		results.put("VTABLE_00000008", "     8 vbt [ANS::A]	[O2NS::O2, ANS::A]");
-		results.put("VTABLE_00000020", "    32 vft [A1NS::A1]	[O2NS::O2, ANS::A, A1NS::A1]");
-		results.put("VTABLE_00000030", "    48 vft [A2NS::A2]	[O2NS::O2, ANS::A, A2NS::A2]");
-		results.put("VTABLE_00000040", "    64 vft [B1NS::B1]	[O2NS::O2, BNS::B, B1NS::B1]");
-		results.put("VTABLE_00000050", "    80 vft [B2NS::B2]	[O2NS::O2, BNS::B, B2NS::B2]");
-		results.put("VTABLE_00000060", "    96 vft [BNS::B]	[O2NS::O2, BNS::B]");
-		results.put("VTABLE_00000068", "   104 vbt [BNS::B]	[O2NS::O2, BNS::B]");
+	private static String getExpectedSourceHierarchyO2() {
+		String expected = "struct O2NS::O2 : ANS::A, virtual BNS::B";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryO2() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft [ANS::A]	[O2NS::O2, ANS::A]");
+		results.put(0x00000008L, "     8 vbt [ANS::A]	[O2NS::O2, ANS::A]");
+		results.put(0x00000020L, "    32 vft [A1NS::A1]	[O2NS::O2, ANS::A, A1NS::A1]");
+		results.put(0x00000030L, "    48 vft [A2NS::A2]	[O2NS::O2, ANS::A, A2NS::A2]");
+		results.put(0x00000040L, "    64 vft [B1NS::B1]	[O2NS::O2, BNS::B, B1NS::B1]");
+		results.put(0x00000050L, "    80 vft [B2NS::B2]	[O2NS::O2, BNS::B, B2NS::B2]");
+		results.put(0x00000060L, "    96 vft [BNS::B]	[O2NS::O2, BNS::B]");
+		results.put(0x00000068L, "   104 vbt [BNS::B]	[O2NS::O2, BNS::B]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsO2() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructO2_00000000());
-		results.put("VTABLE_00000008", getVxtStructO2_00000008());
-		results.put("VTABLE_00000020", getVxtStructO2_00000020());
-		results.put("VTABLE_00000030", getVxtStructO2_00000030());
-		results.put("VTABLE_00000040", getVxtStructO2_00000040());
-		results.put("VTABLE_00000050", getVxtStructO2_00000050());
-		results.put("VTABLE_00000060", getVxtStructO2_00000060());
-		results.put("VTABLE_00000068", getVxtStructO2_00000068());
+	private static Map<Long, String> getExpectedVxtStructsO2() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructO2_00000000());
+		results.put(0x00000008L, getVxtStructO2_00000008());
+		results.put(0x00000020L, getVxtStructO2_00000020());
+		results.put(0x00000030L, getVxtStructO2_00000030());
+		results.put(0x00000040L, getVxtStructO2_00000040());
+		results.put(0x00000050L, getVxtStructO2_00000050());
+		results.put(0x00000060L, getVxtStructO2_00000060());
+		results.put(0x00000068L, getVxtStructO2_00000068());
 		return results;
 	}
 
@@ -5613,11 +5992,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O2NS/O2/!internal/VTABLE_00000000
+			/O2NS/O2/vftable{for_ANS::A}
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   ANS::A::fa_1   ""
-			   8   _func___thiscall_int *   8   O2NS::O2::fo2_1   ""
+			Structure vftable{for_ANS::A} {
+			   0   _func___thiscall_int *   8   fa_1   ""
+			   8   _func___thiscall_int *   8   fo2_1   ""
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
@@ -5628,16 +6007,17 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O2NS/O2/!internal/VTABLE_00000008
+			/O2NS/O2/vbtable{for_ANS::A}
 			pack()
-			Structure VTABLE_00000008 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
-			   8   int   4      "B1NS::B1"
-			   12   int   4      "B2NS::B2"
-			   16   int   4      "BNS::B"
+			Structure vbtable{for_ANS::A} {
+			   0   int   4   offset_O2   "/O2NS/O2/!internal/O2"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
+			   12   int   4   offset_B1   "/B1NS/B1"
+			   16   int   4   offset_B2   "/B2NS/B2"
+			   20   int   4   offset_B   "/BNS/B/!internal/B"
 			}
-			Length: 20 Alignment: 4""";
+			Length: 24 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -5646,12 +6026,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O2NS/O2/!internal/VTABLE_00000020
+			/O2NS/O2/vftable{for_A1NS::A1}
 			pack()
-			Structure VTABLE_00000020 {
-			   0   _func___thiscall_int *   8   ANS::A::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable{for_A1NS::A1} {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -5662,12 +6042,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O2NS/O2/!internal/VTABLE_00000030
+			/O2NS/O2/vftable{for_A2NS::A2}
 			pack()
-			Structure VTABLE_00000030 {
-			   0   _func___thiscall_int *   8   O2NS::O2::fa2_1   ""
-			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
-			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
+			Structure vftable{for_A2NS::A2} {
+			   0   _func___thiscall_int *   8   fa2_1   ""
+			   8   _func___thiscall_int *   8   fa2_2   ""
+			   16   _func___thiscall_int *   8   fa2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -5678,12 +6058,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O2NS/O2/!internal/VTABLE_00000040
+			/O2NS/O2/vftable{for_B1NS::B1}
 			pack()
-			Structure VTABLE_00000040 {
-			   0   _func___thiscall_int *   8   BNS::B::fb1_1   ""
-			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
-			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
+			Structure vftable{for_B1NS::B1} {
+			   0   _func___thiscall_int *   8   fb1_1   ""
+			   8   _func___thiscall_int *   8   fb1_2   ""
+			   16   _func___thiscall_int *   8   fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -5694,12 +6074,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O2NS/O2/!internal/VTABLE_00000050
+			/O2NS/O2/vftable{for_B2NS::B2}
 			pack()
-			Structure VTABLE_00000050 {
-			   0   _func___thiscall_int *   8   BNS::B::fb2_1   ""
-			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
-			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
+			Structure vftable{for_B2NS::B2} {
+			   0   _func___thiscall_int *   8   fb2_1   ""
+			   8   _func___thiscall_int *   8   fb2_2   ""
+			   16   _func___thiscall_int *   8   fb2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -5710,10 +6090,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O2NS/O2/!internal/VTABLE_00000060
+			/O2NS/O2/vftable{for_BNS::B}
 			pack()
-			Structure VTABLE_00000060 {
-			   0   _func___thiscall_int *   8   BNS::B::fb_1   ""
+			Structure vftable{for_BNS::B} {
+			   0   _func___thiscall_int *   8   fb_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -5724,15 +6104,37 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O2NS/O2/!internal/VTABLE_00000068
+			/O2NS/O2/vbtable{for_BNS::B}
 			pack()
-			Structure VTABLE_00000068 {
-			   0   int   4      "B1NS::B1"
-			   4   int   4      "B2NS::B2"
+			Structure vbtable{for_BNS::B} {
+			   0   int   4   offset_B   "/BNS/B/!internal/B"
+			   4   int   4   offset_B1   "/B1NS/B1"
+			   8   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsO2() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006fba8", "O2NS::O2::vftable{for_ANS::A}",
+			"/O2NS/O2/vftable{for_ANS::A}"));
+		results.add(new ListingResult("14006fc48", "O2NS::O2::vbtable{for_ANS::A}",
+			"/O2NS/O2/vbtable{for_ANS::A}"));
+		results.add(new ListingResult("14006fbc0", "O2NS::O2::vftable{for_A1NS::A1}",
+			"/O2NS/O2/vftable{for_A1NS::A1}"));
+		results.add(new ListingResult("14006fbe0", "O2NS::O2::vftable{for_A2NS::A2}",
+			"/O2NS/O2/vftable{for_A2NS::A2}"));
+		results.add(new ListingResult("14006fc00", "O2NS::O2::vftable{for_B1NS::B1}",
+			"/O2NS/O2/vftable{for_B1NS::B1}"));
+		results.add(new ListingResult("14006fc20", "O2NS::O2::vftable{for_B2NS::B2}",
+			"/O2NS/O2/vftable{for_B2NS::B2}"));
+		results.add(new ListingResult("14006fc40", "O2NS::O2::vftable{for_BNS::B}",
+			"/O2NS/O2/vftable{for_BNS::B}"));
+		results.add(new ListingResult("14006fc60", "O2NS::O2::vbtable{for_BNS::B}",
+			"/O2NS/O2/vbtable{for_BNS::B}"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -5836,65 +6238,65 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O3NS::O3
+			/O3NS/O3
 			pack()
-			Structure O3NS::O3 {
-			   0   O3NS::O3   56      "Self Base"
-			   56   A1NS::A1   16      "Virtual Base"
-			   72   A2NS::A2   16      "Virtual Base"
-			   88   B1NS::B1   16      "Virtual Base"
-			   104   B2NS::B2   16      "Virtual Base"
+			Structure O3 {
+			   0   O3   56      "Self Base"
+			   56   A1   16      "Virtual Base"
+			   72   A2   16      "Virtual Base"
+			   88   B1   16      "Virtual Base"
+			   104   B2   16      "Virtual Base"
 			}
 			Length: 120 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/A2NS::A2
+			/A2NS/A2
 			pack()
-			Structure A2NS::A2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a2   ""
 			}
 			Length: 16 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/B1NS::B1
+			/B1NS/B1
 			pack()
-			Structure B1NS::B1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b1   ""
 			}
 			Length: 16 Alignment: 8
-			/B2NS::B2
+			/B2NS/B2
 			pack()
-			Structure B2NS::B2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b2   ""
 			}
 			Length: 16 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8
-			/O3NS::O3/!internal/O3NS::O3
+			/O3NS/O3/!internal/O3
 			pack()
-			Structure O3NS::O3 {
-			   0   ANS::A   24      "Base"
-			   24   BNS::B   24      "Base"
+			Structure O3 {
+			   0   A   24      "Base"
+			   24   B   24      "Base"
 			   48   int   4   o3   ""
 			}
 			Length: 56 Alignment: 8""";
@@ -5906,34 +6308,34 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O3NS::O3
+			/O3NS/O3
 			pack()
-			Structure O3NS::O3 {
-			   0   O3NS::O3   56      "Self Base"
-			   56   char[64]   64      "Filler for 4 Unplaceable Virtual Bases: A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2"
+			Structure O3 {
+			   0   O3   56      "Self Base"
+			   56   char[64]   64      "Filler for 4 Unplaceable Virtual Bases: A1; A2; B1; B2"
 			}
 			Length: 120 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8
-			/O3NS::O3/!internal/O3NS::O3
+			/O3NS/O3/!internal/O3
 			pack()
-			Structure O3NS::O3 {
-			   0   ANS::A   24      "Base"
-			   24   BNS::B   24      "Base"
+			Structure O3 {
+			   0   A   24      "Base"
+			   24   B   24      "Base"
 			   48   int   4   o3   ""
 			}
 			Length: 56 Alignment: 8""";
@@ -5945,29 +6347,34 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructO3());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryO3() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft [ANS::A]	[O3NS::O3, ANS::A]");
-		results.put("VTABLE_00000008", "     8 vbt [ANS::A]	[O3NS::O3, ANS::A]");
-		results.put("VTABLE_00000018", "    24 vft [BNS::B]	[O3NS::O3, BNS::B]");
-		results.put("VTABLE_00000020", "    32 vbt [BNS::B]	[O3NS::O3, BNS::B]");
-		results.put("VTABLE_00000038", "    56 vft [A1NS::A1]	[O3NS::O3, ANS::A, A1NS::A1]");
-		results.put("VTABLE_00000048", "    72 vft [A2NS::A2]	[O3NS::O3, ANS::A, A2NS::A2]");
-		results.put("VTABLE_00000058", "    88 vft [B1NS::B1]	[O3NS::O3, BNS::B, B1NS::B1]");
-		results.put("VTABLE_00000068", "   104 vft [B2NS::B2]	[O3NS::O3, BNS::B, B2NS::B2]");
+	private static String getExpectedSourceHierarchyO3() {
+		String expected = "struct O3NS::O3 : ANS::A, BNS::B";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryO3() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft [ANS::A]	[O3NS::O3, ANS::A]");
+		results.put(0x00000008L, "     8 vbt [ANS::A]	[O3NS::O3, ANS::A]");
+		results.put(0x00000018L, "    24 vft [BNS::B]	[O3NS::O3, BNS::B]");
+		results.put(0x00000020L, "    32 vbt [BNS::B]	[O3NS::O3, BNS::B]");
+		results.put(0x00000038L, "    56 vft [A1NS::A1]	[O3NS::O3, ANS::A, A1NS::A1]");
+		results.put(0x00000048L, "    72 vft [A2NS::A2]	[O3NS::O3, ANS::A, A2NS::A2]");
+		results.put(0x00000058L, "    88 vft [B1NS::B1]	[O3NS::O3, BNS::B, B1NS::B1]");
+		results.put(0x00000068L, "   104 vft [B2NS::B2]	[O3NS::O3, BNS::B, B2NS::B2]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsO3() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructO3_00000000());
-		results.put("VTABLE_00000008", getVxtStructO3_00000008());
-		results.put("VTABLE_00000018", getVxtStructO3_00000018());
-		results.put("VTABLE_00000020", getVxtStructO3_00000020());
-		results.put("VTABLE_00000038", getVxtStructO3_00000038());
-		results.put("VTABLE_00000048", getVxtStructO3_00000048());
-		results.put("VTABLE_00000058", getVxtStructO3_00000058());
-		results.put("VTABLE_00000068", getVxtStructO3_00000068());
+	private static Map<Long, String> getExpectedVxtStructsO3() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructO3_00000000());
+		results.put(0x00000008L, getVxtStructO3_00000008());
+		results.put(0x00000018L, getVxtStructO3_00000018());
+		results.put(0x00000020L, getVxtStructO3_00000020());
+		results.put(0x00000038L, getVxtStructO3_00000038());
+		results.put(0x00000048L, getVxtStructO3_00000048());
+		results.put(0x00000058L, getVxtStructO3_00000058());
+		results.put(0x00000068L, getVxtStructO3_00000068());
 		return results;
 	}
 
@@ -5975,11 +6382,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O3NS/O3/!internal/VTABLE_00000000
+			/O3NS/O3/vftable{for_ANS::A}
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   ANS::A::fa_1   ""
-			   8   _func___thiscall_int *   8   O3NS::O3::fo3_1   ""
+			Structure vftable{for_ANS::A} {
+			   0   _func___thiscall_int *   8   fa_1   ""
+			   8   _func___thiscall_int *   8   fo3_1   ""
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
@@ -5990,15 +6397,16 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O3NS/O3/!internal/VTABLE_00000008
+			/O3NS/O3/vbtable{for_ANS::A}
 			pack()
-			Structure VTABLE_00000008 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
-			   8   int   4      "B1NS::B1"
-			   12   int   4      "B2NS::B2"
+			Structure vbtable{for_ANS::A} {
+			   0   int   4   offset_O3   "/O3NS/O3/!internal/O3"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
+			   12   int   4   offset_B1   "/B1NS/B1"
+			   16   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 16 Alignment: 4""";
+			Length: 20 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -6007,10 +6415,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O3NS/O3/!internal/VTABLE_00000018
+			/O3NS/O3/vftable{for_BNS::B}
 			pack()
-			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   BNS::B::fb_1   ""
+			Structure vftable{for_BNS::B} {
+			   0   _func___thiscall_int *   8   fb_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -6021,13 +6429,14 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O3NS/O3/!internal/VTABLE_00000020
+			/O3NS/O3/vbtable{for_BNS::B}
 			pack()
-			Structure VTABLE_00000020 {
-			   0   int   4      "B1NS::B1"
-			   4   int   4      "B2NS::B2"
+			Structure vbtable{for_BNS::B} {
+			   0   int   4   offset_B   "/BNS/B/!internal/B"
+			   4   int   4   offset_B1   "/B1NS/B1"
+			   8   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -6036,12 +6445,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O3NS/O3/!internal/VTABLE_00000038
+			/O3NS/O3/vftable{for_A1NS::A1}
 			pack()
-			Structure VTABLE_00000038 {
-			   0   _func___thiscall_int *   8   ANS::A::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable{for_A1NS::A1} {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -6052,12 +6461,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O3NS/O3/!internal/VTABLE_00000048
+			/O3NS/O3/vftable{for_A2NS::A2}
 			pack()
-			Structure VTABLE_00000048 {
-			   0   _func___thiscall_int *   8   O3NS::O3::fa2_1   ""
-			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
-			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
+			Structure vftable{for_A2NS::A2} {
+			   0   _func___thiscall_int *   8   fa2_1   ""
+			   8   _func___thiscall_int *   8   fa2_2   ""
+			   16   _func___thiscall_int *   8   fa2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -6068,12 +6477,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O3NS/O3/!internal/VTABLE_00000058
+			/O3NS/O3/vftable{for_B1NS::B1}
 			pack()
-			Structure VTABLE_00000058 {
-			   0   _func___thiscall_int *   8   BNS::B::fb1_1   ""
-			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
-			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
+			Structure vftable{for_B1NS::B1} {
+			   0   _func___thiscall_int *   8   fb1_1   ""
+			   8   _func___thiscall_int *   8   fb1_2   ""
+			   16   _func___thiscall_int *   8   fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -6084,16 +6493,37 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O3NS/O3/!internal/VTABLE_00000068
+			/O3NS/O3/vftable{for_B2NS::B2}
 			pack()
-			Structure VTABLE_00000068 {
-			   0   _func___thiscall_int *   8   BNS::B::fb2_1   ""
-			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
-			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
+			Structure vftable{for_B2NS::B2} {
+			   0   _func___thiscall_int *   8   fb2_1   ""
+			   8   _func___thiscall_int *   8   fb2_2   ""
+			   16   _func___thiscall_int *   8   fb2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsO3() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006fc78", "O3NS::O3::vftable{for_ANS::A}",
+			"/O3NS/O3/vftable{for_ANS::A}"));
+		results.add(new ListingResult("14006fd18", "O3NS::O3::vbtable{for_ANS::A}",
+			"/O3NS/O3/vbtable{for_ANS::A}"));
+		results.add(new ListingResult("14006fc90", "O3NS::O3::vftable{for_BNS::B}",
+			"/O3NS/O3/vftable{for_BNS::B}"));
+		results.add(new ListingResult("14006fd2c", "O3NS::O3::vbtable{for_BNS::B}",
+			"/O3NS/O3/vbtable{for_BNS::B}"));
+		results.add(new ListingResult("14006fca0", "O3NS::O3::vftable{for_A1NS::A1}",
+			"/O3NS/O3/vftable{for_A1NS::A1}"));
+		results.add(new ListingResult("14006fcc0", "O3NS::O3::vftable{for_A2NS::A2}",
+			"/O3NS/O3/vftable{for_A2NS::A2}"));
+		results.add(new ListingResult("14006fce0", "O3NS::O3::vftable{for_B1NS::B1}",
+			"/O3NS/O3/vftable{for_B1NS::B1}"));
+		results.add(new ListingResult("14006fd00", "O3NS::O3::vftable{for_B2NS::B2}",
+			"/O3NS/O3/vftable{for_B2NS::B2}"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -6199,65 +6629,65 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O4NS::O4
+			/O4NS/O4
 			pack()
-			Structure O4NS::O4 {
-			   0   O4NS::O4   32      "Self Base"
-			   32   A1NS::A1   16      "Virtual Base"
-			   48   A2NS::A2   16      "Virtual Base"
-			   64   B1NS::B1   16      "Virtual Base"
-			   80   B2NS::B2   16      "Virtual Base"
-			   96   BNS::B   24      "Virtual Base"
+			Structure O4 {
+			   0   O4   32      "Self Base"
+			   32   A1   16      "Virtual Base"
+			   48   A2   16      "Virtual Base"
+			   64   B1   16      "Virtual Base"
+			   80   B2   16      "Virtual Base"
+			   96   B   24      "Virtual Base"
 			}
 			Length: 120 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/A2NS::A2
+			/A2NS/A2
 			pack()
-			Structure A2NS::A2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a2   ""
 			}
 			Length: 16 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/B1NS::B1
+			/B1NS/B1
 			pack()
-			Structure B1NS::B1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b1   ""
 			}
 			Length: 16 Alignment: 8
-			/B2NS::B2
+			/B2NS/B2
 			pack()
-			Structure B2NS::B2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b2   ""
 			}
 			Length: 16 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8
-			/O4NS::O4/!internal/O4NS::O4
+			/O4NS/O4/!internal/O4
 			pack()
-			Structure O4NS::O4 {
-			   0   ANS::A   24      "Base"
+			Structure O4 {
+			   0   A   24      "Base"
 			   24   int   4   o4   ""
 			}
 			Length: 32 Alignment: 8""";
@@ -6269,25 +6699,25 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O4NS::O4
+			/O4NS/O4
 			pack()
-			Structure O4NS::O4 {
-			   0   O4NS::O4   32      "Self Base"
-			   32   char[88]   88      "Filler for 5 Unplaceable Virtual Bases: BNS::B; A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2"
+			Structure O4 {
+			   0   O4   32      "Self Base"
+			   32   char[88]   88      "Filler for 5 Unplaceable Virtual Bases: B; A1; A2; B1; B2"
 			}
 			Length: 120 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/O4NS::O4/!internal/O4NS::O4
+			/O4NS/O4/!internal/O4
 			pack()
-			Structure O4NS::O4 {
-			   0   ANS::A   24      "Base"
+			Structure O4 {
+			   0   A   24      "Base"
 			   24   int   4   o4   ""
 			}
 			Length: 32 Alignment: 8""";
@@ -6299,29 +6729,34 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructO4());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryO4() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", "     0 vft [ANS::A]	[O4NS::O4, ANS::A]");
-		results.put("VTABLE_00000008", "     8 vbt [ANS::A]	[O4NS::O4, ANS::A]");
-		results.put("VTABLE_00000020", "    32 vft [A1NS::A1]	[O4NS::O4, ANS::A, A1NS::A1]");
-		results.put("VTABLE_00000030", "    48 vft [A2NS::A2]	[O4NS::O4, ANS::A, A2NS::A2]");
-		results.put("VTABLE_00000040", "    64 vft [B1NS::B1]	[O4NS::O4, BNS::B, B1NS::B1]");
-		results.put("VTABLE_00000050", "    80 vft [B2NS::B2]	[O4NS::O4, BNS::B, B2NS::B2]");
-		results.put("VTABLE_00000060", "    96 vft [BNS::B]	[O4NS::O4, BNS::B]");
-		results.put("VTABLE_00000068", "   104 vbt [BNS::B]	[O4NS::O4, BNS::B]");
+	private static String getExpectedSourceHierarchyO4() {
+		String expected = "struct O4NS::O4 : ANS::A, virtual BNS::B";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryO4() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, "     0 vft [ANS::A]	[O4NS::O4, ANS::A]");
+		results.put(0x00000008L, "     8 vbt [ANS::A]	[O4NS::O4, ANS::A]");
+		results.put(0x00000020L, "    32 vft [A1NS::A1]	[O4NS::O4, ANS::A, A1NS::A1]");
+		results.put(0x00000030L, "    48 vft [A2NS::A2]	[O4NS::O4, ANS::A, A2NS::A2]");
+		results.put(0x00000040L, "    64 vft [B1NS::B1]	[O4NS::O4, BNS::B, B1NS::B1]");
+		results.put(0x00000050L, "    80 vft [B2NS::B2]	[O4NS::O4, BNS::B, B2NS::B2]");
+		results.put(0x00000060L, "    96 vft [BNS::B]	[O4NS::O4, BNS::B]");
+		results.put(0x00000068L, "   104 vbt [BNS::B]	[O4NS::O4, BNS::B]");
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsO4() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructO4_00000000());
-		results.put("VTABLE_00000008", getVxtStructO4_00000008());
-		results.put("VTABLE_00000020", getVxtStructO4_00000020());
-		results.put("VTABLE_00000030", getVxtStructO4_00000030());
-		results.put("VTABLE_00000040", getVxtStructO4_00000040());
-		results.put("VTABLE_00000050", getVxtStructO4_00000050());
-		results.put("VTABLE_00000060", getVxtStructO4_00000060());
-		results.put("VTABLE_00000068", getVxtStructO4_00000068());
+	private static Map<Long, String> getExpectedVxtStructsO4() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructO4_00000000());
+		results.put(0x00000008L, getVxtStructO4_00000008());
+		results.put(0x00000020L, getVxtStructO4_00000020());
+		results.put(0x00000030L, getVxtStructO4_00000030());
+		results.put(0x00000040L, getVxtStructO4_00000040());
+		results.put(0x00000050L, getVxtStructO4_00000050());
+		results.put(0x00000060L, getVxtStructO4_00000060());
+		results.put(0x00000068L, getVxtStructO4_00000068());
 		return results;
 	}
 
@@ -6329,11 +6764,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O4NS/O4/!internal/VTABLE_00000000
+			/O4NS/O4/vftable{for_ANS::A}
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   ANS::A::fa_1   ""
-			   8   _func___thiscall_int *   8   O4NS::O4::fo4_1   ""
+			Structure vftable{for_ANS::A} {
+			   0   _func___thiscall_int *   8   fa_1   ""
+			   8   _func___thiscall_int *   8   fo4_1   ""
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
@@ -6344,16 +6779,17 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O4NS/O4/!internal/VTABLE_00000008
+			/O4NS/O4/vbtable{for_ANS::A}
 			pack()
-			Structure VTABLE_00000008 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
-			   8   int   4      "B1NS::B1"
-			   12   int   4      "B2NS::B2"
-			   16   int   4      "BNS::B"
+			Structure vbtable{for_ANS::A} {
+			   0   int   4   offset_O4   "/O4NS/O4/!internal/O4"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
+			   12   int   4   offset_B1   "/B1NS/B1"
+			   16   int   4   offset_B2   "/B2NS/B2"
+			   20   int   4   offset_B   "/BNS/B/!internal/B"
 			}
-			Length: 20 Alignment: 4""";
+			Length: 24 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -6362,12 +6798,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O4NS/O4/!internal/VTABLE_00000020
+			/O4NS/O4/vftable{for_A1NS::A1}
 			pack()
-			Structure VTABLE_00000020 {
-			   0   _func___thiscall_int *   8   ANS::A::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable{for_A1NS::A1} {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -6378,12 +6814,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O4NS/O4/!internal/VTABLE_00000030
+			/O4NS/O4/vftable{for_A2NS::A2}
 			pack()
-			Structure VTABLE_00000030 {
-			   0   _func___thiscall_int *   8   O4NS::O4::fa2_1   ""
-			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
-			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
+			Structure vftable{for_A2NS::A2} {
+			   0   _func___thiscall_int *   8   fa2_1   ""
+			   8   _func___thiscall_int *   8   fa2_2   ""
+			   16   _func___thiscall_int *   8   fa2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -6394,12 +6830,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O4NS/O4/!internal/VTABLE_00000040
+			/O4NS/O4/vftable{for_B1NS::B1}
 			pack()
-			Structure VTABLE_00000040 {
-			   0   _func___thiscall_int *   8   BNS::B::fb1_1   ""
-			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
-			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
+			Structure vftable{for_B1NS::B1} {
+			   0   _func___thiscall_int *   8   fb1_1   ""
+			   8   _func___thiscall_int *   8   fb1_2   ""
+			   16   _func___thiscall_int *   8   fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -6410,12 +6846,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O4NS/O4/!internal/VTABLE_00000050
+			/O4NS/O4/vftable{for_B2NS::B2}
 			pack()
-			Structure VTABLE_00000050 {
-			   0   _func___thiscall_int *   8   BNS::B::fb2_1   ""
-			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
-			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
+			Structure vftable{for_B2NS::B2} {
+			   0   _func___thiscall_int *   8   fb2_1   ""
+			   8   _func___thiscall_int *   8   fb2_2   ""
+			   16   _func___thiscall_int *   8   fb2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -6426,10 +6862,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O4NS/O4/!internal/VTABLE_00000060
+			/O4NS/O4/vftable{for_BNS::B}
 			pack()
-			Structure VTABLE_00000060 {
-			   0   _func___thiscall_int *   8   BNS::B::fb_1   ""
+			Structure vftable{for_BNS::B} {
+			   0   _func___thiscall_int *   8   fb_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -6440,15 +6876,37 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/O4NS/O4/!internal/VTABLE_00000068
+			/O4NS/O4/vbtable{for_BNS::B}
 			pack()
-			Structure VTABLE_00000068 {
-			   0   int   4      "B1NS::B1"
-			   4   int   4      "B2NS::B2"
+			Structure vbtable{for_BNS::B} {
+			   0   int   4   offset_B   "/BNS/B/!internal/B"
+			   4   int   4   offset_B1   "/B1NS/B1"
+			   8   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsO4() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006fd40", "O4NS::O4::vftable{for_ANS::A}",
+			"/O4NS/O4/vftable{for_ANS::A}"));
+		results.add(new ListingResult("14006fde0", "O4NS::O4::vbtable{for_ANS::A}",
+			"/O4NS/O4/vbtable{for_ANS::A}"));
+		results.add(new ListingResult("14006fd58", "O4NS::O4::vftable{for_A1NS::A1}",
+			"/O4NS/O4/vftable{for_A1NS::A1}"));
+		results.add(new ListingResult("14006fd78", "O4NS::O4::vftable{for_A2NS::A2}",
+			"/O4NS/O4/vftable{for_A2NS::A2}"));
+		results.add(new ListingResult("14006fd98", "O4NS::O4::vftable{for_B1NS::B1}",
+			"/O4NS/O4/vftable{for_B1NS::B1}"));
+		results.add(new ListingResult("14006fdb8", "O4NS::O4::vftable{for_B2NS::B2}",
+			"/O4NS/O4/vftable{for_B2NS::B2}"));
+		results.add(new ListingResult("14006fdd8", "O4NS::O4::vftable{for_BNS::B}",
+			"/O4NS/O4/vftable{for_BNS::B}"));
+		results.add(new ListingResult("14006fdf8", "O4NS::O4::vbtable{for_BNS::B}",
+			"/O4NS/O4/vbtable{for_BNS::B}"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -6652,98 +7110,98 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS::O
+			/ONS/O
 			pack()
-			Structure ONS::O {
-			   0   ONS::O   96      "Self Base"
-			   96   A1NS::A1   16      "Virtual Base"
-			   112   A2NS::A2   16      "Virtual Base"
-			   128   B1NS::B1   16      "Virtual Base"
-			   144   B2NS::B2   16      "Virtual Base"
-			   160   BNS::B   24      "Virtual Base"
-			   184   O3NS::O3   56      "Virtual Base"
-			   240   O4NS::O4   32      "Virtual Base"
+			Structure O {
+			   0   O   96      "Self Base"
+			   96   A1   16      "Virtual Base"
+			   112   A2   16      "Virtual Base"
+			   128   B1   16      "Virtual Base"
+			   144   B2   16      "Virtual Base"
+			   160   B   24      "Virtual Base"
+			   184   O3   56      "Virtual Base"
+			   240   O4   32      "Virtual Base"
 			}
 			Length: 272 Alignment: 8
-			/A1NS::A1
+			/A1NS/A1
 			pack()
-			Structure A1NS::A1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a1   ""
 			}
 			Length: 16 Alignment: 8
-			/A2NS::A2
+			/A2NS/A2
 			pack()
-			Structure A2NS::A2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure A2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   a2   ""
 			}
 			Length: 16 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/B1NS::B1
+			/B1NS/B1
 			pack()
-			Structure B1NS::B1 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B1 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b1   ""
 			}
 			Length: 16 Alignment: 8
-			/B2NS::B2
+			/B2NS/B2
 			pack()
-			Structure B2NS::B2 {
-			   0   pointer   8   {vfptr}   ""
+			Structure B2 {
+			   0   pointer   8   vfptr   ""
 			   8   int   4   b2   ""
 			}
 			Length: 16 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8
-			/O1NS::O1/!internal/O1NS::O1
+			/O1NS/O1/!internal/O1
 			pack()
-			Structure O1NS::O1 {
-			   0   ANS::A   24      "Base"
-			   24   BNS::B   24      "Base"
+			Structure O1 {
+			   0   A   24      "Base"
+			   24   B   24      "Base"
 			   48   int   4   o1   ""
 			}
 			Length: 56 Alignment: 8
-			/O2NS::O2/!internal/O2NS::O2
+			/O2NS/O2/!internal/O2
 			pack()
-			Structure O2NS::O2 {
-			   0   ANS::A   24      "Base"
+			Structure O2 {
+			   0   A   24      "Base"
 			   24   int   4   o2   ""
 			}
 			Length: 32 Alignment: 8
-			/O3NS::O3/!internal/O3NS::O3
+			/O3NS/O3/!internal/O3
 			pack()
-			Structure O3NS::O3 {
-			   0   ANS::A   24      "Base"
-			   24   BNS::B   24      "Base"
+			Structure O3 {
+			   0   A   24      "Base"
+			   24   B   24      "Base"
 			   48   int   4   o3   ""
 			}
 			Length: 56 Alignment: 8
-			/O4NS::O4/!internal/O4NS::O4
+			/O4NS/O4/!internal/O4
 			pack()
-			Structure O4NS::O4 {
-			   0   ANS::A   24      "Base"
+			Structure O4 {
+			   0   A   24      "Base"
 			   24   int   4   o4   ""
 			}
 			Length: 32 Alignment: 8
-			/ONS::O/!internal/ONS::O
+			/ONS/O/!internal/O
 			pack()
-			Structure ONS::O {
-			   0   O1NS::O1   56      "Base"
-			   56   O2NS::O2   32      "Base"
+			Structure O {
+			   0   O1   56      "Base"
+			   56   O2   32      "Base"
 			   88   int   4   o   ""
 			}
 			Length: 96 Alignment: 8""";
@@ -6755,49 +7213,49 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS::O
+			/ONS/O
 			pack()
-			Structure ONS::O {
-			   0   ONS::O   96      "Self Base"
-			   96   char[176]   176      "Filler for 7 Unplaceable Virtual Bases: O3NS::O3; O4NS::O4; A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2; BNS::B"
+			Structure O {
+			   0   O   96      "Self Base"
+			   96   char[176]   176      "Filler for 7 Unplaceable Virtual Bases: O3; O4; A1; A2; B1; B2; B"
 			}
 			Length: 272 Alignment: 8
-			/ANS::A/!internal/ANS::A
+			/ANS/A/!internal/A
 			pack()
-			Structure ANS::A {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure A {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   a   ""
 			}
 			Length: 24 Alignment: 8
-			/BNS::B/!internal/BNS::B
+			/BNS/B/!internal/B
 			pack()
-			Structure BNS::B {
-			   0   pointer   8   {vfptr}   ""
-			   8   pointer   8   {vbptr}   ""
+			Structure B {
+			   0   pointer   8   vfptr   ""
+			   8   pointer   8   vbptr   ""
 			   16   int   4   b   ""
 			}
 			Length: 24 Alignment: 8
-			/O1NS::O1/!internal/O1NS::O1
+			/O1NS/O1/!internal/O1
 			pack()
-			Structure O1NS::O1 {
-			   0   ANS::A   24      "Base"
-			   24   BNS::B   24      "Base"
+			Structure O1 {
+			   0   A   24      "Base"
+			   24   B   24      "Base"
 			   48   int   4   o1   ""
 			}
 			Length: 56 Alignment: 8
-			/O2NS::O2/!internal/O2NS::O2
+			/O2NS/O2/!internal/O2
 			pack()
-			Structure O2NS::O2 {
-			   0   ANS::A   24      "Base"
+			Structure O2 {
+			   0   A   24      "Base"
 			   24   int   4   o2   ""
 			}
 			Length: 32 Alignment: 8
-			/ONS::O/!internal/ONS::O
+			/ONS/O/!internal/O
 			pack()
-			Structure ONS::O {
-			   0   O1NS::O1   56      "Base"
-			   56   O2NS::O2   32      "Base"
+			Structure O {
+			   0   O1   56      "Base"
+			   56   O2   32      "Base"
 			   88   int   4   o   ""
 			}
 			Length: 96 Alignment: 8""";
@@ -6809,73 +7267,78 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructO());
 	}
 
-	private static Map<String, String> getExpectedVxtPtrSummaryO() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000",
+	private static String getExpectedSourceHierarchyO() {
+		String expected = "struct ONS::O : O1NS::O1, O2NS::O2, virtual O3NS::O3, virtual O4NS::O4";
+		return expected;
+	}
+
+	private static Map<Long, String> getExpectedVxtPtrSummaryO() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L,
 			"     0 vft [ANS::A, O1NS::O1]	[ONS::O, O1NS::O1, ANS::A]");
-		results.put("VTABLE_00000008",
+		results.put(0x00000008L,
 			"     8 vbt [ANS::A, O1NS::O1]	[ONS::O, O1NS::O1, ANS::A]");
-		results.put("VTABLE_00000018",
+		results.put(0x00000018L,
 			"    24 vft [BNS::B, O1NS::O1]	[ONS::O, O1NS::O1, BNS::B]");
-		results.put("VTABLE_00000020",
+		results.put(0x00000020L,
 			"    32 vbt [BNS::B, O1NS::O1]	[ONS::O, O1NS::O1, BNS::B]");
-		results.put("VTABLE_00000038",
+		results.put(0x00000038L,
 			"    56 vft [ANS::A, O2NS::O2]	[ONS::O, O2NS::O2, ANS::A]");
-		results.put("VTABLE_00000040",
+		results.put(0x00000040L,
 			"    64 vbt [ANS::A, O2NS::O2]	[ONS::O, O2NS::O2, ANS::A]");
-		results.put("VTABLE_00000060",
+		results.put(0x00000060L,
 			"    96 vft [A1NS::A1]	[ONS::O, O1NS::O1, ANS::A, A1NS::A1]");
-		results.put("VTABLE_00000070",
+		results.put(0x00000070L,
 			"   112 vft [A2NS::A2]	[ONS::O, O1NS::O1, ANS::A, A2NS::A2]");
-		results.put("VTABLE_00000080",
+		results.put(0x00000080L,
 			"   128 vft [B1NS::B1]	[ONS::O, O1NS::O1, BNS::B, B1NS::B1]");
-		results.put("VTABLE_00000090",
+		results.put(0x00000090L,
 			"   144 vft [B2NS::B2]	[ONS::O, O1NS::O1, BNS::B, B2NS::B2]");
-		results.put("VTABLE_000000a0",
+		results.put(0x000000a0L,
 			"   160 vft [BNS::B, O2NS::O2]	[ONS::O, O2NS::O2, BNS::B]");
-		results.put("VTABLE_000000a8",
+		results.put(0x000000a8L,
 			"   168 vbt [BNS::B, O2NS::O2]	[ONS::O, O2NS::O2, BNS::B]");
-		results.put("VTABLE_000000b8",
+		results.put(0x000000b8L,
 			"   184 vft [ANS::A, O3NS::O3]	[ONS::O, O3NS::O3, ANS::A]");
-		results.put("VTABLE_000000c0",
+		results.put(0x000000c0L,
 			"   192 vbt [ANS::A, O3NS::O3]	[ONS::O, O3NS::O3, ANS::A]");
-		results.put("VTABLE_000000d0",
+		results.put(0x000000d0L,
 			"   208 vft [BNS::B, O3NS::O3]	[ONS::O, O3NS::O3, BNS::B]");
-		results.put("VTABLE_000000d8",
+		results.put(0x000000d8L,
 			"   216 vbt [BNS::B, O3NS::O3]	[ONS::O, O3NS::O3, BNS::B]");
 		// This is the real expected result, but passing null tells the test to skip doing the
 		//  check... causing the test not to fail,
 		//  but it will issue a warning that the summary value is skipped.
-		//results.put("VTABLE_000000f0", "   240 vft [ANS::A, O4NS::O4]	[ONS::O, O4NS::O4, ANS::A]");
-		results.put("VTABLE_000000f0", null);
+		//results.put(0x000000f0L, "   240 vft [ANS::A, O4NS::O4]	[ONS::O, O4NS::O4, ANS::A]");
+		results.put(0x000000f0L, null);
 		// This is the real expected result, but passing null tells the test to skip doing the
 		//  check... causing the test not to fail,
 		//  but it will issue a warning that the summary value is skipped.
-		//results.put("VTABLE_000000f8", "   248 vbt [BNS::B, O4NS::O4]	[ONS::O, O4NS::O4, ANS::A]");
-		results.put("VTABLE_000000f8", null);
+		//results.put(0x000000f8L, "   248 vbt [BNS::B, O4NS::O4]	[ONS::O, O4NS::O4, ANS::A]");
+		results.put(0x000000f8L, null);
 		return results;
 	}
 
-	private static Map<String, String> getExpectedVxtStructsO() {
-		Map<String, String> results = new TreeMap<>();
-		results.put("VTABLE_00000000", getVxtStructO_00000000());
-		results.put("VTABLE_00000008", getVxtStructO_00000008());
-		results.put("VTABLE_00000018", getVxtStructO_00000018());
-		results.put("VTABLE_00000020", getVxtStructO_00000020());
-		results.put("VTABLE_00000038", getVxtStructO_00000038());
-		results.put("VTABLE_00000040", getVxtStructO_00000040());
-		results.put("VTABLE_00000060", getVxtStructO_00000060());
-		results.put("VTABLE_00000070", getVxtStructO_00000070());
-		results.put("VTABLE_00000080", getVxtStructO_00000080());
-		results.put("VTABLE_00000090", getVxtStructO_00000090());
-		results.put("VTABLE_000000a0", getVxtStructO_000000a0());
-		results.put("VTABLE_000000a8", getVxtStructO_000000a8());
-		results.put("VTABLE_000000b8", getVxtStructO_000000b8());
-		results.put("VTABLE_000000c0", getVxtStructO_000000c0());
-		results.put("VTABLE_000000d0", getVxtStructO_000000d0());
-		results.put("VTABLE_000000d8", getVxtStructO_000000d8());
-		results.put("VTABLE_000000f0", getVxtStructO_000000f0());
-		results.put("VTABLE_000000f8", getVxtStructO_000000f8());
+	private static Map<Long, String> getExpectedVxtStructsO() {
+		Map<Long, String> results = new TreeMap<>();
+		results.put(0x00000000L, getVxtStructO_00000000());
+		results.put(0x00000008L, getVxtStructO_00000008());
+		results.put(0x00000018L, getVxtStructO_00000018());
+		results.put(0x00000020L, getVxtStructO_00000020());
+		results.put(0x00000038L, getVxtStructO_00000038());
+		results.put(0x00000040L, getVxtStructO_00000040());
+		results.put(0x00000060L, getVxtStructO_00000060());
+		results.put(0x00000070L, getVxtStructO_00000070());
+		results.put(0x00000080L, getVxtStructO_00000080());
+		results.put(0x00000090L, getVxtStructO_00000090());
+		results.put(0x000000a0L, getVxtStructO_000000a0());
+		results.put(0x000000a8L, getVxtStructO_000000a8());
+		results.put(0x000000b8L, getVxtStructO_000000b8());
+		results.put(0x000000c0L, getVxtStructO_000000c0());
+		results.put(0x000000d0L, getVxtStructO_000000d0());
+		results.put(0x000000d8L, getVxtStructO_000000d8());
+		results.put(0x000000f0L, getVxtStructO_000000f0());
+		results.put(0x000000f8L, getVxtStructO_000000f8());
 		return results;
 	}
 
@@ -6883,12 +7346,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_00000000
+			/ONS/O/vftable{for_ANS::A's_O1NS::O1}
 			pack()
-			Structure VTABLE_00000000 {
-			   0   _func___thiscall_int *   8   ANS::A::fa_1   ""
-			   8   _func___thiscall_int *   8   ONS::O::fo1_1   ""
-			   16   _func___thiscall_int *   8   ONS::O::fo_1   ""
+			Structure vftable{for_ANS::A's_O1NS::O1} {
+			   0   _func___thiscall_int *   8   fa_1   ""
+			   8   _func___thiscall_int *   8   fo1_1   ""
+			   16   _func___thiscall_int *   8   fo_1   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -6899,18 +7362,19 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_00000008
+			/ONS/O/vbtable{for_ANS::A's_O1NS::O1}
 			pack()
-			Structure VTABLE_00000008 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
-			   8   int   4      "B1NS::B1"
-			   12   int   4      "B2NS::B2"
-			   16   int   4      "BNS::B"
-			   20   int   4      "O3NS::O3"
-			   24   int   4      "O4NS::O4"
+			Structure vbtable{for_ANS::A's_O1NS::O1} {
+			   0   int   4   offset_O   "/ONS/O/!internal/O"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
+			   12   int   4   offset_B1   "/B1NS/B1"
+			   16   int   4   offset_B2   "/B2NS/B2"
+			   20   int   4   offset_B   "/BNS/B/!internal/B"
+			   24   int   4   offset_O3   "/O3NS/O3/!internal/O3"
+			   28   int   4   offset_O4   "/O4NS/O4/!internal/O4"
 			}
-			Length: 28 Alignment: 4""";
+			Length: 32 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -6919,10 +7383,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_00000018
+			/ONS/O/vftable{for_BNS::B's_O1NS::O1}
 			pack()
-			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   BNS::B::fb_1   ""
+			Structure vftable{for_BNS::B's_O1NS::O1} {
+			   0   _func___thiscall_int *   8   fb_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -6933,13 +7397,14 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_00000020
+			/ONS/O/vbtable{for_BNS::B's_O1NS::O1}
 			pack()
-			Structure VTABLE_00000020 {
-			   0   int   4      "B1NS::B1"
-			   4   int   4      "B2NS::B2"
+			Structure vbtable{for_BNS::B's_O1NS::O1} {
+			   0   int   4   offset_B   "/BNS/B/!internal/B"
+			   4   int   4   offset_B1   "/B1NS/B1"
+			   8   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -6948,11 +7413,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_00000038
+			/ONS/O/vftable{for_ANS::A's_O2NS::O2}
 			pack()
-			Structure VTABLE_00000038 {
-			   0   _func___thiscall_int *   8   ANS::A::fa_1   ""
-			   8   _func___thiscall_int *   8   ONS::O::fo2_1   ""
+			Structure vftable{for_ANS::A's_O2NS::O2} {
+			   0   _func___thiscall_int *   8   fa_1   ""
+			   8   _func___thiscall_int *   8   fo2_1   ""
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
@@ -6963,16 +7428,17 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_00000040
+			/ONS/O/vbtable{for_ANS::A's_O2NS::O2}
 			pack()
-			Structure VTABLE_00000040 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
-			   8   int   4      "B1NS::B1"
-			   12   int   4      "B2NS::B2"
-			   16   int   4      "BNS::B"
+			Structure vbtable{for_ANS::A's_O2NS::O2} {
+			   0   int   4   offset_O2   "/O2NS/O2/!internal/O2"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
+			   12   int   4   offset_B1   "/B1NS/B1"
+			   16   int   4   offset_B2   "/B2NS/B2"
+			   20   int   4   offset_B   "/BNS/B/!internal/B"
 			}
-			Length: 20 Alignment: 4""";
+			Length: 24 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -6981,12 +7447,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_00000060
+			/ONS/O/vftable{for_A1NS::A1}
 			pack()
-			Structure VTABLE_00000060 {
-			   0   _func___thiscall_int *   8   ONS::O::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
-			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
+			Structure vftable{for_A1NS::A1} {
+			   0   _func___thiscall_int *   8   fa1_1   ""
+			   8   _func___thiscall_int *   8   fa1_2   ""
+			   16   _func___thiscall_int *   8   fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -6997,12 +7463,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_00000070
+			/ONS/O/vftable{for_A2NS::A2}
 			pack()
-			Structure VTABLE_00000070 {
-			   0   _func___thiscall_int *   8   ONS::O::fa2_1   ""
-			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
-			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
+			Structure vftable{for_A2NS::A2} {
+			   0   _func___thiscall_int *   8   fa2_1   ""
+			   8   _func___thiscall_int *   8   fa2_2   ""
+			   16   _func___thiscall_int *   8   fa2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -7013,12 +7479,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_00000080
+			/ONS/O/vftable{for_B1NS::B1}
 			pack()
-			Structure VTABLE_00000080 {
-			   0   _func___thiscall_int *   8   ONS::O::fb1_1   ""
-			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
-			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
+			Structure vftable{for_B1NS::B1} {
+			   0   _func___thiscall_int *   8   fb1_1   ""
+			   8   _func___thiscall_int *   8   fb1_2   ""
+			   16   _func___thiscall_int *   8   fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -7029,12 +7495,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_00000090
+			/ONS/O/vftable{for_B2NS::B2}
 			pack()
-			Structure VTABLE_00000090 {
-			   0   _func___thiscall_int *   8   ONS::O::fb2_1   ""
-			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
-			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
+			Structure vftable{for_B2NS::B2} {
+			   0   _func___thiscall_int *   8   fb2_1   ""
+			   8   _func___thiscall_int *   8   fb2_2   ""
+			   16   _func___thiscall_int *   8   fb2_3   ""
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
@@ -7045,10 +7511,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_000000a0
+			/ONS/O/vftable{for_BNS::B's_O2NS::O2}
 			pack()
-			Structure VTABLE_000000a0 {
-			   0   _func___thiscall_int *   8   BNS::B::fb_1   ""
+			Structure vftable{for_BNS::B's_O2NS::O2} {
+			   0   _func___thiscall_int *   8   fb_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -7059,13 +7525,14 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_000000a8
+			/ONS/O/vbtable{for_BNS::B's_O2NS::O2}
 			pack()
-			Structure VTABLE_000000a8 {
-			   0   int   4      "B1NS::B1"
-			   4   int   4      "B2NS::B2"
+			Structure vbtable{for_BNS::B's_O2NS::O2} {
+			   0   int   4   offset_B   "/BNS/B/!internal/B"
+			   4   int   4   offset_B1   "/B1NS/B1"
+			   8   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -7074,11 +7541,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_000000b8
+			/ONS/O/vftable{for_ANS::A's_O3NS::O3}
 			pack()
-			Structure VTABLE_000000b8 {
-			   0   _func___thiscall_int *   8   ANS::A::fa_1   ""
-			   8   _func___thiscall_int *   8   ONS::O::fo3_1   ""
+			Structure vftable{for_ANS::A's_O3NS::O3} {
+			   0   _func___thiscall_int *   8   fa_1   ""
+			   8   _func___thiscall_int *   8   fo3_1   ""
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
@@ -7089,15 +7556,16 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_000000c0
+			/ONS/O/vbtable{for_ANS::A's_O3NS::O3}
 			pack()
-			Structure VTABLE_000000c0 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
-			   8   int   4      "B1NS::B1"
-			   12   int   4      "B2NS::B2"
+			Structure vbtable{for_ANS::A's_O3NS::O3} {
+			   0   int   4   offset_O3   "/O3NS/O3/!internal/O3"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
+			   12   int   4   offset_B1   "/B1NS/B1"
+			   16   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 16 Alignment: 4""";
+			Length: 20 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -7106,10 +7574,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_000000d0
+			/ONS/O/vftable{for_BNS::B's_O3NS::O3}
 			pack()
-			Structure VTABLE_000000d0 {
-			   0   _func___thiscall_int *   8   BNS::B::fb_1   ""
+			Structure vftable{for_BNS::B's_O3NS::O3} {
+			   0   _func___thiscall_int *   8   fb_1   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -7120,13 +7588,14 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_000000d8
+			/ONS/O/vbtable{for_BNS::B's_O3NS::O3}
 			pack()
-			Structure VTABLE_000000d8 {
-			   0   int   4      "B1NS::B1"
-			   4   int   4      "B2NS::B2"
+			Structure vbtable{for_BNS::B's_O3NS::O3} {
+			   0   int   4   offset_B   "/BNS/B/!internal/B"
+			   4   int   4   offset_B1   "/B1NS/B1"
+			   8   int   4   offset_B2   "/B2NS/B2"
 			}
-			Length: 8 Alignment: 4""";
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -7135,11 +7604,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_000000f0
+			/ONS/O/vftable{for_ANS::A's_O4NS::O4}
 			pack()
-			Structure VTABLE_000000f0 {
-			   0   _func___thiscall_int *   8   ANS::A::fa_1   ""
-			   8   _func___thiscall_int *   8   ONS::O::fo4_1   ""
+			Structure vftable{for_ANS::A's_O4NS::O4} {
+			   0   _func___thiscall_int *   8   fa_1   ""
+			   8   _func___thiscall_int *   8   fo4_1   ""
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
@@ -7150,18 +7619,60 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		String expected =
 		//@formatter:off
 			"""
-			/ONS/O/!internal/VTABLE_000000f8
+			/ONS/O/vbtable{for_ANS::A's_O4NS::O4}
 			pack()
-			Structure VTABLE_000000f8 {
-			   0   int   4      "A1NS::A1"
-			   4   int   4      "A2NS::A2"
-			   8   int   4      "B1NS::B1"
-			   12   int   4      "B2NS::B2"
-			   16   int   4      "BNS::B"
+			Structure vbtable{for_ANS::A's_O4NS::O4} {
+			   0   int   4   offset_O4   "/O4NS/O4/!internal/O4"
+			   4   int   4   offset_A1   "/A1NS/A1"
+			   8   int   4   offset_A2   "/A2NS/A2"
+			   12   int   4   offset_B1   "/B1NS/B1"
+			   16   int   4   offset_B2   "/B2NS/B2"
+			   20   int   4   offset_B   "/BNS/B/!internal/B"
 			}
-			Length: 20 Alignment: 4""";
+			Length: 24 Alignment: 4""";
 		//@formatter:on
 		return expected;
+	}
+
+	private static List<ListingResult> getExpectedVxtListingResultsO() {
+		List<ListingResult> results = new ArrayList<>();
+		results.add(new ListingResult("14006fe10", "ONS::O::vftable{for_ANS::A's_O1NS::O1}",
+			"/ONS/O/vftable{for_ANS::A's_O1NS::O1}"));
+		results.add(new ListingResult("14006ff20", "ONS::O::vbtable{for_ANS::A's_O1NS::O1}",
+			"/ONS/O/vbtable{for_ANS::A's_O1NS::O1}"));
+		results.add(new ListingResult("14006fe30", "ONS::O::vftable{for_BNS::B's_O1NS::O1}",
+			"/ONS/O/vftable{for_BNS::B's_O1NS::O1}"));
+		results.add(new ListingResult("14006ff40", "ONS::O::vbtable{for_BNS::B's_O1NS::O1}",
+			"/ONS/O/vbtable{for_BNS::B's_O1NS::O1}"));
+		results.add(new ListingResult("14006fe40", "ONS::O::vftable{for_ANS::A's_O2NS::O2}",
+			"/ONS/O/vftable{for_ANS::A's_O2NS::O2}"));
+		results.add(new ListingResult("14006ff4c", "ONS::O::vbtable{for_ANS::A's_O2NS::O2}",
+			"/ONS/O/vbtable{for_ANS::A's_O2NS::O2}"));
+		results.add(new ListingResult("14006fe58", "ONS::O::vftable{for_A1NS::A1}",
+			"/ONS/O/vftable{for_A1NS::A1}"));
+		results.add(new ListingResult("14006fe78", "ONS::O::vftable{for_A2NS::A2}",
+			"/ONS/O/vftable{for_A2NS::A2}"));
+		results.add(new ListingResult("14006fe98", "ONS::O::vftable{for_B1NS::B1}",
+			"/ONS/O/vftable{for_B1NS::B1}"));
+		results.add(new ListingResult("14006feb8", "ONS::O::vftable{for_B2NS::B2}",
+			"/ONS/O/vftable{for_B2NS::B2}"));
+		results.add(new ListingResult("14006fed8", "ONS::O::vftable{for_BNS::B's_O2NS::O2}",
+			"/ONS/O/vftable{for_BNS::B's_O2NS::O2}"));
+		results.add(new ListingResult("14006ff64", "ONS::O::vbtable{for_BNS::B's_O2NS::O2}",
+			"/ONS/O/vbtable{for_BNS::B's_O2NS::O2}"));
+		results.add(new ListingResult("14006fee8", "ONS::O::vftable{for_ANS::A's_O3NS::O3}",
+			"/ONS/O/vftable{for_ANS::A's_O3NS::O3}"));
+		results.add(new ListingResult("14006ff70", "ONS::O::vbtable{for_ANS::A's_O3NS::O3}",
+			"/ONS/O/vbtable{for_ANS::A's_O3NS::O3}"));
+		results.add(new ListingResult("14006ff00", "ONS::O::vftable{for_BNS::B's_O3NS::O3}",
+			"/ONS/O/vftable{for_BNS::B's_O3NS::O3}"));
+		results.add(new ListingResult("14006ff84", "ONS::O::vbtable{for_BNS::B's_O3NS::O3}",
+			"/ONS/O/vbtable{for_BNS::B's_O3NS::O3}"));
+		results.add(new ListingResult("14006ff10", "ONS::O::vftable{for_ANS::A's_O4NS::O4}",
+			"/ONS/O/vftable{for_ANS::A's_O4NS::O4}"));
+		results.add(new ListingResult("14006ff90", "ONS::O::vbtable{for_ANS::A's_O4NS::O4}",
+			"/ONS/O/vbtable{for_ANS::A's_O4NS::O4}"));
+		return results;
 	}
 
 	//==============================================================================================
@@ -7249,7 +7760,43 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		speculatedStructs.put(O, getSpeculatedStructO());
 	}
 
-	private static final Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
+	private static final Map<ClassID, String> expectedSourceHierarchy = new LinkedHashMap<>();
+	static {
+		expectedSourceHierarchy.put(A1, getExpectedSourceHierarchyA1());
+		expectedSourceHierarchy.put(A2, getExpectedSourceHierarchyA2());
+		expectedSourceHierarchy.put(A, getExpectedSourceHierarchyA());
+		expectedSourceHierarchy.put(B1, getExpectedSourceHierarchyB1());
+		expectedSourceHierarchy.put(B2, getExpectedSourceHierarchyB2());
+		expectedSourceHierarchy.put(B, getExpectedSourceHierarchyB());
+		expectedSourceHierarchy.put(C, getExpectedSourceHierarchyC());
+		expectedSourceHierarchy.put(D, getExpectedSourceHierarchyD());
+		expectedSourceHierarchy.put(E, getExpectedSourceHierarchyE());
+		expectedSourceHierarchy.put(F, getExpectedSourceHierarchyF());
+		expectedSourceHierarchy.put(G, getExpectedSourceHierarchyG());
+		expectedSourceHierarchy.put(H, getExpectedSourceHierarchyH());
+		expectedSourceHierarchy.put(I, getExpectedSourceHierarchyI());
+		expectedSourceHierarchy.put(J, getExpectedSourceHierarchyJ());
+		expectedSourceHierarchy.put(K, getExpectedSourceHierarchyK());
+		expectedSourceHierarchy.put(L, getExpectedSourceHierarchyL());
+		expectedSourceHierarchy.put(N1, getExpectedSourceHierarchyN1());
+		expectedSourceHierarchy.put(N2, getExpectedSourceHierarchyN2());
+		expectedSourceHierarchy.put(M, getExpectedSourceHierarchyM());
+		expectedSourceHierarchy.put(O1, getExpectedSourceHierarchyO1());
+		expectedSourceHierarchy.put(O2, getExpectedSourceHierarchyO2());
+		expectedSourceHierarchy.put(O3, getExpectedSourceHierarchyO3());
+		expectedSourceHierarchy.put(O4, getExpectedSourceHierarchyO4());
+		expectedSourceHierarchy.put(O, getExpectedSourceHierarchyO());
+	}
+
+	private static final Map<ClassID, String> speculatedSourceHierarchy =
+		new LinkedHashMap<>();
+	static {
+		speculatedSourceHierarchy.putAll(expectedSourceHierarchy);
+		// The following will replace entries as needed
+		speculatedSourceHierarchy.put(M, getSpeculatedSourceHierarchyM());
+	}
+
+	private static final Map<ClassID, Map<Long, String>> expectedVxtPtrSummaries =
 		new LinkedHashMap<>();
 	static {
 		expectedVxtPtrSummaries.put(A1, getExpectedVxtPtrSummaryA1());
@@ -7278,7 +7825,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		expectedVxtPtrSummaries.put(O, getExpectedVxtPtrSummaryO());
 	}
 
-	private static final Map<ClassID, Map<String, String>> speculatedVxtPtrSummaries =
+	private static final Map<ClassID, Map<Long, String>> speculatedVxtPtrSummaries =
 		new LinkedHashMap<>();
 	static {
 		speculatedVxtPtrSummaries.putAll(expectedVxtPtrSummaries);
@@ -7286,7 +7833,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		speculatedVxtPtrSummaries.put(M, getSpeculatedVxtPtrSummaryM());
 	}
 
-	private static final Map<ClassID, Map<String, String>> expectedVxtStructs =
+	private static final Map<ClassID, Map<Long, String>> expectedVxtStructs =
 		new LinkedHashMap<>();
 	static {
 		expectedVxtStructs.put(A1, getExpectedVxtStructsA1());
@@ -7315,12 +7862,41 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		expectedVxtStructs.put(O, getExpectedVxtStructsO());
 	}
 
-	private static final Map<ClassID, Map<String, String>> speculatedVxtStructs =
+	private static final Map<ClassID, Map<Long, String>> speculatedVxtStructs =
 		new LinkedHashMap<>();
 	static {
 		speculatedVxtStructs.putAll(expectedVxtStructs);
 		// The following will replace entries as needed
 		speculatedVxtStructs.put(M, getSpeculatedVxtStructsM());
+	}
+
+	private static final Map<ClassID, List<ListingResult>> expectedVxtListingResults =
+		new TreeMap<>();
+	static {
+		expectedVxtListingResults.put(A1, getExpectedVxtListingResultsA1());
+		expectedVxtListingResults.put(A2, getExpectedVxtListingResultsA2());
+		expectedVxtListingResults.put(A, getExpectedVxtListingResultsA());
+		expectedVxtListingResults.put(B1, getExpectedVxtListingResultsB1());
+		expectedVxtListingResults.put(B2, getExpectedVxtListingResultsB2());
+		expectedVxtListingResults.put(B, getExpectedVxtListingResultsB());
+		expectedVxtListingResults.put(C, getExpectedVxtListingResultsC());
+		expectedVxtListingResults.put(D, getExpectedVxtListingResultsD());
+		expectedVxtListingResults.put(E, getExpectedVxtListingResultsE());
+		expectedVxtListingResults.put(F, getExpectedVxtListingResultsF());
+		expectedVxtListingResults.put(G, getExpectedVxtListingResultsG());
+		expectedVxtListingResults.put(H, getExpectedVxtListingResultsH());
+		expectedVxtListingResults.put(I, getExpectedVxtListingResultsI());
+		expectedVxtListingResults.put(J, getExpectedVxtListingResultsJ());
+		expectedVxtListingResults.put(K, getExpectedVxtListingResultsK());
+		expectedVxtListingResults.put(L, getExpectedVxtListingResultsL());
+		expectedVxtListingResults.put(N1, getExpectedVxtListingResultsN1());
+		expectedVxtListingResults.put(N2, getExpectedVxtListingResultsN2());
+		expectedVxtListingResults.put(M, getExpectedVxtListingResultsM());
+		expectedVxtListingResults.put(O1, getExpectedVxtListingResultsO1());
+		expectedVxtListingResults.put(O2, getExpectedVxtListingResultsO2());
+		expectedVxtListingResults.put(O3, getExpectedVxtListingResultsO3());
+		expectedVxtListingResults.put(O4, getExpectedVxtListingResultsO4());
+		expectedVxtListingResults.put(O, getExpectedVxtListingResultsO());
 	}
 
 	//==============================================================================================
@@ -7348,20 +7924,32 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return speculatedStructs;
 	}
 
-	public Map<ClassID, Map<String, String>> getExpectedVxtPtrSummaries() {
+	public Map<ClassID, String> getExpectedSourceHierarchy() {
+		return expectedSourceHierarchy;
+	}
+
+	public Map<ClassID, String> getSpeculatedSourceHierarchy() {
+		return speculatedSourceHierarchy;
+	}
+
+	public Map<ClassID, Map<Long, String>> getExpectedVxtPtrSummaries() {
 		return expectedVxtPtrSummaries;
 	}
 
-	public Map<ClassID, Map<String, String>> getSpeculatedVxtPtrSummaries() {
+	public Map<ClassID, Map<Long, String>> getSpeculatedVxtPtrSummaries() {
 		return speculatedVxtPtrSummaries;
 	}
 
-	public Map<ClassID, Map<String, String>> getExpectedVxtStructs() {
+	public Map<ClassID, Map<Long, String>> getExpectedVxtStructs() {
 		return expectedVxtStructs;
 	}
 
-	public Map<ClassID, Map<String, String>> getSpeculatedVxtStructs() {
+	public Map<ClassID, Map<Long, String>> getSpeculatedVxtStructs() {
 		return speculatedVxtStructs;
+	}
+
+	public Map<ClassID, List<ListingResult>> getExpectedListingResults() {
+		return expectedVxtListingResults;
 	}
 
 	@Override

@@ -17,13 +17,18 @@ package ghidra.features.base.memsearch.searcher;
 
 import java.util.function.Predicate;
 
-import ghidra.program.model.listing.*;
+import ghidra.features.base.memsearch.matcher.SearchData;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.Listing;
+import ghidra.program.model.listing.Program;
 
 /**
  * Search filter that can test a search result and determine if that result starts at or inside
  * a code unit that matches one of the selected types.
  */
-public class CodeUnitFilter implements Predicate<MemoryMatch> {
+public class CodeUnitFilter implements Predicate<MemoryMatch<SearchData>> {
 
 	private boolean includeInstructions;
 	private boolean includeUndefinedData;

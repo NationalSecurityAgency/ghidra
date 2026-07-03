@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.gui.tracermi;
 import java.awt.Component;
 import java.beans.*;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 import javax.swing.Icon;
 import javax.swing.JLabel;
@@ -112,11 +113,17 @@ public class RemoteMethodInvocationDialog extends AbstractDebuggerParameterDialo
 		return arguments;
 	}
 
+	@SuppressWarnings("unchecked")
+	private <T> void withParamType(RemoteParameter parameter, ValStr<?> value,
+			BiConsumer<Class<T>, ValStr<T>> func) {
+		func.accept((Class<T>) parameterType(parameter), (ValStr<T>) value);
+	}
+
 	@Override
 	protected void parameterSaveValue(RemoteParameter parameter, SaveState state, String key,
 			ValStr<?> value) {
-		ConfigStateField.putState(state, parameterType(parameter).asSubclass(Object.class), key,
-			value.val());
+		withParamType(parameter, value,
+			(t, v) -> ConfigStateField.putState(state, t, key, v.val()));
 	}
 
 	@Override

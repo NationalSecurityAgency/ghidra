@@ -16,12 +16,12 @@
 package ghidra.app.plugin.core.debug.stack;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import ghidra.app.plugin.core.debug.stack.Sym.*;
 import ghidra.app.plugin.core.debug.stack.SymStateSpace.SymEntry;
-import ghidra.pcode.exec.PcodeArithmetic;
+import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
-import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
@@ -53,6 +53,8 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 
 	/**
 	 * Construct a new state for the given program
+	 * 
+	 * @param program the program under analysis
 	 */
 	public SymPcodeExecutorState(Program program) {
 		this.program = program;
@@ -102,6 +104,11 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	}
 
 	@Override
+	public Stream<PcodeExecutorStatePiece<?, ?>> streamPieces() {
+		return Stream.of(this);
+	}
+
+	@Override
 	public void setVar(AddressSpace space, Sym offset, int size, boolean quantize,
 			Sym val) {
 		Address address = offset.addressIn(space, cSpec);
@@ -124,6 +131,11 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	}
 
 	@Override
+	public void setVarInternal(AddressSpace space, Sym offset, int size, Sym val) {
+		setVar(space, offset, size, false, val);
+	}
+
+	@Override
 	public Sym getVar(AddressSpace space, Sym offset, int size, boolean quantize,
 			Reason reason) {
 		Address address = offset.addressIn(space, cSpec);
@@ -143,6 +155,11 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	}
 
 	@Override
+	public Sym getVarInternal(AddressSpace space, Sym offset, int size, Reason reason) {
+		return getVar(space, offset, size, false, reason);
+	}
+
+	@Override
 	public Map<Register, Sym> getRegisterValues() {
 		return Map.of();
 	}
@@ -159,13 +176,15 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	}
 
 	@Override
-	public SymPcodeExecutorState fork() {
+	public SymPcodeExecutorState fork(PcodeStateCallbacks cb) {
 		return new SymPcodeExecutorState(program, arithmetic, stackSpace.fork(),
 			registerSpace.fork(), uniqueSpace.fork());
 	}
 
 	/**
 	 * Create a new state whose registers are forked from those of this state
+	 * 
+	 * @return this fork
 	 */
 	public SymPcodeExecutorState forkRegs() {
 		return new SymPcodeExecutorState(program, arithmetic, new SymStateSpace(),
@@ -214,8 +233,8 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	 * <p>
 	 * There are two cases:
 	 * <ul>
-	 * <li>PC:Register => location is PC.reg.address
-	 * <li>PC:Deref => location is [Stack]:PC.offset
+	 * <li>{@code PC:Register => location is PC.reg.address}</li>
+	 * <li>{@code PC:Deref => location is [Stack]:PC.offset}</li>
 	 * </ul>
 	 * 
 	 * @return the address (stack offset or register) of the return address
@@ -281,7 +300,7 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	 * Any entry of the form (reg, v:Deref) is collected as (reg, [Stack]:v.offset). Note that the
 	 * size of the stack entry is implied by the size of the register.
 	 * 
-	 * @return
+	 * @return the map from register to stack address
 	 */
 	public Map<Register, Address> computeMapUsingRegisters() {
 		Map<Register, Address> result = new HashMap<>();

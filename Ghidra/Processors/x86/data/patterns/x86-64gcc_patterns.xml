@@ -48,8 +48,67 @@
       <data>0x41564155</data>                                                   <!-- PUSH R14; PUSH R13-->
       <data>0x41554154</data>                                                   <!-- PUSH R13; PUSH R12-->
       <data>0x41 010101.. 0100100. 0x89 11...... 0x55</data>                    <!-- PUSH R12/3/4/5; MOV(R12/3/4/5/xX,RxX); PUSH(RBP)-->
-      <data>0x41 010101.. 0x41 010101.. 0100100. 0x89 11...... </data>          <!-- PUSH R12/3/4/5; PUSH R12/3/4/5; MOV(R12/3/4/5/xX,RxX); -->
+      
+    <!-- These are copies of the patterns above with the ENDBR64 pattern pre-pended. If the above are modified, add here as well -->
+      <!-- ENDBR followed by two-instruction sequences -->
+      <data>0xf3 0x0f 0x1e 0xfa 0x48 0x89 0x5c 0x24  11...000 0x48 0x89 0x6c 0x24  11...000</data>  <!-- MOV [RSP + C], RBX; MOV [RSP + C], RBP -->
+      <data>0xf3 0x0f 0x1e 0xfa 0x48 0x89 0x5c 0x24  11...000 0x4c 0x89 0x64 0x24  111..000</data>  <!-- MOV [RSP + C], RBX; MOV [RSP + C], R12 -->
+      <data>0xf3 0x0f 0x1e 0xfa 0x48 0x89 0x6c 0x24  11...000 0x4c 0x89 0x64 0x24  111..000</data>  <!-- MOV [RSP + C], RBP; MOV [RSP + C], R12 -->
+      <data>0xf3 0x0f 0x1e 0xfa 0x5589e5</data>                                                     <!-- PUSH RBP; MOV(EBP, ESP) (shared objects) -->
+      <data>0xf3 0x0f 0x1e 0xfa 0x554889e5</data>                                                   <!-- PUSH RBP; MOV(RBP, RSP) (shared objects) -->
+      <data>0xf3 0x0f 0x1e 0xfa 0x534889fb</data>                                                   <!-- PUSH RBX; MOV(RBX,RDI) (shared objects) --> 
+      <data>0xf3 0x0f 0x1e 0xfa 0x554889fd</data>                                                   <!-- PUSH (RBP); MOV(RBP, RDI) (kernel objects) -->
+      <data>0xf3 0x0f 0x1e 0xfa 0x534889fb</data>                                                   <!-- PUSH RBX; MOV(RBX,RDI)-->
+      <data>0xf3 0x0f 0x1e 0xfa 0x53   0x48 0x83 0xec  0....000 </data>                             <!-- PUSH RBX; SUB RSP, C -->
+      <data>0xf3 0x0f 0x1e 0xfa 0x53   0x48 0x81 0xec  .....000 00...... 0x00 </data>               <!-- PUSH RBX; SUB RSP, C -->
+      <!-- ENDBR followed by three-instruction sequences -->
+      <data>0xf3 0x0f 0x1e 0xfa 0x55 0x48 0x89 0xe5 0x48 100000.1 0xec  .....000</data>             <!-- PUSH RBP; MOV RBP, RSP; SUB RSP, C --> 
+      <data>0xf3 0x0f 0x1e 0xfa 0x554889e553</data>                                                 <!-- PUSH RBP; MOV RBP, RSP; PUSH RBX -->
+      <data>0xf3 0x0f 0x1e 0xfa 0x554889fd53</data>                                                 <!-- PUSH RBP; MOV RBP, RDI; PUSH RBX -->
+      <data>0xf3 0x0f 0x1e 0xfa 0x554889e548897df8</data>                                           <!-- PUSH RBP; MOV RBP, RSP; MOV [RBP -0x8], RDI -->
+      <data>0xf3 0x0f 0x1e 0xfa 0x53 0x48 0x89 0xfb 0xe8  ........  ........ 0xff 0xff</data>       <!-- PUSH RBX; MOV RBX,RDI; CALL -->
+      <data>0xf3 0x0f 0x1e 0xfa 0x4154 0x55 0100100. 0x89 11......</data>                           <!-- PUSH R12; PUSH RBP; MOV(R12/3/4/5/xX,RxX); -->
+      <data>0xf3 0x0f 0x1e 0xfa 0x4154 0x55 0x53 0100100. 0x89 11......</data>                      <!-- PUSH R12; PUSH RBP; PUSH RBX; MOV(R12/3/4/5/xX,RxX); -->
+      <!--  ENDBR followed by save registers start sequences -->
+      <data>0xf3 0x0f 0x1e 0xfa 0x415741564155</data>                                               <!-- PUSH R15; PUSH R14; PUSH R13-->
+      <data>0xf3 0x0f 0x1e 0xfa 0x41564155</data>                                                   <!-- PUSH R14; PUSH R13-->
+      <data>0xf3 0x0f 0x1e 0xfa 0x41554154</data>                                                   <!-- PUSH R13; PUSH R12-->
+      <data>0xf3 0x0f 0x1e 0xfa 0x41 010101.. 0100100. 0x89 11...... 0x55</data>                    <!-- PUSH R12/3/4/5; MOV(R12/3/4/5/xX,RxX); PUSH(RBP)-->
+      <data>0xf3 0x0f 0x1e 0xfa 0x41 010101.. 0x41 010101.. 0100100. 0x89 11...... </data>          <!-- PUSH R12/3/4/5; PUSH R12/3/4/5; MOV(R12/3/4/5/xX,RxX); -->
       <funcstart/>
+    </postpatterns>
+  </patternpairs>
+  
+  <!-- These are copies of the patterns above with the ENDBR64 pattern pre-pended. If the above are modified, add here as well
+       with the ENDBR64 specifying a code start.-->
+  <patternpairs totalbits="40" postbits="24">
+    <prepatterns>
+      <data>0x90 0x90</data>               <!-- NOP NOP -->
+      <data>0xc3 0x90</data>               <!-- RET NOP -->
+      <data>0x6690</data>                  <!-- two-byte nop -->
+      <data>0xc9 0xc3</data>               <!-- LEAVE RET -->
+      <data>0xe9........</data>            <!-- JMP xxx - after a shared jump target -->
+      <data>0xe9........90</data>            <!-- JMP xxx, NOP - after a shared jump target -->
+      <data>0xeb..</data>                  <!-- JMP small -->
+      <data>0xeb..90</data>                <!-- JMP small , NOP -->
+      <data>0x5d 0xc3</data>               <!-- POP RBP, RET --> 
+      <data>0x5b 0xc3</data>               <!-- POP RBX, RET -->
+      <data>0x41 010111.. 0xc3</data>      <!-- POP R12-15, RET -->
+      <data>0x31c0 0xc3</data>             <!-- XOR(EAX,EAX), RET -->
+      <data>0x4883c4 ....1000 0xc3</data>  <!-- ADD RSP, C; RET -->
+      <data>0x666690</data>                <!-- three-byte NOP -->
+      <data>0x0f1f00</data>                <!-- three-byte NOP -->
+      <data>0x0f1f4000</data>              <!-- four-byte NOP -->
+      <data>0x0f1f440000</data>            <!-- five-byte NOP -->
+      <data>0x660f1f440000</data>          <!-- six-byte NOP -->
+      <data>0x0f1f8000000000</data>        <!-- seven-byte NOP --> 
+      <data>0x0f1f840000000000</data>      <!-- eight-byte NOP -->
+      <data>0x660f1f840000000000</data>    <!-- nine-byte NOP -->
+    </prepatterns>
+    <postpatterns>
+      <data>0xf3 0x0f 0x1e 0xfa </data>                                         <!-- ENDBR64 -->
+      <!-- codestart, but could be an exception handler -->
+      <codeboundary/>
     </postpatterns>
   </patternpairs>
   

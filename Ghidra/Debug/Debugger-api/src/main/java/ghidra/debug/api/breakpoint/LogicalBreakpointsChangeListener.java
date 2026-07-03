@@ -17,7 +17,7 @@ package ghidra.debug.api.breakpoint;
 
 import java.util.Collection;
 
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 
 public interface LogicalBreakpointsChangeListener {
 	default void breakpointAdded(LogicalBreakpoint added) {
@@ -47,12 +47,12 @@ public interface LogicalBreakpointsChangeListener {
 		}
 	}
 
-	default void locationAdded(TraceBreakpoint added) {
+	default void locationAdded(TraceBreakpointLocation added) {
 	}
 
-	default void locationUpdated(TraceBreakpoint updated) {
+	default void locationUpdated(TraceBreakpointLocation updated) {
 	}
 
-	default void locationRemoved(TraceBreakpoint removed) {
+	default void locationRemoved(TraceBreakpointLocation removed) {
 	}
 }

@@ -1,0 +1,208 @@
+<patternlist>  
+  
+  <pattern> <!-- .plt entry thunk -->
+      <data>
+	    0xf8410028                           <!-- std     r2,0x28(r1) -->
+        001111.. ...00010 0xff 0xff          <!-- subis  rX,r2,0x1 -->
+	    0xe9 ........ ........ ........      <!-- ld      rX,#(x) -->
+	    0x7d 0x.9 0x03 0xa6                  <!-- mtctr   rX -->
+	    0xe8 010..... ........ ........      <!-- ld      r2,#(x) -->
+	    0x28220000                           <!-- cmpldi  r2,0 -->
+	    0x4c 1..00010 0x04 0x20              <!-- bnectr+ -->
+	    010010.. ........ ........ ......00  <!-- b X@plt -->  
+      </data>
+      <funcstart thunk="true" section="(?i)(\.plt(\.sec)?)"/> <!-- must be something define before this -->
+  </pattern>
+
+  <pattern> <!-- .plt entry thunk -->
+      <data>  
+  		0xf8410028                           <!-- std     r2,0x28(r1) -->
+        0xe9 ........ ........ ........      <!-- ld      rX,#(x) -->
+        0x7d 0x.9 0x03 0xa6                  <!-- mtctr   rX -->
+        0xe8 010..... ........ ........      <!-- ld      r2,#(x) -->
+        0x28220000                           <!-- cmpldi  r2,0 -->
+        0x4c 1..00010 0x04 0x20              <!-- bnectr+ -->
+        010010.. ........ ........ ......00  <!-- b X@plt -->
+      </data>
+      <funcstart thunk="true" section="(?i)(\.plt(\.sec)?)"/> <!-- must be something define before this -->
+  </pattern>
+  
+  <pattern>
+      <data>  
+  		011111.. ...01000 0x02 0xa6          <!-- mfspr rxx, LR -->
+        0x42     1....... 0x00 0x05          <!-- bl +0x4 -->
+        011111.. ...01000 0x02 0xa6          <!-- mfspr rxx,LR -->
+        001111.. ........ 0x.. 0x..          <!-- addis rxx, rxx, 0xxx -->
+        001110.. ........ 0x.. 0x..          <!-- addi rxx, rxx, 0xxx -->
+        011111.. ...01000 0x03 0xa6          <!-- mtspr LR, rxx -->
+        011111.. ...01001 0x03 0xa6          <!-- mtspr CTR, rxx -->
+        0x4e     10000... 0x04 0x20          <!--bctr -->
+      </data>
+      <funcstart thunk="true"/>
+  </pattern>
+
+  <!-- 
+  	Known call stub (i.e., thunk) patterns which
+  	utilize a propagated r2 register value in determining the thunked function
+  	to which any given call stub branches.
+  	
+  	NOTE: Each pattern must account for all instructions contained within the stub.
+  -->
+  <pattern>
+     <data>
+     	0x....823d	# addis	r12,r2,0x####
+     	0x..0041f8  # std	r2,0x##(r1)
+     	0x....6ce9  # ld		r11,0x####(r12)
+     	0xa603697d  # mtspr	CTR,r11
+     	0x....4ce8  # ld		r2,0x####(r12)
+     	0x....6ce9  # ld		r11,0x####(r12)
+     	0x2004804e	# bctr
+     </data>
+     <funcstart thunk="true"/>
+  </pattern>
+  <pattern>
+     <data>
+     	0x..0041f8  # std	r2,0x##(r1)
+     	0x....62e9  # ld		r11,0x####(r2)
+     	0xa603697d  # mtspr	CTR,r11
+     	0x....62e9  # ld		r11,0x####(r2)
+     	0x....42e8  # ld		r2,0x####(r2)
+     	0x2004804e	# bctr
+     </data>
+     <funcstart thunk="true"/>
+  </pattern>
+  <pattern>
+     <data>
+     	0x..0041f8  # std	r2,0x##(r1)
+     	0x....82e9	# ld		r12,0x####(r2)
+     	0xa603897d	# mtspr	CTR,r12
+     	0x2004804e	# bctr
+     </data>
+     <funcstart after="defined" thunk="true"/>
+  </pattern>
+  <!-- It is possible that the patterns below always appear inline and not used as a thunk -->
+  <pattern> 
+     <data>
+     	0x....623d	# addis	r11,r2,0x####
+     	0x....8be9	# ld		r12,0x####(r11)
+     	0xa603897d	# mtspr	CTR,r12
+     	0x....4be8	# ld		r2,0x####(r11)
+     	0x2004804e	# bctr
+     </data>
+     <possiblefuncstart thunk="true"/>
+  </pattern>
+  <pattern>
+     <data>
+     	0x....623d	# addis	r11,r2,0x####
+     	0x....8be9	# ld		r12,0x####(r11)
+     	0x....6b39	# addi	r11,r11,0x####
+     	0xa603897d	# mtspr	CTR,r12
+     	0x....4be8	# ld		r2,0x####(r11)
+     	0x....6be9	# ld		r11,0x####(r11)
+     	0x2004804e	# bctr
+     </data>
+     <possiblefuncstart thunk="true"/>
+  </pattern>
+  <pattern>
+     <data>
+     	0x....623d	# addis	r11,r2,0x####
+     	0x....8be9	# ld		r12,0x####(r11)
+     	0xa603897d	# mtspr	CTR,r12
+     	0x7862827d	# xor	r2,r12,r12
+     	0x14126b7d	# add	r11,r11,r2
+     	0x....4be8	# ld		r2,0x####(r11)
+     	0x2004804e	# bctr
+     </data>
+     <possiblefuncstart thunk="true"/>
+  </pattern>
+  <pattern>
+     <data>
+     	0x....623d	# addis	r11,r2,0x####
+     	0x....8be9	# ld		r12,0x####(r11)
+     	0x....6b39	# addi	r11,r11,0x####
+     	0xa603897d	# mtspr	CTR,r12
+     	0x7862827d	# xor	r2,r12,r12
+     	0x14126b7d	# add	r11,r11,r2
+     	0x....4be8	# ld		r2,0x####(r11)
+     	0x....6be9	# ld		r11,0x####(r11)
+     	0x2004804e	# bctr
+     </data>
+     <possiblefuncstart thunk="true"/>
+  </pattern>
+  <pattern>
+     <data>
+     	0x..0041f8  # std	r2,0x##(r1)
+     	0x....623d	# addis	r11,r2,0x####
+     	0x....8be9	# ld		r12,0x####(r11)
+     	0xa603897d	# mtspr	CTR,r12
+     	0x....4be8	# ld		r2,0x####(r11)
+     	0x2004804e	# bctr
+     </data>
+     <possiblefuncstart thunk="true"/>
+  </pattern>
+  <pattern>
+     <data>
+     	0x..0041f8  # std	r2,0x##(r1)
+     	0x....623d	# addis	r11,r2,0x####
+     	0x....8be9	# ld		r12,0x####(r11)
+     	0x....6b39	# addi	r11,r11,0x####
+     	0xa603897d	# mtspr	CTR,r12
+     	0x....4be8	# ld		r2,0x####(r11)
+     	0x....6be9	# ld		r11,0x####(r11)
+     	0x2004804e	# bctr
+     </data>
+     <possiblefuncstart thunk="true"/>
+  </pattern>
+  <pattern>
+     <data>
+     	0x..0041f8  # std	r2,0x##(r1)
+     	0x....623d	# addis	r11,r2,0x####
+     	0x....8be9	# ld		r12,0x####(r11)
+     	0xa603897d	# mtspr	CTR,r12
+     	0x7862827d	# xor	r2,r12,r12
+     	0x14126b7d	# add	r11,r11,r2
+     	0x....4be8	# ld		r2,0x####(r11)
+     	0x2004804e	# bctr
+     </data>
+     <possiblefuncstart thunk="true"/>
+  </pattern>
+  <pattern>
+     <data>
+     	0x..0041f8  # std	r2,0x##(r1)
+     	0x....623d	# addis	r11,r2,0x####
+     	0x....8be9	# ld		r12,0x####(r11)
+     	0x....6b39	# addi	r11,r11,0x####
+     	0xa603897d	# mtspr	CTR,r12
+     	0x7862827d	# xor	r2,r12,r12
+     	0x14126b7d	# add	r11,r11,r2
+     	0x....4be8	# ld		r2,0x####(r11)
+     	0x....6be9	# ld		r11,0x####(r11)
+     	0x2004804e	# bctr
+     </data>
+     <possiblefuncstart thunk="true"/>
+  </pattern>
+     <!-- 
+     	The case where call stub performs conditional bnectr followed 
+     	by relative branch is omitted since this is not a valid thunk
+     	scenario.
+     -->
+  <pattern>
+     <data>
+	 	0x0000823d	# addis r12,r2,0x####
+	 	0x00008ce9	# ld		r12,0x####(r12)
+	 	0xa603897d	# mtspr	CTR,r12
+	 	0x2004804e	# bctr
+     </data>
+     <possiblefuncstart thunk="true"/>
+  </pattern>
+  <pattern>
+     <data>
+     	0x000041f8	# std   r2,0x####(r1) 
+	 	0x0000823d	# addis r12,r2,0x####
+	 	0x00008ce9	# ld		r12,0x####(r12)
+	 	0xa603897d	# mtspr	CTR,r12
+	 	0x2004804e	# bctr
+     </data>
+     <possiblefuncstart thunk="true"/>
+  </pattern> 
+</patternlist>

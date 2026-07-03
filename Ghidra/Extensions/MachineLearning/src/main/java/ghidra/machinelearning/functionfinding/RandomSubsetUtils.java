@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.machinelearning.functionfinding;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
+import ghidra.pcodeCPort.utils.MutableLong;
 import ghidra.program.model.address.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -43,25 +44,32 @@ public class RandomSubsetUtils {
 	 * @return random subset of size k
 	 * @throws CancelledException if monitor is canceled
 	 */
-	public static AddressSet randomSubset(AddressSetView addresses, long k, TaskMonitor monitor)
-			throws CancelledException {
-		List<Long> sortedRandom = generateRandomIntegerSubset(addresses.getNumAddresses(), k);
-		Collections.sort(sortedRandom);
+	public static AddressSet randomSubset(AddressSetView addresses, long k,
+			TaskMonitor monitor) throws CancelledException {
+		long[] sortedRandom = generateRandomIntegerSubset(addresses.getNumAddresses(), k);
+		Arrays.sort(sortedRandom);
 		AddressSet randomAddresses = new AddressSet();
-		AddressIterator iter = addresses.getAddresses(true);
-		int addressesAdded = 0;
-		int addressesVisited = 0;
+
+		long addressesVisited = 0;
 		int listIndex = 0;
-		while (iter.hasNext() && addressesAdded < k) {
-			monitor.checkCancelled();
-			Address addr = iter.next();
-			if (sortedRandom.get(listIndex) == addressesVisited) {
+		for (AddressRange range : addresses) {
+			long rangeEnd = addressesVisited + range.getLength();
+			for (; listIndex < k; listIndex++) {
+				monitor.checkCancelled();
+				long next = sortedRandom[listIndex];
+				if (next >= rangeEnd) {
+					// Next address is outside of this range
+					break;
+				}
+				Address addr = range.getMinAddress().add(next - addressesVisited);
 				randomAddresses.add(addr);
-				addressesAdded += 1;
-				listIndex += 1;
 			}
-			addressesVisited += 1;
+			if (listIndex == k) {
+				break;
+			}
+			addressesVisited += range.getLength();
 		}
+
 		return randomAddresses;
 	}
 
@@ -72,24 +80,34 @@ public class RandomSubsetUtils {
 	 * @param k size of random subset (must be >= 0)
 	 * @return list of indices of elements in random subset
 	 */
-	public static List<Long> generateRandomIntegerSubset(long n, long k) {
+	public static long[] generateRandomIntegerSubset(long n, long k) {
 		if (n < 0) {
 			throw new IllegalArgumentException("n cannot be negative");
 		}
 		if (k < 0) {
 			throw new IllegalArgumentException("k cannot be negative");
 		}
+		if (k > Integer.MAX_VALUE) {
+			// Could probably just switch k to an int. Since we were using ArrayList before
+			// that was already going to blow up if k > Integer.MAX_VALUE
+			throw new IllegalArgumentException("k cannot exceed bounds of integer");
+		}
 		if (n < k) {
 			throw new IllegalArgumentException(
 				"size of subset (" + k + ") cannot be larger than size of set (" + n + ")");
 		}
-		Map<Long, Long> permutation = new HashMap<>();
-		for (long i = 0; i < k; ++i) {
+
+		Map<Long, MutableLong> permutation = new HashMap<>();
+
+		for (long i = 0; i < k; i++) {
 			swap(permutation, i, ThreadLocalRandom.current().nextLong(i, n));
 		}
-		List<Long> random = new ArrayList<>();
-		for (long i = 0; i < k; i++) {
-			random.add(permutation.getOrDefault(i, i));
+
+		long[] random = new long[(int) k];
+
+		for (int i = 0; i < k; i++) {
+			random[i] =
+				permutation.computeIfAbsent(Long.valueOf(i), key -> new MutableLong(key)).get();
 		}
 		return random;
 	}
@@ -102,14 +120,15 @@ public class RandomSubsetUtils {
 	 * @param i index
 	 * @param j index
 	 */
-	public static void swap(Map<Long, Long> permutation, long i, long j) {
+	public static void swap(Map<Long, MutableLong> permutation, long i, long j) {
 		if (i == j) {
 			return;
 		}
-		long ith = permutation.getOrDefault(i, i);
-		long jth = permutation.getOrDefault(j, j);
-		permutation.put(i, jth);
-		permutation.put(j, ith);
+		MutableLong ith = permutation.computeIfAbsent(i, key -> new MutableLong(key));
+		MutableLong jth = permutation.computeIfAbsent(j, key -> new MutableLong(key));
+		long temp = ith.get();
+		ith.set(jth.get());
+		jth.set(temp);
 	}
 
 }

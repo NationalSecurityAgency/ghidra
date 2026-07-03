@@ -28,8 +28,8 @@ import ghidra.debug.api.modules.MapProposal;
 import ghidra.debug.api.modules.SectionMapProposal;
 import ghidra.debug.api.modules.SectionMapProposal.SectionMapEntry;
 import ghidra.program.model.listing.Program;
-import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.util.TraceEvent;
 import ghidra.trace.util.TraceEvents;
@@ -61,7 +61,7 @@ public class BySectionAutoMapSpec implements AutoMapSpec {
 
 	@Override
 	public boolean objectHasType(TraceObjectValue value) {
-		return value.getParent().queryInterface(TraceObjectSection.class) != null;
+		return value.getParent().queryInterface(TraceSection.class) != null;
 	}
 
 	@Override

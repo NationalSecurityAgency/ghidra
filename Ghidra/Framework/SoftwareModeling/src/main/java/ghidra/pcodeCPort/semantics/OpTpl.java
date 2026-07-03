@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ public class OpTpl {
 
 	@Override
 	public String toString() {
-		return "OpTpl[opcode=" + opc + "]";
+		return "OpTpl[%s = %s %s]".formatted(output, opc, input);
 	}
 
 	public VarnodeTpl getOut() {
@@ -129,7 +129,7 @@ public class OpTpl {
 
 	public void encode(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_OP_TPL);
-		encoder.writeOpcode(ATTRIB_CODE, opc.ordinal());
+		encoder.writeOpcode(ATTRIB_CODE, opc);
 		if (output == null) {
 			encoder.openElement(ELEM_NULL);
 			encoder.closeElement(ELEM_NULL);

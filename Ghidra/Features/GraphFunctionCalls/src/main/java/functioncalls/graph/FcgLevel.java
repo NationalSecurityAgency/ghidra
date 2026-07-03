@@ -145,8 +145,8 @@ public class FcgLevel implements Comparable<FcgLevel> {
 	/**
 	 * Returns the child level of this level.  The child of a level has the same direction 
 	 * as this level, with a distance of one more than this level.
-	 * 
-	 * @param the direction of the child
+	 *
+	 * @param newDirection the direction of the child
 	 * @return returns the child level of this level
 	 * @throws IllegalArgumentException if this is the source level, which is row 1
 	 */

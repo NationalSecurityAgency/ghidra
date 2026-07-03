@@ -127,9 +127,31 @@ public class MarkdownToHtml {
 
 		@Override
 		public void setAttributes(Node node, String tagName, Map<String, String> attributes) {
-			if (node instanceof Code || node instanceof IndentedCodeBlock ||
-				node instanceof FencedCodeBlock) {
-				attributes.put("style", "background-color: #eef;");
+			// NOTE: This method will get called on both the <pre> and <code> tags, so be careful
+			// not to apply things twice
+
+			if (node instanceof FencedCodeBlock && tagName.equals("pre")) {
+				StringBuilder sb = new StringBuilder();
+				sb.append("background: #f4f4f4;");
+				sb.append("border: 1px solid #ddd;");
+				sb.append("border-left: 3px solid #f36d33;");
+				sb.append("color: #666;");
+				sb.append("display: block;");
+				sb.append("font-family: monospace;");
+				sb.append("line-height: 1.6;");
+				sb.append("margin-bottom: 1.6em;");
+				sb.append("max-width: 100%;");
+				sb.append("overflow: auto;");
+				sb.append("padding: 1em 1.5em;");
+				sb.append("page-break-inside: avoid;");
+				sb.append("word-wrap: break-word;");
+				attributes.put("style", sb.toString());
+			}
+			else if (node instanceof Code || node instanceof IndentedCodeBlock) {
+				StringBuilder sb = new StringBuilder();
+				sb.append("background: #f4f4f4;");
+				sb.append("font-family: monospace;");
+				attributes.put("style", sb.toString());
 			}
 		}
 	}

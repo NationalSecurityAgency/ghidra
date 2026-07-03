@@ -46,6 +46,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
+import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemoryFlag;
@@ -99,8 +100,10 @@ public class DynamicStaticSynchronizationPluginTest
 						monitor, false);
 		}
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+				tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			TraceLocation from =
 				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x00400000));
@@ -158,15 +161,22 @@ public class DynamicStaticSynchronizationPluginTest
 		}
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(new ToySchemaBuilder()
+					.noRegisterGroups()
+					.useRegistersPerFrame()
+					.build(),
+				"Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+				tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			TraceLocation from =
 				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x00400000));
 			ProgramLocation to = new ProgramLocation(program, ss.getAddress(0x00600000));
 			DebuggerStaticMappingUtils.addMapping(from, to, 0x8000, false);
 
-			thread = tb.getOrAddThread("Thread1", 0);
+			thread = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
 			TraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 			regs.setValue(1, new RegisterValue(pc, BigInteger.valueOf(0x00401234)));
@@ -344,8 +354,10 @@ public class DynamicStaticSynchronizationPluginTest
 						monitor, false);
 		}
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
+				tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			TraceLocation from =
 				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x00400000));
@@ -432,13 +444,17 @@ public class DynamicStaticSynchronizationPluginTest
 
 		createAndOpenTrace();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			tb.trace.getMemoryManager()
-					.addRegion("bash:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0041ffff),
+					.addRegion("Memory[bash:.text]", Lifespan.nowOn(0),
+						tb.range(0x00400000, 0x0041ffff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 
 			TraceModule bin = tb.trace.getModuleManager()
-					.addLoadedModule("/bin/bash", "/bin/bash", tb.range(0x00400000, 0x0041ffff), 0);
-			bin.addSection(0, "bash[.text]", tb.range(0x00400000, 0x0040ffff));
+					.addLoadedModule("Modules[/bin/bash]", "/bin/bash",
+						tb.range(0x00400000, 0x0041ffff), 0);
+			bin.addSection(0, "Modules[/bin/bash].Sections[.text]",
+				tb.range(0x00400000, 0x0040ffff));
 		}
 		waitForDomainObject(tb.trace);
 		traceManager.activateTrace(tb.trace);
@@ -464,12 +480,15 @@ public class DynamicStaticSynchronizationPluginTest
 
 		createAndOpenTrace();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			tb.trace.getMemoryManager()
-					.addRegion("bash:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0041ffff),
+					.addRegion("Memory[bash:.text]", Lifespan.nowOn(0),
+						tb.range(0x00400000, 0x0041ffff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 
 			tb.trace.getModuleManager()
-					.addLoadedModule("/bin/bash", "/bin/bash", tb.range(0x00400000, 0x0041ffff), 0);
+					.addLoadedModule("Modules[/bin/bash]", "/bin/bash",
+						tb.range(0x00400000, 0x0041ffff), 0);
 		}
 		waitForDomainObject(tb.trace);
 		traceManager.activateTrace(tb.trace);

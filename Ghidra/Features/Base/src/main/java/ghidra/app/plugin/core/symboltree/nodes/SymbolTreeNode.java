@@ -263,6 +263,9 @@ public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 			if (symbolNode.getSymbol() == searchSymbol) {
 				return symbolNode;
 			}
+			else if (symbolNode instanceof OrganizationNode) {
+				return findNode(symbolNode, key, loadChildren, monitor);
+			}
 		}
 
 		return null;

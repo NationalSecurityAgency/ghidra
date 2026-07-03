@@ -33,7 +33,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * Utility class that fixes golang function parameter storage using each function's current
+ * Utility class that fixes Go function parameter storage using each function's current
  * parameter list (formal info only) as starting information.
  * 
  * TODO: verify GoFuncData.argsize property against what we calculate here 
@@ -53,24 +53,36 @@ public class GoFunctionFixup {
 		this.func = func;
 		this.storageAllocator = new GoParamStorageAllocator(program, goVersion);
 		this.newSignature = func.getSignature();
-		this.newCallingConv = null;
 
 		if (GoRttiMapper.isAbi0Func(func.getEntryPoint(), program)) {
 			// Some (typically lower level) functions in the binary will be marked with a 
 			// symbol that ends in the string "abi0".  
 			// Throw away all registers and force stack allocation for everything 
 			storageAllocator.setAbi0Mode();
+			this.newCallingConv = GoConstants.GOLANG_ABI0_CALLINGCONVENTION_NAME;
+		}
+		else {
+			this.newCallingConv = null;
 		}
 	}
 
-	public GoFunctionFixup(Function func, FunctionSignature newSignature, String newCallingConv,
+	public GoFunctionFixup(Function func, FunctionSignature newSignature, String defaultCCName,
 			GoParamStorageAllocator storageAllocator) {
 		this.program = func.getProgram();
 		this.dtm = program.getDataTypeManager();
 		this.func = func;
 		this.storageAllocator = storageAllocator;
 		this.newSignature = newSignature;
-		this.newCallingConv = newCallingConv;
+		if (GoRttiMapper.isAbi0Func(func.getEntryPoint(), program)) {
+			// Some (typically lower level) functions in the binary will be marked with a 
+			// symbol that ends in the string "abi0".  
+			// Throw away all registers and force stack allocation for everything 
+			storageAllocator.setAbi0Mode();
+			this.newCallingConv = GoConstants.GOLANG_ABI0_CALLINGCONVENTION_NAME;
+		}
+		else {
+			this.newCallingConv = defaultCCName;
+		}
 	}
 
 	public static boolean isClosureContext(ParameterDefinition p) {
@@ -151,7 +163,7 @@ public class GoFunctionFixup {
 			}
 		}
 
-		// For any parameters that were passed as registers, the golang caller pre-allocates
+		// For any parameters that were passed as registers, the Go caller pre-allocates
 		// space on the stack for the parameter value to be used when the register is overwritten.
 		// Ghidra decompilation results are improved if those storage locations are covered
 		// by variables that we create artificially.
@@ -245,8 +257,10 @@ public class GoFunctionFixup {
 			return null;
 		}
 		if (DWARFUtil.isVoid(returnDT)) {
-			return new ReturnParameterImpl(VoidDataType.dataType, VariableStorage.VOID_STORAGE,
-				program);
+			ReturnParameterImpl result = new ReturnParameterImpl(VoidDataType.dataType,
+				VariableStorage.VOID_STORAGE, program);
+			result.setName(result.getName(), SourceType.IMPORTED);
+			return result;
 		}
 
 		GoFunctionMultiReturn multiReturn;
@@ -282,7 +296,9 @@ public class GoFunctionFixup {
 			return null;
 		}
 		VariableStorage varStorage = new VariableStorage(program, varnodes.toArray(Varnode[]::new));
-		return new ReturnParameterImpl(returnDT, varStorage, true, program);
+		ReturnParameterImpl result = new ReturnParameterImpl(returnDT, varStorage, true, program);
+		result.setName(result.getName(), SourceType.IMPORTED);
+		return result;
 	}
 
 	private void allocateReturnStorage(String name_unused, DataType dt, List<Varnode> varnodes,

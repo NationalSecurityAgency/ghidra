@@ -758,11 +758,9 @@ public class DefaultAssemblyResolvedPatterns extends AbstractAssemblyResolution
 			Set<Integer> printed =
 				Arrays.stream(cons.getOpsPrintOrder()).boxed().collect(Collectors.toSet());
 			if (!(opSym.getDefiningSymbol() instanceof SubtableSymbol)) {
-				AssemblyTreeResolver.DBG.println("Operand " + opSym + " is not a sub-table");
 				continue;
 			}
 			if (!printed.contains(opIdx)) {
-				AssemblyTreeResolver.DBG.println("Operand " + opSym + " is hidden");
 				continue;
 			}
 			AssemblyResolvedPatterns child = (AssemblyResolvedPatterns) children.get(opIdx);

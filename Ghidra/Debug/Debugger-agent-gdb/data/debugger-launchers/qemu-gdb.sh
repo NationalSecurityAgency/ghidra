@@ -27,6 +27,7 @@
 #@menu-group gdb
 #@icon icon.debugger
 #@help gdb#qemu
+#@depends Debugger-rmi-trace
 #@enum Endian:str auto big little
 #@arg :file! "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"
@@ -34,6 +35,7 @@
 #@env QEMU_GDB:int=1234 "QEMU Port" "Port for gdb connection to qemu"
 #@env OPT_EXTRA_QEMU_ARGS:str="" "Extra qemu arguments" "Extra arguments to pass to qemu. Use with care."
 #@env OPT_GDB_PATH:file="gdb-multiarch" "gdb command" "The path to gdb. Omit the full path to resolve using the system PATH."
+#@env OPT_GDB_ARGS:str="" "gdb cmd args" "Arguments passed to gdb (versus the target)"
 #@env OPT_ARCH:str="auto" "Architecture" "Target architecture"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 #@env OPT_EXTRA_TTY:bool=false "QEMU TTY" "Provide a separate terminal emulator for the target."
@@ -42,8 +44,8 @@
 
 . ../support/gdbsetuputils.sh
 
-pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
-pypathGdb=$(ghidra-module-pypath "Debug/Debugger-agent-gdb")
+pypathTrace=$(ghidra-module-pypath "Debugger-rmi-trace")
+pypathGdb=$(ghidra-module-pypath)
 export PYTHONPATH=$pypathGdb:$pypathTrace:$PYTHONPATH
 
 target_image="$1"
