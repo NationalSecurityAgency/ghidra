@@ -617,11 +617,7 @@ macro setSignedShiftRightCarryFlag(shiftee,amount) {
 :CMPL dlreg, lreg                   is op8=0xc5; lreg; dlreg {
 	op1:4 = lreg;
 	tmp:4 = dlreg - op1;
-	$(N) = (tmp s< 0);
-	$(Z) = (tmp == 0);
-	$(C) = scarry(dlreg, op1);
-	$(V) = (((dlreg & ~op1 & ~tmp) | (~dlreg & op1 & tmp)) & 0x80000000 ) != 0;
-	$(VT) = $(VT) | $(V);
+	subtractFlags(dlreg, op1, tmp);
 }
 
 @endif
