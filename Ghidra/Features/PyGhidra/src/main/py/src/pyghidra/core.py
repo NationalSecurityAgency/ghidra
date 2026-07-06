@@ -162,8 +162,12 @@ def _analyze_program(flat_api, program):
     if GhidraProgramUtilities.shouldAskToAnalyze(program):
         GhidraScriptUtil.acquireBundleHostReference()
         try:
-            flat_api.analyzeAll(program)
-            GhidraProgramUtilities.markProgramAnalyzed(program)
+            tx_id = program.startTransaction("Analyze")
+            try:
+                flat_api.analyzeAll(program)
+                GhidraProgramUtilities.markProgramAnalyzed(program)
+            finally:
+                program.endTransaction(tx_id, True)
         finally:
             GhidraScriptUtil.releaseBundleHostReference()
 
