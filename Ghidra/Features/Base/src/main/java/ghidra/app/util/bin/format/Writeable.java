@@ -16,19 +16,19 @@
  */
 package ghidra.app.util.bin.format;
 
-import ghidra.util.DataConverter;
-
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import ghidra.util.DataConverter;
+
 /**
- * An interface for writing out class state information.
- * 
+ * An interface for writing out class state information
  */
 public interface Writeable {
 	/**
-	 * Writes this object to the specified random access file using
-	 * the data converter to handle endianness.
+	 * Writes this object to the specified random access file using the data converter to handle 
+	 * endianness
+	 * 
 	 * @param raf the random access file
 	 * @param dc the data converter
 	 * @throws IOException if an I/O error occurs

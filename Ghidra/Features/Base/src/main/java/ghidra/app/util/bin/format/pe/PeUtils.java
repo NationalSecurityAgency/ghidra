@@ -78,4 +78,17 @@ public class PeUtils {
 		}
 	}
 
+	/**
+	 * {@return the given value rounded up to the nearest given alignment}
+	 * 
+	 * @param value the value to align
+	 * @param alignment the alignment value
+	 */
+	public static int align(int value, int alignment) {
+		if (alignment == 0) {
+			return value;
+		}
+		return Math.ceilDiv(value, alignment) * alignment;
+	}
+
 }
