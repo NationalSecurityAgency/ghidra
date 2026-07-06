@@ -185,13 +185,14 @@ public class AssemblyBuffer {
 			return insBytes;
 		}
 		MemBuffer buf = new ByteMemBufferImpl(start, insBytes, language.isBigEndian());
-		ProcessorContext procCtx = new ProgramProcessorContext(progCtx, start);
 		try {
+			RegisterValue rvCtx = ctx.toRegisterValue(ctxreg);
+			progCtx.setRegisterValue(start, start, rvCtx);
+
+			ProcessorContext procCtx = new ProgramProcessorContext(progCtx, start);
 			InstructionPrototype prototype = language.parse(buf, procCtx, false);
 			PseudoInstruction ins = new PseudoInstruction(start, prototype, buf, procCtx);
 			if (ins.hasFallthrough()) {
-				RegisterValue rvCtx = ctx.toRegisterValue(ctxreg);
-				progCtx.setRegisterValue(start, start, rvCtx);
 				Address fall = ins.getFallThrough();
 				progCtx.setRegisterValue(fall, fall, flowBits.getFlowValue(rvCtx));
 			}
@@ -222,7 +223,7 @@ public class AssemblyBuffer {
 			result = result.assign(AssemblyPatternBlock.fromRegisterValue(fromProc));
 		}
 		if (override != null) {
-			result.assign(override);
+			result = result.assign(override);
 		}
 		return result.fillMask();
 	}
