@@ -13,6 +13,7 @@
     <description>HC12 Microcontroller Family</description>
     <compiler name="default" spec="HC12.cspec" id="default"/>
     <external_name tool="gnu" name="m68hc12"/>
+    <external_name tool="IDA-PRO" name="6812"/>
   </language>
   <language processor="HCS-12"
             endian="big"
@@ -26,6 +27,7 @@
     <description>HCS12 Microcontroller Family</description>
     <compiler name="default" spec="HCS12.cspec" id="default"/>
     <external_name tool="gnu" name="m9s12x"/>
+    <external_name tool="IDA-PRO" name="hcs12"/>
   </language>
   <language processor="HCS-12X"
             endian="big"
@@ -39,6 +41,7 @@
     <description>HCS12X Microcontroller Family</description>
     <compiler name="default" spec="HCS12X.cspec" id="default"/>
     <external_name tool="gnu" name="m9s12x"/>
+    <external_name tool="IDA-PRO" name="hcs12x"/>
   </language>
   
   <!-- deprecated HCS12, which was equivalent to HCS12X, allows opening of existing Programs which use the old ID -->
@@ -55,5 +58,6 @@
     <description>HCS12X Microcontroller Family</description>
     <compiler name="default" spec="HCS12X.cspec" id="default"/>
     <external_name tool="gnu" name="m9s12x"/>
+    <external_name tool="IDA-PRO" name="hcs12x"/>
   </language>
 </language_definitions>
