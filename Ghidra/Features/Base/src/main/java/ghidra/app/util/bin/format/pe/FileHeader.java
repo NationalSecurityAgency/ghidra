@@ -17,11 +17,11 @@ package ghidra.app.util.bin.format.pe;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.format.Writeable;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbolAux;
 import ghidra.program.model.data.*;
@@ -30,101 +30,75 @@ import ghidra.util.DataConverter;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
-/**
- * A class to represent the IMAGE_FILE_HEADER struct as
- * defined in <code>winnt.h</code>.
- * <br>
- * <pre>
- * typedef struct _IMAGE_FILE_HEADER {
- *     WORD    Machine;								// MANDATORY
- *     WORD    NumberOfSections;					// USED
- *     DWORD   TimeDateStamp;
- *     DWORD   PointerToSymbolTable;
- *     DWORD   NumberOfSymbols;
- *     WORD    SizeOfOptionalHeader;				// USED
- *     WORD    Characteristics;						// MANDATORY
- * } IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
- * </pre>
- *
- */
-public class FileHeader implements StructConverter {
-	/**
-	 * The name to use when converting into a structure data type.
-	 */
+/// A class to represent the `IMAGE_FILE_HEADER` struct as defined in `winnt.h`
+/// 
+/// ```c
+/// typedef struct _IMAGE_FILE_HEADER {
+///     WORD  Machine;              // MANDATORY
+///     WORD  NumberOfSections;     // USED
+///     DWORD TimeDateStamp;
+///     DWORD PointerToSymbolTable;
+///     DWORD NumberOfSymbols;
+///     WORD  SizeOfOptionalHeader; // USED
+///     WORD  Characteristics;      // MANDATORY
+/// } IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
+/// ```
+public class FileHeader implements StructConverter, Writeable {
+	/// The name to use when converting into a structure data type
 	public final static String NAME = "IMAGE_FILE_HEADER";
-	/**
-	 * The size of the <code>IMAGE_FILE_HEADER</code> in bytes.
-	 */
+
+	/// The size of the {@code IMAGE_FILE_HEADER} in bytes
 	public final static int IMAGE_SIZEOF_FILE_HEADER = 20;
 
-	/**
-	 * Relocation info stripped from file.
-	 */
+	/// Relocation info stripped from file
 	public final static int IMAGE_FILE_RELOCS_STRIPPED = 0x0001;
-	/**
-	 * File is executable (no unresolved externel references).
-	 */
+
+	/// File is executable (no unresolved external references)
 	public final static int IMAGE_FILE_EXECUTABLE_IMAGE = 0x0002;
-	/**
-	 * Line nunbers stripped from file.
-	 */
+
+	/// Line numbers stripped from file
 	public final static int IMAGE_FILE_LINE_NUMS_STRIPPED = 0x0004;
-	/**
-	 * Local symbols stripped from file.
-	 */
+
+	/// Local symbols stripped from file
 	public final static int IMAGE_FILE_LOCAL_SYMS_STRIPPED = 0x0008;
-	/**
-	 * Agressively trim working set
-	 */
+
+	/// Aggressively trim working set
 	public final static int IMAGE_FILE_AGGRESIVE_WS_TRIM = 0x0010;
-	/**
-	 * App can handle &gt;2gb addresses
-	 */
+
+	/// App can handle >2gb addresses
 	public final static int IMAGE_FILE_LARGE_ADDRESS_AWARE = 0x0020;
-	/**
-	 * Bytes of machine word are reversed.
-	 */
+
+	/// Bytes of machine word are reversed
 	public final static int IMAGE_FILE_BYTES_REVERSED_LO = 0x0080;
-	/**
-	 * 32 bit word machine.
-	 */
+
+	/// 32 bit word machine
 	public final static int IMAGE_FILE_32BIT_MACHINE = 0x0100;
-	/**
-	 * Debugging info stripped from file in .DBG file
-	 */
+
+	/// Debugging info stripped from file in .DBG file
 	public final static int IMAGE_FILE_DEBUG_STRIPPED = 0x0200;
-	/**
-	 * If Image is on removable media, copy and run from the swap file.
-	 */
+
+	/// If Image is on removable media, copy and run from the swap file
 	public final static int IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP = 0x0400;
-	/**
-	 * If Image is on Net, copy and run from the swap file.
-	 */
+	
+	/// If Image is on Net, copy and run from the swap file
 	public final static int IMAGE_FILE_NET_RUN_FROM_SWAP = 0x0800;
-	/**
-	 * System File.
-	 */
+
+	/// System File
 	public final static int IMAGE_FILE_SYSTEM = 0x1000;
-	/**
-	 * File is a DLL.
-	 */
+
+	/// File is a DLL
 	public final static int IMAGE_FILE_DLL = 0x2000;
-	/**
-	 * File should only be run on a UP machine.
-	 */
+
+	/// File should only be run on a UP machine
 	public final static int IMAGE_FILE_UP_SYSTEM_ONLY = 0x4000;
-	/**
-	 * Bytes of machine word are reversed.
-	 */
+
+	/// Bytes of machine word are reversed
 	public final static int IMAGE_FILE_BYTES_REVERSED_HI = 0x8000;
 
-	/**
-	 * Magic value in LordPE's Symbol Table pointer field.
-	 */
+	/// Magic value in LordPE's Symbol Table pointer field
 	private final static int LORDPE_SYMBOL_TABLE = 0x726F4C5B;
-	/**
-	 * Magic value in LordPE's Number of Symbols field.
-	 */
+
+	/// Magic value in LordPE's Number of Symbols field
 	private final static int LORDPE_NUMBER_OF_SYMBOLS = 0x5D455064;
 
 	public final static String[] CHARACTERISTICS = { "Relocation info stripped from file",
@@ -137,9 +111,7 @@ public class FileHeader implements StructConverter {
 		"If Image is on Net, copy and run from the swap file", "System file", "File is a DLL",
 		"File should only be run on a UP machine", "Bytes of machine word are reversed" };
 
-	/**
-	 * Values for the Machine field indicating the intended processor architecture
-	 */
+	// Values for the Machine field indicating the intended processor architecture
 	public final static int IMAGE_FILE_MACHINE_MASK = 0xFFFF;
 	public final static int IMAGE_FILE_MACHINE_UNKNOWN = 0x0; 		//	The content of this field is assumed to be applicable to any machine type
 	public final static int IMAGE_FILE_MACHINE_AM33 = 0x1d3; 		//	Matsushita AM33
@@ -182,25 +154,39 @@ public class FileHeader implements StructConverter {
 	private int startIndex;
 	private NTHeader ntHeader;
 
+	/**
+	 * Creates a new {@link FileHeader}
+	 * 
+	 * @param reader A {@link BinaryReader}
+	 * @param startIndex The {@link BinaryReader} index of the start of the header
+	 * @param ntHeader The associated {@link NTHeader}
+	 * @throws IOException if an IO-related error occurred
+	 */
 	FileHeader(BinaryReader reader, int startIndex, NTHeader ntHeader) throws IOException {
 		this.reader = reader;
 		this.startIndex = startIndex;
 		this.ntHeader = ntHeader;
 
-		parse();
+		reader.setPointerIndex(startIndex);
+
+		machine = reader.readNextShort();
+		numberOfSections = reader.readNextUnsignedShort();
+		timeDateStamp = reader.readNextInt();
+		pointerToSymbolTable = reader.readNextInt();
+		numberOfSymbols = reader.readNextInt();
+		sizeOfOptionalHeader = reader.readNextShort();
+		characteristics = reader.readNextShort();
 	}
 
 	/**
-	 * Returns the architecture type of the computer.
-	 * @return the architecture type of the computer
+	 * {@return the architecture type of the computer}
 	 */
 	public short getMachine() {
 		return machine;
 	}
 
 	/**
-	 * Returns a string representation of the architecture type of the computer.
-	 * @return a string representation of the architecture type of the computer
+	 * {@return a string representation of the architecture type of the computer}
 	 */
 	public String getMachineName() {
 		return MachineName.getName(machine);
@@ -234,118 +220,97 @@ public class FileHeader implements StructConverter {
 	}
 
 	/**
-	 * Returns the number of sections.
-	 * Sections equate to Ghidra memory blocks.
-	 * @return the number of sections
+	 * {@return the number of sections}
 	 */
 	public int getNumberOfSections() {
 		return numberOfSections;
 	}
 
 	/**
-	 * Returns the array of section headers.
-	 * @return the array of section headers
+	 * {@return the array of section headers}
 	 */
 	public SectionHeader[] getSectionHeaders() {
-		if (sectionHeaders == null) {
-			return new SectionHeader[0];
-		}
-		return sectionHeaders;
+		return sectionHeaders != null ? sectionHeaders : new SectionHeader[0];
 	}
 
 	/**
-	 * Returns the array of symbols.
-	 * @return the array of symbols
+	 * {@return the array of symbols}
 	 */
 	public List<DebugCOFFSymbol> getSymbols() {
 		return symbols;
 	}
 
 	/**
-	 * Returns the section header that contains the specified virtual address.
+	 * {@return the section header that contains the specified virtual address}
+	 * 
 	 * @param virtualAddr the virtual address
-	 * @return the section header that contains the specified virtual address
 	 */
 	public SectionHeader getSectionHeaderContaining(int virtualAddr) {
-		for (SectionHeader sectionHeader : sectionHeaders) {
-			int start = sectionHeader.getVirtualAddress();
-			int end = sectionHeader.getVirtualAddress() + sectionHeader.getVirtualSize() - 1;
-			if (virtualAddr >= start && virtualAddr <= end) {
-				return sectionHeader;
-			}
-		}
-		return null;
+		return Arrays.stream(sectionHeaders)
+				.filter(e -> virtualAddr >= e.getVirtualAddress() &&
+					virtualAddr < e.getVirtualAddress() + e.getVirtualSize())
+				.findFirst()
+				.orElse(null);
 	}
 
 	/**
-	 * Returns the section header at the specified position in the array.
+	 * {@return the section header at the specified position in the array, or null if invalid}
+	 * 
 	 * @param index index of section header to return
-	 * @return the section header at the specified position in the array, or null if invalid
 	 */
 	public SectionHeader getSectionHeader(int index) {
-		if (index >= 0 && index < sectionHeaders.length) {
-			return sectionHeaders[index];
-		}
-		return null;
+		return index >= 0 && index < sectionHeaders.length ? sectionHeaders[index] : null;
 	}
 
 	/**
-	 * Get the first section header defined with the specified name
+	 * {@return the first section header defined with the specified name, or null if not found}
+	 * 
 	 * @param name section name
-	 * @return first section header defined with the specified name or null if not found
 	 */
 	public SectionHeader getSectionHeader(String name) {
-		for (SectionHeader element : sectionHeaders) {
-			if (element.getName().equals(name)) {
-				return element;
-			}
-		}
-		return null;
+		return Arrays.stream(sectionHeaders)
+				.filter(e -> e.getName().equals(name))
+				.findFirst()
+				.orElse(null);
 	}
 
 	/**
-	 * Returns the time stamp of the image.
-	 * @return the time stamp of the image
+	 * {@return the time stamp of the image}
 	 */
 	public int getTimeDateStamp() {
 		return timeDateStamp;
 	}
 
 	/**
-	 * Returns the file offset of the COFF symbol table
-	 * @return the file offset of the COFF symbol table
+	 * {@return the file offset of the COFF symbol table}
 	 */
 	public int getPointerToSymbolTable() {
 		return pointerToSymbolTable;
 	}
 
 	/**
-	 * Returns the number of symbols in the COFF symbol table
-	 * @return  the number of symbols in the COFF symbol table
+	 * {@return  the number of symbols in the COFF symbol table}
 	 */
 	public int getNumberOfSymbols() {
 		return numberOfSymbols;
 	}
 
 	/**
-	 * Returns the size of the optional header data
-	 * @return the size of the optional header, in bytes
+	 * {@return the size of the optional header, in bytes}
 	 */
 	public int getSizeOfOptionalHeader() {
 		return sizeOfOptionalHeader;
 	}
 
 	/**
-	 * Returns a set of bit flags indicating attributes of the file.
-	 * @return a set of bit flags indicating attributes
+	 * {@return a set of bit flags indicating attributes}
 	 */
 	public int getCharacteristics() {
 		return characteristics;
 	}
 
 	/**
-	 * Returns the file pointer to the section headers.
-	 * @return the file pointer to the section headers
+	 * {@return the file pointer to the section headers}
 	 */
 	public int getPointerToSections() {
 		short sizeOptHdr = ntHeader.getFileHeader().sizeOfOptionalHeader;
@@ -370,8 +335,7 @@ public class FileHeader implements StructConverter {
 			long stringTableOffset = symbolsProcessed ? getStringTableOffset() : -1;
 			sectionHeaders = new SectionHeader[numberOfSections];
 			for (int i = 0; i < numberOfSections; ++i) {
-				SectionHeader section =
-					SectionHeader.readSectionHeader(reader, tmpIndex, stringTableOffset);
+				SectionHeader section = new SectionHeader(reader, tmpIndex, stringTableOffset);
 				sectionHeaders[i] = section;
 
 				int pointerToRawData = section.getPointerToRawData();
@@ -396,10 +360,10 @@ public class FileHeader implements StructConverter {
 				// different addresses to enforce alignment.
 				int virtualAddress = section.getVirtualAddress();
 				int virtualSize = section.getVirtualSize();
-				int alignedVirtualAddress = PortableExecutable.computeAlignment(virtualAddress,
-					optHeader.getSectionAlignment());
-				int alignedVirtualSize = PortableExecutable.computeAlignment(virtualSize,
-					optHeader.getSectionAlignment());
+				int alignedVirtualAddress =
+					PeUtils.align(virtualAddress, optHeader.getSectionAlignment());
+				int alignedVirtualSize =
+					PeUtils.align(virtualSize, optHeader.getSectionAlignment());
 				if (virtualAddress == alignedVirtualAddress) {
 					if (sizeOfRawData > virtualSize) {
 						section.setVirtualSize(Math.min(sizeOfRawData, alignedVirtualSize));
@@ -490,25 +454,9 @@ public class FileHeader implements StructConverter {
 		return false;
 	}
 
-	private void parse() throws IOException {
-		reader.setPointerIndex(startIndex);
-
-		machine = reader.readNextShort();
-		numberOfSections = reader.readNextUnsignedShort();
-		timeDateStamp = reader.readNextInt();
-		pointerToSymbolTable = reader.readNextInt();
-		numberOfSymbols = reader.readNextInt();
-		sizeOfOptionalHeader = reader.readNextShort();
-		characteristics = reader.readNextShort();
-	}
-
-	/**
-	 * @see ghidra.app.util.bin.StructConverter#toDataType()
-	 */
 	@Override
 	public DataType toDataType() throws DuplicateNameException {
 		StructureDataType struct = new StructureDataType(NAME, 0);
-
 		struct.add(WORD, 2, "Machine", getMachineName());
 		struct.add(WORD, 2, "NumberOfSections", null);
 		struct.add(DWORD, 4, "TimeDateStamp", null);
@@ -516,9 +464,7 @@ public class FileHeader implements StructConverter {
 		struct.add(DWORD, 4, "NumberOfSymbols", null);
 		struct.add(WORD, 2, "SizeOfOptionalHeader", null);
 		struct.add(WORD, 2, "Characteristics", null);
-
 		struct.setCategoryPath(new CategoryPath("/PE"));
-
 		return struct;
 	}
 
@@ -527,7 +473,8 @@ public class FileHeader implements StructConverter {
 		numberOfSections = sectionHeaders.length;
 	}
 
-	void writeHeader(RandomAccessFile raf, DataConverter dc) throws IOException {
+	@Override
+	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
 		raf.write(dc.getBytes(machine));
 		raf.write(dc.getBytes(numberOfSections));
 		raf.write(dc.getBytes(timeDateStamp));
@@ -556,7 +503,7 @@ public class FileHeader implements StructConverter {
 			sdd =
 				(SecurityDataDirectory) dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_SECURITY];
 			if (sdd != null && sdd.getSize() > 0) {
-				sdd.updatePointers(PortableExecutable.computeAlignment((int) block.getSize(),
+				sdd.updatePointers(PeUtils.align((int) block.getSize(),
 					optionalHeader.getFileAlignment()));
 			}
 		}
@@ -600,8 +547,8 @@ public class FileHeader implements StructConverter {
 				bidd.updatePointers(SectionHeader.IMAGE_SIZEOF_SECTION_HEADER);
 				int endptr = bidd.getVirtualAddress() + bidd.getSize() - 1;
 				if (endptr >= sectionHeaders[0].getPointerToRawData()) {
-					int alignedPtr = PortableExecutable.computeAlignment(endptr,
-						optionalHeader.getFileAlignment());
+					int alignedPtr =
+						PeUtils.align(endptr, optionalHeader.getFileAlignment());
 					offset = alignedPtr - sectionHeaders[0].getPointerToRawData();
 					for (SectionHeader sectionHeader : sectionHeaders) {
 						sectionHeader.updatePointers(offset);
@@ -637,7 +584,7 @@ public class FileHeader implements StructConverter {
 		}
 
 		int soi = newSection.getVirtualAddress() + newSection.getSizeOfRawData();
-		soi = PortableExecutable.computeAlignment(soi, optionalHeader.getSectionAlignment());
+		soi = PeUtils.align(soi, optionalHeader.getSectionAlignment());
 		optionalHeader.setSizeOfImage(soi);
 	}
 
@@ -657,6 +604,6 @@ public class FileHeader implements StructConverter {
 				lastPos = directorie.rvaToPointer() + directorie.getSize();
 			}
 		}
-		return PortableExecutable.computeAlignment(lastPos, optionalHeader.getFileAlignment());
+		return PeUtils.align(lastPos, optionalHeader.getFileAlignment());
 	}
 }

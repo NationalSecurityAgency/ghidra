@@ -110,7 +110,7 @@ public class SeparateDebugHeader implements OffsetValidator {
 
 		sections = new SectionHeader[numberOfSections];
 		for (int i = 0; i < numberOfSections; ++i) {
-			sections[i] = SectionHeader.readSectionHeader(reader, ptr, -1);
+			sections[i] = new SectionHeader(reader, ptr, -1);
 			ptr += SectionHeader.IMAGE_SIZEOF_SECTION_HEADER;
 		}
 

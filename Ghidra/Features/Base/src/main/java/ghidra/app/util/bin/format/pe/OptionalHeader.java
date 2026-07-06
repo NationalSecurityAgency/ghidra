@@ -105,129 +105,88 @@ import ghidra.util.task.TaskMonitor;
  */
 public class OptionalHeader implements StructConverter {
 
-	/**
-	 * ASLR with 64 bit address space.
-	 */
+	/// ASLR with 64 bit address space
 	public final static int IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA = 0x0020;
 
-	/**
-	 * The DLL can be relocated at load time.
-	 */
+	/// The DLL can be relocated at load time
 	public final static int IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE = 0x0040;
 
-	/**
-	 * Code integrity checks are forced.
-	 */
+	/// Code integrity checks are forced
 	public final static int IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY = 0x0080;
 
-	/**
-	 * The image is compatible with data execution prevention (DEP)
-	 */
+	/// The image is compatible with data execution prevention (DEP)
 	public final static int IMAGE_DLLCHARACTERISTICS_NX_COMPAT = 0x0100;
 
-	/**
-	 * The image is isolation aware, but should not be isolated.
-	 */
+	/// The image is isolation aware, but should not be isolated
 	public final static int IMAGE_DLLCHARACTERISTICS_NO_ISOLATION = 0x0200;
 
-	/**
-	 * The image does not use structured exception handling (SEH).
-	 */
+	/// The image does not use structured exception handling (SEH)
 	public final static int IMAGE_DLLCHARACTERISTICS_NO_SEH = 0x0400;
 
-	/**
-	 * Do not bind the image.
-	 */
+	/// Do not bind the image
 	public final static int IMAGE_DLLCHARACTERISTICS_NO_BIND = 0x0800;
 
-	/**
-	 * Image should execute in an AppContainer.
-	 */
+	/// Image should execute in an AppContainer
 	public final static int IMAGE_DLLCHARACTERISTICS_APPCONTAINER = 0x1000;
 
-	/**
-	 * A WDM driver.
-	 */
+	/// A WDM driver
 	public final static int IMAGE_DLLCHARACTERISTICS_WDM_DRIVER = 0x2000;
 
-	/**
-	 * Image supports Control Flow Guard.
-	 */
+	/// Image supports Control Flow Guard
 	public final static int IMAGE_DLLCHARACTERISTICS_GUARD_CF = 0x4000;
 
-	/**
-	 * The image is terminal server aware.
-	 */
+	/// The image is terminal server aware
 	public final static int IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE = 0x8000;
 
-	/**
-	 * The count of data directories in the optional header.
-	 */
+	/// The count of data directories in the optional header
 	public final static byte IMAGE_NUMBEROF_DIRECTORY_ENTRIES = 16;
 
-	/**
-	 * Export directory index
-	 */
+	/// Export directory index
 	public final static byte IMAGE_DIRECTORY_ENTRY_EXPORT = 0;
-	/**
-	 * Import directory index
-	 */
+
+	/// Import directory index
 	public final static byte IMAGE_DIRECTORY_ENTRY_IMPORT = 1;
-	/**
-	 * Resource directory index
-	 */
+
+	/// Resource directory index
 	public final static byte IMAGE_DIRECTORY_ENTRY_RESOURCE = 2;
-	/**
-	 * Exception directory index
-	 */
+
+	/// Exception directory index
 	public final static byte IMAGE_DIRECTORY_ENTRY_EXCEPTION = 3;
-	/**
-	 * Security directory index
-	 */
+
+	/// Security directory index
 	public final static byte IMAGE_DIRECTORY_ENTRY_SECURITY = 4;
-	/**
-	 * Base Relocation Table directory index
-	 */
+
+	/// Base Relocation Table directory index
 	public final static byte IMAGE_DIRECTORY_ENTRY_BASERELOC = 5;
-	/**
-	 * Debug directory index
-	 */
+
+	/// Debug directory index
 	public final static byte IMAGE_DIRECTORY_ENTRY_DEBUG = 6;
-	/**
-	 * Architecture Specific Data directory index
-	 */
+
+	/// Architecture Specific Data directory index
 	public final static byte IMAGE_DIRECTORY_ENTRY_ARCHITECTURE = 7;
-	/**
-	 * Global Pointer directory index
-	 */
-	public final static byte IMAGE_DIRECTORY_ENTRY_GLOBALPTR = 8;//RVA of GP
-	/**
-	 * TLS directory index
-	 */
+
+	/// Global Pointer directory index
+	public final static byte IMAGE_DIRECTORY_ENTRY_GLOBALPTR = 8; //RVA of GP
+
+	/// TLS directory index
 	public final static byte IMAGE_DIRECTORY_ENTRY_TLS = 9;
-	/**
-	 * Load Configuration directory index
-	 */
+
+	/// Load Configuration directory index
 	public final static byte IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG = 10;
-	/**
-	 * Bound Import directory  index
-	 */
+
+	/// Bound Import directory  index
 	public final static byte IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT = 11;
-	/**
-	 * Import Address Table directory index
-	 */
+
+	/// Import Address Table directory index
 	public final static byte IMAGE_DIRECTORY_ENTRY_IAT = 12;
-	/**
-	 * Delay Load Import Descriptors directory index
-	 */
+
+	/// Delay Load Import Descriptors directory index
 	public final static byte IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT = 13;
-	/**
-	 * COM Runtime Descriptor directory index
-	 */
+
+	/// COM Runtime Descriptor directory index
 	public final static byte IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR = 14;
-	/**
-	 * New name for the COM Descriptor directory index
-	 */
+
+	/// New name for the COM Descriptor directory index
 	public final static byte IMAGE_DIRECTORY_ENTRY_COMHEADER = 14;
 
 	protected short magic;
@@ -272,10 +231,6 @@ public class OptionalHeader implements StructConverter {
 		this.reader = reader;
 		this.startIndex = startIndex;
 
-		parse();
-	}
-
-	protected void parse() throws IOException {
 		reader.setPointerIndex(startIndex);
 
 		magic = reader.readNextShort();
@@ -620,35 +575,35 @@ public class OptionalHeader implements StructConverter {
 	}
 
 	/**
-	 * {@return  true of this optional header is 64-bit.}
+	 * {@return  true of this optional header is 64-bit}
 	 */
 	public boolean is64bit() {
 		return magic == Constants.IMAGE_NT_OPTIONAL_HDR64_MAGIC;
 	}
 
 	/**
-	 * {@return the major version number of the linker that built this binary.}
+	 * {@return the major version number of the linker that built this binary}
 	 */
 	public byte getMajorLinkerVersion() {
 		return majorLinkerVersion;
 	}
 
 	/**
-	 * {@return the minor version number of the linker that built this binary.}
+	 * {@return the minor version number of the linker that built this binary}
 	 */
 	public byte getMinorLinkerVersion() {
 		return minorLinkerVersion;
 	}
 
 	/**
-	 * {@return the combined total size of all sections with IMAGE_SCN_CNT_CODE attribute.}
+	 * {@return the combined total size of all sections with IMAGE_SCN_CNT_CODE attribute}
 	 */
 	public long getSizeOfCode() {
 		return sizeOfCode;
 	}
 
 	/**
-	 * Sets the combined total size of all sections with the IMAGE_SCN_CNT_CODE attribute.
+	 * Sets the combined total size of all sections with the IMAGE_SCN_CNT_CODE attribute
 	 * 
 	 * @param size The size to set
 	 */
@@ -657,7 +612,7 @@ public class OptionalHeader implements StructConverter {
 	}
 
 	/**
-	 * {@return the combined size of all initialized data sections.}
+	 * {@return the combined size of all initialized data sections}
 	 */
 	public long getSizeOfInitializedData() {
 		return Integer.toUnsignedLong(sizeOfInitializedData);
@@ -673,14 +628,14 @@ public class OptionalHeader implements StructConverter {
 	}
 
 	/**
-	 * {@return the size of all sections with the uninitialized data attributes.}
+	 * {@return the size of all sections with the uninitialized data attributes}
 	 */
 	public long getSizeOfUninitializedData() {
 		return Integer.toUnsignedLong(sizeOfUninitializedData);
 	}
 
 	/**
-	 * Sets the size of all sections with the uninitialized data attributes.}
+	 * Sets the size of all sections with the uninitialized data attributes}
 	 * 
 	 * @param size The size to set
 	 */
@@ -696,14 +651,14 @@ public class OptionalHeader implements StructConverter {
 	}
 
 	/**
-	 * {@return the RVA of the first byte of code when loaded in memory.}
+	 * {@return the RVA of the first byte of code when loaded in memory}
 	 */
 	public long getBaseOfCode() {
 		return Integer.toUnsignedLong(baseOfCode);
 	}
 
 	/**
-	 * {@return the RVA of the first byte of data when loaded into memory.}
+	 * {@return the RVA of the first byte of data when loaded into memory}
 	 */
 	public long getBaseOfData() {
 		return Integer.toUnsignedLong(baseOfData);
@@ -731,42 +686,42 @@ public class OptionalHeader implements StructConverter {
 	}
 
 	/**
-	 * {@return the major version number of the required operating system.}
+	 * {@return the major version number of the required operating system}
 	 */
 	public short getMajorOperatingSystemVersion() {
 		return majorOperatingSystemVersion;
 	}
 
 	/**
-	 * {@return the minor version number of the required operating system.}
+	 * {@return the minor version number of the required operating system}
 	 */
 	public short getMinorOperatingSystemVersion() {
 		return minorOperatingSystemVersion;
 	}
 
 	/**
-	 * {@return the major version number of the image.}
+	 * {@return the major version number of the image}
 	 */
 	public short getMajorImageVersion() {
 		return majorImageVersion;
 	}
 
 	/**
-	 * {@return the minor version number of the image.}
+	 * {@return the minor version number of the image}
 	 */
 	public short getMinorImageVersion() {
 		return minorImageVersion;
 	}
 
 	/**
-	 * {@return the major version number of the subsystem.}
+	 * {@return the major version number of the subsystem}
 	 */
 	public short getMajorSubsystemVersion() {
 		return majorSubsystemVersion;
 	}
 
 	/**
-	 * {@return the minor version number of the subsystem.}
+	 * {@return the minor version number of the subsystem}
 	 */
 	public short getMinorSubsystemVersion() {
 		return minorSubsystemVersion;
@@ -812,22 +767,21 @@ public class OptionalHeader implements StructConverter {
 	}
 
 	/**
-	 * {@return the image file checksum.}
+	 * {@return the image file checksum}
 	 */
 	public int getChecksum() {
 		return checkSum;
 	}
 
 	/**
-	* {@return the subsystem that is required to run this image.}
+	* {@return the subsystem that is required to run this image}
 	*/
 	public int getSubsystem() {
 		return subsystem;
 	}
 
 	/**
-	 * {@return the flags that describe properties of and features of this binary.}
-	 * @see ghidra.app.util.bin.format.pe.DllCharacteristics
+	 * {@return the flags that describe properties of and features of this binary}
 	 */
 	public short getDllCharacteristics() {
 		return dllCharacteristics;
@@ -862,21 +816,21 @@ public class OptionalHeader implements StructConverter {
 	}
 
 	/**
-	 * {@return the flags passed to the loader. Obsolete.}
+	 * {@return the flags passed to the loader (obsolete)}
 	 */
 	public int getLoaderFlags() {
 		return loaderFlags;
 	}
 
 	/**
-	 * {@return the number of data-directory entries in the remainder of the optional header.}
+	 * {@return the number of data-directory entries in the remainder of the optional header}
 	 */
 	public long getNumberOfRvaAndSizes() {
 		return Integer.toUnsignedLong(numberOfRvaAndSizes);
 	}
 
 	/**
-	 * {@return the array of data directories.}
+	 * {@return the array of data directories}
 	 */
 	public DataDirectory[] getDataDirectories() {
 		return dataDirectory;
@@ -911,7 +865,8 @@ public class OptionalHeader implements StructConverter {
 		ddstruct.add(DWORD, "Size", null);
 		ddstruct.setCategoryPath(new CategoryPath("/PE"));
 
-		StructureDataType struct = new StructureDataType(getName(), 0);
+		String name = "IMAGE_OPTIONAL_HEADER" + (is64bit() ? "64" : "32");
+		StructureDataType struct = new StructureDataType(name, 0);
 
 		struct.add(WORD, "Magic", null);
 		struct.add(BYTE, "MajorLinkerVersion", null);
@@ -970,7 +925,6 @@ public class OptionalHeader implements StructConverter {
 	 *
 	 * @param raf the random access file
 	 * @param dc  the data converter
-	 *
 	 * @throws IOException if an IO-related error occurred
 	 */
 	public void writeHeader(RandomAccessFile raf, DataConverter dc) throws IOException {
@@ -1066,7 +1020,7 @@ public class OptionalHeader implements StructConverter {
 	}
 
 	/**
-	 * {@return true if the PE uses predominantly CLI code; otherwise, false.}
+	 * {@return true if the PE uses predominantly CLI code; otherwise, false}
 	 * 
 	 * @throws IOException if an IO-related error occurred
 	 */
@@ -1088,9 +1042,5 @@ public class OptionalHeader implements StructConverter {
 			ImageCor20Flags.COMIMAGE_FLAGS_ILONLY) == ImageCor20Flags.COMIMAGE_FLAGS_ILONLY;
 
 		return intermediateLanguageOnly && cor20.getManagedNativeHeader().getVirtualAddress() == 0;
-	}
-
-	private String getName() {
-		return "IMAGE_OPTIONAL_HEADER" + (is64bit() ? "64" : "32");
 	}
 }

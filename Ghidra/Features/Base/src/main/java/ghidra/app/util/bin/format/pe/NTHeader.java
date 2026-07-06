@@ -20,42 +20,39 @@ import java.io.RandomAccessFile;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.format.Writeable;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.program.model.data.*;
 import ghidra.util.DataConverter;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
-/**
- * A class to represent the {@code IMAGE_NT_HEADERS32} and {@code IMAGE_NT_HEADERS64} structs as 
- * defined in {@code winnt.h}
- * 
- * <pre>{@code
- * typedef struct _IMAGE_NT_HEADERS {
- *    DWORD Signature;
- *    IMAGE_FILE_HEADER FileHeader;
- *    IMAGE_OPTIONAL_HEADER32 OptionalHeader;
- * };
- * }</pre>
- */
-public class NTHeader implements StructConverter, OffsetValidator {
-	/**
-	 * The size of the NT header signature.
-	 */
+/// A class to represent the `IMAGE_NT_HEADERS32` and `IMAGE_NT_HEADERS64` structures as defined in
+/// `winnt.h`
+/// ```c
+/// typedef struct _IMAGE_NT_HEADERS {
+///     DWORD Signature;
+///     IMAGE_FILE_HEADER FileHeader;
+///     IMAGE_OPTIONAL_HEADER32 OptionalHeader;
+/// };
+/// ```
+public class NTHeader implements StructConverter, OffsetValidator, Writeable {
+
+	/// The size of the NT header signature.
 	public final static int SIZEOF_SIGNATURE = BinaryReader.SIZEOF_INT;
+
 	public final static int MAX_SANE_COUNT = 0x10000;
 
 	private int signature;
 	private FileHeader fileHeader;
 	private OptionalHeader optionalHeader;
-	private BinaryReader reader;
 	private int index;
 	private boolean parseCliHeaders = false;
 
 	private SectionLayout layout = SectionLayout.FILE;
 
 	/**
-	 * Constructs a new NT header.
+	 * Constructs a new NT header
 	 * 
 	 * @param reader the binary reader
 	 * @param index the index into the reader to the start of the NT header
@@ -63,16 +60,50 @@ public class NTHeader implements StructConverter, OffsetValidator {
 	 * @param parseCliHeaders if true, CLI headers are parsed (if present)
 	 * @throws InvalidNTHeaderException if the bytes the specified index
 	 * @throws IOException if an IO-related exception occurred
-	 *   do not constitute an accurate NT header.
 	 */
 	public NTHeader(BinaryReader reader, int index, SectionLayout layout, boolean parseCliHeaders)
 			throws InvalidNTHeaderException, IOException {
-		this.reader = reader;
 		this.index = index;
 		this.layout = layout;
 		this.parseCliHeaders = parseCliHeaders;
 
-		parse();
+		int tmpIndex = index;
+
+		try {
+			signature = reader.readInt(tmpIndex);
+		}
+		catch (IndexOutOfBoundsException ioobe) {
+			// Handled below
+		}
+
+		// if not correct signature, then return...
+		if (signature != Constants.IMAGE_NT_SIGNATURE) {
+			throw new InvalidNTHeaderException();
+		}
+
+		tmpIndex += 4;
+
+		fileHeader = new FileHeader(reader, tmpIndex, this);
+		if (fileHeader.getSizeOfOptionalHeader() == 0) {
+			Msg.warn(this, "Section headers overlap optional header");
+		}
+		tmpIndex += FileHeader.IMAGE_SIZEOF_FILE_HEADER;
+
+		optionalHeader = new OptionalHeader(this, reader, tmpIndex);
+
+		// Process symbols.  Allow parsing to continue on failure.
+		boolean symbolsProcessed = false;
+		try {
+			fileHeader.processSymbols();
+			symbolsProcessed = true;
+		}
+		catch (Exception e) {
+			Msg.error(this, "Failed to process symbols: " + e.getMessage());
+		}
+
+		// Process sections.  Resolving some sections names (i.e., "/21") requires symbols to have
+		// been successfully processed.  Resolving is optional though.
+		fileHeader.processSections(optionalHeader, symbolsProcessed);
 	}
 
 	/**
@@ -205,8 +236,8 @@ public class NTHeader implements StructConverter, OffsetValidator {
 	}
 
 	/**
-	 * {@return the given virtual address (VA) converted into a pointer into the binary
-	 * image, or -1 if not valid}
+	 * {@return the given virtual address (VA) converted into a pointer into the binary image, or -1
+	 * if not valid}
 	 * 
 	 * @param va the virtual address
 	 */
@@ -215,8 +246,8 @@ public class NTHeader implements StructConverter, OffsetValidator {
 	}
 
 	/**
-	 * {@return the given virtual address (VA) converted into a pointer into the binary
-	 * image, or -1 if not valid}
+	 * {@return the given virtual address (VA) converted into a pointer into the binary image, or 
+	 * -1 if not valid}
 	 * 
 	 * @param va the virtual address
 	 */
@@ -224,62 +255,26 @@ public class NTHeader implements StructConverter, OffsetValidator {
 		return rvaToPointer(va - getOptionalHeader().getImageBase());
 	}
 
-	private void parse() throws InvalidNTHeaderException, IOException {
-		int tmpIndex = index;
-
-		try {
-			signature = reader.readInt(tmpIndex);
-		}
-		catch (IndexOutOfBoundsException ioobe) {
-			// Handled below
-		}
-
-		// if not correct signature, then return...
-		if (signature != Constants.IMAGE_NT_SIGNATURE) {
-			throw new InvalidNTHeaderException();
-		}
-
-		tmpIndex += 4;
-
-		fileHeader = new FileHeader(reader, tmpIndex, this);
-		if (fileHeader.getSizeOfOptionalHeader() == 0) {
-			Msg.warn(this, "Section headers overlap optional header");
-		}
-		tmpIndex += FileHeader.IMAGE_SIZEOF_FILE_HEADER;
-
-		optionalHeader = new OptionalHeader(this, reader, tmpIndex);
-
-		// Process symbols.  Allow parsing to continue on failure.
-		boolean symbolsProcessed = false;
-		try {
-			fileHeader.processSymbols();
-			symbolsProcessed = true;
-		}
-		catch (Exception e) {
-			Msg.error(this, "Failed to process symbols: " + e.getMessage());
-		}
-
-		// Process sections.  Resolving some sections names (i.e., "/21") requires symbols to have
-		// been successfully processed.  Resolving is optional though.
-		fileHeader.processSections(optionalHeader, symbolsProcessed);
-	}
-
-	void writeHeader(RandomAccessFile raf, DataConverter dc) throws IOException {
+	@Override
+	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
 
 		raf.seek(index);
 
 		raf.write(dc.getBytes(signature));
 
-		fileHeader.writeHeader(raf, dc);
+		fileHeader.write(raf, dc);
 
 		optionalHeader.writeHeader(raf, dc);
 
 		SectionHeader[] sections = fileHeader.getSectionHeaders();
 		for (SectionHeader section : sections) {
-			section.writeHeader(raf, dc);
+			section.write(raf, dc);
 		}
 	}
 
+	/**
+	 * {@return whether or not CLI headers should be parsed}
+	 */
 	boolean shouldParseCliHeaders() {
 		return parseCliHeaders;
 	}
