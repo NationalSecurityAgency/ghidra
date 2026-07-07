@@ -1523,9 +1523,24 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 */
 	private static void forceTextComponentFocus(JTextComponent tc) {
 
-		Object contextKey = getInstanceField("FOCUSED_COMPONENT", tc);
-		AppContext context = AppContext.getAppContext();
-		context.put(contextKey, tc);
+		runSwing(() -> {
+
+			// Update Swing's notion of the focused component
+			Object contextKey = getInstanceField("FOCUSED_COMPONENT", tc);
+			AppContext context = AppContext.getAppContext();
+			context.put(contextKey, tc);
+
+			/*
+			 	The FlatLaf will select all text in a text field when it gains focus.  This will 
+			 	break how we send key events to text fields.  For text handling to work correctly, 
+			 	we need to ensure that the given field has focus.  If it gains focus in FlatLaf and
+			 	then selects the text, the next key event will overwrite the current text, which we
+			 	do not want.  
+			 	
+			 	See FlatClientProperties.SELECT_ALL_ON_FOCUS_POLICY
+			 */
+			tc.putClientProperty("JTextField.selectAllOnFocusPolicy", "never");
+		});
 	}
 
 	/**
