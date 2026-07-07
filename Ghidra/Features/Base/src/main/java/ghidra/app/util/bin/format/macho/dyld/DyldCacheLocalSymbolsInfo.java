@@ -79,8 +79,8 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 		entriesOffset = reader.readNextInt();
 		entriesCount = reader.readNextInt();
 
-		nlistList = new ArrayList<>(nlistCount);
-		localSymbolsEntryList = new ArrayList<>(entriesCount);
+		nlistList = new ArrayList<>();
+		localSymbolsEntryList = new ArrayList<>();
 
 		is32bit = !(architecture.getCpuType() == CpuTypes.CPU_TYPE_ARM_64 ||
 			architecture.getCpuType() == CpuTypes.CPU_TYPE_X86_64);
@@ -116,28 +116,23 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 	}
 
 	/**
-	 * Gets the {@link List} of {@link DyldCacheLocalSymbolsEntry}s.
-	 * 
-	 * @return The {@link List} of {@link DyldCacheLocalSymbolsEntry}
+	 * {@return the {@link List} of {@link DyldCacheLocalSymbolsEntry}s}
 	 */
 	public List<DyldCacheLocalSymbolsEntry> getLocalSymbolsEntries() {
 		return localSymbolsEntryList;
 	}
 
 	/**
-	 * Gets the {@link List} of {@link NList}.
-	 * 
-	 * @return The {@link List} of {@link NList}
+	 * {@return the {@link List} of {@link NList}s}
 	 */
 	public List<NList> getNList() {
 		return nlistList;
 	}
 
 	/**
-	 * Gets the {@link List} of {@link NList} for the given dylib offset.
+	 * {@return the {@link List} of {@link NList}s for the given dylib offset}
 	 * 
 	 * @param dylibOffset The offset of dylib in the DYLD Cache
-	 * @return The {@link List} of {@link NList} for the given dylib offset
 	 */
 	public List<NList> getNList(long dylibOffset) {
 		for (DyldCacheLocalSymbolsEntry entry : localSymbolsEntryList) {
@@ -175,8 +170,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 
 			for (int i = 0; i < nlistCount; ++i) {
 				nlistList.add(new NList(nListReader, is32bit));
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 			}
 			// sort the entries by the index in the string table, so don't jump around reading
 			List<NList> sortedList = nlistList.stream()
@@ -187,8 +181,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 			// initialize the NList strings from string table
 			long stringTableOffset = startIndex + stringsOffset;
 			for (NList nList : sortedList) {
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 				nList.initString(nListReader, stringTableOffset);
 			}
 		}
@@ -205,8 +198,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 		try {
 			for (int i = 0; i < entriesCount; ++i) {
 				localSymbolsEntryList.add(new DyldCacheLocalSymbolsEntry(reader, use64bitOffsets));
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 			}
 		}
 		catch (IOException e) {
@@ -224,8 +216,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 			for (NList nlist : nlistList) {
 				Data d = program.getListing().createData(addr, nlist.toDataType());
 				addr = addr.add(d.getLength());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 			}
 		}
 		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
@@ -242,8 +233,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 			for (DyldCacheLocalSymbolsEntry localSymbolsEntry : localSymbolsEntryList) {
 				Data d = program.getListing().createData(addr, localSymbolsEntry.toDataType());
 				addr = addr.add(d.getLength());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 			}
 		}
 		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {

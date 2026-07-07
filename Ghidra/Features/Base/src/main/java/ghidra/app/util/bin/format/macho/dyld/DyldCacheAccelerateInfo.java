@@ -92,10 +92,10 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 		rangeTableCount = reader.readNextInt();
 		dyldSectionAddr = reader.readNextLong();
 
-		imageInfoExtraList = new ArrayList<>(imageExtrasCount);
-		acceleratorInitializerList = new ArrayList<>(initializersCount);
-		acceleratorDofList = new ArrayList<>(dofSectionsCount);
-		rangeEntryList = new ArrayList<>(rangeTableCount);
+		imageInfoExtraList = new ArrayList<>();
+		acceleratorInitializerList = new ArrayList<>();
+		acceleratorDofList = new ArrayList<>();
+		rangeEntryList = new ArrayList<>();
 	}
 
 	/**
