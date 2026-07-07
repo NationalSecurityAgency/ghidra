@@ -189,7 +189,7 @@ public class SwiftDemangler implements Demangler {
 	private void setSwiftNativeDemangler(SwiftDemanglerOptions options) throws DemangledException {
 		if (nativeDemangler == null) {
 			try {
-				nativeDemangler = new SwiftNativeDemangler(options.getSwiftDir());
+				nativeDemangler = new SwiftNativeDemangler();
 			}
 			catch (IOException e) {
 				throw new DemangledException(e);
