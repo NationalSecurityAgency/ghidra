@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import java.io.File;
 import java.io.IOException;
 
 import ghidra.app.util.demangler.*;
@@ -36,10 +35,7 @@ public class SwiftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 
 	private static final String NAME = "Demangler Swift";
 	private static final String DESCRIPTION =
-		"Demangles Swift symbols and applies appropriate datatype and calling conventions where possible. Requires Swift to be installed.";
-	private static final String OPTION_NAME_SWIFT_DIR = "Swift binary directory";
-	private static final String OPTION_DESCRIPTION_SWIFT_DIR =
-		"Path to the Swift installation binary directory, if not on PATH";
+		"Demangles Swift symbols and applies appropriate datatype and calling conventions where possible. Requires Swift to be on the PATH.";
 
 	private static final String OPTION_NAME_INCOMPLETE_PREFIX =
 		"Use incomplete demangle label prefix (%s)"
@@ -54,7 +50,6 @@ public class SwiftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		"Prefix unsupported demangled labels with '%s'"
 				.formatted(SwiftDemanglerOptions.UNSUPPORTED_PREFIX);
 
-	private File swiftDir;
 	private boolean useIncompletePrefix = true;
 	private boolean useUnsupportedPrefix = true;
 
@@ -94,8 +89,6 @@ public class SwiftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	@Override
 	public void registerOptions(Options options, Program program) {
 		HelpLocation help = new HelpLocation("AutoAnalysisPlugin", "Demangler_Analyzer");
-		options.registerOption(OPTION_NAME_SWIFT_DIR, OptionType.FILE_TYPE, swiftDir, help,
-			OPTION_DESCRIPTION_SWIFT_DIR);
 		options.registerOption(OPTION_NAME_INCOMPLETE_PREFIX, OptionType.BOOLEAN_TYPE,
 			useIncompletePrefix, help, OPTION_DESCRIPTION_INCOMPLETE_PREFIX);
 		options.registerOption(OPTION_NAME_UNSUPPORTED_PREFIX, OptionType.BOOLEAN_TYPE,
@@ -104,9 +97,9 @@ public class SwiftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 
 	@Override
 	protected boolean validateOptions(DemanglerOptions options, MessageLog log) {
-		if (options instanceof SwiftDemanglerOptions swiftDemanglerOptions) {
+		if (options instanceof SwiftDemanglerOptions) {
 			try {
-				new SwiftNativeDemangler(swiftDemanglerOptions.getSwiftDir());
+				new SwiftNativeDemangler();
 				return true;
 			}
 			catch (IOException e) {
@@ -120,7 +113,6 @@ public class SwiftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 
 	@Override
 	public void optionsChanged(Options options, Program program) {
-		swiftDir = options.getFile(OPTION_NAME_SWIFT_DIR, swiftDir);
 		useIncompletePrefix =
 			options.getBoolean(OPTION_NAME_INCOMPLETE_PREFIX, useIncompletePrefix);
 		useUnsupportedPrefix =
@@ -130,7 +122,6 @@ public class SwiftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	@Override
 	protected DemanglerOptions getOptions() {
 		SwiftDemanglerOptions swiftDemanglerOptions = new SwiftDemanglerOptions();
-		swiftDemanglerOptions.setSwiftDir(swiftDir);
 		swiftDemanglerOptions.setIncompletePrefix(useIncompletePrefix);
 		swiftDemanglerOptions.setUnsupportedPrefix(useUnsupportedPrefix);
 		return swiftDemanglerOptions;
