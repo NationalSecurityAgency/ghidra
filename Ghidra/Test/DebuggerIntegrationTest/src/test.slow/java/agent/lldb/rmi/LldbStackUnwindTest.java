@@ -15,8 +15,7 @@
  */
 package agent.lldb.rmi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -351,7 +350,7 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 			RowKey.LOCATION, "Location: f900000020:4",
 			RowKey.BYTES, "Bytes: (UNKNOWN) 00 00 00 00",
 			RowKey.INTEGER, "Integer: (UNKNOWN) 0",
-			RowKey.VALUE, "Value: (UNKNOWN) 00000000h",
+			RowKey.VALUE, "Value: (UNKNOWN) 0h",
 			RowKey.WARNINGS, "IGNORED"), table);
 	}
 
