@@ -3,6 +3,7 @@
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from functools import wraps
 
 from .server import mcp, get_context
 from .models import (
@@ -11,7 +12,7 @@ from .models import (
 )
 from .errors import (
     BinaryNotLoadedError, AnalysisError, FunctionNotFoundError,
-    InvalidAddressError, DecompilationError
+    InvalidAddressError, DecompilationError, GhidraMCPError
 )
 
 
@@ -20,7 +21,34 @@ def register_all_tools():
     pass
 
 
+def unified_response(func):
+    """Decorator to wrap tool responses in unified format."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            result = func(*args, **kwargs)
+            return {
+                "status": "success",
+                "data": result,
+                "error": None
+            }
+        except GhidraMCPError as e:
+            return {
+                "status": "error",
+                "data": None,
+                "error": str(e)
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "data": None,
+                "error": f"Unexpected error: {str(e)}"
+            }
+    return wrapper
+
+
 @mcp.tool()
+@unified_response
 def load_binary(
     binary_path: str,
     project_location: Optional[str] = None,
@@ -147,6 +175,7 @@ def _extract_binary_info(program, flat_api, binary_path: str, analysis_time: flo
 
 
 @mcp.tool()
+@unified_response
 def get_binary_info() -> Dict[str, Any]:
     """Get metadata about the currently loaded binary.
 
@@ -164,6 +193,7 @@ def get_binary_info() -> Dict[str, Any]:
 
 
 @mcp.tool()
+@unified_response
 def list_functions(
     name_filter: Optional[str] = None,
     address_filter: Optional[int] = None,
@@ -257,6 +287,7 @@ def _function_to_dict(func, program) -> Dict[str, Any]:
 
 
 @mcp.tool()
+@unified_response
 def decompile_function(
     address: int,
     timeout_seconds: int = 30,
@@ -315,6 +346,7 @@ def decompile_function(
 
 
 @mcp.tool()
+@unified_response
 def get_strings(
     min_length: int = 4,
     limit: int = 100,
@@ -365,6 +397,7 @@ def get_strings(
 
 
 @mcp.tool()
+@unified_response
 def get_xrefs(
     address: int,
     direction: str = "to",
@@ -427,6 +460,7 @@ def get_xrefs(
 
 
 @mcp.tool()
+@unified_response
 def disassemble(
     address: int,
     count: int = 10,
@@ -488,6 +522,7 @@ def disassemble(
 
 
 @mcp.tool()
+@unified_response
 def get_memory_blocks() -> List[Dict[str, Any]]:
     """Get memory block/section information.
 
@@ -518,6 +553,7 @@ def get_memory_blocks() -> List[Dict[str, Any]]:
 
 
 @mcp.tool()
+@unified_response
 def get_symbols(
     symbol_type: Optional[str] = None,
     name_filter: Optional[str] = None,
@@ -621,6 +657,7 @@ def search_strings(
 
 
 @mcp.tool()
+@unified_response
 def get_imports() -> List[Dict[str, Any]]:
     """Get imported functions/variables.
 
@@ -657,6 +694,7 @@ def get_imports() -> List[Dict[str, Any]]:
 
 
 @mcp.tool()
+@unified_response
 def get_exports() -> List[Dict[str, Any]]:
     """Get exported functions/variables.
 
