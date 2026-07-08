@@ -168,13 +168,7 @@ public class DialogFilterConditionSet<T> {
 
 	@Override
 	public String toString() {
-		//@formatter:off
-		return "{\n" +
-//			"\tfilterRow: " + filterRow + ",\n" + // stack overflow when DialogFilterRow.toString() is called
-			"\tdata: " + columnFilterData + ",\n" +
-			"\tconditions: " + conditionSet +"\n" +
-		"}";
-		//@formatter:on
+		return "[data=%s, conditions=%s]".formatted(columnFilterData, conditionSet);
 	}
 
 }
