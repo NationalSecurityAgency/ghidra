@@ -1117,7 +1117,7 @@ segWide: FS: is segover=5 & FS	{ export FS_OFFSET; }
 segWide: GS: is segover=6 & GS	{ export GS_OFFSET; }
 
 seg16: 	   is segover=0			{ export DS; }
-seg16: currentCS: is segover=1 & currentCS	{ export currentCS; }
+seg16: CS: is segover=1 & CS	{ export CS; }
 seg16: SS: is segover=2 & SS	{ export SS; }
 seg16: DS: is segover=3 & DS	{ export DS; }
 seg16: ES: is segover=4 & ES	{ export ES; }
