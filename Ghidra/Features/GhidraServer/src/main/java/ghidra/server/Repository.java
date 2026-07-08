@@ -17,6 +17,7 @@ package ghidra.server;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -351,7 +352,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			validate();
 			validateAdminPrivilege(currentUser);
 
-			Set<String> allUsers = Set.of(mgr.getAllUsers(currentUser));
+			Set<String> allUsers = getAllServerUsers();
 			Set<String> updatedUsers = new HashSet<>();
 
 			LinkedHashMap<String, User> newUserMap = new LinkedHashMap<>();
@@ -574,17 +575,20 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * Generate formatted list of user access permissions to the specified repository.
 	 * This is intended to be used with the svrAdmin console command
 	 * @param repositoryDir repository directory
+	 * @param allUsers set of all valid users known to server
 	 * @param pad padding string to be prefixed to each output line
 	 * @return formatted list of user access permissions
 	 */
-	static String getFormattedUserPermissions(File repositoryDir, String pad) {
+	static String getFormattedUserPermissions(File repositoryDir, Set<String> allUsers,
+			String pad) {
 		StringBuilder buf = new StringBuilder();
 		File userAccessFile = new File(repositoryDir, ACCESS_CONTROL_FILENAME);
 		try {
 			List<User> list = new ArrayList<>();
-			boolean anonymousAccessAllowed = readAccessFile(userAccessFile, list);
+			AtomicBoolean anonymousAccessAllowed = new AtomicBoolean();
+			readAccessFile(userAccessFile, allUsers, anonymousAccessAllowed, list);
 			Collections.sort(list);
-			if (anonymousAccessAllowed) {
+			if (anonymousAccessAllowed.get()) {
 				buf.append(pad + "* Anonymous read-only access permitted *\n");
 			}
 			for (User user : list) {
@@ -592,7 +596,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			}
 		}
 		catch (IOException e) {
-			System.out.println(pad + "Failed to read repository access file: " + e.getMessage());
+			System.err.println(pad + "Failed to read repository access file: " + e.getMessage());
 		}
 		return buf.toString();
 	}
@@ -602,17 +606,19 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * restricted to user names contained within listUserAccess.
 	 * This is intended to be used with the svrAdmin console command
 	 * @param repositoryDir repository directory
+	 * @param allUsers set of all valid users known to server
 	 * @param pad padding string to be prefixed to each output line
 	 * @param listUserAccess set of user names of interest
 	 * @return formatted list of user access permissions or null if no users of interest found
 	 */
-	static String getFormattedUserPermissions(File repositoryDir, String pad,
+	static String getFormattedUserPermissions(File repositoryDir, Set<String> allUsers, String pad,
 			Set<String> listUserAccess) {
 		StringBuilder buf = null;
 		File userAccessFile = new File(repositoryDir, ACCESS_CONTROL_FILENAME);
 		try {
+			AtomicBoolean anonymousAccessAllowed = new AtomicBoolean();
 			ArrayList<User> list = new ArrayList<>();
-			readAccessFile(userAccessFile, list);
+			readAccessFile(userAccessFile, allUsers, anonymousAccessAllowed, list);
 			Collections.sort(list);
 			for (User user : list) {
 				if (!listUserAccess.contains(user.getName())) {
@@ -625,9 +631,13 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			}
 		}
 		catch (IOException e) {
-			System.out.println(pad + "Failed to read repository access file: " + e.getMessage());
+			System.err.println(pad + "Failed to read repository access file: " + e.getMessage());
 		}
 		return buf != null ? buf.toString() : null;
+	}
+
+	private Set<String> getAllServerUsers() {
+		return Set.of(mgr.getUserManager().getUsers());
 	}
 
 	/**
@@ -639,9 +649,12 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			return;
 		}
 
+		AtomicBoolean anonymousAccess = new AtomicBoolean();
 		ArrayList<User> list = new ArrayList<>();
-		anonymousAccessAllowed =
-			readAccessFile(userAccessFile, list) && mgr.anonymousAccessAllowed();
+		boolean modified =
+			readAccessFile(userAccessFile, getAllServerUsers(), anonymousAccess, list) &&
+				mgr.anonymousAccessAllowed();
+		anonymousAccessAllowed = mgr.anonymousAccessAllowed() & anonymousAccess.get();
 
 		LinkedHashMap<String, User> newUserMap = new LinkedHashMap<>();
 		boolean hasAdmin = false;
@@ -654,19 +667,27 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 					.info("WARNING: Repository '" + name + "' does not have an assigned Admin");
 		}
 		userMap = newUserMap;
+
+		if (modified) {
+			writeUserList(userMap, anonymousAccessAllowed);
+		}
 	}
 
 	/**
 	 * Read list of user permissions from userAccessFile and determine if anonymous read-only
 	 * access is permitted
 	 * @param userAccessFile repository user access file
+	 * @param allUsers set of all valid users known to server
+	 * @param allowAnonymous which conveys the anonymous permission state read from the file
 	 * @param users list to be populated with user permissions defined by userAccessFile
-	 * @return true if anonymous read-only access is permitted, else false 
+	 * @return true if one of more users were removed from the stored list
 	 * @throws IOException if an IO error occurs
 	 */
-	private static boolean readAccessFile(File userAccessFile, List<User> users)
+	private static boolean readAccessFile(File userAccessFile, Set<String> allUsers,
+			AtomicBoolean allowAnonymous, List<User> users)
 			throws IOException {
-		boolean allowAnonymous = false;
+		boolean userRemoved = false;
+		allowAnonymous.set(false);
 		try (BufferedReader reader = new BufferedReader(new FileReader(userAccessFile))) {
 			String line = "";
 			while (true) {
@@ -679,16 +700,21 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 				}
 				line = line.trim();
 				if (ANONYMOUS_STR.equals(line)) {
-					allowAnonymous = true;
+					allowAnonymous.set(true);
 					continue;
 				}
 				User user = processAccessLine(line);
 				if (user != null) {
-					users.add(user);
+					if (allUsers.contains(user.getName())) {
+						users.add(user);
+					}
+					else {
+						userRemoved = true;
+					}
 				}
 			}
 		}
-		return allowAnonymous;
+		return userRemoved;
 	}
 
 	/**
@@ -986,7 +1012,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 				int indexVersion = IndexedLocalFileSystem.readIndexVersion(rootPath);
 				if (indexVersion >= IndexedLocalFileSystem.LATEST_INDEX_VERSION) {
 					if (!silent) {
-						System.err
+						System.out
 								.println("Repository '" + repositoryName + "' is already indexed!");
 					}
 					return false;
