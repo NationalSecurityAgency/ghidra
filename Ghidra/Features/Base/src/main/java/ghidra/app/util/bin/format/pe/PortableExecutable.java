@@ -118,7 +118,7 @@ public class PortableExecutable implements Writeable {
 	}
 
 	/**
-	 * {@return the length of the {@link PortableExecutable} file in bytes
+	 * {@return the length of the {@link PortableExecutable} file in bytes}
 	 */
 	public long getFileLength() {
 		return reader != null ? reader.length() : 0;

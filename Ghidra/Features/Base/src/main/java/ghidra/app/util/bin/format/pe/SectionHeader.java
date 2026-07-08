@@ -411,7 +411,7 @@ public class SectionHeader implements StructConverter, ByteArrayConverter, Write
 	}
 
 	/**
-	 * {@return the number of line numbers pointed to by the {@code NumberOfRelocations} field
+	 * {@return the number of line numbers pointed to by the {@code NumberOfRelocations} field}
 	 */
 	public short getNumberOfLinenumbers() {
 		return numberOfLinenumbers;

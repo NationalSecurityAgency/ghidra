@@ -405,9 +405,9 @@ public class TextComponentAutocompleter<T> {
 	}
 
 	/**
-	 * Gets the prefix from the given text field, used to query the model.
+	 * Gets the prefix from the given component, used to query the model.
 	 *
-	 * @param field an attached field, usually the one with focus.
+	 * @param component an attached component, usually the one with focus.
 	 * @return the prefix to use as the query.
 	 */
 	protected String getPrefix(JTextComponent component) {

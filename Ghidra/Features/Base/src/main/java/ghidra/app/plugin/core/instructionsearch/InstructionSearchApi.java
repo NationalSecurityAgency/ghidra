@@ -34,15 +34,15 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * Limitations:	
  * <ol>
- * 		<li>1) Searches may only be performed on a single program.
- * 		<li>2) Only a single address range may be searched for.
+ * 		<li>1) Searches may only be performed on a single program.</li>
+ * 		<li>2) Only a single address range may be searched for.</li>
  * </ol>
  * <p>
  * Results:
  * 		Can be returned in 2 ways: 
  * <ol>
- * 			<li>1) As a list of addresses representing the location of search matches.
- * 			<li>2) As a string (either binary or hex) representing the search string to be used.
+ * 			<li>1) As a list of addresses representing the location of search matches.</li>
+ * 			<li>2) As a string (either binary or hex) representing the search string to be used.</li>
  * </ol>
  * 		The latter results option is useful if using another tool to perform the search (i.e., Yara).
  * <p>

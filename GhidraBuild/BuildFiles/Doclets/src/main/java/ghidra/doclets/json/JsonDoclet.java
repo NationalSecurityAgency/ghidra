@@ -63,7 +63,7 @@ public class JsonDoclet implements Doclet {
 
 	@Override
 	public SourceVersion getSupportedSourceVersion() {
-		return SourceVersion.RELEASE_21;
+		return SourceVersion.RELEASE_25;
 	}
 
 	@Override
