@@ -554,8 +554,24 @@ public class UserManager {
 			}
 		}
 		catch (IOException e) {
-			System.out.println("\nFailed to read user file: " + e.getMessage());
+			System.err.println("\nFailed to read user file: " + e.getMessage());
 		}
+	}
+
+	/**
+	 * Get list of all users known to server.
+	 * @param repositoriesRootDir repositories root directory
+	 * @return list of known users
+	 * @throws IOException if error occurs while reading passwd file
+	 */
+	static Set<String> getUsers(File repositoriesRootDir) throws IOException {
+		File userFile = new File(repositoriesRootDir, USER_PASSWORD_FILE);
+
+		LinkedHashMap<String, UserEntry> list = new LinkedHashMap<>();
+		HashMap<X500Principal, UserEntry> lookupMap = new HashMap<>();
+
+		readUserList(userFile, list, lookupMap);
+		return list.keySet();
 	}
 
 	private static void readUserList(File file, Map<String, UserEntry> usersIndexByName,
