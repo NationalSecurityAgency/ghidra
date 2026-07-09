@@ -346,7 +346,7 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 			RowKey.FRAME,
 			"Frame: 1 FUN_140001000 pc=7ff6bd611040 sp=f900000000 base=f900000078",
 			RowKey.STORAGE, "Storage: Stack[-0x58]:4",
-			RowKey.TYPE, "Type: undefined4",
+			RowKey.TYPE, "Type: int",
 			RowKey.LOCATION, "Location: f900000020:4",
 			RowKey.BYTES, "Bytes: (UNKNOWN) 00 00 00 00",
 			RowKey.INTEGER, "Integer: (UNKNOWN) 0",
