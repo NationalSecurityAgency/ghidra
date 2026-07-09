@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,8 @@ import generic.stl.Pair;
 import ghidra.app.script.GhidraScript;
 import ghidra.feature.fid.db.*;
 import ghidra.feature.fid.service.FidService;
-import ghidra.program.model.lang.*;
-import ghidra.program.util.DefaultLanguageService;
+import ghidra.program.model.lang.CompilerSpecID;
+import ghidra.program.model.lang.LanguageID;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -480,14 +480,14 @@ public class RemoveFunctions extends GhidraScript {
 	}
 
 	protected void runSearch() throws Exception {
-		LanguageService langService = DefaultLanguageService.getLanguageService();
 		FidService fidService = new FidService();
 
 		buildKnownHashes32();
 		LanguageID langId = new LanguageID("x86:LE:32:default");
-		Language language = langService.getLanguage(langId);
+		CompilerSpecID compiler = new CompilerSpecID("windows");
 		println("Searching for x86:LE:32 hashes ...");
-		FidQueryService fidQueryService = fidService.openFidQueryService(language, false);
+		FidQueryService fidQueryService =
+			fidService.openFidQueryService(new FidProgramID(langId, compiler, null), false);
 		findMissingHashes(fidQueryService);
 
 		REMOVE_HASHES.clear();
@@ -500,9 +500,9 @@ public class RemoveFunctions extends GhidraScript {
 
 		buildKnownHashes64();
 		langId = new LanguageID("x86:LE:64:default");
-		language = langService.getLanguage(langId);
 		println("Searching for x86:LE:64 hashes ...");
-		fidQueryService = fidService.openFidQueryService(language, false);
+		fidQueryService =
+			fidService.openFidQueryService(new FidProgramID(langId, compiler, null), false);
 		findMissingHashes(fidQueryService);
 	}
 

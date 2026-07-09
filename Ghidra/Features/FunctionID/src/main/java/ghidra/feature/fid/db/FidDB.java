@@ -25,7 +25,6 @@ import db.DBRecord;
 import ghidra.feature.fid.hash.FidHashQuad;
 import ghidra.framework.store.db.PackedDBHandle;
 import ghidra.framework.store.db.PackedDatabase;
-import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.util.Msg;
 import ghidra.util.ReadOnlyException;
@@ -463,18 +462,19 @@ public class FidDB implements Closeable {
 	 * @param languageID the language id
 	 * @param languageVersion the language version
 	 * @param languageMinorVersion the language minor version
-	 * @param compilerSpecID the compiler spec id
+	 * @param compilerSpecs the allowed compiler specs, as a comma separated list of names
+	 * @param sourceLanguages the allowed source languages, as a comma separated list of names
 	 * @return the newly created library record
 	 */
 	public LibraryRecord createNewLibrary(String libraryFamilyName, String libraryVersion,
 			String libraryVariant, String ghidraVersion, LanguageID languageID, int languageVersion,
-			int languageMinorVersion, CompilerSpecID compilerSpecID) {
+			int languageMinorVersion, String compilerSpecs, String sourceLanguages) {
 
 		try {
 			checkUpdateAllowed();
 			DBRecord record = librariesTable.createLibrary(libraryFamilyName, libraryVersion,
 				libraryVariant, ghidraVersion, languageID, languageVersion, languageMinorVersion,
-				compilerSpecID);
+				compilerSpecs, sourceLanguages);
 			return new LibraryRecord(record);
 		}
 		catch (ReadOnlyException e) {

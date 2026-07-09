@@ -28,7 +28,8 @@ import ghidra.feature.fid.service.FidPopulateResult.Disposition;
 import ghidra.framework.Application;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
@@ -47,12 +48,11 @@ class FidServiceLibraryIngest {
 	private String libraryVariant; // Variant string
 	private List<DomainFile> programFiles;
 	private Predicate<Pair<Function, FidHashQuad>> functionFilter;
-	private LanguageID languageId; // Language for everything in this library
+	private FidFilter programFilter;		// Filter on programs to include in library
 	private List<LibraryRecord> linkLibraries;
 	private TaskMonitor monitor;
 
 	private LibraryRecord library = null; // Database record of the library we are creating
-	private CompilerSpec compilerSpec = null;
 	private Map<FunctionRecord, Set<ChildSymbol>> unresolvedSymbols = new HashMap<>();
 	private TreeSet<Long> globalUniqueFunction = new TreeSet<>();
 	private FidPopulateResult result = null;
@@ -172,14 +172,15 @@ class FidServiceLibraryIngest {
 	 * @param libraryVariant the library variant
 	 * @param programFiles the list of program files
 	 * @param functionFilter the function filter
-	 * @param languageId the Ghidra language id to filter programs by
+	 * @param programFilter the program filter
 	 * @param linkLibraries the list of libraries to use for unresolved symbols
 	 * @param monitor a task monitor
 	 */
 	public FidServiceLibraryIngest(FidDB fidDb, FidService service, String libraryFamilyName,
 			String libraryVersion, String libraryVariant, List<DomainFile> programFiles,
-			Predicate<Pair<Function, FidHashQuad>> functionFilter, LanguageID languageId,
-			List<LibraryRecord> linkLibraries, TaskMonitor monitor) {
+			Predicate<Pair<Function, FidHashQuad>> functionFilter, FidFilter programFilter,
+			List<LibraryRecord> linkLibraries,
+			TaskMonitor monitor) {
 		this.fidDb = fidDb;
 		this.service = service;
 		this.libraryFamilyName = libraryFamilyName;
@@ -187,19 +188,19 @@ class FidServiceLibraryIngest {
 		this.libraryVariant = libraryVariant;
 		this.programFiles = programFiles;
 		this.functionFilter = functionFilter;
-		this.languageId = languageId;
+		this.programFilter = programFilter;
 		this.linkLibraries = linkLibraries;
 		this.monitor = monitor;
-		if (languageId == null) {
-			throw new IllegalArgumentException("LanugageID can't be null"); // null used to be allowed, so add special check
+		if (programFilter.getLanguageID() == null) {
+			throw new IllegalArgumentException(
+				"FidServiceLibraryIngest: Program filter must specify exactly one LanguageID");
 		}
 	}
 
 	/**
 	 * Mark a set of function symbols as "very common" so a match relationship won't be generated with
 	 * functions that call it.
-	 * 
-	 * @param symbols The symbols
+	 * @param symbols is a list of the symbol names to mark
 	 */
 	public void markCommonChildReferences(List<String> symbols) {
 		if (symbols == null) {
@@ -218,6 +219,9 @@ class FidServiceLibraryIngest {
 		monitor.setMessage("Populating library from programs...");
 		monitor.initialize(programFiles.size());
 		Object consumer = new Object();
+		LanguageID languageID = programFilter.getLanguageID();
+		String compilerSpecs = programFilter.getCompilerSpecString(languageID);
+		String sourceLanguages = programFilter.getSourceLanguageString();
 		for (DomainFile programFile : programFiles) {
 			monitor.checkCancelled();
 			Program program = null;
@@ -225,18 +229,16 @@ class FidServiceLibraryIngest {
 				program = (Program) programFile.getDomainObject(consumer, false, false,
 					TaskMonitor.DUMMY);
 				monitor.incrementProgress(1);
-				if (!checkLanguageCompilerSpec(program)) {
+				if (!programFilter.test(program)) {
 					continue;
 				}
-				languageId = program.getLanguageID();
-				compilerSpec = program.getCompilerSpec();
 
 				if (library == null) {
 					Language language = program.getLanguage();
 					library =
 						fidDb.createNewLibrary(libraryFamilyName, libraryVersion, libraryVariant,
-							Application.getApplicationVersion(), languageId, language.getVersion(),
-							language.getMinorVersion(), compilerSpec.getCompilerSpecID());
+							Application.getApplicationVersion(), languageID, language.getVersion(),
+							language.getMinorVersion(), compilerSpecs, sourceLanguages);
 					result = new FidPopulateResult(library);
 				}
 
@@ -588,30 +590,6 @@ class FidServiceLibraryIngest {
 				"relation " + symbol.name + " unresolved; too many possibilities");
 		}
 		return !list.isEmpty();
-	}
-
-	/**
-	 * Make sure all programs have the same language and compiler spec,
-	 * otherwise throw and exception or return false based on failOnNewLanguage
-	 * @param program the program
-	 * @return true if the program passes the filter
-	 */
-	private boolean checkLanguageCompilerSpec(Program program) {
-		if (!languageId.equals(program.getLanguageID())) {
-			Msg.error(this,
-				"Program " + program.getName() + " does not have language " + languageId);
-			return false;
-		}
-		if (compilerSpec != null) {
-			if (!compilerSpec.getCompilerSpecID()
-					.equals(program.getCompilerSpec().getCompilerSpecID())) {
-				throw new IllegalArgumentException(
-					"Program " + program.getName() + " has different compiler spec (" +
-						program.getCompilerSpec().getCompilerSpecID() +
-						") than already established (" + compilerSpec.getCompilerSpecID() + ")");
-			}
-		}
-		return true;
 	}
 
 	/**
