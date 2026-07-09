@@ -47,7 +47,7 @@ public class FileHeader implements StructConverter, Writeable {
 	/// The name to use when converting into a structure data type
 	public final static String NAME = "IMAGE_FILE_HEADER";
 
-	/// The size of the {@code IMAGE_FILE_HEADER} in bytes
+	/// The size of the `IMAGE_FILE_HEADER` in bytes
 	public final static int IMAGE_SIZEOF_FILE_HEADER = 20;
 
 	/// Relocation info stripped from file
