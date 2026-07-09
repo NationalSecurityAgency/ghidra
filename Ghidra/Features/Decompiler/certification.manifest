@@ -63,6 +63,7 @@ src/decompile/datatests/nestedoffset.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_alias.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_globcall.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_iterused.xml||GHIDRA||||END|
+src/decompile/datatests/offcut.xml||GHIDRA||||END|
 src/decompile/datatests/offsetarray.xml||GHIDRA||||END|
 src/decompile/datatests/orcompare.xml||GHIDRA||||END|
 src/decompile/datatests/overridedest.xml||GHIDRA||||END|

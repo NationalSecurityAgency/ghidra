@@ -1076,6 +1076,7 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
 
 {
   bool needexacthit;
+  vn->setSymbolCheck(Varnode::symcheck_complete);
   Architecture *glb = data.getArch();
   Varnode *outvn;
   if (vn->getTypeReadFacing(op)->getMetatype() == TYPE_PTR) { // Are we explicitly marked as a pointer
@@ -1162,8 +1163,10 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
       if (ct->isCharPrint())
 	needexacthit = false;
     }
-    if (needexacthit && entry->getAddr() != rampoint)
+    if (needexacthit && entry->getAddr() != rampoint) {
+      vn->setSymbolCheck(Varnode::symcheck_incomplete);	// May need to retest if we later discover vn is a pointer
       return (SymbolEntry *)0;
+    }
   }
   return entry;
 }
@@ -1190,7 +1193,9 @@ int4 ActionConstantPtr::apply(Funcdata &data)
     vn = *begiter++;
     if (!vn->isConstant()) break; // New varnodes may get inserted between begiter and enditer
     if (vn->getOffset() == 0) continue; // Never make constant 0 into spacebase
-    if (vn->isPtrCheck()) continue; // Have we checked this variable before
+    uint4 check = vn->getSymbolCheck();
+    if (check == Varnode::symcheck_complete) continue; // Have we checked this variable before
+    if (check == Varnode::symcheck_incomplete && vn->getType()->getMetatype() != TYPE_PTR) continue;
     if (vn->hasNoDescend()) continue;
     if (vn->isSpacebase()) continue; // Don't use constant 0 which is already spacebase
     //    if (vn->getSize() != rspc->getAddrSize()) continue; // Must be size of pointer
@@ -1209,7 +1214,6 @@ int4 ActionConstantPtr::apply(Funcdata &data)
     Address rampoint;
     uintb fullEncoding;
     entry = isPointer(rspc,vn,op,slot,rampoint,fullEncoding,data);
-    vn->setPtrCheck();		// Set check flag AFTER searching for symbol
     if (entry != (SymbolEntry *)0) {
       data.spacebaseConstant(op,slot,entry,rampoint,fullEncoding,vn->getSize());
       if ((opc == CPUI_INT_ADD)&&(slot==1))
