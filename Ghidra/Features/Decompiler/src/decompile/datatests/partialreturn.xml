@@ -1,0 +1,24 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:windows">
+<!--
+  A small return value is written through AL.  The old high bytes of RAX
+  should not force recovery of an 8-byte return value with a CONCAT expression.
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+31d248c7c0ffffffff48ffc066833c4100
+75f64839c273110fb704516683f87f7603
+b001c3ffc2ebd930c0c390909090
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="partial_register_return"/>
+</binaryimage>
+<script>
+  <com>lo fu partial_register_return</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Partial register return #1" min="0" max="0">CONCAT</stringmatch>
+<stringmatch name="Partial register return #2" min="0" max="0">uint8 partial_register_return</stringmatch>
+<stringmatch name="Partial register return #3" min="1" max="1">return 1;</stringmatch>
+<stringmatch name="Partial register return #4" min="1" max="1">return 0;</stringmatch>
+</decompilertest>
