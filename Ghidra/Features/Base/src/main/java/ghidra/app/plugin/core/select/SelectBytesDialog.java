@@ -93,6 +93,7 @@ class SelectBytesDialog extends ReusableDialogComponentProvider {
 		lengthField = new IntegerTextField(10);
 		lengthField.getComponent().getAccessibleContext().setAccessibleName("Number Input");
 		lengthField.setMinValue(BigInteger.ZERO);
+		main.add(lengthField.getComponent());
 		return main;
 	}
 
