@@ -26,7 +26,6 @@ import ghidra.program.model.util.VoidPropertyMap;
  */
 public class PersistentOpenCloseManager implements OpenCloseManager {
 	private boolean openByDefault = true;
-	private VoidPropertyMap booleanProperty;
 	private ProgramUserData programUserData;
 
 	// Often, isOpen will be called on the same function address many times in a row so cache
@@ -35,18 +34,15 @@ public class PersistentOpenCloseManager implements OpenCloseManager {
 	private boolean cachedResult;
 	private String defaultOpenClosePropertyname;
 
+	private String owner;
+	private String propertyName;
+	private VoidPropertyMap cachedPropertyMap;
+
 	public PersistentOpenCloseManager(ProgramUserData data, String owner, String propertyName) {
+		this.owner = owner;
+		this.propertyName = propertyName;
 		this.defaultOpenClosePropertyname = propertyName + "Default";
 		programUserData = data;
-
-		int tx = programUserData.startTransaction();
-		try {
-			booleanProperty =
-				programUserData.getBooleanProperty(owner, propertyName, true);
-		}
-		finally {
-			programUserData.endTransaction(tx);
-		}
 
 		// Get the default open state. Only addresses different from default have properties stored.
 		String functionState =
@@ -54,13 +50,37 @@ public class PersistentOpenCloseManager implements OpenCloseManager {
 		openByDefault = functionState.equals("Open");
 	}
 
+	private VoidPropertyMap getExistingProperty() {
+		if (cachedPropertyMap != null) {
+			return cachedPropertyMap;
+		}
+
+		cachedPropertyMap = programUserData.getBooleanProperty(owner, propertyName, false);
+		return cachedPropertyMap;
+	}
+
+	private VoidPropertyMap getOrCreatePropertyMap() {
+		if (cachedPropertyMap != null) {
+			return cachedPropertyMap;
+		}
+
+		cachedPropertyMap = programUserData.getBooleanProperty(owner, propertyName, true);
+		return cachedPropertyMap;
+	}
+
 	@Override
 	public boolean isOpen(Address address) {
+		VoidPropertyMap propertyMap = getExistingProperty();
+		if (propertyMap == null) {
+			return openByDefault;
+		}
+
 		if (address.equals(cachedAddress)) {
 			return cachedResult;
 		}
+
 		cachedAddress = address;
-		boolean contains = booleanProperty.hasProperty(address);
+		boolean contains = propertyMap.hasProperty(address);
 		cachedResult = openByDefault ? !contains : contains;
 		return cachedResult;
 	}
@@ -111,7 +131,8 @@ public class PersistentOpenCloseManager implements OpenCloseManager {
 	private void addAddressProperty(Address address) {
 		int tx = programUserData.startTransaction();
 		try {
-			booleanProperty.add(address);
+			VoidPropertyMap propertyMap = getOrCreatePropertyMap();
+			propertyMap.add(address);
 		}
 		finally {
 			programUserData.endTransaction(tx);
@@ -121,7 +142,8 @@ public class PersistentOpenCloseManager implements OpenCloseManager {
 	private void removeAddressProperty(Address address) {
 		int tx = programUserData.startTransaction();
 		try {
-			booleanProperty.remove(address);
+			VoidPropertyMap propertyMap = getOrCreatePropertyMap();
+			propertyMap.remove(address);
 		}
 		finally {
 			programUserData.endTransaction(tx);
@@ -131,7 +153,8 @@ public class PersistentOpenCloseManager implements OpenCloseManager {
 	private void clearProperties() {
 		int tx = programUserData.startTransaction();
 		try {
-			booleanProperty.clear();
+			VoidPropertyMap propertyMap = getOrCreatePropertyMap();
+			propertyMap.clear();
 		}
 		finally {
 			programUserData.endTransaction(tx);
