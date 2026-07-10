@@ -111,11 +111,7 @@ public class ServerAdmin implements GhidraLaunchable {
 			System.exit(-1);
 		}
 
-		File cmdDir = CommandProcessor.getCommandDir(serverRootDir);
-		if (!cmdDir.isDirectory() || !cmdDir.canWrite()) {
-			System.err.println("Insufficient privilege or server not started!");
-			System.exit(-1);
-		}
+		File cmdDir = CommandProcessor.getOrCreateCommandDir(serverRootDir);
 
 		// Process command line
 		boolean listRepositories = false;
