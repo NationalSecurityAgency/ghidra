@@ -293,7 +293,7 @@ We do not need to be precise in this check; it suffices to check the program cou
 while (true) {
 	monitor.checkCancelled();
 
-	TargetExecutionState execState = getExecutionState(trace);
+	TraceExecutionState execState = getExecutionState(trace);
 	switch (execState) {
 		case STOPPED:
 			resume();
@@ -338,7 +338,7 @@ Using a timeout of 1 second ensures we can terminate promptly should the user ca
 
 Before waiting, we need to make sure the target is running.
 Because we could repeat the loop while the target is already running, we should only call `resume()` if the target is stopped.
-There are utility methods on `TargetExecutionState` like `isRunning()`, which you might prefer to use.
+You might also simplify this with a comparison like `execState == TraceExecutionState.RUNNING`.
 Here, we exhaustively handle every kind of state using a switch statement, which does make the code a bit verbose.
 
 When the target does break, we first allow the UI to finish interrogating the target.
