@@ -387,7 +387,7 @@ public class ModelingScript extends GhidraScript {
 
 It should be fairly apparent how you could add more expression types to complete the model.
 There is some odd nuance in the naming of p-code operations, so do read the documentation carefully.
-If you are not entirely certain what an operation does, take a look at [OpBehaviorFactory](../../../Ghidra/Framework/SoftwareModeling/src/main/java/ghidra/pcode/opbehavior/OpBehaviorFactory.java).
+If you are not entirely certain what an operation does, take a look at [OpBehaviorFactory](../../../Ghidra/Framework/Emulation/src/main/java/ghidra/pcode/opbehavior/OpBehaviorFactory.java).
 You can also examine the concrete implementation on byte arrays [BytesPcodeArithmetic](../../../Ghidra/Framework/Emulation/src/main/java/ghidra/pcode/exec/BytesPcodeArithmetic.java).
 
 ### Mapping the Model
