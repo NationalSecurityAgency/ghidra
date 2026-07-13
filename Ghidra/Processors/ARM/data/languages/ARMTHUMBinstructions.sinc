@@ -4358,7 +4358,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
    build ItCond;
 }
 
-:sev^ItCond^".w"                      is TMode=1 & ItCond & op0=0xf3af; op0=8004
+:sev^ItCond^".w"                      is TMode=1 & ItCond & op0=0xf3af; op0=0x8004
 {
    build ItCond;
 }
