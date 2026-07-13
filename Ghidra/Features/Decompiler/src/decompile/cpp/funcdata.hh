@@ -103,15 +103,14 @@ class Funcdata {
 				// Low level Varnode functions
   void setVarnodeProperties(Varnode *vn) const;	///< Look-up boolean properties and data-type information
   HighVariable *assignHigh(Varnode *vn);	///< Assign a new HighVariable to a Varnode
-  Symbol *handleSymbolConflict(SymbolEntry *entry,Varnode *vn);	///< Handle two variables with matching storage
   bool syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 fl,Datatype *ct);
   bool descend2Undef(Varnode *vn);		///< Transform all reads of the given Varnode to a special \b undefined constant
 
   void splitUses(Varnode *vn);			///< Make all reads of the given Varnode unique
   Varnode *cloneVarnode(const Varnode *vn);	///< Clone a Varnode (between copies of the function)
   void destroyVarnode(Varnode *vn);		///< Delete the given Varnode from \b this function
-  void coverVarnodes(SymbolEntry *entry,vector<Varnode *> &list);
-  bool applyUnionFacet(SymbolEntry *entry,DynamicHash &dhash);
+  void coverVarnodes(MapEntry *entry,vector<Varnode *> &list);
+  bool applyUnionFacet(DynamicEntry *entry,DynamicHash &dhash);
 				// Low level op functions
   void opZeroMulti(PcodeOp *op);		///< Transform trivial CPUI_MULTIEQUAL to CPUI_COPY
 				// Low level block functions
@@ -231,7 +230,7 @@ public:
   Varnode *findSpacebaseInput(AddrSpace *id) const;
   Varnode *constructSpacebaseInput(AddrSpace *id);
   Varnode *constructConstSpacebase(AddrSpace *id);
-  void spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const Address &rampoint,uintb origval,int4 origsize);
+  void spacebaseConstant(PcodeOp *op,int4 slot,MapEntry *entry,const Address &rampoint,uintb origval,int4 origsize);
 
   int4 getHeritagePass(void) const { return heritage.getPass(); }	///< Get overall count of heritage passes
 
@@ -434,6 +433,8 @@ public:
   void clearDeadOps(void) { obank.destroyDead(); }		///< Delete any dead PcodeOps
   void remapVarnode(Varnode *vn,Symbol *sym,const Address &usepoint);
   void remapDynamicVarnode(Varnode *vn,Symbol *sym,const Address &usepoint,uint8 hash);
+  void remapConflictSymbol(Symbol *sym);	///< Convert any MapEntryConflict on the Symbol into a DynamicEntry
+  bool detectSymbolConflicts(Varnode *vn);			///< Detect potential symbol conflicts
   void linkProtoPartial(Varnode *vn);				///< Find or create Symbol and a partial mapping
   Symbol *linkSymbol(Varnode *vn);				///< Find or create Symbol associated with given Varnode
   Symbol *linkSymbolReference(Varnode *vn);			///< Discover and attach Symbol to a constant reference
@@ -441,8 +442,8 @@ public:
   void findLinkedVarnodes(SymbolEntry *entry,vector<Varnode *> &res) const;	///< Find Varnodes that map to the given SymbolEntry
   void buildDynamicSymbol(Varnode *vn);				///< Build a \e dynamic Symbol associated with the given Varnode
   bool testForReturnAddress(Varnode *vn);	///< Test if the given Varnode is (derived from) the return address
-  bool attemptDynamicMapping(SymbolEntry *entry,DynamicHash &dhash);
-  bool attemptDynamicMappingLate(SymbolEntry *entry,DynamicHash &dhash);
+  bool attemptDynamicMapping(DynamicEntry *entry,DynamicHash &dhash);
+  bool attemptDynamicMappingLate(DynamicEntry *entry,DynamicHash &dhash);
   Merge &getMerge(void) { return covermerge; }			///< Get the Merge object for \b this function
   Varnode *getInternalString(const uint1 *buf,int4 size,Datatype *ptrType,PcodeOp *readOp);
 

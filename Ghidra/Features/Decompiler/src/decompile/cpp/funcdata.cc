@@ -355,7 +355,7 @@ Varnode *Funcdata::constructConstSpacebase(AddrSpace *id)
 /// \param rampoint is the constant pointer interpreted as an Address
 /// \param origval is the constant
 /// \param origsize is the size of the constant
-void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const Address &rampoint,uintb origval,int4 origsize)
+void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,MapEntry *entry,const Address &rampoint,uintb origval,int4 origsize)
 
 {
   int4 sz = rampoint.getAddrSize();

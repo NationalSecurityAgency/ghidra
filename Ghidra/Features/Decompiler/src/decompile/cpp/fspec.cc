@@ -2993,7 +2993,10 @@ Datatype *ParameterSymbol::getType(void) const
 Address ParameterSymbol::getAddress(void) const
 
 {
-  return sym->getFirstWholeMap()->getAddr();
+  SymbolEntry *entry = sym->getFirstWholeMap();
+  if (entry->isDynamic())
+    return Address();
+  return ((MapEntry *)entry)->getAddr();
 }
 
 int4 ParameterSymbol::getSize(void) const
@@ -3149,7 +3152,6 @@ ProtoParameter *ProtoStoreSymbol::setInput(int4 i, const string &nm,const Parame
 {
   ParameterSymbol *res = getSymbolBacked(i);
   res->sym = scope->getCategorySymbol(Symbol::function_parameter,i);
-  SymbolEntry *entry;
   Address usepoint;
 
   bool isindirect = (pieces.flags & ParameterPieces::indirectstorage) != 0;
@@ -3157,8 +3159,8 @@ ProtoParameter *ProtoStoreSymbol::setInput(int4 i, const string &nm,const Parame
   bool istypelock = (pieces.flags & ParameterPieces::typelock) != 0;
   bool isnamelock = (pieces.flags & ParameterPieces::namelock) != 0;
   if (res->sym != (Symbol *)0) {
-    entry = res->sym->getFirstWholeMap();
-    if ((entry->getAddr() != pieces.addr)||(entry->getSize() != pieces.type->getSize())) {
+    SymbolEntry *entry = res->sym->getFirstWholeMap();
+    if (((MapEntry *)entry)->getAddr() != pieces.addr || entry->getSize() != pieces.type->getSize()) {
       scope->removeSymbol(res->sym);
       res->sym = (Symbol *)0;
     }

@@ -397,6 +397,11 @@ void Varnode::clearFlags(uint4 fl) const
 void Varnode::clearSymbolLinks(void)
 
 {
+  if (high == (HighVariable *)0) {
+    mapentry = (SymbolEntry *)0;
+    clearFlags(Varnode::namelock | Varnode::typelock | Varnode::mapped);
+    return;
+  }
   bool foundEntry = false;
   for(int4 i=0;i<high->numInstances();++i) {
     Varnode *vn = high->getInstance(i);

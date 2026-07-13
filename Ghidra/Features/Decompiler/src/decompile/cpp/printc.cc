@@ -1929,18 +1929,18 @@ void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
     int4 userind = (int4)op->getIn(0)->getOffset();
     size = glb->userops.getOp(userind)->extractAnnotationSize(vn, op);
   }
-  SymbolEntry *entry;
+  MapEntry *entry;
   if (size != 0)
     entry = symScope->queryContainer(vn->getAddr(),size,op->getAddr());
   else {
     entry = symScope->queryContainer(vn->getAddr(),1,op->getAddr());
-    if (entry != (SymbolEntry *)0)
+    if (entry != (MapEntry *)0)
       size = entry->getSize();
     else
       size = vn->getSize();
   }
   
-  if (entry != (SymbolEntry *)0) {
+  if (entry != (MapEntry *)0) {
     if (entry->getSize() == size)
       pushSymbol(entry->getSymbol(),vn,op);
     else {
@@ -2083,9 +2083,7 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
     }
     else if (allowCast) {
       Datatype *outtype = vn->getHigh()->getType();
-      AddrSpace *spc = sym->getFirstWholeMap()->getAddr().getSpace();
-      if (spc == (AddrSpace *)0)
-	spc = vn->getSpace();
+      AddrSpace *spc = vn->getHigh()->getNameRepresentative()->getSpace();
       if (castStrategy->isSubpieceCastEndian(outtype,ct,off,spc->isBigEndian())) {
 	// Treat truncation as SUBPIECE style cast
 	finalcast = outtype;
@@ -2667,7 +2665,7 @@ bool PrintC::emitScopeVarDecls(const Scope *symScope,int4 cat)
   MapIterator iter = symScope->begin();
   MapIterator enditer = symScope->end();
   for(;iter!=enditer;++iter) {
-    const SymbolEntry *entry = *iter;
+    const MapEntry *entry = *iter;
     if (entry->isPiece()) continue; // Don't do a partial entry
     Symbol *sym = entry->getSymbol();
     if (sym->getCategory() != cat) continue;
@@ -2683,18 +2681,14 @@ bool PrintC::emitScopeVarDecls(const Scope *symScope,int4 cat)
     notempty = true;
     emitVarDeclStatement(sym);
   }
-  list<SymbolEntry>::const_iterator iter_d = symScope->beginDynamic();
-  list<SymbolEntry>::const_iterator enditer_d = symScope->endDynamic();
+  list<DynamicEntry *>::const_iterator iter_d = symScope->beginDynamic();
+  list<DynamicEntry *>::const_iterator enditer_d = symScope->endDynamic();
   for(;iter_d!=enditer_d;++iter_d) {
-    const SymbolEntry *entry = &(*iter_d);
+    const DynamicEntry *entry = *iter_d;
     if (entry->isPiece()) continue; // Don't do a partial entry
-    Symbol *sym = (*iter_d).getSymbol();
+    Symbol *sym = entry->getSymbol();
     if (sym->getCategory() != cat) continue;
     if (sym->getName().size() == 0) continue;
-    if (dynamic_cast<FunctionSymbol *>(sym) != (FunctionSymbol *)0)
-      continue;
-    if (dynamic_cast<LabSymbol *>(sym) != (LabSymbol *)0)
-      continue;
     if (sym->isMultiEntry()) {
       if (sym->getFirstWholeMap() != entry)
 	continue;
