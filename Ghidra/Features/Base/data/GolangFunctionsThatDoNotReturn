@@ -122,3 +122,5 @@ runtime.Goexit
 
 runtime.sigpanic
 runtime.sigpanic0.abi0
+
+runtime.unreachableMethod
