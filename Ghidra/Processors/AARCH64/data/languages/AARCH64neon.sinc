@@ -734,7 +734,7 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0x
 	Rd_FPR8 = Rd_FPR8 + Rn_VPR128.16B[104,8];
 	Rd_FPR8 = Rd_FPR8 + Rn_VPR128.16B[112,8];
 	Rd_FPR8 = Rd_FPR8 + Rn_VPR128.16B[120,8];
-	zext_zq(Zd); # zero upper 31 bytes of Zd
+	zext_zb(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.6 ADDV page C7-2027 line 118452 MATCH x0e31b800/mask=xbf3ffc00
@@ -753,7 +753,7 @@ is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0x
 	Rd_FPR8 = Rd_FPR8 + Rn_VPR64.8B[40,8];
 	Rd_FPR8 = Rd_FPR8 + Rn_VPR64.8B[48,8];
 	Rd_FPR8 = Rd_FPR8 + Rn_VPR64.8B[56,8];
-	zext_zq(Zd); # zero upper 31 bytes of Zd
+	zext_zb(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.6 ADDV page C7-2027 line 118452 MATCH x0e31b800/mask=xbf3ffc00
@@ -7275,6 +7275,7 @@ is b_1031=0b0001111001111110000000 & Rd_GPR32 & Rn_FPR64 & Rd_GPR64
 is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=1 & b_21=0 & Rm_FPR64 & b_15=0 & Ra_FPR64 & Rn_FPR64 & Rd_FPR64 & Zd
 {
 	Rd_FPR64 = Ra_FPR64 f+ (Rm_FPR64 f* Rn_FPR64); #NEON_fmadd(Rn_FPR64, Rm_FPR64, Ra_FPR64);
+	zext_zd(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.100 FMADD page C7-2246 line 131323 MATCH x1f000000/mask=xff208000
@@ -7286,6 +7287,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=1 & b_21=0 & Rm_FPR64 & b_15=0 & R
 is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=0 & b_21=0 & Rm_FPR32 & b_15=0 & Ra_FPR32 & Rn_FPR32 & Rd_FPR32 & Zd
 {
 	Rd_FPR32 = Ra_FPR32 f+ (Rm_FPR32 f* Rn_FPR32); #NEON_fmadd(Rn_FPR32, Rm_FPR32, Ra_FPR32);
+	zext_zs(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.100 FMADD page C7-2246 line 131323 MATCH x1f000000/mask=xff208000
@@ -7297,6 +7299,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=0 & b_21=0 & Rm_FPR32 & b_15=0 & R
 is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=3 & b_21=0 & Rm_FPR16 & b_15=0 & Ra_FPR16 & Rn_FPR16 & Rd_FPR16 & Zd
 {
 	Rd_FPR16 = Ra_FPR16 f+ (Rm_FPR16 f* Rn_FPR16); #NEON_fmadd(Rn_FPR16, Rm_FPR16, Ra_FPR16);
+	zext_zh(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.101 FMAX (vector) page C7-2248 line 131451 MATCH x0e20f400/mask=xbfa0fc00
@@ -9562,6 +9565,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Imm8_fmov16_operand
 is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=1 & b_21=0 & Rm_FPR64 & b_15=1 & Ra_FPR64 & Rn_FPR64 & Rd_FPR64 & Zd
 {
 	Rd_FPR64 = Ra_FPR64 f- (Rm_FPR64 f* Rn_FPR64);
+	zext_zd(Zd); # zero upper bytes of Zd
 
 }
 
@@ -9574,6 +9578,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=1 & b_21=0 & Rm_FPR64 & b_15=1 & R
 is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=0 & b_21=0 & Rm_FPR32 & b_15=1 & Ra_FPR32 & Rn_FPR32 & Rd_FPR32 & Zd
 {
 	Rd_FPR32 = Ra_FPR32 f- (Rm_FPR32 f* Rn_FPR32);
+	zext_zs(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.133 FMSUB page C7-2318 line 135582 MATCH x1f008000/mask=xff208000
@@ -9585,6 +9590,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=0 & b_21=0 & Rm_FPR32 & b_15=1 & R
 is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=3 & b_21=0 & Rm_FPR16 & b_15=1 & Ra_FPR16 & Rn_FPR16 & Rd_FPR16 & Zd
 {
 	Rd_FPR16 = Ra_FPR16 f- (Rm_FPR16 f* Rn_FPR16);
+	zext_zh(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.134 FMUL (by element) page C7-2320 line 135711 MATCH x5f009000/mask=xffc0f400
@@ -17093,6 +17099,7 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=1 & b_2121=1 & Rm_VPR128.8H
 is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0xa & b_1011=2 & Rn_VPR128.16B & Rd_FPR8 & Zd
 {
 	Rd_FPR8 = NEON_smaxv(Rn_VPR128.16B, 1:1);
+	zext_zb(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.270 SMAXV page C7-2616 line 152715 MATCH x0e30a800/mask=xbf3ffc00
@@ -17104,6 +17111,7 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0xa & b_1011=2 & Rn_VPR64.8B & Rd_FPR8 & Zd
 {
 	Rd_FPR8 = NEON_smaxv(Rn_VPR64.8B, 1:1);
+	zext_zb(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.270 SMAXV page C7-2616 line 152715 MATCH x0e30a800/mask=xbf3ffc00
@@ -17115,6 +17123,7 @@ is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0xa & b_1011=2 & Rn_VPR64.4H & Rd_FPR16 & Zd
 {
 	Rd_FPR16 = NEON_smaxv(Rn_VPR64.4H, 2:1);
+	zext_zh(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.270 SMAXV page C7-2616 line 152715 MATCH x0e30a800/mask=xbf3ffc00
@@ -17126,6 +17135,7 @@ is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0xa & b_1011=2 & Rn_VPR128.8H & Rd_FPR16 & Zd
 {
 	Rd_FPR16 = NEON_smaxv(Rn_VPR128.8H, 2:1);
+	zext_zh(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.270 SMAXV page C7-2616 line 152715 MATCH x0e30a800/mask=xbf3ffc00
@@ -17137,6 +17147,7 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=2 & b_1721=0x18 & b_1216=0xa & b_1011=2 & Rn_VPR128.4S & Rd_FPR32 & Zd
 {
 	Rd_FPR32 = NEON_smaxv(Rn_VPR128.4S, 4:1);
+	zext_zs(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.271 SMIN page C7-2618 line 152818 MATCH x0e206c00/mask=xbf20fc00
@@ -17280,6 +17291,7 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=1 & b_2121=1 & Rm_VPR128.8H
 is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0x1a & b_1011=2 & Rn_VPR128.16B & Rd_FPR8 & Zd
 {
 	Rd_FPR8 = NEON_sminv(Rn_VPR128.16B, 1:1);
+	zext_zb(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.273 SMINV page C7-2622 line 153024 MATCH x0e31a800/mask=xbf3ffc00
@@ -17291,6 +17303,7 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0x1a & b_1011=2 & Rn_VPR64.8B & Rd_FPR8 & Zd
 {
 	Rd_FPR8 = NEON_sminv(Rn_VPR64.8B, 1:1);
+	zext_zb(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.273 SMINV page C7-2622 line 153024 MATCH x0e31a800/mask=xbf3ffc00
@@ -17302,6 +17315,7 @@ is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0x1a & b_1011=2 & Rn_VPR64.4H & Rd_FPR16 & Zd
 {
 	Rd_FPR16 = NEON_sminv(Rn_VPR64.4H, 2:1);
+	zext_zh(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.273 SMINV page C7-2622 line 153024 MATCH x0e31a800/mask=xbf3ffc00
@@ -17313,6 +17327,7 @@ is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0x1a & b_1011=2 & Rn_VPR128.8H & Rd_FPR16 & Zd
 {
 	Rd_FPR16 = NEON_sminv(Rn_VPR128.8H, 2:1);
+	zext_zh(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.273 SMINV page C7-2622 line 153024 MATCH x0e31a800/mask=xbf3ffc00
@@ -17324,6 +17339,7 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=2 & b_1721=0x18 & b_1216=0x1a & b_1011=2 & Rn_VPR128.4S & Rd_FPR32 & Zd
 {
 	Rd_FPR32 = NEON_sminv(Rn_VPR128.4S, 4:1);
+	zext_zs(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.274 SMLAL, SMLAL2 (by element) page C7-2624 line 153127 MATCH x0f002000/mask=xbf00f400
@@ -26673,6 +26689,7 @@ is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=1 & b_2121=1 & Rm_VPR128.8H
 is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0xa & b_1011=2 & Rn_VPR128.16B & Rd_FPR8 & Zd
 {
 	Rd_FPR8 = NEON_umaxv(Rn_VPR128.16B, 1:1);
+	zext_zb(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.362 UMAXV page C7-2849 line 166369 MATCH x2e30a800/mask=xbf3ffc00
@@ -26684,6 +26701,7 @@ is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=0 & u=1 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0xa & b_1011=2 & Rn_VPR64.8B & Rd_FPR8 & Zd
 {
 	Rd_FPR8 = NEON_umaxv(Rn_VPR64.8B, 1:1);
+	zext_zb(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.362 UMAXV page C7-2849 line 166369 MATCH x2e30a800/mask=xbf3ffc00
@@ -26695,6 +26713,7 @@ is b_3131=0 & q=0 & u=1 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=0 & u=1 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0xa & b_1011=2 & Rn_VPR64.4H & Rd_FPR16 & Zd
 {
 	Rd_FPR16 = NEON_umaxv(Rn_VPR64.4H, 2:1);
+	zext_zh(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.362 UMAXV page C7-2849 line 166369 MATCH x2e30a800/mask=xbf3ffc00
@@ -26706,6 +26725,7 @@ is b_3131=0 & q=0 & u=1 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0xa & b_1011=2 & Rn_VPR128.8H & Rd_FPR16 & Zd
 {
 	Rd_FPR16 = NEON_umaxv(Rn_VPR128.8H, 2:1);
+	zext_zh(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.362 UMAXV page C7-2849 line 166369 MATCH x2e30a800/mask=xbf3ffc00
@@ -26717,6 +26737,7 @@ is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=2 & b_1721=0x18 & b_1216=0xa & b_1011=2 & Rn_VPR128.4S & Rd_FPR32 & Zd
 {
 	Rd_FPR32 = NEON_umaxv(Rn_VPR128.4S, 4:1);
+	zext_zs(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.363 UMIN page C7-2851 line 166472 MATCH x2e206c00/mask=xbf20fc00
@@ -26860,6 +26881,7 @@ is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=1 & b_2121=1 & Rm_VPR128.8H
 is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0x1a & b_1011=2 & Rn_VPR128.16B & Rd_FPR8 & Zd
 {
 	Rd_FPR8 = NEON_uminv(Rn_VPR128.16B, 1:1);
+	zext_zb(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.365 UMINV page C7-2855 line 166678 MATCH x2e31a800/mask=xbf3ffc00
@@ -26871,6 +26893,7 @@ is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=0 & u=1 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0x1a & b_1011=2 & Rn_VPR64.8B & Rd_FPR8 & Zd
 {
 	Rd_FPR8 = NEON_uminv(Rn_VPR64.8B, 1:1);
+	zext_zb(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.365 UMINV page C7-2855 line 166678 MATCH x2e31a800/mask=xbf3ffc00
@@ -26882,6 +26905,7 @@ is b_3131=0 & q=0 & u=1 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=0 & u=1 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0x1a & b_1011=2 & Rn_VPR64.4H & Rd_FPR16 & Zd
 {
 	Rd_FPR16 = NEON_uminv(Rn_VPR64.4H, 2:1);
+	zext_zh(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.365 UMINV page C7-2855 line 166678 MATCH x2e31a800/mask=xbf3ffc00
@@ -26893,6 +26917,7 @@ is b_3131=0 & q=0 & u=1 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0x1a & b_1011=2 & Rn_VPR128.8H & Rd_FPR16 & Zd
 {
 	Rd_FPR16 = NEON_uminv(Rn_VPR128.8H, 2:1);
+	zext_zh(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.365 UMINV page C7-2855 line 166678 MATCH x2e31a800/mask=xbf3ffc00
@@ -26904,6 +26929,7 @@ is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x18 & b_1216=0x
 is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=2 & b_1721=0x18 & b_1216=0x1a & b_1011=2 & Rn_VPR128.4S & Rd_FPR32 & Zd
 {
 	Rd_FPR32 = NEON_uminv(Rn_VPR128.4S, 4:1);
+	zext_zs(Zd); # zero upper bytes of Zd
 }
 
 # C7.2.366 UMLAL, UMLAL2 (by element) page C7-2857 line 166781 MATCH x2f002000/mask=xbf00f400
