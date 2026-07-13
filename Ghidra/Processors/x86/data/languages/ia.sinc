@@ -5171,7 +5171,7 @@ define pcodeop xend;
 :XCHG Rmr64,Reg64   is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x87; mod=3 & Rmr64 & Reg64        { local tmp = Rmr64; Rmr64 = Reg64; Reg64 = tmp; }
 @endif
 
-:XLAT seg16^BX      is vexMode=0 & addrsize=0 & seg16 & byte=0xd7; BX           { tmp:$(SIZE)= 0; ptr2(tmp,BX+zext(AL)); AL = *tmp; }
+:XLAT seg16^BX      is vexMode=0 & addrsize=0 & seg16 & byte=0xd7; BX           { tmp:$(SIZE) = segment(seg16,BX+zext(AL)); AL = *tmp; }
 :XLAT segWide^EBX     is vexMode=0 & addrsize=1 & segWide & byte=0xd7; EBX          { tmp:$(SIZE)= 0; ptr4(tmp,EBX+zext(AL)); AL = *tmp; }
 @ifdef IA64
 :XLAT segWide^RBX     is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & segWide & byte=0xd7; RBX          { tmp:$(SIZE)= 0; ptr8(tmp,RBX+zext(AL)); AL = *tmp; }
