@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,6 +32,7 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.*;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
+import utilities.util.FileUtilities;
 
 class MemoryMapXmlMgr {
 
@@ -190,7 +191,12 @@ class MemoryMapXmlMgr {
 
 	private void setData(byte[] bytes, int offset, String directory, String fileName,
 			int fileOffset, int length, MessageLog log) throws IOException {
-		File f = new File(directory, fileName);
+		File dir = new File(directory);
+		File f = new File(dir, fileName);
+		if (!FileUtilities.isPathContainedWithin(dir, f)) {
+			throw new FileNotFoundException(
+				"FILE_NAME entry escapes target directory: " + fileName);
+		}
 		RandomAccessFile binfile = new RandomAccessFile(f, "r");
 		//binfile.seek(fileOffset);
 		try {
