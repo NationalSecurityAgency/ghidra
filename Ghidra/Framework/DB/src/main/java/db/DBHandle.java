@@ -46,6 +46,7 @@ public class DBHandle {
 
 	private long lastTransactionID;
 	private volatile boolean txStarted = false;
+	private volatile long txStartingModCount;
 
 	private boolean waitingForNewTransaction = false;
 	private boolean reloadInProgress = false;
@@ -472,6 +473,7 @@ public class DBHandle {
 		}
 		waitingForNewTransaction = false;
 		txStarted = true;
+		txStartingModCount = getModCount();
 		return ++lastTransactionID;
 	}
 
@@ -509,7 +511,7 @@ public class DBHandle {
 	 */
 	private synchronized boolean doEndTransaction(long id, boolean commit)
 			throws DBRollbackException, IOException {
-		if (id != lastTransactionID) {
+		if (!txStarted || id != lastTransactionID) {
 			throw new IllegalStateException("Transaction id is not active");
 		}
 		try {
@@ -530,8 +532,10 @@ public class DBHandle {
 			}
 		}
 		finally {
+			if (commit) {
+				cachedChangedState = isChanged();
+			}
 			txStarted = false;
-			cacheChangedState();
 		}
 		return false;
 	}
@@ -762,11 +766,17 @@ public class DBHandle {
 
 	/**
 	 * Determine if the underlying database has changed.
-	 * NOTE: The returned value reflects a cached state assuming all underlaying database 
-	 * transactions, saving, etc. are facilitated by this handle object.
+	 * <p>
+	 * While a transaction is active this value will reflect changes made during the transaction
+	 * which could ultimately never get committed. When a transaction is not active it is a
+	 * reflection of the committed state.
+	 * 
 	 * @return true if unsaved changes have been made.
 	 */
 	public boolean isChanged() {
+		if (txStarted) {
+			return cachedChangedState || txStartingModCount != getModCount();
+		}
 		return cachedChangedState;
 	}
 
