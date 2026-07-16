@@ -243,4 +243,16 @@ public class PluginConfigurationModel {
 	public List<PluginDescription> getAllPluginDescriptions() {
 		return pluginPackagingProvider.getPluginDescriptions();
 	}
+
+	public List<PluginDescription> getPluginDescriptionsForExtensions() {
+
+		List<PluginDescription> results = new ArrayList<>();
+		List<PluginDescription> descriptions = pluginPackagingProvider.getPluginDescriptions();
+		for (PluginDescription description : descriptions) {
+			if (description.isInExtension()) {
+				results.add(description);
+			}
+		}
+		return results;
+	}
 }
