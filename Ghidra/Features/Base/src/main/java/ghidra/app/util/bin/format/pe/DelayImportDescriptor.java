@@ -84,6 +84,20 @@ public class DelayImportDescriptor implements StructConverter {
 		if (thunksINT == null) {
 			return;
 		}
+		
+		// Warn if the INT and IAT declare different numbers of entries.
+        // These are parallel arrays so a length mismatch is malformed.
+        // The thunk lists include the trailing null terminator, so the
+        // import count is size() - 1. This only surfaces the discrepancy;
+		// it does not change import enumeration.
+        if (pIAT != 0 && pINT != 0 && thunksIAT.size() != thunksINT.size()) {
+        	int intCount = Math.max(0, thunksINT.size() - 1);
+        	int iatCount = Math.max(0, thunksIAT.size() - 1);
+            Msg.warn(this, "Delay-load INT/IAT import count mismatch for " +
+                (dllName != null ? dllName : "unknown DLL") +
+                ": INT=" + intCount + " IAT=" + iatCount);
+        }
+		
 		thunksBoundIAT = readThunks(ntHeader, reader, pBoundIAT, false);
 		if (thunksBoundIAT == null) {
 			return;
