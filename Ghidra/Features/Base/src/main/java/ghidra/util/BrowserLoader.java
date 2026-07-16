@@ -15,6 +15,8 @@
  */
 package ghidra.util;
 
+import static ghidra.util.ManualViewerCommandWrappedOption.*;
+
 import java.io.File;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -98,7 +100,7 @@ public class BrowserLoader {
 			ManualViewerCommandWrappedOption.getDefaultBrowserLoaderOptions();
 		ManualViewerCommandWrappedOption customOption =
 			(ManualViewerCommandWrappedOption) options.getCustomOption(
-				ManualViewerCommandWrappedOption.MANUAL_VIEWER_OPTIONS, defaultOption);
+				MANUAL_VIEWER_OPTIONS, defaultOption);
 
 		boolean success = tryToDisplayBrowser(url, fileURL, customOption);
 		while (!success) {
@@ -111,8 +113,8 @@ public class BrowserLoader {
 			}
 
 			// -if not cancelled, then show the options dialog
-			service.showOptionsDialog(ManualViewerCommandWrappedOption.OPTIONS_CATEGORY_NAME,
-				ManualViewerCommandWrappedOption.OPTIONS_CATEGORY_NAME);
+			service.showOptionsDialog(OPTIONS_CATEGORY_NAME,
+				OPTIONS_CATEGORY_NAME);
 			if (!listener.hasChanged()) {
 				return;  // the user didn't change the options, so we can't do anything
 			}
@@ -149,11 +151,14 @@ public class BrowserLoader {
 		return true;
 	}
 
+	/*	 
+	 	 See the help page for example output.
+	 */
 	private static String[] generateCommandArguments(URL url, URL fileURL,
 			ManualViewerCommandWrappedOption option) {
 
-		List<String> argumentList = new ArrayList<String>();
-		argumentList.add(option.getCommandString());
+		List<String> resultArgs = new ArrayList<String>();
+		resultArgs.add(option.getCommandString());
 
 		// Substitute ${PAGE} (the manual page, carried as a "#page=N" fragment on the file URL)
 		// and ${FILENAME} (the local file path) tokens into the user-supplied arguments.  
@@ -161,52 +166,67 @@ public class BrowserLoader {
 		String pageNumber = getManualPageNumber(fileURL);
 		String fileName = getManualFilePath(fileURL);
 		boolean fileNameInArgs = false;
-		String[] commandArguments = option.getCommandArguments();
-		for (String string : commandArguments) {
-			if (string.contains(ManualViewerCommandWrappedOption.FILENAME_REPLACEMENT_STRING)) {
+		String[] rawArgs = option.getCommandArguments();
+		for (String string : rawArgs) {
+			if (string.contains(FILENAME_REPLACEMENT_STRING)) {
 				fileNameInArgs = true;
 			}
-			string =
-				string.replace(ManualViewerCommandWrappedOption.PAGE_REPLACEMENT_STRING, pageNumber);
+
+			string = string.replace(PAGE_REPLACEMENT_STRING, pageNumber);
 			if (fileName != null) {
-				string = string.replace(
-					ManualViewerCommandWrappedOption.FILENAME_REPLACEMENT_STRING, fileName);
+				string = string.replace(FILENAME_REPLACEMENT_STRING, fileName);
 			}
-			argumentList.add(string);
+			resultArgs.add(string);
 		}
 
 		// The user already positioned the file via the ${FILENAME} token; don't append it again.
 		if (fileNameInArgs) {
-			return argumentList.toArray(new String[argumentList.size()]);
+			return resultArgs.toArray(new String[resultArgs.size()]);
 		}
 
-		String urlString = option.getUrlReplacementString();
+		String urlString = option.getFileFormat();
 		String urlArg;
-		if (urlString.equals(ManualViewerCommandWrappedOption.HTTP_URL_REPLACEMENT_STRING) ||
-			fileURL == null) {
+		if (urlString.equals(HTTP_URL_REPLACEMENT_STRING) || fileURL == null) {
 			urlArg = url.toExternalForm();
 		}
-		else if (urlString.equals(ManualViewerCommandWrappedOption.FILE_URL_REPLACEMENT_STRING)) {
+		else if (urlString.equals(FILE_URL_REPLACEMENT_STRING)) {
 			urlArg = fileURL.toExternalForm();
 		}
 		else {
 			urlArg = fileName;
 		}
 
+		List<String> cmdExeArgs = fixupCmdExeCall(rawArgs, urlArg);
+		if (!cmdExeArgs.isEmpty()) {
+			resultArgs.addAll(cmdExeArgs);
+		}
+		else {
+			resultArgs.add(urlArg);
+		}
+
+		return resultArgs.toArray(new String[resultArgs.size()]);
+	}
+
+	private static List<String> fixupCmdExeCall(String[] rawArgs, String urlArg) {
 		// If launching "cmd.exe /c start URL", surround the URL with double quotes to protect
 		// against special characters being misinterpreted by the shell.
 		// NOTE: If not already present, a double-quoted title must be inserted since the URL
 		// argument that follows will start with a double quote.
-		if (commandArguments.length >= 2 && commandArguments[0].equalsIgnoreCase("/c") &&
-			commandArguments[1].equalsIgnoreCase("start")) {
-			if (commandArguments.length == 2) {
-				argumentList.add("\"Title\"");
-			}
-			urlArg = '"' + urlArg + '"';
+		List<String> result = new ArrayList<>();
+		if (rawArgs.length < 2) {
+			return result;
 		}
-		argumentList.add(urlArg);
 
-		return argumentList.toArray(new String[argumentList.size()]);
+		if (!(rawArgs[0].equalsIgnoreCase("/c") && rawArgs[1].equalsIgnoreCase("start"))) {
+			return result;
+		}
+
+		if (rawArgs.length == 2) {
+			result.add("\"Title\"");
+		}
+
+		result.add('"' + urlArg + '"');
+		return result;
 	}
 
 	/**
@@ -250,7 +270,8 @@ public class BrowserLoader {
 		private boolean hasChanged = false;
 
 		@Override
-		public void optionsChanged(ToolOptions theOptions, String name, Object oldValue, Object newValue) {
+		public void optionsChanged(ToolOptions theOptions, String name, Object oldValue,
+				Object newValue) {
 			hasChanged = true;
 		}
 
