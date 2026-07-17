@@ -41,6 +41,7 @@ src/main/help/help/topics/BSimSearchPlugin/images/BSimOverviewResults.png||GHIDR
 src/main/help/help/topics/BSimSearchPlugin/images/BSimResultsProvider.png||GHIDRA||||END|
 src/main/help/help/topics/BSimSearchPlugin/images/BSimSearchDialog.png||GHIDRA||||END|
 src/main/help/help/topics/BSimSearchPlugin/images/ManageServersDialog.png||GHIDRA||||END|
+src/main/help/help/topics/StructureRecovery/StructureRecovery.html||GHIDRA||||END|
 src/main/resources/bsim.log4j.xml||GHIDRA||||END|
 src/main/resources/images/checkmark_yellow.gif||GHIDRA||||END|
 src/main/resources/images/connected.png||GHIDRA||||END|
