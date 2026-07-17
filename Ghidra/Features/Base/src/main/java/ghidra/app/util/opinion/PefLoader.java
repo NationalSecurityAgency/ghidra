@@ -35,6 +35,14 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * A {@link Loader} for Preferred Executable Format (PEF) files.
+ * <p>
+ * PEF was developed by Apple for use in its classic Mac OS operating system. BeOS on PowerPC 
+ * systems also uses PEF.
+ * 
+ * @see <a href="https://web.archive.org/web/20011017102300/http://developer.apple.com/techpubs/mac/runtimehtml/RTArch-89.html">PEF Structure</a>
+ */
 public class PefLoader extends AbstractProgramWrapperLoader {
 
 	public final static String PEF_NAME = "Preferred Executable Format (PEF)";
