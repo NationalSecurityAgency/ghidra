@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.omf.*;
+import ghidra.app.util.bin.format.omf.OmfException;
+import ghidra.app.util.bin.format.omf.OmfUtils;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -83,14 +84,17 @@ public class OmfIteratedData extends OmfData {
 	 * Contain the definition of one part of a datablock with possible recursion
 	 */
 	public static class DataBlock {
-		private Omf2or4 repeatCount;
+		private int repeatCount;
 		private int blockCount;
 		private byte[] simpleBlock = null;
 		private DataBlock[] nestedBlock = null;
 
 		public static DataBlock read(BinaryReader reader, boolean hasBigFields) throws IOException {
 			DataBlock subblock = new DataBlock();
-			subblock.repeatCount = OmfUtils.readInt2Or4(reader, hasBigFields);
+			subblock.repeatCount = (int) OmfUtils.readInt2Or4(reader, hasBigFields).value();
+			if (subblock.repeatCount < 0) {
+				throw new IOException("Iterated block has negative repeat count");
+			}
 			subblock.blockCount = reader.readNextUnsignedShort();
 			if (subblock.blockCount == 0) {
 				int size = reader.readNextByte() & 0xff;
@@ -115,7 +119,7 @@ public class OmfIteratedData extends OmfData {
 		 * @return The position after the block
 		 */
 		public int fillBuffer(byte[] buffer, int pos) {
-			for (int i = 0; i < (int) repeatCount.value(); ++i) {
+			for (int i = 0; i < repeatCount; ++i) {
 				if (simpleBlock != null) {
 					for (byte element : simpleBlock) {
 						buffer[pos] = element;
@@ -144,7 +148,7 @@ public class OmfIteratedData extends OmfData {
 					length += block.getLength();
 				}
 			}
-			return length * (int) repeatCount.value();
+			return length * repeatCount;
 		}
 
 		/**

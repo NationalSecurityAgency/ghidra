@@ -15,13 +15,13 @@
  */
 package ghidra.app.util.bin.format.pef;
 
-import ghidra.app.util.bin.*;
-import ghidra.program.model.data.*;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import ghidra.app.util.bin.*;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * See Apple's -- PEFBinaryFormat.h
@@ -102,6 +102,10 @@ public class ContainerHeader implements StructConverter {
 				_loader = new LoaderInfoHeader(_reader, section);
 			}
 			_sections.add(section);
+		}
+
+		if (_loader == null) {
+			throw new PefException("Loader section not found!");
 		}
 	}
 

@@ -35,7 +35,7 @@ public class OmfUtils {
 	public static final String CATEGORY_PATH = "/OMF";
 
 	public static Omf2or4 readInt2Or4(BinaryReader reader, boolean isBig) throws IOException {
-		return isBig ? new Omf2or4(4, reader.readNextInt())
+		return isBig ? new Omf2or4(4, reader.readNextUnsignedInt())
 				: new Omf2or4(2, reader.readNextUnsignedShort());
 	}
 
