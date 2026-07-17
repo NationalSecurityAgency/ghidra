@@ -135,7 +135,10 @@ public class eBPF_ElfRelocationHandler
 				}
 				else {
 					// Relocate a pointer to symbol in a non-executable section.
-					// Using R_BPF_64_64 for such relocations was actually a bug in a LLVM fork, fixed in
+					// Clang 13.0 introduced R_BPF_64_ABS64 and previous releases were using R_BPF_64_64:
+					// https://github.com/llvm/llvm-project/commit/6a2ea84600ba4bd3b2733bd8f08f5115eb32164b
+					//
+					// Using R_BPF_64_64 for such relocations was also a bug in a LLVM fork, fixed in
 					// https://github.com/anza-xyz/llvm-project/pull/35
 					// (https://github.com/anza-xyz/llvm-project/commit/fb7188bcf651fdaa2d2c522f4b7444e2c574a822)
 					addend = memory.getLong(relocationAddress);
@@ -190,7 +193,13 @@ public class eBPF_ElfRelocationHandler
 					byteLength = 8;
 				}
 				else {
-					return RelocationResult.UNSUPPORTED;
+					// Relocate a pointer to symbol in a non-executable section.
+					// Clang 13.0 introduced R_BPF_64_ABS32 and previous releases were using R_BPF_64_32:
+					// https://github.com/llvm/llvm-project/commit/6a2ea84600ba4bd3b2733bd8f08f5115eb32164b
+					addend = memory.getInt(relocationAddress);
+					newValue = symbolValue + addend;
+					memory.setInt(relocationAddress, (int) newValue);
+					byteLength = 4;
 				}
 				break;
 			}
