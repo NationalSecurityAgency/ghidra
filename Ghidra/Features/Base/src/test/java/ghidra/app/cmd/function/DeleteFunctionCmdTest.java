@@ -115,6 +115,35 @@ public class DeleteFunctionCmdTest extends AbstractGenericTest {
 		program.endTransaction(transactionID, false);
 	}
 
+	/*
+	 * This is a regression test. Make sure function deletes work with multiple tags.
+	 * See issue #9386.
+	 */
+	@Test
+	public void testDeleteFunctionWithMultipleTags() {
+
+		Address address = addr(0x0);
+		String defaultName = SymbolUtilities.getDefaultFunctionName(address);
+
+		int transactionID = program.startTransaction("TEST");
+
+		Function function =
+			createFunction(defaultName, address, new AddressSet(address, address.add(200L)));
+		assertNotNull("The test function was not created as expected.", function);
+
+		function.addTag("tag1");
+		function.addTag("tag2");
+		function.addTag("tag3");
+
+		DeleteFunctionCmd deleteFunctionCmd = new DeleteFunctionCmd(address);
+		deleteFunctionCmd.applyTo(program);
+
+		function = program.getListing().getFunctionAt(address);
+		assertNull("The function was not deleted as expected.", function);
+
+		program.endTransaction(transactionID, false);
+	}
+
 	// looks through the given symbol array to see if any have the same name 
 	// as the provided string
 	private boolean containsMatchingSymbolName(Symbol[] symbols, String name) {
