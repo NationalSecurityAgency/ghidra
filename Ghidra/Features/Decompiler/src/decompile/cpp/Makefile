@@ -12,7 +12,6 @@ GHIDRA_BIN=../../../../../../../ghidra.bin
 OS = $(shell uname -s)
 CPU = $(shell uname -m)
 
-# TODO: need to revise to support arm64/aarch64 arch - improve on both OS and arch detection 
 
 ifeq ($(OS),Linux)
 # Allow ARCH to be specified externally so we can build for 32-bit from a 64-bit Linux
@@ -23,10 +22,20 @@ ifeq ($(ARCH),x86_64)
   ARCH_TYPE=-m64
   OSDIR=linux_x86_64
 else
+ifeq ($(ARCH),aarch64)
+  # ARM64 compilers don't need an architecture flag for native builds
+  ARCH_TYPE=
+  OSDIR=linux_aarch64
+else
   ARCH_TYPE=-m32
   OSDIR=linux_x86_32
 endif
 endif
+endif
+
+
+
+
 
 ifeq ($(OS),Darwin)
   MAKE_STATIC=
