@@ -6071,64 +6071,6 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   isDegenerate = (baseType->getAlignSize() <= unitsize && baseType->getAlignSize() > 0);
 }
 
-/// \brief Given an offset into the base data-type and array hints find sub-component being referenced
-///
-/// An explicit offset should target a specific sub data-type,
-/// but array indexing may confuse things.  This method passes
-/// back the offset of the best matching component, searching among components
-/// that are \e nearby the given offset, preferring a matching array element size
-/// and a component start that is nearer to the offset.
-/// \param off is the given offset into the data-type
-/// \param arrayHint if non-zero indicates array access, where the value is the element size
-/// \param newoff is used to pass back the actual offset of the selected component
-/// \return \b true if a good component match was found
-bool AddTreeState::hasMatchingSubType(int8 off,uint4 arrayHint,int8 *newoff) const
-
-{
-  if (arrayHint == 0)
-    return (baseType->getSubType(off,newoff) != (Datatype *)0);
-
-  int8 elSizeBefore;
-  int8 offBefore;
-  int8 typeBefore = baseType->nearestArrayedComponentBackward(off, 128, &offBefore, &elSizeBefore);
-  int8 elSizeAfter;
-  int8 offAfter;
-  int8 typeAfter = baseType->nearestArrayedComponentForward(off, 128, &offAfter, &elSizeAfter);
-  if (typeBefore < 0 && typeAfter < 0)
-    return (baseType->getSubType(off,newoff) != (Datatype *)0);
-  if (typeBefore < 0) {
-    *newoff = offAfter;		// Only array is after
-    return true;
-  }
-  if (typeAfter < 0) {
-    *newoff = offBefore;	// Only array is before
-    return true;
-  }
-  if (offAfter == offBefore) {
-    *newoff = offAfter;
-    return true;
-  }
-  // Reaching here we know there is an array before and an array after the offset point
-  if (arrayHint != 1 && elSizeBefore != elSizeAfter) {	// element sizes are different, try to distinguish by arrayHint
-    if (elSizeBefore == arrayHint) {
-      *newoff = offBefore;
-      return true;
-    }
-    if (elSizeAfter == arrayHint) {
-      *newoff = offAfter;
-      return true;
-    }
-  }
-  if (baseType->getSubType(off,newoff) != (Datatype *)0) {
-    if (*newoff == offBefore || *newoff == offAfter)
-      return true;		// Offset is contained in one of the arrayed components.  Return it.
-  }
-  uint8 distBefore = (offBefore < 0) ? -offBefore : offBefore;
-  uint8 distAfter = (offAfter < 0) ? -offAfter : offAfter;
-  *newoff = (distAfter < distBefore) ? offAfter : offBefore;
-  return true;
-}
-
 /// Examine a CPUI_INT_MULT element in the middle of the add tree. Determine if we treat
 /// the output simply as a leaf, or if the multiply needs to be distributed to an
 /// additive subtree.  If the Varnode is a leaf of the tree, return \b true if
@@ -6310,7 +6252,14 @@ void AddTreeState::calcSubtype(void)
     int8 offsetbytes = AddrSpace::addressToByteInt(offset,ct->getWordSize()); // Convert to bytes
     int8 extra;
     // Get offset into mapped variable
-    if (!hasMatchingSubType(offsetbytes, biggestNonMultCoeff, &extra)) {
+    bool foundSymbol = false;
+    if (biggestNonMultCoeff != 0)
+      foundSymbol = baseType->nearestArrayedComponent(offsetbytes, biggestNonMultCoeff, &extra);
+    if (!foundSymbol)
+      foundSymbol = (baseType->getSubType(offsetbytes,&extra) != (Datatype *)0);
+    if (!foundSymbol && biggestNonMultCoeff == 0)
+      foundSymbol = baseType->nearestArrayedComponent(offsetbytes, 1, &extra);
+    if (!foundSymbol) {
       valid = false;		// Cannot find mapped variable but nonmult is non-empty
       return;
     }
@@ -6324,7 +6273,12 @@ void AddTreeState::calcSubtype(void)
     int8 offsetbytes = AddrSpace::addressToByteInt(soffset,ct->getWordSize()); // Convert to bytes
     int8 extra;
     // Get offset into field in structure
-    if (!hasMatchingSubType(offsetbytes, biggestNonMultCoeff, &extra)) {
+    bool foundField = false;
+    if (biggestNonMultCoeff != 0)
+      foundField = baseType->nearestArrayedComponent(offsetbytes, biggestNonMultCoeff, &extra);
+    if (!foundField)
+      foundField = (baseType->getSubType(offsetbytes,&extra) != (Datatype *)0);
+    if (!foundField) {
       if (offsetbytes < 0 || offsetbytes >= baseType->getSize()) {	// Compare as bytes! not address units
 	valid = false; // Out of structure's bounds
 	return;
