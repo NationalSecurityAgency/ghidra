@@ -42,7 +42,7 @@ public class SymbolTableCommand extends LoadCommand {
 	private long stroff;
 	private long strsize;
 
-	private List<NList> symbols = new ArrayList<NList>();
+	private List<NList> symbols = new ArrayList<>();
 
 	/**
 	 * Creates and parses a new {@link SymbolTableCommand}
@@ -144,7 +144,7 @@ public class SymbolTableCommand extends LoadCommand {
 			(index & DynamicSymbolTableConstants.INDIRECT_SYMBOL_ABS) != 0) {
 			return null;
 		}
-		if (index > symbols.size()) {
+		if (index >= symbols.size()) {
 			return null;
 		}
 		return symbols.get(index);
