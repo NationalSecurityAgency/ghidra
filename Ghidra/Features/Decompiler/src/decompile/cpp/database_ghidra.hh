@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,11 +50,9 @@ class ScopeGhidra : public Scope {
     throw LowlevelError("remove_range should not be performed on ghidra scope");
   }
   virtual Scope *buildSubScope(uint8 id,const string &nm);
-  virtual void addSymbolInternal(Symbol *sym) { throw LowlevelError("add_symbol_internal unimplemented"); }
-  virtual SymbolEntry *addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,
-				      const RangeList &uselim) { throw LowlevelError("addMap unimplemented"); }
-  virtual SymbolEntry *addDynamicMapInternal(Symbol *sym,uint4 exfl,uint8 hash,int4 off,int4 sz,
-					     const RangeList &uselim) { throw LowlevelError("addMap unimplemented"); }
+  virtual void addSymbolInternal(Symbol *sym) { throw LowlevelError("addSymbolInternal unimplemented"); }
+  virtual void addMapInternal(Symbol *sym,MapEntry *entry) { throw LowlevelError("addMapInternal unimplemented"); }
+  virtual void addDynamicMapInternal(Symbol *sym,DynamicEntry *entry) { throw LowlevelError("addMapInternal unimplemented"); }
 public:
   ScopeGhidra(ArchitectureGhidra *g);	///< Constructor
 
@@ -67,8 +65,7 @@ public:
   void lockDefaultProperties(void) { flagbaseDefault = ghidra->symboltab->getProperties(); cacheDirty = false; }
   virtual ~ScopeGhidra(void);
   virtual void clear(void);
-  virtual SymbolEntry *addSymbol(const string &nm,Datatype *ct,
-				 const Address &addr,const Address &usepoint);
+  virtual MapEntry *addSymbol(const string &nm,Datatype *ct,const Address &addr,const Address &usepoint);
   virtual string buildVariableName(const Address &addr,
 				   const Address &pc,
 				   Datatype *ct,int4 &index,uint4 flags) const {
@@ -79,10 +76,10 @@ public:
   virtual void setDisplayFormat(Symbol *sym,uint4 attr) { cache->setDisplayFormat(sym,attr); }
 
   virtual void adjustCaches(void) { cache->adjustCaches(); }
-  virtual SymbolEntry *findAddr(const Address &addr,const Address &usepoint) const;
-  virtual SymbolEntry *findContainer(const Address &addr,int4 size,
+  virtual MapEntry *findAddr(const Address &addr,const Address &usepoint) const;
+  virtual MapEntry *findContainer(const Address &addr,int4 size,
 					const Address &usepoint) const;
-  virtual SymbolEntry *findClosestFit(const Address &addr,int4 size,
+  virtual MapEntry *findClosestFit(const Address &addr,int4 size,
 					 const Address &usepoint) const {
     throw LowlevelError("findClosestFit unimplemented"); }
   virtual Funcdata *findFunction(const Address &addr) const;
@@ -90,16 +87,16 @@ public:
   virtual LabSymbol *findCodeLabel(const Address &addr) const;
   virtual Funcdata *resolveExternalRefFunction(ExternRefSymbol *sym) const;
 
-  virtual SymbolEntry *findOverlap(const Address &addr,int4 size) const { throw LowlevelError("findOverlap unimplemented"); }
+  virtual MapEntry *findOverlap(const Address &addr,int4 size) const { throw LowlevelError("findOverlap unimplemented"); }
   virtual void findByName(const string &nm,vector<Symbol *> &res) const { throw LowlevelError("findByName unimplemented"); }
   virtual bool isNameUsed(const string &nm,const Scope *op2) const { throw LowlevelError("isNameUsed unimplemented"); }
 
   virtual MapIterator begin(void) const { throw LowlevelError("begin unimplemented"); }
   virtual MapIterator end(void) const { throw LowlevelError("end unimplemented"); }
-  virtual list<SymbolEntry>::const_iterator beginDynamic(void) const { throw LowlevelError("beginDynamic unimplemented"); }
-  virtual list<SymbolEntry>::const_iterator endDynamic(void) const { throw LowlevelError("endDynamic unimplemented"); }
-  virtual list<SymbolEntry>::iterator beginDynamic(void) { throw LowlevelError("beginDynamic unimplemented"); }
-  virtual list<SymbolEntry>::iterator endDynamic(void) { throw LowlevelError("endDynamic unimplemented"); }
+  virtual list<DynamicEntry *>::const_iterator beginDynamic(void) const { throw LowlevelError("beginDynamic unimplemented"); }
+  virtual list<DynamicEntry *>::const_iterator endDynamic(void) const { throw LowlevelError("endDynamic unimplemented"); }
+  virtual list<DynamicEntry *>::iterator beginDynamic(void) { throw LowlevelError("beginDynamic unimplemented"); }
+  virtual list<DynamicEntry *>::iterator endDynamic(void) { throw LowlevelError("endDynamic unimplemented"); }
   virtual void clearCategory(int4 cat) { throw LowlevelError("clearCategory unimplemented"); }
   virtual void clearUnlockedCategory(int4 cat) { throw LowlevelError("clearUnlockedCategory unimplemented"); }
   virtual void clearUnlocked(void) { throw LowlevelError("clearUnlocked unimplemented"); }
@@ -130,8 +127,7 @@ class ScopeGhidraNamespace : public ScopeInternal {
   friend class ScopeGhidra;
   ArchitectureGhidra *ghidra;		///< Connection to the Ghidra client
 protected:
-  virtual SymbolEntry *addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,
-				      const RangeList &uselim);
+  virtual void addMapInternal(Symbol *sym,MapEntry *entry);
 public:
   ScopeGhidraNamespace(uint8 id,const string &nm,ArchitectureGhidra *g)
     : ScopeInternal(id,nm,g) { ghidra = g; }		///< Constructor

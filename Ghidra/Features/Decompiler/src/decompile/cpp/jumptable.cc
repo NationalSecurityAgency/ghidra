@@ -1174,10 +1174,10 @@ void JumpBasic::calcRange(Varnode *vn,CircleRange &rng) const
   }
 }
 
-/// \brief Return \b true if the \b newRange is preferred over the \b oldRange
+/// \brief Return \b true if the \b newRange is preferred over the current range
 ///
 /// If the ranges are equal keep the old. Prefer a range with a smaller step,min,or size.
-/// \param oldRange is the old range
+/// \param pos is the position of Varnode associated with the \b newRange
 /// \param newRange is the new range
 /// \return \b true if the new range is preferred
 bool JumpBasic::isPreferredRange(int4 pos,const CircleRange &newRange)

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -141,8 +141,9 @@ Symbol *ScopeGhidra::dump2Cache(Decoder &decoder) const
       throw LowlevelError("DuplicateFunctionError, but could not recover original symbol");
   }
   if (sym != (Symbol *)0) {
-    SymbolEntry *entry = sym->getFirstWholeMap();
-    if (entry != (SymbolEntry *)0) {
+    SymbolEntry *ent = sym->getFirstWholeMap();
+    if (ent != (SymbolEntry *)0  && !ent->isDynamic()) {
+      MapEntry *entry = (MapEntry *)ent;
       if (scope != cache) {	// We have a namespace cache
 	// With a global namespace, mark the address range as a "hole", so the same query won't
 	// go up again.  With this limitation, a function can only refer to a single global symbol at a
@@ -230,45 +231,45 @@ void ScopeGhidra::clear(void)
   }
 }
 
-SymbolEntry *ScopeGhidra::findAddr(const Address &addr,
-					    const Address &usepoint) const
+MapEntry *ScopeGhidra::findAddr(const Address &addr,const Address &usepoint) const
+
 {
-  SymbolEntry *entry;
+  MapEntry *entry;
   entry = cache->findAddr(addr,usepoint);
-  if (entry == (SymbolEntry *)0) { // Didn't find symbol
+  if (entry == (MapEntry *)0) { // Didn't find symbol
     entry = cache->findContainer(addr,1,Address());
-    if (entry != (SymbolEntry *)0)
-      return (SymbolEntry *)0;	// Address is already queried, but symbol doesn't start at our address
+    if (entry != (MapEntry *)0)
+      return (MapEntry *)0;	// Address is already queried, but symbol doesn't start at our address
     Symbol *sym = removeQuery(addr); // Query server
     if (sym != (Symbol *)0)
       entry = sym->getMapEntry(addr);
     // entry may be null for certain queries, ghidra may return symbol of size <8 with
     // address equal to START of function, even though the query was for an address INTERNAL to the function
   }
-  if ((entry != (SymbolEntry *)0)&&(entry->getAddr()==addr))
+  if ((entry != (MapEntry *)0)&&(entry->getAddr()==addr))
     return entry;
-  return (SymbolEntry *)0;
+  return (MapEntry *)0;
 }
 
-SymbolEntry *ScopeGhidra::findContainer(const Address &addr,int4 size,
-						 const Address &usepoint) const
+MapEntry *ScopeGhidra::findContainer(const Address &addr,int4 size,const Address &usepoint) const
+
 {
-  SymbolEntry *entry;
+  MapEntry *entry;
   entry = cache->findClosestFit(addr,size,usepoint);
-  if (entry == (SymbolEntry *)0) {
+  if (entry == (MapEntry *)0) {
     Symbol *sym = removeQuery(addr);
     if (sym != (Symbol *)0)
       entry = sym->getMapEntry(addr);
     // entry may be null for certain queries, ghidra may return symbol of size <8 with
     // address equal to START of function, even though the query was for an address INTERNAL to the function
   }
-  if (entry != (SymbolEntry *)0) {
+  if (entry != (MapEntry *)0) {
     // Entry contains addr, does it contain addr+size
     uintb last = entry->getAddr().getOffset() + entry->getSize() -1;
     if (last >= addr.getOffset() + size-1)
       return entry;
   }
-  return (SymbolEntry *)0;
+  return (MapEntry *)0;
 }
 
 ExternRefSymbol *ScopeGhidra::findExternalRef(const Address &addr) const
@@ -340,7 +341,7 @@ Funcdata *ScopeGhidra::resolveExternalRefFunction(ExternRefSymbol *sym) const
     // If the function isn't in cache, we use the special
     // getExternalRefXML interface to recover the external function
     PackedDecode decoder(ghidra);
-    SymbolEntry *entry = sym->getFirstWholeMap();
+    MapEntry *entry = (MapEntry *)sym->getFirstWholeMap();
     if (ghidra->getExternalRef(entry->getAddr(),decoder)) {
       FunctionSymbol *funcSym;
       // Make sure referenced function is cached
@@ -352,8 +353,8 @@ Funcdata *ScopeGhidra::resolveExternalRefFunction(ExternRefSymbol *sym) const
   return resFd;
 }
 
-SymbolEntry *ScopeGhidra::addSymbol(const string &nm,Datatype *ct,
-				    const Address &addr,const Address &usepoint)
+MapEntry *ScopeGhidra::addSymbol(const string &nm,Datatype *ct,const Address &addr,const Address &usepoint)
+
 {
   // We do not inform Ghidra of the new symbol, we just
   // stick it in the cache.  This allows the mapglobals action
@@ -361,13 +362,10 @@ SymbolEntry *ScopeGhidra::addSymbol(const string &nm,Datatype *ct,
   return cache->addSymbol(nm,ct,addr,usepoint);
 }
 
-SymbolEntry *ScopeGhidraNamespace::addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,
-						  const RangeList &uselim)
+void ScopeGhidraNamespace::addMapInternal(Symbol *sym,MapEntry *entry)
 {
-  SymbolEntry *res;
-  res = ScopeInternal::addMapInternal(sym,exfl,addr,off,sz,uselim);
-  glb->symboltab->addRange(this,res->getAddr().getSpace(),res->getFirst(),res->getLast());
-  return res;
+  ScopeInternal::addMapInternal(sym,entry);
+  glb->symboltab->addRange(this,entry->getAddr().getSpace(),entry->getFirst(),entry->getLast());
 }
 
 bool ScopeGhidraNamespace::isNameUsed(const string &nm,const Scope *op2) const

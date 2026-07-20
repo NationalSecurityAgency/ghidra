@@ -784,7 +784,7 @@ string OptionErrorTooManyInstructions::apply(Architecture *glb,const string &p1,
   return res;
 }
 
-/// \class OptionErrorBadData
+/// \class OptionBadDataCount
 /// \brief Toggle whether disassembling bytes that can't be decoded or at a non-existent address is considered a fatal error.
 ///
 /// If the first parameter is "on" then any BadDataError encountered while following flow will cause a fatal error.

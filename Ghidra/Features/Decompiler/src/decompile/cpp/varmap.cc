@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -371,7 +371,8 @@ void ScopeLocal::collectNameRecs(void)
 	    // If the "this" pointer points to a class, try to preserve the data-type
 	    // even though the symbol is not preserved.
 	    SymbolEntry *entry = sym->getFirstWholeMap();
-	    addTypeRecommendation(entry->getAddr(), dt);
+	    if (!entry->isDynamic())
+	      addTypeRecommendation(((MapEntry *)entry)->getAddr(), dt);
 	  }
 	}
       }
@@ -597,7 +598,7 @@ bool ScopeLocal::adjustFit(RangeHint &a) const
     a.size = (int4)maxsize;
   }
   // We want ANY symbol that might be within this range
-  SymbolEntry *entry = findOverlap(addr,a.size);
+  MapEntry *entry = findOverlap(addr,a.size);
   if (entry == (SymbolEntry *)0)
     return true;
   if (entry->getAddr() <= addr) {
@@ -1044,14 +1045,15 @@ void MapState::addGuard(const LoadGuard &guard,OpCode opc,TypeFactory *typeFacto
 void MapState::gatherSymbols(const EntryMap *rangemap)
 
 {
-  list<SymbolEntry>::const_iterator riter;
+  list<SymbolRange>::const_iterator riter;
   Symbol *sym;
   if (rangemap == (EntryMap *)0) return;
   for(riter=rangemap->begin_list();riter!=rangemap->end_list();++riter) {
-    sym = (*riter).getSymbol();
+    const MapEntry *entry = (*riter).entry;
+    sym = entry->getSymbol();
     if (sym == (Symbol *)0) continue;
     //    if ((*iter).isPiece()) continue;     // This should probably never happen
-    uintb start = (*riter).getAddr().getOffset();
+    uintb start = entry->getAddr().getOffset();
     Datatype *ct = sym->getType();
     uint4 flags = sym->isTypeLocked() ? RangeHint::typelock : 0;
     addRange(start,ct,flags,RangeHint::fixed,-1);
@@ -1334,7 +1336,7 @@ void ScopeLocal::markUnaliased(const vector<uintb> &alias)
 {
   EntryMap *rangemap = maptable[space->getIndex()];
   if (rangemap == (EntryMap *)0) return;
-  list<SymbolEntry>::iterator iter,enditer;
+  list<SymbolRange>::iterator iter,enditer;
   set<Range>::const_iterator rangeIter, rangeEndIter;
   rangeIter = getRangeTree().begin();
   rangeEndIter = getRangeTree().end();
@@ -1348,8 +1350,9 @@ void ScopeLocal::markUnaliased(const vector<uintb> &alias)
   enditer = rangemap->end_list();
 
   while(iter!=enditer) {
-    SymbolEntry &entry(*iter++);
-    uintb curoff = entry.getAddr().getOffset() + entry.getSize() - 1;
+    const MapEntry *entry = (*iter).entry;
+    ++iter;
+    uintb curoff = entry->getAddr().getOffset() + entry->getSize() - 1;
     while ((i<alias.size()) && (alias[i] <= curoff)) {
       aliason = true;
       curalias = alias[i++];
@@ -1366,7 +1369,7 @@ void ScopeLocal::markUnaliased(const vector<uintb> &alias)
       }
       ++rangeIter;
     }
-    Symbol *symbol = entry.getSymbol();
+    Symbol *symbol = entry->getSymbol();
     // Test if there is enough distance between symbol
     // and last alias to warrant ignoring the alias
     // NOTE: this is primarily to reset aliasing between
@@ -1460,7 +1463,7 @@ SymbolEntry *ScopeLocal::remapSymbol(Symbol *sym,const Address &addr,const Addre
   SymbolEntry *entry = sym->getFirstWholeMap();
   int4 size = entry->getSize();
   if (!entry->isDynamic()) {
-    if (entry->getAddr() == addr) {
+    if (((MapEntry *)entry)->getAddr() == addr) {
       if (usepoint.isInvalid() && entry->getFirstUseAddress().isInvalid())
 	return entry;
       if (entry->getFirstUseAddress() == usepoint)
@@ -1471,7 +1474,9 @@ SymbolEntry *ScopeLocal::remapSymbol(Symbol *sym,const Address &addr,const Addre
   RangeList rnglist;
   if (!usepoint.isInvalid())
     rnglist.insertRange(usepoint.getSpace(),usepoint.getOffset(),usepoint.getOffset());
-  return addMapInternal(sym,Varnode::mapped,addr,0,size,rnglist);
+  MapEntry *res = new MapEntry(sym,Varnode::mapped,addr,size,0,rnglist);
+  addMapInternal(sym,res);
+  return res;
 }
 
 /// \brief Make the primary mapping for the given Symbol, dynamic
@@ -1488,14 +1493,16 @@ SymbolEntry *ScopeLocal::remapSymbolDynamic(Symbol *sym,uint8 hash,const Address
   SymbolEntry *entry = sym->getFirstWholeMap();
   int4 size = entry->getSize();
   if (entry->isDynamic()) {
-    if (entry->getHash() == hash && entry->getFirstUseAddress() == usepoint)
+    if (((DynamicEntry *)entry)->getHash() == hash && entry->getFirstUseAddress() == usepoint)
       return entry;
   }
   removeSymbolMappings(sym);
   RangeList rnglist;
   if (!usepoint.isInvalid())
     rnglist.insertRange(usepoint.getSpace(),usepoint.getOffset(),usepoint.getOffset());
-  return addDynamicMapInternal(sym,Varnode::mapped,hash,0,size,rnglist);
+  DynamicEntry *newEntry = new DynamicEntry(sym,Varnode::mapped,hash,0,size,rnglist);
+  addDynamicMapInternal(sym,newEntry);
+  return newEntry;
 }
 
 /// \brief Run through name recommendations, checking if any match unnamed symbols
@@ -1516,7 +1523,7 @@ void ScopeLocal::recoverNameRecommendationsForSymbols(void)
     Symbol *sym;
     Varnode *vn = (Varnode *)0;
     if (usepoint.isInvalid()) {
-      SymbolEntry *entry = findOverlap(addr, size);	// Recover any Symbol regardless of usepoint
+      MapEntry *entry = findOverlap(addr, size);	// Recover any Symbol regardless of usepoint
       if (entry == (SymbolEntry *)0) continue;
       if (entry->getAddr() != addr)		// Make sure Symbol has matching address
 	continue;
@@ -1603,7 +1610,7 @@ void ScopeLocal::addRecommendName(Symbol *sym)
   SymbolEntry *entry = sym->getFirstWholeMap();
   if (entry == (SymbolEntry *) 0) return;
   if (entry->isDynamic()) {
-    dynRecommend.emplace_back(entry->getFirstUseAddress(), entry->getHash(), sym->getName(), sym->getId());
+    dynRecommend.emplace_back(entry->getFirstUseAddress(), ((DynamicEntry *)entry)->getHash(), sym->getName(), sym->getId());
   }
   else {
     Address usepoint((AddrSpace *)0,0);
@@ -1611,7 +1618,7 @@ void ScopeLocal::addRecommendName(Symbol *sym)
       const Range *range = entry->getUseLimit().getFirstRange();
       usepoint = Address(range->getSpace(), range->getFirst());
     }
-    nameRecommend.emplace_back(entry->getAddr(),usepoint, entry->getSize(), sym->getName(), sym->getId());
+    nameRecommend.emplace_back(((MapEntry *)entry)->getAddr(),usepoint, entry->getSize(), sym->getName(), sym->getId());
   }
   if (sym->getCategory() < 0)
     removeSymbol(sym);

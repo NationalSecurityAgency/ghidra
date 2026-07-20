@@ -1071,9 +1071,8 @@ bool ActionConstantPtr::checkCopy(PcodeOp *op,Funcdata &data)
 /// \param fullEncoding will hold the full pointer encoding being passed back
 /// \param data is the function being analyzed
 /// \return the recovered symbol or NULL
-SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,int4 slot,
-					  Address &rampoint,uintb &fullEncoding,Funcdata &data)
-
+MapEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,int4 slot,
+				       Address &rampoint,uintb &fullEncoding,Funcdata &data)
 {
   bool needexacthit;
   vn->setSymbolCheck(Varnode::symcheck_complete);
@@ -1084,7 +1083,7 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     needexacthit = false;
   }
   else {
-    if (vn->isTypeLock()) return (SymbolEntry *)0; // Locked as NOT a pointer
+    if (vn->isTypeLock()) return (MapEntry *)0; // Locked as NOT a pointer
     needexacthit = true;
     // Check if the constant is involved in a potential pointer expression
     // as the base
@@ -1093,22 +1092,22 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     case CPUI_CALLIND:
     {
       if (slot==0)
-	return (SymbolEntry *)0;
+	return (MapEntry *)0;
       // A constant parameter could be a pointer
       FuncCallSpecs *fc = data.getCallSpecs(op);
       if (fc != (FuncCallSpecs *)0 && fc->isInputLocked() && fc->numParams() > slot-1) {
 	type_metatype meta = fc->getParam(slot-1)->getType()->getMetatype();
 	if (meta != TYPE_PTR && meta != TYPE_UNKNOWN) {
-	  return (SymbolEntry *)0;	// Definitely not passing a pointer
+	  return (MapEntry *)0;	// Definitely not passing a pointer
 	}
       }
       else if (!glb->infer_pointers)
-	return (SymbolEntry *)0;
+	return (MapEntry *)0;
       break;
     }
     case CPUI_COPY:
       if (!checkCopy(op, data))
-	return (SymbolEntry *)0;
+	return (MapEntry *)0;
       break;
     case CPUI_PIECE:
       // Pointers get concatenated in structures
@@ -1118,43 +1117,43 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     case CPUI_INT_LESSEQUAL:
       // A comparison with a constant could be a pointer
       if (!glb->infer_pointers)
-	return (SymbolEntry *)0;
+	return (MapEntry *)0;
       break;
     case CPUI_INT_ADD:
       outvn = op->getOut();
       if (outvn->getTypeDefFacing()->getMetatype()==TYPE_PTR) {
 	// Is there another pointer base in this expression
 	if (op->getIn(1-slot)->getTypeReadFacing(op)->getMetatype()==TYPE_PTR)
-	  return (SymbolEntry *)0; // If so, we are not a pointer
+	  return (MapEntry *)0; // If so, we are not a pointer
 	// FIXME: need to fully explore additive tree
 	needexacthit = false;
       }
       else if (!glb->infer_pointers)
-	return (SymbolEntry *)0;
+	return (MapEntry *)0;
       break;
     case CPUI_STORE:
       if (slot != 2)
-	return (SymbolEntry *)0;
+	return (MapEntry *)0;
       break;
     default:
-      return (SymbolEntry *)0;
+      return (MapEntry *)0;
     }
     // Make sure the constant is in the expected range for a pointer
     if (spc->getPointerLowerBound() > vn->getOffset())
-      return (SymbolEntry *)0;
+      return (MapEntry *)0;
     if (spc->getPointerUpperBound() < vn->getOffset())
-      return (SymbolEntry *)0;
+      return (MapEntry *)0;
     // Check if the constant looks like a single bit or mask
     if (bit_transitions(vn->getOffset(),vn->getSize()) < 3)
-      return (SymbolEntry *)0;
+      return (MapEntry *)0;
     rampoint = glb->resolveConstant(spc,vn->getOffset(),vn->getSize(),op->getAddr(),fullEncoding);
   }
 
-  if (rampoint.isInvalid()) return (SymbolEntry *)0;
+  if (rampoint.isInvalid()) return (MapEntry *)0;
     // Since we are looking for a global address
     // Assume it is address tied and use empty usepoint
-  SymbolEntry *entry = data.getScopeLocal()->getParent()->queryContainer(rampoint,1,Address());
-  if (entry != (SymbolEntry *)0) {
+  MapEntry *entry = data.getScopeLocal()->getParent()->queryContainer(rampoint,1,Address());
+  if (entry != (MapEntry *)0) {
     Datatype *ptrType = entry->getSymbol()->getType();
     if (ptrType->getMetatype() == TYPE_ARRAY) {
       Datatype *ct = ((TypeArray *)ptrType)->getBase();
@@ -1165,7 +1164,7 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     }
     if (needexacthit && entry->getAddr() != rampoint) {
       vn->setSymbolCheck(Varnode::symcheck_incomplete);	// May need to retest if we later discover vn is a pointer
-      return (SymbolEntry *)0;
+      return (MapEntry *)0;
     }
   }
   return entry;
@@ -1183,7 +1182,7 @@ int4 ActionConstantPtr::apply(Funcdata &data)
   VarnodeLocSet::const_iterator begiter,enditer;
   Architecture *glb = data.getArch();
   AddrSpace *cspc = glb->getConstantSpace();
-  SymbolEntry *entry;
+  MapEntry *entry;
   Varnode *vn;
 
   begiter = data.beginLoc(cspc);
@@ -1214,7 +1213,7 @@ int4 ActionConstantPtr::apply(Funcdata &data)
     Address rampoint;
     uintb fullEncoding;
     entry = isPointer(rspc,vn,op,slot,rampoint,fullEncoding,data);
-    if (entry != (SymbolEntry *)0) {
+    if (entry != (MapEntry *)0) {
       data.spacebaseConstant(op,slot,entry,rampoint,fullEncoding,vn->getSize());
       if ((opc == CPUI_INT_ADD)&&(slot==1))
 	data.opSwapInput(op,0,1);
@@ -5066,12 +5065,12 @@ int4 ActionDynamicMapping::apply(Funcdata &data)
 
 {
   ScopeLocal *localmap = data.getScopeLocal();
-  list<SymbolEntry>::iterator iter,enditer;
+  list<DynamicEntry *>::iterator iter,enditer;
   iter = localmap->beginDynamic();
   enditer = localmap->endDynamic();
   DynamicHash dhash;
   while(iter != enditer) {
-    SymbolEntry *entry = &(*iter);
+    DynamicEntry *entry = *iter;
     ++iter;
     if (data.attemptDynamicMapping(entry,dhash))
       count += 1;
@@ -5083,12 +5082,12 @@ int4 ActionDynamicSymbols::apply(Funcdata &data)
 
 {
   ScopeLocal *localmap = data.getScopeLocal();
-  list<SymbolEntry>::iterator iter,enditer;
+  list<DynamicEntry *>::iterator iter,enditer;
   iter = localmap->beginDynamic();
   enditer = localmap->endDynamic();
   DynamicHash dhash;
   while(iter != enditer) {
-    SymbolEntry *entry = &(*iter);
+    DynamicEntry *entry = *iter;
     ++iter;
     if (data.attemptDynamicMappingLate(entry, dhash))
       count += 1;
@@ -5233,7 +5232,9 @@ void ActionInferTypes::buildLocaltypes(Funcdata &data)
     bool needsBlock = false;
     SymbolEntry *entry = vn->getSymbolEntry();
     if (entry != (SymbolEntry *)0 && !vn->isTypeLock() && entry->getSymbol()->isTypeLocked()) {
-      int4 curOff = (vn->getAddr().getOffset() - entry->getAddr().getOffset()) + entry->getOffset();
+      int4 curOff = entry->getOffset();
+      if (!entry->isDynamic())
+	curOff += (vn->getAddr().getOffset() - ((MapEntry *)entry)->getAddr().getOffset());
       ct = typegrp->getExactPiece(entry->getSymbol()->getType(), curOff, vn->getSize());
       if (ct == (Datatype *)0 || ct->getMetatype() == TYPE_UNKNOWN)	// If we can't resolve, or resolve to UNKNOWN
 	ct = vn->getLocalType(needsBlock);		// Let data-type float, even though parent symbol is type-locked

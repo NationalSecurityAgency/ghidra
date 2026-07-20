@@ -190,8 +190,8 @@ class ActionConstantPtr : public Action {
   static AddrSpace *searchForSpaceAttribute(Varnode *vn,PcodeOp *op);
   static AddrSpace *selectInferSpace(Varnode *vn,PcodeOp *op,const vector<AddrSpace *> &spaceList);
   static bool checkCopy(PcodeOp *op,Funcdata &data);
-  static SymbolEntry *isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,int4 slot,
-				Address &rampoint,uintb &fullEncoding,Funcdata &data);
+  static MapEntry *isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,int4 slot,
+			     Address &rampoint,uintb &fullEncoding,Funcdata &data);
 public:
   ActionConstantPtr(const string &g) : Action(0,"constantptr",g) {}	///< Constructor
   virtual void reset(Funcdata &data) { localcount = 0; }

@@ -3450,13 +3450,13 @@ Datatype *TypeSpacebase::getSubType(int8 off,int8 *newoff) const
   Address nullPoint;
   uintb fullEncoding;
   Address addr = glb->resolveConstant(spaceid, addrOff, -1, nullPoint, fullEncoding);
-  SymbolEntry *smallest;
+  MapEntry *smallest;
 
   // Assume symbol being referenced is address tied so we use a null point of context
   // FIXME: A valid point of context may be necessary in the future
   smallest = scope->queryContainer(addr,1,nullPoint);
 
-  if (smallest == (SymbolEntry *)0) {
+  if (smallest == (MapEntry *)0) {
     *newoff = 0;
     return glb->types->getBase(1,TYPE_UNKNOWN);
   }
@@ -3474,10 +3474,10 @@ int8 TypeSpacebase::nearestArrayedComponentForward(int8 off,int8 max,int8 *newof
   Address nullPoint;
   uintb fullEncoding;
   Address addr = glb->resolveConstant(spaceid, addrOff, -1, nullPoint, fullEncoding);
-  SymbolEntry *smallest = scope->queryContainer(addr,1,nullPoint);
+  MapEntry *smallest = scope->queryContainer(addr,1,nullPoint);
   Address nextAddr;
   Datatype *symbolType;
-  if (smallest == (SymbolEntry *)0 || smallest->getOffset() != 0)
+  if (smallest == (MapEntry *)0 || smallest->getOffset() != 0)
     nextAddr = addr + 32;
   else {
     symbolType = smallest->getSymbol()->getType();
@@ -3496,7 +3496,7 @@ int8 TypeSpacebase::nearestArrayedComponentForward(int8 off,int8 max,int8 *newof
   if (nextAddr < addr)
     return -1;		// Don't let the address wrap
   smallest = scope->queryContainer(nextAddr,1,nullPoint);
-  if (smallest == (SymbolEntry *)0 || smallest->getOffset() != 0)
+  if (smallest == (MapEntry *)0 || smallest->getOffset() != 0)
     return -1;
   symbolType = smallest->getSymbol()->getType();
   *newoff = addr.getOffset() - smallest->getAddr().getOffset();
