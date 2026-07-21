@@ -225,6 +225,10 @@ public abstract class CompositeEditorProvider<T extends Composite, M extends Com
 		}
 	}
 
+	public void goToNextDefinedRow(boolean forward) {
+		editorPanel.goToNextDefinedRow(forward);
+	}
+
 	@Override
 	public HelpLocation getHelpLocation() {
 		return new HelpLocation(getHelpTopic(), getHelpName());
