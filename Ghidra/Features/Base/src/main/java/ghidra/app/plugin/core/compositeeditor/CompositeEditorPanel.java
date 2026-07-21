@@ -942,13 +942,74 @@ public abstract class CompositeEditorPanel<T extends Composite, M extends Compos
 
 	@Override
 	public void statusChanged(String message, boolean beep) {
-		if ((message == null) || (message.length() == 0)) {
+		if (StringUtils.isBlank(message)) {
 			message = " ";
 		}
+
 		setStatus(message);
 		if (beep) {
 			getToolkit().beep();
 		}
+	}
+
+	void goToNextDefinedRow(boolean forward) {
+
+		Integer nextRow = findNextDefinedRow(forward);
+		if (nextRow == null) {
+			getToolkit().beep();
+		}
+		else {
+			goToRow(nextRow);
+		}
+	}
+
+	private Integer findNextDefinedRow(boolean forward) {
+
+		int currentRow = Math.max(0, model.getRow());
+		DtcMatcher isUndefined = dtc -> isUndefined(dtc);
+		int undefinedRow = findNextMatchingDtc(currentRow, forward, isUndefined);
+		int startRow = undefinedRow + (forward ? 1 : -1);
+		int n = model.getRowCount();
+		if (startRow >= n) {
+			return null;
+		}
+
+		DtcMatcher isDefined = dtc -> !isUndefined(dtc);
+		return findNextMatchingDtc(startRow, forward, isDefined);
+	}
+
+	private int findNextMatchingDtc(int row, boolean forward, DtcMatcher matcher) {
+
+		int start = row;
+		int end = forward ? model.getRowCount() : -1;
+		int direction = forward ? 1 : -1;
+		for (int i = start; i != end; i += direction) {
+			DataTypeComponent dtc = model.getComponent(i);
+			if (matcher.matches(dtc)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	// just a nicer predicate
+	private interface DtcMatcher {
+		public boolean matches(DataTypeComponent dtc);
+	}
+
+	private boolean isUndefined(DataTypeComponent dtc) {
+		if (dtc == null) {
+			return true;
+		}
+
+		DataType dt = dtc.getDataType();
+		return Undefined.isUndefined(dt);
+	}
+
+	private void goToRow(int row) {
+		table.getSelectionModel().setSelectionInterval(row, row);
+		Rectangle cellRect = table.getCellRect(row, 0, true);
+		table.scrollRectToVisible(cellRect);
 	}
 
 	void search(String searchText, boolean forward) {
@@ -956,11 +1017,8 @@ public abstract class CompositeEditorPanel<T extends Composite, M extends Compos
 		Integer row = forward ? findForward(searchText) : findBackward(searchText);
 
 		if (row != null) {
-			table.getSelectionModel().setSelectionInterval(row, row);
-			Rectangle cellRect = table.getCellRect(row, 0, true);
-			table.scrollRectToVisible(cellRect);
+			goToRow(row);
 		}
-
 	}
 
 	private Integer findForward(String text) {
@@ -1084,6 +1142,10 @@ public abstract class CompositeEditorPanel<T extends Composite, M extends Compos
 		int viewColumn = table.convertColumnIndexToView(modelColumn);
 		clsm.setSelectionInterval(viewColumn, viewColumn);
 	}
+
+//=================================================================================================
+// Inner Classes
+//=================================================================================================	
 
 	private class ComponentStringCellEditor extends ComponentCellEditor {
 		public ComponentStringCellEditor(JTextField textField) {
