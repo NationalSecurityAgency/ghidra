@@ -1,0 +1,725 @@
+define endian=big;
+define alignment=1;
+define space ram type=ram_space size=2 default;
+define space register type=register_space size=1;
+
+define register offset=0x00 size=1 [ A X Y CC EXTI ];
+define register offset=0x10 size=2 [ PC SP ];
+define register offset=0x10 size=1 [ PCH PCL _ S ];
+@ifdef ST70
+define register offset=0x20 size=1 [ H I N Z C ];
+@endif
+@ifdef ST72
+define register offset=0x20 size=1 [ I1 H I0 N Z C ];
+@endif
+define register offset=0xF0 size=4 contextreg;
+
+define token prefix_byte (8)
+  prefix = (0, 7)
+;
+
+define token inst8 (8)
+  opcode = (0, 7)
+  kind = (0, 3)
+  addressing = (4, 7)
+  bit_upper = (4, 7)
+  bit_lower = (0, 0)
+  bit_position = (1, 3)
+;
+
+define token immediate8 (8)
+  imm8 = (0, 7)
+  addr8 = (0, 7)
+  rel = (0, 7) signed
+;
+
+define token immediate16 (16)
+  imm16 = (0, 15)
+;
+
+define context contextreg
+  # Pre-bytes - see page 30 of the programming manual.
+  prefix_90 = (0, 0) noflow  # PDY
+  prefix_91 = (1, 1) noflow  # PIY
+  prefix_92 = (2, 2) noflow  # PIX
+;
+
+@define PRE_PDY "prefix_90=1 & prefix_91=0 & prefix_92=0"
+@define PRE_PIY "prefix_90=0 & prefix_91=1 & prefix_92=0"
+@define PRE_PIX "prefix_90=0 & prefix_91=0 & prefix_92=1"
+@define NO_PRE  "prefix_90=0 & prefix_91=0 & prefix_92=0"
+
+:^instruction is prefix=0x90; instruction [ prefix_90=1; prefix_91=0; prefix_92=0; ] {}
+:^instruction is prefix=0x91; instruction [ prefix_90=0; prefix_91=1; prefix_92=0; ] {}
+:^instruction is prefix=0x92; instruction [ prefix_90=0; prefix_91=0; prefix_92=1; ] {}
+
+define pcodeop halt;
+define pcodeop waitForInterrupt;
+
+ADMEMOP: imm8           is $(NO_PRE) & addressing=0x0B ; imm8             { export *:1 imm8; }
+ADMEMOP: imm16          is $(NO_PRE) & addressing=0x0C ; imm16            { export *:1 imm16; }
+ADMEMOP: (X)            is $(NO_PRE) & addressing=0x0F & X                { local address:2 = zext(X); export *:1 address; }
+ADMEMOP: (imm8,X)       is $(NO_PRE) & addressing=0x0E & X ; imm8         { local address:2 = imm8 + zext(X); export *:1 address; }
+ADMEMOP: (imm16,X)      is $(NO_PRE) & addressing=0x0D & X ; imm16        { local address:2 = imm16 + zext(X); export *:1 address; }
+ADMEMOP: (Y)            is $(PRE_PDY) & addressing=0x0F & Y               { local address:2 = zext(Y); export *:1 address; }
+ADMEMOP: (imm8,Y)       is $(PRE_PDY) & addressing=0x0E & Y ; imm8        { local address:2 = imm8 + zext(Y); export *:1 address; }
+ADMEMOP: (imm16,Y)      is $(PRE_PDY) & addressing=0x0D & Y ; imm16       { local address:2 = imm16 + zext(Y); export *:1 address; }
+ADMEMOP: [imm8]         is $(PRE_PIX) & addressing=0x0B ; imm8            { local indirect:2 = imm8; local address:1 = *:1 indirect; export *:1 address; }
+ADMEMOP: [imm8".w"]     is $(PRE_PIX) & addressing=0x0C ; imm8            { local indirect:2 = imm8; local address:2 = *:2 indirect; export *:1 address; }
+ADMEMOP: ([imm8],X)     is $(PRE_PIX) & addressing=0x0E & X ; imm8        { local indirect:2 = imm8; local address:1 = *:1 indirect; local target:2 = zext(address) + zext(X); export *:1 target; }
+ADMEMOP: ([imm8".w"],X) is $(PRE_PIX) & addressing=0x0D & X ; imm8        { local indirect:2 = imm8; local address:2 = *:2 indirect + zext(X); export *:1 address; }
+ADMEMOP: ([imm8],Y)     is $(PRE_PIY) & addressing=0x0E & Y ; imm8        { local indirect:2 = imm8; local address:1 = *:1 indirect; local target:2 = zext(address) + zext(Y); export *:1 target; }
+ADMEMOP: ([imm8".w"],Y) is $(PRE_PIY) & addressing=0x0D & Y ; imm8        { local indirect:2 = imm8; local address:2 = *:2 indirect + zext(Y); export *:1 address; }
+
+ASMEMOP: "#"imm8        is $(NO_PRE) & addressing=0x0A ; imm8             { export *[const]:1 imm8; }
+ASMEMOP: ADMEMOP        is ADMEMOP                                        { export ADMEMOP; }
+
+XDMEMOP: imm8           is $(NO_PRE) & addressing=0x0B ; imm8             { export *:1 imm8; }
+XDMEMOP: imm16          is $(NO_PRE) & addressing=0x0C ; imm16            { export *:1 imm16; }
+XDMEMOP: (X)            is $(NO_PRE) & addressing=0x0F & X                { local address:2 = zext(X); export *:1 address; }
+XDMEMOP: (imm8,X)       is $(NO_PRE) & addressing=0x0E & X ; imm8         { local address:2 = imm8 + zext(X); export *:1 address; }
+XDMEMOP: (imm16,X)      is $(NO_PRE) & addressing=0x0D & X ; imm16        { local address:2 = imm16 + zext(X); export *:1 address; }
+XDMEMOP: [imm8]         is $(PRE_PIX) & addressing=0x0B ; imm8            { local indirect:2 = imm8; local address:2 = *:1 indirect; export *:1 address; }
+XDMEMOP: [imm8".w"]     is $(PRE_PIX) & addressing=0x0C ; imm8            { local indirect:2 = imm8; local address:2 = *:2 indirect; export *:1 address; }
+XDMEMOP: ([imm8],X)     is $(PRE_PIX) & addressing=0x0E & X ; imm8        { local indirect:2 = imm8; local address:2 = *:1 indirect; local target:2 = address + zext(X); export *:1 target; }
+XDMEMOP: ([imm8".w"],X) is $(PRE_PIX) & addressing=0x0D & X ; imm8        { local indirect:2 = imm8; local address:2 = *:2 indirect + zext(X); export *:1 address; }
+
+XSMEMOP: "#"imm8        is $(NO_PRE) & addressing=0x0A ; imm8             { export *[const]:1 imm8; }
+XSMEMOP: XDMEMOP        is XDMEMOP                                        { export XDMEMOP; }
+
+YDMEMOP: imm8           is $(PRE_PDY) & addressing=0x0B ; imm8            { export *:1 imm8; }
+YDMEMOP: imm16          is $(PRE_PDY) & addressing=0x0C ; imm16           { export *:1 imm16; }
+YDMEMOP: (Y)            is $(PRE_PDY) & addressing=0x0F & Y               { local address:2 = zext(Y); export *:1 address; }
+YDMEMOP: (imm8,Y)       is $(PRE_PDY) & addressing=0x0E & Y ; imm8        { local address:2 = imm8 + zext(Y); export *:1 address; }
+YDMEMOP: (imm16,Y)      is $(PRE_PDY) & addressing=0x0D & Y ; imm16       { local address:2 = imm16 + zext(Y); export *:1 address; }
+YDMEMOP: [imm8]         is $(PRE_PIY) & addressing=0x0B ; imm8            { local indirect:2 = imm8; local address:1 = *:1 indirect; export *:1 address; }
+YDMEMOP: [imm8".w"]     is $(PRE_PIY) & addressing=0x0C ; imm8            { local indirect:2 = imm8; local address:2 = *:2 indirect; export *:1 address; }
+YDMEMOP: ([imm8],Y)     is $(PRE_PIY) & addressing=0x0E & Y ; imm8        { local indirect:2 = imm8; local address:1 = *:1 indirect; local target:2 = zext(address) + zext(Y); export *:1 target; }
+YDMEMOP: ([imm8".w"],Y) is $(PRE_PIY) & addressing=0x0D & Y ; imm8        { local indirect:2 = imm8; local address:2 = *:2 indirect + zext(Y); export *:1 address; }
+
+YSMEMOP: "#"imm8        is $(PRE_PDY) & addressing=0x0A ; imm8            { export *[const]:1 imm8; }
+YSMEMOP: YDMEMOP        is YDMEMOP                                        { export YDMEMOP; }
+
+# Just dereference ADMEMOP here instead?
+
+ADDROP: imm8            is $(NO_PRE) & addressing=0x0B ; imm8             { export *[const]:2 imm8; }
+ADDROP: imm16           is $(NO_PRE) & addressing=0x0C ; imm16            { export *[const]:2 imm16; }
+ADDROP: (X)             is $(NO_PRE) & addressing=0x0F & X                { local address:2 = zext(X); export address; }
+ADDROP: (imm8,X)        is $(NO_PRE) & addressing=0x0E & X ; imm8         { local address:2 = imm8 + zext(X); export address; }
+ADDROP: (imm16,X)       is $(NO_PRE) & addressing=0x0D & X ; imm16        { local address:2 = imm16 + zext(X); export address; }
+ADDROP: (Y)             is $(PRE_PDY) & addressing=0x0F & Y               { local address:2 = zext(Y); export address; }
+ADDROP: (imm8,Y)        is $(PRE_PDY) & addressing=0x0E & Y ; imm8        { local address:2 = imm8 + zext(Y); export address; }
+ADDROP: (imm16,Y)       is $(PRE_PDY) & addressing=0x0D & Y ; imm16       { local address:2 = imm16 + zext(Y); export address; }
+ADDROP: [imm8]          is $(PRE_PIX) & addressing=0x0B ; imm8            { local indirect:2 = imm8; local address:2 = *:1 indirect; export address; }
+ADDROP: [imm8".w"]      is $(PRE_PIX) & addressing=0x0C ; imm8            { local indirect:2 = imm8; local address:2 = *:2 indirect; export address; }
+ADDROP: ([imm8],X)      is $(PRE_PIX) & addressing=0x0E & X ; imm8        { local indirect:2 = imm8; local address:2 = zext(*:1 indirect) + zext(X); export address; }
+ADDROP: ([imm8".w"],X)  is $(PRE_PIX) & addressing=0x0D & X ; imm8        { local indirect:2 = imm8; local address:2 = *:2 indirect + zext(X); export address; }
+ADDROP: ([imm8],Y)      is $(PRE_PIY) & addressing=0x0E & Y ; imm8        { local indirect:2 = imm8; local address:2 = zext(*:1 indirect) + zext(Y); export address; }
+ADDROP: ([imm8".w"],Y)  is $(PRE_PIY) & addressing=0x0D & Y ; imm8        { local indirect:2 = imm8; local address:2 = *:2 indirect + zext(Y); export address; }
+
+BITOP: A                is $(NO_PRE) & addressing=0x04 & A                { export A; }
+BITOP: X                is $(NO_PRE) & addressing=0x05 & X                { export X; }
+BITOP: Y                is $(PRE_PDY) & addressing=0x05 & Y               { export Y; }
+BITOP: imm8             is $(NO_PRE) & addressing=0x03 ; imm8             { export *:1 imm8; }
+BITOP: (X)              is $(NO_PRE) & addressing=0x07 & X                { local address:2 = zext(X); export *:1 address; }
+BITOP: (imm8,X)         is $(NO_PRE) & addressing=0x06 & X ; imm8         { local address:2 = imm8 + zext(X); export *:1 address; }
+BITOP: (Y)              is $(PRE_PDY) & addressing=0x07 & Y               { local address:2 = zext(Y); export *:1 address; }
+BITOP: (imm8,Y)         is $(PRE_PDY) & addressing=0x06 & Y ; imm8        { local address:2 = imm8 + zext(Y); export *:1 address; }
+BITOP: [imm8]           is $(PRE_PIX) & addressing=0x03 ; imm8            { local indirect:2 = imm8; local address:1 = *:1 indirect; export *:1 address; }
+BITOP: ([imm8],X)       is $(PRE_PIX) & addressing=0x06 & X ; imm8        { local indirect:2 = imm8; local address:1 = *:1 indirect; local target:2 = zext(address) + zext(X); export *:1 target; }
+BITOP: ([imm8],Y)       is $(PRE_PIY) & addressing=0x06 & Y ; imm8        { local indirect:2 = imm8; local address:1 = *:1 indirect; local target:2 = zext(address) + zext(Y); export *:1 target; }
+
+REL: reloc              is rel [ reloc = inst_next + rel; ]               { export *:2 reloc; }
+
+JMPTARGET: address      is $(NO_PRE) & rel [ address = inst_next + rel; ] { export *:2 address; }
+JMPTARGET: [imm8]       is $(PRE_PIX) & imm8                              { local indirect:2 = imm8; local address:2 = *:1 indirect; local target:2 = inst_next + address; export *:2 target; }
+
+JCC: "C"                is opcode=0x25                                    { export C; }
+JCC: "EQ"               is opcode=0x27                                    { export Z; }
+JCC: "F"                is opcode=0x21                                    { export 0:1; }
+JCC: "H"                is opcode=0x29                                    { export H; }
+JCC: "IH"               is opcode=0x2F                                    { export EXTI; }
+JCC: "IL"               is opcode=0x2E                                    { local tmp = !EXTI; export tmp; }
+@ifdef ST70
+JCC: "M"                is opcode=0x2D                                    { export I; }
+@endif
+@ifdef ST72
+JCC: "M"                is opcode=0x2D                                    { local tmp = ((I1 << 1) | I0) == 0b11; export tmp; }
+@endif
+JCC: "MI"               is opcode=0x2B                                    { export N; }
+JCC: "NC"               is opcode=0x24                                    { local tmp = !C; export tmp; }
+JCC: "NE"               is opcode=0x26                                    { local tmp = !Z; export tmp; }
+JCC: "NH"               is opcode=0x28                                    { local tmp = !H; export tmp; }
+@ifdef ST70
+JCC: "NM"               is opcode=0x2C                                    { local tmp = !I; export tmp; }
+@endif
+@ifdef ST72
+JCC: "NM"               is opcode=0x2C                                    { local tmp = ((I1 << 1) | I0) == 0; export tmp; }
+@endif
+JCC: "PL"               is opcode=0x2A                                    { local tmp = !N; export tmp; }
+JCC: "UGT"              is opcode=0x22                                    { local tmp = !(C | Z); export tmp; }
+JCC: "ULE"              is opcode=0x23                                    { local tmp = (C | Z); export tmp; }
+
+macro nzFlags(value) {
+  Z = value == 0;
+  N = value s< 0;
+}
+
+:ADC A, ASMEMOP is kind=0x09 ... & ASMEMOP & A {
+  local value = ASMEMOP;
+  local oldCarry = C;
+  C = carry(A, value);
+  H = carry(A << 4, value << 4);
+  value = value + A + oldCarry;
+  nzFlags(value);
+  A = value;
+}
+
+:ADD A, ASMEMOP is kind=0x0B ... & ASMEMOP & A {
+  local value = ASMEMOP;
+  C = carry(A, value);
+  H = carry(A << 4, value << 4);
+  value = value + A;
+  nzFlags(value);
+  A = value;
+}
+
+:AND A, ASMEMOP is kind=0x04 ... & ASMEMOP & A {
+  local value = ASMEMOP;
+  value = value & A;
+  nzFlags(value);
+  A = value;
+}
+
+:BCP A, ASMEMOP is kind=0x05 ... & ASMEMOP & A {
+  local value = ASMEMOP;
+  local result = value & A;
+  nzFlags(result);
+}
+
+:BRES imm8, "#"bit_position is $(NO_PRE) & bit_upper=0x01 & bit_lower=0x01 & bit_position ; imm8 {
+  local address:2 = imm8;
+  local value = *:1 address;
+  value = value & ~(1 << bit_position);
+  *:1 address = value;
+}
+
+:BRES [imm8], "#"bit_position is $(PRE_PIX) & bit_upper=0x01 & bit_lower=0x01 & bit_position ; imm8 {
+  local address:2 = imm8;
+  local target:2 = *:1 address;
+  local value:1 = *:1 target;
+  value = value & ~(1 << bit_position);
+  *:1 target = value;
+}
+
+:BSET imm8, "#"bit_position is $(NO_PRE) & bit_upper=0x01 & bit_lower=0x00 & bit_position ; imm8 {
+  local address:2 = imm8;
+  local value = *:1 address;
+  value = value | (1 << bit_position);
+  *:1 address = value;
+}
+
+:BSET [imm8], "#"bit_position is $(PRE_PIX) & bit_upper=0x01 & bit_lower=0x00 & bit_position ; imm8 {
+  local address:2 = imm8;
+  local target:2 = *:1 address;
+  local value:1 = *:1 target;
+  value = value | (1 << bit_position);
+  *:1 target = value;
+}
+
+:BTJF imm8, "#"bit_position, REL is $(NO_PRE) & bit_upper=0x00 & bit_lower=0x01 & bit_position ; imm8 ; REL {
+  local address:2 = imm8;
+  local value = *:1 address;
+  if (value & (1 << bit_position)) == (1 << bit_position) goto inst_next;
+  goto REL;
+}
+
+:BTJF [imm8], "#"bit_position, REL is $(PRE_PIX) & bit_upper=0x00 & bit_lower=0x01 & bit_position ; imm8 ; REL {
+  local address:2 = imm8;
+  local target:2 = *:1 address;
+  local value:1 = *:1 target;
+  if (value & (1 << bit_position)) == (1 << bit_position) goto inst_next;
+  goto REL;
+}
+
+:BTJT imm8, "#"bit_position, REL is $(NO_PRE) & bit_upper=0x00 & bit_lower=0x00 & bit_position ; imm8 ; REL {
+  local address:2 = imm8;
+  local value = *:1 address;
+  if (value & (1 << bit_position)) == 0 goto inst_next;
+  goto REL;
+}
+
+:BTJT [imm8], "#"bit_position, REL is $(PRE_PIX) & bit_upper=0x00 & bit_lower=0x00 & bit_position ; imm8 ; REL {
+  local address:2 = imm8;
+  local target:2 = *:1 address;
+  local value:1 = *:1 target;
+  if (value & (1 << bit_position)) == 0 goto inst_next;
+  goto REL;
+}
+
+:CALL ADDROP is kind=0x0D ... & ADDROP {
+  *:2 (SP - 1) = inst_next;
+  SP = SP - 2;
+  call [ADDROP];
+}
+
+:CALLR JMPTARGET is opcode=0xAD ; JMPTARGET {
+  *:2 (SP - 1) = inst_next;
+  SP = SP - 2;
+  call JMPTARGET;
+}
+
+:JR^JCC JMPTARGET is JCC ; JMPTARGET {
+  if !JCC goto inst_next;
+  goto JMPTARGET;
+}
+
+:CLR BITOP is kind=0x0F ... & BITOP {
+  BITOP = 0;
+  N = 0;
+  Z = 1;
+}
+
+:CP A, ASMEMOP is kind=0x01 ... & ASMEMOP & A {
+  local value = ASMEMOP;
+  local result = A - value;
+  nzFlags(result);
+  C = (A >= value);
+}
+
+:CP X, XSMEMOP is kind=0x03 ... & XSMEMOP & X {
+  local value = XSMEMOP;
+  local result = X - value;
+  nzFlags(result);
+  C = (X >= value);
+}
+
+:CP Y, YSMEMOP is kind=0x03 ... & YSMEMOP & Y {
+  local value = YSMEMOP;
+  local result = Y - value;
+  nzFlags(result);
+  C = (Y >= value);
+}
+
+:CPL BITOP is kind=0x03 ... & BITOP {
+  local value = BITOP ^ 0xFF;
+  nzFlags(value);
+  C = 1;
+  BITOP = value;
+}
+
+:DEC BITOP is kind=0x0A ... & BITOP {
+  local value = BITOP - 1;
+  nzFlags(value);
+  BITOP = value;
+}
+
+:HALT is $(NO_PRE) & opcode=0x8E {
+@ifdef ST70
+  I = 0;
+@endif
+@ifdef ST72
+  I0 = 0;
+  I1 = 1;
+@endif
+  halt();
+}
+
+:INC BITOP is kind=0x0C ... & BITOP {
+  local value = BITOP + 1;
+  nzFlags(value);
+  BITOP = value;
+}
+
+:IRET is $(NO_PRE) & opcode=0x80 {
+  SP = SP + 1;
+  CC = *:1 SP;
+  C = CC[0,1];
+  Z = CC[1,1];
+  N = CC[2,1];
+@ifdef ST70
+  I = CC[3,1];
+@endif
+@ifdef ST72
+  I0 = CC[3,1];
+@endif
+  H = CC[4,1];
+@ifdef ST72
+  I1 = CC[5,1];
+@endif
+  SP = SP + 1;
+  A = *:1 SP;
+  SP = SP + 1;
+  X = *:1 SP;
+  SP = SP + 1;
+  local returnAddress:2 = *:2 SP;
+  SP = SP + 1;
+  return [returnAddress];
+}
+
+:JP ADDROP is ADDROP {
+  goto [ADDROP];
+}
+
+:JRA JMPTARGET is opcode=0x20 ; JMPTARGET {
+  goto JMPTARGET;
+}
+
+:LD A, ASMEMOP is kind=0x06 ... & ASMEMOP & A {
+  A = ASMEMOP;
+  nzFlags(A);
+}
+
+:LD ADMEMOP, A is kind=0x07 ... & ADMEMOP & A {
+  ADMEMOP = A;
+  nzFlags(A);
+}
+
+:LD X, XSMEMOP is kind=0x0E ... & XSMEMOP & X {
+  X = XSMEMOP;
+  nzFlags(X);
+}
+
+:LD XDMEMOP, X is kind=0x0F ... & XDMEMOP & X {
+  XDMEMOP = X;
+  nzFlags(X);
+}
+
+:LD Y, YSMEMOP is kind=0x0E ... & YSMEMOP & Y {
+  Y = YSMEMOP;
+  nzFlags(Y);
+}
+
+:LD YDMEMOP, Y is kind=0x0F ... & YDMEMOP & Y {
+  YDMEMOP = Y;
+  nzFlags(Y);
+}
+
+:LD X, A is $(NO_PRE) & opcode=0x97 & X & A {
+  X = A;
+  nzFlags(A);
+}
+
+:LD A, X is $(NO_PRE) & opcode=0x9F & X & A {
+  A = X;
+  nzFlags(X);
+}
+
+:LD Y, A is $(PRE_PDY) & opcode=0x97 & Y & A {
+  Y = A;
+  nzFlags(A);
+}
+
+:LD A, Y is $(PRE_PDY) & opcode=0x9F & Y & A {
+  A = Y;
+  nzFlags(Y);
+}
+
+:LD Y, X is $(PRE_PDY) & opcode=0x93 & X & Y {
+  Y = X;
+  nzFlags(X);
+}
+
+:LD X, Y is $(NO_PRE) & opcode=0x93 & X & Y {
+  X = Y;
+  nzFlags(Y);
+}
+
+:LD A, S is $(NO_PRE) & opcode=0x9E & S & A {
+  A = S;
+  nzFlags(S);
+}
+
+:LD S, A is $(NO_PRE) & opcode=0x95 & S & A {
+  S = A;
+  nzFlags(A);
+}
+
+:LD X, S is $(NO_PRE) & opcode=0x96 & X & S {
+  X = S;
+  nzFlags(S);
+}
+
+:LD S, X is $(NO_PRE) & opcode=0x94 & X & S {
+  S = X;
+  nzFlags(X);
+}
+
+:LD Y, S is $(PRE_PDY) & opcode=0x96 & Y & S {
+  Y = S;
+  nzFlags(S);
+}
+
+:LD S, Y is $(PRE_PDY) & opcode=0x94 & Y & S {
+  S = Y;
+  nzFlags(Y);
+}
+
+:MUL X, A is $(NO_PRE) & opcode=0x42 & X & A {
+  H = 0;
+  C = 0;
+  local destination:2 = zext(X);
+  destination = destination * zext(A);
+  local low:2 = destination & 0xFF;
+  local high:2 = (destination >> 8) & 0xFF;
+  A = low:1;
+  X = high:1;
+}
+
+:MUL Y, A is $(PRE_PDY) & opcode=0x42 & Y & A {
+  H = 0;
+  C = 0;
+  local destination:2 = zext(Y);
+  destination = destination * zext(A);
+  local low:2 = destination & 0xFF;
+  local high:2 = (destination >> 8) & 0xFF;
+  A = low:1;
+  Y = high:1;
+}
+
+:NEG BITOP is kind=0x00 ... & BITOP {
+  local value = (BITOP ^ 0xFF) + 1;
+  nzFlags(value);
+  BITOP = value;
+  if !Z goto inst_next;
+  C = 0;
+}
+
+:NOP is $(NO_PRE) & opcode=0x9D {
+}
+
+:OR A, ASMEMOP is kind=0x0A ... & ASMEMOP & A {
+  local value = ASMEMOP;
+  value = value | A;
+  nzFlags(value);
+  A = value;
+}
+
+:POP A is $(NO_PRE) & opcode=0x84 & A {
+  SP = SP + 1;
+  A = *:1 SP;
+}
+
+:POP X is $(NO_PRE) & opcode=0x85 & X {
+  SP = SP + 1;
+  X = *:1 SP;
+}
+
+:POP Y is $(PRE_PDY) & opcode=0x85 & Y {
+  SP = SP + 1;
+  Y = *:1 SP;
+}
+
+:POP CC is $(NO_PRE) & opcode=0x86 & CC {
+  SP = SP + 1;
+  CC = *:1 SP;
+  C = CC[0,1];
+  Z = CC[1,1];
+  N = CC[2,1];
+@ifdef ST70
+  I = CC[3,1];
+@endif
+@ifdef ST72
+  I0 = CC[3,1];
+@endif
+  H = CC[4,1];
+@ifdef ST72
+  I1 = CC[5,1];
+@endif
+}
+
+:PUSH A is $(NO_PRE) & opcode=0x88 & A {
+  *:1 SP = A;
+  SP = SP - 1;
+}
+
+:PUSH X is $(NO_PRE) & opcode=0x89 & X {
+  *:1 SP = X;
+  SP = SP - 1;
+}
+
+:PUSH Y is $(PRE_PDY) & opcode=0x89 & Y {
+  *:1 SP = Y;
+  SP = SP - 1;
+}
+
+:PUSH CC is $(NO_PRE) & opcode=0x8A & CC {
+  CC = 0xFF;
+  CC[0,1] = C;
+  CC[1,1] = Z;
+  CC[2,1] = N;
+@ifdef ST70
+  CC[3,1] = I;
+@endif
+@ifdef ST72
+  CC[3,1] = I0;
+@endif
+  CC[4,1] = H;
+@ifdef ST72
+  CC[5,1] = I1;
+@endif
+  *:1 SP = CC;
+  SP = SP - 1;
+}
+
+:RCF is $(NO_PRE) & opcode=0x98 {
+  C = 0;
+}
+
+:RET is $(NO_PRE) & opcode=0x81 {
+  SP = SP + 1;
+  local returnAddress:2 = *:2 SP;
+  SP = SP + 1;
+  return [returnAddress];
+}
+
+:RIM is $(NO_PRE) & opcode=0x9A {
+@ifdef ST70
+  I = 0;
+@endif
+@ifdef ST72
+  I0 = 0;
+  I1 = 1;
+@endif
+}
+
+:RLC BITOP is kind=0x09 ... & BITOP {
+  local tmpC = C;
+  local value = BITOP;
+  C = value >> 7;
+  local result = value << 1;
+  result = result | tmpC;
+  nzFlags(value);
+  BITOP = result;
+}
+
+:RRC BITOP is kind=0x06 ... & BITOP {
+  local tmpC = C << 7;
+  local value = BITOP;
+  C = value & 1;
+  local result = value >> 1;
+  result = result | tmpC;
+  nzFlags(value);
+  BITOP = result;
+}
+
+:RSP is $(NO_PRE) & opcode=0x9C {
+  SP = 0x01FF;
+}
+
+:SBC A, ASMEMOP is kind=0x02 ... & ASMEMOP & A {
+  local value = ASMEMOP;
+  local result = A - value - C;
+  nzFlags(result);
+  C = sborrow(A, value);
+  A = result;
+}
+
+:SCF is $(NO_PRE) & opcode=0x99 {
+  C = 1;
+}
+
+:SIM is $(NO_PRE) & opcode=0x9B {
+@ifdef ST70
+  I = 1;
+@endif
+@ifdef ST72
+  I0 = 1;
+  I1 = 1;
+@endif
+}
+
+:SLL BITOP is kind=0x08 ... & BITOP {
+  local value = BITOP;
+  C = value >> 7;
+  value = value << 1;
+  nzFlags(value);
+  BITOP = value;
+}
+
+:SRA BITOP is kind=0x07 ... & BITOP {
+  local value = BITOP;
+  local tmpC = value << 7;
+  C = value & 1;
+  value = (value >> 1) | tmpC;
+  nzFlags(value);
+  BITOP = value;
+}
+
+:SRL BITOP is kind=0x04 ... & BITOP {
+  local value = BITOP;
+  C = value & 1;
+  value = value >> 1;
+  nzFlags(value);
+  BITOP = value;
+}
+
+:SUB A, ASMEMOP is kind=0x00 ... & ASMEMOP & A {
+  local value = ASMEMOP;
+  local result = A - value;
+  nzFlags(result);
+  C = sborrow(A, value);
+  A = result;
+}
+
+:SWAP BITOP is kind=0x0E ... & BITOP {
+  local value = BITOP;
+  value = (value >> 4) | ((value & 0x0F) << 4);
+  nzFlags(value);
+  BITOP = value;
+}
+
+:TNZ BITOP is kind=0x0D ... & BITOP {
+  local value = BITOP;
+  nzFlags(value);
+}
+
+:TRAP is $(NO_PRE) & opcode=0x83 {
+  *:2 (SP - 1) = inst_next;
+  SP = SP - 2;
+  *:1 SP = X;
+  SP = SP - 1;
+  *:1 SP = A;
+  CC = 0xFF;
+  CC[0,1] = C;
+  CC[1,1] = Z;
+  CC[2,1] = N;
+@ifdef ST70
+  CC[3,1] = I;
+@endif
+@ifdef ST72
+  CC[3,1] = I0;
+@endif
+  CC[4,1] = H;
+@ifdef ST72
+  CC[5,1] = I1;
+@endif
+  *:1 SP = CC;
+  SP = SP - 1;
+@ifdef ST70
+  I = 1;
+@endif
+@ifdef ST72
+  I0 = 1;
+  I1 = 1;
+@endif
+  goto [0xFFFC:2];
+}
+
+:WFI is $(NO_PRE) & opcode=0x8F {
+@ifdef ST70
+  I = 0;
+@endif
+@ifdef ST72
+  I0 = 0;
+  I1 = 1;
+@endif
+  waitForInterrupt();
+}
+
+:XOR A, ASMEMOP is kind=0x08 ... & ASMEMOP & A {
+  local value = ASMEMOP;
+  value = value ^ A;
+  nzFlags(value);
+  A = value;
+}
