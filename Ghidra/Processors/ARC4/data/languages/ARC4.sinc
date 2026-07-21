@@ -1,0 +1,66 @@
+# Copyright 2023 The Johns Hopkins University Applied Physics Laboratory LLC
+# Authors: Dan Genin and Tommy Johnson
+
+# Main slaspec must define endianess and alignment
+
+@ifndef WORDSIZE
+@define WORDSIZE "1"
+@endif
+
+
+define space ram type=ram_space size=$(SIZE) wordsize=$(WORDSIZE) default;
+define space register type=register_space size=2 wordsize=4;
+
+# shimmflags, limm and shimnoflags act as dummy registers for instructions
+# with immediate value in destination register
+define register offset=0x1000 size=$(SIZE) [
+
+       r0  r1  r2  r3  r4  r5  r6  r7  r8  r9  r10 r11 r12 r13 r14
+       r15 r16 r17 r18 r19 r20 r21 r22 r23 r24 r25 r26 fp sp
+       ilink1 ilink2 blink pc
+
+       ext0  ext1  ext2  ext3  ext4  ext5  ext6  ext7  ext8  ext9  ext10 ext11 ext12 ext13 ext14
+       ext15 ext16 ext17 ext18 ext19 ext20 ext21 ext22 ext23 ext24 MLO MMID MHI lp_count
+       shimmflags limm shimmnoflags
+
+# r32-r59 reserved, lp_count is r60, MLO, MMID and MHI are only valid if the CPU has a 32x32 multiply extension.
+];
+
+# STATUS REGISTER MAP: (LOW)
+# C - CARRY
+# Z - ZERO
+# N - NEGATIVE
+# V - OVERFLOW
+# tmp* are fake registers used to pass flags into FLAGS table
+define register offset=0x1200 size=1 [
+       Z   N  C  V tmpZ tmpN tmpC tmpV
+];
+
+define register offset=0x1300 size=$(SIZE) [
+       status semaphore lp_start lp_end identity debug
+       aux6 aux7 aux8 aux9 aux10 aux11 aux12 aux13 aux14 aux15
+       aux16 aux17 aux18 aux19 aux20 aux21 aux22 aux23 aux24 aux25
+	aux26 aux27 aux28 aux29 aux30 aux31 aux32 aux33 aux34 aux35
+	aux36 aux37 aux38 aux39 aux40 aux41 aux42 aux43 aux44 aux45
+	aux46 aux47 aux48 aux49 aux50 aux51 aux52 aux53 aux54 aux55
+	aux56 aux57 aux58 aux59 aux60 aux61 aux62 aux63
+];
+
+# Fake register used to pass loop address into LP_COND table
+define register offset=0x1400 size=$(SIZE) [
+       lp_addr
+];
+
+define register offset=0x1500 size=8 [
+       lp_status
+];
+
+# NOTE: it appears that only one context register is allowed(?), so
+#       we are making them longer to accommodate address variables
+#       needed for computation in the action section of sr instruction
+#       to support manual loop initialization.
+
+define context lp_status
+       lp_in_use = (0,0)
+#       tmp1_1 = (32,63)
+       ;
