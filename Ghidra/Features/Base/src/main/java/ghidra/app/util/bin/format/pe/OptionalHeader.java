@@ -753,8 +753,8 @@ public class OptionalHeader implements StructConverter {
 	/**
 	 * {@return the combined size of all headers}
 	 */
-	public long getSizeOfHeaders() {
-		return Integer.toUnsignedLong(sizeOfHeaders);
+	public int getSizeOfHeaders() {
+		return sizeOfHeaders;
 	}
 
 	/**
