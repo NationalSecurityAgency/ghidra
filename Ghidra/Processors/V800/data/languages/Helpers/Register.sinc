@@ -1,0 +1,46 @@
+#####################################################
+#####	     		Register		#####
+#####################################################
+
+
+##### General-purpose registers (r0 to r31) #####
+@if defined(V830)
+define register offset=0x0 size=0x4             # offset = 0 because it's the start
+[
+  r0   r1   r2   sp   gp   tp   r6   r7   r8   r9   
+  r10  r11  r12  r13  r14  r15  r16  r17  r18  r19 
+  r20  r21  r22  r23  r24  r25  r26  r27  r28  r29  
+  mp   lp
+];
+
+@elif defined(V810)
+define register offset=0x0 size=0x4
+[
+  r0   r1   r2   sp   gp   tp   r6   r7   r8   r9   
+  r10  r11  r12  r13  r14  r15  r16  r17  r18  r19 
+  r20  r21  r22  r23  r24  r25  r26  r27  r28  r29  
+  r30  lp
+];
+@endif
+
+##### Control/Special registers #####
+@if defined(V830)
+define register offset=0x80 size=0x4            # offset = 0x80(128) = PreOffset+PreRegister*Size = 0+32*4 = 128
+[
+  EIPC   EIPSW  FEPC   FEPSW  ECR    PSW    PIR    TKCW   _     _     
+  _      _      _      _      _      _      DPC    DPSW   _     _     
+  _      _      _      _      _      _      _      _      _     _     
+  DBWR   HCCW
+];
+
+@elif defined(V810)
+define register offset=0x80 size=0x4  
+[
+  EIPC   EIPSW  FEPC   FEPSW  ECR    PSW    PIR    TKCW   _     _     
+  _      _      _      _      _      _      _      _      _     _     
+  _      _      _      _      CHCW   ADTRE  _      _      _     _     
+  DBWR   HCCW
+];
+@endif
+
+define register offset=0x100 size=0x4 [ PC ];     # offset = 0x100(256) = PreOffset+PreRegister*Size = 128+32*4 = 256
