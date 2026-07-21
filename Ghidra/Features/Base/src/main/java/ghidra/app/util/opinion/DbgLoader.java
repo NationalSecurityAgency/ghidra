@@ -17,10 +17,11 @@ package ghidra.app.util.opinion;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AccessMode;
 import java.util.*;
 
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.RandomAccessByteProvider;
+import ghidra.app.util.bin.FileByteProvider;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.program.model.address.Address;
@@ -77,25 +78,17 @@ public class DbgLoader extends AbstractPeDebugLoader {
 		String parentPath = prog.getExecutablePath();
 		File parentFile = new File(parentPath);
 
-		RandomAccessByteProvider provider2 = null;
-		try {
-			provider2 = new RandomAccessByteProvider(parentFile);
+		try (FileByteProvider provider2 = new FileByteProvider(parentFile, null, AccessMode.READ)) {
 			PortableExecutable parentPE = new PortableExecutable(provider2, SectionLayout.FILE);
 			Address imageBase = prog.getImageBase();
 			Map<SectionHeader, Address> sectionToAddress = new HashMap<>();
 			FileHeader fileHeader = parentPE.getNTHeader().getFileHeader();
-			SectionHeader[] sectionHeaders = fileHeader.getSectionHeaders();
-			for (SectionHeader sectionHeader : sectionHeaders) {
+			for (SectionHeader sectionHeader : fileHeader.getSectionHeaders()) {
 				sectionToAddress.put(sectionHeader,
 					imageBase.add(sectionHeader.getVirtualAddress()));
 			}
 			processDebug(debug.getParser(), parentPE.getNTHeader(), sectionToAddress, prog,
 				settings.options(), settings.monitor());
-		}
-		finally {
-			if (provider2 != null) {
-				provider2.close();
-			}
 		}
 	}
 

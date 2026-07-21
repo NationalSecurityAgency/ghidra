@@ -84,11 +84,24 @@ public class PeUtils {
 	 * @param value the value to align
 	 * @param alignment the alignment value
 	 */
-	public static int align(int value, int alignment) {
+	public static int alignUp(int value, int alignment) {
 		if (alignment == 0) {
 			return value;
 		}
 		return Math.ceilDiv(value, alignment) * alignment;
+	}
+
+	/**
+	 * {@return the given value rounded down to the nearest given alignment}
+	 * 
+	 * @param value the value to align
+	 * @param alignment the alignment value
+	 */
+	public static int alignDown(int value, int alignment) {
+		if (alignment == 0) {
+			return value;
+		}
+		return Math.floorDiv(value, alignment) * alignment;
 	}
 
 }

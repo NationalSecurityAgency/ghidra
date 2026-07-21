@@ -16,21 +16,18 @@
 package ghidra.app.util.bin.format.pe;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.Writeable;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.util.DataConverter;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * A class to manage loading Portable Executables (PE).
  */
-public class PortableExecutable implements Writeable {
+public class PortableExecutable {
 	public static final String NAME = "PORTABLE_EXECUTABLE";
 	public static boolean DEBUG = false;
 
@@ -122,19 +119,5 @@ public class PortableExecutable implements Writeable {
 	 */
 	public long getFileLength() {
 		return reader != null ? reader.length() : 0;
-	}
-
-	@Override
-	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
-		raf.seek(0);
-		if (dosHeader != null) {
-			dosHeader.write(raf, dc);
-		}
-		if (richHeader != null) {
-			richHeader.write(raf, dc);
-		}
-		if (ntHeader != null) {
-			ntHeader.write(raf, dc);
-		}
 	}
 }

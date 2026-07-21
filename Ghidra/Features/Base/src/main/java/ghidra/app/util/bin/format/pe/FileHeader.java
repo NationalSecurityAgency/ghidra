@@ -16,17 +16,14 @@
 package ghidra.app.util.bin.format.pe;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.Writeable;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbolAux;
 import ghidra.program.model.data.*;
-import ghidra.program.model.mem.MemoryBlock;
-import ghidra.util.DataConverter;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -43,7 +40,7 @@ import ghidra.util.exception.DuplicateNameException;
 ///     WORD  Characteristics;      // MANDATORY
 /// } IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
 /// ```
-public class FileHeader implements StructConverter, Writeable {
+public class FileHeader implements StructConverter {
 	/// The name to use when converting into a structure data type
 	public final static String NAME = "IMAGE_FILE_HEADER";
 
@@ -147,7 +144,7 @@ public class FileHeader implements StructConverter, Writeable {
 	private short sizeOfOptionalHeader; 	// delta between start of OptionalHeader and start of section table
 	private short characteristics;
 
-	private SectionHeader[] sectionHeaders;
+	private List<SectionHeader> sectionHeaders = new ArrayList<>();
 	private List<DebugCOFFSymbol> symbols = new ArrayList<>();
 
 	private BinaryReader reader;
@@ -227,27 +224,30 @@ public class FileHeader implements StructConverter, Writeable {
 	}
 
 	/**
-	 * {@return the array of section headers}
+	 * {@return the list of section headers}
 	 */
-	public SectionHeader[] getSectionHeaders() {
-		return sectionHeaders != null ? sectionHeaders : new SectionHeader[0];
+	public List<SectionHeader> getSectionHeaders() {
+		return sectionHeaders;
 	}
 
 	/**
-	 * {@return the array of symbols}
+	 * {@return the list of symbols}
 	 */
 	public List<DebugCOFFSymbol> getSymbols() {
 		return symbols;
 	}
 
 	/**
-	 * {@return the section header that contains the specified virtual address}
+	 * {@return the section header that contains the specified virtual address, or {@code null} if
+	 * it does not exist in any section}
 	 * 
 	 * @param virtualAddr the virtual address
+	 * @param optionalHeader The {@link OptionalHeader}
 	 */
-	public SectionHeader getSectionHeaderContaining(int virtualAddr) {
-		return Arrays.stream(sectionHeaders)
-				.filter(e -> virtualAddr >= e.getVirtualAddress() &&
+	public SectionHeader getSectionHeaderContaining(int virtualAddr,
+			OptionalHeader optionalHeader) {
+		return sectionHeaders.stream()
+				.filter(e -> virtualAddr >= e.getAlignedVirtualAddress(optionalHeader) &&
 					virtualAddr < e.getVirtualAddress() + e.getVirtualSize())
 				.findFirst()
 				.orElse(null);
@@ -259,7 +259,7 @@ public class FileHeader implements StructConverter, Writeable {
 	 * @param index index of section header to return
 	 */
 	public SectionHeader getSectionHeader(int index) {
-		return index >= 0 && index < sectionHeaders.length ? sectionHeaders[index] : null;
+		return index >= 0 && index < sectionHeaders.size() ? sectionHeaders.get(index) : null;
 	}
 
 	/**
@@ -268,7 +268,7 @@ public class FileHeader implements StructConverter, Writeable {
 	 * @param name section name
 	 */
 	public SectionHeader getSectionHeader(String name) {
-		return Arrays.stream(sectionHeaders)
+		return sectionHeaders.stream()
 				.filter(e -> e.getName().equals(name))
 				.findFirst()
 				.orElse(null);
@@ -289,7 +289,7 @@ public class FileHeader implements StructConverter, Writeable {
 	}
 
 	/**
-	 * {@return  the number of symbols in the COFF symbol table}
+	 * {@return the number of symbols in the COFF symbol table}
 	 */
 	public int getNumberOfSymbols() {
 		return numberOfSymbols;
@@ -327,51 +327,14 @@ public class FileHeader implements StructConverter, Writeable {
 	void processSections(OptionalHeader optHeader, boolean symbolsProcessed) throws IOException {
 		long oldIndex = reader.getPointerIndex();
 
-		int tmpIndex = getPointerToSections();
 		if (optHeader.getFileAlignment() == 0) {
 			Msg.error(this, "File alignment == 0: section processing skipped");
 		}
 		else {
 			long stringTableOffset = symbolsProcessed ? getStringTableOffset() : -1;
-			sectionHeaders = new SectionHeader[numberOfSections];
+			int tmpIndex = getPointerToSections();
 			for (int i = 0; i < numberOfSections; ++i) {
-				SectionHeader section = new SectionHeader(reader, tmpIndex, stringTableOffset);
-				sectionHeaders[i] = section;
-
-				int pointerToRawData = section.getPointerToRawData();
-				int sizeOfRawData = section.getSizeOfRawData();
-
-				// Ensure PointerToRawData + SizeOfRawData doesn't exceed the length of the file
-				if (pointerToRawData >= reader.length()) {
-					sizeOfRawData = 0;
-					Msg.warn(this, "Section " + section.getName() + " begins after end of file!");
-				}
-				else if (pointerToRawData + sizeOfRawData > reader.length()) {
-					sizeOfRawData = (int) (reader.length() - pointerToRawData);
-					Msg.warn(this,
-						String.format("Section %s exceeds file length...truncating from %d to %d",
-							section.getName(), section.getSizeOfRawData(), sizeOfRawData));
-				}
-				section.setSizeOfRawData(sizeOfRawData);
-
-				// Ensure VirtualSize is large enough to accommodate SizeOfRawData, but do not
-				// exceed the next alignment boundary.  We can only do this if the VirtualAddress is
-				// already properly aligned, since we currently don't support moving sections to
-				// different addresses to enforce alignment.
-				int virtualAddress = section.getVirtualAddress();
-				int virtualSize = section.getVirtualSize();
-				int alignedVirtualAddress =
-					PeUtils.align(virtualAddress, optHeader.getSectionAlignment());
-				int alignedVirtualSize =
-					PeUtils.align(virtualSize, optHeader.getSectionAlignment());
-				if (virtualAddress == alignedVirtualAddress) {
-					if (sizeOfRawData > virtualSize) {
-						section.setVirtualSize(Math.min(sizeOfRawData, alignedVirtualSize));
-					}
-				}
-				else {
-					Msg.warn(this, "Section " + section.getName() + " is not aligned!");
-				}
+				sectionHeaders.add(new SectionHeader(reader, tmpIndex, stringTableOffset, i));
 				tmpIndex += SectionHeader.IMAGE_SIZEOF_SECTION_HEADER;
 			}
 		}
@@ -454,6 +417,18 @@ public class FileHeader implements StructConverter, Writeable {
 		return false;
 	}
 
+	/**
+	 * {@return the default page size for the architecture}
+	 * <p>
+	 * This is relevant for the {@link OptionalHeader#getSectionAlignment() section alignment}.
+	 */
+	public int getDefaultPageSize() {
+		// Seems that the only architectures that don't use 0x1000 are, Alpha AXP, Alpha AXP 64,
+		// and Itanium, which all use 0x2000. But we don't support those yet.
+
+		return 0x1000;
+	}
+
 	@Override
 	public DataType toDataType() throws DuplicateNameException {
 		StructureDataType struct = new StructureDataType(NAME, 0);
@@ -466,144 +441,5 @@ public class FileHeader implements StructConverter, Writeable {
 		struct.add(WORD, 2, "Characteristics", null);
 		struct.setCategoryPath(new CategoryPath("/PE"));
 		return struct;
-	}
-
-	private void setSectionHeaders(SectionHeader[] sectionHeaders) {
-		this.sectionHeaders = sectionHeaders;
-		numberOfSections = sectionHeaders.length;
-	}
-
-	@Override
-	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
-		raf.write(dc.getBytes(machine));
-		raf.write(dc.getBytes(numberOfSections));
-		raf.write(dc.getBytes(timeDateStamp));
-		raf.write(dc.getBytes(pointerToSymbolTable));
-		raf.write(dc.getBytes(numberOfSymbols));
-		raf.write(dc.getBytes(sizeOfOptionalHeader));
-		raf.write(dc.getBytes(characteristics));
-	}
-
-	/**
-	 * Adds a new section to this file header. Uses the given memory block
-	 * as the section template. The section will have the memory block's name, start address,
-	 * size, etc. The optional header is needed to determine the free byte position in the
-	 * file.
-	 * @param block the memory block template
-	 * @param optionalHeader the related optional header
-	 * @throws RuntimeException if the memory block is uninitialized
-	 */
-	public void addSection(MemoryBlock block, OptionalHeader optionalHeader) {
-		DataDirectory[] directories = optionalHeader.getDataDirectories();
-
-		DataDirectory[] dataDirectories = optionalHeader.getDataDirectories();
-
-		SecurityDataDirectory sdd = null;
-		if (dataDirectories.length > OptionalHeader.IMAGE_DIRECTORY_ENTRY_SECURITY) {
-			sdd =
-				(SecurityDataDirectory) dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_SECURITY];
-			if (sdd != null && sdd.getSize() > 0) {
-				sdd.updatePointers(PeUtils.align((int) block.getSize(),
-					optionalHeader.getFileAlignment()));
-			}
-		}
-
-		int lastPos = computeAlignedNewPosition(optionalHeader, directories);
-
-		SectionHeader newSection = new SectionHeader(block, optionalHeader, lastPos);
-
-		SectionHeader[] newSectionHeaders = new SectionHeader[sectionHeaders.length + 1];
-		System.arraycopy(sectionHeaders, 0, newSectionHeaders, 0, sectionHeaders.length);
-		newSectionHeaders[sectionHeaders.length] = newSection;
-		setSectionHeaders(newSectionHeaders);
-
-		int firstSectionStart = sectionHeaders[0].getPointerToRawData();
-		int lastSectionEnd = sectionHeaders[sectionHeaders.length - 1].getPointerToRawData() +
-			sectionHeaders[sectionHeaders.length - 1].getSizeOfRawData();
-
-		for (int i = 0; i < directories.length; i++) {
-			if (directories[i] == null || directories[i].getSize() == 0 ||
-				directories[i].isContainedInSection()) {
-				continue;
-			}
-			if (directories[i].getVirtualAddress() < firstSectionStart) {
-				if (i != OptionalHeader.IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT) {
-					throw new RuntimeException("PE - Unexpected directory before sections: " + i);
-				}
-			}
-			if (directories[i].getVirtualAddress() > lastSectionEnd) {
-				if (i != OptionalHeader.IMAGE_DIRECTORY_ENTRY_SECURITY) {
-					throw new RuntimeException("PE - Unexpected directory after sections: " + i);
-				}
-			}
-		}
-
-		int offset = 0;
-
-		if (dataDirectories.length > OptionalHeader.IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT) {
-			BoundImportDataDirectory bidd =
-				(BoundImportDataDirectory) dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT];
-			if (bidd != null && bidd.getSize() > 0) {
-				bidd.updatePointers(SectionHeader.IMAGE_SIZEOF_SECTION_HEADER);
-				int endptr = bidd.getVirtualAddress() + bidd.getSize() - 1;
-				if (endptr >= sectionHeaders[0].getPointerToRawData()) {
-					int alignedPtr =
-						PeUtils.align(endptr, optionalHeader.getFileAlignment());
-					offset = alignedPtr - sectionHeaders[0].getPointerToRawData();
-					for (SectionHeader sectionHeader : sectionHeaders) {
-						sectionHeader.updatePointers(offset);
-					}
-					//reset the sizeOfHeaders...
-					optionalHeader.setSizeOfHeaders(sectionHeaders[0].getPointerToRawData());
-				}
-			}
-		}
-
-		if (dataDirectories.length > OptionalHeader.IMAGE_DIRECTORY_ENTRY_DEBUG) {
-			DebugDataDirectory ddd =
-				(DebugDataDirectory) dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_DEBUG];
-			if (ddd != null && ddd.getSize() > 0) {
-				if (ddd.getVirtualAddress() > newSection.getVirtualAddress()) {
-					if (sdd != null && sdd.getSize() > 0) {
-						ddd.updatePointers(offset, sdd.getVirtualAddress() + sdd.getSize());
-					}
-					else {
-						ddd.updatePointers(offset, newSection.getSizeOfRawData());
-					}
-				}
-			}
-		}
-
-		if (block.isExecute()) {
-			optionalHeader
-					.setSizeOfCode(optionalHeader.getSizeOfCode() + newSection.getSizeOfRawData());
-		}
-		else {
-			optionalHeader.setSizeOfInitializedData(
-				optionalHeader.getSizeOfInitializedData() + newSection.getSizeOfRawData());
-		}
-
-		int soi = newSection.getVirtualAddress() + newSection.getSizeOfRawData();
-		soi = PeUtils.align(soi, optionalHeader.getSectionAlignment());
-		optionalHeader.setSizeOfImage(soi);
-	}
-
-	private int computeAlignedNewPosition(OptionalHeader optionalHeader,
-			DataDirectory[] directories) {
-		int lastPos = 0;
-		for (SectionHeader sectionHeader : sectionHeaders) {
-			if (sectionHeader.getPointerToRawData() + sectionHeader.getSizeOfRawData() > lastPos) {
-				lastPos = sectionHeader.getPointerToRawData() + sectionHeader.getSizeOfRawData();
-			}
-		}
-		for (DataDirectory directorie : directories) {
-			if (directorie == null || directorie.getSize() == 0) {
-				continue;
-			}
-			if (directorie.rvaToPointer() + directorie.getSize() > lastPos) {
-				lastPos = directorie.rvaToPointer() + directorie.getSize();
-			}
-		}
-		return PeUtils.align(lastPos, optionalHeader.getFileAlignment());
 	}
 }
