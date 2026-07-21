@@ -24,4 +24,5 @@ eclipse.project.name = 'Processors Loongarch'
 
 dependencies {
 	api project(':Base')
+	api project(':BytePatterns')
 }
