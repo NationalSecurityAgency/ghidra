@@ -19,6 +19,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import org.jdom2.IllegalDataException;
+import org.jdom2.IllegalNameException;
+
 import generic.jar.ResourceFile;
 import ghidra.app.util.bin.format.pe.ResourceDataDirectory;
 import ghidra.app.util.importer.MessageLog;
@@ -173,7 +176,12 @@ public class LibraryLookupTable {
 			Msg.warn(LibraryLookupTable.class, "Can't write to installation directory");
 		}
 		else {
-			symTab.write(f, new File(program.getExecutablePath()), version);
+			try {
+				symTab.write(f, new File(program.getExecutablePath()), version);
+			}
+			catch (IllegalNameException | IllegalDataException e) {
+				throw new IOException(e);
+			}
 		}
 
 		return file;

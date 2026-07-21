@@ -485,7 +485,8 @@ class LibrarySymbolTable {
 		//}
 	}
 
-	void write(File output, File input, String lversion) throws IOException {
+	void write(File output, File input, String lversion)
+			throws IOException, IllegalNameException, IllegalDataException {
 		Element root = new Element("LIBRARY");
 
 		root.setAttribute("NAME", tableName);
@@ -515,15 +516,11 @@ class LibrarySymbolTable {
 			root.addContent(export);
 		}
 
-		FileOutputStream fos = new FileOutputStream(output);
-		try {
+		try (FileOutputStream fos = new FileOutputStream(output)) {
 			Document doc = new Document(root);
 
 			XMLOutputter xmlout = GenericXMLOutputter.getInstance();
 			xmlout.output(doc, fos);
-		}
-		finally {
-			fos.close();
 		}
 
 		//StringBuffer buffer = new StringBuffer();
