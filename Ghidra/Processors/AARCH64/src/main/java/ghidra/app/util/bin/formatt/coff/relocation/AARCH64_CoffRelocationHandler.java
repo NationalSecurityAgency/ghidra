@@ -187,6 +187,11 @@ public class AARCH64_CoffRelocationHandler implements CoffRelocationHandler {
 				mem.setInt(address, bytesToAdjust);
 				break;
 
+			case IMAGE_REL_ARM64_ADDR64:
+				mem.setLong(address, symbolAddr.getOffset());
+				byteLength = 8;
+				break;
+
 			default: {
 				return RelocationResult.UNSUPPORTED;
 			}
