@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+
+import re
+
+def compare_guid_files(file1_path, file2_path):
+  guids = {}
+
+  def parse_file(filename):
+    with open(filename, 'r') as f:
+      for line in f:
+        match = re.search(r"^([^\s]*)\s*(.*)", line)
+        if match:
+          guid = match.group(1)
+          names = match.group(2).replace(';', "")
+          for name in names.split("|"):
+            name = name.strip()
+            if name:
+              if guid in guids:
+                if name not in guids[guid]:
+                  guids[guid].append(name)
+              else:
+                guids[guid] = [name]
+            else:
+              print("No name for {guid}")
+
+  parse_file(file1_path)
+  parse_file(file2_path)
+
+  return [(guid, names) for guid, names in guids.items()]
+
+file_prim = "/tmp/ghidra/Ghidra/Features/Base/data/typeinfo/win32/msvcrt/guids.txt"
+file_sec = "/tmp/guids-export.txt"
+outfile = "/tmp/ghidra/Ghidra/Features/Base/data/typeinfo/win32/msvcrt/guids.txt"
+guid_comparisons = compare_guid_files(file_prim, file_sec)
+
+merged = []
+for guid, names in guid_comparisons:
+  merged.append(f"{guid} {'|'.join(names)}\n")
+
+merged.sort()
+
+with open(outfile, 'w', encoding='utf-8') as file:
+    file.writelines(merged)
