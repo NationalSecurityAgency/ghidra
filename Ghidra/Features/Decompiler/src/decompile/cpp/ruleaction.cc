@@ -6005,6 +6005,7 @@ void AddTreeState::clear(void)
   multiple.clear();
   coeff.clear();
   nonmult.clear();
+  multiequalsToInspect.clear();
   correct = 0;
   offset = 0;
   valid = true;
@@ -6035,6 +6036,9 @@ bool AddTreeState::initAlternateForm(void)
   clear();
   return true;
 }
+
+AddTreeState::AddTreeState(Funcdata &d)
+  : data(d) { }
 
 AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   : data(d)
@@ -6069,6 +6073,7 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   distributeOp = (PcodeOp *)0;
   int4 unitsize = AddrSpace::addressToByteInt(1,ct->getWordSize());
   isDegenerate = (baseType->getAlignSize() <= unitsize && baseType->getAlignSize() > 0);
+  inspectedMultiequals = false;
 }
 
 /// \brief Given an offset into the base data-type and array hints find sub-component being referenced
@@ -6085,8 +6090,10 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
 bool AddTreeState::hasMatchingSubType(int8 off,uint4 arrayHint,int8 *newoff) const
 
 {
-  if (arrayHint == 0)
-    return (baseType->getSubType(off,newoff) != (Datatype *)0);
+  if (arrayHint == 0 && (off >= 0 || baseType->getMetatype() == TYPE_SPACEBASE)) {
+    lastMatchedType = baseType->getSubType(off,newoff);
+    return (lastMatchedType != (Datatype *)0);
+  }
 
   int8 elSizeBefore;
   int8 offBefore;
@@ -6094,8 +6101,10 @@ bool AddTreeState::hasMatchingSubType(int8 off,uint4 arrayHint,int8 *newoff) con
   int8 elSizeAfter;
   int8 offAfter;
   int8 typeAfter = baseType->nearestArrayedComponentForward(off, 128, &offAfter, &elSizeAfter);
-  if (typeBefore < 0 && typeAfter < 0)
-    return (baseType->getSubType(off,newoff) != (Datatype *)0);
+  if (typeBefore < 0 && typeAfter < 0) {
+    lastMatchedType = baseType->getSubType(off,newoff);
+    return lastMatchedType != (Datatype *)0;
+  }
   if (typeBefore < 0) {
     *newoff = offAfter;		// Only array is after
     return true;
@@ -6143,44 +6152,48 @@ bool AddTreeState::checkMultTerm(Varnode *vn,PcodeOp *op,uint8 treeCoeff)
 {
   Varnode *vnconst = op->getIn(1);
   Varnode *vnterm = op->getIn(0);
-  uint8 val;
 
   if (vnterm->isFree()) {
     valid = false;
     return false;
   }
   if (vnconst->isConstant()) {
-    val = (vnconst->getOffset() * treeCoeff) & ptrmask;
-    intb sval = sign_extend(val, vn->getSize() * 8 - 1);
-    intb rem = (size == 0) ? sval : sval % size;
-    if (rem != 0) {
-      if ((val >= size) && (size != 0)) {
-	valid = false; // Size is too big: pointer type must be wrong
-	return false;
-      }
-      if (!preventDistribution) {
-	if (vnterm->isWritten() && vnterm->getDef()->code() == CPUI_INT_ADD) {
-	  if (distributeOp == (PcodeOp *)0)
-	    distributeOp = op;
-	  return spanAddTree(vnterm->getDef(), val);
-	}
-      }
-      uint4 vncoeff = (sval < 0) ? (uint4)-sval : (uint4)sval;
-      if (vncoeff > biggestNonMultCoeff)
-	biggestNonMultCoeff = vncoeff;
-      return true;
-    }
-    else {
-      if (treeCoeff != 1)
-	isDistributeUsed = true;
-      multiple.push_back(vnterm);
-      coeff.push_back(sval);
-      return false;
-    }
+    return checkMultTermPiece(vn, op, treeCoeff, vnconst->getOffset(), vnterm);
   }
   if (treeCoeff > biggestNonMultCoeff)
     biggestNonMultCoeff = treeCoeff;
   return true;
+}
+
+bool AddTreeState::checkMultTermPiece(Varnode *vn,PcodeOp *op,uint8 treeCoeff,uintb constval,Varnode *vnterm)
+{
+  uint8 val = (constval * treeCoeff) & ptrmask;
+  intb sval = sign_extend(val, vn->getSize() * 8 - 1);
+  intb rem = (size == 0) ? sval : sval % size;
+  if (rem != 0) {
+    if ((val >= size) && (size != 0)) {
+      valid = false; // Size is too big: pointer type must be wrong
+      return false;
+    }
+    if (!preventDistribution) {
+      if (vnterm->isWritten() && vnterm->getDef()->code() == CPUI_INT_ADD) {
+        if (distributeOp == (PcodeOp *)0)
+          distributeOp = op;
+        return spanAddTree(vnterm->getDef(), val);
+      }
+    }
+    uint4 vncoeff = (sval < 0) ? (uint4)-sval : (uint4)sval;
+    if (vncoeff > biggestNonMultCoeff)
+      biggestNonMultCoeff = vncoeff;
+    return true;
+  }
+  else {
+    if (treeCoeff != 1)
+      isDistributeUsed = true;
+    multiple.push_back(vnterm);
+    coeff.push_back(sval);
+    return false;
+  }
 }
 
 /// If the given Varnode is a constant or multiplicative term, update
@@ -6225,6 +6238,16 @@ bool AddTreeState::checkTerm(Varnode *vn,uint8 treeCoeff)
     }
     if (def->code() == CPUI_INT_MULT)	// Check for constant coeff indicating size
       return checkMultTerm(vn, def, treeCoeff);
+    if (def->code() == CPUI_INT_LEFT) {
+      Varnode *shiftLeftByPtr = def->getIn(1);
+      if (shiftLeftByPtr->isConstant()) {
+        uintb shiftLeftBy = shiftLeftByPtr->getOffset();
+        if (shiftLeftBy != shiftLeftByPtr->getSize() * 8 - 1)
+          return checkMultTermPiece(vn, def, treeCoeff, 1ULL << shiftLeftBy, def->getIn(0));
+      }
+    }
+    if (treeCoeff == 1 && def->code() == CPUI_MULTIEQUAL)
+      multiequalsToInspect.push_back(vn);
   }
   else if (vn->isFree()) {
     valid = false;
@@ -6268,6 +6291,265 @@ bool AddTreeState::spanAddTree(PcodeOp *op,uint8 treeCoeff)
   if (two_is_non)
     nonmult.push_back(op->getIn(1));
   return false;		// At least one of the sides contains multiples
+}
+
+intb AddTreeState::greatestCommonDivisor(intb val1, intb val2) {
+  intb op1multiplier = val1;
+  if (val1 < 0) val1 = -val1;
+  if (val2 < 0) val2 = -val2;
+  if (val1 != 0 && val2 != 0) {
+    while (val2 != val1) {  // greatest common divisor: euclid's algorithm
+      if (val2 > val1) {
+        val2 -= val1;
+      } else {
+        val1 -= val2;
+      }
+    }
+    return val2;
+  } else if (val1 != 0) {
+    return val1;
+  } else if (val2 != 0) {
+    return val2;
+  } else {
+    return -1;
+  }
+}
+
+// \brief Modify surrounding expressions in an attempt to recover the multiple
+// 
+// For situations like this:
+// int sliding_offset = 0;  // or any constant divisible by element_size
+// // or int sliding_offset = something * element_size;
+// do {
+//   ... *(pointer_to_element + sliding_offset + optional_member_offset) ...
+//   sliding_offset += element_size;
+//   // or
+//   sliding_offset -= element_size;
+// } while (true);
+// , where element_size is the size of element pointed to by pointer_to_element
+// 
+// It modifies expressions which set or write the sliding_offset variable
+// by dividing their constant by element_size, and applying * element_size
+// (multiplication by element_size) to all places where the sliding_offset is used instead.
+// This makes RulePtrArith more likely to recognize that the CPUI_INT_ADD expression
+// is actually a CPUI_PTRADD.
+// \return \b true if successful, \b false otherwise
+bool AddTreeState::inspectMultiequals(void) {
+  vector<Varnode *>::iterator iter;
+  for (iter = multiequalsToInspect.begin(); iter != multiequalsToInspect.end(); ++iter) {
+    Varnode *vn = *iter;
+    if (!vn->isWritten()) continue;
+    PcodeOp *op = vn->getDef();
+    if (op->code() != CPUI_MULTIEQUAL) continue;
+    if (op->numInput() != 2) continue;
+    Varnode *in1 = op->getIn(0);
+    if (!in1->isWritten() || in1->loneDescend() != op) continue;
+    PcodeOp *op1 = in1->getDef();
+    int4 op1Size = 0;
+    intb op1Val = 0;
+    int op1ReplacementSlot = 0;
+    if (op1->code() == CPUI_INT_MULT || op1->code() == CPUI_INT_LEFT) {
+      Varnode *multTerm = op1->getIn(0);
+      if (multTerm->isFree()) continue;
+      Varnode *multConst = op1->getIn(1);
+      if (!multConst->isConstant()) continue;
+      uintb multval = multConst->getOffset() & ptrmask;
+      intb multsval;
+      if (op1->code() == CPUI_INT_LEFT) {
+        if (multval == multConst->getSize() * 8 - 1) {
+          continue;
+        }
+        multval = 1ULL << multval;
+        multsval = multval;
+      } else {
+        multsval = sign_extend(multval, in1->getSize() * 8 - 1);
+      }
+      op1Val = multsval;
+      op1ReplacementSlot = 1;
+      op1Size = multConst->getSize();
+    } else if (op1->code() == CPUI_COPY) {
+      Varnode *assignmentConst = op1->getIn(0);
+      if (!assignmentConst->isConstant() || op1->numInput() != 1) continue;
+      uintb assignval = assignmentConst->getOffset() & ptrmask;
+      intb assignsval = sign_extend(assignval, in1->getSize() * 8 - 1);
+      op1Val = assignsval;
+      op1ReplacementSlot = 0;
+      op1Size = assignmentConst->getSize();
+    } else {
+      continue;
+    }
+    Varnode *in2 = op->getIn(1);
+    if (!in2->isWritten()) continue;
+    bool failed = false;
+    int4 comparisonsvalSize;
+    int comparisonConstSlot;
+    intb comparisonsval;
+    bool comparisonOneAdded = false;
+    PcodeOp* comparisonOp = nullptr;
+    list<PcodeOp *>::const_iterator in2Desc;
+    for (in2Desc = in2->beginDescend(); in2Desc != in2->endDescend(); ++in2Desc) {
+      PcodeOp* desc = *in2Desc;
+      if (desc == op) {
+        continue;
+      }
+      while (desc->code() == CPUI_INDIRECT) {
+        Varnode *descOut = desc->getOut();
+        if (!descOut) break;
+        PcodeOp *next = descOut->loneDescend();
+        if (!next) break;
+        desc = next;
+      }
+      OpCode descOpc = desc->code();
+      bool isSigned = descOpc == CPUI_INT_SLESS || descOpc == CPUI_INT_SLESSEQUAL;
+      if (!isSigned && descOpc != CPUI_INT_LESS && descOpc != CPUI_INT_LESSEQUAL) {
+        failed = true;
+        break;
+      }
+      if (comparisonOp == nullptr) {
+	comparisonOp = desc;
+	if (comparisonOp->numInput() != 2) {
+	  failed = true;
+	  break;
+	}
+	for (comparisonConstSlot = 0; comparisonConstSlot < 2; ++comparisonConstSlot) {
+	  if (comparisonOp->getIn(comparisonConstSlot)->isConstant()) {
+	    break;
+	  }
+	}
+	if (comparisonConstSlot == 2) {
+	  failed = true;
+	  break;
+	}
+	const Varnode* comparisonOperand = comparisonOp->getIn(comparisonConstSlot);
+	comparisonsvalSize = comparisonOperand->getSize();
+	uintb comparisonval = comparisonOperand->getOffset() & ptrmask;
+	if (isSigned) {
+          comparisonsval = sign_extend(comparisonval, comparisonOperand->getSize() * 8 - 1);
+	} else {
+	  comparisonsval = (intb)comparisonval;
+	}
+        PcodeOp *comparisonLone = comparisonOp->getOut()->loneDescend();
+	if (comparisonLone
+	    && comparisonLone->code() == CPUI_CBRANCH
+	    && (
+	      // the reason comparisonLone->isBooleanFlip() doesn't matter here is because from slot 0 and < it would turn into slot 1 and <=, and vice versa (see RuleBoolNegate)
+	      comparisonConstSlot == 0 && (descOpc == CPUI_INT_SLESS || descOpc == CPUI_INT_LESS)
+	      || comparisonConstSlot == 1 && (descOpc == CPUI_INT_SLESSEQUAL || descOpc == CPUI_INT_LESSEQUAL)
+	    )
+	) {
+	  // ghidra can only display < signs, so add + 1
+	  ++comparisonsval;
+	  comparisonOneAdded = true;
+	}
+      } else {
+        failed = true;
+        break;
+      }
+    }
+    if (failed) continue;
+    PcodeOp *op2 = in2->getDef();
+    while (op2->code() == CPUI_INDIRECT) {
+      PcodeOp *next = op2->getIn(0)->getDef();
+      if (!next) break;
+      op2 = next;
+    }
+    if (op2->code() != CPUI_INT_ADD) continue;
+    Varnode *addTerm = op2->getIn(0);
+    if (addTerm != vn) continue;
+    Varnode *addConst = op2->getIn(1);
+    if (!addConst->isConstant()) continue;
+    uintb addval = addConst->getOffset() & ptrmask;
+    intb addsval = sign_extend(addval, in2->getSize() * 8 - 1);
+    bool needDistributeCopy = false;
+    if (op1->code() == CPUI_COPY
+        && (size == 0 && op1Val != 0 || op1Val % size != 0)
+        && (baseType->getMetatype() == TYPE_STRUCT
+          || baseType->getMetatype() == TYPE_SPACEBASE)) {
+      // if the constant in CPUI_COPY is an offset to a member of the struct,
+      // -needDistributeCopy- being true will mean we want to duplicate that constant
+      // into all mentions of the -vn- and in the original CPUI_COPY replace it with 0
+      nonmultsum = op1Val;
+      biggestNonMultCoeff = 0;
+      nonmult.push_back(op1ReplacementSlot != -1 ? op1->getIn(op1ReplacementSlot) : op1->getOut());
+      calcSubtype();
+      needDistributeCopy = (valid && isSubtype);
+    }
+    Varnode *newConstForOp1;
+    intb extra = 0;
+    if (needDistributeCopy) {
+      extra = op1Val;
+      newConstForOp1 = data.newConstant(op1Size, 0);
+      data.opSetInput(op1, newConstForOp1, op1ReplacementSlot);
+      if (comparisonOp != nullptr) {
+        const Varnode* comparisonOperand = comparisonOp->getIn(comparisonConstSlot);
+        data.opSetInput(comparisonOp,
+          data.newConstant(comparisonOperand->getSize(), (uintb)(
+            comparisonsval - op1Val - (comparisonOneAdded ? 1 : 0)
+          ) & ptrmask), 1);
+        comparisonsval -= op1Val;
+      }
+      op1Val = 0;
+    } else if (op1Val % size != 0 || addsval % size != 0) continue;  // the value in CPUI_COPY is either not the offset into the struct or op1 is not a CPUI_COPY
+    intb multiplier = greatestCommonDivisor(op1Val, addsval);
+    if (comparisonOp != nullptr && !needDistributeCopy) {
+      multiplier = greatestCommonDivisor(multiplier, comparisonsval);
+    }
+    if (multiplier != 1) {
+      Varnode *newConstForOp1 = data.newConstant(op1Size, (op1Val / multiplier) & ptrmask);
+      data.opSetInput(op1, newConstForOp1, op1ReplacementSlot);
+      Varnode *newConstForAdd = data.newConstant(addConst->getSize(), (addsval / multiplier) & ptrmask);
+      data.opSetInput(op2, newConstForAdd, 1);
+    }
+    list<PcodeOp *>::const_iterator descendListIter;
+    vector<PcodeOp *> descendants;
+    for (descendListIter = vn->beginDescend(); descendListIter != vn->endDescend(); ++descendListIter) {
+      PcodeOp *desc = *descendListIter;
+      while (desc->code() == CPUI_INDIRECT) {
+        Varnode *descOut = desc->getOut();
+        if (!descOut) break;
+        PcodeOp *next = descOut->loneDescend();
+        if (!next) break;
+        desc = next;
+      }
+      descendants.push_back(desc);
+    }
+    vector<PcodeOp *>::const_iterator descendIter;
+    for (descendIter = descendants.begin(); descendIter != descendants.end(); ++descendIter) {
+      PcodeOp *desc = *descendIter;
+      if (desc == op1 || desc == op2 || desc->code() == CPUI_INDIRECT) continue;
+      int4 inSlot = desc->getSlot(vn);
+      PcodeOp *newMultOp = nullptr;
+      Varnode* nodeToAdd;
+      if (multiplier != 1) {
+        newMultOp = data.newOpBefore(desc, CPUI_INT_MULT, vn, data.newConstant(addConst->getSize(), multiplier & ptrmask));
+        nodeToAdd = newMultOp->getOut();
+      } else {
+        nodeToAdd = vn;
+      }
+      if (extra != 0) {
+        newMultOp = data.newOpBefore(desc, CPUI_INT_ADD, nodeToAdd, data.newConstant(op1Size, (uintb)extra & ptrmask));
+      }
+      if (newMultOp != nullptr) {
+        data.opSetInput(desc, newMultOp->getOut(), inSlot);
+      }
+    }
+    if (comparisonOp != nullptr) {
+      if (multiplier != 1) {
+        const Varnode* comparisonOperand = comparisonOp->getIn(comparisonConstSlot);
+        data.opSetInput(comparisonOp,
+	  data.newConstant(
+	    comparisonOperand->getSize(),
+	    (uintb)(
+	      comparisonsval / multiplier - (comparisonOneAdded ? 1 : 0)
+	    ) & ptrmask
+	  ),
+	  comparisonConstSlot
+	);
+      }
+    }
+    return true;
+  }
+  return false;
 }
 
 /// Make final calcultions to determine if a pointer to a sub data-type of the base
@@ -6440,6 +6722,152 @@ Varnode *AddTreeState::buildExtra(void)
   return resNode;
 }
 
+bool AddTreeState::tryShiftedSpacebaseUsedAsCounter_check(tryShiftedSpacebaseUsedAsCounter_check_result *result, PcodeOp *op, int slot)
+
+{
+  Varnode *in = op->getIn(slot);
+  Datatype* inType = in->getTypeReadFacing(op);
+  if (inType->getMetatype() == TYPE_PTR) {
+    if (result->type) return false;
+    result->type = inType;
+    return true;
+  }
+  if (!in->isWritten()) {
+    if (in->isConstant()) {
+      result->offset += sign_extend((intb)in->getOffset(), in->getSize() * 8 - 1);
+      return true;
+    }
+    return false;
+  }
+  PcodeOp *inDef = in->getDef();
+  OpCode inDefCode = inDef->code();
+  if (inDefCode == CPUI_INT_ADD) {
+    if (!tryShiftedSpacebaseUsedAsCounter_check(result, inDef, 0)) return false;
+    if (!tryShiftedSpacebaseUsedAsCounter_check(result, inDef, 1)) return false;
+    return true;
+  } else if (inDefCode == CPUI_INT_MULT) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool AddTreeState::tryShiftedSpacebaseUsedAsCounter(PcodeOp *op)
+
+{
+  int4 multiEqSlot = -1;
+  PcodeOp *multiEq;
+  Varnode *multiEqOut;
+  for (int i = 0; i < 2; ++i) {
+    Varnode *in = op->getIn(i);
+    if (!in->isWritten()) return false;
+    PcodeOp *inDef = in->getDef();
+    while (inDef->code() == CPUI_INDIRECT) {
+      inDef = inDef->getIn(0)->getDef();
+      if (!inDef) break;
+    }
+    if (inDef && inDef->code() == CPUI_MULTIEQUAL) {
+      if (multiEqSlot != -1) return false;
+      multiEqSlot = (int4)i;
+      multiEq = inDef;
+      multiEqOut = inDef->getOut();
+    }
+  }
+  if (multiEqSlot == -1) return false;
+  Varnode *inputOther = op->getIn(1 - multiEqSlot);
+  PcodeOp *addedTree = inputOther->getDef();
+  if (addedTree->code() != CPUI_INT_ADD) return false;
+  
+  tryShiftedSpacebaseUsedAsCounter_check_result result;
+  result.type = 0;
+  result.offset = 0;
+  if (multiEq->numInput() != 2) return false;
+  if (!tryShiftedSpacebaseUsedAsCounter_check(&result, addedTree, 0)) return false;
+  if (!tryShiftedSpacebaseUsedAsCounter_check(&result, addedTree, 1)) return false;
+  if (!result.type || result.type->getMetatype() != TYPE_PTR
+      || ((TypePointer*)result.type)->getPtrTo()->getMetatype() != TYPE_STRUCT) return false;
+  if (result.offset >= 0) return false;
+  
+  return tryShiftedSpacebaseUsedAsCounterFromMultiEq(multiEq);
+}
+
+bool AddTreeState::tryShiftedSpacebaseUsedAsCounterFromMultiEq(PcodeOp *multiEq)
+
+{
+  Varnode *multiEqOut = multiEq->getOut();
+  Varnode *multiEq0 = multiEq->getIn(0);
+  Varnode *multiEq1 = multiEq->getIn(1);
+  if (!multiEq0->isWritten() || !multiEq1->isWritten()) return false;
+  PcodeOp *def0 = multiEq0->getDef();
+  // gets generated by Funcdata::spacebaseConstant: PTRSUB(0,off)
+  if (def0->code() != CPUI_PTRSUB) return false;
+  Varnode *def0in0 = def0->getIn(0);
+  if (!def0in0->isConstant() || !def0in0->isSpacebase() || def0in0->getOffset() != 0) return false;
+  Varnode *def0Const = def0->getIn(1);
+  if (!def0Const->isConstant()) return false;
+  uintb def0ConstVal = def0Const->getOffset();
+  intb def0ConstVals = sign_extend((intb)def0ConstVal, def0Const->getSize() * 8 - 1);
+  if (def0ConstVals < 0) return false;
+  
+  PcodeOp *incrementOperation = multiEq1->getDef();
+  if (!(
+      incrementOperation->code() == CPUI_INT_ADD
+      && incrementOperation->getIn(0) == multiEqOut
+      && incrementOperation->getIn(1)->isConstant()
+      || incrementOperation->code() == CPUI_PTRADD
+      && incrementOperation->getIn(0) == multiEqOut
+      && incrementOperation->getIn(1)->isConstant()
+      // incrementOperation->getIn(2) can only be a constant, no need to check
+  )) return false;
+  
+  int descendCount = 0;
+  list<PcodeOp *>::const_iterator descIter;
+  for (descIter = multiEqOut->beginDescend(); descIter != multiEqOut->endDescend(); ++descIter) {
+    PcodeOp *desc = *descIter;
+    ++descendCount;
+    if (desc == incrementOperation) continue;
+    OpCode descCode = desc->code();
+    if (descCode != CPUI_LOAD && descCode != CPUI_INT_ADD) return false;
+  }
+  
+  if (descendCount <= 1) return false;
+  
+  vector<PcodeOp *> opsToModify;
+  opsToModify.reserve(descendCount - 1);
+  for (descIter = multiEqOut->beginDescend(); descIter != multiEqOut->endDescend(); ++descIter) {
+    PcodeOp *desc = *descIter;
+    if (desc == incrementOperation) continue;
+    opsToModify.push_back(desc);
+  }
+  
+  for (PcodeOp *op : opsToModify) {
+    int4 slot = op->getSlot(multiEqOut);
+    PcodeOp *newAddition = data.newOpBefore(op, CPUI_INT_ADD, data.newConstant(def0Const->getSize(),def0ConstVal), multiEqOut);
+    data.opSetInput(op, newAddition->getOut(), slot);
+  }
+  
+  Datatype *newType = data.getArch()->types->getBase(def0Const->getSize(),TYPE_UNKNOWN);
+  
+  data.opSetOpcode(def0, CPUI_COPY);
+  data.opRemoveInput(def0, 1);
+  data.opSetInput(def0, data.newConstant(4, 0), 0);
+  // unset type if converting from pointer to number 0, the pointer got pushed to descendants
+  def0->getOut()->updateType(newType, false, true);
+  multiEqOut->updateType(newType, false, true);
+  
+  if (incrementOperation->code() == CPUI_PTRADD) {
+    data.opSetOpcode(incrementOperation, CPUI_INT_ADD);
+    Varnode *incrConstant = incrementOperation->getIn(1);
+    intb incrAmount = sign_extend((intb)incrConstant->getOffset(), incrConstant->getSize() * 8 - 1);
+    data.opSetInput(incrementOperation, data.newConstant(incrConstant->getSize(),
+       incrAmount * incrementOperation->getIn(2)->getOffset() & calc_mask(incrConstant->getSize())), 1);
+    data.opRemoveInput(incrementOperation, 2);
+  }
+  incrementOperation->getOut()->updateType(newType, false, true);
+  
+  return true;
+}
+
 /// The base data-type being pointed to is unit sized (or smaller).  Everything is a multiple, so an ADD
 /// is always converted into a PTRADD.
 /// \return \b true if the degenerate transform was applied
@@ -6452,6 +6880,8 @@ bool AddTreeState::buildDegenerate(void)
     return false;	// Don't transform at all
   if (baseOp->getOut()->getTypeDefFacing()->getMetatype() != TYPE_PTR)	// Make sure pointer propagates thru INT_ADD
     return false;
+  if (tryShiftedSpacebaseUsedAsCounter(baseOp))
+    return true;
   vector<Varnode *> newparams;
   int4 slot = baseOp->getSlot(ptr);
   newparams.push_back( ptr );
@@ -6462,6 +6892,593 @@ bool AddTreeState::buildDegenerate(void)
   return true;
 }
 
+void AddTreeState::clonedTreeAddResult(vector<ClonedTree> &result, const ClonedTree& newElem)
+
+{
+  for (ClonedTree &existingElem : result) {
+    bool eq = false;
+    if (existingElem.vars.size() == newElem.vars.size()) {
+      eq = true;
+      int size = (int)existingElem.vars.size();
+      for (int i = 0; i < size; ++i) {
+        if (existingElem.vars[i] != newElem.vars[i]) {
+          eq = false;
+          break;
+        }
+      }
+    }
+    if (eq) {
+      existingElem.coeff += newElem.coeff;
+      return;
+    }
+  }
+  result.push_back(newElem);
+}
+
+void AddTreeState::ClonedTree::addVar(Varnode * vn)
+
+{
+  int size = (int)vars.size();
+  int i;
+  for (i = 0; i < size; ++i) {
+    if (vars[i] >= vn) {
+      break;
+    }
+  }
+  vars.insert(vars.begin() + i, vn);
+}
+
+void AddTreeState::cloneTree(Varnode *tree, const ClonedTree& outer, vector<ClonedTree> &result)
+
+{
+  intb constVal;
+  if (isSpacebaseConst(tree, &constVal)) {
+    ClonedTree newElem;
+    newElem.vars = outer.vars;
+    newElem.coeff = outer.coeff * constVal;
+    clonedTreeAddResult(result, newElem);
+    return;
+  }
+  if (tree->isConstant()) {
+    ClonedTree newElem;
+    newElem.vars = outer.vars;
+    constVal = sign_extend((intb)tree->getOffset(), tree->getSize() * 8 - 1);
+    newElem.coeff = outer.coeff * constVal;
+    clonedTreeAddResult(result, newElem);
+    return;
+  }
+  PcodeOp *def = nullptr;
+  OpCode opc = (OpCode)-1;
+  if (tree->isWritten()) {
+    def = tree->getDef();
+    opc = def->code();
+  }
+  if (opc != CPUI_INT_ADD && opc != CPUI_INT_MULT) {
+    ClonedTree newElem;
+    newElem.vars.reserve(outer.vars.size() + 1);
+    newElem.vars.insert(newElem.vars.end(), outer.vars.begin(), outer.vars.end());
+    newElem.addVar(tree);
+    newElem.coeff = outer.coeff;
+    clonedTreeAddResult(result, newElem);
+    return;
+  }
+  Varnode *left = def->getIn(0);
+  Varnode *right = def->getIn(1);
+  if (opc == CPUI_INT_ADD) {
+    cloneTree(left, outer, result);
+    cloneTree(right, outer, result);
+    return;
+  }
+  // opc == CPUI_INT_MULT
+  if (left->isConstant() || right->isConstant()) {
+    if (left->isConstant() && right->isConstant()) {
+      intb leftVal = sign_extend((intb)left->getOffset(), left->getSize() * 8 - 1);
+      intb rightVal = sign_extend((intb)right->getOffset(), right->getSize() * 8 - 1);
+      ClonedTree newElem;
+      newElem.vars = outer.vars;
+      newElem.coeff = outer.coeff * leftVal * rightVal;
+      clonedTreeAddResult(result, newElem);
+      return;
+    }
+    Varnode *other;
+    intb coeff;
+    if (left->isConstant()) {
+      coeff = sign_extend((intb)left->getOffset(), left->getSize() * 8 - 1);
+      other = right;
+    } else {
+      coeff = sign_extend((intb)right->getOffset(), right->getSize() * 8 - 1);
+      other = left;
+    }
+    ClonedTree newElem;
+    newElem.vars = outer.vars;
+    newElem.coeff = outer.coeff * coeff;
+    cloneTree(other, newElem, result);
+    return;
+  }
+  
+  ClonedTree primer;
+  primer.coeff = 1;
+  
+  vector<ClonedTree> leftResult;
+  cloneTree(left, primer, leftResult);
+  
+  vector<ClonedTree> rightResult;
+  cloneTree(right, primer, rightResult);
+  
+  for (const ClonedTree& leftElem : leftResult) {
+    for (const ClonedTree& rightElem : rightResult) {
+      ClonedTree newElem;
+      newElem.vars.reserve(outer.vars.size() + leftElem.vars.size() + rightElem.vars.size());
+      for (Varnode *vn : outer.vars) {
+        newElem.addVar(vn);
+      }
+      for (Varnode *vn : leftElem.vars) {
+        newElem.addVar(vn);
+      }
+      for (Varnode *vn : rightElem.vars) {
+        newElem.addVar(vn);
+      }
+      newElem.coeff = outer.coeff * leftElem.coeff * rightElem.coeff;
+      clonedTreeAddResult(result, newElem);
+    }
+  }
+  
+}
+
+Varnode *AddTreeState::clonedTreeToActualPcode(const vector<ClonedTree> &inTree, PcodeOp *follow)
+
+{
+  uintb mask = calc_mask(ptrsize);
+  
+  Varnode *finalVn = nullptr;
+  for (const ClonedTree& elem : inTree) {
+    if (elem.coeff == 0) continue;
+    Varnode *elemVn = nullptr;
+    for (Varnode *memb : elem.vars) {
+      if (elemVn == nullptr) {
+        elemVn = memb;
+      } else {
+        elemVn = data.newOpBefore(follow, CPUI_INT_MULT, elemVn, memb)->getOut();
+      }
+    }
+    if (elem.coeff != 1 || elemVn == nullptr) {
+      Varnode *newConst = data.newConstant(ptrsize, elem.coeff & mask);
+      if (elemVn == nullptr) {
+        elemVn = newConst;
+      } else {
+        elemVn = data.newOpBefore(follow, CPUI_INT_MULT, elemVn, newConst)->getOut();
+      }
+    }
+    if (finalVn == nullptr) {
+      finalVn = elemVn;
+    } else {
+      finalVn = data.newOpBefore(follow, CPUI_INT_ADD, finalVn, elemVn)->getOut();
+    }
+  }
+  if (finalVn == nullptr) {
+    PcodeOp *newOp = data.newOp(1, follow->getAddr());
+    data.opSetOpcode(newOp,CPUI_COPY);
+    data.opSetInput(newOp,data.newConstant(4,0),0);
+    data.opInsertBefore(newOp,follow);
+    return newOp->getOut();
+  }
+  return finalVn;
+}
+
+bool AddTreeState::isSpacebaseConst(Varnode *vn, intb *val)
+
+{
+  if (!vn->isWritten()) return false;
+  PcodeOp *def = vn->getDef();
+  if (def->code() != CPUI_PTRSUB) return false;
+  Varnode *left = def->getIn(0);
+  Varnode *right = def->getIn(1);
+  if (left->isConstant() && left->isSpacebase() && left->getOffset() == 0
+      && right->isConstant()) {
+    intb tmp = sign_extend((intb)right->getOffset(), right->getSize() * 8 - 1);
+    *val = tmp;
+    return true;
+  }
+  return false;
+}
+
+bool AddTreeState::tryPropagateAddedConst(PcodeOp *op, bool ignoreCounterIncrementCheck)
+
+{
+  if (op->code() == CPUI_PTRSUB) {
+    Varnode *in0 = op->getIn(0);
+    if (in0->isSpacebase() && in0->isConstant() && in0->getOffset() == 0 && op->getIn(1)->isConstant()) {
+      PcodeOp *loneDesc = op->getOut()->loneDescend();
+      while (loneDesc && loneDesc->code() == CPUI_INDIRECT) {
+        Varnode *loneDescOut = loneDesc->getOut();
+        if (!loneDescOut) break;
+        loneDesc = loneDescOut->loneDescend();
+      }
+      if (loneDesc && loneDesc->code() == CPUI_MULTIEQUAL) {
+        return tryShiftedSpacebaseUsedAsCounterFromMultiEq(loneDesc);
+      }
+    }
+  }
+  if (op->code() != CPUI_INT_ADD && op->code() != CPUI_PTRADD) return false;
+  int ptrSlot;
+  for (ptrSlot = 0; ptrSlot < 2; ++ptrSlot) {
+    Varnode *in = op->getIn(ptrSlot);
+    if (in->getTypeReadFacing(op)->getMetatype() == TYPE_PTR) {
+      break;
+    }
+  }
+  if (ptrSlot == 2) return false;
+  Varnode *baseOpAddedTree = op->getIn(1 - ptrSlot);
+  if (!baseOpAddedTree->isConstant() && !baseOpAddedTree->isWritten()) return false;
+  if (!baseOpAddedTree->isConstant()) {
+    PcodeOp *baseOpAddedTreeDef = baseOpAddedTree->getDef();
+    OpCode opcode = baseOpAddedTreeDef->code();
+    if (opcode != CPUI_INT_ADD && opcode != CPUI_INT_MULT) {
+      while (opcode == CPUI_INDIRECT) {
+        baseOpAddedTree = baseOpAddedTreeDef->getIn(0);
+        baseOpAddedTreeDef = baseOpAddedTree->getDef();
+        if (!baseOpAddedTreeDef) break;
+      }
+      if (opcode == CPUI_MULTIEQUAL && baseOpAddedTreeDef->numInput() == 2) {
+        return tryShiftedSpacebaseUsedAsCounterFromMultiEq(baseOpAddedTreeDef);
+      }
+      return false;
+    }
+  }
+  Varnode *baseOpOut = op->getOut();
+  PcodeOp *baseOpOutLoneDescend = baseOpOut->loneDescend();
+  while (baseOpOutLoneDescend && baseOpOutLoneDescend->code() == CPUI_INDIRECT) {
+    baseOpOutLoneDescend = baseOpOutLoneDescend->getOut()->loneDescend();
+  }
+  if (!baseOpOutLoneDescend) return false;
+  if (!(
+    baseOpOutLoneDescend->code() == CPUI_MULTIEQUAL && baseOpOutLoneDescend->numInput() == 2
+  )) {
+    bool foundMultiEq = false;
+    while (baseOpOutLoneDescend->code() == CPUI_INT_ADD) {
+      int slot = baseOpOutLoneDescend->getSlot(baseOpOut);
+      Varnode *other = baseOpOutLoneDescend->getIn(1 - slot);
+      if (!other->isWritten()) return false;
+      PcodeOp *def = other->getDef();
+      if (def->code() == CPUI_MULTIEQUAL && def->numInput() == 2) {
+        baseOpOutLoneDescend = def;
+        baseOpOut = def->getIn(0);
+        foundMultiEq = true;
+        break;
+      } else {
+        baseOpOut = baseOpOutLoneDescend->getOut();
+        baseOpOutLoneDescend = baseOpOut->loneDescend();
+        if (!baseOpOutLoneDescend) break;
+      }
+    }
+    if (!foundMultiEq) return false;
+    return tryPropagateAddedConst(baseOpOut->getDef(), true);
+  }
+  return tryPropagateAddedConstFromMultiEq(baseOpOutLoneDescend, baseOpOutLoneDescend->getSlot(baseOpOut), ignoreCounterIncrementCheck);
+}
+
+bool AddTreeState::noOneActuallyWroteVarSinceMultiEqHelper(Varnode *vn, Varnode *start, set<PcodeOp *>& scouted)
+
+{
+  if (!vn->isWritten()) return true;
+  PcodeOp *def = vn->getDef();
+  while (def && def->code() == CPUI_INDIRECT) {
+    Varnode *in = def->getIn(0);
+    if (in == start) return true;
+    def = in->getDef();
+  }
+  if (!def) return true;
+  if (def->code() != CPUI_MULTIEQUAL) return false;
+  if (scouted.find(def) != scouted.end()) return true;
+  scouted.insert(def);
+  for (int i = 0; i < (int)def->numInput(); ++i) {
+    Varnode *in = def->getIn(i);
+    if (in == start) continue;
+    if (!noOneActuallyWroteVarSinceMultiEqHelper(in, start, scouted)) return false;
+  }
+  return true;
+}
+
+// it's all CPUI_INDIRECT and CPUI_MULTIEQUAL that branch off and lead to CPUI_INDIRECT and, ultimately, to the -start- or -startMultiEq-
+bool AddTreeState::noOneActuallyWroteVarSinceMultiEq(Varnode *start, PcodeOp *startMultiEq)
+
+{
+  set<PcodeOp *> scouted;
+  if (startMultiEq)
+    scouted.insert(startMultiEq);
+  return noOneActuallyWroteVarSinceMultiEqHelper(start, startMultiEq ? startMultiEq->getOut() : nullptr, scouted);
+}
+
+void AddTreeState::collectDescends(Varnode *start, vector<CollectedDescend>& allDescends, set<CollectedDescend, CollectedDescendCompare>& scouted)
+
+{
+  CollectedDescend opWithSlot;
+  for (list<PcodeOp *>::const_iterator descIter = start->beginDescend(); descIter != start->endDescend(); ++descIter) {
+    PcodeOp *startDef = start->getDef();
+    Varnode *startVn = start;
+    PcodeOp *descOp = *descIter;
+    
+    opWithSlot.op = descOp;
+    opWithSlot.slot = descOp->getSlot(start);
+    
+    if (scouted.find(opWithSlot) != scouted.end())
+      continue;
+    
+    while (descOp->code() == CPUI_INDIRECT) {
+      Varnode *descOpOut = descOp->getOut();
+      if (!descOpOut) return;
+      PcodeOp *descOpLone = descOpOut->loneDescend();
+      if (!descOpLone) break;
+      
+      scouted.insert(opWithSlot);
+      
+      startDef = descOp;
+      startVn = descOpOut;
+      descOp = descOpLone;
+      
+      opWithSlot.op = descOp;
+      opWithSlot.slot = 0;
+      
+    }
+    
+    scouted.insert(opWithSlot);
+    
+    OpCode descCode = descOp->code();
+    if (descCode == CPUI_INDIRECT) {
+      collectDescends(descOp->getOut(), allDescends, scouted);
+    } else if (descCode == CPUI_MULTIEQUAL) {
+      if (descOp->numInput() == 2 && getAssignmentPtrSlotOfMultiequalLoopWithShiftedStructureOffset(descOp) != -1) {
+        allDescends.push_back(opWithSlot);
+      } else {
+        for (int inputIndex = 0; inputIndex < descOp->numInput(); ++inputIndex) {
+          scouted.insert({ descOp, inputIndex });
+        }
+        collectDescends(descOp->getOut(), allDescends, scouted);
+      }
+    } else {
+      allDescends.push_back(opWithSlot);
+    }
+  }
+}
+
+int AddTreeState::getAssignmentPtrSlotOfMultiequalLoopWithShiftedStructureOffset(PcodeOp *multiEq, int assignmentSlot)
+
+{
+  Varnode *multiEqAssignment = multiEq->getIn(assignmentSlot);
+  if (!multiEqAssignment->isWritten()) return -1;
+  PcodeOp *assignmentOp = multiEqAssignment->getDef();
+  if (assignmentOp->code() != CPUI_INT_ADD) return -1;
+  
+  int ptrSlot;
+  for (ptrSlot = 0; ptrSlot < 2; ++ptrSlot) {
+    Varnode *assignmentIn = assignmentOp->getIn(ptrSlot);
+    if (assignmentIn->getTypeReadFacing(assignmentOp)->getMetatype() == TYPE_PTR
+        || assignmentIn->isWritten() && assignmentIn->getDef()->code() == CPUI_PTRSUB) {
+      break;
+    }
+  }
+  if (ptrSlot == 2) return -1;
+  Varnode *ptrNode = assignmentOp->getIn(ptrSlot);
+  
+  if (multiEqAssignment->loneDescend() != multiEq) return -1;
+  
+  Varnode *assignmentRight = assignmentOp->getIn(1 - ptrSlot);
+  if (!assignmentRight->isConstant() && !assignmentRight->isWritten()) return -1;
+  if (!assignmentRight->isConstant()) {
+    PcodeOp *assignmentRightDef = assignmentRight->getDef();
+    OpCode opcode = assignmentRightDef->code();
+    if (opcode != CPUI_INT_ADD && opcode != CPUI_INT_MULT) return -1;
+  }
+  Varnode *multiEqOther = multiEq->getIn(1 - assignmentSlot);
+  Varnode *multiEqOut = multiEq->getOut();
+  if (!multiEqOther->isWritten()) return -1;
+  PcodeOp *multiEqOtherDef = multiEqOther->getDef();
+  if (!(
+    multiEqOtherDef->code() == CPUI_INT_ADD
+    && (
+      multiEqOtherDef->getIn(0) == multiEqOut
+      || multiEqOtherDef->getIn(0)->getAddr() == multiEqOut->getAddr()
+      && noOneActuallyWroteVarSinceMultiEq(multiEqOtherDef->getIn(0), multiEq)
+    )
+  )) return -1;
+  Varnode *counterIncrement = multiEqOtherDef->getIn(1);
+  if (!counterIncrement->isConstant()) return -1;
+  return ptrSlot;
+}
+
+bool AddTreeState::tryPropagateAddedConstFromMultiEq(PcodeOp *multiEq, int assignmentSlot, bool ignoreCounterIncrementCheck)
+
+{
+  int assignmentPtrSlot = getAssignmentPtrSlotOfMultiequalLoopWithShiftedStructureOffset(multiEq, assignmentSlot);
+  if (assignmentPtrSlot == -1) return false;
+  Varnode *multiEqAssignment = multiEq->getIn(assignmentSlot);
+  PcodeOp *assignmentOp = multiEqAssignment->getDef();
+  Varnode *ptrNode = assignmentOp->getIn(assignmentPtrSlot);
+  Varnode *assignmentRight = assignmentOp->getIn(1 - assignmentPtrSlot);
+  Varnode *multiEqOther = multiEq->getIn(1 - assignmentSlot);
+  Varnode *multiEqOut = multiEq->getOut();
+  PcodeOp *multiEqOtherDef = multiEqOther->getDef();
+  Varnode *counterIncrement = multiEqOtherDef->getIn(1);
+  int4 counterIncrementSize = counterIncrement->getSize();
+  uintb counterIncrementVal = counterIncrement->getOffset();
+  intb counterIncrementVals = sign_extend((intb)counterIncrementVal, counterIncrementSize * 8 - 1);
+  if (!ignoreCounterIncrementCheck) {
+    if (!lastMatchedType
+        || counterIncrementVals > 0
+        && counterIncrementVals < lastMatchedType->getSize()
+        && !(
+          assignmentRight->isConstant()
+          && assignmentRight->getOffset() != offset
+        )) return false;
+  }
+  vector<CollectedDescend> addOperations;
+  set<CollectedDescend, CollectedDescendCompare> visitedOps;
+  visitedOps.insert({ multiEq, assignmentSlot });
+  visitedOps.insert({ multiEqOtherDef, 0 });
+  collectDescends(multiEqOut, addOperations, visitedOps);
+  for (auto it = addOperations.begin(); it != addOperations.end(); ) {
+    if (it->op == multiEqOtherDef) {
+      it = addOperations.erase(it);
+    } else {
+      ++it;
+    }
+  }
+  if (addOperations.empty()) return false;
+  PcodeOp *newOp = data.newOp(1, assignmentOp->getAddr());
+  data.opSetOpcode(newOp,CPUI_COPY);
+  data.opSetInput(newOp,data.newConstant(4,0),0);
+  data.opInsertBefore(newOp,assignmentOp);
+  data.opSetOutput(newOp, multiEqAssignment);
+  // unset type if converting from pointer to number 0, the pointer got pushed to descendants
+  Datatype *multiEqType = data.getArch()->types->getBase(multiEqAssignment->getSize(),TYPE_UNKNOWN);
+  multiEqAssignment->updateType(multiEqType, false, true);
+  data.opUnsetInput(assignmentOp, 0);
+  data.opUnsetInput(assignmentOp, 1);
+  data.opDestroy(assignmentOp);
+  for (const CollectedDescend &addOperation : addOperations) {
+    PcodeOp *addOperationOp = addOperation.op;
+    Varnode *usedVar = addOperationOp->getIn(addOperation.slot);
+    PcodeOp *usedVarDef = usedVar->getDef();
+    PcodeOp *follow = addOperationOp;
+    OpCode opc = addOperationOp->code();
+    if (multiEqOut != usedVar) {
+      usedVar->updateType(multiEqType, false, true);
+    }
+    if (opc == CPUI_MULTIEQUAL) {
+      follow = usedVarDef;
+    } else if (opc == CPUI_PTRADD) {
+      // convert back, everything is about to change
+      Varnode *addMult = addOperationOp->getIn(2);
+      data.opSetOpcode(addOperationOp, CPUI_INT_ADD);
+      data.opRemoveInput(addOperationOp, 2);
+      Varnode *adder = addOperationOp->getIn(1);
+      if (adder->isConstant()) {
+        intb adderConst = sign_extend((intb)adder->getOffset(), adder->getSize() * 8 - 1);
+        data.opSetInput(addOperationOp, data.newConstant(adder->getSize(), adderConst * addMult->getOffset() & calc_mask(adder->getSize())), 1);
+      } else {
+        continue;
+      }
+    }
+    // the other opcs that can happen are CPUI_INT_ADD, CPUI_STORE, CPUI_LOAD
+    int slot = addOperation.slot;
+    Varnode *rightSide;
+    ClonedTree primer;
+    primer.coeff = 1;
+    vector<ClonedTree> clonedTree;
+    if (addOperationOp->code() == CPUI_INT_ADD) {
+      while (true) {
+        Varnode *addOut = addOperationOp->getOut();
+        PcodeOp *addLone = addOut->loneDescend();
+        if (!addLone) break;
+        if (addLone->code() != CPUI_INT_ADD) break;
+        addOperationOp = addLone;
+      }
+      cloneTree(addOperationOp->getOut(), primer, clonedTree);
+      vector<ClonedTree> clonedTreeAssignment;
+      bool clonedTreeAssignmentBuilt = false;
+      int clonedTreeSize = (int)clonedTree.size();
+      for (int itI = 0; itI < clonedTreeSize; ++itI) {
+        ClonedTree& elem = clonedTree[itI];
+        bool containsMultiEq = false;
+        int count = 0;
+        for (Varnode *vn : elem.vars) {
+          if (vn == usedVar) {
+            ++count;
+            containsMultiEq = true;
+            break;
+          }
+        }
+        if (!containsMultiEq) continue;
+        if (count == 1) {
+          if (!clonedTreeAssignmentBuilt) {
+            clonedTreeAssignmentBuilt = true;
+            cloneTree(assignmentRight, primer, clonedTreeAssignment);
+          }
+          ClonedTree newElemPtr;
+          newElemPtr.coeff = elem.coeff * counterIncrementVals;
+          newElemPtr.vars.reserve(elem.vars.size());
+          for (Varnode *vn : elem.vars) {
+            if (vn == usedVar) {
+              newElemPtr.vars.push_back(usedVar);
+            } else {
+              newElemPtr.vars.push_back(vn);
+            }
+          }
+          vector<ClonedTree> clonedTreeAssignmentConcrete;
+          clonedTreeAssignmentConcrete.reserve(clonedTreeAssignment.size());
+          for (ClonedTree& assignmentElem : clonedTreeAssignment) {
+            ClonedTree newElemAssignment;
+            newElemAssignment.vars.reserve(elem.vars.size() - 1);
+            for (Varnode *vn : elem.vars) {
+              if (vn != usedVar) {
+                newElemAssignment.vars.push_back(vn);
+              }
+            }
+            newElemAssignment.coeff = assignmentElem.coeff * elem.coeff;
+            clonedTreeAssignmentConcrete.push_back(newElemAssignment);
+          }
+          if (ptrNode->isConstant() && ptrNode->getOffset() == 0) {
+            clonedTree.erase(clonedTree.begin() + itI);
+            --itI;
+            --clonedTreeSize;
+          } else {
+            for (auto itVn = elem.vars.begin(); itVn != elem.vars.end(); ++itVn) {
+              Varnode *vn = *itVn;
+              if (vn == usedVar) {
+                *itVn = ptrNode;
+              }
+            }
+          }
+          clonedTreeAddResult(clonedTree, newElemPtr);
+          for (const ClonedTree& assignmentElem : clonedTreeAssignmentConcrete) {
+            clonedTreeAddResult(clonedTree, assignmentElem);
+          }
+        } else {
+          Varnode *newAdditionConst;
+          if (ptrNode->isConstant() && ptrNode->getOffset() == 0) {
+            newAdditionConst = assignmentRight;
+          } else {
+            newAdditionConst = data.newOpBefore(addOperationOp,
+              CPUI_INT_ADD, ptrNode, assignmentRight)->getOut();
+          }
+          PcodeOp *newMult = data.newOpBefore(addOperationOp,
+            CPUI_INT_MULT, usedVar, data.newConstant(counterIncrementSize, counterIncrementVal));
+          PcodeOp *newAdditionFinal = data.newOpBefore(addOperationOp,
+            CPUI_INT_ADD, newAdditionConst, newMult->getOut());
+          for (auto itVn = elem.vars.begin(); itVn != elem.vars.end(); ++itVn) {
+            Varnode *vn = *itVn;
+            if (vn == usedVar) {
+              *itVn = newAdditionFinal->getOut();
+            }
+          }
+        }
+      }
+      Varnode *newActualOpTree = clonedTreeToActualPcode(clonedTree, follow);
+      data.opSetOutput(newActualOpTree->getDef(), addOperationOp->getOut());
+      data.opDestroy(addOperationOp);
+      continue;
+    }
+    cloneTree(assignmentRight, primer, clonedTree);
+    rightSide = clonedTreeToActualPcode(clonedTree, addOperationOp);
+    Varnode *newAdditionConst;
+    if (ptrNode->isConstant() && ptrNode->getOffset() == 0) {
+      newAdditionConst = rightSide;
+    } else {
+      newAdditionConst = data.newOpBefore(follow,
+        CPUI_INT_ADD, ptrNode, rightSide)->getOut();
+    }
+    PcodeOp *newMult = data.newOpBefore(follow,
+      CPUI_INT_MULT, usedVar, data.newConstant(counterIncrementSize, counterIncrementVal));
+    PcodeOp *newAdditionFinal = data.newOpBefore(follow,
+      CPUI_INT_ADD, newAdditionConst, newMult->getOut());
+    data.opSetInput(addOperationOp, newAdditionFinal->getOut(), slot);
+  }
+  data.opSetInput(multiEqOtherDef, data.newConstant(counterIncrementSize, 1), 1);
+  multiEqOtherDef->getOut()->updateType(multiEqType, false, true);
+  multiEqOut->updateType(multiEqType, false, true);
+  return true;
+}
+
 /// \return \b true if a transform was applied
 bool AddTreeState::apply(void)
 
@@ -6469,14 +7486,61 @@ bool AddTreeState::apply(void)
   if (isDegenerate)
     return buildDegenerate();
   spanAddTree(baseOp,1);
+  if (!preventDistribution && distributeOp != (PcodeOp *)0 && !isDistributeUsed) {
+    clear();
+    preventDistribution = true;
+    spanAddTree(baseOp,1);
+  }
   if (!valid) return false;		// Were there any show stoppers
+  if (multiple.empty() && !multiequalsToInspect.empty() && size != 0) {
+    if (inspectMultiequals()) {
+      inspectedMultiequals = true;
+      clear();
+      spanAddTree(baseOp,1);
+    }
+  }
   if (distributeOp != (PcodeOp *)0 && !isDistributeUsed) {
     clear();
     preventDistribution = true;
     spanAddTree(baseOp,1);
   }
-  calcSubtype();
   if (!valid) return false;
+  if (size != 0 && baseType->getMetatype() == TYPE_STRUCT
+      && (
+        nonmultsum > size && multsum == 0 && multiple.empty()
+        || multsum < 0
+      )) {
+    if (tryPropagateAddedConst(baseOp, true))
+      return true;
+  }
+  calcSubtype();
+  if (!valid) {
+    if (!preventDistribution && distributeOp != (PcodeOp *)0) {
+      clear();
+      preventDistribution = true;
+      spanAddTree(baseOp,1);
+      if (valid) {
+        calcSubtype();
+      }
+    }
+    if (!valid && !inspectedMultiequals
+          && !multiequalsToInspect.empty() && size != 0) {
+      if (inspectMultiequals()) {
+        inspectedMultiequals = true;
+        clear();
+        spanAddTree(baseOp,1);
+        if (valid) {
+          calcSubtype();
+        }
+      }
+    }
+  }
+  if (!valid) return false;
+  if (size != 0 && baseType->getMetatype() == TYPE_STRUCT) {
+    if (nonmultsum <= size && (multsum == 0 && multiple.empty() || multsum & (1 << ptrsize * 8 - 1)))
+      if (tryPropagateAddedConst(baseOp, false))
+        return true;
+  }
   while(valid && distributeOp != (PcodeOp *)0) {
     if (!data.distributeIntMultAdd(distributeOp)) {
       valid = false;
@@ -6504,6 +7568,59 @@ bool AddTreeState::apply(void)
   }
   buildTree();
   return true;
+}
+
+bool AddTreeState::pushExtraNode(Varnode *extraNode)
+
+{
+  if (!(
+      !extraNode->isWritten() && extraNode->isConstant()
+      && offset && isSubtype && lastMatchedType && lastMatchedType->getMetatype() == TYPE_ARRAY
+  )) return false;
+  uintb extraNodeConstant = extraNode->getOffset();
+  Datatype* arrayBaseType = ((TypeArray*)lastMatchedType)->getBase();
+  if (arrayBaseType->getMetatype() != TYPE_STRUCT) return false;
+  int4 arrayBaseTypeSize = arrayBaseType->getSize();
+  Varnode *baseOpOut = baseOp->getOut();
+  PcodeOp *multiEq = baseOpOut->loneDescend();
+  if (!(
+    multiEq && multiEq->code() == CPUI_MULTIEQUAL && multiEq->numInput() == 2
+  )) return false;
+  PcodeOp *incrementOp;
+  Varnode *incrementedIterator;
+  for (int multiEqInputIndex = 0; multiEqInputIndex < 2; ++multiEqInputIndex) {
+    Varnode *multiEqIn = multiEq->getIn(multiEqInputIndex);
+    if (multiEqIn == baseOp->getOut()) {
+      continue;
+    }
+    if (!multiEqIn->isWritten()) return false;
+    incrementOp = multiEqIn->getDef();
+    if (incrementOp->code() != CPUI_INT_ADD) return false;
+    incrementedIterator = incrementOp->getIn(0);
+    if (!incrementedIterator->isWritten()) return false;
+    if (incrementedIterator->getDef() != multiEq) return false;
+    Varnode *incrementSize = incrementOp->getIn(1);
+    if (!incrementSize->isConstant()) return false;
+    if (incrementSize->getOffset() != (uintb)arrayBaseTypeSize) return false;
+  }
+  list<PcodeOp *>::const_iterator descIter;
+  vector<PcodeOp *> usagesToModify;
+  for (descIter = incrementedIterator->beginDescend(); descIter != incrementedIterator->endDescend(); ++descIter) {
+    PcodeOp *usagePlace = *descIter;
+    if (usagePlace == incrementOp) {
+      continue;
+    }
+    if (usagePlace->code() != CPUI_INT_ADD) return false;
+    if (usagePlace->getIn(0) != incrementedIterator) return false;
+    usagesToModify.push_back(usagePlace);
+  }
+  for (PcodeOp *usagePlace : usagesToModify) {
+    PcodeOp *usageAddon = data.newOpBefore(usagePlace, CPUI_INT_ADD, incrementedIterator,
+      extraNode ? extraNode : data.newConstant(4, extraNodeConstant));
+    extraNode = nullptr;
+    data.opSetInput(usagePlace, usageAddon->getOut(), 0);
+  }
+  return !usagesToModify.empty();
 }
 
 /// The original ADD tree has been successfully split into \e multiple and
@@ -6546,8 +7663,9 @@ void AddTreeState::buildTree(void)
   }
 
   // Add back in any remaining terms
-  if (extraNode != (Varnode *)0)
+  if (extraNode != (Varnode *)0 && !pushExtraNode(extraNode)) {
     newop = data.newOpBefore(baseOp,CPUI_INT_ADD,multNode,extraNode);
+  }
 
   if (newop == (PcodeOp *)0) {
     // This should never happen
@@ -6672,7 +7790,52 @@ int4 RulePtrArith::applyOp(PcodeOp *op,Funcdata &data)
     ct = op->getIn(slot)->getTypeReadFacing(op);
     if (ct->getMetatype() == TYPE_PTR) break;
   }
-  if (slot == op->numInput()) return 0;
+  if (slot == op->numInput()) {
+    bool foundMult = false;
+    bool foundConst = false;
+    // is this a pointer being subtracted from a constant (observed in some visualstudio:unknown compiled code)
+    for (int i = 0; i < 2; ++i) {
+      Varnode *in = op->getIn(i);
+      if (in->isConstant()) {
+        if (!foundConst) {
+          foundConst = true;
+        } else {
+          return 0;
+        }
+      } else {
+        if (!in->isWritten()) return 0;
+        PcodeOp *def = in->getDef();
+        if (def->code() != CPUI_INT_MULT) return 0;
+        int defI;
+        for (defI = 0; defI < 2; ++defI) {
+          Varnode *defIn = def->getIn(defI);
+          if (defIn->isConstant()) {
+            uintb defInConst = defIn->getOffset();
+            if (defInConst == 1 || defInConst == (0xffffffff & calc_mask(defIn->getSize()))) {
+              break;
+            }
+          }
+        }
+        if (defI == 2) return 0;
+        Varnode *other = def->getIn(1 - defI);
+        if (other->getTypeReadFacing(def)->getMetatype() != TYPE_PTR) return 0;
+        if (!foundMult) {
+          foundMult = true;
+        } else {
+          return 0;
+        }
+      }
+    }
+    if (!foundMult || !foundConst) return 0;
+    Varnode *out = op->getOut();
+    if (!out) return 0;
+    PcodeOp *multiEq = out->loneDescend();
+    if (!multiEq || multiEq->code() != CPUI_MULTIEQUAL) return 0;
+    AddTreeState state(data);
+    if (state.tryPropagateAddedConstFromMultiEq(multiEq, multiEq->getSlot(out), true))
+      return 1;
+    return 0;
+  }
   if (evaluatePointerExpression(op, slot) != 2) return 0;
   if (!verifyPreferredPointer(op, slot)) return 0;
 
@@ -6982,7 +8145,7 @@ int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLev
   multiplier = 0;
   int8 submultiplier;
   if (vn->isConstant())
-    return vn->getOffset();
+    return sign_extend(vn->getOffset(), vn->getSize() * 8 - 1);
   if (!vn->isWritten())
     return 0;
   maxLevel -= 1;
@@ -6992,10 +8155,12 @@ int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLev
   OpCode opc = op->code();
   int8 retval = 0;
   if (opc == CPUI_INT_ADD) {
-    retval += getConstOffsetBack(op->getIn(0),submultiplier,maxLevel);
+    Varnode *opIn0 = op->getIn(0);
+    retval += getConstOffsetBack(opIn0,submultiplier,maxLevel);
     if (submultiplier > multiplier)
       multiplier = submultiplier;
-    retval += getConstOffsetBack(op->getIn(1), submultiplier, maxLevel);
+    Varnode *opIn1 = op->getIn(1);
+    retval += getConstOffsetBack(opIn1, submultiplier, maxLevel);
     if (submultiplier > multiplier)
       multiplier = submultiplier;
   }
@@ -7003,8 +8168,22 @@ int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLev
     Varnode *cvn = op->getIn(1);
     if (!cvn->isConstant()) return 0;
     multiplier = cvn->getOffset();
-    getConstOffsetBack(op->getIn(0), submultiplier, maxLevel);
-    if (submultiplier > 0)
+    intb multiplier_s = sign_extend(multiplier, cvn->getSize() * 8 - 1);
+    if (multiplier_s < 0) multiplier = -multiplier_s;
+    Varnode *opIn0 = op->getIn(0);
+    getConstOffsetBack(opIn0, submultiplier, maxLevel);
+    if (submultiplier != 0)
+      multiplier *= submultiplier;		// Only contribute to the multiplier
+  }
+  else if (opc == CPUI_INT_LEFT) {
+    Varnode *cvn = op->getIn(1);
+    if (!cvn->isConstant()) return 0;
+    uintb constval = cvn->getOffset();
+    if (constval == 0 || constval == cvn->getSize() * 8 - 1) return 0;
+    multiplier = 1ULL << constval;
+    Varnode *opIn0 = op->getIn(0);
+    getConstOffsetBack(opIn0, submultiplier, maxLevel);
+    if (submultiplier != 0)
       multiplier *= submultiplier;		// Only contribute to the multiplier
   }
   return retval;
