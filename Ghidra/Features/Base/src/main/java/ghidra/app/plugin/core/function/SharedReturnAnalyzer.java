@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import ghidra.util.task.TaskMonitor;
  * associated branching instruction flow to a CALL-RETURN
  */
 public class SharedReturnAnalyzer extends AbstractAnalyzer {
-	
+
 	private static final String NAME = "Shared Return Calls";
 	protected static final String DESCRIPTION =
 		"Converts branches to calls, followed by an immediate return, when the destination is a function.  " +
@@ -59,7 +59,8 @@ public class SharedReturnAnalyzer extends AbstractAnalyzer {
 	private final static boolean OPTION_DEFAULT_CONSIDER_CONDITIONAL_BRANCHES_ENABLED = false;
 
 	private boolean assumeContiguousFunctions = OPTION_DEFAULT_ASSUME_CONTIGUOUS_FUNCTIONS_ENABLED;
-	private boolean considerConditionalBranches = OPTION_DEFAULT_CONSIDER_CONDITIONAL_BRANCHES_ENABLED;
+	private boolean considerConditionalBranches =
+		OPTION_DEFAULT_CONSIDER_CONDITIONAL_BRANCHES_ENABLED;
 
 	public SharedReturnAnalyzer() {
 		this(NAME, DESCRIPTION, AnalyzerType.FUNCTION_ANALYZER);
@@ -91,11 +92,12 @@ public class SharedReturnAnalyzer extends AbstractAnalyzer {
 		if (GoRttiMapper.isGolangProgram(program)) {
 			sharedReturnEnabled = false;
 		}
-	
+
 		// If the language (in the .pspec file) overrides this setting, use that value
 		boolean contiguousFunctionsEnabled = language.getPropertyAsBoolean(
-			GhidraLanguagePropertyKeys.ENABLE_ASSUME_CONTIGUOUS_FUNCTIONS_ONLY, assumeContiguousFunctions);
-		
+			GhidraLanguagePropertyKeys.ENABLE_ASSUME_CONTIGUOUS_FUNCTIONS_ONLY,
+			assumeContiguousFunctions);
+
 		assumeContiguousFunctions = contiguousFunctionsEnabled;
 
 		return sharedReturnEnabled;
@@ -121,7 +123,8 @@ public class SharedReturnAnalyzer extends AbstractAnalyzer {
 		assumeContiguousFunctions = options.getBoolean(OPTION_NAME_ASSUME_CONTIGUOUS_FUNCTIONS,
 			assumeContiguousFunctions);
 
-		considerConditionalBranches = options.getBoolean(OPTION_NAME_CONSIDER_CONDITIONAL_BRANCHES_FUNCTIONS,
+		considerConditionalBranches =
+			options.getBoolean(OPTION_NAME_CONSIDER_CONDITIONAL_BRANCHES_FUNCTIONS,
 				considerConditionalBranches);
 
 	}

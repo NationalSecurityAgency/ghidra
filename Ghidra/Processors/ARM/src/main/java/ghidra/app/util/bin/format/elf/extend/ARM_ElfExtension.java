@@ -126,8 +126,9 @@ public class ARM_ElfExtension extends ElfExtension {
 			}
 			functionAddress = functionAddress.previous(); // align address
 			try {
-				program.getProgramContext().setValue(tmodeRegister, functionAddress,
-					functionAddress, BigInteger.ONE);
+				program.getProgramContext()
+						.setValue(tmodeRegister, functionAddress,
+							functionAddress, BigInteger.ONE);
 			}
 			catch (ContextChangeException e) {
 				// ignore since should not be instructions at time of import
@@ -165,8 +166,9 @@ public class ARM_ElfExtension extends ElfExtension {
 			}
 			else if ("$t".equals(symName) || symName.startsWith("$t.")) {
 				// is thumb mode
-				program.getProgramContext().setValue(tmodeRegister, address, address,
-					BigInteger.valueOf(1));
+				program.getProgramContext()
+						.setValue(tmodeRegister, address, address,
+							BigInteger.valueOf(1));
 				elfLoadHelper.markAsCode(address);
 
 				// do not retain $t symbols in program due to potential function/thunk naming interference
@@ -175,8 +177,9 @@ public class ARM_ElfExtension extends ElfExtension {
 			}
 			else if ("$a".equals(symName) || symName.startsWith("$a.")) {
 				// is arm mode
-				program.getProgramContext().setValue(tmodeRegister, address, address,
-					BigInteger.valueOf(0));
+				program.getProgramContext()
+						.setValue(tmodeRegister, address, address,
+							BigInteger.valueOf(0));
 				elfLoadHelper.markAsCode(address);
 
 				// do not retain $a symbols in program due to potential function/thunk naming interference
@@ -194,12 +197,13 @@ public class ARM_ElfExtension extends ElfExtension {
 				elfLoadHelper.setElfSymbolAddress(elfSymbol, address);
 				return null;
 			}
-			if (elfSymbol.getType() == ElfSymbol.STT_FUNC) {
+			if (elfSymbol.isFunction()) {
 				long symVal = address.getOffset();
 				if ((symVal & 1) != 0 && tmodeRegister != null) {
 					address = address.previous();
-					program.getProgramContext().setValue(tmodeRegister, address, address,
-						BigInteger.valueOf(1));
+					program.getProgramContext()
+							.setValue(tmodeRegister, address, address,
+								BigInteger.valueOf(1));
 				}
 			}
 		}

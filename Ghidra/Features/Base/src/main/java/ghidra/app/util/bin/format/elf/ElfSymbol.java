@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,8 @@
 package ghidra.app.util.bin.format.elf;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -90,6 +92,10 @@ public class ElfSymbol {
 	public static final byte STV_HIDDEN = 2;
 	/**Not preemptible, not exported*/
 	public static final byte STV_PROTECTED = 3;
+
+	/** Pattern for recognized .cold symbol names in ELF files **/
+	private static final Pattern COLD_ELF_SYMBOL_PATTERN =
+		Pattern.compile(".+\\.cold((\\.[0-9]+)?)");
 
 	private ElfSymbolTable symbolTable;
 	private final int symbolTableIndex;
@@ -317,11 +323,36 @@ public class ElfSymbol {
 	}
 
 	/**
-	 * Returns true if this symbol defines a function.
-	 * @return true if this symbol defines a function
+	 * Returns true if this symbol has type {@link ElfSymbol#STT_FUNC}.
+	 * <br>
+	 * Note: compare to {@link ElfSymbol#isFunction(boolean)}
+	 * @return true if symbol type is {@code STT_FUNC}
 	 */
 	public boolean isFunction() {
-		return getType() == STT_FUNC;
+		return isFunction(false);
+	}
+
+	/**
+	 * If {@code entryPointsOnly} is false, this method tests whether the symbol's type is 
+	 * {@link ElfSymbol#STT_FUNC}. If {@code entryPointsOnly} is true, this method tests whether
+	 * the symbol's type is {@link ElfSymbol#STT_FUNC} and whether the symbol represents an actual 
+	 * function entry point (currently by checking whether the symbol name ends in {@code .cold}
+	 * or {@code .cold.N})
+	 * @param entryPointsOnly if true, restrict to function entry points
+	 * @return true if the symbol is a (possibly restricted) function symbol.
+	 */
+	public boolean isFunction(boolean entryPointsOnly) {
+		if (getType() != STT_FUNC) {
+			// not a function symbol 
+			return false;
+		}
+		if (!entryPointsOnly) {
+			// only care about whether it is a function symbol
+			return true;
+		}
+		// check the symbol name
+		Matcher matcher = COLD_ELF_SYMBOL_PATTERN.matcher(getNameAsString());
+		return !matcher.matches();
 	}
 
 	/**
@@ -502,6 +533,16 @@ public class ElfSymbol {
 			Integer.toHexString(Byte.toUnsignedInt(st_info)) + " - " + "st_other: 0x" +
 			Integer.toHexString(Byte.toUnsignedInt(st_other)) + " - " + "st_shndx: 0x" +
 			Integer.toHexString(Short.toUnsignedInt(st_shndx));
+	}
+
+	/**
+	 * Tests whether {@code name} is the name of a "cold" Elf symbol.
+	 * @param name string to test
+	 * @return true if cold, false otherwise
+	 */
+	public static boolean isColdSymbolName(String name) {
+		Matcher matcher = COLD_ELF_SYMBOL_PATTERN.matcher(name);
+		return matcher.matches();
 	}
 
 }

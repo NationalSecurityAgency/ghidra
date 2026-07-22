@@ -17,6 +17,7 @@ package ghidra.app.util.bin.format.elf;
 
 import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.AbstractProgramLoader;
 import ghidra.app.util.opinion.ElfLoaderOptionsFactory;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
@@ -78,7 +79,10 @@ public interface ElfLoadHelper {
 	 * The analyzers will pick this up and disassemble the code.
 	 * @param address code memory address to be marked
 	 */
-	void markAsCode(Address address);
+	default void markAsCode(Address address) {
+		Program program = getProgram();
+		AbstractProgramLoader.markProperty(program, address, Program.CODE_MAP_NAME);
+	}
 
 	/**
 	 * Create a one-byte function, so that when the code is analyzed,
