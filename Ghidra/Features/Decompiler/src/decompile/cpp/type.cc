@@ -1565,56 +1565,105 @@ bool TypeEnum::hasNamedValue(uintb val) const
 /// The representation is returned as a list of names that must logically ORed and possibly complemented.
 /// If no representation is possible, no names will be returned.
 /// \param val is the value to find the representation for
-/// \param rep will contain the individual names in the representation and other transforms
-void TypeEnum::getMatches(uintb val,Representation &rep) const
+/// \param valSize is the size (in bits) of the varnode that was holding \b val or 0 if the size of the enum is implied
+/// \param shiftDistance \b number of bits by which you shifted \b val to the left prior to passing it to this function
+/// \param representation will hold the list of names, the unchanged copy of the \b shiftDistance value, and whether the names are for the complement (~) version of the \b val
+void TypeEnum::getMatches(uintb val,int4 valSize,int shiftDistance,Representation &representation) const
 
 {
   map<uintb,string>::const_iterator iter;
-  int4 count;
+  int4 attempt;
+  Representation prevAttempt;  // the successful attempt made for the non-complement (non-~) version of val, for comparing with the attempt for the complement (~) (second) version and choosing the best one
+  
+  uintb shiftDistanceMask = (1U << shiftDistance) - 1;
+  int sizeToUse = valSize == 0 ? size * 8 : valSize;
+  uintb sizeMask = sizeToUse >= sizeof(uintb) * 8 ? ~0ULL : (1ULL << sizeToUse) - 1;
 
-  for(count=0;count<2;++count) {
+  representation.shiftAmount = shiftDistance;
+
+  for(attempt=0;attempt<2;++attempt) {
     bool allmatch = true;
-    if (val == 0) {	// Zero handled specially
-      iter = namemap.find(val);
-      if (iter != namemap.end())
-	rep.matchname.push_back( (*iter).second );
-      else
-	allmatch = false;
-    }
-    else {
+    iter = namemap.lower_bound(val);  // iter is either namemap.end(), or iter->first is guaranteed to be >= val
+    if (iter != namemap.end() && iter->first == val) {
+      representation.matchname.push_back(iter->second);  // an exact match
+    } else if (val == 0) {
+      allmatch = false;  // if this is a zero value, we can't represent it, because all other enum elements would be non-zero
+      break;  // not allowing inverted representation for 0 by doing a ~(-1) if this enum has a -1 element
+    } else {
       uintb bitsleft = val;
-      uintb target = val;
-      while(target != 0) {
-	// Find named value that matches the largest number of most significant bits in bitsleft
-	iter = namemap.upper_bound(target);
-	if (iter == namemap.begin()) break;	// All named values are greater than target
-	--iter;					// Biggest named value less than or equal to target
-	uintb curval = (*iter).first;
-	uintb diff = coveringmask(bitsleft ^ curval);
-	if (diff >= bitsleft) break;		// Could not match most significant bit of bitsleft
-	if ((curval & diff) == 0) {
-	  // Found a named value that matches at least most significant bit of bitsleft
-	  rep.matchname.push_back( (*iter).second );	// Accept the name
-	  bitsleft ^= curval;				// Remove the bits from bitsleft
-	  target = bitsleft;				// Continue searching for named value that match the new bitsleft
+      while (iter != namemap.begin()) {  // iterate backwards from end to start (from highest value to lowest)
+	--iter;
+	// iter->first is guaranteed to be < val
+	const uintb& key = iter->first;
+	// if key is 0, 'bitsleft_temp >= key' condition below is guaranteed to be fulfilled and we will break there
+	const uintb& maskedKey = key & bitsleft;
+	const uintb bitsleft_temp = bitsleft - maskedKey;
+	// Why this works (proof):
+	// Since key is guaranteed to be < bitsleft, it can't have a bit that is higher than bitsleft's most significant bit.
+	// 1)
+	//    Assume key contains the most significant bit of bitsleft.
+	//    maskedKey would include that bit.
+	//    bitsleft_temp would not have that bit.
+	//    bitsleft_temp is guaranteed to be < key, which still has the bit.
+	// 2)
+	//    Assume key does not contain the most significant bit of bitsleft.
+	//    maskedKey would not include that bit.
+	//    bitsleft_temp would still have that bit.
+	//    bitsleft_temp is guaranteed to be >= key, which does not have that bit.
+	if (bitsleft_temp >= key) {
+	  // None of the remaining enum elements are going to contain bitsleft's most significant bit, since they're all lower than the key,
+	  // so we can exit now
+	  break;
 	}
-	else {
-	  // Not all the (one) bits of curval match into bitsleft, but we can restrict a further search.
-	  // Bits above diff in curval are the maximum we can hope to match with one named value.
-	  // Zero out bits below this and prepare to search at or below this value
-	  target = curval & ~diff;
+	// If we are here, that means key contained the most significant bit of bitsleft.
+	if (maskedKey == key) {             // if all bits of the enum value are contained in bitsleft
+	  representation.matchname.push_back(iter->second);
+	  bitsleft = bitsleft_temp;         // remove used bits and continue next search only for the bits that remain
+	  if (bitsleft == 0) {              // no more bits remain, we found all of them in the enum
+	    break;
+	  }
+	  iter = namemap.lower_bound(bitsleft); // this will return a non-end iterator, because
+	  // we removed the highest bit from the bitsleft
+	  // and the current key contained that bit, so at most
+	  // this should return the current key again.
+	  // iter->first is guaranteed to be >= bitsleft.
+	  if (iter->first == bitsleft) {  // the iter->first matches bitsleft exactly
+	    representation.matchname.push_back(iter->second);
+	    bitsleft = 0;
+	    break;
+	  }
+	  // Once we do --iter at the beginning of the next iteration, iter->first will be guaranteed to be < bitsleft
 	}
       }
-      allmatch = (bitsleft == 0);
+      allmatch = (bitsleft == 0);  // if not all bits were found then we can't make a representation
     }
-    if (allmatch) {			// If we have a complete representation
-      rep.complement = (count==1);	// Set whether we represented original value or complement
+    if (attempt == 1 && !prevAttempt.matchname.empty() && (                         // If we have a previous successful attempt doing a non-~ representation
+        allmatch && prevAttempt.matchname.size() < representation.matchname.size()  // And this attempt is successful but yields more enum elements than the other one
+        || !allmatch)) {                                                            // Or this attempt is just not successful
+      representation = prevAttempt;                                                 // Return the previous attempt
       return;
     }
-    val = val ^ calc_mask(size);	// Switch value we are trying to represent (to complement)
-    rep.matchname.clear();		// Clear out old attempt
-  }
-  // If we reach here, no representation was possible, -matchname- is empty
+    if (allmatch                                                    // If we have a complete representation
+      && attempt == 0 && representation.matchname.size() >= (       // But it seems to include most of the enum's elements (if each was a single bit flag)
+                                  size * 8 - shiftDistance) / 2) {  // Or when the val was <<32 before being passed, because when that happens
+                                                                    // it could include fewer flags than size * 8 / 2, so a double-check (with
+                                                                    // the complement of the val) is necessary
+      prevAttempt = representation;
+      allmatch = false;
+    }
+    if (allmatch)  // We have a complete representation
+      return;
+    
+    val ^= sizeMask;           // Switch value we are trying to represent (to complement).
+    val ^= shiftDistanceMask;  // If the val was for example 0xfffffffe and was <<32 before being passed to this function
+                               // it would get padded with 0's and end up looking like 0xfffffffe00000000
+                               // so when getting its complement we would get 0x00000001ffffffff
+                               // and still not find the enum values we're looking for. The ^= shiftDistanceMask fixes that
+    
+    representation.matchname.clear();  // Clear out old attempt
+    representation.complement = true;
+  }  // for(attempt=0;attempt<2;++attempt)
+  // If we reach here, no representation was possible, representation.matchname is empty
 }
 
 int4 TypeEnum::compare(const Datatype &op,int4 level) const
@@ -2732,16 +2781,24 @@ void TypePartialEnum::printRaw(ostream &s) const
 bool TypePartialEnum::hasNamedValue(uintb val) const
 
 {
-  val <<= 8*offset;
+  val <<= offset;
   return parent->hasNamedValue(val);
 }
 
-void TypePartialEnum::getMatches(uintb val,Representation &rep) const
+void TypePartialEnum::getMatches(uintb val,int4 valSize,int shiftDistance,Representation &representation) const
 
 {
-  val <<= 8*offset;
-  rep.shiftAmount = offset * 8;
-  parent->getMatches(val,rep);
+  val <<= offset;
+  valSize += offset;
+  if (valSize > (int4)sizeof(uintb) * 8) {
+    valSize = (int4)sizeof(uintb) * 8;
+  }
+  shiftDistance += offset;
+  if (shiftDistance >= valSize) {
+    shiftDistance = valSize - 1;
+    val = 0;
+  }
+  parent->getMatches(val,valSize,shiftDistance,representation);
 }
 
 int4 TypePartialEnum::compare(const Datatype &op,int4 level) const
@@ -4476,7 +4533,7 @@ TypeEnum *TypeFactory::getTypeEnum(const string &n)
 
 /// Create a data-type representing storage of part of an \e enumeration.
 /// \param contain is the parent \e enumeration data-type that we are taking a part of.
-/// \param off is the offset (in bytes) within the parent that the partial data-type starts at
+/// \param off is the offset (in bits) within the parent that the partial data-type starts at
 /// \param sz is the number of bytes in the partial data-type
 /// \return the TypePartialEnum object
 TypePartialEnum *TypeFactory::getTypePartialEnum(TypeEnum *contain,int4 off,int4 sz)
@@ -4632,7 +4689,7 @@ Datatype *TypeFactory::getExactPiece(Datatype *ct,int4 offset,int4 size)
       return getTypePartialUnion(partial->getParentUnion(),lastOff + partial->getOffset(), size);
     }
     else if (lastType->isEnumType() && !lastType->hasStripped())
-      return getTypePartialEnum((TypeEnum *)lastType, lastOff, size);
+      return getTypePartialEnum((TypeEnum *)lastType, lastOff * 8, size);
   }
   return (Datatype *)0;
 }
