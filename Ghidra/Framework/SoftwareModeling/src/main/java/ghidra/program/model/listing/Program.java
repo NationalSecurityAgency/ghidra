@@ -82,6 +82,11 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	/** The maximum number of operands for any assembly language */
 	public final static int MAX_OPERANDS = 16;
 
+	/** Name of code property map **/
+	public static final String CODE_MAP_NAME = "CodeMap";
+	/** Name of cold entry point addresses property map **/
+	public static final String COLD_ENTRY_MAP_NAME = "ColdEntries";
+
 	/**
 	 * Get the listing object.
 	 * @return the Listing interface to the listing object.

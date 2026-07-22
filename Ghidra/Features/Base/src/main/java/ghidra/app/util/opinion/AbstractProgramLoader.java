@@ -36,6 +36,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
+import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.util.MD5Utilities;
@@ -346,6 +347,27 @@ public abstract class AbstractProgramLoader implements Loader {
 		prog.setExecutableMD5(md5);
 		String sha256 = computeBinarySHA256(provider);
 		prog.setExecutableSHA256(sha256);
+	}
+
+	/**
+	 * Mark an address in the given property map.  If the map does not exist it will be created.
+	 * @param program program
+	 * @param address address to mark
+	 * @param propertyMapName name of property map
+	 */
+	public static void markProperty(Program program, Address address, String propertyMapName) {
+		AddressSetPropertyMap codeProp = program.getAddressSetPropertyMap(propertyMapName);
+		if (codeProp == null) {
+			try {
+				codeProp = program.createAddressSetPropertyMap(propertyMapName);
+			}
+			catch (DuplicateNameException e) {
+				codeProp = program.getAddressSetPropertyMap(propertyMapName);
+			}
+		}
+		if (codeProp != null) {
+			codeProp.add(address, address);
+		}
 	}
 
 	private String getProgramNameFromSourceData(ByteProvider provider, String domainFileName) {

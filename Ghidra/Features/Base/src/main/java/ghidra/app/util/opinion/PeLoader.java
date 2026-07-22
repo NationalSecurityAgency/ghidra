@@ -50,7 +50,6 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -508,32 +507,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 		}
 	}
 
-	/**
-	 * Mark this location as code in the CodeMap. The analyzers will pick this up and disassemble
-	 * the code.
-	 *
-	 * TODO: this should be in a common place, so all importers can communicate that something is
-	 * code or data.
-	 *
-	 * @param program The program to mark up.
-	 * @param address The location.
-	 */
-	private void markAsCode(Program program, Address address) {
-		AddressSetPropertyMap codeProp = program.getAddressSetPropertyMap("CodeMap");
-		if (codeProp == null) {
-			try {
-				codeProp = program.createAddressSetPropertyMap("CodeMap");
-			}
-			catch (DuplicateNameException e) {
-				codeProp = program.getAddressSetPropertyMap("CodeMap");
-			}
-		}
-
-		if (codeProp != null) {
-			codeProp.add(address, address);
-		}
-	}
-
 	private void processExports(OptionalHeader optionalHeader, Program program, TaskMonitor monitor,
 			MessageLog log) {
 
@@ -778,7 +751,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			if (entry > 0) {
 				try {
 					symTable.createLabel(entryAddr, "__x86_CIL_", SourceType.IMPORTED);
-					markAsCode(prog, entryAddr);
+					markProperty(prog, entryAddr, Program.CODE_MAP_NAME);
 					symTable.addExternalEntryPoint(entryAddr);
 				}
 				catch (InvalidInputException e) {
@@ -794,7 +767,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		try {
 			// mark up entry (either Native or IL)
 			symTable.createLabel(entryAddr, "entry", SourceType.IMPORTED);
-			markAsCode(prog, entryAddr);
+			markProperty(prog, entryAddr, Program.CODE_MAP_NAME);
 		}
 		catch (InvalidInputException e) {
 			// ignore
