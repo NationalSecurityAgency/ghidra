@@ -118,4 +118,13 @@ int PDBApiContext::init(const std::wstring& szFilename, const std::wstring& szSi
 	return hr;
 }
 
+void handleFindChildrenError(HRESULT res) {
+	if (!FAILED(res)) {
+		return;
+	}
 
+	if (res == E_NOTIMPL) {
+		fatal("findChilren() returned E_NOTIMPL. Maybe the input file is an unsupported partial PDB\n");
+	}
+	fatal("findChildren() failed\n");
+}
