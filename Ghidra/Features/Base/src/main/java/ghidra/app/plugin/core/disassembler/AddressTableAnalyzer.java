@@ -322,7 +322,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 		DataIterator definedData = program.getListing().getDefinedData(addrSet, true);
 		for (Data data : definedData) {
 			DataType dataType = data.getDataType();
-			if (dataType instanceof Undefined) {
+			if (Undefined.isUndefined(dataType)) {
 				continue;
 			}
 
