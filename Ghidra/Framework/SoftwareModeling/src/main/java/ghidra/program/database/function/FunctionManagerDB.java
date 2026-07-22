@@ -430,7 +430,7 @@ public class FunctionManagerDB implements FunctionManager {
 			}
 
 			// Remove all tag mappings associated with this function
-			for (FunctionTag tag : new ArrayList<>(function.getTags())) {
+			for (FunctionTag tag : function.getTags()) {
 				function.removeTag(tag.getName());
 			}
 
