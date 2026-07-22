@@ -10433,6 +10433,30 @@ Varnode *RulePopcountBoolXor::getBooleanResult(Varnode *vn,int4 bitPos,int4 &con
   }
 }
 
+/// \brief Return \b true if the PIECE looks like a partial register write
+///
+/// A partial write to the least significant bytes of a register can be modeled
+/// by assigning the most significant bytes of the register, then concatenating
+/// them with the new least significant bytes.  Treat this as pathological if
+/// the most significant input is stored in the corresponding high bytes of the
+/// PIECE output.
+/// \param op is the CPUI_PIECE op
+/// \return \b true if the PIECE writes only the least significant output bytes
+bool RulePiecePathology::isPartialWrite(PcodeOp *op)
+
+{
+  Varnode *outVn = op->getOut();
+  if (outVn == (Varnode *)0) return false;
+  if (outVn->getSpace()->getType() == IPTR_INTERNAL) return false;
+  Varnode *hiVn = op->getIn(0);
+  int4 loSize = op->getIn(1)->getSize();
+  if (hiVn->getSize() + loSize != outVn->getSize()) return false;
+  Address addr = outVn->getAddr();
+  if (!addr.getSpace()->isBigEndian())
+    addr = addr + loSize;
+  return (addr == hiVn->getAddr());
+}
+
 /// \brief Return \b true if concatenating with a SUBPIECE of the given Varnode is unusual
 ///
 /// \param vn is the given Varnode
@@ -10595,6 +10619,8 @@ int4 RulePiecePathology::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *vn = op->getIn(0);
   if (!vn->isWritten()) return 0;
   PcodeOp *subOp = vn->getDef();
+  if (isPartialWrite(op))
+    return tracePathologyForward(op, data);
 
   // Make sure we are concatenating the most significant bytes of a truncation
   OpCode opc = subOp->code();

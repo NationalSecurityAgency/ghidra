@@ -1525,6 +1525,7 @@ public:
 };
 
 class RulePiecePathology : public Rule {
+  static bool isPartialWrite(PcodeOp *op);
   static bool isPathology(Varnode *vn,Funcdata &data);
   static int4 tracePathologyForward(PcodeOp *op,Funcdata &data);
 public:
