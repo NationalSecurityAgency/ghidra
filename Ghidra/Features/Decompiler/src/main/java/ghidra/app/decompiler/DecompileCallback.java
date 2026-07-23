@@ -21,8 +21,17 @@ import static ghidra.program.model.pcode.ElementId.*;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
 
 import ghidra.app.cmd.function.CallDepthChangeInfo;
+import ghidra.app.decompiler.spi.PcodeOverrideHook;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
@@ -34,8 +43,14 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBufferImpl;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.*;
+import ghidra.program.model.util.AddressSetPropertyMap;
+import ghidra.program.model.util.LongPropertyMap;
+import ghidra.program.model.util.PropertyMapManager;
+import ghidra.program.model.util.StringPropertyMap;
 import ghidra.util.Msg;
 import ghidra.util.UndefinedFunction;
+import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.exception.NoValueException;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskMonitor;
@@ -226,6 +241,10 @@ public class DecompileCallback {
 				debug.handleOverrides(addr, instr);
 			}
 
+			if (emitFunctionPcodeOverride(addr, instr, resultEncoder)) {
+				return;
+			}
+
 			instr.getPrototype()
 					.getPcodePacked(resultEncoder, instr.getInstructionContext(),
 						new InstructionPcodeOverride(instr));
@@ -241,6 +260,54 @@ public class DecompileCallback {
 		}
 		// If we reach here, an exception was thrown
 		resultEncoder.clear();	// Make sure the result is empty
+	}
+
+	/**
+	 * Cache of {@link PcodeOverrideHook}s applicable to the current
+	 * cached function.  Populated on the first call to
+	 * {@link #emitFunctionPcodeOverride} after {@link #cachedFunction}
+	 * changes; cleared by {@link #setFunction}.
+	 */
+	private List<PcodeOverrideHook> activeHooks;
+	private Function activeHooksFor;
+
+	private List<PcodeOverrideHook> getActiveHooks() {
+		if (cachedFunction == activeHooksFor) {
+			return activeHooks;
+		}
+		List<PcodeOverrideHook> hooks = new ArrayList<>();
+		for (PcodeOverrideHook hook : ClassSearcher.getInstances(PcodeOverrideHook.class)) {
+			if (hook.canHandle(program)) {
+				hooks.add(hook);
+			}
+		}
+		activeHooks = hooks;
+		activeHooksFor = cachedFunction;
+		return hooks;
+	}
+
+	/**
+	 * Give each registered {@link PcodeOverrideHook} a chance to emit
+	 * synthetic pcode for {@code instr} in place of its sleigh-derived
+	 * prototype.  The first hook that returns true takes ownership of
+	 * the instruction's pcode; if none claim it, the prototype is
+	 * emitted by the caller.
+	 *
+	 * <p>Hooks are filtered to those whose {@link PcodeOverrideHook#canHandle}
+	 * returned true for the current program, and the filter result is
+	 * cached per cached-function.
+	 */
+	private boolean emitFunctionPcodeOverride(Address addr, Instruction instr,
+			PatchEncoder resultEncoder) throws IOException, NoValueException {
+		if (cachedFunction == null) {
+			return false;
+		}
+		for (PcodeOverrideHook hook : getActiveHooks()) {
+			if (hook.emit(program, cachedFunction, addr, instr, resultEncoder)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -1097,6 +1164,13 @@ public class DecompileCallback {
 		if (cachedFunction != null && cachedFunction.getBody().contains(addr)) {
 			return cachedFunction;
 		}
+		// Multi-flow body extension: when the cached function has
+		// published a FunctionBodyExt map (e.g. via an IFC analyzer),
+		// addresses in that map are also part of its flow even if not in
+		// the primary body managed by NamespaceManager.
+		if (cachedFunction != null && cachedFunctionExtContains(addr)) {
+			return cachedFunction;
+		}
 		return listing.getFunctionContaining(addr);
 	}
 
@@ -1108,7 +1182,20 @@ public class DecompileCallback {
 		if (extRef != null) {
 			return listing.getFunctionAt(extRef.getToAddress());
 		}
+		// Hide functions whose entry lies inside the cached function's
+		// extension: the pcode walker would otherwise treat a goto into
+		// that entry as a tail-call and stop walking the inlined body.
+		if (cachedFunction != null && cachedFunctionExtContains(addr)) {
+			return null;
+		}
 		return listing.getFunctionAt(addr);
+	}
+
+	private boolean cachedFunctionExtContains(Address addr) {
+		String name = "FunctionBodyExt:" +
+			Long.toHexString(cachedFunction.getEntryPoint().getOffset());
+		AddressSetPropertyMap ext = program.getAddressSetPropertyMap(name);
+		return ext != null && ext.contains(addr);
 	}
 
 	/**
