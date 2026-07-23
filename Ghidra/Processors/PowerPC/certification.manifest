@@ -40,6 +40,7 @@ data/languages/ppc_32_quicciii_be.slaspec||GHIDRA||||END|
 data/languages/ppc_32_quicciii_le.slaspec||GHIDRA||||END|
 data/languages/ppc_64.pspec||GHIDRA||||END|
 data/languages/ppc_64_32.cspec||GHIDRA||||END|
+data/languages/ppc_64_32_eabi.cspec||GHIDRA||||END|
 data/languages/ppc_64_be.cspec||GHIDRA||||END|
 data/languages/ppc_64_be.slaspec||GHIDRA||||END|
 data/languages/ppc_64_be_Mac.cspec||GHIDRA||||END|
