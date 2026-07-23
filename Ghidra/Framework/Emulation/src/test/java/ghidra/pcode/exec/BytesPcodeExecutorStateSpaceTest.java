@@ -15,9 +15,11 @@
  */
 package ghidra.pcode.exec;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,6 +33,7 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguageHelper;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Register;
 
 public class BytesPcodeExecutorStateSpaceTest extends AbstractGTest {
 
@@ -109,5 +112,25 @@ public class BytesPcodeExecutorStateSpaceTest extends AbstractGTest {
 			rng(space, 0xffff_fffcL, 0xffff_ffffL),
 			rng(space, 0, 3)),
 			stateSpace.computeUninitialized(0xffff_fffcL, 8));
+	}
+
+	@Test
+	public void testGetRegisterValuesRequiresOnlyRegisterBytesInitialized() throws Exception {
+		SleighLanguage language = SleighLanguageHelper.getMockBE64Language();
+		AddressSpace space = language.getAddressFactory().getRegisterSpace();
+		BytesPcodeExecutorStatePiece piece =
+			new BytesPcodeExecutorStatePiece(language, PcodeStateCallbacks.NONE);
+		BytesPcodeExecutorStateSpace stateSpace =
+			new BytesPcodeExecutorStateSpace(language, space, piece);
+		Register r0 = language.getRegister("r0");
+		Register r1 = language.getRegister("r1");
+		byte[] data = new byte[] { 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x7f };
+
+		stateSpace.write(r0.getAddress().getOffset(), data, 0, data.length,
+			PcodeStateCallbacks.NONE);
+
+		Map<Register, byte[]> values = stateSpace.getRegisterValues(List.of(r0, r1));
+		assertArrayEquals(data, values.get(r0));
+		assertFalse(values.containsKey(r1));
 	}
 }
