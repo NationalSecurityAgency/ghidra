@@ -2547,45 +2547,45 @@ macro ls_opc_umax(data, value, dest) { dest = zext(data > value) * data + zext(d
 macro ls_opc_umin(data, value, dest) { dest = zext(data > value) * value + zext(data <= value) * data; }
 macro ls_opc_swp (data, value, dest) { dest = value; }
 
-ls_opc1: "add" is b_3031=0b00 & b_1215=0b0000 & aa_Ws & ls_data1 & ls_mem1 { build ls_data1; ls_opc_add(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem1; }
-ls_opc2: "add" is b_3031=0b01 & b_1215=0b0000 & aa_Ws & ls_data2 & ls_mem2 { build ls_data2; ls_opc_add(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem2; }
-ls_opc4: "add" is b_3031=0b10 & b_1215=0b0000 & aa_Ws & ls_data4 & ls_mem4 { build ls_data4; ls_opc_add(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem4; }
-ls_opc8: "add" is b_3031=0b11 & b_1215=0b0000 & aa_Xs & ls_data8 & ls_mem8 { build ls_data8; ls_opc_add(tmp_ldXn, aa_Xs, tmp_stXn); build ls_mem8; }
+ls_opc1: "add" is b_3031=0b00 & b_1215=0b0000 & Rs_GPR32 & ls_data1 & ls_mem1 { build ls_data1; ls_opc_add(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem1; }
+ls_opc2: "add" is b_3031=0b01 & b_1215=0b0000 & Rs_GPR32 & ls_data2 & ls_mem2 { build ls_data2; ls_opc_add(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem2; }
+ls_opc4: "add" is b_3031=0b10 & b_1215=0b0000 & Rs_GPR32 & ls_data4 & ls_mem4 { build ls_data4; ls_opc_add(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem4; }
+ls_opc8: "add" is b_3031=0b11 & b_1215=0b0000 & Rs_GPR64 & ls_data8 & ls_mem8 { build ls_data8; ls_opc_add(tmp_ldXn, Rs_GPR64, tmp_stXn); build ls_mem8; }
 
-ls_opc1: "clr" is b_3031=0b00 & b_1215=0b0001 & aa_Ws & ls_data1 & ls_mem1 { build ls_data1; ls_opc_clr(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem1; }
-ls_opc2: "clr" is b_3031=0b01 & b_1215=0b0001 & aa_Ws & ls_data2 & ls_mem2 { build ls_data2; ls_opc_clr(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem2; }
-ls_opc4: "clr" is b_3031=0b10 & b_1215=0b0001 & aa_Ws & ls_data4 & ls_mem4 { build ls_data4; ls_opc_clr(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem4; }
-ls_opc8: "clr" is b_3031=0b11 & b_1215=0b0001 & aa_Xs & ls_data8 & ls_mem8 { build ls_data8; ls_opc_clr(tmp_ldXn, aa_Xs, tmp_stXn); build ls_mem8; }
+ls_opc1: "clr" is b_3031=0b00 & b_1215=0b0001 & Rs_GPR32 & ls_data1 & ls_mem1 { build ls_data1; ls_opc_clr(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem1; }
+ls_opc2: "clr" is b_3031=0b01 & b_1215=0b0001 & Rs_GPR32 & ls_data2 & ls_mem2 { build ls_data2; ls_opc_clr(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem2; }
+ls_opc4: "clr" is b_3031=0b10 & b_1215=0b0001 & Rs_GPR32 & ls_data4 & ls_mem4 { build ls_data4; ls_opc_clr(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem4; }
+ls_opc8: "clr" is b_3031=0b11 & b_1215=0b0001 & Rs_GPR64 & ls_data8 & ls_mem8 { build ls_data8; ls_opc_clr(tmp_ldXn, Rs_GPR64, tmp_stXn); build ls_mem8; }
 
-ls_opc1: "eor" is b_3031=0b00 & b_1215=0b0010 & aa_Ws & ls_data1 & ls_mem1 { build ls_data1; ls_opc_eor(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem1; }
-ls_opc2: "eor" is b_3031=0b01 & b_1215=0b0010 & aa_Ws & ls_data2 & ls_mem2 { build ls_data2; ls_opc_eor(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem2; }
-ls_opc4: "eor" is b_3031=0b10 & b_1215=0b0010 & aa_Ws & ls_data4 & ls_mem4 { build ls_data4; ls_opc_eor(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem4; }
-ls_opc8: "eor" is b_3031=0b11 & b_1215=0b0010 & aa_Xs & ls_data8 & ls_mem8 { build ls_data8; ls_opc_eor(tmp_ldXn, aa_Xs, tmp_stXn); build ls_mem8; }
+ls_opc1: "eor" is b_3031=0b00 & b_1215=0b0010 & Rs_GPR32 & ls_data1 & ls_mem1 { build ls_data1; ls_opc_eor(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem1; }
+ls_opc2: "eor" is b_3031=0b01 & b_1215=0b0010 & Rs_GPR32 & ls_data2 & ls_mem2 { build ls_data2; ls_opc_eor(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem2; }
+ls_opc4: "eor" is b_3031=0b10 & b_1215=0b0010 & Rs_GPR32 & ls_data4 & ls_mem4 { build ls_data4; ls_opc_eor(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem4; }
+ls_opc8: "eor" is b_3031=0b11 & b_1215=0b0010 & Rs_GPR64 & ls_data8 & ls_mem8 { build ls_data8; ls_opc_eor(tmp_ldXn, Rs_GPR64, tmp_stXn); build ls_mem8; }
 
-ls_opc1: "set" is b_3031=0b00 & b_1215=0b0011 & aa_Ws & ls_data1 & ls_mem1 { build ls_data1; ls_opc_set(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem1; }
-ls_opc2: "set" is b_3031=0b01 & b_1215=0b0011 & aa_Ws & ls_data2 & ls_mem2 { build ls_data2; ls_opc_set(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem2; }
-ls_opc4: "set" is b_3031=0b10 & b_1215=0b0011 & aa_Ws & ls_data4 & ls_mem4 { build ls_data4; ls_opc_set(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem4; }
-ls_opc8: "set" is b_3031=0b11 & b_1215=0b0011 & aa_Xs & ls_data8 & ls_mem8 { build ls_data8; ls_opc_set(tmp_ldXn, aa_Xs, tmp_stXn); build ls_mem8; }
+ls_opc1: "set" is b_3031=0b00 & b_1215=0b0011 & Rs_GPR32 & ls_data1 & ls_mem1 { build ls_data1; ls_opc_set(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem1; }
+ls_opc2: "set" is b_3031=0b01 & b_1215=0b0011 & Rs_GPR32 & ls_data2 & ls_mem2 { build ls_data2; ls_opc_set(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem2; }
+ls_opc4: "set" is b_3031=0b10 & b_1215=0b0011 & Rs_GPR32 & ls_data4 & ls_mem4 { build ls_data4; ls_opc_set(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem4; }
+ls_opc8: "set" is b_3031=0b11 & b_1215=0b0011 & Rs_GPR64 & ls_data8 & ls_mem8 { build ls_data8; ls_opc_set(tmp_ldXn, Rs_GPR64, tmp_stXn); build ls_mem8; }
 
-ls_opc1: "smax" is b_3031=0b00 & b_1215=0b0100 & aa_Ws & ls_data1 & ls_mem1 { build ls_data1; ls_opc_smax(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem1; }
-ls_opc2: "smax" is b_3031=0b01 & b_1215=0b0100 & aa_Ws & ls_data2 & ls_mem2 { build ls_data2; ls_opc_smax(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem2; }
-ls_opc4: "smax" is b_3031=0b10 & b_1215=0b0100 & aa_Ws & ls_data4 & ls_mem4 { build ls_data4; ls_opc_smax(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem4; }
-ls_opc8: "smax" is b_3031=0b11 & b_1215=0b0100 & aa_Xs & ls_data8 & ls_mem8 { build ls_data8; ls_opc_smax(tmp_ldXn, aa_Xs, tmp_stXn); build ls_mem8; }
+ls_opc1: "smax" is b_3031=0b00 & b_1215=0b0100 & Rs_GPR32 & ls_data1 & ls_mem1 { build ls_data1; ls_opc_smax(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem1; }
+ls_opc2: "smax" is b_3031=0b01 & b_1215=0b0100 & Rs_GPR32 & ls_data2 & ls_mem2 { build ls_data2; ls_opc_smax(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem2; }
+ls_opc4: "smax" is b_3031=0b10 & b_1215=0b0100 & Rs_GPR32 & ls_data4 & ls_mem4 { build ls_data4; ls_opc_smax(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem4; }
+ls_opc8: "smax" is b_3031=0b11 & b_1215=0b0100 & Rs_GPR64 & ls_data8 & ls_mem8 { build ls_data8; ls_opc_smax(tmp_ldXn, Rs_GPR64, tmp_stXn); build ls_mem8; }
 
-ls_opc1: "smin" is b_3031=0b00 & b_1215=0b0101 & aa_Ws & ls_data1 & ls_mem1 { build ls_data1; ls_opc_smin(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem1; }
-ls_opc2: "smin" is b_3031=0b01 & b_1215=0b0101 & aa_Ws & ls_data2 & ls_mem2 { build ls_data2; ls_opc_smin(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem2; }
-ls_opc4: "smin" is b_3031=0b10 & b_1215=0b0101 & aa_Ws & ls_data4 & ls_mem4 { build ls_data4; ls_opc_smin(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem4; }
-ls_opc8: "smin" is b_3031=0b11 & b_1215=0b0101 & aa_Xs & ls_data8 & ls_mem8 { build ls_data8; ls_opc_smin(tmp_ldXn, aa_Xs, tmp_stXn); build ls_mem8; }
+ls_opc1: "smin" is b_3031=0b00 & b_1215=0b0101 & Rs_GPR32 & ls_data1 & ls_mem1 { build ls_data1; ls_opc_smin(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem1; }
+ls_opc2: "smin" is b_3031=0b01 & b_1215=0b0101 & Rs_GPR32 & ls_data2 & ls_mem2 { build ls_data2; ls_opc_smin(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem2; }
+ls_opc4: "smin" is b_3031=0b10 & b_1215=0b0101 & Rs_GPR32 & ls_data4 & ls_mem4 { build ls_data4; ls_opc_smin(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem4; }
+ls_opc8: "smin" is b_3031=0b11 & b_1215=0b0101 & Rs_GPR64 & ls_data8 & ls_mem8 { build ls_data8; ls_opc_smin(tmp_ldXn, Rs_GPR64, tmp_stXn); build ls_mem8; }
 
-ls_opc1: "umax" is b_3031=0b00 & b_1215=0b0110 & aa_Ws & ls_data1 & ls_mem1 { build ls_data1; ls_opc_umax(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem1; }
-ls_opc2: "umax" is b_3031=0b01 & b_1215=0b0110 & aa_Ws & ls_data2 & ls_mem2 { build ls_data2; ls_opc_umax(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem2; }
-ls_opc4: "umax" is b_3031=0b10 & b_1215=0b0110 & aa_Ws & ls_data4 & ls_mem4 { build ls_data4; ls_opc_umax(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem4; }
-ls_opc8: "umax" is b_3031=0b11 & b_1215=0b0110 & aa_Xs & ls_data8 & ls_mem8 { build ls_data8; ls_opc_umax(tmp_ldXn, aa_Xs, tmp_stXn); build ls_mem8; }
+ls_opc1: "umax" is b_3031=0b00 & b_1215=0b0110 & Rs_GPR32 & ls_data1 & ls_mem1 { build ls_data1; ls_opc_umax(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem1; }
+ls_opc2: "umax" is b_3031=0b01 & b_1215=0b0110 & Rs_GPR32 & ls_data2 & ls_mem2 { build ls_data2; ls_opc_umax(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem2; }
+ls_opc4: "umax" is b_3031=0b10 & b_1215=0b0110 & Rs_GPR32 & ls_data4 & ls_mem4 { build ls_data4; ls_opc_umax(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem4; }
+ls_opc8: "umax" is b_3031=0b11 & b_1215=0b0110 & Rs_GPR64 & ls_data8 & ls_mem8 { build ls_data8; ls_opc_umax(tmp_ldXn, Rs_GPR64, tmp_stXn); build ls_mem8; }
 
-ls_opc1: "umin" is b_3031=0b00 & b_1215=0b0111 & aa_Ws & ls_data1 & ls_mem1 { build ls_data1; ls_opc_umin(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem1; }
-ls_opc2: "umin" is b_3031=0b01 & b_1215=0b0111 & aa_Ws & ls_data2 & ls_mem2 { build ls_data2; ls_opc_umin(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem2; }
-ls_opc4: "umin" is b_3031=0b10 & b_1215=0b0111 & aa_Ws & ls_data4 & ls_mem4 { build ls_data4; ls_opc_umin(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem4; }
-ls_opc8: "umin" is b_3031=0b11 & b_1215=0b0111 & aa_Xs & ls_data8 & ls_mem8 { build ls_data8; ls_opc_umin(tmp_ldXn, aa_Xs, tmp_stXn); build ls_mem8; }
+ls_opc1: "umin" is b_3031=0b00 & b_1215=0b0111 & Rs_GPR32 & ls_data1 & ls_mem1 { build ls_data1; ls_opc_umin(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem1; }
+ls_opc2: "umin" is b_3031=0b01 & b_1215=0b0111 & Rs_GPR32 & ls_data2 & ls_mem2 { build ls_data2; ls_opc_umin(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem2; }
+ls_opc4: "umin" is b_3031=0b10 & b_1215=0b0111 & Rs_GPR32 & ls_data4 & ls_mem4 { build ls_data4; ls_opc_umin(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem4; }
+ls_opc8: "umin" is b_3031=0b11 & b_1215=0b0111 & Rs_GPR64 & ls_data8 & ls_mem8 { build ls_data8; ls_opc_umin(tmp_ldXn, Rs_GPR64, tmp_stXn); build ls_mem8; }
 
 # Nearly all of these instructions have the same "operation" in the
 # manual, the differences being load vs store, the operation (o3:opc),
@@ -6479,9 +6479,9 @@ is b_2431=0xd4 & excCode=0 & imm16 & excCode2=0 & ll=1
 
 # size=0b00 (3031)
 
-:swp^ls_lor^"b" aa_Ws, aa_Wt, [Rn_GPR64xsp]
-is b_3031=0b00 & b_2429=0b111000 & b_21=1 & b_1215=0b1000 & b_1011=0b00 & ls_loa & ls_lor & aa_Wt & ls_data1 & ls_mem1 & aa_Ws & Rn_GPR64xsp
-{ build ls_loa; build ls_data1; ls_opc_swp(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem1; aa_Wt = tmp_ldWn; build ls_lor; }
+:swp^ls_lor^"b" Rs_GPR32, aa_Wt, [Rn_GPR64xsp]
+is b_3031=0b00 & b_2429=0b111000 & b_21=1 & b_1215=0b1000 & b_1011=0b00 & ls_loa & ls_lor & aa_Wt & ls_data1 & ls_mem1 & Rn_GPR64xsp & Rs_GPR32
+{ build ls_loa; build ls_data1; ls_opc_swp(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem1; aa_Wt = tmp_ldWn; build ls_lor; }
 
 # C6.2.367 SWPH, SWPAH, SWPALH, SWPLH page C6-1960 line 115079 MATCH x78208000/mask=xff20fc00
 # CONSTRUCT x78208000/mask=xff20fc00 MATCHED 1 DOCUMENTED OPCODES
@@ -6489,9 +6489,9 @@ is b_3031=0b00 & b_2429=0b111000 & b_21=1 & b_1215=0b1000 & b_1011=0b00 & ls_loa
 
 # size=0b01 (3031)
 
-:swp^ls_lor^"h" aa_Ws, aa_Wt, [Rn_GPR64xsp]
-is b_3031=0b01 & b_2429=0b111000 & b_21=1 & b_1215=0b1000 & b_1011=0b00 & ls_loa & ls_lor & aa_Wt & ls_data2 & ls_mem2 & aa_Ws & Rn_GPR64xsp
-{ build ls_loa; build ls_data2; ls_opc_swp(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem2; aa_Wt = tmp_ldWn; build ls_lor; }
+:swp^ls_lor^"h" Rs_GPR32, aa_Wt, [Rn_GPR64xsp]
+is b_3031=0b01 & b_2429=0b111000 & b_21=1 & b_1215=0b1000 & b_1011=0b00 & ls_loa & ls_lor & aa_Wt & ls_data2 & ls_mem2 & Rn_GPR64xsp & Rs_GPR32
+{ build ls_loa; build ls_data2; ls_opc_swp(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem2; aa_Wt = tmp_ldWn; build ls_lor; }
 
 # C6.2.368 SWP, SWPA, SWPAL, SWPL page C6-1962 line 115186 MATCH xb8208000/mask=xbf20fc00
 # CONSTRUCT xb8208000/mask=xff20fc00 MATCHED 1 DOCUMENTED OPCODES
@@ -6499,9 +6499,9 @@ is b_3031=0b01 & b_2429=0b111000 & b_21=1 & b_1215=0b1000 & b_1011=0b00 & ls_loa
 
 # size=0b10 (3031)
 
-:swp^ls_lor aa_Ws, aa_Wt, [Rn_GPR64xsp]
-is b_3031=0b10 & b_2429=0b111000 & b_21=1 & b_1215=0b1000 & b_1011=0b00 & ls_loa & ls_lor & aa_Wt & ls_data4 & ls_mem4 & aa_Ws & Rn_GPR64xsp
-{ build ls_loa; build ls_data4; ls_opc_swp(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem4; aa_Wt = tmp_ldWn; build ls_lor; }
+:swp^ls_lor Rs_GPR32, aa_Wt, [Rn_GPR64xsp]
+is b_3031=0b10 & b_2429=0b111000 & b_21=1 & b_1215=0b1000 & b_1011=0b00 & ls_loa & ls_lor & aa_Wt & ls_data4 & ls_mem4 & Rn_GPR64xsp & Rs_GPR32
+{ build ls_loa; build ls_data4; ls_opc_swp(tmp_ldWn, Rs_GPR32, tmp_stWn); build ls_mem4; aa_Wt = tmp_ldWn; build ls_lor; }
 
 # C6.2.368 SWP, SWPA, SWPAL, SWPL page C6-1962 line 115186 MATCH xb8208000/mask=xbf20fc00
 # CONSTRUCT xf8208000/mask=xff20fc00 MATCHED 1 DOCUMENTED OPCODES
@@ -6509,9 +6509,9 @@ is b_3031=0b10 & b_2429=0b111000 & b_21=1 & b_1215=0b1000 & b_1011=0b00 & ls_loa
 
 # size=0b11 (3031)
 
-:swp^ls_lor aa_Xs, aa_Xt, [Rn_GPR64xsp]
-is b_3031=0b11 & b_2429=0b111000 & b_21=1 & b_1215=0b1000 & b_1011=0b00 & ls_loa & ls_lor & aa_Xt & ls_data8 & ls_mem8 & aa_Xs & Rn_GPR64xsp
-{ build ls_loa; build ls_data8; ls_opc_swp(tmp_ldXn, aa_Xs, tmp_stXn); build ls_mem8; aa_Xt = tmp_ldXn; build ls_lor; }
+:swp^ls_lor Rs_GPR64, aa_Xt, [Rn_GPR64xsp]
+is b_3031=0b11 & b_2429=0b111000 & b_21=1 & b_1215=0b1000 & b_1011=0b00 & ls_loa & ls_lor & aa_Xt & ls_data8 & ls_mem8 & Rn_GPR64xsp & Rs_GPR64
+{ build ls_loa; build ls_data8; ls_opc_swp(tmp_ldXn, Rs_GPR64, tmp_stXn); build ls_mem8; aa_Xt = tmp_ldXn; build ls_lor; }
 
 # C6.2.369 SXTB page C6-1964 line 115324 MATCH x13001c00/mask=x7fbffc00
 # C6.2.267 SBFIZ page C6-1751 line 103178 MATCH x13000000/mask=x7f800000
