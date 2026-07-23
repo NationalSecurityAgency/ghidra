@@ -1007,7 +1007,7 @@ macro PushEntireState()
 
 :BGT REL    is op=0x2E; REL
 {
-        if (($(N) == $(V)) & $(C)) goto REL;
+        if (($(N) == $(V)) & ($(Z) == 0)) goto REL;
 }
 
 :BLE REL     is op=0x2F; REL
@@ -1346,7 +1346,7 @@ macro PushEntireState()
 
 :LBGT REL2    is PAGE2; op=0x2E; REL2
 {
-        if (($(N) == $(V)) & $(C)) goto REL2;
+        if (($(N) == $(V)) & ($(Z) == 0)) goto REL2;
 }
 
 :LBLE REL2     is PAGE2; op=0x2F; REL2
