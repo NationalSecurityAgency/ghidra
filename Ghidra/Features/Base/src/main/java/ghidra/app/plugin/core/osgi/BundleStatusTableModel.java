@@ -300,9 +300,11 @@ public class BundleStatusTableModel
 			if (summary != null) {
 				Swing.runLater(() -> {
 					BundleStatus status = getStatus(bundle);
-					status.setSummary(summary);
-					int rowIndex = getRowIndex(status);
-					fireTableRowsUpdated(rowIndex, rowIndex);
+					if (status != null) {
+						status.setSummary(summary);
+						int rowIndex = getRowIndex(status);
+						fireTableRowsUpdated(rowIndex, rowIndex);
+					}
 				});
 			}
 		}
