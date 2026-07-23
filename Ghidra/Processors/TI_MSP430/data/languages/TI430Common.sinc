@@ -94,7 +94,6 @@ define context contextreg
 # use the repeat feature.
 # NOTE: The POPM/PUSM have a starting register & # of register to pop/push. We need to track
 # that info in context for the subtables that do the work.
-  ctx_isHi=(0,0) noflow					# Used in pspec to flag msp430 instruction > 64k
   ctx_al=(1,1) noflow					# extension word al field
   ctx_ctregdest=(2,5) noflow			# extension word dest register/immediate field
   ctx_ctregdests=(2,5) signed noflow	# signed version of above
@@ -181,8 +180,8 @@ define token instr16(16)
 #
 #	Attach(s)
 #
-attach variables [ 	src_8_4
-					dest_0_4
+attach variables [ src_8_4 dest_0_4 ] [ PC SP SR _ R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 ];
+attach variables [
 					reg_Direct16_0_4 
 					src_Direct16_8_4 
 					dest_Direct16_0_4
@@ -211,6 +210,13 @@ SRC16_8_4: src_Direct16_8_4		is src_Direct16_8_4 & reg_Direct16_8_4W {export reg
 DST16_0_4: dest_Direct16_0_4		is dest_Direct16_0_4 & reg_Direct16_0_4W {export reg_Direct16_0_4W;}
 SRC8_8_4: src_Direct16_8_4		is src_Direct16_8_4 & src_Direct_lo {export src_Direct_lo;}
 DST8_0_4: reg_Direct16_0_4		is reg_Direct16_0_4 & dest_Direct_lo {export dest_Direct_lo;}
+
+@if REG_SIZE == "4"
+SRC20_8_4: src_8_4			is src_8_4 { export src_8_4; }
+SRC20_8_4: PC				is src_8_4=0 & PC { PC = inst_next; export PC; }
+DST20_0_4: dest_0_4			is dest_0_4  { export dest_0_4; }
+DST20_0_4: PC				is dest_0_4=0 & PC { PC = inst_next; export PC; }
+@endif
 
 ####################################
 # Status Register (SR) Map
@@ -243,11 +249,22 @@ DST8_0_4: reg_Direct16_0_4		is reg_Direct16_0_4 & dest_Direct_lo {export dest_Di
 #-----------------------------------------------
 
 @if REG_SIZE == "4"
-AMASK: val	is ctx_isHi=1 [ val = 0xFFFF; ]  { export *[const]:4 val; }
-AMASK: val	is ctx_isHi=0 [ val = 0xFFFFF; ] { export *[const]:4 val; }
+AMASK: val	is bow=0 [ val = 0xFFFFE; ] { export *[const]:4 val; }
+AMASK: val	is bow=1 [ val = 0xFFFFF; ] { export *[const]:4 val; }
+
+macro computeIndexedAddr(ptr, reg, index, input_mask) {
+	local isHi = (reg & 0xF0000) != 0;
+	local mask = 0xFFFF | (zext(isHi) * 0xF0000);
+	ptr = (reg + index) & mask & input_mask;
+}
 @else
 AMASK: val	is bow=0 [ val = 0xFFFE; ]  { export *[const]:2 val; } # Memory accesses for unaligned (odd) word addresses round down for alignment.
 AMASK: val	is bow=1 [ val = 0xFFFF; ]  { export *[const]:2 val; }
+AMASK: val	is epsilon [ val = 0xFFFF; ]  { export *[const]:2 val; }
+
+macro computeIndexedAddr(ptr, reg, index, mask) {
+	ptr = (reg + index) & mask;
+}
 @endif
 
 #-----------------------------------------------
@@ -259,11 +276,11 @@ AMASK: val	is bow=1 [ val = 0xFFFF; ]  { export *[const]:2 val; }
 #-----------------------------------------------
 REG_W_AS: DST16_0_4 			 		 is DST16_0_4 & as=0x0 & bow=0x0  {export DST16_0_4;} # Word/Register Direct (Rn):
 REG_W_AS: DST16_0_4 			 		 is DST16_0_4 & reg16_0_4=0 & as=0x0 & bow=0x0  {DST16_0_4 = inst_next & 0xFFFE; export DST16_0_4;} # PC register accesses point to next instruction
-REG_W_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:2 tmp;}
-REG_W_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 & AMASK & reg_Indexed16_0_4=1 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s - 0x2) & AMASK; export *:2 tmp;} # PUSH, CALL X(SP) - addressing includes SP decrement
+REG_W_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s {local tmp:$(REG_SIZE); computeIndexedAddr(tmp, reg_Indexed16_0_4, indexExtWord16_0_16s, AMASK); export *:2 tmp;}
+REG_W_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 & AMASK & reg_Indexed16_0_4=1 ; indexExtWord16_0_16s {local tmp:$(REG_SIZE); computeIndexedAddr(tmp, reg_Indexed16_0_4, indexExtWord16_0_16s - 0x2, AMASK); export *:2 tmp;} # PUSH, CALL X(SP) - addressing includes SP decrement
 REG_W_AS: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = reg_InDirect16_0_4 & AMASK; export *:2 tmp;} # Word/Register Indirect (@Rn):
 REG_W_AS: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = reg_InDirect16_0_4 & AMASK; export *:2 tmp;} # Word/Register Indirect Autoincrement (@Rn+):
-REG_W_AS: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x0 & AMASK; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK; export *:2 tmp; } # Symbolic
+REG_W_AS: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x0 & AMASK; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ] { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16s, AMASK); export *:2 tmp; } # Symbolic
 REG_W_AS: "#"^indexExtWord16_0_16 	 is reg16_0_4=0x0 & as=0x3 & bow=0x0 ; indexExtWord16_0_16 {export *[const]:2 indexExtWord16_0_16; } # Immediate
 REG_W_AS: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x0 & AMASK; indexExtWord16_0_16 {tmp:$(REG_SIZE) = indexExtWord16_0_16 & AMASK; export *:2 tmp; } # Absolute
 REG_W_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x0  { export 4:2;}		# Constant
@@ -275,21 +292,21 @@ REG_W_AS: "#-1" 					 is	reg16_0_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2;} 	
 
 REG_W_AS_DEST: DST16_0_4 			 is DST16_0_4 & as=0x0 & bow=0x0  {export DST16_0_4;} # Word/Register Direct (Rn):
 REG_W_AS_DEST: DST16_0_4 			 is DST16_0_4 & reg16_0_4=0 & as=0x0 & bow=0x0  {DST16_0_4 = inst_next & 0xFFFE; export DST16_0_4;} # PC register accesses point to next instruction
-REG_W_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:2 tmp;}
+REG_W_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s {local tmp:$(REG_SIZE); computeIndexedAddr(tmp, reg_Indexed16_0_4, indexExtWord16_0_16s, AMASK); export *:2 tmp;}
 REG_W_AS_DEST: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = reg_InDirect16_0_4 & AMASK; export *:2 tmp;} # Word/Register Indirect (@Rn):
 REG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = reg_InDirect16_0_4 & AMASK; export *:2 tmp;} # Word/Register Indirect Autoincrement (@Rn+):
-REG_W_AS_DEST: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK; export *:2 tmp; } # Symbolic
+REG_W_AS_DEST: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ] { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16s, AMASK); export *:2 tmp; } # Symbolic
 REG_W_AS_DEST: "#"^indexExtWord16_0_16 	 is reg16_0_4=0x0 & as=0x3 & bow=0x0 & AMASK ; indexExtWord16_0_16 {export *:2 inst_next; } # Immediate - Undocumented behaviour
 REG_W_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 {tmp:$(REG_SIZE) = indexExtWord16_0_16 & AMASK; export *:2 tmp; } # Absolute
 
 #-----------------------------------------------
 REG_B_AS: DST8_0_4 			 		 is DST8_0_4 & as=0x0 & bow=0x1  { export DST8_0_4;} # Word/Register Direct (Rn):
 REG_B_AS: DST8_0_4 			 		 is DST8_0_4 & reg16_0_4=0 & as=0x0 & bow=0x1  {tmp:$(REG_SIZE) = inst_next; DST8_0_4 = tmp:1 & 0xFF; export DST8_0_4;} # PC register accesses point to next instruction - must return register for resulting stores
-REG_B_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:1 tmp;}
-REG_B_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 & AMASK & reg_Indexed16_0_4=1 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s - 0x2) & AMASK; export *:1 tmp;} # PUSH.B X(SP) - includes SP decrement
+REG_B_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s {local tmp:$(REG_SIZE); computeIndexedAddr(tmp, reg_Indexed16_0_4, indexExtWord16_0_16s, AMASK); export *:1 tmp;}
+REG_B_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 & AMASK & reg_Indexed16_0_4=1 ; indexExtWord16_0_16s {local tmp:$(REG_SIZE); computeIndexedAddr(tmp, reg_Indexed16_0_4, indexExtWord16_0_16s - 0x2, AMASK); export *:1 tmp;} # PUSH.B X(SP) - includes SP decrement
 REG_B_AS: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
 REG_B_AS: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
-REG_B_AS: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:1 tmp; } # Symbolic
+REG_B_AS: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ] {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:1 tmp; } # Symbolic
 REG_B_AS: "#"^indexExtWord16_0_16 	 is reg16_0_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 { export *[const]:1 indexExtWord16_0_16; } # Immediate
 REG_B_AS: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
 REG_B_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x1  { export 4:1;}		# Constant
@@ -301,10 +318,10 @@ REG_B_AS: "#-1" 					 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1;} 	# 
 
 REG_B_AS_DEST: DST8_0_4 			 	 is DST8_0_4 & as=0x0 & bow=0x1  { export DST8_0_4;} # Word/Register Direct (Rn):
 REG_B_AS_DEST: DST8_0_4 			 	 is DST8_0_4 & reg16_0_4=0 & as=0x0 & bow=0x1  {tmp:$(REG_SIZE) = inst_next; DST8_0_4 = tmp:1 & 0xFF; export DST8_0_4;} # PC register accesses point to next instruction
-REG_B_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:1 tmp;}
+REG_B_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s {local tmp:$(REG_SIZE); computeIndexedAddr(tmp, reg_Indexed16_0_4, indexExtWord16_0_16s, AMASK); export *:1 tmp;}
 REG_B_AS_DEST: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-REG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
-REG_B_AS_DEST: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:1 tmp; } # Symbolic
+REG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
+REG_B_AS_DEST: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ] { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16s, AMASK); export *:1 tmp; } # Symbolic
 REG_B_AS_DEST: "#"^indexExtWord16_0_16 	 is reg16_0_4=0x0 & as=0x3 & bow=0x1 & AMASK ; indexExtWord16_0_16 {export *:1 inst_next; } # Undocumented behaviour
 REG_B_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
 
@@ -315,10 +332,10 @@ REG_B_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; i
 #-----------------------------------------------
 SRC_W_AS: SRC16_8_4 			 		 is SRC16_8_4 & as=0x0 & bow=0x0  {export SRC16_8_4;} # Word/Register Direct (Rn):
 SRC_W_AS: SRC16_8_4 			 		 is SRC16_8_4 & src16_8_4=0 & as=0x0 & bow=0x0 {tmp:2 = inst_next; export tmp;} # PC register accesses point to next instruction (PC-relative addresses already covered by Immediate/Symbolic modes)
-SRC_W_AS: indexExtWord16_0_16s^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (src_Indexed16_8_4 + indexExtWord16_0_16s) & AMASK; export *:2 tmp;}
+SRC_W_AS: indexExtWord16_0_16s^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s {local tmp:$(REG_SIZE); computeIndexedAddr(tmp, src_Indexed16_8_4, indexExtWord16_0_16s, AMASK); export *:2 tmp;}
 SRC_W_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = src_InDirect16_8_4 & AMASK; export *:2 tmp;} # Word/Register Indirect (@Rn):
 SRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = src_InDirect16_8_4 & AMASK; export *:2 tmp;} # Word/Register Indirect Autoincrement (@Rn+):
-SRC_W_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK; export *:2 tmp; } # Symbolic
+SRC_W_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ] { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16s, AMASK); export *:2 tmp; } # Symbolic
 SRC_W_AS: "#"^indexExtWord16_0_16 	 is src16_8_4=0x0 & as=0x3 & bow=0x0 ; indexExtWord16_0_16 {export *[const]:2 indexExtWord16_0_16; } # Immediate
 SRC_W_AS: "&"^indexExtWord16_0_16 	 is src16_8_4=0x2 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 {tmp:$(REG_SIZE) = indexExtWord16_0_16 & AMASK; export *:2 tmp; } # Absolute
 SRC_W_AS: "#4" 						 is src16_8_4=0x2 & as=0x2 & bow=0x0  { export 4:2; }		# Constant
@@ -330,10 +347,10 @@ SRC_W_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2; } 
 #-----------------------------------------------
 SRC_B_AS: SRC8_8_4 			 		 is SRC8_8_4 & as=0x0 & bow=0x1  { export SRC8_8_4;} # Word/Register Direct (Rn):
 SRC_B_AS: SRC8_8_4 			 		 is SRC8_8_4 & src16_8_4=0 & as=0x0 & bow=0x1  {tmp:$(REG_SIZE) = inst_next; tmp2:1 = tmp:1; export tmp2;} # PC register accesses point to next instruction.
-SRC_B_AS: indexExtWord16_0_16s^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (src_Indexed16_8_4 + indexExtWord16_0_16s) & AMASK; export *:1 tmp;}
+SRC_B_AS: indexExtWord16_0_16s^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, src_Indexed16_8_4, indexExtWord16_0_16s, AMASK); export *:1 tmp;}
 SRC_B_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
 SRC_B_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
-SRC_B_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:1 tmp; } # Symbolic
+SRC_B_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ] { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16s, AMASK); export *:1 tmp; } # Symbolic
 SRC_B_AS: "#"^indexExtWord16_0_16 	 is src16_8_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 {export *[const]:1 indexExtWord16_0_16;} # Immediate
 SRC_B_AS: "&"^indexExtWord16_0_16 	 is src16_8_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
 SRC_B_AS: "#4" 						 is src16_8_4=0x2 & as=0x2 & bow=0x1  { export 4:1; }		# Constant
@@ -354,27 +371,27 @@ DEST_W_AD: DST16_0_4 			 		 is DST16_0_4 & dest_0_4=0 & ad=0x0 & bow=0x0  {DST16
 
 # Register relative destinations for R1, R4-R15
 DEST_W_AD: indexExtWord16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s
-     {tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:2 tmp;}
+     {local tmp:$(REG_SIZE); computeIndexedAddr(tmp, dest_Indexed16_0_4, indexExtWord16_0_16s, AMASK); export *:2 tmp;}
 #---Depends on SRC ---#
 # Source is register-relative and involves 'embedded' immediate
 DEST_W_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x0 & AMASK & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16s
-     {tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + indexExt2Word16_0_16s) & AMASK; export *:2 tmp;}
+     { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, dest_Indexed16_0_4, indexExt2Word16_0_16s, AMASK); export *:2 tmp;}
 # Source is an 'embedded' immediate implemented by @PC+
 DEST_W_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x0 & AMASK & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16s
-     {tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + indexExt2Word16_0_16s) & AMASK; export *:2 tmp;}
+     { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, dest_Indexed16_0_4, indexExt2Word16_0_16s, AMASK); export *:2 tmp;}
 # Source is involves a register increment (@reg+) that applies to the destination (of same register, but not PC, SR, R3)
 DEST_W_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x0 & AMASK & as=0x3 & src16_8_4=dest_0_4 & (src16_8_4 = 1 | src16_8_4 >= 4) ; indexExt2Word16_0_16s
-     {tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + 2 + indexExt2Word16_0_16s) & AMASK; export *:2 tmp;}
+     { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, dest_Indexed16_0_4 + 2, indexExt2Word16_0_16s, AMASK); export *:2 tmp;}
 #---End of Depend ----#
 
 # PC-relative destinations
 DEST_W_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ]
-     {tmp:$(REG_SIZE) = labelCalc & AMASK; export *:2 tmp; } # Symbolic
+     { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16s, AMASK); export *:2 tmp; } # Symbolic
 #---Depends on SRC ---#
 DEST_W_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x0 & AMASK & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16s [labelCalc = inst_start + 4 + indexExt2Word16_0_16s; ]
-     {tmp:$(REG_SIZE) = labelCalc & AMASK; export *:2 tmp; } # Symbolic
+     { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 4, indexExt2Word16_0_16s, AMASK); export *:2 tmp; } # Symbolic
 DEST_W_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x0 & AMASK & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16s [labelCalc = inst_start + 4 + indexExt2Word16_0_16s; ]
-     {tmp:$(REG_SIZE) = labelCalc & AMASK; export *:2 tmp; } # Symbolic
+     { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 4, indexExt2Word16_0_16s, AMASK); export *:2 tmp; } # Symbolic
 #---End of Depend ----#
 
 # SR-relative (absolute value) destinations
@@ -393,24 +410,24 @@ DEST_B_AD: DST8_0_4 		  			 is DST8_0_4 & dest_Direct_lo & ad=0x0 & bow=0x1
 DEST_B_AD: DST8_0_4 			 		 is DST8_0_4 & dest_Direct_lo & dest_0_4=0 & ad=0x0 & bow=0x1  {tmp:$(REG_SIZE) = inst_next; DST8_0_4 = tmp:1 & 0xFF; export DST8_0_4;} # PC register accesses point to next instruction
 
 DEST_B_AD: indexExtWord16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s
-     { tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:1 tmp;}
+     {local tmp:$(REG_SIZE); computeIndexedAddr(tmp, dest_Indexed16_0_4, indexExtWord16_0_16s, AMASK); export *:1 tmp;}
 #---Depends on SRC ---#
 DEST_B_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 & AMASK & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16s
-     { tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + indexExt2Word16_0_16s) & AMASK; export *:1 tmp;}
+     {local tmp:$(REG_SIZE); computeIndexedAddr(tmp, dest_Indexed16_0_4, indexExt2Word16_0_16s, AMASK); export *:1 tmp;}
 DEST_B_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 & AMASK & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16s
-     { tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + indexExt2Word16_0_16s) & AMASK; export *:1 tmp;}
+     { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, dest_Indexed16_0_4, indexExt2Word16_0_16s, AMASK); export *:1 tmp;}
 # Source includes a register increment (@reg+) that applies to the destination (use of same register in source and dest, but not PC, SR, R3)
 DEST_B_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 & AMASK & as=0x3 & src16_8_4=dest_0_4 & (src16_8_4 = 1 | src16_8_4 >= 4) ; indexExt2Word16_0_16s
-     {tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + 2 + indexExt2Word16_0_16s) & AMASK; export *:1 tmp;}
+     { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, dest_Indexed16_0_4 + 2, indexExt2Word16_0_16s, AMASK); export *:1 tmp;}
 #---End of Depend ----#
 
 DEST_B_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ]
-     {tmp:$(REG_SIZE) = labelCalc & AMASK; export *:1 tmp; } # Symbolic
+     { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16s, AMASK); export *:1 tmp; } # Symbolic
 #---Depends on SRC ---#
 DEST_B_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x1 & AMASK & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16s [labelCalc = inst_start + 4 + indexExt2Word16_0_16s; ]
-     {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:1 tmp; } # Symbolic
+     { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 4, indexExt2Word16_0_16s, AMASK); export *:1 tmp; } # Symbolic
 DEST_B_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x1 & AMASK & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16s [labelCalc = inst_start + 4 + indexExt2Word16_0_16s; ]
-     {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:1 tmp; } # Symbolic
+     { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 4, indexExt2Word16_0_16s, AMASK); export *:1 tmp; } # Symbolic
 #---End of Depend ----#
 
 DEST_B_AD: "&"^indexExtWord16_0_16 	  is dest=0x2 & ad=0x1 & bow=0x1 ; indexExtWord16_0_16
@@ -440,11 +457,17 @@ tbl_wzero:			is ad=0 & reg_Direct16_0_4 & reg_Direct16_0_4W {ztmp:2 = reg_Direct
 @endif
 tbl_wzero:			is epsilon {}
 
+@if REG_SIZE == "4"
+tbl_wzero_singleop:		is as=0 & reg_Direct16_0_4 & reg_Direct16_0_4W {ztmp:2 = reg_Direct16_0_4W; reg_Direct16_0_4 = 0; reg_Direct16_0_4W = ztmp; }
+@endif
+tbl_wzero_singleop:		is epsilon {}
+
 #
 # Post Processing
 #    does correct increment of source register
 #    Also catches when PC is being stored to and does the correct branching
 #
+postRegIncrement:   is as=0x3 & dest_0_4   & ctx_al=0x0 & reg_InDirect16_0_4	 { reg_InDirect16_0_4 = reg_InDirect16_0_4 + 4; }
 postRegIncrement:   is as=0x3 & dest_0_4   & bow=0x0 & reg_InDirect16_0_4                { reg_InDirect16_0_4 = reg_InDirect16_0_4 + 2; }
 postRegIncrement:   is as=0x3 & dest_0_4=1 & bow=0x0 & reg_InDirect16_0_4 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0)               { } # PUSH.W SP, SP modification covered by PUSH
 postRegIncrement:   is as=0x3 & dest_0_4   & bow=0x1 & reg_InDirect16_0_4                 { reg_InDirect16_0_4 = reg_InDirect16_0_4 + 1; }
@@ -452,12 +475,14 @@ postRegIncrement:  	is as=0x3 & dest_0_4=1 & bow=0x1 & reg_InDirect16_0_4 { reg_
 postRegIncrement:  	is as=0x3 & dest_0_4=1 & bow=0x1 & reg_InDirect16_0_4 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0) { } # PUSH.B @SP+, SP modification covered by PUSH
 postRegIncrement:   is as=0x3 & dest_0_4=0 & bow=0x0 & reg_InDirect16_0_4   { }     # PC is incremented by 2, but that is just to skip over the value
 postRegIncrement:   is as=0x3 & dest_0_4=0 & bow=0x1 & reg_InDirect16_0_4   { }     # PC is incremented by 2, but that is just to skip over the value
+postRegIncrement:   is as=0x3 & (dest_0_4=2 | dest_0_4=3) & ctx_al=0x0 & (bow=0x1 | bow=0x0) { }
 postRegIncrement:   is as=0x3 & dest_0_4=2 & bow=0x1     { }
 postRegIncrement:   is as=0x3 & dest_0_4=3 & bow=0x1     { }
 postRegIncrement:   is as=0x3 & dest_0_4=2 & bow=0x0     { }
 postRegIncrement:   is as=0x3 & dest_0_4=3 & bow=0x0     { }
-postRegIncrement:   is as=0x0 & dest_0_4=0 & bow=0x0 & (op16_12_4!=0x1 | op16_8_4!=0x2 | op16_7_1!=0x0) { PC = PC & 0xFFFE; goto [PC]; } # If PC is modified, alter flow (except for PUSH instructions)
-postRegIncrement:   is as=0x0 & dest_0_4=0 & bow=0x1 & (op16_12_4!=0x1 | op16_8_4!=0x2 | op16_7_1!=0x0) { PC = PC & 0xFE; goto [PC]; } # If PC is modified, alter flow (except for PUSH instructions)
+postRegIncrement:   is as=0x0 & dest_0_4=0 & ctx_al=1 & bow=0x0 & (op16_12_4!=0x1 | op16_8_4!=0x2 | op16_7_1!=0x0) { PC = PC & 0xFFFE; goto [PC]; } # If PC is modified, alter flow (except for PUSH instructions)
+postRegIncrement:   is as=0x0 & dest_0_4=0 & ctx_al=1 & bow=0x1 & (op16_12_4!=0x1 | op16_8_4!=0x2 | op16_7_1!=0x0) { PC = PC & 0xFE; goto [PC]; } # If PC is modified, alter flow (except for PUSH instructions)
+postRegIncrement:   is as=0x0 & dest_0_4=0 & ctx_al=0 { PC = PC & 0xFFFFE; goto [PC]; }
 postRegIncrement:   is as     & bow                       { }
 
 # R2 and R3 are constant generators - post-increment not supported
@@ -504,35 +529,21 @@ postIncrement:  			 is as=0x3 & ctx_haveext=0 & src16_8_4=1 & bow=0x1 & ctx_al=0
 postIncrement:               is as & src16_8_4 & bow
 {  }
 
-
 #
-# Zero Extends if the store is byte oriented, and a register is being stored to
-zeroExtend: is dest_Direct_lo & dest_Direct16_0_4
-{ dest_Direct16_0_4 = zext(dest_Direct_lo); }
-
+# Post processing when destination is the PC
 #
-# Post processing when destination is the PC - for byte operations
-#
-postIncrementStore:  			 is postIncrement & ad=0x0 & src_InDirect16_8_4 & as=0x3 & src16_8_4=1 & dest_Direct16_0_4=0x0 & bow=0x1 & ctx_al=1 & zeroExtend
-{ build zeroExtend; build postIncrement; return [PC]; }
-postIncrementStore:  			 is postIncrement & ad=0x0 & dest_Direct16_0_4=0x0 & bow=0x1 & ctx_al=1 & zeroExtend
-{ build zeroExtend; build postIncrement; PC = PC & 0xFFFFFE; goto [PC];} # Writes to PC are rounded to alignment
-postIncrementStore:              is postIncrement & ad=0x0 & bow=0x1 & ctx_al=1 & zeroExtend
-{ build zeroExtend; build postIncrement; }
 
-postIncrementStore:  			 is postIncrement & ctx_haveext=0 & ad=0x0 & src_InDirect16_8_4 & as=0x3 & src16_8_4=1 & dest_Direct16_0_4=0x0 & bow=0x1 & zeroExtend 
-{ build zeroExtend; build postIncrement; return [PC]; }
-postIncrementStore:  			 is postIncrement & ctx_haveext=0 & ad=0x0 & dest_Direct16_0_4=0x0 & bow=0x1 & zeroExtend # MOV.B any,PC
-{ build zeroExtend; build postIncrement; PC = PC & 0xFE; goto [PC];} # Writes to PC are rounded to alignment
-postIncrementStore:              is postIncrement & ctx_haveext=0 & ad=0x0 & bow=0x1 & zeroExtend
-{ build zeroExtend; build postIncrement; }
+postStorePC:  			is ad=0x0 & as=0x3 & dest_Direct16_0_4=0x0 & src16_8_4=0x1
+{ PC = PC & ~1; return [PC]; }
+postStorePC:  			is ad=0x0 & dest_Direct16_0_4=0x0
+{ PC = PC & ~1; goto [PC];}
+postStorePC:  			is op16_12_4=0 & dest_0_4=0x0
+{ PC = PC & ~1; goto [PC]; }
+postStorePC:			is epsilon
+{  }
 
-postIncrementStore:  			 is postIncrement & ad=0x0 & src_InDirect16_8_4 & as=0x3 & src16_8_4=1 & dest_Direct16_0_4=0x0
-{ build postIncrement; return [PC]; }
-postIncrementStore:  			 is postIncrement & ad=0x0 & dest_Direct16_0_4=0x0
-{ build postIncrement; PC = PC & 0xFFFE; goto [PC];} # Writes to PC are rounded to alignment
-postIncrementStore:              is postIncrement & ad & bow
-{ build postIncrement; }
+postIncrementStore: is postIncrement & postStorePC
+{ build postIncrement; build postStorePC; }
 
 #-----------------------------------------------
 #
@@ -556,7 +567,7 @@ JCND: "MP"	is condition=0x7 {cndTst:1 = 0x1; export cndTst;}                    
 #-----------------------------------------------
 
 OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
-	{ export *:2 offset10;}
+	{ export *:$(REG_SIZE) offset10;}
 	
 	
 ###################################################################################
@@ -577,14 +588,14 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
 #	| 0  | 0  | 0  | 1  | 0  | 0  |     000    | B/W |   As    |     register    | 
-:RRC^".W" REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x0 & tbl_wzero & postRegIncrement) ... & REG_W_AS_DEST {
+:RRC^".W" REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x0 & tbl_wzero_singleop & postRegIncrement) ... & REG_W_AS_DEST {
 	# Operation Flags...
 	$(OVERFLOW) = 0;	# V Flag is reset
 	# Operation...
 	tmp:1 = $(CARRY);
 	$(CARRY) = REG_W_AS_DEST[0,1];
 	REG_W_AS_DEST = ((zext(tmp) << 0xF) | (REG_W_AS_DEST >> 0x1));
-	build tbl_wzero;
+	build tbl_wzero_singleop;
 	# Result Flags...
 	$(SIGN) = (REG_W_AS_DEST s< 0x0);			# S Flag
 	$(ZERO) = (REG_W_AS_DEST == 0x0);			# Z Flag
@@ -614,11 +625,11 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
 #	| 0  | 0  | 0  | 1  | 0  | 0  |     001    |  0  |   As    |     register    | 
-:SWPB REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x1 & bow=0x0 & tbl_wzero & postRegIncrement) ... & REG_W_AS_DEST {
+:SWPB REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x1 & bow=0x0 & tbl_wzero_singleop & postRegIncrement) ... & REG_W_AS_DEST {
 	lowByte:1 = REG_W_AS_DEST[0,8];
 	highByte:1 = REG_W_AS_DEST[8,8];
 	REG_W_AS_DEST = (((zext(lowByte)) << 0x8) | zext(highByte));
-	build tbl_wzero;
+	build tbl_wzero_singleop;
 	#Status bits are not affected
 	build postRegIncrement;
 }
@@ -632,14 +643,14 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
 #	| 0  | 0  | 0  | 1  | 0  | 0  |     010    | B/W |   As    |     register    | 
-:RRA^".W" REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x0 & tbl_wzero & postRegIncrement) ... & REG_W_AS_DEST {
+:RRA^".W" REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x0 & tbl_wzero_singleop & postRegIncrement) ... & REG_W_AS_DEST {
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;					# V Flag (reset)
 	# Operation...
 	$(CARRY) = REG_W_AS_DEST[0,1];
 	MSB:2 = REG_W_AS_DEST >> 0xF;
 	REG_W_AS_DEST = ((MSB << 0xF) | (REG_W_AS_DEST >> 0x1));
-	build tbl_wzero;
+	build tbl_wzero_singleop;
 	# Result Flags...
 	$(SIGN) = (REG_W_AS_DEST s< 0x0);			# S Flag
 	$(ZERO) = (REG_W_AS_DEST == 0x0);			# Z Flag
@@ -669,19 +680,32 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
 #	| 0  | 0  | 0  | 1  | 0  | 0  |     011    |  0  |   As    |     register    | 
-:SXT REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x1 & bow=0x0 & tbl_wzero & postRegIncrement) ... & REG_W_AS_DEST {
+:SXT REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x1 & bow=0x0 & tbl_wzero_singleop & postRegIncrement) ... & REG_W_AS_DEST {
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;						# V Flag
 	# Operation...	
 	byteVal:1 = REG_W_AS_DEST[0,8];
 	REG_W_AS_DEST = sext(byteVal);
-	build tbl_wzero;
+	build tbl_wzero_singleop;
 	# Result Flags...
 	$(SIGN) = (REG_W_AS_DEST s< 0x0);			# S Flag
 	$(ZERO) = (REG_W_AS_DEST == 0x0);			# Z Flag
 	$(CARRY) = (REG_W_AS_DEST != 0x0);			# C Flag
 	build postRegIncrement;
 }
+
+@if REG_SIZE == "4"
+:SXT DST20_0_4 is ctx_haveext=0 & as=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x1 & bow=0x0 & postRegIncrement) & DST20_0_4 {
+	# Operation...
+	DST20_0_4 = sext(DST20_0_4:1) & 0xfffff;
+	# Result Flags...
+	$(SIGN) = (DST20_0_4[19,1] == 0x1);		# S Flag
+	$(ZERO) = (DST20_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (DST20_0_4 != 0x0);			# C Flag
+	$(OVERFLOW) = 0x0;				# V Flag
+	build postRegIncrement;
+}
+@endif
 
 
 ###################################################################################
@@ -749,7 +773,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	tmp:$(REG_SIZE) = zext(*:2 SP);
 	SR = zext(tmp[0,12]);
 	SP = SP + 0x2;
-	PC = zext(*:2 SP) | ((tmp & 0xF000) << 4);
+	PC = zext(*:2 SP) | ((tmp & 0xF000) << 4) & ~1;
 @endif	
 	SP = SP + 0x2;
 	return [PC];
@@ -807,7 +831,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #-----------------------
 # Branch
 :BR SRC_W_AS   is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & ad=0x0 & dest_Direct16_0_4=0x0 & postIncrement) ... & SRC_W_AS ... {
-	PC = zext(SRC_W_AS) & 0xFFFFFFFE:$(REG_SIZE);
+	PC = zext(SRC_W_AS) & ~1;
 	build postIncrement; # needed before branch
 	goto [PC];
 	#Status bits are not affected
@@ -815,9 +839,8 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 
 # Branch to an immediate value
 :BR DirectAddr       is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & ad=0x0 & dest_Direct16_0_4=0x0 & src_Direct16_8_4=0x0 & as=0x3); DirectAddr {
-	PC = &DirectAddr;
-    goto DirectAddr;
-    #Status bits are not affected
+	goto DirectAddr;
+	#Status bits are not affected
 }
 
 # No operation
@@ -828,17 +851,21 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 
 # Pop word from stack
 :POP^".W" DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & (ad=0x1 | dest_Direct16_0_4) & as=0x3 & src_Direct16_8_4=0x1 & tbl_wzero & AMASK) ... & DEST_W_AD ... {
-	DEST_W_AD = *:2 (SP & AMASK);
+	local tmp:2 = *:2 (SP & AMASK);
 	build tbl_wzero;
 	SP = SP + 0x2;
+	build DEST_W_AD;
+	DEST_W_AD = tmp;
 	#Status bits are not affected
 }
 
 # Pop byte from stack
 :POP^".B" DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x1 & (ad=0x1 | dest_Direct16_0_4) & as=0x3 & src_Direct16_8_4=0x1 & tbl_bzero) ... & DEST_B_AD ... {
-	DEST_B_AD = *:1 SP;
+	local tmp:1 = *:1 SP;
 	build tbl_bzero;
 	SP = SP + 0x2;
+	build DEST_B_AD;
+	DEST_B_AD = tmp;
 	#Status bits are not affected
 }
 
@@ -877,22 +904,26 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #------------------
 #	SRC Word
 #------------------
-:MOV^".W" SRC_W_AS, DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & tbl_wzero & postIncrementStore) ... & SRC_W_AS ... & DEST_W_AD ... {
-	DEST_W_AD = SRC_W_AS;
+:MOV^".W" SRC_W_AS, DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & tbl_wzero & postIncrement & postStorePC) ... & SRC_W_AS ... & DEST_W_AD ... {
+	local tmp:2 = SRC_W_AS;
+	build postIncrement;
+	DEST_W_AD = tmp;
 	build tbl_wzero;
 	#Status bits are not affected
-	build postIncrementStore;
+	build postStorePC;
 }
 
 
 #------------------
 #   SRC Byte
 #------------------
-:MOV^".B" SRC_B_AS, DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x1 & tbl_bzero & postIncrementStore) ... & SRC_B_AS ... & DEST_B_AD ... {
-	DEST_B_AD = SRC_B_AS;
+:MOV^".B" SRC_B_AS, DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x1 & tbl_bzero & postIncrement & postStorePC) ... & SRC_B_AS ... & DEST_B_AD ... {
+	local tmp:1 = SRC_B_AS;
+	build postIncrement;
+	DEST_B_AD = tmp;
 	build tbl_bzero;
 	#Status bits are not affected
-	build postIncrementStore;
+	build postStorePC;
 }
 
 
