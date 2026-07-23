@@ -177,4 +177,20 @@ abstract class CommentHistoryAdapter {
 	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract RecordIterator getAllRecords() throws IOException;
+
+	/**
+	 * Anonymize all comment history records by replacing the userName field with the given anonymousName.
+	 * @param anonymousName the name to replace the userName field with
+	 * @throws IOException if there was a problem accessing the database
+	 */
+	abstract void anonymizeAllRecords(String anonymousName) throws IOException;
+
+	/**
+	 * Anonymize comment history records for a specific address by replacing the userName field with the given anonymousName.
+	 * @param anonymousName the name to replace the userName field with
+	 * @param addr the address of the records to anonymize
+	 * @throws IOException if there was a problem accessing the database
+	 */
+	abstract void anonymizeRecordsByAddress(String anonymousName, Address addr) throws IOException;
+
 }
