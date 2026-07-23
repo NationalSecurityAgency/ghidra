@@ -13,6 +13,7 @@
     <description>Tensilica Xtensa 32-bit little-endian</description>
     <compiler name="default" spec="xtensa.cspec" id="default"/>
     <external_name tool="gnu" name="xtensa"/>
+    <external_name tool="IDA-PRO" name="xtensa"/>
     <external_name tool="DWARF.register.mapping.file" name="xtensa.dwarf"/>
     <external_name tool="qemu" name="qemu-xtensa"/>
     <external_name tool="qemu_system" name="qemu-system-xtensa"/>
@@ -29,6 +30,7 @@
     <description>Tensilica Xtensa 32-bit big-endian</description>
     <compiler name="default" spec="xtensa.cspec" id="default"/>
     <external_name tool="gnu" name="xtensa"/>
+    <external_name tool="IDA-PRO" name="xtensab"/>
     <external_name tool="DWARF.register.mapping.file" name="xtensa.dwarf"/>
     <external_name tool="qemu" name="qemu-xtensaeb"/>
     <external_name tool="qemu_system" name="qemu-system-xtensaeb"/>

@@ -34,7 +34,7 @@ public class InstructionTableCellRenderer extends GhidraTableCellRenderer {
 	private static final String FONT_ID = "font.plugin.instruction.table.renderer";
 
 	public InstructionTableCellRenderer() {
-		super(Gui.getFont(FONT_ID));
+		setBaseFontId(FONT_ID);
 	}
 
 	/**

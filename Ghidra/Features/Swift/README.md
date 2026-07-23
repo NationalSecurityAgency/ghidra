@@ -1,6 +1,6 @@
 # SwiftDemangler
 
-This module provides support for demanling mangled [Swift](https://www.swift.org) symbols. Supported
+This module provides support for demangling mangled [Swift](https://www.swift.org) symbols. Supported
 mangled symbols begin with `$S`, `$s`, `_$S"`, `_$s`, or `_T`.
 
 The demangler currently relies on making direct calls to the native Swift demangler tool, which
@@ -21,5 +21,4 @@ protocol descriptor for SwiftUI.View
 The resulting tree is parsed by the Ghidra Swift Demangler to form and apply a demangled symbol 
 name.
 
-By default, the `Demangler Swift` Analyzer will search for the native Swift Demangler on the `PATH`.
-If it resides elsewhere, its path can be specified in the analyzer's options.
+The `Demangler Swift` Analyzer assumes that the native Swift Demangler is on the `PATH`.

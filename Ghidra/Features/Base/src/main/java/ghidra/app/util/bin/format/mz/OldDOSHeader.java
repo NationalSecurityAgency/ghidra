@@ -16,13 +16,10 @@
 package ghidra.app.util.bin.format.mz;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.Writeable;
 import ghidra.program.model.data.*;
-import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -47,7 +44,7 @@ import ghidra.util.exception.DuplicateNameException;
  * </pre>
  */
 
-public class OldDOSHeader implements StructConverter, Writeable {
+public class OldDOSHeader implements StructConverter {
 
 	/** The name to use when converting into a structure data type. */
 	public static final String NAME = "OLD_IMAGE_DOS_HEADER";
@@ -264,23 +261,5 @@ public class OldDOSHeader implements StructConverter, Writeable {
 	    e_cs          = reader.readNextShort();
 	    e_lfarlc      = reader.readNextShort();
 	    e_ovno        = reader.readNextShort();
-	}
-
-	@Override
-	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
-		raf.write(dc.getBytes(e_magic));
-		raf.write(dc.getBytes(e_cblp));
-		raf.write(dc.getBytes(e_cp));
-		raf.write(dc.getBytes(e_crlc));
-		raf.write(dc.getBytes(e_cparhdr));
-		raf.write(dc.getBytes(e_minalloc));
-		raf.write(dc.getBytes(e_maxalloc));
-		raf.write(dc.getBytes(e_ss));
-		raf.write(dc.getBytes(e_sp));
-		raf.write(dc.getBytes(e_csum));
-		raf.write(dc.getBytes(e_ip));
-		raf.write(dc.getBytes(e_cs));
-		raf.write(dc.getBytes(e_lfarlc));
-		raf.write(dc.getBytes(e_ovno));
 	}
 }

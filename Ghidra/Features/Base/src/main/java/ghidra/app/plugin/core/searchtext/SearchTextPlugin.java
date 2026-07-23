@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.searchtext;
 
 import java.awt.*;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -28,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.*;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
+import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.Highlight;
 import docking.widgets.table.threaded.*;
 import generic.theme.GIcon;
@@ -102,6 +104,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	private int searchLimit;
 	private SearchTask currentTask;
 	private String lastSearchedText;
+	private LastSearchHit lastSearchHit;
 	private boolean doHighlight;
 	private Navigatable navigatable;
 
@@ -150,15 +153,18 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		if (result == null) {
 			searchDialog.setStatusText("Not found");
 		}
-		else if (result.programLocation().equals(currentLocation)) {
-			searchNext(searchTask.getProgram(), searchNavigatable, textSearcher);
-		}
 		else {
 			searchDialog.setStatusText("");
 			ProgramLocation loc = result.programLocation();
 			if (goToService.goTo(searchNavigatable, loc, program)) {
 				new SearchTextHighlightProvider(searchNavigatable, searchOptions, null, program,
 					result);
+
+				// The navigatable may change its location if it does not have the search result
+				// location visible.  We store that here so we can later detect that case in order
+				// to keep the search from getting stuck.
+				ProgramLocation navigatableLoc = navigatable.getLocation();
+				lastSearchHit = new LastSearchHit(loc, navigatableLoc);
 			}
 		}
 
@@ -262,7 +268,20 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	}
 
 	private ProgramLocation getStartLocation() {
-		return currentLocation = navigatable.getLocation();
+
+		ProgramLocation currentNavLoc = navigatable.getLocation();
+		if (lastSearchHit != null) {
+			ProgramLocation lastNavLoc = lastSearchHit.navigatableLocation();
+
+			// The navigatable's location has not changed since the last search. Use the last search
+			// location as the start point for the next search.  This ensures the searching does not
+			// get stuck when the navigatable cannot display the last search hit.
+			if (lastNavLoc.equals(currentNavLoc)) {
+				return lastSearchHit.searchLocation();
+			}
+		}
+
+		return currentNavLoc;
 	}
 
 	private void searchNext(Program program, Navigatable searchNavigatable, Searcher textSearcher) {
@@ -534,7 +553,12 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 // Inner Classes
 //==================================================================================================
 
-	class TableLoadingListener implements ThreadedTableModelListener {
+	private record LastSearchHit(ProgramLocation searchLocation,
+			ProgramLocation navigatableLocation) {
+		//
+	}
+
+	private class TableLoadingListener implements ThreadedTableModelListener {
 
 		private ThreadedTableModel<?, ?> model;
 		private TableComponentProvider<ProgramLocation> provider;
@@ -572,8 +596,9 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 					"Stopped search after finding " + matchCount + " matches.\n" +
 						"The search limit can be changed at Edit->Tool Options, under Search.");
 			}
+
 			// there was a suggestion that the dialog should not go way after a search all
-//			searchDialog.close();
+			// searchDialog.close();
 		}
 
 		private Component getParentComponent() {
@@ -702,32 +727,37 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				return NO_HIGHLIGHTS;
 			}
 
-			int charOffset = searchResult.offset();
-			int searchStart = charOffset;
+			/*
+			 	Find the highlight start and end using the ProgramLocation.  The location is in 
+			 	model space, but the Highlights are in view space.  The field factory already knows
+			 	how to convert between these 2 spaces by providing a FieldLocation for the view 
+			 	space.
+			 */
+			BigInteger dummyIndex = BigInteger.ZERO;
+			int dummyFieldNumber = 0;
+			FieldLocation fieldLocation =
+				fieldFactory.getFieldLocation(field, dummyIndex, dummyFieldNumber, loc);
+
+			/*
+			 	We now need to handle the case where the view values have multiple rows.  The 
+			 	Highlight uses character offsets that treat multiple rows as one single line string.
+			 	Here we use the ListingField to convert from rows to a character offset. 
+			 */
+			int row = fieldLocation.getRow();
+			int col = fieldLocation.getCol();
+			int screenOffset = field.screenLocationToTextOffset(row, col);
+			int searchStart = screenOffset;
 			int searchEnd = searchStart + searchText.length();
 
-			Pattern regexp =
-				UserSearchUtils.createSearchPattern(searchText, searchOptions.isCaseSensitive());
-			Matcher matcher = regexp.matcher(text);
-			while (matcher.find()) {
-				int start = matcher.start();
-				int end = matcher.end();
-
-				// ensure the particular regex match is the actual search result
-				if (start == searchStart && end == searchEnd) {
-
-					Color hlColor = SearchConstants.SEARCH_HIGHLIGHT_COLOR;
-					if (start <= cursorTextOffset && end >= cursorTextOffset) {
-						// change the highlight color when in the field so it stands out
-						hlColor = SearchConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR;
-					}
-
-					// this is the matching search hit for a single search
-					int endEx = end - 1;
-					return new Highlight[] { new Highlight(start, endEx, hlColor) };
-				}
+			Color hlColor = SearchConstants.SEARCH_HIGHLIGHT_COLOR;
+			if (searchStart <= cursorTextOffset && searchEnd >= cursorTextOffset) {
+				// change the highlight color when in the field so it stands out
+				hlColor = SearchConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR;
 			}
-			return NO_HIGHLIGHTS;
+
+			// this is the matching search hit for a single search
+			int endInc = searchEnd - 1; // highlights are inclusive
+			return new Highlight[] { new Highlight(searchStart, endInc, hlColor) };
 		}
 
 		private boolean shouldHighlight(ListingField field) {

@@ -14,7 +14,7 @@
 # limitations under the License.
 ##
 import contextlib
-import warnings
+from typing_extensions import deprecated
 from typing import Union, TYPE_CHECKING, Tuple, Generator, List, Optional
 
 from pyghidra.converters import *  # pylint: disable=wildcard-import, unused-wildcard-import
@@ -169,6 +169,7 @@ def _analyze_program(flat_api, program):
 
 
 @contextlib.contextmanager
+@deprecated("open_program() is deprecated, use open_project() and program_context() or program_loader() instead.", stacklevel=3)
 def open_program(
         binary_path: Union[str, Path],
         project_location: Union[str, Path] = None,
@@ -206,11 +207,6 @@ def open_program(
     :raises ValueError: If the provided language, compiler or loader is invalid.
     :raises TypeError: If the provided loader does not implement `ghidra.app.util.opinion.Loader`.
     """
-    warnings.warn(
-        "open_program() is deprecated, use open_project() and program_context() or program_loader() instead.",
-        DeprecationWarning,
-        stacklevel=3
-    )
     
     from pyghidra.launcher import PyGhidraLauncher, HeadlessPyGhidraLauncher
 
@@ -320,6 +316,7 @@ def _flat_api(
 
 
 # pylint: disable=too-many-arguments
+@deprecated("run_script() is deprecated, use open_project() and ghidra_script() instead.", stacklevel=3)
 def run_script(
     binary_path: Optional[Union[str, Path]],
     script_path: Union[str, Path],
@@ -367,11 +364,6 @@ def run_script(
     :raises ValueError: If the provided language, compiler or loader is invalid.
     :raises TypeError: If the provided loader does not implement `ghidra.app.util.opinion.Loader`.
     """
-    warnings.warn(
-        "run_script() is deprecated, use open_project() and ghidra_script() instead.",
-        DeprecationWarning,
-        stacklevel=3
-    )
     
     script_path = str(script_path)
     args = binary_path, project_location, project_name, verbose, analyze, lang, compiler, loader, program_name, nested_project_location

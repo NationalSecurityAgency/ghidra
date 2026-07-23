@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,9 @@ package ghidra.feature.fid.db;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 
-import ghidra.program.model.lang.*;
-import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.Msg;
 import ghidra.util.exception.VersionException;
 
@@ -49,8 +46,8 @@ public class FidFile implements Comparable<FidFile> {
 	private final boolean isInstalled;
 	private boolean isActive = true;
 	private FidFileManager fidFileManager;
-	private Set<LanguageDescription> supportedLanguages;
 	private FidDB openUpdateableFidDB;
+	private FidFilter supportedLanguages;
 
 	FidFile(FidFileManager fidFileManager, File file, boolean isInstalled) {
 		this.fidFileManager = fidFileManager;
@@ -104,7 +101,7 @@ public class FidFile implements Comparable<FidFile> {
 			openUpdateableFidDB = fidDB;
 		}
 		if (supportedLanguages == null) {
-			supportedLanguages = getSupportedLanguages(fidDB);
+			supportedLanguages = new FidFilter(fidDB);
 		}
 		return fidDB;
 	}
@@ -180,45 +177,36 @@ public class FidFile implements Comparable<FidFile> {
 	}
 
 	/**
-	 * Tests if the Fid database for this FidFile supports the given language.
-	 * @param language the language to test.
-	 * @return true if this Fid Database supports the given language.
+	 * Tests if the database for this FidFile supports the given language, compiler, and source.
+	 * LanguageDescription maps to the set of CompilerSpecID that are supported for that language.
+	 * If there is no matching LanguageDescription in the map, the Program is not supported.
+	 * If the mapped Set<CompilerSpecID> is empty, then all specs are supported for the language.
+	 * If the mapped Set<CompilerSpecID> is not empty but there is no matching CompilerSpecID,
+	 * then the Program is not supported.
+	 * If the compilerSpec parameter is null, then the user wants to apply this
+	 * file even if the Program's compiler spec doesn't match.
+	 * If a set of supported source languages is present, then at least one provided source
+	 * language must match or the Program is not supported.
+	 * If the sourceSet parameter is null, then the user wants to apply this file even if
+	 * the Program's source languages don't match.
+	 * @param programID the program features to test
+	 * @return true if this Fid Database supports the given Program.
 	 */
-	public boolean canProcessLanguage(Language language) {
+	public boolean canProcess(FidProgramID programID) {
 		if (supportedLanguages == null) {
 			supportedLanguages = getSupportedLanguages();
 		}
-		return supportedLanguages.contains(language.getLanguageDescription());
+		return supportedLanguages.test(programID);
 	}
 
-	private Set<LanguageDescription> getSupportedLanguages(FidDB fidDB) {
-
-		Set<LanguageDescription> languages = new TreeSet<>(new ProcessorSizeComparator());
-		LanguageService languageService = DefaultLanguageService.getLanguageService();
-
-		List<LibraryRecord> allLibraries = fidDB.getAllLibraries();
-		for (LibraryRecord libraryRecord : allLibraries) {
-			LanguageID ghidraLanguageID = libraryRecord.getGhidraLanguageID();
-			try {
-				LanguageDescription languageDescription =
-					languageService.getLanguageDescription(ghidraLanguageID);
-				languages.add(languageDescription);
-			}
-			catch (LanguageNotFoundException e) {
-				// ignore language
-			}
-		}
-		return languages;
-	}
-
-	private Set<LanguageDescription> getSupportedLanguages() {
+	private FidFilter getSupportedLanguages() {
 		if (supportedLanguages != null) {
 			return supportedLanguages;
 		}
 		if (isValidFile() && supportedLanguages != null) {
 			return supportedLanguages;
 		}
-		supportedLanguages = new TreeSet<>(new ProcessorSizeComparator());
+		supportedLanguages = new FidFilter();
 		return supportedLanguages;
 	}
 
@@ -226,28 +214,5 @@ public class FidFile implements Comparable<FidFile> {
 		if (fidDB == openUpdateableFidDB) {
 			openUpdateableFidDB = null;
 		}
-	}
-
-	/**
-	 *  Comparator for deciding if a target language "matches" an architecture for a library
-	 *  We want processor family, endianness and "size" to match, but variant can be different
-	 */
-	private static class ProcessorSizeComparator implements Comparator<LanguageDescription> {
-
-		@Override
-		public int compare(LanguageDescription o1, LanguageDescription o2) {
-			int res = o1.getProcessor().compareTo(o2.getProcessor());
-			if (res != 0) {
-				return res;
-			}
-			if (o1.getSize() != o2.getSize()) {
-				return (o1.getSize() < o2.getSize()) ? -1 : 1;
-			}
-			if (o1.getInstructionEndian() != o2.getInstructionEndian()) {
-				return o1.getInstructionEndian().isBigEndian() ? -1 : 1;
-			}
-			return 0;
-		}
-
 	}
 }

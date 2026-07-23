@@ -4,7 +4,7 @@
 <title>Function ID</title>
 <link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="../../shared/languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="index.html" title="Function ID">
 <link rel="up" href="index.html" title="Function ID">
 <link rel="prev" href="index.html" title="Function ID">
@@ -29,7 +29,9 @@ where the compiled form of the functions does not change. Because of the hashing
 functions remain identifiable even if the library is relocated during linking.
 Larger changes to the compilation process of the library however
 will likely prevent successful searches.
-Function ID databases are necessarily targeted to a specific processor.
+Function ID databases are necessarily targeted to a specific processor and optionally to specific
+compilers or source languages.
+
 </p>
 <p>
 Function ID generally runs as part of <span class="bold"><strong>Auto Analysis</strong></span> but can
@@ -189,7 +191,7 @@ toggle whether the analyzer is active or not, and if
 presents some configurable options for the analyzer.
   </p>
 <div class="informalexample"><div class="variablelist"><dl class="variablelist">
-<dt><span class="term"><span class="bold"><strong>Instruction count threshold</strong></span></span></dt>
+<dt><span class="term"><span class="bold"><strong>Instruction Count Threshold</strong></span></span></dt>
 <dd><p>
       This is the <span class="bold"><strong>primary threshold</strong></span> a potential
       match must exceed in order to be reported by
@@ -199,7 +201,7 @@ presents some configurable options for the analyzer.
       the score counts the number of instructions in the
       function plus instructions in any matching parent or child.
       </p></dd>
-<dt><span class="term"><span class="bold"><strong>Multiple match threshold</strong></span></span></dt>
+<dt><span class="term"><span class="bold"><strong>Multiple Match Threshold</strong></span></span></dt>
 <dd><p>
       In general for a single function, if there are multiple potential matches
       all with different names, this is a good sign that the matches are random,
@@ -207,7 +209,7 @@ presents some configurable options for the analyzer.
       this threshold, the analyzer will report a <span class="emphasis"><em>Multiple Match</em></span>.
       (See <a class="xref" href="FunctionID.html#multiplematches" title="Multiple Matches">&#8220;Multiple Matches&#8221;</a>)
       </p></dd>
-<dt><span class="term"><span class="bold"><strong>Always apply FID labels</strong></span></span></dt>
+<dt><span class="term"><span class="bold"><strong>Always Apply FID Labels</strong></span></span></dt>
 <dd><p>
       If this toggle is on, the analyzer will report matches even if there is
       already an imported or user defined name for the function.
@@ -216,6 +218,13 @@ presents some configurable options for the analyzer.
 <dd><p>
       The analyzer will only create bookmarks for matches if this toggle is on.
       This does not affect insertion of comments and symbols.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Ignore Database Filters</strong></span></span></dt>
+<dd><p>
+	  If this toggle is on, the analyzer will ignore any compiler or
+	  source language filters built into a FID database.  Matching will be
+	  attempted when a database targets the same processor as the program,
+	  even if it targets different compilers or source languages.
       </p></dd>
 </dl></div></div>
 <p>

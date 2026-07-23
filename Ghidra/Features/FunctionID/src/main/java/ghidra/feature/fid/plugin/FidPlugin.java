@@ -121,7 +121,7 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Detach attached FidDb", getName())
-				.enabledWhen(ac -> enabledForUserFidFiles())
+				.enabledWhen(ac -> fidFileManager.hasUserFidFiles())
 				.onAction(ac -> removeFidFile())
 				.menuPath(ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Detach attached FidDb...")
 				.menuGroup(MENU_GROUP_1, "4")
@@ -130,7 +130,6 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Populate FidDb from programs", getName())
-				.enabledWhen(ac -> enabledForUserFidFiles())
 				.onAction(ac -> {
 					fidFileManager.load();
 					PopulateFidDialog populateFidDialog = new PopulateFidDialog(tool, service);
@@ -151,15 +150,6 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 			return true;
 		}
 		return fidFileManager.hasFidFiles();
-	}
-
-	private boolean enabledForUserFidFiles() {
-		if (!fidFileManager.hasLoadedFidFiles()) {
-			// We haven't loaded Fid files yet.  Since we don't know if we can enable, return true
-			// so users can at least try to perform the action.
-			return true;
-		}
-		return fidFileManager.hasUserFidFiles();
 	}
 
 	/**

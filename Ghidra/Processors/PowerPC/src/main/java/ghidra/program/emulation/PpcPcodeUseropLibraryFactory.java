@@ -19,7 +19,7 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibraryFactory.UseropLibrary;
 
-@UseropLibrary("ppc")
+@UseropLibrary(id = "ppc")
 public class PpcPcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	@Override
 	public <T> PcodeUseropLibrary<T> create(SleighLanguage language,

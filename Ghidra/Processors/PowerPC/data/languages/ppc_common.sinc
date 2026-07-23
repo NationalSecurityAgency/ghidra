@@ -47,7 +47,7 @@ define register offset=0x500 size=1 [ fp_fx fp_fex fp_vx fp_ox
 				      fp_cc0 fp_cc1 fp_cc2 fp_cc3
 				      fp_reserve1 fp_vxsoft fp_vxsqrt fp_vxcvi
 				      fp_ve fp_oe fp_ue fp_ze
-				      fp_xe fp_ni fp_rn0 fp_rn1 ];
+				      fp_xe fp_ni fp_rn0 fp_rn1 fp_drn ];
 
 define register offset = 0x700 size =$(REGISTER_SIZE) [MSR];
 define register offset = 0x720	size=$(REGISTER_SIZE) [RESERVE_ADDRESS];
@@ -676,6 +676,7 @@ define token instr(32)
 	CT=(21,25)  
 	CT2=(21,24)  
 	CX=(3,3)
+	CYex=(9,10)
 	D0=(6,15) signed
 	D1=(16,20)
 	D2=(0,0)
@@ -690,6 +691,7 @@ define token instr(32)
 	DM2=(2,2)
 	DQ=(4,15)
 	DQs=(4,15) signed
+	DRM=(11,13)
 	DS=(2,15)
 	DSs=(2,15) signed
 	DX=(16,20)
@@ -713,6 +715,7 @@ define token instr(32)
 	fS=(21,25)
 	fT=(21,25)
 	IMM=(11,15)
+	IMM4=(11,14)
 
 	EVUIMM=(11,15)
 	BU_UIMM=(16,20)
@@ -724,6 +727,7 @@ define token instr(32)
 	L= (21,22)
 	L2=(21,21)
 	L16=(16,17)
+	LBIT=(16,16)
 	LEV=(5,11)
 	LI=(2,25) signed
 	LK=(0,0)
@@ -743,6 +747,7 @@ define token instr(32)
 	
     RA=(16,20)
 	RB=(11,15)
+	RM=(11,12)
 	RS=(21,25)
 	RT=(21,25)
 	R0=(0,0)
@@ -1780,8 +1785,7 @@ macro storeRegisterPartial(reg, ea, sa) {
   ea = ea + 4;
 }
 
-
-macro packbits( D,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,
+ macro packbits( D,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,
                a16,a17,a18,a19,a20,a21,a22,a23,a24,a25,a26,a27,a28,a29,a30,a31) {
  D = zext(a31) & 1;
  D=D|(zext(a0)&1)<<31; D=D|(zext(a1)&1)<<30; D=D|(zext(a2)&1)<<29; D=D|(zext(a3)&1)<<28;
@@ -1793,6 +1797,7 @@ macro packbits( D,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,
  D=D|(zext(a24)&1)<<7;  D=D|(zext(a25)&1)<<6; D=D|(zext(a26)&1)<<5;  D=D|(zext(a27)&1)<<4;
  D=D|(zext(a28)&1)<<3;  D=D|(zext(a29)&1)<<2; D=D|(zext(a30)&1)<<1;
  }
+ 
 
 macro unpackbits(D,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,
                a16,a17,a18,a19,a20,a21,a22,a23,a24,a25,a26,a27,a28,a29,a30,a31) {
@@ -1803,13 +1808,15 @@ macro unpackbits(D,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,
  a16=(D&0x8000)!=0; a17=(D&0x4000)!=0; a18=(D&0x2000)!=0; a19=(D&0x1000)!=0;
  a20=(D&0x800)!=0; a21=(D&0x400)!=0; a22=(D&0x200)!=0; a23=(D&0x100)!=0;
  a24=(D&0x80)!=0; a25=(D&0x40)!=0; a26=(D&0x20)!=0; a27=(D&0x10)!=0;
- a28=(D&0x8)!=0; a29=(D&0x4)!=0; a30=(D&0x2)!=0; a31=(D&0x1)!=0; }
+ a28=(D&0x8)!=0; a29=(D&0x4)!=0; a30=(D&0x2)!=0; a31=(D&0x1)!=0;
+ }
 
 macro packFPSCR(tmp) {
 	packbits(tmp, fp_fx, fp_fex, fp_vx, fp_ox, fp_ux, fp_zx, fp_xx, fp_vxsnan,
 	fp_vxisi, fp_vxidi, fp_vxzdz, fp_vximz, fp_vxvc, fp_fr, fp_fi, fp_c,
 	fp_cc0, fp_cc1, fp_cc2, fp_cc3, fp_reserve1, fp_vxsoft, fp_vxsqrt,
 	fp_vxcvi, fp_ve, fp_oe, fp_ue, fp_ze, fp_xe, fp_ni, fp_rn0, fp_rn1);
+	tmp[32,3] = fp_drn;
 }
 macro unpackFPSCR(tmp) {
   unpackbits(tmp, fp_fx, fp_fex, fp_vx, fp_ox,
@@ -1819,7 +1826,8 @@ macro unpackFPSCR(tmp) {
 		    fp_cc0, fp_cc1, fp_cc2, fp_cc3,
 		    fp_reserve1, fp_vxsoft, fp_vxsqrt, fp_vxcvi,
 		    fp_ve, fp_oe, fp_ue, fp_ze,
-		    fp_xe, fp_ni, fp_rn0, fp_rn1); 
+		    fp_xe, fp_ni, fp_rn0, fp_rn1);
+  fp_drn = tmp[32,3];
 }
 
 

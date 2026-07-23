@@ -15,17 +15,28 @@
  */
 package ghidra.app.plugin.core.assembler;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.collections4.map.DefaultedMap;
+import org.apache.commons.collections4.map.LazyMap;
+
 import docking.ActionContext;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.ProgramPlugin;
+import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.util.Msg;
+import ghidra.util.task.CachingSwingWorker;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * A plugin for assembly
@@ -54,12 +65,77 @@ import ghidra.program.model.mem.MemBuffer;
 public class AssemblerPlugin extends ProgramPlugin {
 	public static final String ASSEMBLER_NAME = "Assembler";
 
+	private static final String ASSEMBLY_RATING = "assemblyRating";
+	private static final String ASSEMBLY_MESSAGE = "assemblyMessage";
+
+	/**
+	 * Enumerated quality ratings and text to describe them.
+	 */
+	static enum AssemblyRating {
+		UNRATED("This processor has not been tested with the assembler." +
+			" The assembler will probably work on this language."),
+		POOR("This processor received a rating of POOR during testing." +
+			" We DO NOT recommend trying to assemble."),
+		BRONZE("This processor received a rating of BRONZE during testing." +
+			" A fair number of instructions may assemble, but we DO NOT recommend trying to" +
+			" assemble."),
+		SILVER("This processor received a rating of SILVER during testing." +
+			" Most instructions should work, but you will likely encounter a few errors."),
+		GOLD("This processor received a rating of GOLD during testing." +
+			" You should rarely encounter an error."),
+		PLATINUM("This processor received a rating of PLATINUM during testing.");
+
+		final String message;
+
+		private AssemblyRating(String message) {
+			this.message = message;
+		}
+	}
+
+	// To build the assembler in the background if it takes a while
+	private static class AssemblerConstructorWorker extends CachingSwingWorker<Assembler> {
+		private Language language;
+
+		public AssemblerConstructorWorker(Language language) {
+			super("Assemble", false);
+			this.language = language;
+		}
+
+		@Override
+		protected Assembler runInBackground(TaskMonitor monitor) {
+			monitor.setMessage("Constructing assembler for " + language);
+			return Assemblers.getAssembler(language);
+		}
+	}
+
+	public static final Map<Language, CachingSwingWorker<Assembler>> CACHE =
+		LazyMap.lazyMap(new HashMap<>(), language -> new AssemblerConstructorWorker(language));
+
+	/*test*/ static final Map<Language, Boolean> SHOWN_WARNING =
+		DefaultedMap.defaultedMap(new HashMap<>(), false);
+
 	/*test*/ PatchInstructionAction patchInstructionAction;
 	/*test*/ PatchDataAction patchDataAction;
+	/*test*/ AssemblePatchAction assemblePatchAction;
 
 	public AssemblerPlugin(PluginTool tool) {
 		super(tool);
 		createActions();
+	}
+
+	protected static void warnLanguage(Language language) {
+		AssemblyRating rating = AssemblyRating.valueOf(
+			language.getProperty(ASSEMBLY_RATING + ":" + language.getLanguageID(),
+				AssemblyRating.UNRATED.name()));
+		if (AssemblyRating.PLATINUM != rating) {
+			String message = language.getProperty(ASSEMBLY_MESSAGE + ":" + language.getLanguageID(),
+				rating.message);
+			if (!SHOWN_WARNING.get(language)) {
+				Msg.showWarn(AssemblerPlugin.class, null, "Assembler Rating",
+					"<html><body><p style='width: 300px;'>" + message + "</p></body></html>");
+				SHOWN_WARNING.put(language, true);
+			}
+		}
 	}
 
 	private void createActions() {
@@ -97,6 +173,23 @@ public class AssemblerPlugin extends ProgramPlugin {
 			}
 		};
 		tool.addAction(patchDataAction);
+
+		assemblePatchAction = new AssemblePatchAction(this, "Assemble") {
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return super.isEnabledForContext(context) &&
+					context instanceof ListingActionContext lac &&
+					!lac.getNavigatable().isDynamic();
+			}
+
+			@Override
+			public boolean isAddToPopup(ActionContext context) {
+				return super.isAddToPopup(context) &&
+					context instanceof ListingActionContext lac &&
+					!lac.getNavigatable().isDynamic();
+			}
+		};
+		tool.addAction(assemblePatchAction);
 	}
 
 	@Override

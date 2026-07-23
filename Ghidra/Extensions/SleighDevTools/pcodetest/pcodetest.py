@@ -91,7 +91,6 @@ class PCodeTestBuild(BuildUtil):
 
         # make sure compiler exists and runnable
         self.config.compile_exe = self.config.exec_dir + self.config.exec_prefix + self.config.compile_exe
-        self.config.build_exe = self.config.exec_dir + str(self.config.exec_prefix) + str(self.config.build_exe)
         self.config.strip_exe = self.config.exec_dir + str(self.config.exec_prefix) + str(self.config.strip_exe)
         self.config.objdump_exe = self.config.exec_dir + str(self.config.exec_prefix) + str(self.config.objdump_exe)
         self.config.readelf_exe = self.config.exec_dir + str(self.config.exec_prefix) + str(self.config.readelf_exe)

@@ -25,6 +25,7 @@ import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.TargetPublicationListener;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.tracermi.*;
+import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 
@@ -79,6 +80,15 @@ public class TraceRmiServiceNode extends AbstractTraceRmiManagerNode
 		}
 		if (node == null) {
 			return;
+		}
+		removeNode(node);
+	}
+
+	@Internal
+	public void cleanConnectionNode(TraceRmiConnectionNode node) {
+		TraceRmiConnection connection = node.getConnection();
+		synchronized (connectionNodes) {
+			connectionNodes.remove(connection);
 		}
 		removeNode(node);
 	}

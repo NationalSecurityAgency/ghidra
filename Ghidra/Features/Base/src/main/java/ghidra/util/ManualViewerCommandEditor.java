@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 package ghidra.util;
+
+
+import static ghidra.util.HTMLUtilities.*;
+import static ghidra.util.ManualViewerCommandWrappedOption.*;
 
 import java.awt.Component;
 import java.awt.event.ItemEvent;
@@ -35,20 +39,29 @@ import ghidra.util.layout.PairLayout;
 public class ManualViewerCommandEditor extends PropertyEditorSupport
 		implements CustomOptionsEditor {
 
-	private static final String FILE_FORMAT_DESCRIPTION =
-		"This determines the format of the " + "URL that is sent to the process above.  If " +
-			ManualViewerCommandWrappedOption.HTTP_URL_REPLACEMENT_STRING +
-			" is chosen, then an HTTP URL will be passed to the process.  If " +
-			ManualViewerCommandWrappedOption.FILE_URL_REPLACEMENT_STRING +
-			" is chosen, the a File URL will be sent to " + "the process.  If " +
-			ManualViewerCommandWrappedOption.FILENAME_REPLACEMENT_STRING +
-			" is chosen, then only the file path will be sent to the process.";
+	//@formatter:off
+	private static final String FILE_FORMAT_DESCRIPTION = """
+		This determines the format of the URL that is sent to the process above.
+		 - %s: an HTTP URL will be passed to the process.  
+		 - %s: a File URL will be passed to the process.  
+		 - %s: only the file path will be passed to the process.
+		""".formatted(HTTP_URL_REPLACEMENT_STRING, 
+			          FILE_URL_REPLACEMENT_STRING, 
+			          FILENAME_REPLACEMENT_STRING);
+	//@formatter:on
+
 	private static final String COMMAND_STRING_DESCRIPTION = "This is the name of, or a full " +
-		"path to an executable that will be launched to open the processor manual.  " +
-		"Examples include 'firefox', 'netscape', 'open', etc.";
-	private static final String COMMAND_ARGUMENTS_DESCRIPTION =
-		"These are the arguments that will " +
-			"be passed to the command given in the 'Command String' field.";
+		"path to an executable that will be launched to open the processor manual.\n" +
+		"Examples: 'google-chrome', 'open', etc.";
+
+	//@formatter:off
+	private static final String COMMAND_ARGUMENTS_DESCRIPTION = """
+			Arguments passed to the command.
+			 - %s: replaced with the manual page number.
+			 - %s: replaced with manual filename; automatically appended if not specified.
+			""".formatted(PAGE_REPLACEMENT_STRING, 
+					 	  FILENAME_REPLACEMENT_STRING);
+	//@formatter:on
 
 	private static final String[] DESCRIPTIONS =
 		{ FILE_FORMAT_DESCRIPTION, COMMAND_STRING_DESCRIPTION, COMMAND_ARGUMENTS_DESCRIPTION };
@@ -70,6 +83,7 @@ public class ManualViewerCommandEditor extends PropertyEditorSupport
 	public ManualViewerCommandEditor() {
 		editorComponent = new LaunchDataInputPanel();
 	}
+
 
 	@Override
 	public String[] getOptionDescriptions() {
@@ -119,7 +133,7 @@ public class ManualViewerCommandEditor extends PropertyEditorSupport
 				"Unable to parse command arguments: " + argumentsField.getText(), e);
 			return wrappedOption; // signal that the options haven't changed
 		}
-		newOption.setUrlReplacementString((String) fileFormatComboBox.getSelectedItem());
+		newOption.setFileFormat((String) fileFormatComboBox.getSelectedItem());
 		return newOption;
 	}
 
@@ -177,7 +191,7 @@ public class ManualViewerCommandEditor extends PropertyEditorSupport
 
 			argumentsField.setText(buffer.toString().trim());
 
-			fileFormatComboBox.setSelectedItem(option.getUrlReplacementString());
+			fileFormatComboBox.setSelectedItem(option.getFileFormat());
 		}
 
 		ManualViewerCommandWrappedOption getOption() {
@@ -194,7 +208,7 @@ public class ManualViewerCommandEditor extends PropertyEditorSupport
 			}
 			option.setCommandArguments(arguments);
 
-			option.setUrlReplacementString((String) fileFormatComboBox.getSelectedItem());
+			option.setFileFormat((String) fileFormatComboBox.getSelectedItem());
 
 			return option;
 		}
@@ -206,21 +220,18 @@ public class ManualViewerCommandEditor extends PropertyEditorSupport
 
 			JLabel commandLabel = new GDLabel(COMMAND_STRING_LABEL);
 			commandLabel.setToolTipText(COMMAND_STRING_DESCRIPTION);
-			commandField = new JTextField(30);
+			commandField = new JTextField(50);
 
 			JLabel argumentsLabel = new GDLabel(COMMAND_ARGUMENTS_LABEL);
-			argumentsLabel.setToolTipText(COMMAND_ARGUMENTS_DESCRIPTION);
-			argumentsField = new JTextField(20);
+			argumentsLabel.setToolTipText(toHTML(COMMAND_ARGUMENTS_DESCRIPTION));
+			argumentsField = new JTextField(50);
 
 			JLabel formatLabel = new GDLabel(FILE_FORMAT_LABEL);
-			formatLabel.setToolTipText(FILE_FORMAT_DESCRIPTION);
+			formatLabel.setToolTipText(toHTML(FILE_FORMAT_DESCRIPTION));
 			fileFormatComboBox = new GComboBox<>();
-			fileFormatComboBox.addItem(
-				ManualViewerCommandWrappedOption.HTTP_URL_REPLACEMENT_STRING);
-			fileFormatComboBox.addItem(
-				ManualViewerCommandWrappedOption.FILE_URL_REPLACEMENT_STRING);
-			fileFormatComboBox.addItem(
-				ManualViewerCommandWrappedOption.FILENAME_REPLACEMENT_STRING);
+			fileFormatComboBox.addItem(HTTP_URL_REPLACEMENT_STRING);
+			fileFormatComboBox.addItem(FILE_URL_REPLACEMENT_STRING);
+			fileFormatComboBox.addItem(FILENAME_REPLACEMENT_STRING);
 			fileFormatComboBox.setSelectedIndex(0);
 
 			// add each grouping of widgets as a single line in the main panel's vertical layout;

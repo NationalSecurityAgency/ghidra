@@ -27,6 +27,7 @@ import javax.accessibility.*;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.*;
+import ghidra.util.Msg;
 
 /**
  * Contains all the code for implementing the AccessibleFieldPanel which is an inner class in
@@ -227,8 +228,9 @@ public class AccessibleFieldPanelDelegate {
 	 */
 	public AccessibleField getAccessibleField(FieldLocation loc) {
 		AccessibleLayout accessibleLayout = getAccessibleLayout(loc.getIndex());
+		int fieldNum = loc.getFieldNum();
 		if (accessibleLayout != null) {
-			return getAccessibleField(accessibleLayout.getStartingFieldNum() + loc.getFieldNum());
+			return getAccessibleField(accessibleLayout.getStartingFieldNum() + fieldNum);
 		}
 
 		LayoutModel layoutModel = panel.getLayoutModel();
@@ -236,8 +238,12 @@ public class AccessibleFieldPanelDelegate {
 		if (layout == null) {
 			return null;
 		}
-		Field field = layout.getField(loc.getFieldNum());
-		return new AccessibleField(field, panel, loc.getFieldNum(), null);
+		Field field = layout.getField(fieldNum);
+		if (field == null) {
+			Msg.warn(this, "Can't find field for given FieldLocation, loc = " + loc);
+			return null;
+		}
+		return new AccessibleField(field, panel, fieldNum, null);
 	}
 
 	private AccessibleLayout getAccessibleLayout(BigInteger index) {

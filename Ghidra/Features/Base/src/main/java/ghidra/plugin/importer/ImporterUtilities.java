@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.*;
 
 import docking.widgets.OptionDialog;
+import ghidra.app.events.ProgramAddedToPluginEvent;
 import ghidra.app.plugin.core.help.AboutDomainObjectUtils;
 import ghidra.app.services.FileSystemBrowserService;
 import ghidra.app.services.ProgramManager;
@@ -506,7 +507,7 @@ public class ImporterUtilities {
 	}
 
 	public static void addContentToProgram(PluginTool tool, Program program, FSRL fsrl,
-			LoadSpec loadSpec, List<Option> options, TaskMonitor monitor) {
+			LoadSpec loadSpec, List<Option> options, boolean analyze, TaskMonitor monitor) {
 
 		Objects.requireNonNull(monitor);
 
@@ -524,6 +525,8 @@ public class ImporterUtilities {
 			if (!Loader.loggingDisabled && messageLog.hasMessages()) {
 				Msg.info(ImporterUtilities.class, "Additional info:\n" + messageLog.toString());
 			}
+
+			tool.firePluginEvent(new ProgramAddedToPluginEvent("Add To Program", program, analyze));
 		}
 		catch (CancelledException e) {
 			return;

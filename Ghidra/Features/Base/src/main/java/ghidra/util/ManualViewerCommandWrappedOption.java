@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.util;
+
+import java.util.Objects;
 
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
@@ -28,16 +30,21 @@ public class ManualViewerCommandWrappedOption implements CustomOption {
 	static final String FILE_URL_REPLACEMENT_STRING = "${FILE_URL}";
 	static final String FILENAME_REPLACEMENT_STRING = "${FILENAME}";
 
+	/**
+	 * Token that may be used within the command arguments; it is replaced with the manual page
+	 * number when the command is launched.
+	 */
+	static final String PAGE_REPLACEMENT_STRING = "${PAGE}";
+
 	private static final String COMMAND_STRING = "commandString";
 	private static final String COMMAND_ARGUMENTS = "commandArguments";
 	private static final String URL_STRING = "urlReplacementString";
 
-	private static final String DEFAULT_URL_REPLACEMENT_STRING =
-		ManualViewerCommandWrappedOption.HTTP_URL_REPLACEMENT_STRING;
+	private static final String DEFAULT_URL_REPLACEMENT_STRING = HTTP_URL_REPLACEMENT_STRING;
 
 	private String commandString;
 	private String[] commandArguments;
-	private String urlReplacementString;
+	private String fileFormat;
 
 	public ManualViewerCommandWrappedOption() {
 		// required for persistence
@@ -47,14 +54,14 @@ public class ManualViewerCommandWrappedOption implements CustomOption {
 	public void readState(GProperties properties) {
 		commandString = properties.getString(COMMAND_STRING, null);
 		commandArguments = properties.getStrings(COMMAND_ARGUMENTS, null);
-		urlReplacementString = properties.getString(URL_STRING, null);
+		fileFormat = properties.getString(URL_STRING, null);
 	}
 
 	@Override
 	public void writeState(GProperties properties) {
 		properties.putString(COMMAND_STRING, commandString);
 		properties.putStrings(COMMAND_ARGUMENTS, commandArguments);
-		properties.putString(URL_STRING, urlReplacementString);
+		properties.putString(URL_STRING, fileFormat);
 	}
 
 	@Override
@@ -62,7 +69,7 @@ public class ManualViewerCommandWrappedOption implements CustomOption {
 		int hash = 0;
 
 		hash += commandString == null ? 0 : commandString.hashCode();
-		hash += urlReplacementString == null ? 0 : urlReplacementString.hashCode();
+		hash += fileFormat == null ? 0 : fileFormat.hashCode();
 
 		if (commandArguments != null) {
 			for (String arg : commandArguments) {
@@ -84,9 +91,9 @@ public class ManualViewerCommandWrappedOption implements CustomOption {
 		}
 
 		ManualViewerCommandWrappedOption otherOption = (ManualViewerCommandWrappedOption) obj;
-		return SystemUtilities.isEqual(commandString, otherOption.commandString) &&
-			SystemUtilities.isEqual(urlReplacementString, otherOption.urlReplacementString) &&
-			SystemUtilities.isArrayEqual(commandArguments, otherOption.commandArguments);
+		return Objects.equals(commandString, otherOption.commandString) &&
+			Objects.equals(fileFormat, otherOption.fileFormat) &&
+			Objects.deepEquals(commandArguments, otherOption.commandArguments);
 	}
 
 	public String getCommandString() {
@@ -105,12 +112,12 @@ public class ManualViewerCommandWrappedOption implements CustomOption {
 		this.commandArguments = commandArguments;
 	}
 
-	public String getUrlReplacementString() {
-		return urlReplacementString;
+	public String getFileFormat() {
+		return fileFormat;
 	}
 
-	public void setUrlReplacementString(String urlReplacementString) {
-		this.urlReplacementString = urlReplacementString;
+	public void setFileFormat(String newFormat) {
+		this.fileFormat = newFormat;
 	}
 
 	public static ManualViewerCommandWrappedOption getDefaultBrowserLoaderOptions() {
@@ -120,22 +127,22 @@ public class ManualViewerCommandWrappedOption implements CustomOption {
 			option.setCommandString(System.getenv("ComSpec"));
 			String[] args = new String[] { "/c", "start" };
 			option.setCommandArguments(args);
-			option.setUrlReplacementString(DEFAULT_URL_REPLACEMENT_STRING);
+			option.setFileFormat(DEFAULT_URL_REPLACEMENT_STRING);
 		}
 		else if (Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.LINUX) {
-			option.setCommandString("firefox");
+			option.setCommandString("google-chrome");
 			option.setCommandArguments(new String[] {});
-			option.setUrlReplacementString(DEFAULT_URL_REPLACEMENT_STRING);
+			option.setFileFormat(DEFAULT_URL_REPLACEMENT_STRING);
 		}
 		else if (Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.MAC_OS_X) {
 			option.setCommandString("open");
 			option.setCommandArguments(new String[] {});
-			option.setUrlReplacementString(DEFAULT_URL_REPLACEMENT_STRING);
+			option.setFileFormat(DEFAULT_URL_REPLACEMENT_STRING);
 		}
 		else {
 			option.setCommandString("");
 			option.setCommandArguments(new String[] {});
-			option.setUrlReplacementString(DEFAULT_URL_REPLACEMENT_STRING);
+			option.setFileFormat(DEFAULT_URL_REPLACEMENT_STRING);
 		}
 
 		return option;

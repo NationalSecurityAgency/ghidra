@@ -93,8 +93,11 @@ public enum TraceEmulationIntegration {
 			TraceThread thread, int frame) {
 		Writer writer = new TraceWriter(access) {
 			@Override
-			protected PcodeTraceRegistersAccess getRegAccess(PcodeThread<?> ignored) {
-				return access.getDataForLocalState(thread, frame);
+			protected PcodeTraceDataAccess getDataAccess(PcodeTraceAccess access,
+					AddressSpace space, PcodeThread<?> ignored) {
+				return space.isRegisterSpace()
+						? access.getDataForLocalState(thread, frame)
+						: access.getDataForSharedState();
 			}
 		};
 		writer.putHandler(new ImmediateBytesPieceHandler());
@@ -222,6 +225,7 @@ public enum TraceEmulationIntegration {
 		/**
 		 * An uninitialized portion of a state piece is being read (concrete addressing).
 		 * 
+		 * @param writer the writer
 		 * @param acc the trace access shim for the relevant state (shared or local)
 		 * @param thread the thread, if applicable. This is null if either the state being accessed
 		 *            is the emulator's shared state, or if the state is bound to a plain
@@ -232,12 +236,13 @@ public enum TraceEmulationIntegration {
 		 * @see PcodeEmulationCallbacks#readUninitialized(PcodeThread, PcodeExecutorStatePiece,
 		 *      AddressSetView, Reason)
 		 */
-		AddressSetView readUninitialized(PcodeTraceDataAccess acc, PcodeThread<?> thread,
-				PcodeExecutorStatePiece<A, T> piece, AddressSetView set);
+		AddressSetView readUninitialized(Writer writer, PcodeTraceDataAccess acc,
+				PcodeThread<?> thread, PcodeExecutorStatePiece<A, T> piece, AddressSetView set);
 
 		/**
 		 * An uninitialized portion of a state piece is being read (abstract addressing).
 		 * 
+		 * @param writer the writer
 		 * @param acc the trace access shim for the relevant state (shared or local)
 		 * @param thread the thread, if applicable. This is null if either the state being accessed
 		 *            is the emulator's shared state, or if the state is bound to a plain
@@ -251,15 +256,16 @@ public enum TraceEmulationIntegration {
 		 * @see PcodeEmulationCallbacks#readUninitialized(PcodeThread, PcodeExecutorStatePiece,
 		 *      AddressSpace, Object, int, Reason)
 		 */
-		default int abstractReadUninit(PcodeTraceDataAccess acc, PcodeThread<?> thread,
-				PcodeExecutorStatePiece<A, T> piece, AddressSpace space, A offset, int length,
-				Reason reason) {
+		default int abstractReadUninit(Writer writer, PcodeTraceDataAccess acc,
+				PcodeThread<?> thread, PcodeExecutorStatePiece<A, T> piece, AddressSpace space,
+				A offset, int length, Reason reason) {
 			return 0;
 		}
 
 		/**
 		 * Data was written (concrete addressing).
 		 * 
+		 * @param writer the writer
 		 * @param acc the trace access shim for the relevant state (shared or local)
 		 * @param written the {@link Writer}'s current log of written addresses (mutable).
 		 *            Typically, this is not accessed but rather passed to delegate methods.
@@ -274,7 +280,7 @@ public enum TraceEmulationIntegration {
 		 * @see PcodeEmulationCallbacks#dataWritten(PcodeThread, PcodeExecutorStatePiece, Address,
 		 *      int, Object)
 		 */
-		default boolean dataWritten(PcodeTraceDataAccess acc, AddressSet written,
+		default boolean dataWritten(Writer writer, PcodeTraceDataAccess acc, AddressSet written,
 				PcodeThread<?> thread, PcodeExecutorStatePiece<A, T> piece, Address address,
 				int length, T value) {
 			return false;
@@ -283,6 +289,7 @@ public enum TraceEmulationIntegration {
 		/**
 		 * Data was written (abstract addressing).
 		 * 
+		 * @param writer the writer
 		 * @param acc the trace access shim for the relevant state (shared or local)
 		 * @param written the {@link Writer}'s current log of written addresses (mutable).
 		 *            Typically, this is not accessed but rather passed to delegate methods.
@@ -297,7 +304,7 @@ public enum TraceEmulationIntegration {
 		 * @see PcodeEmulationCallbacks#dataWritten(PcodeThread, PcodeExecutorStatePiece,
 		 *      AddressSpace, Object, int, Object)
 		 */
-		default void abstractWritten(PcodeTraceDataAccess acc, AddressSet written,
+		default void abstractWritten(Writer writer, PcodeTraceDataAccess acc, AddressSet written,
 				PcodeThread<?> thread, PcodeExecutorStatePiece<A, T> piece, AddressSpace space,
 				A offset, int length, T value) {
 		}
@@ -310,12 +317,13 @@ public enum TraceEmulationIntegration {
 		 * also have state assigned to abstract addresses. In such cases, it is up to the handler to
 		 * track what has been written.
 		 * 
+		 * @param writer the writer
 		 * @param into the destination trace access
 		 * @param thread the thread associated with the piece's state
 		 * @param piece the source state piece
 		 * @param written the portion that is known to have been written
 		 */
-		void writeDown(PcodeTraceDataAccess into, PcodeThread<?> thread,
+		void writeDown(TraceWriter writer, PcodeTraceAccess into, PcodeThread<?> thread,
 				PcodeExecutorStatePiece<A, T> piece, AddressSetView written);
 	}
 
@@ -340,13 +348,14 @@ public enum TraceEmulationIntegration {
 		}
 
 		@Override
-		public AddressSetView readUninitialized(PcodeTraceDataAccess acc, PcodeThread<?> thread,
-				PcodeExecutorStatePiece<Void, Void> piece, AddressSetView set) {
+		public AddressSetView readUninitialized(Writer writer, PcodeTraceDataAccess acc,
+				PcodeThread<?> thread, PcodeExecutorStatePiece<Void, Void> piece,
+				AddressSetView set) {
 			return set;
 		}
 
 		@Override
-		public void writeDown(PcodeTraceDataAccess into, PcodeThread<?> thread,
+		public void writeDown(TraceWriter writer, PcodeTraceAccess into, PcodeThread<?> thread,
 				PcodeExecutorStatePiece<Void, Void> piece, AddressSetView written) {
 		}
 	}
@@ -372,8 +381,9 @@ public enum TraceEmulationIntegration {
 		}
 
 		@Override
-		public AddressSetView readUninitialized(PcodeTraceDataAccess acc, PcodeThread<?> thread,
-				PcodeExecutorStatePiece<byte[], byte[]> piece, AddressSetView set) {
+		public AddressSetView readUninitialized(Writer writer, PcodeTraceDataAccess acc,
+				PcodeThread<?> thread, PcodeExecutorStatePiece<byte[], byte[]> piece,
+				AddressSetView set) {
 			// NOTE: For simplicity, read without regard to gaps
 			// NOTE: We cannot write those gaps, though!!!
 			AddressSetView knownButUninit = acc.intersectViewKnown(set, true);
@@ -398,20 +408,21 @@ public enum TraceEmulationIntegration {
 		}
 
 		@Override
-		public void writeDown(PcodeTraceDataAccess into, PcodeThread<?> thread,
+		public void writeDown(TraceWriter writer, PcodeTraceAccess into, PcodeThread<?> thread,
 				PcodeExecutorStatePiece<byte[], byte[]> piece, AddressSetView written) {
 			for (AddressRange range : written) {
 				AddressSpace space = range.getAddressSpace();
 				if (space.isUniqueSpace()) {
 					continue;
 				}
+				PcodeTraceDataAccess acc = writer.getDataAccess(into, space, thread);
 				long lower = range.getMinAddress().getOffset();
 				long fullLen = range.getLength();
 				while (fullLen > 0) {
 					int len = MathUtilities.unsignedMin(CHUNK_SIZE, fullLen);
 					// NOTE: Would prefer less copying and less heap garbage....
 					byte[] bytes = piece.getVarInternal(space, lower, len, Reason.INSPECT);
-					into.putBytes(space.getAddress(lower), ByteBuffer.wrap(bytes));
+					acc.putBytes(space.getAddress(lower), ByteBuffer.wrap(bytes));
 
 					lower += bytes.length;
 					fullLen -= bytes.length;
@@ -426,7 +437,7 @@ public enum TraceEmulationIntegration {
 	 */
 	public static class ImmediateBytesPieceHandler extends BytesPieceHandler {
 		@Override
-		public boolean dataWritten(PcodeTraceDataAccess acc, AddressSet written,
+		public boolean dataWritten(Writer writer, PcodeTraceDataAccess acc, AddressSet written,
 				PcodeThread<?> thread, PcodeExecutorStatePiece<byte[], byte[]> piece,
 				Address address, int length, byte[] value) {
 			if (address.isUniqueAddress()) {
@@ -510,8 +521,8 @@ public enum TraceEmulationIntegration {
 				T value);
 
 		@Override
-		public AddressSetView readUninitialized(PcodeTraceDataAccess acc, PcodeThread<?> thread,
-				PcodeExecutorStatePiece<A, T> piece, AddressSetView set) {
+		public AddressSetView readUninitialized(Writer writer, PcodeTraceDataAccess acc,
+				PcodeThread<?> thread, PcodeExecutorStatePiece<A, T> piece, AddressSetView set) {
 			PcodeTracePropertyAccess<P> property =
 				acc.getPropertyAccess(getPropertyName(), getPropertyType());
 			AddressSet remains = new AddressSet(set);
@@ -546,9 +557,9 @@ public enum TraceEmulationIntegration {
 		 * all of the abstract states.
 		 */
 		@Override
-		public int abstractReadUninit(PcodeTraceDataAccess acc, PcodeThread<?> thread,
-				PcodeExecutorStatePiece<A, T> piece, AddressSpace space, A offset, int length,
-				Reason reason) {
+		public int abstractReadUninit(Writer writer, PcodeTraceDataAccess acc,
+				PcodeThread<?> thread, PcodeExecutorStatePiece<A, T> piece, AddressSpace space,
+				A offset, int length, Reason reason) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -558,20 +569,21 @@ public enum TraceEmulationIntegration {
 		 * This method handles serializing the concrete portion and associating the states to their
 		 * respective addresses in the property. Handlers needing to serialize abstracts portions
 		 * must both implement the means of tracking what has been written (see
-		 * {@link #abstractWritten(PcodeTraceDataAccess, AddressSet, PcodeThread, PcodeExecutorStatePiece, AddressSpace, Object, int, Object)}),
+		 * {@link #abstractWritten(Writer, PcodeTraceDataAccess, AddressSet, PcodeThread, PcodeExecutorStatePiece, AddressSpace, Object, int, Object)}),
 		 * and the placement of that state information into the property. The latter is accomplished
 		 * by overriding this method, taking care to invoke the super method for the concrete
 		 * portion.
 		 */
 		@Override
-		public void writeDown(PcodeTraceDataAccess into, PcodeThread<?> thread,
+		public void writeDown(TraceWriter writer, PcodeTraceAccess into, PcodeThread<?> thread,
 				PcodeExecutorStatePiece<A, T> piece, AddressSetView written) {
-			PcodeTracePropertyAccess<P> property =
-				into.getPropertyAccess(getPropertyName(), getPropertyType());
 			AddressSet remains = new AddressSet(written);
 			while (!remains.isEmpty()) {
 				Address cur = remains.getMinAddress();
 				AddressSpace space = cur.getAddressSpace();
+				PcodeTraceDataAccess acc = writer.getDataAccess(into, space, thread);
+				PcodeTracePropertyAccess<P> property =
+					acc.getPropertyAccess(getPropertyName(), getPropertyType());
 				Entry<Long, T> entry = piece.getNextEntryInternal(space, cur.getOffset());
 				if (entry == null) {
 					remains.delete(space.getMinAddress(), space.getMaxAddress());
@@ -593,7 +605,7 @@ public enum TraceEmulationIntegration {
 		}
 
 		@Override
-		public void abstractWritten(PcodeTraceDataAccess acc, AddressSet written,
+		public void abstractWritten(Writer writer, PcodeTraceDataAccess acc, AddressSet written,
 				PcodeThread<?> thread, PcodeExecutorStatePiece<A, T> piece, AddressSpace space,
 				A offset, int length, T value) {
 			throw new UnsupportedOperationException();
@@ -662,17 +674,18 @@ public enum TraceEmulationIntegration {
 		protected final PcodeTraceMemoryAccess memAccess;
 		protected final Map<PcodeThread<?>, PcodeTraceRegistersAccess> regAccess = new HashMap<>();
 
+		record PieceInfo(PcodeThread<?> thread, AddressSet written) {}
+
 		/**
 		 * An address set to track what has actually been written. It's not enough to just use the
 		 * {@link SemisparseByteArray}'s initialized set, as that may be caching bytes from the
 		 * trace which are still {@link TraceMemoryState#UNKNOWN}.
 		 */
-		protected final AddressSet memWritten = new AddressSet();
-		protected final Map<PcodeThread<?>, AddressSet> regsWritten = new HashMap<>();
+		//protected final AddressSet memWritten = new AddressSet();
+		//protected final Map<PcodeThread<?>, AddressSet> regsWritten = new HashMap<>();
+		protected final Map<PcodeExecutorStatePiece<?, ?>, PieceInfo> pieces = new HashMap<>();
 
 		protected final Map<PieceType<?, ?>, PieceHandler<?, ?>> handlers = new HashMap<>();
-
-		private PcodeMachine<?> emulator;
 
 		/**
 		 * Construct a writer which sources state from the given access shim
@@ -687,11 +700,6 @@ public enum TraceEmulationIntegration {
 		@Override
 		public void putHandler(PieceHandler<?, ?> handler) {
 			handlers.put(PieceType.forHandler(handler), handler);
-		}
-
-		@Override
-		public void emulatorCreated(PcodeMachine<Object> emulator) {
-			this.emulator = emulator;
 		}
 
 		@Override
@@ -715,28 +723,17 @@ public enum TraceEmulationIntegration {
 		 * @param piece the piece
 		 * @param written the logged portions written
 		 */
-		protected <B, U> void writePieceDown(PcodeTraceDataAccess into, PcodeThread<?> thread,
+		protected <B, U> void writePieceDown(PcodeTraceAccess into, PcodeThread<?> thread,
 				PcodeExecutorStatePiece<B, U> piece, AddressSetView written) {
 			PieceHandler<B, U> handler = handlerFor(piece);
-			handler.writeDown(into, thread, piece, written);
+			handler.writeDown(this, into, thread, piece, written);
 		}
 
 		@Override
 		public void writeDown(PcodeTraceAccess into) {
-			PcodeTraceMemoryAccess memInto = into.getDataForSharedState();
-			for (PcodeExecutorStatePiece<?, ?> piece : emulator.getSharedState()
-					.streamPieces()
-					.toList()) {
-				writePieceDown(memInto, null, piece, memWritten);
-			}
-			for (PcodeThread<?> thread : emulator.getAllThreads()) {
-				PcodeTraceRegistersAccess regInto = into.getDataForLocalState(thread, 0);
-				AddressSetView written = regsWritten.getOrDefault(thread, new AddressSet());
-				for (PcodeExecutorStatePiece<?, ?> piece : thread.getState()
-						.streamPieces()
-						.toList()) {
-					writePieceDown(regInto, thread, piece, written);
-				}
+			for (Entry<PcodeExecutorStatePiece<?, ?>, PieceInfo> ent : pieces.entrySet()) {
+				PieceInfo info = ent.getValue();
+				writePieceDown(into, info.thread, ent.getKey(), info.written);
 			}
 		}
 
@@ -745,23 +742,28 @@ public enum TraceEmulationIntegration {
 			writeDown(access.deriveForWrite(snap));
 		}
 
-		protected PcodeTraceRegistersAccess getRegAccess(PcodeThread<?> thread) {
-			// Always use frame 0
-			return regAccess.computeIfAbsent(thread, t -> access.getDataForLocalState(t, 0));
+		protected PcodeTraceDataAccess getDataAccess(PcodeTraceAccess access, AddressSpace space,
+				PcodeThread<?> thread) {
+			if (space.isRegisterSpace()) {
+				return access.getDataForLocalState(thread, 0);
+			}
+			if (space.isMemorySpace()) {
+				return access.getDataForSharedState();
+			}
+			return null; // e.g., unique, constant
 		}
 
 		@Override
 		public <B, U> void dataWritten(PcodeThread<Object> thread,
-				PcodeExecutorStatePiece<B, U> piece,
-				Address address, int length, U value) {
-			PcodeTraceDataAccess acc = address.isRegisterAddress()
-					? getRegAccess(thread)
-					: memAccess;
-			AddressSet written = address.isRegisterAddress()
-					? regsWritten.computeIfAbsent(thread, t -> new AddressSet())
-					: memWritten;
-			if (handlerFor(piece).dataWritten(acc, written, thread, piece, address, length,
-				value)) {
+				PcodeExecutorStatePiece<B, U> piece, Address address, int length, U value) {
+			PcodeTraceDataAccess acc = getDataAccess(access, address.getAddressSpace(), thread);
+			if (acc == null) {
+				return;
+			}
+			PieceInfo info =
+				pieces.computeIfAbsent(piece, _ -> new PieceInfo(thread, new AddressSet()));
+			if (handlerFor(piece).dataWritten(this, acc, info.written, thread, piece, address,
+				length, value)) {
 				return;
 			}
 			if (length == 0) {
@@ -769,12 +771,12 @@ public enum TraceEmulationIntegration {
 			}
 			Address end = address.addWrap(length - 1);
 			if (address.compareTo(end) <= 0) {
-				written.add(address, end);
+				info.written.add(address, end);
 			}
 			else {
 				AddressSpace space = address.getAddressSpace();
-				written.add(address, space.getMaxAddress());
-				written.add(space.getMinAddress(), end);
+				info.written.add(address, space.getMaxAddress());
+				info.written.add(space.getMinAddress(), end);
 			}
 		}
 
@@ -782,21 +784,23 @@ public enum TraceEmulationIntegration {
 		public <B, U> void dataWritten(PcodeThread<Object> thread,
 				PcodeExecutorStatePiece<B, U> piece, AddressSpace space, B offset, int length,
 				U value) {
-			PcodeTraceDataAccess acc = space.isRegisterSpace() ? getRegAccess(thread) : memAccess;
-			AddressSet written = space.isRegisterSpace()
-					? regsWritten.computeIfAbsent(thread, t -> new AddressSet())
-					: memWritten;
-			handlerFor(piece).abstractWritten(acc, written, thread, piece, space, offset, length,
-				value);
+			PcodeTraceDataAccess acc = getDataAccess(access, space, thread);
+			if (acc == null) {
+				return;
+			}
+			PieceInfo info =
+				pieces.computeIfAbsent(piece, _ -> new PieceInfo(thread, new AddressSet()));
+			handlerFor(piece).abstractWritten(this, acc, info.written, thread, piece, space, offset,
+				length, value);
 		}
 
 		@Override
 		public <B, U> int readUninitialized(PcodeThread<Object> thread,
 				PcodeExecutorStatePiece<B, U> piece, AddressSpace space, B offset, int length,
 				Reason reason) {
-			PcodeTraceDataAccess acc = space.isRegisterSpace() ? getRegAccess(thread) : memAccess;
-			return handlerFor(piece).abstractReadUninit(acc, thread, piece, space, offset, length,
-				reason);
+			PcodeTraceDataAccess acc = getDataAccess(access, space, thread);
+			return handlerFor(piece).abstractReadUninit(this, acc, thread, piece, space, offset,
+				length, reason);
 		}
 
 		@Override
@@ -809,8 +813,8 @@ public enum TraceEmulationIntegration {
 			if (space.isUniqueSpace()) {
 				return set;
 			}
-			PcodeTraceDataAccess acc = space.isRegisterSpace() ? getRegAccess(thread) : memAccess;
-			return handlerFor(piece).readUninitialized(acc, thread, piece, set);
+			PcodeTraceDataAccess acc = getDataAccess(access, space, thread);
+			return handlerFor(piece).readUninitialized(this, acc, thread, piece, set);
 		}
 	}
 }

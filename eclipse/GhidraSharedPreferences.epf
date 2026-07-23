@@ -32,6 +32,7 @@
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.problem.unnecessaryElse=warning
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.problem.unnecessaryTypeCheck=warning
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownException=warning
+/instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.problem.unusedLambdaParameter=ignore
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.release=enabled
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.source=1.8
 /instance/org.eclipse.jdt.core/org.eclipse.jdt.core.compiler.taskPriorities=NORMAL,HIGH,NORMAL,HIGH

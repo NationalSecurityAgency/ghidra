@@ -210,10 +210,8 @@ public class ShellUtils {
 		},
 		/**
 		 * Plain Windows command-line arguments for the C runtime
-		 * <p>
-		 * See <href a=
-		 * "https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-commandlinetoargvw">CommandLineToArgvW
-		 * function</a>
+		 * 
+		 * @see <a href="https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-commandlinetoargvw">CommandLineToArgvWfunction</a>
 		 */
 		WINDOWS {
 			/**

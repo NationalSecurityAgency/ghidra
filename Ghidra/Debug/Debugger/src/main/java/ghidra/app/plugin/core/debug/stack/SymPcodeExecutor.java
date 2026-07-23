@@ -405,8 +405,15 @@ public class SymPcodeExecutor extends PcodeExecutor<Sym> {
 		// This should always end a basic block, so just do nothing
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * This could be a {@link PcodeOp#RETURN return} and the slaspec does not always set PC
+	 * explicitly, so do it here, but don't perform any actual control transfer.
+	 */
 	@Override
 	protected void doExecuteIndirectBranch(PcodeOp op, PcodeFrame frame) {
-		// This should always end a basic block, so just do nothing
+		Sym offset = state.getVar(getIndirectBranchTarget(op), reason);
+		branchToOffset(op, offset, frame);
 	}
 }

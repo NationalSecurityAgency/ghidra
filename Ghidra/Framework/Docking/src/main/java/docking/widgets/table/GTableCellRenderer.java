@@ -70,6 +70,9 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 		if (e.isLookAndFeelChanged()) {
 			updateUI();
 		}
+		else if (e.hasGlobalFontChanged()) {
+			updateUI();
+		}
 	};
 
 	/**

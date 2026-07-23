@@ -35,7 +35,7 @@ import jdk.javadoc.doclet.*;
 /**
  * Doclet that outputs javadoc in JSON format (instead of HTML).  Things like Python can then
  * read in the JSON and easily access all of the javadoc elements.
- * 
+ * <p>
  * To run: gradle zipJavadocs
  */
 public class JsonDoclet implements Doclet {
@@ -63,7 +63,7 @@ public class JsonDoclet implements Doclet {
 
 	@Override
 	public SourceVersion getSupportedSourceVersion() {
-		return SourceVersion.RELEASE_21;
+		return SourceVersion.RELEASE_25;
 	}
 
 	@Override
@@ -134,10 +134,9 @@ public class JsonDoclet implements Doclet {
 	}
 
 	/**
-	 * Converts a class {@link TypeElement} to a {@link JsonObject}.
+	 * {@return a class {@link TypeElement} converted to a {@link JsonObject}}
 	 * 
 	 * @param classElement the class {@link TypeElement} to convert
-	 * @return A json object that represents the class.
 	 */
 	private JsonObject classToJson(TypeElement classElement) {
 		JsonObject classObj = new JsonObject();
@@ -361,90 +360,71 @@ public class JsonDoclet implements Doclet {
 	}
 
 	/**
-	 * Gets the long type name of the given {@link TypeMirror type}.
+	 * {@return the long type name of the given {@link TypeMirror type}}
 	 * 
 	 * @param type The type to get the long type name of.
-	 * @return The long type name of the given {@link TypeMirror type}.
 	 */
 	private String getTypeLong(TypeMirror type) {
 		return type.toString();
 	}
 
 	/**
-	 * Gets the short type name of the given {@link TypeMirror type}.
+	 * {@return the short type name of the given {@link TypeMirror type}}
 	 * 
 	 * @param type The type to get the short type name of.
-	 * @return The short type name of the given {@link TypeMirror type}.
 	 */
 	private String getTypeShort(TypeMirror type) {
-		switch (type.getKind()) {
-			case DECLARED:
-				return ((DeclaredType) type).asElement().getSimpleName().toString();
-			default:
-				return type.toString();
-		}
+		return switch (type.getKind()) {
+			case DECLARED -> ((DeclaredType) type).asElement().getSimpleName().toString();
+			default -> type.toString();
+		};
 	}
 
 	/**
-	 * Gets the comment from the given {@link DocTree}.
+	 * {@return the comment from the given {@link DocTree}}
 	 * 
 	 * @param docTree The {@link DocTree} to get the comment from.
-	 * @return The comment from the given {@link DocTree}.
 	 */
 	private String getComment(DocTree docTree) {
-		switch (docTree.getKind()) {
-			case COMMENT:
-				return ((CommentTree) docTree).getBody();
-			case LINK:
-				return ((LinkTree) docTree).getReference().getSignature();
-			case PARAM:
-				return getComment(((ParamTree) docTree).getDescription());
-			case RETURN:
-				return getComment(((ReturnTree) docTree).getDescription());
-			case TEXT:
-				return ((TextTree) docTree).getBody();
-			case THROWS:
-				return getComment(((ThrowsTree) docTree).getDescription());
-			default:
-				return "";
-		}
+		return switch (docTree.getKind()) {
+			case COMMENT -> ((CommentTree) docTree).getBody();
+			case LINK -> ((LinkTree) docTree).getReference().getSignature();
+			case PARAM -> getComment(((ParamTree) docTree).getDescription());
+			case RETURN -> getComment(((ReturnTree) docTree).getDescription());
+			case TEXT -> ((TextTree) docTree).getBody();
+			case THROWS -> getComment(((ThrowsTree) docTree).getDescription());
+			case MARKDOWN -> ((RawTextTree) docTree).getContent();
+			default -> "";
+		};
 	}
 
 	/**
-	 * Gets the comment from the given {@link List} of  {@link DocTree}s. Each list element 
-	 * represents a line.  The final comment is simply all the lines concatenated.
+	 * {@return the comment from the given {@link List} of  {@link DocTree}s}
+	 * <p>
+	 * Each list element represents a line.  The final comment is simply all the lines concatenated.
 	 * 
 	 * @param docTreeList The {@link DocTree} {@link List} to get the comment from.
-	 * @return The comment from the given {@link DocTree} {@link List}.
 	 */
 	private String getComment(List<? extends DocTree> docTreeList) {
 		return docTreeList.stream().map(e -> getComment(e)).collect(Collectors.joining());
 	}
 
 	/**
-	 * Gets the comment from the given {@link DocCommentTree}.
+	 * {@return the comment from the given {@link DocCommentTree}}
 	 * 
 	 * @param docCommentTree The {@link DocCommentTree} to get the comment from.
-	 * @return The comment from the given {DocCommentTree DocTree}.
 	 */
 	private String getComment(DocCommentTree docCommentTree) {
-		if (docCommentTree != null) {
-			return getComment(docCommentTree.getFullBody());
-		}
-		return "";
+		return docCommentTree != null ? getComment(docCommentTree.getFullBody()) : "";
 	}
 
 	/**
-	 * Gets the full unprocessed javadoc from the given {@link DocCommentTree}.
+	 * {@return the full unprocessed javadoc from the given {@link DocCommentTree}}
 	 * 
 	 * @param docCommentTree The {@link DocCommentTree} to get the javadoc from.
-	 * @return the full unprocessed javadoc from the given {@link DocCommentTree}.
 	 */
 	private String getJavadoc(DocCommentTree docCommentTree) {
-		if (docCommentTree != null) {
-			return docCommentTree.toString();
-		}
-		return "";
+		return docCommentTree != null ? docCommentTree.toString() : "";
 	}
 
 	/**

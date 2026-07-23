@@ -110,7 +110,7 @@ public class SeparateDebugHeader implements OffsetValidator {
 
 		sections = new SectionHeader[numberOfSections];
 		for (int i = 0; i < numberOfSections; ++i) {
-			sections[i] = SectionHeader.readSectionHeader(reader, ptr, -1);
+			sections[i] = new SectionHeader(reader, ptr, -1, i);
 			ptr += SectionHeader.IMAGE_SIZEOF_SECTION_HEADER;
 		}
 
@@ -126,7 +126,8 @@ public class SeparateDebugHeader implements OffsetValidator {
 
 		ptr += exportedNamesSize;
 
-		parser = new DebugDirectoryParser(reader, ptr, debugDirectorySize, sizeOfImage);
+		parser = new DebugDirectoryParser(reader, ptr, debugDirectorySize, sizeOfImage,
+			sectionAlignment, 0);
 	}
 
 	/**
@@ -213,8 +214,14 @@ public class SeparateDebugHeader implements OffsetValidator {
 	 * Returns the section alignment value.
 	 * @return the section alignment value
 	 */
+	@Override
 	public int getSectionAlignment() {
 		return sectionAlignment;
+	}
+	
+	@Override
+	public int getFileAlignment() {
+		return 0;
 	}
 
 	/**
@@ -266,5 +273,4 @@ public class SeparateDebugHeader implements OffsetValidator {
 	public boolean checkRVA(long rva) {
 		return (0 <= rva) && (rva <= sizeOfImage);
 	}
-
 }

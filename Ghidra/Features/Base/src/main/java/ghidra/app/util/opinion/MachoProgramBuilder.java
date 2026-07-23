@@ -684,7 +684,8 @@ public class MachoProgramBuilder {
 			for (int i = indirectSymbolTableIndex; i < indirectSymbolTableIndex + nSymbols; ++i) {
 				monitor.increment();
 				int symbolIndex = indirectSymbols.get(i);
-				NList symbol = symbolTableCommand.getSymbolAt(symbolIndex);
+				NList symbol =
+					symbolTableCommand != null ? symbolTableCommand.getSymbolAt(symbolIndex) : null;
 				String name = null;
 				if (symbol != null && !symbol.getString().isBlank()) {
 					name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);

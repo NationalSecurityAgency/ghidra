@@ -72,7 +72,9 @@ public class SnapshotRow {
 		if (thread == null) {
 			return null;
 		}
+		// Use snap only for the object structure. Actual value must be in view snapshot
 		long snap = getTime().getSnap();
+		long viewSnap = snapshot.getKey();
 		TraceStack stack;
 		try {
 			stack = trace.getStackManager().getLatestStack(thread, snap);
@@ -88,7 +90,7 @@ public class SnapshotRow {
 		if (frame == null) {
 			return null;
 		}
-		return frame.getProgramCounter(snap);
+		return frame.getProgramCounter(viewSnap);
 	}
 
 	private Address getProgramCounterByRegister() {

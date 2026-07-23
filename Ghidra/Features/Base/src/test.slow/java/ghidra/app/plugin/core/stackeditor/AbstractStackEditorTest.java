@@ -151,6 +151,19 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 		waitForSwing();// some editing notifications are in an invokeLater
 	}
 
+	protected void cleanup() {
+		clearActions();
+
+		Object editorPanel = getInstanceField("editorPanel", provider);
+		JTable table = (JTable) getInstanceField("table", editorPanel);
+		runSwing(() -> table.editingCanceled(new ChangeEvent(table)));
+		waitForSwing();// some editing notifications are in an invokeLater
+
+		runSwing(() -> {
+			provider.dispose();
+		}, true);
+	}
+
 	@Override
 	protected void setUpPlugins() throws PluginException {
 		super.setUpPlugins();
@@ -244,17 +257,6 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 		for (Variable element : vars) {
 			stackFrame.clearVariable(element.getStackOffset());
 		}
-	}
-
-	protected void cleanup() {
-		clearActions();
-
-		Object editorPanel = getInstanceField("editorPanel", provider);
-		JTable table = (JTable) getInstanceField("table", editorPanel);
-		runSwing(() -> table.editingCanceled(new ChangeEvent(table)));
-		waitForSwing();// some editing notifications are in an invokeLater
-
-		runSwing(() -> provider.dispose(), true);
 	}
 
 	void clearActions() {

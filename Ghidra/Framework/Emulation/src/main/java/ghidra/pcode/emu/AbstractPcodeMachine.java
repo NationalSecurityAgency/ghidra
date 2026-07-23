@@ -324,12 +324,8 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		 * addressed by formalizing and better exposing the notion of p-code stacks (of p-code
 		 * frames)
 		 */
-		PcodeProgram pcode = compileSleigh("breakpoint:" + address, String.format("""
-				if (!(%s)) goto <nobreak>;
-					emu_swi();
-				<nobreak>
-					emu_exec_decoded();
-				""", sleighCondition));
+		PcodeProgram pcode = compileSleigh("breakpoint:" + address,
+			SleighUtils.sleighForConditionalBreak(sleighCondition));
 		injects.put(address, pcode);
 	}
 

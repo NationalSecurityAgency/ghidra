@@ -98,6 +98,16 @@ public class SymbolUtilities {
 	 */
 	public final static String ORDINAL_PREFIX = "Ordinal_";
 
+	//@formatter:off
+	// Unicode code points that are defined in the unicode spec as having a type that we would
+	// normally consider useful for symbol names, but are invisible and hence not desirable.
+	private static final int[] EXTRA_INVALID_CODEPOINTS = new int[] {
+		0x2800, // braille blank
+		0x115f, 0x1160, 0x3164, 0xffa0, // hangul filler chars
+		0xfffc // unicode object replacement character
+	};
+	//@formatter:on
+
 	private static final Comparator<Symbol> CASE_INSENSITIVE_SYMBOL_NAME_COMPARATOR = (s1, s2) -> {
 		return s1.getName().compareToIgnoreCase(s2.getName());
 	};
@@ -384,6 +394,16 @@ public class SymbolUtilities {
 				    Character.FINAL_QUOTE_PUNCTUATION
 			*/
 		}
+
+		// There are a handful of unicode chars that are in 'good' categories, but are invisible
+		// or undesirable in a symbol name.  Reject them here.
+		// Note: using an array to search a small number of values is faster than Set.contains()
+		for (int extra_invalid_codepoint : EXTRA_INVALID_CODEPOINTS) {
+			if (extra_invalid_codepoint == cp) {
+				return true;
+			}
+		}
+
 		return false;
 	}
 

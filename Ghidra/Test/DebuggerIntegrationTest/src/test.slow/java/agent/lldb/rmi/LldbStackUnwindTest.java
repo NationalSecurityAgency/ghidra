@@ -87,7 +87,8 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 	DecompilerProvider decompilerProvider;
 	DecompilerPanel decompilerPanel;
 
-	record LldbAndTrace(LldbAndConnection conn, ManagedDomainObject mdo) implements AutoCloseable {
+	record LldbAndTrace(LldbAndConnection conn, ManagedDomainObject<Trace> mdo)
+			implements AutoCloseable {
 		public void execute(String cmd) {
 			conn.execute(cmd);
 		}
@@ -122,10 +123,10 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 	}
 
 	@SuppressWarnings("resource")
-	protected LldbAndTrace startAndSyncLldb(ManagedDomainObject mdo) throws Exception {
+	protected LldbAndTrace startAndSyncLldb(ManagedDomainObject<Trace> mdo) throws Exception {
 		LldbAndConnection conn = startAndConnectLldb();
 		try {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			tb = new ToyDBTraceBuilder(mdo.get());
 			return new LldbAndTrace(conn, mdo);
 		}
 		catch (Exception e) {
@@ -148,8 +149,8 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 		tool.acceptDomainFiles(dfs);
 
 		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject mdo = new ManagedDomainObject(traceDF, false, false, monitor);
-		resyncMappings((Trace) mdo.get());
+		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
+		resyncMappings(mdo.get());
 		tool.acceptDomainFiles(new DomainFile[] { traceDF });
 
 		programs = openPrograms(dfs);
@@ -178,8 +179,8 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 		tool.acceptDomainFiles(dfs);
 
 		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject mdo = new ManagedDomainObject(traceDF, false, false, monitor);
-		resyncMappings((Trace) mdo.get());
+		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
+		resyncMappings(mdo.get());
 		tool.acceptDomainFiles(new DomainFile[] { traceDF });
 
 		programs = openPrograms(dfs);
@@ -210,8 +211,8 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 		tool.acceptDomainFiles(dfs);
 
 		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject mdo = new ManagedDomainObject(traceDF, false, false, monitor);
-		resyncMappings((Trace) mdo.get());
+		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
+		resyncMappings(mdo.get());
 		tool.acceptDomainFiles(new DomainFile[] { traceDF });
 
 		programs = openPrograms(dfs);
@@ -242,8 +243,8 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 		tool.acceptDomainFiles(dfs);
 
 		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject mdo = new ManagedDomainObject(traceDF, false, false, monitor);
-		resyncMappings((Trace) mdo.get());
+		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
+		resyncMappings(mdo.get());
 		tool.acceptDomainFiles(new DomainFile[] { traceDF });
 
 		programs = openPrograms(dfs);
@@ -271,8 +272,8 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 		tool.acceptDomainFiles(dfs);
 
 		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject mdo = new ManagedDomainObject(traceDF, false, false, monitor);
-		resyncMappings((Trace) mdo.get());
+		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
+		resyncMappings(mdo.get());
 		tool.acceptDomainFiles(new DomainFile[] { traceDF });
 
 		programs = openPrograms(dfs);
@@ -300,8 +301,8 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 		tool.acceptDomainFiles(dfs);
 
 		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject mdo = new ManagedDomainObject(traceDF, false, false, monitor);
-		resyncMappings((Trace) mdo.get());
+		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
+		resyncMappings(mdo.get());
 		tool.acceptDomainFiles(new DomainFile[] { traceDF });
 
 		programs = openPrograms(dfs);
@@ -345,11 +346,11 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 			RowKey.FRAME,
 			"Frame: 1 FUN_140001000 pc=7ff6bd611040 sp=f900000000 base=f900000078",
 			RowKey.STORAGE, "Storage: Stack[-0x58]:4",
-			RowKey.TYPE, "Type: undefined4",
+			RowKey.TYPE, "Type: int",
 			RowKey.LOCATION, "Location: f900000020:4",
 			RowKey.BYTES, "Bytes: (UNKNOWN) 00 00 00 00",
 			RowKey.INTEGER, "Integer: (UNKNOWN) 0",
-			RowKey.VALUE, "Value: (UNKNOWN) 00000000h",
+			RowKey.VALUE, "Value: (UNKNOWN) 0h",
 			RowKey.WARNINGS, "IGNORED"), table);
 	}
 

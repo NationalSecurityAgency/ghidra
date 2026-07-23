@@ -15,11 +15,10 @@
  */
 package ghidra.app.plugin.core.debug.gui.breakpoint.timeline;
 
-import java.awt.BorderLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.util.*;
-
-import javax.swing.JComponent;
-import javax.swing.JPanel;
+import java.util.List;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
@@ -37,6 +36,7 @@ import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.util.TraceEvents;
+import ghidra.util.HelpLocation;
 
 public class BreakpointTimelineProvider extends ComponentProvider {
 	record BreakpointHitEvent(long snap, TraceBreakpointKind breakType, String breakpointName) {}
@@ -78,6 +78,7 @@ public class BreakpointTimelineProvider extends ComponentProvider {
 			super("Close all zoom windows", provider.getOwner());
 			setEnabled(true);
 			setToolBarData(new ToolBarData(ICON, "1"));
+			setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "close_zoom_windows"));
 		}
 
 		@Override
@@ -93,6 +94,7 @@ public class BreakpointTimelineProvider extends ComponentProvider {
 			super("Set default cell size to the smallest", provider.getOwner());
 			setEnabled(true);
 			setToolBarData(new ToolBarData(ICON, "zoom"));
+			setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "smallest_cell"));
 		}
 
 		@Override
@@ -111,6 +113,7 @@ public class BreakpointTimelineProvider extends ComponentProvider {
 			super("Toggle Grid Outline", provider.getOwner());
 			setEnabled(true);
 			setToolBarData(new ToolBarData(OUTLINE_ICON, "2"));
+			setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "toggle_grid_outline"));
 		}
 
 		@Override
@@ -119,7 +122,6 @@ public class BreakpointTimelineProvider extends ComponentProvider {
 			getToolBarData().setIcon(grid ? OUTLINE_ICON : NO_OUTLINE_ICON);
 			breakpointTimelinePanel.toggleGridOutline();
 			breakpointTimelinePlugin.refreshAllProviders(BreakpointTimelineProvider.this);
-
 		}
 	}
 
@@ -133,6 +135,7 @@ public class BreakpointTimelineProvider extends ComponentProvider {
 			super("Toggle between grid and single column", provider.getOwner());
 			setEnabled(true);
 			setToolBarData(new ToolBarData(GRID_ICON, "2"));
+			setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "toggle_grid_column"));
 		}
 
 		@Override
@@ -151,6 +154,7 @@ public class BreakpointTimelineProvider extends ComponentProvider {
 			super("Increase cell size", provider.getOwner());
 			setEnabled(true);
 			setToolBarData(new ToolBarData(ICON, "zoom"));
+			setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "zoom_in"));
 		}
 
 		@Override
@@ -166,6 +170,7 @@ public class BreakpointTimelineProvider extends ComponentProvider {
 			super("Decrease cell size", provider.getOwner());
 			setEnabled(true);
 			setToolBarData(new ToolBarData(ICON, "zoom"));
+			setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "zoom_out"));
 		}
 
 		@Override
@@ -173,6 +178,9 @@ public class BreakpointTimelineProvider extends ComponentProvider {
 			breakpointTimelinePanel.decreaseDefaultCellSize();
 		}
 	}
+
+	ToggleGridOrColumnAction toggleGridOrColumnAction;
+	ToggleGridAction toggleGridAction;
 
 	@Internal
 	public static Iterator<? extends TraceObjectValue> getTraceObjectValuesWithPCsIntersectingRange(
@@ -208,6 +216,7 @@ public class BreakpointTimelineProvider extends ComponentProvider {
 			boolean makeTransient) {
 		super(breakpointTimelinePlugin.getTool(), "Breakpoint Timeline",
 			breakpointTimelinePlugin.getName());
+		setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "plugin"));
 		this.breakpointTimelinePlugin = breakpointTimelinePlugin;
 		wrapperPanel = new JPanel(new BorderLayout());
 		breakpointTimelinePanel = new BreakpointTimelinePanel(this);
@@ -234,8 +243,10 @@ public class BreakpointTimelineProvider extends ComponentProvider {
 	}
 
 	private void createActions() {
-		dockingTool.addLocalAction(this, new ToggleGridOrColumnAction(this));
-		dockingTool.addLocalAction(this, new ToggleGridAction(this));
+		toggleGridOrColumnAction = new ToggleGridOrColumnAction(this);
+		dockingTool.addLocalAction(this, toggleGridOrColumnAction);
+		toggleGridAction = new ToggleGridAction(this);
+		dockingTool.addLocalAction(this, toggleGridAction);
 		dockingTool.addLocalAction(this, new ZoomInAction(this));
 		dockingTool.addLocalAction(this, new ZoomOutAction(this));
 		dockingTool.addLocalAction(this, new CloseAllZoomWindowsAction(this));
@@ -301,7 +312,7 @@ public class BreakpointTimelineProvider extends ComponentProvider {
 		breakpointTimelinePanel.refresh();
 	}
 
-	private void refreshBreakpointHits() {
+	/*testing*/ void refreshBreakpointHits() {
 		breakpointHits.clear();
 
 		if (currentTrace == null) {

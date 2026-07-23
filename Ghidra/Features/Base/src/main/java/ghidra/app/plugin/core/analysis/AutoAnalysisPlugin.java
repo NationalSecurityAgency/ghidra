@@ -61,7 +61,7 @@ import ghidra.util.task.TaskLauncher;
 	category = PluginCategoryNames.ANALYSIS,
 	shortDescription = "Manages auto-analysis",
 	description = "Provides coordination and a service for All Auto Analysis tasks.",
-	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class, ProgramActivatedPluginEvent.class, ProgramPostActivatedPluginEvent.class }
+	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class, ProgramActivatedPluginEvent.class, ProgramPostActivatedPluginEvent.class, ProgramAddedToPluginEvent.class }
 )
 //@formatter:on
 public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerListener {
@@ -245,26 +245,28 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 	@Override
 	public void processEvent(PluginEvent event) {
-		if (event instanceof ProgramClosedPluginEvent ev) {
-			programClosed(ev.getProgram());
-		}
-		else if (event instanceof ProgramOpenedPluginEvent ev) {
-			programOpened(ev.getProgram());
-		}
-		else if (event instanceof ProgramActivatedPluginEvent ev) {
-			Program program = ev.getActiveProgram();
-			if (program == null) {
-				removeOneShotActions();
+		switch (event) {
+			case ProgramClosedPluginEvent ev -> programClosed(ev.getProgram());
+			case ProgramOpenedPluginEvent ev -> programOpened(ev.getProgram());
+			case ProgramAddedToPluginEvent ev -> programAddedTo(ev.getProgram(), ev.analyze());
+			case ProgramActivatedPluginEvent ev -> {
+				Program program = ev.getActiveProgram();
+				if (program == null) {
+					removeOneShotActions();
+				}
+				else {
+					programActivated(program);
+					addOneShotActions(program);
+				}
 			}
-			else {
-				programActivated(program);
-				addOneShotActions(program);
+			case ProgramPostActivatedPluginEvent ev -> {
+				Program program = ev.getActiveProgram();
+				if (program != null) {
+					postProgramActivated(program);
+				}
 			}
-		}
-		else if (event instanceof ProgramPostActivatedPluginEvent ev) {
-			Program program = ev.getActiveProgram();
-			if (program != null) {
-				postProgramActivated(program);
+			default -> {
+				/* do nothing */
 			}
 		}
 	}
@@ -291,6 +293,12 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	private void postProgramActivated(Program program) {
 		AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
 		if (analysisMgr.askToAnalyze(tool)) {
+			analyzeCallback(program, null);
+		}
+	}
+
+	private void programAddedTo(Program program, boolean analyze) {
+		if (analyze) {
 			analyzeCallback(program, null);
 		}
 	}

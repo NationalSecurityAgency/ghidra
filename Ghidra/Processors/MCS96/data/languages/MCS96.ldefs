@@ -12,5 +12,10 @@
             id="MCS96:LE:16:default">
     <description>Intel MCS-96 Microcontroller Family</description>
     <compiler name="default" spec="MCS96.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="80196"/>
+    <external_name tool="IDA-PRO" name="80196np"/>
+    <external_name tool="IDA-PRO" name="8096"/>
+    <external_name tool="IDA-PRO" name="8061"/>
+    <external_name tool="IDA-PRO" name="8065"/>
   </language>
 </language_definitions>

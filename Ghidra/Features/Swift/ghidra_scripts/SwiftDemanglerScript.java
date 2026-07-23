@@ -55,7 +55,7 @@ public class SwiftDemanglerScript extends GhidraScript {
 			return;
 		}
 
-		SwiftNativeDemangler nativeDemangler = new SwiftNativeDemangler(options.getSwiftDir());
+		SwiftNativeDemangler nativeDemangler = new SwiftNativeDemangler();
 		SwiftNativeDemangledOutput demangledOutput = nativeDemangler.demangle(mangled);
 		println(demangledOutput.toString());
 

@@ -27,7 +27,7 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
 
-@UseropLibrary("arm")
+@UseropLibrary(id = "arm")
 public class ArmPcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	@Override
 	public <T> PcodeUseropLibrary<T> create(SleighLanguage language,

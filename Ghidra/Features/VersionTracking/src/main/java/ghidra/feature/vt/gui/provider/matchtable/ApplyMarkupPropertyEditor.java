@@ -451,7 +451,7 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		useFunctionNamespaceLabel = new GDLabel("Replace Namespace", SwingConstants.RIGHT);
 		useFunctionNamespaceLabel.setToolTipText(USE_NAMESPACE_TOOLTIP);
 
-		useEmptyCompositesLabel = new GDLabel("Use Emtpy Composite Types", SwingConstants.RIGHT);
+		useEmptyCompositesLabel = new GDLabel("Use Empty Composite Types", SwingConstants.RIGHT);
 		useEmptyCompositesLabel.setToolTipText(USE_EMPTY_COMPOSITES_TOOLTIP);
 	}
 

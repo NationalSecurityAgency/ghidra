@@ -172,7 +172,7 @@ public enum BasicAutoReadMemorySpec implements AutoReadMemorySpec {
 			AddressSet toRead = new AddressSet(quantize(12, visible));
 			for (Lifespan span : coordinates.getView().getViewport().getOrderedSpans()) {
 				AddressSetView alreadyKnown =
-					mm.getAddressesWithState(span.lmin(), visible, StatePredicate.IS_KNOWN);
+					mm.getAddressesWithState(span, toRead, StatePredicate.IS_KNOWN);
 				toRead.delete(alreadyKnown);
 				if (span.lmax() != span.lmin() || toRead.isEmpty()) {
 					break;

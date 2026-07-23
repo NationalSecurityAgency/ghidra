@@ -40,6 +40,13 @@ public class FunctionDefinitionLocationDescriptor extends GenericDataTypeLocatio
 	protected void doGetReferences(Accumulator<LocationReference> accumulator, TaskMonitor monitor)
 			throws CancelledException {
 
+		findAppliedFunctionDefinition(accumulator);
+
+		ReferenceUtils.findDataTypeReferences(accumulator, functionDefinition, program, true,
+			monitor);
+	}
+
+	private void findAppliedFunctionDefinition(Accumulator<LocationReference> accumulator) {
 		DataType myReturnType = functionDefinition.getReturnType();
 		ParameterDefinition[] myParameters = functionDefinition.getArguments();
 
@@ -49,15 +56,14 @@ public class FunctionDefinitionLocationDescriptor extends GenericDataTypeLocatio
 
 		// the definition could be applied in more than one namespace, so handle each application
 		while (symbols.hasNext()) {
-			Symbol symbol = symbols.next();
 
-			if (!(symbol instanceof FunctionSymbol)) {
+			Symbol symbol = symbols.next();
+			if (!(symbol instanceof FunctionSymbol functionSymbol)) {
 				continue;
 			}
-			FunctionSymbol functionSymbol = (FunctionSymbol) symbol;
+
 			long symbolID = functionSymbol.getID();
 			Function function = functionManager.getFunction(symbolID);
-
 			FunctionSignature signature = function.getSignature(true);
 			ParameterDefinition[] theirParameters = signature.getArguments();
 			if (!isSameParamters(myParameters, theirParameters)) {

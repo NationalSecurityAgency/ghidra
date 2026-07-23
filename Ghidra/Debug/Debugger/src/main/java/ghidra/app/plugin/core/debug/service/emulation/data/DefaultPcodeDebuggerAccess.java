@@ -25,9 +25,10 @@ import ghidra.trace.model.thread.TraceThread;
 /**
  * The default target-and-trace access shim for a session
  */
-public class DefaultPcodeDebuggerAccess extends
-		AbstractPcodeDebuggerAccess //
-		<DefaultPcodeDebuggerMemoryAccess, DefaultPcodeDebuggerRegistersAccess> {
+public class DefaultPcodeDebuggerAccess extends AbstractPcodeDebuggerAccess<
+	DefaultPcodeDebuggerMemoryAccess, DefaultPcodeDebuggerRegistersAccess> {
+
+	protected final ServiceProvider provider;
 
 	/**
 	 * Construct a shim
@@ -39,7 +40,8 @@ public class DefaultPcodeDebuggerAccess extends
 	 */
 	public DefaultPcodeDebuggerAccess(ServiceProvider provider, Target target,
 			TracePlatform platform, long snap) {
-		super(provider, target, platform, snap);
+		super(target, platform, snap);
+		this.provider = provider;
 	}
 
 	/**
@@ -53,7 +55,8 @@ public class DefaultPcodeDebuggerAccess extends
 	 */
 	public DefaultPcodeDebuggerAccess(ServiceProvider provider, Target target,
 			TracePlatform platform, long snap, long threadsSnap) {
-		super(provider, target, platform, snap, threadsSnap);
+		super(target, platform, snap, threadsSnap);
+		this.provider = provider;
 	}
 
 	/**
@@ -75,7 +78,7 @@ public class DefaultPcodeDebuggerAccess extends
 	@Override
 	protected DefaultPcodeDebuggerRegistersAccess newDataForLocalState(TraceThread thread,
 			int frame) {
-		return new DefaultPcodeDebuggerRegistersAccess(provider, target, platform, snap, thread,
-			frame, viewport);
+		return new DefaultPcodeDebuggerRegistersAccess(target, platform, snap, thread, frame,
+			viewport);
 	}
 }

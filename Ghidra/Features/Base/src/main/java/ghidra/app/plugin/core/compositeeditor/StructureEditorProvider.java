@@ -85,6 +85,8 @@ public class StructureEditorProvider
 			new AddBitFieldAction(this),
 			new EditBitFieldAction(this),
 			new ShowDataTypeInTreeAction(this),
+			new NextPrevDefinedComponentAction(this, true),
+			new NextPrevDefinedComponentAction(this, false),
 
 //			new ViewBitFieldAction(this)
 		};

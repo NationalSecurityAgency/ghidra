@@ -51,12 +51,12 @@ a specific need.
 * Dual monitors strongly suggested
 
 ### Software
-* Java 21 64-bit Runtime and Development Kit (JDK) (see [Java Notes](#java-notes))
-  * Free long term support (LTS) versions of JDK 21 are provided by:
+* Java 25 64-bit Runtime and Development Kit (JDK) (see [Java Notes](#java-notes))
+  * Free long term support (LTS) versions of JDK 25 are provided by:
     * [Adoptium Temurin](https://adoptium.net/temurin/releases)
-    * [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html)
+    * [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-25-ug/downloads-list.html)
 * Python3 (3.9 to 3.14)
-  * Python 3.9 to 3.14 for [Debugger support](#debugger-notes)
+  * Python 3.7 to 3.14 for [Debugger support](#debugger-notes)
   * Python 3.9 to 3.14 for [PyGhidra support](#pyghidra-mode)
   * This is available from [Python.org](https://python.org) or most operating system's app stores or
     software repositories.  For Linux it is recommended that the system's package repository be used
@@ -203,14 +203,14 @@ Ghidra supports running on the following additional platforms with user-built na
 * Linux ARM 64-bit
 * FreeBSD x86 64-bit (no debugger support)
 * FreeBSD ARM 64-bit (no debugger support)
-* OpenBSD x86 64-bit (no debugger support)
-* OpenBSD ARM 64-bit (no debugger support)
+* OpenBSD x86 64-bit
+* OpenBSD ARM 64-bit
 
 For supported systems where native binaries have not been supplied, or those that are supplied fail
 to run properly, it may be necessary to build the native Ghidra binaries. In order to build native
 binaries for your platform, you will need the following installed on your system:
 * A [supported](#minimum-requirements) version of a Java Development Kit
-* [Gradle 8.5+](https://gradle.org/releases) (or supplied Gradle wrapper with Internet connection)
+* [Gradle 9.1.0+](https://gradle.org/releases) (or supplied Gradle wrapper with Internet connection)
 * Software C/C++ build tools and library packages
   * __macOS:__ _Xcode_ or the abbreviated _Command Line Tools for Xcode_. Assuming you are connected
     to the Internet, _Xcode_ (which includes the command tools) may be installed directly from the

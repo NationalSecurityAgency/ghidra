@@ -23,3 +23,4 @@ MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2.tar.gz Apache License 2.0
 MODULE FILE LICENSE: pypkg/dist/packaging-25.0-py3-none-any.whl Apache License 2.0
 MODULE FILE LICENSE: pypkg/dist/setuptools-80.9.0-py3-none-any.whl MIT
 MODULE FILE LICENSE: pypkg/dist/wheel-0.45.1-py3-none-any.whl MIT
+MODULE FILE LICENSE: pypkg/dist/typing_extensions-4.16.0-py3-none-any.whl Python Software Foundation License

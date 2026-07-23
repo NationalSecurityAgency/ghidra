@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.instructionsearch.model;
 
 import ghidra.app.plugin.core.instructionsearch.util.InstructionSearchUtils;
+import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 
 /**
@@ -26,12 +27,6 @@ public class MaskContainer {
 	private byte[] mask;
 	private byte[] value;
 
-	/**
-	 * 
-	 * @param mask
-	 * @param value
-	 * @throws InvalidInputException
-	 */
 	public MaskContainer(byte[] mask, byte[] value) throws IllegalArgumentException {
 
 		// Mask and value arrays must be the same size, and not be null. 
@@ -48,79 +43,52 @@ public class MaskContainer {
 		this.value = value;
 	}
 
-	/**
-	 * @return the mask
-	 */
 	public byte[] getMask() {
 		return mask;
 	}
 
-	/**
-	 * 
-	 * @return
-	 */
 	public String getMaskAsBinaryString() {
 		StringBuilder str = new StringBuilder();
 
-		for (int i = 0; i < mask.length; i++) {
-			str.append(InstructionSearchUtils.toBinaryString(mask[i]));
+		for (byte element : mask) {
+			str.append(InstructionSearchUtils.toBinaryString(element));
 		}
 
 		return str.toString();
 	}
 
-	/**
-	 * @param mask the mask to set
-	 */
 	public void setMask(byte[] mask) {
 		this.mask = mask;
 	}
 
-	/**
-	 * @return the value
-	 */
 	public byte[] getValue() {
 		return value;
 	}
 
-	/**
-	 * 
-	 * @return
-	 */
 	public String getValueAsBinaryString() {
 		StringBuilder str = new StringBuilder();
 
-		for (int i = 0; i < value.length; i++) {
-			str.append(InstructionSearchUtils.toBinaryString(value[i]));
+		for (byte element : value) {
+			str.append(InstructionSearchUtils.toBinaryString(element));
 		}
 
 		return str.toString();
 	}
 
-	/**
-	 * @param value the value to set
-	 */
 	public void setValue(byte[] value) {
 		this.value = value;
 	}
 
-	/**
-	 * Returns the bytes and masking merged together, as a binary string.
-	 * 
-	 * @param mask
-	 * @param value
-	 * @return list containing the value (index 0) and mask (index 1).
-	 */
 	public String toBinaryString() {
 
 		StringBuilder valueString = new StringBuilder();
 		StringBuilder maskString = new StringBuilder();
 
-		for (int i = 0; i < value.length; i++) {
-			valueString.append(InstructionSearchUtils.toBinaryString(value[i]));
+		for (byte element : value) {
+			valueString.append(InstructionSearchUtils.toBinaryString(element));
 		}
-		for (int i = 0; i < mask.length; i++) {
-			maskString.append(InstructionSearchUtils.toBinaryString(mask[i]));
+		for (byte element : mask) {
+			maskString.append(InstructionSearchUtils.toBinaryString(element));
 		}
 
 		String combinedString = "";
@@ -129,7 +97,7 @@ public class MaskContainer {
 				maskString.toString());
 		}
 		catch (InvalidInputException e) {
-			e.printStackTrace();
+			Msg.error(this, e.getMessage(), e);
 		}
 
 		return combinedString;

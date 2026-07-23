@@ -42,7 +42,13 @@ public class TraceRmiConnectionNode extends AbstractTraceRmiManagerNode {
 
 	@Override
 	public String getDisplayText() {
-		return connection.getDescription() + " at " + connection.getRemoteAddress();
+		try {
+			return connection.getDescription() + " at " + connection.getRemoteAddress();
+		}
+		catch (Exception e) {
+			provider.cleanConnectionNode(this);
+			return "Error: " + e;
+		}
 	}
 
 	@Override
@@ -52,8 +58,13 @@ public class TraceRmiConnectionNode extends AbstractTraceRmiManagerNode {
 
 	@Override
 	public String getToolTip() {
-		return "Trace RMI Connection to " + connection.getDescription() + " at " +
-			connection.getRemoteAddress();
+		try {
+			return "Trace RMI Connection to " + connection.getDescription() + " at " +
+				connection.getRemoteAddress();
+		}
+		catch (Exception e) {
+			return "Error: " + e;
+		}
 	}
 
 	@Override

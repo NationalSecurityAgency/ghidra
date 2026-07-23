@@ -33,7 +33,7 @@ import ghidra.util.datastruct.ListenerSet;
 
 public class DebuggerStaticMappingContext implements DebuggerAddressTranslator {
 
-	record ChangeCollector(DebuggerStaticMappingContext ctx, Set<Trace> traces,
+	public record ChangeCollector(DebuggerStaticMappingContext ctx, Set<Trace> traces,
 			Set<Program> programs) implements AutoCloseable {
 
 		static <T> Set<T> subtract(Set<T> a, Set<T> b) {

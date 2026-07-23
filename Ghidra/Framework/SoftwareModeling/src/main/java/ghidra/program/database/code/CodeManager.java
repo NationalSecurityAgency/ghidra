@@ -2940,6 +2940,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		try {
 			long addr = addrMap.getKey(address, false);
 			DBRecord commentRec = getCommentAdapter().getRecord(addr);
+			if (commentRec == null) {
+				return null;
+			}
 			CommentType[] types = CommentType.values();
 			String[] comments = new String[types.length];
 

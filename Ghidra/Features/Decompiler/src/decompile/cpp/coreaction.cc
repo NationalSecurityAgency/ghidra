@@ -565,9 +565,12 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
     collectLaneSizes(vn,lanedRegister,checkLanes);
   else {
     int4 defaultSize = data.getArch()->types->getSizeOfPointer();		// Default lane size
-    if (defaultSize != 4)
-      defaultSize = 8;
-    checkLanes.addLaneSize(defaultSize);
+    if (defaultSize == 4 && lanedRegister.allowedLane(4))
+      checkLanes.addLaneSize(4);
+    else if (lanedRegister.allowedLane(8))
+      checkLanes.addLaneSize(8);
+    else if (lanedRegister.allowedLane(4))
+      checkLanes.addLaneSize(4);
   }
   LanedRegister::const_iterator enditer = checkLanes.end();
   for(LanedRegister::const_iterator iter=checkLanes.begin();iter!=enditer;++iter) {
@@ -1068,11 +1071,11 @@ bool ActionConstantPtr::checkCopy(PcodeOp *op,Funcdata &data)
 /// \param fullEncoding will hold the full pointer encoding being passed back
 /// \param data is the function being analyzed
 /// \return the recovered symbol or NULL
-SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,int4 slot,
-					  Address &rampoint,uintb &fullEncoding,Funcdata &data)
-
+MapEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,int4 slot,
+				       Address &rampoint,uintb &fullEncoding,Funcdata &data)
 {
   bool needexacthit;
+  vn->setSymbolCheck(Varnode::symcheck_complete);
   Architecture *glb = data.getArch();
   Varnode *outvn;
   if (vn->getTypeReadFacing(op)->getMetatype() == TYPE_PTR) { // Are we explicitly marked as a pointer
@@ -1080,7 +1083,7 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     needexacthit = false;
   }
   else {
-    if (vn->isTypeLock()) return (SymbolEntry *)0; // Locked as NOT a pointer
+    if (vn->isTypeLock()) return (MapEntry *)0; // Locked as NOT a pointer
     needexacthit = true;
     // Check if the constant is involved in a potential pointer expression
     // as the base
@@ -1089,22 +1092,22 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     case CPUI_CALLIND:
     {
       if (slot==0)
-	return (SymbolEntry *)0;
+	return (MapEntry *)0;
       // A constant parameter could be a pointer
       FuncCallSpecs *fc = data.getCallSpecs(op);
       if (fc != (FuncCallSpecs *)0 && fc->isInputLocked() && fc->numParams() > slot-1) {
 	type_metatype meta = fc->getParam(slot-1)->getType()->getMetatype();
 	if (meta != TYPE_PTR && meta != TYPE_UNKNOWN) {
-	  return (SymbolEntry *)0;	// Definitely not passing a pointer
+	  return (MapEntry *)0;	// Definitely not passing a pointer
 	}
       }
       else if (!glb->infer_pointers)
-	return (SymbolEntry *)0;
+	return (MapEntry *)0;
       break;
     }
     case CPUI_COPY:
       if (!checkCopy(op, data))
-	return (SymbolEntry *)0;
+	return (MapEntry *)0;
       break;
     case CPUI_PIECE:
       // Pointers get concatenated in structures
@@ -1114,43 +1117,43 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     case CPUI_INT_LESSEQUAL:
       // A comparison with a constant could be a pointer
       if (!glb->infer_pointers)
-	return (SymbolEntry *)0;
+	return (MapEntry *)0;
       break;
     case CPUI_INT_ADD:
       outvn = op->getOut();
       if (outvn->getTypeDefFacing()->getMetatype()==TYPE_PTR) {
 	// Is there another pointer base in this expression
 	if (op->getIn(1-slot)->getTypeReadFacing(op)->getMetatype()==TYPE_PTR)
-	  return (SymbolEntry *)0; // If so, we are not a pointer
+	  return (MapEntry *)0; // If so, we are not a pointer
 	// FIXME: need to fully explore additive tree
 	needexacthit = false;
       }
       else if (!glb->infer_pointers)
-	return (SymbolEntry *)0;
+	return (MapEntry *)0;
       break;
     case CPUI_STORE:
       if (slot != 2)
-	return (SymbolEntry *)0;
+	return (MapEntry *)0;
       break;
     default:
-      return (SymbolEntry *)0;
+      return (MapEntry *)0;
     }
     // Make sure the constant is in the expected range for a pointer
     if (spc->getPointerLowerBound() > vn->getOffset())
-      return (SymbolEntry *)0;
+      return (MapEntry *)0;
     if (spc->getPointerUpperBound() < vn->getOffset())
-      return (SymbolEntry *)0;
+      return (MapEntry *)0;
     // Check if the constant looks like a single bit or mask
     if (bit_transitions(vn->getOffset(),vn->getSize()) < 3)
-      return (SymbolEntry *)0;
+      return (MapEntry *)0;
     rampoint = glb->resolveConstant(spc,vn->getOffset(),vn->getSize(),op->getAddr(),fullEncoding);
   }
 
-  if (rampoint.isInvalid()) return (SymbolEntry *)0;
+  if (rampoint.isInvalid()) return (MapEntry *)0;
     // Since we are looking for a global address
     // Assume it is address tied and use empty usepoint
-  SymbolEntry *entry = data.getScopeLocal()->getParent()->queryContainer(rampoint,1,Address());
-  if (entry != (SymbolEntry *)0) {
+  MapEntry *entry = data.getScopeLocal()->getParent()->queryContainer(rampoint,1,Address());
+  if (entry != (MapEntry *)0) {
     Datatype *ptrType = entry->getSymbol()->getType();
     if (ptrType->getMetatype() == TYPE_ARRAY) {
       Datatype *ct = ((TypeArray *)ptrType)->getBase();
@@ -1159,8 +1162,10 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
       if (ct->isCharPrint())
 	needexacthit = false;
     }
-    if (needexacthit && entry->getAddr() != rampoint)
-      return (SymbolEntry *)0;
+    if (needexacthit && entry->getAddr() != rampoint) {
+      vn->setSymbolCheck(Varnode::symcheck_incomplete);	// May need to retest if we later discover vn is a pointer
+      return (MapEntry *)0;
+    }
   }
   return entry;
 }
@@ -1177,7 +1182,7 @@ int4 ActionConstantPtr::apply(Funcdata &data)
   VarnodeLocSet::const_iterator begiter,enditer;
   Architecture *glb = data.getArch();
   AddrSpace *cspc = glb->getConstantSpace();
-  SymbolEntry *entry;
+  MapEntry *entry;
   Varnode *vn;
 
   begiter = data.beginLoc(cspc);
@@ -1187,7 +1192,9 @@ int4 ActionConstantPtr::apply(Funcdata &data)
     vn = *begiter++;
     if (!vn->isConstant()) break; // New varnodes may get inserted between begiter and enditer
     if (vn->getOffset() == 0) continue; // Never make constant 0 into spacebase
-    if (vn->isPtrCheck()) continue; // Have we checked this variable before
+    uint4 check = vn->getSymbolCheck();
+    if (check == Varnode::symcheck_complete) continue; // Have we checked this variable before
+    if (check == Varnode::symcheck_incomplete && vn->getType()->getMetatype() != TYPE_PTR) continue;
     if (vn->hasNoDescend()) continue;
     if (vn->isSpacebase()) continue; // Don't use constant 0 which is already spacebase
     //    if (vn->getSize() != rspc->getAddrSize()) continue; // Must be size of pointer
@@ -1206,8 +1213,7 @@ int4 ActionConstantPtr::apply(Funcdata &data)
     Address rampoint;
     uintb fullEncoding;
     entry = isPointer(rspc,vn,op,slot,rampoint,fullEncoding,data);
-    vn->setPtrCheck();		// Set check flag AFTER searching for symbol
-    if (entry != (SymbolEntry *)0) {
+    if (entry != (MapEntry *)0) {
       data.spacebaseConstant(op,slot,entry,rampoint,fullEncoding,vn->getSize());
       if ((opc == CPUI_INT_ADD)&&(slot==1))
 	data.opSwapInput(op,0,1);
@@ -1280,6 +1286,62 @@ int4 ActionDeindirect::apply(Funcdata &data)
   return 0;
 }
 
+/// \brief Try to eliminate constant extended to be larger than sizeof(uintb)
+///
+/// If given varnode is defined as zext(#0), simplify operations that read it.
+/// \param vn is the big varnode
+/// \param data is the function
+void ActionVarnodeProps::handleExtendedZero(Varnode *vn,Funcdata &data)
+
+{
+  PcodeOp *zext = vn->getDef();
+  if (zext->code() != CPUI_INT_ZEXT) return;
+  if (!zext->getIn(0)->constantMatch(0)) return;
+  list<PcodeOp *>::const_iterator iter;
+  iter = vn->beginDescend();
+   while(iter != vn->endDescend()) {
+    PcodeOp *subop = *iter;
+    ++iter;
+    switch(subop->code()) {
+      case CPUI_INT_ADD:
+      case CPUI_INT_OR:
+      case CPUI_INT_XOR:
+	data.opRemoveInput(subop, subop->getSlot(vn));	// Convert to COPY of other slot
+	data.opSetOpcode(subop, CPUI_COPY);
+	iter = vn->beginDescend();
+	count += 1;
+	break;
+      case CPUI_INT_2COMP:
+	data.opSetOpcode(subop, CPUI_COPY);
+	count += 1;
+	break;
+      case CPUI_INT_LEFT:
+      case CPUI_INT_RIGHT:
+      case CPUI_INT_SRIGHT:
+      case CPUI_INT_DIV:
+      case CPUI_INT_SDIV:
+      case CPUI_INT_REM:
+      case CPUI_INT_SREM:
+	if (subop->getIn(0) != vn)		// Check if zero is first input
+	  break;
+	data.opRemoveInput(subop, 1);		// Convert to COPY of zero
+	data.opSetOpcode(subop, CPUI_COPY);
+	iter = vn->beginDescend();
+	count += 1;
+	break;
+      case CPUI_INT_MULT:
+      case CPUI_INT_AND:
+	data.opRemoveInput(subop, 1-subop->getSlot(vn));	// Convert to COPY of zero
+	data.opSetOpcode(subop, CPUI_COPY);
+	iter = vn->beginDescend();
+	count += 1;
+	break;
+      default:
+	break;
+    }
+  }
+}
+
 int4 ActionVarnodeProps::apply(Funcdata &data)
 
 {
@@ -1325,10 +1387,14 @@ int4 ActionVarnodeProps::apply(Funcdata &data)
 	if (data.replaceVolatile(vn))
 	  count += 1;		// Try to replace vn with pcode op
     }
-    else if (((vn->getNZMask() & vn->getConsume())==0)&&(vnSize<=sizeof(uintb))) {
+    else if ((vn->getNZMask() & vn->getConsume())==0) {
       // FIXME: uintb should be arbitrary precision
       if (vn->isConstant()) continue; // Don't replace a constant
       if (vn->isWritten()) {
+	if (vnSize > sizeof(uintb)) {
+	  handleExtendedZero(vn, data);
+	  continue;
+	}
 	if (vn->getDef()->code() == CPUI_COPY) {
 	  if (vn->getDef()->getIn(0)->isConstant()) {
 	    // Don't replace a COPY 0, with a zero, let
@@ -4999,12 +5065,12 @@ int4 ActionDynamicMapping::apply(Funcdata &data)
 
 {
   ScopeLocal *localmap = data.getScopeLocal();
-  list<SymbolEntry>::iterator iter,enditer;
+  list<DynamicEntry *>::iterator iter,enditer;
   iter = localmap->beginDynamic();
   enditer = localmap->endDynamic();
   DynamicHash dhash;
   while(iter != enditer) {
-    SymbolEntry *entry = &(*iter);
+    DynamicEntry *entry = *iter;
     ++iter;
     if (data.attemptDynamicMapping(entry,dhash))
       count += 1;
@@ -5016,12 +5082,12 @@ int4 ActionDynamicSymbols::apply(Funcdata &data)
 
 {
   ScopeLocal *localmap = data.getScopeLocal();
-  list<SymbolEntry>::iterator iter,enditer;
+  list<DynamicEntry *>::iterator iter,enditer;
   iter = localmap->beginDynamic();
   enditer = localmap->endDynamic();
   DynamicHash dhash;
   while(iter != enditer) {
-    SymbolEntry *entry = &(*iter);
+    DynamicEntry *entry = *iter;
     ++iter;
     if (data.attemptDynamicMappingLate(entry, dhash))
       count += 1;
@@ -5166,7 +5232,9 @@ void ActionInferTypes::buildLocaltypes(Funcdata &data)
     bool needsBlock = false;
     SymbolEntry *entry = vn->getSymbolEntry();
     if (entry != (SymbolEntry *)0 && !vn->isTypeLock() && entry->getSymbol()->isTypeLocked()) {
-      int4 curOff = (vn->getAddr().getOffset() - entry->getAddr().getOffset()) + entry->getOffset();
+      int4 curOff = entry->getOffset();
+      if (!entry->isDynamic())
+	curOff += (vn->getAddr().getOffset() - ((MapEntry *)entry)->getAddr().getOffset());
       ct = typegrp->getExactPiece(entry->getSymbol()->getType(), curOff, vn->getSize());
       if (ct == (Datatype *)0 || ct->getMetatype() == TYPE_UNKNOWN)	// If we can't resolve, or resolve to UNKNOWN
 	ct = vn->getLocalType(needsBlock);		// Let data-type float, even though parent symbol is type-locked

@@ -4509,18 +4509,18 @@ bool RuleSubCommute::cancelExtensions(PcodeOp *longform,PcodeOp *subOp,Varnode *
   if (outvn->loneDescend() != subOp) return false;	// Must be exactly one output to SUBPIECE
   if (ext0In->getSize() == ext1In->getSize()) {
     maxSize = ext0In->getSize();
-    if (ext0In->isFree()) return false;		// Must be able to propagate inputs
-    if (ext1In->isFree()) return false;
+    if (ext0In->isFree() && !ext0In->isConstant()) return false;		// Must be able to propagate inputs
+    if (ext1In->isFree() && !ext1In->isConstant()) return false;
   }
   else if (ext0In->getSize() < ext1In->getSize()) {
     maxSize = ext1In->getSize();
-    if (ext1In->isFree()) return false;
+    if (ext1In->isFree() && !ext1In->isConstant()) return false;
     if (longform->getIn(0)->loneDescend() != longform) return false;
     ext0In = shortenExtension(longform->getIn(0)->getDef(), maxSize, data);
   }
   else {
     maxSize = ext0In->getSize();
-    if (ext0In->isFree()) return false;
+    if (ext0In->isFree() && !ext0In->isConstant()) return false;
     if (longform->getIn(1)->loneDescend() != longform) return false;
     ext1In = shortenExtension(longform->getIn(1)->getDef(), maxSize, data);
   }
@@ -7499,9 +7499,11 @@ Datatype *RulePieceStructure::determineDatatype(Varnode *vn,int4 &baseOffset)
 
   if (ct->getSize() != vn->getSize()) {			// vn is a partial
     SymbolEntry *entry = vn->getSymbolEntry();
-    baseOffset = vn->getAddr().overlap(0,entry->getAddr(),ct->getSize());
+    if (entry->isDynamic())
+      return (Datatype *)0;
+    baseOffset = vn->getAddr().overlap(0,((MapEntry *)entry)->getAddr(),ct->getSize());
     if (baseOffset < 0)
-      return (Datatype*)0;
+      return (Datatype *)0;
     baseOffset += entry->getOffset();
     // Find concrete sub-type that matches the size of the Varnode
     Datatype *subType = ct;

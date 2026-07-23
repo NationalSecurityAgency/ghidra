@@ -32,6 +32,7 @@ namespace ghidra {
 class Architecture;
 class Funcdata;
 class Scope;
+class MapEntry;
 class Database;
 class Symbol;
 class PrintLanguage;
@@ -58,54 +59,18 @@ extern ElementId ELEM_RANGEEQUALSSYMBOLS;	///< Marshaling element \<rangeequalss
 extern ElementId ELEM_SCOPE;		///< Marshaling element \<scope>
 extern ElementId ELEM_SYMBOLLIST;	///< Marshaling element \<symbollist>
 
-/// \brief A storage location for a particular Symbol
-///
-/// Where a Symbol is stored, as a byte address and a size, is of particular importance
-/// to the decompiler. This class encapsulates this storage meta-data. A single Symbol split
-/// across multiple storage locations is supported by the \b offset and \b size fields. The
-/// \b hash field supports \e dynamic storage, where a Symbol is represented by a constant
-/// or a temporary register. In this case, storage must be tied to the particular p-code
-/// operators using the value.
-///
-/// A particular memory address does \b not have to represent the symbol across all code. Storage
-/// may get recycled for different Symbols at different points in the code. The \b uselimit object
-/// defines the range of instruction addresses over which a particular memory address does
-/// represent a Symbol, with the convention that an empty \b uselimit indicates the storage
-/// holds the Symbol across \e all code.
-class SymbolEntry {
-  friend class Scope;
-  Symbol *symbol;		///< Symbol object being mapped
-  uint4 extraflags;		///< Varnode flags specific to this storage location
-  Address addr;			///< Starting address of the storage location
-  uint8 hash;			///< A dynamic storage address (an alternative to \b addr for dynamic symbols)
-  int4 offset;			///< Offset into the Symbol that \b this covers
-  int4 size;			///< Number of bytes consumed by \b this (piece of the) storage
-  RangeList uselimit;		///< Code address ranges where this storage is valid
-  SymbolEntry(Symbol *sym);	///< Construct a mapping for a Symbol without an address
+/// \brief A helper class for storing MapEntry objects in an interval map
+class SymbolRange {
 public:
-  /// \brief Initialization data for a SymbolEntry to facilitate a rangemap
-  ///
-  /// This is all the raw pieces of a SymbolEntry for a (non-dynamic) Symbol except
-  /// the offset of the main address and the size, which are provided by the
-  /// (rangemap compatible) SymbolEntry constructor.
-  class EntryInitData {
-    friend class SymbolEntry;
-    AddrSpace *space;		///< The address space of the main SymbolEntry starting address
-    Symbol *symbol;		///< The symbol being mapped
-    uint4 extraflags;		///< Varnode flags specific to the storage location
-    int4 offset;		///< Starting offset of the portion of the Symbol being covered
-    const RangeList &uselimit;	///< Reference to the range of code addresses for which the storage is valid
-  public:
-    EntryInitData(Symbol *sym,uint4 exfl,AddrSpace *spc,int4 off,const RangeList &ul)
-      : uselimit(ul) { symbol = sym; extraflags=exfl; space = spc; offset = off; }	///< Constructor
-  };
-
+  uintb first;			///< Starting offset of range covered by the MapEntry
+  uintb last;			///< Last offset of range
+  MapEntry *entry;		///< Pointer to the MapEntry
   /// \brief Class for sub-sorting different SymbolEntry objects at the same address
   ///
-  /// This is built from the SymbolEntry \b uselimit object (see SymbolEntry::getSubsort())
+  /// This is built from the SymbolEntry \b uselimit object
   /// Relevant portions of an Address object or pulled out for smaller storage and quick comparisons.
   class EntrySubsort {
-    friend class SymbolEntry;
+    friend class SymbolRange;
     int4 useindex;			///< Index of the sub-sorting address space
     uintb useoffset;			///< Offset into the sub-sorting address space
   public:
@@ -132,23 +97,63 @@ public:
       return (useoffset < op2.useoffset);
     }
   };
+
   typedef uintb linetype;		///< The linear element for a rangemap of SymbolEntry
   typedef EntrySubsort subsorttype;	///< The sub-sort object for a rangemap
-  typedef EntryInitData inittype;	///< Initialization data for a SymbolEntry in a rangemap
+  typedef MapEntry *inittype;		///< Initialization data for a SymbolEntry in a rangemap
 
-  SymbolEntry(const EntryInitData &data,uintb a,uintb b);		///< Fully initialize \b this
-  SymbolEntry(Symbol *sym,uint4 exfl,uint8 h,int4 off,int4 sz,const RangeList &rnglist);	///< Construct a dynamic SymbolEntry
-  bool isPiece(void) const { return ((extraflags&(Varnode::precislo|Varnode::precishi))!=0); }	///< Is \b this a high or low piece of the whole Symbol
-  bool isDynamic(void) const { return addr.isInvalid(); }		///< Is \b storage \e dynamic
-  bool isInvalid(void) const { return (addr.isInvalid() && (hash==0)); }	///< Is \b this storage \e invalid
+  SymbolRange(MapEntry *e,uintb f,uintb l) { entry=e; first = f; last = l; }	///< Constructor
+  uintb getFirst(void) const { return first; }		///< Get the first offset of \b this storage location
+  uintb getLast(void) const { return last; }	///< Get the last offset of \b this storage location
+  subsorttype getSubsort(void) const;
+};
+
+/// \brief A storage location for a particular Symbol
+///
+/// Storage can be a fixed Address or a dynamically located Varnode representing the Symbol.
+/// Storage may get recycled for different Symbols at different points in the code. The \b uselimit object
+/// defines the range of instruction addresses over which a particular SymbolEntry does
+/// represent a Symbol, with the convention that an empty \b uselimit indicates the storage
+/// holds the Symbol across \e all code.
+class SymbolEntry {
+  friend class Scope;
+  friend class ScopeInternal;
+  /// \brief The type (derived class) of SymbolEntry
+protected:
+  enum {
+    map_entry = 0,		///< Is a MapEntry
+    conflict_entry = 1,		///< Is a MapEntryConflict
+    dynamic_entry = 2		///< Is a DynamicEntry
+  };
+  Symbol *symbol;		///< Symbol object being mapped
+  RangeList uselimit;		///< Code address ranges where this storage is valid
+  uint4 extraflags;		///< Varnode flags specific to this storage location
+  int4 offset;			///< Offset into the Symbol that \b this covers
+  int4 size;			///< Number of bytes consumed by \b this (piece of the) storage
+  uint2 entrytype;		///< Type of SymbolEntry
+  bool is_piece;		///< Is \b this a piece of the whole symbol
+public:
+  SymbolEntry(Symbol *sym);	///< Construct an uninitialized SymbolEntry
+  SymbolEntry(Symbol *sym,uint4 exflags,int4 sz,int4 off,const RangeList &use);		///< Constructor
+  virtual ~SymbolEntry(void) {}
+  bool isPiece(void) const { return is_piece; }		///< Is \b this a proper piece of the whole Symbol
+  bool isDynamic(void) const { return (entrytype == dynamic_entry); }	///< Is \b storage \e dynamic
+  bool isConflict(void) const { return (entrytype == conflict_entry); }	///< Does storage have potential Symbol conflicts
+
+  /// \brief  Get the data-type associated with (a piece of) \b this
+  ///
+  /// Return the data-type that matches the given size and address within \b this storage.
+  /// NULL is returned if there is no valid sub-type matching the size.
+  /// \param addr is the given address
+  /// \param sz is the given size (in bytes)
+  /// \return the matching data-type or NULL
+  virtual Datatype *getSizedType(const Address &addr,int4 sz) const=0;
+  virtual void printEntry(ostream &s) const=0;				///< Print a one-line description of \b this to a debug stream
+  virtual void encode(Encoder &encoder) const=0;			///< Encode storage element internal to \<mapsym>
+  virtual void decode(Decoder &decoder)=0;				///< Decode storage element internal to \<mapsym>
   uint4 getAllFlags(void) const;					///< Get all Varnode flags for \b this storage
   int4 getOffset(void) const { return offset; }				///< Get offset of \b this within the Symbol
-  uintb getFirst(void) const { return addr.getOffset(); }		///< Get the first offset of \b this storage location
-  uintb getLast(void) const { return (addr.getOffset()+size-1); }	///< Get the last offset of \b this storage location
-  subsorttype getSubsort(void) const;					///< Get the sub-sort object
   Symbol *getSymbol(void) const { return symbol; }			///< Get the Symbol associated with \b this
-  const Address &getAddr(void) const { return addr; }			///< Get the starting address of \b this storage
-  uint8 getHash(void) const { return hash; }				///< Get the hash used to identify \b this storage
   int4 getSize(void) const { return size; }				///< Get the number of bytes consumed by \b this storage
   bool inUse(const Address &usepoint) const;				///< Is \b this storage valid for the given code address
   const RangeList &getUseLimit(void) const { return uselimit; }		///< Get the set of valid code addresses for \b this storage
@@ -156,12 +161,66 @@ public:
   void setUseLimit(const RangeList &uselim) { uselimit = uselim; }	///< Set the range of code addresses where \b this is valid
   bool isAddrTied(void) const;						///< Is \b this storage address tied
   bool updateType(Varnode *vn) const;					///< Update a Varnode data-type from \b this
-  Datatype *getSizedType(const Address &addr,int4 sz) const;		///< Get the data-type associated with (a piece of) \b this
-  void printEntry(ostream &s) const;					///< Dump a description of \b this to a stream
-  void encode(Encoder &encoder) const;					///< Encode \b this to a stream
-  void decode(Decoder &decoder);					///< Decode \b this from a stream
+
 };
-typedef rangemap<SymbolEntry> EntryMap;			///< A rangemap of SymbolEntry
+typedef rangemap<SymbolRange> EntryMap;			///< A rangemap of MapEntry
+
+/// \brief A mapping from a Symbol to storage Address
+///
+/// This object holds a (starting) Address of the Symbol and can be integrated into an EntryMap.
+/// A single Symbol split across multiple storage locations is supported by the \b offset and \b size fields.
+class MapEntry : public SymbolEntry {
+  friend class Scope;
+  friend class ScopeInternal;
+protected:
+  Address addr;						///< Starting address of the storage location
+  list<SymbolRange>::iterator mapIterator;		///< Position within container
+public:
+  MapEntry(Symbol *sym,uint4 exflags,const Address &ad,int4 sz,int4 off,const RangeList &use);	///< Constructor
+  MapEntry(Symbol *sym) : SymbolEntry(sym) {}		///< Construct and uninitialized MapEntry for use with decode()
+  virtual Datatype *getSizedType(const Address &addr,int4 sz) const;
+  virtual void printEntry(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder);
+  uintb getFirst(void) const { return addr.getOffset(); }		///< Get the first offset of \b this storage location
+  uintb getLast(void) const { return (addr.getOffset()+size-1); }	///< Get the last offset of \b this storage location
+  const Address &getAddr(void) const { return addr; }			///< Get the starting address of \b this storage
+};
+
+/// \brief A mapping from Symbol to Address when there are conflicting uses of the Address
+///
+/// If storage is (potentially) used by other Symbols at the same code point (\b uselimit),
+/// the Varnode is mapped using \b this, which allows potential deconfliction later,
+/// by converting to a DynamicEntry.
+class MapEntryConflict : public MapEntry {
+  uintm uniq;		///< Unique id of PcodeOp defining mapped Varnode
+public:
+  MapEntryConflict(Symbol *sym,Varnode *vn);	///< Constructor
+  uintm getUnique(void) const { return uniq; }	///< Get id of PcodeOp defining the conflicting Varnode
+  virtual void printEntry(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder);
+};
+
+/// \brief A mapping from a Symbol to a specific Varnode
+///
+/// For a constant or temporary register that is not strongly linked to a particular storage address,
+/// \b this allows a representative Varnode to be discovered dynamically.
+/// Storage for the Symbol is tied to the particular Varnode and p-code operator using the value.
+class DynamicEntry : public SymbolEntry {
+  friend class Scope;
+  friend class ScopeInternal;
+  uint8 hash;		///< A dynamic storage address
+  list<DynamicEntry *>::iterator dynIterator;		///< Position within container
+public:
+  DynamicEntry(Symbol *sym,uint4 exfl,uint8 h,int4 off,int4 sz,const RangeList &rnglist);	///< Constructor
+  DynamicEntry(Symbol *sym) : SymbolEntry(sym) { hash = 0; entrytype = dynamic_entry; }	///< Constructor for use with decode()
+  virtual Datatype *getSizedType(const Address &addr,int4 sz) const;
+  virtual void printEntry(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder);
+  uint8 getHash(void) const { return hash; }			///< Get the hash used to identify \b this storage
+};
 
 /// \brief The base class for a symbol in a symbol table or scope
 ///
@@ -186,11 +245,11 @@ protected:
   int2 category;		///< Special category (\b function_parameter, \b equate, etc.)
   uint2 catindex;		///< Index within category
   uint8 symbolId;		///< Unique id, 0=unassigned
-  vector<list<SymbolEntry>::iterator> mapentry;	///< List of storage locations labeled with \b this Symbol
+  vector<SymbolEntry *> mapentry;	///< List of storage locations labeled with \b this Symbol
   mutable const Scope *depthScope;	///< Scope associated with current depth resolution
   mutable int4 depthResolution;	///< Number of namespace elements required to resolve symbol in current scope
   uint4 wholeCount;		///< Number of SymbolEntries that map to the whole Symbol
-  virtual ~Symbol(void) {}	///< Destructor
+  virtual ~Symbol(void);		///< Destructor
   void setDisplayFormat(uint4 val);	///< Set the display format for \b this Symbol
   void checkSizeTypeLock(void);	///< Calculate if \b size_typelock property is on
   void setThisPointer(bool val);	///< Toggle whether \b this is the "this" pointer for a class method
@@ -242,7 +301,7 @@ public:
   void setIsolated(bool val);					///< Set whether \b this Symbol should be speculatively merged
   Scope *getScope(void) const { return scope; }			///< Get the scope owning \b this Symbol
   SymbolEntry *getFirstWholeMap(void) const;	 		///< Get the first entire mapping of the symbol
-  SymbolEntry *getMapEntry(const Address &addr) const;	 	///< Get first mapping of the symbol that contains the given Address
+  MapEntry *getMapEntry(const Address &addr) const;	 	///< Get first mapping of the symbol that contains the given Address
   int4 numEntries(void) const { return mapentry.size(); }	///< Return the number of SymbolEntrys
   SymbolEntry *getMapEntry(int4 i) const { return &(*mapentry[i]); }	///< Return the i-th SymbolEntry for \b this Symbol
   int4 getMapEntryPosition(const SymbolEntry *entry) const;	///< Position of given SymbolEntry within \b this multi-entry Symbol
@@ -381,7 +440,7 @@ typedef set<Symbol *,SymbolCompareName> SymbolNameTree;		///< A set of Symbol ob
 class MapIterator {
   const vector<EntryMap *> *map;		///< The list of EntryMaps, one per address space
   vector<EntryMap *>::const_iterator curmap;	///< Current EntryMap being iterated
-  list<SymbolEntry>::const_iterator curiter;	///< Current SymbolEntry being iterated
+  list<SymbolRange>::const_iterator curiter;	///< Current SymbolEntry being iterated
 public:
   MapIterator(void) { map = (const vector<EntryMap *> *)0; }	///< Construct an uninitialized iterator
 
@@ -392,7 +451,7 @@ public:
   /// \param ci is the position of the iterator within the specific EntryMap
   MapIterator(const vector<EntryMap *> *m,
 	       vector<EntryMap *>::const_iterator cm,
-	       list<SymbolEntry>::const_iterator ci) {
+	       list<SymbolRange>::const_iterator ci) {
     map = m; curmap = cm; curiter = ci;
   }
 
@@ -400,7 +459,7 @@ public:
   MapIterator(const MapIterator &op2) {
     map = op2.map; curmap = op2.curmap; curiter = op2.curiter;
   }
-  const SymbolEntry *operator*(void) const { return &(*curiter); }	///< Return the SymbolEntry being pointed at
+  const MapEntry *operator*(void) const { return (*curiter).entry; }	///< Return the SymbolEntry being pointed at
   MapIterator &operator++(void);					///< Pre-increment the iterator
   MapIterator operator++(int4 i);					///< Post-increment the iterator
 
@@ -481,17 +540,17 @@ protected:
 				     const Scope *scope2,
 				     const Address &addr,
 				     const Address &usepoint,
-				     SymbolEntry **addrmatch);
+				     MapEntry **addrmatch);
   static const Scope *stackContainer(const Scope *scope1,
 					  const Scope *scope2,
 					  const Address &addr,int4 size,
 					  const Address &usepoint,
-					  SymbolEntry **addrmatch);
+					  MapEntry **addrmatch);
   static const Scope *stackClosestFit(const Scope *scope1,
 					   const Scope *scope2,
 					   const Address &addr,int4 size,
 					   const Address &usepoint,
-					   SymbolEntry **addrmatch);
+					   MapEntry **addrmatch);
   static const Scope *stackFunction(const Scope *scope1,
 					 const Scope *scope2,
 					 const Address &addr,
@@ -528,34 +587,19 @@ protected:
   /// \param sym is the preconstructed Symbol
   virtual void addSymbolInternal(Symbol *sym)=0;
 
-  /// \brief Create a new SymbolEntry for a Symbol given a memory range
+  /// \brief Add a new MapEntry to a Symbol, update the map from Address to Symbol
   ///
-  /// The SymbolEntry is specified in terms of a memory range and \b usepoint
   /// \param sym is the given Symbol being mapped
-  /// \param exfl are any boolean Varnode properties specific to the memory range
-  /// \param addr is the starting address of the given memory range
-  /// \param off is the byte offset of the new SymbolEntry (relative to the whole Symbol)
-  /// \param sz is the number of bytes in the range
-  /// \param uselim is the given \b usepoint (which may be \e invalid)
-  /// \return the newly created SymbolEntry
-  virtual SymbolEntry *addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,
-				      const RangeList &uselim)=0;
+  /// \param entry is the MapEntry to add
+  virtual void addMapInternal(Symbol *sym,MapEntry *entry)=0;
 
-
-  /// \brief Create a new SymbolEntry for a Symbol given a dynamic hash
+  /// \brief Add a new DynamicEntry to a Symbol
   ///
-  /// The SymbolEntry is specified in terms of a \b hash and \b usepoint, which describe how
-  /// to find the temporary Varnode holding the symbol value.
   /// \param sym is the given Symbol being mapped
-  /// \param exfl are any boolean Varnode properties
-  /// \param hash is the given dynamic hash
-  /// \param off is the byte offset of the new SymbolEntry (relative to the whole Symbol)
-  /// \param sz is the number of bytes occupied by the Varnode
-  /// \param uselim is the given \b usepoint
-  /// \return the newly created SymbolEntry
-  virtual SymbolEntry *addDynamicMapInternal(Symbol *sym,uint4 exfl,uint8 hash,int4 off,int4 sz,
-					     const RangeList &uselim)=0;
-  SymbolEntry *addMap(SymbolEntry &entry);	///< Integrate a SymbolEntry into the range maps
+  /// \param entry is the DynamicEntry to add
+  virtual void addDynamicMapInternal(Symbol *sym,DynamicEntry *entry)=0;
+  void addMap(MapEntry *entry);				///< Integrate a MapEntry into the range maps
+  void addDynamic(DynamicEntry *entry);			///< Integrate a DynamicEntry into the Scope
   void setSymbolId(Symbol *sym,uint8 id) const { sym->symbolId = id; }	///< Adjust the id associated with a symbol
   void setDisplayName(const string &nm) { displayName = nm; }		///< Change name displayed in output
 public:
@@ -574,10 +618,10 @@ public:
   virtual ~Scope(void);						///< Destructor
   virtual MapIterator begin(void) const=0;			///< Beginning iterator to mapped SymbolEntrys
   virtual MapIterator end(void) const=0;			///< Ending iterator to mapped SymbolEntrys
-  virtual list<SymbolEntry>::const_iterator beginDynamic(void) const=0;	///< Beginning iterator to dynamic SymbolEntrys
-  virtual list<SymbolEntry>::const_iterator endDynamic(void) const=0;	///< Ending iterator to dynamic SymbolEntrys
-  virtual list<SymbolEntry>::iterator beginDynamic(void)=0;	///< Beginning iterator to dynamic SymbolEntrys
-  virtual list<SymbolEntry>::iterator endDynamic(void)=0;	///< Ending iterator to dynamic SymbolEntrys
+  virtual list<DynamicEntry *>::const_iterator beginDynamic(void) const=0;	///< Beginning iterator to dynamic SymbolEntrys
+  virtual list<DynamicEntry *>::const_iterator endDynamic(void) const=0;	///< Ending iterator to dynamic SymbolEntrys
+  virtual list<DynamicEntry *>::iterator beginDynamic(void)=0;	///< Beginning iterator to dynamic SymbolEntrys
+  virtual list<DynamicEntry *>::iterator endDynamic(void)=0;	///< Ending iterator to dynamic SymbolEntrys
   virtual void clear(void)=0;					///< Clear all symbols from \b this scope
   virtual void clearCategory(int4 cat)=0;			///< Clear all symbols of the given category from \b this scope
   virtual void clearUnlocked(void)=0;				///< Clear all unlocked symbols from \b this scope
@@ -620,7 +664,7 @@ public:
   /// \param addr is the given address
   /// \param usepoint is the point at which the Symbol is accessed (may be \e invalid)
   /// \return the matching SymbolEntry or NULL
-  virtual SymbolEntry *findAddr(const Address &addr,const Address &usepoint) const=0;
+  virtual MapEntry *findAddr(const Address &addr,const Address &usepoint) const=0;
 
   /// \brief Find the smallest Symbol containing the given memory range
   ///
@@ -628,8 +672,7 @@ public:
   /// \param size is the number of bytes in the range
   /// \param usepoint is the point at which the Symbol is accessed (may be \e invalid)
   /// \return the matching SymbolEntry or NULL
-  virtual SymbolEntry *findContainer(const Address &addr,int4 size,
-					     const Address &usepoint) const=0;
+  virtual MapEntry *findContainer(const Address &addr,int4 size,const Address &usepoint) const=0;
 
   /// \brief Find Symbol which is the closest fit to the given memory range
   ///
@@ -637,8 +680,7 @@ public:
   /// \param size is the number of bytes in the range
   /// \param usepoint is the point at which the Symbol is accessed (may be \e invalid)
   /// \return the matching SymbolEntry or NULL
-  virtual SymbolEntry *findClosestFit(const Address &addr,int4 size,
-					 const Address &usepoint) const=0;
+  virtual MapEntry *findClosestFit(const Address &addr,int4 size,const Address &usepoint) const=0;
 
   /// \brief Find the function starting at the given address
   ///
@@ -663,7 +705,7 @@ public:
   /// \param addr is the starting address of the given range
   /// \param size is the number of bytes in the range
   /// \return an overlapping SymbolEntry or NULL if none exists
-  virtual SymbolEntry *findOverlap(const Address &addr,int4 size) const=0;
+  virtual MapEntry *findOverlap(const Address &addr,int4 size) const=0;
 
   /// \brief Find a Symbol by name within \b this Scope
   ///
@@ -741,8 +783,7 @@ public:
   /// \param ind is, for the function_parameter category, the index position to set, and is unused for other categories
   virtual void setCategory(Symbol *sym,int4 cat,int4 ind)=0;
 
-  virtual SymbolEntry *addSymbol(const string &nm,Datatype *ct,
-				 const Address &addr,const Address &usepoint);
+  virtual MapEntry *addSymbol(const string &nm,Datatype *ct,const Address &addr,const Address &usepoint);
 
   const string &getName(void) const { return name; }		///< Get the name of the Scope
   const string &getDisplayName(void) const { return displayName; }	///< Get name displayed in output
@@ -752,12 +793,11 @@ public:
   // The main global querying routines
   void queryByName(const string &nm,vector<Symbol *> &res) const;	///< Look-up symbols by name
   Funcdata *queryFunction(const string &nm) const;			///< Look-up a function by name
-  SymbolEntry *queryByAddr(const Address &addr,
-			   const Address &usepoint) const;	  	///< Get Symbol with matching address
-  SymbolEntry *queryContainer(const Address &addr,int4 size,
-			      const Address &usepoint) const;		///< Find the smallest containing Symbol
-  SymbolEntry *queryProperties(const Address &addr,int4 size,
-			       const Address &usepoint,uint4 &flags) const;	///< Find a Symbol or properties at the given address
+  MapEntry *queryByAddr(const Address &addr,const Address &usepoint) const;	  ///< Get Symbol with matching address
+  MapEntry *queryContainer(const Address &addr,int4 size,
+			   const Address &usepoint) const;		///< Find the smallest containing Symbol
+  MapEntry *queryProperties(const Address &addr,int4 size,
+			    const Address &usepoint,uint4 &flags) const;	///< Find a Symbol or properties at the given address
   Funcdata *queryFunction(const Address &addr) const;			///< Look-up a function by address
   Funcdata *queryExternalRefFunction(const Address &addr) const;	///< Look-up a function thru an \e external \e reference
   LabSymbol *queryCodeLabel(const Address &addr) const;			///< Look-up a code label by address
@@ -777,8 +817,7 @@ public:
   Architecture *getArch(void) const { return glb; }		///< Get the Architecture associated with \b this
   Scope *getParent(void) const { return parent; }		///< Get the parent Scope (or NULL if \b this is the global Scope)
   Symbol *addSymbol(const string &nm,Datatype *ct);		///< Add a new Symbol \e without mapping it to an address
-  SymbolEntry *addMapPoint(Symbol *sym,const Address &addr,
-			   const Address &usepoint);		///< Map a Symbol to a specific address
+  MapEntry *addMapPoint(Symbol *sym,const Address &addr,const Address &usepoint);	///< Map a Symbol to a specific address
   Symbol *addMapSym(Decoder &decoder);				///< Parse a mapped Symbol from a \<mapsym> element
   FunctionSymbol *addFunction(const Address &addr,const string &nm);
   ExternRefSymbol *addExternalRef(const Address &addr,const Address &refaddr,const string &nm);
@@ -786,6 +825,7 @@ public:
   Symbol *addDynamicSymbol(const string &nm,Datatype *ct,const Address &caddr,uint8 hash);
   Symbol *addEquateSymbol(const string &nm,uint4 format,uintb value,const Address &addr,uint8 hash);
   Symbol *addUnionFacetSymbol(const string &nm,Datatype *dt,int4 fieldNum,const Address &addr,uint8 hash);
+  SymbolEntry *addSymbolWithConflict(const string &nm,Datatype *ct,Varnode *vn);
   string buildDefaultName(Symbol *sym,int4 &base,Varnode *vn) const;	///< Create a default name for the given Symbol
   bool isReadOnly(const Address &addr,int4 size,const Address &usepoint) const;
   void printBounds(ostream &s) const { rangetree.printBounds(s); }	///< Print a description of \b this Scope's \e owned memory ranges
@@ -805,13 +845,12 @@ class ScopeInternal : public Scope {
 protected:
   virtual Scope *buildSubScope(uint8 id,const string &nm);	///< Build an unattached Scope to be associated as a sub-scope of \b this
   virtual void addSymbolInternal(Symbol *sym);
-  virtual SymbolEntry *addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,const RangeList &uselim);
-  virtual SymbolEntry *addDynamicMapInternal(Symbol *sym,uint4 exfl,uint8 hash,int4 off,int4 sz,
-					     const RangeList &uselim);
+  virtual void addMapInternal(Symbol *sym,MapEntry *entry);
+  virtual void addDynamicMapInternal(Symbol *sym,DynamicEntry *entry);
   SymbolNameTree nametree;			///< The set of Symbol objects, sorted by name
   vector<EntryMap *> maptable;			///< Rangemaps of SymbolEntry, one map for each address space
   vector<vector<Symbol *> > category;		///< References to Symbol objects organized by category
-  list<SymbolEntry> dynamicentry;		///< Dynamic symbol entries
+  list<DynamicEntry *> dynamicentry;		///< Dynamic symbol entries
   SymbolNameTree multiEntrySet;			///< Set of symbols with multiple entries
   uint8 nextUniqueId;				///< Next available symbol id
 public:
@@ -826,10 +865,10 @@ public:
   virtual ~ScopeInternal(void);
   virtual MapIterator begin(void) const;
   virtual MapIterator end(void) const;
-  virtual list<SymbolEntry>::const_iterator beginDynamic(void) const;
-  virtual list<SymbolEntry>::const_iterator endDynamic(void) const;
-  virtual list<SymbolEntry>::iterator beginDynamic(void);
-  virtual list<SymbolEntry>::iterator endDynamic(void);
+  virtual list<DynamicEntry *>::const_iterator beginDynamic(void) const;
+  virtual list<DynamicEntry *>::const_iterator endDynamic(void) const;
+  virtual list<DynamicEntry *>::iterator beginDynamic(void);
+  virtual list<DynamicEntry *>::iterator endDynamic(void);
   virtual void removeSymbolMappings(Symbol *symbol);
   virtual void removeSymbol(Symbol *symbol);
   virtual void renameSymbol(Symbol *sym,const string &newname);
@@ -838,15 +877,13 @@ public:
   virtual void clearAttribute(Symbol *sym,uint4 attr);
   virtual void setDisplayFormat(Symbol *sym,uint4 attr);
 
-  virtual SymbolEntry *findAddr(const Address &addr,const Address &usepoint) const;
-  virtual SymbolEntry *findContainer(const Address &addr,int4 size,
-					const Address &usepoint) const;
-  virtual SymbolEntry *findClosestFit(const Address &addr,int4 size,
-					 const Address &usepoint) const;
+  virtual MapEntry *findAddr(const Address &addr,const Address &usepoint) const;
+  virtual MapEntry *findContainer(const Address &addr,int4 size,const Address &usepoint) const;
+  virtual MapEntry *findClosestFit(const Address &addr,int4 size,const Address &usepoint) const;
   virtual Funcdata *findFunction(const Address &addr) const;
   virtual ExternRefSymbol *findExternalRef(const Address &addr) const;
   virtual LabSymbol *findCodeLabel(const Address &addr) const;
-  virtual SymbolEntry *findOverlap(const Address &addr,int4 size) const;
+  virtual MapEntry *findOverlap(const Address &addr,int4 size) const;
 
   virtual void findByName(const string &nm,vector<Symbol *> &res) const;
   virtual bool isNameUsed(const string &nm,const Scope *op2) const;

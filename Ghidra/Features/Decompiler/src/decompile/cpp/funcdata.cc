@@ -355,7 +355,7 @@ Varnode *Funcdata::constructConstSpacebase(AddrSpace *id)
 /// \param rampoint is the constant pointer interpreted as an Address
 /// \param origval is the constant
 /// \param origsize is the size of the constant
-void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const Address &rampoint,uintb origval,int4 origsize)
+void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,MapEntry *entry,const Address &rampoint,uintb origval,int4 origsize)
 
 {
   int4 sz = rampoint.getAddrSize();
@@ -402,7 +402,7 @@ void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const 
   // Make sure newconstant and extra preserve origval in address units
   uintb newconstoff = origval - extra;		// everything is already in address units
   newconst = newConstant(sz,newconstoff);
-  newconst->setPtrCheck();	// No longer need to check this constant as a pointer
+  newconst->setSymbolCheck(Varnode::symcheck_complete);	// No longer need to check this constant as symbolref
   if (spaceid->isTruncated())
     addOp->setPtrFlow();
   opSetInput(addOp,spacebase_vn,0);
@@ -425,7 +425,7 @@ void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const 
     else
       opSetOpcode(extraOp,CPUI_INT_ADD);
     Varnode *extconst = newConstant(sz,extra);
-    extconst->setPtrCheck();
+    extconst->setSymbolCheck(Varnode::symcheck_complete);
     opSetInput(extraOp,outvn,0);
     opSetInput(extraOp,extconst,1);
     outvn = extraOp->getOut();
@@ -730,8 +730,9 @@ void Funcdata::encodeTree(Encoder &encoder) const
 /// tree is also emitted.
 /// \param encoder is the stream encoder
 /// \param id is the unique id associated with the function symbol
-/// \param savetree is \b true if the p-code tree should be emitted
-void Funcdata::encode(Encoder &encoder,uint8 id,bool savetree) const
+/// \param saveTree is \b true if the p-code tree should be emitted
+/// \param saveOverrides is \b true if information about overrides should be emitted
+void Funcdata::encode(Encoder &encoder,uint8 id,bool saveTree,bool saveOverrides) const
 
 {
   encoder.openElement(ELEM_FUNCTION);
@@ -747,13 +748,14 @@ void Funcdata::encode(Encoder &encoder,uint8 id,bool savetree) const
     localmap->encodeRecursive(encoder,false);	// Save scope and all subscopes
   }
 
-  if (savetree) {
+  if (saveTree) {
     encodeTree(encoder);
     encodeHigh(encoder);
   }
   encodeJumpTable(encoder);
   funcp.encode(encoder);		// Must be saved after database
-  localoverride.encode(encoder,glb);
+  if (saveOverrides)
+    localoverride.encode(encoder,glb);
   encoder.closeElement(ELEM_FUNCTION);
 }
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public abstract class AbstractInstructionTable extends GhidraTable {
 
 	// The standard cell height is a bit too small for our liking, so we expand it vertically a
 	// bit.
-	private int CELL_HEIGHT_PADDING = 6;
+	private int CELL_HEIGHT_PADDING = 9;
 
 	/**
 	 * {@link InstructionTableDataObject} instances constitute the contents of
@@ -76,11 +76,11 @@ public abstract class AbstractInstructionTable extends GhidraTable {
 		// Disable reorder of columns.  Allowing this would cause the table
 		// to become unstable; we rely on knowing that mnemonics are always in
 		// the first column, and that operand columns are in a particular order.
-		this.getTableHeader().setReorderingAllowed(false);
+		getTableHeader().setReorderingAllowed(false);
 
 		// The default cell size is a bit small and makes the text a bit hard 
 		// to read, so increase it to provide some space around the text.
-		this.setRowHeight(this.getRowHeight() + CELL_HEIGHT_PADDING);
+		setRowPadding(CELL_HEIGHT_PADDING);
 	}
 
 	InstructionSearchPlugin getPlugin() {

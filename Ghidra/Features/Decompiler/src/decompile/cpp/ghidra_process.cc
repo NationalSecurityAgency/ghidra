@@ -99,18 +99,17 @@ void GhidraCommand::loadParameters(void)
 
   if (ghidra == (ArchitectureGhidra *)0)
     throw JavaError("decompiler","No architecture registered with decompiler");
-  ghidra->clearWarnings();
 }
 
-/// This method sends any warnings accumulated during execution back, but it can be overloaded
-/// to send back any kind of information. Individual records are sent using
-/// the message protocol.
-void GhidraCommand::sendResult(void)
+/// This method can be overloaded to send back any kind of information as a string. Individual records
+/// are sent using the message protocol. If the command failed, a string describing the error is passed in.
+/// \param errorMsg is, if not empty, the error causing the commmand to fail
+void GhidraCommand::sendResult(const string &errorMsg)
 
 {
   if (ghidra != (ArchitectureGhidra *)0) {
     sout.write("\000\000\001\020",4);
-    sout << ghidra->getWarnings();
+    sout << errorMsg;
     sout.write("\000\000\001\021",4);
   }
 }
@@ -127,6 +126,7 @@ int4 GhidraCommand::doit(void)
 {
   status = 0;
   sout.write("\000\000\001\006",4); // Command response header
+  string errorMsg;
   try {
     loadParameters();
     int4 type = ArchitectureGhidra::readToAnyBurst(sin);
@@ -135,25 +135,19 @@ int4 GhidraCommand::doit(void)
     rawAction();
   }
   catch(DecoderError &err) {
-    string errmsg;
-    errmsg = "Marshaling error: " + err.explain;
-    ghidra->printMessage( errmsg );
+    errorMsg = "Marshaling error: " + err.explain;
   }
   catch(JavaError &err) {
     ArchitectureGhidra::passJavaException(sout,err.type,err.explain);
     return status;			// Abort sending any results
   }
   catch(RecovError &err) {
-    string errmsg;
-    errmsg = "Recoverable Error: " + err.explain;
-    ghidra->printMessage( errmsg );
+    errorMsg = "Recoverable Error: " + err.explain;
   }
   catch(LowlevelError &err) {
-    string errmsg;
-    errmsg = "Low-level Error: " + err.explain;
-    ghidra->printMessage( errmsg );
+    errorMsg = "Low-level Error: " + err.explain;
   }
-  sendResult();
+  sendResult(errorMsg);
   sout.write("\000\000\001\007",4); // Command response closer
   sout.flush();
   return status;
@@ -200,13 +194,13 @@ void RegisterProgram::rawAction(void)
   archid = open;
 }
 
-void RegisterProgram::sendResult(void)
+void RegisterProgram::sendResult(const string &errorMsg)
 
 {
   sout.write("\000\000\001\016",4);
   sout << dec << archid;
   sout.write("\000\000\001\017",4);
-  GhidraCommand::sendResult();
+  GhidraCommand::sendResult(errorMsg);
 }
 
 void DeregisterProgram::loadParameters(void)
@@ -225,7 +219,6 @@ void DeregisterProgram::loadParameters(void)
 
   if (ghidra == (ArchitectureGhidra *)0)
     throw JavaError("decompiler","No architecture registered with decompiler");
-  ghidra->clearWarnings();
 }
 
 void DeregisterProgram::rawAction(void)
@@ -250,13 +243,13 @@ void DeregisterProgram::rawAction(void)
     res = 0;
 }
 
-void DeregisterProgram::sendResult(void)
+void DeregisterProgram::sendResult(const string &errorMsg)
 
 {
   sout.write("\000\000\001\016",4);
   sout << dec << res;
   sout.write("\000\000\001\017",4);
-  GhidraCommand::sendResult();
+  GhidraCommand::sendResult(errorMsg);
 }
 
 void FlushNative::rawAction(void)
@@ -272,13 +265,13 @@ void FlushNative::rawAction(void)
   res = 0;
 }
 
-void FlushNative::sendResult(void)
+void FlushNative::sendResult(const string &errorMsg)
 
 {
   sout.write("\000\000\001\016",4);
   sout << dec << res;
   sout.write("\000\000\001\017",4);
-  GhidraCommand::sendResult();
+  GhidraCommand::sendResult(errorMsg);
 }
 
 void DecompileAt::loadParameters(void)
@@ -324,7 +317,7 @@ void DecompileAt::rawAction(void)
 	ParamIDAnalysis pidanalysis( fd, false );
 	pidanalysis.encode( encoder, true );
       }
-      fd->encode(encoder,0,ghidra->getSendSyntaxTree());
+      fd->encode(encoder,0,ghidra->getSendSyntaxTree(),false);
       if (ghidra->getSendCCode()&&
 	  (ghidra->allacts.getCurrentName() == "decompile"))
         ghidra->print->docFunction(fd);
@@ -405,14 +398,14 @@ void SetAction::rawAction(void)
   res = true;
 }
 
-void SetAction::sendResult(void)
+void SetAction::sendResult(const string &errorMsg)
 
 {
   if (res)
     ArchitectureGhidra::writeStringStream(sout,"t");
   else
     ArchitectureGhidra::writeStringStream(sout,"f");
-  GhidraCommand::sendResult();
+  GhidraCommand::sendResult(errorMsg);
 }
 
 void SetOptions::loadParameters(void)
@@ -444,14 +437,14 @@ void SetOptions::rawAction(void)
   res = true;
 }
 
-void SetOptions::sendResult(void)
+void SetOptions::sendResult(const string &errorMsg)
 
 {
   if (res)
     ArchitectureGhidra::writeStringStream(sout,"t");
   else
     ArchitectureGhidra::writeStringStream(sout,"f");
-  GhidraCommand::sendResult();
+  GhidraCommand::sendResult(errorMsg);
 }
 
 /// A command is read from the Ghidra client.  The matching GhidraCommand object is

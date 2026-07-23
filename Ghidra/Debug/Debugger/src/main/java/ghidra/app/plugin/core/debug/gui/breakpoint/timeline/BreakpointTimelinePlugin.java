@@ -93,6 +93,7 @@ public class BreakpointTimelinePlugin extends AbstractDebuggerPlugin {
 				if (currentTrace == t) {
 					currentTrace = null;
 					provider.setTrace(null);
+					actions.setTrace(null);
 				}
 				removeZoomProviders(t);
 			}
@@ -110,6 +111,7 @@ public class BreakpointTimelinePlugin extends AbstractDebuggerPlugin {
 				else {
 					refreshAllProviders(null);
 				}
+				actions.setTrace(t);
 			}
 			default -> {
 			}

@@ -546,7 +546,8 @@ System.out.printf("In LibrarySymbolTable.read:(...) %s <ord %3d> : '%s'\n", file
 		//}
 	}
 
-	void write(File output, File input, String lversion) throws IOException {
+	void write(File output, File input, String lversion)
+			throws IOException, IllegalNameException, IllegalDataException {
 		Element root = new Element("LIBRARY");
 
 		root.setAttribute("NAME", tableName);
@@ -576,15 +577,11 @@ System.out.printf("In LibrarySymbolTable.read:(...) %s <ord %3d> : '%s'\n", file
 			root.addContent(export);
 		}
 
-		FileOutputStream fos = new FileOutputStream(output);
-		try {
+		try (FileOutputStream fos = new FileOutputStream(output)) {
 			Document doc = new Document(root);
 
 			XMLOutputter xmlout = GenericXMLOutputter.getInstance();
 			xmlout.output(doc, fos);
-		}
-		finally {
-			fos.close();
 		}
 
 		//StringBuffer buffer = new StringBuffer();
