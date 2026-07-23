@@ -3,4 +3,5 @@
 
 @include "AARCH64instructions.sinc"
 @include "AARCH64_AMXext.sinc"
+@include "AARCH64_AppleExt.sinc"
 
