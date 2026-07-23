@@ -1,0 +1,193 @@
+#66 0F3A CF /r /ib
+#GF2P8AFFINEINVQB xmm1,
+#xmm2/m128, imm8 A V/V
+#GFNI Computes inverse affine transformation in the finite field GF(2^8).
+define pcodeop gf2p8affineinvqb;
+:GF2P8AFFINEINVQB XmmReg1, XmmReg2_m128, imm8 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0xCF; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
+{
+	XmmReg1 = gf2p8affineinvqb(XmmReg2_m128, XmmReg1, imm8:1 );
+	ZmmReg1 = zext(XmmReg1);
+}
+
+#VEX.128.66.0F3A.W1 CF /r /ib
+#VGF2P8AFFINEINVQB xmm1, xmm2,
+#xmm3/m128, imm8 B V/V
+#AVX GFNI Computes inverse affine transformation in the finite field GF(2^8).
+define pcodeop vgf2p8affineinvqb_avx;
+:VGF2P8AFFINEINVQB XmmReg1, vexVVVV_XmmReg, XmmReg2_m128, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xCF; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
+{
+	XmmReg1 = vgf2p8affineinvqb_avx( vexVVVV_XmmReg, XmmReg2_m128, imm8:1 );
+	ZmmReg1 = zext(XmmReg1);
+}
+#VEX.256.66.0F3A.W1 CF /r /ib
+#VGF2P8AFFINEINVQB ymm1, ymm2,
+#ymm3/m256, imm8 B V/V AVX
+#GFNI Computes inverse affine transformation in the finite field GF(2^8).
+:VGF2P8AFFINEINVQB YmmReg1, vexVVVV_YmmReg, YmmReg2_m256, imm8 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & vexVVVV_YmmReg; byte=0xCF; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256; imm8
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
+{
+	YmmReg1 = vgf2p8affineinvqb_avx( vexVVVV_YmmReg, YmmReg2_m256, imm8:1 );
+	ZmmReg1 = zext(YmmReg1);
+}
+
+# GF2P8AFFINEINVQB 3-476 PAGE 1046 LINE 56498
+define pcodeop vgf2p8affineinvqb_avx512vl ;
+:VGF2P8AFFINEINVQB XmmReg1 XmmOpMask8, evexV5_XmmReg, XmmReg2_m128_m64bcst, imm8 is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & XmmOpMask8 & evexV5_XmmReg; byte=0xCF; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m64bcst; imm8
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
+{
+	XmmResult = vgf2p8affineinvqb_avx512vl( evexV5_XmmReg, XmmReg2_m128_m64bcst, imm8:1 );
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+# GF2P8AFFINEINVQB 3-476 PAGE 1046 LINE 56501
+:VGF2P8AFFINEINVQB YmmReg1 YmmOpMask8, evexV5_YmmReg, YmmReg2_m256_m64bcst, imm8 is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & YmmOpMask8 & evexV5_YmmReg; byte=0xCF; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256_m64bcst; imm8
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
+{
+	YmmResult = vgf2p8affineinvqb_avx512vl( evexV5_YmmReg, YmmReg2_m256_m64bcst, imm8:1 );
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+
+# GF2P8AFFINEINVQB 3-476 PAGE 1046 LINE 56504
+define pcodeop vgf2p8affineinvqb_avx512f ;
+:VGF2P8AFFINEINVQB ZmmReg1 ZmmOpMask8, evexV5_ZmmReg, ZmmReg2_m512_m64bcst, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & ZmmOpMask8 & evexV5_ZmmReg; byte=0xCF; ZmmReg1 ... & ZmmReg2_m512_m64bcst; imm8
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
+{
+	ZmmResult = vgf2p8affineinvqb_avx512f( evexV5_ZmmReg, ZmmReg2_m512_m64bcst, imm8:1 );
+	ZmmMask = ZmmReg1;
+	build ZmmOpMask8;
+	ZmmReg1 = ZmmResult;
+}
+
+#66 0F3A CE /r /ib
+#GF2P8AFFINEQB xmm1, xmm2/m128, imm8 A V/V GFNI
+#Computes affine transformation in the finite field GF(2^8).
+define pcodeop gf2p8affineqb;
+:GF2P8AFFINEQB XmmReg1, XmmReg2_m128, imm8 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0xCE; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
+{
+	XmmReg1 = gf2p8affineqb(XmmReg2_m128, XmmReg1, imm8:1 );
+	ZmmReg1 = zext(XmmReg1);
+}
+
+#VEX.128.66.0F3A.W1 CE /r /ib
+#VGF2P8AFFINEQB xmm1, xmm2, xmm3/m128, imm8 B V/V AVX
+#GFNI Computes affine transformation in the finite field GF(2^8).
+define pcodeop vgf2p8affineqb_avx;
+:VGF2P8AFFINEQB XmmReg1, vexVVVV_XmmReg, XmmReg2_m128, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & vexVVVV_XmmReg; byte=0xCE; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
+{
+	XmmReg1 = vgf2p8affineqb_avx( vexVVVV_XmmReg, XmmReg2_m128, imm8:1 );
+	ZmmReg1 = zext(XmmReg1);
+}
+
+#VEX.256.66.0F3A.W1 CE /r /ib
+#VGF2P8AFFINEQB ymm1, ymm2, ymm3/m256, imm8 B V/V AVX
+#GFNI Computes affine transformation in the finite field GF(2^8).
+:VGF2P8AFFINEQB YmmReg1, vexVVVV_YmmReg, YmmReg2_m256, imm8 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & vexVVVV_YmmReg; byte=0xCE; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256; imm8
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
+{
+	YmmReg1 = vgf2p8affineqb_avx( vexVVVV_YmmReg, YmmReg2_m256, imm8:1 );
+	ZmmReg1 = zext(YmmReg1);
+}
+
+# GF2P8AFFINEQB 3-479 PAGE 1049 LINE 56642
+define pcodeop vgf2p8affineqb_avx512vl ;
+:VGF2P8AFFINEQB XmmReg1 XmmOpMask8, evexV5_XmmReg, XmmReg2_m128_m64bcst, imm8 is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & XmmOpMask8 & evexV5_XmmReg; byte=0xCE; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m64bcst; imm8
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
+{
+	XmmResult = vgf2p8affineqb_avx512vl( evexV5_XmmReg, XmmReg2_m128_m64bcst, imm8:1 );
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+# GF2P8AFFINEQB 3-479 PAGE 1049 LINE 56645
+:VGF2P8AFFINEQB YmmReg1 YmmOpMask8, evexV5_YmmReg, YmmReg2_m256_m64bcst, imm8 is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & YmmOpMask8 & evexV5_YmmReg; byte=0xCE; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256_m64bcst; imm8
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
+{
+	YmmResult = vgf2p8affineqb_avx512vl( evexV5_YmmReg, YmmReg2_m256_m64bcst, imm8:1 );
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+
+# GF2P8AFFINEQB 3-479 PAGE 1049 LINE 56648
+define pcodeop vgf2p8affineqb_avx512f ;
+:VGF2P8AFFINEQB ZmmReg1 ZmmOpMask8, evexV5_ZmmReg, ZmmReg2_m512_m64bcst, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & ZmmOpMask8 & evexV5_ZmmReg; byte=0xCE; ZmmReg1 ... & ZmmReg2_m512_m64bcst; imm8
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
+{
+	ZmmResult = vgf2p8affineqb_avx512f( evexV5_ZmmReg, ZmmReg2_m512_m64bcst, imm8:1 );
+	ZmmMask = ZmmReg1;
+	build ZmmOpMask8;
+	ZmmReg1 = ZmmResult;
+}
+
+#66 0F38 CF /r
+#GF2P8MULB xmm1, xmm2/m128 A V/V
+#GFNI Multiplies elements in the finite field GF(2^8).
+define pcodeop gf2p8mulb;
+:GF2P8MULB XmmReg1, XmmReg2_m128, imm8 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0xCF; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
+{
+	XmmReg1 = gf2p8mulb(XmmReg2_m128, XmmReg1, imm8:1 );
+	ZmmReg1 = zext(XmmReg1);
+}
+
+#VEX.128.66.0F38.W0 CF /r
+#VGF2P8MULB xmm1, xmm2, xmm3/m128 B V/V AVX
+#GFNI Multiplies elements in the finite field GF(2^8).
+define pcodeop vgf2p8mulb_avx;
+:VGF2P8MULB XmmReg1, vexVVVV_XmmReg, XmmReg2_m128, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xCF; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
+{
+	XmmReg1 = vgf2p8affineqb_avx( vexVVVV_XmmReg, XmmReg2_m128, imm8:1 );
+	ZmmReg1 = zext(XmmReg1);
+}
+
+#VEX.256.66.0F38.W0 CF /r
+#VGF2P8MULB ymm1, ymm2, ymm3/m256 B V/V AVX
+#GFNI Multiplies elements in the finite field GF(2^8).
+:VGF2P8MULB YmmReg1, vexVVVV_YmmReg, YmmReg2_m256, imm8 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xCF; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256; imm8
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
+{
+	YmmReg1 = vgf2p8mulb_avx( vexVVVV_YmmReg, YmmReg2_m256, imm8:1 );
+	ZmmReg1 = zext(YmmReg1);
+}
+
+# GF2P8MULB 3-481 PAGE 1051 LINE 56754
+define pcodeop vgf2p8mulb_avx512vl ;
+:VGF2P8MULB XmmReg1 XmmOpMask8, evexV5_XmmReg, XmmReg2_m128 is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & XmmOpMask8 & evexV5_XmmReg; byte=0xCF; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128
+[ evexD8Type = 1; evexTType = 0; ] # (TupleType Full Mem)
+{
+	XmmResult = vgf2p8mulb_avx512vl( evexV5_XmmReg, XmmReg2_m128 );
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+# GF2P8MULB 3-481 PAGE 1051 LINE 56757
+:VGF2P8MULB YmmReg1 YmmOpMask8, evexV5_YmmReg, YmmReg2_m256 is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & YmmOpMask8 & evexV5_YmmReg; byte=0xCF; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256
+[ evexD8Type = 1; evexTType = 0; ] # (TupleType Full Mem)
+{
+	YmmResult = vgf2p8mulb_avx512vl( evexV5_YmmReg, YmmReg2_m256 );
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+
+# GF2P8MULB 3-481 PAGE 1051 LINE 56760
+define pcodeop vgf2p8mulb_avx512f ;
+:VGF2P8MULB ZmmReg1 ZmmOpMask8, evexV5_ZmmReg, ZmmReg2_m512 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & ZmmOpMask8 & evexV5_ZmmReg; byte=0xCF; ZmmReg1 ... & ZmmReg2_m512
+[ evexD8Type = 1; evexTType = 0; ] # (TupleType Full Mem)
+{
+	ZmmResult = vgf2p8mulb_avx512f( evexV5_ZmmReg, ZmmReg2_m512 );
+	ZmmMask = ZmmReg1;
+	build ZmmOpMask8;
+	ZmmReg1 = ZmmResult;
+}
