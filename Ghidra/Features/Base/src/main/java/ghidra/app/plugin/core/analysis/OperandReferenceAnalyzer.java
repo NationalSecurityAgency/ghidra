@@ -348,7 +348,7 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 					DataType dt = data.getDataType();
 					stuffDefined = true;
 					if (!(dt instanceof StringDataType || data.isPointer())) {
-						if (dt instanceof Undefined) {
+						if (Undefined.isUndefined(dt)) {
 							isUndefinedStuff = true;
 						}
 						else {
