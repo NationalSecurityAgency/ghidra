@@ -9065,14 +9065,15 @@ define pcodeop psllw;
 :PSLLW          mmxreg2, imm8    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x71; mod = 0b11 & reg_opcode=6 & mmxreg2; imm8 { mmxreg2 = psllw(mmxreg2, imm8:8); }
 
 :PSLLD          mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF2; mmxreg ... & m64 ... {
-  local m:8 = m64;
-  mmxreg[0,32] = mmxreg[0,32] << m[0,32];
-  mmxreg[32,32] = mmxreg[32,32] << m[32,32];
+  local count = m64;
+  mmxreg[0,32] = mmxreg[0,32] << count;
+  mmxreg[32,32] = mmxreg[32,32] << count;
 }
 
 :PSLLD          mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF2; mmxmod = 3 & mmxreg1 & mmxreg2 {
-  mmxreg1[0,32] = mmxreg1[0,32] << mmxreg2[0,32];
-  mmxreg1[32,32] = mmxreg1[32,32] << mmxreg2[32,32];
+  local count = mmxreg2;
+  mmxreg1[0,32] = mmxreg1[0,32] << count;
+  mmxreg1[32,32] = mmxreg1[32,32] << count;
 }
 
 :PSLLD          mmxreg2, imm8    is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x72; mod = 0b11 & reg_opcode=6 & mmxreg2; imm8 {
@@ -9090,7 +9091,7 @@ define pcodeop psllw;
 
 :PSLLD          XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF2; XmmReg ... & m128 ... {
   local m:16 = m128;
-  local count:4 = m[0,32];
+  local count:8 = m(0);
   XmmReg[0,32] = XmmReg[0,32] << count;
   XmmReg[32,32] = XmmReg[32,32] << count;
   XmmReg[64,32] = XmmReg[64,32] << count;
@@ -9098,7 +9099,7 @@ define pcodeop psllw;
 }
 
 :PSLLD          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF2; xmmmod = 3 & XmmReg1 & XmmReg2 {
-  local count:4 = XmmReg2[0,32];
+  local count = XmmReg2[0,64];
   XmmReg1[0,32] = XmmReg1[0,32] << count;
   XmmReg1[32,32] = XmmReg1[32,32] << count;
   XmmReg1[64,32] = XmmReg1[64,32] << count;
