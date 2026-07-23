@@ -63,7 +63,7 @@ public class SymbolTableCommand extends LoadCommand {
 		stroff = loadCommandReader.readNextUnsignedInt();
 		strsize = loadCommandReader.readNextUnsignedInt();
 
-		List<NList> nlistList = new ArrayList<>((int) nsyms);
+		List<NList> nlistList = new ArrayList<>();
 		dataReader.setPointerIndex(header.getStartIndex() + symoff);
 		for (int i = 0; i < nsyms; ++i) {
 			nlistList.add(new NList(dataReader, header.is32bit()));
