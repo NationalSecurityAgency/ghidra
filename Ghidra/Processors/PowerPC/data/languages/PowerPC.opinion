@@ -12,8 +12,10 @@
         <constraint primary="497"   processor="PowerPC" endian="little" size="32" />
     </constraint>
     <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
-        <constraint primary="20"   processor="PowerPC"                  size="32" />
-        <constraint primary="21"   processor="PowerPC"                  size="64" />
+        <constraint primary="20" processor="PowerPC" size="32">
+            <constraint secondary="0x80000000" endian="big" variant="e200" />
+        </constraint>
+        <constraint primary="21" processor="PowerPC" size="64" />
     </constraint>
     <constraint loader="Preferred Executable Format (PEF)" compilerSpecID="default">
         <constraint primary="pwpc" processor="PowerPC" endian="big" size="32" />
