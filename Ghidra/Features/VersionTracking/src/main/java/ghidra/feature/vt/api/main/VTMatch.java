@@ -74,6 +74,13 @@ public interface VTMatch {
 	public VTScore getConfidenceScore();
 
 	/**
+	 * Returns the PDiff similarity score (basic-block mnemonic hash similarity)
+	 * that was computed at match creation time, or null if not available.
+	 * @return the PDiff similarity score, or null
+	 */
+	public VTScore getPdiffSimilarityScore();
+
+	/**
 	 * Returns the address in the source program for a match.
 	 * @return the address in the source program
 	 */
