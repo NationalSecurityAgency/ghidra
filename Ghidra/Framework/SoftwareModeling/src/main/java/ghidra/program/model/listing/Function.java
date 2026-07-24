@@ -283,7 +283,7 @@ public interface Function extends Namespace {
 	/**
 	 * Return all {@link FunctionTag} objects associated with this function.
 	 * 
-	 * @return set of tag names
+	 * @return set of tags
 	 */
 	public Set<FunctionTag> getTags();
 
