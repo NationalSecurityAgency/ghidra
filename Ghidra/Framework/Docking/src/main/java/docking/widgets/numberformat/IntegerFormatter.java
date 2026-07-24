@@ -17,6 +17,7 @@ package docking.widgets.numberformat;
 
 import java.awt.Toolkit;
 import java.text.*;
+import java.util.function.Predicate;
 
 import javax.swing.text.*;
 
@@ -36,18 +37,21 @@ public class IntegerFormatter extends NumberFormatter {
 		setAllowsInvalid(true);
 	}
 
+	protected Predicate<Number> createIsValidNumberPredicate() {
+		return n -> true;
+	}
+
 	@Override
 	protected DocumentFilter getDocumentFilter() {
 		if (myDocumentFilter == null) {
 			myDocumentFilter = createDocumentFilter();
 		}
-
 		return myDocumentFilter;
 	}
 
 	protected DocumentFilter createDocumentFilter() {
 		return new PosiviteValueIntegerDocumentFilterWrapper(getFormat(),
-			getOriginalDocumentFilter());
+			getOriginalDocumentFilter(), createIsValidNumberPredicate());
 	}
 
 	protected DocumentFilter getOriginalDocumentFilter() {
@@ -58,10 +62,17 @@ public class IntegerFormatter extends NumberFormatter {
 
 		protected final DocumentFilter wrappedFilter;
 		protected final Format format;
+		protected final Predicate<Number> isValidNumber;
 
 		PosiviteValueIntegerDocumentFilterWrapper(Format format, DocumentFilter wrappedFilter) {
+			this(format, wrappedFilter, n -> true);
+		}
+
+		PosiviteValueIntegerDocumentFilterWrapper(Format format, DocumentFilter wrappedFilter,
+				Predicate<Number> isValidNumber) {
 			this.format = format;
 			this.wrappedFilter = wrappedFilter;
+			this.isValidNumber = isValidNumber;
 		}
 
 		@Override
@@ -129,6 +140,10 @@ public class IntegerFormatter extends NumberFormatter {
 
 			Number number = parseText(text);
 			if (number == null) {
+				return false;
+			}
+
+			if (!isValidNumber.test(number)) {
 				return false;
 			}
 
