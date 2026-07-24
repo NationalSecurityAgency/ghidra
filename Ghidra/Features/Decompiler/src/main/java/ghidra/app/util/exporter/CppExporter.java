@@ -36,7 +36,7 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.Equate;
+import ghidra.program.model.symbol.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -553,12 +553,16 @@ public class CppExporter extends ProgramExporter {
 	 * <p>
 	 * Returns a string suitable for use as a C initializer (e.g., {@code 0x42},
 	 * {@code "hello"}, {@code {1, 2, 3}}), or {@code null} if no valid initializer
-	 * can be produced (e.g., for pointer types, function types, or uninitialized memory).
+	 * can be produced (e.g., for function types, or uninitialized memory).
+	 * <p>
+	 * Pointer types are resolved to symbol names when possible (e.g., {@code &a} or
+	 * {@code foo} for a function pointer), using {@code program} for symbol lookup.
 	 *
-	 * @param data the data item to render as a C initializer
+	 * @param data    the data item to render as a C initializer
+	 * @param program the program, used to resolve pointer targets to symbol names
 	 * @return C initializer string, or {@code null} if not representable
 	 */
-	private static String buildDataInitializer(Data data) {
+	private static String buildDataInitializer(Data data, Program program) {
 		if (data == null) {
 			return null;
 		}
@@ -571,8 +575,29 @@ public class CppExporter extends ProgramExporter {
 			baseType = td.getBaseDataType();
 		}
 
-		// Skip pointer types - their address representation is not valid C syntax
-		if (baseType instanceof Pointer || baseType instanceof FunctionDefinition) {
+		// For pointer types, resolve the referenced address to a symbol name
+		if (baseType instanceof Pointer) {
+			if (program == null) {
+				return null;
+			}
+			Object value = data.getValue();
+			if (!(value instanceof Address refAddr)) {
+				return null;
+			}
+			Symbol symbol = program.getSymbolTable().getPrimarySymbol(refAddr);
+			if (symbol == null) {
+				return null;
+			}
+			String symName = symbol.getName();
+			// Function pointers don't need the address-of operator
+			if (program.getFunctionManager().getFunctionAt(refAddr) != null) {
+				return symName;
+			}
+			return "&" + symName;
+		}
+
+		// Skip function definition types (bare function types, not pointer-to-function)
+		if (baseType instanceof FunctionDefinition) {
 			return null;
 		}
 
@@ -586,7 +611,7 @@ public class CppExporter extends ProgramExporter {
 						sb.append(", ");
 					}
 					Data component = data.getComponent(i);
-					String compInit = buildDataInitializer(component);
+					String compInit = buildDataInitializer(component, program);
 					if (compInit == null) {
 						return null;
 					}
@@ -760,7 +785,7 @@ public class CppExporter extends ProgramExporter {
 							String declaration;
 							if (emitGlobalData && symAddr != null) {
 								Data data = prog.getListing().getDataAt(symAddr);
-								String initializer = buildDataInitializer(data);
+								String initializer = buildDataInitializer(data, prog);
 								declaration = initializer != null
 										? declBase + " = " + initializer + ";"
 										: declBase + ";";
