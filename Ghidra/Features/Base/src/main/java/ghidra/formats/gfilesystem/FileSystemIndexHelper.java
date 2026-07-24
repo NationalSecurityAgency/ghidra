@@ -38,10 +38,10 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	private FileData<METADATATYPE> rootDir;
 	
 	static class FileData<METADATATYPE> {
+		final long fileIndex;
 		GFile file;
 		METADATATYPE metaData;
-		final long fileIndex;
-		final String symlinkPath;
+		String symlinkPath;
 		
 		FileData(GFile file, METADATATYPE metaData, long fileIndex) {
 			this(file, metaData, fileIndex, null);
@@ -135,6 +135,15 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	public synchronized GFile getFileByIndex(long fileIndex) {
 		FileData<METADATATYPE> fileData = fileIndexToEntryMap.get(fileIndex);
 		return (fileData != null) ? fileData.file : null;
+	}
+
+	/**
+	 * {@return the index of the specified file}
+	 * @param file GFile
+	 */
+	public synchronized long getFileIndex(GFile file) {
+		FileData<METADATATYPE> fd = file == null ? rootDir : fileToEntryMap.get(file);
+		return fd != null ? fd.fileIndex : -1;
 	}
 
 	/**
@@ -270,9 +279,26 @@ public class FileSystemIndexHelper<METADATATYPE> {
 		return fd != null ? fd.file : null;
 	}
 
+	/**
+	 * {@return the symlink path that the specified file contains}
+	 * @param file GFile
+	 */
 	public synchronized String getSymlinkPath(GFile file) {
 		FileData<METADATATYPE> fd = file == null ? rootDir : fileToEntryMap.get(file);
 		return fd != null ? fd.symlinkPath : null;
+	}
+
+	/**
+	 * Update the symlink path of the specified file
+	 * 
+	 * @param file GFile
+	 * @param newSymlinkPath string path
+	 */
+	public synchronized void updateSymlinkPath(GFile file, String newSymlinkPath) {
+		FileData<METADATATYPE> fd = fileToEntryMap.get(file);
+		if (fd != null) {
+			fd.symlinkPath = newSymlinkPath;
+		}
 	}
 
 	private FileData<METADATATYPE> getFileData(GFile f) throws IOException {
