@@ -4,7 +4,7 @@
 
 defaultTasks 'assemble'
 
-ext.supportedPlatforms = ['mac_x86_64', 'mac_arm_64', 'linux_x86_64', 'linux_arm_64']
+ext.supportedPlatforms = ['mac_x86_64', 'mac_arm_64', 'linux_x86_64', 'linux_arm_64', 'linux_loongarch_64']
 
 ext.binutilsResource = new File("${binutilsLocation}/${binutils}.tar.bz2")
 
@@ -56,6 +56,9 @@ model {
 	}
 	tasks.compileGdisLinux_arm_64ExecutableGdisC {
 		dependsOn 'copyBinutilsArtifcats_linux_arm_64'
+	}
+	tasks.compileGdisLinux_loongarch_64ExecutableGdisC {
+		dependsOn 'copyBinutilsArtifcats_linux_loongarch_64'
 	}
 	
 }

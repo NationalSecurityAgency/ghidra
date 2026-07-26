@@ -21,6 +21,7 @@ public enum Architecture {
 	POWERPC("ppc"),
 	POWERPC_64("ppc64"),
 	ARM_64("aarch64", "arm64"),
+	LOONGARCH_64("loongarch64", "loong64"),
 	UNKNOWN("Unknown Architecture");
 
 	/**

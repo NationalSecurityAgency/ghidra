@@ -43,6 +43,9 @@ public enum Platform {
 	/// Identifies a Linux ARM 64-bit OS
 	LINUX_ARM_64(OperatingSystem.LINUX, Architecture.ARM_64, "linux_arm_64", ".so", ""),
 
+	/// Identifies a Linux Loongarch 64-bit OS
+	LINUX_LOONGARCH_64(OperatingSystem.LINUX, Architecture.LOONGARCH_64, "linux_loongarch_64", ".so", ""),
+
 	/// Identifies a macOS x86 32-bit OS
 	MAC_X86_32(OperatingSystem.MAC_OS_X, Architecture.X86, "mac_x86_32", ".dylib", ""),
 
@@ -129,6 +132,7 @@ public enum Platform {
 			paths.add("/lib64");
 			paths.add("/lib/x86_64-linux-gnu");
 			paths.add("/lib/aarch64-linux-gnu");
+			paths.add("/lib/loongarch64-linux-gnu");
 			paths.add("/usr/bin");
 			paths.add("/usr/lib");
 			paths.add("/usr/X11R6/bin");

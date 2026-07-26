@@ -98,6 +98,8 @@ elif [ "$ARCH" = "x86_64" ]; then
 	OSDIR="linux_x86_64"
 elif [ "$ARCH" = "aarch64" ]; then
 	OSDIR="linux_arm_64"
+elif [ "$ARCH" = "loongarch64" ]; then
+	OSDIR="linux_loongarch_64"
 else
 	echo "Unsupported platform: $OS $ARCH"
 	exit -1	
