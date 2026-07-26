@@ -98,7 +98,7 @@ public class WildAssemblyParseToken extends AssemblyParseToken {
 	public record WildRange(long min, long max) implements Comparable<WildRange> {
 		public WildRange(long min, long max) {
 			if (min > max) {
-				throw new AssertionError("max > max");
+				throw new AssertionError("min > max");
 			}
 			this.min = min;
 			this.max = max;
