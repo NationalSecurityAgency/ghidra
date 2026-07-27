@@ -464,8 +464,8 @@ public class BatchImportDialog extends DialogComponentProvider {
 		chooser.setTitle("Choose File to Batch Import");
 		chooser.setApproveButtonText("Select files");
 		chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_AND_DIRECTORIES);
-		chooser.addFileFilter(ImporterUtilities.LOADABLE_FILES_FILTER);
-		chooser.addFileFilter(ImporterUtilities.CONTAINER_FILES_FILTER);
+		ImporterUtilities.addLoadableFileFilters(chooser);
+		ImporterUtilities.addFileSystemFileFilters(chooser);
 		chooser.setSelectedFileFilter(GhidraFileFilter.ALL);
 
 		chooser.setLastDirectoryPreference(LAST_IMPORT_DIR);

@@ -827,6 +827,11 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 		return COFF_NAME;
 	}
 
+	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("o", "obj");
+	}
+
 	class CoffPair {
 		public long offset;
 		public long size;

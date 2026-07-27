@@ -32,7 +32,12 @@ import ghidra.formats.gfilesystem.fileinfo.FileType;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-@FileSystemInfo(type = "cpio", description = "CPIO", factory = CpioFileSystemFactory.class)
+@FileSystemInfo(
+	type = "cpio",
+	description = "CPIO",
+	factory = CpioFileSystemFactory.class,
+	extensions = { "cpio" }
+)
 public class CpioFileSystem extends AbstractFileSystem<CpioArchiveEntry> {
 	private static final int MAX_SANE_SYMLINK = 64 * 1024;
 

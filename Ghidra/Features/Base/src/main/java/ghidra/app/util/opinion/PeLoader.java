@@ -870,6 +870,11 @@ public class PeLoader extends AbstractPeDebugLoader {
 		return PE_NAME;
 	}
 
+	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("exe", "dll", "sys");
+	}
+
 	public static class CompilerOpinion {
 		static final char[] errString_borland =
 			"This program must be run under Win32\r\n$".toCharArray();
