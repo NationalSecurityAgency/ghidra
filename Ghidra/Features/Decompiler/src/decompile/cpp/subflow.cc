@@ -86,6 +86,13 @@ SubvariableFlow::ReplaceVarnode *SubvariableFlow::setReplacement(Varnode *vn,uin
       if (sextval != cval)
 	return (ReplaceVarnode *)0;
     }
+    else if ((vn->getOffset() & calc_mask(vn->getSize()) & ~mask) != 0) {
+      // The constant has bits set outside of the logical variable.  addConstant() would truncate
+      // it to -mask-, silently changing its value.  For a flag sized variable the check below,
+      // that nothing outside of -mask- is consumed, is skipped, so the untruncated bits may still
+      // be read from the same storage location.  Don't trace through the constant in that case.
+      return (ReplaceVarnode *)0;
+    }
     return addConstant((ReplaceOp *)0,mask,0,vn);
   }
 
