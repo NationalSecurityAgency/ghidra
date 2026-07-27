@@ -1240,4 +1240,11 @@ abstract class CompositeViewerModel<T extends Composite> extends AbstractTableMo
 		return viewComposite.isPackingEnabled();
 	}
 
+	/**
+	 * Get the composite edtor's datatype manager
+	 * @return composite edtor's datatype manager
+	 */
+	public CompositeViewerDataTypeManager<T> getViewDataTypeManager() {
+		return viewDTM;
+	}
 }

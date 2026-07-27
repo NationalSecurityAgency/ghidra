@@ -25,6 +25,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.*;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
+
 /**
  * Base class for IntegerTextFields that allow entering integer values based on some 
  * integer format (i.e., hex, decimal, unsigned hex, binary, etc.). This field does input
@@ -38,7 +41,7 @@ public class AbstractIntegerTextField {
 	protected IntegerFormat currentFormat;
 	private BigInteger minValue;
 	private BigInteger maxValue;
-	private boolean usePrefix = true;
+	private boolean autoSwitch = true;
 
 	/**
 	 * Creates a new IntegerTextField with the specified number of columns and initial value
@@ -53,12 +56,20 @@ public class AbstractIntegerTextField {
 		allFormats = Arrays.asList(formats);
 		currentFormat = allFormats.get(0);
 
-		textField = new MultiFormatTextField(columns, allFormats, m -> setFormat(m));
+		textField = new CustomHintMultiFormatTextField(columns);
 
 		AbstractDocument document = (AbstractDocument) textField.getDocument();
 		document.setDocumentFilter(new HexDecimalDocumentFilter());
 		setValue(initialValue);
 		textField.addTextChangedCallback(this::valueChanged);
+	}
+
+	/**
+	 * Sets the accessible name for the component of this input field.
+	 * @param name the accessible name for this field
+	 */
+	public void setAccessibleName(String name) {
+		textField.getAccessibleContext().setAccessibleName(name);
 	}
 
 	/**
@@ -71,14 +82,6 @@ public class AbstractIntegerTextField {
 	}
 
 	/**
-	 * Sets the accessible name for the component of this input field.
-	 * @param name the accessible name for this field
-	 */
-	public void setAccessibleName(String name) {
-		textField.getAccessibleContext().setAccessibleName(name);
-	}
-
-	/**
 	 * Removes the changes listener.
 	 *
 	 * @param listener the listener to be removed.
@@ -88,13 +91,28 @@ public class AbstractIntegerTextField {
 	}
 
 	/**
+	 * {@return true if the text field will select the text when it initially gains focus.}
+	 */
+	public boolean isSelectTextOnFocusGainedEnabled() {
+		Object value = textField.getClientProperty("JTextField.selectAllOnFocusPolicy");
+		if (value == null) {
+			return false;
+		}
+		return Strings.CI.containsAny(value.toString(), "once", "always");
+	}
+
+	/**
 	 * Returns the current value of the field or null if the field has no current value.
 	 *
 	 * @return the current value of the field or null if the field has no current value.
 	 */
 	public BigInteger getValue() {
 		String text = textField.getText();
-		return parse(text, currentFormat);
+		BigInteger value = parse(text, currentFormat);
+		if (isInBounds(value)) {
+			return value;
+		}
+		return null;
 	}
 
 	/**
@@ -198,9 +216,14 @@ public class AbstractIntegerTextField {
 	}
 
 	private String addPrefix(String text) {
+
+		// 'autoSwitch' requires a prefix. When not using auto-switch, do not add a prefix if the
+		// user has not added one.
+		boolean usePrefix = autoSwitch;
 		if (!usePrefix) {
 			return text;
 		}
+
 		String prefix = currentFormat.getPrefix();
 		if (prefix.isBlank()) {
 			return text;
@@ -329,6 +352,18 @@ public class AbstractIntegerTextField {
 	}
 
 	/**
+	 * Clears the current selection and places the caret at the end of the text.
+	 */
+	public void clearSelection() {
+		String text = textField.getText();
+		int end = 0;
+		if (!StringUtils.isBlank(text)) {
+			end = text.length();
+		}
+		textField.setCaretPosition(end);
+	}
+
+	/**
 	 * Sets the horizontal alignment of the JTextField
 	 * 
 	 * @param alignment the alignment as in {@link JTextField#setHorizontalAlignment(int)}
@@ -338,16 +373,17 @@ public class AbstractIntegerTextField {
 	}
 
 	/**
-	 * Sets whether or not that non-decimal formats require using a prefix (i.e., "0x" for hex).
-	 * Generally, using a prefix is preferred as it allows the mode to auto-switch as the user
-	 * types (or not types) a prefix. If the prefix is not used, the only way to change input
-	 * formats is to use the built-in cntr-M action.
-	 * @param usePrefix true to require a prefix, false to not require a prefix
+	 * Sets whether this text field will switch the input mode format when typing a matching prefix.
+	 * For example, assuming DEC and HEX modes are available, while in DEC mode, typing {@code 0x}
+	 * will switch the mode format to HEX. 
+	 * <P>
+	 * Auto-switching is on by default.
+	 * 
+	 * @param newAutoSwitch true to auto-switch; false requires user to change modes manually
 	 */
-	public void setUseNumberPrefix(boolean usePrefix) {
-		BigInteger value = getValue();
-		this.usePrefix = usePrefix;
-		setValue(value);
+	public void setAutoSwitchMode(boolean newAutoSwitch) {
+		this.autoSwitch = newAutoSwitch;
+		textField.repaint();
 	}
 
 	/**
@@ -358,13 +394,35 @@ public class AbstractIntegerTextField {
 		return new ArrayList<>(allFormats);
 	}
 
+	/**
+	 * Sets the minimum value.  The given value must be less than or equal to 0.
+	 * @param minValue the value
+	 */
 	protected void setMinValue(BigInteger minValue) {
+
+		if (minValue != null) {
+			if (minValue.compareTo(BigInteger.ZERO) > 0) {
+				throw new IllegalArgumentException("Min value must be <= 0");
+			}
+		}
+
 		BigInteger value = getValue();
 		this.minValue = minValue;
 		setValue(value);
 	}
 
+	/**
+	 * Sets the maximum value.  The given value must be greater than 0.
+	 * @param maxValue the value
+	 */
 	protected void setMaxValue(BigInteger maxValue) {
+
+		if (maxValue != null) {
+			if (maxValue.compareTo(BigInteger.ZERO) <= 0) {
+				throw new IllegalArgumentException("Max value must be > 0");
+			}
+		}
+
 		BigInteger value = getValue();
 		this.maxValue = maxValue;
 		setValue(value);
@@ -381,6 +439,9 @@ public class AbstractIntegerTextField {
 	}
 
 	protected boolean isInBounds(BigInteger value) {
+		if (value == null) {
+			return false;
+		}
 		if (minValue != null && minValue.compareTo(value) > 0) {
 			return false;
 		}
@@ -391,19 +452,39 @@ public class AbstractIntegerTextField {
 		if (text.equals("0") || text.equals("-0")) {
 			return BigInteger.ZERO;
 		}
+
 		String prefix = format.getPrefix();
-		if (usePrefix && !prefix.isBlank()) {
-			if (text.startsWith(prefix)) {
-				text = text.substring(prefix.length());
-			}
-			else if (text.startsWith("-" + prefix)) {
-				text = "-" + text.substring(prefix.length() + 1);
-			}
-			else {
-				return null;
-			}
+		if (prefix.isBlank()) {
+			return format.parse(text);
 		}
+
+		// auto-switching requires a prefix so we know when we should switch formats
+		boolean requiresPrefix = autoSwitch;
+		boolean hasPrefix = hasPrefix(text, prefix);
+		if (requiresPrefix && !hasPrefix) {
+			return null;
+		}
+
+		text = text.replaceFirst(prefix, "");
 		return format.parse(text);
+	}
+
+	private boolean hasPrefix(String text, String prefix) {
+		return text.startsWith(prefix) || text.startsWith("-" + prefix);
+	}
+
+	private boolean hasFormatPrefix(String text, IntegerFormat format) {
+		if (text.startsWith("-")) {
+			if (!allowsNegative()) {
+				return false;
+			}
+			if (text.length() == 1) {
+				return true;
+			}
+			text = text.substring(1);
+		}
+
+		return format.getPrefix().startsWith(text);
 	}
 
 	private boolean isValidPrefix(String text, IntegerFormat format) {
@@ -416,11 +497,12 @@ public class AbstractIntegerTextField {
 			}
 			text = text.substring(1);
 		}
-		if (!usePrefix) {
-			return false;
-		}
-		return usePrefix && format.getPrefix().startsWith(text);
+		return format.getPrefix().startsWith(text);
 	}
+
+//=================================================================================================
+// Inner Classes
+//=================================================================================================	
 
 	/**
 	 * DocumentFilter that prevents users from entering invalid data into the field.
@@ -473,8 +555,9 @@ public class AbstractIntegerTextField {
 			if (text.isEmpty()) {
 				return true;
 			}
+
 			if (isValidPrefix(text, currentFormat)) {
-				return true;
+				return true; // just a prefix and is valid
 			}
 
 			BigInteger value = parse(text, currentFormat);
@@ -482,8 +565,8 @@ public class AbstractIntegerTextField {
 				return isInBounds(value);
 			}
 
-			if (usePrefix) {
-				// only allow auto switching if using number prefix
+			// only allow auto switching if using number prefix
+			if (autoSwitch) {
 				return autoSwitchFormat(text);
 			}
 			return false;
@@ -491,11 +574,12 @@ public class AbstractIntegerTextField {
 
 		private boolean autoSwitchFormat(String text) {
 			for (IntegerFormat format : allFormats) {
-				if (isValidPrefix(text, format)) {
+				if (hasFormatPrefix(text, format)) {
 					currentFormat = format;
 					textField.setFormat(format);
 					return true;
 				}
+
 				BigInteger value = parse(text, format);
 				if (value != null && isInBounds(value)) {
 					currentFormat = format;
@@ -515,4 +599,30 @@ public class AbstractIntegerTextField {
 		}
 	}
 
+	private class CustomHintMultiFormatTextField extends MultiFormatTextField {
+
+		public CustomHintMultiFormatTextField(int columns) {
+			super(columns, allFormats, m -> AbstractIntegerTextField.this.setFormat(m));
+		}
+
+		@Override
+		protected String getHintToolTipText() {
+			String superText = super.getHintToolTipText();
+			if (autoSwitch) {
+				return superText;
+			}
+
+			return superText + "<br><br><i>*Auto-switch mode disabled</i>";
+		}
+
+		@Override
+		protected String getHint() {
+			String superHint = super.getHint();
+			if (autoSwitch) {
+				return superHint;
+			}
+
+			return superHint + "*";
+		}
+	}
 }

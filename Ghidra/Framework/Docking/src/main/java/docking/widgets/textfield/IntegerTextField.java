@@ -44,17 +44,14 @@ import docking.widgets.textfield.integer.IntegerFormat;
  * equal to this value.</LI>
  * <LI>Min value - This value must be generally be negative and will restrict the input to values
  * greater than or equal to this value. As a special case, the min value can be set to 1.</LI>
- * <LI>Use number prefix - If this mode is on, then non-decimal values must be typed with its 
- * prefix(i.e., 0x for hex). When requiring non-decimal prefix, the field is permitted to auto
+ * <LI>Auto-switch mode - When requiring non-decimal prefix, the field is permitted to auto
  * switch formats based on the prefix (or lack thereof). When the use prefix is off, the only way
  * to switch formats is to use the ctrl-M action.</LI>
  * <LI>Show the number mode as hint text - If showing number mode is on, the format short name
  * is displayed lightly in the bottom right portion of the text field.
  * See {@link #setShowNumberMode(boolean)}</LI>
  * </UL>
- *
  */
-
 public class IntegerTextField extends AbstractIntegerTextField {
 	private IntegerFormat hex;
 	private IntegerFormat decimal;
@@ -137,11 +134,11 @@ public class IntegerTextField extends AbstractIntegerTextField {
 	 * mode and the typed text will be interpreted appropriately for the mode.
 	 *
 	 * @param usePrefix true to use the 0x convention for hex.
-	 * @deprecated use {@link #setUseNumberPrefix(boolean)} instead
+	 * @deprecated use {@link #setAutoSwitchMode(boolean)} instead
 	 */
 	@Deprecated(forRemoval = true, since = "12.2")
 	public void setAllowsHexPrefix(boolean usePrefix) {
-		setUseNumberPrefix(usePrefix);
+		setAutoSwitchMode(usePrefix);
 	}
 
 	/**
