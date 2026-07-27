@@ -17,6 +17,7 @@ package ghidra.formats.gfilesystem.factory;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.*;
@@ -114,6 +115,18 @@ public class FileSystemFactoryMgr {
 				.sorted(String::compareToIgnoreCase)
 				.toList();
 		//@formatter:on
+	}
+
+	/**
+	 * {@return a map of associated file system extensions keyed by file system description}
+	 */
+	public Map<String, String[]> getFilesystemExtensionsByDescription() {
+		return sortedFactories
+				.stream()
+				.collect(
+					Collectors.toMap(FileSystemInfoRec::getDescription,
+						FileSystemInfoRec::getExtensions));
+				
 	}
 
 	/**

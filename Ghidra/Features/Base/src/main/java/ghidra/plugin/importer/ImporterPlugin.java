@@ -465,8 +465,8 @@ public class ImporterPlugin extends Plugin
 	private void initializeChooser(String title, String buttonText, boolean multiSelect) {
 		if (chooser == null) {
 			chooser = new GhidraFileChooser(tool.getActiveWindow());
-			chooser.addFileFilter(ImporterUtilities.LOADABLE_FILES_FILTER);
-			chooser.addFileFilter(ImporterUtilities.CONTAINER_FILES_FILTER);
+			ImporterUtilities.addLoadableFileFilters(chooser);
+			ImporterUtilities.addFileSystemFileFilters(chooser);
 			chooser.setSelectedFileFilter(GhidraFileFilter.ALL);
 		}
 		chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);

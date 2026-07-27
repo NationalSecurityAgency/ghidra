@@ -829,4 +829,9 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 		return NE_NAME;
 	}
 
+	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("exe", "dll");
+	}
+
 }

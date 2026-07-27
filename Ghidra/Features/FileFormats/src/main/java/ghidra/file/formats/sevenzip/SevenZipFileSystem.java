@@ -46,7 +46,12 @@ import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
  * WARNING: care is taken to synchronize access to the underlying sevenzip library methods as
  * some race conditions have been encountered that cause the entire jdk to core dump. 
  */
-@FileSystemInfo(type = "7zip", description = "7Zip", factory = SevenZipFileSystemFactory.class)
+@FileSystemInfo(
+	type = "7zip",
+	description = "7Zip",
+	factory = SevenZipFileSystemFactory.class,
+	extensions = { "7z", "rpm" }
+)
 public class SevenZipFileSystem extends AbstractFileSystem<ISimpleInArchiveItem> {
 	private Map<Integer, String> passwords = new HashMap<>();
 
@@ -203,7 +208,7 @@ public class SevenZipFileSystem extends AbstractFileSystem<ISimpleInArchiveItem>
 		// that file will not be readable unless a password is found for it (see 
 		// getPasswordForFile()).
 		
-		try (CryptoSession cryptoSession = fsService.newCryptoSession()) {
+		try (CryptoSession _ = fsService.newCryptoSession()) {
 			List<ISimpleInArchiveItem> encryptedItems = getEncryptedItemsWithoutPasswords();
 			ISimpleInArchiveItem encryptedItem = null;
 			while ((encryptedItem = getFirstItemWithoutPassword(encryptedItems)) != null &&

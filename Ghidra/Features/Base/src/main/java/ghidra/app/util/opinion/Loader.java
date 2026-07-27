@@ -297,6 +297,13 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 		return COMMAND_LINE_ARG_PREFIX + arg;
 	}
 
+	/**
+	 * {@return a {@link Collection} of file extensions associated with this {@link Loader}}
+	 */
+	public default Collection<String> getAssociatedFileExtensions() {
+		return List.of();
+	}
+
 	@Override
 	public default int compareTo(Loader o) {
 		int compareTiers = getTier().compareTo(o.getTier());

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,13 @@ import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
  * <p>
  * 7Zip's features are superior to the native java zip handling (ie. passwords)
  */
-@FileSystemInfo(type = "zip", description = "ZIP", factory = ZipFileSystemFactory.class, priority = FileSystemInfo.PRIORITY_HIGH)
+@FileSystemInfo(
+	type = "zip",
+	description = "ZIP",
+	factory = ZipFileSystemFactory.class,
+	priority = FileSystemInfo.PRIORITY_HIGH,
+	extensions = { "zip", "jar" }
+)
 public class ZipFileSystem extends SevenZipFileSystem {
 
 	public ZipFileSystem(FSRLRoot fsrl, FileSystemService fsService) {

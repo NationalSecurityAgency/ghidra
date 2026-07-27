@@ -168,7 +168,7 @@ public class LoaderService {
 	 * @return An instance of every known {@link Loader}.  The {@link Loader} instances are sorted
 	 *   according to their {@link Loader#compareTo(Loader) natural ordering}. 
 	 */
-	private synchronized static Collection<Loader> getAllLoaders() {
+	public synchronized static Collection<Loader> getAllLoaders() {
 		List<Loader> loaders = new ArrayList<>(ClassSearcher.getInstances(Loader.class));
 		Collections.sort(loaders);
 		return loaders;

@@ -289,4 +289,9 @@ public class IntelHexLoader extends AbstractProgramLoader {
 	public String getName() {
 		return INTEL_HEX_NAME;
 	}
+
+	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("hex");
+	}
 }

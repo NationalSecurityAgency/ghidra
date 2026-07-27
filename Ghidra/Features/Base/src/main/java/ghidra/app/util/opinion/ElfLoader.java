@@ -193,6 +193,11 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 		return ELF_NAME;
 	}
 
+	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("so", "o");
+	}
+
 	/**
 	 * Attempts to detect a more specific compiler from the ELF
 	 * 

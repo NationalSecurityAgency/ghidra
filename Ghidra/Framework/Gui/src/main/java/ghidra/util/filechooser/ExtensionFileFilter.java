@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import ghidra.util.Msg;
 import utilities.util.reflection.ReflectionUtilities;
@@ -56,6 +57,7 @@ public class ExtensionFileFilter implements GhidraFileFilter {
 
 	/**
 	 * Creates a file filter that accepts the given file type.
+	 * <p>
 	 * Example: new ExtensionFileFilter("jpg", "JPEG Images");
 	 *
 	 * @param extension file extension to match, without leading dot
@@ -67,16 +69,38 @@ public class ExtensionFileFilter implements GhidraFileFilter {
 
 	/**
 	 * Creates a file filter from the given string array and description.
+	 * <p>
 	 * Example: new ExtensionFileFilter(String {"gif", "jpg"}, "Gif and JPG Images");
 	 *
 	 * @param filters array of file name extensions, each without a leading dot
 	 * @param description descriptive string of the filter
 	 */
 	public ExtensionFileFilter(String[] filters, String description) {
-		this.extensions = Arrays.asList(filters)
-				.stream()
-				.map(ExtensionFileFilter::clean)
-				.collect(Collectors.toList());
+		this(Arrays.stream(filters), description);
+	}
+
+	/**
+	 * Creates a file filter from the given string {@link Collection} and description.
+	 * <p>
+	 * Example: new ExtensionFileFilter(List.of("gif", "jpg"), "Gif and JPG Images");
+	 *
+	 * @param filters array of file name extensions, each without a leading dot
+	 * @param description descriptive string of the filter
+	 */
+	public ExtensionFileFilter(Collection<String> filters, String description) {
+		this(filters.stream(), description);
+	}
+
+	/**
+	 * Creates a file filter from the given string {@link Stream} and description.
+	 * <p>
+	 * Example: new ExtensionFileFilter(Stream.of("gif", "jpg"), "Gif and JPG Images");
+	 *
+	 * @param filters {@link List} of file name extensions, each without a leading dot
+	 * @param description descriptive string of the filter
+	 */
+	private ExtensionFileFilter(Stream<String> filters, String description) {
+		this.extensions = filters.map(ExtensionFileFilter::clean).collect(Collectors.toList());
 		this.description = description;
 	}
 
