@@ -19,6 +19,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.*;
 
 import com.google.gson.*;
@@ -151,6 +152,16 @@ public class VSCodeIntegrationPlugin extends ProgramPlugin implements VSCodeInte
 				"Visual Studio Code installation executable file does not exist.");
 		}
 		return vscodeExecutableFile;
+	}
+
+	@Override
+	public List<String> getVSCodeArguments() {
+		List<String> args = new ArrayList<>();
+		CollectionUtils.addIgnoreNull(args,
+			options.getString(VSCodeIntegrationOptionsPlugin.VSCODE_ARG1_OPTION, null));
+		CollectionUtils.addIgnoreNull(args,
+			options.getString(VSCodeIntegrationOptionsPlugin.VSCODE_ARG2_OPTION, null));
+		return args;
 	}
 
 	@Override
