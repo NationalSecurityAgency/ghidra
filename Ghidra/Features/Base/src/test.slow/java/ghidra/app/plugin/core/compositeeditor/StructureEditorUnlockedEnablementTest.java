@@ -50,7 +50,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof EditFieldAction) || (action instanceof InsertUndefinedAction) ||
 				(action instanceof AddBitFieldAction) || (action instanceof PointerAction) ||
 				(action instanceof HexNumbersAction) || (action instanceof ApplyAction) ||
-				action instanceof NextPrevDefinedComponentAction) {
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -86,7 +87,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof AddBitFieldAction) || (action instanceof PointerAction) ||
 				(action instanceof HexNumbersAction) ||
 				(action instanceof ShowDataTypeInTreeAction) ||
-				action instanceof NextPrevDefinedComponentAction) {
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -122,7 +124,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof CreateInternalStructureAction) ||
 				(action instanceof ShowDataTypeInTreeAction ||
 					action instanceof FindReferencesToStructureFieldAction) ||
-				action instanceof NextPrevDefinedComponentAction) {
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -164,7 +167,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof CreateInternalStructureAction) ||
 				(action instanceof ShowDataTypeInTreeAction ||
 					action instanceof FindReferencesToStructureFieldAction) ||
-				action instanceof NextPrevDefinedComponentAction) {
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -207,7 +211,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof CreateInternalStructureAction) ||
 				(action instanceof ShowDataTypeInTreeAction ||
 					action instanceof FindReferencesToStructureFieldAction) ||
-				action instanceof NextPrevDefinedComponentAction) {
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -248,7 +253,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof AddBitFieldAction) || (action instanceof PointerAction) ||
 				(action instanceof HexNumbersAction) ||
 				(action instanceof ShowDataTypeInTreeAction) ||
-				action instanceof NextPrevDefinedComponentAction) {
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else {

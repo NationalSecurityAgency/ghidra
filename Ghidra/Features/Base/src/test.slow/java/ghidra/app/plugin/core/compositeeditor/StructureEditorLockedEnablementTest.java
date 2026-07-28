@@ -68,7 +68,8 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 			if ((action instanceof EditFieldAction) || (action instanceof AddBitFieldAction) ||
 				(action instanceof InsertUndefinedAction) || (action instanceof PointerAction) ||
 				(action instanceof HexNumbersAction) || (action instanceof ApplyAction) ||
-				action instanceof NextPrevDefinedComponentAction) {
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -120,7 +121,8 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 				(action instanceof InsertUndefinedAction) || (action instanceof PointerAction) ||
 				(action instanceof HexNumbersAction) ||
 				(action instanceof ShowDataTypeInTreeAction) ||
-				(action instanceof NextPrevDefinedComponentAction)) {
+				(action instanceof NextPrevDefinedComponentAction) ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -172,7 +174,8 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 				(action instanceof CreateInternalStructureAction) ||
 				(action instanceof ShowDataTypeInTreeAction) ||
 				action instanceof FindReferencesToStructureFieldAction ||
-				action instanceof NextPrevDefinedComponentAction) {
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -204,7 +207,8 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 				(action instanceof CreateInternalStructureAction) ||
 				(action instanceof ShowDataTypeInTreeAction) ||
 				action instanceof FindReferencesToStructureFieldAction ||
-				action instanceof NextPrevDefinedComponentAction) {
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -236,7 +240,8 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 				(action instanceof CreateInternalStructureAction) ||
 				(action instanceof ShowDataTypeInTreeAction) ||
 				action instanceof FindReferencesToStructureFieldAction ||
-				action instanceof NextPrevDefinedComponentAction) {
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -266,7 +271,8 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 				(action instanceof PointerAction) || (action instanceof HexNumbersAction) ||
 				(action instanceof CreateInternalStructureAction) ||
 				(action instanceof ShowDataTypeInTreeAction) ||
-				action instanceof NextPrevDefinedComponentAction) {
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -292,7 +298,8 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 			else if ((action instanceof CycleGroupAction) || (action instanceof ClearAction) ||
 				(action instanceof DeleteAction) || (action instanceof HexNumbersAction) ||
 				(action instanceof ShowDataTypeInTreeAction) ||
-				action instanceof NextPrevDefinedComponentAction) {
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else {
