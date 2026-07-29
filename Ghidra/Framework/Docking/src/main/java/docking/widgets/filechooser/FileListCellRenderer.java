@@ -21,10 +21,7 @@ import java.io.File;
 
 import javax.swing.JList;
 
-import org.bouncycastle.crypto.generators.DHBasicKeyPairGenerator;
-
 import docking.widgets.list.GListCellRenderer;
-import ghidra.util.Msg;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 
 class FileListCellRenderer extends GListCellRenderer<File> {
@@ -44,25 +41,42 @@ class FileListCellRenderer extends GListCellRenderer<File> {
 	}
 
 	@Override
+	public Dimension getPreferredSize() {
+		/*
+		 	The preferred size is used by the UI to pre-calculate the list's cell width to use while
+		 	rendering. The default preferred size does not account for the border insets. Some LaFs
+		 	appreciably change border size when focused. If the size of the cell is pre-calculated 
+		 	using the smaller border size, then when the cell is focused text may be clipped, as the
+		 	cell size does not get updated when the border is changed. Start with the biggest known 
+		 	border size to prevent clipping.
+		 */
+		Dimension d = super.getPreferredSize();
+		int borderWidth = getMaxBorderWidth();
+		d.width += borderWidth;
+		return d;
+	}
+
+	@Override
 	public Component getListCellRendererComponent(JList<? extends File> list, File file, int index,
 			boolean isSelected, boolean cellHasFocus) {
 
 		super.getListCellRendererComponent(list, file, index, isSelected, cellHasFocus);
+
 		setIcon(model.getIcon(file));
 
-		// The file chooser's list will sometimes set a fixed width.  When that happens, the text
-		// may get clipped.  When we get clipped text, add a tooltip to show the full text.
+		setToolTipText(null); // clear out previous cell's tool tip
+
+		// As a performance tweak, the file chooser's list will get set to a fixed width when the 
+		// number of directory items is large. (Clients may also choose to set a fixed width value.)
+		// Setting a fixed width may cause a cell's text to get clipped.  When we get clipped text,
+		// add a tooltip to show the full text.
 		int fixedWidth = list.getFixedCellWidth();
 		if (fixedWidth > 0) {
 			Dimension d = getPreferredSize();
 			if (d.getWidth() > fixedWidth) {
 				setToolTipText(getText());
-			}	
-			else {
-				setToolTipText(null);
 			}
 		}
-
 		return this;
 	}
 
