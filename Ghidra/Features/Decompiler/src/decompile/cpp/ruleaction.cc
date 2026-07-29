@@ -4204,7 +4204,7 @@ AddrSpace *RuleLoadVarnode::correctSpacebase(Architecture *glb,Varnode *vn,AddrS
   return assoc;
 }
 
-/// \brief Check if given Varnode is spacebase + a constant
+/// \brief Check if given Varnode is spacebase + a constant, or spacebase | a constant
 ///
 /// If it is, pass back the constant and return the associated space
 /// \param glb is the address space manager
@@ -4226,23 +4226,49 @@ AddrSpace *RuleLoadVarnode::vnSpacebase(Architecture *glb,Varnode *vn,uintb &val
   }
   if (!vn->isWritten()) return (AddrSpace *)0;
   op = vn->getDef();
-  if (op->code() != CPUI_INT_ADD) return (AddrSpace *)0;
+  if (!(op->code() == CPUI_INT_ADD || op->code() == CPUI_INT_OR)) {
+    return (AddrSpace *)0;
+  }
+  if (op->code() == CPUI_INT_OR && vn->getSize() > sizeof(uintb)) {
+    return (AddrSpace *)0;
+  }
   vn1 = op->getIn(0);
   vn2 = op->getIn(1);
+  if (op->code() == CPUI_INT_OR) {
+    uintb baseval;
+    Varnode *basevn;
+    Varnode *constvn;
+    if (vn2->isConstant()) {
+      basevn = vn1;
+      constvn = vn2;
+    } else if (vn1->isConstant()) {
+      basevn = vn2;
+      constvn = vn1;
+    } else {
+      return (AddrSpace *)0;
+    }
+    retspace = vnSpacebase(glb,basevn,baseval,spc);
+    if (retspace != (AddrSpace *)0) {
+        if ((basevn->getNZMask() & constvn->getOffset()) != 0) {
+          return (AddrSpace *)0;
+        }
+        val = baseval + constvn->getOffset();
+    }
+    return retspace;
+  }
   retspace = correctSpacebase(glb,vn1,spc);
   if (retspace != (AddrSpace *)0) {
-    if (vn2->isConstant()) {
-      val = vn2->getOffset();
-      return retspace;
-    }
-    return (AddrSpace *)0;
+      if (vn2->isConstant()) {
+          val = vn2->getOffset();
+          return retspace;
+      }
   }
   retspace = correctSpacebase(glb,vn2,spc);
   if (retspace != (AddrSpace *)0) {
-    if (vn1->isConstant()) {
-      val = vn1->getOffset();
-      return retspace;
-    }
+      if (vn1->isConstant()) {
+          val = vn1->getOffset();
+          return retspace;
+      }
   }
   return (AddrSpace *)0;
 }
