@@ -669,10 +669,11 @@ define pcodeop crcc.w.d.w;
 	local msb:1 = imm16_6;
 	local lsb:1 = imm10_6;
 	local len:1 = msb + 1 - lsb;
-	local mask:8 = (1 << len) - 1;
-	local repl:8 = (RJsrc & (mask << lsb)) >> lsb;
+	local lowmask:8 = (1 << len) - 1;
+	local fieldmask:8 = lowmask << lsb;
+	local repl:8 = (RJsrc & lowmask) << lsb;
 
-	RD = (RD & (~mask)) | repl;
+	RD = (RD & (~fieldmask)) | repl;
 }
 
 
