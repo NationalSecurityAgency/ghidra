@@ -126,18 +126,18 @@
 #0x001b8000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
 :rotr.d RD, RJsrc, RKsrc              is op15_31=0x37 & RD & RJsrc & RKsrc {
 	local shift:1 = RKsrc(0) & 0x3f;
-	local tmp1:8 = RJsrc s>> shift;
+	local tmp1:8 = RJsrc >> shift;
 	local tmp2:8 = RJsrc << (64 - shift);
-	RD = tmp1 + tmp2;
+	RD = tmp1 | tmp2;
 }
 
 #la-base-64.txt rotri.d mask=0x004d0000	[@qemu]
 #0x004d0000	0xffff0000	r0:5,r5:5,u10:6	['reg0_5_s0', 'reg5_5_s0', 'imm10_6_s0']
 :rotri.d RD, RJsrc, imm10_6           is op16_31=0x4d & RD & RJsrc & imm10_6 {
 	local shift:1 = imm10_6 & 0x3f;
-	local tmp1:8 = RJsrc s>> shift;
+	local tmp1:8 = RJsrc >> shift;
 	local tmp2:8 = RJsrc << (64 - shift);
-	RD = tmp1 + tmp2;
+	RD = tmp1 | tmp2;
 }
 
 
