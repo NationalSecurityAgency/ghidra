@@ -549,7 +549,7 @@ public class FileSystemService {
 		if (provider instanceof RefdByteProvider) {
 			provider = ((RefdByteProvider) provider).getWrappedByteProvider();
 		}
-		if (provider instanceof FileByteProvider || provider instanceof RandomAccessByteProvider) {
+		if (provider instanceof FileByteProvider) {
 			return provider.getFile();
 		}
 
