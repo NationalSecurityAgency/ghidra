@@ -45,7 +45,7 @@ public class IntelHexLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	public boolean supportsLoadIntoProgram() {
+	public boolean supportsLoadIntoProgram(Program program) {
 		return true;
 	}
 

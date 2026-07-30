@@ -31,9 +31,6 @@ import utility.module.ModuleUtilities;
 
 /**
  * Class used to prepare Ghidra for launching
- * <p>
- * A {@link #main(String[])} method is provided which redirects execution to a 
- * {@link GhidraLaunchable} class passed in as a command line argument
  */
 public class GhidraLauncher {
 
@@ -79,21 +76,6 @@ public class GhidraLauncher {
 		// and pass the rest through to the target class's launch method.
 		GhidraLaunchable launchable = (GhidraLaunchable) constructor.newInstance();
 		launchable.launch(layout, Arrays.copyOfRange(args, 1, args.length));
-	}
-
-	/**
-	 * Launches the given {@link GhidraLaunchable} specified in the first command line argument
-	 * 
-	 * @param args The first argument is the name of the {@link GhidraLaunchable} to launch.
-	 *   The remaining args get passed through to the class's {@link GhidraLaunchable#launch} 
-	 *   method.
-	 * @throws Exception If there was a problem launching.  See the exception's message for more
-	 *     details on what went wrong. 
-	 * @deprecated Use {@link Ghidra#main(String[])} instead
-	 */
-	@Deprecated(since = "10.1", forRemoval = true)
-	public static void main(String[] args) throws Exception {
-		launch(args);
 	}
 
 	/**

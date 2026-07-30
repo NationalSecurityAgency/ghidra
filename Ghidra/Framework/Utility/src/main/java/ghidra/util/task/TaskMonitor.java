@@ -129,19 +129,8 @@ public interface TaskMonitor {
 	/**
 	 * Check to see if this monitor has been cancelled
 	 * @throws CancelledException if monitor has been cancelled
-	 * @deprecated Use {@link #checkCancelled()} instead
 	 */
-	@Deprecated(since = "10.3")
-	public void checkCanceled() throws CancelledException;
-
-	/**
-	 * Check to see if this monitor has been cancelled
-	 * @throws CancelledException if monitor has been cancelled
-	 */
-	public default void checkCancelled() throws CancelledException {
-		// note: call checkCancelled() until it is removed; this produces the least number of changes
-		checkCanceled();
-	}
+	public void checkCancelled() throws CancelledException;
 
 	/**
 	 * Increases the progress value by 1.
@@ -216,16 +205,6 @@ public interface TaskMonitor {
 
 	/**
 	 * Clear the cancellation so that this TaskMonitor may be reused
-	 * @deprecated Use {@link #clearCancelled()} instead
 	 */
-	@Deprecated(since = "10.3")
-	public void clearCanceled();
-
-	/**
-	 * Clear the cancellation so that this TaskMonitor may be reused
-	 */
-	public default void clearCancelled() {
-		// note: call clearCancelled() until it is removed; this produces the least number of changes
-		clearCanceled();
-	}
+	public void clearCancelled();
 }

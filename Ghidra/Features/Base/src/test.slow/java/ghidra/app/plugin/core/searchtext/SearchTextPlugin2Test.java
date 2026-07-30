@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -32,7 +33,6 @@ import ghidra.app.plugin.core.table.TableServicePlugin;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.options.Options;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
@@ -538,7 +538,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		setTextAndPressEnter(tf, "hello");
 
-		runSwing(() -> tool.removePlugins(new Plugin[] { plugin }));
+		runSwing(() -> tool.removePlugins(List.of(plugin)));
 		assertFalse(tempDialog.isVisible());
 	}
 
