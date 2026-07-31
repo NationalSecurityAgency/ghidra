@@ -15,16 +15,13 @@
  */
 package datagraph.data.graph.panel.model.row;
 
-import docking.widgets.table.GTable;
-import docking.widgets.table.RowObject;
 import ghidra.program.model.listing.Data;
 
 /**
- * Abstract class for displaying rows in a Data GTrable model. Similar to a {@link RowObject} in
- * a {@link GTable}. The big difference is that each row maintains its indent level and whether
- * or not is is expanded. GTrables are like tables, but with a tree like structure. Each row that is
- * a child of another row has its indent level set to one more than its parent. The expanded flag is
- * used to indicate if a given row has visible child rows showing or not.
+ * Abstract class for displaying rows in a Data GTrable model. Each row maintains its indent level 
+ * and whether or not is is expanded. GTables are like tables, but with a tree like structure. Each
+ * row that is a child of another row has its indent level set to one more than its parent. The 
+ * expanded flag is used to indicate if a given row has visible child rows showing or not.
  */
 
 public abstract class DataRowObject {
@@ -78,7 +75,7 @@ public abstract class DataRowObject {
 	}
 
 	/**
-	 * @{return the Data object associated with this row.}
+	 * {@return the Data object associated with this row.}
 	 */
 	public abstract Data getData();
 

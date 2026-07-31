@@ -73,21 +73,6 @@ public class FileCache {
 	private ReferenceMap<String, FileCacheEntry> memCache = new ReferenceMap<>();
 
 	/**
-	 * Backwards compatible with previous cache directories to age off the files located
-	 * therein.
-	 * 
-	 * @param oldCacheDir the old 2-level cache directory
-	 * @deprecated Marked as deprecated to ensure this is removed in a few versions after most
-	 * user's old-style cache dirs have been cleaned up.
-	 */
-	@Deprecated(forRemoval = true, since = "10.1")
-	public static void performCacheMaintOnOldDirIfNeeded(File oldCacheDir) {
-		if (oldCacheDir.isDirectory()) {
-			performCacheMaintIfNeeded(oldCacheDir, 2 /* old nesting level */);
-		}
-	}
-
-	/**
 	 * Creates a new {@link FileCache} instance where files are stored under the specified
 	 * {@code cacheDir}
 	 * 

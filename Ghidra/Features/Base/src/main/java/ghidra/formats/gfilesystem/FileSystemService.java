@@ -154,10 +154,6 @@ public class FileSystemService {
 	 */
 	public FileSystemService() {
 		this(new File(Application.getUserCacheDirectory(), "fscache2"));
-
-		// age off files in old cache dir.  Remove this after a few versions
-		FileCache.performCacheMaintOnOldDirIfNeeded(
-			new File(Application.getUserCacheDirectory(), "fscache"));
 	}
 
 	/**

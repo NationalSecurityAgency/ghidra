@@ -16,121 +16,14 @@
 package ghidra.util;
 
 /**
- * Helper methods for converting between
- * number data types without negative
- * promotion.
- * <p>
- * Consider using java built-in methods for conversion instead of methods from this
- * class. 
+ * Legacy methods for converting between number data types without negative promotion. Most methods
+ * have been deprecated off in favor of built-in Java methods.
  */ 
 public class Conv {
 	
 	private Conv() {
+		// prevent instantiation
 	}
-	
-	/**
-	 * A byte mask.
-	 * 
-	 * @deprecated {@link Byte#toUnsignedInt(byte)} will handle most use cases of this constant
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public static final int BYTE_MASK = 0xff;
-    /**
-	 * A short mask.
-	 * @deprecated {@link Short#toUnsignedInt(short)} will handle most use cases of this constant
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public static final int SHORT_MASK = 0xffff;
-    /**
-	 * An integer mask.
-	 * @deprecated {@link Integer#toUnsignedLong(int)} will handle most use cases of this constant
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public static final long INT_MASK = 0x00000000ffffffffL;
-
-	/**
-	 * @param b the byte
-	 * @return the short equivalent of the byte
-	 * @deprecated Use other built-ins like {@link Byte#toUnsignedInt(byte)}
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public static short byteToShort(byte b) {
-		return (short) (b & 0xff);
-	}
-
-	/**
-	 * Converts a byte to an integer.
-	 * 
-	 * @param b the byte
-	 * @return the integer equivalent of the byte
-	 * @deprecated Use {@link Byte#toUnsignedInt(byte)} instead
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public static int byteToInt(byte b) {
-		return Byte.toUnsignedInt(b);
-	}
-
-	/**
-	 * Converts a byte to a long.
-	 * @param b the byte
-	 * @return the long equivalent of the byte
-	 * @deprecated Use {@link Byte#toUnsignedLong(byte)} instead
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public static long byteToLong(byte b) {
-		return Byte.toUnsignedLong(b);
-	}
-    
-	/**
-	 * Converts a short to an integer.
-	 * @param s the short
-	 * @return the integer equivalent of the short
-	 * @deprecated Use {@link Short#toUnsignedInt(short)} instead
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public static int shortToInt(short s) {
-		return Short.toUnsignedInt(s);
-	}
-    
-	/**
-	 * Converts a short to a long.
-	 * @param s the short
-	 * @return the long equivalent of the short
-	 * @deprecated Use {@link Short#toUnsignedLong(short)} instead
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public static long shortToLong(short s) {
-		return Short.toUnsignedLong(s);
-    }
-    
-	/**
-	 * Converts an integer to a long.
-	 * @param i the integer
-	 * @return the long equivalent of the long
-	 * @deprecated Use {@link Integer#toUnsignedLong(int)} instead
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public static long intToLong(int i) {
-		return Integer.toUnsignedLong(i);
-    }
-
-	/**
-	 * Old and <b>incorrect</b> way to convert bytes to a String by casting their
-	 * values to chars.  Do not use.  Does not seem to be used in current codebase.
-	 * 
-	 * @param array The bytes to convert
-	 * @return The converted bytes
-	 * @deprecated Use {@link String#String(byte[], java.nio.charset.Charset) new String(bytes, StandardCharSets.US_ASCII)}
-	 * instead
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public static String toString(byte [] array) {
-		StringBuilder builder = new StringBuilder();
-    	for (byte b : array) {
-			builder.append((char) b);
-		}
-		return builder.toString();
-    }
 
     /**
 	 * Consider using {@link String#format(String, Object...) String.format("%02x", b)} instead.
@@ -141,7 +34,7 @@ public class Conv {
 	 * @return the padded hex string
 	 */
 	public static String toHexString(byte b) {
-		return zeropad(Integer.toHexString(Byte.toUnsignedInt(b)), 2);
+		return String.format("%02x", b);
     }
 
     /**
@@ -153,7 +46,7 @@ public class Conv {
 	 * @return the padded hex string
 	 */
 	public static String toHexString(short s) {
-		return zeropad(Integer.toHexString(Short.toUnsignedInt(s)), 4);
+		return String.format("%04x", s);
     }
     
 	/**
@@ -165,7 +58,7 @@ public class Conv {
 	 * @return the padded hex string
 	 */
 	public static String toHexString(int i) {
-        return zeropad(Integer.toHexString(i), 8);
+		return String.format("%08x", i);
     }
 
     /**
@@ -177,7 +70,7 @@ public class Conv {
 	 * @return the padded hex string
 	 */
 	public static String toHexString(long l) {
-        return zeropad(Long.toHexString(l), 16);
+		return String.format("%016x", l);
     }
 
     /**
@@ -196,5 +89,4 @@ public class Conv {
         }
 		return builder.toString();
     }
-
 }
