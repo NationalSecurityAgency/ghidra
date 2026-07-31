@@ -59,7 +59,10 @@ YACC=bison
 INCLUDES=
 BFDLIB=-lbfd
 
-LNK=-lz -lzstd
+LNK=-lz
+
+.PHONY: all
+all: ghidra_opt decomp_opt sleigh_opt
 
 # Source files
 ALL_SOURCE= $(wildcard *.cc)
