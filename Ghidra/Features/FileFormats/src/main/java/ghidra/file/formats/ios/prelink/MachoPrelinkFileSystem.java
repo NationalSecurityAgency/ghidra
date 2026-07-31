@@ -43,13 +43,18 @@ import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.program.model.lang.LanguageService;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.util.Conv;
 import ghidra.util.Msg;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
 
-@FileSystemInfo(type = MachoPrelinkFileSystem.IOS_PRELINK_FSTYPE, description = MachoPrelinkConstants.TITLE, priority = FileSystemInfo.PRIORITY_HIGH, factory = GFileSystemBaseFactory.class)
+@FileSystemInfo(
+	type = MachoPrelinkFileSystem.IOS_PRELINK_FSTYPE,
+	description = MachoPrelinkConstants.TITLE,
+	priority = FileSystemInfo.PRIORITY_HIGH,
+	factory = GFileSystemBaseFactory.class
+)
 public class MachoPrelinkFileSystem extends GFileSystemBase implements GFileSystemProgramProvider {
 
 	public final static String IOS_PRELINK_FSTYPE = "iosprelink";
@@ -89,7 +94,8 @@ public class MachoPrelinkFileSystem extends GFileSystemBase implements GFileSyst
 		List<Long> machoHeaderOffsets =
 			MachoPrelinkUtils.findPrelinkMachoHeaderOffsets(provider, monitor);
 		try {
-			List<MachoPrelinkMap> prelinkList = MachoPrelinkUtils.parsePrelinkXml(provider, monitor);
+			List<MachoPrelinkMap> prelinkList =
+				MachoPrelinkUtils.parsePrelinkXml(provider, monitor);
 			if (!prelinkList.isEmpty()) {
 				processPrelinkWithMacho(prelinkList, machoHeaderOffsets, monitor);
 			}
@@ -249,8 +255,9 @@ public class MachoPrelinkFileSystem extends GFileSystemBase implements GFileSyst
 		monitor.setMessage("Processing PRELINK with found Mach-O headers...");
 		monitor.initialize(prelinkList.size());
 
-		BidiMap<MachoPrelinkMap, Long> map = MachoPrelinkUtils.matchPrelinkToMachoHeaderOffsets(provider,
-			prelinkList, machoHeaderOffsets, monitor);
+		BidiMap<MachoPrelinkMap, Long> map =
+			MachoPrelinkUtils.matchPrelinkToMachoHeaderOffsets(provider,
+				prelinkList, machoHeaderOffsets, monitor);
 
 		for (MachoPrelinkMap info : map.keySet()) {
 
@@ -298,8 +305,10 @@ public class MachoPrelinkFileSystem extends GFileSystemBase implements GFileSyst
 				continue;
 			}
 
-			Address address = systemProgram.getAddressFactory().getDefaultAddressSpace().getAddress(
-				prelinkMap.getPrelinkExecutableLoadAddr());
+			Address address = systemProgram.getAddressFactory()
+					.getDefaultAddressSpace()
+					.getAddress(
+						prelinkMap.getPrelinkExecutableLoadAddr());
 
 			ByteProvider systemKextProvider =
 				new MemoryByteProvider(systemProgram.getMemory(), address);
@@ -310,8 +319,9 @@ public class MachoPrelinkFileSystem extends GFileSystemBase implements GFileSyst
 			//MachoLoader loader = new MachoLoader();
 			//loader.load( machHeader, systemProgram, new MessageLog(), monitor );
 
-			Namespace namespace = systemProgram.getSymbolTable().createNameSpace(null,
-				file.getName(), SourceType.IMPORTED);
+			Namespace namespace = systemProgram.getSymbolTable()
+					.createNameSpace(null,
+						file.getName(), SourceType.IMPORTED);
 
 			List<SymbolTableCommand> commands =
 				machHeader.getLoadCommands(SymbolTableCommand.class);
@@ -404,7 +414,8 @@ public class MachoPrelinkFileSystem extends GFileSystemBase implements GFileSyst
 			if (monitor.isCancelled()) {
 				break;
 			}
-			String kextName = "Kext_0x" + Conv.toHexString(machoHeaderOffset) + ".kext";
+			String kextName =
+				"Kext_0x" + NumericUtilities.toPaddedHexString(machoHeaderOffset) + ".kext";
 			try {
 				MachHeader header = new MachHeader(provider, machoHeaderOffset);
 				header.parse();

@@ -15,10 +15,12 @@
  */
 package ghidra.util;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
- * Legacy methods for converting between number data types without negative promotion. Most methods
- * have been deprecated off in favor of built-in Java methods.
+ * Deprecated class set for removal. Do not use.
  */ 
+@Deprecated(since = "12.2", forRemoval = true)
 public class Conv {
 	
 	private Conv() {
@@ -26,67 +28,66 @@ public class Conv {
 	}
 
     /**
-	 * Consider using {@link String#format(String, Object...) String.format("%02x", b)} instead.
-	 * <p>
-	 * Converts a byte into a padded hex string.
+	 * {@return a byte converted into a padded hex string}
 	 * 
 	 * @param b the byte
-	 * @return the padded hex string
+	 * @deprecated use {@link NumericUtilities#toPaddedHexString(byte)} instead
 	 */
+	@Deprecated(since = "12.2", forRemoval = true)
 	public static String toHexString(byte b) {
-		return String.format("%02x", b);
+		return NumericUtilities.toPaddedHexString(b);
     }
 
     /**
-	 * Consider using {@link String#format(String, Object...) String.format("%04x", s)} instead.
-	 * <p>
-	 * Converts a short into a padded hex string.
+	 * {@return a short converted into a padded hex string}
 	 * 
 	 * @param s the short
-	 * @return the padded hex string
+	 * @deprecated use {@link NumericUtilities#toPaddedHexString(short)} instead
 	 */
+	@Deprecated(since = "12.2", forRemoval = true)
 	public static String toHexString(short s) {
-		return String.format("%04x", s);
+		return NumericUtilities.toPaddedHexString(s);
     }
     
 	/**
-	 * Consider using {@link String#format(String, Object...) String.format("%08x", i)} instead.
-	 * <p>
-	 * Converts an integer into a padded hex string.
+	 * {@return an int converted into a padded hex string}
 	 * 
-	 * @param i the integer
-	 * @return the padded hex string
+	 * @param i the int
+	 * @deprecated use {@link NumericUtilities#toPaddedHexString(int)} instead
 	 */
+	@Deprecated(since = "12.2", forRemoval = true)
 	public static String toHexString(int i) {
-		return String.format("%08x", i);
+		return NumericUtilities.toPaddedHexString(i);
     }
 
     /**
-	 * Consider using {@link String#format(String, Object...) String.format("%016x", l)} instead.
-	 * <p>
-	 * Converts a long into a padded hex string.
+	 * {@return a long converted into a padded hex string}
 	 * 
 	 * @param l the long
-	 * @return the padded hex string
+	 * @deprecated use {@link NumericUtilities#toPaddedHexString(long)} instead
 	 */
+	@Deprecated(since = "12.2", forRemoval = true)
 	public static String toHexString(long l) {
-		return String.format("%016x", l);
+		return NumericUtilities.toPaddedHexString(l);
     }
 
     /**
-	 * Returns a string that is extended to length len with zeroes.
+	 * {@return a string that is extended to length {@code len} with zeroes}
 	 * 
 	 * @param s The string to pad
 	 * @param len The length of the return string
-	 * @return A string that has been left-padded with zeros to be of length len
+	 * @deprecated use {@link StringUtils#leftPad(String, int, char)} instead
 	 */
+	@Deprecated(since = "12.2", forRemoval = true)
 	public static String zeropad(String s, int len) {
-        if (s == null) s = "";
+		if (s == null) {
+			s = "";
+		}
 		StringBuilder builder = new StringBuilder(s);
-        int zerosNeeded = len - s.length();
-        for (int i = 0 ; i < zerosNeeded ; ++i) {
+		int zerosNeeded = len - s.length();
+		for (int i = 0; i < zerosNeeded; ++i) {
 			builder.insert(0, '0');
-        }
+		}
 		return builder.toString();
-    }
+	}
 }
