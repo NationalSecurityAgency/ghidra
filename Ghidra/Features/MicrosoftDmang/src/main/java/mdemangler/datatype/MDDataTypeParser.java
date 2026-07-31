@@ -352,19 +352,19 @@ public class MDDataTypeParser {
 						dt = new MDArrayBasicType(dmang);
 						break;
 					case 'P':
-						dt = new MDUnknownPExtendedDataType(dmang);
+						dt = new MDAutoDataType(dmang);
 						break;
 					case 'Q':
 						dt = new MDChar8DataType(dmang);
 						break;
 					case 'R':
-						dt = new MDUnknownRExtendedDataType(dmang);
+						dt = new MDAngleUnknownDataType(dmang);
 						break;
 					case 'S':
 						dt = new MDChar16DataType(dmang);
 						break;
 					case 'T':
-						dt = new MDUnknownTExtendedDataType(dmang);
+						dt = new MDDecltypeAutoDataType(dmang);
 						break;
 					case 'U':
 						dt = new MDChar32DataType(dmang);
