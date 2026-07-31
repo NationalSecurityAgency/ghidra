@@ -59,7 +59,7 @@ YACC=bison
 INCLUDES=
 BFDLIB=-lbfd
 
-LNK=-lz
+LNK=-lz -lzstd
 
 # Source files
 ALL_SOURCE= $(wildcard *.cc)
@@ -125,7 +125,7 @@ COMMANDLINE_NAMES=$(CORE) $(DECCORE) $(EXTRA) $(SLEIGH) consolemain
 COMMANDLINE_DEBUG=-DCPUI_DEBUG -D__TERMINAL__
 COMMANDLINE_OPT=-D__TERMINAL__
 
-TEST_NAMES=$(CORE) $(DECCORE) $(SLEIGH) $(EXTRA) test 
+TEST_NAMES=$(CORE) $(DECCORE) $(SLEIGH) $(EXTRA) test
 TEST_DEBUG=-D__TERMINAL__
 
 GHIDRA_NAMES=$(CORE) $(DECCORE) $(GHIDRA)
@@ -160,82 +160,54 @@ LIBSLA_SOURCE=$(LIBSLA_NAMES:%=%.cc) $(LIBSLA_NAMES:%=%.hh) \
 LIBDECOMP_DBG_OBJS=$(LIBDECOMP_NAMES:%=com_dbg/%.o)
 LIBDECOMP_OPT_OBJS=$(LIBDECOMP_NAMES:%=com_opt/%.o)
 
-# conditionals to determine which dependency files to build
-DEPNAMES=com_dbg/depend com_opt/depend
-ifeq ($(MAKECMDGOALS),install_ghidraopt)
-	DEPNAMES=ghi_opt/depend
-endif
-ifeq ($(MAKECMDGOALS),install_ghidradbg)
-	DEPNAMES=ghi_dbg/depend
-endif
-ifeq ($(MAKECMDGOALS),ghidra_opt)
-	DEPNAMES=ghi_opt/depend
-endif
-ifeq ($(MAKECMDGOALS),ghidra_opt_mac)
-	DEPNAMES=ghi_opt/depend
-endif
-ifeq ($(MAKECMDGOALS),ghidra_dbg)
-	DEPNAMES=ghi_dbg/depend
-endif
-ifeq ($(MAKECMDGOALS),sleigh_opt)
-	DEPNAMES=sla_opt/depend
-endif
-ifeq ($(MAKECMDGOALS),sleigh_opt_mac)
-	DEPNAMES=sla_opt/depend
-endif
-ifeq ($(MAKECMDGOALS),sleigh_dbg)
-	DEPNAMES=sla_dbg/depend
-endif
-ifeq ($(MAKECMDGOALS),libsla.a)
-	DEPNAMES=com_opt/depend.lib_sla
-endif
-ifeq ($(MAKECMDGOALS),libsla_dbg.a)
-	DEPNAMES=com_dbg/depend.lib_sla
-endif
-ifeq ($(MAKECMDGOALS),decomp_dbg)
-	DEPNAMES=com_dbg/depend
-endif
-ifeq ($(MAKECMDGOALS),decomp_opt)
-	DEPNAMES=com_opt/depend
-endif
-ifneq (,$(filter $(MAKECMDGOALS),decomp_test_dbg test))
-	DEPNAMES=test_dbg/depend
-endif
-ifeq ($(MAKECMDGOALS),reallyclean)
-	DEPNAMES=
-endif
-ifeq ($(MAKECMDGOALS),clean)
-	DEPNAMES=
-endif
-ifeq ($(MAKECMDGOALS),doc)
-	DEPNAMES=
-endif
-ifeq ($(MAKECMDGOALS),tags)
-	DEPNAMES=
-endif
-ifeq ($(MAKECMDGOALS),link_extensions)
-	DEPNAMES=
-endif
-ifeq ($(MAKECMDGOALS),link_extensions_hard)
-	DEPNAMES=
-endif
+-include $(COMMANDLINE_DBG_OBJS:.o=.d)
+-include $(COMMANDLINE_OPT_OBJS:.o=.d)
+-include $(TEST_DEBUG_OBJS:.o=.d)
+-include $(GHIDRA_DBG_OBJS:.o=.d)
+-include $(GHIDRA_OPT_OBJS:.o=.d)
+-include $(SLEIGH_DBG_OBJS:.o=.d)
+-include $(SLEIGH_OPT_OBJS:.o=.d)
+-include $(LIBSLA_DBG_OBJS:.o=.d)
+-include $(LIBSLA_OPT_OBJS:.o=.d)
+-include $(LIBDECOMP_DBG_OBJS:.o=.d)
+-include $(LIBDECOMP_OPT_OBJS:.o=.d)
 
-com_dbg/%.o:	%.cc
-	$(CXX) $(ARCH_TYPE) -c $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(COMMANDLINE_DEBUG) $< -o $@
-com_opt/%.o:	%.cc
-	$(CXX) $(ARCH_TYPE) -c $(OPT_CXXFLAGS) $(ADDITIONAL_FLAGS) $(COMMANDLINE_OPT)   $< -o $@
-test_dbg/%.o:	%.cc
-	$(CXX) $(ARCH_TYPE) -c $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(TEST_DEBUG)        $< -o $@
-test_dbg/%.o:	../unittests/%.cc
-	$(CXX) -I. $(ARCH_TYPE) -c $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(TEST_DEBUG)        $< -o $@
-ghi_dbg/%.o:	%.cc
-	$(CXX) $(ARCH_TYPE) -c $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(GHIDRA_DEBUG)      $< -o $@
-ghi_opt/%.o:	%.cc
-	$(CXX) $(ARCH_TYPE) -c $(OPT_CXXFLAGS) $(ADDITIONAL_FLAGS) $(GHIDRA_OPT)        $< -o $@
-sla_dbg/%.o:	%.cc
-	$(CXX) $(ARCH_TYPE) -c $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(SLEIGH_DEBUG)      $< -o $@
-sla_opt/%.o:	%.cc
-	$(CXX) $(ARCH_TYPE) -c $(OPT_CXXFLAGS) $(ADDITIONAL_FLAGS) $(SLEIGH_OPT)        $< -o $@
+com_dbg/%.o: %.cc | com_dbg
+	$(CXX) $(ARCH_TYPE) $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(COMMANDLINE_DEBUG) \
+		-MMD -MP -MF $(@:.o=.d) -c $< -o $@
+
+com_opt/%.o: %.cc | com_opt
+	$(CXX) $(ARCH_TYPE) $(OPT_CXXFLAGS) $(ADDITIONAL_FLAGS) $(COMMANDLINE_OPT) \
+		-MMD -MP -MF $(@:.o=.d) -c $< -o $@
+
+test_dbg/%.o: %.cc | test_dbg
+	$(CXX) $(ARCH_TYPE) $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(TEST_DEBUG) \
+		-MMD -MP -MF $(@:.o=.d) -c $< -o $@
+
+test_dbg/%.o: ../unittests/%.cc | test_dbg
+	$(CXX) -I. $(ARCH_TYPE) $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(TEST_DEBUG) \
+		-MMD -MP -MF $(@:.o=.d) -c $< -o $@
+
+ghi_dbg/%.o: %.cc | ghi_dbg
+	$(CXX) $(ARCH_TYPE) $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(GHIDRA_DEBUG) \
+		-MMD -MP -MF $(@:.o=.d) -c $< -o $@
+
+ghi_opt/%.o: %.cc | ghi_opt
+	$(CXX) $(ARCH_TYPE) $(OPT_CXXFLAGS) $(ADDITIONAL_FLAGS) $(GHIDRA_OPT) \
+		-MMD -MP -MF $(@:.o=.d) -c $< -o $@
+
+sla_dbg/%.o: %.cc | sla_dbg
+	$(CXX) $(ARCH_TYPE) $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(SLEIGH_DEBUG) \
+		-MMD -MP -MF $(@:.o=.d) -c $< -o $@
+
+sla_opt/%.o: %.cc | sla_opt
+	$(CXX) $(ARCH_TYPE) $(OPT_CXXFLAGS) $(ADDITIONAL_FLAGS) $(SLEIGH_OPT) \
+		-MMD -MP -MF $(@:.o=.d) -c $< -o $@
+
+OBJDIRS := com_dbg com_opt test_dbg ghi_dbg ghi_opt sla_dbg sla_opt
+
+$(OBJDIRS):
+	mkdir -p $@
 
 grammar.cc:	grammar.y
 	$(YACC) -l -o $@ $<
@@ -338,77 +310,17 @@ link_extensions_hard:
 tags:
 	etags *.c *.h *.cc *.hh
 
-# Rules to build the different dependency files
-com_dbg/depend:	$(COMMANDLINE_NAMES:%=%.cc)
-	mkdir -p com_dbg 
-	@set -e; rm -f $@; \
-	$(CXX) -MM $(COMMANDLINE_DEBUG) $^ > $@.$$$$; \
-	sed 's,\(.*\)\.o[ :]*,com_dbg/\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
-
-com_opt/depend:	$(COMMANDLINE_NAMES:%=%.cc)
-	mkdir -p com_opt
-	@set -e; rm -f $@; \
-	$(CXX) -MM $(COMMANDLINE_OPT) $^ > $@.$$$$; \
-	sed 's,\(.*\)\.o[ :]*,com_opt/\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
-
-test_dbg/depend:	$(TEST_NAMES:%=%.cc) $(UNITTEST_NAMES:%=%.cc)
-	mkdir -p test_dbg
-	@set -e; rm -f $@; \
-	$(CXX) -I. -MM $(TEST_DEBUG) $^ > $@.$$$$; \
-	sed 's,\(.*\)\.o[ :]*,test_dbg/\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
-
-ghi_dbg/depend:	$(GHIDRA_NAMES_DBG:%=%.cc)
-	mkdir -p ghi_dbg
-	@set -e; rm -f $@; \
-	$(CXX) -MM $(GHIDRA_DEBUG) $^ > $@.$$$$; \
-	sed 's,\(.*\)\.o[ :]*,ghi_dbg/\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
-
-ghi_opt/depend:	$(GHIDRA_NAMES:%=%.cc)
-	mkdir -p ghi_opt 
-	@set -e; rm -f $@; \
-	$(CXX) -MM $(GHIDRA_OPT) $^ > $@.$$$$; \
-	sed 's,\(.*\)\.o[ :]*,ghi_opt/\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
-
-sla_dbg/depend:	$(SLEIGH_NAMES:%=%.cc)
-	mkdir -p sla_dbg
-	@set -e; rm -f $@; \
-	$(CXX) -MM $(SLEIGH_DEBUG) $^ > $@.$$$$; \
-	sed 's,\(.*\)\.o[ :]*,sla_dbg/\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
-
-sla_opt/depend:	$(SLEIGH_NAMES:%=%.cc)
-	mkdir -p sla_opt
-	@set -e; rm -f $@; \
-	$(CXX) -MM $(SLEIGH_OPT) $^ > $@.$$$$; \
-	sed 's,\(.*\)\.o[ :]*,sla_opt/\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
-
-com_opt/depend.lib_sla:	$(LIBSLA_NAMES:%=%.cc)
-	mkdir -p com_opt
-	@set -e; rm -f $@; \
-	$(CXX) -MM $(COMMANDLINE_OPT) $^ > $@.$$$$; \
-	sed 's,\(.*\)\.o[ :]*,com_opt/\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
-
-com_dbg/depend.lib_sla:	$(LIBSLA_NAMES:%=%.cc)
-	mkdir -p com_dbg
-	@set -e; rm -f $@; \
-	$(CXX) -MM $(COMMANDLINE_DEBUG) $^ > $@.$$$$; \
-	sed 's,\(.*\)\.o[ :]*,com_dbg/\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
-
-include $(DEPNAMES)
-
 doc:
 	doxygen Doxyfile
 
 clean:
-	rm -f com_dbg/*.o com_opt/*.o test_dbg/*.o ghi_dbg/*.o ghi_opt/*.o sla_dbg/*.o sla_opt/*.o
+	rm -f com_dbg/*.o com_dbg/*.d
+	rm -f com_opt/*.o com_opt/*.d
+	rm -f test_dbg/*.o test_dbg/*.d
+	rm -f ghi_dbg/*.o ghi_dbg/*.d
+	rm -f ghi_opt/*.o ghi_opt/*.d
+	rm -f sla_dbg/*.o sla_dbg/*.d
+	rm -f sla_opt/*.o sla_opt/*.d
 	rm -f *.gcov com_dbg/*.gcno com_dbg/*.gcda
 
 resetgcov:
@@ -419,3 +331,22 @@ reallyclean:	clean
 	rm -rf com_dbg com_opt test_dbg ghi_dbg ghi_opt sla_dbg sla_opt
 	rm -f $(EXECS) TAGS *~
 
+.PHONY: \
+	decomp_dbg \
+	decomp_opt \
+	decomp_test_dbg \
+	test \
+	ghidra_dbg \
+	ghidra_opt \
+	sleigh_dbg \
+	sleigh_opt \
+	install_ghidradbg \
+	install_ghidraopt \
+	sleighexamp_dir \
+	link_extensions \
+	link_extensions_hard \
+	tags \
+	doc \
+	clean \
+	resetgcov \
+	reallyclean
