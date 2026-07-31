@@ -167,6 +167,9 @@ c4305fc3b907000000e8be03000090b9
         <type name="byte" id="0xc00000000000007f" metatype="uint" size="1"/>
       </type>
     </field>
+    <bitfield name="low_nibble" id="0" offset="65" first="0" size="4">
+      <type name="byte" id="0xc00000000000007a" metatype="uint" size="1"/>
+    </bitfield>
   </type>
 </typegrp><db scopeidbyname="false">
 <scope name="" id="0x0">
