@@ -49,7 +49,13 @@ public class IHDRChunk {
 				ByteBuffer buff = ByteBuffer.wrap(data);
 
 				imgWidth = buff.getInt();
+				if (imgWidth <= 0 || imgWidth > 65535) {
+					throw new IllegalArgumentException("Invalid image width: " + imgWidth);
+				}
 				imgHeight = buff.getInt();
+				if (imgHeight <= 0 || imgHeight > 65535) {
+					throw new IllegalArgumentException("Invalid image height: " + imgHeight);
+				}
 				bitDepth = buff.get();
 				colorType = buff.get();
 				compressionMethod = buff.get();
