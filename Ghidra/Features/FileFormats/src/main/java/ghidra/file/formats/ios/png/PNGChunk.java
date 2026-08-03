@@ -40,6 +40,9 @@ public class PNGChunk implements StructConverter {
 	 */
 	public PNGChunk(BinaryReader reader) throws IOException {
 		length = reader.readNextInt();
+		if (length < 0 || length > 8 * 1024 * 1024) {
+			throw new IllegalArgumentException("Unreasonable PNG chunk length: " + length);
+		}
 		chunkID = reader.readNextInt();
 		data = reader.readNextByteArray(length);
 		crc32 = reader.readNextInt();
