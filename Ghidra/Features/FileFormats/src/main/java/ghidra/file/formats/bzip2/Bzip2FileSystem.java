@@ -4,26 +4,36 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.iso9660;
+package ghidra.file.formats.bzip2;
 
-import ghidra.file.formats.sevenzip.SevenZipFileSystem;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.formats.gfilesystem.AbstractSinglePayloadFileSystem;
 import ghidra.formats.gfilesystem.FSRLRoot;
-import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 
-@FileSystemInfo(type = "iso9660", description = "ISO 9660", factory = ISO9660FileSystemFactory.class)
-public class ISO9660FileSystem extends SevenZipFileSystem {
+//@formatter:off
+@FileSystemInfo(
+	type = "bzip2",
+	description = "BZip2",
+	factory = Bzip2FileSystemFactory.class,
+	extensions = { "bz2" }
+)
+//@formatter:on
+public class Bzip2FileSystem extends AbstractSinglePayloadFileSystem {
 
-	public ISO9660FileSystem(FSRLRoot fsrl, FileSystemService fsService) {
-		super(fsrl, fsService);
+	public Bzip2FileSystem(FSRLRoot fsFSRL, ByteProvider payloadProvider, String payloadFilename,
+			FileAttributes attrs) {
+		super(fsFSRL, payloadProvider, payloadFilename, attrs);
 	}
+
 }
