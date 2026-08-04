@@ -153,6 +153,14 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 
 	}
 
+	/**
+	 * The minimal format manager can also be called the 'user' format manager.  We have a full
+	 * format manager that the user cannot change.  We also have a default format manager that the
+	 * user cannot change.  The minimal format manager can be updated by the user.  
+	 * 
+	 * <P>Even stranger, the minimal starts out as the default format.
+	 * @return the minimal format
+	 */
 	public FormatManager getMinimalFormatManager() {
 		if (minimalFormatManager == null) {
 			setMinimalFormatManager(createMinimalFormatManager());
@@ -173,7 +181,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 
 		SaveState saveState = new SaveState();
 		newFormatManager.saveState(saveState);
-		minimalFormatManager.readState(saveState);
+		minimalFormatManager.readState(saveState, false);
 		env.setUserDefinedFormat(minimalFormatManager);
 		view.repaint();
 	}
