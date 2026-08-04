@@ -1613,6 +1613,9 @@ define token instrAARCH64 (32) endian = little
 	sve_ztt_0004 = (0,4)
 	sve_zttt_0004 = (0,4)
 	sve_ztttt_0004 = (0,4)
+	sme_pm_1315 = (13,15)
+	sme_za_s_0001 = (0,1)
+	sme_za_d_0002 = (0,2)
 ;
 
 # SECTION variables and variable names
@@ -1876,10 +1879,18 @@ attach variables [ sve_pg_1012 ]
 	p0 p1 p2 p3 p4 p5 p6 p7
 ];
 
+attach variables [ sme_pm_1315 ]
+[
+	p0 p1 p2 p3 p4 p5 p6 p7
+];
+
 attach variables [ sve_pd_0003 sve_pdm_0003 sve_pdn_0003 sve_pg_0508 sve_pg_1013 sve_pg_1619 sve_pm_1619 sve_pn_0508 sve_pt_0003 ]
 [
 	p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15
 ];
+
+attach names [ sme_za_s_0001 ] [ "0" "1" "2" "3" ];
+attach names [ sme_za_d_0002 ] [ "0" "1" "2" "3" "4" "5" "6" "7" ];
 
 attach names [ sve_sz_22 ] [ b h ];
 attach names [ sve_msz_1011 ] [ "" " #1" " #2" " #3" ];
@@ -3981,6 +3992,8 @@ with : ImmS_ImmR_TestSet=1 {
 @include "AARCH64neon.sinc"
 @include "AARCH64ldst.sinc"
 @include "AARCH64sve.sinc"
+@include "AARCH64sve2.sinc"
+@include "AARCH64sme.sinc"
 
 # TODO These are placeholders until the correction instruction implementations can be found
 
@@ -3997,4 +4010,3 @@ is b_0031=0x00200c20
 unimpl
 
 } # end with ImmS_ImmR_TestSet=1
-
