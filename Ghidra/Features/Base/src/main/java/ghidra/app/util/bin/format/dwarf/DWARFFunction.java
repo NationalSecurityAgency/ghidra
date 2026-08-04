@@ -128,7 +128,34 @@ public class DWARFFunction {
 		}
 		dfunc.varArg = !diea.getChildren(DW_TAG_unspecified_parameters).isEmpty();
 
+		if (hasNoSignatureInformation(dfunc, diea)) {
+			// The DIE carries no usable signature information.  Committing it as-is
+			// would lock an incorrect "void f(void)" signature (SourceType.IMPORTED)
+			// and prevent later analyzers from recovering the real parameters,
+			// making the result worse than for the same binary without debug info.
+			dfunc.signatureCommitMode = CommitMode.NO_PARAMS;
+		}
+
 		return dfunc;
+	}
+
+	/**
+	 * Detects subprogram DIEs that provide no signature information: no formal
+	 * parameters, no DW_AT_prototyped flag, and a DW_TAG_unspecified_type return type.
+	 * <p>
+	 * Assemblers emit this shape for functions defined in assembly source (e.g. gas
+	 * with --gdwarf only records name, address range and an unspecified return type),
+	 * where the parameters and return value are genuinely unknown rather than absent.
+	 *
+	 * @param dfunc {@link DWARFFunction} being built
+	 * @param diea DW_TAG_subprogram {@link DIEAggregate}
+	 * @return true if the DIE asserts nothing about the function's signature
+	 */
+	private static boolean hasNoSignatureInformation(DWARFFunction dfunc, DIEAggregate diea) {
+		DIEAggregate typeRef = diea.getTypeRef();
+		return dfunc.params.isEmpty() && !dfunc.varArg &&
+			!diea.getBool(DW_AT_prototyped, false) &&
+			typeRef != null && typeRef.getTag() == DW_TAG_unspecified_type;
 	}
 
 	private DWARFFunction(DIEAggregate diea, DWARFName dni, DWARFRangeList dwarfBody) {
