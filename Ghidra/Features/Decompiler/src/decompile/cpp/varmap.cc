@@ -68,6 +68,7 @@ bool RangeHint::reconcile(const RangeHint *b) const
     b = a;			// Make sure b is smallest
     a = tmp;
   }
+  if (b->isTypeLock()) return false;
   int8 mod = (b->sstart - a->sstart) % a->type->getAlignSize();
   if (mod < 0)
     mod += a->type->getAlignSize();
@@ -86,7 +87,6 @@ bool RangeHint::reconcile(const RangeHint *b) const
 
   if (b->rangeType == RangeType::open && b->isConstAbsorbable(a))
     return true;
-  if (b->isTypeLock()) return false;
   type_metatype meta = a->type->getMetatype();
   if (meta != TYPE_STRUCT && meta != TYPE_UNION) {
     if (meta != TYPE_ARRAY || ((TypeArray *)(a->type))->getBase()->getMetatype() != TYPE_UNKNOWN)
@@ -97,6 +97,8 @@ bool RangeHint::reconcile(const RangeHint *b) const
   if (meta == TYPE_UNKNOWN || meta == TYPE_INT || meta == TYPE_UINT) {
     return true;
   }
+  if (meta == TYPE_ARRAY && ((TypeArray *)(b->type))->getBase()->getMetatype() == TYPE_UNKNOWN)
+    return true;
   return false;
 }
 
@@ -170,6 +172,10 @@ bool RangeHint::preferred(const RangeHint *b,bool reconcile) const
 bool RangeHint::attemptJoin(RangeHint *b)
 
 {
+  if (b->isBackfill()) {
+    if (attemptBackfill(b))
+      return true;
+  }
   if (rangeType != open) return false;
   if (b->rangeType == endpoint) return false;			// Don't merge with bounding range
   if (isConstAbsorbable(b)) {
@@ -208,6 +214,56 @@ bool RangeHint::attemptJoin(RangeHint *b)
   type = settype;
   absorb(b);
   return true;
+}
+
+/// Move in increments of the data-type aligned size.
+/// \param point is the offset to backfill to
+void RangeHint::backfillToPoint(intb point)
+
+{
+  intb diff = sstart - point;
+  intb num = diff / type->getAlignSize();
+  intb amount = num * type->getAlignSize();
+  sstart -= amount;
+  start -= amount;
+}
+
+/// \param b is the hint to backfill
+/// \return \b true if we treat \b as having been absorbed into \b this
+bool RangeHint::attemptBackfill(RangeHint *b)
+
+{
+  intb rightedge = sstart + size;
+  if (b->sstart < rightedge)
+    return true;
+  if (rangeType != open) {
+    b->backfillToPoint(rightedge);	// If not open, backfill all the way to right edge
+    return false;
+  }
+  if (isBackfill())
+    return true;	// Throw out second backfill if there are two in a row
+  b->backfillToPoint((b->sstart - rightedge)/2);	// Backfill half way into open space
+  return true;
+}
+
+/// The start edge of \b this hint is moved backwards by element sizes (up to \b maxElements).
+/// If there is no start that lies inside the range, no change is made.
+/// \param range is the given range to fill
+/// \param maxElements is the maximum number of array elements to fill
+void RangeHint::backfillOpen(const Range &range,int4 maxElements)
+
+{
+  if (start < range.getFirst()) return;
+  uintb diff = start - range.getFirst();
+  uintb num = diff / type->getAlignSize();
+  if (num > maxElements)
+    num = maxElements;
+  uintb amount = num * type->getAlignSize();
+  uintb tmpStart = start - amount;
+  if (!range.contains(Address(range.getSpace(),tmpStart)))
+    return;
+  start = tmpStart;
+  sstart -= amount;
 }
 
 /// Absorb details of the other RangeHint into \b this, except for the data-type.  Inherit an \e open range
@@ -262,6 +318,8 @@ bool RangeHint::merge(RangeHint *b,AddrSpace *space,TypeFactory *typeFactory)
   bool didReconcile;
   int4 resType;		// 0=this, 1=b, 2=confuse
 
+  if (b->rangeType == endpoint)
+    throw LowlevelError("RangeHint overlaps endpoint");
   if (contain(b)) {			// Does one range contain the other
     didReconcile = reconcile(b);	// Can the data-type layout be reconciled
     if (!didReconcile && start != b->start)
@@ -347,6 +405,7 @@ ScopeLocal::ScopeLocal(uint8 id,AddrSpace *spc,Funcdata *fd,Architecture *g) : S
   rangeLocked = false;
   stackGrowsNegative = true;
   overlapProblems = false;
+  openParamRefs = false;
   restrictScope(fd);
 } 
 
@@ -392,13 +451,28 @@ void ScopeLocal::annotateRawStackPtr(void)
   if (spVn == (Varnode *)0) return;
   list<PcodeOp *>::const_iterator iter;
   vector<PcodeOp *> refOps;
+  bool sawRaw = false;
   for(iter=spVn->beginDescend();iter!=spVn->endDescend();++iter) {
     PcodeOp *op = *iter;
     if (op->getEvalType() == PcodeOp::special && !op->isCall()) continue;
     OpCode opc = op->code();
-    if (opc == CPUI_INT_ADD || opc == CPUI_PTRSUB || opc == CPUI_PTRADD)
+    if (opc == CPUI_PTRSUB) {
+      if (op->getIn(1)->getOffset() == 0)
+	sawRaw = true;
+      continue;
+    }
+    if (opc == CPUI_INT_ADD || opc == CPUI_PTRADD)
       continue;
     refOps.push_back(op);
+    sawRaw = true;
+  }
+  if (sawRaw) {
+  // Make sure a symbol exists
+    Address zeroaddr(space,0);
+    if (queryContainer(zeroaddr, 1, Address()) == (MapEntry *)0) {
+      Datatype *ct = fd->getArch()->types->getBase(1,TYPE_UNKNOWN);
+      addSymbol("",ct,zeroaddr,Address());
+    }
   }
   for(int4 i=0;i<refOps.size();++i) {
     PcodeOp *op = refOps[i];
@@ -862,11 +936,12 @@ uintb AliasChecker::gatherOffset(Varnode *vn)
 /// \param rn is the subset of addresses within the address space to analyze
 /// \param pm is subset of ranges within the address space considered to be parameters
 /// \param dt is the default data-type
-MapState::MapState(AddrSpace *spc,const RangeList &rn,
-		     const RangeList &pm,Datatype *dt) : range(rn)
+MapState::MapState(AddrSpace *spc,const RangeList &rn,const RangeList &pm,Datatype *dt)
+  : range(rn), paramRange(pm)
 {
   spaceid = spc;
   defaultType = dt;
+  paramRangeHit = false;
   set<Range>::const_iterator pmiter;
   for(pmiter=pm.begin();pmiter!=pm.end();++pmiter) {
     AddrSpace *pmSpc = (*pmiter).getSpace();
@@ -887,6 +962,53 @@ MapState::~MapState(void)
     delete *riter;
 }
 
+/// If the initial offset of the hint is in range, truncate the data-type so it fits. Otherwise,
+/// assuming the hint is out of bounds due to array slack, try to shift it into the nearest legal range.
+/// If the hint is shifted backwards, it is converted into a \b backfill range.
+/// The hint is shifted by a multiple of the data-type aligned size.
+/// \param st is the starting offset of the range
+/// \param ct is the data-type spanning the range
+/// \param fl is additional boolean properties of the range
+/// \return \b true if the hint was successfully adjusted to be in range
+bool MapState::adjustOutOfRange(uintb &st,Datatype *&ct,uint4 &fl)
+
+{
+  if (paramRange.inRange(Address(spaceid,st),ct->getSize())) {
+    paramRangeHit = true;
+    return false;
+  }
+  if (defaultType->getSize() < ct->getSize() && range.inRange(Address(spaceid,st),defaultType->getSize())) {
+    // Range starts valid but crosses over out of bounds
+    ct = defaultType;		// Convert to unknown array extending to boundary
+    return true;
+  }
+  if (st == 0)
+    return false;	// Let annotateRawStackPtr handle this offset
+  // Assume this is an array reference with a constant offset folded in
+  // Try to shift the reference into the valid range
+  const Range *near = range.getNearestRange(spaceid, st);
+  if (near == (const Range *)0)
+    return false;
+  if (near->getLast() < st) {
+    uint8 num = (st - near->getLast() - 1) / ct->getAlignSize();
+    st -= ct->getAlignSize() * (num + 1);
+    if (!near->contains(Address(spaceid,st + ct->getSize() -1)))
+      st -= ct->getAlignSize();
+    if (!near->contains(Address(spaceid,st)))
+      return false;
+    fl |= RangeHint::backfill;
+  }
+  else {
+    uint8 num = (near->getFirst() - st + 1) / ct->getAlignSize();
+    st += ct->getAlignSize() * (num + 1);
+    if (!near->contains(Address(spaceid,st)))
+      return false;
+    if (!near->contains(Address(spaceid,st + ct->getSize() -1)))
+      return false;
+  }
+  return true;
+}
+
 /// A specific range of bytes is described for the hint, given a starting offset and other information.
 /// The size of range can be fixed or open-ended. A putative data-type can be provided.
 /// \param st is the starting offset of the range
@@ -899,18 +1021,21 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,i
 {
   if ((ct == (Datatype *)0)||(ct->getSize()==0)) // Must have a real type
     ct = defaultType;
-  int4 sz = ct->getSize();
-  if (!range.inRange(Address(spaceid,st),sz))
-    return;
+  if (!range.inRange(Address(spaceid,st),ct->getSize())) {
+    if (rt != RangeHint::open)
+      return;
+    if (!adjustOutOfRange(st, ct, fl))
+      return;
+  }
   intb sst = (intb)AddrSpace::byteToAddress(st,spaceid->getWordSize());
   sst = sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
-  RangeHint *newRange = new RangeHint(st,sz,sst,ct,fl,rt,hi);
+  RangeHint *newRange = new RangeHint(st,ct->getSize(),sst,ct,fl,rt,hi);
   maplist.push_back(newRange);
 #ifdef OPACTION_DEBUG
   if (debugon) {
     ostringstream s;
-    s << "Add Range: " << hex << st << ":" << dec << sz;
+    s << "Add Range: " << hex << st << ":" << dec << ct->getSize();
     s << " ";
     ct->printRaw(s);
     s << endl;
@@ -1080,6 +1205,12 @@ bool MapState::initialize(void)
   stable_sort(maplist.begin(),maplist.end(),RangeHint::compareRanges);
   reconcileDatatypes();
   iter = maplist.begin();
+  RangeHint *first = *iter;
+  if (first->isBackfill()) {					// If there is an initial backfill into open space
+    const Range *sub = range.getRange(spaceid,first->start);
+    if (sub != (const Range *)0)
+      first->backfillOpen(*sub,127);				// go ahead and fill it now
+  }
   return true;
 }
 
@@ -1269,11 +1400,9 @@ void ScopeLocal::restructureVarnode(bool aliasyes)
   state.gatherVarnodes(*fd); // Gather stack type information from varnodes
   state.gatherOpen(*fd);
   state.gatherSymbols(maptable[space->getIndex()]);
+  openParamRefs = state.hasParamRangeHit();
   overlapProblems = restructure(state);
 
-  // At some point, processing mapped input symbols may be folded
-  // into the above gather/restructure process, but for now
-  // we just define fake symbols so that mark_unaliased will work
   clearUnlockedCategory(Symbol::function_parameter);
   clearCategory(Symbol::fake_input);
   fakeInputSymbols();
@@ -1313,8 +1442,11 @@ bool ScopeLocal::restructure(MapState &state)
     }
     else {
       if (!cur.attemptJoin(next)) {
-	if (cur.rangeType == RangeHint::open)
+	if (cur.rangeType == RangeHint::open) {
 	  cur.size = next->sstart-cur.sstart;
+	  if (cur.size < 0)
+	    cur.size = 0x7fffffff;	// Maximum size for a data-type
+	}
 	if (adjustFit(cur))
 	  createEntry(cur);
 	cur = *next;
@@ -1391,7 +1523,7 @@ void ScopeLocal::markUnaliased(const vector<uintb> &alias)
 
 /// This assigns a Symbol to any input Varnode stored in our address space, which could be
 /// a parameter but isn't in the formal prototype of the function (these should already be in
-/// the scope marked as category '0').
+/// the scope marked as category 'function_parameter').
 void ScopeLocal::fakeInputSymbols(void)
 
 {

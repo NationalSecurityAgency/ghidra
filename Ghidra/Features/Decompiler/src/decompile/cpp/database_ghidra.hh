@@ -88,6 +88,8 @@ public:
   virtual Funcdata *resolveExternalRefFunction(ExternRefSymbol *sym) const;
 
   virtual MapEntry *findOverlap(const Address &addr,int4 size) const { throw LowlevelError("findOverlap unimplemented"); }
+  virtual MapEntry *findSymbolBefore(const Address &addr,const Address &usepoint) const;
+  virtual MapEntry *findSymbolAfter(const Address &addr,const Address &usepoint) const;
   virtual void findByName(const string &nm,vector<Symbol *> &res) const { throw LowlevelError("findByName unimplemented"); }
   virtual bool isNameUsed(const string &nm,const Scope *op2) const { throw LowlevelError("isNameUsed unimplemented"); }
 

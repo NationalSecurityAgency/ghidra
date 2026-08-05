@@ -707,6 +707,20 @@ public:
   /// \return an overlapping SymbolEntry or NULL if none exists
   virtual MapEntry *findOverlap(const Address &addr,int4 size) const=0;
 
+  /// \brief Find the last Symbol whose range ends before the given address
+  ///
+  /// \param addr is the given address
+  /// \param usepoint is the point at which the Symbol is being accessed
+  /// \return the matching MapEntry or NULL
+  virtual MapEntry *findSymbolBefore(const Address &addr,const Address &usepoint) const=0;
+
+  /// \brief Find the first Symbol whose range begins after the given address
+  ///
+  /// \param addr is the given address
+  /// \param usepoint is the point at which the Symbol is being accessed
+  /// \return the matching MapEntry or NULL
+  virtual MapEntry *findSymbolAfter(const Address &addr,const Address &usepoint) const=0;
+
   /// \brief Find a Symbol by name within \b this Scope
   ///
   /// If there are multiple Symbols with the same name, all are passed back.
@@ -789,6 +803,7 @@ public:
   const string &getDisplayName(void) const { return displayName; }	///< Get name displayed in output
   uint8 getId(void) const { return uniqueId; }			///< Get the globally unique id
   bool isGlobal(void) const { return (fd == (Funcdata *)0); }	///< Return \b true if \b this scope is global
+  Funcdata *getFunction(void) const { return fd; }		///< Get function \b this is attached to, or null
 
   // The main global querying routines
   void queryByName(const string &nm,vector<Symbol *> &res) const;	///< Look-up symbols by name
@@ -884,6 +899,8 @@ public:
   virtual ExternRefSymbol *findExternalRef(const Address &addr) const;
   virtual LabSymbol *findCodeLabel(const Address &addr) const;
   virtual MapEntry *findOverlap(const Address &addr,int4 size) const;
+  virtual MapEntry *findSymbolBefore(const Address &addr,const Address &usepoint) const;
+  virtual MapEntry *findSymbolAfter(const Address &addr,const Address &usepoint) const;
 
   virtual void findByName(const string &nm,vector<Symbol *> &res) const;
   virtual bool isNameUsed(const string &nm,const Scope *op2) const;

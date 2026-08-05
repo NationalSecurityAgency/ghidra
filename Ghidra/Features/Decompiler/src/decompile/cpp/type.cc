@@ -200,32 +200,25 @@ Datatype *Datatype::getSubType(int8 off,int8 *newoff) const
 }
 
 /// If \b this data-type is (or contains) an array starting after the given
-/// offset, return the distance in bytes to the start of the array,
-/// and pass back the difference between the component's start and the given offset.
+/// offset, pass back information about the component and its distance.
 /// \param off is the given offset into \b this data-type
-/// \param max is the maximum distance, in bytes, to search
-/// \param newoff is used to pass back the offset difference
-/// \param elSize is used to pass back the array element size
-/// \return the distance to the array or -1 otherwise
-int8 Datatype::nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
+/// \param res is filled in with component and distance info
+/// \return \b true if a component is found
+bool Datatype::nearestArrayedComponentForward(int8 off,Nearest &res) const
 
 {
-  return -1;
+  return false;
 }
 
 /// If \b this data-type is (or contains) an array starting before the given
-/// offset, return the distance in bytes to the end of the array,
-/// and pass back the difference between the component's start and the given offset.
-/// Return the component data-type or null if no array is found.
+/// offset, pass back information about the component and its distance.
 /// \param off is the given offset into \b this data-type
-/// \param max is the maximum distance, in bytes, to search
-/// \param newoff is used to pass back the offset difference
-/// \param elSize is used to pass back the array element size
-/// \return the distance to the array or -1 otherwise
-int8 Datatype::nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
+/// \param res is filled in with component and distance info
+/// \return \b true if a component is found
+bool Datatype::nearestArrayedComponentBackward(int8 off,Nearest &res) const
 
 {
-  return -1;
+  return false;
 }
 
 /// Order \b this with another data-type, in a way suitable for the type propagation algorithm.
@@ -536,6 +529,66 @@ bool Datatype::isPrimitiveWhole(void) const
   return false;
 }
 
+/// \brief Find the \e array subcomponent nearest to the given offset
+///
+/// This method passes back the offset of the best component, preferring an array closer
+/// to the offset and matching the preferred element size.  The start of the array must
+/// be within \b max bytes of the offset, or \b false is returned.
+/// \param off is the given offset into the data-type
+/// \param arrayHint if non-zero indicates the preferred element size
+/// \param newoff is used to pass back the actual offset of the selected component
+/// \return \b true if a good component match was found
+bool Datatype::nearestArrayedComponent(int8 off,uint4 arrayHint,int8 *newoff) const
+
+{
+  Nearest before;
+  Nearest after;
+  bool typeBefore = nearestArrayedComponentBackward(off, before);
+  bool typeAfter = nearestArrayedComponentForward(off, after);
+  if (!typeBefore && !typeAfter)
+    return false;
+  if (!typeBefore) {
+    *newoff = after.offset;	// Only array is after
+    return true;
+  }
+  if (!typeAfter) {
+    *newoff = before.offset;	// Only array is before
+    return true;
+  }
+  // Reaching here we know there is an array before and an array after the offset point
+  if (arrayHint != 1 && before.elSize != after.elSize) {	// element sizes are different, try to distinguish by arrayHint
+    if (before.elSize == arrayHint) {
+      *newoff = before.offset;
+      return true;
+    }
+    if (after.elSize == arrayHint) {
+      *newoff = after.offset;
+      return true;
+    }
+  }
+  if (getSubType(off,newoff) != (Datatype *)0) {
+    if (*newoff == before.offset || *newoff == after.offset)
+      return true;		// Offset is contained in one of the arrayed components.  Return it.
+  }
+  *newoff = (after.distance <= before.distance) ? after.offset : before.offset;
+  return true;
+}
+
+/// If \b this data-type is an array, or has an arrayed component, return \b true.
+/// \param off is the out-of-bounds offset
+/// \return \b true if an array is present
+bool Datatype::testForArraySlack(int8 off)
+
+{
+  if (metatype == TYPE_ARRAY)
+    return true;
+  Nearest comp;
+  if (off < 0) {
+    return nearestArrayedComponentForward(off, comp);
+  }
+  return nearestArrayedComponentBackward(off, comp);
+}
+
 /// Called only if the \b typedefImm field is non-null.  Encode the data-type to the
 /// stream as a simple \<typedef> element including only the names and ids of \b this and
 /// the data-type it typedefs.
@@ -566,6 +619,8 @@ int4 Datatype::calcAlignSize(int4 sz,int4 align)
   return sz;
 }
 
+/// \brief Is this data-type suitable as input to a CPUI_PTRSUB op
+///
 /// A CPUI_PTRSUB must act on a pointer data-type where the given offset addresses a component.
 /// Perform this check.
 /// \param off is the given offset
@@ -576,6 +631,17 @@ bool Datatype::isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const
 
 {
   return false;
+}
+
+/// A companion to isPtrsubMatching().
+/// \param off is the given byte offset into \b this
+/// \param extra is a sub-offset into the component reached by the main offset
+/// \param multiplier is the size of any index multiplier to reach into the component
+/// \return \b true if the offset is considered valid
+bool Datatype::isOffsetValid(int8 off,int8 extra,int8 multiplier) const
+
+{
+  return false;		// By default assume no sub-components
 }
 
 /// Some data-types are ephemeral, and, in the final decompiler output, get replaced with a formal version
@@ -1144,23 +1210,6 @@ void TypePointer::encode(Encoder &encoder) const
   encoder.closeElement(ELEM_TYPE);
 }
 
-/// If the given data-type is an array, or has an arrayed component, return \b true.
-/// \param dt is the given data-type to check
-/// \param off is the out-of-bounds offset
-/// \return \b true is an array is present
-bool TypePointer::testForArraySlack(Datatype *dt,int8 off)
-
-{
-  int8 newoff;
-  int8 elSize;
-  if (dt->getMetatype() == TYPE_ARRAY)
-    return true;
-  if (off < 0) {
-    return (dt->nearestArrayedComponentForward(off, 128, &newoff, &elSize) >= 0);
-  }
-  return (dt->nearestArrayedComponentBackward(off, 128, &newoff, &elSize) >= 0);
-}
-
 /// Parse a \<type> element with a child describing the data-type being pointed to
 /// \param decoder is the stream decoder
 /// \param typegrp is the factory owning \b this data-type
@@ -1280,67 +1329,10 @@ TypePointer *TypePointer::downChain(int8 &off,TypePointer *&par,int8 &parOff,boo
 bool TypePointer::isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const
 
 {
-  type_metatype meta = ptrto->getMetatype();
-  if (meta==TYPE_SPACEBASE) {
-    int8 newoff = AddrSpace::addressToByteInt(off,wordsize);
-    Datatype *subType = ptrto->getSubType(newoff,&newoff);
-    if (subType == (Datatype *)0 || newoff != 0)
-      return false;
-    extra = AddrSpace::addressToByteInt(extra,wordsize);
-    if (subType->getMetatype() == TYPE_CODE) {
-      // When the pointer targets inside a function, consider PTRSUB to be suitable when
-      // the extra is non-negative, as subType->getSize() cannot be used (it is always 1).
-      if (extra < 0)
-	return false;
-    }
-    else {
-      if (extra < 0 || extra >= subType->getSize()) {
-	if (!testForArraySlack(subType, extra))
-	  return false;
-      }
-    }
-  }
-  else if (meta == TYPE_ARRAY) {
-    if (off != 0)
-      return false;
-    multiplier = AddrSpace::addressToByteInt(multiplier,wordsize);
-    if (multiplier >= ptrto->getAlignSize())
-      return false;
-  }
-  else if (meta == TYPE_STRUCT) {
-    int4 typesize = ptrto->getSize();
-    multiplier = AddrSpace::addressToByteInt(multiplier,wordsize);
-    if (multiplier >= ptrto->getAlignSize())
-      return false;
-    int8 newoff = AddrSpace::addressToByteInt(off,wordsize);
-    extra = AddrSpace::addressToByteInt(extra, wordsize);
-    Datatype *subType = ptrto->getSubType(newoff,&newoff);
-    if (subType != (Datatype *)0) {
-      if (newoff != 0)
-	return false;
-      if (extra < 0 || extra >= subType->getSize()) {
-	if (!testForArraySlack(subType, extra))
-	  return false;
-      }
-    }
-    else {
-      extra += newoff;
-      if ((extra < 0 || extra >= typesize)&&(typesize!=0))
-        return false;
-    }
-  }
-  else if (meta == TYPE_UNION) {
-    // A PTRSUB reaching here cannot be used for a union field resolution
-    // These are created by ActionSetCasts::resolveUnion
-    return false;	// So we always return false
-  }
-  else if (meta == TYPE_CODE) {
-    if (extra < 0)
-      return false;
-  }
-  else
-    return false;	// Not a pointer to a structured data-type
-  return true;
+  off = AddrSpace::addressToByteInt(off,wordsize);
+  extra = AddrSpace::addressToByteInt(extra, wordsize);
+  multiplier = AddrSpace::addressToByteInt(multiplier,wordsize);
+  return ptrto->isOffsetValid(off, extra, multiplier);
 }
 
 Datatype *TypePointer::resolveInFlow(PcodeOp *op,int4 slot)
@@ -1424,24 +1416,27 @@ Datatype *TypeArray::getSubType(int8 off,int8 *newoff) const
   return arrayof;
 }
 
-int8 TypeArray::nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
+bool TypeArray::nearestArrayedComponentForward(int8 off,Nearest &res) const
 
 {
-  if (off > 0) return -1;	// Skip if we are in the middle of array
-  *newoff = off;
-  *elSize = arrayof->getAlignSize();
-  return -off;
+  if (off > 0) return false;	// Skip if we are in the middle of array
+  res.offset = off;
+  res.elSize = arrayof->getAlignSize();
+  res.distance = -off;
+  return true;
 }
 
-int8 TypeArray::nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
+bool TypeArray::nearestArrayedComponentBackward(int8 off,Nearest &res) const
 
 {
-  if (off < 0) return -1;	// Skip if we are before array
-  *newoff = off;
-  *elSize = arrayof->getAlignSize();
-  if (off <= size)
-    return (size - off);
-  return (off - size);
+  if (off < 0) return false;	// Skip if we are before array
+  res.offset = off;
+  res.elSize = arrayof->getAlignSize();
+  if (off < size)
+    res.distance = 0;		// In the array, is distance 0
+  else
+    res.distance = (off - size);
+  return true;
 }
 
 int4 TypeArray::getHoleSize(int4 off) const
@@ -1497,6 +1492,16 @@ Datatype *TypeArray::resolveInFlow(PcodeOp *op,int4 slot)
   ResolvedUnion compFill(this,fieldNum,*fd->getArch()->types);
   fd->setUnionField(this, op, slot, compFill);
   return compFill.getDatatype();
+}
+
+bool TypeArray::isOffsetValid(int8 off,int8 extra,int8 multiplier) const
+
+{
+  if (off != 0)
+    return false;
+  if (multiplier >= getAlignSize())
+    return false;
+  return true;
 }
 
 Datatype* TypeArray::findResolve(const PcodeOp *op,int4 slot)
@@ -1952,7 +1957,7 @@ int4 TypeStruct::getHoleSize(int4 off) const
   return getSize() - off;		// Distance to end of structure
 }
 
-int8 TypeStruct::nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
+bool TypeStruct::nearestArrayedComponentBackward(int8 off,Nearest &res) const
 
 {
   int4 firstIndex = getLowerBoundField(off);
@@ -1961,22 +1966,18 @@ int8 TypeStruct::nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,
     const TypeField &subfield( field[i] );
     int8 diff = off - subfield.offset;
     Datatype *subtype = subfield.type;
-    int8 suboff;
     int8 remain = (i == firstIndex) ? diff : subtype->getSize();
-    if (diff - remain > max) break;
-    int8 distance = subtype->nearestArrayedComponentBackward(remain, max, &suboff, elSize);
-    if (distance >= 0) {
-      distance = (diff - remain) + distance;
-      if (distance > max) break;
-      *newoff = diff;
-      return distance;
+    if (subtype->nearestArrayedComponentBackward(remain, res)) {
+      res.distance = (diff - remain) + res.distance;
+      res.offset = diff;
+      return true;
     }
     i -= 1;
   }
-  return -1;
+  return false;
 }
 
-int8 TypeStruct::nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
+bool TypeStruct::nearestArrayedComponentForward(int8 off,Nearest &res) const
 
 {
   int4 i = getLowerBoundField(off);
@@ -1990,21 +1991,16 @@ int8 TypeStruct::nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,i
   while(i<field.size()) {
     const TypeField &subfield( field[i] );
     int8 diff = subfield.offset - off;		// The first struct field examined may have a negative diff
-    if (diff + remain > max) break;
     Datatype *subtype = subfield.type;
-    int8 suboff;
-    int8 distance = subtype->nearestArrayedComponentForward(remain, max, &suboff, elSize);
-    if (distance >= 0) {
-      distance = diff + remain + distance;
-      if (distance > max)
-	break;
-      *newoff = -diff;
-      return distance;
+    if (subtype->nearestArrayedComponentForward(remain, res)) {
+      res.distance = diff + remain + res.distance;
+      res.offset = -diff;
+      return true;
     }
     i += 1;
     remain = 0;
   }
-  return -1;
+  return false;
 }
 
 int4 TypeStruct::compare(const Datatype &op,int4 level) const
@@ -2120,6 +2116,29 @@ void TypeStruct::encode(Encoder &encoder) const
   for(;iter2!=bitfield.end();++iter2)
     (*iter2).encode(encoder);
   encoder.closeElement(ELEM_TYPE);
+}
+
+bool TypeStruct::isOffsetValid(int8 off,int8 extra,int8 multiplier) const
+
+{
+  if (multiplier >= getAlignSize())
+    return false;
+  int8 newoff;
+  Datatype *subType = getSubType(off,&newoff);
+  if (subType != (Datatype *)0) {
+    if (newoff != 0)
+      return false;
+    if (extra < 0 || extra >= subType->getSize()) {
+      if (!subType->testForArraySlack(extra))
+	return false;
+    }
+  }
+  else {
+    extra += newoff;
+    if ((extra < 0 || extra >= size)&&(size != 0))
+      return false;
+  }
+  return true;
 }
 
 /// \brief Decode a single field, check for errors, and accumulate size and alignment
@@ -2394,7 +2413,9 @@ void TypeStruct::assignContiguousBitfields(vector<TypeBitField> &bitlist,int4 &p
 /// \param newSize passes back the calculated size of the structure
 /// \param newAlign passes back the calculated alignment
 /// \param flags passes back any additional flags that should be set on the structure
-void TypeStruct::assignFieldOffsets(vector<TypeField> &list,vector<TypeBitField> &bitlist,int4 &newSize,int4 &newAlign,uint4 &flags)
+/// \param st is the structure to be populated
+void TypeStruct::assignFieldOffsets(vector<TypeField> &list,vector<TypeBitField> &bitlist,int4 &newSize,int4 &newAlign,
+				    uint4 &flags,const TypeStruct *st)
 
 {
   int4 nextBitPos = -1;
@@ -2415,7 +2436,7 @@ void TypeStruct::assignFieldOffsets(vector<TypeField> &list,vector<TypeBitField>
     }
     TypeField &curField(list[pos]);
     if (curField.type->getMetatype() == TYPE_VOID)
-      throw LowlevelError("Illegal field data-type: void");
+      throw LowlevelError("Illegal field void in structure: "+st->getName());
     if (curField.offset != -1) continue;
     int4 cursize = curField.type->getAlignSize();
     int4 align = curField.type->getAlignment();
@@ -2434,7 +2455,7 @@ void TypeStruct::assignFieldOffsets(vector<TypeField> &list,vector<TypeBitField>
     assignContiguousBitfields(bitlist, curBitInd, offset, newAlign);	// Bitfields after any other fields
   }
   if (!bitlist.empty() && curBitInd != bitlist.size())
-    throw LowlevelError("Malformed bitfield description");
+    throw LowlevelError("Malformed bitfield description in structure: "+st->getName());
   if (!bitlist.empty())
     flags |= Datatype::has_bitfields;
   newSize = calcAlignSize(offset, newAlign);
@@ -2658,6 +2679,26 @@ const TypeField *TypeUnion::findTruncation(int8 offset,int4 sz,const PcodeOp *op
   return (const TypeField *)0;
 }
 
+bool TypeUnion::nearestArrayedComponentForward(int8 off,Nearest &res) const
+
+{
+  for(int4 i=0;i<field.size();++i) {
+    if (field[i].type->nearestArrayedComponentForward(off, res))
+      return true;
+  }
+  return false;
+}
+
+bool TypeUnion::nearestArrayedComponentBackward(int8 off,Nearest &res) const
+
+{
+  for(int4 i=0;i<field.size();++i) {
+    if (field[i].type->nearestArrayedComponentBackward(off, res))
+      return true;
+  }
+  return false;
+}
+
 int4 TypeUnion::findCompatibleResolve(Datatype *ct) const
 
 {
@@ -2680,13 +2721,15 @@ int4 TypeUnion::findCompatibleResolve(Datatype *ct) const
   return -1;
 }
 
-void TypeUnion::assignFieldOffsets(vector<TypeField> &list,int4 &newSize,int4 &newAlign,TypeUnion *tu)
+void TypeUnion::assignFieldOffsets(vector<TypeField> &list,int4 &newSize,int4 &newAlign,uint4 &flags,
+				   const TypeUnion *tu)
 
 {
   vector<TypeField>::iterator iter;
 
   newSize = 0;
   newAlign = 1;
+  flags = 0;
   for(iter=list.begin();iter!=list.end();++iter) {
     Datatype *ct = (*iter).type;
     // Do some sanity checks on the field
@@ -3395,6 +3438,12 @@ void TypeCode::encode(Encoder &encoder) const
   encoder.closeElement(ELEM_TYPE);
 }
 
+bool TypeCode::isOffsetValid(int8 off,int8 extra,int8 multiplier) const
+
+{
+  return (extra >= 0);		// Valid for any non-negative offset
+}
+
 /// \param decoder is the stream decoder
 void TypeCode::decodeStub(Decoder &decoder)
 
@@ -3431,13 +3480,10 @@ void TypeCode::decodePrototype(Decoder &decoder,bool isConstructor,bool isDestru
 Scope *TypeSpacebase::getMap(void) const
 
 {
-  Scope *res = glb->symboltab->getGlobalScope();
-  if (!localframe.isInvalid()) { // If this spacebase is for a localframe
-    Funcdata *fd = res->queryFunction(localframe);
-    if (fd != (Funcdata *)0)
-      res = fd->getScopeLocal();
-  }
-  return res;
+  Scope *scope = glb->symboltab->resolveScope(scopeId);
+  if (scope == (Scope *)0)
+    throw LowlevelError("Trying to get scope from unattached Typespacebase");
+  return scope;
 }
 
 Datatype *TypeSpacebase::getSubType(int8 off,int8 *newoff) const
@@ -3457,6 +3503,8 @@ Datatype *TypeSpacebase::getSubType(int8 off,int8 *newoff) const
   smallest = scope->queryContainer(addr,1,nullPoint);
 
   if (smallest == (MapEntry *)0) {
+    if (!scope->inScope(addr, 1, nullPoint))
+      return (Datatype *)0;
     *newoff = 0;
     return glb->types->getBase(1,TYPE_UNKNOWN);
   }
@@ -3464,7 +3512,7 @@ Datatype *TypeSpacebase::getSubType(int8 off,int8 *newoff) const
   return smallest->getSymbol()->getType();
 }
 
-int8 TypeSpacebase::nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
+bool TypeSpacebase::nearestArrayedComponentForward(int8 off,Nearest &res) const
 
 {
   Scope *scope = getMap();
@@ -3474,57 +3522,88 @@ int8 TypeSpacebase::nearestArrayedComponentForward(int8 off,int8 max,int8 *newof
   Address nullPoint;
   uintb fullEncoding;
   Address addr = glb->resolveConstant(spaceid, addrOff, -1, nullPoint, fullEncoding);
+
+  // Look for Symbol (with an array component) at initial address
   MapEntry *smallest = scope->queryContainer(addr,1,nullPoint);
-  Address nextAddr;
   Datatype *symbolType;
-  if (smallest == (MapEntry *)0 || smallest->getOffset() != 0)
-    nextAddr = addr + 32;
-  else {
+  if (smallest != (MapEntry *)0 && smallest->getOffset() == 0) {
     symbolType = smallest->getSymbol()->getType();
     int8 structOff = addr.getOffset() - smallest->getAddr().getOffset();
-    int8 dummyOff;
-    int8 distance = symbolType->nearestArrayedComponentForward(structOff, max, &dummyOff, elSize);
-    if (distance >= 0) {
-      if (distance > max)
-	return -1;
-      *newoff = structOff;
-      return distance;
+    // Look for arrayed component
+    if (symbolType->nearestArrayedComponentForward(structOff, res)) {
+      res.offset = structOff;
+      return true;
     }
-    int8 sz = AddrSpace::byteToAddressInt(smallest->getSize(), spaceid->getWordSize());
-    nextAddr = smallest->getAddr() + sz;
   }
-  if (nextAddr < addr)
-    return -1;		// Don't let the address wrap
-  smallest = scope->queryContainer(nextAddr,1,nullPoint);
-  if (smallest == (MapEntry *)0 || smallest->getOffset() != 0)
-    return -1;
-  symbolType = smallest->getSymbol()->getType();
-  *newoff = addr.getOffset() - smallest->getAddr().getOffset();
-  int8 dummyOff;
-  int8 distance = symbolType->nearestArrayedComponentForward(0, max, &dummyOff, elSize);
-  if (distance >= 0) {
-    distance = distance - *newoff;
-    if (distance > max)
-      return -1;
-    return distance;
-  }
-  return -1;
+
+  // Look at Symbols in sequence after the initial address
+  Address nextAddr = addr;
+  do {
+    smallest = scope->findSymbolAfter(nextAddr, nullPoint);
+    if (smallest == (MapEntry *)0 || smallest->getOffset() != 0)
+      return false;
+    nextAddr = smallest->getAddr();
+    symbolType = smallest->getSymbol()->getType();
+    int8 structOff = addr.getOffset() - nextAddr.getOffset();	// Negative: addr is before start of Symbol
+    if (symbolType->nearestArrayedComponentForward(0, res)) {
+      res.distance = res.distance - structOff;
+      res.offset = structOff;
+      if (res.distance > MAX_ARRAY_SLACK_FORWARD)
+	return false;
+      // If the distance is bigger than the whole data-type, this reference will be treated as an array access
+      if (res.distance <= symbolType->getSize() || symbolType->getMetatype() == TYPE_ARRAY)
+	return true;
+    }
+  } while(nextAddr.getOffset() - addr.getOffset() < MAX_ARRAY_SLACK_FORWARD);
+  return false;
 }
 
-int8 TypeSpacebase::nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const
+bool TypeSpacebase::nearestArrayedComponentBackward(int8 off,Nearest &res) const
 
 {
-  Datatype *subType = getSubType(off, newoff);
-  if (subType == (Datatype *)0)
-    return -1;
-  int8 dummyOff;
-  int8 distance = subType->nearestArrayedComponentBackward(*newoff,max,&dummyOff,elSize);
-  if (distance >= 0) {
-    if (distance > max)
-      return -1;
-    return distance;
+  Scope *scope = getMap();
+  uintb addrOff = AddrSpace::byteToAddress(off, spaceid->getWordSize());	// Convert from byte offset to address unit
+  // It should always be the case that the given offset represents a full encoding of the
+  // pointer, so the point of context is unused and the size is given as -1
+  Address nullPoint;
+  uintb fullEncoding;
+  Address addr = glb->resolveConstant(spaceid, addrOff, -1, nullPoint, fullEncoding);
+
+  int4 max = MAX_ARRAY_SLACK_BACKWARD;
+  // Look for Symbol (with an array component) at the initial address
+  MapEntry *smallest = scope->queryContainer(addr,1,nullPoint);
+  Datatype *symbolType;
+  if (smallest != (MapEntry *)0 && smallest->getOffset() == 0) {
+    symbolType = smallest->getSymbol()->getType();
+    int8 structOff = addr.getOffset() - smallest->getAddr().getOffset();
+    if (symbolType->nearestArrayedComponentBackward(structOff, res)) {
+      res.offset = structOff;
+      return true;
+    }
   }
-  return -1;
+  else
+    max = MAX_ARRAY_SLACK_FORWARD;	// Search farther if there is no symbol at initial offset
+
+  // Look at Symbols in sequence before the initial address
+  Address nextAddr = addr;
+  do {
+    smallest = scope->findSymbolBefore(nextAddr, nullPoint);
+    if (smallest == (MapEntry *)0 || smallest->getOffset() != 0)
+      return false;
+    symbolType = smallest->getSymbol()->getType();
+    nextAddr = smallest->getAddr();
+    int8 structOff = addr.getOffset() - nextAddr.getOffset();
+    if (symbolType->nearestArrayedComponentBackward(symbolType->getSize(), res)) {
+      res.distance = res.distance + structOff - symbolType->getSize();
+      res.offset = structOff;
+      if (res.distance > max)
+	return false;
+      // If the distance is bigger than the whole data-type, this reference will be treated as an array access
+      if (res.distance <= symbolType->getSize() || symbolType->getMetatype() == TYPE_ARRAY)
+	return true;
+    }
+  } while(addr.getOffset() - nextAddr.getOffset() < max);
+  return false;
 }
 
 int4 TypeSpacebase::compare(const Datatype &op,int4 level) const
@@ -3540,9 +3619,30 @@ int4 TypeSpacebase::compareDependency(const Datatype &op) const
   if (res != 0) return res;
   TypeSpacebase *tsb = (TypeSpacebase *) &op;
   if (spaceid != tsb->spaceid) return (spaceid < tsb->spaceid) ? -1:1;
-  if (localframe.isInvalid()) return 0; // Global space base
-  if (localframe != tsb->localframe) return (localframe < tsb->localframe) ? -1:1;
+  if (scopeId != tsb->scopeId) return (scopeId < tsb->scopeId) ? -1:1;
   return 0;
+}
+
+bool TypeSpacebase::isOffsetValid(int8 off,int8 extra,int8 multiplier) const
+
+{
+  int8 newoff;
+  Datatype *subType = getSubType(off,&newoff);
+  if (subType == (Datatype *)0 || newoff != 0)
+    return false;
+  if (subType->getMetatype() == TYPE_CODE) {
+    // When the pointer targets inside a function, consider PTRSUB to be suitable when
+    // the extra is non-negative, as subType->getSize() cannot be used (it is always 1).
+    if (extra < 0)
+      return false;
+  }
+  else {
+    if (extra < 0 || extra >= subType->getSize()) {
+      if (!subType->testForArraySlack(extra))
+	return false;
+    }
+  }
+  return true;
 }
 
 /// Return the Address being referred to by a specific offset relative
@@ -3556,7 +3656,7 @@ Address TypeSpacebase::getAddress(uintb off,int4 sz,const Address &point) const
 {
   uintb fullEncoding;
   // Currently a constant off of a global spacebase must be a full pointer encoding
-  if (localframe.isInvalid())
+  if (scopeId == 0)
     sz = -1;	// Set size to -1 to guarantee that full encoding recovery isn't launched
   return glb->resolveConstant(spaceid,off,sz,point,fullEncoding);
 }
@@ -3571,6 +3671,10 @@ void TypeSpacebase::encode(Encoder &encoder) const
   encoder.openElement(ELEM_TYPE);
   encodeBasic(metatype,-1,encoder);
   encoder.writeSpace(ATTRIB_SPACE, spaceid);
+  Address localframe;
+  Scope *scope = getMap();
+  if (!scope->isGlobal())
+    localframe = scope->getFunction()->getAddress();
   localframe.encode(encoder);
   encoder.closeElement(ELEM_TYPE);
 }
@@ -3584,7 +3688,14 @@ void TypeSpacebase::decode(Decoder &decoder,TypeFactory &typegrp)
 //  uint4 elemId = decoder.openElement();
   decodeBasic(decoder);
   spaceid = decoder.readSpace(ATTRIB_SPACE);
-  localframe = Address::decode(decoder);
+  Address localframe = Address::decode(decoder);
+  Scope *res = glb->symboltab->getGlobalScope();
+  if (!localframe.isInvalid()) {
+    Funcdata *fd = res->queryFunction(localframe);
+    if (fd != (Funcdata *)0)
+      res = fd->getScopeLocal();
+  }
+  scopeId = res->getId();
 //  decoder.closeElement(elemId);
 }
 
@@ -3998,7 +4109,8 @@ void TypeFactory::setFields(const vector<TypeField> &fd,const vector<TypeBitFiel
   tree.erase(ot);
   ot->setFields(fd,bit,newSize,newAlign);
   ot->flags &= ~(uint4)Datatype::type_incomplete;
-  ot->flags |= (flags & (Datatype::opaque_string | Datatype::variable_length | Datatype::type_incomplete | Datatype::has_bitfields));
+  ot->flags |= (flags & (Datatype::opaque_string | Datatype::variable_length | Datatype::type_incomplete |
+      Datatype::has_bitfields));
   tree.insert(ot);
   recalcPointerSubmeta(ot, SUB_PTR);
   recalcPointerSubmeta(ot, SUB_PTR_STRUCT);
@@ -4488,13 +4600,13 @@ TypePartialEnum *TypeFactory::getTypePartialEnum(TypeEnum *contain,int4 off,int4
 }
 
 /// Creates the special TypeSpacebase with an associated address space and scope
-/// \param id is the address space
-/// \param addr specifies the function scope, or isInvalid() for global scope
+/// \param spc is the address space
+/// \param scope is the id of the Scope
 /// \return the TypeSpacebase object
-TypeSpacebase *TypeFactory::getTypeSpacebase(AddrSpace *id,const Address &addr)
+TypeSpacebase *TypeFactory::getTypeSpacebase(AddrSpace *spc,uint8 scope)
 
 {
-  TypeSpacebase tsb(id,addr,glb);
+  TypeSpacebase tsb(spc,scope,glb);
   return (TypeSpacebase *) findAdd(tsb);
 }
 
@@ -4649,7 +4761,7 @@ void TypeFactory::assignRawFields(TypeStruct *ct,vector<TypeField> &fd,vector<Ty
   int4 newSize;
   int4 newAlign;
   uint4 flags;
-  TypeStruct::assignFieldOffsets(fd,bit,newSize,newAlign,flags);
+  TypeStruct::assignFieldOffsets(fd,bit,newSize,newAlign,flags,ct);
   glb->types->setFields(fd,bit,ct,newSize,newAlign,flags);
 }
 
@@ -4663,8 +4775,9 @@ void TypeFactory::assignRawFields(TypeUnion *ct,vector<TypeField> &fd)
 {
   int4 newSize;
   int4 newAlign;
-  TypeUnion::assignFieldOffsets(fd,newSize,newAlign,ct);
-  glb->types->setFields(fd,ct,newSize,newAlign,0);
+  uint4 flags;
+  TypeUnion::assignFieldOffsets(fd,newSize,newAlign,flags,ct);
+  glb->types->setFields(fd,ct,newSize,newAlign,flags);
 }
 
 /// The indicated Datatype object is removed from this container.
