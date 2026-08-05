@@ -17,7 +17,7 @@ package docking.widgets.filter;
 
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 /**
  * A text filter that uses a pattern and performs a 'matches' using that pattern.
@@ -41,7 +41,7 @@ public abstract class MatchesPatternTextFilter extends AbstractPatternTextFilter
 			// Handle escaped glob characters.  A previous filter result that ends with an escape
 			// character will not have correctly matched the items being filtered.  Thus, we cannot
 			// be a sub filter such a parent filter.
-			boolean endsWithEscapedGlob = StringUtils.endsWithAny(filterText, "\\?", "\\*");
+			boolean endsWithEscapedGlob = Strings.CS.endsWithAny(filterText, "\\?", "\\*");
 			if (endsWithEscapedGlob) {
 				// If the user type slow enough (to let the SwingUpdateManager run) in the filter
 				// field, then the parent filter will end with a backslash.  If they user types fast

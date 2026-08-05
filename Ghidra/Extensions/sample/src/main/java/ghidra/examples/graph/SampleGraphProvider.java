@@ -26,7 +26,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
@@ -165,7 +165,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 		GraphViewer<SampleVertex, SampleEdge> viewer = view.getPrimaryGraphViewer();
 
 		Predicate<SampleVertex> filter =
-			v -> StringUtils.containsIgnoreCase(v.getName(), filterText);
+			v -> Strings.CI.contains(v.getName(), filterText);
 		FilterVerticesJob<SampleVertex, SampleEdge> job =
 			new FilterVerticesJob<>(viewer, graph, filter, remove);
 

@@ -117,15 +117,6 @@ public interface Memory extends AddressSetView {
 	public AddressSetView getAllInitializedAddressSet();
 
 	/**
-	 * {@return the set of addresses which correspond to all the "loaded" memory blocks that have
-	 * initialized data.}  This does not include initialized memory blocks that contain data from
-	 * the program's file header such as debug sections.
-	 * @deprecated Use {@link #getLoadedAndInitializedAddressSet} instead
-	 */
-	@Deprecated
-	public AddressSetView getInitializedAddressSet();
-
-	/**
 	 * {@return the set of addresses which correspond to the executable memory}
 	 */
 	public AddressSetView getExecuteSet();

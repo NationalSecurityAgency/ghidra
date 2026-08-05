@@ -131,7 +131,7 @@ public interface BlockModelService {
 	/**
 	 * Get new instance of the active Subroutine Block model for the current program.
 	 * @return new Subroutine Block model instance or null if program is not open
-	 * @deprecated use getActiveSubroutineModel(Program) instead
+	 * @deprecated use {@link #getActiveSubroutineModel(Program)} instead
 	 */
 	@Deprecated(since = "9.0")
 	public CodeBlockModel getActiveSubroutineModel();
@@ -140,7 +140,7 @@ public interface BlockModelService {
 	 * Get new instance of the active Subroutine Block model for the current program.
 	 * @param includeExternals externals are included if true
 	 * @return new Subroutine Block model instance or null if program is not open
-	 * @deprecated use getActiveSubroutineModel(Program) instead
+	 * @deprecated use {@link #getActiveSubroutineModel(Program, boolean)} instead
 	 */
 	@Deprecated(since = "9.0")
 	public CodeBlockModel getActiveSubroutineModel(boolean includeExternals);
@@ -171,7 +171,7 @@ public interface BlockModelService {
 	 * @param modelName name of registered block model
 	 * @return new model instance or null if program is not open.
 	 * @throws NotFoundException if specified model is not registered
-	 * @deprecated use getNewModelByName(String, Program) instead
+	 * @deprecated use {@link #getNewModelByName(String, Program)} instead
 	 */
 	@Deprecated
 	public CodeBlockModel getNewModelByName(String modelName)
@@ -183,7 +183,7 @@ public interface BlockModelService {
 	 * @param includeExternals externals are included if true
 	 * @return new model instance or null if program is not open.
 	 * @throws NotFoundException if specified model is not registered
-	 * @deprecated use getNewModelByName(String, Program, boolean) instead
+	 * @deprecated use {@link #getNewModelByName(String, Program, boolean)} instead
 	 */
 	@Deprecated
 	public CodeBlockModel getNewModelByName(String modelName, boolean includeExternals)

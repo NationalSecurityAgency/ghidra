@@ -176,7 +176,7 @@ public class CallFixupAnalyzer extends AbstractAnalyzer {
 
 	private void addInThunkedFunctionsToList(Program program, AddressSetView initialSet,
 			Function function, AddressSet functionAddresses) {
-		Address[] thunkAddrs = function.getFunctionThunkAddresses();
+		Address[] thunkAddrs = function.getFunctionThunkAddresses(false);
 		if (thunkAddrs != null) {
 			for (Address addr : thunkAddrs) {
 				if (!initialSet.contains(addr)) {

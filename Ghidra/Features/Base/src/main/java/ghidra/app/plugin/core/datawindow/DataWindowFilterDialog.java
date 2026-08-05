@@ -234,7 +234,7 @@ class DataWindowFilterDialog extends DialogComponentProvider {
 			Set<Entry<String, Boolean>> entrySet = typeEnabledMap.entrySet();
 			for (Entry<String, Boolean> entry : entrySet) {
 				String checkboxName = entry.getKey();
-				if (StringUtils.containsIgnoreCase(checkboxName, filterText)) {
+				if (Strings.CI.contains(checkboxName, filterText)) {
 					checkboxNameList.add(checkboxName);
 				}
 			}
@@ -254,7 +254,7 @@ class DataWindowFilterDialog extends DialogComponentProvider {
 			plugin.setFilterEnabled(false);
 		}
 		else {
-			Coverage coverage = (Coverage) coverageCombo.getSelectedItem();
+			Coverage coverage = coverageCombo.getSelectedItem();
 			plugin.setFilter(typeEnabledMap, coverage);
 		}
 

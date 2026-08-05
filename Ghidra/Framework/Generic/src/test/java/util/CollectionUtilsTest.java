@@ -15,6 +15,7 @@
  */
 package util;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.collection.IsIn.oneOf;
 import static org.junit.Assert.*;
