@@ -3037,9 +3037,10 @@ void PrintC::emitBlockIf(const BlockIf *bl)
   setMod(only_branch);
   condBlock->emit(this);
   popMod();
-  if (bl->getGotoTarget() != (FlowBlock *)0) {
+  FlowBlock::block_type mainType = bl->getType();
+  if (mainType == FlowBlock::t_ifgoto) {
     emit->spaces(1);
-    emitGotoStatement(condBlock,bl->getGotoTarget(),bl->getGotoType());
+    emitGotoStatement(condBlock,((const BlockIfGoto *)bl)->getGotoTarget(),((const BlockIfGoto *)bl)->getGotoType());
   }
   else {
     setMod(no_branch);
@@ -3048,11 +3049,12 @@ void PrintC::emitBlockIf(const BlockIf *bl)
     bl->getBlock(1)->emit(this);
     emit->endBlock(id1);
     emit->closeBraceIndent(CLOSE_CURLY, id);
-    if (bl->getSize() == 3) {
+    if (mainType == FlowBlock::t_ifelse) {
       emit->tagLine();
       emit->print(KEYWORD_ELSE,EmitMarkup::keyword_color);
       FlowBlock *elseBlock = bl->getBlock(2);
-      if (elseBlock->getType() == FlowBlock::t_if) {
+      FlowBlock::block_type type = elseBlock->getType();
+      if (type == FlowBlock::t_if || type == FlowBlock::t_ifelse || type == FlowBlock::t_ifgoto) {
 	// Attempt to merge the "else" and "if" syntax
 	setMod(pending_brace);
 	int4 id2 = emit->beginBlock(elseBlock);
@@ -3066,6 +3068,13 @@ void PrintC::emitBlockIf(const BlockIf *bl)
 	emit->endBlock(id3);
 	emit->closeBraceIndent(CLOSE_CURLY, id2);
       }
+    }
+    else if (mainType == FlowBlock::t_ifnoexit) {
+      // Since the first body does not exit, we don't need an "else" and curly braces for the body on the alternate path
+      FlowBlock *followBlock = bl->getBlock(2);
+      int4 id2 = emit->beginBlock(followBlock);
+      followBlock->emit(this);
+      emit->endBlock(id2);
     }
   }
   popMod();
