@@ -110,10 +110,11 @@ private:
   uint4 flags;		///< Additional boolean properties of this range
   RangeType rangeType;	///< The type of range
   int4 highind;		///< Minimum upper bound on the array index (if \b this is \e open)
+  bool callAlias;	///< True if \b this is an \e open range whose base address is passed to a sub-function
 public:
   RangeHint(void) {}	///< Uninitialized constructor
   RangeHint(uintb st,int4 sz,intb sst,Datatype *ct,uint4 fl,RangeType rt,int4 hi) {
-    start=st; size=sz; sstart=sst; type=ct; flags=fl; rangeType = rt; highind=hi; }	///< Initialized constructor
+    start=st; size=sz; sstart=sst; type=ct; flags=fl; rangeType = rt; highind=hi; callAlias=false; }	///< Initialized constructor
   bool isTypeLock(void) const { return ((flags & typelock)!=0); }	///< Is the data-type for \b this range locked
   bool isConstAbsorbable(const RangeHint *b) const;	///< Can another range by absorbed into \b this as a constant
   bool reconcile(const RangeHint *b) const;
@@ -140,7 +141,8 @@ public:
   struct AddBase {
     Varnode *base;		///< The Varnode holding the base pointer
     Varnode *index;		///< The index value or NULL
-    AddBase(Varnode *b,Varnode *i) { base=b; index=i; }	///< Constructor
+    bool callUse;		///< True if the pointer is passed to a sub-function (CALL or CALLIND)
+    AddBase(Varnode *b,Varnode *i,bool c=false) { base=b; index=i; callUse=c; }	///< Constructor
   };
 private:
   const Funcdata *fd;		///< Function being searched for aliases
@@ -179,7 +181,7 @@ class MapState {
   Datatype *defaultType;		///< The default data-type to use for RangeHints
   AliasChecker checker;			///< A collection of pointer Varnodes into our address space
   void addGuard(const LoadGuard &guard,OpCode opc,TypeFactory *typeFactory);	///< Add LoadGuard record as a hint to the collection
-  void addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,int4 hi);	///< Add a hint to the collection
+  void addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,int4 hi,bool ca=false);	///< Add a hint to the collection
   void addFixedType(uintb start,Datatype *ct,uint4 flags,TypeFactory *types);	///< Add a fixed reference to a specific data-type
   void reconcileDatatypes(void);	///< Decide on data-type for RangeHints at the same address
   static bool isReadActive(Varnode *vn);	///< Is the given Varnode read by an active operation

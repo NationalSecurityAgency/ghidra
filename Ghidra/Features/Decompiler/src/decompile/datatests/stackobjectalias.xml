@@ -1,0 +1,37 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   A stack object is passed by address to external calls and later read through an
+   interior field.  The open stack range for the address-taken object should not
+   be cut off at the first following field access.
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+4881ec2804000048897c2408488d442410
+baffffff7fbe010000004889c7e8dd0000
+00488d4424104889c7e8e000000085c0
+7519488d442410be000000004889c7e8
+da000000b8f4ffffffeb33488b542408
+488d4424104889d64889c7e8be000000
+8984241c04000083bc241c0400000079
+098b84241c040000eb048b4424184881
+c428040000c3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="stack_object_call_alias"/>
+<symbol space="ram" offset="0x100100" name="init_bigprint"/>
+<symbol space="ram" offset="0x100110" name="is_complete"/>
+<symbol space="ram" offset="0x100120" name="finalize_bigprint"/>
+</binaryimage>
+<script>
+  <com>parse line extern void init_bigprint(char *bp, int4 size, int4 max);</com>
+  <com>parse line extern int4 is_complete(char *bp);</com>
+  <com>parse line extern int4 finalize_bigprint(char *bp, char **out);</com>
+  <com>parse line extern int4 stack_object_call_alias(char **out);</com>
+  <com>lo fu stack_object_call_alias</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Stack object alias #1" min="1" max="1">char acStack_418 \[1048\];</stringmatch>
+<stringmatch name="Stack object alias #2" min="1" max="1">init_bigprint\(acStack_418,1,0x7fffffff\);</stringmatch>
+<stringmatch name="Stack object alias #3" min="0" max="0">char acStack_418 \[8\];</stringmatch>
+</decompilertest>
