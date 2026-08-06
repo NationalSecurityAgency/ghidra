@@ -165,6 +165,10 @@ bool RangeHint::preferred(const RangeHint *b,bool reconcile) const
 ///   - must not be a locked data-type
 ///   - must not extend the size of the first array beyond what is known of its limits
 ///
+/// Alternately, if \b this is an \e open range whose base address is passed to a sub-function
+/// and there is no data-type evidence bounding the underlying object, the following RangeHint
+/// is absorbed unless there is evidence that a distinct object starts at it (see the comment
+/// in the method body).
 /// \param b is the other RangeHint to absorb
 /// \return \b true if the other RangeHint was successfully absorbed
 bool RangeHint::attemptJoin(RangeHint *b)
@@ -173,6 +177,29 @@ bool RangeHint::attemptJoin(RangeHint *b)
   if (rangeType != open) return false;
   if (b->rangeType == endpoint) return false;			// Don't merge with bounding range
   if (isConstAbsorbable(b)) {
+    absorb(b);
+    return true;
+  }
+  if (callAlias && highind < 0 && type->getSize() == 1 && !isTypeLock() &&
+      b->rangeType == fixed && !b->isTypeLock()) {
+    // The base address of this open range is passed to a sub-function, which may read or write
+    // any part of the underlying object.  The alias analysis commits to exactly this
+    // (see AliasChecker::gatherInternal and ScopeLocal::markUnaliased): every offset from the base
+    // up is treated as potentially accessed through the pointer, and Varnodes there keep their
+    // INDIRECT effects across the calls.  If the variable model nevertheless cut the object at the
+    // next directly referenced offset, accesses the sub-function makes beyond the cut could not be
+    // expressed in terms of any variable, contradicting the alias analysis and producing an object
+    // too small for the sub-function's accesses.  So a following direct reference is treated as
+    // evidence of an access to the interior of the object, not of a distinct variable, and is
+    // absorbed.  The rule only applies while there is no better evidence of the object's extent:
+    //   - highind >= 0 means an access pattern (indexing or constant fill) has been observed;
+    //     that extent evidence takes precedence, and the data-type driven join below governs;
+    //   - a recovered element data-type (more than a 1-byte placeholder, or a type-lock on
+    //     \b this) likewise carries extent/alignment information and takes precedence.
+    // Positive evidence that a distinct object starts at -b- also blocks absorption:
+    //   - -b- is type-locked: a user assertion outranks this inference;
+    //   - -b- is itself an open range: its base address was independently derived or escaped,
+    //     marking the start of a separate object (the artificial endpoint is excluded above).
     absorb(b);
     return true;
   }
@@ -217,6 +244,8 @@ bool RangeHint::attemptJoin(RangeHint *b)
 void RangeHint::absorb(RangeHint *b)
 
 {
+  if (b->callAlias)
+    callAlias = true;		// The base address of the combined range still escapes to a sub-function
   if (b->rangeType == open) {
     if (type->getAlignSize() == b->type->getAlignSize()) {	// Compatible element data-type
       rangeType = open;
@@ -293,6 +322,7 @@ bool RangeHint::merge(RangeHint *b,AddrSpace *space,TypeFactory *typeFactory)
     rangeType = b->rangeType;
     highind = b->highind;
     size = b->size;
+    callAlias = b->callAlias;	// absorb() recovers the property from the original range
     absorb(&copyRange);
   }
   else if (resType == 2) {
@@ -314,8 +344,8 @@ bool RangeHint::merge(RangeHint *b,AddrSpace *space,TypeFactory *typeFactory)
   return false;
 }
 
-/// Compare (signed) offset, size, RangeType, flags, and high index, in that order.
-/// Datatype is \e not compared.
+/// Compare (signed) offset, size, RangeType, flags, high index, and the \b callAlias
+/// property, in that order.  Datatype is \e not compared.
 /// \param op2 is the other RangeHint to compare with \b this
 /// \return -1, 0, or 1 depending on if \b this comes before, is equal to, or comes after
 int4 RangeHint::compare(const RangeHint &op2) const
@@ -331,6 +361,8 @@ int4 RangeHint::compare(const RangeHint &op2) const
     return (flags < op2.flags) ? -1 : 1;
   if (highind != op2.highind)
     return (highind < op2.highind) ? -1 : 1;
+  if (callAlias != op2.callAlias)
+    return op2.callAlias ? -1 : 1;		// Ranges without the callAlias property come first
   return 0;
 }
 
@@ -747,6 +779,7 @@ void AliasChecker::gatherAdditiveBase(Varnode *startvn,vector<AddBase> &addbase)
   list<PcodeOp *>::const_iterator iter;
   PcodeOp *op;
   bool nonadduse;
+  bool calluse;
   int4 i=0;
 
   vn = startvn;
@@ -756,6 +789,7 @@ void AliasChecker::gatherAdditiveBase(Varnode *startvn,vector<AddBase> &addbase)
     vn = vnqueue[i].base;
     indexvn = vnqueue[i++].index;
     nonadduse = false;
+    calluse = false;
     for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
       op = *iter;
       switch(op->code()) {
@@ -797,12 +831,17 @@ void AliasChecker::gatherAdditiveBase(Varnode *startvn,vector<AddBase> &addbase)
 	  vnqueue.push_back(AddBase(subvn,indexvn));
 	}
 	break;
+      case CPUI_CALL:
+      case CPUI_CALLIND:
+	calluse = true;		// The pointer escapes to a sub-function
+	nonadduse = true;
+	break;
       default:
 	nonadduse = true;	// Used in non-additive expression
       }
     }
     if (nonadduse)
-      addbase.push_back(AddBase(vn,indexvn));
+      addbase.push_back(AddBase(vn,indexvn,calluse));
   }
   for(i=0;i<vnqueue.size();++i)
     vnqueue[i].base->clearMark();
@@ -894,7 +933,8 @@ MapState::~MapState(void)
 /// \param fl is additional boolean properties
 /// \param rt is the type of the hint
 /// \param hi is the biggest guaranteed index for \e open range hints
-void MapState::addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,int4 hi)
+/// \param ca is \b true if the base address of an \e open range is passed to a sub-function
+void MapState::addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,int4 hi,bool ca)
 
 {
   if ((ct == (Datatype *)0)||(ct->getSize()==0)) // Must have a real type
@@ -906,6 +946,7 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,i
   sst = sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
   RangeHint *newRange = new RangeHint(st,sz,sst,ct,fl,rt,hi);
+  newRange->callAlias = ca;
   maplist.push_back(newRange);
 #ifdef OPACTION_DEBUG
   if (debugon) {
@@ -1237,7 +1278,7 @@ void MapState::gatherOpen(const Funcdata &fd)
     else {
       minItems = -1;
     }
-    addRange(offset,ct,0,RangeHint::open,minItems);
+    addRange(offset,ct,0,RangeHint::open,minItems,addbase[i].callUse);
   }
 
   TypeFactory *typeFactory = fd.getArch()->types;
