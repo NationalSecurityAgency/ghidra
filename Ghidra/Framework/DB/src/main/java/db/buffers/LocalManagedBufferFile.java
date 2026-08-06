@@ -375,7 +375,6 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 		super.setReadOnly();
 
 		if (openForUpdate) {
-			openForUpdate = false;
 			bfMgr.versionCreated(version, comment, checkinId);
 			startPreSave();
 		}
