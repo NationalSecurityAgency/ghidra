@@ -15,8 +15,7 @@
  */
 package ghidra.features.bsim.query;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 
 import ghidra.features.bsim.query.client.PostgresFunctionDatabase;
 import ghidra.features.bsim.query.elastic.ElasticDatabase;
@@ -34,9 +33,10 @@ public class BSimClientFactory {
 	 * @param urlString the URL to build
 	 * @return the parsed URL object
 	 * @throws MalformedURLException if the URL string cannot be parsed
+	 * @throws URISyntaxException if the URL string cannot be parsed
 	 */
-	public static URL buildURL(String urlString) throws MalformedURLException {
-		URL url = new URL(urlString);
+	public static URL buildURL(String urlString) throws MalformedURLException, URISyntaxException {
+		URL url = new URI(urlString).toURL();
 		checkBSimServerURL(url);
 		return url;
 	}
@@ -73,11 +73,12 @@ public class BSimClientFactory {
 	 * @param urlString is the "related" URL
 	 * @return the root BSim URL
 	 * @throws MalformedURLException if the given URL string cannot be parsed
+	 * @throws URISyntaxException if the given URL string cannot be parsed
 	 * @throws IllegalArgumentException if local ghidra URL is specified
 	 */
 	public static URL deriveBSimURL(String urlString)
-			throws IllegalArgumentException, MalformedURLException {
-		URL url = new URL(urlString);	// URL used only for parsing purposes
+			throws IllegalArgumentException, MalformedURLException, URISyntaxException {
+		URL url = new URI(urlString).toURL();	// URL used only for parsing purposes
 		String protocol = url.getProtocol();
 		if ("postgresql".equals(protocol) || "https".equals(protocol) ||
 			"elastic".equals(protocol) || "file".equals(protocol)) {
@@ -130,7 +131,7 @@ public class BSimClientFactory {
 		try {
 			return buildClient(bsimServerInfo.toURL(), async);
 		}
-		catch (MalformedURLException e) {
+		catch (MalformedURLException | URISyntaxException e) {
 			throw new RuntimeException(e);  // unexpected
 		}
 	}

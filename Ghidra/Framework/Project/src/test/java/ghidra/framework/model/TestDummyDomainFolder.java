@@ -21,7 +21,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import ghidra.framework.data.*;
 import ghidra.framework.store.FolderNotEmptyException;
@@ -88,7 +88,7 @@ public class TestDummyDomainFolder implements DomainFolder {
 	@Override
 	public String getPathname() {
 		if (parent != null) {
-			String parentPathname = StringUtils.appendIfMissing(parent.getPathname(), "/");
+			String parentPathname = Strings.CS.appendIfMissing(parent.getPathname(), "/");
 			return parentPathname + folderName;
 		}
 		return "/";

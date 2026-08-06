@@ -23,7 +23,7 @@ import java.util.Map;
 
 import javax.swing.Icon;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import ghidra.framework.Application;
 import ghidra.framework.data.*;
@@ -131,7 +131,7 @@ public class TestDummyDomainFile implements DomainFile, LinkFileInfo {
 
 	@Override
 	public String getPathname() {
-		String parentPathname = StringUtils.appendIfMissing(parent.getPathname(), "/");
+		String parentPathname = Strings.CS.appendIfMissing(parent.getPathname(), "/");
 		return parentPathname + name;
 	}
 

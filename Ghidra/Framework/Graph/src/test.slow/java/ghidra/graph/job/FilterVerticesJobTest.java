@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.graph.job;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.awt.Dimension;
 import java.util.Set;
@@ -23,7 +23,7 @@ import java.util.function.Predicate;
 
 import javax.swing.JFrame;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -268,7 +268,7 @@ public class FilterVerticesJobTest extends AbstractFilteringVisualGraphTest {
 	}
 
 	private void filter(String filterText, boolean remove, int filterDuration) {
-		Predicate<AbstractTestVertex> filter = v -> StringUtils.containsIgnoreCase(v.getName(), filterText);
+		Predicate<AbstractTestVertex> filter = v -> Strings.CI.contains(v.getName(), filterText);
 		FilterVerticesJob<AbstractTestVertex, TestEdge> job =
 			new FilterVerticesJob<>(viewer, graph, filter, remove);
 		job.duration = filterDuration;
@@ -277,7 +277,7 @@ public class FilterVerticesJobTest extends AbstractFilteringVisualGraphTest {
 	}
 
 	private void filterSlowly(String filterText, boolean remove) {
-		Predicate<AbstractTestVertex> filter = v -> StringUtils.containsIgnoreCase(v.getName(), filterText);
+		Predicate<AbstractTestVertex> filter = v -> Strings.CI.contains(v.getName(), filterText);
 		FilterVerticesJob<AbstractTestVertex, TestEdge> job =
 			new FilterVerticesJob<AbstractTestVertex, TestEdge>(viewer, graph, filter, remove) {
 

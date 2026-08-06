@@ -682,7 +682,7 @@ public interface Function extends Namespace {
 	 * a recursive search is generally needed (see {@link #getFunctionThunkAddresses(boolean)}).
 	 * This method form may be removed in a future release.
 	 */
-	@Deprecated(since = "10.2")
+	@Deprecated(since = "10.2", forRemoval = true)
 	public default Address[] getFunctionThunkAddresses() {
 		return getFunctionThunkAddresses(false);
 	}

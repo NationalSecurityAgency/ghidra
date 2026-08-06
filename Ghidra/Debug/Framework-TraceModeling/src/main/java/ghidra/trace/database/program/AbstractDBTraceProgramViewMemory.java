@@ -125,11 +125,6 @@ public abstract class AbstractDBTraceProgramViewMemory
 	}
 
 	@Override
-	public AddressSetView getInitializedAddressSet() {
-		return getOrComputeAddressSet();
-	}
-
-	@Override
 	public boolean isBigEndian() {
 		return program.getLanguage().isBigEndian();
 	}

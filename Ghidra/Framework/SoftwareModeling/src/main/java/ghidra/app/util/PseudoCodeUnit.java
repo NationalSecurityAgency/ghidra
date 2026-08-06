@@ -410,9 +410,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	 * 
 	 * @throws ConcurrentModificationException
 	 *             if this object is no longer valid.
-	 * @deprecated
 	 */
-	@Deprecated
 	@Override
 	public String getLabel() {
 		if (program == null)

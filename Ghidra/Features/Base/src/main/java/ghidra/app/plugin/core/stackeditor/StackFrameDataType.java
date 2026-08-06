@@ -1131,7 +1131,7 @@ class StackFrameDataType implements Structure {
 
 		wrappedStruct.delete(ordinal);
 
-		Range<Integer> r = Range.between(stackOffset, stackOffset + len - 1);
+		Range<Integer> r = Range.of(stackOffset, stackOffset + len - 1);
 		if (r.contains(parameterOffset)) {
 			int negLenReduction = parameterOffset - stackOffset;
 			negativeLength -= negLenReduction;
