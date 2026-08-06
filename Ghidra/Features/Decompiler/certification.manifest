@@ -53,6 +53,7 @@ src/decompile/datatests/inlinetarget.xml||GHIDRA||||END|
 src/decompile/datatests/longdouble.xml||GHIDRA||||END|
 src/decompile/datatests/loopcomment.xml||GHIDRA||||END|
 src/decompile/datatests/lzcount.xml||GHIDRA||||END|
+src/decompile/datatests/memclassparam.xml||GHIDRA||||END|
 src/decompile/datatests/mixfloatint.xml||GHIDRA||||END|
 src/decompile/datatests/modulo.xml||GHIDRA||||END|
 src/decompile/datatests/modulo2.xml||GHIDRA||||END|
