@@ -47,7 +47,8 @@ public enum ProgramEvent implements EventType {
 	SYMBOL_ANCHOR_FLAG_CHANGED,			// a symbol's pinned status was changed
 	SYMBOL_PRIMARY_STATE_CHANGED,		// a symbol primary status changed
 	SYMBOL_RENAMED,						// a symbol was renamed
-	SYMBOL_SCOPE_CHANGED,				// the set of addresses associated with a symbol changed
+	SYMBOL_SCOPE_CHANGED,				// the namespace associated with a symbol changed
+	SYMBOL_LIBRARY_CHANGED,				// the library for this symbol changed
 	SYMBOL_ASSOCIATION_ADDED,			// a symbol association was added to a reference
 	SYMBOL_ASSOCIATION_REMOVED,			// a symbol association was removed from a reference
 	SYMBOL_DATA_CHANGED,				// some symbol property was changed 

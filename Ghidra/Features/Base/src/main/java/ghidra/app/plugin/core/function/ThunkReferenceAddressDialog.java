@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,14 @@
  */
 package ghidra.app.plugin.core.function;
 
-import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.dialogs.ObjectChooserDialog;
 import docking.widgets.label.GLabel;
 import ghidra.app.util.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -29,7 +31,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import ghidra.util.exception.NotFoundException;
 import ghidra.util.layout.PairLayout;
 
 public class ThunkReferenceAddressDialog extends DialogComponentProvider {
@@ -110,18 +111,9 @@ public class ThunkReferenceAddressDialog extends DialogComponentProvider {
 
 		refAddress = program.getAddressFactory().getAddress(text);
 		if (refAddress == null) {
-			try {
-				refSymbol = getSymbolForText(text);
-				if (refSymbol == null) {
-					Msg.showError(this, getComponent(), "Ambiguous Symbol Name",
-						"Specified symbol is ambiguous.  Try full namespace name, " +
-							"mangled name or address.");
-					return;
-				}
-			}
-			catch (NotFoundException e) {
-				Msg.showError(this, getComponent(), "Invalid Entry Error",
-					"Invalid thunk reference address or name specified: " + text);
+			refSymbol = getSymbolForText(text);
+			if (refSymbol == null) {
+				setStatusText("Invalid thunk reference address or name specified");
 				return;
 			}
 			refAddress = refSymbol.getAddress();
@@ -136,12 +128,13 @@ public class ThunkReferenceAddressDialog extends DialogComponentProvider {
 	}
 
 	private boolean isValid(Address addr, Symbol s) {
-
-		if (s != null) {
-			if (refSymbol.isExternal() || s.getSymbolType() == SymbolType.FUNCTION) {
-				// Externals and functions are valid
-				return true;
-			}
+		if (s == null) {
+			setStatusText("Function not found at address: " + addr);
+			return false;
+		}
+		if (refSymbol.isExternal() || s.getSymbolType() == SymbolType.FUNCTION) {
+			// Externals and functions are valid
+			return true;
 		}
 
 		if (addr == null) {
@@ -184,57 +177,73 @@ public class ThunkReferenceAddressDialog extends DialogComponentProvider {
 	 * text entry which may optionally include a namespace
 	 * @param text symbol name
 	 * @return symbol or null if multiple symbols found
-	 * @throws NotFoundException if no matching symbols were found 
 	 * 
 	 */
-	private Symbol getSymbolForText(String text) throws NotFoundException {
-
-		SymbolTable symbolTable = program.getSymbolTable();
+	private Symbol getSymbolForText(String text) {
 
 		SymbolPath symbolPath = new SymbolPath(text);
 		Namespace namespace = getNamespace(symbolPath);
 
-		Iterator<Symbol> symbolIterator;
-		if (namespace == null) {
-			symbolIterator = symbolTable.getSymbols(text);
-		}
-		else {
-			symbolIterator = symbolTable.getSymbols(symbolPath.getName(), namespace).iterator();
-		}
-		Symbol symbol = null;
-		try {
-			symbol = findRefSymbol(symbolIterator);
-			if (symbol == null) {
-				return null; // multiple symbols found
-			}
-		}
-		catch (NotFoundException e) {
-			// ignore
-		}
-
-		Symbol candidateSymbol2 = null;
+		List<Symbol> symbols = getSymbols(symbolPath, namespace);
+		symbols = filterSymbols(symbols);
 		if (namespace == null) {
 			// look for original external symbols not indexed by symbol table
-			try {
-				candidateSymbol2 = findOriginalExternalSymbol(text);
-				if (candidateSymbol2 == null) {
-					return null; // multiple symbols found
-				}
-				if (symbol != null) {
-					return null;
-				}
-				symbol = candidateSymbol2;
-			}
-			catch (NotFoundException e) {
-				// ignore
-			}
+			symbols.addAll(findOriginalExternalSymbols(text));
 		}
-
-		if (symbol == null) {
-			throw new NotFoundException();
+		if (symbols.isEmpty()) {
+			return null;
 		}
+		if (symbols.size() == 1) {
+			return symbols.get(0);
+		}
+		return pickSymbol(symbols, symbolPath.getName());
 
-		return symbol;
+	}
+
+	private List<Symbol> filterSymbols(List<Symbol> symbols) {
+		return symbols.stream().filter(s -> isValidSymbol(s)).collect(Collectors.toList());
+	}
+
+	private Symbol pickSymbol(List<Symbol> symbols, String name) {
+		List<ThunkSymbolDecorator> list =
+			symbols.stream().map(ThunkSymbolDecorator::new).collect(Collectors.toList());
+		ObjectChooserDialog<ThunkSymbolDecorator> dialog =
+			new ObjectChooserDialog<ThunkSymbolDecorator>("Choose Which \"" + name + "\"",
+				ThunkSymbolDecorator.class, list, "getAddress", "getLibrary", "getNamespace",
+				"getSignature");
+
+		dialog.setPreferredWidth(820);
+		dialog.setPreferredColumnWidths(120, 150, 150, 400);
+		tool.showDialog(dialog);
+		ThunkSymbolDecorator selectedObject = dialog.getSelectedObject();
+		if (selectedObject == null) {
+			close();
+			return null;
+		}
+		return selectedObject.getSymbol();
+	}
+
+	private List<Symbol> getSymbols(SymbolPath symbolPath, Namespace namespace) {
+		SymbolTable symbolTable = program.getSymbolTable();
+		if (namespace != null) {
+			return symbolTable.getSymbols(symbolPath.getName(), namespace);
+		}
+		SymbolIterator it = symbolTable.getSymbols(symbolPath.getName());
+		List<Symbol> list = new ArrayList<>();
+		it.forEach(list::add);
+		return list;
+	}
+
+	private boolean isValidSymbol(Symbol s) {
+		// valid symbols are function symbols (internal or external) and external labels
+		SymbolType symbolType = s.getSymbolType();
+		if (symbolType == SymbolType.FUNCTION) {
+			return true;
+		}
+		if (symbolType == SymbolType.LABEL) {
+			return s.isExternal();
+		}
+		return false;
 	}
 
 	private Namespace getNamespace(SymbolPath symbolPath) {
@@ -245,18 +254,6 @@ public class ThunkReferenceAddressDialog extends DialogComponentProvider {
 
 		List<Namespace> namespaces = NamespaceUtils.getNamespaceByPath(program, null, parentNs);
 
-		if (namespaces.isEmpty()) {
-			SymbolTable symbolTable = program.getSymbolTable();
-			for (String libraryName : program.getExternalManager().getExternalLibraryNames()) {
-				Symbol librarySymbol = symbolTable.getLibrarySymbol(libraryName);
-				namespaces = NamespaceUtils.getNamespaceByPath(program,
-					(Library) librarySymbol.getObject(), parentNs);
-				if (!namespaces.isEmpty()) {
-					break; // use first library containing namespace
-				}
-			}
-		}
-
 		if (namespaces.size() > 1) {
 			// assume local symbol was specified
 			Msg.showError(this, getComponent(), "Invalid Namespace",
@@ -266,61 +263,10 @@ public class ThunkReferenceAddressDialog extends DialogComponentProvider {
 		return namespaces.isEmpty() ? null : namespaces.get(0);
 	}
 
-	/**
-	 * Find unique symbol from iterator ignoring related thunks.  
-	 * @param symbolIterator symbol iterator
-	 * @return unique function or code symbol or null if multiple symbols found
-	 * @throws NotFoundException if no symbols were found
-	 */
-	private Symbol findRefSymbol(Iterator<Symbol> symbolIterator) throws NotFoundException {
-		Symbol candidateSymbol = null;
-		Symbol candidateThunkSymbol = null;
-		Symbol candidateThunkedSymbol = null; // corresponds to candidateThunkSymbol
-		while (symbolIterator.hasNext()) {
-			Symbol s = symbolIterator.next();
-			SymbolType type = s.getSymbolType();
-			if (type == SymbolType.FUNCTION || type == SymbolType.LABEL) {
-				Symbol thunkedSymbol = getThunkedSymbol(s);
-				if (thunkedSymbol != null) {
-					// ignore equivalent thunks
-					if (candidateThunkSymbol != null &&
-						!thunkedSymbol.equals(candidateThunkedSymbol)) {
-						return null;
-					}
-					candidateThunkedSymbol = thunkedSymbol;
-					candidateThunkSymbol = s;
-				}
-				else { // non-thunk symbol
-					if (candidateSymbol != null) {
-						return null;
-					}
-					candidateSymbol = s;
-				}
-			}
-		}
-		if (candidateSymbol == null) {
-			candidateSymbol = candidateThunkSymbol;
-		}
-		else if (candidateThunkSymbol != null && !candidateSymbol.equals(candidateThunkedSymbol)) {
-			return null;
-		}
-		if (candidateSymbol == null) {
-			throw new NotFoundException();
-		}
-		return candidateSymbol;
-	}
-
-	/**
-	 * Find unique original external symbol with the given name.  
-	 * @param name original external symbol name
-	 * @return unique external symbol or null if multiple matching external symbols were found
-	 * @throws NotFoundException if no original external symbols were found
-	 */
-	private Symbol findOriginalExternalSymbol(String name) throws NotFoundException {
-
+	private List<Symbol> findOriginalExternalSymbols(String name) {
+		List<Symbol> list = new ArrayList<>();
 		// must examine each external since secondary/original name
 		// is not indexed within symbol table
-		Symbol candidateSymbol = null;
 		SymbolTable symbolTable = program.getSymbolTable();
 		ExternalManager externalManager = program.getExternalManager();
 		for (Symbol s : symbolTable.getExternalSymbols()) {
@@ -329,26 +275,11 @@ public class ThunkReferenceAddressDialog extends DialogComponentProvider {
 				ExternalLocation externalLocation = externalManager.getExternalLocation(s);
 				String originalName = externalLocation.getOriginalImportedName();
 				if (name.equals(originalName)) {
-					if (candidateSymbol != null) {
-						return null;
-					}
-					candidateSymbol = s;
+					list.add(s);
 				}
 			}
 		}
-		if (candidateSymbol == null) {
-			throw new NotFoundException();
-		}
-		return candidateSymbol;
-	}
-
-	private Symbol getThunkedSymbol(Symbol s) {
-		if (s.getSymbolType() != SymbolType.FUNCTION) {
-			return null;
-		}
-		Function f = (Function) s.getObject();
-		Function thunkedFunction = f.getThunkedFunction(true);
-		return thunkedFunction != null ? thunkedFunction.getSymbol() : null;
+		return list;
 	}
 
 	/**

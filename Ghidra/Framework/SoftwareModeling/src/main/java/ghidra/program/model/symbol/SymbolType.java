@@ -27,18 +27,16 @@ public abstract class SymbolType {
 
 	public static final SymbolType LABEL = new SymbolType("Label", false, 0) {
 		@Override
-		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr,
-				boolean isExternalSymbol) {
-			boolean externalParent = parent.isExternal();
-			if (symbolAddr.isExternalAddress() != externalParent) {
-				return false;
-			}
+		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr) {
 			if (parent.getID() != Namespace.GLOBAL_NAMESPACE_ID &&
 				program != parent.getSymbol().getProgram()) {
 				return false;
 			}
 			// CODE symbol may not have an external function parent
-			return !(parent instanceof Function) || !externalParent;
+			if (parent instanceof Function function) {
+				return !function.isExternal();
+			}
+			return true;
 		}
 
 		@Override
@@ -61,10 +59,9 @@ public abstract class SymbolType {
 
 	};
 
-	public static final SymbolType LIBRARY = new SymbolType("Library", true, 1) {
+	public static final SymbolType LIBRARY = new SymbolType("Library", false, 1) {
 		@Override
-		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr,
-				boolean isExternalSymbol) {
+		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr) {
 			return parent.getID() == Namespace.GLOBAL_NAMESPACE_ID;
 		}
 
@@ -82,19 +79,14 @@ public abstract class SymbolType {
 
 	public static final SymbolType NAMESPACE = new SymbolType("Namespace", true, 3) {
 		@Override
-		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr,
-				boolean isExternalSymbol) {
-			// Uses NO_ADDRESS - External address not used
-			boolean isExternalParent = parent.isExternal();
-			if (isExternalSymbol != isExternalParent) {
+		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr) {
+			Symbol parentSymbol = parent.getSymbol();
+			if (parentSymbol.isExternal()) {
 				return false;
 			}
-			if (parent.getID() != Namespace.GLOBAL_NAMESPACE_ID &&
-				program != parent.getSymbol().getProgram()) {
+			if (!parent.isGlobal() && program != parentSymbol.getProgram()) {
 				return false;
 			}
-			// NAMESPACE can not be contained within a function or a class
-			//return !(parent instanceof Function) && !(parent instanceof GhidraClass);
 			return true;
 		}
 
@@ -112,12 +104,7 @@ public abstract class SymbolType {
 
 	public static final SymbolType CLASS = new SymbolType("Class", true, 4) {
 		@Override
-		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr,
-				boolean isExternalSymbol) {
-			// Uses NO_ADDRESS - External address not used
-			if (isExternalSymbol != parent.isExternal()) {
-				return false;
-			}
+		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr) {
 			if (parent.getID() != Namespace.GLOBAL_NAMESPACE_ID &&
 				program != parent.getSymbol().getProgram()) {
 				return false;
@@ -146,11 +133,8 @@ public abstract class SymbolType {
 
 	public static final SymbolType FUNCTION = new SymbolType("Function", true, 5) {
 		@Override
-		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr,
-				boolean isExternalSymbol) {
-			if (symbolAddr.isExternalAddress() != parent.isExternal()) {
-				return false;
-			}
+		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr) {
+
 			if (parent.getID() != Namespace.GLOBAL_NAMESPACE_ID &&
 				program != parent.getSymbol().getProgram()) {
 				return false;
@@ -183,8 +167,7 @@ public abstract class SymbolType {
 
 	public static final SymbolType PARAMETER = new SymbolType("Parameter", false, 6) {
 		@Override
-		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr,
-				boolean isExternalSymbol) {
+		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr) {
 			if (parent instanceof Function) {
 				return program == parent.getSymbol().getProgram();
 			}
@@ -204,10 +187,13 @@ public abstract class SymbolType {
 
 	public static final SymbolType LOCAL_VAR = new SymbolType("Local Var", false, 7) {
 		@Override
-		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr,
-				boolean isExternalSymbol) {
+		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr) {
+			Symbol parentSymbol = parent.getSymbol();
+			if (parentSymbol.isExternal()) {
+				return false;
+			}
 			if (parent instanceof Function) {
-				return program == parent.getSymbol().getProgram();
+				return program == parentSymbol.getProgram();
 			}
 			return false;
 		}
@@ -226,8 +212,7 @@ public abstract class SymbolType {
 
 	public static final SymbolType GLOBAL_VAR = new SymbolType("Global Register Var", false, 8) {
 		@Override
-		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr,
-				boolean isExternalSymbol) {
+		public boolean isValidParent(Program program, Namespace parent, Address symbolAddr) {
 			return parent.getID() == Namespace.GLOBAL_NAMESPACE_ID;
 		}
 
@@ -246,8 +231,7 @@ public abstract class SymbolType {
 	public static final SymbolType GLOBAL =
 		new SymbolType(GlobalNamespace.GLOBAL_NAMESPACE_NAME, true, -1) {
 			@Override
-			public boolean isValidParent(Program program, Namespace parent, Address symbolAddr,
-					boolean isExternalSymbol) {
+			public boolean isValidParent(Program program, Namespace parent, Address symbolAddr) {
 				return false;
 			}
 
@@ -266,13 +250,13 @@ public abstract class SymbolType {
 		{ LABEL, LIBRARY, null, NAMESPACE, CLASS, FUNCTION, PARAMETER, LOCAL_VAR, GLOBAL_VAR };
 
 	private final String name;
-	private final byte value;
+	private final byte id;
 	private final boolean isNamespace;
 
-	private SymbolType(String name, boolean isNamespace, int value) {
+	private SymbolType(String name, boolean isNamespace, int id) {
 		this.name = name;
 		this.isNamespace = isNamespace;
-		this.value = (byte) value;
+		this.id = (byte) id;
 	}
 
 	/**
@@ -281,12 +265,10 @@ public abstract class SymbolType {
 	 * @param program the program to contain the symbol
 	 * @param parent the namespace where a symbol will potentially be parented.
 	 * @param symbolAddr the address of they symbol to be parented.
-	 * @param isExternalSymbol true if the symbol is external.
 	 * @return true if the given namespace is a valid parent for a symbol if it has the
 	 * given address and whether or not it is external.
 	 */
-	public abstract boolean isValidParent(Program program, Namespace parent, Address symbolAddr,
-			boolean isExternalSymbol);
+	public abstract boolean isValidParent(Program program, Namespace parent, Address symbolAddr);
 
 	/**
 	 * Returns true if the given address is valid for this symbol type.
@@ -314,7 +296,7 @@ public abstract class SymbolType {
 	}
 
 	/**
-	 * Returns true if this symbol represents a namespace.
+	 * {@return true if this symbol represents a namespace}
 	 */
 	public boolean isNamespace() {
 		return isNamespace;
@@ -326,15 +308,16 @@ public abstract class SymbolType {
 	}
 
 	/**
-	 * Returns the id of this symbol type.
+	 * {@return the id of this symbol type}
 	 */
 	public byte getID() {
-		return value;
+		return id;
 	}
 
 	/**
 	 * Returns the SymbolType for the given id.
 	 * @param id the id for the SymbolType to find.
+	 * @return the SymbolType for the given id.
 	 */
 	public static SymbolType getSymbolType(int id) {
 		if (id == -1) {
@@ -352,7 +335,7 @@ public abstract class SymbolType {
 		int result = 1;
 		result = prime * result + (isNamespace ? 1231 : 1237);
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + value;
+		result = prime * result + id;
 		return result;
 	}
 
@@ -379,7 +362,7 @@ public abstract class SymbolType {
 		else if (!name.equals(other.name)) {
 			return false;
 		}
-		if (value != other.value) {
+		if (id != other.id) {
 			return false;
 		}
 		return true;

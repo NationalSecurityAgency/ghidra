@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,12 +27,9 @@ public class CreateExternalFunctionCmd implements Command<Program> {
 	private Symbol extSymbol;
 
 	private String libraryName;
-	private Namespace parentNamespace;
 	private String name;
 	private Address address;
-
 	private SourceType source;
-
 	private String status;
 
 	/**
@@ -68,31 +65,6 @@ public class CreateExternalFunctionCmd implements Command<Program> {
 		this.source = source;
 	}
 
-	/**
-	 * Create an external function in the specified external namespace.
-	 * @param externalParentNamespace the external parent namespace where the named function should be created (required)
-	 * @param name function name (required)
-	 * @param address the address of the function's entry point in the external library (optional)
-	 * @param source the source type for this external function
-	 */
-	public CreateExternalFunctionCmd(Namespace externalParentNamespace, String name,
-			Address address, SourceType source) {
-		if (externalParentNamespace == null || name.length() == 0) {
-			throw new IllegalArgumentException("A parent namespace must be specified.");
-		}
-		if (!externalParentNamespace.isExternal()) {
-			throw new IllegalArgumentException(
-				"The parent namespace must be an external namespace.");
-		}
-		this.parentNamespace = externalParentNamespace;
-		this.name = name;
-		this.address = address;
-		if (source == null) {
-			throw new IllegalArgumentException("Source cannot be null");
-		}
-		this.source = source;
-	}
-
 	@Override
 	public boolean applyTo(Program program) {
 
@@ -118,13 +90,7 @@ public class CreateExternalFunctionCmd implements Command<Program> {
 	private boolean createExternalFunction(Program program) {
 		try {
 			ExternalManager extMgr = program.getExternalManager();
-			ExternalLocation extLoc;
-			if (parentNamespace == null) {
-				extLoc = extMgr.addExtFunction(libraryName, name, address, source);
-			}
-			else {
-				extLoc = extMgr.addExtFunction(parentNamespace, name, address, source);
-			}
+			ExternalLocation extLoc = extMgr.addExtFunction(libraryName, name, address, source);
 			extSymbol = extLoc.getSymbol();
 			return true;
 		}

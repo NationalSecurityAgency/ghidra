@@ -249,7 +249,7 @@ public class SymbolTablePlugin extends Plugin implements SymbolTableService {
 					.call(this::symbolAdded)
 				.each(SYMBOL_REMOVED)
 					.call(this::symbolRemoved)
-				.each(SYMBOL_RENAMED, SYMBOL_SCOPE_CHANGED, SYMBOL_DATA_CHANGED)
+				.each(SYMBOL_RENAMED, SYMBOL_SCOPE_CHANGED, SYMBOL_DATA_CHANGED, SYMBOL_LIBRARY_CHANGED)
 					.call(this::symbolChanged)
 				.each(SYMBOL_SOURCE_CHANGED)
 					.call(this::symbolSourceChanged)

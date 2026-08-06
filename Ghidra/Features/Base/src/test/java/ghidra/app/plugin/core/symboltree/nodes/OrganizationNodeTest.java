@@ -147,7 +147,7 @@ public class OrganizationNodeTest extends AbstractDockingTest {
 		assertEquals("11 more...", dupNode.getChild(OrganizationNode.MAX_SAME_NAME).getName());
 
 		SymbolTreeNode node = (SymbolTreeNode) nodeList.get(nodeList.size() - 1);
-		simulateSmbolDeleted(dNode, node.getSymbol());
+		simulateSymbolDeleted(dNode, node.getSymbol());
 
 		assertEquals("10 more...", dupNode.getChild(dupNode.getChildCount() - 1).getName());
 	}
@@ -167,7 +167,7 @@ public class OrganizationNodeTest extends AbstractDockingTest {
 		assertEquals("11 more...", dupNode.getChild(OrganizationNode.MAX_SAME_NAME).getName());
 
 		SymbolTreeNode node = (SymbolTreeNode) nodeList.get(4);
-		simulateSmbolDeleted(dNode, node.getSymbol());
+		simulateSymbolDeleted(dNode, node.getSymbol());
 
 		assertEquals(OrganizationNode.MAX_SAME_NAME, dupNode.getChildCount());
 		assertEquals("11 more...", dupNode.getChild(dupNode.getChildCount() - 1).getName());
@@ -227,9 +227,9 @@ public class OrganizationNodeTest extends AbstractDockingTest {
 		assertEquals("AB", nodeA.getChild(0).getName());
 	}
 
-	private void simulateSmbolDeleted(SymbolTreeNode root, Symbol symbolToDelete) {
-		SymbolNode key = SymbolNode.createKeyNode(symbolToDelete, symbolToDelete.getName(), null);
-		GTreeNode found = root.findSymbolTreeNode(key, false, TaskMonitor.DUMMY);
+	private void simulateSymbolDeleted(SymbolTreeNode node, Symbol symbolToDelete) {
+		SearchNode key = SearchNode.create(symbolToDelete, symbolToDelete.getName());
+		GTreeNode found = node.getMatchingChild(key, false);
 		Swing.runNow(() -> found.getParent().removeNode(found));
 	}
 

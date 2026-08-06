@@ -48,6 +48,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for the symbol tree plugin.
@@ -108,10 +109,10 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		assertTrue(navigateIncomingAction.isSelected());
 
-		GTreeNode fNode = getFunctionsNode();
-		util.expandNode(fNode);
+		GTreeNode globalsNode = getGlobalsNode();
+		util.expandNode(globalsNode);
 
-		GTreeNode gNode = fNode.getChild(1);
+		GTreeNode gNode = globalsNode.getChild("ghidra");
 		util.expandNode(gNode);
 
 		GTreeNode node = gNode.getChild(5);
@@ -125,10 +126,10 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testNavigateToFunction() throws Exception {
 		// select a node; code browser should go there
-		GTreeNode fNode = getFunctionsNode();
-		util.expandNode(fNode);
+		GTreeNode globalsNode = getGlobalsNode();
+		util.expandNode(globalsNode);
 
-		GTreeNode gNode = fNode.getChild(1);
+		GTreeNode gNode = globalsNode.getChild("ghidra");
 		util.expandNode(gNode);
 		Symbol s = ((SymbolNode) gNode).getSymbol();
 		Function f = (Function) s.getObject();
@@ -142,13 +143,13 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testNavigateToParameter() throws Exception {
 
-		GTreeNode fNode = getFunctionsNode();
-		util.expandNode(fNode);
+		GTreeNode globalsNode = getGlobalsNode();
+		util.expandNode(globalsNode);
 
-		GTreeNode gNode = fNode.getChild(1);
+		GTreeNode gNode = globalsNode.getChild("ghidra");
 		util.expandNode(gNode);
 
-		GTreeNode pNode = gNode.getChild(0);
+		GTreeNode pNode = gNode.getChild("param_1");
 		clickOnNode(pNode);
 
 		Symbol s = ((SymbolNode) pNode).getSymbol();
@@ -165,9 +166,9 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		GTreeNode node = extNode.getChild(0);
 		util.expandNode(node);
-		GTreeNode fNode = node.getChild(0);
+		GTreeNode globalsNode = node.getChild(0);
 
-		Symbol extSym = ((SymbolNode) fNode).getSymbol();
+		Symbol extSym = ((SymbolNode) globalsNode).getSymbol();
 		assertNotNull(extSym);
 		Address addr = null;
 		ExternalLocation extLoc = (ExternalLocation) extSym.getObject();
@@ -181,7 +182,7 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			}
 		}
 		assertNotNull(addr);
-		clickOnNode(fNode);
+		clickOnNode(globalsNode);
 		cbPlugin.updateNow();
 		assertEquals(addr, cbPlugin.getCurrentAddress());
 	}
@@ -201,10 +202,10 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		util.waitForTree();
 
 		// parm_1 should be selected in the symbol tree
-		GTreeNode fNode = getFunctionsNode();
-		GTreeNode doStuffNode = fNode.getChild(0);
+		GTreeNode globalsNode = getGlobalsNode();
+		GTreeNode doStufglobalsNode = globalsNode.getChild("doStuff");
 
-		GTreeNode param_1Node = doStuffNode.getChild(0);
+		GTreeNode param_1Node = doStufglobalsNode.getChild("param_1");
 		TreePath path = param_1Node.getTreePath();
 
 		TreePath selectedPath = runSwing(() -> tree.getSelectionPath());
@@ -214,13 +215,13 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testDeleteLocalVariable() throws Exception {
-		GTreeNode functionsNode = getFunctionsNode();
-		util.expandNode(functionsNode);
+		GTreeNode globalsNode = getGlobalsNode();
+		util.expandNode(globalsNode);
 
-		GTreeNode ghidraNode = functionsNode.getChild(1);
+		GTreeNode ghidraNode = globalsNode.getChild("ghidra");
 		util.expandNode(ghidraNode);
 
-		GTreeNode node = ghidraNode.getChild(9);
+		GTreeNode node = ghidraNode.getChild("AnotherLocal");
 		util.selectNode(node);
 		int count = ghidraNode.getChildCount();
 
@@ -238,8 +239,8 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		undo(program);
 
 		util.waitForTree();
-		functionsNode = getFunctionsNode();
-		ghidraNode = functionsNode.getChild(1);
+		globalsNode = getGlobalsNode();
+		ghidraNode = globalsNode.getChild("ghidra");
 		boolean found = false;
 		for (int i = 0; i < count - 1; i++) {
 			GTreeNode n = ghidraNode.getChild(i);
@@ -254,8 +255,8 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		redo(program);
 
 		util.waitForTree();
-		functionsNode = getFunctionsNode();
-		ghidraNode = functionsNode.getChild(1);
+		globalsNode = getGlobalsNode();
+		ghidraNode = globalsNode.getChild("ghidra");
 
 		for (int i = 0; i < count - 1; i++) {
 			GTreeNode n = ghidraNode.getChild(i);
@@ -266,24 +267,25 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testDeleteFunction() throws Exception {
-		GTreeNode functionsNode = getFunctionsNode();
-		util.expandNode(functionsNode);
+		GTreeNode globalsNode = getGlobalsNode();
+		util.expandNode(globalsNode);
+		assertEquals(18, globalsNode.getChildCount());
 
-		GTreeNode doStuffNode = functionsNode.getChild(0);
+		GTreeNode doStuffNode = globalsNode.getChild("doStuff");
 		util.expandNode(doStuffNode);
 		util.selectNode(doStuffNode);
 
 		ActionContext context = util.getSymbolTreeContext();
 		performTreeAction(deleteAction, context);
 
-		functionsNode = getFunctionsNode();
-		assertEquals(2, functionsNode.getChildCount());
+		globalsNode = getGlobalsNode();
+		assertEquals(18, globalsNode.getChildCount());
 	}
 
 	@Test
 	public void testDeleteNamespace() throws Exception {
 
-		GTreeNode nsParentNode = rootNode.getChild(5);
+		GTreeNode nsParentNode = rootNode.getChild(SymbolCategory.NAMESPACES.getName());
 		GTreeNode nsNode = util.createObject(nsParentNode, "MyNamespace", createNamespaceAction);
 		util.createObject(nsNode, "MyClass", createClassAction);
 
@@ -291,12 +293,11 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		ActionContext context = util.getSymbolTreeContext();
 		performTreeAction(deleteAction, context);
 
-		nsParentNode = rootNode.getChild(4);
 		for (int i = 0; i < nsParentNode.getChildCount(); i++) {
 			GTreeNode n = rootNode.getChild(i);
-			assertTrue(n instanceof SymbolCategoryNode);
-			SymbolCategory cat = ((SymbolCategoryNode) n).getSymbolCategory();
-			assertTrue(cat.getSymbolType() != SymbolType.NAMESPACE);
+			if (n.getName().equals("MyNamespace")) {
+				fail("Expected MyNamespace node to be deleted");
+			}
 		}
 
 	}
@@ -304,7 +305,7 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testConvertNamespaceToClass() throws Exception {
 		String classNodeName = "MyClass";
-		GTreeNode nsNode = rootNode.getChild(SymbolCategory.NAMESPACE_CATEGORY.getName());
+		GTreeNode nsNode = rootNode.getChild(SymbolCategory.NAMESPACES.getName());
 		GTreeNode classNode = util.createObject(
 			nsNode, classNodeName, createNamespaceAction);
 
@@ -312,10 +313,14 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		ActionContext context = util.getSymbolTreeContext();
 		performTreeAction(convertToClassAction, context);
 
-		GTreeNode classRootNode = rootNode.getChild(SymbolCategory.CLASS_CATEGORY.getName());
-		classNode = classRootNode.getChild(classNodeName);
+		GTreeNode namespacesNode = rootNode.getChild(SymbolCategory.NAMESPACES.getName());
+		classNode = namespacesNode.getChild(classNodeName);
+		assertTrue(classNode instanceof ClassSymbolNode);
 		assertNotNull(classNode);
 		waitForCondition(tree::isEditing);
+
+		tree.cancelEditing();
+		waitForSwing();
 	}
 
 	@Test
@@ -323,12 +328,6 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		/*
 		
-		 	The Classes folder flattens classes so every class appears at the top level.  Because
-		 	users can expand classes, top level classes may also appear nested under other classes.
-		 	
-		 	Classes
-		 		Class1
-		 		
 		 	Namespaces		 	
 		 		FooNs
 		 			Class1
@@ -337,18 +336,11 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		Namespace fooNs = createNamespace("FooNs");
 		GhidraClass class1 = createClass(fooNs, "Class1");
 
-		expandClasses();
 		expandNamesapces();
 
 		//@formatter:off
 		assertNamespaceNodes(
 			"FooNs::Class1"
-		);
-		//@formatter:on
-
-		//@formatter:off
-		assertClassNodes(
-			"Class1"
 		);
 		//@formatter:on
 
@@ -360,29 +352,13 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		);
 		//@formatter:on
 
-		//@formatter:off
-		assertClassNodes(
-			"Class1.renamed"
-		);
-		//@formatter:on
 	}
 
 	@Test
 	public void testClassCategoryDuplicates_NestedClass_RenameLabel() throws Exception {
 
 		/*
-		 	
-		 	The Classes folder flattens classes so every class appears at the top level.  Because
-		 	users can expand classes, top level classes may also appear nested under other classes.
-		 	
 		 	Classes
-		 		Class1		 			
-		 			Label1
-		 			BarNs
-		 				Class2
-		 					Label2
-		 		Class2
-		 			Label2
 		 		
 		 	Namespaces		 	
 		 		FooNs
@@ -399,8 +375,6 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		createLabel(class1, "Label1", "0x1001100");
 		GhidraClass class2 = createClass(barNs, "Class2");
 		Symbol lable2 = createLabel(class2, "Label2", "0x1001104");
-
-		expandClasses();
 		expandNamesapces();
 
 		// verify all leaf nodes
@@ -408,14 +382,6 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNamespaceNodes(
 			"FooNs::Class1::Label1",
 			"FooNs::Class1::BarNs::Class2::Label2"
-		);
-		//@formatter:on
-
-		//@formatter:off
-		assertClassNodes(
-			"Class1::Label1",
-			"Class1::BarNs::Class2::Label2",
-			"Class2::Label2"
 		);
 		//@formatter:on
 
@@ -428,31 +394,14 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		);
 		//@formatter:on
 
-		//@formatter:off
-		assertClassNodes(
-			"Class1::Label1",
-			"Class1::BarNs::Class2::Label2.renamed",
-			"Class2::Label2.renamed"
-		);
-		//@formatter:on
 	}
 
 	@Test
 	public void testClassCategoryDuplicates_NestedClass_ChangeNamespace() throws Exception {
 
 		/*
-		 	
-		 	The Classes folder flattens classes so every class appears at the top level.  Because
-		 	users can expand classes, top level classes may also appear nested under other classes.
-		 	
+		
 		 	Classes
-		 		Class1		 			
-		 			Label1
-		 			BarNs
-		 				Class2
-		 					Label2
-		 		Class2
-		 			Label2
 		 		
 		 	Namespaces		 	
 		 		FooNs
@@ -470,7 +419,6 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		GhidraClass class2 = createClass(barNs, "Class2");
 		createLabel(class2, "Label2", "0x1001104");
 
-		expandClasses();
 		expandNamesapces();
 
 		// verify all leaf nodes
@@ -478,14 +426,6 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNamespaceNodes(
 			"FooNs::Class1::Label1",
 			"FooNs::Class1::BarNs::Class2::Label2"
-		);
-		//@formatter:on
-
-		//@formatter:off
-		assertClassNodes(
-			"Class1::Label1",
-			"Class1::BarNs::Class2::Label2",
-			"Class2::Label2"
 		);
 		//@formatter:on
 
@@ -498,33 +438,15 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		);
 		//@formatter:on
 
-		//@formatter:off
-		assertClassNodes(
-			"Class1",
-			"Class1::BarNs::Label1",
-			"Class1::BarNs::Class2::Label2",
-			"Class2::Label2"
-		);
-		//@formatter:on
 	}
 
 	@Test
 	public void testClassCategoryDuplicates_NestedClass_RenameNamespace() throws Exception {
 
 		/*
-		 	
-		 	The Classes folder flattens classes so every class appears at the top level.  Because
-		 	users can expand classes, top level classes may also appear nested under other classes.
-		 	
+		 			 	
 		 	Classes
-		 		Class1		 			
-		 			Label1
-		 			BarNs
-		 				Class2
-		 					Label2
-		 		Class2
-		 			Label2
-		 		
+		 	
 		 	Namespaces		 	
 		 		FooNs
 		 			Class1
@@ -541,7 +463,6 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		GhidraClass class2 = createClass(barNs, "Class2");
 		createLabel(class2, "Label2", "0x1001104");
 
-		expandClasses();
 		expandNamesapces();
 
 		// verify all leaf nodes
@@ -549,14 +470,6 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNamespaceNodes(
 			"FooNs::Class1::Label1",
 			"FooNs::Class1::BarNs::Class2::Label2"
-		);
-		//@formatter:on
-
-		//@formatter:off
-		assertClassNodes(
-			"Class1::Label1",
-			"Class1::BarNs::Class2::Label2",
-			"Class2::Label2"
 		);
 		//@formatter:on
 
@@ -569,13 +482,6 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		);
 		//@formatter:on
 
-		//@formatter:off
-		assertClassNodes(
-			"Class1::Label1",
-			"Class1::BarNs.renamed::Class2::Label2",
-			"Class2::Label2"
-		);
-		//@formatter:on
 	}
 
 	@Test
@@ -583,10 +489,10 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		// select a group node; only cut, delete, make selection should be
 		// on the popup
 
-		GTreeNode lNode = rootNode.getChild(3);
-		util.expandNode(lNode);
+		GTreeNode globalsNode = rootNode.getChild("Globals");
+		util.expandNode(globalsNode);
 
-		util.selectNode(lNode);
+		util.selectNode(globalsNode);
 
 		ActionContext context = util.getSymbolTreeContext();
 		assertFalse(renameAction.isEnabledForContext(context));
@@ -601,8 +507,8 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testUpdate() throws Exception {
 		// create a new label; verify that it shows up in the tree
-		GTreeNode lNode = rootNode.getChild(3);
-		util.expandNode(lNode);
+		GTreeNode globalsNode = rootNode.getChild("Globals");
+		util.expandNode(globalsNode);
 
 		// add a label
 		tx(program, () -> {
@@ -612,12 +518,11 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		util.waitForTree();
 
-		lNode = rootNode.getChild(3);
+		globalsNode = rootNode.getChild("Globals");
 		util.waitForTree();
 
-		GTreeNode node = lNode.getChild(0);
+		GTreeNode node = globalsNode.getChild("abcdefg");
 		assertNotNull(node);
-		assertEquals("abcdefg", node.toString());
 	}
 
 	@Test
@@ -635,10 +540,10 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		util.waitForTree();
 
-		GTreeNode fNode = getFunctionsNode();
-		util.expandNode(fNode);
+		GTreeNode globalsNode = getGlobalsNode();
+		util.expandNode(globalsNode);
 
-		GTreeNode gNode = fNode.getChild(1);
+		GTreeNode gNode = globalsNode.getChild("ghidra");
 		util.expandNode(gNode);
 
 		GTreeNode node = gNode.getChild(9);
@@ -648,20 +553,20 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		undo(program);
 		util.waitForTree();
 
-		fNode = getFunctionsNode();
-		util.expandNode(fNode);
+		globalsNode = getGlobalsNode();
+		util.expandNode(globalsNode);
 
-		gNode = fNode.getChild(1);
+		gNode = globalsNode.getChild("ghidra");
 		util.expandNode(gNode);
 
 		node = gNode.getChild(9);
 		assertEquals("AnotherLocal", (((SymbolNode) node).getSymbol()).getName());
 
 		redo(program);
-		fNode = getFunctionsNode();
-		util.expandNode(fNode);
+		globalsNode = getGlobalsNode();
+		util.expandNode(globalsNode);
 
-		gNode = fNode.getChild(1);
+		gNode = globalsNode.getChild("ghidra");
 		util.expandNode(gNode);
 
 		node = gNode.getChild(9);
@@ -698,36 +603,6 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testOrgNode_Classes() throws Exception {
-
-		// set org node threshold to a low value 
-		ToolOptions options = tool.getOptions(SymbolTreePlugin.OPTIONS_CATEGORY);
-		int newThreshold = 4;
-		options.setInt(SymbolTreePlugin.OPTION_NAME_GROUP_THRESHOLD, newThreshold);
-
-		/*
-		 	Create enough nodes to trigger an org node.
-		 	
-		 	Classes
-		 		ClassGroup1
-		 			ClassGroup10
-		 				ClassGroup100
-		 		ClassGroup2
-		 		ClassGroup3
-		 */
-		createOrgClasses(newThreshold);
-
-		// create a new namespace node that would appear under an org node
-		ClassSymbolNode parentNode =
-			openClassNodes("ClassGroup1::ClassGroup10::ClassGroup100");
-		Namespace parentNs = parentNode.getNamespace();
-		createClass(parentNs, "NewClass");
-
-		// verify node is in the tree
-		assertClassNodes("ClassGroup1::ClassGroup10::ClassGroup100::NewClass");
-	}
-
-	@Test
 	public void testDeleteOrgNode() throws Exception {
 
 		//
@@ -752,7 +627,7 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		createOrgNamespaces(newThreshold);
 		openNamespaceNodes("NsGroup1::NsGroup10::NsGroup100");
 
-		GTreeNode group10 = getNode(tree, "Global", "Namespaces", "NsGroup1", "NsGroup10");
+		GTreeNode group10 = getNode(tree, "Root", "Namespaces", "NsGroup1", "NsGroup10");
 
 		List<GTreeNode> children = group10.getChildren();
 		List<SymbolNode> symbols =
@@ -763,7 +638,7 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		ActionContext context = util.getSymbolTreeContext();
 		performTreeAction(deleteAction, context);
 
-		GTreeNode group1 = getNode(tree, "Global", "Namespaces", "NsGroup1");
+		GTreeNode group1 = getNode(tree, "Root", "Namespaces", "NsGroup1");
 		group10 = group1.getChild("NsGroup10");
 		assertNull(group10);
 
@@ -773,6 +648,24 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
+	@Test
+	public void testFindClassInNamespace() throws Exception {
+
+		Namespace namespace = createNamespace(null, "namespace");
+		GhidraClass myClass = createClass(namespace, "myClass");
+		SymbolTreeRootNode root = (SymbolTreeRootNode) tree.getModelRoot();
+		GTreeNode result = root.findSymbolNode(myClass.getSymbol(), true, TaskMonitor.DUMMY);
+		assertNotNull(result);
+	}
+
+	@Test
+	public void testFindNamespaceInClass() throws Exception {
+		GhidraClass myClass = createClass(null, "myClass");
+		Namespace namespace = createNamespace(myClass, "subNamespace");
+		SymbolTreeRootNode root = (SymbolTreeRootNode) tree.getModelRoot();
+		GTreeNode result = root.findSymbolNode(namespace.getSymbol(), true, TaskMonitor.DUMMY);
+		assertNotNull(result);
+	}
 //=================================================================================================
 // Private Methods
 //=================================================================================================	
@@ -780,11 +673,6 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 	private NamespaceCategoryNode getNamespacesNode() {
 		GTreeNode root = tree.getViewRoot();
 		return (NamespaceCategoryNode) root.getChild("Namespaces");
-	}
-
-	private ClassCategoryNode getClassesNode() {
-		GTreeNode root = tree.getViewRoot();
-		return (ClassCategoryNode) root.getChild("Classes");
 	}
 
 	private NamespaceSymbolNode openNamespaceNodes(String path) {
@@ -805,24 +693,6 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		return (NamespaceSymbolNode) parent;
 	}
 
-	private ClassSymbolNode openClassNodes(String path) {
-
-		GTreeNode parent = getClassesNode();
-		String[] parts = path.split("::");
-		for (String name : parts) {
-			GTreeNode child = parent.getChild(name);
-			String message =
-				"Child '%s' not found in parent '%s' \n\tfor path '%s'"
-						.formatted(name, parent, path);
-			assertNotNull(message, child);
-			tree.expandPath(child);
-			parent = child;
-		}
-		waitForTree(tree);
-
-		return (ClassSymbolNode) parent;
-	}
-
 	private void createOrgNamespaces(int threshold) throws Exception {
 		int groupCount = 3;
 		for (int i = 0; i < groupCount; i++) {
@@ -838,29 +708,6 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 				}
 			}
 		}
-	}
-
-	private void createOrgClasses(int threshold) throws Exception {
-		int groupCount = 3;
-		for (int i = 0; i < groupCount; i++) {
-			// groups need to share a common prefix
-			String groupName = "Group" + (i + 1); // 1-based for readability
-			int childCount = (threshold + 1);
-			for (int j = 0; j < childCount; j++) {
-
-				String subGroupName = groupName + j;
-				for (int k = 0; k < childCount; k++) {
-
-					createClass("Class" + subGroupName + k);
-				}
-			}
-		}
-	}
-
-	private void expandClasses() {
-		GTreeNode node = rootNode.getChild("Classes");
-		tree.expandTree(node);
-		waitForTree(tree);
 	}
 
 	private void expandNamesapces() {
@@ -895,12 +742,6 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNodes(parent, paths);
 	}
 
-	private void assertClassNodes(String... paths) {
-		GTreeNode root = tree.getViewRoot();
-		GTreeNode parent = root.getChild("Classes");
-		assertNodes(parent, paths);
-	}
-
 	private void assertNodes(GTreeNode category, String... paths) {
 
 		for (String path : paths) {
@@ -927,10 +768,6 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		return cmd.getNamespace();
 	}
 
-	private void createClass(String name) throws Exception {
-		createClass(program.getGlobalNamespace(), name);
-	}
-
 	private GhidraClass createClass(Namespace parent, String name) throws Exception {
 		GhidraClass c = tx(program, () -> {
 			SymbolTable symbolTable = program.getSymbolTable();
@@ -951,8 +788,8 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		return s;
 	}
 
-	private GTreeNode getFunctionsNode() {
-		return runSwing(() -> rootNode.getChild(2));
+	private GTreeNode getGlobalsNode() {
+		return runSwing(() -> rootNode.getChild("Globals"));
 	}
 
 	private void getActions() {

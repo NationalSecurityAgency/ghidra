@@ -15,13 +15,22 @@
  */
 package docking.widgets.dialogs;
 
+import java.awt.Dimension;
 import java.util.List;
 
 import javax.swing.JComponent;
 
 import docking.DialogComponentProvider;
+import docking.widgets.table.GTable;
 import docking.widgets.table.GTableWidget;
 
+/**
+ * Dialog for choosing from a list of objects.  The dialog uses a list of specified methods on the 
+ * objects to form the columns of a display table, where each row in the table represents one of the
+ * object to pick from.
+ * 
+ * @param <T> the object type of the object to choose from
+ */
 public class ObjectChooserDialog<T> extends DialogComponentProvider {
 
 	private T selectedObject;
@@ -39,8 +48,10 @@ public class ObjectChooserDialog<T> extends DialogComponentProvider {
 
 		setTransient(true);
 		addWorkPanel(buildWorkPanel());
+		table.addSelectionListener(t -> setOkEnabled(t != null));
 		addOKButton();
 		addCancelButton();
+		setOkEnabled(false);
 	}
 
 	@Override
@@ -94,6 +105,26 @@ public class ObjectChooserDialog<T> extends DialogComponentProvider {
 
 	public void setFilterText(String text) {
 		table.setFilterText(text);
+	}
+
+	public void setPreferredColumnWidths(int... widths) {
+		table.setColumnPreferredWidths(widths);
+	}
+
+	public void setPreferredWidth(int width) {
+		GTable gTable = table.getTable();
+		Dimension vpSize = gTable.getPreferredScrollableViewportSize();
+		int height = (int) vpSize.getHeight();
+		Dimension newVpSize = new Dimension(width, height);
+		gTable.setPreferredScrollableViewportSize(newVpSize);
+	}
+
+	public void setPreferredHeight(int height) {
+		GTable gTable = table.getTable();
+		Dimension vpSize = gTable.getPreferredScrollableViewportSize();
+		int width = (int) vpSize.getWidth();
+		Dimension newVpSize = new Dimension(width, height);
+		gTable.setPreferredScrollableViewportSize(newVpSize);
 	}
 
 	@Override

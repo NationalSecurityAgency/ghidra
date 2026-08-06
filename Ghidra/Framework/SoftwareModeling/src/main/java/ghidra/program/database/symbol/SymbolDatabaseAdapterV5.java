@@ -16,19 +16,10 @@
 package ghidra.program.database.symbol;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
 import db.*;
-import ghidra.program.database.map.*;
-import ghidra.program.database.util.EmptyRecordIterator;
-import ghidra.program.database.util.RecordFilter;
-import ghidra.program.model.address.*;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.SymbolType;
-import ghidra.util.exception.CancelledException;
+import ghidra.program.database.map.AddressMap;
 import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * SymbolDatabaseAdapter for version 5
@@ -36,316 +27,148 @@ import ghidra.util.task.TaskMonitor;
  * This version added additional sparse columns to store optional data specific to certain
  * symbol types.  The adhoc string data column was eliminated.
  */
-class SymbolDatabaseAdapterV5 extends SymbolDatabaseAdapter {
+class SymbolDatabaseAdapterV5 extends PreV6SymbolDatabaseAdapter implements RecordTranslator {
 
-	static final int SYMBOL_VERSION = 5;
+	static final int VERSION = 5;
 
-	// Used to create a range when searching symbols by name/namespace but don't care about address
-	private static final long MIN_ADDRESS_OFFSET = 0;
-	private static final long MAX_ADDRESS_OFFSET = -1;
+	static final int V5_SYMBOL_NAME_COL = 0;
+	static final int V5_SYMBOL_ADDR_COL = 1;
+	static final int V5_SYMBOL_PARENT_ID_COL = 2;
+	static final int V5_SYMBOL_TYPE_COL = 3;
+	static final int V5_SYMBOL_FLAGS_COL = 4;
+
+	// Sparse fields - the following fields are not always applicable so they are optional and 
+	// don't consume space in the database if they aren't used.
+	static final int V5_SYMBOL_HASH_COL = 5;
+	static final int V5_SYMBOL_PRIMARY_COL = 6;
+	static final int V5_SYMBOL_DATATYPE_COL = 7;
+	static final int V5_SYMBOL_VAROFFSET_COL = 8;
+	static final int V5_SYMBOL_ORIGINAL_IMPORTED_NAME_COL = 9;
+	static final int V5_SYMBOL_EXTERNAL_PROG_ADDR_COL = 10;
+	static final int V5_SYMBOL_COMMENT_COL = 11;
+	static final int V5_SYMBOL_LIBPATH_COL = 12;
+	static final int V5_SYMBOL_LIB_ORDINAL_COL = 13;
 
 	// NOTE: the primary field duplicates the symbol's address when the symbol is primary. This
 	// allows us to index this field and quickly find the primary symbols. The field is sparse
 	// so that non-primary symbols don't consume any space for this field.
 
-	static final Schema V5_SYMBOL_SCHEMA = new Schema(SYMBOL_VERSION, "Key",
-		new Field[] { StringField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE,
-			ByteField.INSTANCE, ByteField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE,
-			LongField.INSTANCE, IntField.INSTANCE, StringField.INSTANCE, StringField.INSTANCE,
-			StringField.INSTANCE, StringField.INSTANCE, IntField.INSTANCE },
-		new String[] { "Name", "Address", "Namespace", "Symbol Type", "Flags", "Locator Hash",
-			"Primary", "Datatype", "Variable Offset", "ExtOrigImportName", "ExtProgAddr", "Comment",
-			"LibPath", "LibOrdinal" },
-		new int[] { SYMBOL_HASH_COL, SYMBOL_PRIMARY_COL, SYMBOL_DATATYPE_COL, SYMBOL_VAROFFSET_COL,
-			SYMBOL_ORIGINAL_IMPORTED_NAME_COL, SYMBOL_EXTERNAL_PROG_ADDR_COL, SYMBOL_COMMENT_COL,
-			SYMBOL_LIBPATH_COL, SYMBOL_LIB_ORDINAL_COL });
+// Do not remove the following commented out schema! It shows the version 4 symbol table schema. */
+//	static final Schema V5_SYMBOL_SCHEMA = new Schema(SYMBOL_VERSION, "Key",
+//		new Field[] { StringField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE,
+//			ByteField.INSTANCE, ByteField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE,
+//			LongField.INSTANCE, IntField.INSTANCE, StringField.INSTANCE, StringField.INSTANCE,
+//			StringField.INSTANCE, StringField.INSTANCE, IntField.INSTANCE },
+//		new String[] { "Name", "Address", "Namespace", "Symbol Type", "Flags", "Locator Hash",
+//			"Primary", "Datatype", "Variable Offset", "ExtOrigImportName", "ExtProgAddr", "Comment",
+//			"LibPath", "LibOrdinal" },
+//		new int[] { V5_SYMBOL_HASH_COL, V5_SYMBOL_PRIMARY_COL, V5_SYMBOL_DATATYPE_COL,
+//			V5_SYMBOL_VAROFFSET_COL, V5_SYMBOL_ORIGINAL_IMPORTED_NAME_COL,
+//			V5_SYMBOL_EXTERNAL_PROG_ADDR_COL, V5_SYMBOL_COMMENT_COL, V5_SYMBOL_LIBPATH_COL,
+//			V5_SYMBOL_LIB_ORDINAL_COL });
 
 	private Table symbolTable;
-	private AddressMap addrMap;
 
-	SymbolDatabaseAdapterV5(DBHandle handle, AddressMap addrMap, boolean create)
-			throws VersionException, IOException {
+	SymbolDatabaseAdapterV5(DBHandle handle, AddressMap addrMap)
+			throws VersionException {
 
-		this.addrMap = addrMap;
-		if (create) {
-			symbolTable = handle.createTable(SYMBOL_TABLE_NAME, SYMBOL_SCHEMA,
-				new int[] { SYMBOL_ADDR_COL, SYMBOL_NAME_COL, SYMBOL_PARENT_ID_COL, SYMBOL_HASH_COL,
-					SYMBOL_PRIMARY_COL, SYMBOL_ORIGINAL_IMPORTED_NAME_COL,
-					SYMBOL_EXTERNAL_PROG_ADDR_COL });
+		symbolTable = handle.getTable(SYMBOL_TABLE_NAME);
+		if (symbolTable == null) {
+			throw new VersionException("Missing Table: " + SYMBOL_TABLE_NAME);
 		}
-		else {
-			symbolTable = handle.getTable(SYMBOL_TABLE_NAME);
-			if (symbolTable == null) {
-				throw new VersionException("Missing Table: " + SYMBOL_TABLE_NAME);
+		if (symbolTable.getSchema().getVersion() != VERSION) {
+			int version = symbolTable.getSchema().getVersion();
+			if (version < VERSION) {
+				throw new VersionException(true);
 			}
-			if (symbolTable.getSchema().getVersion() != SYMBOL_VERSION) {
-				int version = symbolTable.getSchema().getVersion();
-				if (version < SYMBOL_VERSION) {
-					throw new VersionException(true);
-				}
-				throw new VersionException(VersionException.NEWER_VERSION, false);
-			}
+			throw new VersionException(VersionException.NEWER_VERSION, false);
 		}
 	}
 
 	@Override
-	DBRecord createSymbolRecord(String name, long namespaceID, Address address,
-			SymbolType symbolType, boolean isPrimary, SourceType source) {
+	RecordIterator getSymbols() throws IOException {
+		return new TranslatedRecordIterator(symbolTable.iterator(), this);
+	}
 
-		long nextID = symbolTable.getKey();
+	@Override
+	protected int getVersion() {
+		return VERSION;
+	}
 
-		// Avoid key 0, as it is reserved for the global namespace
-		if (nextID == 0) {
-			nextID++;
+	@Override
+	public DBRecord translateRecord(DBRecord record) {
+		if (record == null) {
+			return null;
+		}
+		DBRecord rec = SymbolDatabaseAdapter.SYMBOL_SCHEMA.createRecord(record.getKey());
+
+		String symbolName = record.getString(V5_SYMBOL_NAME_COL);
+		rec.setString(SymbolDatabaseAdapter.SYMBOL_NAME_COL, symbolName);
+
+		long symbolAddrKey = record.getLongValue(V5_SYMBOL_ADDR_COL);
+		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL, symbolAddrKey);
+
+		long namespaceId = record.getLongValue(V5_SYMBOL_PARENT_ID_COL);
+		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_ID_COL, namespaceId);
+
+		byte symbolTypeId = record.getByteValue(V5_SYMBOL_TYPE_COL);
+		rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL, symbolTypeId);
+
+		rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL,
+			record.getByteValue(V5_SYMBOL_FLAGS_COL));
+
+		//
+		// Convert sparse columns
+
+		Field hash = record.getFieldValue(V5_SYMBOL_HASH_COL);
+		if (hash != null) {
+			rec.setField(SymbolDatabaseAdapter.SYMBOL_HASH_COL, hash);
 		}
 
-		long addressKey = addrMap.getKey(address, true);
+		Field primaryAddr = record.getFieldValue(V5_SYMBOL_PRIMARY_COL);
+		if (primaryAddr != null) {
+			rec.setField(SymbolDatabaseAdapter.SYMBOL_PRIMARY_COL, primaryAddr);
+		}
 
-		DBRecord rec = symbolTable.getSchema().createRecord(nextID);
-		rec.setString(SYMBOL_NAME_COL, name);
-		rec.setLongValue(SYMBOL_ADDR_COL, addressKey);
-		rec.setLongValue(SYMBOL_PARENT_ID_COL, namespaceID);
-		rec.setByteValue(SYMBOL_TYPE_COL, symbolType.getID());
-		rec.setByteValue(SYMBOL_FLAGS_COL, getSourceTypeFlagsBits(source)); // assume non-pinned
+		Field dataTypeId = record.getFieldValue(V5_SYMBOL_DATATYPE_COL);
+		if (dataTypeId != null) {
+			rec.setField(SymbolDatabaseAdapter.SYMBOL_DATATYPE_COL, dataTypeId);
+		}
 
-		// Sparse columns - these columns don't apply to all symbols.
-		// they default to null unless specifically set. Null values don't consume space.
+		Field varOffset = record.getFieldValue(V5_SYMBOL_VAROFFSET_COL);
+		if (varOffset != null) {
+			rec.setField(SymbolDatabaseAdapter.SYMBOL_VAROFFSET_COL, varOffset);
+		}
 
-		rec.setField(SYMBOL_HASH_COL, computeLocatorHash(name, namespaceID, addressKey));
+		Field origName = record.getFieldValue(V5_SYMBOL_ORIGINAL_IMPORTED_NAME_COL);
+		if (origName != null) {
+			rec.setField(SymbolDatabaseAdapter.SYMBOL_ORIGINAL_IMPORTED_NAME_COL, origName);
+		}
 
-		if (isPrimary) {
-			rec.setLongValue(SYMBOL_PRIMARY_COL, addressKey);
+		Field extProgramAddr = record.getFieldValue(V5_SYMBOL_EXTERNAL_PROG_ADDR_COL);
+		if (extProgramAddr != null) {
+			rec.setField(SymbolDatabaseAdapter.SYMBOL_EXTERNAL_PROG_ADDR_COL, extProgramAddr);
+		}
+
+		Field comment = record.getFieldValue(V5_SYMBOL_COMMENT_COL);
+		if (comment != null) {
+			rec.setField(SymbolDatabaseAdapter.SYMBOL_COMMENT_COL, comment);
+		}
+
+		Field libPath = record.getFieldValue(V5_SYMBOL_LIBPATH_COL);
+		if (libPath != null) {
+			rec.setField(SymbolDatabaseAdapter.SYMBOL_LIBPATH_COL, libPath);
+		}
+		Field libOrdinal = record.getFieldValue(V5_SYMBOL_LIB_ORDINAL_COL);
+		if (libOrdinal != null) {
+			rec.setField(SymbolDatabaseAdapter.SYMBOL_LIB_ORDINAL_COL, libOrdinal);
 		}
 
 		return rec;
 	}
 
 	@Override
-	void removeSymbol(long symbolID) throws IOException {
-		symbolTable.deleteRecord(symbolID);
-	}
-
-	@Override
-	boolean hasSymbol(Address addr) throws IOException {
-		long key = addrMap.getKey(addr, false);
-		if (key == AddressMap.INVALID_ADDRESS_KEY && !addr.equals(Address.NO_ADDRESS)) {
-			return false;
-		}
-		return symbolTable.hasRecord(new LongField(key), SYMBOL_ADDR_COL);
-	}
-
-	@Override
-	Field[] getSymbolIDs(Address addr) throws IOException {
-		long key = addrMap.getKey(addr, false);
-		if (key == AddressMap.INVALID_ADDRESS_KEY && !addr.equals(Address.NO_ADDRESS)) {
-			return Field.EMPTY_ARRAY;
-		}
-		return symbolTable.findRecords(new LongField(key), SYMBOL_ADDR_COL);
-	}
-
-	@Override
-	DBRecord getSymbolRecord(long symbolID) throws IOException {
-		return symbolTable.getRecord(symbolID);
-	}
-
-	@Override
 	int getSymbolCount() {
 		return symbolTable.getRecordCount();
 	}
-
-	@Override
-	RecordIterator getSymbolsByAddress(boolean forward) throws IOException {
-		return new KeyToRecordIterator(symbolTable,
-			new AddressIndexPrimaryKeyIterator(symbolTable, SYMBOL_ADDR_COL, addrMap, forward));
-	}
-
-	@Override
-	RecordIterator getSymbolsByAddress(Address startAddr, boolean forward) throws IOException {
-		return new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-			SYMBOL_ADDR_COL, addrMap, startAddr, forward));
-	}
-
-	@Override
-	void updateSymbolRecord(DBRecord record) throws IOException {
-		// make sure hash is updated to current name and name space
-		String name = record.getString(SYMBOL_NAME_COL);
-		long namespaceId = record.getLongValue(SYMBOL_PARENT_ID_COL);
-		long addressKey = record.getLongValue(SYMBOL_ADDR_COL);
-		record.setField(SYMBOL_HASH_COL, computeLocatorHash(name, namespaceId, addressKey));
-		symbolTable.putRecord(record);
-	}
-
-	@Override
-	RecordIterator getSymbols() throws IOException {
-		return symbolTable.iterator();
-	}
-
-	@Override
-	RecordIterator getSymbols(Address start, Address end, boolean forward) throws IOException {
-		return new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-			SYMBOL_ADDR_COL, addrMap, start, end, forward));
-	}
-
-	@Override
-	RecordIterator getSymbols(AddressSetView set, boolean forward) throws IOException {
-		return new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-			SYMBOL_ADDR_COL, addrMap, set, forward));
-	}
-
-	@Override
-	protected RecordIterator getPrimarySymbols(AddressSetView set, boolean forward)
-			throws IOException {
-		return new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-			SYMBOL_PRIMARY_COL, addrMap, set, forward));
-	}
-
-	@Override
-	protected DBRecord getPrimarySymbol(Address address) throws IOException {
-		AddressIndexPrimaryKeyIterator it = new AddressIndexPrimaryKeyIterator(symbolTable,
-			SYMBOL_PRIMARY_COL, addrMap, address, address, true);
-		if (it.hasNext()) {
-			return symbolTable.getRecord(it.next());
-		}
-		return null;
-	}
-
-	void deleteExternalEntries(Address start, Address end) throws IOException {
-		AddressRecordDeleter.deleteRecords(symbolTable, SYMBOL_ADDR_COL, addrMap, start, end, null);
-	}
-
-	@Override
-	void moveAddress(Address oldAddr, Address newAddr) throws IOException {
-		LongField oldKey = new LongField(addrMap.getKey(oldAddr, false));
-		long newKey = addrMap.getKey(newAddr, true);
-		Field[] keys = symbolTable.findRecords(oldKey, SYMBOL_ADDR_COL);
-		for (Field key : keys) {
-			DBRecord rec = symbolTable.getRecord(key);
-			rec.setLongValue(SYMBOL_ADDR_COL, newKey);
-			symbolTable.putRecord(rec);
-		}
-	}
-
-	@Override
-	Set<Address> deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
-			throws CancelledException, IOException {
-
-		AnchoredSymbolRecordFilter filter = new AnchoredSymbolRecordFilter();
-		AddressRecordDeleter.deleteRecords(symbolTable, SYMBOL_ADDR_COL, addrMap, startAddr,
-			endAddr, filter);
-
-		return filter.getAddressesForSkippedRecords();
-	}
-
-	@Override
-	RecordIterator getSymbolsByNamespace(long id) throws IOException {
-		LongField field = new LongField(id);
-		return symbolTable.indexIterator(SYMBOL_PARENT_ID_COL, field, field, true);
-	}
-
-	@Override
-	RecordIterator getSymbolsByName(String name) throws IOException {
-		StringField field = new StringField(name);
-		return symbolTable.indexIterator(SYMBOL_NAME_COL, field, field, true);
-	}
-
-	@Override
-	RecordIterator scanSymbolsByName(String startName) throws IOException {
-		StringField field = new StringField(startName);
-		return symbolTable.indexIterator(SYMBOL_NAME_COL, field, null, true);
-	}
-
-	@Override
-	RecordIterator getExternalSymbolsByOriginalImportName(String extLabel) throws IOException {
-		StringField extLabelField = new StringField(extLabel);
-		return symbolTable.indexIterator(SYMBOL_ORIGINAL_IMPORTED_NAME_COL, extLabelField,
-			extLabelField, true);
-	}
-
-	@Override
-	RecordIterator getExternalSymbolsByMemoryAddress(Address extProgAddr) throws IOException {
-		StringField addrField = new StringField(extProgAddr.toString());
-		return symbolTable.indexIterator(SYMBOL_EXTERNAL_PROG_ADDR_COL, addrField, addrField, true);
-	}
-
-	@Override
-	RecordIterator getSymbolsByNameAndNamespace(String name, long id) throws IOException {
-		// create a range of hash fields for all symbols with this name and namespace id over all
-		// possible addresses
-		Field start = computeLocatorHash(name, id, MIN_ADDRESS_OFFSET);
-		if (start == null) {
-			return EmptyRecordIterator.INSTANCE;
-		}
-
-		Field end = computeLocatorHash(name, id, MAX_ADDRESS_OFFSET);
-
-		RecordIterator it = symbolTable.indexIterator(SYMBOL_HASH_COL, start, end, true);
-		return getNameAndNamespaceFilterIterator(name, id, it);
-	}
-
-	@Override
-	DBRecord getSymbolRecord(Address address, String name, long namespaceId) throws IOException {
-		long addressKey = addrMap.getKey(address, false);
-		Field search = computeLocatorHash(name, namespaceId, addressKey);
-		if (search == null) {
-			return null;
-		}
-		RecordIterator it = symbolTable.indexIterator(SYMBOL_HASH_COL, search, search, true);
-		RecordIterator filtered =
-			getNameNamespaceAddressFilterIterator(name, namespaceId, addressKey, it);
-		if (filtered.hasNext()) {
-			return filtered.next();
-		}
-		return null;
-	}
-
-	@Override
-	Address getMaxSymbolAddress(AddressSpace space) throws IOException {
-		if (space.isMemorySpace()) {
-			AddressIndexKeyIterator addressKeyIterator = new AddressIndexKeyIterator(symbolTable,
-				SYMBOL_ADDR_COL, addrMap, space.getMinAddress(), space.getMaxAddress(), false);
-			if (addressKeyIterator.hasNext()) {
-				return addrMap.decodeAddress(addressKeyIterator.next());
-			}
-		}
-		else {
-			LongField max = new LongField(addrMap.getKey(space.getMaxAddress(), false));
-			DBFieldIterator iterator =
-				symbolTable.indexFieldIterator(null, max, false, SYMBOL_ADDR_COL);
-			if (iterator.hasPrevious()) {
-				LongField val = (LongField) iterator.previous();
-				Address addr = addrMap.decodeAddress(val.getLongValue());
-				if (space.equals(addr.getAddressSpace())) {
-					return addr;
-				}
-			}
-		}
-		return null;
-	}
-
-	@Override
-	Table getTable() {
-		return symbolTable;
-	}
-
-	private class AnchoredSymbolRecordFilter implements RecordFilter {
-		private Set<Address> set = new HashSet<Address>();
-
-		@Override
-		public boolean matches(DBRecord record) {
-			// only move symbols whose anchor flag is not on
-			Address addr = addrMap.decodeAddress(record.getLongValue(SYMBOL_ADDR_COL));
-			byte flags = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL);
-			boolean pinned = (flags & SymbolDatabaseAdapter.SYMBOL_PINNED_FLAG) != 0;
-			if (!pinned) {
-				return true;
-			}
-			set.add(addr);
-			return false;
-		}
-
-		Set<Address> getAddressesForSkippedRecords() {
-			return set;
-		}
-	}
-
 }

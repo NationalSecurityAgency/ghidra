@@ -156,12 +156,14 @@ public interface ReferenceManager {
 			throws InvalidInputException, DuplicateNameException;
 
 	/**
-	 * Adds an external reference.  If a reference already
-	 * exists for the fromAddr and opIndex, the existing reference is replaced
-	 * with the new reference.
+	 * Adds an external reference.  If a reference already exists for the fromAddr and 
+	 * opIndex, the existing reference is replaced with the new reference.  If an
+	 * existing matching external location is found it will be referenced, if not a 
+	 * new one will be created.
 	 * 
 	 * @param fromAddr from memory address (source of the reference)
-	 * @param extNamespace external namespace containing the named external label.
+	 * @param library the external library
+	 * @param namespace external namespace containing the named external label.
 	 * @param extLabel label within the external program, may be null if extAddr is not null
 	 * @param extAddr address within the external program, may be null
 	 * @param source the source of this reference
@@ -174,18 +176,18 @@ public interface ReferenceManager {
 	 * @throws DuplicateNameException if another non-Library namespace has the same name
 	 * @throws IllegalArgumentException if an invalid {@code extAddr} was specified.
 	 */
-	public Reference addExternalReference(Address fromAddr, Namespace extNamespace, String extLabel,
+	public Reference addExternalReference(Address fromAddr, Library library, Namespace namespace,
+			String extLabel,
 			Address extAddr, SourceType source, int opIndex, RefType type)
 			throws InvalidInputException, DuplicateNameException;
 
 	/**
-	 * Adds an external reference.  If a reference already
-	 * exists for the fromAddr and opIndex, the existing reference is replaced
-	 * with the new reference.
+	 * Adds an external reference.  If a reference already exists for the fromAddr and opIndex, 
+	 * the existing reference(s) is replaced with the new reference.
 	 * 
 	 * @param fromAddr from memory address (source of the reference)
 	 * @param opIndex operand index
-	 * @param location external location
+	 * @param location existing external location defined by this manager's program instance
 	 * @param source the source of this reference
 	 * @param type reference type - how the location is being referenced
 	 * @return external reference

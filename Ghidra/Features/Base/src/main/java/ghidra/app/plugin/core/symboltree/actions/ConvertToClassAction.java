@@ -24,7 +24,6 @@ import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -34,13 +33,22 @@ import ghidra.util.exception.InvalidInputException;
 public class ConvertToClassAction extends SymbolTreeContextAction {
 
 	private static final String NAME = "Convert to Class";
+	private SymbolTreePlugin plugin;
 
 	public ConvertToClassAction(SymbolTreePlugin plugin, String group, String subGroup) {
 		super(NAME, plugin.getName());
+
+		this.plugin = plugin;
 		MenuData menuData = new MenuData(new String[] { NAME }, group);
 		menuData.setMenuSubGroup(subGroup);
 		setPopupMenuData(menuData);
 		setEnabled(false);
+	}
+
+	@Override
+	public void dispose() {
+		this.plugin = null;
+		super.dispose();
 	}
 
 	@Override
@@ -62,48 +70,34 @@ public class ConvertToClassAction extends SymbolTreeContextAction {
 	@Override
 	protected void actionPerformed(SymbolTreeActionContext context) {
 		TreePath[] selectionPaths = context.getSelectedSymbolTreePaths();
-
-		Program program = context.getProgram();
 		GTreeNode node = (GTreeNode) selectionPaths[0].getLastPathComponent();
-
-		SymbolGTree tree = context.getSymbolTree();
-		GTreeNode root = tree.getViewRoot();
-
 		Symbol symbol = ((SymbolNode) node).getSymbol();
 		Namespace namespace = (Namespace) symbol.getObject();
 		if (namespace == null) {
 			return;
 		}
 
+		GTreeNode parentNode = node.getParent();
 		String name = namespace.getName();
+		Program program = context.getProgram();
 		convertToClass(program, namespace);
-		program.flushEvents();
 
-		GTreeNode classesNode = root.getChild(SymbolCategory.CLASS_CATEGORY.getName());
-		if (classesNode == null) {
-			Msg.showInfo(this, null, "Classes Filtered Out of View",
-				"New class node is filtered out of view");
-			return;
-		}
-
-		tree.startEditing(classesNode, name);
+		SymbolTreeProvider provider = plugin.getProvider();
+		provider.editNode(parentNode, name);
 	}
 
 	private static void convertToClass(Program program, Namespace ns) {
-		int id = program.startTransaction(NAME);
-		boolean success = false;
-		try {
-			NamespaceUtils.convertNamespaceToClass(ns);
-			success = true;
-		}
-		catch (InvalidInputException e) {
-			// This is thrown when the provided namespace is a function
-			// It was checked in isEnabledForContext and thus cannot occur
-			throw new AssertException(e);
-		}
-		finally {
-			program.endTransaction(id, success);
-		}
+
+		program.withTransaction(NAME, () -> {
+			try {
+				NamespaceUtils.convertNamespaceToClass(ns);
+			}
+			catch (InvalidInputException e) {
+				// This is thrown when the provided namespace is a function
+				// It was checked in isEnabledForContext and thus cannot occur
+				throw new AssertException(e);
+			}
+		});
 	}
 
 }

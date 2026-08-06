@@ -22,7 +22,8 @@ import ghidra.app.services.*;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -213,12 +214,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 		// Only demangle global or external symbols when directly parented to a Library namespace
 		Namespace parentNamespace = symbol.getParentNamespace();
-		if (symbol.isExternal()) {
-			if (!(parentNamespace instanceof Library)) {
-				return true;
-			}
-		}
-		else if (!parentNamespace.isGlobal()) {
+		if (!parentNamespace.isGlobal()) {
 			return true;
 		}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -189,6 +189,16 @@ public class SymbolGTreeDragNDropHandler implements GTreeDragNDropHandler {
 		if (SymbolDataFlavor.DATA_FLAVOR.equals(flavor)) {
 			return getSymbols(transferNodes);
 		}
+		/*
+			The generic flavor for the Symbol Tree.  This is used to paste all nodes in the list.
+			These nodes will be given to the Symbol Tree provider, which will decide how to process
+			each node.
+		
+			Note: symbolNode.getNodeDataFlavor() is used to get the flavor of each node being 
+		      	transfered.  But, we do not use those flavors to process the nodes on a drop().
+		      	Instead, we use the generic SymbolTreeDataFlavor.DATA_FLAVOR and let the provider
+		      	handle each node separately. (see getSupportedDataFlavors() in this file) 
+		 */
 		else if (SymbolTreeDataFlavor.DATA_FLAVOR.equals(flavor)) {
 			List<GTreeNode> nodes = new ArrayList<>();
 			for (GTreeNode node : transferNodes) {

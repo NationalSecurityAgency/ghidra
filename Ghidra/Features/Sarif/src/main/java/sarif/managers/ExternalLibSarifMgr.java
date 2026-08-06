@@ -50,12 +50,13 @@ public class ExternalLibSarifMgr extends SarifMgr {
 		externalMap = new HashMap<>();
 	}
 
-	////////////////////////////
+	/////////////////
 	// SARIF READ CURRENT DTD //
-	////////////////////////////
+	/////////////////
 
 	@Override
-	protected void readResults(List<Map<String, Object>> list, SarifProgramOptions options, TaskMonitor monitor)
+	protected void readResults(List<Map<String, Object>> list, SarifProgramOptions options,
+			TaskMonitor monitor)
 			throws AddressFormatException, CancelledException {
 		if (list != null) {
 			monitor.setMessage("Processing " + key + "...");
@@ -73,7 +74,8 @@ public class ExternalLibSarifMgr extends SarifMgr {
 				monitor.increment();
 			}
 
-		} else {
+		}
+		else {
 			monitor.setMessage("Skipping over " + key + " ...");
 		}
 	}
@@ -85,7 +87,8 @@ public class ExternalLibSarifMgr extends SarifMgr {
 	 * @param monitor monitor that can be canceled
 	 */
 	@Override
-	public boolean read(Map<String, Object> result, SarifProgramOptions options, TaskMonitor monitor)
+	public boolean read(Map<String, Object> result, SarifProgramOptions options,
+			TaskMonitor monitor)
 			throws CancelledException {
 		try {
 			String symbol = (String) result.get("symbol");
@@ -98,13 +101,15 @@ public class ExternalLibSarifMgr extends SarifMgr {
 				return true;
 			}
 			return false;
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			log.appendException(e);
 		}
 		return false;
 	}
 
-	private void processExternalLib(Map<String, Object> result) throws InvalidInputException, DuplicateNameException {
+	private void processExternalLib(Map<String, Object> result)
+			throws InvalidInputException, DuplicateNameException {
 
 		String progName = (String) result.get("name");
 		// check to make sure that we do not clear any
@@ -135,6 +140,7 @@ public class ExternalLibSarifMgr extends SarifMgr {
 
 		try {
 			String name = (String) result.get("name");
+			String libraryName = (String) result.get("libraryName");
 			String location = (String) result.get("location");
 			Address address = getLocation(result);
 			String extern = (String) result.get("externalAddress");
@@ -144,49 +150,55 @@ public class ExternalLibSarifMgr extends SarifMgr {
 				sourceType = SourceType.IMPORTED;
 			}
 			boolean isClass = (boolean) result.get("isClass");
-			Namespace p = walkNamespace(program.getGlobalNamespace(), location + "::", address, sourceType, isClass);
+			Namespace namespace = walkNamespace(program.getGlobalNamespace(), location + "::",
+				address, sourceType, isClass);
 			String name0 = (String) result.get("originalImportedName");
 
-			ExternalLocation loc = addExternal(result, name, address, sourceType, p, name0);
+			ExternalLocation loc =
+				addExternal(result, name, libraryName, address, sourceType, namespace, name0);
 			externalMap.put(extern, loc);
-		} catch (InvalidInputException | AddressOverflowException e) {
+		}
+		catch (InvalidInputException | AddressOverflowException e) {
 			log.appendException(e);
 		}
 	}
 
-	private ExternalLocation addExternal(Map<String, Object> result, String name, Address address, SourceType sourceType,
-			Namespace p, String name0) throws InvalidInputException {
-		Library lib = getLibrary(p);
+	private ExternalLocation addExternal(Map<String, Object> result, String name,
+			String libraryName, Address address,
+			SourceType sourceType,
+			Namespace namespace, String name0) throws InvalidInputException {
+		Library library = getLibrary(libraryName);
 		ExternalLocation loc;
 		if ((boolean) result.get("isFunction")) {
 			if (name0 != null) {
-				loc = extManager.addExtFunction(lib == null ? p : lib, name0, address, sourceType, false);
-				loc.setName(p, name, sourceType);
-			} else {
-				loc = extManager.addExtFunction(p, name, address, sourceType, true);
+				loc = extManager.addExtFunction(library, namespace, name0, address, sourceType,
+					false);
 			}
-		} else {
+			else {
+				loc = extManager.addExtFunction(library, name, address, sourceType, true);
+			}
+		}
+		else {
 			if (name0 != null) {
-				loc = extManager.addExtLocation(lib == null ? p : lib, name0, address, sourceType, false);
-				loc.setName(p, name, sourceType);
-			} else {
-				loc = extManager.addExtLocation(p, name, address, sourceType, true);
+				loc = extManager.addExtLocation(library, namespace, name0, address, sourceType,
+					false);
+			}
+			else {
+				loc =
+					extManager.addExtLocation(library, namespace, name, address, sourceType, true);
 			}
 		}
 		return loc;
 	}
 
-	private Library getLibrary(Namespace p) {
-		if (p instanceof Library lib) {
-			return lib;
-		}
-		Namespace parent = p.getParentNamespace();
-		return parent == null ? null : getLibrary(parent);
+	private Library getLibrary(String libraryName) {
+		Symbol librarySymbol = program.getSymbolTable().getLibrarySymbol(libraryName);
+		return librarySymbol == null ? null : (Library) librarySymbol.getObject();
 	}
 
-	/////////////////////////////
+	//////////////////
 	// SARIF WRITE CURRENT DTD //
-	/////////////////////////////
+	//////////////////
 
 	/**
 	 * Write out the SARIF for the external library table.
@@ -205,7 +217,7 @@ public class ExternalLibSarifMgr extends SarifMgr {
 		}
 
 		writeExtAsSARIF(program, request0, results);
-		
+
 		Iterator<GhidraClass> classNamespaces = program.getSymbolTable().getClassNamespaces();
 		List<GhidraClass> request1 = new ArrayList<>();
 		while (classNamespaces.hasNext()) {
@@ -216,13 +228,17 @@ public class ExternalLibSarifMgr extends SarifMgr {
 
 	}
 
-	public static void writeExtAsSARIF(Program program, List<String> request, JsonArray results) throws IOException {
-		SarifExternalLibraryWriter writer = new SarifExternalLibraryWriter(program.getExternalManager(), request, null);
+	public static void writeExtAsSARIF(Program program, List<String> request, JsonArray results)
+			throws IOException {
+		SarifExternalLibraryWriter writer =
+			new SarifExternalLibraryWriter(program.getExternalManager(), request, null);
 		new TaskLauncher(new SarifWriterTask("Libraries", writer, results), null);
 	}
 
-	public static void writeNamespaceAsSARIF(Program program, List<GhidraClass> request, JsonArray results) throws IOException {
-		SarifClassesNamespaceWriter writer = new SarifClassesNamespaceWriter(program.getExternalManager(), program.getSymbolTable(), request, null);
+	public static void writeNamespaceAsSARIF(Program program, List<GhidraClass> request,
+			JsonArray results) throws IOException {
+		SarifClassesNamespaceWriter writer = new SarifClassesNamespaceWriter(
+			program.getExternalManager(), program.getSymbolTable(), request, null);
 		new TaskLauncher(new SarifWriterTask("Libraries", writer, results), null);
 	}
 

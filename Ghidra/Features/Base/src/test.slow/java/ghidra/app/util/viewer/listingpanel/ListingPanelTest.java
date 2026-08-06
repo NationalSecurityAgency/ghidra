@@ -132,7 +132,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("01001008", l.getField(3).getText());
 		assertEquals("01 02 03 04", l.getField(4).getText());
 		assertEquals("addr", l.getField(5).getText());
-		assertEquals("ADVAPI32.dll::RegQueryValueExW", l.getField(6).getText());
+		assertEquals("ADVAPI32.dll:RegQueryValueExW", l.getField(6).getText());
 	}
 
 	@Test

@@ -151,7 +151,7 @@ public class FunctionEditorDialogTest extends AbstractGhidraHeadedIntegrationTes
 		Function f = getFunction("0x1006420");
 		Namespace actualNamespace = f.getParentNamespace();
 		SymbolPath expectedPath = new SymbolPath(newNamespacePath);
-		SymbolPath actualPath = new SymbolPath(actualNamespace.getPathList(true));
+		SymbolPath actualPath = new SymbolPath(actualNamespace.getPathList());
 		assertEquals(expectedPath, actualPath);
 	}
 
@@ -174,7 +174,7 @@ public class FunctionEditorDialogTest extends AbstractGhidraHeadedIntegrationTes
 		Function f = getFunction("0x1006420");
 		Namespace actualNamespace = f.getParentNamespace();
 		SymbolPath expectedPath = new SymbolPath(newNamespacePath);
-		SymbolPath actualPath = new SymbolPath(actualNamespace.getPathList(true));
+		SymbolPath actualPath = new SymbolPath(actualNamespace.getPathList());
 		assertEquals(expectedPath, actualPath);
 	}
 

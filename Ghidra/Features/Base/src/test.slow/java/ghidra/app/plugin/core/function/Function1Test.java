@@ -163,7 +163,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(editComment.isEnabledForContext(actionContext));
 		assertFalse(deleteComment.isEnabledForContext(actionContext));
 
-		createThunk(addr("0x10030d2"), "comdlg32.dll::CommDlgExtendedError", true);
+		createThunk(addr("0x10030d2"), "CommDlgExtendedError", true);
 
 		assertTrue(cb.goToField(addr("0x10030d2"), "Function Signature", 0, 0));
 		actionContext = cb.getProvider().getActionContext(null);
@@ -207,7 +207,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		assertNull(program.getListing().getFunctionAt(addr("0x1006420")));
 
-		Function thunk = createThunk(addr("0x10030d2"), "comdlg32.dll::CommDlgExtendedError", true);
+		Function thunk = createThunk(addr("0x10030d2"), "CommDlgExtendedError", true);
 
 		cb.goToField(addr("0x10030d2"), "Function Signature", 0, 0);
 		assertEquals("thunk undefined CommDlgExtendedError()", cb.getCurrentFieldText());
@@ -243,7 +243,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		createLabel(addr("0x10030d2"), "Foo");
 
-		Function thunk = createThunk(addr("0x10030d2"), "comdlg32.dll::CommDlgExtendedError", true);
+		Function thunk = createThunk(addr("0x10030d2"), "CommDlgExtendedError", true);
 
 		cb.goToField(addr("0x10030d2"), "Function Signature", 0, 0);
 		assertEquals("thunk undefined Foo()", cb.getCurrentFieldText());
@@ -315,7 +315,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		env.showTool();
 		loadProgram("notepad");
 
-		createThunk(addr("0x10030d2"), "comdlg32.dll::CommDlgExtendedError", true);
+		createThunk(addr("0x10030d2"), "CommDlgExtendedError", true);
 
 		assertTrue(cb.goToField(addr("0x10030d2"), "Function Signature", 0, 0));
 
@@ -325,8 +325,8 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 			waitForDialogComponent(ThunkReferenceAddressDialog.class);
 		assertNotNull(thunkDlg);
 		JTextField thunkedEntryField = findComponent(thunkDlg, JTextField.class);
-		assertEquals("comdlg32.dll::CommDlgExtendedError", thunkedEntryField.getText());
-		setText(thunkedEntryField, "ADVAPI32.dll::RegQueryValueExW");
+		assertEquals("CommDlgExtendedError", thunkedEntryField.getText());
+		setText(thunkedEntryField, "RegQueryValueExW");
 		pressButtonByText(thunkDlg, "OK");
 		waitForSwing();
 		waitForBusyTool();
@@ -352,7 +352,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		env.showTool();
 		loadProgram("notepad");
 
-		Function func = createThunk(addr("0x10030d2"), "comdlg32.dll::CommDlgExtendedError", true);
+		Function func = createThunk(addr("0x10030d2"), "CommDlgExtendedError", true);
 
 		assertTrue(cb.goToField(addr("0x10030d2"), "Function Signature", 0, 0));
 		assertTrue(func.isThunk());
@@ -415,7 +415,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(thunkDlg);
 		JTextField thunkedEntryField = findComponent(thunkDlg, JTextField.class);
 		assertEquals("", thunkedEntryField.getText());
-		setText(thunkedEntryField, "ADVAPI32.dll::RegQueryValueExW");
+		setText(thunkedEntryField, "RegQueryValueExW");
 		pressButtonByText(thunkDlg, "OK");
 		waitForSwing();
 		waitForBusyTool();
@@ -444,7 +444,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		env.showTool();
 		loadProgram("notepad");
 
-		createThunk(addr("0x10030d2"), "comdlg32.dll::CommDlgExtendedError", true);
+		createThunk(addr("0x10030d2"), "CommDlgExtendedError", true);
 
 		assertTrue(cb.goToField(addr("0x10030d2"), "Address", 0, 0));
 

@@ -20,9 +20,9 @@ import java.util.*;
 
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeSlowLoadingNode;
+import ghidra.app.plugin.core.symboltree.SymbolTreeFilterState;
 import ghidra.app.plugin.core.symboltree.SymbolTreeProvider;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.task.TaskMonitor;
@@ -40,6 +40,12 @@ import ghidra.util.task.TaskMonitor;
  * parent node to sort its children differently.
  */
 public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
+	//@formatter:off
+	static final DataFlavor LABEL_DATA_FLAVOR = new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Labels");
+	static final DataFlavor FUNCTION_DATA_FLAVOR = new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Functions");
+	static final DataFlavor CLASS_DATA_FLAVOR = new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Classes");
+	static final DataFlavor NAMESPACE_DATA_FLAVOR = new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Namespaces");
+	//@formatter:on
 
 	public static final Comparator<Symbol> SYMBOL_COMPARATOR = (s1, s2) -> {
 		// note: not really sure if we care about the cases where 'symbol' is null, as that 
@@ -94,13 +100,6 @@ public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 	 * @return true if this node can be cut and moved to a different location.
 	 */
 	public abstract boolean canCut();
-
-	/**
-	 * Returns true if this nodes handles paste operations
-	 * @param pastedNodes the nodes to be pasted
-	 * @return true if this nodes handles paste operations
-	 */
-	public abstract boolean canPaste(List<GTreeNode> pastedNodes);
 
 	/**
 	 * Signals to this node that it has been cut during a cut operation, for example, like during
@@ -159,55 +158,36 @@ public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 		return null;
 	}
 
+	protected SymbolTreeFilterState getFilterState() {
+		SymbolTreeRootNode root = (SymbolTreeRootNode) getRoot();
+		return root.getSymbolTreeFilterState();
+	}
+
 	/**
-	 * Locates the node that contains the given symbol.
+	 * Last resort method to find a symbol in the tree when the more direct approaches have failed.
+	 * This method will visit each node in a depth first traversal, looking for the given symbol.
+	 * Note that this method only searches the nodes that are currently loaded, it will not trigger
+	 * any lazy node loading.
+	 * The main use of this method is to find a node whose symbol was removed and the corresponding
+	 * tree node needs to be deleted. The direct approach will fail if both the name and namespace
+	 * where changed at same time since the event system sends two events and neither have the 
+	 * all the necessary information to find the symbol efficiently.
 	 * 
-	 * <p><b>Note: </b>This can degenerate into a brute-force search algorithm, but works in 
-	 * all normal cases using a binary search.
-	 *  
-	 * @param key the node used to find an existing node.  This node is a node created that is
-	 *        used by the Comparators to perform binary searches.  These can be fabricated 
-	 *        by using {@link SymbolNode#createNode(Symbol, Program)}
-	 * @param loadChildren if true then children should be loaded, else quit early if 
-	 *        children are not loaded.
-	 * @param monitor the task monitor
-	 * @return the node that contains the given symbol.
+	 * @param symbol the symbol to search for
+	 * @param monitor the TaskMonitor that can be used to cancel the operation
+	 * @return the GTreeNode containing the symbol or null if not found
 	 */
-	public GTreeNode findSymbolTreeNode(SymbolNode key, boolean loadChildren, TaskMonitor monitor) {
+	protected final GTreeNode findNodeBruteForce(Symbol symbol, TaskMonitor monitor) {
 
-		// if we don't have to loadChildren and we are not loaded get out.
-		if ((!isLoaded() && !loadChildren) || monitor.isCancelled()) {
-			return null;
-		}
-
-		// see if the given node is the node we want
-		Symbol searchSymbol = key.getSymbol();
-		if (getSymbol() == searchSymbol) {
+		if (getSymbol() == symbol) {
 			return this;
 		}
 
-		List<GTreeNode> children = getChildren();
-		int index = Collections.binarySearch(children, key, getChildrenComparator());
-		if (index >= 0) {
-			GTreeNode node = children.get(index);
-			SymbolTreeNode symbolNode = (SymbolTreeNode) node;
-			if (symbolNode.getSymbol() == searchSymbol) {
-				return symbolNode;
-			}
-
-			// At this point we know that the given child is not itself a symbol node, but it 
-			// may contain a child that contains the symbol node (some symbol nodes will
-			// themselves contain more symbol nodes).  
-			// Ask that child to search.  Leave this method regardless, as if this child does
-			// not have it, then none of the others will.
-			node = symbolNode.findSymbolTreeNode(key, loadChildren, monitor);
-			return node;
+		if (!isLoaded() || monitor.isCancelled()) {
+			return null;
 		}
 
-		// Brute-force lookup in each child.  This will not typically be called.  Category nodes 
-		// that support large numbers of children have overridden this method to perform smarter
-		// searching.
-		for (GTreeNode childNode : children) {
+		for (GTreeNode childNode : getChildren()) {
 			if (monitor.isCancelled()) {
 				return null;
 			}
@@ -216,7 +196,7 @@ public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 			}
 
 			SymbolTreeNode symbolNode = (SymbolTreeNode) childNode;
-			GTreeNode foundNode = symbolNode.findSymbolTreeNode(key, loadChildren, monitor);
+			GTreeNode foundNode = symbolNode.findNodeBruteForce(symbol, monitor);
 			if (foundNode != null) {
 				return foundNode;
 			}
@@ -226,49 +206,81 @@ public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 	}
 
 	/**
-	 * Searches for the given node 'key' inside of the given parent.   This method performs an 
-	 * efficient search and does not recurse below the given node.
+	 * Finds the child node in this node that matches the given search key. The search key node
+	 * will contain the symbol being searched for, but the name may not be the current symbol's
+	 * name. This is to facilitate finding symbols in the tree whose name has been changed, but
+	 * we know the old name.
+	 * <P>
+	 * This method normally just searches the immediate children of a node. However, if the node
+	 * is an organization node, it will recursively descend into organization nodes to find the
+	 * target symbol. It will never recurse into non-organization nodes.
 	 * 
-	 * @param parent the node whose children will be searched
-	 * @param key the token node to search for
-	 * @param loadChildren true to load children; false signals to search only if already loaded
-	 * @param monitor the monitor
-	 * @return the node or null
+	 * @param key a special node used to search for a symbol. It allows for a different name than
+	 * the actual symbol name.
+	 * @param loadChildren if true, the node will load its children before searching. Otherwise, 
+	 * if loadChildren is false and the node is not currently loaded, it will just return null.
+	 * @return returns the node containing the searched for symbol if it is found; otherwise it
+	 * returns null
 	 */
-	protected GTreeNode findNode(GTreeNode parent, SymbolNode key, boolean loadChildren,
-			TaskMonitor monitor) {
+	public SymbolTreeNode getMatchingChild(SymbolNode key, boolean loadChildren) {
+		if (!loadChildren && !isLoaded()) {
+			return null;
+		}
+		List<GTreeNode> children = getChildren();
 
-		if ((!isLoaded() && !loadChildren) || monitor.isCancelled()) {
+		Comparator<GTreeNode> comparator = getChildrenComparator();
+		int index = Collections.binarySearch(children, key, comparator);
+		if (index < 0) {
 			return null;
 		}
 
-		// see if the given node is the node we want
-		Symbol searchSymbol = key.getSymbol();
-		if (parent instanceof SymbolTreeNode symbolNode) {
-			if (symbolNode.getSymbol() == searchSymbol) {
-				return symbolNode;
-			}
+		// We may have duplicate symbols, so our binary search may have resulted in the middle
+		// of a run of duplicate names, so we must search around the found index.
+		//
+		// However, if the node at the index is an organization node, then we know that any 
+		// duplicates will also be in the organization node. 
+		// Normally, this search is only one level, but organization nodes have to be handled
+		// specially. Since organization nodes add artificial layers to break up what would have
+		// been a very large list of child nodes, the algorithm needs to recurse down through all
+		// organization nodes to find the node that conceptually lives at this level.
+
+		SymbolTreeNode node = (SymbolTreeNode) children.get(index);
+		if (node instanceof OrganizationNode orgNode) {
+			return orgNode.getMatchingChild(key, loadChildren);
 		}
 
-		Comparator<GTreeNode> comparator = ((SymbolTreeNode) parent).getChildrenComparator();
-		List<GTreeNode> children = parent.getChildren();
-		int index = Collections.binarySearch(children, key, comparator);
-		if (index >= 0) {
-			GTreeNode node = children.get(index);
-			SymbolTreeNode symbolNode = (SymbolTreeNode) node;
-
-			// Some parent nodes may contain OrganizationNodes, which will return as a match when 
-			// the symbol does not match.  We expect the symbol to always match for clients of this 
-			// method.  
-			if (symbolNode.getSymbol() == searchSymbol) {
-				return symbolNode;
-			}
-			else if (symbolNode instanceof OrganizationNode) {
-				return findNode(symbolNode, key, loadChildren, monitor);
+		int start = getStart(index, key, children, comparator);
+		int end = getEnd(index, key, children, comparator);
+		for (int i = start; i < end; i++) {
+			node = (SymbolNode) children.get(i);
+			if (node.getSymbol() == key.getSymbol()) {
+				return node;
 			}
 		}
-
 		return null;
+	}
 
+	private static int getStart(int index, SymbolNode key, List<GTreeNode> children,
+			Comparator<GTreeNode> comparator) {
+		for (int i = index - 1; i >= 0; i--) {
+			GTreeNode node = children.get(i);
+			int result = comparator.compare(key, node);
+			if (result != 0) {
+				return i + 1;
+			}
+		}
+		return 0;
+	}
+
+	private static int getEnd(int index, SymbolNode key, List<GTreeNode> children,
+			Comparator<GTreeNode> comparator) {
+		for (int i = index + 1; i < children.size(); i++) {
+			GTreeNode node = children.get(i);
+			int result = comparator.compare(key, node);
+			if (result != 0) {
+				return i;	// the end is exclusive so don't subtract 1
+			}
+		}
+		return children.size();
 	}
 }

@@ -161,11 +161,6 @@ public class OrganizationNode extends SymbolTreeNode {
 	}
 
 	@Override
-	public boolean canPaste(List<GTreeNode> pastedNodes) {
-		return false;
-	}
-
-	@Override
 	public boolean isCut() {
 		return false;
 	}
@@ -268,43 +263,6 @@ public class OrganizationNode extends SymbolTreeNode {
 			}
 			parent = parent.getParent();
 		}
-	}
-
-	@Override
-	public GTreeNode findSymbolTreeNode(SymbolNode key, boolean loadChildren,
-			TaskMonitor taskMonitor) {
-
-		String symbolName = key.getName();
-		if (!symbolName.startsWith(baseName)) {
-			// the given name does not start with the base name; it cannot be in this node
-			return null;
-		}
-
-		// special case: all symbols in this group have the same name.
-		if (moreNode != null) {
-			if (!symbolName.equals(baseName)) {
-				return null;
-			}
-			// The node either belongs to this node's children or it is represented by the
-			// 'more' node
-			for (GTreeNode child : children()) {
-				SymbolTreeNode symbolTreeNode = (SymbolTreeNode) child;
-				if (symbolTreeNode.getSymbol() == key.getSymbol()) {
-					return child;
-				}
-			}
-
-			return moreNode;
-		}
-
-		//
-		// Note: The 'key' node used for searching will find us the parent node of the symbol
-		//       that has changed if it is an org node (this is because the org node searches
-		//       using the old name).  So, org nodes are different than normal nodes in that
-		//       the old name will find the right parent, but not the actual current node, as
-		//       it has a new name.  
-		//
-		return super.findSymbolTreeNode(key, loadChildren, taskMonitor);
 	}
 
 	@Override
@@ -435,6 +393,32 @@ public class OrganizationNode extends SymbolTreeNode {
 		}
 		return true;
 
+	}
+
+	@Override
+	public SymbolTreeNode getMatchingChild(SymbolNode key, boolean loadChildren) {
+		// We only have 'more' nodes when every node in this Organization node have the same
+		// identical name. In this case, the name of this node (baseName) will have the same
+		// name as every childNode contained in this node. Also, only the first handful of symbols
+		// with that name will have nodes and the rest are represented by the 'more' node.
+		//
+		// So the search node will either be one of the few child nodes or is is represented by the
+		// 'more' node. In the case where the more node was returned in response to a symbol deleted 
+		// notification, the subsequent call back to the organization node's removeNode(child) will
+		// recognize the 'more' node and decrement the count instead of deleting it.
+		if (moreNode != null) {
+			if (!key.getName().equals(baseName)) {
+				return null;
+			}
+			for (GTreeNode child : children()) {
+				SymbolTreeNode symbolTreeNode = (SymbolTreeNode) child;
+				if (symbolTreeNode.getSymbol() == key.getSymbol()) {
+					return symbolTreeNode;
+				}
+			}
+			return moreNode;
+		}
+		return super.getMatchingChild(key, loadChildren);
 	}
 
 	static class OrganizationNodeComparator implements Comparator<GTreeNode> {

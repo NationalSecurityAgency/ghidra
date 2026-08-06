@@ -19,6 +19,7 @@ import ghidra.app.util.SymbolPath;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Library;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -43,6 +44,11 @@ public interface ExternalLocation {
 	public String getLibraryName();
 
 	/**
+	 * {@return the external library for this location}
+	 */
+	public Library getLibrary();
+
+	/**
 	 * NOTE: If this external location corresponds to a back-reference this
 	 * may correspond to an application and not a library.
 	 * 
@@ -50,7 +56,7 @@ public interface ExternalLocation {
 	 * null if unknown.
 	 */
 	public String getExternalLibraryPath();
-	
+
 	/**
 	 * Returns the parent namespace containing this location.
 	 * @return the parent namespace containing this location.
@@ -112,6 +118,12 @@ public interface ExternalLocation {
 	 */
 	public void setLocation(String label, Address addr, SourceType source)
 			throws DuplicateNameException, InvalidInputException;
+
+	/**
+	 * Sets the library for the external location
+	 * @param library the new library for the externalLocation
+	 */
+	public void setLibrary(Library library);
 
 	/**
 	 * @return true if location corresponds to a function

@@ -26,7 +26,7 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.symbol.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.symbol.*;
-import ghidra.util.*;
+import ghidra.util.LockHold;
 import ghidra.util.exception.*;
 
 public class DBTraceProgramViewSymbolTable implements SymbolTable {
@@ -310,6 +310,12 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	}
 
 	@Override
+	public SymbolIterator getSymbols(Library library) {
+		// revisit in GP-7207
+		return new SymbolIteratorAdapter(new ArrayList<Symbol>().iterator());
+	}
+
+	@Override
 	public SymbolIterator getSymbols(long namespaceID) {
 		AbstractDBTraceSymbol sym = symbolManager.getSymbolByID(namespaceID);
 		if (!(sym instanceof DBTraceNamespaceSymbol)) {
@@ -397,6 +403,11 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 
 	@Override
 	public SymbolIterator getExternalSymbols() {
+		return new SymbolIteratorAdapter(Collections.emptyIterator());
+	}
+
+	@Override
+	public SymbolIterator getExternalSymbolByOriginalImportName(Library library, String extLabel) {
 		return new SymbolIteratorAdapter(Collections.emptyIterator());
 	}
 

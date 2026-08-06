@@ -25,10 +25,18 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * External manager interface. Defines methods for dealing with external programs and locations
- * within those programs.
+ * External manager interface. Defines methods for dealing with external libraries/programs 
+ * and associated {@link ExternalLocation} symbols used to reference locations within them.
+ * When a specific library is unknown, an external location may be associated with the
+ * {@link Library#UNKNOWN} library until a more suitable named library can be identified.
+ * <p>
+ * An {@link ExternalLocation} may be a {@link Function} or a generic location.  
+ * <p>
+ * When creating a location with a mangled name it must be created within the global namespace 
+ * to ensure that it will be considered for demangling.  Once demangled, the original mangled
+ * name gets saved to the location object's 
+ * {@link ExternalLocation#getOriginalImportedName() original imported name}.  
  */
-
 public interface ExternalManager {
 
 	/**
@@ -98,7 +106,7 @@ public interface ExternalManager {
 	 */
 	public void setExternalPath(String libraryName, String pathname, boolean userDefined)
 			throws InvalidInputException;
-	
+
 	/**
 	 * {@return the ordinal associated with an external library which represents its 
 	 * sequence within the order list of libraries or -1 if library name not found}
@@ -154,31 +162,39 @@ public interface ExternalManager {
 
 	/**
 	 * Returns a set of External Locations matching the given label name in the specified Library.
-	 * If searching for an original import name which should not be constrained to a specific 
-	 * library (e.g., mangled name), null may be specified for the libraryName.
+	 * If searching for an original import name, which should not be constrained to a specific 
+	 * library (e.g., mangled name), null should be specified for the libraryName.
+	 * <p>
+	 * NOTE: Only those external symbols which are contained within the global namespace will be 
+	 * included.
 	 * 
-	 * @param libraryName the name of the library
+	 * @param libraryName the name of the library (may be null to consider all libraries)
 	 * @param label the name of the label
 	 * @return a list of External Locations matching the given label name in the given Library.
 	 */
 	public Set<ExternalLocation> getExternalLocations(String libraryName, String label);
 
 	/**
-	 * Returns a set of External Locations matching the given label name in the given Namespace.
+	 * Returns a set of External Locations matching the given label within an optional namespace and library.
 	 * If searching for an original import name which should not be constrained to a specific 
-	 * library (e.g., mangled name), null may be specified for the namespace.  If a library 
-	 * sub-namespace is specified the original import name will not be searched.
+	 * library (e.g., mangled name), null should be specified for both library and namespace.  If a namespace 
+	 * is specified the original import name will not be searched.
 	 * 
-	 * @param namespace the external Namespace to search or null
+	 * @param library the external library (may be null to consider all libraries)
+	 * @param namespace the namespace within which the label should be searched for (may be null for global namespace)
 	 * @param label the name of the labels to search for.
 	 * @return a list of External Locations matching the given label name in the given Namespace.
 	 */
-	public Set<ExternalLocation> getExternalLocations(Namespace namespace, String label);
+	public Set<ExternalLocation> getExternalLocations(Library library, Namespace namespace,
+			String label);
 
 	/**
 	 * Returns the unique external location associated with the given library name and label.
-	 * If searching for an original import name which should not be constrained to a specific 
-	 * library (e.g., mangled name), null may be specified for the libraryName.
+	 * If searching for an original import name, which should not be constrained to a specific 
+	 * library (e.g., mangled name), null should be specified for the libraryName.
+	 * <p>
+	 * NOTE: Only those external symbols which are contained within the global namespace will be 
+	 * included.
 	 * 
 	 * @param libraryName the library name or null
 	 * @param label the label of the external location
@@ -187,16 +203,18 @@ public interface ExternalManager {
 	public ExternalLocation getUniqueExternalLocation(String libraryName, String label);
 
 	/**
-	 * Returns the unique external location associated with the given namespace and label.
+	 * Returns the unique external location associated with the given library, namespace and label.
 	 * If searching for an original import name which should not be constrained to a specific 
-	 * library (e.g., mangled name), null may be specified for the namespace.  If a library 
-	 * sub-namespace is specified the original import name will not be searched.
+	 * library (e.g., mangled name), null may be specified for the library.  If a namespace 
+	 * is specified the original import name will not be searched.
 	 * 
-	 * @param namespace the namespace or null
+	 * @param library the library or null
+	 * @param namespace the namespace within which the label should be searched for (may be null for global namespace)
 	 * @param label the label of the external location
 	 * @return the unique external location or null
 	 */
-	public ExternalLocation getUniqueExternalLocation(Namespace namespace, String label);
+	public ExternalLocation getUniqueExternalLocation(Library library, Namespace namespace,
+			String label);
 
 	/**
 	 * Returns the external location associated with the given external symbol
@@ -228,9 +246,11 @@ public interface ExternalManager {
 			throws InvalidInputException, DuplicateNameException;
 
 	/**
-	 * Get or create an external location associated with a library/file named {@code libraryName}
-	 * and the location within that file identified by {@code extLabel} and/or its memory address
-	 * {@code extAddr}.  Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * Get or create an external location associated with a specified library
+	 * and identified by {@code extLabel} and/or its memory address {@code extAddr}.  
+	 * Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * <p>
+	 * NOTE: The result location will be created within the global namespace.
 	 * 
 	 * @param libraryName the external library name
 	 * @param extLabel the external label or null
@@ -247,11 +267,13 @@ public interface ExternalManager {
 			SourceType sourceType) throws InvalidInputException, DuplicateNameException;
 
 	/**
-	 * Create an external location in the indicated external parent namespace 
-	 * and identified by {@code extLabel} and/or its memory address
-	 * {@code extAddr}.  Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * Get or create an external location associated with a specified library
+	 * and identified by {@code extLabel} and/or its memory address {@code extAddr}.  
+	 * Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * <p>
+	 * NOTE: The result location will be created within the global namespace.
 	 * 
-	 * @param extNamespace the external namespace
+	 * @param library The external library
 	 * @param extLabel the external label or null
 	 * @param extAddr the external memory address or null
 	 * @param sourceType the source type of this external library's symbol
@@ -261,33 +283,91 @@ public interface ExternalManager {
 	 * Neither {@code extLabel} nor {@code extAddr} was specified properly.
 	 * @throws IllegalArgumentException if an invalid {@code extAddr} was specified.
 	 */
-	public ExternalLocation addExtLocation(Namespace extNamespace, String extLabel, Address extAddr,
-			SourceType sourceType) throws InvalidInputException;
+	public default ExternalLocation addExtLocation(Library library, String extLabel,
+			Address extAddr, SourceType sourceType) throws InvalidInputException {
+		return addExtLocation(library, null, extLabel, extAddr, sourceType, true);
+	}
 
 	/**
-	 * Get or create an external location in the indicated external parent namespace 
-	 * and identified by {@code extLabel} and/or its memory address
-	 * {@code extAddr}.  Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * Get or create an external location associated with a specified library and namespace,
+	 * and identified by {@code extLabel} and/or its memory address {@code extAddr}.  
+	 * Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * <p>
+	 * NOTE: If the extLabel is null the global or null namespace should be specified.
 	 * 
-	 * @param extNamespace the external namespace
+	 * @param library The external library
+	 * @param namespace the namespace or null for the global namespace
 	 * @param extLabel the external label or null
 	 * @param extAddr the external memory address or null
 	 * @param sourceType the source type of this external library's symbol
-	 * @param reuseExisting if true, this will return an existing matching external
-	 * location instead of creating a new one.
 	 * @return external location
 	 * @throws InvalidInputException if an invalid {@code extlabel} is specified.  
 	 * Names with spaces or the empty string are not permitted.
 	 * Neither {@code extLabel} nor {@code extAddr} was specified properly.
 	 * @throws IllegalArgumentException if an invalid {@code extAddr} was specified.
 	 */
-	public ExternalLocation addExtLocation(Namespace extNamespace, String extLabel, Address extAddr,
-			SourceType sourceType, boolean reuseExisting) throws InvalidInputException;
+	public default ExternalLocation addExtLocation(Library library, Namespace namespace,
+			String extLabel, Address extAddr, SourceType sourceType) throws InvalidInputException {
+		return addExtLocation(library, namespace, extLabel, extAddr, sourceType, true);
+	}
 
 	/**
-	 * Create an external {@link Function} in the external {@link Library} namespace 
-	 * {@code libararyName} and identified by {@code extLabel} and/or its memory address
-	 * {@code extAddr}.  Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * Get or create an external location associated with a specified library and namespace,
+	 * and identified by {@code extLabel} and/or its memory address {@code extAddr}.  
+	 * Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * <p>
+	 * NOTE: The result location will be created within the global namespace.
+	 * 
+	 * @param library the external library
+	 * @param extLabel the external label or null
+	 * @param extAddr the external memory address or null
+	 * @param sourceType the source type of this external library's symbol
+	 * @param reuseExisting if true, will return any existing matching location instead of
+	 * creating a new one if a suitable match is found. If false, the method will create a 
+	 * new one as long as an extLabel has been specified.
+	 * @return external location
+	 * @throws InvalidInputException if an invalid {@code extlabel} is specified.  
+	 * Names with spaces or the empty string are not permitted.
+	 * Neither {@code extLabel} nor {@code extAddr} was specified properly.
+	 * @throws IllegalArgumentException if an invalid {@code extAddr} was specified.
+	 */
+	public default ExternalLocation addExtLocation(Library library, String extLabel,
+			Address extAddr, SourceType sourceType, boolean reuseExisting)
+			throws InvalidInputException {
+		return addExtLocation(library, null, extLabel, extAddr, sourceType, reuseExisting);
+	}
+
+	/**
+	 * Get or create an external location associated with a specified library and namespace,
+	 * and identified by {@code extLabel} and/or its memory address {@code extAddr}.  
+	 * Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * <p>
+	 * NOTE: If the extLabel is null the global or null namespace should be specified.
+	 * 
+	 * @param library the external library
+	 * @param namespace the namespace or null for the global namespace
+	 * @param extLabel the external label or null
+	 * @param extAddr the external memory address or null
+	 * @param sourceType the source type of this external library's symbol
+	 * @param reuseExisting if true, will return any existing matching location instead of
+	 * creating a new one if a suitable match is found. If false, the method will create a 
+	 * new one as long as an extLabel has been specified.
+	 * @return external location
+	 * @throws InvalidInputException if an invalid {@code extlabel} is specified.  
+	 * Names with spaces or the empty string are not permitted.
+	 * Neither {@code extLabel} nor {@code extAddr} was specified properly.
+	 * @throws IllegalArgumentException if an invalid {@code extAddr} was specified.
+	 */
+	public ExternalLocation addExtLocation(Library library, Namespace namespace, String extLabel,
+			Address extAddr, SourceType sourceType, boolean reuseExisting)
+			throws InvalidInputException;
+
+	/**
+	 * Get or create an external {@link Function} location associated with a specified library
+	 * and identified by {@code extLabel} and/or its memory address {@code extAddr}.  
+	 * Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * <p>
+	 * NOTE: The result location will be created within the global namespace.
 	 * 
 	 * @param libraryName the external library name
 	 * @param extLabel label within the external program, may be null if extAddr is not null
@@ -304,11 +384,13 @@ public interface ExternalManager {
 			SourceType sourceType) throws InvalidInputException, DuplicateNameException;
 
 	/**
-	 * Create an external {@link Function} in the indicated external parent namespace 
-	 * and identified by {@code extLabel} and/or its memory address
-	 * {@code extAddr}.  Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * Get or create an external {@link Function} location associated with a specified library
+	 * and identified by {@code extLabel} and/or its memory address {@code extAddr}.  
+	 * Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * <p>
+	 * NOTE: The result location will be created within the global namespace.
 	 * 
-	 * @param extNamespace the external namespace
+	 * @param library the external library
 	 * @param extLabel the external label or null
 	 * @param extAddr the external memory address or null
 	 * @param sourceType the source type of this external library's symbol
@@ -318,28 +400,83 @@ public interface ExternalManager {
 	 * Neither {@code extLabel} nor {@code extAddr} was specified properly.
 	 * @throws IllegalArgumentException if an invalid {@code extAddr} was specified.
 	 */
-	public ExternalLocation addExtFunction(Namespace extNamespace, String extLabel, Address extAddr,
-			SourceType sourceType) throws InvalidInputException;
+	public default ExternalLocation addExtFunction(Library library, String extLabel,
+			Address extAddr, SourceType sourceType) throws InvalidInputException {
+		return addExtFunction(library, null, extLabel, extAddr, sourceType, true);
+	}
 
 	/**
-	 * Get or create an external {@link Function} in the indicated external parent namespace 
-	 * and identified by {@code extLabel} and/or its memory address
-	 * {@code extAddr}.  Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * Get or create an external {@link Function} location associated with a specified library
+	 * and identified by {@code extLabel} and/or its memory address {@code extAddr}.  
+	 * Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * <p>
+	 * NOTE: The result location will be created within the global namespace.
 	 * 
-	 * @param extNamespace the external namespace
+	 * @param library the external library
 	 * @param extLabel the external label or null
 	 * @param extAddr the external memory address or null
 	 * @param sourceType the source type of this external library's symbol
 	 * @param reuseExisting if true, will return any existing matching location instead of
-	 * creating a new one. If false, will prefer to create a new one as long as the specified
-	 * address is not null and not used in an existing location.
+	 * creating a new one if a suitable match is found. If false, the method will create a 
+	 * new one as long as an extLabel has been specified.
 	 * @return external location
 	 * @throws InvalidInputException if an invalid {@code extlabel} is specified.  
 	 * Names with spaces or the empty string are not permitted.
 	 * Neither {@code extLabel} nor {@code extAddr} was specified properly.
 	 * @throws IllegalArgumentException if an invalid {@code extAddr} was specified.
 	 */
-	public ExternalLocation addExtFunction(Namespace extNamespace, String extLabel, Address extAddr,
-			SourceType sourceType, boolean reuseExisting) throws InvalidInputException;
+	public default ExternalLocation addExtFunction(Library library, String extLabel,
+			Address extAddr, SourceType sourceType, boolean reuseExisting)
+			throws InvalidInputException {
+		return addExtFunction(library, null, extLabel, extAddr, sourceType, reuseExisting);
+	}
+
+	/**
+	 * Get or create an external {@link Function} location associated with a specified library and namespace,
+	 * and identified by {@code extLabel} and/or its memory address {@code extAddr}.  
+	 * Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * <p>
+	 * NOTE: If the extLabel is null the global or null namespace should be specified.
+	 * 
+	 * @param library the external library
+	 * @param namespace the namespace or null for the global namespace
+	 * @param extLabel the external label or null
+	 * @param extAddr the external memory address or null
+	 * @param sourceType the source type of this external library's symbol
+	 * @return external location
+	 * @throws InvalidInputException if an invalid {@code extlabel} is specified.  
+	 * Names with spaces or the empty string are not permitted.
+	 * Neither {@code extLabel} nor {@code extAddr} was specified properly.
+	 * @throws IllegalArgumentException if an invalid {@code extAddr} was specified.
+	 */
+	public default ExternalLocation addExtFunction(Library library, Namespace namespace,
+			String extLabel, Address extAddr, SourceType sourceType) throws InvalidInputException {
+		return addExtFunction(library, namespace, extLabel, extAddr, sourceType, true);
+	}
+
+	/**
+	 * Get or create an external {@link Function} location associated with a specified library and namespace,
+	 * and identified by {@code extLabel} and/or its memory address
+	 * {@code extAddr}.  Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * <p>
+	 * NOTE: If the extLabel is null the global or null namespace should be specified.
+	 * 
+	 * @param library the external library
+	 * @param namespace the namespace or null for the global namespace
+	 * @param extLabel the external label or null
+	 * @param extAddr the external memory address or null
+	 * @param sourceType the source type of this external library's symbol
+	 * @param reuseExisting if true, will return any existing matching location instead of
+	 * creating a new one if a suitable match is found. If false, the method will create a 
+	 * new one as long as an extLabel has been specified.
+	 * @return external location
+	 * @throws InvalidInputException if an invalid {@code extlabel} is specified.  
+	 * Names with spaces or the empty string are not permitted.
+	 * Neither {@code extLabel} nor {@code extAddr} was specified properly.
+	 * @throws IllegalArgumentException if an invalid {@code extAddr} was specified.
+	 */
+	public ExternalLocation addExtFunction(Library library, Namespace namespace, String extLabel,
+			Address extAddr, SourceType sourceType, boolean reuseExisting)
+			throws InvalidInputException;
 
 }

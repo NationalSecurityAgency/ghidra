@@ -578,20 +578,22 @@ public class ReferenceDBManager implements ReferenceManager, ProgramDBModule, Er
 		if (!fromAddr.isMemoryAddress()) {
 			throw new IllegalArgumentException("From address must be memory addresses");
 		}
-		try {
-			if (symbolMgr.getPrimarySymbol(location.getExternalSpaceAddress()) != null) {
-				removeAllFrom(fromAddr, opIndex);
-				return addRef(fromAddr, location.getExternalSpaceAddress(), type, sourceType,
-					opIndex, false, false, 0);
+		try (Closeable c = lock.write()) {
+
+			Symbol extSym = location.getSymbol();
+			if (extSym.getProgram() != getProgram()) {
+				throw new IllegalArgumentException(
+					"External location originates from a different program instance");
 			}
-			try {
-				return addExternalReference(fromAddr, location.getParentName(), location.getLabel(),
-					location.getAddress(), sourceType, opIndex, type);
+
+			if (extSym.isDeleted()) {
+				throw new ConcurrentModificationException("External location has been deleted");
 			}
-			catch (DuplicateNameException e) {
-				throw new InvalidInputException(
-					"External location not found and failed to create due to name conflict");
-			}
+
+			removeAllFrom(fromAddr, opIndex);
+
+			return addRef(fromAddr, extSym.getAddress(), type, sourceType, opIndex, false, false,
+				0);
 		}
 		catch (IOException e) {
 			program.dbError(e);
@@ -625,7 +627,8 @@ public class ReferenceDBManager implements ReferenceManager, ProgramDBModule, Er
 	}
 
 	@Override
-	public Reference addExternalReference(Address fromAddr, Namespace extNamespace, String extLabel,
+	public Reference addExternalReference(Address fromAddr, Library library, Namespace namespace,
+			String extLabel,
 			Address extAddr, SourceType sourceType, int opIndex, RefType type)
 			throws InvalidInputException, DuplicateNameException {
 		if (!fromAddr.isMemoryAddress()) {
@@ -634,7 +637,7 @@ public class ReferenceDBManager implements ReferenceManager, ProgramDBModule, Er
 		try {
 			ExternalManagerDB extMgr = program.getExternalManager();
 			ExternalLocation extLoc =
-				extMgr.addExtLocation(extNamespace, extLabel, extAddr, sourceType);
+				extMgr.addExtLocation(library, namespace, extLabel, extAddr, sourceType);
 
 			removeAllFrom(fromAddr, opIndex);
 
@@ -1799,9 +1802,10 @@ public class ReferenceDBManager implements ReferenceManager, ProgramDBModule, Er
 		int opIndex = ref.getOperandIndex();
 		if (ref.isExternalReference()) {
 			ExternalLocation extLoc = ((ExternalReference) ref).getExternalLocation();
+			Library library = extLoc.getLibrary();
 			try {
-				return addExternalReference(from, extLoc.getParentNameSpace(), extLoc.getLabel(),
-					extLoc.getAddress(), sourceType, opIndex, type);
+				return addExternalReference(from, library, extLoc.getParentNameSpace(),
+					extLoc.getLabel(), extLoc.getAddress(), sourceType, opIndex, type);
 			}
 			catch (DuplicateNameException e) {
 				throw new AssertException(e);

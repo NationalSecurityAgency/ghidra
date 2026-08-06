@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,8 +84,8 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, new DWordDataType());
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, new DWordDataType());
 
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -114,7 +114,7 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 		Function thunkedFunction = thunkFunction.getThunkedFunction(false);
 		assertNotNull(thunkedFunction);
 		assertTrue(thunkedFunction.isExternal());
-		assertEquals("user32.dll::printf", thunkedFunction.getName(true));
+		assertEquals("printf", thunkedFunction.getName(true));
 	}
 
 	@Test

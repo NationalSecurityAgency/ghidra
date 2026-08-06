@@ -463,7 +463,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		//
 
 		// 1)
-		String operandText = "dword ptr [->ADVAPI32.dll::RegQueryValueExW]";
+		String operandText = "dword ptr [->ADVAPI32.dll:RegQueryValueExW]";
 		OperandFieldLocation operandFieldLocation = new OperandFieldLocation(program,
 			addr("0100418c"), null, addr("01001008"), operandText, 15, 0);
 		codeBrowserPlugin.goTo(operandFieldLocation);

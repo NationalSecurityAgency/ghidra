@@ -142,4 +142,16 @@ public class Lock extends ReentrantReadWriteLock {
 		@Override
 		public void close();
 	}
+
+	/**
+	 * Checks that the current thread already has the write lock and throws an 
+	 * IllegalStateException if it doesn't.
+	 * @throws IllegalStateException if the current thread does not have the write lock.
+	 */
+	public void expectWriteLock() {
+		if (!isWriteLockedByCurrentThread()) {
+			throw new IllegalStateException(
+				"write lock is expected to be aquired before this method is called.");
+		}
+	}
 }

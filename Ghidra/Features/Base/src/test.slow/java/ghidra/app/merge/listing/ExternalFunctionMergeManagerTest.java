@@ -50,7 +50,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" });
+						createExternalFunction(program, "user32.dll", new String[] { "apples" });
 					addStackParameter(applesFunction, "P1", SourceType.USER_DEFINED,
 						new DWordDataType(), 4, "Test Parameter Comment");
 					addStackParameter(applesFunction, "P2", SourceType.USER_DEFINED,
@@ -62,7 +62,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 				// Check the function just created.
 				Function function =
-					getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					getExternalFunction(program, "user32.dll", new String[] { "apples" });
 				assertEquals("apples", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(DataType.DEFAULT, function.getReturnType());
@@ -103,7 +103,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function function =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 
 					function.setName("FRED", SourceType.USER_DEFINED);
 					function.setReturnType(new FloatDataType(), SourceType.ANALYSIS);
@@ -134,10 +134,10 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 				// Check the function just changed.
 				Function applesFunction =
-					getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					getExternalFunction(program, "user32.dll", new String[] { "apples" });
 				assertNull(applesFunction);
 				Function function =
-					getExternalFunction(program, new String[] { "user32.dll", "FRED" });
+					getExternalFunction(program, "user32.dll", new String[] { "FRED" });
 				assertEquals("FRED", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(new FloatDataType(), function.getReturnType());
@@ -192,9 +192,9 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		assertNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" }));
+		assertNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" }));
 		Function function =
-			getExternalFunction(resultProgram, new String[] { "user32.dll", "FRED" });
+			getExternalFunction(resultProgram, "user32.dll", new String[] { "FRED" });
 		assertNotNull(function);
 		assertEquals("FRED", function.getName());
 		assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
@@ -250,7 +250,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" });
+						createExternalFunction(program, "user32.dll", new String[] { "apples" });
 					addStackParameter(applesFunction, "P1", SourceType.USER_DEFINED,
 						new DWordDataType(), 4, "Test Parameter Comment");
 					addStackParameter(applesFunction, "P2", SourceType.USER_DEFINED,
@@ -262,7 +262,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 				// Check the function just created.
 				Function function =
-					getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					getExternalFunction(program, "user32.dll", new String[] { "apples" });
 				assertEquals("apples", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(DataType.DEFAULT, function.getReturnType());
@@ -308,7 +308,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function function =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 
 					function.setName("FRED", SourceType.USER_DEFINED);
 					function.setReturnType(new FloatDataType(), SourceType.ANALYSIS);
@@ -339,10 +339,10 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 				// Check the function just changed.
 				Function applesFunction =
-					getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					getExternalFunction(program, "user32.dll", new String[] { "apples" });
 				assertNull(applesFunction);
 				Function function =
-					getExternalFunction(program, new String[] { "user32.dll", "FRED" });
+					getExternalFunction(program, "user32.dll", new String[] { "FRED" });
 				assertEquals("FRED", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(new FloatDataType(), function.getReturnType());
@@ -392,9 +392,9 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		assertNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" }));
+		assertNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" }));
 		Function function =
-			getExternalFunction(resultProgram, new String[] { "user32.dll", "FRED" });
+			getExternalFunction(resultProgram, "user32.dll", new String[] { "FRED" });
 		assertNotNull(function);
 		assertEquals("FRED", function.getName());
 		assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
@@ -450,7 +450,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" });
+						createExternalFunction(program, "user32.dll", new String[] { "apples" });
 					addStackParameter(applesFunction, "P1", SourceType.USER_DEFINED,
 						new DWordDataType(), 4, "Test Parameter Comment");
 					addStackParameter(applesFunction, "P2", SourceType.USER_DEFINED,
@@ -462,7 +462,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 				// Check the function just created.
 				Function function =
-					getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					getExternalFunction(program, "user32.dll", new String[] { "apples" });
 				assertEquals("apples", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(DataType.DEFAULT, function.getReturnType());
@@ -503,7 +503,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function function =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 
 					function.setName("FRED", SourceType.USER_DEFINED);
 					function.setReturnType(new FloatDataType(), SourceType.ANALYSIS);
@@ -534,10 +534,10 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 				// Check the function just changed.
 				Function applesFunction =
-					getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					getExternalFunction(program, "user32.dll", new String[] { "apples" });
 				assertNull(applesFunction);
 				Function function =
-					getExternalFunction(program, new String[] { "user32.dll", "FRED" });
+					getExternalFunction(program, "user32.dll", new String[] { "FRED" });
 				assertEquals("FRED", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(new FloatDataType(), function.getReturnType());
@@ -587,7 +587,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function externalFunction =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					externalFunction.getSymbol().delete();
 				}
 				catch (Exception e) {
@@ -600,9 +600,9 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		chooseRadioButton("Resolve External Function Remove Conflict", LATEST_BUTTON);
 		waitForMergeCompletion();
 
-		assertNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" }));
+		assertNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" }));
 		Function function =
-			getExternalFunction(resultProgram, new String[] { "user32.dll", "FRED" });
+			getExternalFunction(resultProgram, "user32.dll", new String[] { "FRED" });
 		assertNotNull(function);
 		assertEquals("FRED", function.getName());
 		assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
@@ -658,7 +658,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" });
+						createExternalFunction(program, "user32.dll", new String[] { "apples" });
 					addStackParameter(applesFunction, "P1", SourceType.USER_DEFINED,
 						new DWordDataType(), 4, "Test Parameter Comment");
 					addStackParameter(applesFunction, "P2", SourceType.USER_DEFINED,
@@ -670,7 +670,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 				// Check the function just created.
 				Function function =
-					getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					getExternalFunction(program, "user32.dll", new String[] { "apples" });
 				assertEquals("apples", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(DataType.DEFAULT, function.getReturnType());
@@ -711,7 +711,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function function =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 
 					function.setName("FRED", SourceType.USER_DEFINED);
 					function.setReturnType(new FloatDataType(), SourceType.ANALYSIS);
@@ -742,10 +742,10 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 				// Check the function just changed.
 				Function applesFunction =
-					getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					getExternalFunction(program, "user32.dll", new String[] { "apples" });
 				assertNull(applesFunction);
 				Function function =
-					getExternalFunction(program, new String[] { "user32.dll", "FRED" });
+					getExternalFunction(program, "user32.dll", new String[] { "FRED" });
 				assertEquals("FRED", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(new FloatDataType(), function.getReturnType());
@@ -795,7 +795,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function externalFunction =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					externalFunction.getSymbol().delete();
 				}
 				catch (Exception e) {
@@ -808,9 +808,9 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		chooseRadioButton("Resolve External Function Remove Conflict", MY_BUTTON);
 		waitForMergeCompletion();
 
-		assertNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" }));
+		assertNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" }));
 		ExternalLocation location =
-			getExternalLocation(resultProgram, new String[] { "user32.dll", "FRED" });
+			getExternalLocation(resultProgram, "user32.dll", new String[] { "FRED" });
 		assertNotNull(location);
 	}
 
@@ -823,7 +823,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" });
+						createExternalFunction(program, "user32.dll", new String[] { "apples" });
 					addStackParameter(applesFunction, "P1", SourceType.USER_DEFINED,
 						new DWordDataType(), 4, "Test Parameter Comment");
 					addStackParameter(applesFunction, "P2", SourceType.USER_DEFINED,
@@ -835,7 +835,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 				// Check the function just created.
 				Function function =
-					getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					getExternalFunction(program, "user32.dll", new String[] { "apples" });
 				assertEquals("apples", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(DataType.DEFAULT, function.getReturnType());
@@ -876,7 +876,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function externalFunction =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					externalFunction.getSymbol().delete();
 				}
 				catch (Exception e) {
@@ -888,7 +888,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function function =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 
 					function.setName("FRED", SourceType.USER_DEFINED);
 					function.setReturnType(new FloatDataType(), SourceType.ANALYSIS);
@@ -919,10 +919,10 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 				// Check the function just changed.
 				Function applesFunction =
-					getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					getExternalFunction(program, "user32.dll", new String[] { "apples" });
 				assertNull(applesFunction);
 				Function function =
-					getExternalFunction(program, new String[] { "user32.dll", "FRED" });
+					getExternalFunction(program, "user32.dll", new String[] { "FRED" });
 				assertEquals("FRED", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(new FloatDataType(), function.getReturnType());
@@ -973,9 +973,9 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		chooseRadioButton("Resolve External Function Remove Conflict", LATEST_BUTTON);
 		waitForMergeCompletion();
 
-		assertNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" }));
+		assertNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" }));
 		ExternalLocation location =
-			getExternalLocation(resultProgram, new String[] { "user32.dll", "FRED" });
+			getExternalLocation(resultProgram, "user32.dll", new String[] { "FRED" });
 		assertNotNull(location);
 	}
 
@@ -988,7 +988,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" });
+						createExternalFunction(program, "user32.dll", new String[] { "apples" });
 					addStackParameter(applesFunction, "P1", SourceType.USER_DEFINED,
 						new DWordDataType(), 4, "Test Parameter Comment");
 					addStackParameter(applesFunction, "P2", SourceType.USER_DEFINED,
@@ -1000,7 +1000,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 				// Check the function just created.
 				Function function =
-					getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					getExternalFunction(program, "user32.dll", new String[] { "apples" });
 				assertEquals("apples", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(DataType.DEFAULT, function.getReturnType());
@@ -1041,7 +1041,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function externalFunction =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					externalFunction.getSymbol().delete();
 				}
 				catch (Exception e) {
@@ -1053,7 +1053,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function function =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 
 					function.setName("FRED", SourceType.USER_DEFINED);
 					function.setReturnType(new FloatDataType(), SourceType.ANALYSIS);
@@ -1084,10 +1084,10 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 				// Check the function just changed.
 				Function applesFunction =
-					getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					getExternalFunction(program, "user32.dll", new String[] { "apples" });
 				assertNull(applesFunction);
 				Function function =
-					getExternalFunction(program, new String[] { "user32.dll", "FRED" });
+					getExternalFunction(program, "user32.dll", new String[] { "FRED" });
 				assertEquals("FRED", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(new FloatDataType(), function.getReturnType());
@@ -1138,9 +1138,9 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		chooseRadioButton("Resolve External Function Remove Conflict", MY_BUTTON);
 		waitForMergeCompletion();
 
-		assertNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" }));
+		assertNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" }));
 		Function function =
-			getExternalFunction(resultProgram, new String[] { "user32.dll", "FRED" });
+			getExternalFunction(resultProgram, "user32.dll", new String[] { "FRED" });
 		assertNotNull(function);
 		assertEquals("FRED", function.getName());
 		assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
@@ -1196,7 +1196,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" });
+						createExternalFunction(program, "user32.dll", new String[] { "apples" });
 					addParameter(applesFunction, "P1", SourceType.USER_DEFINED, new DWordDataType(),
 						"Test Parameter Comment");
 					addParameter(applesFunction, "P2", SourceType.USER_DEFINED, new DWordDataType(),
@@ -1208,7 +1208,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 				// Check the function just created.
 				Function function =
-					getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					getExternalFunction(program, "user32.dll", new String[] { "apples" });
 				assertEquals("apples", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(DataType.DEFAULT, function.getReturnType());
@@ -1250,7 +1250,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 				try {
 					// Set the external Mem Address
 					ExternalLocation externalLocation =
-						getExternalLocation(program, new String[] { "user32.dll", "apples" });
+						getExternalLocation(program, "user32.dll", new String[] { "apples" });
 
 					try {
 						externalLocation.setLocation(externalLocation.getLabel(),
@@ -1273,7 +1273,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 				try {
 					// Set the external Mem Address
 					ExternalLocation externalLocation =
-						getExternalLocation(program, new String[] { "user32.dll", "apples" });
+						getExternalLocation(program, "user32.dll", new String[] { "apples" });
 
 					try {
 						externalLocation.setLocation(externalLocation.getLabel(),
@@ -1287,7 +1287,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					}
 
 					Function function =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 
 					function.setName("FRED", SourceType.USER_DEFINED);
 					function.setReturnType(new FloatDataType(), SourceType.ANALYSIS);
@@ -1318,10 +1318,10 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 				// Check the function just changed.
 				Function applesFunction =
-					getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					getExternalFunction(program, "user32.dll", new String[] { "apples" });
 				assertNull(applesFunction);
 				Function function =
-					getExternalFunction(program, new String[] { "user32.dll", "FRED" });
+					getExternalFunction(program, "user32.dll", new String[] { "FRED" });
 				assertEquals("FRED", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(new FloatDataType(), function.getReturnType());
@@ -1373,14 +1373,14 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			new int[] { INFO_ROW, KEEP_LATEST });// Memory Address conflict
 		waitForMergeCompletion();
 
-		assertNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" }));
+		assertNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" }));
 		ExternalLocation externalLocation =
-			getExternalLocation(resultProgram, new String[] { "user32.dll", "FRED" });
+			getExternalLocation(resultProgram, "user32.dll", new String[] { "FRED" });
 		assertNotNull(externalLocation);
 		assertEquals("70db1234", externalLocation.getAddress().toString());
 
 		Function function =
-			getExternalFunction(resultProgram, new String[] { "user32.dll", "FRED" });
+			getExternalFunction(resultProgram, "user32.dll", new String[] { "FRED" });
 		assertNotNull(function);
 		assertEquals("FRED", function.getName());
 		assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
@@ -1436,12 +1436,12 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" });
+						createExternalFunction(program, "user32.dll", new String[] { "apples" });
 					addParameter(applesFunction, "P1", SourceType.USER_DEFINED, new DWordDataType(),
 						"Test Parameter Comment");
 
 					Function orangesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "oranges" });
+						createExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					addParameter(orangesFunction, "P1", SourceType.USER_DEFINED,
 						new DWordDataType(), "Test Parameter Comment");
 				}
@@ -1454,7 +1454,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function function =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 
 					function.setName("BARNEY", SourceType.USER_DEFINED);
 				}
@@ -1462,33 +1462,33 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					Assert.fail(e.getMessage());
 				}
 				assertNotNull(
-					getExternalFunction(program, new String[] { "user32.dll", "BARNEY" }));
-				assertNull(getExternalFunction(program, new String[] { "user32.dll", "apples" }));
+					getExternalFunction(program, "user32.dll", new String[] { "BARNEY" }));
+				assertNull(getExternalFunction(program, "user32.dll", new String[] { "apples" }));
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function function =
-						getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+						getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 
 					function.setName("FRED", SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				assertNotNull(getExternalFunction(program, new String[] { "user32.dll", "FRED" }));
-				assertNull(getExternalFunction(program, new String[] { "user32.dll", "oranges" }));
+				assertNotNull(getExternalFunction(program, "user32.dll", new String[] { "FRED" }));
+				assertNull(getExternalFunction(program, "user32.dll", new String[] { "oranges" }));
 			}
 		});
 
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		assertNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" }));
-		assertNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "oranges" }));
-		assertNotNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "BARNEY" }));
-		assertNotNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "FRED" }));
+		assertNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" }));
+		assertNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "oranges" }));
+		assertNotNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "BARNEY" }));
+		assertNotNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "FRED" }));
 	}
 
 	@Test
@@ -1500,12 +1500,12 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" });
+						createExternalFunction(program, "user32.dll", new String[] { "apples" });
 					addParameter(applesFunction, "P1", SourceType.USER_DEFINED, new DWordDataType(),
 						"Test Parameter Comment");
 
 					Function orangesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "oranges" });
+						createExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					addParameter(orangesFunction, "P1", SourceType.USER_DEFINED,
 						new DWordDataType(), "Test Parameter Comment");
 				}
@@ -1518,9 +1518,9 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function func;
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setName("BARNEY", SourceType.USER_DEFINED);
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setName("BETTY", SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1532,9 +1532,9 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function func;
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setName("FRED", SourceType.USER_DEFINED);
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setName("WILMA", SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1544,20 +1544,20 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		});
 
 		executeMerge(ASK_USER);
-		checkExternalPanelInfo(MY_TITLE, "user32.dll::FRED", 1, 2);
+		checkExternalPanelInfo(MY_TITLE, "FRED", 1, 2);
 		chooseVariousOptionsForConflictType("Resolve External Detail Conflict",
 			new int[] { INFO_ROW, KEEP_LATEST });
-		checkExternalPanelInfo(MY_TITLE, "user32.dll::WILMA", 2, 2);
+		checkExternalPanelInfo(MY_TITLE, "WILMA", 2, 2);
 		chooseVariousOptionsForConflictType("Resolve External Detail Conflict",
 			new int[] { INFO_ROW, KEEP_MY });
 		waitForMergeCompletion();
 
-		assertNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" }));
-		assertNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "oranges" }));
-		assertNotNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "BARNEY" }));
-		assertNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "BETTY" }));
-		assertNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "FRED" }));
-		assertNotNull(getExternalFunction(resultProgram, new String[] { "user32.dll", "WILMA" }));
+		assertNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" }));
+		assertNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "oranges" }));
+		assertNotNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "BARNEY" }));
+		assertNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "BETTY" }));
+		assertNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "FRED" }));
+		assertNotNull(getExternalFunction(resultProgram, "user32.dll", new String[] { "WILMA" }));
 	}
 
 	@Test
@@ -1568,9 +1568,9 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					createExternalFunction(program, new String[] { "user32.dll", "BETTY" },
+					createExternalFunction(program, "user32.dll", new String[] { "BETTY" },
 						addr(program, "1002239"), null, SourceType.USER_DEFINED);
-					createExternalFunction(program, new String[] { "user32.dll", "BARNEY" },
+					createExternalFunction(program, "user32.dll", new String[] { "BARNEY" },
 						addr(program, "77db1020"), null, SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1581,9 +1581,9 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					createExternalFunction(program, new String[] { "user32.dll", "BETTY" },
+					createExternalFunction(program, "user32.dll", new String[] { "BETTY" },
 						addr(program, "10063b4"));
-					createExternalFunction(program, new String[] { "user32.dll", "BARNEY" },
+					createExternalFunction(program, "user32.dll", new String[] { "BARNEY" },
 						addr(program, "77db1130"));
 				}
 				catch (Exception e) {
@@ -1623,10 +1623,10 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					createExternalFunction(program, new String[] { "user32.dll", "BETTY" },
+					createExternalFunction(program, "user32.dll", new String[] { "BETTY" },
 						addr(program, "1002239"));
 
-					createExternalFunction(program, new String[] { "user32.dll", "BARNEY" },
+					createExternalFunction(program, "user32.dll", new String[] { "BARNEY" },
 						addr(program, "77db1020"));
 				}
 				catch (Exception e) {
@@ -1637,10 +1637,10 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					createExternalFunction(program, new String[] { "user32.dll", "BETTY" },
+					createExternalFunction(program, "user32.dll", new String[] { "BETTY" },
 						addr(program, "77db1020"));
 
-					createExternalFunction(program, new String[] { "user32.dll", "BARNEY" },
+					createExternalFunction(program, "user32.dll", new String[] { "BARNEY" },
 						addr(program, "1002239"));
 				}
 				catch (Exception e) {
@@ -1675,7 +1675,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function function =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(function);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
@@ -1691,7 +1691,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function func =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.removeParameter(0);
 				}
 				catch (Exception e) {
@@ -1704,7 +1704,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function func =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.getParameter(0).setComment("New my comment.");
 				}
 				catch (Exception e) {
@@ -1718,7 +1718,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		chooseRadioButton(LATEST_BUTTON);
 		waitForMergeCompletion();
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		assertEquals(0, func.getParameterCount());
 		assertSameDataType(new ByteDataType(), func.getReturnType());
 	}
@@ -1732,7 +1732,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function function =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(function);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
@@ -1748,7 +1748,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function func =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.removeParameter(0);
 				}
 				catch (Exception e) {
@@ -1761,7 +1761,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function func =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.getParameter(0).setComment("New my comment.");
 				}
 				catch (Exception e) {
@@ -1775,7 +1775,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		chooseRadioButton(MY_BUTTON);
 		waitForMergeCompletion();
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		assertEquals(1, func.getParameterCount());
 		Parameter parameter = func.getParameter(0);
 		assertSameDataType(new DWordDataType(), parameter.getDataType());
@@ -1793,7 +1793,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function function =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(function);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), program);
@@ -1809,7 +1809,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function func =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.removeParameter(0);
 				}
 				catch (Exception e) {
@@ -1822,7 +1822,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function func =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.getParameter(0).setName("NewMyName", SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1836,7 +1836,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		chooseRadioButton(LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		assertEquals(0, func.getParameterCount());
 
 	}
@@ -1850,7 +1850,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function function =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(function);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), program);
@@ -1866,7 +1866,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function func =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.removeParameter(0);
 				}
 				catch (Exception e) {
@@ -1879,7 +1879,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function func =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.getParameter(0).setName("NewMyName", SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1893,7 +1893,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME);
 		waitForMergeCompletion();
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		Parameter parm = func.getParameter(0);
 		assertEquals("NewMyName", parm.getName());
 	}
@@ -1907,7 +1907,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(applesFunction);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), program);
@@ -1917,7 +1917,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					applesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					Function orangesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "oranges" });
+						createExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					addParameter(orangesFunction, "A1", SourceType.USER_DEFINED,
 						new DWordDataType(), "Test Parameter Comment");
 					addParameter(orangesFunction, "A2", SourceType.USER_DEFINED,
@@ -1932,13 +1932,13 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function func =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					assertNotNull(func);
 					Parameter parameter0 = func.getParameter(0);
 					assertNotNull(parameter0);
 					func.removeParameter(0);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					Parameter parameter1 = func.getParameter(1);
 					parameter1.setName("NewLatestName", SourceType.USER_DEFINED);
 				}
@@ -1952,13 +1952,13 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function func =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					assertNotNull(func);
 					Parameter parameter0 = func.getParameter(0);
 					assertNotNull(parameter0);
 					parameter0.setName("NewMyName", SourceType.USER_DEFINED);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					Parameter parameter1 = func.getParameter(1);
 					assertNotNull(parameter1);
 					func.removeParameter(1);
@@ -1979,7 +1979,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		Register r12Reg = context.getRegister("r12");
 		Register r11Reg = context.getRegister("r11");
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		Parameter[] parameters = func.getParameters();
 		assertEquals(2, parameters.length);
 		assertEquals("NewMyName", parameters[0].getName());
@@ -1991,7 +1991,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		Variable[] localVariables = func.getLocalVariables();
 		assertEquals(0, localVariables.length);
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "oranges" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "oranges" });
 		parameters = func.getParameters();
 		assertEquals(1, parameters.length);
 		assertEquals("A1", parameters[0].getName());
@@ -2010,7 +2010,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(applesFunction);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), program);
@@ -2018,7 +2018,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					applesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Function orangesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "oranges" });
+						createExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					addStackParameter(orangesFunction, "A1", SourceType.USER_DEFINED,
 						new DWordDataType(), 4, "Test Parameter Comment");
 					addStackParameter(orangesFunction, "A2", SourceType.USER_DEFINED,
@@ -2037,13 +2037,13 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					AddRegisterParameterCommand cmd;
 					Register regR5 = program.getProgramContext().getRegister("r5");
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					cmd = new AddRegisterParameterCommand(func, regR5, null,
 						new Undefined4DataType(), 1, SourceType.USER_DEFINED);
 					cmd.applyTo(program);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					param0 = func.getParameter(0);
 					assertNotNull(param0);
@@ -2063,13 +2063,13 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					AddRegisterParameterCommand cmd;
 					Register regR6 = program.getProgramContext().getRegister("r6");
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					param0 = func.getParameter(0);
 					assertNotNull(param0);
 					param0.setName("NewParamName1", SourceType.USER_DEFINED);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					cmd = new AddRegisterParameterCommand(func, regR6, null,
 						new Undefined4DataType(), 1, SourceType.USER_DEFINED);
@@ -2092,7 +2092,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		Register r11Reg = context.getRegister("r11");
 		Register r6Reg = context.getRegister("r6");
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		Parameter[] parameters = func.getParameters();
 		assertEquals(1, parameters.length);
 		assertEquals("NewParamName1", parameters[0].getName());
@@ -2101,7 +2101,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		Variable[] localVariables = func.getLocalVariables();
 		assertEquals(0, localVariables.length);
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "oranges" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "oranges" });
 		parameters = func.getParameters();
 		assertEquals(3, parameters.length);
 		assertEquals("A1", parameters[0].getName());
@@ -2126,7 +2126,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(applesFunction);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), program);
@@ -2134,7 +2134,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					applesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Function orangesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "oranges" });
+						createExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					assertNotNull(orangesFunction);
 					parameter1 = new ParameterImpl("A1", new DWordDataType(), program);
 					parameter1.setComment("Test Parameter Comment");
@@ -2153,13 +2153,13 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					Register regR1 = program.getProgramContext().getRegister("r1");
 					Register regR3 = program.getProgramContext().getRegister("r3");
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					cmd = new AddRegisterParameterCommand(func, regR1, "Latest_1",
 						new FloatDataType(), 1, SourceType.USER_DEFINED);
 					cmd.applyTo(program);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					cmd = new AddRegisterParameterCommand(func, regR3, "Latest_3",
 						new FloatDataType(), 1, SourceType.USER_DEFINED);
@@ -2179,13 +2179,13 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					Register regR4 = program.getProgramContext().getRegister("r4");
 					Register regR6 = program.getProgramContext().getRegister("r6");
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					cmd = new AddRegisterParameterCommand(func, regR4, "My_4",
 						new Undefined4DataType(), 1, SourceType.USER_DEFINED);
 					cmd.applyTo(program);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					cmd = new AddRegisterParameterCommand(func, regR6, "My_6",
 						new Undefined4DataType(), 1, SourceType.USER_DEFINED);
@@ -2208,7 +2208,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		Register r4Reg = context.getRegister("r4");
 		Register r3Reg = context.getRegister("r3");
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		Parameter[] parameters = func.getParameters();
 		assertEquals(2, parameters.length);
 		assertEquals("P1", parameters[0].getName());
@@ -2220,7 +2220,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		Variable[] localVariables = func.getLocalVariables();
 		assertEquals(0, localVariables.length);
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "oranges" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "oranges" });
 		parameters = func.getParameters();
 		assertEquals(2, parameters.length);
 		assertEquals("A1", parameters[0].getName());
@@ -2242,21 +2242,21 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(applesFunction);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
 					applesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Function orangesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "oranges" });
+						createExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					addParameter(orangesFunction, "A1", SourceType.USER_DEFINED,
 						new DWordDataType(), "Test Parameter Comment");
 					addParameter(orangesFunction, "A2", SourceType.USER_DEFINED,
 						new DWordDataType(), "Test Parameter Comment");
 
 					Function pearsFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "pears" });
+						createExternalFunction(program, "user32.dll", new String[] { "pears" });
 					addParameter(pearsFunction, "B1", SourceType.USER_DEFINED, new DWordDataType(),
 						"Test B1");
 					addParameter(pearsFunction, "B2", SourceType.USER_DEFINED, new DWordDataType(),
@@ -2271,10 +2271,10 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function func =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.removeParameter(0);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.removeParameter(1);
 				}
 				catch (Exception e) {
@@ -2287,10 +2287,10 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function func =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.removeParameter(0);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "pears" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "pears" });
 					func.removeParameter(0);
 				}
 				catch (Exception e) {
@@ -2306,13 +2306,13 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		ProgramContext context = resultProgram.getProgramContext();
 		Register r12Reg = context.getRegister("r12");
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		Parameter[] parameters = func.getParameters();
 		assertEquals(0, parameters.length);
 		Variable[] localVariables = func.getLocalVariables();
 		assertEquals(0, localVariables.length);
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "oranges" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "oranges" });
 		parameters = func.getParameters();
 		assertEquals(1, parameters.length);
 		assertEquals("A1", parameters[0].getName());
@@ -2321,7 +2321,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		localVariables = func.getLocalVariables();
 		assertEquals(0, localVariables.length);
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "pears" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "pears" });
 		parameters = func.getParameters();
 		assertEquals(1, parameters.length);
 		assertEquals("B2", parameters[0].getName());
@@ -2334,7 +2334,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 	/**
 	 * Remove a register parameter vs change the register on a register parameter.
 	 * 
-	 * @throws Exception
+	 * @throws Exception  if exception occurs
 	 */
 	@Test
 	public void testRemoveVsChangeRegParam() throws Exception {
@@ -2345,7 +2345,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(applesFunction);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), program);
@@ -2353,7 +2353,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					applesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Function orangesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "oranges" });
+						createExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					addParameter(orangesFunction, "A1", SourceType.USER_DEFINED,
 						new DWordDataType(), "Test A1 Comment");
 				}
@@ -2367,11 +2367,11 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 				try {
 					ProgramContext context = program.getProgramContext();
 					Function func;
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					func.removeParameter(0);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					changeToRegisterParameter(func, 0, context.getRegister("r2"));
 				}
@@ -2386,11 +2386,11 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 				try {
 					ProgramContext context = program.getProgramContext();
 					Function func;
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					changeToRegisterParameter(func, 0, context.getRegister("r3"));
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					func.removeParameter(0);
 				}
@@ -2409,7 +2409,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		ProgramContext context = resultProgram.getProgramContext();
 		Register r3Reg = context.getRegister("r3");
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		Parameter[] parameters = func.getParameters();
 		assertEquals(1, parameters.length);
 		assertEquals("P1", parameters[0].getName());
@@ -2418,7 +2418,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		Variable[] localVariables = func.getLocalVariables();
 		assertEquals(0, localVariables.length);
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "oranges" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "oranges" });
 		parameters = func.getParameters();
 		assertEquals(0, parameters.length);
 		localVariables = func.getLocalVariables();
@@ -2440,7 +2440,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(applesFunction);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), program);
@@ -2448,7 +2448,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					applesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Function orangesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "oranges" });
+						createExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					addParameter(orangesFunction, "A1", SourceType.USER_DEFINED,
 						new DWordDataType(), "Test A1 Comment");
 				}
@@ -2461,11 +2461,11 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function func;
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					func.removeParameter(0);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					func.getParameter(0).setName("X1", SourceType.USER_DEFINED);
 				}
@@ -2479,11 +2479,11 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function func;
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					func.getParameter(0).setName("Y1", SourceType.USER_DEFINED);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					func.removeParameter(0);
 				}
@@ -2499,7 +2499,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME);
 		waitForMergeCompletion();
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		Parameter[] parameters = func.getParameters();
 		assertEquals(1, parameters.length);
 		assertEquals("Y1", parameters[0].getName());
@@ -2508,7 +2508,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		Variable[] localVariables = func.getLocalVariables();
 		assertEquals(0, localVariables.length);
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "oranges" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "oranges" });
 		parameters = func.getParameters();
 		assertEquals(0, parameters.length);
 		localVariables = func.getLocalVariables();
@@ -2530,7 +2530,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(applesFunction);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), program);
@@ -2538,7 +2538,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					applesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Function orangesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "oranges" });
+						createExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					addParameter(orangesFunction, "A1", SourceType.USER_DEFINED,
 						new DWordDataType(), "Test A1 Comment");
 				}
@@ -2551,11 +2551,11 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function func;
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					func.removeParameter(0);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					func.getParameter(0).setDataType(new FloatDataType(), SourceType.USER_DEFINED);
 				}
@@ -2569,11 +2569,11 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function func;
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					func.getParameter(0).setDataType(new FloatDataType(), SourceType.USER_DEFINED);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					func.removeParameter(0);
 				}
@@ -2589,7 +2589,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME);
 		waitForMergeCompletion();
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		Parameter[] parameters = func.getParameters();
 		assertEquals(1, parameters.length);
 		assertEquals("P1", parameters[0].getName());
@@ -2598,7 +2598,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		Variable[] localVariables = func.getLocalVariables();
 		assertEquals(0, localVariables.length);
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "oranges" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "oranges" });
 		parameters = func.getParameters();
 		assertEquals(0, parameters.length);
 		localVariables = func.getLocalVariables();
@@ -2620,7 +2620,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(applesFunction);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), program);
@@ -2628,7 +2628,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					applesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Function orangesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "oranges" });
+						createExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					addParameter(orangesFunction, "A1", SourceType.USER_DEFINED,
 						new DWordDataType(), "Test A1 Comment");
 				}
@@ -2641,11 +2641,11 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function func;
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					func.removeParameter(0);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					func.getParameter(0).setComment("LATEST Comment");
 				}
@@ -2659,11 +2659,11 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function func;
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					func.getParameter(0).setComment("MY Comment");
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					func.removeParameter(0);
 				}
@@ -2679,7 +2679,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME);
 		waitForMergeCompletion();
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		Parameter[] parameters = func.getParameters();
 		assertEquals(1, parameters.length);
 		assertEquals("P1", parameters[0].getName());
@@ -2689,7 +2689,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		Variable[] localVariables = func.getLocalVariables();
 		assertEquals(0, localVariables.length);
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "oranges" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "oranges" });
 		parameters = func.getParameters();
 		assertEquals(0, parameters.length);
 		localVariables = func.getLocalVariables();
@@ -2710,7 +2710,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(applesFunction);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), program);
@@ -2718,7 +2718,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					applesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Function orangesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "oranges" });
+						createExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					assertNotNull(orangesFunction);
 					parameter1 = new ParameterImpl("A1", new DWordDataType(), program);
 					parameter1.setComment("Test A1 Comment");
@@ -2733,11 +2733,11 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function func;
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					changeToStackParameter(func, 0, 0x8);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					func.removeParameter(0);
 				}
@@ -2751,11 +2751,11 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function func;
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					func.removeParameter(0);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					changeToStackParameter(func, 0, 0x8);
 				}
@@ -2771,13 +2771,13 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME);
 		waitForMergeCompletion();
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		Parameter[] parameters = func.getParameters();
 		assertEquals(0, parameters.length);
 		Variable[] localVariables = func.getLocalVariables();
 		assertEquals(0, localVariables.length);
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "oranges" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "oranges" });
 		parameters = func.getParameters();
 		assertEquals(1, parameters.length);
 		assertEquals("A1", parameters[0].getName());
@@ -2796,7 +2796,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(applesFunction);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), program);
@@ -2804,7 +2804,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					applesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Function orangesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "oranges" });
+						createExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					orangesFunction.setCustomVariableStorage(true);
 					addStackParameter(orangesFunction, "A1", SourceType.USER_DEFINED,
 						new DWordDataType(), 4, "Test Parameter Comment");
@@ -2821,11 +2821,11 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 				try {
 					Function func;
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					Parameter[] parameters = func.getParameters();
 					parameters[0].setName("Foo", SourceType.USER_DEFINED);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					parameters = func.getParameters();
 					parameters[1].setComment("This is a different test comment.");
 				}
@@ -2840,11 +2840,11 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 				try {
 					Function func;
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					Parameter[] parameters = func.getParameters();
 					parameters[0].setName("Foo", SourceType.USER_DEFINED);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					parameters = func.getParameters();
 					parameters[1].setDataType(new IntegerDataType(), SourceType.USER_DEFINED);
 				}
@@ -2861,7 +2861,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		ProgramContext context = resultProgram.getProgramContext();
 		Register r12Reg = context.getRegister("r12");
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		Parameter[] parameters = func.getParameters();
 		assertEquals(1, parameters.length);
 		assertEquals("Foo", parameters[0].getName());
@@ -2870,7 +2870,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		Variable[] localVariables = func.getLocalVariables();
 		assertEquals(0, localVariables.length);
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "oranges" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "oranges" });
 		parameters = func.getParameters();
 		assertEquals(2, parameters.length);
 		assertEquals("A1", parameters[0].getName());
@@ -2892,7 +2892,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(applesFunction);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), program);
@@ -2900,28 +2900,28 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					applesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Function orangesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "oranges" });
+						createExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					addParameter(orangesFunction, "A1", SourceType.USER_DEFINED,
 						new DWordDataType(), "Test Parameter Comment");
 					addParameter(orangesFunction, "A2", SourceType.USER_DEFINED,
 						new DWordDataType(), "Test Parameter Comment");
 
 					Function pearsFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "pears" });
+						createExternalFunction(program, "user32.dll", new String[] { "pears" });
 					addParameter(pearsFunction, "B1", SourceType.USER_DEFINED, new DWordDataType(),
 						"Test Parameter Comment");
 					addParameter(pearsFunction, "B2", SourceType.USER_DEFINED, new DWordDataType(),
 						"Test Parameter Comment");
 
 					Function grapesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "grapes" });
+						createExternalFunction(program, "user32.dll", new String[] { "grapes" });
 					addParameter(grapesFunction, "C1", SourceType.USER_DEFINED, new DWordDataType(),
 						"Test Parameter Comment");
 					addParameter(grapesFunction, "C2", SourceType.USER_DEFINED, new DWordDataType(),
 						"Test Parameter Comment");
 
 					Function berriesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "berries" });
+						createExternalFunction(program, "user32.dll", new String[] { "berries" });
 					addParameter(berriesFunction, "D1", SourceType.USER_DEFINED,
 						new DWordDataType(), "Test Parameter Comment");
 					addParameter(berriesFunction, "D2", SourceType.USER_DEFINED,
@@ -2938,21 +2938,21 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					ProgramContext context = program.getProgramContext();
 					Function func;
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					changeToRegisterParameter(func, 0, context.getRegister("R1"));
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					changeToStackParameter(func, 1, 0x4);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "pears" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "pears" });
 					func.getParameter(0).setName("LatestName_0", SourceType.USER_DEFINED);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "grapes" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "grapes" });
 					func.getParameter(1).setDataType(new WordDataType(), SourceType.USER_DEFINED);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "berries" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "berries" });
 					func.getParameter(0).setComment("test comment.");
 				}
 				catch (Exception e) {
@@ -2967,23 +2967,23 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					ProgramContext context = program.getProgramContext();
 					Function func;
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "apples" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setCustomVariableStorage(true);
 					changeToStackParameter(func, 0, 0x4);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setCustomVariableStorage(true);
 					changeToRegisterParameter(func, 1, context.getRegister("r2"));
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "pears" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "pears" });
 					func.getParameter(0).setName("NewName_0", SourceType.USER_DEFINED);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "grapes" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "grapes" });
 					func.getParameter(1)
 							.setDataType(new ArrayDataType(new ByteDataType(), 2, 1),
 								SourceType.USER_DEFINED);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "berries" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "berries" });
 					func.getParameter(0).setComment("My sample comment.");
 				}
 				catch (Exception e) {
@@ -3001,7 +3001,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		chooseVariousOptions(new int[] { INFO_ROW, KEEP_MY });// Comment change for user32.dll::berries
 		waitForMergeCompletion();
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		Parameter[] parameters = func.getParameters();
 		assertEquals(1, parameters.length);
 		assertEquals("P1", parameters[0].getName());
@@ -3010,7 +3010,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		Variable[] localVariables = func.getLocalVariables();
 		assertEquals(0, localVariables.length);
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "oranges" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "oranges" });
 		parameters = func.getParameters();
 		assertEquals(2, parameters.length);
 		assertEquals("A1", parameters[0].getName());
@@ -3022,7 +3022,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		localVariables = func.getLocalVariables();
 		assertEquals(0, localVariables.length);
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "pears" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "pears" });
 		parameters = func.getParameters();
 		assertEquals(2, parameters.length);
 		assertEquals("NewName_0", parameters[0].getName());
@@ -3034,7 +3034,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		localVariables = func.getLocalVariables();
 		assertEquals(0, localVariables.length);
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "grapes" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "grapes" });
 		parameters = func.getParameters();
 		assertEquals(2, parameters.length);
 		assertEquals("C1", parameters[0].getName());
@@ -3047,7 +3047,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		localVariables = func.getLocalVariables();
 		assertEquals(0, localVariables.length);
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "berries" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "berries" });
 		parameters = func.getParameters();
 		assertEquals(2, parameters.length);
 		assertEquals("D1", parameters[0].getName());
@@ -3070,7 +3070,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					Function applesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "apples" },
+						createExternalFunction(program, "user32.dll", new String[] { "apples" },
 							addr(program, "77db1020"), new ByteDataType(), SourceType.USER_DEFINED);
 					assertNotNull(applesFunction);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), program);
@@ -3078,7 +3078,8 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					applesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Function orangesFunction =
-						createExternalFunction(program, new String[] { "user32.dll", "oranges" });
+						createExternalFunction(program, "user32.dll",
+							new String[] { "oranges" });
 					addParameter(orangesFunction, "A1", SourceType.USER_DEFINED,
 						new DWordDataType(), "Test Parameter Comment");
 					addParameter(orangesFunction, "A2", SourceType.USER_DEFINED,
@@ -3093,10 +3094,10 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyLatest(ProgramDB program) {
 				try {
 					Function func =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setStackPurgeSize(5);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setStackPurgeSize(3);
 				}
 				catch (Exception e) {
@@ -3108,10 +3109,10 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					Function func =
-						getExternalFunction(program, new String[] { "user32.dll", "apples" });
+						getExternalFunction(program, "user32.dll", new String[] { "apples" });
 					func.setStackPurgeSize(8);
 
-					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
+					func = getExternalFunction(program, "user32.dll", new String[] { "oranges" });
 					func.setStackPurgeSize(2);
 				}
 				catch (Exception e) {
@@ -3127,10 +3128,10 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 			new int[] { INFO_ROW, KEEP_MY });
 		waitForMergeCompletion();
 
-		Function func = getExternalFunction(resultProgram, new String[] { "user32.dll", "apples" });
+		Function func = getExternalFunction(resultProgram, "user32.dll", new String[] { "apples" });
 		assertEquals(5, func.getStackPurgeSize());
 
-		func = getExternalFunction(resultProgram, new String[] { "user32.dll", "oranges" });
+		func = getExternalFunction(resultProgram, "user32.dll", new String[] { "oranges" });
 		assertEquals(2, func.getStackPurgeSize());
 	}
 }

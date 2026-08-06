@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import javax.swing.border.EmptyBorder;
 
 import docking.DialogComponentProvider;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.ExternalLocation;
 import ghidra.program.model.symbol.Symbol;
@@ -146,8 +147,9 @@ public class EditExternalLocationDialog extends DialogComponentProvider {
 
 	private String getEditName() {
 		if (externalLocation != null) {
+			Library library = externalLocation.getLibrary();
 			Symbol symbol = externalLocation.getSymbol();
-			String name = symbol.getName(true);
+			String name = library.getName() + ":" + symbol.getName(true);
 			Address addr = externalLocation.getAddress();
 			if (addr != null) {
 				name += " @ " + addr.toString(true);

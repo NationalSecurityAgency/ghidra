@@ -95,13 +95,6 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		return externalLocation;
 	}
 
-	/**
-	 *
-	 * @param program
-	 * @param transactionDescription
-	 * @param library
-	 * @param label
-	 */
 	void removeExternalLabel(ProgramDB program, String transactionDescription, String library,
 			String label) {
 		int txId = program.startTransaction(transactionDescription);
@@ -128,16 +121,6 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		assertNull(externalLocation);
 	}
 
-	/**
-	 *
-	 * @param program
-	 * @param transactionDescription
-	 * @param library
-	 * @param label
-	 * @param addressAsString
-	 * @param sourceType
-	 * @return
-	 */
 	ExternalLocation createExternalFunction(ProgramDB program, String transactionDescription,
 			String library, String label, String addressAsString, SourceType sourceType) {
 		Address address = (addressAsString != null) ? addr(program, addressAsString) : null;
@@ -176,22 +159,14 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		return externalLocation;
 	}
 
-	/**
-	 *
-	 * @param program
-	 * @param transactionDescription
-	 * @param library
-	 * @param label
-	 * @param addressAsString
-	 */
 	void removeExternalFunctionLocation(ProgramDB program, String transactionDescription,
-			String library, String label, String addressAsString) {
+			String libraryName, String label, String addressAsString) {
 		int txId = program.startTransaction(transactionDescription);
 		boolean commit = false;
 		ExternalManager externalManager = program.getExternalManager();
 		try {
 			ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(library, label);
+				externalManager.getUniqueExternalLocation(libraryName, label);
 			assertNotNull(externalLocation);
 			if (!externalLocation.isFunction()) {
 				Assert.fail(externalLocation.getLabel() + " is not a function.");
@@ -200,11 +175,13 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 			boolean delete = externalSymbol.delete();
 			assertTrue(delete);
 			commit = true;
-
-			Symbol s = getUniqueSymbol(program, library, program.getGlobalNamespace());
+			Symbol s = getUniqueSymbol(program, libraryName, program.getGlobalNamespace());
 			if (s instanceof LibrarySymbol) {
-				Symbol symbol = getUniqueSymbol(program, label, (Namespace) s.getObject());
-				symbol.delete();
+				Library library = (Library) s.getObject();
+				Symbol symbol = getUniqueSymbol(program, label, null);
+				if (library.equals(symbol.getLibrary())) {
+					symbol.delete();
+				}
 			}
 			commit = true;
 		}
@@ -215,31 +192,19 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 			program.endTransaction(txId, commit);
 		}
 
-		SymbolTable symbolTable = program.getSymbolTable();
-		Symbol s = symbolTable.getLibrarySymbol(library);
-		if (s instanceof LibrarySymbol) {
-			Symbol symbol = getUniqueSymbol(program, label, (Namespace) s.getObject());
-			assertNull(symbol);
-		}
+		Symbol symbol = getUniqueSymbol(program, label, null);
+		assertNull(symbol);
 
-		assertTrue(externalManager.contains(library));
+		assertTrue(externalManager.contains(libraryName));
 		ExternalLocation externalLocation =
-			externalManager.getUniqueExternalLocation(library, label);
+			externalManager.getUniqueExternalLocation(libraryName, label);
 		assertNull(externalLocation);
 		FunctionIterator externalFunctions = program.getFunctionManager().getExternalFunctions();
 		assertEquals(false, externalFunctions.hasNext());
 	}
 
-	/**
-	 *
-	 * @param program
-	 * @param transactionDescription
-	 * @param library
-	 * @param label
-	 * @param addressAsString
-	 */
-	void changeExternalFunctionIntoExternalLabel(Program program, String[] path) {
-		Function externalFunction = getExternalFunction(program, path);
+	void changeExternalFunctionIntoExternalLabel(Program program, String library, String[] path) {
+		Function externalFunction = getExternalFunction(program, library, path);
 
 		int txId = program.startTransaction("Changing external function into an external label.");
 		boolean commit = false;
@@ -256,19 +221,11 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 			program.endTransaction(txId, commit);
 		}
 
-		ExternalLocation externalLocation = getExternalLocation(program, path);
+		ExternalLocation externalLocation = getExternalLocation(program, library, path);
 		assertNotNull(externalLocation);
 		assertFalse(externalLocation.isFunction());
 	}
 
-	/**
-	 *
-	 * @param program
-	 * @param transactionDescription
-	 * @param library
-	 * @param label
-	 * @param addressAsString
-	 */
 	void setAddressForExternalLabel(ProgramDB program, String transactionDescription,
 			String library, String label, String addressAsString) {
 		int txId = program.startTransaction(transactionDescription);
@@ -300,13 +257,6 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		assertEquals(addressAsString, (address != null) ? address.toString() : null);
 	}
 
-	/**
-	 *
-	 * @param program
-	 * @param transactionDescription
-	 * @param library
-	 * @param label
-	 */
 	void removeAddressFromExternalLabel(ProgramDB program, String transactionDescription,
 			String library, String label) {
 		int txId = program.startTransaction(transactionDescription);
@@ -336,13 +286,6 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		assertNull(externalLocation.getAddress());
 	}
 
-	/**
-	 *
-	 * @param program
-	 * @param transactionDescription
-	 * @param library
-	 * @param label
-	 */
 	void changeMemAddressForExternalLabel(ProgramDB program, String transactionDescription,
 			String library, String label, String changeAddressAsString) {
 		Address changeAddress =
@@ -375,15 +318,6 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		assertEquals(changeAddress, externalLocation.getAddress());
 	}
 
-	/**
-	 *
-	 * @param program
-	 * @param transactionDescription
-	 * @param library
-	 * @param label
-	 * @param addressAsString
-	 * @param externalDataType
-	 */
 	void setDataTypeForExternalLabel(ProgramDB program, String transactionDescription,
 			String library, String label, String addressAsString, DataType externalDataType) {
 		Address address = (addressAsString != null) ? addr(program, addressAsString) : null;
@@ -415,14 +349,6 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		assertTrue(dataType.isEquivalent(externalDataType));
 	}
 
-	/**
-	 *
-	 * @param program
-	 * @param transactionDescription
-	 * @param library
-	 * @param label
-	 * @param addressAsString
-	 */
 	void removeDataTypeFromExternalLabel(ProgramDB program, String transactionDescription,
 			String library, String label, String addressAsString) {
 		Address address = (addressAsString != null) ? addr(program, addressAsString) : null;
@@ -454,14 +380,6 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		assertNull(dataType);
 	}
 
-	/**
-	 *
-	 * @param program
-	 * @param transactionDescription
-	 * @param library
-	 * @param label
-	 * @param externalSourceType
-	 */
 	void setSourceTypeForExternalLabel(ProgramDB program, String transactionDescription,
 			String library, String label, SourceType externalSourceType) {
 		int txId = program.startTransaction(transactionDescription);
@@ -491,13 +409,6 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		assertTrue(sourceType == externalSourceType);
 	}
 
-	/**
-	 *
-	 * @param program
-	 * @param transactionDescription
-	 * @param library
-	 * @param label
-	 */
 	void changeExternalLabelIntoFunction(ProgramDB program, String transactionDescription,
 			String library, String label) {
 		int txId = program.startTransaction(transactionDescription);
@@ -528,11 +439,6 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		assertNotNull(function);
 	}
 
-	/**
-	 *
-	 * @param externalLocation
-	 * @param expectedAddress
-	 */
 	void checkExternalAddress(ExternalLocation externalLocation, String expectedAddress) {
 		Address address = externalLocation.getAddress();
 		String addressString = (address != null) ? address.toString() : null;
@@ -541,11 +447,6 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		assertEquals(failureMessage, expectedAddress, addressString);
 	}
 
-	/**
-	 *
-	 * @param externalLocation
-	 * @param expectedSourceType
-	 */
 	void checkExternalSourceType(ExternalLocation externalLocation, SourceType expectedSourceType) {
 		SourceType sourceType = externalLocation.getSource();
 		String failureMessage =
@@ -554,11 +455,6 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		assertEquals(failureMessage, expectedSourceType, sourceType);
 	}
 
-	/**
-	 *
-	 * @param externalLocation
-	 * @param expectedDataType
-	 */
 	void checkExternalDataType(ExternalLocation externalLocation, DataType expectedDataType) {
 		DataType dataType = externalLocation.getDataType();
 		String failureMessage = "Expected external data type '" + expectedDataType.getName() +
@@ -572,11 +468,6 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		assertTrue(failureMessage, expectedDataType.isEquivalent(actualDataType));
 	}
 
-	/**
-	 *
-	 * @param function
-	 * @param expectedDataType
-	 */
 	void checkFunctionReturnType(Function function, DataType expectedDataType) {
 		DataType functionReturnType = function.getReturnType();
 		String failureMessage = "Expected return type '" + expectedDataType.getName() +
@@ -584,11 +475,6 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		assertTrue(failureMessage, expectedDataType.isEquivalent(functionReturnType));
 	}
 
-	/**
-	 *
-	 * @param parameter
-	 * @param expectedDataType
-	 */
 	void checkParameterDataType(Parameter parameter, DataType expectedDataType) {
 		DataType parameterDataType = parameter.getDataType();
 		String failureMessage =
@@ -597,14 +483,6 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		assertTrue(failureMessage, expectedDataType.isEquivalent(parameterDataType));
 	}
 
-	/**
-	 *
-	 * @param programVersion
-	 * @param externalLocationPathName
-	 * @param conflictNumber
-	 * @param totalNumberOfConflicts
-	 * @throws Exception
-	 */
 	void checkExternalPanelInfo(final String programVersion, final String externalLocationPathName,
 			final int conflictNumber, final int totalNumberOfConflicts) throws Exception {
 		waitForPrompting();
@@ -714,22 +592,24 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		}
 	}
 
-	Function createExternalFunction(final Program program, final String[] path)
+	Function createExternalFunction(Program program, String library, String[] path)
 			throws DuplicateNameException, InvalidInputException {
-		return createExternalFunction(program, path, null, null, SourceType.USER_DEFINED);
+		return createExternalFunction(program, library, path, null, null, SourceType.USER_DEFINED);
 	}
 
-	Function createExternalFunction(final Program program, final String[] path,
+	Function createExternalFunction(Program program, String library, String[] path,
 			final Address address) throws DuplicateNameException, InvalidInputException {
-		return createExternalFunction(program, path, address, null, SourceType.USER_DEFINED);
+		return createExternalFunction(program, library, path, address, null,
+			SourceType.USER_DEFINED);
 	}
 
-	Function createExternalFunction(final Program program, final String[] path,
+	Function createExternalFunction(Program program, String library, String[] path,
 			final DataType returnType) throws DuplicateNameException, InvalidInputException {
-		return createExternalFunction(program, path, null, returnType, SourceType.USER_DEFINED);
+		return createExternalFunction(program, library, path, null, returnType,
+			SourceType.USER_DEFINED);
 	}
 
-	Function createExternalFunction(final Program program, final String[] path,
+	Function createExternalFunction(Program program, String libraryName, String[] path,
 			final Address memoryAddress, final DataType returnType, final SourceType sourceType)
 			throws DuplicateNameException, InvalidInputException {
 
@@ -737,17 +617,9 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		ExternalManager externalManager = program.getExternalManager();
 		int nameIndex = path.length - 1;
 
-		Library externalLibrary;
-		Symbol librarySymbol = symbolTable.getLibrarySymbol(path[0]);
-		if (librarySymbol != null) {
-			externalLibrary = (Library) librarySymbol.getObject();
-		}
-		else {
-			externalLibrary = symbolTable.createExternalLibrary(path[0], sourceType);
-		}
-
-		Namespace currentNamespace = externalLibrary;
-		for (int i = 1; i < nameIndex; i++) {
+		Library library = getLibrary(symbolTable, libraryName, sourceType);
+		Namespace currentNamespace = program.getGlobalNamespace();
+		for (int i = 0; i < nameIndex; i++) {
 			Symbol nextNamespaceSymbol = getUniqueSymbol(program, path[i], currentNamespace);
 			if (nextNamespaceSymbol != null) {
 				currentNamespace = (Namespace) nextNamespaceSymbol.getObject();
@@ -758,8 +630,9 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 			}
 		}
 
-		ExternalLocation externalLocation = externalManager.addExtFunction(currentNamespace,
-			path[nameIndex], memoryAddress, sourceType);
+		ExternalLocation externalLocation =
+			externalManager.addExtFunction(library, currentNamespace,
+				path[nameIndex], memoryAddress, sourceType);
 
 		Function function = externalLocation.getFunction();
 		assertNotNull(function);
@@ -771,7 +644,16 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		return function;
 	}
 
-	ExternalLocation createExternalLabel(final Program program, final String[] path,
+	private Library getLibrary(SymbolTable symbolTable, String libraryName, SourceType source)
+			throws DuplicateNameException, InvalidInputException {
+		Symbol librarySymbol = symbolTable.getLibrarySymbol(libraryName);
+		if (librarySymbol != null) {
+			return (Library) librarySymbol.getObject();
+		}
+		return symbolTable.createExternalLibrary(libraryName, source);
+	}
+
+	ExternalLocation createExternalLabel(Program program, String libraryName, String[] path,
 			final Address memoryAddress, final SourceType sourceType)
 			throws DuplicateNameException, InvalidInputException {
 
@@ -779,17 +661,10 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		ExternalManager externalManager = program.getExternalManager();
 		int nameIndex = path.length - 1;
 
-		Library externalLibrary;
-		Symbol librarySymbol = getUniqueSymbol(program, path[0], program.getGlobalNamespace());
-		if (librarySymbol != null) {
-			externalLibrary = (Library) librarySymbol.getObject();
-		}
-		else {
-			externalLibrary = symbolTable.createExternalLibrary(path[0], sourceType);
-		}
+		Library library = getLibrary(symbolTable, libraryName, sourceType);
 
-		Namespace currentNamespace = externalLibrary;
-		for (int i = 1; i < nameIndex; i++) {
+		Namespace currentNamespace = program.getGlobalNamespace();
+		for (int i = 0; i < nameIndex; i++) {
 			Symbol nextNamespaceSymbol = getUniqueSymbol(program, path[i], currentNamespace);
 			if (nextNamespaceSymbol != null) {
 				currentNamespace = (Namespace) nextNamespaceSymbol.getObject();
@@ -800,29 +675,21 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 			}
 		}
 
-		ExternalLocation externalLocation = externalManager.addExtLocation(currentNamespace,
-			path[nameIndex], memoryAddress, sourceType);
+		ExternalLocation externalLocation =
+			externalManager.addExtLocation(library, currentNamespace,
+				path[nameIndex], memoryAddress, sourceType);
 
 		return externalLocation;
 	}
 
-	Namespace createExternalNamespace(final Program program, final String[] path,
-			final SourceType sourceType) throws DuplicateNameException, InvalidInputException {
+	Namespace createNamespace(Program program, String[] path, final SourceType sourceType)
+			throws DuplicateNameException, InvalidInputException {
 
 		SymbolTable symbolTable = program.getSymbolTable();
 		int namespaceIndex = path.length;
 
-		Library externalLibrary;
-		Symbol librarySymbol = getUniqueSymbol(program, path[0], program.getGlobalNamespace());
-		if (librarySymbol != null) {
-			externalLibrary = (Library) librarySymbol.getObject();
-		}
-		else {
-			externalLibrary = symbolTable.createExternalLibrary(path[0], sourceType);
-		}
-
-		Namespace currentNamespace = externalLibrary;
-		for (int i = 1; i < namespaceIndex; i++) {
+		Namespace currentNamespace = null;
+		for (int i = 0; i < namespaceIndex; i++) {
 			Symbol nextNamespaceSymbol = getUniqueSymbol(program, path[i], currentNamespace);
 			if (nextNamespaceSymbol != null) {
 				currentNamespace = (Namespace) nextNamespaceSymbol.getObject();
@@ -852,18 +719,18 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		return function.addParameter(parameter1, sourceType);
 	}
 
-	Function getExternalFunction(Program program, String[] path) {
-
+	Function getExternalFunction(Program program, String libraryName, String[] path) {
+		// the first name is the library. the other names form the namespace path
 		SymbolTable symbolTable = program.getSymbolTable();
 		int nameIndex = path.length - 1;
 
-		Symbol librarySymbol = symbolTable.getLibrarySymbol(path[0]);
+		Symbol librarySymbol = symbolTable.getLibrarySymbol(libraryName);
 		SymbolType librarySymbolType = librarySymbol.getSymbolType();
 		assertEquals(SymbolType.LIBRARY, librarySymbolType);
-		Library externalLibrary = (Library) librarySymbol.getObject();
+		Library library = (Library) librarySymbol.getObject();
 
-		Namespace currentNamespace = externalLibrary;
-		for (int i = 1; i < nameIndex; i++) {
+		Namespace currentNamespace = null;
+		for (int i = 0; i < nameIndex; i++) {
 			Symbol nextNamespaceSymbol = getUniqueSymbol(program, path[i], currentNamespace);
 			currentNamespace = (Namespace) nextNamespaceSymbol.getObject();
 		}
@@ -872,40 +739,37 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		if (functionSymbol == null) {
 			return null;
 		}
+		assertEquals(library, functionSymbol.getLibrary());
 		SymbolType functionSymbolType = functionSymbol.getSymbolType();
 		assertEquals(SymbolType.FUNCTION, functionSymbolType);
 		Function function = (Function) functionSymbol.getObject();
 		return function;
 	}
 
-	ExternalLocation getExternalLocation(Program program, String[] path) {
+	ExternalLocation getExternalLocation(Program program, String library, String[] path) {
 		int nameIndex = path.length - 1;
-		Namespace namespace = getExternalNamespace(program, path, path.length - 1);
+		Namespace namespace = getNamespace(program, path, path.length - 1);
 
 		List<Symbol> symbols = program.getSymbolTable().getSymbols(path[nameIndex], namespace);
 		if (symbols.size() != 1) {
 			return null;
 		}
+		Symbol symbol = symbols.get(0);
+		assertEquals(library, symbol.getLibrary().getName());
 		ExternalManager externalManager = program.getExternalManager();
-		return externalManager.getExternalLocation(symbols.get(0));
+		return externalManager.getExternalLocation(symbol);
 	}
 
-	Namespace getExternalNamespace(Program program, String[] path) {
-		return getExternalNamespace(program, path, path.length);
+	Namespace getNamespace(Program program, String[] path) {
+		return getNamespace(program, path, path.length);
 	}
 
-	Namespace getExternalNamespace(Program program, String[] path, int pathLength) {
+	Namespace getNamespace(Program program, String[] path, int pathLength) {
 
 		SymbolTable symbolTable = program.getSymbolTable();
-
-		Symbol librarySymbol = symbolTable.getLibrarySymbol(path[0]);
-		SymbolType librarySymbolType = librarySymbol.getSymbolType();
-		assertEquals(SymbolType.LIBRARY, librarySymbolType);
-		Library externalLibrary = (Library) librarySymbol.getObject();
-
-		Namespace currentNamespace = externalLibrary;
-		for (int i = 1; i < pathLength; i++) {
-			currentNamespace = findExternalNamespaceSymbol(symbolTable, path[i], currentNamespace);
+		Namespace currentNamespace = null;
+		for (int i = 0; i < pathLength; i++) {
+			currentNamespace = findNamespaceSymbol(symbolTable, path[i], currentNamespace);
 			if (currentNamespace == null) {
 				return null;
 			}
@@ -913,16 +777,13 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 		return currentNamespace;
 	}
 
-	private Namespace findExternalNamespaceSymbol(SymbolTable symbolTable, String name,
+	private Namespace findNamespaceSymbol(SymbolTable symbolTable, String name,
 			Namespace currentNamespace) {
 		List<Symbol> symbols = symbolTable.getSymbols(name, currentNamespace);
 		for (Symbol symbol : symbols) {
 			Object object = symbol.getObject();
-			if (object instanceof Namespace) {
-				Namespace namespace = (Namespace) object;
-				if (namespace.isExternal()) {
-					return namespace;
-				}
+			if (object instanceof Namespace namespace) {
+				return namespace;
 			}
 		}
 		return null;

@@ -416,11 +416,10 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 			ExternalManager em = program.getExternalManager();
 
 			// "ADVAPI32.dll", "externalFunctionXyz", "_Zxyz"
-			ExternalLocation externalLocation =
-				em.addExtFunction(Library.UNKNOWN, "_Zxyz", addr(extAddress), SourceType.IMPORTED);
 			Library lib = em.addExternalLibraryName("ADVAPI32.dll", SourceType.IMPORTED);
-			externalLocation.setName(lib, "externalFunctionXyz", SourceType.IMPORTED);
-
+			ExternalLocation externalLocation =
+				em.addExtFunction(lib, "_Zxyz", addr(extAddress), SourceType.IMPORTED);
+			externalLocation.setName(null, "externalFunctionXyz", SourceType.IMPORTED);
 			Function function = program.getFunctionManager().getFunctionAt(addr(addressString));
 			function.setThunkedFunction(externalLocation.getFunction());
 		});

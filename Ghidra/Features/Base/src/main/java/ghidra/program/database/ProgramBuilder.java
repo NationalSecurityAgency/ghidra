@@ -1088,8 +1088,7 @@ public class ProgramBuilder {
 
 			SymbolTable symTable = program.getSymbolTable();
 			ExternalManager extMgr = program.getExternalManager();
-			Namespace namespace = extMgr.addExternalLibraryName(libraryName, sourceType);
-
+			Namespace namespace = null;
 			String myExternalLabel = externalLabel;
 			if (myExternalLabel != null && myExternalLabel.indexOf(Namespace.DELIMITER) > 0) {
 				// External manager API does not yet support creation of namespaces within
@@ -1103,7 +1102,7 @@ public class ProgramBuilder {
 			Reference ref = refMgr.addExternalReference(addr(fromAddress), libraryName,
 				myExternalLabel, eAddress, sourceType, opIndex, refType);
 
-			if (!(namespace instanceof Library)) {
+			if (namespace != null) {
 				Symbol s = symTable.getSymbol(ref);
 				s.setNamespace(namespace);
 			}
@@ -1127,7 +1126,8 @@ public class ProgramBuilder {
 			ExternalLocation extLoc =
 				em.addExtFunction(Library.UNKNOWN, originalName, eAddress, SourceType.IMPORTED);
 			Library lib = em.addExternalLibraryName(libName, SourceType.IMPORTED);
-			extLoc.setName(lib, functionName, SourceType.IMPORTED);
+			extLoc.setName(null, functionName, SourceType.IMPORTED);
+			extLoc.setLibrary(lib);
 			return extLoc;
 		});
 	}

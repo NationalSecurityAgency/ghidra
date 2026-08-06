@@ -241,13 +241,11 @@ class VarnodeLocationCellEditor extends AbstractCellEditor
 
 	private static class RegisterComparator implements Comparator<Register> {
 
-		private AlphaNumericComparator alphaNumericComparator = new AlphaNumericComparator();
-
 		@Override
 		public int compare(Register r1, Register r2) {
 			String s1 = r1.getName().toLowerCase();
 			String s2 = r2.getName().toLowerCase();
-			return alphaNumericComparator.compare(s1, s2);
+			return AlphaNumericComparator.CS.compare(s1, s2);
 		}
 	}
 }

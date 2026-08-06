@@ -129,14 +129,11 @@ public class RegisterTree extends GTree {
 
 	private static class RegisterNodeComparator implements Comparator<GTreeNode> {
 
-		private AlphaNumericComparator alphaNumericComparator =
-			new AlphaNumericComparator();
-
 		@Override
 		public int compare(GTreeNode n1, GTreeNode n2) {
 			String s1 = n1.getName().toLowerCase();
 			String s2 = n2.getName().toLowerCase();
-			return alphaNumericComparator.compare(s1, s2);
+			return AlphaNumericComparator.CS.compare(s1, s2);
 		}
 	}
 

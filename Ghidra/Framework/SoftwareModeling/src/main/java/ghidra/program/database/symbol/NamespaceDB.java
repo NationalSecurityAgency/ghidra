@@ -99,10 +99,4 @@ class NamespaceDB implements Namespace {
 	public String toString() {
 		return getName(true);
 	}
-
-	@Override
-	public boolean isExternal() {
-		return symbol.isExternal();
-	}
-
 }

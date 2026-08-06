@@ -63,7 +63,7 @@ public class SymbolTreeLocationReferencesTest extends AbstractLocationReferences
 		addThunk(thunkAddr, externalFunction);
 		waitForTree(symbolTree);
 
-		selectPath(symbolTree, "Global", "Imports", "ADVAPI32.dll", "IsTextUnicode");
+		selectPath(symbolTree, "Root", "Imports", "ADVAPI32.dll", "IsTextUnicode");
 
 		ActionContext actionContext = treeProvider.getActionContext(null);
 		assertTrue("showSymbolReferencesAction not properly enabled",
@@ -91,7 +91,7 @@ public class SymbolTreeLocationReferencesTest extends AbstractLocationReferences
 		addExternalFunctionReference(otherRefAddr, "ADVAPI32.dll", "IsTextUnicode",
 			RefType.COMPUTED_CALL);
 
-		selectPath(symbolTree, "Global", "Labels", "ADVAPI32.dll_IsTextUnicode"); // label on IAT entry
+		selectPath(symbolTree, "Root", "Globals", "ADVAPI32.dll_IsTextUnicode"); // label on IAT entry
 
 		ActionContext actionContext = treeProvider.getActionContext(null);
 		assertTrue("showSymbolReferencesAction not properly enabled",

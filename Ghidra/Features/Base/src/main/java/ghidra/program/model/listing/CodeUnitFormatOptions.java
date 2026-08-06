@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,7 +70,7 @@ public class CodeUnitFormatOptions {
 	protected volatile ShowBlockName showBlockName = ShowBlockName.NEVER;
 	protected volatile ShowNamespace showNamespace = ShowNamespace.NEVER;
 	protected volatile String localPrefixOverride = null;
-	protected volatile boolean showLibraryInNamespace = true;
+	protected volatile boolean showLibrary = true;
 	protected volatile boolean doRegVariableMarkup = true;
 	protected volatile boolean doStackVariableMarkup = true;
 	protected volatile boolean includeInferredVariableMarkup = false;
@@ -122,11 +122,11 @@ public class CodeUnitFormatOptions {
 	public CodeUnitFormatOptions(ShowBlockName showBlockName, ShowNamespace showNamespace,
 			String localPrefixOverride, boolean doRegVariableMarkup, boolean doStackVariableMarkup,
 			boolean includeInferredVariableMarkup, boolean alwaysShowPrimaryReference,
-			boolean includeScalarReferenceAdjustment, boolean showLibraryInNamespace,
+			boolean includeScalarReferenceAdjustment, boolean showLibrary,
 			boolean followReferencedPointers, TemplateSimplifier templateSimplifier) {
 		this.showBlockName = showBlockName;
 		this.showNamespace = showNamespace;
-		this.showLibraryInNamespace = showLibraryInNamespace;
+		this.showLibrary = showLibrary;
 		this.localPrefixOverride = localPrefixOverride;
 		this.doRegVariableMarkup = doRegVariableMarkup;
 		this.doStackVariableMarkup = doStackVariableMarkup;

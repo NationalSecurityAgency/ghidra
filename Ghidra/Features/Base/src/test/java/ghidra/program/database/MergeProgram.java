@@ -125,6 +125,10 @@ public class MergeProgram {
 		}
 	}
 
+	public Namespace createNamespace(String name, SourceType type) {
+		return createNamespace(null, name, type);
+	}
+
 	public Namespace createNamespace(Namespace parent, String name, SourceType type) {
 		Namespace result = null;
 
@@ -135,9 +139,9 @@ public class MergeProgram {
 				try {
 
 					// make sure we get the equivalent namespace for the given program
-					Namespace parentNamespace = findMatchingNamespace(p, parent);
+					parent = findMatchingNamespace(p, parent);
 
-					Namespace ns = symbolTable.createNameSpace(parentNamespace, name, type);
+					Namespace ns = symbolTable.createNameSpace(parent, name, type);
 					if (result == null) {
 						result = ns; // always use the first program for consistency
 					}
@@ -249,8 +253,13 @@ public class MergeProgram {
 		}
 	}
 
-	public void addExternalLocation(Namespace namespace, String label, String address,
-			SourceType type) {
+	public void addExternalLocation(Library library, String label,
+			String address, SourceType type) {
+		addExternalLocation(library, null, label, address, type);
+	}
+
+	public void addExternalLocation(Library library, Namespace namespace, String label,
+			String address, SourceType type) {
 
 		startTransactions();
 		try {
@@ -258,14 +267,14 @@ public class MergeProgram {
 
 				// make sure we get the equivalent namespace for the given program
 				Namespace parentNamespace = findMatchingNamespace(p, namespace);
-
+				library = findMatchingLibrary(p, library);
 				ExternalManager externalManager = p.getExternalManager();
 				Address addr = null;
 				if (address != null) {
 					addr = addr(p, address);
 				}
 				try {
-					externalManager.addExtLocation(parentNamespace, label, addr, type);
+					externalManager.addExtLocation(library, parentNamespace, label, addr, type);
 				}
 				catch (Exception e) {
 					throw new RuntimeException("Exception adding extenal location", e);
@@ -277,8 +286,13 @@ public class MergeProgram {
 		}
 	}
 
-	public void addExternalLocation(Namespace namespace, String label, String address, DataType dt,
-			SourceType type) {
+	public void addExternalLocation(Library library, String label,
+			String address, DataType dt, SourceType type) {
+		addExternalLocation(library, null, label, address, dt, type);
+	}
+
+	public void addExternalLocation(Library library, Namespace namespace, String label,
+			String address, DataType dt, SourceType type) {
 
 		startTransactions();
 		try {
@@ -286,15 +300,15 @@ public class MergeProgram {
 
 				// make sure we get the equivalent namespace for the given program
 				Namespace parentNamespace = findMatchingNamespace(p, namespace);
-
+				Library myLibrary = findMatchingLibrary(p, library);
 				ExternalManager externalManager = p.getExternalManager();
 				Address addr = null;
 				if (address != null) {
 					addr = addr(p, address);
 				}
 				try {
-					ExternalLocation loc =
-						externalManager.addExtLocation(parentNamespace, label, addr, type);
+					ExternalLocation loc = externalManager.addExtLocation(myLibrary,
+						parentNamespace, label, addr, type);
 					loc.setDataType(dt);
 				}
 				catch (Exception e) {
@@ -307,7 +321,13 @@ public class MergeProgram {
 		}
 	}
 
-	public ExternalLocation addExternalFunction(Namespace namespace, String name, String address,
+	public ExternalLocation addExternalFunction(Library library, String name, String address,
+			SourceType type) {
+		return addExternalFunction(library, null, name, address, type);
+	}
+
+	public ExternalLocation addExternalFunction(Library library, Namespace namespace, String name,
+			String address,
 			SourceType type) {
 
 		ExternalLocation result = null;
@@ -318,6 +338,7 @@ public class MergeProgram {
 
 				// make sure we get the equivalent namespace for the given program
 				Namespace parentNamespace = findMatchingNamespace(p, namespace);
+				library = findMatchingLibrary(p, library);
 
 				ExternalManager externalManager = p.getExternalManager();
 				Address addr = null;
@@ -326,7 +347,7 @@ public class MergeProgram {
 				}
 				try {
 					ExternalLocation loc =
-						externalManager.addExtFunction(parentNamespace, name, addr, type);
+						externalManager.addExtFunction(library, parentNamespace, name, addr, type);
 					if (result == null) {
 						result = loc;
 					}
@@ -406,28 +427,45 @@ public class MergeProgram {
 		return functionManager.getFunctionAt(f.getEntryPoint());
 	}
 
+	private Library findMatchingLibrary(Program program, Library otherLibrary) {
+		if (otherLibrary == null) {
+			return null;
+		}
+		Program otherProgram = otherLibrary.getSymbol().getProgram();
+		if (otherProgram == program) {
+			return otherLibrary;
+		}
+		return getCorrespondingLibrary(program, otherLibrary, otherProgram);
+	}
+
 	private Namespace findMatchingNamespace(Program program, Namespace otherNamespace) {
 		if (otherNamespace == null) {
 			return program.getGlobalNamespace();
 		}
 
-		Program source = otherNamespace.getSymbol().getProgram();
-		if (source == program) {
+		Program otherProgram = otherNamespace.getSymbol().getProgram();
+		if (otherProgram == program) {
 			return otherNamespace;
 		}
-		return getCorrespondingNamespace(source, otherNamespace, program);
+		return getCorrespondingNamespace(program, otherNamespace, otherProgram);
 	}
 
-	private Namespace getCorrespondingNamespace(Program source, Namespace ns,
+	private Library getCorrespondingLibrary(Program program, Library library,
 			Program otherProgram) {
-		if (ns == source.getGlobalNamespace()) {
-			return otherProgram.getGlobalNamespace();
+		Symbol librarySymbol = program.getSymbolTable().getLibrarySymbol(library.getName());
+		return librarySymbol == null ? null : (Library) librarySymbol.getObject();
+	}
+
+	private Namespace getCorrespondingNamespace(Program program, Namespace ns,
+			Program otherProgram) {
+		if (ns == otherProgram.getGlobalNamespace()) {
+			return program.getGlobalNamespace();
 		}
 
 		Namespace parent = ns.getParentNamespace();
-		Namespace otherNamespace = getCorrespondingNamespace(source, parent, otherProgram);
-		SymbolTable symbolTable = otherProgram.getSymbolTable();
-		return symbolTable.getNamespace(ns.getName(), otherNamespace);
+		Namespace namespace = getCorrespondingNamespace(program, parent, otherProgram);
+		SymbolTable symbolTable = program.getSymbolTable();
+		return symbolTable.getNamespace(ns.getName(), namespace);
 	}
 
 	private void startTransactions() {

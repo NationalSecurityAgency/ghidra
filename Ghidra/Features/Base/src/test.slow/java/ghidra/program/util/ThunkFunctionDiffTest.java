@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -757,10 +757,10 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 		FunctionManager latestFM = latestProgram.getFunctionManager();
 		FunctionManager myFM = myProgram.getFunctionManager();
 
-		Namespace externalLibrary = (Namespace) getUniqueSymbol(myProgram, "user32.dll",
+		Library externalLibrary = (Library) getUniqueSymbol(myProgram, "user32.dll",
 			myProgram.getGlobalNamespace()).getObject();
 		assertNotNull(externalLibrary);
-		Symbol apples = getUniqueSymbol(myProgram, "apples", externalLibrary);
+		Symbol apples = getUniqueSymbol(myProgram, "apples", null);
 		assertEquals(SymbolType.FUNCTION, apples.getSymbolType());
 		Function myExternalFunction = (Function) apples.getObject();
 		Function latestThunked = latestFM.getFunctionAt(addr(latestProgram, FUNCTION_3));
@@ -855,18 +855,17 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 		FunctionManager latestFM = latestProgram.getFunctionManager();
 		FunctionManager myFM = myProgram.getFunctionManager();
 
-		Namespace latestExternalLibrary = (Namespace) getUniqueSymbol(latestProgram, "user32.dll",
+		Library latestExternalLibrary = (Library) getUniqueSymbol(latestProgram, "user32.dll",
 			latestProgram.getGlobalNamespace()).getObject();
 		assertNotNull(latestExternalLibrary);
-		Symbol latestExternalApples =
-			getUniqueSymbol(latestProgram, "apples", latestExternalLibrary);
+		Symbol latestExternalApples = getUniqueSymbol(latestProgram, "apples", null);
 		assertEquals(SymbolType.FUNCTION, latestExternalApples.getSymbolType());
 		Function latestExternalFunction = (Function) latestExternalApples.getObject();
 
-		Namespace myExternalLibrary = (Namespace) getUniqueSymbol(myProgram, "user32.dll",
+		Library myExternalLibrary = (Library) getUniqueSymbol(myProgram, "user32.dll",
 			myProgram.getGlobalNamespace()).getObject();
 		assertNotNull(myExternalLibrary);
-		Symbol myExternalApples = getUniqueSymbol(myProgram, "apples", myExternalLibrary);
+		Symbol myExternalApples = getUniqueSymbol(myProgram, "apples", null);
 		assertEquals(SymbolType.FUNCTION, myExternalApples.getSymbolType());
 		Function myExternalFunction = (Function) myExternalApples.getObject();
 
@@ -959,19 +958,18 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 		FunctionManager latestFM = latestProgram.getFunctionManager();
 		FunctionManager myFM = myProgram.getFunctionManager();
 
-		Namespace latestExternalLibrary = (Namespace) getUniqueSymbol(latestProgram, "user32.dll",
+		Library latestExternalLibrary = (Library) getUniqueSymbol(latestProgram, "user32.dll",
 			latestProgram.getGlobalNamespace()).getObject();
 		assertNotNull(latestExternalLibrary);
-		Symbol latestExternalApples =
-			getUniqueSymbol(latestProgram, "apples", latestExternalLibrary);
+		Symbol latestExternalApples = getUniqueSymbol(latestProgram, "apples", null);
 		assertEquals(SymbolType.FUNCTION, latestExternalApples.getSymbolType());
 		Function latestExternalFunction = (Function) latestExternalApples.getObject();
 
-		Namespace myExternalLibrary = (Namespace) getUniqueSymbol(myProgram, "user32.dll",
+		Library myExternalLibrary = (Library) getUniqueSymbol(myProgram, "user32.dll",
 			myProgram.getGlobalNamespace()).getObject();
 		assertNotNull(myExternalLibrary);
 		SymbolTable mySymTab = myProgram.getSymbolTable();
-		Symbol myExternalApples = getUniqueSymbol(myProgram, "apples", myExternalLibrary);
+		Symbol myExternalApples = getUniqueSymbol(myProgram, "apples", null);
 		assertEquals(SymbolType.FUNCTION, myExternalApples.getSymbolType());
 		Function myExternalFunction = (Function) myExternalApples.getObject();
 
@@ -1065,18 +1063,17 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 		FunctionManager latestFM = latestProgram.getFunctionManager();
 		FunctionManager myFM = myProgram.getFunctionManager();
 
-		Namespace latestExternalLibrary = (Namespace) getUniqueSymbol(latestProgram, "user32.dll",
+		Library latestExternalLibrary = (Library) getUniqueSymbol(latestProgram, "user32.dll",
 			latestProgram.getGlobalNamespace()).getObject();
 		assertNotNull(latestExternalLibrary);
-		Symbol latestExternalApples =
-			getUniqueSymbol(latestProgram, "apples", latestExternalLibrary);
+		Symbol latestExternalApples = getUniqueSymbol(latestProgram, "apples", null);
 		assertEquals(SymbolType.FUNCTION, latestExternalApples.getSymbolType());
 		Function latestExternalFunction = (Function) latestExternalApples.getObject();
 
-		Namespace myExternalLibrary = (Namespace) getUniqueSymbol(myProgram, "user32.dll",
+		Library myExternalLibrary = (Library) getUniqueSymbol(myProgram, "user32.dll",
 			myProgram.getGlobalNamespace()).getObject();
 		assertNotNull(myExternalLibrary);
-		Symbol myExternalApples = getUniqueSymbol(myProgram, "oranges", myExternalLibrary);
+		Symbol myExternalApples = getUniqueSymbol(myProgram, "oranges", null);
 		assertEquals(SymbolType.FUNCTION, myExternalApples.getSymbolType());
 		Function myExternalFunction = (Function) myExternalApples.getObject();
 
@@ -1170,18 +1167,17 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 		FunctionManager latestFM = latestProgram.getFunctionManager();
 		FunctionManager myFM = myProgram.getFunctionManager();
 
-		Namespace latestExternalLibrary = (Namespace) getUniqueSymbol(latestProgram, "user32.dll",
+		Library latestExternalLibrary = (Library) getUniqueSymbol(latestProgram, "user32.dll",
 			latestProgram.getGlobalNamespace()).getObject();
 		assertNotNull(latestExternalLibrary);
-		Symbol latestExternalApples =
-			getUniqueSymbol(latestProgram, "apples", latestExternalLibrary);
+		Symbol latestExternalApples = getUniqueSymbol(latestProgram, "apples", null);
 		assertEquals(SymbolType.FUNCTION, latestExternalApples.getSymbolType());
 		Function latestExternalFunction = (Function) latestExternalApples.getObject();
 
-		Namespace myExternalLibrary = (Namespace) getUniqueSymbol(myProgram, "user32.dll",
+		Library myExternalLibrary = (Library) getUniqueSymbol(myProgram, "user32.dll",
 			myProgram.getGlobalNamespace()).getObject();
 		assertNotNull(myExternalLibrary);
-		Symbol myExternalApples = getUniqueSymbol(myProgram, "oranges", myExternalLibrary);
+		Symbol myExternalApples = getUniqueSymbol(myProgram, "oranges", null);
 		assertEquals(SymbolType.FUNCTION, myExternalApples.getSymbolType());
 		Function myExternalFunction = (Function) myExternalApples.getObject();
 

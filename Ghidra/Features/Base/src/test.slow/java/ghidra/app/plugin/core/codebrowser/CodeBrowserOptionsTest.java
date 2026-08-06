@@ -862,13 +862,13 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 
 		cb.goToField(addr("0x1003daa"), "Operands", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
-		assertEquals("TestLib::ExtNS::ExtLab", btf.getText());
+		assertEquals("TestLib:ExtNS::ExtLab", btf.getText());
 
 		cb.goToField(addr("0x1001012"), "Operands", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
-		assertEquals("->TestLib::ExtNS::ExtLab", btf.getText());
+		assertEquals("->TestLib:ExtNS::ExtLab", btf.getText());
 
-		namespaceOption.setShowLibraryInNamespace(false);
+		namespaceOption.setShowLibrary(false);
 		options.setCustomOption(names.get(3), namespaceOption);
 		cb.updateNow();
 
@@ -880,7 +880,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals("->ExtNS::ExtLab", btf.getText());
 
-		namespaceOption.setShowLibraryInNamespace(true);
+		namespaceOption.setShowLibrary(false);
 		namespaceOption.setShowNonLocalNamespace(false);
 		options.setCustomOption(names.get(3), namespaceOption);
 		cb.updateNow();

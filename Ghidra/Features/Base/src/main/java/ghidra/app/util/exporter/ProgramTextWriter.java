@@ -94,14 +94,14 @@ class ProgramTextWriter {
 			true, // include inferred register variable markup
 			true, // include extended reference markup
 			true, // include scalar adjustment
-			true, // include library names in namespace
+			true, // include library names
 			true, // follow referenced pointers
 			simplifier // disabled simplifier
 		);
 
 		CodeUnitFormat cuFormat = new CodeUnitFormat(formatOptions);
 
-		////  M A I N   L O O P  //////////////////////////////////////////
+		//// M A I N L O O P
 
 		Address bytesRemovedRangeStart = null;
 		Address bytesRemovedRangeEnd = null;
@@ -122,7 +122,7 @@ class ProgramTextWriter {
 				time = currTime;
 			}
 
-			//// Undefined Data Area ///////////////////////////////////////
+			//// Undefined Data Area
 
 			if ((!options.isShowUndefinedData()) && (currentCodeUnit instanceof Data) &&
 				!((Data) currentCodeUnit).isDefined()) {
@@ -153,7 +153,7 @@ class ProgramTextWriter {
 			boolean isFunctionEntryPoint =
 				currentFunction != null && currentFunction.getEntryPoint().equals(currentAddress);
 
-			//// Plate Property ////////////////////////////////////////////
+			//// Plate Property
 			boolean cuHasPlate = false;
 			if (options.isShowProperties()) {
 				String[] plate = currentCodeUnit.getCommentAsArray(CommentType.PLATE);
@@ -166,7 +166,7 @@ class ProgramTextWriter {
 				}
 			}
 
-			//// Function Signature and Header /////////////////////////////
+			//// Function Signature and Header
 			if (isFunctionEntryPoint) {
 				String fill = genFill(options.getAddrWidth() + options.getBytesWidth());
 
@@ -248,7 +248,7 @@ class ProgramTextWriter {
 					? new ReferenceLineDispenser(true, currentCodeUnit, program, options)
 					: new ReferenceLineDispenser());
 
-			//// Process the labels and refs... ///////////////////
+			//// Process the labels and refs...
 
 			String emptySymbolLine = genFill(options.getLabelWidth());
 
@@ -279,7 +279,7 @@ class ProgramTextWriter {
 			backRLD.dispose();
 			fwdRLD.dispose();
 
-			//// Line of Disassembled Code /////////////////////////////////
+			//// Line of Disassembled Code
 
 			buffy = new StringBuilder();
 
@@ -288,7 +288,7 @@ class ProgramTextWriter {
 			processMnemonic(currentCodeUnit);
 			processOperands(currentCodeUnit, cuFormat);
 
-			//// End of Line Area //////////////////////////////////////////
+			//// End of Line Area
 
 			if (options.isShowComments()) {
 				addComments(currentCodeUnit);
@@ -299,7 +299,7 @@ class ProgramTextWriter {
 			}
 			buffy = new StringBuilder();
 
-			//// Post Comment //////////////////////////////////////////////
+			//// Post Comment
 			if (options.isShowComments()) {
 				String[] post = currentCodeUnit.getCommentAsArray(CommentType.POST);
 				if (post != null) {
@@ -321,7 +321,7 @@ class ProgramTextWriter {
 				}
 			}
 
-			//// Space Property ////////////////////////////////////////////
+			//// Space Property
 
 			if (options.isShowProperties() && currentCodeUnit.hasProperty("Space")) {
 				try {

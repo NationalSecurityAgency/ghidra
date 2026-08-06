@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -333,30 +333,10 @@ public class GenSignatures {
 
 	private String extractExternalName(Symbol sym, CallRecord callRecord) {
 		String fullName = sym.getName(true);
-		int ind = fullName.indexOf("::");
-		String libraryName;
-		if (ind >= 0) {
-			libraryName = fullName.substring(0, ind);			// First namespace is name of library
-			String tmpnm = fullName.substring(ind + 2);	// Cut off first namespace
-			if (tmpnm.isEmpty()) {
-				libraryName = "unknown";
-				callRecord.funcname = fullName;
-			}
-			else if (libraryName.isEmpty()) {
-				libraryName = "unknown";
-				callRecord.funcname = tmpnm;
-			}
-			else {
-				callRecord.funcname = tmpnm;
-			}
-			if (libraryName.equals(Library.UNKNOWN)) {
-				libraryName = "unknown";
-			}
-		}
-		else {
-			libraryName = "unknown";
-			callRecord.funcname = fullName;
-		}
+		Library library = sym.getLibrary();
+
+		String libraryName = library == null ? "unknown" : library.getName();
+		callRecord.funcname = fullName;
 		return libraryName;
 	}
 

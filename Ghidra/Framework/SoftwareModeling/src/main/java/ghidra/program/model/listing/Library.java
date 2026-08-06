@@ -15,20 +15,35 @@
  */
 package ghidra.program.model.listing;
 
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.exception.InvalidInputException;
 
 /**
  * Interface for a Library dependency and namespace.
  */
-public interface Library extends Namespace {
+public interface Library {
 
 	public static final String UNKNOWN = "<EXTERNAL>";
 
-	@Override
-	public default Type getType() {
-		return Type.LIBRARY;
-	}
+	/**
+	 * {@return the simple namespace name (without parent path)}
+	 * <p>
+	 * See {@link #getName(boolean)} for the namespace-qualified variant.
+	 */
+	public String getName();
+
+	/**
+	 * Return the library id
+	 * @return the library id
+	 */
+	public long getID();
+
+	/**
+	 * Get the symbol for this namespace.
+	 * @return the symbol for this namespace.
+	 */
+	public Symbol getSymbol();
 
 	/**
 	 * @return the associated program file pathname within the project which corresponds to this library.
@@ -57,17 +72,7 @@ public interface Library extends Namespace {
 		if (symbol.getSymbolType() == SymbolType.LIBRARY) {
 			return (Library) symbol.getObject();
 		}
-		if (symbol.getSymbolType() == SymbolType.NAMESPACE ||
-			symbol.getSymbolType() == SymbolType.CLASS) {
-			while (symbol != null && symbol.isExternal()) {
-				Namespace n = (Namespace) symbol.getObject();
-				if (n instanceof Library lib) {
-					return lib;
-				}
-				symbol = n.getParentNamespace().getSymbol();
-			}
-		}
-		return null;
+		return symbol.getLibrary();
 	}
 
 }

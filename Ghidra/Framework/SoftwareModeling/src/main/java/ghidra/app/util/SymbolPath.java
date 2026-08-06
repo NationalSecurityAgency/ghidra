@@ -18,7 +18,6 @@ package ghidra.app.util;
 import java.util.*;
 
 import ghidra.program.model.address.GlobalNamespace;
-import ghidra.program.model.listing.Library;
 import ghidra.program.model.symbol.*;
 
 /**
@@ -86,23 +85,9 @@ public class SymbolPath implements Comparable<SymbolPath> {
 	 * @param symbol the symbol to get a SymbolPath for.
 	 */
 	public SymbolPath(Symbol symbol) {
-		this(symbol, false);
-	}
-
-	/**
-	 * Constructs a new SymbolPath for the given symbol with the option to exclude a beginning
-	 * library name.
-	 *
-	 * @param symbol the symbol to get a SymbolPath for.
-	 * @param excludeLibrary if true, any library name at the front of the path will be removed.
-	 */
-	public SymbolPath(Symbol symbol, boolean excludeLibrary) {
 		symbolName = symbol.getName();
 		Namespace parentNamespace = symbol.getParentNamespace();
 		if (parentNamespace == null || parentNamespace.isGlobal()) {
-			parentPath = null;
-		}
-		else if (excludeLibrary && (parentNamespace instanceof Library)) {
 			parentPath = null;
 		}
 		else {

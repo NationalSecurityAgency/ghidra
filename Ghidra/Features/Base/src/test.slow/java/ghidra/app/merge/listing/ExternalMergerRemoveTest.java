@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -463,12 +463,8 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		SymbolTable symbolTable = resultProgram.getSymbolTable();
-		Symbol s = symbolTable.getLibrarySymbol("user32.dll");
-		if (s != null) {
-			Symbol symbol = getUniqueSymbol(resultProgram, "Blue", (Namespace) s.getObject());
-			assertNull(symbol);
-		}
+		Symbol symbol = getUniqueSymbol(resultProgram, "Blue", null);
+		assertNull(symbol);
 
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains("user32.dll"));
@@ -997,8 +993,8 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				changeExternalFunctionIntoExternalLabel(program,
-					new String[] { "user32.dll", "Blue" });
+				changeExternalFunctionIntoExternalLabel(program, "user32.dll",
+					new String[] { "Blue" });
 			}
 
 			@Override
@@ -1054,12 +1050,12 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				changeExternalFunctionIntoExternalLabel(program,
-					new String[] { "user32.dll", "Blue" });
+				changeExternalFunctionIntoExternalLabel(program, "user32.dll",
+					new String[] { "Blue" });
 
 				try {
 					Function externalLocation =
-						createExternalFunction(program, new String[] { "user32.dll", "Red" },
+						createExternalFunction(program, "user32.dll", new String[] { "Red" },
 							addr(program, "77db1450"), null, SourceType.USER_DEFINED);
 					assertNotNull(externalLocation);
 				}
@@ -1152,7 +1148,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				changeExternalFunctionIntoExternalLabel(program,
-					new String[] { "user32.dll", "Blue" });
+					"user32.dll", new String[] { "Blue" });
 			}
 		});
 
@@ -1214,8 +1210,8 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				changeExternalFunctionIntoExternalLabel(program,
-					new String[] { "user32.dll", "Blue" });
+				changeExternalFunctionIntoExternalLabel(program, "user32.dll",
+					new String[] { "Blue" });
 			}
 		});
 

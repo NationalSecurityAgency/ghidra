@@ -206,7 +206,7 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 			showNamespace = CodeUnitFormatOptions.ShowNamespace.NON_LOCAL;
 		}
 
-		showLibraryInNamespace = namespaceOption.isShowLibraryInNamespace();
+		showLibrary = namespaceOption.isShowLibrary();
 		doRegVariableMarkup = fieldOptions.getBoolean(REGISTER_VARIABLE_MARKUP_OPTION, true);
 		doStackVariableMarkup = fieldOptions.getBoolean(STACK_VARIABLE_MARKUP_OPTION, true);
 		includeInferredVariableMarkup =

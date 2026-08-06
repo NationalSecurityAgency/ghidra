@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -123,9 +123,8 @@ public class NoReturnFunctionAnalyzer extends AbstractAnalyzer {
 		// skip noreturn marking if its namespace is not global, library, or std
 		// it prevents class methods (e.g. Menu::_exit()) incorrectly marked as noreturn
 		Namespace parentNamespace = symbol.getParentNamespace();
-		if (parentNamespace != null && !parentNamespace.isGlobal() &&
-			!parentNamespace.isLibrary()) {
-			List<String> pathList = parentNamespace.getPathList(true);
+		if (parentNamespace != null && !parentNamespace.isGlobal()) {
+			List<String> pathList = parentNamespace.getPathList();
 			if (!(pathList.size() == 1 && pathList.get(0) == "std")) {
 				return;
 			}
@@ -148,7 +147,7 @@ public class NoReturnFunctionAnalyzer extends AbstractAnalyzer {
 
 		Address address = symbol.getAddress();
 		if (symbol.getSymbolType() == SymbolType.LABEL) {
-			if (!SymbolType.FUNCTION.isValidParent(program, parentNamespace, address, false)) {
+			if (!SymbolType.FUNCTION.isValidParent(program, parentNamespace, address)) {
 				return; // skip if parent does not permit function creation
 			}
 			CreateFunctionCmd fCommand = new CreateFunctionCmd(address);

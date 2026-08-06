@@ -26,7 +26,6 @@ import ghidra.app.merge.MergeConstants;
 import ghidra.app.merge.MergeManager;
 import ghidra.app.merge.tool.ListingMergePanel;
 import ghidra.app.merge.util.ConflictUtility;
-import ghidra.app.util.NamespaceUtils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
@@ -63,7 +62,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 	private final static String INFO_TITLE = CONFLICT_TYPE + " Merge Information";
 	private final static String ERROR_TITLE = CONFLICT_TYPE + " Merge Errors";
 
-	static protected final int EXTERNAL_NAMESPACE = 0x001;
+	static protected final int EXTERNAL_LIBRARY = 0x001;
 	static protected final int EXTERNAL_LABEL = 0x002;
 	static protected final int EXTERNAL_ADDRESS = 0x004;
 // Source Type differences have been commented out.
@@ -73,11 +72,8 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 	static protected final int EXTERNAL_DATA_TYPE = 0x020;
 	static protected final int EXTERNAL_FUNCTION = 0x040;
 	static protected final int HIGHEST_DETAIL_BIT_SHIFT = 6; // 0 based
-	static protected final int ALL_EXTERNAL_DIFFERENCES = EXTERNAL_NAMESPACE | EXTERNAL_LABEL |
+	static protected final int ALL_EXTERNAL_DIFFERENCES = EXTERNAL_LIBRARY | EXTERNAL_LABEL |
 		EXTERNAL_ADDRESS | EXTERNAL_SYMBOL_TYPE | EXTERNAL_DATA_TYPE | EXTERNAL_FUNCTION;
-//	static protected final int ALL_EXTERNAL_DIFFERENCES = EXTERNAL_NAMESPACE | EXTERNAL_LABEL |
-//			EXTERNAL_ADDRESS | EXTERNAL_SOURCE_TYPE | EXTERNAL_SYMBOL_TYPE | EXTERNAL_DATA_TYPE |
-//			EXTERNAL_FUNCTION;
 
 	/** Keep the external location added in LATEST to resolve a conflict. */
 	public static final int KEEP_LATEST_ADD = 1;
@@ -322,9 +318,6 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 	}
 
 	private void initializeConflictSets() {
-		AddressFactory myAddressFactory = programs[MY].getAddressFactory();
-//		AddressFactory originalAddressFactory = programs[ORIGINAL].getAddressFactory();
-
 		externalDataTypeConflicts = new AddressSet();
 		externalFunctionVersusDataTypeConflicts = new AddressSet();
 		removeSet = new AddressSet();
@@ -717,28 +710,52 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 
 		// See if both changed to same value.
 		switch (type) {
-			case EXTERNAL_NAMESPACE:
-				replaceNamespace(resultExternalLocation, fromExternalLocation, monitor);
+			case EXTERNAL_LIBRARY:
+				replaceLibrary(resultExternalLocation, fromExternalLocation, monitor);
 				return;
 			case EXTERNAL_LABEL:
 				// TODO: The order of detail merge could be problematic since we can't set 
 				// default label if EXTERNAL_ADDRESS is currently null.  
-				String fromLabel = fromExternalLocation.getLabel();
 				SourceType resultSource = resultExternalLocation.getSource();
 				SourceType fromSource = fromExternalLocation.getSource();
 				// If both are DEFAULT then no name to merge.
 				if (resultSource == SourceType.DEFAULT && fromSource == SourceType.DEFAULT) {
 					return; // Just return since default names may not match each other by their text.
 				}
+
+				String fromLabel = fromExternalLocation.getLabel();
+				String fromOrigName = fromExternalLocation.getOriginalImportedName();
 				try {
-					resultExternalLocation.getSymbol().setName(fromLabel, fromSource);
+					Symbol resultSym = resultExternalLocation.getSymbol();
+
+					// Get the namespace we need from result.
+					Namespace fromNamespace = fromExternalLocation.getParentNameSpace();
+
+					if (fromNamespace.isGlobal() && fromOrigName == null &&
+						resultExternalLocation.getOriginalImportedName() != null) {
+						// assume result is in better state and should be retained as-is
+						return;
+					}
+
+					Namespace desiredResultNamespace =
+						resolveNamespace(programs[MY], fromNamespace);
+
+					// Update name w/ namespace and original import name
+					// We must revert result and apply name in proper order to  ensure
+					// final result matches from symbol naming
+					resultExternalLocation.restoreOriginalName();
+					if (fromOrigName != null) {
+						resultSym.setNameAndNamespace(fromOrigName, null, SourceType.IMPORTED); // assume mangled name was imported
+					}
+					resultSym.setNameAndNamespace(fromLabel, desiredResultNamespace, fromSource);
 				}
-				catch (DuplicateNameException e) {
-					throw new AssertException("Can't happen now that duplicates are allowed");
+				catch (DuplicateNameException | CircularDependencyException e) {
+					throw new AssertException("Unexpected", e);
 				}
 				catch (InvalidInputException e) {
 					Msg.error(this,
-						"Couldn't merge external location name '" + fromLabel + "'. " + e);
+						"Couldn't merge external location name '" +
+							fromExternalLocation.getSymbol().getName(true) + "'. " + e);
 					return;
 				}
 				return;
@@ -858,8 +875,10 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 
 		// Neither is null so lets compare them.
 
+		String libName1 = externalLocation1.getLibraryName();
 		Namespace namespace1 = externalLocation1.getParentNameSpace();
 		String label1 = externalLocation1.getLabel();
+		String origName1 = externalLocation1.getOriginalImportedName();
 		DataType dataType1 = getResultDataType(externalLocation1);
 		Address address1 = externalLocation1.getAddress();
 		SourceType sourceType1 = externalLocation1.getSource();
@@ -867,8 +886,10 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		SymbolType symbolType1 = symbol1.getSymbolType();
 		Function function1 = externalLocation1.getFunction();
 
+		String libName2 = externalLocation2.getLibraryName();
 		Namespace namespace2 = externalLocation2.getParentNameSpace();
 		String label2 = externalLocation2.getLabel();
+		String origName2 = externalLocation2.getOriginalImportedName();
 		DataType dataType2 = getResultDataType(externalLocation2);
 		Address address2 = externalLocation2.getAddress();
 		SourceType sourceType2 = externalLocation2.getSource();
@@ -878,10 +899,12 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 
 		// TODO: Does not consider original imported name
 
-		if (!equivalentNamespaces(namespace1, namespace2)) {
-			conflicts |= EXTERNAL_NAMESPACE;
+		if (!SystemUtilities.isEqual(libName1, libName2)) {
+			conflicts |= EXTERNAL_LIBRARY;
 		}
-		if (!isSameLabel(label1, label2, sourceType1, sourceType2)) {
+		if (!equivalentNamespaces(namespace1, namespace2) ||
+			!isSameLabel(label1, label2, sourceType1, sourceType2) ||
+			!SystemUtilities.isEqual(origName1, origName2)) {
 			conflicts |= EXTERNAL_LABEL;
 		}
 		if (!SystemUtilities.isEqual(address1, address2)) {
@@ -933,6 +956,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 
 		// Neither is null so lets compare them.
 
+		String libName1 = externalLocation1.getLibraryName();
 		Namespace namespace1 = externalLocation1.getParentNameSpace();
 		String label1 = externalLocation1.getLabel();
 		boolean label1IsDefault = hasDefaultExternalName(externalLocation1);
@@ -945,7 +969,9 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		Function function1 = externalLocation1.getFunction();
 		String originalName1 = externalLocation1.getOriginalImportedName();
 		boolean external1IsFunction = function1 != null;
+		String libraryName1 = externalLocation1.getLibraryName();
 
+		String libName2 = externalLocation2.getLibraryName();
 		Namespace namespace2 = externalLocation2.getParentNameSpace();
 		String label2 = externalLocation2.getLabel();
 		boolean label2IsDefault = hasDefaultExternalName(externalLocation2);
@@ -958,6 +984,11 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		String originalName2 = externalLocation2.getOriginalImportedName();
 		Function function2 = externalLocation2.getFunction();
 		boolean external2IsFunction = function2 != null;
+		String libraryName2 = externalLocation2.getLibraryName();
+
+		if (!SystemUtilities.isEqual(libName1, libName2)) {
+			return true;
+		}
 
 		if (!equivalentNamespaces(namespace1, namespace2)) {
 			return true;
@@ -984,7 +1015,9 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			hasExternalFunctionAddConflicts(function1, function2)) {
 			return true;
 		}
-
+		if (!libraryName1.equals(libraryName2)) {
+			return true;
+		}
 		return false;
 	}
 
@@ -1064,9 +1097,11 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		}
 
 		// Neither is null so lets compare them.
-
+		boolean label1IsDefault = externalLocation1.getSource() == SourceType.DEFAULT;
+		String libName1 = externalLocation1.getLibraryName();
 		Namespace namespace1 = externalLocation1.getParentNameSpace();
 		String label1 = externalLocation1.getLabel();
+		String originalName1 = externalLocation1.getOriginalImportedName();
 		DataType dataType1 = getResultDataType(externalLocation1);
 		Address address1 = externalLocation1.getAddress();
 //		SourceType sourceType1 = externalLocation1.getSource();
@@ -1074,8 +1109,11 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		SymbolType symbolType1 = symbol1.getSymbolType();
 		Function function1 = externalLocation1.getFunction();
 
+		boolean label2IsDefault = externalLocation2.getSource() == SourceType.DEFAULT;
+		String libName2 = externalLocation2.getLibraryName();
 		Namespace namespace2 = externalLocation2.getParentNameSpace();
 		String label2 = externalLocation2.getLabel();
+		String originalName2 = externalLocation2.getOriginalImportedName();
 		DataType dataType2 = getResultDataType(externalLocation2);
 		Address address2 = externalLocation2.getAddress();
 //		SourceType sourceType2 = externalLocation2.getSource();
@@ -1083,10 +1121,19 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		SymbolType symbolType2 = symbol2.getSymbolType();
 		Function function2 = externalLocation2.getFunction();
 
+		if (!SystemUtilities.isEqual(libName1, libName2)) {
+			return false;
+		}
 		if (!equivalentNamespaces(namespace1, namespace2)) {
 			return false;
 		}
-		if (!label1.equals(label2)) {
+		if (label1IsDefault) {
+			if (!label2IsDefault) {
+				return false;
+			}
+		}
+		else if (!SystemUtilities.isEqual(label1, label2) ||
+			!SystemUtilities.isEqual(originalName1, originalName2)) {
 			return false;
 		}
 		if (!isSameDataType(dataType1, dataType2)) {
@@ -1298,9 +1345,9 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 				getBasicExternalDiffs(externalLocations[ORIGINAL], externalLocations[MY]);
 
 			int detailConflictFlags = 0;
-			// Check and auto-merge the namespace.
+			// Check and auto-merge the library
 			detailConflictFlags |=
-				determineBasicExternalConflict(externalLocations, EXTERNAL_NAMESPACE,
+				determineBasicExternalConflict(externalLocations, EXTERNAL_LIBRARY,
 					latestMyChanges, originalLatestChanges, originalMyChanges, monitor);
 
 			// Check and auto-merge the name and source type.
@@ -1664,6 +1711,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			// Latest and My don't match.
 			// See what pieces can be auto-merged and which are conflicts.
 
+			String latestLibName = latestExternalLocation.getLibraryName();
 			Namespace latestNamespace = latestExternalLocation.getParentNameSpace();
 			String latestLabel = latestExternalLocation.getLabel();
 			DataType latestDataType = getResultDataType(latestExternalLocation);
@@ -1673,16 +1721,13 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			Function latestFunction = latestExternalLocation.getFunction();
 			boolean latestExternalIsFunction = (latestFunction != null);
 
+			String myLibName = myExternalLocation.getLibraryName();
 			Namespace myNamespace = myExternalLocation.getParentNameSpace();
-			boolean myNamespaceIsDefault =
-				(myNamespace.getSymbol().getSymbolType() == SymbolType.LIBRARY) &&
-					(myNamespace.getName() == Library.UNKNOWN);
 			String myLabel = myExternalLocation.getLabel();
 			boolean myLabelIsDefault = hasDefaultExternalName(myExternalLocation);
 			DataType myDataType = getResultDataType(myExternalLocation);
 			boolean myDataTypeIsDefined = hasDefinedDataType(myExternalLocation);
 			Address myAddress = myExternalLocation.getAddress();
-			String myOriginalName = myExternalLocation.getOriginalImportedName();
 //			SourceType mySourceType = myExternalLocation.getSource();
 			Function myFunction = myExternalLocation.getFunction();
 			boolean myExternalIsFunction = (myFunction != null);
@@ -1699,23 +1744,20 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 				latestExternalLocation, myExternalLocation, originalLocation };
 			updateAddressTranslators(locations);
 
-//			if (myOriginalName != null && latestOriginalName == null &&
-//				myOriginalName.equals(latestLabel)) {
-//				mergeExternalDetail(EXTERNAL_LABEL, resultExternalLocation, myExternalLocation,
-//					monitor);
-//			}
-
-			if (!myNamespaceIsDefault && !equivalentNamespaces(latestNamespace, myNamespace)) {
-				// Auto-merge MY namespace.
-				mergeExternalDetail(EXTERNAL_NAMESPACE, resultExternalLocation, myExternalLocation,
+			if (!SystemUtilities.isEqual(latestLibName, myLibName)) {
+				// Auto-merge MY library.
+				mergeExternalDetail(EXTERNAL_LIBRARY, resultExternalLocation, myExternalLocation,
 					monitor);
 			}
 
-			if (!myLabelIsDefault && !SystemUtilities.isEqual(latestLabel, myLabel) &&
-				!SystemUtilities.isEqual(latestOriginalName, myLabel)) {
-				// Auto-merge MY label.
-				mergeExternalDetail(EXTERNAL_LABEL, resultExternalLocation, myExternalLocation,
-					monitor);
+			if (!myLabelIsDefault) {
+				if (!equivalentNamespaces(latestNamespace, myNamespace) ||
+					!SystemUtilities.isEqual(latestLabel, myLabel) ||
+					!SystemUtilities.isEqual(latestOriginalName, myLabel)) {
+					// Auto-merge MY label w/ namespace and original import name.
+					mergeExternalDetail(EXTERNAL_LABEL, resultExternalLocation, myExternalLocation,
+						monitor);
+				}
 			}
 
 			if ((myAddress != null) && !SystemUtilities.isEqual(latestAddress, myAddress)) {
@@ -1761,8 +1803,14 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 
 		ExternalLocation resultExternalLocation =
 			addExternal(myExternalLocation, getMergeMy(), monitor);
-		if ((resultExternalLocation != null) &&
-			!resultExternalLocation.getLabel().equals(myExternalLocation.getLabel())) {
+		if (resultExternalLocation == null) {
+			return null;
+		}
+		if (!equivalentNamespaces(resultExternalLocation.getParentNameSpace(),
+			myExternalLocation.getParentNameSpace()) ||
+			!resultExternalLocation.getLabel().equals(myExternalLocation.getLabel()) ||
+			!SystemUtilities.isEqual(resultExternalLocation.getOriginalImportedName(),
+				myExternalLocation.getOriginalImportedName())) {
 			renamedConflictIDs.add(resultExternalLocation.getSymbol().getID());
 		}
 		return resultExternalLocation;
@@ -1780,10 +1828,11 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		Namespace namespace = resolvedNamespace;
 		String name = externalLocation.getLabel();
 		SourceType sourceType = externalLocation.getSource();
+		Library library = listingMergeManager.resolveLibrary(programMerge.getOriginProgram(),
+			externalLocation.getLibrary());
 
 		String originalImportedName = externalLocation.getOriginalImportedName();
 		if (originalImportedName != null) {
-			namespace = NamespaceUtils.getLibrary(namespace);
 			name = originalImportedName;
 			sourceType = SourceType.IMPORTED;
 		}
@@ -1798,16 +1847,18 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			}
 
 			// Add the function by creating a simple function.
-			resultExternalLocation = externalManagers[RESULT].addExtFunction(namespace, name,
-				address, sourceType, false);
+			resultExternalLocation =
+				externalManagers[RESULT].addExtFunction(library, namespace, name,
+					address, sourceType, false);
 			Function resultFunction = resultExternalLocation.getFunction();
 			// Now change the simple function to become the one we actually want.
 			programMerge.replaceExternalFunction(resultFunction, function, monitor);
 		}
 		// Add External Label
 		else {
-			resultExternalLocation = externalManagers[RESULT].addExtLocation(namespace, name,
-				address, sourceType, false);
+			resultExternalLocation =
+				externalManagers[RESULT].addExtLocation(library, namespace, name,
+					address, sourceType, false);
 
 			// Set the data type to match MY.
 			DataType dataType = getResultDataType(externalLocation);
@@ -2751,8 +2802,8 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		String[] header = getExternalInfo(externalLocations, HEADER);
 		String[] latest = getExternalInfo(externalLocations, LATEST);
 		String[] my = getExternalInfo(externalLocations, MY);
-		String[] keepBoth = { "Keep Both", "", "", "", "", "", "" };
-		String[] mergeBoth = { "Merge Together", "", "", "", "", "", "" };
+		String[] keepBoth = { "Keep Both", "", "", "", "", "", "", "" };
+		String[] mergeBoth = { "Merge Together", "", "", "", "", "", "", "" };
 
 		VerticalChoicesPanel panel = getEmptyVerticalPanel();
 
@@ -2871,18 +2922,16 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			panel.setHeader(text);
 			panel.addInfoRow("Conflict", new String[] { LATEST_TITLE, MY_TITLE }, true);
 
-			if ((conflicts & EXTERNAL_NAMESPACE) != 0) {
-				Namespace latestNamespace = locations[LATEST].getParentNameSpace();
-				Namespace myNamespace = locations[MY].getParentNameSpace();
-				String latest = latestNamespace.getName(true);
-				String my = myNamespace.getName(true);
+			if ((conflicts & EXTERNAL_LIBRARY) != 0) {
+				String latest = locations[LATEST].getLibraryName();
+				String my = locations[MY].getLibraryName();
 				panel.addSingleChoice("Namespace", new String[] { latest, my },
-					new ExternalDetailChangeListener(EXTERNAL_NAMESPACE, locations, panel,
+					new ExternalDetailChangeListener(EXTERNAL_LIBRARY, locations, panel,
 						monitor));
 			}
 			if ((conflicts & EXTERNAL_LABEL) != 0) {
-				String latest = locations[LATEST].getLabel();
-				String my = locations[MY].getLabel();
+				String latest = locations[LATEST].getSymbol().getName(true);
+				String my = locations[MY].getSymbol().getName(true);
 				panel.addSingleChoice("Name", new String[] { latest, my },
 					new ExternalDetailChangeListener(EXTERNAL_LABEL, locations, panel, monitor));
 			}
@@ -2898,7 +2947,8 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 //		if ((conflicts & EXTERNAL_SOURCE_TYPE) != 0) {
 //			String latest = locations[LATEST].getSource().getDisplayString();
 //			String my = locations[MY].getSource().getDisplayString();
-////			String original = locations[ORIGINAL].getSource().getDisplayString();
+			//// String original =
+			/// locations[ORIGINAL].getSource().getDisplayString();
 //			panel.addSingleChoice("Source Type", new String[] { latest, my },
 //				new ExternalDetailChangeListener(EXTERNAL_SOURCE_TYPE, locations, panel, monitor));
 //		}
@@ -3252,76 +3302,81 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		return listingMergeManager.resolveNamespace(sourceProgram, sourceNamespace);
 	}
 
-	public ExternalLocation replaceExternalLocation(ExternalLocation toExternalLocation,
+	private Library resolveLibrary(Program sourceProgram, Library sourceLibrary)
+			throws DuplicateNameException, InvalidInputException {
+		return listingMergeManager.resolveLibrary(sourceProgram, sourceLibrary);
+	}
+
+	public ExternalLocation replaceExternalLocation(ExternalLocation resultExternalLocation,
 			ExternalLocation fromExternalLocation, ProgramMerge programMerge, TaskMonitor monitor)
 			throws DuplicateNameException, InvalidInputException, CancelledException {
 
-		// Change the namespace.
-		replaceNamespace(toExternalLocation, fromExternalLocation, monitor);
+		// Change the library.
+		replaceLibrary(resultExternalLocation, fromExternalLocation, monitor);
 
-		// Change the label, address and source.
-		replaceLocation(toExternalLocation, fromExternalLocation, monitor);
+		// Change the label w/ namespace, original name, address and source.
+		replaceLocation(resultExternalLocation, fromExternalLocation, monitor);
 
 		// TODO: replacing data type on a function seems wrong.  Do we handle the case
 		// where we replace a function with a non-function?  
 
 		// Replace the data type.
-		replaceExternalDataType(toExternalLocation, fromExternalLocation, monitor);
+		replaceExternalDataType(resultExternalLocation, fromExternalLocation, monitor);
 
 		// Replace the function.
-		return replaceFunction(toExternalLocation, fromExternalLocation, programMerge, monitor);
+		return replaceFunction(resultExternalLocation, fromExternalLocation, programMerge, monitor);
 	}
 
-	private void replaceNamespace(ExternalLocation toExternalLocation,
+	private void replaceLibrary(ExternalLocation toExternalLocation,
 			ExternalLocation fromExternalLocation, TaskMonitor monitor) {
 
-		Symbol toSymbol = toExternalLocation.getSymbol();
-		Symbol fromSymbol = fromExternalLocation.getSymbol();
-		Program fromProgram = fromSymbol.getProgram();
+		Library currentLibrary = toExternalLocation.getLibrary();
+		Library fromLibrary = fromExternalLocation.getLibrary();
+		Program fromProgram = fromLibrary.getSymbol().getProgram();
 
-		Namespace currentResultNamespace = toSymbol.getParentNamespace();
-		Namespace fromNamespace = fromExternalLocation.getParentNameSpace();
-		Exception exc = null;
 		try {
-			// Get the namespace we need from result.
-			Namespace desiredResultNamespace = resolveNamespace(fromProgram, fromNamespace);
-			if (currentResultNamespace == desiredResultNamespace) {
-				return;
-			}
-			toSymbol.setNamespace(desiredResultNamespace);
+			Library toLibrary = resolveLibrary(fromProgram, fromLibrary);
+			toExternalLocation.setLibrary(toLibrary);
 		}
-		catch (DuplicateNameException | InvalidInputException | CircularDependencyException e) {
-			exc = e;
-		}
-		if (exc != null) {
-			Msg.error(this, "Couldn't replace namespace '" + currentResultNamespace.getName(true) +
-				"' with '" + fromNamespace.getName(true) + "'." + exc.getMessage());
+		catch (DuplicateNameException | InvalidInputException e) {
+			Msg.error(this, "Couldn't replace library '" + currentLibrary.getName() +
+				"' with '" + fromLibrary.getName() + "'." + e.getMessage());
 		}
 	}
 
-	private void replaceLocation(ExternalLocation toExternalLocation,
+	private void replaceLocation(ExternalLocation resultExternalLocation,
 			ExternalLocation fromExternalLocation, TaskMonitor monitor)
-			throws DuplicateNameException, InvalidInputException {
+			throws InvalidInputException, CancelledException {
+
+		Namespace namespace1 = resultExternalLocation.getParentNameSpace();
+		String label1 = resultExternalLocation.getLabel();
+		String origName1 = resultExternalLocation.getOriginalImportedName();
+		SourceType sourceType1 = resultExternalLocation.getSource();
+
+		Namespace namespace2 = fromExternalLocation.getParentNameSpace();
+		String label2 = fromExternalLocation.getLabel();
+		String origName2 = fromExternalLocation.getOriginalImportedName();
+		SourceType sourceType2 = fromExternalLocation.getSource();
 
 		Address fromAddress = fromExternalLocation.getAddress();
-		Address toAddress = toExternalLocation.getAddress();
-		boolean addressChanged = !SystemUtilities.isEqual(fromAddress, toAddress);
+		Address resultAddress = resultExternalLocation.getAddress();
+		boolean addressChanged = !SystemUtilities.isEqual(fromAddress, resultAddress);
 
-		String fromLabel = fromExternalLocation.getSource() == SourceType.DEFAULT ? null
-				: fromExternalLocation.getLabel();
-		String toLabel = toExternalLocation.getSource() == SourceType.DEFAULT ? null
-				: toExternalLocation.getLabel();
-		if (!SystemUtilities.isEqual(fromLabel, toLabel)) {
-			if (fromLabel == null && addressChanged) {
+		boolean labelChanged = !equivalentNamespaces(namespace1, namespace2) ||
+			!isSameLabel(label1, label2, sourceType1, sourceType2) ||
+			!SystemUtilities.isEqual(origName1, origName2);
+
+		if (labelChanged) {
+			if (sourceType2 == SourceType.DEFAULT && addressChanged) {
 				// need to update address first if switching to null/default label
-				toExternalLocation.setAddress(fromAddress);
+				resultExternalLocation.setAddress(fromAddress);
 				addressChanged = false;
 			}
-			SourceType fromSourceType = fromExternalLocation.getSource();
-			toExternalLocation.getSymbol().setName(fromLabel, fromSourceType);
+			mergeExternalDetail(EXTERNAL_LABEL, resultExternalLocation, fromExternalLocation,
+				monitor);
 		}
 		if (addressChanged) {
-			toExternalLocation.setAddress(fromAddress);
+			resultExternalLocation.setAddress(fromAddress);
 		}
 	}
 
@@ -3397,7 +3452,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			getBasicExternalDiffs(externalLocations[LATEST], externalLocations[MY]);
 
 		int detailConflictFlags =
-			latestMyChanges & (EXTERNAL_NAMESPACE | EXTERNAL_LABEL | EXTERNAL_ADDRESS);
+			latestMyChanges & (EXTERNAL_LIBRARY | EXTERNAL_LABEL | EXTERNAL_ADDRESS);
 //			(EXTERNAL_NAMESPACE | EXTERNAL_LABEL | EXTERNAL_SOURCE_TYPE | EXTERNAL_ADDRESS);
 		if ((detailConflictFlags & EXTERNAL_ADDRESS) != 0) {
 			Address latestAddress = externalLocations[LATEST].getAddress();
@@ -4170,7 +4225,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 				? externalLocations[ORIGINAL].getExternalSpaceAddress()
 				: null;
 
-		String[] info = new String[] { "", "", "", "", "", "", "" };
+		String[] info = new String[] { "", "", "", "", "", "", "", "" };
 
 		String versionName = RESULT_TITLE;
 		String externalName = "";
@@ -4181,8 +4236,8 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 
 		switch (programVersion) {
 			case HEADER:
-				return new String[] { "Option", "Name", "Type", "Address", "DataType", "Source",
-					"Function" };
+				return new String[] { "Option", "Name", "Library", "Type", "Address", "DataType",
+					"Source", "Function" };
 			case LATEST:
 				pgm = programs[LATEST];
 				versionName = LATEST_TITLE;
@@ -4223,16 +4278,18 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			DataType dataType = getResultDataType(externalLocation);
 			SourceType sourceType = externalLocation.getSource();
 			Function function = externalLocation.getFunction();
+			String library = externalLocation.getLibraryName();
 
 			info[1] = externalName;
-			info[2] = externalType;
-			info[3] = DiffUtility.getUserToAddressString(pgm, externalAddress);
+			info[2] = library;
+			info[3] = externalType;
+			info[4] = DiffUtility.getUserToAddressString(pgm, externalAddress);
 			if (dataType != null) {
-				info[4] = dataType.getDisplayName();
+				info[5] = dataType.getDisplayName();
 			}
-			info[5] = sourceType.getDisplayString();
+			info[6] = sourceType.getDisplayString();
 			if (function != null) {
-				info[6] = function.getPrototypeString(true, true);
+				info[7] = function.getPrototypeString(true, true);
 			}
 		}
 		return info;
