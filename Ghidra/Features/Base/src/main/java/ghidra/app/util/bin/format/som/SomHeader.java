@@ -84,12 +84,18 @@ public class SomHeader implements StructConverter {
 	 * Creates a new {@link SomHeader}
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the header
+	 * @throws SomException if the header is invalid
 	 * @throws IOException if there was an IO-related error
 	 */
-	public SomHeader(BinaryReader reader) throws IOException {
+	public SomHeader(BinaryReader reader) throws SomException, IOException {
 		systemId = reader.readNextUnsignedShort();
 		magic = reader.readNextUnsignedShort();
 		versionId = reader.readNextUnsignedInt();
+
+		if (!hasValidMagic() || !hasValidVersionId()) {
+			throw new SomException("Invalid SOM header");
+		}
+
 		fileTime = new SomSysClock(reader);
 		entrySpace = reader.readNextUnsignedInt();
 		entrySubspace = reader.readNextUnsignedInt();
@@ -174,36 +180,10 @@ public class SomHeader implements StructConverter {
 	}
 
 	/**
-	 * {@return true if this {@link SomHeader} has a valid magic number; otherwise false}
-	 */
-	public boolean hasValidMagic() {
-		return switch (magic) {
-			case MAGIC_LIBRARY:
-			case MAGIC_RELOCATABLE:
-			case MAGIC_NON_SHAREABLE_EXE:
-			case MAGIC_SHAREABLE_EXE:
-			case MAGIC_SHARABLE_DEMAND_LOADABLE_EXE:
-			case MAGIC_DYNAMIC_LOAD_LIBRARY:
-			case MAGIC_SHARED_LIBRARY:
-			case MAGIC_RELOCATABLE_LIBRARY:
-				yield true;
-			default:
-				yield false;
-		};
-	}
-
-	/**
 	 * {@return the version ID}
 	 */
 	public long getVersionId() {
 		return versionId;
-	}
-
-	/**
-	 * {@return true if this {@link SomHeader} has a valid version ID; otherwise false}
-	 */
-	public boolean hasValidVersionId() {
-		return versionId == 85082112 || versionId == 87102412;
 	}
 
 	/**
@@ -556,6 +536,32 @@ public class SomHeader implements StructConverter {
 			DataUtilities.createData(program, addr, symbol.toDataType(), -1, CHECK_FOR_SPACE);
 			program.getListing().setComment(addr, CommentType.EOL, symbol.getName());
 		}
+	}
+
+	/**
+	 * {@return true if this {@link SomHeader} has a valid magic number; otherwise false}
+	 */
+	private boolean hasValidMagic() {
+		return switch (magic) {
+			case MAGIC_LIBRARY:
+			case MAGIC_RELOCATABLE:
+			case MAGIC_NON_SHAREABLE_EXE:
+			case MAGIC_SHAREABLE_EXE:
+			case MAGIC_SHARABLE_DEMAND_LOADABLE_EXE:
+			case MAGIC_DYNAMIC_LOAD_LIBRARY:
+			case MAGIC_SHARED_LIBRARY:
+			case MAGIC_RELOCATABLE_LIBRARY:
+				yield true;
+			default:
+				yield false;
+		};
+	}
+
+	/**
+	 * {@return true if this {@link SomHeader} has a valid version ID; otherwise false}
+	 */
+	private boolean hasValidVersionId() {
+		return versionId == 85082112 || versionId == 87102412;
 	}
 
 	@Override
