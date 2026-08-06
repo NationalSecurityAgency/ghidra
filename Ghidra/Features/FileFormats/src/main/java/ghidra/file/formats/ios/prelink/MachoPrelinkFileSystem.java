@@ -191,7 +191,7 @@ public class MachoPrelinkFileSystem extends GFileSystemBase implements GFileSyst
 				new MessageLog(), monitor);
 
 			AbstractProgramLoader.setProgramProperties(program, providerWrapper,
-				MachoLoader.MACH_O_NAME);
+				MachoLoader.MACH_O_NAME, monitor);
 			program.setExecutablePath(file.getPath()); // override the value set by AbstractProgramLoader.setProgramProperties
 
 			if (file.equals(systemKextFile)) {
