@@ -57,7 +57,7 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 	public void load(T dataType) {
 
 		if (dataType.isDeleted()) {
-			// This can occur when mayny events get lumped together and a change event triggers
+			// This can occur when many events get lumped together and a change event triggers
 			// a delayed reload prior to datatype removal and its event
 			if (dataType == originalComposite) {
 				// Re-route to dataTypeRemoved callback after restoring listener.
@@ -884,7 +884,7 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 			throw new UnsupportedOperationException();
 		}
 
-		// TODO: May  need special logic if dtc is zero-length component
+		// Note: May  need special logic if dtc is zero-length component
 		int length = getLength();
 		int nextCompOffset = dtc.getEndOffset() + 1;
 		if (nextCompOffset >= length) {
@@ -1513,8 +1513,7 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 					}
 					else {
 						Composite changedComposite = getOriginalComposite();
-						if ((changedComposite != null) &&
-							!viewComposite.isEquivalent(changedComposite)) {
+						if (changedComposite != null) {
 							originalDTM.removeDataTypeManagerListener(this);
 							originalDTM.flushEvents();
 							Swing.runLater(() -> load(getOriginalComposite()));
