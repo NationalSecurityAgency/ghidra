@@ -308,8 +308,8 @@ void HighVariable::stripType(void) const
   if (meta == TYPE_PARTIALUNION || meta == TYPE_PARTIALSTRUCT) {
     if (symbol != (Symbol *)0 && symboloffset != -1) {	// If there is a bigger backing symbol
 	type_metatype submeta = symbol->getType()->getMetatype();
-	if (submeta == TYPE_STRUCT || submeta == TYPE_UNION)
-	  return;			// Don't strip the partial union
+	if (submeta == TYPE_STRUCT || submeta == TYPE_UNION || submeta == TYPE_ARRAY)
+	  return;			// Don't strip the partial
     }
   }
   else if (type->isEnumType()) {

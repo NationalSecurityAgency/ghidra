@@ -360,6 +360,7 @@ public:
 /// Simplify expressions like:
 ///  - `sub( concat(V,W), 0)  =>  W`
 ///  - `sub( concat(V,W), c)  =>  V`
+///  - `sub( sub(V, c), d) =>  SUB(V,#c+#d)`
 ///
 /// preserving the data-types and removing the SUBPIECE and PIECE operations that are discarded.
 class RuleDumptyHumpLate : public Rule {

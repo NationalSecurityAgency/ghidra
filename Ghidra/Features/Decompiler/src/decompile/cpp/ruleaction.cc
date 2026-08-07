@@ -7685,6 +7685,63 @@ int4 RulePieceStructure::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
+/// \class RuleAndStructure
+/// \brief Convert `and(x,#mask) => zext(sub(x,#c)` when the mask corresponds to a field access
+void RuleAndStructure::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_AND);
+}
+
+int4 RuleAndStructure::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *cvn = op->getIn(1);
+  if (!cvn->isConstant()) return 0;
+  Varnode *vn = op->getIn(0);
+  Datatype *baseType = vn->getTypeReadFacing(op);
+  type_metatype meta = baseType->getMetatype();
+  if (meta != TYPE_STRUCT && meta != TYPE_PARTIALSTRUCT && meta != TYPE_ARRAY)
+    return 0;
+  uintb off = cvn->getOffset();
+  int4 count = sizeof(uintb)*8 - count_leading_zeros(off);
+  int4 size = count / 8;	// Number of bytes being masked off
+  if (count % 8 != 0)
+    size += 1;
+  int8 structOff = vn->getSpace()->isBigEndian() ? vn->getSize() - size : 0;
+  Datatype *ct = baseType->findSmallestContainer(structOff, size, &structOff);
+  if (ct->getSize() >= vn->getSize() || structOff != 0)
+    return 0;
+  PcodeOp *subOp = data.newOp(2, op->getAddr());
+  data.opSetOpcode(subOp, CPUI_SUBPIECE);
+  data.opSetInput(subOp,data.newConstant(4, 0),1);
+  data.opMarkSpecialPrint(subOp);	// Mark SUBPIECE as a field extraction
+  Address addr = op->getOut()->getAddr();
+  if (addr.isBigEndian())
+    addr = addr + (vn->getSize() - ct->getSize());
+  addr.renormalize(vn->getSize());		// Allow for possible join address
+  Varnode *outvn = data.newVarnodeOut(ct->getSize(), addr, subOp);
+  outvn->updateType(ct);
+  if (calc_mask(size) == off) {
+    data.opRemoveInput(op, 1);
+    data.opSetInput(op, outvn, 0);
+    data.opSetOpcode(op, CPUI_INT_ZEXT);
+    data.opSetInput(subOp,vn,0);
+    data.opInsertBefore(subOp, op);
+  }
+  else {
+    PcodeOp *newZext = data.newOp(1, op->getAddr());
+    data.opSetOpcode(newZext, CPUI_INT_ZEXT);
+    Varnode *outzext = data.newUniqueOut(vn->getSize(), newZext);
+    data.opSetInput(op, outzext, 0);
+    data.opSetInput(subOp, vn, 0);
+    data.opSetInput(newZext,outvn,0);
+    data.opInsertBefore(newZext,op);
+    data.opInsertBefore(subOp,newZext);
+  }
+  return 1;
+}
+
 /// \class RuleSubNormal
 /// \brief Pull-back SUBPIECE through INT_RIGHT and INT_SRIGHT
 ///
