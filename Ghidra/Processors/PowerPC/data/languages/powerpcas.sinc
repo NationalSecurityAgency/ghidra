@@ -46,13 +46,19 @@ define pcodeop lmdOp;
 define pcodeop stmdOp;
 define pcodeop dsixesOp;
 
-# Each SELxx constructor below extracts, into a local `bit`, the value of
-# XER bit (32+XBI) for XBI in 0:15 (the range addressable by TXER/SELxx's
-# 4-bit XBI field) via the same branch chain over XBI. Only the six XER
-# sub-bits this language otherwise models as registers are represented
+# XBI_BIT resolves, at decode time, the XER bit (32+XBI) named by the
+# SELxx instructions' 4-bit XBI field. Only the six XER sub-bits this
+# language otherwise models as registers are represented
 # (XBI 0=SO, 1=OV, 2=CA, 9=T02, 10=T07, 11=TAG); the remaining positions
 # are not tracked by this language and read as 0 here rather than being
 # modeled precisely.
+XBI_BIT: is BITS_21_24=0  { export xer_so; }
+XBI_BIT: is BITS_21_24=1  { export xer_ov; }
+XBI_BIT: is BITS_21_24=2  { export xer_ca; }
+XBI_BIT: is BITS_21_24=9  { export xer_t02; }
+XBI_BIT: is BITS_21_24=10 { export xer_t07; }
+XBI_BIT: is BITS_21_24=11 { export xer_tag; }
+XBI_BIT: is BITS_21_24    { tmp:1 = 0; export tmp; }
 
 # Displays a raw 0:15 field value biased by +32, so the operand shown is
 # the absolute XER bit number being selected (e.g. the TAG bit, XER[43],
@@ -102,289 +108,65 @@ XBI32: val is BITS_21_24 [ val = BITS_21_24 + 32; ] { export *[const]:1 val; }
 #   those values. Destination RA in 11:15, XBI in 21:24 (IBM, displayed
 #   biased +32 as with TXER above); bits 25:26 are reserved.
 # --------------------------------------------------------------------------
-:selii A,AS_SEL_IS,AS_SEL_IB,XBI32 is $(NOTVLE) & OP=30 & A & AS_SEL_IS & AS_SEL_IB & BITS_21_24 & XBI32 & AS_SEL_OP=24
+:selii A,AS_SEL_IS,AS_SEL_IB,XBI32 is $(NOTVLE) & OP=30 & A & AS_SEL_IS & AS_SEL_IB & BITS_21_24 & XBI32 & XBI_BIT & AS_SEL_OP=24
 {
-	xbi:1 = BITS_21_24;
-	bit:1 = 0;
-	if (xbi == 0) goto <xbiSO>;
-	if (xbi == 1) goto <xbiOV>;
-	if (xbi == 2) goto <xbiCA>;
-	if (xbi == 9) goto <xbiT02>;
-	if (xbi == 10) goto <xbiT07>;
-	if (xbi == 11) goto <xbiTAG>;
-	goto <xbiDone>;
-<xbiSO>
-	bit = xer_so;
-	goto <xbiDone>;
-<xbiOV>
-	bit = xer_ov;
-	goto <xbiDone>;
-<xbiCA>
-	bit = xer_ca;
-	goto <xbiDone>;
-<xbiT02>
-	bit = xer_t02;
-	goto <xbiDone>;
-<xbiT07>
-	bit = xer_t07;
-	goto <xbiDone>;
-<xbiTAG>
-	bit = xer_tag;
-<xbiDone>
 	A = AS_SEL_IB;
-	if (bit == 0) goto inst_next;
+	if (XBI_BIT == 0) goto inst_next;
 	A = AS_SEL_IS;
 }
 
-:selii. A,AS_SEL_IS,AS_SEL_IB,XBI32 is $(NOTVLE) & OP=30 & A & AS_SEL_IS & AS_SEL_IB & BITS_21_24 & XBI32 & AS_SEL_OP=25
+:selii. A,AS_SEL_IS,AS_SEL_IB,XBI32 is $(NOTVLE) & OP=30 & A & AS_SEL_IS & AS_SEL_IB & BITS_21_24 & XBI32 & XBI_BIT & AS_SEL_OP=25
 {
-	xbi:1 = BITS_21_24;
-	bit:1 = 0;
-	if (xbi == 0) goto <xbiSO>;
-	if (xbi == 1) goto <xbiOV>;
-	if (xbi == 2) goto <xbiCA>;
-	if (xbi == 9) goto <xbiT02>;
-	if (xbi == 10) goto <xbiT07>;
-	if (xbi == 11) goto <xbiTAG>;
-	goto <xbiDone>;
-<xbiSO>
-	bit = xer_so;
-	goto <xbiDone>;
-<xbiOV>
-	bit = xer_ov;
-	goto <xbiDone>;
-<xbiCA>
-	bit = xer_ca;
-	goto <xbiDone>;
-<xbiT02>
-	bit = xer_t02;
-	goto <xbiDone>;
-<xbiT07>
-	bit = xer_t07;
-	goto <xbiDone>;
-<xbiTAG>
-	bit = xer_tag;
-<xbiDone>
 	A = AS_SEL_IB;
-	if (bit == 1) goto <settrue>;
-	goto <done>;
-<settrue>
+	if (XBI_BIT == 0) goto <done>;
 	A = AS_SEL_IS;
 <done>
 	cr0flags(A);
 }
 
-:selir A,AS_SEL_IS,B,XBI32 is $(NOTVLE) & OP=30 & A & AS_SEL_IS & B & BITS_21_24 & XBI32 & AS_SEL_OP=26
+:selir A,AS_SEL_IS,B,XBI32 is $(NOTVLE) & OP=30 & A & AS_SEL_IS & B & BITS_21_24 & XBI32 & XBI_BIT & AS_SEL_OP=26
 {
-	xbi:1 = BITS_21_24;
-	bit:1 = 0;
-	if (xbi == 0) goto <xbiSO>;
-	if (xbi == 1) goto <xbiOV>;
-	if (xbi == 2) goto <xbiCA>;
-	if (xbi == 9) goto <xbiT02>;
-	if (xbi == 10) goto <xbiT07>;
-	if (xbi == 11) goto <xbiTAG>;
-	goto <xbiDone>;
-<xbiSO>
-	bit = xer_so;
-	goto <xbiDone>;
-<xbiOV>
-	bit = xer_ov;
-	goto <xbiDone>;
-<xbiCA>
-	bit = xer_ca;
-	goto <xbiDone>;
-<xbiT02>
-	bit = xer_t02;
-	goto <xbiDone>;
-<xbiT07>
-	bit = xer_t07;
-	goto <xbiDone>;
-<xbiTAG>
-	bit = xer_tag;
-<xbiDone>
 	A = B;
-	if (bit == 0) goto inst_next;
+	if (XBI_BIT == 0) goto inst_next;
 	A = AS_SEL_IS;
 }
 
-:selir. A,AS_SEL_IS,B,XBI32 is $(NOTVLE) & OP=30 & A & AS_SEL_IS & B & BITS_21_24 & XBI32 & AS_SEL_OP=27
+:selir. A,AS_SEL_IS,B,XBI32 is $(NOTVLE) & OP=30 & A & AS_SEL_IS & B & BITS_21_24 & XBI32 & XBI_BIT & AS_SEL_OP=27
 {
-	xbi:1 = BITS_21_24;
-	bit:1 = 0;
-	if (xbi == 0) goto <xbiSO>;
-	if (xbi == 1) goto <xbiOV>;
-	if (xbi == 2) goto <xbiCA>;
-	if (xbi == 9) goto <xbiT02>;
-	if (xbi == 10) goto <xbiT07>;
-	if (xbi == 11) goto <xbiTAG>;
-	goto <xbiDone>;
-<xbiSO>
-	bit = xer_so;
-	goto <xbiDone>;
-<xbiOV>
-	bit = xer_ov;
-	goto <xbiDone>;
-<xbiCA>
-	bit = xer_ca;
-	goto <xbiDone>;
-<xbiT02>
-	bit = xer_t02;
-	goto <xbiDone>;
-<xbiT07>
-	bit = xer_t07;
-	goto <xbiDone>;
-<xbiTAG>
-	bit = xer_tag;
-<xbiDone>
 	A = B;
-	if (bit == 1) goto <settrue>;
-	goto <done>;
-<settrue>
+	if (XBI_BIT == 0) goto <done>;
 	A = AS_SEL_IS;
 <done>
 	cr0flags(A);
 }
 
-:selri A,D,AS_SEL_IB,XBI32 is $(NOTVLE) & OP=30 & A & D & AS_SEL_IB & BITS_21_24 & XBI32 & AS_SEL_OP=28
+:selri A,D,AS_SEL_IB,XBI32 is $(NOTVLE) & OP=30 & A & D & AS_SEL_IB & BITS_21_24 & XBI32 & XBI_BIT & AS_SEL_OP=28
 {
-	xbi:1 = BITS_21_24;
-	bit:1 = 0;
-	if (xbi == 0) goto <xbiSO>;
-	if (xbi == 1) goto <xbiOV>;
-	if (xbi == 2) goto <xbiCA>;
-	if (xbi == 9) goto <xbiT02>;
-	if (xbi == 10) goto <xbiT07>;
-	if (xbi == 11) goto <xbiTAG>;
-	goto <xbiDone>;
-<xbiSO>
-	bit = xer_so;
-	goto <xbiDone>;
-<xbiOV>
-	bit = xer_ov;
-	goto <xbiDone>;
-<xbiCA>
-	bit = xer_ca;
-	goto <xbiDone>;
-<xbiT02>
-	bit = xer_t02;
-	goto <xbiDone>;
-<xbiT07>
-	bit = xer_t07;
-	goto <xbiDone>;
-<xbiTAG>
-	bit = xer_tag;
-<xbiDone>
 	A = AS_SEL_IB;
-	if (bit == 0) goto inst_next;
+	if (XBI_BIT == 0) goto inst_next;
 	A = D;
 }
 
-:selri. A,D,AS_SEL_IB,XBI32 is $(NOTVLE) & OP=30 & A & D & AS_SEL_IB & BITS_21_24 & XBI32 & AS_SEL_OP=29
+:selri. A,D,AS_SEL_IB,XBI32 is $(NOTVLE) & OP=30 & A & D & AS_SEL_IB & BITS_21_24 & XBI32 & XBI_BIT & AS_SEL_OP=29
 {
-	xbi:1 = BITS_21_24;
-	bit:1 = 0;
-	if (xbi == 0) goto <xbiSO>;
-	if (xbi == 1) goto <xbiOV>;
-	if (xbi == 2) goto <xbiCA>;
-	if (xbi == 9) goto <xbiT02>;
-	if (xbi == 10) goto <xbiT07>;
-	if (xbi == 11) goto <xbiTAG>;
-	goto <xbiDone>;
-<xbiSO>
-	bit = xer_so;
-	goto <xbiDone>;
-<xbiOV>
-	bit = xer_ov;
-	goto <xbiDone>;
-<xbiCA>
-	bit = xer_ca;
-	goto <xbiDone>;
-<xbiT02>
-	bit = xer_t02;
-	goto <xbiDone>;
-<xbiT07>
-	bit = xer_t07;
-	goto <xbiDone>;
-<xbiTAG>
-	bit = xer_tag;
-<xbiDone>
 	A = AS_SEL_IB;
-	if (bit == 1) goto <settrue>;
-	goto <done>;
-<settrue>
+	if (XBI_BIT == 0) goto <done>;
 	A = D;
 <done>
 	cr0flags(A);
 }
 
-:selrr A,D,B,XBI32 is $(NOTVLE) & OP=30 & A & D & B & BITS_21_24 & XBI32 & AS_SEL_OP=30
+:selrr A,D,B,XBI32 is $(NOTVLE) & OP=30 & A & D & B & BITS_21_24 & XBI32 & XBI_BIT & AS_SEL_OP=30
 {
-	xbi:1 = BITS_21_24;
-	bit:1 = 0;
-	if (xbi == 0) goto <xbiSO>;
-	if (xbi == 1) goto <xbiOV>;
-	if (xbi == 2) goto <xbiCA>;
-	if (xbi == 9) goto <xbiT02>;
-	if (xbi == 10) goto <xbiT07>;
-	if (xbi == 11) goto <xbiTAG>;
-	goto <xbiDone>;
-<xbiSO>
-	bit = xer_so;
-	goto <xbiDone>;
-<xbiOV>
-	bit = xer_ov;
-	goto <xbiDone>;
-<xbiCA>
-	bit = xer_ca;
-	goto <xbiDone>;
-<xbiT02>
-	bit = xer_t02;
-	goto <xbiDone>;
-<xbiT07>
-	bit = xer_t07;
-	goto <xbiDone>;
-<xbiTAG>
-	bit = xer_tag;
-<xbiDone>
 	A = B;
-	if (bit == 0) goto inst_next;
+	if (XBI_BIT == 0) goto inst_next;
 	A = D;
 }
 
-:selrr. A,D,B,XBI32 is $(NOTVLE) & OP=30 & A & D & B & BITS_21_24 & XBI32 & AS_SEL_OP=31
+:selrr. A,D,B,XBI32 is $(NOTVLE) & OP=30 & A & D & B & BITS_21_24 & XBI32 & XBI_BIT & AS_SEL_OP=31
 {
-	xbi:1 = BITS_21_24;
-	bit:1 = 0;
-	if (xbi == 0) goto <xbiSO>;
-	if (xbi == 1) goto <xbiOV>;
-	if (xbi == 2) goto <xbiCA>;
-	if (xbi == 9) goto <xbiT02>;
-	if (xbi == 10) goto <xbiT07>;
-	if (xbi == 11) goto <xbiTAG>;
-	goto <xbiDone>;
-<xbiSO>
-	bit = xer_so;
-	goto <xbiDone>;
-<xbiOV>
-	bit = xer_ov;
-	goto <xbiDone>;
-<xbiCA>
-	bit = xer_ca;
-	goto <xbiDone>;
-<xbiT02>
-	bit = xer_t02;
-	goto <xbiDone>;
-<xbiT07>
-	bit = xer_t07;
-	goto <xbiDone>;
-<xbiTAG>
-	bit = xer_tag;
-<xbiDone>
 	A = B;
-	if (bit == 1) goto <settrue>;
-	goto <done>;
-<settrue>
+	if (XBI_BIT == 0) goto <done>;
 	A = D;
 <done>
 	cr0flags(A);
