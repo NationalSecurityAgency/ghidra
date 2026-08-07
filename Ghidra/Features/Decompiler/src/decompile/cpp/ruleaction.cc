@@ -10814,6 +10814,120 @@ int4 RuleFloatSignCleanup::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
+/// \class RuleUnsignedComparisonFromSignBit
+/// \brief Handles `((a | (~b)) - ((a - b) u>> 1)) u>> 31`, which is equivalent to `b u<= a`.
+///
+/// This identity is used by some PowerPC compilers.
+void RuleUnsignedComparisonFromSignBit::getOpList(vector<uint4> &oplist) const
+{
+  oplist.push_back(CPUI_INT_RIGHT);
+}
+
+bool check_sub_op_or_add(PcodeOp *op, Varnode **sub_lhs, Varnode **sub_rhs) {
+  if (op->code() == CPUI_INT_SUB) {
+    *sub_lhs = op->getIn(0);
+    *sub_rhs = op->getIn(1);
+    return true;
+  } else if (op->code() == CPUI_INT_ADD) {
+    // RuleSub2Add might have transformed sub_lhs - sub_rhs into sub_lhs + (sub_rhs * -1)
+    for (int i = 0; i < 2; i++) {
+      Varnode *add_rhs = op->getIn(i ^ 1);
+      if (!add_rhs->isWritten()) continue;
+      PcodeOp *mult_op = add_rhs->getDef();
+      if (mult_op->code() != CPUI_INT_MULT) continue;
+      // constant will always be on the right
+      Varnode *real_sub_rhs = mult_op->getIn(0);
+      Varnode *minus_one = mult_op->getIn(1);
+      if (!minus_one->constantMatch(calc_mask(real_sub_rhs->getSize()))) continue;
+
+      *sub_lhs = op->getIn(i);
+      *sub_rhs = real_sub_rhs;
+      return true;
+    }
+  }
+  return false;
+}
+
+int4 RuleUnsignedComparisonFromSignBit::applyOp(PcodeOp *op, Funcdata &data)
+{
+  // Check that the right shift extracts the sign bit
+  Varnode *sub = op->getIn(0);
+  if (! op->getIn(1)->constantMatch((sub->getSize() * 8) - 1)) return 0;
+
+  // There might be a subpiece extracting the top part of another varnode - skip through that
+  if (! sub->isWritten()) return 0;
+  PcodeOp *sub_op = sub->getDef();
+  if (sub_op->code() == CPUI_SUBPIECE) {
+    // This is throwing away some number of least significant bytes. As long as
+    // it keeps the top byte, we're okay.
+    if (! sub_op->getIn(1)->isConstant()) return 0;
+    if (sub_op->getIn(1)->constantMatch(sub_op->getIn(0)->getSize())) return 0;
+    if (! sub_op->getIn(0)->isWritten()) return 0;
+
+    sub_op = sub_op->getIn(0)->getDef();
+  }
+
+  // Check that the subtraction has the correct forms as inputs
+  Varnode *sub_left;
+  Varnode *sub_right;
+  if (! check_sub_op_or_add(sub_op, &sub_left, &sub_right)) return 0;
+
+  // Check the right side of the subtraction first, so we know which varnodes
+  // are A and X (if we did left side first, we would have to check both options,
+  // since | is commutative).
+  // sub_right should be: ((a - x) u>> 1)
+  if (! sub_right->isWritten()) return 0;
+  PcodeOp *sub_right_op = sub_right->getDef();
+  if (sub_right_op->code() != CPUI_INT_RIGHT) return 0;
+  if (!sub_right_op->getIn(1)->constantMatch(1)) return 0;
+  Varnode *diff = sub_right_op->getIn(0);
+
+  // Check that the 'diff' really is a subtraction, and then extract A and X.
+  if (! diff->isWritten()) return 0;
+  Varnode *var_A;
+  Varnode *var_B;
+  PcodeOp *diff_op = diff->getDef();
+  if (! check_sub_op_or_add(diff_op, &var_A, &var_B)) return 0;
+
+  // Now we know A and X, we can try to match this to the left hand side of the
+  // original subtraction: sub_left should represent `(a | (~x))`
+  if (! sub_left->isWritten()) return 0;
+  PcodeOp *or_op = sub_left->getDef();
+  if (or_op->code() != CPUI_INT_OR) return 0;
+
+  // Try to match one of the operands of the INT_OR to var_A, and the other to
+  // the bitwise negation of var_B.
+  bool ok = false;
+  for (int i = 0; i < 2; i++) {
+    if (! functionalEquality(or_op->getIn(i), var_A)) continue;
+
+    // or_rhs might be INT_NEGATE(var_B)
+    Varnode *or_rhs = or_op->getIn(i ^ 1);
+    if (or_rhs->isWritten()) {
+      PcodeOp *or_rhs_op = or_rhs->getDef();
+      if (or_rhs_op->code() != CPUI_INT_NEGATE) continue;
+      if (! functionalEquality(or_rhs_op->getIn(0), var_B)) continue;
+
+      ok = true;
+      break;
+    } else if (var_B->isConstant()) {
+      // or_rhs might be a constant-folded ~var_B
+      if (! or_rhs->constantMatch(var_B->getOffset() ^ calc_mask(var_B->getSize()))) continue;
+
+      ok = true;
+      break;
+    }
+  }
+  if (! ok) return 0;
+
+  // We've got a match - time to contruct the output: X u<= A
+  data.opSetOpcode(op, CPUI_INT_LESSEQUAL);
+  data.opSetInput(op, var_B, 0);
+  data.opSetInput(op, var_A, 1);
+
+  return 1;
+}
+
 /// \class RuleOrCompare
 /// \brief Simplify INT_OR in comparisons with 0.
 ///
