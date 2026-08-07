@@ -1,0 +1,560 @@
+# PowerPC AS extensions
+#
+# "PowerPC AS" refers to a set of architectural extensions implemented by
+# 64-bit IBM POWER CPUs to support the tagged-memory capability model
+# inherited from the AS/400 (later "IBM i") platform. IBM has never published
+# an ISA manual for these extensions. This file is based on public
+# third-party research:
+#
+#   - "The PowerPC AS Tagged Memory Extensions", Hugo Landau
+#     https://www.devever.net/~hl/ppcas
+#
+# and has been verified against code found in real IBM i binaries.
+#
+# Treat this module the way altivec.sinc is treated elsewhere in this
+# language: an optional, self-contained instruction extension that a variant
+# opts into via @include. It is only meaningful for 64-bit "Power ISA"
+# variants (POWER5 and later); it is not applicable to 32-bit/embedded cores.
+#
+# Instruction bit positions cited in the comments below use IBM numbering
+# (bit 0 = MSB of the 32-bit instruction word), as do the sources above.
+# The field definitions themselves follow this codebase's existing
+# convention of SLEIGH-native bit numbering (bit 0 = LSB), i.e. an IBM range
+# (x,y) is expressed as (31-y,31-x). A number of fields at commonly reused
+# bit positions (D, S, A, B, TO, B_BITS, BI_BITS, NB, CRFD, BIT_L,
+# BITS_0_1, BITS_11_20, BITS_21_22, BITS_21_24, DQs/dqPlusRaOrZeroAddress,
+# DS/dsPlusRaOrZeroAddress, XOP_1_10, XOP_0_10) are already declared in
+# ppc_common.sinc and are reused here rather than redeclared. Fields specific
+# to this file (AS_TXER_MINOR, AS_SEL_OP, AS_SEL_IS, AS_SEL_IB,
+# AS_LTPTR_IMM) are declared in ppc_common.sinc next to the other PowerPC-AS
+# field declarations, as is the tag-condition-code ("TGCC") register triple
+# (xer_t02/xer_t07/xer_tag, i.e. bits 41:43 of the 64-bit XER).
+#
+# Register-chain instructions (LSDI/LSDX/STSDI/STSDX, LMD/STMD) and the
+# decimal-assist DSIXES are decoded fully, but their multi-register/BCD
+# data-flow effects are left as uninterpreted pcodeops rather than modeled
+# in full; each comment below describes the actual behaviour for anyone
+# wanting to extend this later using the same recursive-table technique as
+# lmwInstructions.sinc / lswInstructions.sinc.
+
+define pcodeop txerOp;
+define pcodeop lsdiOp;
+define pcodeop lsdxOp;
+define pcodeop stsdiOp;
+define pcodeop stsdxOp;
+define pcodeop lmdOp;
+define pcodeop stmdOp;
+define pcodeop dsixesOp;
+
+# Each SELxx constructor below extracts, into a local `bit`, the value of
+# XER bit (32+XBI) for XBI in 0:15 (the range addressable by TXER/SELxx's
+# 4-bit XBI field) via the same branch chain over XBI. Only the six XER
+# sub-bits this language otherwise models as registers are represented
+# (XBI 0=SO, 1=OV, 2=CA, 9=T02, 10=T07, 11=TAG); the remaining positions
+# are not tracked by this language and read as 0 here rather than being
+# modeled precisely.
+
+# Displays a raw 0:15 field value biased by +32, so the operand shown is
+# the absolute XER bit number being selected (e.g. the TAG bit, XER[43],
+# displays as 43 rather than as the raw field value 11).
+XBI32: val is BITS_21_24 [ val = BITS_21_24 + 32; ] { export *[const]:1 val; }
+
+# --------------------------------------------------------------------------
+# SETTAG - Set Tag
+#   Sets XER[43] (the TAG bit) to 1. Typically executed immediately before a
+#   STQ so that the quadword it stores is marked as a valid (tagged)
+#   pointer. No operands. Fixed encoding 0x7C0103E6, decoded here as
+#   opcode(0:5)=31, reserved(6:10)=0, a constant 32 in bits 11:20, and
+#   XO(21:30)=499.
+# --------------------------------------------------------------------------
+:settag is $(NOTVLE) & OP=31 & TO=0 & XOP_1_10=499 & BITS_11_20=32 & BIT_0=0
+{
+	xer_tag = 1;
+}
+
+# --------------------------------------------------------------------------
+# TXER - Trap on XER
+#   txer TO,UI,XBI
+#   Invokes the system trap handler if XER[XBI+32] equals TO (only TO
+#   values 0 and 1 are valid). UI has no effect on execution; it exists
+#   purely to pass a parameter to the trap handler. Major opcode 31, minor
+#   opcode 36 in bits 25:30 (IBM); fields TO (6:10), UI (11:20), XBI
+#   (21:24, displayed here biased +32 - see XBI32 above).
+# --------------------------------------------------------------------------
+:txer TO,BITS_11_20,XBI32 is $(NOTVLE) & OP=31 & TO & BITS_11_20 & BITS_21_24 & XBI32 & AS_TXER_MINOR=36
+{
+	txerOp(TO:1, BITS_11_20:2, BITS_21_24:1);
+}
+
+# --------------------------------------------------------------------------
+# SELII / SELIR / SELRI / SELRR (+ "." CR-updating variants)
+# Select {Immediate,Register}-{Immediate,Register} MDS-form
+#   selii  RA,IS,IB,XBI       selir  RA,IS,RB,XBI
+#   selri  RA,RS,IB,XBI       selrr  RA,RS,RB,XBI
+#
+#   A conditional move driven by an XER bit: RA is set to the first source
+#   operand (from instruction bits 6:10) if XER[XBI+32] is 1, and to the
+#   second source operand (from bits 16:20) otherwise. Immediate operands
+#   (IS/IB) are 5-bit sign-extended values. "." variants additionally set
+#   CR0 from the result. Major opcode 30, minor opcode 12/13/14/15 in bits
+#   27:30 (IBM) with Rc in bit 31 - modeled here as a single combined 5-bit
+#   field (AS_SEL_OP, values 24-31) since (minor<<1)|Rc reduces to exactly
+#   those values. Destination RA in 11:15, XBI in 21:24 (IBM, displayed
+#   biased +32 as with TXER above); bits 25:26 are reserved.
+# --------------------------------------------------------------------------
+:selii A,AS_SEL_IS,AS_SEL_IB,XBI32 is $(NOTVLE) & OP=30 & A & AS_SEL_IS & AS_SEL_IB & BITS_21_24 & XBI32 & AS_SEL_OP=24
+{
+	xbi:1 = BITS_21_24;
+	bit:1 = 0;
+	if (xbi == 0) goto <xbiSO>;
+	if (xbi == 1) goto <xbiOV>;
+	if (xbi == 2) goto <xbiCA>;
+	if (xbi == 9) goto <xbiT02>;
+	if (xbi == 10) goto <xbiT07>;
+	if (xbi == 11) goto <xbiTAG>;
+	goto <xbiDone>;
+<xbiSO>
+	bit = xer_so;
+	goto <xbiDone>;
+<xbiOV>
+	bit = xer_ov;
+	goto <xbiDone>;
+<xbiCA>
+	bit = xer_ca;
+	goto <xbiDone>;
+<xbiT02>
+	bit = xer_t02;
+	goto <xbiDone>;
+<xbiT07>
+	bit = xer_t07;
+	goto <xbiDone>;
+<xbiTAG>
+	bit = xer_tag;
+<xbiDone>
+	A = AS_SEL_IB;
+	if (bit == 0) goto inst_next;
+	A = AS_SEL_IS;
+}
+
+:selii. A,AS_SEL_IS,AS_SEL_IB,XBI32 is $(NOTVLE) & OP=30 & A & AS_SEL_IS & AS_SEL_IB & BITS_21_24 & XBI32 & AS_SEL_OP=25
+{
+	xbi:1 = BITS_21_24;
+	bit:1 = 0;
+	if (xbi == 0) goto <xbiSO>;
+	if (xbi == 1) goto <xbiOV>;
+	if (xbi == 2) goto <xbiCA>;
+	if (xbi == 9) goto <xbiT02>;
+	if (xbi == 10) goto <xbiT07>;
+	if (xbi == 11) goto <xbiTAG>;
+	goto <xbiDone>;
+<xbiSO>
+	bit = xer_so;
+	goto <xbiDone>;
+<xbiOV>
+	bit = xer_ov;
+	goto <xbiDone>;
+<xbiCA>
+	bit = xer_ca;
+	goto <xbiDone>;
+<xbiT02>
+	bit = xer_t02;
+	goto <xbiDone>;
+<xbiT07>
+	bit = xer_t07;
+	goto <xbiDone>;
+<xbiTAG>
+	bit = xer_tag;
+<xbiDone>
+	A = AS_SEL_IB;
+	if (bit == 1) goto <settrue>;
+	goto <done>;
+<settrue>
+	A = AS_SEL_IS;
+<done>
+	cr0flags(A);
+}
+
+:selir A,AS_SEL_IS,B,XBI32 is $(NOTVLE) & OP=30 & A & AS_SEL_IS & B & BITS_21_24 & XBI32 & AS_SEL_OP=26
+{
+	xbi:1 = BITS_21_24;
+	bit:1 = 0;
+	if (xbi == 0) goto <xbiSO>;
+	if (xbi == 1) goto <xbiOV>;
+	if (xbi == 2) goto <xbiCA>;
+	if (xbi == 9) goto <xbiT02>;
+	if (xbi == 10) goto <xbiT07>;
+	if (xbi == 11) goto <xbiTAG>;
+	goto <xbiDone>;
+<xbiSO>
+	bit = xer_so;
+	goto <xbiDone>;
+<xbiOV>
+	bit = xer_ov;
+	goto <xbiDone>;
+<xbiCA>
+	bit = xer_ca;
+	goto <xbiDone>;
+<xbiT02>
+	bit = xer_t02;
+	goto <xbiDone>;
+<xbiT07>
+	bit = xer_t07;
+	goto <xbiDone>;
+<xbiTAG>
+	bit = xer_tag;
+<xbiDone>
+	A = B;
+	if (bit == 0) goto inst_next;
+	A = AS_SEL_IS;
+}
+
+:selir. A,AS_SEL_IS,B,XBI32 is $(NOTVLE) & OP=30 & A & AS_SEL_IS & B & BITS_21_24 & XBI32 & AS_SEL_OP=27
+{
+	xbi:1 = BITS_21_24;
+	bit:1 = 0;
+	if (xbi == 0) goto <xbiSO>;
+	if (xbi == 1) goto <xbiOV>;
+	if (xbi == 2) goto <xbiCA>;
+	if (xbi == 9) goto <xbiT02>;
+	if (xbi == 10) goto <xbiT07>;
+	if (xbi == 11) goto <xbiTAG>;
+	goto <xbiDone>;
+<xbiSO>
+	bit = xer_so;
+	goto <xbiDone>;
+<xbiOV>
+	bit = xer_ov;
+	goto <xbiDone>;
+<xbiCA>
+	bit = xer_ca;
+	goto <xbiDone>;
+<xbiT02>
+	bit = xer_t02;
+	goto <xbiDone>;
+<xbiT07>
+	bit = xer_t07;
+	goto <xbiDone>;
+<xbiTAG>
+	bit = xer_tag;
+<xbiDone>
+	A = B;
+	if (bit == 1) goto <settrue>;
+	goto <done>;
+<settrue>
+	A = AS_SEL_IS;
+<done>
+	cr0flags(A);
+}
+
+:selri A,D,AS_SEL_IB,XBI32 is $(NOTVLE) & OP=30 & A & D & AS_SEL_IB & BITS_21_24 & XBI32 & AS_SEL_OP=28
+{
+	xbi:1 = BITS_21_24;
+	bit:1 = 0;
+	if (xbi == 0) goto <xbiSO>;
+	if (xbi == 1) goto <xbiOV>;
+	if (xbi == 2) goto <xbiCA>;
+	if (xbi == 9) goto <xbiT02>;
+	if (xbi == 10) goto <xbiT07>;
+	if (xbi == 11) goto <xbiTAG>;
+	goto <xbiDone>;
+<xbiSO>
+	bit = xer_so;
+	goto <xbiDone>;
+<xbiOV>
+	bit = xer_ov;
+	goto <xbiDone>;
+<xbiCA>
+	bit = xer_ca;
+	goto <xbiDone>;
+<xbiT02>
+	bit = xer_t02;
+	goto <xbiDone>;
+<xbiT07>
+	bit = xer_t07;
+	goto <xbiDone>;
+<xbiTAG>
+	bit = xer_tag;
+<xbiDone>
+	A = AS_SEL_IB;
+	if (bit == 0) goto inst_next;
+	A = D;
+}
+
+:selri. A,D,AS_SEL_IB,XBI32 is $(NOTVLE) & OP=30 & A & D & AS_SEL_IB & BITS_21_24 & XBI32 & AS_SEL_OP=29
+{
+	xbi:1 = BITS_21_24;
+	bit:1 = 0;
+	if (xbi == 0) goto <xbiSO>;
+	if (xbi == 1) goto <xbiOV>;
+	if (xbi == 2) goto <xbiCA>;
+	if (xbi == 9) goto <xbiT02>;
+	if (xbi == 10) goto <xbiT07>;
+	if (xbi == 11) goto <xbiTAG>;
+	goto <xbiDone>;
+<xbiSO>
+	bit = xer_so;
+	goto <xbiDone>;
+<xbiOV>
+	bit = xer_ov;
+	goto <xbiDone>;
+<xbiCA>
+	bit = xer_ca;
+	goto <xbiDone>;
+<xbiT02>
+	bit = xer_t02;
+	goto <xbiDone>;
+<xbiT07>
+	bit = xer_t07;
+	goto <xbiDone>;
+<xbiTAG>
+	bit = xer_tag;
+<xbiDone>
+	A = AS_SEL_IB;
+	if (bit == 1) goto <settrue>;
+	goto <done>;
+<settrue>
+	A = D;
+<done>
+	cr0flags(A);
+}
+
+:selrr A,D,B,XBI32 is $(NOTVLE) & OP=30 & A & D & B & BITS_21_24 & XBI32 & AS_SEL_OP=30
+{
+	xbi:1 = BITS_21_24;
+	bit:1 = 0;
+	if (xbi == 0) goto <xbiSO>;
+	if (xbi == 1) goto <xbiOV>;
+	if (xbi == 2) goto <xbiCA>;
+	if (xbi == 9) goto <xbiT02>;
+	if (xbi == 10) goto <xbiT07>;
+	if (xbi == 11) goto <xbiTAG>;
+	goto <xbiDone>;
+<xbiSO>
+	bit = xer_so;
+	goto <xbiDone>;
+<xbiOV>
+	bit = xer_ov;
+	goto <xbiDone>;
+<xbiCA>
+	bit = xer_ca;
+	goto <xbiDone>;
+<xbiT02>
+	bit = xer_t02;
+	goto <xbiDone>;
+<xbiT07>
+	bit = xer_t07;
+	goto <xbiDone>;
+<xbiTAG>
+	bit = xer_tag;
+<xbiDone>
+	A = B;
+	if (bit == 0) goto inst_next;
+	A = D;
+}
+
+:selrr. A,D,B,XBI32 is $(NOTVLE) & OP=30 & A & D & B & BITS_21_24 & XBI32 & AS_SEL_OP=31
+{
+	xbi:1 = BITS_21_24;
+	bit:1 = 0;
+	if (xbi == 0) goto <xbiSO>;
+	if (xbi == 1) goto <xbiOV>;
+	if (xbi == 2) goto <xbiCA>;
+	if (xbi == 9) goto <xbiT02>;
+	if (xbi == 10) goto <xbiT07>;
+	if (xbi == 11) goto <xbiTAG>;
+	goto <xbiDone>;
+<xbiSO>
+	bit = xer_so;
+	goto <xbiDone>;
+<xbiOV>
+	bit = xer_ov;
+	goto <xbiDone>;
+<xbiCA>
+	bit = xer_ca;
+	goto <xbiDone>;
+<xbiT02>
+	bit = xer_t02;
+	goto <xbiDone>;
+<xbiT07>
+	bit = xer_t07;
+	goto <xbiDone>;
+<xbiTAG>
+	bit = xer_tag;
+<xbiDone>
+	A = B;
+	if (bit == 1) goto <settrue>;
+	goto <done>;
+<settrue>
+	A = D;
+<done>
+	cr0flags(A);
+}
+
+# --------------------------------------------------------------------------
+# LTPTR - Load Tagged Pointer
+#   A later addition to the PowerPC AS family, known from the sources cited
+#   in the file header. Functions like LQ (loads a 128-bit quadword into the
+#   register pair RT:RT+1), except the loaded value reads as zero if the
+#   quadword's tag bit was not set. Major opcode 57 (DS-form), sub-opcode 1
+#   in bits 30:31 (IBM); opcode 57's other three sub-opcodes are already used
+#   by lfdp/lxsd/lxssp elsewhere in this language, so this does not conflict.
+#   Displacement field matches LQ's DQ field (quadword-scaled, bits 16:27
+#   IBM); the purpose of the trailing 2-bit immediate in 28:29 (IBM) is not
+#   known (an encoding diagram appears in a patent, but is known to contain
+#   typos in the bit offsets).
+#
+#   The tag-check/zeroing behaviour itself is not modeled, since this
+#   language has no representation of the underlying per-quadword hardware
+#   tag store; the load is otherwise modeled exactly like LQ.
+# --------------------------------------------------------------------------
+:ltptr RT,dqPlusRaOrZeroAddress,AS_LTPTR_IMM is $(NOTVLE) & OP=57 & RT & Dp & dqPlusRaOrZeroAddress & AS_LTPTR_IMM & BITS_0_1=1 & regp [regpset = Dp+1;]
+{
+	ea:$(REGISTER_SIZE) = dqPlusRaOrZeroAddress;
+@if ENDIAN == "big"
+	RT = *:$(REGISTER_SIZE) ea;
+	regp = *:$(REGISTER_SIZE) (ea + $(REGISTER_SIZE));
+@else
+	RT = *:$(REGISTER_SIZE) (ea + $(REGISTER_SIZE));
+	regp = *:$(REGISTER_SIZE) ea;
+@endif
+}
+
+# --------------------------------------------------------------------------
+# LSDI / LSDX / STSDI / STSDX - Load/Store String Doubleword (Immediate /
+# Indexed)
+#   Doubleword-granularity counterparts to lswi/lswx/stswi/stswx: string
+#   bytes are packed 8-per-register (all eight bytes of each GPR) instead of
+#   4-per-register, starting at register RT/RS and wrapping through GPR 0 if
+#   needed, with any unfilled remainder of the last register zeroed on
+#   loads. The immediate forms take the byte count from NB (0 meaning 32);
+#   the indexed forms take it from XER[57:63], as lswx/stswx do. X-form,
+#   opcode 31, minor opcodes 629/565/757/693 in bits 21:30 (IBM). The
+#   multi-register data flow is left as an uninterpreted pcodeop below
+#   rather than modeled in full.
+# --------------------------------------------------------------------------
+:lsdi D,RA_OR_ZERO,NB is $(NOTVLE) & OP=31 & D & RA_OR_ZERO & NB & XOP_1_10=629 & BIT_0=0
+{
+	lsdiOp(D, RA_OR_ZERO, NB:1);
+}
+
+:lsdx D,RA_OR_ZERO,B is $(NOTVLE) & OP=31 & D & RA_OR_ZERO & B & XOP_1_10=565 & BIT_0=0
+{
+	lsdxOp(D, RA_OR_ZERO, B);
+}
+
+:stsdi S,RA_OR_ZERO,NB is $(NOTVLE) & OP=31 & S & RA_OR_ZERO & NB & XOP_1_10=757 & BIT_0=0
+{
+	stsdiOp(S, RA_OR_ZERO, NB:1);
+}
+
+:stsdx S,RA_OR_ZERO,B is $(NOTVLE) & OP=31 & S & RA_OR_ZERO & B & XOP_1_10=693 & BIT_0=0
+{
+	stsdxOp(S, RA_OR_ZERO, B);
+}
+
+# --------------------------------------------------------------------------
+# LMD / STMD - Load/Store Multiple Doubleword DS-form
+#   Doubleword-granularity counterparts to lmw/stmw: these have no count
+#   operand and always transfer every register from RT/RS through r31,
+#   to/from consecutive doublewords starting at EA (STMD is the mirror
+#   store, additionally clearing the hardware tags of the storage it
+#   writes). DS-form sharing opcode 58/62 with ld/ldu/lwa and std/stdu/stq
+#   respectively, which already use sub-opcodes 0-2, leaving sub-opcode 3
+#   for lmd/stmd exactly as implemented here. The multi-register data flow
+#   is left as an uninterpreted pcodeop below rather than modeled in full.
+# --------------------------------------------------------------------------
+:lmd D,dsPlusRaOrZeroAddress is $(NOTVLE) & OP=58 & D & dsPlusRaOrZeroAddress & BITS_0_1=3
+{
+	ea:$(REGISTER_SIZE) = dsPlusRaOrZeroAddress;
+	lmdOp(D, ea);
+}
+
+:stmd S,dsPlusRaOrZeroAddress is $(NOTVLE) & OP=62 & S & dsPlusRaOrZeroAddress & BITS_0_1=3
+{
+	ea:$(REGISTER_SIZE) = dsPlusRaOrZeroAddress;
+	stmdOp(S, ea);
+}
+
+# --------------------------------------------------------------------------
+# CMPLA - Compare Logical Addresses X-form
+#   cmpla BF,RA,RB
+#   A segment-aware unsigned compare: RA and RB are only truly comparable if
+#   their high-order 16 bits (the AS/400 "segment ID") match, and either that
+#   segment ID is 0 or the high-order 40 bits also match. If comparable, CR
+#   field BF receives an ordinary unsigned LT/GT/EQ result; otherwise the
+#   operands are incomparable and BF is set to 0b0001 (only its low-order,
+#   "incomparable" bit set). Opcode 31, BF in 6:8 (IBM), a literal 1 bit at
+#   bit 10 (IBM, this codebase's BIT_L), RA/RB in 11:15/16:20, minor opcode
+#   64 in 21:30.
+# --------------------------------------------------------------------------
+:cmpla CRFD,A,B is $(NOTVLE) & OP=31 & CRFD & BIT_L=1 & A & B & XOP_1_10=64 & BIT_0=0
+{
+	local c:1 = 0;
+	if ((A >> 48) != (B >> 48)) goto <incomparable>;
+	if ((A >> 48) == 0) goto <compare>;
+	if ((A >> 24) != (B >> 24)) goto <incomparable>;
+<compare>
+	c = ((A < B) << 3) | ((A > B) << 2) | ((A == B) << 1);
+	goto <done>;
+<incomparable>
+	c = 1;
+<done>
+	CRFD = c;
+}
+
+# --------------------------------------------------------------------------
+# DSIXES - Decimal Sixes X-form
+#   dsixes RA
+#   A BCD arithmetic assist: builds a doubleword in RA with a decimal six
+#   (0b0110) in every BCD digit position whose corresponding XER
+#   decimal-carry bit (XER[16:31], one bit per digit) is 0, and a zero
+#   digit where that bit is 1 - i.e. RA <- (~DC) & 0x6666666666666666,
+#   where DC is the 16-bit XER[16:31] field expanded one bit per nibble.
+#   The XER[16:31] decimal-carry field is set by the carrying add/subtract
+#   instructions and is not otherwise modeled by this language, so this is
+#   left as an uninterpreted pcodeop. Opcode 31, RA in 11:15, minor opcode
+#   61 in 21:30, with reserved 5-bit fields at 6:10 and 16:20 (IBM).
+# --------------------------------------------------------------------------
+:dsixes A is $(NOTVLE) & OP=31 & TO=0 & A & B_BITS=0 & XOP_1_10=61 & BIT_0=0
+{
+	dsixesOp(A);
+}
+
+# --------------------------------------------------------------------------
+# DTCS. - Decimal Test and Clear Sign X-form
+#   dtcs. RA,RS
+#   Tests whether the low-order BCD digit (bits 60:63) of RS is a decimal
+#   minus sign (0xB or 0xD); sets CR0 to LT if so and GT otherwise (with
+#   XER[SO] mirrored into CR0's low-order bit, matching this codebase's
+#   cr0flags convention). RA is set to RS with its low-order digit cleared
+#   to 0, and CA is cleared to 0. There is no non-CR-updating form of this
+#   instruction (Rc is fixed to 1). Opcode 31, RS in 6:10, RA in 11:15, an
+#   11-bit minor opcode of 187 in bits 21:31, and a reserved 5-bit field at
+#   16:20 (IBM).
+# --------------------------------------------------------------------------
+:dtcs. A,D is $(NOTVLE) & OP=31 & A & D & B_BITS=0 & XOP_0_10=187
+{
+	nibble:$(REGISTER_SIZE) = D & 0xF;
+	s:$(REGISTER_SIZE) = ((nibble >> 3) & 1) & (((nibble >> 2) & 1) ^ ((nibble >> 1) & 1)) & (nibble & 1);
+	cr0 = 4 | zext(xer_so);
+	if (s == 0) goto <done>;
+	cr0 = 8 | zext(xer_so);
+<done>
+	A = (D >> 4) << 4;
+	xer_ca = 0;
+}
+
+# --------------------------------------------------------------------------
+# MCRXRT - Move to Condition Register from XER TGCC X-form
+#   mcrxrt BF
+#   Copies XER[41:43] (the tag condition code: T02, T07, TAG) into CR field
+#   BF, with the field's high-order bit forced to 0. These are the same
+#   XER bits that the tagged-memory loads set, which is why the
+#   instruction lives here rather than in the general ISA files. Opcode 31,
+#   BF in 6:8 (IBM), reserved fields in 9:10/11:15/16:20, minor opcode 544
+#   in 21:30.
+# --------------------------------------------------------------------------
+:mcrxrt CRFD is $(NOTVLE) & OP=31 & CRFD & BITS_21_22=0 & BI_BITS=0 & B_BITS=0 & XOP_1_10=544 & BIT_0=0
+{
+	CRFD = (zext(xer_t02) << 2) | (zext(xer_t07) << 1) | zext(xer_tag);
+}
