@@ -1,5 +1,5 @@
 <decompilertest>
-    <!-- the comment in Heritage::splitJoinRead (and floatExtensionRead
+    <!-- the comment in Heritage::splitJoinRead (and floatExtensionRead)
     said:  // vn isFree, so loneDescend must be non-null
     However, this conclusion does not follow from the premise.
     The test case below provides a counterexample:
@@ -19,5 +19,5 @@ L1:
         <symbol space="ram" offset="0x100000" name="f" />
     </binaryimage>
     <script><com>lo fu f</com><com>decompile</com><com>print C</com></script>
-    <stringmatch name="expecting some output - fail case is segfault" min="5" max="1000">.</stringmatch>
+    <stringmatch name="varnode null descend - fail case is segfault" min="5" max="1000">.</stringmatch>
 </decompilertest>
