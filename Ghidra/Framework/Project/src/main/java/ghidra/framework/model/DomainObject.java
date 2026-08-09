@@ -158,7 +158,7 @@ public interface DomainObject {
 	 * Saves (i.e., serializes) the current content to a packed file.
 	 * @param outputFile packed output file
 	 * @param monitor progress monitor
-	 * @throws IOException if an exception occurs
+	 * @throws IOException if an error occurs during operation
 	 * @throws CancelledException if the user cancels
 	 * @throws UnsupportedOperationException if not supported by object implementation
 	 */

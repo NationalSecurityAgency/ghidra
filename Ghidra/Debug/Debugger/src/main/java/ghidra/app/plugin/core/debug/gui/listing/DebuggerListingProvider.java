@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.ICON_REGISTER_MARKER;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -161,6 +161,12 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Debug
 		@Override
 		protected boolean goToAddress(Address address) {
 			return getListingPanel().goTo(address);
+		}
+
+		@Override
+		protected Address getCurrentAddress() {
+			ProgramLocation location = DebuggerListingProvider.this.getLocation();
+			return location == null ? null : location.getByteAddress();
 		}
 	}
 
@@ -507,7 +513,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Debug
 	}
 
 	void readConfigState(SaveState saveState) {
-		// TODO: Override and invoke super.readState, but it's package private
+		// LATER: Override and invoke super.readState, but it's package private
 
 		Element formatManagerElement = saveState.getXmlElement("formatManager");
 		if (formatManagerElement != null) {

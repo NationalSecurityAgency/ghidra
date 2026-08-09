@@ -56,10 +56,8 @@ public abstract class GoType implements StructureMarkup<GoType>, StructureVerifi
 	public static Class<? extends GoType> getSpecializedTypeClass(GoRttiMapper programContext,
 			long offset) throws IOException {
 		GoTypeDetector typeDetector = programContext.readStructure(GoTypeDetector.class, offset);
-		Class<? extends GoType> result = specializedTypeClasses.get(typeDetector.getKind());
-		if (result == null) {
-			result = GoPlainType.class;
-		}
+		Class<? extends GoType> result =
+			specializedTypeClasses.getOrDefault(typeDetector.getKind(), GoPlainType.class);
 		return result;
 	}
 

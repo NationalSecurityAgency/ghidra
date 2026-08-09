@@ -704,7 +704,7 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 		ElfHeader elfHeader = elfLoadHelper.getElfHeader();
 
 		// Check for V2 ABI
-		if (isExternal || elfSymbol.getType() != ElfSymbol.STT_FUNC ||
+		if (isExternal || !elfSymbol.isFunction() ||
 			getPpc64ElfABIVersion(elfHeader) != 2) {
 			return address;
 		}

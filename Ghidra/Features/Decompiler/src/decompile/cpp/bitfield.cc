@@ -115,6 +115,15 @@ BitFieldTransform::BitFieldTransform(Funcdata *f,Datatype *dt,int4 off)
   isBigEndian = f->getArch()->getDefaultDataSpace()->isBigEndian();
 }
 
+const vector<uint4> BitFieldInsertTransform::allowedFinalWrites = {
+    CPUI_COPY, CPUI_INT_EQUAL, CPUI_INT_NOTEQUAL, CPUI_INT_SLESS, CPUI_INT_SLESSEQUAL,
+    CPUI_INT_LESS, CPUI_INT_LESSEQUAL, CPUI_INT_ZEXT, CPUI_INT_SEXT, CPUI_INT_ADD, CPUI_INT_CARRY,
+    CPUI_INT_SCARRY, CPUI_INT_XOR, CPUI_INT_AND, CPUI_INT_OR, CPUI_INT_LEFT, CPUI_INT_RIGHT,
+    CPUI_INT_SRIGHT, CPUI_INT_MULT, CPUI_BOOL_NEGATE, CPUI_BOOL_XOR, CPUI_BOOL_AND, CPUI_BOOL_OR,
+    CPUI_FLOAT_EQUAL, CPUI_FLOAT_NOTEQUAL, CPUI_FLOAT_LESS, CPUI_FLOAT_LESSEQUAL, CPUI_FLOAT_NAN,
+    CPUI_SUBPIECE
+};
+
 /// If the state is for a partial field whose storage location is overwritten
 /// later in the same basic block, return \b true
 /// \param state is the field
@@ -794,10 +803,17 @@ BitFieldInsertTransform::BitFieldInsertTransform(Funcdata *f,PcodeOp *op,Datatyp
     outvn = op->getIn(0);
     if (!outvn->isWritten()) return;
     finalWriteOp = outvn->getDef();		// But use the op feeding the INDIRECT as the finalWriteOp
+    if (!mappedVn->isAddrTied())
+      return;
+    // Check that op feeding INDIRECT is in the allowed list
+    if (!binary_search(allowedFinalWrites.begin(),allowedFinalWrites.end(),finalWriteOp->code()))
+      return;
   }
   else {
     outvn = finalWriteOp->getOut();
     mappedVn = outvn;
+    if (!mappedVn->isAddrTied())
+      return;
   }
   containerSize = outvn->getSize();
   originalValue = (Varnode *)0;
@@ -1678,13 +1694,8 @@ int4 RuleBitFieldStore::applyOp(PcodeOp *op,Funcdata &data)
 void RuleBitFieldOut::getOpList(vector<uint4> &oplist) const
 
 {
-  uint4 list[]={ CPUI_COPY, CPUI_INT_EQUAL, CPUI_INT_NOTEQUAL, CPUI_INT_SLESS, CPUI_INT_SLESSEQUAL,
-    CPUI_INT_LESS, CPUI_INT_LESSEQUAL, CPUI_INT_ZEXT, CPUI_INT_SEXT, CPUI_INT_ADD, CPUI_INT_CARRY,
-    CPUI_INT_SCARRY, CPUI_INT_XOR, CPUI_INT_AND, CPUI_INT_OR, CPUI_INT_LEFT, CPUI_INT_RIGHT,
-    CPUI_INT_SRIGHT, CPUI_INT_MULT, CPUI_BOOL_NEGATE, CPUI_BOOL_XOR, CPUI_BOOL_AND, CPUI_BOOL_OR,
-    CPUI_FLOAT_EQUAL, CPUI_FLOAT_NOTEQUAL, CPUI_FLOAT_LESS, CPUI_FLOAT_LESSEQUAL, CPUI_FLOAT_NAN,
-    CPUI_INDIRECT, CPUI_SUBPIECE };
-  oplist.insert(oplist.end(),list,list+30);
+  oplist.insert(oplist.end(),BitFieldInsertTransform::allowedFinalWrites.begin(),BitFieldInsertTransform::allowedFinalWrites.end());
+  oplist.push_back(CPUI_INDIRECT);
 }
 
 int4 RuleBitFieldOut::applyOp(PcodeOp *op,Funcdata &data)

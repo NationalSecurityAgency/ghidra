@@ -457,11 +457,6 @@ class DataDB extends CodeUnitDB implements Data {
 	}
 
 	@Override
-	public Data getComponentAt(int offset) {
-		return getComponentContaining(offset);
-	}
-
-	@Override
 	public Data getComponentContaining(int offset) {
 		try (Closeable c = lock.read()) {
 			refreshIfNeeded();

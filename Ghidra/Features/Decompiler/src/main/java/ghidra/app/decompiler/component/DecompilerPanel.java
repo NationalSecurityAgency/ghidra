@@ -1393,16 +1393,30 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 * decompiler content panel and the line numbers panel}
 	 */
 	public Rectangle getViewContentBounds() {
+
+		Insets viewInsets = scroller.getViewInsets();
+		int x = 0; // don't use insets here, since we want the full size including the line # panel
+		int y = viewInsets.top;
+
+		// This compensates for the optional parent border. We have guilty knowledge that our parent
+		// will have a non-empty border when in a snapshot
+		JComponent decorationPanel = (JComponent) getParent();
+		Insets parentInsets = decorationPanel.getInsets();
+		x += parentInsets.left;
+		y += parentInsets.top;
+
 		// The bounds we want includes both the extent size of the main decompiler view + the
 		// area that displays the line numbers which is not inside the IndexedScrollPane. The width
-		// of the line numbers panel can be found by looking at the x position of the scroller as
-		// it is offset by the line number panel's width. We are also assuming there are no borders
-		// internal to the DecompilerPanel. If that changes, we would also need to factor in the
-		// insets.
+		// of the line numbers panel can be found by looking at the x position of the scroll view,
+		// as it is offset by the line number panel's width. 
 		Rectangle bounds = scroller.getBounds();
-		Dimension scrollerSize = scroller.getViewExtentSize();
 		int lineNumberWidth = bounds.x;
-		return new Rectangle(0, 0, scrollerSize.width + lineNumberWidth, scrollerSize.height);
+		int gap = viewInsets.left;
+		Dimension extent = scroller.getViewExtentSize();
+		int width = lineNumberWidth + gap + extent.width;
+		int height = extent.height;
+
+		return new Rectangle(x, y, width, height);
 	}
 
 	private void buildPanels() {

@@ -23,7 +23,8 @@ import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.trace.TraceEmulationIntegration;
 import ghidra.pcode.exec.trace.TraceEmulationIntegration.*;
-import ghidra.pcode.exec.trace.data.*;
+import ghidra.pcode.exec.trace.data.PcodeTraceAccess;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.thread.TraceThread;
 
@@ -73,13 +74,41 @@ public enum DebuggerEmulationIntegration {
 	}
 
 	/**
-	 * Create state callbacks that lazily load data and immediately write changes to the given
-	 * access shim.
+	 * Create state callbacks that lazily load data and writes changes to the given access shim.
+	 * <p>
+	 * Reads may be redirected to the target.
+	 * <p>
+	 * Use this instead of {@link #bytesImmediateWriteTarget(PcodeDebuggerAccess)} when interfacing
+	 * directly with a {@link PcodeExecutorState} vice a {@link PcodeEmulator}.
 	 * 
+	 * @see TraceEmulationIntegration#bytesImmediateWrite(PcodeTraceAccess, TraceThread, int)
+	 * @param access the access shim for loads and stores
+	 * @param thread the trace thread for register accesses
+	 * @param frame the frame for register accesses, usually 0
+	 * @param mode determines whether or not writes affect the target
+	 * @return the callbacks
+	 */
+	public static Writer bytesWriteMode(PcodeDebuggerAccess access,
+			TraceThread thread, int frame, Mode mode) {
+		Writer writer = new TraceWriter(access) {
+			@Override
+			protected PcodeTraceDataAccess getDataAccess(PcodeTraceAccess access,
+					AddressSpace space, PcodeThread<?> ignored) {
+				return space.isRegisterSpace()
+						? access.getDataForLocalState(thread, frame)
+						: access.getDataForSharedState();
+			}
+		};
+		writer.putHandler(new TargetBytesPieceHandler(mode));
+		return writer;
+	}
+
+	/**
+	 * Create state callbacks that lazily load data and immediately writes changes to the given
+	 * access shim.
 	 * <p>
 	 * Reads may be redirected to the target. If redirected, writes are immediately sent to the
 	 * target and presumably stored into the trace at the same snapshot as state is sourced.
-	 *
 	 * <p>
 	 * Use this instead of {@link #bytesImmediateWriteTarget(PcodeDebuggerAccess)} when interfacing
 	 * directly with a {@link PcodeExecutorState} vice a {@link PcodeEmulator}.
@@ -92,15 +121,7 @@ public enum DebuggerEmulationIntegration {
 	 */
 	public static PcodeStateCallbacks bytesImmediateWriteTarget(PcodeDebuggerAccess access,
 			TraceThread thread, int frame) {
-		PcodeDebuggerRegistersAccess regAcc = access.getDataForLocalState(thread, frame);
-		Writer writer = new TraceWriter(access) {
-			@Override
-			protected PcodeTraceRegistersAccess getRegAccess(PcodeThread<?> ignored) {
-				return regAcc;
-			}
-		};
-		writer.putHandler(new TargetBytesPieceHandler(Mode.RW));
-		return writer.wrapFor(null);
+		return bytesWriteMode(access, thread, frame, Mode.RW).wrapFor(null);
 	}
 
 	protected static <T> T waitTimeout(CompletableFuture<T> future) {
@@ -130,11 +151,12 @@ public enum DebuggerEmulationIntegration {
 		}
 
 		@Override
-		public AddressSetView readUninitialized(PcodeTraceDataAccess acc, PcodeThread<?> thread,
-				PcodeExecutorStatePiece<byte[], byte[]> piece, AddressSetView set) {
+		public AddressSetView readUninitialized(Writer writer, PcodeTraceDataAccess acc,
+				PcodeThread<?> thread, PcodeExecutorStatePiece<byte[], byte[]> piece,
+				AddressSetView set) {
 			AddressSetView unknown = set.subtract(acc.intersectViewKnown(set, false));
 			if (unknown.isEmpty()) {
-				return super.readUninitialized(acc, thread, piece, set);
+				return super.readUninitialized(writer, acc, thread, piece, set);
 			}
 			if (acc instanceof PcodeDebuggerRegistersAccess regsAcc) {
 				if (regsAcc.isLive()) {
@@ -144,15 +166,16 @@ public enum DebuggerEmulationIntegration {
 				 * Pass `set` to super, because even if regsAcc has just read from target into
 				 * trace, we have yet to read from trace into state piece.
 				 */
-				return super.readUninitialized(acc, thread, piece, set);
+				return super.readUninitialized(writer, acc, thread, piece, set);
 			}
 			if (acc instanceof PcodeDebuggerMemoryAccess memAcc) {
 				if (memAcc.isLive() && waitTimeout(memAcc.readFromTargetMemory(unknown))) {
 					unknown = set.subtract(memAcc.intersectViewKnown(set, false));
 					if (unknown.isEmpty()) {
-						return super.readUninitialized(acc, thread, piece, set);
+						return super.readUninitialized(writer, acc, thread, piece, set);
 					}
 				}
+				unknown = unknown.subtract(memAcc.intersectViewKnown(unknown, true));
 				AddressSetView remains = memAcc.readFromStaticImages(piece, unknown);
 				/**
 				 * In this case, readFromStaticImages has in fact modified the state piece, so we to
@@ -161,13 +184,14 @@ public enum DebuggerEmulationIntegration {
 				 */
 				AddressSetView readFromStatic = unknown.subtract(remains);
 				AddressSetView toReadFromTraceToPiece = set.subtract(readFromStatic);
-				return super.readUninitialized(memAcc, thread, piece, toReadFromTraceToPiece);
+				return super.readUninitialized(writer, memAcc, thread, piece,
+					toReadFromTraceToPiece);
 			}
 			throw new AssertionError();
 		}
 
 		@Override
-		public boolean dataWritten(PcodeTraceDataAccess acc, AddressSet written,
+		public boolean dataWritten(Writer writer, PcodeTraceDataAccess acc, AddressSet written,
 				PcodeThread<?> thread, PcodeExecutorStatePiece<byte[], byte[]> piece,
 				Address address, int length, byte[] value) {
 			if (!mode.isWriteTarget()) {

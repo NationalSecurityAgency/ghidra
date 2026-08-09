@@ -48,7 +48,7 @@ public class ProgramBreakpoint {
 	private static final Gson GSON = new GsonBuilder().create();
 
 	/**
-	 * A class for (de)serializing breakoint properties in the bookmark's comments
+	 * A class for (de)serializing breakpoint properties in the bookmark's comments
 	 */
 	static class BreakpointProperties {
 		public String name;
@@ -104,6 +104,25 @@ public class ProgramBreakpoint {
 				"Ill-formatted bookmark breakpoint length: " + e + ". Using 1.");
 			return 1;
 		}
+	}
+
+	/**
+	 * Produce a breakpoint from its bookmark (utility).
+	 * <p>
+	 * The breakpoint manager does not ordinarily use this, as the path to total construction spans
+	 * discovering and indexing of logical breakpoints, and then adding into them information
+	 * available from program bookmarks and trace breakpoints. This utility eases the processing of
+	 * program-specified bookmarks without depending on the breakpoint service.
+	 * 
+	 * @param program the program containing the bookmark
+	 * @param bm the bookmark describing the breakpoint
+	 * @return the breakpoint
+	 */
+	public static ProgramBreakpoint fromBookmark(Program program, Bookmark bm) {
+		ProgramBreakpoint brk = new ProgramBreakpoint(program,
+			bm.getAddress(), lengthFromBookmark(bm), kindsFromBookmark(bm));
+		brk.add(bm);
+		return brk;
 	}
 
 	private final Program program;
@@ -399,10 +418,27 @@ public class ProgramBreakpoint {
 	 */
 	public Bookmark getBookmark() {
 		Bookmark eBookmark = this.eBookmark;
-		if (eBookmark != null) {
+		if (eBookmark != null && !eBookmark.isDeleted()) {
 			return eBookmark;
 		}
-		return dBookmark;
+		Bookmark dBookmark = this.dBookmark;
+		if (dBookmark != null && !dBookmark.isDeleted()) {
+			return dBookmark;
+		}
+		return null;
+	}
+
+	public List<Bookmark> getBookmarksValidOrNot() {
+		Bookmark eBookmark = this.eBookmark;
+		Bookmark dBookmark = this.dBookmark;
+		List<Bookmark> result = new ArrayList<>();
+		if (eBookmark != null) {
+			result.add(eBookmark);
+		}
+		if (dBookmark != null) {
+			result.add(dBookmark);
+		}
+		return result;
 	}
 
 	protected String getComment() {

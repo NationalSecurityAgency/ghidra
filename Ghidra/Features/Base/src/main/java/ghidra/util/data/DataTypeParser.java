@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.services.DataTypeQueryService;
@@ -540,7 +541,7 @@ public class DataTypeParser {
 			throw new NumberFormatException();
 		}
 		size = size.trim();
-		if (StringUtils.startsWithIgnoreCase(size, "0x")) {
+		if (Strings.CI.startsWith(size, "0x")) {
 			return Integer.parseInt(size.substring(2), 16);
 		}
 		return Integer.parseInt(size);

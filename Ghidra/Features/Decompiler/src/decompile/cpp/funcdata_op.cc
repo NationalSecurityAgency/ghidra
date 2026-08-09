@@ -862,7 +862,7 @@ int4 Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
   Address eaddr(baseaddr.getSpace(),~((uintb)0));
   inlineflow.setRange(baddr,eaddr);
   inlineflow.setFlags(FlowInfo::error_outofbounds|FlowInfo::error_unimplemented|
-		      FlowInfo::error_reinterpreted|FlowInfo::flow_forinline);
+		      FlowInfo::error_baddata|FlowInfo::error_reinterpreted|FlowInfo::flow_forinline);
   inlineflow.forwardRecursion(flow);
   inlineflow.generateOps();
 
@@ -917,107 +917,38 @@ int4 Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
 
 /// \brief Find the primary branch operation for an instruction
 ///
-/// For machine instructions that branch, this finds the \e primary PcodeOp that performs
-/// the branch.  The instruction is provided as a list of p-code ops, and the caller can
-/// specify whether they expect to see a \e branch, \e call, or \e return operation.
-/// \param iter is the start of the operations for the instruction
-/// \param enditer is the end of the operations for the instruction
-/// \param findbranch is \b true if the caller expects to see a BRANCH, CBRANCH, or BRANCHIND
-/// \param findcall is \b true if the caller expects to see CALL or CALLIND
-/// \param findreturn is \b true if the caller expects to see RETURN
+/// For instructions that branch, this finds the \e primary PcodeOp that performs the branch.
+/// The caller can specify whether they expect to see a \e branch, \e call, \e callother, or \e return operation.
+/// \param addr is the address of the instruction
+/// \param findBranch is \b true if the caller expects to see a BRANCH, CBRANCH, or BRANCHIND
+/// \param findCall is \b true if the caller expects to see CALL or CALLIND
+/// \param findCallother is \b true if the caller expects to see CALLOTHER
+/// \param findReturn is \b true if the caller expects to see RETURN
 /// \return the first branching PcodeOp that matches the criteria or NULL
-PcodeOp *Funcdata::findPrimaryBranch(PcodeOpTree::const_iterator iter,PcodeOpTree::const_iterator enditer,
-				     bool findbranch,bool findcall,bool findreturn)
+PcodeOp *Funcdata::findPrimaryBranch(const Address &addr,bool findBranch,bool findCall,bool findCallother,bool findReturn)
 {
+  PcodeOpTree::const_iterator iter = beginOp(addr);
+  PcodeOpTree::const_iterator enditer = endOp(addr);
   while(iter != enditer) {
     PcodeOp *op = (*iter).second;
-    switch(op->code()) {
-    case CPUI_BRANCH:
-    case CPUI_CBRANCH:
-      if (findbranch) {
+    if (op->isCallOrBranch() || op->isFlowBreak()) {
+      OpCode opc = op->code();
+      if (findBranch && (opc == CPUI_BRANCH || opc == CPUI_CBRANCH)) {
 	if (!op->getIn(0)->isConstant()) // Make sure this is not an internal branch
 	  return op;
       }
-      break;
-    case CPUI_BRANCHIND:
-      if (findbranch)
+      if (findBranch && opc == CPUI_BRANCHIND)
 	return op;
-      break;
-    case CPUI_CALL:
-    case CPUI_CALLIND:
-      if (findcall)
+      if (findCall && (opc == CPUI_CALL || opc == CPUI_CALLIND))
 	return op;
-      break;
-    case CPUI_RETURN:
-      if (findreturn)
+      if (findReturn && opc == CPUI_RETURN)
 	return op;
-      break;
-    default:
-      break;
+      if (findCallother && opc == CPUI_CALLOTHER)
+	return op;
     }
     ++iter;
   }
   return (PcodeOp *)0;
-}
-
-/// \brief Override the control-flow p-code for a particular instruction
-///
-/// P-code in \b this function is modified to change the control-flow of
-/// the instruction at the given address, based on the Override type.
-/// \param addr is the given address of the instruction to modify
-/// \param type is the Override type
-void Funcdata::overrideFlow(const Address &addr,uint4 type)
-
-{
-  PcodeOpTree::const_iterator iter = beginOp(addr);
-  PcodeOpTree::const_iterator enditer = endOp(addr);
-
-  PcodeOp *op = (PcodeOp *)0;
-  if (type == Override::BRANCH)
-    op = findPrimaryBranch(iter,enditer,false,true,true);
-  else if (type == Override::CALL)
-    op = findPrimaryBranch(iter,enditer,true,false,true);
-  else if (type == Override::CALL_RETURN)
-    op = findPrimaryBranch(iter,enditer,true,true,true);
-  else if (type == Override::RETURN)
-    op = findPrimaryBranch(iter,enditer,true,true,false);
-
-  if ((op == (PcodeOp *)0)||(!op->isDead()))
-    throw LowlevelError("Could not apply flowoverride");
-
-  OpCode opc = op->code();
-  if (type == Override::BRANCH) {
-    if (opc == CPUI_CALL)
-      opSetOpcode(op,CPUI_BRANCH);
-    else if (opc == CPUI_CALLIND)
-      opSetOpcode(op,CPUI_BRANCHIND);
-    else if (opc == CPUI_RETURN)
-      opSetOpcode(op,CPUI_BRANCHIND);
-  }
-  else if ((type == Override::CALL)||(type == Override::CALL_RETURN)) {
-    if (opc == CPUI_BRANCH)
-      opSetOpcode(op,CPUI_CALL);
-    else if (opc == CPUI_BRANCHIND)
-      opSetOpcode(op,CPUI_CALLIND);
-    else if (opc == CPUI_CBRANCH)
-      throw LowlevelError("Do not currently support CBRANCH overrides");
-    else if (opc == CPUI_RETURN)
-      opSetOpcode(op,CPUI_CALLIND);
-    if (type == Override::CALL_RETURN) { // Insert a new return op after call
-      PcodeOp *newReturn = newOp(1,addr);
-      opSetOpcode(newReturn,CPUI_RETURN);
-      opSetInput(newReturn,newConstant(1,0),0);
-      opDeadInsertAfter(newReturn,op);
-    }
-  }
-  else if (type == Override::RETURN) {
-    if ((opc == CPUI_BRANCH)||(opc == CPUI_CBRANCH)||(opc == CPUI_CALL))
-      throw LowlevelError("Do not currently support complex overrides");
-    else if (opc == CPUI_BRANCHIND)
-      opSetOpcode(op,CPUI_RETURN);
-    else if (opc == CPUI_CALLIND)
-      opSetOpcode(op,CPUI_RETURN);
-  }
 }
 
 /// Do in-place replacement of

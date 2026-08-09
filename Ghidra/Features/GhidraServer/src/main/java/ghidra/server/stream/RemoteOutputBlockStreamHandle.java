@@ -21,6 +21,8 @@ import java.net.SocketException;
 import java.util.zip.*;
 
 import db.buffers.*;
+import ghidra.util.MonitoredOutputStream;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * <code>RemoteOutputBlockStreamHandle</code> provides a serializable handle to a
@@ -39,7 +41,7 @@ public class RemoteOutputBlockStreamHandle extends RemoteBlockStreamHandle<Outpu
 	 * @param server block stream server instance
 	 * @param blockCount number of blocks to be read by server and written by client
 	 * @param blockSize buffer file block size
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	public RemoteOutputBlockStreamHandle(BlockStreamServer server, int blockCount, int blockSize)
 			throws IOException {
@@ -54,16 +56,15 @@ public class RemoteOutputBlockStreamHandle extends RemoteBlockStreamHandle<Outpu
 	private class ClientOutputBlockStream implements OutputBlockStream {
 
 		private final Socket socket;
-		private final OutputStream out;
+		private OutputStream out;
 
 		private int blocksRemaining = getBlockCount();
 
-		ClientOutputBlockStream(Socket socket) throws IOException {
+		ClientOutputBlockStream(Socket socket, TaskMonitor monitor) throws IOException {
 			this.socket = socket;
+			out = new MonitoredOutputStream(socket.getOutputStream(), monitor);
 			if (compressed) {
-				out = new RemoteDeflaterOutputStream(socket.getOutputStream(), Deflater.BEST_SPEED);
-			} else {
-			    out = socket.getOutputStream();
+				out = new RemoteDeflaterOutputStream(out, Deflater.BEST_SPEED);
 			}
 		}
 
@@ -106,12 +107,11 @@ public class RemoteOutputBlockStreamHandle extends RemoteBlockStreamHandle<Outpu
 	}
 
 	@Override
-	public OutputBlockStream openBlockStream() throws IOException {
+	public OutputBlockStream openBlockStream(TaskMonitor monitor) throws IOException {
 
 		Socket socket = connect();
-		socket.setSendBufferSize(getPreferredBufferSize());
 
-		return new ClientOutputBlockStream(socket);
+		return new ClientOutputBlockStream(socket, monitor);
 	}
 
 	@Override
@@ -120,8 +120,6 @@ public class RemoteOutputBlockStreamHandle extends RemoteBlockStreamHandle<Outpu
 		if (!(blockStream instanceof OutputBlockStream)) {
 			throw new IllegalArgumentException("expected OutputBlockStream");
 		}
-
-		socket.setReceiveBufferSize(getPreferredBufferSize());
 
 		OutputBlockStream outputBlockStream = (OutputBlockStream) blockStream;
 		try (InputStream in = getBlockInputStream(socket)) {

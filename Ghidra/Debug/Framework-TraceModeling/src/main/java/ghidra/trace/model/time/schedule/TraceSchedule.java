@@ -519,7 +519,6 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Get the event thread for this schedule in the context of the given trace
-	 * 
 	 * <p>
 	 * This is the thread stepped when no thread is specified for the first step of the sequence.
 	 * 
@@ -923,6 +922,9 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Indicates a step and which kind (instruction or p-code)
+	 * 
+	 * @param kind the kind of step
+	 * @param step the actual step
 	 */
 	public record StepAndKind(StepKind kind, Step step) {}
 

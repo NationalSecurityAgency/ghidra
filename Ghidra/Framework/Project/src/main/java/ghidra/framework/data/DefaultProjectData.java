@@ -1263,11 +1263,9 @@ public class DefaultProjectData implements ProjectData {
 	@Override
 	public void close() {
 		synchronized (this) {
-			if (!closed) {
-				closed = true;
-			}
+			closed = true;
 			if (inUseCount != 0) {
-				return; // delay dispose
+				return; // delay dispose while still in-use
 			}
 		}
 		dispose();

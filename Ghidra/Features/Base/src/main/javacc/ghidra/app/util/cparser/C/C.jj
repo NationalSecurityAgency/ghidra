@@ -81,6 +81,7 @@ PARSER_BEGIN(CParser)
 
 package ghidra.app.util.cparser.C;
 
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.lang.CompilerSpec;
@@ -225,13 +226,9 @@ public class CParser {
             }
         }
 
-        // TODO: for builtin-Types, override with the built-in
-        //       wchar_t, etc...
-        if (type.equals("wchar_t")) {
-        	dt = WideCharDataType.dataType;
-        } else {
-        	dt = new TypedefDataType(getCurrentCategoryPath(), type, dt, dtMgr);
-        }
+        TypedefDataType td = new TypedefDataType(getCurrentCategoryPath(), type, dt, dtMgr);
+		dt = DataTypeUtilities.getTypedefReplacement(td, false);
+		
     	dt = addDef(types, type, dt);
     	
         return dt;

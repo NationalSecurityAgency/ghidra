@@ -1496,11 +1496,19 @@ bool CollapseStructure::ruleBlockIfNoExit(FlowBlock *bl)
     if (clauseblock->sizeOut() != 0) continue; // Must be no way out of clause
     if (clauseblock->isSwitchOut()) continue;
     if (!bl->isDecisionOut(i)) continue;
-    //    if (clauseblock->isInteriorGotoTarget()) {
-    //      bl->setGotoBranch(i);
-    //      return true;
-    //    }
-
+    if (i == 0) {
+      FlowBlock *otherblock = bl->getOut(1);
+      if (otherblock->sizeIn() == 1 &&
+	  otherblock->sizeOut() == 0 &&
+	  !otherblock->isSwitchOut() &&
+	  bl->isDecisionOut(1)) {
+	// Both out edges go to "no exit" blocks
+	if (bl->negateCondition(true))
+	  dataflow_changecount += 1;
+	graph.newBlockIfNoExit(bl,clauseblock,otherblock);
+	return true;
+      }
+    }
     if (i==0) {			// clause must be true out of bl
       if (bl->negateCondition(true))
 	dataflow_changecount += 1;
@@ -2218,9 +2226,9 @@ void ActionReturnSplit::gatherReturnGotos(FlowBlock *parent,vector<FlowBlock *> 
 	  if (((BlockGoto *)bl)->gotoPrints())
 	    ret = ((BlockGoto *)bl)->getGotoTarget();
 	}
-	else if (bl->getType() == FlowBlock::t_if)
+	else if (bl->getType() == FlowBlock::t_ifgoto)
 	  // if this is an ifgoto block, get target, otherwise null
-	  ret = ((BlockIf *)bl)->getGotoTarget();
+	  ret = ((BlockIfGoto *)bl)->getGotoTarget();
 	if (ret != (FlowBlock *)0) {
 	  while(ret->getType() != FlowBlock::t_basic)
 	    ret = ret->subBlock(0);
@@ -2319,7 +2327,7 @@ int4 ActionReturnSplit::apply(Funcdata &data)
     count += 1;
 #ifdef BLOCKCONSISTENT_DEBUG
     if (!data.getBasicBlocks().isConsistent())
-      data.getArch()->printMessage("Block structure is not consistent");
+      data.getArch()->printWarning("Block structure is not consistent");
 #endif
   }
   return 0;

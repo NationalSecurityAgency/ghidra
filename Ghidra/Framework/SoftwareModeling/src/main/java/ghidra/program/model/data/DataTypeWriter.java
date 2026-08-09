@@ -33,7 +33,11 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DataTypeWriter {
 
-	// list of Ghidra built-in type names which correspond to C primitive types
+	// list of type names which correspond to C/C++ compiler primitive types
+	// TODO: Specified INTEGRAL_TYPES only impact treatment of typedefs whose name
+	//   matches or ends with a specified name.  It's unclear if this is an appropriate
+	//   check for suppressing a typedef.
+	// NOTE: '__int64' is only a primitive type for MSVC where 'unsigned __int64' is allowed.
 	private static String[] INTEGRAL_TYPES = { "char", "short", "int", "long", "long long",
 		"__int64", "float", "double", "long double", "void" };
 

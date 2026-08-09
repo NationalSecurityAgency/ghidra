@@ -2,31 +2,31 @@
 ##MODULE IP: Apache License 2.0
 ##MODULE IP: Copyright Distribution Permitted
 ##MODULE IP: Public Domain
-Common/server/jaas.conf||GHIDRA||||END|
-Common/server/server.conf||GHIDRA||||END|
-Common/server/svrREADME.md||GHIDRA||||END|
-Common/support/GhidraGo/ghidraGoREADME.html||GHIDRA||||END|
-Common/support/analyzeHeadlessREADME.md||GHIDRA||||END|
-Common/support/buildGhidraJarREADME.txt||GHIDRA||||END|
-Common/support/debug.log4j.xml||GHIDRA||||END|
-Common/support/gradle/gradle-wrapper.jar||Apache License 2.0||||END|
-Common/support/gradle/gradle-wrapper.properties||Apache License 2.0||||END|
-Common/support/launch.properties||GHIDRA||||END|
-Linux/ghidraRun||GHIDRA||||END|
-Linux/server/ghidraSvr||GHIDRA||||END|
-Linux/server/svrAdmin||GHIDRA||||END|
-Linux/server/svrInstall||GHIDRA||||END|
-Linux/server/svrUninstall||GHIDRA||||END|
-Linux/support/GhidraGo/ghidraGo||GHIDRA||||END|
-Linux/support/analyzeHeadless||GHIDRA||||END|
-Linux/support/bsim||GHIDRA||||END|
-Linux/support/bsim_ctl||GHIDRA||||END|
-Linux/support/buildGhidraJar||GHIDRA||||END|
-Linux/support/convertStorage||GHIDRA||||END|
-Linux/support/ghidraClean||GHIDRA||||END|
-Linux/support/ghidraDebug||GHIDRA||||END|
-Linux/support/jshellRun||GHIDRA||||END|
-Linux/support/pyghidraRun||GHIDRA||||END|
-Linux/support/sleigh||GHIDRA||||END|
-Windows/support/README_createPdbXmlFiles.txt||GHIDRA||||END|
-Windows/support/ghidra.ico||GHIDRA||||END|
+ghidraRun||GHIDRA||||END|
+server/ghidraSvr||GHIDRA||||END|
+server/jaas.conf||GHIDRA||||END|
+server/server.conf||GHIDRA||||END|
+server/svrAdmin||GHIDRA||||END|
+server/svrInstall||GHIDRA||||END|
+server/svrREADME.md||GHIDRA||||END|
+server/svrUninstall||GHIDRA||||END|
+support/GhidraGo/ghidraGo||GHIDRA||||END|
+support/GhidraGo/ghidraGoREADME.html||GHIDRA||||END|
+support/README_createPdbXmlFiles.txt||GHIDRA||||END|
+support/analyzeHeadless||GHIDRA||||END|
+support/analyzeHeadlessREADME.md||GHIDRA||||END|
+support/bsim||GHIDRA||||END|
+support/bsim_ctl||GHIDRA||||END|
+support/buildGhidraJar||GHIDRA||||END|
+support/buildGhidraJarREADME.txt||GHIDRA||||END|
+support/convertStorage||GHIDRA||||END|
+support/debug.log4j.xml||GHIDRA||||END|
+support/ghidra.ico||GHIDRA||||END|
+support/ghidraClean||GHIDRA||||END|
+support/ghidraDebug||GHIDRA||||END|
+support/gradle/gradle-wrapper.jar||Apache License 2.0||||END|
+support/gradle/gradle-wrapper.properties||Apache License 2.0||||END|
+support/jshellRun||GHIDRA||||END|
+support/launch.properties||GHIDRA||||END|
+support/pyghidraRun||GHIDRA||||END|
+support/sleigh||GHIDRA||||END|

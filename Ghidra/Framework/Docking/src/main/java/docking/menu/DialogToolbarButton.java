@@ -71,6 +71,7 @@ public class DialogToolbarButton extends EmptyBorderToggleButton {
 
 			context.setSourceObject(e.getSource());
 			context.setContextProvider(contextProvider);
+			context.setEventClickModifiers(e.getModifiers());
 
 			dockingAction.actionPerformed(context);
 		});

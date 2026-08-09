@@ -33,8 +33,8 @@ import ghidra.program.model.data.StringDataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.Conv;
 import ghidra.util.Msg;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
@@ -496,7 +496,8 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 		Options proplist = program.getOptions(Program.PROGRAM_INFO);
 
 		proplist.setString("Debug Misc", actualData);
-		proplist.setString("Debug Misc Datatype", "0x" + Conv.toHexString(datatype));
+		proplist.setString("Debug Misc Datatype",
+			"0x" + NumericUtilities.toPaddedHexString(datatype));
 	}
 
 	private void addLineComment(Address addr, int line) {

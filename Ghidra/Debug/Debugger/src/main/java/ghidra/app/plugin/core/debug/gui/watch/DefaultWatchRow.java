@@ -61,7 +61,7 @@ public class DefaultWatchRow implements WatchRow {
 	private String expression;
 	private String typePath;
 	private DataType dataType;
-	private SettingsImpl settings = new SettingsImpl();
+	private final SettingsImpl settings = new SettingsImpl();
 	private SavedSettings savedSettings = new SavedSettings(settings);
 	private String comment;
 
@@ -104,7 +104,7 @@ public class DefaultWatchRow implements WatchRow {
 		}
 		try {
 			compiled = DebuggerPcodeUtils.compileExpression(provider.getTool(), provider.current,
-				expression);
+				null, expression);
 		}
 		catch (Exception e) {
 			error = e;

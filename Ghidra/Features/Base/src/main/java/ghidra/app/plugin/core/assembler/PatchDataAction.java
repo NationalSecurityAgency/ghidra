@@ -121,6 +121,7 @@ public class PatchDataAction extends AbstractPatchAction {
 		if (encoded.length != oldLength) {
 			program.getListing().createData(address, dt, encoded.length);
 		}
+		doGoToNext(encoded.length);
 	}
 
 	@Override
@@ -143,7 +144,7 @@ public class PatchDataAction extends AbstractPatchAction {
 			tool.setStatusInfo(e.getMessage(), true);
 			return;
 		}
-		try (Transaction tx =
+		try (Transaction _ =
 			program.openTransaction("Patch Data @" + address + ": " + input.getText())) {
 			applyPatch(rng, encoded);
 			hide();

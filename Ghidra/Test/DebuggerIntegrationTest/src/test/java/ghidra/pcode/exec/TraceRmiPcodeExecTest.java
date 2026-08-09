@@ -24,11 +24,15 @@ import org.junit.Test;
 
 import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerIntegrationTest;
+import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.pcode.exec.SleighUtils.LitIdMode;
 import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.trace.database.symbol.DBTraceSymbolManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.stack.TraceStackFrame;
@@ -52,6 +56,11 @@ public class TraceRmiPcodeExecTest extends AbstractGhidraHeadedDebuggerIntegrati
 			tb.createObjectsProcessAndThreads();
 			thread = tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class);
 			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
+
+			DBTraceSymbolManager syms = tb.trace.getSymbolManager();
+			syms.labels()
+					.create(0, tb.addr(0x1234), "abba", syms.getGlobalNamespace(),
+						SourceType.IMPORTED);
 		}
 		target = rmiCx.publishTarget(tool, tb.trace);
 		language = (SleighLanguage) tb.trace.getBaseLanguage();
@@ -82,6 +91,174 @@ public class TraceRmiPcodeExecTest extends AbstractGhidraHeadedDebuggerIntegrati
 		byte[] result = waitOn(futResult);
 		assertEquals(new BigInteger("11"),
 			executor.getArithmetic().toBigInteger(result, Purpose.INSPECT));
+	}
+
+	@Test
+	public void testExecutorEvalBinLit() throws Throwable {
+		setupExecTest();
+
+		DebuggerCoordinates coords = DebuggerCoordinates.NOWHERE.target(target).thread(thread);
+		PcodeExpression expr = DebuggerPcodeUtils.compileExpression(tool, coords, tb.addr(0x1000),
+			".+0b10", LitIdMode.NORMAL);
+		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool, coords);
+		byte[] result = expr.evaluate(executor);
+		assertEquals(new BigInteger("1002", 16),
+			executor.getArithmetic().toBigInteger(result, Purpose.INSPECT));
+	}
+
+	@Test
+	public void testExecutorEvalWithDot() throws Throwable {
+		setupExecTest();
+
+		DebuggerCoordinates coords = DebuggerCoordinates.NOWHERE.target(target).thread(thread);
+		PcodeExpression expr =
+			DebuggerPcodeUtils.compileExpression(tool, coords, tb.addr(0x1000), ".+4");
+		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool, coords);
+		byte[] result = expr.evaluate(executor);
+		assertEquals(new BigInteger("1004", 16),
+			executor.getArithmetic().toBigInteger(result, Purpose.INSPECT));
+	}
+
+	@Test
+	public void testExecutorEvalWithLabel() throws Throwable {
+		setupExecTest();
+
+		DebuggerCoordinates coords = DebuggerCoordinates.NOWHERE.target(target).thread(thread);
+		PcodeExpression expr =
+			DebuggerPcodeUtils.compileExpression(tool, coords, tb.addr(0x1000), "abba+4");
+		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool, coords);
+		byte[] result = expr.evaluate(executor);
+		assertEquals(new BigInteger("1238", 16),
+			executor.getArithmetic().toBigInteger(result, Purpose.INSPECT));
+	}
+
+	@Test
+	public void testExecutorEvalHexMode() throws Throwable {
+		setupExecTest();
+
+		DebuggerCoordinates coords = DebuggerCoordinates.NOWHERE.target(target).thread(thread);
+		PcodeExpression expr = DebuggerPcodeUtils.compileExpression(tool, coords, tb.addr(0x1000),
+			".+4c", LitIdMode.HEX);
+		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool, coords);
+		byte[] result = expr.evaluate(executor);
+		assertEquals(new BigInteger("104c", 16),
+			executor.getArithmetic().toBigInteger(result, Purpose.INSPECT));
+	}
+
+	@Test
+	public void testExecutorEvalHexMode0nPrefix() throws Throwable {
+		setupExecTest();
+
+		DebuggerCoordinates coords = DebuggerCoordinates.NOWHERE.target(target).thread(thread);
+		PcodeExpression expr = DebuggerPcodeUtils.compileExpression(tool, coords, tb.addr(0x1000),
+			".+0n100", LitIdMode.HEX);
+		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool, coords);
+		byte[] result = expr.evaluate(executor);
+		assertEquals(new BigInteger("1064", 16),
+			executor.getArithmetic().toBigInteger(result, Purpose.INSPECT));
+	}
+
+	@Test
+	public void testExecutorEvalHexModeWithSize() throws Throwable {
+		setupExecTest();
+
+		DebuggerCoordinates coords = DebuggerCoordinates.NOWHERE.target(target).thread(thread);
+		PcodeExpression expr = DebuggerPcodeUtils.compileExpression(tool, coords, tb.addr(0x1000),
+			".+4c:8", LitIdMode.HEX);
+		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool, coords);
+		byte[] result = expr.evaluate(executor);
+		assertEquals(new BigInteger("104c", 16),
+			executor.getArithmetic().toBigInteger(result, Purpose.INSPECT));
+	}
+
+	@Test(expected = SleighException.class)
+	public void testExecutorEvalHexModeWithHexSizeErr() throws Throwable {
+		setupExecTest();
+
+		DebuggerCoordinates coords = DebuggerCoordinates.NOWHERE.target(target).thread(thread);
+		PcodeExpression expr = DebuggerPcodeUtils.compileExpression(tool, coords, tb.addr(0x1000),
+			".+4c:a", LitIdMode.HEX);
+		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool, coords);
+		byte[] result = expr.evaluate(executor);
+		assertEquals(new BigInteger("104c", 16),
+			executor.getArithmetic().toBigInteger(result, Purpose.INSPECT));
+	}
+
+	@Test
+	public void testExecutorEvalHexModeLooksBinPrefix() throws Throwable {
+		setupExecTest();
+
+		DebuggerCoordinates coords = DebuggerCoordinates.NOWHERE.target(target).thread(thread);
+		PcodeExpression expr = DebuggerPcodeUtils.compileExpression(tool, coords, tb.addr(0x1000),
+			".+0b12", LitIdMode.HEX);
+		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool, coords);
+		byte[] result = expr.evaluate(executor);
+		assertEquals(new BigInteger("1b12", 16),
+			executor.getArithmetic().toBigInteger(result, Purpose.INSPECT));
+	}
+
+	@Test
+	public void testExecutorEvalHexModeLooksBin() throws Throwable {
+		setupExecTest();
+
+		DebuggerCoordinates coords = DebuggerCoordinates.NOWHERE.target(target).thread(thread);
+		PcodeExpression expr = DebuggerPcodeUtils.compileExpression(tool, coords, tb.addr(0x1000),
+			".+0b10", LitIdMode.HEX);
+		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool, coords);
+		byte[] result = expr.evaluate(executor);
+		assertEquals(new BigInteger("1b10", 16),
+			executor.getArithmetic().toBigInteger(result, Purpose.INSPECT));
+	}
+
+	@Test
+	public void testExecutorEvalHexModeWithLabel() throws Throwable {
+		setupExecTest();
+
+		DebuggerCoordinates coords = DebuggerCoordinates.NOWHERE.target(target).thread(thread);
+		PcodeExpression expr = DebuggerPcodeUtils.compileExpression(tool, coords, tb.addr(0x1000),
+			"abba+4", LitIdMode.HEX);
+		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool, coords);
+		byte[] result = expr.evaluate(executor);
+		// This should prefer to interpret abba as an int (hex) literal
+		assertEquals(new BigInteger("abbe", 16),
+			executor.getArithmetic().toBigInteger(result, Purpose.INSPECT));
+	}
+
+	@Test
+	public void testExecutorEvalIdHexModeWithLabel() throws Throwable {
+		setupExecTest();
+
+		DebuggerCoordinates coords = DebuggerCoordinates.NOWHERE.target(target).thread(thread);
+		PcodeExpression expr = DebuggerPcodeUtils.compileExpression(tool, coords, tb.addr(0x1000),
+			"abba+4", LitIdMode.ID_HEX);
+		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool, coords);
+		byte[] result = expr.evaluate(executor);
+		// This should prefer to interpret abba as an id (with value 0x1234)
+		assertEquals(new BigInteger("1238", 16),
+			executor.getArithmetic().toBigInteger(result, Purpose.INSPECT));
+	}
+
+	@Test
+	public void testExecutorEvalIdHexModeWithHexLooksLabel() throws Throwable {
+		setupExecTest();
+
+		DebuggerCoordinates coords = DebuggerCoordinates.NOWHERE.target(target).thread(thread);
+		PcodeExpression expr = DebuggerPcodeUtils.compileExpression(tool, coords, tb.addr(0x1000),
+			"abbb+4", LitIdMode.ID_HEX);
+		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool, coords);
+		byte[] result = expr.evaluate(executor);
+		// Even though abbb may be parsed as an id, we fall back to an int, if hex.
+		assertEquals(new BigInteger("abbf", 16),
+			executor.getArithmetic().toBigInteger(result, Purpose.INSPECT));
+	}
+
+	@Test(expected = SleighException.class)
+	public void testExecutorEvalNormalModeHexErr() throws Throwable {
+		setupExecTest();
+
+		DebuggerCoordinates coords = DebuggerCoordinates.NOWHERE.target(target).thread(thread);
+		DebuggerPcodeUtils.compileExpression(tool, coords, tb.addr(0x1000),
+			".+4c", LitIdMode.NORMAL);
 	}
 
 	@Test

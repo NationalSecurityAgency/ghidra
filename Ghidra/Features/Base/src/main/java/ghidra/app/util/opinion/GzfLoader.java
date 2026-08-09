@@ -66,7 +66,7 @@ public class GzfLoader implements Loader {
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
 			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	@Override
@@ -131,7 +131,6 @@ public class GzfLoader implements Loader {
 
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
-		// TODO WRONG! try to parse a bit and tell for real
 		List<LoadSpec> loadSpecs = new ArrayList<>();
 		if (isGzfFile(provider)) {
 			loadSpecs.add(new LoadSpec(this, 0, false));

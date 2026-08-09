@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import Generator, List, NoReturn, Tuple, Union
 
 import jpype
-from jpype import imports, _jpype
+from jpype import imports, _jpype, JException
 from packaging.version import Version
 
 from pyghidra.javac import java_compile
@@ -176,6 +176,12 @@ def _lastrun() -> Path:
         
     return None
 
+def _pyghidra_excepthook(exc_type, exc_value, tb):
+    sys.__excepthook__(exc_type, exc_value, tb)
+    if isinstance(exc_type, JException):
+        # Remove the first line of the Java stack trace...it's already output
+        sys.stderr.write(exc_value.stacktrace().partition("\n")[2])
+
 class PyGhidraLauncher:
     """
     Base pyghidra launcher
@@ -221,11 +227,15 @@ class PyGhidraLauncher:
         self.vm_args = self._jvm_args()
         self.args = []
         self.app_info = ApplicationInfo.from_file(ghidra_dir / "application.properties")
+        
+        # Install our custom excepthook (only if no one else already has)
+        if sys.excepthook == sys.__excepthook__:
+            sys.excepthook = _pyghidra_excepthook
 
     def _setup_dev_classpath(self, utility_dir: Path):
         """
         Sets up the classpath for dev mode as seen in
-        Ghidra/RuntimeScripts/Linux/support/launch.sh
+        Ghidra/RuntimeScripts/support/launch.sh
         """
         bin_dir = Path("bin") / "main"
         build_dir = Path("build") / "libs"
@@ -252,6 +262,8 @@ class PyGhidraLauncher:
             if "org.eclipse.jdt.launching.VM_ARGUMENTS" in line:
                 _, _, value = line.partition("value=")
                 value = value.removesuffix("/>")
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1]
                 return html.unescape(value).split()
 
         raise Exception("org.eclipse.jdt.launching.VM_ARGUMENTS not found")
@@ -274,7 +286,7 @@ class PyGhidraLauncher:
         root = self._install_dir
 
         if self._dev_mode:
-            root = root / "Ghidra" / "RuntimeScripts" / "Common"
+            root = root / "Ghidra" / "RuntimeScripts"
 
         launch_properties = root / "support" / "launch.properties"
 
@@ -734,6 +746,10 @@ class GuiPyGhidraLauncher(PyGhidraLauncher):
         stdout = _PyGhidraStdOut(sys.stdout)
         stderr = _PyGhidraStdOut(sys.stderr)
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            try:
+                Ghidra.setLinuxApplicationName()
+            except AttributeError:
+                pass # Ghidra 12.2 and later
             Thread(lambda: Ghidra.main(["ghidra.GhidraRun", *self.args])).start()
             is_exiting = threading.Event()
             Runtime.getRuntime().addShutdownHook(Thread(is_exiting.set))

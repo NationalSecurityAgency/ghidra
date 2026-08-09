@@ -161,14 +161,22 @@ public class SourceFilesTablePlugin extends ProgramPlugin implements OptionsChan
 	}
 
 	private boolean isEnabled(ListingActionContext context) {
+		Program p = getCurrentProgram();
+		if (p == null || p != context.getProgram()) {
+			return false;
+		}
 		Address address = context.getAddress();
-		SourceFileManager manager = getCurrentProgram().getSourceFileManager();
+		SourceFileManager manager = p.getSourceFileManager();
 		return manager.getSourceMapEntries(address).size() > 0;
 	}
 
 	private void viewSourceFile(ListingActionContext context) {
+		Program p = getCurrentProgram();
+		if (p == null || p != context.getProgram()) {
+			return;
+		}
 		Address address = context.getAddress();
-		SourceFileManager manager = getCurrentProgram().getSourceFileManager();
+		SourceFileManager manager = p.getSourceFileManager();
 		List<SourceMapEntry> entries = manager.getSourceMapEntries(address);
 		if (entries.isEmpty()) {
 			return; // sanity check

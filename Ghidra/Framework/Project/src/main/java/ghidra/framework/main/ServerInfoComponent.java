@@ -16,6 +16,7 @@
 package ghidra.framework.main;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -47,6 +48,10 @@ public class ServerInfoComponent extends JPanel {
 	public ServerInfoComponent() {
 		super(new BorderLayout(10, 10));
 		buildMainPanel();
+	}
+
+	public Component getDefaultFocusComponent() {
+		return nameField;
 	}
 
 	/**
@@ -218,4 +223,5 @@ public class ServerInfoComponent extends JPanel {
 	public boolean isValidInformation() {
 		return checkServerName() && checkPortNumber();
 	}
+
 }

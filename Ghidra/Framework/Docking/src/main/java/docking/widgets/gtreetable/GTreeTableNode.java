@@ -15,12 +15,11 @@
  */
 package docking.widgets.gtreetable;
 
+import javax.swing.*;
 import java.io.Serializable;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-
-import javax.swing.Icon;
 
 public class GTreeTableNode implements Serializable {
 	private class EachAncestorIterator implements Iterator<GTreeTableNode> {
@@ -53,7 +52,22 @@ public class GTreeTableNode implements Serializable {
 			nodes.addAll(curNode.getChildren());
 			return curNode;
 		}
+	}
 
+	private class EachDecendantDFSIterator implements Iterator<GTreeTableNode> {
+		final List<GTreeTableNode> nodes = new ArrayList<>(children);
+
+		@Override
+		public boolean hasNext() {
+			return !nodes.isEmpty();
+		}
+
+		@Override
+		public GTreeTableNode next() {
+			final GTreeTableNode curNode = nodes.removeFirst();
+			nodes.addAll(0, curNode.getChildren());
+			return curNode;
+		}
 	}
 
 	private class EachExpandedIterator implements Iterator<GTreeTableNode> {
@@ -68,11 +82,10 @@ public class GTreeTableNode implements Serializable {
 		public GTreeTableNode next() {
 			final GTreeTableNode curNode = nodes.removeFirst();
 			if (curNode.isExpanded()) {
-				nodes.addAll((curNode.getChildren()));
+				nodes.addAll(curNode.getChildren());
 			}
 			return curNode;
 		}
-
 	}
 
 	protected final String name;
@@ -85,11 +98,23 @@ public class GTreeTableNode implements Serializable {
 
 	protected boolean visible;
 
+	private int index;
+
 	public GTreeTableNode(final String name) {
 		this.name = name;
 		expanded = false;
 		children = Collections.synchronizedList(new ArrayList<>());
 		visible = true;
+	}
+
+	/**
+	 * Reindex the tree for sorting
+	 */
+	void reindex() {
+		int i = 0;
+		for (GTreeTableNode node : getRoot().descendantsDFS()) {
+			node.index = i++;
+		}
 	}
 
 	/**
@@ -144,6 +169,15 @@ public class GTreeTableNode implements Serializable {
 	 */
 	public Iterable<GTreeTableNode> descendants() {
 		return EachDecendantIterator::new;
+	}
+
+	/**
+	 * Get an iterable of all the descendants of this node in DFS order
+	 *
+	 * @return An iterable of descendants
+	 */
+	public Iterable<GTreeTableNode> descendantsDFS() {
+		return EachDecendantDFSIterator::new;
 	}
 
 	/**
@@ -206,6 +240,21 @@ public class GTreeTableNode implements Serializable {
 			final GTreeTableNode curNode = nodes.removeFirst();
 			action.accept(curNode);
 			nodes.addAll(curNode.getChildren());
+		}
+	}
+
+	/**
+	 * Perform an action on each descendant of this node in DFS order
+	 *
+	 * @param action To perform on each descendant
+	 */
+	public void forEachDescendantDFS(final Consumer<GTreeTableNode> action) {
+		final List<GTreeTableNode> nodes = new ArrayList<>(children);
+
+		while (!nodes.isEmpty()) {
+			final GTreeTableNode curNode = nodes.removeFirst();
+			action.accept(curNode);
+			nodes.addAll(0, curNode.getChildren());
 		}
 	}
 
@@ -452,6 +501,15 @@ public class GTreeTableNode implements Serializable {
 		final GTreeTableNode child = children.get(childIndex);
 		children.remove(childIndex);
 		child.setParent(null);
+	}
+
+	/**
+	 * Get this node's index in the tree, for sorting purposes
+	 *
+	 * @return Index in tree
+	 */
+	int getIndex() {
+		return index;
 	}
 
 	/**

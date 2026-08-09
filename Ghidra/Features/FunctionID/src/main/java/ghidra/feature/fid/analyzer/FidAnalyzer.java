@@ -20,6 +20,7 @@ import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.feature.fid.cmd.ApplyFidEntriesCommand;
+import ghidra.feature.fid.db.FidProgramID;
 import ghidra.feature.fid.service.FidService;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
@@ -39,10 +40,15 @@ public class FidAnalyzer extends AbstractAnalyzer {
 	private FidService service;
 
 	// Options
-	public static final String OPTION_NAME_CREATE_BOOKMARKS = "Create Analysis Bookmarks";
+	private static final String OPTION_NAME_CREATE_BOOKMARKS = "Create Analysis Bookmarks";
 	private static final String OPTION_DESCRIPTION_CREATE_BOOKMARKS =
 		"If checked, an analysis bookmark will be created for each function which was matched " +
 			"against one or more known library functions.";
+
+	private static final String IGNORE_FILTERS_OPTION_NAME = "Ignore Database Filters";
+	private static final String IGNORE_FILTERS_OPTION_DESCRIPTION = "If checked, the " +
+		"analyzer will try to apply labels from any FID file even if the targeted compilers " +
+		"and source languages don't match the program.  Only the FID file's language ID must match";
 
 	public static final String APPLY_ALL_FID_LABELS_OPTION_NAME = "Always Apply FID Labels";
 	private static final String APPLY_ALL_FID_LABELS_OPTION_DESCRIPTION = "Enable this option to " +
@@ -54,10 +60,12 @@ public class FidAnalyzer extends AbstractAnalyzer {
 	// Default Option Values
 	private static final boolean APPLY_ALL_FID_LABELS_DEFAULT = false;
 	private static final boolean OPTION_DEFAULT_CREATE_BOOKMARKS_ENABLED = true;
+	private static final boolean IGNORE_FILTERS_DEFAULT = false;
 
 	// Option Variables
 	private boolean alwaysApplyFidLabels = APPLY_ALL_FID_LABELS_DEFAULT;
 	private boolean createBookmarksEnabled = OPTION_DEFAULT_CREATE_BOOKMARKS_ENABLED;
+	private boolean ignoreFilters = IGNORE_FILTERS_DEFAULT;
 
 	private static final String SCORE_THRESHOLD_OPTION_NAME = "Instruction Count Threshold";
 
@@ -130,7 +138,7 @@ public class FidAnalyzer extends AbstractAnalyzer {
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
-		if (!service.canProcess(program.getLanguage())) {
+		if (!service.canProcess(new FidProgramID(program, ignoreFilters))) {
 			// This can now happen, since we no longer check in canAnalyze()
 			Msg.debug(this, "No FID Libraries apply for language " + program.getLanguageID());
 			return false;
@@ -142,7 +150,7 @@ public class FidAnalyzer extends AbstractAnalyzer {
 
 		ApplyFidEntriesCommand cmd;
 		cmd = new ApplyFidEntriesCommand(set, scoreThreshold, multiScoreThreshold,
-			alwaysApplyFidLabels, createBookmarksEnabled);
+			alwaysApplyFidLabels, createBookmarksEnabled, ignoreFilters);
 		cmd.applyTo(program, monitor);
 
 		// Name Change can change the nature of a function from a system
@@ -181,6 +189,8 @@ public class FidAnalyzer extends AbstractAnalyzer {
 			APPLY_ALL_FID_LABELS_OPTION_DESCRIPTION);
 		options.registerOption(OPTION_NAME_CREATE_BOOKMARKS, createBookmarksEnabled, null,
 			OPTION_DESCRIPTION_CREATE_BOOKMARKS);
+		options.registerOption(IGNORE_FILTERS_OPTION_NAME, ignoreFilters, null,
+			IGNORE_FILTERS_OPTION_DESCRIPTION);
 	}
 
 	@Override
@@ -198,6 +208,8 @@ public class FidAnalyzer extends AbstractAnalyzer {
 			options.getBoolean(APPLY_ALL_FID_LABELS_OPTION_NAME, APPLY_ALL_FID_LABELS_DEFAULT);
 		createBookmarksEnabled =
 			options.getBoolean(OPTION_NAME_CREATE_BOOKMARKS, createBookmarksEnabled);
+		ignoreFilters =
+			options.getBoolean(IGNORE_FILTERS_OPTION_NAME, ignoreFilters);
 	}
 
 }

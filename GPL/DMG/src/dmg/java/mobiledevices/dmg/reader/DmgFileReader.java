@@ -39,7 +39,7 @@ public class DmgFileReader implements Closeable {
 	private List<FSFolder> rootFolders = new ArrayList<FSFolder>();
 	private List<FileSystemHandler> fileSystemHandlers = new ArrayList<FileSystemHandler>();
 
-	public DmgFileReader( GByteProvider provider ) {
+	public DmgFileReader(GByteProvider provider) {
 		this.provider = provider;
 	}
 
@@ -85,66 +85,69 @@ public class DmgFileReader implements Closeable {
 		}
 	}
 
-	private void debug( byte [] plistData, String fileName ) {
+	private void debug(byte[] plistData, String fileName) {
 		// TODO Auto-generated method stub
 	}
 
-	private void openPartition( Partition selectedPartition ) throws IOException {
-        long fsOffset = selectedPartition.getStartOffset();//getPmPyPartStart()+selectedPartition.getPmLgDataStart())*blockSize;
-        long fsLength = selectedPartition.getLength();//getPmDataCnt()*blockSize;
+	private void openPartition(Partition selectedPartition) throws IOException {
+		long fsOffset = selectedPartition.getStartOffset();//getPmPyPartStart()+selectedPartition.getPmLgDataStart())*blockSize;
+		long fsLength = selectedPartition.getLength();//getPmDataCnt()*blockSize;
 
-        FileSystemRecognizer fsr = new FileSystemRecognizer( rras, fsOffset );
-        FileSystemRecognizer.FileSystemType fsType = fsr.detectFileSystem();
+		FileSystemRecognizer fsr = new FileSystemRecognizer(rras, fsOffset);
+		FileSystemRecognizer.FileSystemType fsType = fsr.detectFileSystem();
 
-        if ( fsType == FileSystemRecognizer.FileSystemType.HFS_PLUS ||
-        	 fsType == FileSystemRecognizer.FileSystemType.HFSX ||
-        	 fsType == FileSystemRecognizer.FileSystemType.HFS ) {
+		if (fsType == FileSystemRecognizer.FileSystemType.HFS_PLUS ||
+			fsType == FileSystemRecognizer.FileSystemType.HFSX ||
+			fsType == FileSystemRecognizer.FileSystemType.HFS) {
 
-            final FileSystemMajorType fsMajorType;
-            switch ( fsType ) {
-                case HFS:
-                    fsMajorType = FileSystemMajorType.APPLE_HFS;
-                    break;
-                case HFS_PLUS:
-                    fsMajorType = FileSystemMajorType.APPLE_HFS_PLUS;
-                    break;
-                case HFSX:
-                    fsMajorType = FileSystemMajorType.APPLE_HFSX;
-                    break;
-                default:
-                    fsMajorType = null;
-                    break;
-            }
+			final FileSystemMajorType fsMajorType;
+			switch (fsType) {
+				case HFS:
+					fsMajorType = FileSystemMajorType.APPLE_HFS;
+					break;
+				case HFS_PLUS:
+					fsMajorType = FileSystemMajorType.APPLE_HFS_PLUS;
+					break;
+				case HFSX:
+					fsMajorType = FileSystemMajorType.APPLE_HFSX;
+					break;
+				default:
+					fsMajorType = null;
+					break;
+			}
 
-            FileSystemHandlerFactory factory = fsMajorType.createDefaultHandlerFactory();
-            if ( factory.isSupported( StandardAttribute.CACHING_ENABLED ) ) {
-                factory.getCreateAttributes().
-                        setBooleanAttribute(StandardAttribute.CACHING_ENABLED,
-                        true);
-            }
+			FileSystemHandlerFactory factory = fsMajorType.createDefaultHandlerFactory();
+			if (factory.isSupported(StandardAttribute.CACHING_ENABLED)) {
+				factory.getCreateAttributes()
+						.setBooleanAttribute(StandardAttribute.CACHING_ENABLED,
+							true);
+			}
 
-            ReadableRandomAccessStream stage1;
+			ReadableRandomAccessStream stage1;
 
-            if (fsLength > 0) {
-            	stage1 = new ReadableConcatenatedStream(rras, fsOffset, fsLength);
-            }
-            else {
-            	stage1 = rras;
-            }
+			if (fsLength > 0) {
+				stage1 = new ReadableConcatenatedStream(rras, fsOffset, fsLength);
+			}
+			else {
+				stage1 = rras;
+			}
 
-            DataLocator dataLocator = new ReadableStreamDataLocator(stage1);
+			DataLocator dataLocator = new ReadableStreamDataLocator(stage1);
 
-            FileSystemHandler fileSystemHandler = factory.createHandler(dataLocator);
-            fileSystemHandlers.add( fileSystemHandler );
+			FileSystemHandler fileSystemHandler = factory.createHandler(dataLocator);
+			fileSystemHandlers.add(fileSystemHandler);
 
-            rootFolders.add( fileSystemHandler.getRoot() );
+			rootFolders.add(fileSystemHandler.getRoot());
 
-            if ( fileSystemHandler instanceof HFSXFileSystemHandler ) {
-            	parser = new AttributesFileParser( (HFSXFileSystemHandler)fileSystemHandler, fileSystemHandler.getRoot( ).getName( ) );
-            }
-        } else {
-        		System.err.println("UNKNOWN file system type.  Can't Open filesystem.  Suspect this is an APFS.\n");
-        }
+			if (fileSystemHandler instanceof HFSXFileSystemHandler) {
+				parser = new AttributesFileParser((HFSXFileSystemHandler) fileSystemHandler,
+					fileSystemHandler.getRoot().getName());
+			}
+		}
+		else {
+			System.err.println(
+				"UNKNOWN file system type.  Can't Open filesystem.  Suspect this is an APFS.\n");
+		}
 	}
 
 	@Override
@@ -155,7 +158,7 @@ public class DmgFileReader implements Closeable {
 		catch (Exception e) {
 			//ignore
 		}
-		if ( parser != null ) {
+		if (parser != null) {
 			parser.dispose();
 			parser = null;
 		}
@@ -163,34 +166,36 @@ public class DmgFileReader implements Closeable {
 		rootFolders.clear();
 	}
 
-	public InputStream getData( FSEntry entry ) throws IOException {
-		if ( entry != null && entry.isFile() ) {
-			FSFile fsFile = (FSFile)entry;
+	public InputStream getData(FSEntry entry) throws IOException {
+		if (entry != null && entry.isFile()) {
+			FSFile fsFile = (FSFile) entry;
 			FSFork mainFork = fsFile.getMainFork();
-			if ( mainFork.getLength() > 0 ) {
-				ReadableRandomAccessStream mainForkStream = mainFork.getReadableRandomAccessStream();
-				if ( mainForkStream.length() != 0 ) {
-					return new DmgInputStream( mainForkStream );
+			if (mainFork.getLength() > 0) {
+				ReadableRandomAccessStream mainForkStream =
+					mainFork.getReadableRandomAccessStream();
+				if (mainForkStream.length() != 0) {
+					return new DmgInputStream(mainForkStream);
 				}
 			}
-			else if ( mainFork.getLength() == 0 ) {
+			else if (mainFork.getLength() == 0) {
 
-				FSFork resourceFork = fsFile.getForkByType( FSForkType.MACOS_RESOURCE );
-				ReadableRandomAccessStream resourceForkStream = resourceFork.getReadableRandomAccessStream();
+				FSFork resourceFork = fsFile.getForkByType(FSForkType.MACOS_RESOURCE);
+				ReadableRandomAccessStream resourceForkStream =
+					resourceFork.getReadableRandomAccessStream();
 
-				if ( parser == null ) {
+				if (parser == null) {
 					return null;
 				}
 
-				DecmpfsHeader decmpfsHeader = parser.getDecmpfsHeader( fsFile );
+				DecmpfsHeader decmpfsHeader = parser.getDecmpfsHeader(fsFile);
 
-				if ( decmpfsHeader == null ) {
+				if (decmpfsHeader == null) {
 					return null;
 				}
 
-				if ( decmpfsHeader.getCompressionType() == DecmpfsCompressionTypes.CMP_Type3 ) {
+				if (decmpfsHeader.getCompressionType() == DecmpfsCompressionTypes.CMP_Type3) {
 
-					if ( decmpfsHeader.getAttrBytes()[ 0 ] == -1 ) {
+					if (decmpfsHeader.getAttrBytes()[0] == -1) {
 						return new ByteArrayInputStream(decmpfsHeader.getAttrBytes(), 1,
 							decmpfsHeader.getAttrBytes().length - 1);
 					}
@@ -198,7 +203,7 @@ public class DmgFileReader implements Closeable {
 					return new RestrictedInflaterInputStream(decmpfsHeader.getAttrBytes(),
 						(int) decmpfsHeader.getUncompressedSize());
 				}
-				else if ( decmpfsHeader.getCompressionType() == DecmpfsCompressionTypes.CMP_Type4 ) {
+				else if (decmpfsHeader.getCompressionType() == DecmpfsCompressionTypes.CMP_Type4) {
 					return decompressResourceFork(entry, resourceForkStream,
 						(int) decmpfsHeader.getUncompressedSize());
 				}
@@ -207,11 +212,12 @@ public class DmgFileReader implements Closeable {
 		return null;
 	}
 
-	private InputStream decompressResourceFork( FSEntry entry, 
-												ReadableRandomAccessStream resourceForkStream,
-												int expectedLength ) throws IOException {
+	private InputStream decompressResourceFork(FSEntry entry,
+			ReadableRandomAccessStream resourceForkStream,
+			int expectedLength) throws IOException {
 
-		File tempFile = GFileUtilityMethods.writeTemporaryFile( new DmgInputStream( resourceForkStream ) );
+		File tempFile =
+			GFileUtilityMethods.writeTemporaryFile(new DmgInputStream(resourceForkStream));
 		System.err.println(
 			"dmg resource fork for " + entry.getName() + ": " + tempFile.getAbsolutePath());
 
@@ -313,28 +319,28 @@ public class DmgFileReader implements Closeable {
 		}
 	}
 
-	public List<String> getInfo( String path ) {
-		if ( path != null ) {
-			DmgInfoGenerator info = new DmgInfoGenerator( this, path, parser );
-			return info.getInformation( );
+	public List<String> getInfo(String path) {
+		if (path != null) {
+			DmgInfoGenerator info = new DmgInfoGenerator(this, path, parser);
+			return info.getInformation();
 		}
 		return null;
 	}
 
-	public List<FSEntry> getListing( String path ) {
+	public List<FSEntry> getListing(String path) {
 		List<FSEntry> list = new ArrayList<FSEntry>();
-		if ( path == null || path.equals( "/" ) ) {
-			for ( FileSystemHandler handler : fileSystemHandlers ) {
-				list.add( handler.getRoot() );
+		if (path == null || path.equals("/")) {
+			for (FileSystemHandler handler : fileSystemHandlers) {
+				list.add(handler.getRoot());
 			}
 		}
 		else {
-			FSEntry fileByPath = getFileByPath( path );
-			if ( fileByPath != null ) {
-				if ( fileByPath.isFolder() ) {
-					FSEntry [] listEntries = fileByPath.asFolder().listEntries();
-					for ( FSEntry entry : listEntries ) {
-						list.add( entry );
+			FSEntry fileByPath = getFileByPath(path);
+			if (fileByPath != null) {
+				if (fileByPath.isFolder()) {
+					FSEntry[] listEntries = fileByPath.asFolder().listEntries();
+					for (FSEntry entry : listEntries) {
+						list.add(entry);
 					}
 				}
 			}
@@ -343,58 +349,61 @@ public class DmgFileReader implements Closeable {
 	}
 
 	/**
-	 * Returns the length of the given file system entry.
+	 * {@return the length of the given file system entry}
+	 * <p>
 	 * If the entry is actually a directory, then -1 is returned.
+	 * 
+	 * @param entry the file system entry
 	 */
-	public long getLength( FSEntry entry ) {
+	public long getLength(FSEntry entry) {
 		if (entry != null && entry.isFile()) {
 			FSFork mainFork = entry.asFile().getMainFork();
-			if ( mainFork.getLength() > 0 ) {
+			if (mainFork.getLength() > 0) {
 				return mainFork.getLength();
 			}
-			try {
-				if (parser != null) {
-					DecmpfsHeader header = parser.getDecmpfsHeader(entry.asFile());
-					if (header != null) {
-						return header.getUncompressedSize();
-					}
+			if (parser != null) {
+				DecmpfsHeader header = parser.getDecmpfsHeader(entry.asFile());
+				if (header != null) {
+					return header.getUncompressedSize();
 				}
-			}
-			catch (IOException e) {
-				return 1;//TODO lookup valid length in DECMPFS
 			}
 		}
 		return -1;
 	}
 
 	/**
-	 * Convert path to string array.
-	 * 
+	 * {@return a path converted to a string array}
+	 * <p>
 	 * For example, "/a/b/c.txt" will be converted to [ "a", "b", "c.txt" ].
-	 * 
+	 * <p>
 	 * Note: the "a" will be stripped because it corresponds to the file system handler.
+	 * 
+	 * @param path the path
 	 */
-	public String [] convertPathToArrayAndStripFileSystemName( String path ) {
-		String [] splitPath = path.split( "/" );
-		if ( splitPath.length <= 2 ) {
-			return new String[ 0 ];
+	public String[] convertPathToArrayAndStripFileSystemName(String path) {
+		String[] splitPath = path.split("/");
+		if (splitPath.length <= 2) {
+			return new String[0];
 		}
-		String [] temp = new String[ splitPath.length - 2 ];
-		System.arraycopy( splitPath, 2, temp, 0, splitPath.length - 2 );
+		String[] temp = new String[splitPath.length - 2];
+		System.arraycopy(splitPath, 2, temp, 0, splitPath.length - 2);
 		return temp;
 	}
 
 	/**
-	 * Returns the DMG file object for the corresponding path.
+	 * {@return the DMG file object for the corresponding path}
+	 * <p>
 	 * Path should contain the file system handler name.
+	 * 
+	 * @param path the path
 	 */
-	public FSEntry getFileByPath( String path ) {
-		if ( path == null || path.equals( "/" ) ) {//ROOT
+	public FSEntry getFileByPath(String path) {
+		if (path == null || path.equals("/")) {//ROOT
 			return null;
 		}
-		for ( FileSystemHandler handler : fileSystemHandlers ) {
-			FSEntry entry = handler.getEntry( convertPathToArrayAndStripFileSystemName( path ) );
-			if ( entry != null ) {
+		for (FileSystemHandler handler : fileSystemHandlers) {
+			FSEntry entry = handler.getEntry(convertPathToArrayAndStripFileSystemName(path));
+			if (entry != null) {
 				return entry;
 			}
 		}

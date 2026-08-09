@@ -268,7 +268,7 @@ class SearchTextDialog extends ReusableDialogComponentProvider {
 		commentsCB.setToolTipText(HTMLUtilities.toHTML("Search in any of the comment fields"));
 
 		labelsCB = new GCheckBox("Labels");
-		labelsCB.setToolTipText(HTMLUtilities.toHTML("Search in the Lable field"));
+		labelsCB.setToolTipText(HTMLUtilities.toHTML("Search in the Label field"));
 
 		mnemonicsCB = new GCheckBox("Instruction Mnemonics");
 		mnemonicsCB

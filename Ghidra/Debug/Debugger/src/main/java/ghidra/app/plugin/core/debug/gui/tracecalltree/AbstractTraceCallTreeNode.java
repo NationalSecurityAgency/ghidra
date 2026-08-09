@@ -22,7 +22,7 @@ import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.NumericUtilities;
 import resources.Icons;
 
-abstract class AbstractTraceCallTreeNode extends GTreeTableNode {
+public abstract class AbstractTraceCallTreeNode extends GTreeTableNode {
 	public record ParamNameToBytes(String name, byte[] bytes) {}
 
 	private final TraceSnapshot snap;

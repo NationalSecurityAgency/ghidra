@@ -247,7 +247,7 @@ class SymbolTableXmlMgr {
 				if (!f.isThunk()) {
 					String thunkedName = name.substring(6);
 					Symbol symbol = SymbolUtilities.getExpectedLabelOrFunctionSymbol(program,
-						thunkedName, err -> log.error(null, err));
+						thunkedName, err -> log.appendMsg(err));
 					if (symbol == null || symbol.getSymbolType() != SymbolType.FUNCTION) {
 						log.appendMsg(
 							"Failed to establish thunk function for function at: " + addr);

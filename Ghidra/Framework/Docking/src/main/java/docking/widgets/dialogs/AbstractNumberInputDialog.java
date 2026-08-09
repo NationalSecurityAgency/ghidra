@@ -24,6 +24,7 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.IntegerTextField;
+import docking.widgets.textfield.integer.AbstractIntegerTextField;
 import docking.widgets.textfield.integer.IntegerFormat;
 import ghidra.util.Swing;
 
@@ -64,9 +65,7 @@ public abstract class AbstractNumberInputDialog extends DialogComponentProvider 
 	 * @param showAsHex if true, the initial value will be displayed as hex
 	 */
 	public AbstractNumberInputDialog(String title, String prompt, BigInteger initialValue,
-			BigInteger min,
-			BigInteger max,
-			boolean showAsHex) {
+			BigInteger min, BigInteger max, boolean showAsHex) {
 		super(title, true, true, true, false);
 
 		this.min = min;
@@ -204,10 +203,12 @@ public abstract class AbstractNumberInputDialog extends DialogComponentProvider 
 
 	private void selectAndFocusText() {
 		Swing.runLater(() -> {
-			numberInputField.requestFocus();
-			numberInputField.selectAll();
-		});
 
+			if (numberInputField.isSelectTextOnFocusGainedEnabled()) {
+				numberInputField.requestFocus();
+				numberInputField.selectAll();
+			}
+		});
 	}
 
 	/**
@@ -226,6 +227,41 @@ public abstract class AbstractNumberInputDialog extends DialogComponentProvider 
 	 */
 	public void setInput(int value) {
 		numberInputField.setValue(value);
+	}
+
+	/**
+	 * Sets the fields value as text.
+	 * @param text the text
+	 */
+	public void setInputAsText(String text) {
+		numberInputField.setText(text);
+	}
+
+	/**
+	 * Sets the input mode for the field in this dialog.
+	 * @param mode the mode
+	 * @see AbstractIntegerTextField#setFormat(IntegerFormat)
+	 */
+	public void setMode(IntegerFormat mode) {
+		numberInputField.setFormat(mode);
+	}
+
+	/**
+	 * Sets whether this text field will switch the input mode format when typing a matching prefix.
+	 *
+	 * @param autoSwitch true to auto-switch; false requires user to change modes manually
+	 * @see AbstractIntegerTextField#setAutoSwitchMode(boolean)
+	 */
+	public void setAutoSwitchMode(boolean autoSwitch) {
+		numberInputField.setAutoSwitchMode(autoSwitch);
+	}
+
+	/**
+	 * Sets the label text of this dialog.  The default value is "Enter number of items".
+	 * @param text the text
+	 */
+	public void setPrompt(String text) {
+		label.setText(text);
 	}
 
 	/**

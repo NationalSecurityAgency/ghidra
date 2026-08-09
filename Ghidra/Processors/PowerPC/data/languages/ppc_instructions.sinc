@@ -2401,17 +2401,17 @@ define pcodeop lswxOp;
 #mffs fD	0xfc 00 04 8e
 :mffs fD		is $(NOTVLE) & OP=63 & fD & BITS_11_20=0 & XOP_1_10=583 & Rc=0
 {
-	tmp:4 = 0;
+	tmp:8 = 0;
 	packFPSCR(tmp);
-	fD = zext(tmp);
+	fD = tmp;
 }
 
 #mffs. fD	0xfc 00 04 8f
 :mffs. fD		is $(NOTVLE) & OP=63 & fD & BITS_11_20=0 & XOP_1_10=583 & Rc=1
 {
-	tmp:4 = 0;
+	tmp:8 = 0;
 	packFPSCR(tmp);
-	fD = zext(tmp);
+	fD = tmp;
 	cr1flags();
 }
 
@@ -2489,69 +2489,113 @@ define pcodeop lswxOp;
 #mtfsf 10,fr0		0xfc 00 05 8e
 :mtfsf FM,fB	is $(NOTVLE) & OP=63 & BIT_25=0 & FM & FM0 & FM1 & FM2 & FM3 & FM4 & FM5 & FM6 & FM7 & BIT_16=0 & fB &  XOP_1_10=711 & Rc=0
 {
-	tmp:4 = 0;
+	tmp:8 = 0;
 	packFPSCR(tmp);
 	
-	mask0:4 = zext((FM0:1 == 1)* 0xf) << 28;
-	mask1:4 = zext((FM1:1 == 1)* 0xf) << 24;
-	mask2:4 = zext((FM2:1 == 1)* 0xf) << 20;
-	mask3:4 = zext((FM3:1 == 1)* 0xf) << 16;
-	mask4:4 = zext((FM4:1 == 1)* 0xf) << 12;
-	mask5:4 = zext((FM5:1 == 1)* 0xf) << 8;
-	mask6:4 = zext((FM6:1 == 1)* 0xf) << 4;
-	mask7:4 = zext((FM7:1 == 1)* 0xf);
+	mask0:8 = zext((FM0:1 == 1)* 0xf) << 28;
+	mask1:8 = zext((FM1:1 == 1)* 0xf) << 24;
+	mask2:8 = zext((FM2:1 == 1)* 0xf) << 20;
+	mask3:8 = zext((FM3:1 == 1)* 0xf) << 16;
+	mask4:8 = zext((FM4:1 == 1)* 0xf) << 12;
+	mask5:8 = zext((FM5:1 == 1)* 0xf) << 8;
+	mask6:8 = zext((FM6:1 == 1)* 0xf) << 4;
+	mask7:8 = zext((FM7:1 == 1)* 0xf);
 	
-	mask:4 = mask0 | mask1 | mask2 | mask3 | mask4 | mask5 | mask6 | mask7;
+	mask:8 = mask0 | mask1 | mask2 | mask3 | mask4 | mask5 | mask6 | mask7;
 	
-	tmp1:4 = fB:4;
-	tmp2:4 = (tmp & ~mask) | (tmp1 & mask);
+	tmp1:8 = fB;
+	tmp2:8 = (tmp & ~mask) | (tmp1 & mask);
+	unpackFPSCR(tmp2);
+}
+
+:mtfsf FM,fB,1	is $(NOTVLE) & OP=63 & BIT_25=0 & FM & FM0 & FM1 & FM2 & FM3 & FM4 & FM5 & FM6 & FM7 & BIT_16=1 & fB &  XOP_1_10=711 & Rc=0
+{
+	tmp:8 = 0;
+	packFPSCR(tmp);
+	
+	mask0:8 = zext((FM0:1 == 1)* 0xf) << 60;
+	mask1:8 = zext((FM1:1 == 1)* 0xf) << 56;
+	mask2:8 = zext((FM2:1 == 1)* 0xf) << 52;
+	mask3:8 = zext((FM3:1 == 1)* 0xf) << 48;
+	mask4:8 = zext((FM4:1 == 1)* 0xf) << 44;
+	mask5:8 = zext((FM5:1 == 1)* 0xf) << 40;
+	mask6:8 = zext((FM6:1 == 1)* 0xf) << 36;
+	mask7:8 = zext((FM7:1 == 1)* 0xf) << 32;
+	
+	mask:8 = mask0 | mask1 | mask2 | mask3 | mask4 | mask5 | mask6 | mask7;
+	
+	tmp1:8 = fB:8;
+	tmp2:8 = (tmp & ~mask) | (tmp1 & mask);
 	unpackFPSCR(tmp2);
 }
 
 #mtfsf. 10,fr0		0xfc 00 05 8f
 :mtfsf. FM,fB	is $(NOTVLE) & OP=63 & BIT_25=0 & FM & FM0 & FM1 & FM2 & FM3 & FM4 & FM5 & FM6 & FM7 & BIT_16=0 & fB &  XOP_1_10=711 & Rc=1
 {
-	tmp:4 = 0;
+	tmp:8 = 0;
 	packFPSCR(tmp);
 	
-	mask0:4 = zext((FM0:1 == 1)* 0xf) << 28;
-	mask1:4 = zext((FM1:1 == 1)* 0xf) << 24;
-	mask2:4 = zext((FM2:1 == 1)* 0xf) << 20;
-	mask3:4 = zext((FM3:1 == 1)* 0xf) << 16;
-	mask4:4 = zext((FM4:1 == 1)* 0xf) << 12;
-	mask5:4 = zext((FM5:1 == 1)* 0xf) << 8;
-	mask6:4 = zext((FM6:1 == 1)* 0xf) << 4;
-	mask7:4 = zext((FM7:1 == 1)* 0xf);
+	mask0:8 = zext((FM0:1 == 1)* 0xf) << 28;
+	mask1:8 = zext((FM1:1 == 1)* 0xf) << 24;
+	mask2:8 = zext((FM2:1 == 1)* 0xf) << 20;
+	mask3:8 = zext((FM3:1 == 1)* 0xf) << 16;
+	mask4:8 = zext((FM4:1 == 1)* 0xf) << 12;
+	mask5:8 = zext((FM5:1 == 1)* 0xf) << 8;
+	mask6:8 = zext((FM6:1 == 1)* 0xf) << 4;
+	mask7:8 = zext((FM7:1 == 1)* 0xf);
 	
-	mask:4 = mask0 | mask1 | mask2 | mask3 | mask4 | mask5 | mask6 | mask7;
+	mask:8 = mask0 | mask1 | mask2 | mask3 | mask4 | mask5 | mask6 | mask7;
 	
-	tmp1:4 = fB:4;
-	tmp2:4 = (tmp & ~mask) | (tmp1 & mask);
+	tmp1:8 = fB:8;
+	tmp2:8 = (tmp & ~mask) | (tmp1 & mask);
 	unpackFPSCR(tmp2);
 	cr1flags();
 }
 
 #mtfsfi 10,3		0xfc 00 01 0c
-:mtfsfi crfD,IMM	is $(NOTVLE) & OP=63 & crfD & BITS_16_22=0 & IMM & BIT_11=0 & XOP_1_10=134 & Rc=0 
+:mtfsfi crfD,IMM4	is $(NOTVLE) & OP=63 & crfD & BITS_16_22=0 & IMM4 & BIT_11=0 & XOP_1_10=134 & Rc=0 
 {
-	tmp:4 = 0;
+	tmp:8 = 0;
 	packFPSCR(tmp);
 	shift:1 = 28-(crfD*4);
-	mask:4 = 0xf << shift;
-	tmp1:4 = IMM << shift;
-	tmp2:4 = (tmp & ~mask) | tmp1;
+	mask:8 = 0xf << shift;
+	tmp1:8 = IMM4 << shift;
+	tmp2:8 = (tmp & ~mask) | tmp1;
+	unpackFPSCR(tmp2);
+}
+
+:mtfsfi crfD,IMM4,1	is $(NOTVLE) & OP=63 & crfD & BITS_16_22=0 & IMM4 & BIT_11=1 & XOP_1_10=134 & Rc=0 
+{
+	tmp:8 = 0;
+	packFPSCR(tmp);
+	shift:1 = 60-(crfD*4);
+	mask:8 = 0xf << shift;
+	tmp1:8 = IMM4 << shift;
+	tmp2:8 = (tmp & ~mask) | tmp1;
 	unpackFPSCR(tmp2);
 }
 
 #mtfsfi. 10,3		0xfc 00 01 0d
-:mtfsfi. crfD,IMM	is $(NOTVLE) & OP=63 & crfD & BITS_16_22=0 & IMM & BIT_11=0 & XOP_1_10=134 & Rc=1
+:mtfsfi. crfD,IMM4	is $(NOTVLE) & OP=63 & crfD & BITS_16_22=0 & IMM4 & BIT_11=0 & XOP_1_10=134 & Rc=1
 {
-	tmp:4 = 0;
+	tmp:8 = 0;
 	packFPSCR(tmp);
 	shift:1 = 28-(crfD*4);
-	mask:4 = 0xf << shift;
-	tmp1:4 = IMM << shift;
-	tmp2:4 = (tmp & ~mask) | tmp1;
+	mask:8 = 0xf << shift;
+	tmp1:8 = IMM4 << shift;
+	tmp2:8 = (tmp & ~mask) | tmp1;
+	unpackFPSCR(tmp2);
+	cr1flags();
+}
+
+:mtfsfi. crfD,IMM4,1	is $(NOTVLE) & OP=63 & crfD & BITS_16_22=0 & IMM4 & BIT_11=1 & XOP_1_10=134 & Rc=1
+{
+	tmp:8 = 0;
+	packFPSCR(tmp);
+	shift:1 = 60-(crfD*4);
+	mask:8 = 0xf << shift;
+	tmp1:8 = IMM4 << shift;
+	tmp2:8 = (tmp & ~mask) | tmp1;
 	unpackFPSCR(tmp2);
 	cr1flags();
 }
@@ -3116,7 +3160,10 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 #sc 		0x44 00 00 02
 :sc	LEV				is $(NOTVLE) & OP=17 & BITS_12_25=0 & LEV & BITS_2_4=0 & BIT_1=1 & BIT_0=0
 {
-	syscall();
+	local lev:1 = LEV;
+	SRR0 = inst_next;
+	SRR1 = MSR;
+	syscall(lev);
 }
 
 #slbia		0x7C 00 03 E4

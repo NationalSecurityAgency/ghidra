@@ -895,10 +895,13 @@ bool ArchitectureGhidra::getCPoolRef(const vector<uintb> &refs,Decoder &decoder)
   return readAll(sin,decoder);
 }
 
-void ArchitectureGhidra::printMessage(const string &message) const
+void ArchitectureGhidra::printWarning(const string &message) const
 
 {
-  warnings += '\n'+message;
+  sout.write("\000\000\001\022",4);
+  sout << "Decompiler: " << message;
+  sout.write("\000\000\001\023",4);
+  sout.flush();
 }
 
 /// \brief Construct given specification files and i/o streams

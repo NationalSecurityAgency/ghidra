@@ -121,7 +121,7 @@ if [ -f "${APP_HOME}/gradle-wrapper.jar" ]; then
     GHIDRA_HOME="${APP_HOME}/../.."
 else
     # Development Environment (Eclipse classes or "gradle jar")
-    CLASSPATH="${APP_HOME}/Ghidra/RuntimeScripts/Common/support/gradle/gradle-wrapper.jar"
+    CLASSPATH="${APP_HOME}/Ghidra/RuntimeScripts/support/gradle/gradle-wrapper.jar"
     GHIDRA_HOME="${APP_HOME}"
 fi
 

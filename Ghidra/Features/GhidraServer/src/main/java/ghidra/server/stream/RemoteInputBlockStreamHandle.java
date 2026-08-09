@@ -22,6 +22,8 @@ import java.util.zip.Deflater;
 import java.util.zip.InflaterInputStream;
 
 import db.buffers.*;
+import ghidra.util.MonitoredInputStream;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * <code>RemoteInputBlockStreamHandle</code> provides a serializable handle to a
@@ -56,11 +58,11 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 	private class ClientInputBlockStream implements InputBlockStream {
 
 		private final Socket socket;
-		private final InputStream in;
+		private InputStream in;
 		
 		private int blocksRemaining = getBlockCount();
 
-		ClientInputBlockStream(Socket socket) throws IOException {
+		ClientInputBlockStream(Socket socket, TaskMonitor monitor) throws IOException {
 			this.socket = socket;
 			if (compressed) {
 				// Uses default Inflater with nowrap=false
@@ -68,6 +70,7 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 			} else {
 				in = socket.getInputStream();
 			}
+			in = new MonitoredInputStream(in, monitor);
 		}
 
 		@Override
@@ -121,12 +124,11 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 	}
 
 	@Override
-	public InputBlockStream openBlockStream() throws IOException {
+	public InputBlockStream openBlockStream(TaskMonitor monitor) throws IOException {
 
 		Socket socket = connect();
-		socket.setReceiveBufferSize(getPreferredBufferSize());
 
-		return new ClientInputBlockStream(socket);
+		return new ClientInputBlockStream(socket, monitor);
 	}
 
 	@Override
@@ -135,15 +137,21 @@ public class RemoteInputBlockStreamHandle extends RemoteBlockStreamHandle<InputB
 			throw new IllegalArgumentException("expected InputBlockStream");
 		}
 
-		socket.setSendBufferSize(getPreferredBufferSize());
-
 		InputBlockStream inputBlockStream = (InputBlockStream) blockStream;
 		try (OutputStream out = getBlockInputStream(socket)) {
 
 			copyBlockData(inputBlockStream, out);
+			
+			// Done with compressed stream, force compressed data to flush
+			// before final handshake occurs
+			if (out instanceof RemoteDeflaterOutputStream deflatorOut) {
+				deflatorOut.finish();
+			}
 
-			// perform final handshake before close (uncompressed)
+			// Perform final handshake before close (uncompressed)
 			writeStreamEnd(socket);
+			
+			// TODO: Investigate use of timeout if both sides are trying to do a read
 			readStreamEnd(socket, false);
 		}
 		catch (SocketException e) {

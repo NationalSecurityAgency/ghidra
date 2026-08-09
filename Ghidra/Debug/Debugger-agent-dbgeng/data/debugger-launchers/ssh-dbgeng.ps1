@@ -26,7 +26,7 @@
 #@icon icon.debugger
 #@help dbgeng#ssh
 #@depends Debugger-rmi-trace
-#@env OPT_TARGET_IMG:file="" "Image" "The target binary executable image"
+#@env OPT_TARGET_IMG:str="" "Image" "The target binary executable image"
 #@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_SSH_PATH:file="ssh" "ssh command" "The path to ssh on the local system. Omit the full path to resolve using the system PATH."
 #@env OPT_HOST:str="localhost" "[User@]Host" "The hostname or user@host"
@@ -35,6 +35,7 @@
 #@env OPT_PYTHON_EXE:file!="python" "Python command" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
 #@env OPT_PYTHON_ARGS:str="" "python cmd args" "Arguments passed to python (versus the target)"
 #@env OPT_USE_DBGMODEL:bool=true "Use dbgmodel" "Load and use dbgmodel.dll if it is available."
+#@env WINDBG_DIR:dir="C:\Windows\System32" "Path to dbgeng.dll directory" "Path containing dbgeng and associated DLLS (if not Windows Kits)."
 
 . ..\support\dbgsetuputils.ps1
 
@@ -42,6 +43,7 @@ function Compute-Python-Args {
 	param($TempFile)
 	
 	$arglist = @("$Env:OPT_PYTHON_EXE")
+	$arglist+=@("-i")
 	if ("$Env:OPT_PYTHON_ARGS" -ne "") {
 		$arglist+=($Env:OPT_PYTHON_ARGS)
 	}
@@ -49,6 +51,7 @@ function Compute-Python-Args {
 	
 	$arglist+=("localhost:$Env:OPT_REMOTE_PORT")
 	$arglist+=($Env:OPT_USE_DBGMODEL)
+	$arglist+=($Env:WINDBG_DIR)
 	$arglist+=($Env:OPT_TARGET_IMG)
 
 	if ("$Env:OPT_TARGET_ARGS" -ne "") {

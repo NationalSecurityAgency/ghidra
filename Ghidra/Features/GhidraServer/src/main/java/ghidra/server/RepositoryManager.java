@@ -459,8 +459,10 @@ public class RepositoryManager {
 	 * @param repositoriesRootDir repositories root directory
 	 * @param includeUserAccessDetails if true additional user access details will displayed 
 	 * for each repository
+	 * @param allUsers set of all valid users known to server
 	 */
-	static void listRepositories(File repositoriesRootDir, boolean includeUserAccessDetails) {
+	static void listRepositories(File repositoriesRootDir, boolean includeUserAccessDetails,
+			Set<String> allUsers) {
 		String[] names = RepositoryManager.getRepositoryNames(repositoriesRootDir);
 		System.out.println("\nRepositories:");
 		if (names.length == 0) {
@@ -495,7 +497,7 @@ public class RepositoryManager {
 			System.out.println("  " + name + (type == null ? "" : (" - uses " + type)));
 
 			if (includeUserAccessDetails) {
-				System.out.print(Repository.getFormattedUserPermissions(repoDir, "    "));
+				System.out.print(Repository.getFormattedUserPermissions(repoDir, allUsers, "    "));
 			}
 		}
 	}
@@ -505,8 +507,10 @@ public class RepositoryManager {
 	 * This is intended to be used with the svrAdmin console command
 	 * @param repositoriesRootDir repositories root directory
 	 * @param usernameSet set of users whose details should be displayed
+	 * @param allUsers set of all valid users known to server
 	 */
-	static void listRepositories(File repositoriesRootDir, Set<String> usernameSet) {
+	static void listRepositories(File repositoriesRootDir, Set<String> usernameSet,
+			Set<String> allUsers) {
 		String[] names = RepositoryManager.getRepositoryNames(repositoriesRootDir);
 		if (names.length == 0) {
 			System.out.println("   <No repositories have been created>");
@@ -518,7 +522,7 @@ public class RepositoryManager {
 			File repoDir = new File(repositoriesRootDir, NamingUtilities.mangle(name));
 
 			String formattedAccessList =
-				Repository.getFormattedUserPermissions(repoDir, "    ", usernameSet);
+				Repository.getFormattedUserPermissions(repoDir, allUsers, "    ", usernameSet);
 			if (formattedAccessList != null) {
 				if (outputHeader) {
 					System.out.println("\nRepositories:");
@@ -562,8 +566,8 @@ public class RepositoryManager {
 	 * @throws IOException if error occured while updating repository access lists.
 	 */
 	void userRemoved(String username) throws IOException {
-		for (String repName : getRepositoryNames()) {
-			getRepository(repName).removeUser(username);
+		for (Repository repo : repositoryMap.values()) {
+			repo.removeUser(username);
 		}
 	}
 

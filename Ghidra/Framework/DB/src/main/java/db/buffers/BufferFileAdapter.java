@@ -20,6 +20,7 @@ import java.rmi.*;
 import java.util.NoSuchElementException;
 
 import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * <code>BufferFileAdapter</code> provides a BufferFile implementation which
@@ -148,10 +149,11 @@ public class BufferFileAdapter implements BufferFile {
 
 	/**
 	 * Obtain a direct stream to read all blocks of this buffer file
+	 * @param monitor task monitor
 	 * @return input block stream
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
-	InputBlockStream getInputBlockStream() throws IOException {
+	InputBlockStream getInputBlockStream(TaskMonitor monitor) throws IOException {
 		// NOTE: This may need to change in the future if other
 		// non-RMI implementation require the use of InputBlockStreamHandle
 		if (isRemote()) {
@@ -159,7 +161,7 @@ public class BufferFileAdapter implements BufferFile {
 			// obtain InputBlockStream via InputBlockStreamHandle
 			BlockStreamHandle<InputBlockStream> inputBlockStreamHandle =
 				bufferFileHandle.getInputBlockStreamHandle();
-			return inputBlockStreamHandle.openBlockStream();
+			return inputBlockStreamHandle.openBlockStream(monitor);
 		}
 		return bufferFileHandle.getInputBlockStream();
 	}
@@ -167,10 +169,11 @@ public class BufferFileAdapter implements BufferFile {
 	/**
 	 * Obtain a direct stream to write blocks to this buffer file
 	 * @param blockCount number of blocks to be written
+	 * @param monitor task monitor
 	 * @return output block stream
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
-	OutputBlockStream getOutputBlockStream(int blockCount) throws IOException {
+	OutputBlockStream getOutputBlockStream(int blockCount, TaskMonitor monitor) throws IOException {
 		// NOTE: This may need to change in the future if other
 		// non-RMI implementation require the use of InputBlockStreamHandle
 		if (isRemote()) {
@@ -178,7 +181,7 @@ public class BufferFileAdapter implements BufferFile {
 			// obtain OutputBlockStream via OutputBlockStreamHandle
 			BlockStreamHandle<OutputBlockStream> outputBlockStreamHandle =
 				bufferFileHandle.getOutputBlockStreamHandle(blockCount);
-			return outputBlockStreamHandle.openBlockStream();
+			return outputBlockStreamHandle.openBlockStream(monitor);
 		}
 		return bufferFileHandle.getOutputBlockStream(blockCount);
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,8 @@ import javax.swing.JTextField;
 import docking.test.AbstractDockingTest;
 import generic.test.AbstractGTest;
 import generic.test.AbstractGuiTest;
-import ghidra.app.plugin.core.assembler.AssemblyDualTextField.AssemblyCompletion;
-import ghidra.app.plugin.core.assembler.AssemblyDualTextField.AssemblyInstruction;
+import ghidra.app.plugin.core.assembler.completion.AssemblyCompletion;
+import ghidra.app.plugin.core.assembler.completion.InstructionAssemblyCompletion;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.program.model.address.Address;
@@ -68,7 +68,7 @@ public class AssemblerPluginTestHelper {
 	}
 
 	public void snuffWarning(Language language) {
-		PatchInstructionAction.SHOWN_WARNING.put(language, true);
+		AssemblerPlugin.SHOWN_WARNING.put(language, true);
 	}
 
 	public void assertDualFields() {
@@ -123,8 +123,8 @@ public class AssemblerPluginTestHelper {
 		List<AssemblyCompletion> completions = inputAndGetCompletions(newText);
 		assertFalse("There are no assembly completion options", completions.isEmpty());
 		AssemblyCompletion first = completions.get(0);
-		assertTrue(first instanceof AssemblyInstruction);
-		AssemblyInstruction ai = (AssemblyInstruction) first;
+		assertTrue(first instanceof InstructionAssemblyCompletion);
+		InstructionAssemblyCompletion ai = (InstructionAssemblyCompletion) first;
 
 		AbstractGuiTest.runSwing(() -> patchInstructionAction.accept(ai));
 		AbstractGhidraHeadedIntegrationTest.waitForProgram(program);

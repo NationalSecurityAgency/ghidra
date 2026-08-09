@@ -15,6 +15,8 @@
  */
 package ghidra.framework.main.wizard.project;
 
+import java.awt.Component;
+
 import javax.swing.JComponent;
 
 import docking.wizard.WizardModel;
@@ -33,6 +35,11 @@ public class ProjectTypeStep extends WizardStep<ProjectWizardData> {
 			new HelpLocation(GenericHelpTopics.FRONT_END, "SelectProjectType"));
 
 		panel = new ProjectTypePanel();
+	}
+
+	@Override
+	public Component getDefaultFocusComponent() {
+		return panel.getDefaultFocusComponent();
 	}
 
 	@Override

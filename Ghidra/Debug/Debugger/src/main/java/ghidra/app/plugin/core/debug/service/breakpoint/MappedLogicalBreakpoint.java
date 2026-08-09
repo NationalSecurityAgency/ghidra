@@ -270,6 +270,11 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
+	public List<Bookmark> getProgramBookmarksValidOrNot() {
+		return progBreak.getBookmarksValidOrNot();
+	}
+
+	@Override
 	public String getName() {
 		return progBreak.getName();
 	}

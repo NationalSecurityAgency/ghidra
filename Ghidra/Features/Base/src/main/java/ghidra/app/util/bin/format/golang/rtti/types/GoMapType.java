@@ -169,7 +169,12 @@ public class GoMapType extends GoType {
 
 	@Override
 	public boolean isValid() {
-		return super.isValid() && typ.getSize() == programContext.getPtrSize();
+		return super.isValid() && isValidSize();
+	}
+
+	private boolean isValidSize() {
+		return typ.getSize() == programContext.getPtrSize() &&
+			typ.getPtrBytes() == programContext.getPtrSize();
 	}
 
 }

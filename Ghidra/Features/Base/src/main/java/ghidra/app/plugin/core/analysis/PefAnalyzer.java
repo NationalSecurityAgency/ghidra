@@ -56,7 +56,7 @@ public class PefAnalyzer extends AbstractAnalyzer {
 		Listing listing = program.getListing();
 		ReferenceManager referenceManager = program.getReferenceManager();
 		Symbol tocSymbol = SymbolUtilities.getExpectedLabelOrFunctionSymbol(program,
-			PefConstants.TOC, err -> log.error(getName(), err));
+			PefConstants.TOC, err -> log.appendMsg(getName() + ": " + err));
 		if (tocSymbol == null) {
 			return true;
 		}

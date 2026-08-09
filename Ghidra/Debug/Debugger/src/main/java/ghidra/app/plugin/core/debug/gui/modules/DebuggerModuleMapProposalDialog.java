@@ -127,8 +127,7 @@ public class DebuggerModuleMapProposalDialog
 				return CustomToStringCellRenderer.MONO_ULONG_HEX;
 			}
 		},
-		MEMORIZE("Memorize", Boolean.class, ModuleMapEntry::isMemorize,
-				ModuleMapEntry::setMemorize);
+		MEMORIZE("Memorize", Boolean.class, ModuleMapEntry::isMemorize, ModuleMapEntry::setMemorize);
 
 		private final String header;
 		private final Class<?> cls;
@@ -208,7 +207,7 @@ public class DebuggerModuleMapProposalDialog
 	protected void populateComponents() {
 		super.populateComponents();
 		setPreferredSize(600, 300);
-		table.setRowHeight(BUTTON_SIZE);
+		table.setPreferredRowHeight(BUTTON_SIZE);
 	}
 
 	private void chooseAndSetProgram(ModuleMapEntry entry) {

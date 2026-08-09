@@ -697,7 +697,7 @@ public class ElfHeader implements StructConverter {
 			// p_vaddr to find it relative to a PT_LOAD segment
 			long vaddr = dynamicHeaders[0].getVirtualAddress();
 			if (vaddr == 0 || dynamicHeaders[0].getFileSize() == 0) {
-				Msg.warn(this, "ELF Dynamic table appears to have been stripped from binary");
+				logError("ELF Dynamic table appears to have been stripped from binary");
 				return;
 			}
 
@@ -931,7 +931,7 @@ public class ElfHeader implements StructConverter {
 			!dynamicTable.containsDynamicValue(ElfDynamicType.DT_SYMENT) ||
 			dynamicHashType == null) {
 			if (dynamicStringTable != null) {
-				Msg.warn(this, "Failed to parse DT_SYMTAB, missing dynamic dependency");
+				logError("Failed to parse DT_SYMTAB, missing dynamic dependency");
 			}
 			return null;
 		}
@@ -992,6 +992,10 @@ public class ElfHeader implements StructConverter {
 				symCount = reader.readInt(symbolHashTableOffset + 4); // nchain from DT_HASH
 			}
 
+			if (symCount == 0) {
+				return null;
+			}
+
 			// NOTE: When parsed from dynamic table and not found via section header parse
 			// it is assumed that the extended symbol section table is not used.
 
@@ -1006,20 +1010,32 @@ public class ElfHeader implements StructConverter {
 	/**
 	 * Walk DT_GNU_HASH table to determine dynamic symbol count
 	 * @param gnuHashTableOffset DT_GNU_HASH table file offset
-	 * @return dynamic symbol count
+	 * @return dynamic symbol count (0 may be returned when processing error occurs)
 	 * @throws IOException file read error
 	 */
 	private int deriveGnuHashDynamicSymbolCount(long gnuHashTableOffset) throws IOException {
 		int numBuckets = reader.readInt(gnuHashTableOffset);
 		int symbolBase = reader.readInt(gnuHashTableOffset + 4);
-		int bloomSize = reader.readInt(gnuHashTableOffset + 8);
+		long bloomSize = reader.readUnsignedInt(gnuHashTableOffset + 8);
 		// int bloomShift = reader.readInt(gnuHashTableOffset + 12);
-		int bloomWordSize = is64Bit() ? 8 : 4;
+		long bloomWordSize = is64Bit() ? 8 : 4;
 		long bucketsOffset = gnuHashTableOffset + 16 + (bloomWordSize * bloomSize);
+
+
+		// Identify restricted region which contains GNU hash table (arbitrary min-length)
+		long maxOffset = getMaxOffsetForLoadedRegionContaining(gnuHashTableOffset, 12);
+		if (maxOffset <= 0) {
+			logError("Failed to idenitify loaded GNU Hash table");
+			return 0;
+		}
 
 		long bucketOffset = bucketsOffset;
 		int maxSymbolIndex = 0;
 		for (int i = 0; i < numBuckets; i++) {
+			if (bucketOffset < gnuHashTableOffset || bucketOffset > maxOffset) {
+				logError("Error occured while inspecting GNU Hash table");
+				return 0;
+			}
 			int symbolIndex = reader.readInt(bucketOffset);
 			if (symbolIndex > maxSymbolIndex) {
 				maxSymbolIndex = symbolIndex;
@@ -1032,6 +1048,10 @@ public class ElfHeader implements StructConverter {
 		++maxSymbolIndex;
 		long chainOffset = bucketOffset + (4 * chainIndex); // chains immediately follow buckets
 		while (true) {
+			if (chainOffset < gnuHashTableOffset || chainOffset > maxOffset) {
+				logError("Error occured while inspecting GNU Hash table");
+				return 0;
+			}
 			int chainValue = reader.readInt(chainOffset);
 			if ((chainValue & 1) != 0) {
 				break;
@@ -1040,6 +1060,24 @@ public class ElfHeader implements StructConverter {
 			chainOffset += 4;
 		}
 		return maxSymbolIndex;
+	}
+
+	private long getMaxOffsetForLoadedRegionContaining(long offset, long minSize) {
+		if (e_shnum != 0) {
+			ElfSectionHeader sectionContaining =
+				getSectionHeaderContainingFileRange(offset, minSize);
+			if (sectionContaining != null) {
+				return sectionContaining.getOffset() + sectionContaining.getSize() - 1;
+			}
+		}
+		if (e_phnum != 0) {
+			ElfProgramHeader containingSegment =
+				getProgramLoadHeaderContainingFileOffset(offset);
+			if (containingSegment != null) {
+				return containingSegment.getOffset() + containingSegment.getFileSize() - 1;
+			}
+		}
+		return -1;
 	}
 
 	/**
@@ -1296,6 +1334,7 @@ public class ElfHeader implements StructConverter {
 			}
 		}
 		catch (IOException e) {
+			logError("Elf prelink read failure (see log)");
 			Msg.error(this, "Elf prelink read failure", e);
 		}
 		return preLinkImageBase;

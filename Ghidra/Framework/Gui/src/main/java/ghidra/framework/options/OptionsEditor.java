@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,7 @@ public interface OptionsEditor {
 
 	/**
 	 * Apply the changes.
+	 * @throws InvalidInputException if the input is invalid
 	 */
 	public void apply() throws InvalidInputException;
 
@@ -47,7 +48,7 @@ public interface OptionsEditor {
 
 	/**
 	 * Sets the options change listener
-	 * @param listener
+	 * @param listener the listener
 	 */
 	public void setOptionsPropertyChangeListener(PropertyChangeListener listener);
 
@@ -56,6 +57,7 @@ public interface OptionsEditor {
 	 * 
 	 * @param options The editable options that for which a GUI component will be created
 	 * @param editorStateFactory The factory that will provide state objects this options editor
+	 * @return the component
 	 */
 	public JComponent getEditorComponent(Options options, EditorStateFactory editorStateFactory);
 

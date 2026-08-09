@@ -17,7 +17,6 @@ package docking.widgets.fieldpanel.field;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JComponent;
@@ -57,23 +56,6 @@ public class VerticalLayoutTextField implements TextField {
 	private String rowSeparator;
 
 	protected boolean isClipped;
-
-	/**
-	 * This constructor will create a text field from an array of FieldElements, putting each
-	 * element on its own line.
-	 * 
-	 * @param textElements the FieldElements to display
-	 * @param startX  the x position to draw the element
-	 * @param width   the max width allocated to this field
-	 * @param maxLines the max number of lines to display
-	 * @param hlFactory the highlight factory
-	 * @deprecated use the constructor that takes a list
-	 */
-	@Deprecated(since = "10.1", forRemoval = true)
-	public VerticalLayoutTextField(FieldElement[] textElements, int startX, int width, int maxLines,
-			FieldHighlightFactory hlFactory) {
-		this(Arrays.asList(textElements), startX, width, maxLines, hlFactory, " ");
-	}
 
 	/**
 	 * This constructor will create a text field from an array of FieldElements, putting each

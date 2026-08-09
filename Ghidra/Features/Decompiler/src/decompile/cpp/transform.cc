@@ -320,7 +320,7 @@ void LanedRegister::LanedIterator::normalize(void)
     s.unsetf(ios::dec | ios::hex | ios::oct);
     int4 sz = -1;
     s >> sz;
-    if (sz < 0 || sz > 16)
+    if (sz <= 0 || sz >= wholeSize || sz > 16)
       throw LowlevelError("Bad lane size: " + value);
     addLaneSize(sz);
   }

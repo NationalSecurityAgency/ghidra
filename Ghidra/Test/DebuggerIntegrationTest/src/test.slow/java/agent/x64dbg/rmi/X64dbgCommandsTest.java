@@ -15,6 +15,7 @@
  */
 package agent.x64dbg.rmi;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
@@ -111,8 +112,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals("x86:LE:64:default",
 				tb.trace.getBaseLanguage().getLanguageID().getIdAsString());
 			assertEquals("windows",
@@ -129,7 +130,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/noname")) {
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/noname")) {
 			assertThat(mdo.get(), instanceOf(Trace.class));
 		}
 	}
@@ -150,8 +151,9 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 					.formatted(PREAMBLE, addr, NOTEPAD));
 		DomainFile dfMyToy = env.getProject().getProjectData().getFile("/New Traces/x64dbg/myToy");
 		assertNotNull(dfMyToy);
-		try (ManagedDomainObject mdo = new ManagedDomainObject(dfMyToy, false, false, monitor)) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo =
+			new ManagedDomainObject<>(dfMyToy, Trace.class, monitor)) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals("Toy:BE:64:default",
 				tb.trace.getBaseLanguage().getLanguageID().getIdAsString());
 			assertEquals("default",
@@ -280,8 +282,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals(0, tb.trace.getTimeManager().getAllSnapshots().size());
 		}
 
@@ -296,8 +298,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals(1, tb.trace.getTimeManager().getAllSnapshots().size());
 		}
 	}
@@ -314,8 +316,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceSnapshot snapshot = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots());
 			assertEquals(0, snapshot.getKey());
 			assertEquals("Scripted snapshot", snapshot.getDescription());
@@ -343,8 +345,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 			traceManager.openTrace(tb.trace);
 			traceManager.activateTrace(tb.trace);
@@ -379,8 +381,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 
 			String eval = extractOutSection(out, "---Start---");
@@ -414,8 +416,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 
 			String pc = extractOutSection(out, "---PC---");
@@ -448,8 +450,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD, count));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 			List<TraceObjectValue> regVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
@@ -486,8 +488,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD, count));
 		// The spaces will be left over, but the values should be zeroed
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 			List<TraceObjectValue> regVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
@@ -518,8 +520,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -544,8 +546,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -572,8 +574,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -599,8 +601,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD, extra, x64dbgExpr, gtype));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -754,8 +756,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -786,8 +788,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -834,8 +836,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals("""
 					Parent          Key       Span     Value           Type
 					Test.Objects[1] vaddr     [0,+inf) ram:deadbeef    ADDRESS
@@ -875,8 +877,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals("""
 					Parent          Key   Span     Value        Type
 					Test.Objects[1] vaddr [0,+inf) ram:deadbeef ADDRESS""",
@@ -900,7 +902,7 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
 			assertSame(mdo.get(), traceManager.getCurrentTrace());
 			assertEquals("Test.Objects[1]",
 				traceManager.getCurrentObject().getCanonicalPath().toString());
@@ -924,8 +926,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Not concerned about specifics, so long as disassembly occurs
 			long total = 0;
 			for (CodeUnit cu : tb.trace.getCodeManager().definedUnits().get(0, true)) {
@@ -950,8 +952,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<TraceObject> processes = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0), PathFilter.parse("Processes[]"))
@@ -973,8 +975,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<TraceObject> available = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0), PathFilter.parse("Sessions[].Available[]"))
@@ -1004,8 +1006,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 					quit()
 					"""
 					.formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			List<TraceObjectValue> procSBreakLocVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
 						PathFilter.parse("Sessions[].Processes[].Debug.Software Breakpoints[]"))
@@ -1049,8 +1051,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 					quit()
 					"""
 					.formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			List<TraceObjectValue> procBreakVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
 						PathFilter.parse("Sessions[].Processes[].Debug.Hardware Breakpoints[]"))
@@ -1087,8 +1089,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Assumes LLDB on Linux amd64
 			TraceObject env =
 				Objects.requireNonNull(
@@ -1113,8 +1115,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceMemoryRegion> all =
 				tb.trace.getMemoryManager().getAllRegions();
@@ -1135,8 +1137,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
 			TraceModule modBash =
@@ -1158,8 +1160,8 @@ public class X64dbgCommandsTest extends AbstractX64dbgTraceRmiTest {
 				util.terminate_session()
 				quit()
 				""".formatted(PREAMBLE, addr, NOTEPAD));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceThread> threads = tb.trace.getThreadManager().getAllThreads();
 			assertThat(threads.size(), greaterThan(2));

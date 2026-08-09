@@ -1062,6 +1062,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 
 	@Override
 	public void componentHidden() {
+		updateLocationUpdateManager.stop();
 		storeLocation(null);
 		controller.primaryProviderHidden();
 		super.componentHidden();
@@ -1071,10 +1072,11 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	public void componentShown() {
 		super.componentShown();
 
-		if (currentLocation == null) {
-			return;
+		ProgramLocation loc = plugin.getProgramLocation();
+		storeLocation(loc);
+		if (loc != null) {
+			refreshAndResetPerspective();
 		}
-		refreshAndResetPerspective();
 	}
 
 	@Override

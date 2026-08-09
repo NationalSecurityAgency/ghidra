@@ -22,6 +22,7 @@ import javax.swing.JButton;
 import javax.swing.KeyStroke;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import docking.action.DockingActionIf;
 import ghidra.docking.util.LookAndFeelUtils;
@@ -53,17 +54,17 @@ public class DockingToolBarUtils {
 		String toolTipText = getToolTipText(action);
 		String keyBindingText = getKeyBindingAcceleratorText(button, action.getKeyBinding());
 		if (keyBindingText != null) {
-			return combingToolTipTextWithKeyBinding(toolTipText, keyBindingText);
+			return combineToolTipTextWithKeyBinding(toolTipText, keyBindingText);
 		}
 		return toolTipText;
 	}
 
-	private static String combingToolTipTextWithKeyBinding(String toolTipText,
+	private static String combineToolTipTextWithKeyBinding(String toolTipText,
 			String keyBindingText) {
 		StringBuilder buffy = new StringBuilder(toolTipText);
 		if (StringUtilities.startsWithIgnoreCase(toolTipText, "<html>")) {
 			String endHTMLTag = "</html>";
-			int closeTagIndex = StringUtils.indexOfIgnoreCase(toolTipText, endHTMLTag);
+			int closeTagIndex = Strings.CI.indexOf(toolTipText, endHTMLTag);
 			if (closeTagIndex < 0) {
 				// no closing tag, which is acceptable
 				buffy.append(START_KEYBINDING_TEXT)

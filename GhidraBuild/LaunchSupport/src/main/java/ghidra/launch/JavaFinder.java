@@ -36,7 +36,7 @@ public abstract class JavaFinder {
 	 * The different supported platforms (operating systems).
 	 */
 	public enum Platform {
-		WINDOWS, MACOS, LINUX;
+		WINDOWS, MACOS, LINUX, OPEN_BSD;
 	}
 
 	/**
@@ -54,6 +54,9 @@ public abstract class JavaFinder {
 			if (os.contains("mac")) {
 				return Platform.MACOS;
 			}
+			if (os.contains("openbsd")) {
+				return Platform.OPEN_BSD;
+			}
 		}
 		return Platform.LINUX;
 	}
@@ -69,6 +72,8 @@ public abstract class JavaFinder {
 				return new WindowsJavaFinder();
 			case MACOS:
 				return new MacJavaFinder();
+			case OPEN_BSD:
+				return new OpenBSDJavaFinder();
 			case LINUX:
 			default:
 				return new LinuxJavaFinder();

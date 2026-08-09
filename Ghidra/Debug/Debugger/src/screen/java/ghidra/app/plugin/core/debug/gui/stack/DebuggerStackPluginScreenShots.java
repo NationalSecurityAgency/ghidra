@@ -28,6 +28,7 @@ import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.core.debug.gui.action.SPLocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
+import ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueHoverPlugin;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
@@ -294,6 +295,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 
 		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
+		addPlugin(tool, VariableValueHoverPlugin.class);
 
 		Function function = createFibonacciProgramX86_32();
 		Address entry = function.getEntryPoint();

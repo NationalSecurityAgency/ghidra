@@ -625,18 +625,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return newCurrent;
 	}
 
-	protected String getTraceDisplayName(Trace trace) {
-		DomainFile file = trace.getDomainFile();
-		String name = file.getName();
-		if (!name.isBlank()) {
-			return name;
-		}
-		return trace.getName();
-	}
-
 	protected void contextChanged() {
 		Trace trace = current.getTrace();
-		String itemName = trace == null ? "..." : getTraceDisplayName(trace);
+		String itemName = trace == null ? "..." : trace.getDomainFile().getName();
 		actionCloseTrace.getMenuBarData().setMenuItemName(CloseTraceAction.NAME_PREFIX + itemName);
 		actionSaveTrace.getMenuBarData().setMenuItemName(SaveTraceAction.NAME_PREFIX + itemName);
 		tool.contextChanged(null);

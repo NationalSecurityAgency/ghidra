@@ -46,6 +46,7 @@ public class DBHandle {
 
 	private long lastTransactionID;
 	private volatile boolean txStarted = false;
+	private volatile long txStartingModCount;
 
 	private boolean waitingForNewTransaction = false;
 	private boolean reloadInProgress = false;
@@ -472,6 +473,7 @@ public class DBHandle {
 		}
 		waitingForNewTransaction = false;
 		txStarted = true;
+		txStartingModCount = getModCount();
 		return ++lastTransactionID;
 	}
 
@@ -509,7 +511,7 @@ public class DBHandle {
 	 */
 	private synchronized boolean doEndTransaction(long id, boolean commit)
 			throws DBRollbackException, IOException {
-		if (id != lastTransactionID) {
+		if (!txStarted || id != lastTransactionID) {
 			throw new IllegalStateException("Transaction id is not active");
 		}
 		try {
@@ -517,6 +519,7 @@ public class DBHandle {
 				if (commit) {
 					masterTable.flush();
 					if (bufferMgr.checkpoint()) {
+						cachedChangedState = isChanged();
 						++checkpointNum;
 						return true;
 					}
@@ -531,12 +534,12 @@ public class DBHandle {
 		}
 		finally {
 			txStarted = false;
-			cacheChangedState();
 		}
 		return false;
 	}
 
 	private void cacheChangedState() {
+		// Must be invoked from within a synchronized block when no transaction is active
 		cachedChangedState = bufferMgr != null && bufferMgr.isChanged();
 	}
 
@@ -546,7 +549,10 @@ public class DBHandle {
 	 * 
 	 * @return current modification count
 	 */
-	public long getModCount() {
+	public synchronized long getModCount() {
+		if (bufferMgr == null) {
+			return txStartingModCount; // ballpark value (database has been closed)
+		}
 		return bufferMgr.getModCount();
 	}
 
@@ -712,26 +718,6 @@ public class DBHandle {
 	}
 
 	/**
-	 * Revert the current database version to an older version.
-	 * @param oldVersion
-	 * @param monitor
-	 * @return boolean
-	 * @throws IllegalStateException if the database has modified prior to
-	 * invoking this method.
-	 * @throws IllegalArgumentException if this method is invoked more than
-	 * once or the version file(s) are corrupt.
-	 */
-//	boolean revert(int oldVersion, TaskMonitor monitor) throws IOException {
-//		for (int v = (version-1); v >= oldVersion; --v) {
-//			monitor.setMessage("Processing Version " + v);
-//			bufferMgr.applyVersionFile(db.getVersionFile(v), monitor);
-//			if (monitor.isCancelled())
-//				return false;
-//		}
-//		return true;
-//	}
-
-	/**
 	 * Close the database and dispose of the underlying buffer manager.
 	 * Any existing recovery data will be discarded.
 	 */
@@ -762,11 +748,17 @@ public class DBHandle {
 
 	/**
 	 * Determine if the underlying database has changed.
-	 * NOTE: The returned value reflects a cached state assuming all underlaying database 
-	 * transactions, saving, etc. are facilitated by this handle object.
+	 * <p>
+	 * While a transaction is active this value will reflect changes made during the transaction
+	 * which could ultimately never get committed. When a transaction is not active it is a
+	 * reflection of the committed state.
+	 * 
 	 * @return true if unsaved changes have been made.
 	 */
-	public boolean isChanged() {
+	public synchronized boolean isChanged() {
+		if (bufferMgr != null && txStarted) {
+			return cachedChangedState || txStartingModCount != getModCount();
+		}
 		return cachedChangedState;
 	}
 

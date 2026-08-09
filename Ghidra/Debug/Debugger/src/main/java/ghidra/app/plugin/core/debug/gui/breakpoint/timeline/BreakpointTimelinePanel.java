@@ -97,8 +97,8 @@ class BreakpointTimelinePanel extends JPanel {
 		}
 	}
 
-	private static boolean singleColumn = false;
-	private static boolean showGridOutline = true;
+	private boolean singleColumn = false;
+	private boolean showGridOutline = true;
 
 	private static final GColor BG_COLOR = Colors.BACKGROUND;
 	private static final GColor GRID_COLOR = Colors.FOREGROUND_DISABLED;
@@ -156,9 +156,8 @@ class BreakpointTimelinePanel extends JPanel {
 	private void click(Point p) {
 		final Optional<BreakpointTimelinePanel.CachedIndex> first =
 			cells.values().stream().filter(s -> s.getRect().contains(p)).findFirst();
-		if (first.isPresent()) {
-			getTraceManagerService().activateSnap(first.get().getMainSnap());
-		}
+		first.ifPresent(
+			cachedIndex -> getTraceManagerService().activateSnap(cachedIndex.getMainSnap()));
 	}
 
 	void decreaseDefaultCellSize() {
@@ -179,7 +178,7 @@ class BreakpointTimelinePanel extends JPanel {
 			return;
 		}
 
-		if (!BreakpointTimelinePanel.singleColumn) {
+		if (!singleColumn) {
 			final long potentialSideLength = getPotentialSideLength(width, height);
 
 			cellWidth = Math.max(defaultCellSize, potentialSideLength);
@@ -235,7 +234,7 @@ class BreakpointTimelinePanel extends JPanel {
 		double xSideLength;
 		double ySideLength;
 
-		double xPixelsPerCell = Math.ceil(Math.sqrt((numCells * width) / height));
+		double xPixelsPerCell = Math.ceil(Math.sqrt((double) (numCells * width) / height));
 		if (xPixelsPerCell == 0) {
 			xPixelsPerCell = width;
 		}
@@ -246,7 +245,7 @@ class BreakpointTimelinePanel extends JPanel {
 			xSideLength = width / xPixelsPerCell;
 		}
 
-		final double yPixelsPerCell = Math.ceil(Math.sqrt((numCells * height) / width));
+		final double yPixelsPerCell = Math.ceil(Math.sqrt((double) (numCells * height) / width));
 		if ((Math.floor((yPixelsPerCell * width) / height) * yPixelsPerCell) < numCells) {
 			ySideLength = (width / Math.ceil((width * yPixelsPerCell) / height));
 		}
@@ -305,8 +304,9 @@ class BreakpointTimelinePanel extends JPanel {
 
 		final Graphics2D g2d = (Graphics2D) g;
 
-		for (final Long cellIndex : cells.keySet()) {
-			final CachedIndex curSpan = cells.get(cellIndex);
+		for (final Map.Entry<Long, CachedIndex> entry : cells.entrySet()) {
+			long cellIndex = entry.getKey();
+			final CachedIndex curSpan = entry.getValue();
 			if ((startDragIndex != null) && (endDragIndex != null) &&
 				(cellIndex >= startDragIndex.getIndex()) &&
 				(cellIndex <= endDragIndex.getIndex())) {
@@ -324,7 +324,7 @@ class BreakpointTimelinePanel extends JPanel {
 			}
 			g2d.fillRect(curSpan.getRect().x, curSpan.getRect().y, curSpan.getRect().width,
 				curSpan.getRect().height);
-			if (BreakpointTimelinePanel.showGridOutline) {
+			if (showGridOutline) {
 				g2d.setColor(BreakpointTimelinePanel.GRID_COLOR);
 				g2d.drawRect(curSpan.getRect().x, curSpan.getRect().y, curSpan.getRect().width,
 					curSpan.getRect().height);
@@ -399,7 +399,6 @@ class BreakpointTimelinePanel extends JPanel {
 				else {
 					getTraceManagerService()
 							.activateSnap(getTraceManagerService().getCurrentSnap() - 1);
-
 				}
 				repaint();
 			}
@@ -446,12 +445,12 @@ class BreakpointTimelinePanel extends JPanel {
 	}
 
 	void toggleGridOrColumn() {
-		BreakpointTimelinePanel.singleColumn = !BreakpointTimelinePanel.singleColumn;
+		singleColumn = !singleColumn;
 		calculateGridAndBuildCache();
 	}
 
 	void toggleGridOutline() {
-		BreakpointTimelinePanel.showGridOutline = !BreakpointTimelinePanel.showGridOutline;
+		showGridOutline = !showGridOutline;
 		repaint();
 	}
 

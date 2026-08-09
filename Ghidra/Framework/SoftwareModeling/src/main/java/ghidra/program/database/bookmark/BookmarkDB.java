@@ -176,4 +176,8 @@ public class BookmarkDB extends DbObject implements Bookmark {
 		super.checkDeleted();
 	}
 
+	@Override
+	public boolean isDeleted() {
+		return isDeleted(mgr.lock);
+	}
 }

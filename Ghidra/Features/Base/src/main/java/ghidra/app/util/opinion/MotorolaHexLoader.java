@@ -46,7 +46,7 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	public boolean supportsLoadIntoProgram() {
+	public boolean supportsLoadIntoProgram(Program program) {
 		return true;
 	}
 
@@ -77,10 +77,12 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 	}
 
 	static boolean isPossibleHexFile(ByteProvider provider) {
+		final int MAX_BLANK_LINES = 100;
 		try (BoundedBufferedReader reader =
 			new BoundedBufferedReader(new InputStreamReader(provider.getInputStream(0)))) {
+			int i = 0;
 			String line = reader.readLine();
-			while (line.matches("^\\s*$")) {
+			while (i++ < MAX_BLANK_LINES && line.isBlank()) {
 				line = reader.readLine();
 			}
 			return line.matches("^[S:][0-9a-fA-F]+$");

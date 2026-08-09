@@ -120,16 +120,17 @@ public:
     writemask = 0x02,           ///< Should not be considered a write in heritage calculation
     vacconsume = 0x04,		///< Vacuous consume
     lisconsume = 0x08,		///< In consume worklist
-    ptrcheck = 0x10,	        ///< The Varnode value is \e NOT a pointer
-    ptrflow = 0x20,             ///< If this varnode flows to or from a pointer
-    unsignedprint = 0x40,	///< Constant that must be explicitly printed as an unsigned token
-    longprint = 0x80,		///< Constant that must be explicitly printed as a \e long integer token
-    stack_store = 0x100,	///< Created by an explicit STORE
-    locked_input = 0x200,	///< Input that exists even if its unused
-    spacebase_placeholder = 0x400, ///< This varnode is inserted artificially to track a register
+    symcheck_incomplete = 0x20,	///< Checked for symbol reference, but may require an additional check
+    symcheck_complete = 0x30,	///< Checked for symbol reference
+    ptrflow = 0x40,             ///< If this varnode flows to or from a pointer
+    unsignedprint = 0x80,	///< Constant that must be explicitly printed as an unsigned token
+    longprint = 0x100,		///< Constant that must be explicitly printed as a \e long integer token
+    stack_store = 0x200,	///< Created by an explicit STORE
+    locked_input = 0x400,	///< Input that exists even if its unused
+    spacebase_placeholder = 0x800, ///< This varnode is inserted artificially to track a register
 				///< value at a specific point in the code
-    stop_uppropagation = 0x800,	///< Data-types do not propagate from an output into \b this
-    has_implied_field = 0x1000	///< The varnode is implied but also has a data-type that needs resolution
+    stop_uppropagation = 0x1000, ///< Data-types do not propagate from an output into \b this
+    has_implied_field = 0x2000	///< The varnode is implied but also has a data-type that needs resolution
   };
 private:
   mutable uint4 flags;		///< The collection of boolean attributes for this Varnode
@@ -257,7 +258,7 @@ public:
   bool isSpacebase(void) const { return ((flags&Varnode::spacebase)!=0); } ///< Is this location used to store the base point for a virtual address space?
   bool isReturnAddress(void) const { return ((flags&Varnode::return_address)!=0); } ///< Is this storage for a calls return address?
   bool isProtoPartial(void) const { return ((flags&Varnode::proto_partial)!=0); } ///< Is \b this getting pieced together into a larger whole
-  bool isPtrCheck(void) const { return ((addlflags&Varnode::ptrcheck)!=0); } ///< Has \b this been checked as a constant pointer to a mapped symbol?
+  uint4 getSymbolCheck(void) const { return addlflags & symcheck_complete; } ///< Get state of checks for \b this as constant symbol reference
   bool isPtrFlow(void) const { return ((addlflags&Varnode::ptrflow)!=0); } ///< Does this varnode flow to or from a known pointer
   bool isSpacebasePlaceholder(void) const { return ((addlflags&Varnode::spacebase_placeholder)!=0); } ///< Is \b this used specifically to track stackpointer values?
   bool hasNoLocalAlias(void) const { return ((flags&Varnode::nolocalalias)!=0); } ///< Are there (not) any local pointers that might affect \b this?
@@ -313,8 +314,7 @@ public:
   void clearExplicit(void) { clearFlags(Varnode::explict); } ///< Clear the \e explicit mark on this Varnode
   void setReturnAddress(void) { flags |= Varnode::return_address; } ///< Mark as storage location for a return address
   void clearReturnAddress(void) { flags &= ~Varnode::return_address; } ///< Clear return address attribute
-  void setPtrCheck(void) { addlflags |= Varnode::ptrcheck; } ///< Set \b this as checked for a constant symbol reference
-  void clearPtrCheck(void) { addlflags &= ~Varnode::ptrcheck; } ///< Clear the pointer check mark on this Varnode
+  void setSymbolCheck(uint4 val) { addlflags = (addlflags & ~symcheck_complete) | (val & symcheck_complete); } ///< Set state of checks for a constant symbol reference
   void setPtrFlow(void) { addlflags |= Varnode::ptrflow; } ///< Set \b this as flowing to or from pointer
   void clearPtrFlow(void) { addlflags &= ~Varnode::ptrflow; } ///< Indicate that this varnode is not flowing to or from pointer
   void setSpacebasePlaceholder(void) { addlflags |= Varnode::spacebase_placeholder; } ///< Mark \b this as a special Varnode for tracking stackpointer values

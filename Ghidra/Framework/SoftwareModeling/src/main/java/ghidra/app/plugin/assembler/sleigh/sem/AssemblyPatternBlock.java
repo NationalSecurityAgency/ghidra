@@ -30,6 +30,7 @@ import ghidra.app.plugin.processors.sleigh.expression.ContextField;
 import ghidra.app.plugin.processors.sleigh.expression.TokenField;
 import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
 import ghidra.app.plugin.processors.sleigh.pattern.PatternBlock;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.util.NumericUtilities;
 
@@ -634,8 +635,8 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	/**
 	 * Write mask bits from context commit to mask array of block
 	 * 
-	 * @implNote This is used when scraping for valid input contexts to determine which context variables
-	 *           are passed to the <code>globalset</code> directive.
+	 * @implNote This is used when scraping for valid input contexts to determine which context
+	 *           variables are passed to the <code>globalset</code> directive.
 	 * 
 	 * @param cc the context commit
 	 * @return the result
@@ -836,7 +837,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	 * Mask the given {@code unmasked} value with the mask contained in this pattern block.
 	 * 
 	 * <p>
-	 * The returned {@link AssemblyPatternBlock} has an identical mask as {@code this} but with a 
+	 * The returned {@link AssemblyPatternBlock} has an identical mask as {@code this} but with a
 	 * value taken from the given {@code unmasked}.
 	 * 
 	 * @param unmasked the value to be masked into the result
@@ -977,6 +978,16 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 			res = res.shiftLeft((n - length()) * 8);
 		}
 		return res;
+	}
+
+	/**
+	 * Convert this pattern block into a register value
+	 * 
+	 * @param reg the register, typically the contextreg
+	 * @return the register value
+	 */
+	public RegisterValue toRegisterValue(Register reg) {
+		return new RegisterValue(reg, toBigInteger(reg.getNumBytes()));
 	}
 
 	/**

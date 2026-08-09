@@ -116,7 +116,7 @@ public class FormatManager implements OptionsChangeListener {
 		FormatManager newManager = new FormatManager(displayOptions, fieldOptions);
 		SaveState saveState = new SaveState();
 		saveState(saveState);
-		newManager.readState(saveState);
+		newManager.readState(saveState, false);
 		return newManager;
 	}
 
@@ -961,7 +961,10 @@ public class FormatManager implements OptionsChangeListener {
 	 */
 	public void saveState(SaveState saveState) {
 		for (int i = 0; i < NUM_MODELS; i++) {
-			saveState.putXmlElement(models[i].getName(), models[i].saveToXml());
+			FieldFormatModel model = models[i];
+			String name = model.getName();
+			Element element = model.saveToXml();
+			saveState.putXmlElement(name, element);
 		}
 	}
 
@@ -972,16 +975,30 @@ public class FormatManager implements OptionsChangeListener {
 	 * @param saveState the SaveState to read from.
 	 */
 	public void readState(SaveState saveState) {
+		readState(saveState, true);
+	}
+
+	// Note: only for clients that manage their own exact formats; remove when 
+	// checkForMissingNewCriticalFields() gets removed
+	@Deprecated(since = "12.2", forRemoval = true)
+	public void readState(SaveState saveState, boolean checkForMissingFields) {
 		initialized = false;
 		for (int i = 0; i < NUM_MODELS; i++) {
-			if (saveState.hasValue(models[i].getName())) {
-				models[i].restoreFromXml(saveState.getXmlElement(models[i].getName()));
-				// hack to make sure the new open/close variables field is present
-				// If missing, we are just going to reset it to the default format
-				checkForMissingNewCriticalFields(models[i]);
+			FieldFormatModel model = models[i];
+			String name = model.getName();
+			if (!saveState.hasValue(name)) {
+				Element element = getDefaultModel(i);
+				model.restoreFromXml(element);
+				continue;
 			}
-			else {
-				models[i].restoreFromXml(getDefaultModel(i));
+
+			Element element = saveState.getXmlElement(name);
+			model.restoreFromXml(element);
+
+			if (checkForMissingFields) {
+				// Hack to make sure the new open/close variables field is present. If missing, we 
+				// are just going to reset it to the default format
+				checkForMissingNewCriticalFields(model);
 			}
 		}
 		initialized = true;
@@ -993,17 +1010,20 @@ public class FormatManager implements OptionsChangeListener {
 	private void checkForMissingNewCriticalFields(FieldFormatModel model) {
 		if (model.getName().equals("Variable")) {
 			if (!hasField(model, "+")) {
-				model.restoreFromXml(getDefaultVariableFormat());
+				Element element = getDefaultVariableFormat();
+				model.restoreFromXml(element);
 			}
 		}
 		if (model.getName().equals("Function")) {
 			if (!hasField(model, "+")) {
-				model.restoreFromXml(getDefaultFunctionFormat());
+				Element element = getDefaultFunctionFormat();
+				model.restoreFromXml(element);
 			}
 		}
 		if (model.getName().equals("Address Break")) {
 			if (!hasField(model, "Collapsed Code")) {
-				model.restoreFromXml(getDefaultDividerFormat());
+				Element element = getDefaultDividerFormat();
+				model.restoreFromXml(element);
 			}
 		}
 	}

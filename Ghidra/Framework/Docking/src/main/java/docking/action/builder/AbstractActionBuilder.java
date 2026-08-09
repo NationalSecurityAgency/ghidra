@@ -251,6 +251,18 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	}
 
 	/**
+	 * Builds and adds the action as a local action for the given dialog provider
+	 * 
+	 * @param provider the dialog provider to add the action to
+	 * @return the newly created action
+	 */
+	public T buildAndInstallLocal(DialogComponentProvider provider) {
+		T action = build();
+		provider.addAction(action);
+		return action;
+	}
+
+	/**
 	 * Configure the description for the action.  This description will appear as a tooltip
 	 * over tool bar buttons.
 	 * 

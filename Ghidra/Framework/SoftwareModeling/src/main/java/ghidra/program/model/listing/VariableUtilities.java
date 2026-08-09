@@ -745,11 +745,11 @@ public class VariableUtilities {
 
 			DataType dt = findOrCreateClassStruct(function);
 			if (dt == null) {
-				dt = DataType.VOID;
+				dt = VoidDataType.dataType;
 			}
 			dt = new PointerDataType(dt);
 			DataType[] arr = new DataType[2];
-			arr[0] = DataType.VOID;
+			arr[0] = VoidDataType.dataType;
 			arr[1] = dt;
 			VariableStorage thisStorage =
 				convention.getStorageLocations(function.getProgram(), arr, true,

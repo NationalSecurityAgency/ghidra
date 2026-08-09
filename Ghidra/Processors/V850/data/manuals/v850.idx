@@ -1,4 +1,4 @@
-@r01us0001ej0100_v850e2m.pdf [V850E2M User’s Manual: Architecture RENESAS MCU V850E2M Microprocessor Core]
+@r01us0001ej0100_v850e2m.pdf [V850E2M Userï¿½s Manual: Architecture RENESAS MCU V850E2M Microprocessor Core]
 
 ADD, 71
 ADDI, 72
@@ -172,3 +172,19 @@ TRNCF.SL, 403
 TRNCF.SUL, 404
 TRNCF.SUW, 405
 TRNCF.SW, 406
+
+@r01us0143ej0130-rh850g3mh.pdf [RH850G3MH User's Manual: Software Renesas microcontroller]
+
+BINS, 162
+CACHE, 303
+CLL, 169
+LD.DW, 204
+LDL.W, 211
+LOOP, 213
+POPSP, 232
+PUSHSP, 237
+ROTL, 240
+SNOOZE, 268
+ST.DW, 274
+STC.W, 279
+SYNCI, 288

@@ -381,6 +381,9 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 	public void themeChanged(ThemeEvent event) {
 		if (event.isLookAndFeelChanged()) {
 			setFont(Gui.getFont(DEFAULT_FONT_ID));
+			if (model.themeChangeNotification) {
+				responseEncoder.reportDarkMode(Gui.isDarkTheme());
+			}
 		}
 		if (event.isFontChanged(DEFAULT_FONT_ID)) {
 			setFont(Gui.getFont(DEFAULT_FONT_ID));
@@ -775,8 +778,13 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 			return;
 		}
 		Rectangle bounds = scroller.getViewportBorderBounds();
-		int cols = bounds.width / metrics.charWidth('M');
-		int rows = bounds.height / metrics.getHeight();
+		int mWidth = metrics.charWidth('M');
+		int mHeight = metrics.getHeight();
+		if (mWidth == 0 || mHeight == 0) {
+			return;
+		}
+		int cols = bounds.width / mWidth;
+		int rows = bounds.height / mHeight;
 		resizeTerminal((short) cols, (short) rows);
 	}
 

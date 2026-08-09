@@ -50,6 +50,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.FlowType;
+import ghidra.program.model.symbol.RefType;
 import ghidra.program.util.AddressEvaluator;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
@@ -68,7 +69,7 @@ import resources.Icons;
 
 import static ghidra.program.util.ProgramEvent.*;
 
-class TraceCallTreeProvider extends ComponentProviderAdapter
+public class TraceCallTreeProvider extends ComponentProviderAdapter
 		implements DebuggerProvider, PopupActionProvider {
 
 	private class ClearLogAction extends DockingAction {
@@ -76,8 +77,8 @@ class TraceCallTreeProvider extends ComponentProviderAdapter
 		ClearLogAction(ComponentProvider provider) {
 			super("Clear log", provider.getOwner());
 			setEnabled(true);
-			Icon ICON = Icons.CLEAR_ICON;
-			setToolBarData(new ToolBarData(ICON, "log"));
+			Icon icon = Icons.CLEAR_ICON;
+			setToolBarData(new ToolBarData(icon, "log"));
 		}
 
 		@Override
@@ -91,8 +92,8 @@ class TraceCallTreeProvider extends ComponentProviderAdapter
 		FoldRecursiveAction(ComponentProvider provider) {
 			super("Collapse from selected cell recursively", provider.getOwner());
 			setEnabled(true);
-			Icon ICON = Icons.COLLAPSE_ALL_ICON;
-			setToolBarData(new ToolBarData(ICON, "expand"));
+			Icon icon = Icons.COLLAPSE_ALL_ICON;
+			setToolBarData(new ToolBarData(icon, "expand"));
 		}
 
 		@Override
@@ -111,8 +112,8 @@ class TraceCallTreeProvider extends ComponentProviderAdapter
 		JumpToCurrentAction(ComponentProvider provider) {
 			super("Jump to current node", provider.getOwner());
 			setEnabled(true);
-			Icon ICON = Icons.HOME_ICON;
-			setToolBarData(new ToolBarData(ICON, "jump"));
+			Icon icon = Icons.HOME_ICON;
+			setToolBarData(new ToolBarData(icon, "jump"));
 		}
 
 		@Override
@@ -131,8 +132,8 @@ class TraceCallTreeProvider extends ComponentProviderAdapter
 		RebuildCallTreeAction(ComponentProvider provider) {
 			super("Rebuild Call Tree", provider.getOwner());
 			setEnabled(true);
-			Icon ICON = Icons.REFRESH_ICON;
-			setToolBarData(new ToolBarData(ICON, "refresh"));
+			Icon icon = Icons.REFRESH_ICON;
+			setToolBarData(new ToolBarData(icon, "refresh"));
 		}
 
 		@Override
@@ -154,8 +155,8 @@ class TraceCallTreeProvider extends ComponentProviderAdapter
 		ShowLogWindowAction(ComponentProvider provider) {
 			super("Show/hide log window", provider.getOwner());
 			setEnabled(true);
-			Icon ICON = Icons.WARNING_ICON;
-			setToolBarData(new ToolBarData(ICON, "log"));
+			Icon icon = Icons.WARNING_ICON;
+			setToolBarData(new ToolBarData(icon, "log"));
 			setSelected(showLogWindow);
 		}
 
@@ -185,8 +186,8 @@ class TraceCallTreeProvider extends ComponentProviderAdapter
 		ShowReturnsToggleAction(ComponentProvider provider) {
 			super("Show/hide returns", provider.getOwner());
 			setEnabled(true);
-			Icon ICON = Icons.ARROW_UP_LEFT_ICON;
-			setToolBarData(new ToolBarData(ICON, "show"));
+			Icon icon = Icons.ARROW_UP_LEFT_ICON;
+			setToolBarData(new ToolBarData(icon, "show"));
 			setSelected(showReturns);
 		}
 
@@ -209,8 +210,8 @@ class TraceCallTreeProvider extends ComponentProviderAdapter
 		ShowTailCallsToggleAction(ComponentProvider provider) {
 			super("Show/hide tail calls", provider.getOwner());
 			setEnabled(true);
-			Icon ICON = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
-			setToolBarData(new ToolBarData(ICON, "show"));
+			Icon icon = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
+			setToolBarData(new ToolBarData(icon, "show"));
 			setSelected(showTailCalls);
 		}
 
@@ -283,8 +284,8 @@ class TraceCallTreeProvider extends ComponentProviderAdapter
 		UnfoldRecursiveAction(ComponentProvider provider) {
 			super("Expand from selected cell recursively", provider.getOwner());
 			setEnabled(true);
-			Icon ICON = Icons.EXPAND_ALL_ICON;
-			setToolBarData(new ToolBarData(ICON, "expand"));
+			Icon icon = Icons.EXPAND_ALL_ICON;
+			setToolBarData(new ToolBarData(icon, "expand"));
 		}
 
 		@Override
@@ -474,7 +475,7 @@ class TraceCallTreeProvider extends ComponentProviderAdapter
 			final Instruction inst) throws CancelledException {
 		monitor.checkCancelled();
 
-		if (inst.getFlowType().equals(FlowType.UNCONDITIONAL_CALL) &&
+		if (inst.getFlowType().equals(RefType.UNCONDITIONAL_CALL) &&
 			(inst.getFlows().length == 1)) {
 			if (inst.getDefaultFallThrough() == null) {
 				treeLogModel.log(trace,
@@ -673,6 +674,7 @@ class TraceCallTreeProvider extends ComponentProviderAdapter
 					final ProgramLocation loc =
 						new ProgramLocation(currentCoords.getView(), address);
 					listingService.goTo(loc, true);
+					listingService.requestFocus();
 				})
 				.build());
 
@@ -694,6 +696,7 @@ class TraceCallTreeProvider extends ComponentProviderAdapter
 						final ProgramLocation loc =
 							new ProgramLocation(currentCoords.getView(), address);
 						dl.goTo(loc);
+						dl.requestFocus();
 					})
 					.build());
 		}
@@ -713,6 +716,7 @@ class TraceCallTreeProvider extends ComponentProviderAdapter
 					final ProgramLocation loc =
 						new ProgramLocation(currentCoords.getView(), address);
 					dl.goTo(loc);
+					dl.requestFocus();
 				})
 				.build());
 	}
@@ -1215,9 +1219,9 @@ class TraceCallTreeProvider extends ComponentProviderAdapter
 			return;
 		}
 		final List<GTreeTableNode> list = currentRootNode.find(n -> {
-			if (n instanceof final AbstractTraceCallTreeNode TraceCallTreeNode) {
-				return TraceCallTreeNode.getName().equals(func.getName()) &&
-					(coords.getSnap() >= TraceCallTreeNode.getSnapshotKey());
+			if (n instanceof final AbstractTraceCallTreeNode traceCallTreeNode) {
+				return traceCallTreeNode.getName().equals(func.getName()) &&
+					(coords.getSnap() >= traceCallTreeNode.getSnapshotKey());
 			}
 			treeTable.setStatusMessage("Can't find node for current location, check debug console");
 			return false;

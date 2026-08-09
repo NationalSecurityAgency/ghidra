@@ -16,5 +16,6 @@
     <description>Renesas M16C/60 16-Bit MicroComputer</description>
     <compiler name="default" spec="M16C_60.cspec" id="default"/>
     <external_name tool="gnu" name="m16c"/>
+    <external_name tool="IDA-PRO" name="m16c60"/>
   </language>
 </language_definitions>

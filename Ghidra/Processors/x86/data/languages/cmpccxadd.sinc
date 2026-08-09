@@ -1,0 +1,27 @@
+####
+#### CMPccXADD instructions
+####
+
+@ifdef IA64
+:CMP^cc^"XADD" m32, Reg32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32 & row=0xe & cc; Reg32 ... & m32  {
+	local op1 = m32;
+	local op2 = Reg32;
+	subflags(op1, op2);
+	local tmp = op1 - op2;
+	resultflags(tmp);
+	build cc;
+	if (!cc) goto inst_next;
+	m32 = vexVVVV_r32;
+}
+
+:CMP^cc^"XADD" m64, Reg64, vexVVVV_r64 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64 & row=0xe & cc; Reg64 ... & m64  {
+	local op1 = m64;
+	local op2 = Reg64;
+	subflags(op1, op2);
+	local tmp = op1 - op2;
+	resultflags(tmp);
+	build cc;
+	if (!cc) goto inst_next;
+	m64 = vexVVVV_r64;
+}
+@endif

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import generic.stl.Pair;
 import ghidra.feature.fid.db.*;
 import ghidra.feature.fid.hash.*;
 import ghidra.framework.model.DomainFile;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.Processor;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.classfinder.ClassSearcher;
@@ -178,7 +178,7 @@ public class FidService {
 	 * @param libraryVariant the library variant
 	 * @param programDomainFiles the domain files to use when populating the library
 	 * @param functionFilter a filter to possibly reject functions from the library
-	 * @param languageId the ghidra language id to filter on, or null
+	 * @param programFilter a filter on which programs to ingest
 	 * @param linkLibraries libraries to search for (internally) unresolved symbols
 	 * @param commonSymbols is a list of symbols for which relationships are not generated
 	 * @param monitor a task monitor
@@ -190,12 +190,13 @@ public class FidService {
 
 	public FidPopulateResult createNewLibraryFromPrograms(FidDB fidDb, String libraryFamilyName,
 			String libraryVersion, String libraryVariant, List<DomainFile> programDomainFiles,
-			Predicate<Pair<Function, FidHashQuad>> functionFilter, LanguageID languageId,
-			List<LibraryRecord> linkLibraries, List<String> commonSymbols, TaskMonitor monitor)
+			Predicate<Pair<Function, FidHashQuad>> functionFilter, FidFilter programFilter,
+			List<LibraryRecord> linkLibraries,
+			List<String> commonSymbols, TaskMonitor monitor)
 			throws MemoryAccessException, VersionException, CancelledException,
 			IllegalStateException, IOException {
 		FidServiceLibraryIngest ingest = new FidServiceLibraryIngest(fidDb, this, libraryFamilyName,
-			libraryVersion, libraryVariant, programDomainFiles, functionFilter, languageId,
+			libraryVersion, libraryVariant, programDomainFiles, functionFilter, programFilter,
 			linkLibraries, monitor);
 		ingest.markCommonChildReferences(commonSymbols);
 		return ingest.create();
@@ -290,29 +291,30 @@ public class FidService {
 	}
 
 	/**
-	 * Returns true if at least one FidLibraryDatabases can process programs with the given language
-	 * @param language the language to test Fid Databases for
+	 * Returns true if at least one FidLibraryDatabases can process programs with
+	 * the given language, compiler, and source language
+	 * @param programID properties of the program to test Fid Databases for
 	 * @return true if at least one FidLibraryDatabases can process programs with the given language
 	 */
 
-	public boolean canProcess(Language language) {
-		return fidFileManager.canQuery(language);
+	public boolean canProcess(FidProgramID programID) {
+		return fidFileManager.canQuery(programID);
 	}
 
 	/**
-	 * Creates a new FidQueryService that can facilitate performing a query over multiple
-	 * Fid databases. This causes the appropriate databases to be opened, and therefore, the
-	 * caller of this method is responsible for closing the FidQueryService when done with it.
-	 * @param language the language that will be queried against
+	 * Creates a new FidQueryServices and opens the multiple FID databases that match the given
+	 * Language and CompilerSpec.
+	 * The caller of this method is responsible for closing the FidQueryService when done with it.
+	 * @param programID properties of the program that will be queried against
 	 * @param openForUpdate if true, the databases will be opened for read/write.  Otherwise
 	 * it will be opened for reading only.
 	 * @return a new FidQueryService that allows querying across all appropriate fid databases for the given language.
-	 * @throws VersionException
-	 * @throws IOException
+	 * @throws VersionException if any database Schema does not match the current version.
+	 * @throws IOException if a general I/O error occurs.
 	 */
 
-	public FidQueryService openFidQueryService(Language language, boolean openForUpdate)
+	public FidQueryService openFidQueryService(FidProgramID programID, boolean openForUpdate)
 			throws VersionException, IOException {
-		return fidFileManager.openFidQueryService(language, openForUpdate);
+		return fidFileManager.openFidQueryService(programID, openForUpdate);
 	}
 }

@@ -20,8 +20,8 @@ import java.io.IOException;
 import java.util.List;
 
 import ghidra.app.util.*;
-import ghidra.app.util.exporter.Exporter;
 import ghidra.app.util.exporter.ExporterException;
+import ghidra.app.util.exporter.ProgramExporter;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.AddressSetView;
@@ -36,7 +36,7 @@ import sarif.managers.ProgramSarifMgr;
  * An implementation of exporter that creates
  * an SARIF representation of the program.
  */
-public class SarifExporter extends Exporter {
+public class SarifExporter extends ProgramExporter {
 	private SarifProgramOptions options = new SarifProgramOptions();
 
 	/**
@@ -59,17 +59,21 @@ public class SarifExporter extends Exporter {
 		this.options.setOptions(options);
 	}
 
+
 	@Override
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet, TaskMonitor monitor)
 			throws IOException, ExporterException {
 
 		log.clear();
 
-		if (!(domainObj instanceof Program)) {
-			log.appendMsg("Unsupported type: "+domainObj.getClass().getName());
+		Program program;
+		try {
+			program = getProgram(domainObj);
+		}
+		catch (ClassCastException e) {
+			log.appendMsg("Unsupported type: " + domainObj.getClass().getName());
 			return false;
 		}
-		Program program = (Program)domainObj;
 
 		if (addrSet == null) {
 			addrSet = program.getMemory();

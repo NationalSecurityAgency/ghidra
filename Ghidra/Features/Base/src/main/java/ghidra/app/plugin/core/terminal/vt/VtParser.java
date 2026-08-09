@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.terminal.vt;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
  * The parser for a terminal emulator
@@ -141,10 +142,10 @@ public class VtParser {
 
 	protected void debugChar(char c) {
 		if (!Character.isISOControl(c)) {
-			System.err.print("%c".formatted(c));
+			System.err.println("\\x%02x (%c)".formatted(c & 0xff, c));
 		}
 		else {
-			System.err.print("\\x%02x".formatted(c & 0xff));
+			System.err.println("\\x%02x".formatted(c & 0xff));
 		}
 	}
 
@@ -156,7 +157,7 @@ public class VtParser {
 	 * @return the new state node
 	 */
 	protected VtState doProcessByte(VtState state, byte b) {
-		return state.handleNext(b, this, handler);
+		return Objects.requireNonNull(state.handleNext(b, this, handler));
 	}
 
 	/**

@@ -179,6 +179,11 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("dylib");
+	}
+
+	@Override
 	protected boolean isValidSearchPath(FSRL fsrl, ImporterSettings settings)
 			throws CancelledException {
 		FileSystemService fsService = FileSystemService.getInstance();
@@ -622,7 +627,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				if (lib == null) {
 					for (DomainFolder searchFolder : searchFolders) {
 						DomainFile df =
-							findLibraryInProject(path, searchFolder, searchPaths, settings);
+							findLibraryInProject(path, searchFolder, searchPaths, true, settings);
 						if (df != null) {
 							DomainObject obj = df.getDomainObject(this, true, true, monitor);
 							if (obj instanceof Program p) {

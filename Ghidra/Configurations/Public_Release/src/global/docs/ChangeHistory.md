@@ -1,3 +1,14 @@
+# Ghidra 12.1.2 Change History (June 2026)
+
+### Improvements
+* _MachineLearning_. Upgraded the Machine Learning extension's olcut jars to 5.3.1. (GP-6894)
+* _Multi-User_. Data buffers transferred to and from a Ghidra Server are now compressed by default.  The default was previously inconsistent for the two directions. (GP-6915)
+
+### Bugs
+* _Decompiler_. Fixed infinite loop in Decompiler analysis that was triggered by bitfield data-types. (GP-6850, Issue #9185)
+* _Importer:ELF_. Improved ELF GNU Hash table bounds-checking to avoid potential hang. (GP-6887)
+* _Multi-User_. Corrected severe regression error with Ghidra Server 12.1.1 block-stream compression. (GP-6903)
+
 # Ghidra 12.1.1 Change History (May 2026)
 
 ### Improvements

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,8 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.*;
+import ghidra.util.task.Task;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * The SelectByFlowPlugin adds selection of code based on program flow to a
@@ -347,7 +348,7 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 
 		monitor.initialize(startAddresses.getNumAddresses());
 
-		CodeBlockModel cbm = blockModelService.getActiveSubroutineModel();
+		CodeBlockModel cbm = blockModelService.getActiveSubroutineModel(program);
 		CodeBlockIterator iter = cbm.getCodeBlocksContaining(startAddresses, monitor);
 		while (iter.hasNext()) {
 			if (monitor.isCancelled()) {
@@ -382,7 +383,7 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 		monitor.initialize(startAddresses.getNumAddresses());
 
 		ReferenceManager rm = program.getReferenceManager();
-		CodeBlockModel cbm = blockModelService.getActiveSubroutineModel();
+		CodeBlockModel cbm = blockModelService.getActiveSubroutineModel(program);
 		CodeBlockIterator cbIter = cbm.getCodeBlocksContaining(startAddresses, monitor);
 
 		while (cbIter.hasNext()) {

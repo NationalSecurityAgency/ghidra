@@ -61,6 +61,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.NavigatableComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.util.*;
@@ -604,19 +605,41 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	private boolean isInCollapsableCodeArea(ProgramLocationActionContext context) {
+
 		ProgramLocation location = context.getLocation();
+		if (location instanceof FunctionSignatureFieldLocation ||
+			location instanceof FunctionOpenCloseLocation ||
+			location instanceof CollapsedCodeLocation) {
+			return true;
+		}
 
 		// this allows the code collapse to be toggled on instructions in the body of a function,
 		// but we have to exclude the variable locations so as to not interfere with the 
 		// open/close variables action which also is mapped to <SPACE> 
-		if (location instanceof CodeUnitLocation && !(location instanceof VariableLocation) &&
-			!(location instanceof VariablesOpenCloseLocation)) {
+		if (isInFunctionBody(location)) {
 			return true;
 		}
 
-		return location instanceof FunctionSignatureFieldLocation ||
-			location instanceof FunctionOpenCloseLocation ||
-			location instanceof CollapsedCodeLocation;
+		return false;
+	}
+
+	private boolean isInFunctionBody(ProgramLocation location) {
+
+		if (!(location instanceof CodeUnitLocation)) {
+			return false;
+		}
+
+		if (location instanceof VariableLocation ||
+			location instanceof VariablesOpenCloseLocation) {
+			return false;
+		}
+
+		Data cursorData = DataUtilities.getDataAtLocation(location);
+		if (cursorData != null) {
+			return false;
+		}
+
+		return true;
 	}
 
 	private void buildQuickTogleFieldActions() {

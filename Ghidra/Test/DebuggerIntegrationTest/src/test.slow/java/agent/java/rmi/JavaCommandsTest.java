@@ -15,6 +15,7 @@
  */
 package agent.java.rmi;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.*;
@@ -123,8 +124,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceStart("HelloWorld.class");
 				/exit
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals("JVM:BE:32:default",
 				tb.trace.getBaseLanguage().getLanguageID().getIdAsString());
 			assertEquals("default",
@@ -140,7 +141,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceStart(null);
 				/exit
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/jdi/noname")) {
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/jdi/noname")) {
 			assertThat(mdo.get(), instanceOf(Trace.class));
 		}
 	}
@@ -241,8 +242,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceDisconnect();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals(0, tb.trace.getTimeManager().getAllSnapshots().size());
 		}
 		finally {
@@ -264,8 +265,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceDisconnect();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertNotEquals(0, tb.trace.getTimeManager().getAllSnapshots().size());
 		}
 	}
@@ -280,8 +281,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceSave();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals(2, tb.trace.getTimeManager().getAllSnapshots().size());
 			TraceSnapshot snapshot = getLastSnapshot();
 			assertEquals(1, snapshot.getKey());
@@ -306,8 +307,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceDisconnect();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = getLastSnapshot().getKey();
 			MemDump dump = parseHexDump(extractOutSection(out, "---Dump---"));
 			ByteBuffer buf = ByteBuffer.allocate(dump.data().length);
@@ -334,8 +335,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceDisconnect();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = getLastSnapshot().getKey();
 			String eval = extractOutSection(out, "---Start---");
 			List<String> lines = List.of(eval.split("\n"));
@@ -366,8 +367,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceDisconnect();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = getLastSnapshot().getKey();
 			MemDump dump = parseHexDump(extractOutSection(out, "---Dump---"));
 			Arrays.fill(dump.data(), 0, 8, (byte) 0);
@@ -390,8 +391,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceDisconnect();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = getLastSnapshot().getKey();
 			List<TraceObjectValue> regVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(snap),
@@ -423,8 +424,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
 		// The spaces will be left over, but the values should be zeroed
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = getLastSnapshot().getKey();
 			List<TraceObjectValue> regVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(snap),
@@ -452,8 +453,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceSave();
 				/exit
 				""".formatted(PREAMBLE, addr, TESTSETUP));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/Test")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/Test")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1].Bob"));
 			assertNotNull(object);
@@ -475,8 +476,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceSave();
 				/exit
 				""".formatted(PREAMBLE, addr, TESTSETUP));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/Test")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/Test")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1].Bob"));
 			assertNotNull(object);
@@ -501,8 +502,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceDisconnect();
 				/exit
 				""".formatted(PREAMBLE, addr, TESTSETUP));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/Test")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/Test")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -526,8 +527,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceDisconnect();
 				/exit
 				""".formatted(PREAMBLE, addr, TESTSETUP, extra, value, schema));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/Test")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/Test")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = getLastSnapshot().getKey();
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
@@ -626,8 +627,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceDisconnect();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = getLastSnapshot().getKey();
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("VMs"));
@@ -654,8 +655,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 					/exit
 					"""
 					.formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = getLastSnapshot().getKey();
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("VMs"));
@@ -687,8 +688,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceDisconnect();
 				/exit
 				""".formatted(PREAMBLE, addr, TESTSETUP));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/Test")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/Test")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -721,8 +722,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceSave();
 				/exit
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/jdi/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/jdi/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -762,8 +763,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceDisconnect();
 				/exit
 				""".formatted(PREAMBLE, addr, TESTSETUP));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/Test")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/Test")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals(
 				"Parent          Key       Span      Value         Type      \n" +
 					"Test.Objects[1] [0..+inf) vbool     true          BOOL      \n" +
@@ -803,7 +804,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceSave();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
 			assertEquals("VMs[OpenJDK 64-Bit Server VM].Threads[Finalizer]",
 				traceManager.getCurrentObject().getCanonicalPath().toString());
 		}
@@ -822,8 +823,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceSave();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = getLastSnapshot().getKey();
 			// Not concerned about specifics, so long as disassembly occurs
 			long total = 0;
@@ -848,8 +849,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceSave();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = getLastSnapshot().getKey();
 			Collection<TraceObject> vms = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(snap), PathFilter.parse("VMs[]"))
@@ -870,8 +871,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceSave();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = getLastSnapshot().getKey();
 			Collection<TraceObject> processes = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(snap), PathFilter.parse("VMs[].Processes"))
@@ -892,8 +893,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceSave();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
 			TraceModule mod = Unique.assertOne(
 				all.stream().filter(m -> m.getName(SNAP).contains("Thread.class")));
@@ -913,8 +914,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceDisconnect();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			Collection<? extends TraceThread> threads = tb.trace.getThreadManager().getAllThreads();
 			assertEquals(4, threads.size());
 			Set<String> names = new HashSet<>();
@@ -941,8 +942,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceDisconnect();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = getLastSnapshot().getKey();
 			List<TraceObject> stack = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(snap),
@@ -964,8 +965,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceSave();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			Collection<? extends TraceMemoryRegion> all =
 				tb.trace.getMemoryManager().getAllRegions();
 			assertThat(all.size(), greaterThan(90));
@@ -984,8 +985,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceSave();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = getLastSnapshot().getKey();
 			List<TraceObjectValue> events = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(snap),
@@ -1010,8 +1011,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 				cmds.ghidraTraceSave();
 				/exit
 				""".formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = getLastSnapshot().getKey();
 			List<TraceObjectValue> breaks = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(snap),
@@ -1044,8 +1045,8 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 					/exit
 					"""
 					.formatted(PREAMBLE, addr, HWSETUP_W_STATE));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = getLastSnapshot().getKey();
 			List<TraceObjectValue> breaks = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(snap),

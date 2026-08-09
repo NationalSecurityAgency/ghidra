@@ -345,6 +345,12 @@ ext.deps = [
 		url: "https://files.pythonhosted.org/packages/20/12/38679034af332785aac8774540895e234f4d07f7545804097de4b666afd8/packaging-25.0-py3-none-any.whl",
 		sha256: "29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484",
 		destination: file("${DEPS_DIR}/PyGhidra/")
+	],
+	[
+		name: "typing_extensions-4.16.0-py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl",
+		sha256: "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8",
+		destination: file("${DEPS_DIR}/PyGhidra/")
 	], 
 	[
 		name: "jpype1-1.5.2-cp313-cp313-macosx_10_13_universal2.whl", 

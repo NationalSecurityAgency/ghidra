@@ -36,6 +36,8 @@ model {
 			targetPlatform "mac_arm_64"
 			targetPlatform "freebsd_x86_64"
 			targetPlatform "freebsd_arm_64"
+			targetPlatform "openbsd_x86_64"
+			targetPlatform "openbsd_arm_64"
 		
 			sources {
 				c {

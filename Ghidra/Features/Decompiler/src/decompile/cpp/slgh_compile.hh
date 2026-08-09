@@ -301,8 +301,8 @@ public:
 /// various set*() methods prior to calling run_compilation.
 class SleighCompile : public SleighBase {
   friend class SleighPcode;
-  static const int4 UNIQUE_CROSSBUILD_POSITION = 8;
-  static const int4 UNIQUE_CROSSBUILD_NUMBITS = 8;
+  static const int4 UNIQUE_CROSSBUILD_POSITION = 8;	///< The position to insert a cross-build region, within a unique varnode
+  static const int4 UNIQUE_CROSSBUILD_NUMBITS = 8;	///< Number of bits inserted for the cross-build region
 public:
   SleighPcode pcode;			///< The p-code parsing (sub)engine
 private:

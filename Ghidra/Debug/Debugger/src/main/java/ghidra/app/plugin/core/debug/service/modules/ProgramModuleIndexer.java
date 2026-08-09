@@ -17,6 +17,8 @@ package ghidra.app.plugin.core.debug.service.modules;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
@@ -31,6 +33,9 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.modules.TraceModule;
+import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.*;
 
 // TODO: Consider making this a front-end plugin?
 public class ProgramModuleIndexer implements DomainFolderChangeListener {
@@ -74,8 +79,7 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 	// TODO: Note language and prefer those from the same processor?
 	// Will get difficult with new OBTR, since I'd need a platform
 	// There's also the WoW64 issue....
-	protected record IndexEntry(String name, String dfID, NameSource source) {
-	}
+	protected record IndexEntry(String name, String dfID, NameSource source) {}
 
 	protected class ModuleChangeListener
 			implements DomainObjectListener, DomainObjectClosedListener {
@@ -177,29 +181,103 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 	private final Project project;
 	private final ProjectData projectData;
 	private volatile boolean disposed;
+	private final CompletableFuture<Void> initialIndexFuture = new CompletableFuture<>();
 
 	private final Map<Program, ModuleChangeListener> openedForUpdate = new HashMap<>();
+	private final Object indexLock = new Object();
 	private final ModuleIndex index = new ModuleIndex();
 
 	public ProgramModuleIndexer(PluginTool tool) {
+		this(tool, tool::execute);
+	}
+
+	public ProgramModuleIndexer(PluginTool tool, Consumer<Task> taskExecutor) {
 		this.project = tool.getProject();
 		this.projectData = tool.getProject().getProjectData();
 		this.projectData.addDomainFolderChangeListener(this);
 
-		indexFolder(projectData.getRootFolder());
+		startInitialIndex(taskExecutor);
 	}
 
 	void dispose() {
 		disposed = true;
 		projectData.removeDomainFolderChangeListener(this);
+		initialIndexFuture.cancel(false);
+		synchronized (openedForUpdate) {
+			for (ModuleChangeListener listener : openedForUpdate.values()) {
+				listener.dispose();
+			}
+			openedForUpdate.clear();
+		}
 	}
 
-	protected void indexFolder(DomainFolder folder) {
-		for (DomainFile file : folder.getFiles()) {
-			addToIndex(file);
+	protected void startInitialIndex(Consumer<Task> taskExecutor) {
+		taskExecutor.accept(new Task("Index Program Modules", true, true, false) {
+			@Override
+			public void run(TaskMonitor monitor) throws CancelledException {
+				try {
+					indexProject(monitor);
+					initialIndexFuture.complete(null);
+				}
+				catch (CancelledException e) {
+					initialIndexFuture.cancel(false);
+					throw e;
+				}
+				catch (Throwable e) {
+					initialIndexFuture.completeExceptionally(e);
+					Msg.error(this, "Failed to index program modules", e);
+				}
+			}
+		});
+	}
+
+	protected void indexProject(TaskMonitor monitor) throws CancelledException {
+		int fileCount = projectData.getFileCount();
+		if (fileCount < 0) {
+			monitor.setIndeterminate(true);
 		}
-		for (DomainFolder sub : folder.getFolders()) {
-			indexFolder(sub);
+		else {
+			monitor.initialize(fileCount);
+		}
+
+		for (DomainFile file : ProjectDataUtils.descendantFiles(projectData.getRootFolder())) {
+			if (disposed) {
+				throw new CancelledException();
+			}
+			monitor.checkCancelled();
+			monitor.setMessage("Indexing " + file.getPathname());
+			addToIndex(file);
+			monitor.incrementProgress(1);
+		}
+	}
+
+	public void waitForInitialIndex(TaskMonitor monitor) throws CancelledException {
+		monitor = TaskMonitor.dummyIfNull(monitor);
+		monitor.setMessage("Waiting for program module index");
+		CompletableFuture<Void> cancelled = new CompletableFuture<>();
+		CancelledListener listener = () -> cancelled.cancel(false);
+		monitor.addCancelledListener(listener);
+		try {
+			monitor.checkCancelled();
+			CompletableFuture.anyOf(cancelled, initialIndexFuture).get();
+			initialIndexFuture.get();
+		}
+		catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new CancelledException();
+		}
+		catch (CancellationException e) {
+			throw new CancelledException();
+		}
+		catch (ExecutionException e) {
+			Throwable cause = e.getCause();
+			if (cause instanceof CancellationException) {
+				throw new CancelledException();
+			}
+			Msg.error(this, "Failed to index program modules", cause);
+		}
+		finally {
+			monitor.removeCancelledListener(listener);
 		}
 	}
 
@@ -237,28 +315,32 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 		}
 		String exeName = exePath == null ? null : new File(exePath).getName();
 
-		for (String modPath : getModulePaths(metadata)) {
-			String modName = new File(modPath).getName();
-			if (!modPath.equals(modName)) {
-				index.addEntry(modPath, dfID, NameSource.MODULE_PATH);
+		synchronized (indexLock) {
+			for (String modPath : getModulePaths(metadata)) {
+				String modName = new File(modPath).getName();
+				if (!modPath.equals(modName)) {
+					index.addEntry(modPath, dfID, NameSource.MODULE_PATH);
+				}
+				index.addEntry(modName, dfID, NameSource.MODULE_NAME);
 			}
-			index.addEntry(modName, dfID, NameSource.MODULE_NAME);
-		}
 
-		index.addEntry(dfName, dfID, NameSource.DOMAIN_FILE_NAME);
-		if (progName != null) {
-			index.addEntry(progName, dfID, NameSource.DOMAIN_FILE_NAME);
-		}
-		if (exeName != null) {
-			if (!exePath.equals(exeName)) {
-				index.addEntry(exePath, dfID, NameSource.PROGRAM_EXECUTABLE_PATH);
+			index.addEntry(dfName, dfID, NameSource.DOMAIN_FILE_NAME);
+			if (progName != null) {
+				index.addEntry(progName, dfID, NameSource.DOMAIN_FILE_NAME);
 			}
-			index.addEntry(exeName, dfID, NameSource.PROGRAM_EXECUTABLE_NAME);
+			if (exeName != null) {
+				if (!exePath.equals(exeName)) {
+					index.addEntry(exePath, dfID, NameSource.PROGRAM_EXECUTABLE_PATH);
+				}
+				index.addEntry(exeName, dfID, NameSource.PROGRAM_EXECUTABLE_NAME);
+			}
 		}
 	}
 
 	protected void removeFromIndex(String fileID) {
-		index.removeFile(fileID);
+		synchronized (indexLock) {
+			index.removeFile(fileID);
+		}
 	}
 
 	protected void refreshIndex(DomainFile file) {
@@ -396,13 +478,15 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 
 	public List<IndexEntry> getBestEntries(TraceModule module, long snap) {
 		String modulePathName = module.getName(snap).toLowerCase();
-		List<IndexEntry> entries = new ArrayList<>(index.getByName(modulePathName));
-		if (!entries.isEmpty()) {
+		synchronized (indexLock) {
+			List<IndexEntry> entries = new ArrayList<>(index.getByName(modulePathName));
+			if (!entries.isEmpty()) {
+				return entries;
+			}
+			String moduleFileName = new File(modulePathName).getName();
+			entries.addAll(index.getByName(moduleFileName));
 			return entries;
 		}
-		String moduleFileName = new File(modulePathName).getName();
-		entries.addAll(index.getByName(moduleFileName));
-		return entries;
 	}
 
 	public DomainFile getBestMatch(AddressSpace space, TraceModule module, long snap,

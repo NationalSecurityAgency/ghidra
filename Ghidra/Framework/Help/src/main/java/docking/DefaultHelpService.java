@@ -34,6 +34,11 @@ public class DefaultHelpService implements HelpService {
 	}
 
 	@Override
+	public boolean isShowing() {
+		return false;
+	}
+
+	@Override
 	public void showHelp(java.net.URL url) {
 		// no-op
 	}

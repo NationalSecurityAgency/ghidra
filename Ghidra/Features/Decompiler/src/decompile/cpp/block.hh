@@ -30,6 +30,9 @@ class BlockGoto;
 class BlockMultiGoto;
 class BlockCondition;
 class BlockIf;
+class BlockIfElse;
+class BlockIfNoExit;
+class BlockIfGoto;
 class BlockWhileDo;
 class BlockDoWhile;
 class BlockInfLoop;
@@ -76,7 +79,7 @@ public:
   /// \brief The possible block types
   enum block_type {
     t_plain, t_basic, t_graph, t_copy, t_goto, t_multigoto, t_ls,
-    t_condition, t_if, t_whiledo, t_dowhile, t_switch, t_infloop
+    t_condition, t_if, t_ifelse, t_ifnoexit, t_ifgoto, t_whiledo, t_dowhile, t_switch, t_infloop
   };
   /// \brief Boolean properties of blocks
   ///
@@ -120,19 +123,21 @@ public:
     f_immed_copy = 0x200	///< Copy propagation has happened across the edge
   };
 private:
-  uint4 flags;			///< Collection of block_flags
   FlowBlock *parent;		///< The parent block to which \b this belongs
   FlowBlock *immed_dom;		///< Immediate dominating block
   FlowBlock *copymap;		///< Back reference to a BlockCopy of \b this
-  int4 index;			///< Reference index for this block (reverse post order)
-  int4 visitcount;		///< A count of visits of this node for various algorithms
-  int4 numdesc;			///< Number of descendants of this block in spanning tree (+1)
   vector<BlockEdge> intothis;	///< Blocks which (can) fall into this block
   vector<BlockEdge> outofthis;	///< Blocks into which this block (can) fall
 				// If there are two possible outputs as the
 				// result of a conditional branch
 				// the first block in outofthis should be
 				// the result of the condition being false
+  uint4 flags;			///< Collection of block_flags
+  int4 index;			///< Reference index for this block (reverse post order)
+  int4 visitcount;		///< A count of visits of this node for various algorithms
+  int4 numdesc;			///< Number of descendants of this block in spanning tree (+1)
+  int4 leafCount;		///< Number of leaf blocks contained in \b this
+  int4 structureDepth;		///< Amount of nesting in structure rooted at \b this
   static void replaceEdgeMap(vector<BlockEdge> &vec);	///< Update block references in edges with copy map
   void addInEdge(FlowBlock *b,uint4 lab);	///< Add an edge coming into \b this
   void decodeNextInEdge(Decoder &decoder,BlockMap &resolver);	///< Decode the next input edge from stream
@@ -353,6 +358,9 @@ public:
   bool isGotoIn(int4 i) const { return ((intothis[i].label & (f_irreducible|f_goto_edge))!=0); }	///< Is the i-th incoming edge unstructured
   bool isGotoOut(int4 i) const { return ((outofthis[i].label & (f_irreducible|f_goto_edge))!=0); }	///< Is the i-th outgoing edge unstructured
   JumpTable *getJumptable(void) const;	///< Get the JumpTable associated \b this block
+  int4 getBasicCount(void) const { return leafCount; }	///< Get the number of basic blocks under the structure at \b this point
+  int4 getStructureDepth(void) const { return structureDepth; }	///< Get the nesting depth of the structure rooted at \b this point
+  uint4 getHaltType(void) const;			///< Get the \e halt type of the last PcodeOp in \b this
   void printShortHeader(ostream &s) const;		///< Print a short identifier for the block
   static block_type nameToType(const string &name);	///< Get the block_type associated with a name string
   static string typeToName(block_type bt);		///< Get the name string associated with a block_type
@@ -384,6 +392,7 @@ protected:
   void swapBlocks(int4 i,int4 j);	///< Swap the positions two component FlowBlocks
   static void markCopyBlock(FlowBlock *bl,uint4 fl);	///< Set properties on the first leaf FlowBlock
 public:
+  BlockGraph(void) { leafCount = 0; }			///< Construct empty structure
   void clear(void);					///< Clear all component FlowBlock objects
   virtual ~BlockGraph(void) { clear(); }		///< Destructor
   const vector<FlowBlock *> &getList(void) const { return list; }	///< Get the list of component FlowBlock objects
@@ -426,9 +435,10 @@ public:
   BlockMultiGoto *newBlockMultiGoto(FlowBlock *bl,int4 outedge);		///< Build a new BlockMultiGoto
   BlockList *newBlockList(const vector<FlowBlock *> &nodes);			///< Build a new BlockList
   BlockCondition *newBlockCondition(FlowBlock *b1,FlowBlock *b2);		///< Build a new BlockCondition
-  BlockIf *newBlockIfGoto(FlowBlock *cond);					///< Build a new BlockIfGoto
+  BlockIfGoto *newBlockIfGoto(FlowBlock *cond);					///< Build a new BlockIfGoto
   BlockIf *newBlockIf(FlowBlock *cond,FlowBlock *tc);				///< Build a new BlockIf
-  BlockIf *newBlockIfElse(FlowBlock *cond,FlowBlock *tc,FlowBlock *fc);		///< Build a new BlockIfElse
+  BlockIfElse *newBlockIfElse(FlowBlock *cond,FlowBlock *tc,FlowBlock *fc);	///< Build a new BlockIfElse
+  BlockIfNoExit *newBlockIfNoExit(FlowBlock *cond,FlowBlock *tc,FlowBlock *fc);	///< Build a new BlockIfNoExit
   BlockWhileDo *newBlockWhileDo(FlowBlock *cond,FlowBlock *cl);			///< Build a new BlockWhileDo
   BlockDoWhile *newBlockDoWhile(FlowBlock *condcl);				///< Build a new BlockDoWhile
   BlockInfLoop *newBlockInfLoop(FlowBlock *body);				///< Build a new BlockInfLoop
@@ -659,10 +669,6 @@ public:
 /// the block of code executed when the condition is true.  If there is a third component, it
 /// is the "else" block, executed when the condition is false.
 ///
-/// If there is only one component, this represents the case where the conditionally executed
-/// branch is unstructured.  This is generally emitted where the conditionally executed body
-/// is the single \e goto statement.
-///
 /// A BlockIf will always have at most one (structured) exit edge. With one component, one of the edges of
 /// the conditional component is unstructured. With two components, one of the conditional block
 /// edges flows to the body block, and the body's out edge and the remaining conditional block out
@@ -670,22 +676,58 @@ public:
 /// \e true body block, the other conditional edge flows to the \e false body block, and outgoing
 /// edges from the body blocks, if they exist, flow to the same exit block.
 class BlockIf : public BlockGraph {
-  uint4 gototype;			///< The type of unstructured edge (if present)
-  FlowBlock *gototarget;		///< The target FlowBlock of the unstructured edge (if present)
 public:
-  BlockIf(void) { gototype = f_goto_goto; gototarget = (FlowBlock *)0; }	///< Constructor
-  void setGotoTarget(FlowBlock *bl) { gototarget = bl; }		///< Mark the target of the unstructured edge
-  FlowBlock *getGotoTarget(void) const { return gototarget; }		///< Get the target of the unstructured edge
-  uint4 getGotoType(void) const { return gototype; }			///< Get the type of unstructured edge
   virtual block_type getType(void) const { return t_if; }
-  virtual void markUnstructured(void);
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
   virtual void printHeader(ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockIf(this); }
-  virtual bool preferComplement(Funcdata &data,bool allowOpRemoval);
-  virtual const FlowBlock *getExitLeaf(void) const;
-  virtual PcodeOp *lastOp(void) const;
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
+};
+
+/// \brief An "if" with two bodies of conditionally executed code
+///
+/// The first component is the \e conditional block. The second component is executed if the condition is \b true.
+/// The third component is the "else" clause. Both bodies have at most one \e out edge.
+class BlockIfElse : public BlockIf {
+public:
+  virtual block_type getType(void) const { return t_ifelse; }
+  virtual void scopeBreak(int4 curexit,int4 curloopexit);
+  virtual void printHeader(ostream &s) const;
+  virtual bool preferComplement(Funcdata &data,bool allowOpRemoval);
+};
+
+/// \brief An "if" with two bodies of executed code, neither of which has an exit
+///
+/// This always has three components, the \e conditional block, and two bodies. If the condition is \b true,
+/// the first body is executed. The second "else" body is treated as if it were \e following the first body,
+/// and it is rendered without explicit "else" syntax.
+class BlockIfNoExit : public BlockIfElse {
+public:
+  virtual block_type getType(void) const { return t_ifnoexit; }
+  virtual void scopeBreak(int4 curexit,int4 curloopexit);
+  virtual void printHeader(ostream &s) const;
+  virtual bool preferComplement(Funcdata &data,bool allowOpRemoval);
+  virtual PcodeOp *lastOp(void) const { return getBlock(2)->lastOp(); }
+};
+
+/// \brief An "if" with one unstructured \e goto branch
+///
+/// This always has one component, the condition.  One of the two branches is executed as a \e goto statement,
+/// the target of which is stored internally.
+/// The other branch is the (structured) exit.
+class BlockIfGoto : public BlockIf {
+  uint4 gototype;			///< The type of unstructured edge (if present)
+  FlowBlock *gototarget;		///< The target FlowBlock of the unstructured edge (if present)
+public:
+  BlockIfGoto(FlowBlock *target) { gototype = f_goto_goto; gototarget = target; }	///< Constructor
+  FlowBlock *getGotoTarget(void) const { return gototarget; }		///< Get the target of the unstructured edge
+  uint4 getGotoType(void) const { return gototype; }			///< Get the type of unstructured edge
+  virtual block_type getType(void) const { return t_ifgoto; }
+  virtual void scopeBreak(int4 curexit,int4 curloopexit);
+  virtual void printHeader(ostream &s) const;
+  virtual void markUnstructured(void);
+  virtual const FlowBlock *getExitLeaf(void) const { return getBlock(0)->getExitLeaf(); }
+  virtual PcodeOp *lastOp(void) const { return getBlock(0)->lastOp(); }
   virtual void encodeBody(Encoder &encoder) const;
 };  
 
@@ -903,6 +945,16 @@ inline FlowBlock *FlowBlock::nextFlowAfter(const FlowBlock *bl) const
 
 {
   return (FlowBlock *)0;
+}
+
+/// If the last op is a halt of execution of some form, we return its code: \b halt, \b noreturn, \b badinstruction etc.
+/// If it is not a halt, or if there is no last op, 0 is returned.
+/// \return the \e halt code or 0
+inline uint4 FlowBlock::getHaltType(void) const
+
+{
+  PcodeOp *op = lastOp();
+  return (op != (PcodeOp *)0) ? op->getHaltType() : 0;
 }
 
 /// \param bl1 is the first FlowBlock to compare

@@ -28,7 +28,13 @@ def append_paths():
 
 def main():
     append_paths()
+    
     # Delay these imports until sys.path is patched
+    try:
+        import ghidradbg
+    except ModuleNotFoundError:
+        os._exit(253)
+        
     from ghidradbg import commands as cmd
     from ghidradbg import util
     from pybag.dbgeng import core as DbgEng
