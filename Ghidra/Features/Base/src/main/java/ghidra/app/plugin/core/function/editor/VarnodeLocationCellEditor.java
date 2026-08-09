@@ -51,8 +51,6 @@ class VarnodeLocationCellEditor extends AbstractCellEditor
 	private AddressInput addressInput;
 	private IntegerTextField offsetInput;
 
-	private Comparator<Register> registerWrapperComparator =
-		(r1, r2) -> r1.toString().compareToIgnoreCase(r2.toString());
 	private VarnodeInfo currentVarnode;
 
 	VarnodeLocationCellEditor(StorageAddressModel model) {
@@ -176,19 +174,7 @@ class VarnodeLocationCellEditor extends AbstractCellEditor
 	}
 
 	private Component createRegisterCombo(VarnodeInfo varnode) {
-		ProgramContext programContext = program.getProgramContext();
-
-		List<Register> registers = new ArrayList<>(programContext.getRegisters());
-
-		for (Iterator<Register> iter = registers.iterator(); iter.hasNext();) {
-			Register register = iter.next();
-			if (register.isProcessorContext() || register.isHidden()) {
-				iter.remove();
-			}
-		}
-
-		Collections.sort(registers, registerWrapperComparator);
-		//Register[] registers = validItems.toArray(new Register[validItems.size()]);
+		List<Register> registers = getSortedVisibleRegisters(program.getProgramContext());
 
 		RegisterDropDownSelectionDataModel registerModel =
 			new RegisterDropDownSelectionDataModel(registers);
@@ -232,5 +218,19 @@ class VarnodeLocationCellEditor extends AbstractCellEditor
 		});
 
 		return registerEntryTextField;
+	}
+
+	static List<Register> getSortedVisibleRegisters(ProgramContext programContext) {
+		List<Register> registers = new ArrayList<>(programContext.getRegisters());
+
+		for (Iterator<Register> iter = registers.iterator(); iter.hasNext();) {
+			Register register = iter.next();
+			if (register.isProcessorContext() || register.isHidden()) {
+				iter.remove();
+			}
+		}
+
+		Collections.sort(registers);
+		return registers;
 	}
 }
