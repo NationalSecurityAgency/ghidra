@@ -115,6 +115,7 @@ public interface VtHandler {
 	// Various parameters for the 'h' and 'l' final CSI bytes
 
 	public static final byte[] _4 = ascii("4");
+	public static final byte[] G0 = ascii(">0");
 	public static final byte[] Q1 = ascii("?1");
 	public static final byte[] Q7 = ascii("?7");
 	public static final byte[] Q12 = ascii("?12");
@@ -127,6 +128,7 @@ public interface VtHandler {
 	public static final byte[] Q1048 = ascii("?1048");
 	public static final byte[] Q1049 = ascii("?1049");
 	public static final byte[] Q2004 = ascii("?2004");
+	public static final byte[] Q2031 = ascii("?2031");
 	public static final byte[] Q9001 = ascii("?9001");
 
 	/**
@@ -338,6 +340,10 @@ public interface VtHandler {
 	 * For 8-bit colors, one of the 216 colors from the RGB cube
 	 * <p>
 	 * The r, g, and b fields give the "step" number from 0 to 5, dimmest to brightest.
+	 * 
+	 * @param r red
+	 * @param g green
+	 * @param b blue
 	 */
 	public record Ansi216Color(int r, int g, int b) implements AnsiColor {}
 
@@ -346,6 +352,8 @@ public interface VtHandler {
 	 * <p>
 	 * The v field is a value from 0 to 23, 0 being the dimmest, but not true black, and 23 being
 	 * the brightest, but not true white.
+	 * 
+	 * @param v value
 	 */
 	public record AnsiGrayscaleColor(int v) implements AnsiColor {}
 
@@ -353,6 +361,10 @@ public interface VtHandler {
 	 * A 24-bit color
 	 * <p>
 	 * The r, g, and b fields are values from 0 to 255 dimmest to brightest.
+	 * 
+	 * @param r red
+	 * @param g green
+	 * @param b blue
 	 */
 	public record Ansi24BitColor(int r, int g, int b) implements AnsiColor {}
 
@@ -630,29 +642,15 @@ public interface VtHandler {
 	default void handleCharExc(byte b) {
 		try {
 			switch (b) {
-				case 7:
-					handleBell();
-					return;
-				case 8:
-					handleBackSpace();
-					return;
-				case 9:
-					handleTab();
-					return;
-				case 10:
-					handleLineFeed();
-					return;
-				case 13:
-					handleCarriageReturn();
-					return;
-				case 14:
-					handleAltCharset(true);
-					return;
-				case 15:
-					handleAltCharset(false);
-					return;
+				case 7 -> handleBell();
+				case 8 -> handleBackSpace();
+				case 9 -> handleTab();
+				case 10 -> handleLineFeed();
+				case 13 -> handleCarriageReturn();
+				case 14 -> handleAltCharset(true);
+				case 15 -> handleAltCharset(false);
+				default -> handleChar(b);
 			}
-			handleChar(b);
 		}
 		catch (Exception e) {
 			Msg.error(this, "Exception handling terminal character output " + charInfo(b) + ":" + e,
@@ -777,8 +775,20 @@ public interface VtHandler {
 		else if (bufEq(csiParam, Q2004)) {
 			handleBracketedPasteMode(en);
 		}
+		else if (bufEq(csiParam, Q2031)) {
+			handleThemeChangeNotification(en);
+		}
 		else if (bufEq(csiParam, Q9001)) {
 			handleWin32InputMode(en);
+		}
+		else {
+			throw new UnknownCsiException();
+		}
+	}
+
+	default void handleQStuff(ByteBuffer csiParam) {
+		if (bufEq(csiParam, G0)) {
+			handleXTVersion();
 		}
 		else {
 			throw new UnknownCsiException();
@@ -796,49 +806,29 @@ public interface VtHandler {
 			throw new UnknownCsiException();
 		}
 		switch (bits.nextInt()) {
-			case 22: {
+			case 22 -> {
 				switch (bits.nextInt()) {
-					case 0: {
+					case 0 -> {
 						handleSaveIconTitle();
 						handleSaveWindowTitle();
-						return;
 					}
-					case 1: {
-						handleSaveIconTitle();
-						return;
-					}
-					case 2: {
-						handleSaveWindowTitle();
-						return;
-					}
-					default: {
-						throw new UnknownCsiException();
-					}
+					case 1 -> handleSaveIconTitle();
+					case 2 -> handleSaveWindowTitle();
+					default -> throw new UnknownCsiException();
 				}
 			}
-			case 23: {
+			case 23 -> {
 				switch (bits.nextInt()) {
-					case 0: {
+					case 0 -> {
 						handleRestoreIconTitle();
 						handleRestoreWindowTitle();
-						return;
 					}
-					case 1: {
-						handleRestoreIconTitle();
-						return;
-					}
-					case 2: {
-						handleRestoreWindowTitle();
-						return;
-					}
-					default: {
-						throw new UnknownCsiException();
-					}
+					case 1 -> handleRestoreIconTitle();
+					case 2 -> handleRestoreWindowTitle();
+					default -> throw new UnknownCsiException();
 				}
 			}
-			default: {
-				throw new UnknownCsiException();
-			}
+			default -> throw new UnknownCsiException();
 		}
 	}
 
@@ -854,123 +844,98 @@ public interface VtHandler {
 			throws Exception {
 		try {
 			switch (csiFinal) {
-				case '@': { // Insert characters
+				case '@' -> { // Insert characters
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleInsertCharacters(n);
-					return;
 				}
-				case 'A': // Cursor up
-				case 'B': // Cursor down
-				case 'C': // Cursor forward
-				case 'D': /* Cursor back */ {
+				case 'A', 'B', 'C', 'D' -> { // Cursor up, down, forward, back
 					Direction dir = Direction.forCsiFinal(csiFinal);
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleMoveCursor(dir, n);
-					return;
 				}
-				case 'G': { // Cursor character absolute
+				case 'G' -> { // Cursor character absolute
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleMoveCursorCol(n - 1);
-					return;
 				}
-				case 'f': // Horizontal and Vertical Position (same as CUP)
-				case 'H': { // Cursor position
+				// Horizontal and Vertical Position (same as CUP), Cursor Position
+				case 'f', 'H' -> {
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					int m = bits.hasNext() ? bits.nextInt() : 1;
 					handleMoveCursor(n - 1, m - 1);
-					return;
 				}
-				case 'J': { // Erase in display
+				case 'J' -> { // Erase in display
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 0;
 					handleErase(Erasure.fromED(n));
-					return;
 				}
-				case 'K': { // Erase in line
+				case 'K' -> { // Erase in line
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 0;
 					handleErase(Erasure.fromEL(n));
-					return;
 				}
-				case 'L': { // Insert lines
+				case 'L' -> { // Insert lines
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleInsertLines(n);
-					return;
 				}
-				case 'M': { // Delete lines
+				case 'M' -> { // Delete lines
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleDeleteLines(n);
-					return;
 				}
-				case 'P': { // Delete characters
+				case 'P' -> { // Delete characters
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleDeleteCharacters(n);
-					return;
 				}
-				case 'S': { // Scroll up lines
+				case 'S' -> { // Scroll up lines
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleScrollLinesUp(n, false);
-					return;
 				}
-				case 'T': { // Scroll down lines
+				case 'T' -> { // Scroll down lines
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleScrollLinesDown(n);
-					return;
 				}
-				case 'X': { // Erase characters
+				case 'X' -> { // Erase characters
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleEraseCharacters(n);
-					return;
 				}
-				case 'Z': { // Cursor backward tabulation
+				case 'Z' -> { // Cursor backward tabulation
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleBackwardTab(n);
-					return;
 				}
-				case 'b': { // Repeat last character
+				case 'b' -> { // Repeat last character
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleRepeatChar(n);
-					return;
 				}
-				case 'c': { // Send Device Attributes
-					Msg.trace(this, "TODO: Send Device Attributes");
-					return;
-				}
-				case 'd': { // Line position absolute
+				case 'c' -> Msg.trace(this, "TODO: Send Device Attributes");
+				case 'd' -> { // Line position absolute
 					OfInt bits = parseCsiInts(csiParam);
 					int n = bits.hasNext() ? bits.nextInt() : 1;
 					handleMoveCursorRow(n - 1);
-					return;
 				}
-				case 'h': {
-					handleHOrLStuff(csiParam, true);
-					return;
-				}
-				case 'l': {
-					handleHOrLStuff(csiParam, false);
-					return;
-				}
-				case 'm': { // Select Graphic Rendition (SGR)
+				case 'h' -> handleHOrLStuff(csiParam, true);
+				case 'l' -> handleHOrLStuff(csiParam, false);
+				case 'm' -> { // Select Graphic Rendition (SGR)
 					if (csiParam.hasRemaining()) {
 						switch (csiParam.get(csiParam.position())) {
-							case '>': // Set key modifier options
+							case '>' -> { // Set key modifier options
 								Msg.trace(this, "TODO: Set key modifier options");
 								return;
-							case '?': // Query key modifier options
+							}
+							case '?' -> { // Query key modifier options
 								Msg.trace(this, "TODO: Query key modifier options");
 								return;
+							}
 						}
 					}
 					OfInt bits = parseCsiInts(csiParam);
@@ -980,49 +945,31 @@ public interface VtHandler {
 					while (bits.hasNext()) {
 						handleSgrAttribute(bits);
 					}
-					return;
 				}
-				case 'n': { // Device Status Report
+				case 'n' -> { // Device Status Report
 					OfInt bits = parseCsiInts(csiParam);
 					if (!bits.hasNext()) {
 						throw new UnknownCsiException();
 					}
 					switch (bits.nextInt()) {
-						case 6: // Report Cursor Position
-							handleReportCursorPos();
-							return;
-						case 5: // Status Report (Not implemented)
-						default:
-							throw new UnknownCsiException();
+						case 5 -> throw new UnknownCsiException(); // Status Report (Not implemented)
+						case 6 -> handleReportCursorPos();
+						case 996 -> handleQueryTheme();
+						default -> throw new UnknownCsiException();
 					}
 				}
-				case 'p': { // Soft terminal reset
-					// TODO: Not sure how/if this should differ from "full" reset
-					handleFullReset();
-					return;
-				}
-				case 'r': { // Scroll screen
+				case 'p' -> handleFullReset(); // Really Soft, but how's it different?
+				case 'q' -> handleQStuff(csiParam);
+				case 'r' -> { // Scroll screen
 					OfInt bits = parseCsiInts(csiParam);
 					Integer start = bits.hasNext() ? bits.nextInt() - 1 : null;
 					Integer end = bits.hasNext() ? bits.nextInt() - 1 : null;
 					handleSetScrollRange(start, end);
-					return;
 				}
-				case 's': {
-					handleSaveCursorPos();
-					return;
-				}
-				case 't': { // Window manipulation
-					handleWindowManipulation(csiParam);
-					return;
-				}
-				case 'u': {
-					handleRestoreCursorPos();
-					return;
-				}
-				default: {
-					throw new UnknownCsiException();
-				}
+				case 's' -> handleSaveCursorPos();
+				case 't' -> handleWindowManipulation(csiParam);
+				case 'u' -> handleRestoreCursorPos();
+				default -> throw new UnknownCsiException();
 			}
 		}
 		catch (UnknownCsiException e) {
@@ -1229,69 +1176,27 @@ public interface VtHandler {
 			return;
 		}
 		switch (code) {
-			case 0:
-				handleResetAttributes();
-				return;
-			case 1:
-				handleIntensity(Intensity.BOLD);
-				return;
-			case 2:
-				handleIntensity(Intensity.DIM);
-				return;
-			case 3:
-				handleFont(AnsiFont.ITALIC);
-				return;
-			case 4:
-				handleUnderline(Underline.SINGLE);
-				return;
-			case 5:
-				handleBlink(Blink.SLOW);
-				return;
-			case 6:
-				handleBlink(Blink.FAST);
-				return;
-			case 7:
-				handleReverseVideo(ReverseVideo.REVERSED);
-				return;
-			case 8:
-				handleHidden(true);
-				return;
-			case 9:
-				handleStrikeThrough(true);
-				return;
-			case 20:
-				handleFont(AnsiFont.BLACK_LETTER);
-				return;
-			case 21:
-				handleUnderline(Underline.DOUBLE);
-				return;
-			case 22:
-				handleIntensity(Intensity.NORMAL);
-				return;
-			case 23:
-				handleFont(AnsiFont.NORMAL);
-				return;
-			case 24:
-				handleUnderline(Underline.NONE);
-				return;
-			case 25:
-				handleBlink(Blink.NONE);
-				return;
-			case 26:
-				handleProportionalSpacing(true);
-				return;
-			case 27:
-				handleReverseVideo(ReverseVideo.NORMAL);
-				return;
-			case 28:
-				handleHidden(false);
-				return;
-			case 29:
-				handleStrikeThrough(false);
-				return;
-			default:
-				Msg.warn(this, "Unrecognized SGR attribute: " + code);
-				return;
+			case 0 -> handleResetAttributes();
+			case 1 -> handleIntensity(Intensity.BOLD);
+			case 2 -> handleIntensity(Intensity.DIM);
+			case 3 -> handleFont(AnsiFont.ITALIC);
+			case 4 -> handleUnderline(Underline.SINGLE);
+			case 5 -> handleBlink(Blink.SLOW);
+			case 6 -> handleBlink(Blink.FAST);
+			case 7 -> handleReverseVideo(ReverseVideo.REVERSED);
+			case 8 -> handleHidden(true);
+			case 9 -> handleStrikeThrough(true);
+			case 20 -> handleFont(AnsiFont.BLACK_LETTER);
+			case 21 -> handleUnderline(Underline.DOUBLE);
+			case 22 -> handleIntensity(Intensity.NORMAL);
+			case 23 -> handleFont(AnsiFont.NORMAL);
+			case 24 -> handleUnderline(Underline.NONE);
+			case 25 -> handleBlink(Blink.NONE);
+			case 26 -> handleProportionalSpacing(true);
+			case 27 -> handleReverseVideo(ReverseVideo.NORMAL);
+			case 28 -> handleHidden(false);
+			case 29 -> handleStrikeThrough(false);
+			default -> Msg.warn(this, "Unrecognized SGR attribute: " + code);
 		}
 	}
 
@@ -1523,6 +1428,26 @@ public interface VtHandler {
 	void handleBracketedPasteMode(boolean en);
 
 	/**
+	 * Toggle unsolicited theme-change notifications
+	 * <p>
+	 * This is the Dark and Light Mode detection as documented by the <a
+	 * href="https://contour-terminal.org/vt-extensions/color-palette-update-notifications/">Contour
+	 * Terminal Emulator</a>.
+	 * 
+	 * @param en true to send notifications of theme changes
+	 */
+	void handleThemeChangeNotification(boolean en);
+
+	/**
+	 * Solicit the current theme
+	 * <p>
+	 * This is the Dark and Light Mode detection as documented by the <a
+	 * href="https://contour-terminal.org/vt-extensions/color-palette-update-notifications/">Contour
+	 * Terminal Emulator</a>.
+	 */
+	void handleQueryTheme();
+
+	/**
 	 * Toggle Win32 input mode
 	 * 
 	 * <p>
@@ -1687,13 +1612,13 @@ public interface VtHandler {
 	/**
 	 * Set the range of rows (viewport) involved in scrolling.
 	 * <p>
-	 * This applies not only to {@link #handleScrollUp()} and {@link #handleScrollDown()}, but also
-	 * to when the cursor moves far enough down that the display must scroll. Normally, start is 0
-	 * and end is rows-1 (The parser will adjust the 1-up indices to 0-up) so that the entire
-	 * display is scrolled. If the cursor moves past end (not just the end of the device, but the
-	 * end given here) then the scrolling region must be scrolled. The top line is removed, the
-	 * interior lines are moved up, and the bottom line is cleared. If the terminal is resized, the
-	 * scroll range is reset to the whole display.
+	 * This applies not only to {@link #handleScrollLinesUp(int, boolean)} and
+	 * {@link #handleScrollLinesDown(int)}, but also to when the cursor moves far enough down that
+	 * the display must scroll. Normally, start is 0 and end is rows-1 (The parser will adjust the
+	 * 1-up indices to 0-up) so that the entire display is scrolled. If the cursor moves past end
+	 * (not just the end of the device, but the end given here) then the scrolling region must be
+	 * scrolled. The top line is removed, the interior lines are moved up, and the bottom line is
+	 * cleared. If the terminal is resized, the scroll range is reset to the whole display.
 	 * 
 	 * @param start the first row (0-up) in the scrolling region. If omitted, the first row of the
 	 *            display.
@@ -1718,7 +1643,7 @@ public interface VtHandler {
 	 * Scroll the display n lines up, considering only those lines in the scrolling range.
 	 * 
 	 * @param n the number of lines to scroll
-	 * @see #handleScrollDown()
+	 * @see #handleScrollLinesDown(int)
 	 * @see #handleSetScrollRange(Integer, Integer)
 	 */
 	void handleScrollViewportUp(int n);
@@ -1769,4 +1694,9 @@ public interface VtHandler {
 	 * reset to their defaults.
 	 */
 	void handleFullReset();
+
+	/**
+	 * Handle an XTVERSION request
+	 */
+	void handleXTVersion();
 }

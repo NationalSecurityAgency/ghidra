@@ -61,7 +61,7 @@ public class DefaultWatchRow implements WatchRow {
 	private String expression;
 	private String typePath;
 	private DataType dataType;
-	private SettingsImpl settings = new SettingsImpl();
+	private final SettingsImpl settings = new SettingsImpl();
 	private SavedSettings savedSettings = new SavedSettings(settings);
 	private String comment;
 

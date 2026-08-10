@@ -41,6 +41,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.gui.emulation.DebuggerEmulateFunctionDialog;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.services.*;
 import ghidra.async.AsyncLazyMap;
@@ -62,6 +63,7 @@ import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.pcode.exec.trace.data.DefaultPcodeTraceAccess;
 import ghidra.pcode.exec.trace.data.PcodeTraceAccess;
 import ghidra.program.model.address.*;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
@@ -120,6 +122,27 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 					.description(DESCRIPTION)
 					.toolBarIcon(ICON)
 					.toolBarGroup(GROUP)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.menuIcon(ICON)
+					.menuGroup(GROUP)
+					.popupMenuPath(NAME)
+					.popupMenuIcon(ICON)
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface EmulateFunctionAction {
+		String NAME = "Emulate Function";
+		String DESCRIPTION = "Emulate the current function in a new trace";
+		Icon ICON = DebuggerResources.ICON_EMULATE;
+		String GROUP = DebuggerResources.GROUP_GENERAL;
+		String HELP_ANCHOR = "emulate_function";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
 					.menuPath(DebuggerPluginPackage.NAME, NAME)
 					.menuIcon(ICON)
 					.menuGroup(GROUP)
@@ -374,6 +397,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	private AutoService.Wiring autoServiceWiring;
 
 	DockingAction actionEmulateProgram;
+	DockingAction actionEmulateFunction;
 	DockingAction actionEmulateAddThread;
 	DockingAction actionInvalidateCache;
 	Map<Class<? extends EmulatorFactory>, ToggleDockingAction> actionsChooseEmulatorFactory =
@@ -398,6 +422,12 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				.enabledWhen(this::emulateProgramEnabled)
 				.popupWhen(this::emulateProgramEnabled)
 				.onAction(this::emulateProgramActivated)
+				.buildAndInstall(tool);
+		actionEmulateFunction = EmulateFunctionAction.builder(this)
+				.withContext(ProgramLocationActionContext.class)
+				.enabledWhen(this::emulateFunctionEnabled)
+				.popupWhen(this::emulateFunctionEnabled)
+				.onAction(this::emulateFunctionActivated)
 				.buildAndInstall(tool);
 		actionEmulateAddThread = EmulateAddThreadAction.builder(this)
 				.withContext(ProgramLocationActionContext.class)
@@ -485,6 +515,32 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				trace.release(this);
 			}
 		}
+	}
+
+	private boolean emulateFunctionEnabled(ProgramLocationActionContext ctx) {
+		Program program = ctx.getProgram();
+		Address address = ctx.getAddress();
+		if (program == null || program instanceof TraceProgramView || address == null) {
+			return false;
+		}
+		Function function = program.getFunctionManager().getFunctionContaining(address);
+		if (function == null) {
+			return false;
+		}
+		return true;
+	}
+
+	private void emulateFunctionActivated(ProgramLocationActionContext ctx) {
+		Program program = ctx.getProgram();
+		Address address = ctx.getAddress();
+		if (program == null || address == null) {
+			return;
+		}
+		Function function = program.getFunctionManager().getFunctionContaining(address);
+		if (function == null) {
+			return;
+		}
+		tool.showDialog(new DebuggerEmulateFunctionDialog(tool, function));
 	}
 
 	private boolean emulateAddThreadEnabled(ProgramLocationActionContext ctx) {

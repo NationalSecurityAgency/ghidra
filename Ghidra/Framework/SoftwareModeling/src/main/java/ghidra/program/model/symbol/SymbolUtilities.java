@@ -98,6 +98,16 @@ public class SymbolUtilities {
 	 */
 	public final static String ORDINAL_PREFIX = "Ordinal_";
 
+	//@formatter:off
+	// Unicode code points that are defined in the unicode spec as having a type that we would
+	// normally consider useful for symbol names, but are invisible and hence not desirable.
+	private static final int[] EXTRA_INVALID_CODEPOINTS = new int[] {
+		0x2800, // braille blank
+		0x115f, 0x1160, 0x3164, 0xffa0, // hangul filler chars
+		0xfffc // unicode object replacement character
+	};
+	//@formatter:on
+
 	private static final Comparator<Symbol> CASE_INSENSITIVE_SYMBOL_NAME_COMPARATOR = (s1, s2) -> {
 		return s1.getName().compareToIgnoreCase(s2.getName());
 	};
@@ -146,7 +156,6 @@ public class SymbolUtilities {
 		return false;
 	}
 
-
 	/**
 	 * Generates a default function name for a given address.
 	 * @param addr the entry point of the function.
@@ -158,8 +167,8 @@ public class SymbolUtilities {
 
 	/**
 	 * Returns true if the specified name is reserved as a default external name.
-	 * @param name
-	 * @param addrFactory
+	 * @param name the name
+	 * @param addrFactory the address factory
 	 * @return true if the specified name is reserved as a default external name.
 	 */
 	public static boolean isReservedExternalDefaultName(String name, AddressFactory addrFactory) {
@@ -197,6 +206,9 @@ public class SymbolUtilities {
 	 * at some address.
 	 * WARNING! Does not handle dynamic labels which use data-type prefixes -
 	 * see {@link #isDynamicSymbolPattern(String, boolean)} for more liberal check
+	 * @param name the name 
+	 * @param addrFactory the address factory
+	 * @return true if a reserved dynamic name
 	 */
 	public static boolean isReservedDynamicLabelName(String name, AddressFactory addrFactory) {
 		String prefix = findDynamicPrefix(name);
@@ -382,6 +394,16 @@ public class SymbolUtilities {
 				    Character.FINAL_QUOTE_PUNCTUATION
 			*/
 		}
+
+		// There are a handful of unicode chars that are in 'good' categories, but are invisible
+		// or undesirable in a symbol name.  Reject them here.
+		// Note: using an array to search a small number of values is faster than Set.contains()
+		for (int extra_invalid_codepoint : EXTRA_INVALID_CODEPOINTS) {
+			if (extra_invalid_codepoint == cp) {
+				return true;
+			}
+		}
+
 		return false;
 	}
 

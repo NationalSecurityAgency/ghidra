@@ -1321,7 +1321,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	// TODO: We need a more global solution for this.
-	@Deprecated
+	@Deprecated(since = "10.2")
 	public void setEffectiveImageBase(Address imageBase) {
 		effectiveImageBase = imageBase;
 	}

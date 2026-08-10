@@ -992,6 +992,10 @@ public class ElfHeader implements StructConverter {
 				symCount = reader.readInt(symbolHashTableOffset + 4); // nchain from DT_HASH
 			}
 
+			if (symCount == 0) {
+				return null;
+			}
+
 			// NOTE: When parsed from dynamic table and not found via section header parse
 			// it is assumed that the extended symbol section table is not used.
 
@@ -1006,7 +1010,7 @@ public class ElfHeader implements StructConverter {
 	/**
 	 * Walk DT_GNU_HASH table to determine dynamic symbol count
 	 * @param gnuHashTableOffset DT_GNU_HASH table file offset
-	 * @return dynamic symbol count
+	 * @return dynamic symbol count (0 may be returned when processing error occurs)
 	 * @throws IOException file read error
 	 */
 	private int deriveGnuHashDynamicSymbolCount(long gnuHashTableOffset) throws IOException {
@@ -1059,22 +1063,21 @@ public class ElfHeader implements StructConverter {
 	}
 
 	private long getMaxOffsetForLoadedRegionContaining(long offset, long minSize) {
-		long maxOffset = -1;
 		if (e_shnum != 0) {
 			ElfSectionHeader sectionContaining =
 				getSectionHeaderContainingFileRange(offset, minSize);
 			if (sectionContaining != null) {
-				maxOffset = sectionContaining.getOffset() + sectionContaining.getSize() - 1;
+				return sectionContaining.getOffset() + sectionContaining.getSize() - 1;
 			}
 		}
-		else {
+		if (e_phnum != 0) {
 			ElfProgramHeader containingSegment =
 				getProgramLoadHeaderContainingFileOffset(offset);
 			if (containingSegment != null) {
-				maxOffset = containingSegment.getOffset() + containingSegment.getFileSize() - 1;
+				return containingSegment.getOffset() + containingSegment.getFileSize() - 1;
 			}
 		}
-		return maxOffset;
+		return -1;
 	}
 
 	/**

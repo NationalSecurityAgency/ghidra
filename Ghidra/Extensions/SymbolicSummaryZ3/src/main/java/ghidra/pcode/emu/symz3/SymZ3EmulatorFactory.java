@@ -25,13 +25,13 @@ import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.pcode.exec.trace.data.PcodeTraceAccess;
 
 /**
- * An emulator factory for making the {@link SymZ3DebuggerPcodeEmulator} discoverable to the UI
- * 
+ * An emulator factory for making the {@link SymZ3PcodeEmulator} discoverable to the UI
  * <p>
  * This is the final class to create a full Debugger-integrated emulator. This class is what makes
  * it appear in the menu of possible emulators the user may configure.
  */
 public class SymZ3EmulatorFactory implements EmulatorFactory {
+	public static final String TITLE = "Symbolic Z3 Summary with Concrete Emulation";
 
 	public static Writer delayedWriteTrace(PcodeTraceAccess access) {
 		Writer writer = TraceEmulationIntegration.bytesDelayedWrite(access);
@@ -45,7 +45,7 @@ public class SymZ3EmulatorFactory implements EmulatorFactory {
 
 	@Override
 	public String getTitle() {
-		return "Symbolic Z3 Summary with Concrete Emulation";
+		return TITLE;
 	}
 
 	@Override

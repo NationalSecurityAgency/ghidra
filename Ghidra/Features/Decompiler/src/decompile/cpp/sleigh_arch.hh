@@ -135,7 +135,7 @@ public:
   const string &getTarget(void) const { return target; }	///< Get the \e language \e id of the active processor
   void encodeHeader(Encoder &encoder) const;			///< Encode basic attributes of the active executable
   void restoreXmlHeader(const Element *el);			///< Restore from basic attributes of an executable
-  virtual void printMessage(const string &message) const { *errorstream << message << endl; }
+  virtual void printWarning(const string &message) const;
   virtual ~SleighArchitecture(void);
   virtual string getDescription(void) const;
 

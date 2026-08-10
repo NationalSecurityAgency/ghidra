@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,13 +16,10 @@
 package ghidra.app.util.bin.format.mz;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.Writeable;
 import ghidra.program.model.data.*;
-import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -47,7 +44,7 @@ import ghidra.util.exception.DuplicateNameException;
  * </pre>
  */
 
-public class OldDOSHeader implements StructConverter, Writeable {
+public class OldDOSHeader implements StructConverter {
 
 	/** The name to use when converting into a structure data type. */
 	public static final String NAME = "OLD_IMAGE_DOS_HEADER";
@@ -72,7 +69,8 @@ public class OldDOSHeader implements StructConverter, Writeable {
 	protected BinaryReader reader;
 
 	/**
-	 * Constructs a new DOS header.
+	 * Constructs a new {@link OldDOSHeader}
+	 * 
 	 * @param reader the binary reader
 	 * @throws IOException if there was an IO-related error
 	 */
@@ -82,32 +80,28 @@ public class OldDOSHeader implements StructConverter, Writeable {
 	}
 
 	/**
-	 * Returns the processor name.
-	 * @return the processor name
+	 * {@return the processor name}
 	 */
 	public String getProcessorName() {
 	    return "x86";
 	}
 
 	/**
-	 * Returns the magic number.
-	 * @return the magic number
+	 * {@return the magic number}
 	 */
 	public short e_magic() {
 	    return e_magic;
 	}
 
 	/**
-	 * Returns the number of bytes on the last page of file.
-	 * @return the number of bytes on the last page of the file
+	 * {@return the number of bytes on the last page of the file}
 	 */
 	public short e_cblp() {
 	    return e_cblp;
 	}
 
 	/**
-	 * Returns the number of pages in the file.
-	 * @return the number of pages in the file
+	 * {@return the number of pages in the file}
 	 */
 	public short e_cp() {
 	    return e_cp;
@@ -122,104 +116,77 @@ public class OldDOSHeader implements StructConverter, Writeable {
 	}
 
 	/**
-	 * Returns the size of header in paragraphs.
-	 * @return the size of header in paragraphs
+	 * {@return the size of header in paragraphs}
 	 */
 	public short e_cparhdr() {
 	    return e_cparhdr; 
 	}
 
 	/**
-	 * Returns the minimum extra paragraphs needed.
-	 * @return the minimum extra paragraphs needed
+	 * {@return the minimum extra paragraphs needed}
 	 */
 	public short e_minalloc() {
 	    return e_minalloc;
 	}
 
 	/**
-	 * Returns the maximum extra paragraphs needed.
-	 * @return the maximum extra paragraphs needed
+	 * {@return the maximum extra paragraphs needed}
 	 */
 	public short e_maxalloc() {
 	    return e_maxalloc;
 	}
 
 	/**
-	 * Returns the initial (relative) SS value.
-	 * @return the initial (relative) SS value
+	 * {@return the initial (relative) SS value}
 	 */
 	public short e_ss() {
 	    return e_ss;
 	}
 
 	/**
-	 * Returns the initial SP value.
-	 * @return the initial SP value
+	 * {@return the initial SP value}
 	 */
 	public short e_sp() {
 	    return e_sp;
 	}
 
 	/**
-	 * Returns the checksum.
-	 * @return the checksum
+	 * {@return the checksum}
 	 */
 	public short e_csum() {
 	    return e_csum;
 	}
 
 	/**
-	 * Returns the initial IP value.
-	 * @return the initial IP value
+	 * {@return the initial IP value}
 	 */
 	public short e_ip() {
 	    return e_ip;
 	}
 
 	/**
-	 * Returns the initial (relative) CS value.
-	 * @return the initial (relative) CS value
+	 * {@return the initial (relative) CS value}
 	 */
 	public short e_cs() {
 	    return e_cs;
 	}
 
 	/**
-	 * Returns the file address of relocation table.
-	 * @return the file address of relocation table
+	 * {@return the file address of relocation table}
 	 */
 	public short e_lfarlc() {
 	    return e_lfarlc;
 	}
 
 	/**
-	 * Returns the overlay number.
-	 * @return the overlay number
+	 * {@return the overlay number}
 	 */
 	public short e_ovno() {
 	    return e_ovno;
 	}
 
 	/**
-	 * Returns true if a new EXE header exists.
-	 * @return true if a new EXE header exists
-	 */
-	public boolean hasNewExeHeader() {
-	    return false;
-	}
-
-	/**
-	 * Returns true if a PE header exists.
-	 * @return true if a PE header exists
-	 */
-	public boolean hasPeHeader() {
-		return false;
-	}
-
-	/**
-	 * Returns true if the DOS magic number is correct
-	 * @return true if the DOS magic number is correct
+	 * {@return true if the DOS magic number is correct}
 	 */
 	public boolean isDosSignature() {
 	    return e_magic == IMAGE_DOS_SIGNATURE;
@@ -268,10 +235,6 @@ public class OldDOSHeader implements StructConverter, Writeable {
 	    return struct;
 	}
 	
-	/**
-	 * Helper to override the value of name
-	 * @return The name of the header
-	 */
 	protected String getName() {
 		return NAME;
 	}
@@ -299,23 +262,4 @@ public class OldDOSHeader implements StructConverter, Writeable {
 	    e_lfarlc      = reader.readNextShort();
 	    e_ovno        = reader.readNextShort();
 	}
-
-	@Override
-	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
-		raf.write(dc.getBytes(e_magic));
-		raf.write(dc.getBytes(e_cblp));
-		raf.write(dc.getBytes(e_cp));
-		raf.write(dc.getBytes(e_crlc));
-		raf.write(dc.getBytes(e_cparhdr));
-		raf.write(dc.getBytes(e_minalloc));
-		raf.write(dc.getBytes(e_maxalloc));
-		raf.write(dc.getBytes(e_ss));
-		raf.write(dc.getBytes(e_sp));
-		raf.write(dc.getBytes(e_csum));
-		raf.write(dc.getBytes(e_ip));
-		raf.write(dc.getBytes(e_cs));
-		raf.write(dc.getBytes(e_lfarlc));
-		raf.write(dc.getBytes(e_ovno));
-	}
-
 }

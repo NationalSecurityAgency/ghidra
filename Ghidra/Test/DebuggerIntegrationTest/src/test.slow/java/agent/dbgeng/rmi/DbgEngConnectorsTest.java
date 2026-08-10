@@ -18,10 +18,13 @@ package agent.dbgeng.rmi;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+
+import javax.swing.JOptionPane;
 
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -30,9 +33,11 @@ import org.junit.Test;
 import agent.AbstractRmiConnectorsTest;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.debug.gui.tracermi.launcher.AbstractTraceRmiLaunchOffer.EarlyTerminationException;
+import ghidra.app.plugin.core.debug.gui.tracermi.launcher.AbstractTraceRmiLaunchOffer.NoStaticMappingException;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.LaunchResult;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
+import ghidra.pty.testutil.DummyProc;
 
 public class DbgEngConnectorsTest extends AbstractRmiConnectorsTest {
 
@@ -122,8 +127,8 @@ public class DbgEngConnectorsTest extends AbstractRmiConnectorsTest {
 	public void testDbgViaSsh() throws Exception {
 		pip("ghidradbg==%s".formatted(Application.getApplicationVersion()));
 		try (LaunchResult result = doLaunch("dbgeng via ssh", Map.ofEntries(
-			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
-			Map.entry("OPT_HOST", "localhost")))) {
+			Map.entry("env:OPT_TARGET_IMG", chooseImage().toString()),
+			Map.entry("env:OPT_HOST", "localhost")))) {
 			checkResult(result);
 		}
 	}
@@ -136,15 +141,16 @@ public class DbgEngConnectorsTest extends AbstractRmiConnectorsTest {
 		// Overwrite with an incompatible version we don't include
 		pipOob("protobuf==3.19.0");
 		try (LaunchResult result = doLaunch("dbgeng via ssh", Map.ofEntries(
-			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
-			Map.entry("OPT_HOST", "localhost")))) {
+			Map.entry("env:OPT_TARGET_IMG", chooseImage().toString()),
+			Map.entry("env:OPT_HOST", "localhost")))) {
+			// If the next line fails, make sure "python" on your box is 3.13
 			assertTrue(result.exception() instanceof EarlyTerminationException);
 			assertThat(result.sessions().get("Shell").content(),
 				Matchers.containsString("Would you like to install"));
 		}
 		try (LaunchResult result = doLaunch("dbgeng via ssh", Map.ofEntries(
-			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
-			Map.entry("OPT_HOST", "localhost")))) {
+			Map.entry("env:OPT_TARGET_IMG", chooseImage().toString()),
+			Map.entry("env:OPT_HOST", "localhost")))) {
 			checkResult(result);
 		}
 	}
@@ -152,19 +158,53 @@ public class DbgEngConnectorsTest extends AbstractRmiConnectorsTest {
 	@Test
 	public void testDbgViaSshSetupGhidraDbg() throws Exception {
 		try (LaunchResult result = doLaunch("dbgeng via ssh", Map.ofEntries(
-			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
-			Map.entry("OPT_HOST", "localhost")))) {
+			Map.entry("env:OPT_TARGET_IMG", chooseImage().toString()),
+			Map.entry("env:OPT_HOST", "localhost")))) {
+			// If the next line fails, make sure "python" on your box is 3.13
 			assertTrue(result.exception() instanceof EarlyTerminationException);
 			assertThat(result.sessions().get("Shell").content(),
 				Matchers.containsString("Would you like to install"));
 		}
 		try (LaunchResult result = doLaunch("dbgeng via ssh", Map.ofEntries(
-			Map.entry("env:OPT_TARGET_IMG", chooseImage()),
-			Map.entry("OPT_HOST", "localhost")))) {
+			Map.entry("env:OPT_TARGET_IMG", chooseImage().toString()),
+			Map.entry("env:OPT_HOST", "localhost")))) {
 			checkResult(result);
 		}
 	}
 
+	@Test
+	@NoLocalSetup
+	public void testLinuxToDbgViaSshSetupGhidraDbg() throws Exception {
+		assumeFalse(isWindows());
+
+		String hostname = JOptionPane.showInputDialog("Windows Hostname");
+
+		assertEquals(0, runInTerminal(
+			List.of(DummyProc.which("ssh"), hostname, "pip uninstall ghidradbg"), null));
+
+		try (LaunchResult result = doLaunch("dbgeng via ssh (shell)", Map.ofEntries(
+			Map.entry("env:OPT_TARGET_IMG", chooseImage().toString()),
+			Map.entry("env:OPT_HOST", hostname)))) {
+			assertTrue(result.exception() instanceof EarlyTerminationException);
+			assertThat(result.sessions().get("Shell").content(),
+				Matchers.containsString("Would you like to install"));
+		}
+		try (LaunchResult result = doLaunch("dbgeng via ssh (shell)", Map.ofEntries(
+			Map.entry("env:OPT_TARGET_IMG", chooseImage().toString()),
+			Map.entry("env:OPT_HOST", hostname)))) {
+			checkResult(result);
+		}
+	}
+
+	@Override
+	protected void checkResult(LaunchResult result) {
+		// Exits to python shell, requires quit which generates early term exc.
+		if (result.exception() != null &&
+			!(result.exception() instanceof EarlyTerminationException) &&
+			!(result.exception() instanceof NoStaticMappingException)) {
+			throw new AssertionError(result);
+		}
+	}
 	// LATER?: kernel
 	// LATER?: attach (usermode by PID)
 	// LATER?: ext

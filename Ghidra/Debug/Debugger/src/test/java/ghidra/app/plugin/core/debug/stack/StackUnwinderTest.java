@@ -643,7 +643,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	protected Function createInfiniteRecursionProgramArm() throws Throwable {
 		createProgram("ARM:LE:32:v8", "default");
 		intoProject(program);
-		try (Transaction tx = program.openTransaction("Assemble")) {
+		try (Transaction _ = program.openTransaction("Assemble")) {
 			Address entry = addr(program, 0x00400000);
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
@@ -654,8 +654,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 			Language language = asm.getLanguage();
 			Register regCtx = language.getContextBaseRegister();
 			Register regT = language.getRegister("T");
-			RegisterValue rvDefault = new RegisterValue(regCtx,
-				asm.getContextAt(entry).toBigInteger(regCtx.getNumBytes()));
+			RegisterValue rvDefault = asm.getContextAt(entry).toRegisterValue(regCtx);
 			RegisterValue rvThumb = rvDefault.assign(regT, BigInteger.ONE);
 			AssemblyPatternBlock ctxThumb = AssemblyPatternBlock.fromRegisterValue(rvThumb);
 

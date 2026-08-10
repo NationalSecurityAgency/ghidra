@@ -135,7 +135,7 @@ public class ImporterLanguageDialog extends DialogComponentProvider {
 		}
 	}
 
-	LanguageCompilerSpecPair getSelectedLanguage() {
+	public LanguageCompilerSpecPair getSelectedLanguage() {
 		if (wasDialogCancelled) {
 			return null;
 		}

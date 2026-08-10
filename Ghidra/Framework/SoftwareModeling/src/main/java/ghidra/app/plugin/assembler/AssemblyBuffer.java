@@ -17,10 +17,17 @@ package ghidra.app.plugin.assembler;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
+import ghidra.app.plugin.processors.sleigh.SleighParserContext;
+import ghidra.app.util.PseudoInstruction;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.*;
+import ghidra.program.util.ProgramContextImpl;
 
 /**
  * A convenience for accumulating bytes output by an {@link Assembler}
@@ -45,9 +52,86 @@ import ghidra.program.model.listing.Program;
  * </pre>
  */
 public class AssemblyBuffer {
+	static class FlowBits {
+		final byte[] noFlow;
+
+		public FlowBits(byte[] noFlow) {
+			this.noFlow = noFlow;
+		}
+
+		static void setBits(byte[] into, byte[] from) {
+			for (int i = 0; i < into.length; i++) {
+				into[i] |= from[i];
+			}
+		}
+
+		static void clrBits(byte[] into, byte[] from) {
+			for (int i = 0; i < into.length; i++) {
+				into[i] &= ~from[i];
+			}
+		}
+
+		static boolean applySubMask(byte[] noFlow, Register reg) {
+			boolean result = false;
+			byte[] subMask = reg.getBaseMask();
+			if (!reg.followsFlow()) {
+				setBits(noFlow, subMask);
+				return true;
+			}
+			// Don't set anything, just descend
+			if (!reg.hasChildren()) {
+				return result;
+			}
+			for (Register child : reg.getChildRegisters()) {
+				result |= applySubMask(noFlow, child);
+			}
+			return result;
+		}
+
+		static FlowBits fromBase(Register ctxreg) {
+			byte[] noFlow = ctxreg.getBaseMask().clone();
+			Arrays.fill(noFlow, (byte) 0);
+			if (applySubMask(noFlow, ctxreg)) {
+				return new FlowBits(noFlow);
+			}
+			return new FlowBits(null);
+		}
+
+		public RegisterValue getFlowValue(RegisterValue value) {
+			if (noFlow == null) {
+				return value;
+			}
+			return value.clearBitValues(noFlow);
+		}
+	}
+
 	private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	private final Assembler asm;
+	private final Language language;
+	private final Register ctxreg;
 	private final Address entry;
+	private final ProgramContext progCtx;
+	private final FlowBits flowBits;
+
+	/**
+	 * Create a buffer with the given assembler starting at the given entry
+	 * 
+	 * @param asm the assembler
+	 * @param entry the starting address where the resulting code will be located
+	 * @param initialContext optional override of context at entry, null to take default
+	 */
+	public AssemblyBuffer(Assembler asm, Address entry, RegisterValue initialContext) {
+		this.asm = asm;
+		this.language = asm.getLanguage();
+		this.entry = entry;
+		this.ctxreg = language.getContextBaseRegister();
+		this.progCtx = ctxreg == null || ctxreg == Register.NO_CONTEXT
+				? null
+				: new ProgramContextImpl(language);
+		this.flowBits = progCtx == null ? null : FlowBits.fromBase(ctxreg);
+
+		copyEntryContext(initialContext);
+	}
 
 	/**
 	 * Create a buffer with the given assembler starting at the given entry
@@ -56,8 +140,35 @@ public class AssemblyBuffer {
 	 * @param entry the starting address where the resulting code will be located
 	 */
 	public AssemblyBuffer(Assembler asm, Address entry) {
-		this.asm = asm;
-		this.entry = entry;
+		this(asm, entry, null);
+	}
+
+	private RegisterValue getEntryContext(RegisterValue override) {
+		if (progCtx == null) {
+			return null;
+		}
+		Program program = asm.getProgram();
+		if (program == null) {
+			return override;
+		}
+		RegisterValue ctx = program.getProgramContext().getDisassemblyContext(entry);
+		if (ctx == null) {
+			return override;
+		}
+		return ctx.combineValues(override); // handles null
+	}
+
+	private void copyEntryContext(RegisterValue override) {
+		RegisterValue ctx = getEntryContext(override);
+		if (ctx == null) {
+			return;
+		}
+		try {
+			progCtx.setRegisterValue(entry, entry, ctx);
+		}
+		catch (ContextChangeException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	/**
@@ -67,6 +178,63 @@ public class AssemblyBuffer {
 	 */
 	public Address getNext() {
 		return entry.add(baos.size());
+	}
+
+	private byte[] applyContext(Address start, byte[] insBytes, AssemblyPatternBlock ctx) {
+		if (progCtx == null) {
+			return insBytes;
+		}
+		MemBuffer buf = new ByteMemBufferImpl(start, insBytes, language.isBigEndian());
+		try {
+			RegisterValue rvCtx = ctx.toRegisterValue(ctxreg);
+			progCtx.setRegisterValue(start, start, rvCtx);
+
+			ProcessorContext procCtx = new ProgramProcessorContext(progCtx, start);
+			InstructionPrototype prototype = language.parse(buf, procCtx, false);
+			PseudoInstruction ins = new PseudoInstruction(start, prototype, buf, procCtx);
+			if (ins.hasFallthrough()) {
+				Address fall = ins.getFallThrough();
+				progCtx.setRegisterValue(fall, fall, flowBits.getFlowValue(rvCtx));
+			}
+			if (!(ins.getParserContext() instanceof SleighParserContext parserCtx)) {
+				return insBytes;
+			}
+			parserCtx.applyCommits(procCtx);
+		}
+		catch (InsufficientBytesException | UnknownInstructionException | MemoryAccessException
+				| AddressOverflowException | ContextChangeException e) {
+			throw new AssertionError(e);
+		}
+		return insBytes;
+	}
+
+	public AssemblyPatternBlock getNextCtx() {
+		return getCtx(getNext(), null);
+	}
+
+	private AssemblyPatternBlock getCtx(Address at, AssemblyPatternBlock override) {
+		if (ctxreg == null || ctxreg == Register.NO_CONTEXT) {
+			return null;
+		}
+		AssemblyPatternBlock result = asm.getContextAt(at);
+
+		RegisterValue fromProc = progCtx.getRegisterValue(ctxreg, at);
+		if (fromProc != null) {
+			result = result.assign(AssemblyPatternBlock.fromRegisterValue(fromProc));
+		}
+		if (override != null) {
+			result = result.assign(override);
+		}
+		return result.fillMask();
+	}
+
+	private byte[] doAssembleLine(Address at, String line, AssemblyPatternBlock ctx)
+			throws AssemblySyntaxException, AssemblySemanticException {
+		ctx = getCtx(at, ctx);
+		return applyContext(at, ctx == null
+				? asm.assembleLine(at, line)
+				: asm.assembleLine(at, line, ctx),
+			ctx);
 	}
 
 	/**
@@ -81,7 +249,7 @@ public class AssemblyBuffer {
 	 */
 	public byte[] assemble(String line, AssemblyPatternBlock ctx)
 			throws AssemblySyntaxException, AssemblySemanticException, IOException {
-		return emit(asm.assembleLine(getNext(), line, ctx));
+		return emit(doAssembleLine(getNext(), line, ctx));
 	}
 
 	/**
@@ -95,7 +263,7 @@ public class AssemblyBuffer {
 	 */
 	public byte[] assemble(String line)
 			throws AssemblySyntaxException, AssemblySemanticException, IOException {
-		return emit(asm.assembleLine(getNext(), line));
+		return assemble(line, null);
 	}
 
 	/**
@@ -134,7 +302,7 @@ public class AssemblyBuffer {
 	public byte[] assemble(Address at, String line, AssemblyPatternBlock ctx)
 			throws AssemblySyntaxException, AssemblySemanticException, IOException {
 		byte[] full = baos.toByteArray();
-		byte[] bytes = asm.assembleLine(at, line, ctx);
+		byte[] bytes = doAssembleLine(at, line, ctx);
 		System.arraycopy(bytes, 0, full, (int) at.subtract(entry), bytes.length);
 		baos.reset();
 		baos.write(full);
@@ -154,12 +322,7 @@ public class AssemblyBuffer {
 	 */
 	public byte[] assemble(Address at, String line)
 			throws AssemblySyntaxException, AssemblySemanticException, IOException {
-		byte[] full = baos.toByteArray();
-		byte[] bytes = asm.assembleLine(at, line);
-		System.arraycopy(bytes, 0, full, (int) at.subtract(entry), bytes.length);
-		baos.reset();
-		baos.write(full);
-		return bytes;
+		return assemble(at, line, null);
 	}
 
 	/**

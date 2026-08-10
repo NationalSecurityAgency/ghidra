@@ -271,7 +271,7 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 
 		String voidDescriptor = "V";
 		computedType = DescriptorDecoder.getDataTypeOfDescriptor(voidDescriptor, dtm);
-		assertTrue(computedType.equals(DataType.VOID));
+		assertTrue(computedType.equals(VoidDataType.dataType));
 	}
 
 	@Test
@@ -450,7 +450,7 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 
 		String voidTovoid = "()V";
 		type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(voidTovoid, dtm);
-		assertEquals(DataType.VOID, type);
+		assertEquals(VoidDataType.dataType, type);
 
 		String ItoI = "(I)I";
 		type = DescriptorDecoder.getReturnTypeOfMethodDescriptor(ItoI, dtm);

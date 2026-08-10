@@ -30,6 +30,7 @@ import javax.naming.ldap.Rdn;
 import javax.security.auth.DestroyFailedException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.postgresql.core.Utils;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 
@@ -1153,9 +1154,9 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		localConnection = getOrCreateLocalConnection();
 
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("CREATE ROLE \"");
-		buffer.append(specifiedUserName);
-		buffer.append("\" WITH LOGIN");
+		buffer.append("CREATE ROLE ");
+		Utils.escapeIdentifier(buffer, specifiedUserName);
+		buffer.append(" WITH LOGIN");
 
 		try (Statement st = localConnection.createStatement()) {
 			st.executeUpdate(buffer.toString());
@@ -1217,9 +1218,8 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		boolean userDoesNotExist = false;
 		localConnection = getOrCreateLocalConnection();
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("DROP ROLE \"");
-		buffer.append(specifiedUserName);
-		buffer.append('\"');
+		buffer.append("DROP ROLE ");
+		Utils.escapeIdentifier(buffer, specifiedUserName);
 
 		try (Statement st = localConnection.createStatement()) {
 			st.executeUpdate(buffer.toString());
@@ -1359,9 +1359,9 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	 */
 	private void resetPassword(Connection pdb, String username) throws SQLException {
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("ALTER ROLE \"");
-		buffer.append(username);
-		buffer.append("\" WITH PASSWORD '");
+		buffer.append("ALTER ROLE ");
+		Utils.escapeIdentifier(buffer, username);
+		buffer.append(" WITH PASSWORD '");
 		buffer.append(DEFAULT_PASSWORD);
 		buffer.append('\'');
 		executeSQLStatement(pdb, buffer.toString());
@@ -1389,16 +1389,17 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	private void changePrivilegeCommand() throws Exception {
 		localConnection = getOrCreateLocalConnection();
 		try {
+			StringBuilder buffer = new StringBuilder("ALTER ROLE ");
+			Utils.escapeIdentifier(buffer, specifiedUserName);
 			if (adminPrivilegeRequested) {
 				System.out.println("Granting admin privileges to " + specifiedUserName);
-				executeSQLStatement(localConnection,
-					"ALTER ROLE " + specifiedUserName + " SUPERUSER CREATEROLE CREATEDB");
+				buffer.append(" SUPERUSER CREATEROLE CREATEDB");
 			}
 			else {
 				System.out.println("Revoking admin privileges from " + specifiedUserName);
-				executeSQLStatement(localConnection,
-					"ALTER ROLE " + specifiedUserName + " NOSUPERUSER NOCREATEROLE NOCREATEDB");
+				buffer.append(" NOSUPERUSER NOCREATEROLE NOCREATEDB");
 			}
+			executeSQLStatement(localConnection, buffer.toString());
 		}
 		finally {
 			localConnection.close();

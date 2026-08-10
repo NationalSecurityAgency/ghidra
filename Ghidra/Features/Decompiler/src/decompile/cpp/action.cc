@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ void Action::issueWarning(Architecture *glb)
 {
   if ((flags&(rule_warnings_on|rule_warnings_given)) == rule_warnings_on) {
     flags |= rule_warnings_given;
-    glb->printMessage("WARNING: Applied action "+name);
+    glb->printWarning("Applied action "+name);
   }
 }
 
@@ -640,7 +640,7 @@ void Rule::issueWarning(Architecture *glb)
 {
   if ((flags&(warnings_on|warnings_given)) == warnings_on) {
     flags |= warnings_given;
-    glb->printMessage("WARNING: Applied rule "+name);
+    glb->printWarning("Applied rule "+name);
   }
 }
 
@@ -862,11 +862,11 @@ int4 ActionPool::processOp(PcodeOp *op,Funcdata &data)
         rule_index = 0;		
       }
     }
+#ifdef CPUI_DEBUG
     else if (opc != op->code()) {
-      data.getArch()->printMessage("ERROR: Rule " + rl->getName() + " changed op without returning result of 1!");
-      opc = op->code();
-      rule_index = 0;	
+      throw LowlevelError("ERROR: Rule " + rl->getName() + " changed op without returning result of 1!");
     }
+#endif
   }
   op_state++;
   rule_index = 0;

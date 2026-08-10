@@ -69,7 +69,14 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		}
 		Varnode vn = tokenAtCursor.getVarnode();
 		if (vn != null) {
-			DataType dt = vn.getHigh().getDataType();
+			// Some Varnodes -- volatile-memory loads in particular -- never get
+			// a HighVariable assigned during decompile, so getHigh() can be null.
+			// Same guard pattern as typeIsUnionRelated below.
+			HighVariable high = vn.getHigh();
+			if (high == null) {
+				return null;
+			}
+			DataType dt = high.getDataType();
 			if (dt instanceof TypeDef) {
 				dt = ((TypeDef) dt).getBaseDataType();
 			}

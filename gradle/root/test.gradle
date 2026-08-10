@@ -328,6 +328,7 @@ def initTestJVM(Task task, String rootDirName) {
 			'-Dcpu.core.override=8',
 			'-XX:ParallelGCThreads=8',
 			'-XX:+UseParallelGC',
+			'-XX:+UseCompactObjectHeaders',
 			'-Djava.awt.headless=false',
 			'-DDecompilerFunctionAnalyzer.enabled=false', // prevent long-winded analysis when testing (see DecompilerFunctionAnalyzer)
 			'-Dfile.encoding=UTF8',

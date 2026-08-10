@@ -2137,9 +2137,11 @@ bool SplitDatatype::RootPointer::backUpPointer(Datatype *impliedBase)
 /// find it, we back up one level (through a PTRSUB, PTRADD, or INT_ADD). If it isn't found after 1 hop,
 /// \b false is returned.  Once this pointer is found, we back up through any single path of nested TYPE_STRUCT
 /// and TYPE_ARRAY offsets to establish the final root \b pointer, and \b true is returned. Any accumulated offset,
-/// relative to the original LOAD or STORE pointer is recorded in the \b baseOffset.
+/// relative to the original LOAD or STORE pointer is recorded in the \b baseOffset.  If we encounter
+/// union data-types during the traversal, we record their resolution for later reproduction.
 /// \param op is the LOAD or STORE
 /// \param valueType is the specific data-type to match
+/// \param resolver records any resolved union fields
 /// \return \b true if the root pointer is found
 bool SplitDatatype::RootPointer::find(PcodeOp *op,Datatype *valueType,ResolveCache &resolver)
 

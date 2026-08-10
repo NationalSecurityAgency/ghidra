@@ -183,6 +183,7 @@ public:
   int4 funcptr_align;		///< How many bits of alignment a function ptr has
   uint4 flowoptions;            ///< options passed to flow following engine
   uint4 max_instructions;	///< Maximum instructions that can be processed in one function
+  uint4 max_baddata;		///< Maximum number of bad instructions that one function can encounter
   int4 alias_block_level;	///< Aliases blocked by 0=none, 1=struct, 2=array, 3=all
   uint4 split_datatype_config;	///< Toggle for data-types splitting: Bit 0=structs, 1=arrays, 2=pointers
   vector<Rule *> extra_pool_rules; ///< Extra rules that go in the main pool (cpu specific, experimental)
@@ -230,7 +231,7 @@ public:
   int4 getMinimumLanedRegisterSize(void) const;		///< Get the minimum size of a laned register in bytes
   void setDefaultModel(ProtoModel *model);		///< Set the default PrototypeModel
   void clearAnalysis(Funcdata *fd);			///< Clear analysis specific to a function
-  void readLoaderSymbols(const string &delim);		 ///< Read any symbols from loader into database
+  void readLoaderSymbols(void);		 		///< Read any symbols from loader into database
   void collectBehaviors(vector<OpBehavior *> &behave) const;	///< Provide a list of OpBehavior objects
   SegmentOp *getSegmentOp(AddrSpace *spc) const;	///< Retrieve the \e segment op for the given space if any
   void setPrototype(const PrototypePieces &pieces);	///< Set the prototype for a particular function
@@ -243,14 +244,15 @@ public:
   /// \return the description
   virtual string getDescription(void) const { return archid; }
 
-  /// \brief Print an error message to console
+  /// \brief Print a warning message to console
   ///
-  /// Write the given message to whatever the registered error stream is
+  /// Write the given message to a registered stream.
   /// \param message is the error message
-  virtual void printMessage(const string &message) const=0;
+  virtual void printWarning(const string &message) const=0;
   virtual void encode(Encoder &encoder) const;		///< Encode \b this architecture to a stream
   virtual void restoreXml(DocumentStorage &store);	///< Restore the Architecture state from XML documents
   virtual void nameFunction(const Address &addr,string &name) const;	///< Pick a default name for a function
+  string getScopeDelimiter(void) const { return print->getScopeDelimiter(); }	///< Get the character string separating scope names
 #ifdef OPACTION_DEBUG
   void setDebugStream(ostream *s) { debugstream = s; }	///< Establish the debug console stream
   void printDebug(const string &message) const { *debugstream << message << endl; }	///< Print message to the debug stream

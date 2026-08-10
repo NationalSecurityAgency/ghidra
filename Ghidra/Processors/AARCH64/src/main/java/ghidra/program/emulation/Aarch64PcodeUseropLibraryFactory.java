@@ -26,7 +26,7 @@ import ghidra.program.model.pcode.Varnode;
  * For the TBL and TBX instructions, see
  * https://developer.arm.com/documentation/ddi0602/2024-12/SIMD-FP-Instructions/TBL--Table-vector-lookup-
  */
-@UseropLibrary("aarch64")
+@UseropLibrary(id = "aarch64")
 public class Aarch64PcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	@Override
 	public <T> PcodeUseropLibrary<T> create(SleighLanguage language,

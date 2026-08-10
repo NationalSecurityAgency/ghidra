@@ -331,6 +331,42 @@ public final class NumericUtilities {
 	}
 
 	/**
+	 * {@return a byte converted into a padded hex string}
+	 * 
+	 * @param b the byte
+	 */
+	public static String toPaddedHexString(byte b) {
+		return "%02x".formatted(b);
+	}
+
+	/**
+	 * {@return a short converted into a padded hex string}
+	 * 
+	 * @param s the short
+	 */
+	public static String toPaddedHexString(short s) {
+		return "%04x".formatted(s);
+	}
+
+	/**
+	 * {@return an int converted into a padded hex string}
+	 * 
+	 * @param i the int
+	 */
+	public static String toPaddedHexString(int i) {
+		return "%08x".formatted(i);
+	}
+
+	/**
+	 * {@return a long converted into a padded hex string}
+	 * 
+	 * @param l the long
+	 */
+	public static String toPaddedHexString(long l) {
+		return "%016x".formatted(l);
+	}
+
+	/**
 	 * Converts a <strong>unsigned</strong> long value, which is currently stored in a java
 	 * <strong>signed</strong> long, into a {@link BigInteger}.
 	 * <p>

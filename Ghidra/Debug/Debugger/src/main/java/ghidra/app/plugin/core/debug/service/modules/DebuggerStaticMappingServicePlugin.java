@@ -100,13 +100,14 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		super(tool);
 		this.autoWiring = AutoService.wireServicesProvidedAndConsumed(this);
 		this.context = new DebuggerStaticMappingContext(executor);
-		this.programModuleIndexer = new ProgramModuleIndexer(tool);
+		this.programModuleIndexer = new ProgramModuleIndexer(tool, this::executeTask);
 		this.moduleMapProposalGenerator = new ModuleMapProposalGenerator(programModuleIndexer);
 	}
 
 	@Override
 	protected void dispose() {
 		tool.getProject().getProjectData().removeDomainFolderChangeListener(this);
+		programModuleIndexer.dispose();
 		executor.close();
 		super.dispose();
 	}
@@ -128,6 +129,8 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	private void checkTraceMapping(Trace trace, TaskMonitor monitor) throws CancelledException {
+		programModuleIndexer.waitForInitialIndex(monitor);
+
 		DebuggerAutoMappingService autoMappingService =
 			tool.getService(DebuggerAutoMappingService.class);
 		if (autoMappingService == null ||
@@ -188,6 +191,8 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 	private void checkAllTraceMappingsForProgram(Program program, TaskMonitor monitor)
 			throws CancelledException {
+		programModuleIndexer.waitForInitialIndex(monitor);
+
 		DebuggerAutoMappingService autoMappingService =
 			tool.getService(DebuggerAutoMappingService.class);
 		if (autoMappingService == null ||

@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.ne;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.util.Conv;
+import ghidra.util.NumericUtilities;
 
 /**
  * An implementation of the new-executable TNAMEINFO structure.
@@ -176,6 +176,6 @@ public class Resource {
 		if (resourceID >= 0 && resourceID < names.length) {
 			return names[resourceID].getName();
 		}
-		return ("NE - Resource - unknown id - " + Conv.toHexString(resourceID));
+		return ("NE - Resource - unknown id - " + NumericUtilities.toPaddedHexString(resourceID));
 	}
 }

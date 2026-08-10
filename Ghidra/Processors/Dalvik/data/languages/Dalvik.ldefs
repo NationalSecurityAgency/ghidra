@@ -14,6 +14,7 @@
             id="Dalvik:LE:32:default">
     <description>Dalvik Base</description>
     <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="dalvik"/>
   </language>
 
   <language processor="Dalvik"

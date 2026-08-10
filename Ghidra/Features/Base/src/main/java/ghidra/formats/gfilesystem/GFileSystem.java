@@ -80,6 +80,13 @@ public interface GFileSystem extends Closeable, Iterable<GFile>, ExtensionPoint 
 	}
 
 	/**
+	 * {@return a {@link Collection} of file extensions associated with this {@link GFileSystem}}
+	 */
+	public default Collection<String> getAssociatedFileExtensions() {
+		return List.of();
+	}
+
+	/**
 	 * File system's FSRL
 	 *
 	 * @return {@link FSRLRoot} of this filesystem.

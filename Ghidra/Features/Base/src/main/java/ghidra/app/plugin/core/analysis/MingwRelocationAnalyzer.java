@@ -38,6 +38,7 @@ import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
+import ghidra.util.StringUtilities;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -77,7 +78,8 @@ public class MingwRelocationAnalyzer extends AbstractAnalyzer {
 			return true;
 		}
 		try {
-			MinGWPseudoRelocationHandler handler = new MinGWPseudoRelocationHandler(program);
+			MinGWPseudoRelocationHandler handler =
+				new MinGWPseudoRelocationHandler(program, monitor);
 			boolean success = handler.processRelocations(log, monitor);
 			markAsProcessed(program, handler.listLabelsFound(), success);
 		}
@@ -121,14 +123,15 @@ class MinGWPseudoRelocList {
 	private Address pdwListEndAddr;
 	private boolean listLabelsFound;
 
-	MinGWPseudoRelocList(Program program) throws InvalidDataException {
+	MinGWPseudoRelocList(Program program, TaskMonitor monitor)
+			throws InvalidDataException, CancelledException {
 		this.program = program;
 		if (!findLabeledPseudoRelocList()) {
 			if (program.getDefaultPointerSize() == 8) {
-				findUnlabeledPseudoRelocList64Bit();
+				findUnlabeledPseudoRelocList64Bit(monitor);
 			}
 			else {
-				findUnlabeledPseudoRelocList32Bit();
+				findUnlabeledPseudoRelocList32Bit(monitor);
 			}
 		}
 		if (getDataBlock(pdwListStartAddr) != getDataBlock(pdwListEndAddr)) {
@@ -149,14 +152,176 @@ class MinGWPseudoRelocList {
 		return listLabelsFound;
 	}
 
-	private void findUnlabeledPseudoRelocList64Bit() throws InvalidDataException {
-		// TODO: add logic for finding relocation list within stripped binary
-		throw new InvalidDataException("MinGW pseudo-relocation list not found");
+	private void findUnlabeledPseudoRelocList64Bit(TaskMonitor monitor)
+			throws InvalidDataException, CancelledException {
+
+		findUnlabeledPseudoRelocList(monitor);
+
 	}
 
-	private void findUnlabeledPseudoRelocList32Bit() throws InvalidDataException {
-		// TODO: add logic for finding relocation list within stripped binary
-		throw new InvalidDataException("MinGW pseudo-relocation list not found");
+	private void findUnlabeledPseudoRelocList32Bit(TaskMonitor monitor)
+			throws InvalidDataException, CancelledException {
+
+		findUnlabeledPseudoRelocList(monitor);
+	}
+
+	private void findUnlabeledPseudoRelocList(TaskMonitor monitor)
+			throws InvalidDataException, CancelledException {
+
+		//TODO: find a way to recognize type0 ones
+		if (!findUnlabledType1PseudoRelocList(monitor)) {
+			throw new InvalidDataException("MinGW pseudo-relocation list not found");
+		}
+		createPrimaryLabel(pdwListStartAddr, PSEUDO_RELOC_LIST_START_NAME);
+		createPrimaryLabel(pdwListEndAddr, PSEUDO_RELOC_LIST_END_NAME);
+		listLabelsFound = true;
+	}
+
+	private boolean findUnlabledType1PseudoRelocList(TaskMonitor monitor)
+			throws CancelledException {
+
+		MemoryBlock block = program.getMemory().getBlock(".rdata");
+		if (block == null) {
+			Msg.error(this, "Cannot find a .rdata block");
+			return false;
+		}
+
+		// first look backwards from end of .rdata to find the last occurance of "GCC:" in the
+		// .rdata block
+		byte[] gccBytes = "GCC:".getBytes();
+		Address gccStringAddr =
+			findBytesBefore(block.getEnd(), gccBytes, block.getStart(), monitor);
+		if (gccStringAddr == null) {
+			return false;
+		}
+
+		// if a "GCC:" is found get the end of its string including a null
+		Address endOfStringAddr = findEndOfString(gccStringAddr, block.getEnd(), monitor);
+		if (endOfStringAddr == null) {
+			return false;
+		}
+
+		// look for the first occurrence of the byte pattern 00 00 00 00 00 00 00 00 01 00 00 00
+		// after the GCC string - this is the type1 pseudoRelocListHeader which occurs right before
+		// the array of relocations
+		byte[] startBytes =
+			{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00 };
+
+		Address tableBegAddr = findBytesAfter(endOfStringAddr, startBytes, block.getEnd(), monitor);
+		if (tableBegAddr == null) {
+			return false;
+		}
+
+		// now find end of table by adding 12 bytes at a time and checking to see if the next
+		// bytes are all zero
+		Address tableEnd = findEndOfTable(tableBegAddr.add(12), block.getEnd(), monitor);
+		if (tableEnd == null) {
+			return false;
+		}
+
+		//check to make sure there are all 0's between end of string and beginning of 
+		// relocation table 
+		int numExpectedZeros =
+			(int) (tableBegAddr.getUnsignedOffset() - endOfStringAddr.getUnsignedOffset());
+
+		if (foundZerosAt(endOfStringAddr.add(1), numExpectedZeros)) {
+			pdwListStartAddr = tableBegAddr;
+			pdwListEndAddr = tableEnd;
+			return true;
+		}
+
+		return false;
+
+	}
+
+	// find the end of the table by looking for four 00's after sets of 12 bytes
+	// check that first four bytes of each set is a valid ibo32
+	private Address findEndOfTable(Address start, Address limit, TaskMonitor monitor)
+			throws CancelledException {
+
+		Address possibleEnd = start;
+		while (possibleEnd.compareTo(limit) <= 0) {
+			monitor.checkCancelled();
+
+			// if a valid end is reached return the end address
+			if (foundZerosAt(possibleEnd, 4)) {
+				return possibleEnd;
+			}
+
+			// if not the end then validate the first item in each 12-byte block
+			if (!isValidIbo32(possibleEnd)) {
+				return null;
+			}
+
+			possibleEnd = possibleEnd.add(12);
+		}
+
+		return null;
+	}
+
+	private boolean isValidIbo32(Address address) {
+
+		IBO32DataType ibo32 = new IBO32DataType(program.getDataTypeManager());
+		int length = ibo32.getLength();
+		Memory memory = program.getMemory();
+		DumbMemBufferImpl compMemBuffer = new DumbMemBufferImpl(memory, address);
+		Object value = ibo32.getValue(compMemBuffer, ibo32.getDefaultSettings(), length);
+
+		if ((value instanceof Address iboAddr) && memory.contains(iboAddr)) {
+			return true;
+		}
+		return false;
+	}
+
+	private Address findBytesAfter(Address address, byte[] bytes, Address limit,
+			TaskMonitor monitor) {
+
+		return program.getMemory().findBytes(address, limit, bytes, null, true, monitor);
+	}
+
+	private Address findBytesBefore(Address address, byte[] bytes, Address limit,
+			TaskMonitor monitor) {
+
+		return program.getMemory().findBytes(address, limit, bytes, null, false, monitor);
+
+	}
+
+	// given start of string verify middle is all ascii and find the address of the end of the string
+	// return null if reaches the given limit, encounters a MemoryAccessException, or has a non-ascii
+	// character before reaching the \0 string terminator
+	private Address findEndOfString(Address start, Address limit, TaskMonitor monitor)
+			throws CancelledException {
+		try {
+			for (Address a = start; a.compareTo(limit) <= 0; a = a.add(1)) {
+				monitor.checkCancelled();
+				byte b = program.getMemory().getByte(a);
+				if (b == 0) {
+					return a;
+				}
+				if (!StringUtilities.isAsciiChar(b)) {
+					break;
+				}
+			}
+		}
+		catch (MemoryAccessException e) {
+			// ignore
+		}
+		return null;
+	}
+
+	private boolean foundZerosAt(Address address, int numZeros) {
+
+		for (int i = 0; i < numZeros; i++) {
+			try {
+				if (program.getMemory().getByte(address.add(i)) != 0x00) {
+					return false;
+				}
+			}
+			catch (MemoryAccessException | AddressOutOfBoundsException e) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private boolean findLabeledPseudoRelocList() throws InvalidDataException {
@@ -177,6 +342,20 @@ class MinGWPseudoRelocList {
 	private static Symbol getLabel(Program program, String name) {
 		return SymbolUtilities.getExpectedLabelOrFunctionSymbol(program, name, m -> {
 			/* ignore */});
+	}
+
+	private Symbol createPrimaryLabel(Address address, String name) {
+		try {
+			SymbolTable SymbolList = program.getSymbolTable();
+			Symbol symbol = SymbolList.createLabel(address, name, null, SourceType.ANALYSIS);
+			if (!symbol.isPrimary()) {
+				symbol.setPrimary();
+			}
+			return symbol;
+		}
+		catch (InvalidInputException e) {
+			throw new AssertException("unexpected", e);
+		}
 	}
 
 	Address getListStartAddress() {
@@ -211,11 +390,14 @@ class MinGWPseudoRelocationHandler {
 	/**
 	 * Construct MinGW pseudo-relocation handler for a Program.
 	 * @param program program to be processed
+	 * @param monitor task monitor
 	 * @throws InvalidDataException failed to locate pseudo relocation list in program memory
+	 * @throws CancelledException if user cancels
 	 */
-	MinGWPseudoRelocationHandler(Program program) throws InvalidDataException {
+	MinGWPseudoRelocationHandler(Program program, TaskMonitor monitor)
+			throws InvalidDataException, CancelledException {
 		this.program = program;
-		relocList = new MinGWPseudoRelocList(program);
+		relocList = new MinGWPseudoRelocList(program, monitor);
 	}
 
 	boolean listLabelsFound() {

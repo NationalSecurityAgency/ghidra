@@ -185,7 +185,7 @@ uint4 ArraySequence::selectStringCopyFunction(int4 &index)
 /// \param ent is the given Symbol
 /// \param root is the COPY holding the constant
 /// \param addr is the Address being COPYed into
-StringSequence::StringSequence(Funcdata &fdata,Datatype *ct,SymbolEntry *ent,PcodeOp *root,const Address &addr)
+StringSequence::StringSequence(Funcdata &fdata,Datatype *ct,MapEntry *ent,PcodeOp *root,const Address &addr)
   : ArraySequence(fdata,ct,root)
 {
   rootAddr = addr;
@@ -987,8 +987,8 @@ int4 RuleStringCopy::applyOp(PcodeOp *op,Funcdata &data)
   if (!ct->isCharPrint()) return 0;			// Copied to a "char" data-type Varnode
   if (ct->isOpaqueString()) return 0;
   if (!outvn->isAddrTied()) return 0;
-  SymbolEntry *entry = data.getScopeLocal()->queryContainer(outvn->getAddr(), outvn->getSize(), op->getAddr());
-  if (entry == (SymbolEntry *)0)
+  MapEntry *entry = data.getScopeLocal()->queryContainer(outvn->getAddr(), outvn->getSize(), op->getAddr());
+  if (entry == (MapEntry *)0)
     return 0;
   StringSequence sequence(data,ct,entry,op,outvn->getAddr());
   if (!sequence.isValid())

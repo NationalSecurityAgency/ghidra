@@ -195,26 +195,19 @@ public class StackUnwinder {
 				continue;
 			}
 
-			Address pcVal = pcOrSp(frame, coord, state, true);
+			Address pcVal = pcOrSp(frame, coord, warnings, state, true);
+			if (pcVal == null) {
+				// True if not frame 0 and no access to regs or stack
+				break;
+			}
 
 			ProgramLocation loc = getProgramLocation(coord.getSnap(), pcVal);
 			if (loc != null && service != null) {
-				UnwindInfo info =
-					service.getUnwindInfo(loc.getProgram(), loc.getAddress(), monitor);
-				if (info == null) {
-					// Continue here to generate a frame and prevent recalculating info
-					try {
-						StaticAndUnwind sau = computeUnwindInfo(coord.getSnap(), pcVal, monitor);
-						info = sau.info();
-					}
-					catch (CancelledException e) {
-						warnings.add(
-							new CustomStackUnwindWarning("Unwind cancelled for frame " + level));
-					}
-				}
+				// Created UnwindInfo if it doesn't exist
+				service.getUnwindInfo(loc.getProgram(), loc.getAddress(), monitor);
 			}
 
-			Address spVal = pcOrSp(frame, coord, state, false);
+			Address spVal = pcOrSp(frame, coord, warnings, state, false);
 
 			SavedRegisterMap nextRegisterMap = updateMap(frame, registerMap);
 			frame = unwind(coord, pcVal, spVal, state, nextRegisterMap, monitor);
@@ -243,7 +236,7 @@ public class StackUnwinder {
 	}
 
 	private Address pcOrSp(AnalysisUnwoundFrame<WatchValue> frame,
-			DebuggerCoordinates coordinates,
+			DebuggerCoordinates coordinates, StackUnwindWarningSet warnings,
 			PcodeExecutorState<?> state, boolean getPc) {
 		TraceThread thread = coordinates.getThread();
 		int level = coordinates.getFrame();
@@ -284,20 +277,30 @@ public class StackUnwinder {
 			UnwindInfo prevInfo = frame.getUnwindInfo();
 			Address base = frame.getBasePointer();
 			try {
-				regVal = getPc ? prevInfo.computeNextPc(base, state, codeSpace, pc)
-						: prevInfo.computeNextSp(base);
-				if (regVal != null) {
-					return regVal;
+				if (prevInfo.ofReturn() == null) {
+					warnings.add(new CustomStackUnwindWarning(
+						"Indeterminate return from frame preceding " + level));
+				}
+				else {
+					regVal = getPc ? prevInfo.computeNextPc(base, state, codeSpace, pc)
+							: prevInfo.computeNextSp(base);
+					if (regVal != null) {
+						return regVal;
+					}
 				}
 			}
 			catch (Exception e) {
-				// Use the fall-back case below
+				warnings.add(new CustomStackUnwindWarning(e.getMessage()));
 			}
 		}
 
 		// Fall-back to current frame
-		RegisterValue rval = state.inspectRegisterValue(getPc ? pc : sp);
-		return codeSpace.getAddress(rval.getUnsignedValue().longValue());
+		if (coordinates.getFrame() == 0) {
+			RegisterValue rval = state.inspectRegisterValue(getPc ? pc : sp);
+			return codeSpace.getAddress(rval.getUnsignedValue().longValue());
+		}
+
+		return null;
 	}
 
 	record StaticAndUnwind(Address staticPc, UnwindInfo info) {}

@@ -420,11 +420,10 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		}
 
 		public CompletableFuture<VariableValueTable> fillStorage(Function function, String name,
-				DataType type, Program program, VariableStorage storage,
-				AddressSetView symbolStorage) {
+				DataType type, Program program, VariableStorage storage) {
 			return executeBackground(monitor -> {
 				UnwoundFrame<WatchValue> frame =
-					VariableValueUtils.requiresFrame(program, storage, symbolStorage)
+					VariableValueUtils.requiresFrame(program, storage)
 							? eval.getStackFrame(function, warnings, monitor, true)
 							: eval.getGlobalsFakeFrame();
 				return fillFrameStorage(frame, name, type, program, storage);
@@ -432,15 +431,15 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		}
 
 		public CompletableFuture<VariableValueTable> fillPcodeOp(Function function, String name,
-				DataType type, PcodeOp op, AddressSetView symbolStorage) {
+				DataType type, PcodeOp op) {
 			Program program = function.getProgram();
-			boolean requiresFrame = applyCopyHeuristic(program, op, symbolStorage,
+			boolean requiresFrame = applyCopyHeuristic(program, op,
 				VariableValueUtils::requiresFrame, VariableValueUtils::requiresFrame);
 			return executeBackground(monitor -> {
 				UnwoundFrame<WatchValue> frame = requiresFrame
 						? eval.getStackFrame(function, warnings, monitor, true)
 						: eval.getGlobalsFakeFrame();
-				return fillFrameOp(frame, program, name, type, op, symbolStorage);
+				return fillFrameOp(frame, program, name, type, op);
 			});
 		}
 
@@ -473,11 +472,11 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		}
 
 		interface CopyCase<T> {
-			T evaluate(Program program, Varnode varnode, AddressSetView symbolStorage);
+			T evaluate(Program program, Varnode varnode);
 		}
 
 		interface DefaultCase<T> {
-			T evaluate(Program program, PcodeOp op, AddressSetView symbolStorage);
+			T evaluate(Program program, PcodeOp op);
 		}
 
 		/**
@@ -486,29 +485,25 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		 * the LHS of an assignment operator, but that could be difficult and complex.... In any
 		 * case, if it's an assignment, I'm going to evaluate the output of the output operand
 		 * instead. Trouble is, that may just traverse back over the copy, as the copy is the
-		 * defining operator. It might only work if I can guarantee the output is part of the symbol
-		 * storage.
-		 * 
+		 * defining operator.
 		 */
-		protected <T> T applyCopyHeuristic(Program program, PcodeOp op,
-				AddressSetView symbolStorage,
-				CopyCase<T> copyCase, DefaultCase<T> defaultCase) {
+		protected <T> T applyCopyHeuristic(Program program, PcodeOp op, CopyCase<T> copyCase,
+				DefaultCase<T> defaultCase) {
 			return switch (op.getOpcode()) {
-				case PcodeOp.COPY -> copyCase.evaluate(program, op.getOutput(), symbolStorage);
-				default -> defaultCase.evaluate(program, op, symbolStorage);
+				case PcodeOp.COPY -> copyCase.evaluate(program, op.getOutput());
+				default -> defaultCase.evaluate(program, op);
 			};
 		}
 
 		public VariableValueTable fillFrameOp(UnwoundFrame<WatchValue> frame, Program program,
-				String name, DataType type, PcodeOp op, AddressSetView symbolStorage) {
+				String name, DataType type, PcodeOp op) {
 			table.add(new NameRow(name));
 			if (!frame.isFake()) {
 				table.add(new FrameRow(frame));
 			}
 			table.add(new TypeRow(type));
 
-			WatchValue value =
-				applyCopyHeuristic(program, op, symbolStorage, frame::evaluate, frame::evaluate);
+			WatchValue value = applyCopyHeuristic(program, op, frame::evaluate, frame::evaluate);
 
 			// TODO: What if the type is dynamic with non-fixed size?
 			if (type.getLength() != value.length()) {
@@ -518,7 +513,7 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		}
 
 		public CompletableFuture<VariableValueTable> fillHighVariable(HighVariable hVar,
-				String name, AddressSetView symbolStorage) {
+				String name) {
 			Function function = hVar.getHighFunction().getFunction();
 			VariableStorage storage = VariableValueUtils.fabricateStorage(hVar);
 			if (storage.isUniqueStorage()) {
@@ -527,17 +522,14 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 				table.add(new ValueRow("(Unique)", TraceMemoryState.KNOWN));
 				return CompletableFuture.completedFuture(table);
 			}
-			return fillStorage(function, name, hVar.getDataType(), function.getProgram(), storage,
-				symbolStorage);
+			return fillStorage(function, name, hVar.getDataType(), function.getProgram(), storage);
 		}
 
-		public CompletableFuture<VariableValueTable> fillHighVariable(HighVariable hVar,
-				AddressSetView symbolStorage) {
-			return fillHighVariable(hVar, hVar.getName(), symbolStorage);
+		public CompletableFuture<VariableValueTable> fillHighVariable(HighVariable hVar) {
+			return fillHighVariable(hVar, hVar.getName());
 		}
 
-		public CompletableFuture<VariableValueTable> fillComponent(ClangFieldToken token,
-				AddressSetView symbolStorage) {
+		public CompletableFuture<VariableValueTable> fillComponent(ClangFieldToken token) {
 			Function function = token.getClangFunction().getHighFunction().getFunction();
 			Program program = function.getProgram();
 			PcodeOp op = token.getPcodeOp();
@@ -547,13 +539,13 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 			if (hVar.getDataType().isEquivalent(new PointerDataType(type))) {
 				op = VariableValueUtils.findDeref(program.getAddressFactory(), vn);
 			}
-			return fillPcodeOp(function, token.getText(), type, op, symbolStorage);
+			return fillPcodeOp(function, token.getText(), type, op);
 		}
 
 		public CompletableFuture<VariableValueTable> fillComposite(HighSymbol hSym,
-				HighVariable hVar, AddressSetView symbolStorage) {
+				HighVariable hVar) {
 			return fillStorage(hVar.getHighFunction().getFunction(), hSym.getName(),
-				hSym.getDataType(), hSym.getProgram(), hSym.getStorage(), symbolStorage);
+				hSym.getDataType(), hSym.getProgram(), hSym.getStorage());
 		}
 
 		public CompletableFuture<VariableValueTable> fillToken(ClangToken token) {
@@ -561,17 +553,8 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 				return null;
 			}
 
-			/**
-			 * I can't get just the expression tree here, except as p-code AST, which doesn't seem
-			 * to include token info. A line should contain the full expression, though. I'll grab
-			 * the symbols' storage from it and ensure my evaluation recurses until it hits those
-			 * symbols.
-			 */
-			AddressSet symbolStorage =
-				VariableValueUtils.collectSymbolStorage(token.getLineParent());
-
 			if (token instanceof ClangFieldToken fieldToken) {
-				return fillComponent(fieldToken, symbolStorage);
+				return fillComponent(fieldToken);
 			}
 
 			HighVariable hVar = token.getHighVariable();
@@ -594,16 +577,16 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 			Varnode representative = hVar.getRepresentative();
 			if (!storage.contains(representative.getAddress())) {
 				// I'm not sure this can ever happen....
-				return fillHighVariable(hVar, symbolStorage);
+				return fillHighVariable(hVar);
 			}
 
 			if (Arrays.asList(storage.getVarnodes()).equals(List.of(representative))) {
 				// The var is the symbol
-				return fillHighVariable(hVar, symbolStorage);
+				return fillHighVariable(hVar);
 			}
 
 			// Presumably, there's some component path from symbol to high var
-			return fillComposite(hSym, hVar, symbolStorage);
+			return fillComposite(hSym, hVar);
 		}
 
 		public CompletableFuture<VariableValueTable> fillVariable(Variable variable) {

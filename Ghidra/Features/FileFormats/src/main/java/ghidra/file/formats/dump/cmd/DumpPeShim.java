@@ -140,102 +140,51 @@ public class DumpPeShim extends PeLoader {
 	@Override
 	protected Map<SectionHeader, Address> processMemoryBlocks(PortableExecutable pe, Program prog,
 			FileBytes fileBytes, TaskMonitor monitor, MessageLog log)
-			throws AddressOverflowException {
+			throws AddressOverflowException, CancelledException {
 
 		AddressFactory af = prog.getAddressFactory();
 		AddressSpace space = af.getDefaultAddressSpace();
 		Map<SectionHeader, Address> sectionToAddress = new HashMap<>();
 
-		if (monitor.isCancelled()) {
-			return sectionToAddress;
-		}
-		monitor.setMessage("[" + prog.getName() + "]: processing memory blocks...");
-
 		NTHeader ntHeader = pe.getNTHeader();
 		FileHeader fileHeader = ntHeader.getFileHeader();
 		OptionalHeader optionalHeader = ntHeader.getOptionalHeader();
-
-		SectionHeader[] sections = fileHeader.getSectionHeaders();
-		if (sections.length == 0) {
-			Msg.warn(this, "No sections found");
-		}
+		List<SectionHeader> sections = fileHeader.getSectionHeaders();
 
 		// Header block
-		int virtualSize = (int) Math.min(getVirtualSize(pe, sections, space), fileBytes.getSize());
-		long addr = optionalHeader.getImageBase();
-		Address address = space.getAddress(addr);
-
-		adjustBlock(address, virtualSize, HEADERS);
+		int headerSize = (int) Math.min(getHeaderSize(pe, sections, space), fileBytes.getSize());
+		Address imageBase = space.getAddress(optionalHeader.getImageBase());
+		adjustBlock(imageBase, headerSize, HEADERS);
 
 		// Section blocks
-		try {
-			for (int i = 0; i < sections.length; ++i) {
-				if (monitor.isCancelled()) {
-					return sectionToAddress;
-				}
-
-				addr = sections[i].getVirtualAddress() + optionalHeader.getImageBase();
-
-				address = space.getAddress(addr);
-
-				int rawDataSize = sections[i].getSizeOfRawData();
-				int rawDataPtr = sections[i].getPointerToRawData();
-				virtualSize = sections[i].getVirtualSize();
-				if (rawDataSize != 0 && rawDataPtr != 0) {
-					int dataSize =
-						((rawDataSize > virtualSize && virtualSize > 0) || rawDataSize < 0)
-								? virtualSize
-								: rawDataSize;
-					if (ntHeader.checkRVA(dataSize) ||
-						(0 < dataSize && dataSize < pe.getFileLength())) {
-						if (!ntHeader.checkRVA(dataSize)) {
-							Msg.warn(this, "OptionalHeader.SizeOfImage < size of " +
-								sections[i].getName() + " section");
-						}
-						String sectionName = sections[i].getReadableName();
-						if (sectionName.isBlank()) {
-							sectionName = "SECTION." + i;
-						}
-						sectionToAddress.put(sections[i], address);
-						adjustBlock(address, virtualSize, sectionName);
-					}
-					if (rawDataSize == virtualSize) {
-						continue;
-					}
-					else if (rawDataSize > virtualSize) {
-						// virtual size fully initialized
-						continue;
-					}
-					// remainder of virtual size is uninitialized
-					if (rawDataSize < 0) {
-						Msg.error(this,
-							"Section[" + i + "] has invalid size " +
-								Integer.toHexString(rawDataSize) + " (" +
-								Integer.toHexString(virtualSize) + ")");
-						break;
-					}
-					virtualSize -= rawDataSize;
-					address = address.add(rawDataSize);
-				}
-
-				if (virtualSize == 0) {
-					Msg.error(this, "Section[" + i + "] has size zero");
-				}
-				else {
-					int dataSize = (virtualSize > 0 || rawDataSize < 0) ? virtualSize : 0;
-					if (dataSize > 0) {
-						sectionToAddress.put(sections[i], address);
-						adjustBlock(address, virtualSize, sections[i].getReadableName());
-					}
-				}
-
-			}
+		monitor.setMessage("[" + prog.getName() + "]: processing sections...");
+		if (sections.isEmpty()) {
+			log.appendMsg("No sections found");
 		}
-		catch (IllegalStateException ise) {
-			if (optionalHeader.getFileAlignment() != optionalHeader.getSectionAlignment()) {
-				throw new IllegalStateException(ise);
+		for (SectionHeader section : sections) {
+			monitor.checkCancelled();
+
+			Address addr = imageBase.add(section.getAlignedVirtualAddress(optionalHeader));
+
+			String sectionName = section.getReadableName();
+			int alignedRawSize = section.getAlignedSizeOfRawData(optionalHeader, log);
+			int alignedVirtualSize = section.getAlignedVirtualSize(optionalHeader, log);
+
+			if (section.getVirtualSize() == 0) {
+				log.appendMsg("Section '%s' has size zero".formatted(sectionName));
 			}
-			Msg.warn(this, "Section header processing aborted");
+
+			if (section.getPointerToRawData() != 0 && alignedRawSize != 0) {
+				sectionToAddress.put(section, addr);
+				adjustBlock(addr, alignedVirtualSize, sectionName);
+				alignedVirtualSize -= alignedRawSize;
+				addr = addr.add(alignedRawSize);
+			}
+
+			if (alignedVirtualSize > 0) {
+				adjustBlock(addr, alignedVirtualSize, sectionName);
+				sectionToAddress.putIfAbsent(section, addr);
+			}
 		}
 
 		return sectionToAddress;

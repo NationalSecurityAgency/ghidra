@@ -1339,38 +1339,16 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		return null;
 	}
 
-	private boolean isAllInvolvedTracesUsingEmulatedBreakpoints(ActionContext ctx) {
-		if (controlService == null) {
-			return false;
-		}
-		Set<Trace> traces = new HashSet<>();
+	private boolean isAtLeastOneBreakpoint(ActionContext ctx) {
 		Collection<LogicalBreakpoint> breakpoints = getLogicalBreakpoints(ctx);
-		if (breakpoints != null) {
-			if (breakpoints.isEmpty()) {
-				return false;
-			}
-			for (LogicalBreakpoint lb : breakpoints) {
-				traces.addAll(lb.getParticipatingTraces());
-			}
+		if (breakpoints != null && !breakpoints.isEmpty()) {
+			return true;
 		}
-		else if (ctx instanceof DebuggerBreakpointLocationsActionContext locCtx) {
-			Collection<TraceBreakpointLocation> locations = locCtx.getLocations();
-			if (locations.isEmpty()) {
-				return false;
-			}
-			for (TraceBreakpointLocation loc : locations) {
-				traces.add(loc.getTrace());
-			}
+		if (ctx instanceof DebuggerBreakpointLocationsActionContext locCtx &&
+			!locCtx.getLocations().isEmpty()) {
+			return true;
 		}
-		else {
-			return false;
-		}
-		for (Trace trace : traces) {
-			if (!controlService.getCurrentMode(trace).useEmulatedBreakpoints()) {
-				return false;
-			}
-		}
-		return true;
+		return false;
 	}
 
 	private static final Set<TraceBreakpointKind> EXECUTE_KINDS =
@@ -1400,11 +1378,11 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	}
 
 	private boolean isPopupSetCondition(ActionContext ctx) {
-		return isAllInvolvedTracesUsingEmulatedBreakpoints(ctx) && isAllBreakpointsExecution(ctx);
+		return isAtLeastOneBreakpoint(ctx) && isAllBreakpointsExecution(ctx);
 	}
 
 	private boolean isPopupSetInjection(ActionContext ctx) {
-		return isAllInvolvedTracesUsingEmulatedBreakpoints(ctx) && isAllBreakpointsExecution(ctx);
+		return isAtLeastOneBreakpoint(ctx) && isAllBreakpointsExecution(ctx);
 	}
 
 	private String deriveCurrentSleigh(ActionContext ctx) {

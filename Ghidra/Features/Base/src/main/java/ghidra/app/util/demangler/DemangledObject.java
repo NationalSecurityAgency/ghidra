@@ -116,6 +116,7 @@ public abstract class DemangledObject implements Demangled {
 	// Status of mangled String converted successfully to demangled String
 	private boolean demangledNameSucceeded = false;
 	private String errorMessage = null;
+	protected boolean isPrimary = true; // default to true for backward compatibility
 
 	/**
 	 * Constructor.  This is the older constructor that does not take a mangled context
@@ -247,6 +248,15 @@ public abstract class DemangledObject implements Demangled {
 				DemanglerUtil.stripSuperfluousSignatureSpaces(name).trim().replace(' ', '_');
 		}
 		demangledNameSucceeded = !mangled.equals(name);
+	}
+
+	/**
+	 * Sets whether the symbol from which this demangle object was created is the primary symbol at
+	 * the given address.  If true, then the demangled symbol will be made the primary symbol.
+	 * @param isPrimary true if primary
+	 */
+	public void setPrimary(boolean isPrimary) {
+		this.isPrimary = isPrimary;
 	}
 
 	/**
@@ -438,11 +448,14 @@ public abstract class DemangledObject implements Demangled {
 	 * @param address address which corresponds to this demangled object
 	 * @param options options which control how demangled data is applied
 	 * @param monitor task monitor
-	 * @return true if successfully applied, else false
+	 * @return false if there is an issue applying
 	 * @throws Exception if an error occurs during the apply operation
 	 */
 	public boolean applyTo(Program program, Address address, DemanglerOptions options,
 			TaskMonitor monitor) throws Exception {
+		if (!isPrimary) {
+			return true;
+		}
 		return applyPlateCommentOnly(program, address);
 	}
 

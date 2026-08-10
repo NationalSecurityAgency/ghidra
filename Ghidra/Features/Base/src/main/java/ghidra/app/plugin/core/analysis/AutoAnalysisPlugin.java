@@ -22,6 +22,9 @@ import docking.DockingWindowManager;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.action.builder.ActionBuilder;
+import docking.actions.DockingToolActions;
+import docking.actions.SharedDockingActionPlaceholder;
+import docking.options.editor.OptionsDialog;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
@@ -58,13 +61,15 @@ import ghidra.util.task.TaskLauncher;
 	category = PluginCategoryNames.ANALYSIS,
 	shortDescription = "Manages auto-analysis",
 	description = "Provides coordination and a service for All Auto Analysis tasks.",
-	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class, ProgramActivatedPluginEvent.class, ProgramPostActivatedPluginEvent.class }
+	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class, ProgramActivatedPluginEvent.class, ProgramPostActivatedPluginEvent.class, ProgramAddedToPluginEvent.class }
 )
 //@formatter:on
 public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerListener {
 
 	private static final String SHOW_ANALYSIS_OPTIONS = "Show Analysis Options";
 	private static final String ANALYZE_GROUP_NAME = "Analyze";
+
+	static final String OPTIONS_OWNER = "Analysis Options";
 
 	private DockingAction autoAnalyzeAction;
 
@@ -131,6 +136,11 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 		tool.setMenuGroup(new String[] { "Analysis", "One Shot" }, ANALYZE_GROUP_NAME);
 
+		// This action is created later in the AnalysisPanel
+		AnalysisOptionsSharedActionPlaceholder placeholder =
+			new AnalysisOptionsSharedActionPlaceholder(OptionsDialog.TOGGLE_EDITOR_ACTION_NAME);
+		DockingToolActions toolActions = tool.getToolActions();
+		toolActions.registerSharedActionPlaceholder(placeholder);
 	}
 
 	private void updateActionName(ActionContext context) {
@@ -235,26 +245,28 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 	@Override
 	public void processEvent(PluginEvent event) {
-		if (event instanceof ProgramClosedPluginEvent ev) {
-			programClosed(ev.getProgram());
-		}
-		else if (event instanceof ProgramOpenedPluginEvent ev) {
-			programOpened(ev.getProgram());
-		}
-		else if (event instanceof ProgramActivatedPluginEvent ev) {
-			Program program = ev.getActiveProgram();
-			if (program == null) {
-				removeOneShotActions();
+		switch (event) {
+			case ProgramClosedPluginEvent ev -> programClosed(ev.getProgram());
+			case ProgramOpenedPluginEvent ev -> programOpened(ev.getProgram());
+			case ProgramAddedToPluginEvent ev -> programAddedTo(ev.getProgram(), ev.analyze());
+			case ProgramActivatedPluginEvent ev -> {
+				Program program = ev.getActiveProgram();
+				if (program == null) {
+					removeOneShotActions();
+				}
+				else {
+					programActivated(program);
+					addOneShotActions(program);
+				}
 			}
-			else {
-				programActivated(program);
-				addOneShotActions(program);
+			case ProgramPostActivatedPluginEvent ev -> {
+				Program program = ev.getActiveProgram();
+				if (program != null) {
+					postProgramActivated(program);
+				}
 			}
-		}
-		else if (event instanceof ProgramPostActivatedPluginEvent ev) {
-			Program program = ev.getActiveProgram();
-			if (program != null) {
-				postProgramActivated(program);
+			default -> {
+				/* do nothing */
 			}
 		}
 	}
@@ -281,6 +293,12 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	private void postProgramActivated(Program program) {
 		AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
 		if (analysisMgr.askToAnalyze(tool)) {
+			analyzeCallback(program, null);
+		}
+	}
+
+	private void programAddedTo(Program program, boolean analyze) {
+		if (analyze) {
 			analyzeCallback(program, null);
 		}
 	}
@@ -324,7 +342,11 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		}
 	}
 
-	class OneShotAnalyzerAction extends ListingContextAction {
+//=================================================================================================
+// Inner Classes
+//=================================================================================================	
+
+	private class OneShotAnalyzerAction extends ListingContextAction {
 		private Analyzer analyzer;
 		private Program canAnalyzeProgram;
 		private boolean canAnalyze;
@@ -390,4 +412,26 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 			}
 		}
 	}
+
+	// Small class to register actions by name before the various editors have been shown. We need
+	// this for the Analysis OptionsDialog actions to appear in the key binding options.
+	private class AnalysisOptionsSharedActionPlaceholder implements SharedDockingActionPlaceholder {
+
+		private String actionName;
+
+		AnalysisOptionsSharedActionPlaceholder(String actionName) {
+			this.actionName = actionName;
+		}
+
+		@Override
+		public String getOwner() {
+			return OPTIONS_OWNER;
+		}
+
+		@Override
+		public String getName() {
+			return actionName;
+		}
+	}
+
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,6 +32,8 @@ import ghidra.program.model.listing.Function;
  * of a given stack frame. Based on an inspection of a variable's storage, it may not be necessary
  * to attempt a stack unwind to evaluate it. If that is the case, this "frame" may be used to
  * evaluate it where a frame interface is expected or convenient.
+ * 
+ * @param <T> the type of values retrievable from the unwound frame
  */
 public class FakeUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	private static final SavedRegisterMap IDENTITY_MAP = new SavedRegisterMap();
@@ -68,6 +70,11 @@ public class FakeUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 
 	@Override
 	public Address getProgramCounter() {
+		return null;
+	}
+
+	@Override
+	public Address getStaticCounter() {
 		return null;
 	}
 

@@ -5,7 +5,7 @@
 #   Usage: ghidraSvr [ console | status | install | uninstall | start | stop | restart ]
 #---------------------------------------------------------------------------------------
 
-# The Java 21 (or later) runtime installation must either be on the system path, specified by the
+# The Java 25 (or later) runtime installation must either be on the system path, specified by the
 # JAVA_HOME environment variable or preferably set explicitly with the GHIDRA_JAVA_HOME variable 
 # below.  Since this script may be used during service initialization, reliance on environmental 
 # settings such as JAVA_HOME may be problematic.  It is also important to note that once installed
@@ -18,11 +18,11 @@
 # installed as a systemd service the Java path will be locked-in to the generated ghidra.service 
 # script.
 #
-# Example: The symbolic link "/usr/lib/jvm/java-21-openjdk" should be specified in favor of a
-#		  version-specific path such as "/usr/lib/jvm/java-21-openjdk-21.0.5.0.10-3.el8.x86_64".  
+# Example: The symbolic link "/usr/lib/jvm/java-25-openjdk" should be specified in favor of a
+#		  version-specific path such as "/usr/lib/jvm/java-25-openjdk-25.0.5.0.10-3.el8.x86_64".  
 
 # Uncomment the following line and set JAVA_HOME before installing as a service
-# GHIDRA_JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+# GHIDRA_JAVA_HOME=/usr/lib/jvm/java-25-openjdk
 
 OPTION=$1
 

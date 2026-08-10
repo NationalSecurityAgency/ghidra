@@ -136,17 +136,16 @@ public class ReDisassembler {
 		 * instruction and context matches what's already there, or it encounters an unconditional
 		 * branch.
 		 * 
-		 * @return true if the queue is non-empty after completing this block, false if we're done.
 		 * @throws CancelledException
 		 */
-		protected boolean nextBlock() throws CancelledException {
+		protected void nextBlock() throws CancelledException {
 			monitor.checkCancelled();
-			instructionSet.addBlock(new ReDisBlock(this, queue.pop()).disassembleBlock());
-			return !queue.isEmpty();
+			instructionSet.addBlock(new ReDisBlock(this, queue.pollFirst()).disassembleBlock());
 		}
 
 		protected InstructionSet disassemble() throws CancelledException {
-			while (nextBlock()) {
+			while (!queue.isEmpty()) {
+				nextBlock();
 			}
 			return instructionSet;
 		}
@@ -361,10 +360,8 @@ public class ReDisassembler {
 		}
 	}
 
-	public AddressSetView disasemble(Address seed, TaskMonitor monitor) throws CancelledException {
-		ReDisState state = new ReDisState(monitor);
-		state.addSeed(seed);
-		InstructionSet set = state.disassemble();
+	protected AddressSetView placeInstructions(ReDisState state, InstructionSet set,
+			TaskMonitor monitor) throws CancelledException {
 		for (AddressRange range : set.getAddressSet()) {
 			listing.clearCodeUnits(range.getMinAddress(), range.getMaxAddress(), true, monitor);
 		}
@@ -376,5 +373,22 @@ public class ReDisassembler {
 			Msg.error(this, "Could not overwrite with re-disassembly", e);
 		}
 		return set.getAddressSet();
+	}
+
+	public AddressSetView disassemble(AddressSetView seeds, TaskMonitor monitor)
+			throws CancelledException {
+		ReDisState state = new ReDisState(monitor);
+		for (Address seed : seeds.getAddresses(true)) {
+			state.addSeed(seed);
+		}
+		InstructionSet set = state.disassemble();
+		return placeInstructions(state, set, monitor);
+	}
+
+	public AddressSetView disassemble(Address seed, TaskMonitor monitor) throws CancelledException {
+		ReDisState state = new ReDisState(monitor);
+		state.addSeed(seed);
+		InstructionSet set = state.disassemble();
+		return placeInstructions(state, set, monitor);
 	}
 }

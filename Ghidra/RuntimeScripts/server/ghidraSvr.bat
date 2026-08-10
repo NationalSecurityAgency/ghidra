@@ -20,7 +20,7 @@
 ::   Usage: ghidraSvr [ console | status | install | uninstall | start | stop | restart ]
 :: ---------------------------------------------------------------------------------------
 
-:: The Java 21 (or later) runtime installation must either be on the system path, specified by the
+:: The Java 25 (or later) runtime installation must either be on the system path, specified by the
 :: JAVA_HOME environment variable or preferably set explicitly with the GHIDRA_JAVA_HOME variable 
 :: below.  Since this script may be used during service initialization, reliance on environmental 
 :: settings such as JAVA_HOME may be problematic.  It is also important to note that once installed

@@ -17,12 +17,15 @@ package ghidra.app.extension.datatype.finder;
 
 import java.util.List;
 
+import docking.widgets.search.SearchLocationContext;
 import ghidra.app.decompiler.ClangFieldToken;
 import ghidra.app.decompiler.ClangLine;
 import ghidra.app.services.DataTypeReference;
 import ghidra.app.services.FieldMatcher;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.listing.Function;
 
 /**
  * This class represents the use of a field of a {@link Composite} data type <b>where there is no
@@ -84,12 +87,18 @@ public class AnonymousVariableAccessDR extends VariableAccessDR {
 		// referring to the field and not the composite.
 		//
 		if (fieldMatcher.isIgnored()) {
+
 			if (matchesFieldType) {
-				// no field name and the search type matches this reference's field type
-				String fieldName = variable.getName();
-				results.add(createReference(variable, fieldName));
+				// no field to match and the search type matches this composite's field type
+				String fieldName = null;
+				DataTypeReference ref = createReferenceToVariable(variable, fieldName);
+				results.add(ref);
 			}
-			// else there is no field and the search type does not match the reference's type
+
+			// else there is no field to match and the search type matched the composite type; as 
+			// mentioned in the comment above, we are ignoring the match on the composite, as 
+			// that is handled by the VariableAccessDR, which gets created before this object as the
+			// tokens are being parsed.
 			return;
 		}
 
@@ -99,11 +108,20 @@ public class AnonymousVariableAccessDR extends VariableAccessDR {
 		// The client has requested a particular field of the parent composite.  We only have a
 		// match if the parent type matches and the field name/offset matches.
 		//
-		String text = field.getText();
+		String fieldName = field.getText();
 		int offset = field.getOffset();
-		if (matchesCompositeType && fieldMatcher.matches(text, offset)) {
-			results.add(new DataTypeReference(compositeType, fieldMatcher.getFieldName(),
-				getFunction(), getAddress(), getContext()));
+		if (!fieldMatcher.matches(fieldName, offset)) {
+			return; // the field does not match
 		}
+
+		if (matchesCompositeType) {
+			Function function = getFunction();
+			Address address = getAddress();
+			SearchLocationContext context = getContext();
+			results.add(
+				new DataTypeReference(compositeType, fieldName, function, address, context));
+		}
+		// else,  matches the composite's field type, but not the parent type; this fails the 
+		// requirement that the composite type must match when searching for a field
 	}
 }

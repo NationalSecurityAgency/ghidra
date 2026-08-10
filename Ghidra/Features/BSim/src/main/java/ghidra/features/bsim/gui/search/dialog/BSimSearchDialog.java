@@ -17,16 +17,18 @@ package ghidra.features.bsim.gui.search.dialog;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.EmptyBorderButton;
-import docking.widgets.textfield.IntegerTextField;
+import docking.widgets.numberformat.IntegerFormatter;
+import docking.widgets.numberformat.IntegerFormatterFactory;
+import docking.widgets.textfield.GFormattedTextField;
 import generic.theme.GIcon;
 import ghidra.app.services.GoToService;
 import ghidra.features.bsim.gui.BSimSearchPlugin;
@@ -49,7 +51,7 @@ public class BSimSearchDialog extends AbstractBSimSearchDialog {
 	private BSimFilterPanel filterPanel;
 
 	// Query Settings
-	private IntegerTextField maxResultsField;
+	private GFormattedTextField maxResultsField;
 
 	public BSimSearchDialog(PluginTool tool, BSimSearchService service,
 			BSimServerManager serverManager, Set<FunctionSymbol> functions) {
@@ -124,26 +126,34 @@ public class BSimSearchDialog extends AbstractBSimSearchDialog {
 	protected JPanel buildOptionsPanel() {
 		JPanel panel = super.buildOptionsPanel();
 
-		maxResultsField = new IntegerTextField(10);
-		maxResultsField.setValue(100);
-		maxResultsField.setMinValue(BigInteger.ONE);
-		maxResultsField.setUseNumberPrefix(false);
-		maxResultsField.setShowNumberMode(false);
-
-		JComponent maxResultsComponent = maxResultsField.getComponent();
+		IntegerFormatter formatter = new OneOrMoreIntegerFormatter();
+		IntegerFormatterFactory factory = new IntegerFormatterFactory(formatter, false);
+		maxResultsField = new GFormattedTextField(factory, 100);
 
 		JLabel maxLabel = new JLabel("Max Matches Per Function:");
-		maxLabel.setLabelFor(maxResultsComponent);
+		maxLabel.setLabelFor(maxResultsField);
 
 		panel.add(maxLabel);
-		panel.add(maxResultsComponent);
+		panel.add(maxResultsField);
 		return panel;
+	}
+
+	private class OneOrMoreIntegerFormatter extends IntegerFormatter {
+
+		@Override
+		protected Predicate<Number> createIsValidNumberPredicate() {
+			return n -> {
+				int i = n.intValue();
+				return i > 0;
+			};
+		}
+
 	}
 
 	protected BSimSearchSettings getSearchSettings() {
 		double similarity = similarityField.getValue();
 		double confidence = confidenceField.getValue();
-		int maxResults = maxResultsField.getIntValue();
+		int maxResults = (Integer) maxResultsField.getValue();
 		BSimFilterSet set = filterPanel.getFilterSet();
 		return new BSimSearchSettings(similarity, confidence, maxResults, set);
 	}

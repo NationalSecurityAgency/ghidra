@@ -51,7 +51,7 @@ public class HexBigIntegerTableCellEditor extends AbstractCellEditor implements 
 		input.getComponent().setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
 		input.setMinValue(null);	// allow negative numbers
 		input.setFormat(IntegerFormat.HEX);
-		input.setUseNumberPrefix(false);
+		input.setAutoSwitchMode(false);
 		input.setShowNumberMode(true);
 		input.setHorizontalAlignment(SwingConstants.RIGHT);
 

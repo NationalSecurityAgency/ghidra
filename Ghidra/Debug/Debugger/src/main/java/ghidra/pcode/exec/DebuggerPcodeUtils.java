@@ -25,6 +25,7 @@ import org.antlr.runtime.tree.CommonTreeNodeStream;
 
 import ghidra.app.nav.NavigationUtils;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationIntegration;
+import ghidra.app.plugin.core.debug.service.emulation.Mode;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
@@ -36,6 +37,7 @@ import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.SleighProgramCompiler.ErrorCollectingPcodeParser;
 import ghidra.pcode.exec.SleighUtils.LitIdMode;
 import ghidra.pcode.exec.trace.*;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.pcode.exec.trace.data.DefaultPcodeTraceAccess;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.pcode.utils.Utils;
@@ -320,6 +322,39 @@ public enum DebuggerPcodeUtils {
 		return compileExpression(provider, coordinates, current, source, LitIdMode.NORMAL);
 	}
 
+	public record WriterAndState(Writer writer, PcodeExecutorState<byte[]> state) {}
+
+	/**
+	 * Get a p-code executor state for the given coordinates
+	 * 
+	 * <p>
+	 * If a thread is included, the executor state will have access to both the memory and registers
+	 * in the context of that thread. Otherwise, only memory access is permitted.
+	 * 
+	 * @param provider the service provider (usually the tool)
+	 * @param coordinates the coordinates
+	 * @param mode determines whether or not writes affect the target
+	 * @return the state
+	 */
+	public static WriterAndState executorStateForCoordinates(ServiceProvider provider,
+			DebuggerCoordinates coordinates, Mode mode) {
+		Trace trace = coordinates.getTrace();
+		if (trace == null) {
+			throw new IllegalArgumentException("Coordinates have no trace");
+		}
+		TracePlatform platform = coordinates.getPlatform();
+		if (!(platform.getLanguage() instanceof SleighLanguage language)) {
+			throw new IllegalArgumentException(
+				"Given trace or platform does not use a Sleigh language");
+		}
+		DefaultPcodeDebuggerAccess access = new DefaultPcodeDebuggerAccess(provider,
+			coordinates.getTarget(), platform, coordinates.getViewSnap());
+		Writer writer = DebuggerEmulationIntegration.bytesWriteMode(access,
+			coordinates.getThread(), coordinates.getFrame(), mode);
+		return new WriterAndState(writer,
+			new BytesPcodeExecutorState(language, writer.wrapFor(null)));
+	}
+
 	/**
 	 * Get a p-code executor state for the given coordinates
 	 * 
@@ -333,20 +368,7 @@ public enum DebuggerPcodeUtils {
 	 */
 	public static PcodeExecutorState<byte[]> executorStateForCoordinates(ServiceProvider provider,
 			DebuggerCoordinates coordinates) {
-		Trace trace = coordinates.getTrace();
-		if (trace == null) {
-			throw new IllegalArgumentException("Coordinates have no trace");
-		}
-		TracePlatform platform = coordinates.getPlatform();
-		if (!(platform.getLanguage() instanceof SleighLanguage language)) {
-			throw new IllegalArgumentException(
-				"Given trace or platform does not use a Sleigh language");
-		}
-		DefaultPcodeDebuggerAccess access = new DefaultPcodeDebuggerAccess(provider,
-			coordinates.getTarget(), platform, coordinates.getViewSnap());
-		PcodeStateCallbacks cb = DebuggerEmulationIntegration.bytesImmediateWriteTarget(access,
-			coordinates.getThread(), coordinates.getFrame());
-		return new BytesPcodeExecutorState(language, cb);
+		return executorStateForCoordinates(provider, coordinates, Mode.RW).state;
 	}
 
 	/**

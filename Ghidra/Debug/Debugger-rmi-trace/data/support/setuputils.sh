@@ -90,7 +90,6 @@ compute-ssh-args() {
 	printf -v qargs '%q ' "$@"
 
 	sshargs+=("$OPT_SSH_PATH")
-	sshargs+=(-t)
 	if [ "$forward" == "true" ]; then
 		sshargs+=("-R$OPT_REMOTE_PORT:$GHIDRA_TRACE_RMI_ADDR")
 	fi
@@ -103,6 +102,14 @@ compute-ssh-args() {
 	else 
 		sshargs+=("TERM='$TERM' $qargs")
 	fi
+}
+
+compute-scp-args() {
+	tmpfile=$1
+
+	scpargs+=$(echo $OPT_SSH_PATH | sed 's/ssh/scp/g')
+	scpargs+=("$tmpfile")
+	scpargs+=("$OPT_HOST:~/")
 }
 
 check-result-and-prompt-mitigation() {
@@ -132,6 +139,9 @@ mitigate-scp-pymodules() {
 	local -a scpargs
 	for mod in "$@"; do
 		dist=$(ghidra-module-pydist "$mod")
+		if [ "$?" -ne "0" ]; then
+			return 1
+		fi
 		scpargs+=("$dist"/*)
 	done
 	scp "${scpargs[@]}" "$OPT_HOST:~/"

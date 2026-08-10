@@ -123,11 +123,14 @@ public class DecompileDebugXmlLoaderTest extends AbstractGhidraHeadedIntegration
 
 				Iterator<Structure> structures = dtm.getAllStructures();
 				Structure struct = structures.next(); // there is only 1 struct in the example XML dump
-				assertEquals("Component count didn't match.", 20, struct.getNumComponents());
+				assertEquals("Component count didn't match.", 22, struct.getNumComponents());
 				assertEquals("Struct name is incorrect", "IMAGE_DOS_HEADER", struct.getName());
 				DataTypeComponent array = struct.getComponentAt(0); // the first component is an array
 				assertEquals("Array component name doesn't match", "e_magic", array.getFieldName());
 				assertEquals("Array wasn't sized right", 2, array.getLength());
+				DataTypeComponent bitField = struct.getComponentAt(65); // last component is a bitfield
+				assertEquals("Bitfield name doesn't match", "low_nibble", bitField.getFieldName());
+				assertEquals("Bitfield length doesn't match", "1", bitField.getLength() + "");
 			}
 			finally {
 				program.release(this);

@@ -103,15 +103,14 @@ class Funcdata {
 				// Low level Varnode functions
   void setVarnodeProperties(Varnode *vn) const;	///< Look-up boolean properties and data-type information
   HighVariable *assignHigh(Varnode *vn);	///< Assign a new HighVariable to a Varnode
-  Symbol *handleSymbolConflict(SymbolEntry *entry,Varnode *vn);	///< Handle two variables with matching storage
   bool syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 fl,Datatype *ct);
   bool descend2Undef(Varnode *vn);		///< Transform all reads of the given Varnode to a special \b undefined constant
 
   void splitUses(Varnode *vn);			///< Make all reads of the given Varnode unique
   Varnode *cloneVarnode(const Varnode *vn);	///< Clone a Varnode (between copies of the function)
   void destroyVarnode(Varnode *vn);		///< Delete the given Varnode from \b this function
-  void coverVarnodes(SymbolEntry *entry,vector<Varnode *> &list);
-  bool applyUnionFacet(SymbolEntry *entry,DynamicHash &dhash);
+  void coverVarnodes(MapEntry *entry,vector<Varnode *> &list);
+  bool applyUnionFacet(DynamicEntry *entry,DynamicHash &dhash);
 				// Low level op functions
   void opZeroMulti(PcodeOp *op);		///< Transform trivial CPUI_MULTIEQUAL to CPUI_COPY
 				// Low level block functions
@@ -134,8 +133,6 @@ class Funcdata {
   static bool descendantsOutside(Varnode *vn);
   static void encodeVarnode(Encoder &encoder,VarnodeLocSet::const_iterator iter,VarnodeLocSet::const_iterator enditer);
   static bool checkIndirectUse(Varnode *vn);
-  static PcodeOp *findPrimaryBranch(PcodeOpTree::const_iterator iter,PcodeOpTree::const_iterator enditer,
-				    bool findbranch,bool findcall,bool findreturn);
 public:
   Funcdata(const string &nm,const string &disp,Scope *conf,const Address &addr,FunctionSymbol *sym,int4 sz=0);	///< Constructor
   ~Funcdata(void);							///< Destructor
@@ -197,14 +194,13 @@ public:
   void followFlow(const Address &baddr,const Address &eadddr);
   void truncatedFlow(const Funcdata *fd,const FlowInfo *flow);
   int4 inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop);
-  void overrideFlow(const Address &addr,uint4 type);
   void doLiveInject(InjectPayload *payload,const Address &addr,BlockBasic *bl,list<PcodeOp *>::iterator pos);
   
   void printRaw(ostream &s) const;			///< Print raw p-code op descriptions to a stream
   void printVarnodeTree(ostream &s) const;		///< Print a description of all Varnodes to a stream
   void printBlockTree(ostream &s) const;		///< Print a description of control-flow structuring to a stream
   void printLocalRange(ostream &s) const;		///< Print description of memory ranges associated with local scopes
-  void encode(Encoder &encoder,uint8 id,bool savetree) const;	///< Encode a description of \b this function to stream
+  void encode(Encoder &encoder,uint8 id,bool saveTree,bool saveOverrides) const;	///< Encode a description of \b this function to stream
   uint8 decode(Decoder &decoder);			///< Restore the state of \b this function from a stream
   void encodeJumpTable(Encoder &encoder) const;		///< Encode a description of jump-tables to stream
   void decodeJumpTable(Decoder &decoder);		///< Decode jump-tables from a stream
@@ -234,7 +230,7 @@ public:
   Varnode *findSpacebaseInput(AddrSpace *id) const;
   Varnode *constructSpacebaseInput(AddrSpace *id);
   Varnode *constructConstSpacebase(AddrSpace *id);
-  void spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const Address &rampoint,uintb origval,int4 origsize);
+  void spacebaseConstant(PcodeOp *op,int4 slot,MapEntry *entry,const Address &rampoint,uintb origval,int4 origsize);
 
   int4 getHeritagePass(void) const { return heritage.getPass(); }	///< Get overall count of heritage passes
 
@@ -437,6 +433,8 @@ public:
   void clearDeadOps(void) { obank.destroyDead(); }		///< Delete any dead PcodeOps
   void remapVarnode(Varnode *vn,Symbol *sym,const Address &usepoint);
   void remapDynamicVarnode(Varnode *vn,Symbol *sym,const Address &usepoint,uint8 hash);
+  void remapConflictSymbol(Symbol *sym);	///< Convert any MapEntryConflict on the Symbol into a DynamicEntry
+  bool detectSymbolConflicts(Varnode *vn);			///< Detect potential symbol conflicts
   void linkProtoPartial(Varnode *vn);				///< Find or create Symbol and a partial mapping
   Symbol *linkSymbol(Varnode *vn);				///< Find or create Symbol associated with given Varnode
   Symbol *linkSymbolReference(Varnode *vn);			///< Discover and attach Symbol to a constant reference
@@ -444,8 +442,8 @@ public:
   void findLinkedVarnodes(SymbolEntry *entry,vector<Varnode *> &res) const;	///< Find Varnodes that map to the given SymbolEntry
   void buildDynamicSymbol(Varnode *vn);				///< Build a \e dynamic Symbol associated with the given Varnode
   bool testForReturnAddress(Varnode *vn);	///< Test if the given Varnode is (derived from) the return address
-  bool attemptDynamicMapping(SymbolEntry *entry,DynamicHash &dhash);
-  bool attemptDynamicMappingLate(SymbolEntry *entry,DynamicHash &dhash);
+  bool attemptDynamicMapping(DynamicEntry *entry,DynamicHash &dhash);
+  bool attemptDynamicMappingLate(DynamicEntry *entry,DynamicHash &dhash);
   Merge &getMerge(void) { return covermerge; }			///< Get the Merge object for \b this function
   Varnode *getInternalString(const uint1 *buf,int4 size,Datatype *ptrType,PcodeOp *readOp);
 
@@ -535,6 +533,8 @@ public:
 
   /// \brief End of all (alive) PcodeOp objects attached to a specific Address
   PcodeOpTree::const_iterator endOp(const Address &addr) const { return obank.end(addr); }
+
+  PcodeOp *findPrimaryBranch(const Address &addr,bool findBranch,bool findCall,bool findCallother,bool findReturn);
 
   bool moveRespectingCover(PcodeOp *op,PcodeOp *lastOp);	///< Move given op past \e lastOp respecting covers if possible
 

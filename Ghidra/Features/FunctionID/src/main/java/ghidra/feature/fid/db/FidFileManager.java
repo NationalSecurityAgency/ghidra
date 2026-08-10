@@ -26,7 +26,6 @@ import generic.jar.ResourceFile;
 import generic.util.Path;
 import ghidra.framework.Application;
 import ghidra.framework.preferences.Preferences;
-import ghidra.program.model.lang.Language;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -183,19 +182,22 @@ public class FidFileManager {
 	}
 
 	/**
-	 * Opens all the Fid Databases applicable for the given language and returns a FidQueryService
-	 * which is a convenience for querying multiple databases at the same time.
-	 * @param language the language of the programs to be queried.
+	 * Opens all the Fid Databases applicable for the given Language and CompilerSpec,
+	 * and returns a FidQueryService as a convenience for querying multiple FID files
+	 * at the same time.  The CompilerSpec can be null to indicate the service should not
+	 * filter out results whose compiler spec doesn't match.
+	 * 
+	 * @param programID the properties of the program to be queried
 	 * @param openForUpdate if true, all non-installation databases will be open for update;
 	 * otherwise they will be read-only.
 	 * @return a FidQueryService which is a convenience for querying multiple databases at the same time.
 	 * @throws VersionException if any of the fidFiles have a database Schema that is not the current version.
 	 * @throws IOException if a general I/O error occurs.
 	 */
-	public FidQueryService openFidQueryService(Language language, boolean openForUpdate)
+	public FidQueryService openFidQueryService(FidProgramID programID, boolean openForUpdate)
 			throws VersionException, IOException {
 		loadFidFiles();
-		return new FidQueryService(fidFiles, language, openForUpdate);
+		return new FidQueryService(fidFiles, programID, openForUpdate);
 	}
 
 	/**
@@ -225,14 +227,15 @@ public class FidFileManager {
 	}
 
 	/**
-	 * Returns true if any FidFile database known to the application can support the given language.
-	 * @param language the language to test.
-	 * @return  true if any FidFile database known to the application can support the given language.
+	 * Returns true if any FidFile database known to the application can support
+	 * the given language and compiler.
+	 * @param programID the properties of the program we want to query against
+	 * @return true if any known FidFile database can support the given language and compiler.
 	 */
-	public boolean canQuery(Language language) {
+	public boolean canQuery(FidProgramID programID) {
 		loadFidFiles();
 		for (FidFile file : fidFiles) {
-			if (file.isActive() && file.canProcessLanguage(language)) {
+			if (file.isActive() && file.canProcess(programID)) {
 				return true;
 			}
 		}

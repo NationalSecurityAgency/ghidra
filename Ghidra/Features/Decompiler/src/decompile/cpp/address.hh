@@ -244,6 +244,7 @@ public:
   const Range *getLastRange(void) const;			///< Get the last Range
   const Range *getLastSignedRange(AddrSpace *spaceid) const;	///< Get the last Range viewing offsets as signed
   const Range *getRange(AddrSpace *spaceid,uintb offset) const;	///< Get Range containing the given byte
+  const Range *getNearestRange(AddrSpace *spaceid,uintb offset) const;	///< Get the nearest Range to the given byte
   void insertRange(AddrSpace *spc,uintb first,uintb last);	///< Insert a range of addresses
   void removeRange(AddrSpace *spc,uintb first,uintb last);	///< Remove a range of addresses
   void merge(const RangeList &op2);				///< Merge another RangeList into \b this

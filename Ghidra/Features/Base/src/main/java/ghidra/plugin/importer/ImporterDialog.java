@@ -85,6 +85,7 @@ public class ImporterDialog extends DialogComponentProvider {
 	protected JButton folderButton;
 	protected JButton languageButton;
 	protected JTextField languageTextField;
+	protected JPanel optionsPanel;
 	protected JCheckBox mirrorFsCheckBox;
 	protected JButton optionsButton;
 	protected ElidingFilePathTextField folderNameTextField;
@@ -156,7 +157,7 @@ public class ImporterDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new VerticalLayout(5));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(buildMainPanel());
-		panel.add(buildButtonPanel());
+		panel.add(buildOptionsPanel());
 		panel.getAccessibleContext().setAccessibleName("Importer");
 		return panel;
 	}
@@ -177,7 +178,7 @@ public class ImporterDialog extends DialogComponentProvider {
 		panel.add(buildFolderNameField());
 		panel.add(buildFolderNameBrowseButton());
 
-		panel.add(new GLabel("Program Name: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Name: ", SwingConstants.RIGHT));
 		panel.add(buildNameTextField());
 		panel.add(new JLabel());
 
@@ -336,13 +337,13 @@ public class ImporterDialog extends DialogComponentProvider {
 		return loaderMap.get(loader).stream().anyMatch(spec -> spec.requiresLanguageCompilerSpec());
 	}
 
-	private Component buildButtonPanel() {
+	private Component buildOptionsPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		JPanel innerPanel = new JPanel(new HorizontalLayout(5));
-		innerPanel.add(buildMirrorFsCheckbox());
-		innerPanel.add(buildOptionsButton());
-		panel.add(innerPanel, BorderLayout.EAST);
-		panel.getAccessibleContext().setAccessibleName("Buttons");
+		optionsPanel = new JPanel(new HorizontalLayout(5));
+		optionsPanel.add(buildMirrorFsCheckbox());
+		optionsPanel.add(buildOptionsButton());
+		panel.add(optionsPanel, BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("Options");
 		return panel;
 	}
 
@@ -478,7 +479,7 @@ public class ImporterDialog extends DialogComponentProvider {
 	}
 
 	protected Loader getSelectedLoader() {
-		return (Loader) loaderComboBox.getSelectedItem();
+		return loaderComboBox.getSelectedItem();
 	}
 
 	protected boolean validateFormInput() {

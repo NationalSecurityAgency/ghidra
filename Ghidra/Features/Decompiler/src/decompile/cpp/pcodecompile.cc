@@ -17,6 +17,7 @@
 
 namespace ghidra {
 
+/// \return the Location as a string
 string Location::format(void) const
 
 {
@@ -25,22 +26,12 @@ string Location::format(void) const
   return s.str();
 }
 
-  ExprTree::ExprTree(VarnodeTpl *vn)
+/// \param vn is the expression root
+ExprTree::ExprTree(VarnodeTpl *vn)
 
 {
   outvn = vn;
   ops = new vector<OpTpl *>;
-}
-
-ExprTree::ExprTree(OpTpl *op)
-
-{
-  ops = new vector<OpTpl *>;
-  ops->push_back(op);
-  if (op->getOut() != (VarnodeTpl *)0)
-    outvn = new VarnodeTpl(*op->getOut());
-  else
-    outvn = (VarnodeTpl *)0;
 }
 
 ExprTree::~ExprTree(void)
@@ -55,10 +46,18 @@ ExprTree::~ExprTree(void)
   }
 }
 
+/// \brief Create a new \e raw expression by appending an array of VarnodeTpl, as inputs, to a new root OpTpl
+///
+/// The OpTpl may already have inputs.  The root VarnodeTpl from each ExprTree passed in is appended
+/// to the list of input parameters of the OpTpl, creating a single new expression.
+/// The original ExprTrees and their container are all destroyed.
+/// The new expression is returned, in raw form, as a flattened array of OpTpl.
+/// \param op is the new root OpTpl
+/// \param param is the list of expressions, each with a root VarnodeTpl
+/// \return the new \e raw expression as an array of OpTpl
 vector<OpTpl *> *ExprTree::appendParams(OpTpl *op,vector<ExprTree *> *param)
 
-{				// Create op expression with entire list of expression
-				// inputs
+{
   vector<OpTpl *> *res = new vector<OpTpl *>;
   
   for(int4 i=0;i<param->size();++i) {
@@ -73,20 +72,24 @@ vector<OpTpl *> *ExprTree::appendParams(OpTpl *op,vector<ExprTree *> *param)
   return res;
 }
 
+/// \brief Convert an expression to a raw array of OpTpl
+///
+/// The flattened array of OpTpl is stripped from the ExprTree, which is then destroyed.
+/// \param expr is the expression to convert to an array
+/// \return the raw array of OpTpl
 vector<OpTpl *> *ExprTree::toVector(ExprTree *expr)
 
-{				// Grab the op vector and delete the output expression
+{
   vector<OpTpl *> *res = expr->ops;
   expr->ops = (vector<OpTpl *> *)0;
   delete expr;
   return res;
 }
 
+/// \param newout is the new output being forced
 void ExprTree::setOutput(VarnodeTpl *newout)
 
-{				// Force the output of the expression to be new out
-				// If the original output is named, this requires
-				// an extra COPY op
+{
   OpTpl *op;
   if (outvn == (VarnodeTpl *)0)
     throw SleighError("Expression has no output");
@@ -96,8 +99,8 @@ void ExprTree::setOutput(VarnodeTpl *newout)
     op->clearOutput();
     op->setOutput(newout);
   }
-  else {
-    op = new OpTpl(CPUI_COPY);
+  else {				// If the original output is named
+    op = new OpTpl(CPUI_COPY);		// an extra COPY is required
     op->addInput(outvn);
     op->setOutput(newout);
     ops->push_back(op);
@@ -105,6 +108,14 @@ void ExprTree::setOutput(VarnodeTpl *newout)
   outvn = new VarnodeTpl(*newout);
 }
 
+/// \brief Force a size on a specific VarnodeTpl if possible
+///
+/// If the VarnodeTpl already has a fixed size, this method does nothing.
+/// If the VarnodeTpl is a temporary register then all other temporaries with the same offset in the same expression
+/// are also adjusted.
+/// \param vt is the specific VarnodeTpl to adjust
+/// \param size is the size constant to assign
+/// \param ops is the array of OpTpl in the expression
 void PcodeCompile::force_size(VarnodeTpl *vt,const ConstTpl &size,const vector<OpTpl *> &ops)
 
 {
@@ -142,11 +153,17 @@ void PcodeCompile::force_size(VarnodeTpl *vt,const ConstTpl &size,const vector<O
   }
 }
 
+/// \brief Try to propagate a known size across a p-code operation to zero size inputs and outputs
+///
+/// If the OpTpl has an input (or output) VarnodeTpl with a know non-zero size, try to force this size
+/// onto the VarnodeTpl in the indicated slot.
+/// \param j is the slot we are trying to fill (-1=output)
+/// \param op is the p-code operation to propagate the size across
+/// \param inputonly indicates, if \b true, whether the size propagates only between inputs of the operation.
+/// \param ops is an array of all operations in the sequence
 void PcodeCompile::matchSize(int4 j,OpTpl *op,bool inputonly,const vector<OpTpl *> &ops)
 
-{				// Find something to fill in zero size varnode
-				// j is the slot we are trying to fill (-1=output)
-				// Don't check output for non-zero if inputonly is true
+{
   VarnodeTpl *match = (VarnodeTpl *)0;
   VarnodeTpl *vt;
   int4 i,inputsize;
@@ -167,12 +184,15 @@ void PcodeCompile::matchSize(int4 j,OpTpl *op,bool inputonly,const vector<OpTpl 
     force_size(vt,match->getSize(),ops);
 }
 
+/// \brief Try to deduce the size of all input and output VarnodeTpl for the given OpTpl
+///
+/// For any VarnodeTpl whose size is not known (isZeroSize() returns \b true), an attempt is
+/// made to fill in the size from another input or output of the OpTpl.
+/// \param op is the given OpTpl
+/// \param ops is the complete set of OpTpl in the expression/constructor
 void PcodeCompile::fillinZero(OpTpl *op,const vector<OpTpl *> &ops)
 
-{				// Try to get rid of zero size varnodes in op
-  // Right now this is written assuming operands for the constructor are
-  // are built before any other pcode in the constructor is generated
-
+{
   int4 inputsize,i;
 
   switch(op->getOpcode()) {
@@ -262,11 +282,15 @@ void PcodeCompile::fillinZero(OpTpl *op,const vector<OpTpl *> &ops)
   }
 }
 
+/// \brief Propagate a size to all VarnodeTpl whose size is unknown
+///
+/// Size information is propagated across operations and expressions as far as possible.
+/// If there are any remaining VarnodeTpl whose size is unknown, return \b false.
+/// \param ct is the set of p-code operations to propagate across
+/// \return \b true if all VarnodeTpl have a known size
 bool PcodeCompile::propagateSize(ConstructTpl *ct)
 
-{				// Fill in size for varnodes with size 0
-				// Return first OpTpl with a size 0 varnode
-				// that cannot be filled in or NULL otherwise
+{
   vector<OpTpl *> zerovec,zerovec2;
   vector<OpTpl *>::const_iterator iter;
   int4 lastsize;
@@ -292,9 +316,11 @@ bool PcodeCompile::propagateSize(ConstructTpl *ct)
   return true;
 }
 
+/// Space for the register is allocated in the \e unique address space.
+/// \return the new temporary register
 VarnodeTpl *PcodeCompile::buildTemporary(void)
 
-{				// Build temporary variable (with zerosize)
+{
   VarnodeTpl *res = new VarnodeTpl(ConstTpl(uniqspace),
 				   ConstTpl(ConstTpl::real,allocateTemp()),
 				   ConstTpl(ConstTpl::real,0));
@@ -302,18 +328,24 @@ VarnodeTpl *PcodeCompile::buildTemporary(void)
   return res;
 }
 
+/// The parsed name and the next available id are assigned to the label. The symbol is assigned to the current scope.
+/// \param name is the parsed name of the label
+/// \return the new symbol
 LabelSymbol *PcodeCompile::defineLabel(string *name)
 
-{ // Create a label symbol
+{
   LabelSymbol *labsym = new LabelSymbol(*name,local_labelcount++);
   delete name;
   addSymbol(labsym);		// Add symbol to local scope
   return labsym;
 }
 
+/// A placeholder OpTpl for the label is created and returned, as an array.
+/// \param labsym is the given label
+/// \return an array containing the new OpTpl
 vector<OpTpl *> *PcodeCompile::placeLabel(LabelSymbol *labsym)
 
-{ // Create placeholder OpTpl for a label
+{
   if (labsym->isPlaced()) {
     reportError(getLocation(labsym), "Label '" + labsym->getName() + "' is placed more than once");
   }
@@ -328,6 +360,13 @@ vector<OpTpl *> *PcodeCompile::placeLabel(LabelSymbol *labsym)
   return res;
 }
 
+/// A new named temporary register is created and assigned as the root of the given expression.
+/// A symbol representing the register is added to the current scope.
+/// \param usesLocalKey is \b true if the name was defined with the 'local' keyword
+/// \param rhs is the given expression
+/// \param varname is the parsed symbol name to associate with the new register
+/// \param size is non-zero if an explicit size was provided in the parsed definition
+/// \return the new expression as a raw array of OpTpl
 vector<OpTpl *> *PcodeCompile::newOutput(bool usesLocalKey,ExprTree *rhs,string *varname,uint4 size)
 
 {
@@ -348,20 +387,27 @@ vector<OpTpl *> *PcodeCompile::newOutput(bool usesLocalKey,ExprTree *rhs,string 
   return ExprTree::toVector(rhs);
 }
 
+/// A temporary register is allocated, and the symbol is added to the current scope.
+/// \param varname is the parsed symbol name
+/// \param size is the size of the new register (0 indicates the size is initially unknown)
 void PcodeCompile::newLocalDefinition(string *varname,uint4 size)
 
-{ // Create a new temporary symbol (without generating any pcode)
+{
   VarnodeSymbol *sym;
   sym = new VarnodeSymbol(*varname,uniqspace,allocateTemp(),size);
   addSymbol(sym);
   delete varname;
 }
 
+/// A new expression is created ending in a unary operation.
+/// The input to the operation is the root VarnodeTpl of the given expression,
+/// and the output is a new temporary register.
+/// \param opc is the unary operation code
+/// \param vn is the given input expression
+/// \return the new expression
 ExprTree *PcodeCompile::createOp(OpCode opc,ExprTree *vn)
 
-{				// Create new expression with output -outvn-
-				// built by performing -opc- on input vn.
-				// Free input expression
+{
   VarnodeTpl *outvn = buildTemporary();
   OpTpl *op = new OpTpl(opc);
   op->addInput(vn->outvn);
@@ -371,12 +417,16 @@ ExprTree *PcodeCompile::createOp(OpCode opc,ExprTree *vn)
   return vn;
 }
 
-ExprTree *PcodeCompile::createOp(OpCode opc,ExprTree *vn1,
-				    ExprTree *vn2)
+/// A new expression is created ending in a binary operation.
+/// Inputs to the operation are the root VarnodeTpl from the two given expressions,
+/// and the output is a new temporary register.
+/// \param opc is the binary operation code
+/// \param vn1 is the first input expression
+/// \param vn2 is the second input expression
+/// \return the new combined expression
+ExprTree *PcodeCompile::createOp(OpCode opc,ExprTree *vn1,ExprTree *vn2)
 
-{				// Create new expression with output -outvn-
-				// built by performing -opc- on inputs vn1 and vn2.
-				// Free input expressions
+{
   VarnodeTpl *outvn = buildTemporary();
   vn1->ops->insert(vn1->ops->end(),vn2->ops->begin(),vn2->ops->end());
   vn2->ops->clear();
@@ -391,9 +441,18 @@ ExprTree *PcodeCompile::createOp(OpCode opc,ExprTree *vn1,
   return vn1;
 }
 
+/// \brief Create a new binary operation combining the given input expressions and an explicit output VarnodeTpl
+///
+/// A new expression is created ending in a binary operation.
+/// Inputs are the root VarnodeTpl from the two given expressions.
+/// \param outvn is the explicit output of the new operation
+/// \param opc is the binary operation code
+/// \param vn1 is the first input expression
+/// \param vn2 is the second input expression
+/// \return the new combined expression
 ExprTree *PcodeCompile::createOpOut(VarnodeTpl *outvn,OpCode opc,
 				       ExprTree *vn1,ExprTree *vn2)
-{ // Create an op with explicit output and two inputs
+{
   vn1->ops->insert(vn1->ops->end(),vn2->ops->begin(),vn2->ops->end());
   vn2->ops->clear();
   OpTpl *op = new OpTpl(opc);
@@ -407,9 +466,17 @@ ExprTree *PcodeCompile::createOpOut(VarnodeTpl *outvn,OpCode opc,
   return vn1;
 }
 
+/// \brief Create a new unary operation with the given expression as input and an explicit output VarnodeTpl
+///
+/// A new expression is created ending in a unary operation.
+/// The input to the operation is the root VarnodeTpl of the given expression.
+/// \param outvn is the explicit output of the new operation
+/// \param opc is the unary operation code
+/// \param vn is the input expression
+/// \return the new combined expression
 ExprTree *PcodeCompile::createOpOutUnary(VarnodeTpl *outvn,OpCode opc,ExprTree *vn)
 
-{ // Create an op with explicit output and 1 input
+{
   OpTpl *op = new OpTpl(opc);
   op->addInput(vn->outvn);
   op->setOutput(outvn);
@@ -418,10 +485,16 @@ ExprTree *PcodeCompile::createOpOutUnary(VarnodeTpl *outvn,OpCode opc,ExprTree *
   return vn;
 }
 
+/// \brief Create a new unary operation with the given expression as input and no output
+///
+/// A new expression is created ending in a unary operation.
+/// The input to the operation is the root VarnodeTpl of the given expression.
+/// \param opc is the unary operation code
+/// \param vn is the input expression
+/// \return the new combined expression as raw array
 vector<OpTpl *> *PcodeCompile::createOpNoOut(OpCode opc,ExprTree *vn)
 
-{				// Create new expression by creating op with given -opc-
-				// and single input vn.   Free the input expression
+{
   OpTpl *op = new OpTpl(opc);
   op->addInput(vn->outvn);
   vn->outvn = (VarnodeTpl *)0;	// There is no longer an output to this expression
@@ -432,10 +505,17 @@ vector<OpTpl *> *PcodeCompile::createOpNoOut(OpCode opc,ExprTree *vn)
   return res;
 }
 
+/// \brief Create a new binary operation with the given expressions as input and no output
+///
+/// A new expression is created ending in a binary operation.
+/// Inputs are the root VarnodeTpl of the given expressions.
+/// \param opc is the binary operation code
+/// \param vn1 is the first input expression
+/// \param vn2 is the second input expression
+/// \return the new combined expression as a raw array
 vector<OpTpl *> *PcodeCompile::createOpNoOut(OpCode opc,ExprTree *vn1,ExprTree *vn2)
 
-{				// Create new expression by creating op with given -opc-
-				// and inputs vn1 and vn2. Free the input expressions
+{
   vector<OpTpl *> *res = vn1->ops;
   vn1->ops = (vector<OpTpl *> *)0;
   res->insert(res->end(),vn2->ops->begin(),vn2->ops->end());
@@ -451,6 +531,13 @@ vector<OpTpl *> *PcodeCompile::createOpNoOut(OpCode opc,ExprTree *vn1,ExprTree *
   return res;
 }
 
+/// \brief Create a new unary operation with the given constant as input and no output.
+///
+/// A new expression is created ending in a unary operation.
+/// A new constant VarnodeTpl is created as input.
+/// \param opc is the unary operation code
+/// \param val is the constant value of the input
+/// \return the new expression as a raw array
 vector<OpTpl *> *PcodeCompile::createOpConst(OpCode opc,uintb val)
 
 {
@@ -464,9 +551,17 @@ vector<OpTpl *> *PcodeCompile::createOpConst(OpCode opc,uintb val)
   return res;
 }
 
+/// \brief Create a new LOAD operation with the given pointer expression as input
+///
+/// A new expression is created ending in a LOAD operation.
+/// The input pointer is the root VarnodeTpl of the given expression.
+/// The output is a new temporary register.
+/// \param qual provides the address space and any knowledge of the size being LOADed
+/// \param ptr is the given pointer expression
+/// \return the new expression
 ExprTree *PcodeCompile::createLoad(StarQuality *qual,ExprTree *ptr)
 
-{				// Create new load expression, free ptr expression
+{
   VarnodeTpl *outvn = buildTemporary();
   OpTpl *op = new OpTpl(CPUI_LOAD);
   // The first varnode input to the load is a constant reference to the AddrSpace being loaded
@@ -487,8 +582,16 @@ ExprTree *PcodeCompile::createLoad(StarQuality *qual,ExprTree *ptr)
   return ptr;
 }
 
-vector<OpTpl *> *PcodeCompile::createStore(StarQuality *qual,
-					      ExprTree *ptr,ExprTree *val)
+/// \brief Create a new STORE operation with the given expressions as inputs
+///
+/// A new expression is created ending in a STORE operation.
+/// The inputs are the root VarnodeTpl of the given expressions.
+/// \param qual provides the address space and any knowledge of the size being STOREed
+/// \param ptr is the pointer expression
+/// \param val is the value being STOREd
+/// \return the new expression as a raw array
+vector<OpTpl *> *PcodeCompile::createStore(StarQuality *qual,ExprTree *ptr,ExprTree *val)
+
 {
   vector<OpTpl *> *res = ptr->ops;
   ptr->ops = (vector<OpTpl *> *)0;
@@ -515,9 +618,17 @@ vector<OpTpl *> *PcodeCompile::createStore(StarQuality *qual,
   return res;
 }
 
+/// \brief Create a CALLOTHER p-code op with temporary output, given a symbol and parameter expressions
+///
+/// A new expression is created ending in a CALLOTHER operation.
+/// Inputs are the root VarnodeTpl from the given array of expressions.
+/// The output is a new temporary register.
+/// \param sym is the symbol to associate with CALLOTHER
+/// \param param is the array of input expressions
+/// \return the new combined expression
 ExprTree *PcodeCompile::createUserOp(UserOpSymbol *sym,vector<ExprTree *> *param)
 
-{ // Create userdefined pcode op, given symbol and parameters
+{
   VarnodeTpl *outvn = buildTemporary();
   ExprTree *res = new ExprTree();
   res->ops = createUserOpNoOut(sym,param);
@@ -526,6 +637,13 @@ ExprTree *PcodeCompile::createUserOp(UserOpSymbol *sym,vector<ExprTree *> *param
   return res;
 }
 
+/// \brief Create a CALLOTHER p-code op, given a symbol and parameter expressions
+///
+/// A new expression is created ending in a CALLOTHER operation, with no output.
+/// Inputs are the root VarnodeTpl from the given array of expressions.
+/// \param sym is the symbol to associate with the CALLOTHER
+/// \param param is the array of input expressions
+/// \return the new combined expression as a raw array
 vector<OpTpl *> *PcodeCompile::createUserOpNoOut(UserOpSymbol *sym,vector<ExprTree *> *param)
 
 {
@@ -537,6 +655,14 @@ vector<OpTpl *> *PcodeCompile::createUserOpNoOut(UserOpSymbol *sym,vector<ExprTr
   return ExprTree::appendParams(op,param);
 }
 
+/// \brief Create a new operation with a variable number of inputs and a temporary output.
+///
+/// A new expression is created ending in the new operation.
+/// Inputs are the root VarnodeTpl from the given array of expressions.
+/// The output is a new temporary register.
+/// \param opc is the variadic operation code
+/// \param param is the array of input expressions
+/// \return the new combined expression
 ExprTree *PcodeCompile::createVariadic(OpCode opc,vector<ExprTree *> *param)
 
 {
@@ -549,10 +675,18 @@ ExprTree *PcodeCompile::createVariadic(OpCode opc,vector<ExprTree *> *param)
   return res;
 }
 
+/// \brief Append a binary operation to the given expression.
+///
+/// A new operation is appended to the end of the expression.
+/// The root VarnodeTpl of the expression becomes the first input to the operation.
+/// The given constant value and size becomes the second input.
+/// \param opc is the binary operation code
+/// \param res is the expression being modified and the first input
+/// \param constval is the second input value
+/// \param constsz is the second input size
 void PcodeCompile::appendOp(OpCode opc,ExprTree *res,uintb constval,int4 constsz)
 
-{ // Take output of res expression, combine with constant,
-  // using opc operation, return the resulting expression
+{
   OpTpl *op = new OpTpl(opc);
   VarnodeTpl *constvn = new VarnodeTpl(ConstTpl(constantspace),
 					 ConstTpl(ConstTpl::real,constval),
@@ -565,10 +699,19 @@ void PcodeCompile::appendOp(OpCode opc,ExprTree *res,uintb constval,int4 constsz
   res->outvn = new VarnodeTpl(*outvn);
 }
 
+/// \brief Build a truncated VarnodeTpl, if possible, from the given bit range
+///
+/// The bit range must be on byte boundaries or NULL is returned.
+/// The VarnodeTpl being must already have fixed dimensions or be a \b handle.
+/// For a \b handle, the truncation is built using ConstTpl::v_offset_plus mechanics, allowing the
+/// truncation for exported values to be computed in the context of a specific instruction.
+/// \param basevn is the VarnodeTpl to be truncated
+/// \param bitoffset is the starting bit of the range (0 indicates the least significant bit)
+/// \param numbits is the number of bits in the range
+/// \return the truncated VarnodeTpl (or NULL)
 VarnodeTpl *PcodeCompile::buildTruncatedVarnode(VarnodeTpl *basevn,uint4 bitoffset,uint4 numbits)
 
-{ // Build a truncated form -basevn- that matches the bitrange [ -bitoffset-, -numbits- ] if possible
-  // using just ConstTpl mechanics, otherwise return null
+{
   uint4 byteoffset = bitoffset / 8; // Convert to byte units
   uint4 numbytes = numbits / 8;
   uintb fullsz = 0;
@@ -609,9 +752,20 @@ VarnodeTpl *PcodeCompile::buildTruncatedVarnode(VarnodeTpl *basevn,uint4 bitoffs
   return res;
 }
 
+/// \brief Assign an expression to a bit range within a given VarnodeTpl
+///
+/// Other bits of the VarnodeTpl are preserved.  The value assigned is taken from the root VarnodeTpl
+/// of the expression, which is assumed to have zero bits in any position greater than or equal to \b numbits.
+/// If the bit range falls on byte boundaries, the assignment is accomplished with byte based truncation operations.
+/// Otherwise mask and shift operations (INT_AND, INT_OR, and INT_LEFT) are used.
+/// \param vn is the given VarnodeTpl being assigned to
+/// \param bitoffset is the starting bit of the range (0 indicates the least significant bit)
+/// \param numbits is the number of bits in the range
+/// \param rhs is the expression being assigned
+/// \return a new combined expression as a raw array
 vector<OpTpl *> *PcodeCompile::assignBitRange(VarnodeTpl *vn,uint4 bitoffset,uint4 numbits,ExprTree *rhs)
 
-{ // Create an expression assigning the rhs to a bitrange within sym
+{
   string errmsg;
   if (numbits == 0)
     errmsg = "Size of bitrange is zero";
@@ -673,12 +827,19 @@ vector<OpTpl *> *PcodeCompile::assignBitRange(VarnodeTpl *vn,uint4 bitoffset,uin
   return resops;
 }
 
+/// \brief Create an expression computing the indicated bit range of a symbol
+///
+/// The result is truncated to the smallest byte size that can contain the indicated number of bits,
+/// with the desired bits shifted into the least significant positions.
+/// If the bit range is on byte boundaries, the truncation is accomplished with byte based truncation operations.
+/// Otherwise masks and shifts (INT_AND and INT_RIGHT) are used.
+/// \param sym is the symbol representing the VarnodeTpl to truncate
+/// \param bitoffset is the starting bit of the range (0 indicates the least significant bit)
+/// \param numbits is the number of bits in the range
+/// \return a new expression whose root VarnodeTpl holds the result
 ExprTree *PcodeCompile::createBitRange(SpecificSymbol *sym,uint4 bitoffset,uint4 numbits)
 
-{ // Create an expression computing the indicated bitrange of sym
-  // The result is truncated to the smallest byte size that can
-  // contain the indicated number of bits. The result has the
-  // desired bits shifted all the way to the right
+{
   string errmsg;
   if (numbits == 0)
     errmsg = "Size of bitrange is zero";
@@ -754,10 +915,14 @@ ExprTree *PcodeCompile::createBitRange(SpecificSymbol *sym,uint4 bitoffset,uint4
   return res;
 }
 
+/// \brief Produce a constant VarnodeTpl that is the offset of the storage address of the given VarnodeTpl
+///
+/// \param var is the given VarnodeTpl to take the address of
+/// \param size is the size of the resulting pointer constant (may be 0)
+/// \return the new constant VarnodeTpl
 VarnodeTpl *PcodeCompile::addressOf(VarnodeTpl *var,uint4 size)
 
-{				// Produce constant varnode that is the offset
-				// portion of varnode -var-
+{
   if (size==0) {		// If no size specified
     if (var->getSpace().getType() == ConstTpl::spaceid) {
       AddrSpace *spc = var->getSpace().getSpace();	// Look to the particular space

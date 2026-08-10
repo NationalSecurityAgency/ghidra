@@ -123,14 +123,6 @@ public class AbstractGuiTest extends AbstractGenericTest {
 		waitForSwing();
 	}
 
-	/**
-	 * @deprecated Use {@link #waitForSwing()} instead
-	 */
-	@Deprecated(forRemoval = true, since = "10.3")
-	public static void waitForPostedSwingRunnables() {
-		waitForSwing();
-	}
-
 	public static <T extends Component> T findComponent(Container parent, Class<T> desiredClass) {
 		return findComponent(parent, desiredClass, false);
 	}

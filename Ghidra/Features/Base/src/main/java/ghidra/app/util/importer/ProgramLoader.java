@@ -37,13 +37,15 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Used to load (import) a new {@link Program}
+ * Used to load (import) a new {@link Program} or other {@link DomainObject}.
  */
 public class ProgramLoader {
 
 	/**
 	 * Gets a new {@link ProgramLoader} {@link Builder} which can be used to load a new 
-	 * {@link Program}
+	 * {@link Program}.  This builder may optionally support loading of other {@link DomainObject}
+	 * implementations through the use of the {@link Builder#loadAll()} method in place of the
+	 * Program-specific load methods. 
 	 * 
 	 * @return A new {@link ProgramLoader} {@link Builder} which can be used to load a new 
 	 *   {@link Program}
@@ -490,7 +492,9 @@ public class ProgramLoader {
 
 		/**
 		 * Loads the specified {@link #source(ByteProvider) source} with this {@link Builder}'s 
-		 * current configuration
+		 * current configuration.  This method is intended to handle various {@link DomainObject}
+		 * implementations unlike the other Program specific load methods.  Care must be taken to
+		 * check the specific implementation class before casting.
 		 * 
 		 * @return The {@link LoadResults} which contains one or more {@link Loaded} 
 		 *   {@link DomainObject}s (created but not saved)
@@ -508,7 +512,9 @@ public class ProgramLoader {
 
 		/**
 		 * Loads the specified {@link #source(ByteProvider) source} with this {@link Builder}'s 
-		 * current configuration
+		 * current configuration.  This method is intended to handle various {@link DomainObject}
+		 * implementations unlike the other Program specific load methods.  Care must be taken to
+		 * check the specific implementation class before casting.
 		 * 
 		 * @param consumer A reference to the object "consuming" the returned {@link LoadResults}, 
 		 *   used to ensure the underlying {@link DomainObject}s are only closed when every consumer

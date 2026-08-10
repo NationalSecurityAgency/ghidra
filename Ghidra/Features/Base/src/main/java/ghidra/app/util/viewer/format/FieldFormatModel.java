@@ -16,6 +16,7 @@
 package ghidra.app.util.viewer.format;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.jdom2.Element;
 
@@ -283,6 +284,13 @@ public class FieldFormatModel {
 		}
 	}
 
+	@Override
+	public String toString() {
+		return name + ":\n" + Arrays.stream(factories)
+				.map(f -> f.getClass().getSimpleName())
+				.collect(Collectors.joining(",\n"));
+	}
+
 	/**
 	 * Saves this format to XML.
 	 * @return the XML element for the saved format
@@ -324,10 +332,11 @@ public class FieldFormatModel {
 	 */
 	public void restoreFromXml(Element root) {
 		List<?> list = root.getChildren("ROW");
-		Iterator<?> rowIter = list.iterator();
-		rows = new ArrayList<>(list.size());
-		while (rowIter.hasNext()) {
-			Row row = createRow((Element) rowIter.next());
+		Iterator<?> it = list.iterator();
+		rows = new ArrayList<>();
+		while (it.hasNext()) {
+			Element element = (Element) it.next();
+			Row row = createRow(element);
 			rows.add(row);
 		}
 		findWidth();
@@ -462,6 +471,7 @@ public class FieldFormatModel {
 			row.fieldOptionsChanged(options, optionName, oldValue, newValue);
 		}
 	}
+
 //==================================================================================================
 //Inner Classes 
 //==================================================================================================
@@ -564,6 +574,8 @@ class Row {
 
 	@Override
 	public String toString() {
-		return fields.toString();
+		return fields.stream()
+				.map(f -> f.getClass().getSimpleName())
+				.collect(Collectors.joining(","));
 	}
 }

@@ -35,6 +35,26 @@
     might work around this by copying the affected DLLs from your WinDbg installation into your
     Python installation.</P>
 
+    <P>Also worth noting, there are now two local launchers, the original .bat-based launcher and a
+    newer .ps1-based launcher. The powershell launcher is not signed. You must therefore set the
+    current user's execution policy or permissions on the script:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+</PRE>
+      </LI>
+
+      <LI style="list-style: none">or</LI>
+
+      <LI>
+<PRE>
+Unblock-File "Ghidra\Debug\Debugger-agent-dbgeng\data\debugger-launchers\local-dbgeng.ps1"
+</PRE>
+      </LI>
+    </UL>
+
     <H3><A name="setup"></A>Setup</H3>
 
     <P>Installing WinDbg is highly recommended. If you wish to forego installing WinDbg, you can
@@ -48,7 +68,7 @@
     <UL style="list-style-type: none">
       <LI>
 <PRE>
-python3 -m pip install pybag protobuf>=3.20.3
+python3 -m pip install pybag protobuf&gt;=3.20.3
 </PRE>
       </LI>
     </UL>
@@ -123,7 +143,7 @@ python3 -m pip install --no-index -f Debugger-rmi-trace\pypkg\dist -f Debugger-a
 
       <LI><B>Env</B>: This is a composite string containg Environment Variable entries delineated
       by '/0' separators. For example, you could redefine USERNAME and USERPROFILE with the entry
-      'USERNAME=SomeUser/0USERPROFILE=C:\Users\SomeUser'.</LI>
+      "<TT>USERNAME=SomeUser/0USERPROFILE=C:\Users\SomeUser</TT>".</LI>
 
       <LI><B>CreateFlags</B>: Flags used when creating the process, typically either
       DEBUG_PROCESS(1) or DEBUG_ONLY_THIS_PROCESS(2) if you do not wish to follow spawned
@@ -163,42 +183,45 @@ python3 -m pip install --no-index -f Debugger-rmi-trace\pypkg\dist -f Debugger-a
       <LI>
         <B>Connection</B>: This is the connection string specifying the transport options for
         communicating with the remote debugger. A typical example might be
-        'tcp:port=12345,server=192.168.0.2' for a debugger that has issued the command 
+        "<TT>tcp:port=12345,server=192.168.0.2</TT>" for a debugger that has issued the command
 <PRE>
 .server tcp:port=12345
 </PRE>
       </LI>
     </UL>
 
-	<H2><A name="ssh"></A>Remote via SSH</H2>
+    <H2><A name="ssh"></A>Remote via SSH</H2>
 
-	<P>"<TT>ssh-dbgeng</TT>" is the remote equivalent to "<TT>dbgeng</TT>";
-	"<TT>ssh-dbgeng-attach</TT>" is the remote equivalent to "<TT>dbgeng-attach</TT>".
-	</P>
+    <P>"<TT>ssh-dbgeng</TT>" is the remote equivalent to "<TT>dbgeng</TT>";
+    "<TT>ssh-dbgeng-attach</TT>" is the remote equivalent to "<TT>dbgeng-attach</TT>".</P>
 
-	<H3><A name="remote_setup"></A>Setup</H3>
+    <H3><A name="remote_setup"></A>Setup</H3>
 
-	<P>Instructions are indentical to those above but executed on the remote machine.</P>
+    <P>Instructions are identical to those above but executed on the remote machine. Both of these
+    commands are now implemented via powershell, so the same caveats listed above for the local
+    .ps1 launcher apply here, i.e. you will need to set the current user's execution policy or
+    permissions on the script. Separate launchers have also been added for starting the debugger on
+    a remote Windows box from a local Linux machine.</P>
 
-	<H3>Additional Options</H3>
+    <H3>Additional Options</H3>
 
-	<UL>
-		<LI><B>ssh command</B>: The ssh command to execute, optionaly with full path.</LI>
-		
-		<LI><B>[User@]Host</B>: This is the host name of the target system, optionally including a
-		user name. This is passed as is to <TT>ssh</TT>, which may interpret it according to local
-		configuration.</LI>
+    <UL>
+      <LI><B>ssh command</B>: The ssh command to execute, optionaly with full path.</LI>
 
-		<LI><B>Remote Trace RMI Port</B>: An available TCP port on the target system, which will
-		listen for dbgeng's Trace RMI connection and forward it back to Ghidra.</LI>
+      <LI><B>[User@]Host</B>: This is the host name of the target system, optionally including a
+      user name. This is passed as is to <TT>ssh</TT>, which may interpret it according to local
+      configuration.</LI>
 
-		<LI><B>Extra <TT>ssh</TT> arguments</B>: These are extra arguments to pass to <TT>ssh</TT>.
-		They are inserted immediately after the <TT>ssh</TT> command but before the host name. Beware
-		that syntax errors may cause strange behavior, and that not all features may be compatible
-		with this launcher.</LI>
-	</UL>
+      <LI><B>Remote Trace RMI Port</B>: An available TCP port on the target system, which will
+      listen for dbgeng's Trace RMI connection and forward it back to Ghidra.</LI>
 
-	<H2><A name="svrcx"></A>Process Server</H2>
+      <LI><B>Extra <TT>ssh</TT> arguments</B>: These are extra arguments to pass to <TT>ssh</TT>.
+      They are inserted immediately after the <TT>ssh</TT> command but before the host name. Beware
+      that syntax errors may cause strange behavior, and that not all features may be compatible
+      with this launcher.</LI>
+    </UL>
+
+    <H2><A name="svrcx"></A>Process Server</H2>
 
     <P>The "<TT>dbgeng-svrcx</TT>" launcher extends the base dbgeng launcher adding an option for
     connecting through a remote process server.</P>
@@ -209,11 +232,10 @@ python3 -m pip install --no-index -f Debugger-rmi-trace\pypkg\dist -f Debugger-a
       <LI>
         <B>Connection</B>: This is the connection string specifying the transport options for
         communicating with the remote server. A typical example might be
-        'tcp:port=12345,server=192.168.0.2' for a process server launched on the machine at
-        192.168.0.2 using: 
+        "<TT>tcp:port=12345,server=192.168.0.2</TT>" for a process server launched on the machine
+        at 192.168.0.2 using: 
 <PRE>
-        dbgsrv -t tcp:port=12345
-       
+dbgsrv -t tcp:port=12345
 </PRE>
       </LI>
     </UL>

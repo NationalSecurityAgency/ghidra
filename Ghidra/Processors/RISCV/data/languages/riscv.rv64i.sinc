@@ -107,15 +107,15 @@
 
 
 # subw d,s,t 4000003b fe00707f SIMPLE (64, 0) 
-:subw rd,rs1W,rs2W is rs1W & rs2W & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x0 & funct7=0x20
+:subw rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x0 & funct7=0x20
 {
-	local result = rs1W - rs2W;
+	local result = rs1:$(WXLEN)- rs2:$(WXLEN);
 	rd = sext(result);
 }
 
 # negw d,t 4000003b fe0ff07f ALIAS (64, 0)
-:negw rd,rs2W is rs2W & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x0 & funct7=0x20 & op1519=0x0
+:negw rd,rs2 is rs2 & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x0 & funct7=0x20 & op1519=0x0
 {
-	local tmp = -rs2W;
+	local tmp = -rs2:$(WXLEN);
 	rd = sext(tmp);
 }

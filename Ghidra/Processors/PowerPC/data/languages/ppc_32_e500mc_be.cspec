@@ -33,7 +33,7 @@
           <register name="r10"/>
         </pentry>
         <pentry minsize="1" maxsize="500" align="4">
-          <addr offset="4" space="stack"/>
+          <addr offset="8" space="stack"/>
         </pentry>
       </input>
       <output>

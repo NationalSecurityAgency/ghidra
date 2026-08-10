@@ -112,8 +112,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_create('notepad.exe', wait=True)
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals("x86:LE:64:default",
 				tb.trace.getBaseLanguage().getLanguageID().getIdAsString());
 			assertEquals("windows",
@@ -129,7 +129,7 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_start()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/noname")) {
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/noname")) {
 			assertThat(mdo.get(), instanceOf(Trace.class));
 		}
 	}
@@ -149,8 +149,9 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 					.formatted(PREAMBLE, addr));
 		DomainFile dfMyToy = env.getProject().getProjectData().getFile("/New Traces/pydbg/myToy");
 		assertNotNull(dfMyToy);
-		try (ManagedDomainObject mdo = new ManagedDomainObject(dfMyToy, false, false, monitor)) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo =
+			new ManagedDomainObject<>(dfMyToy, Trace.class, monitor)) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals("Toy:BE:64:default",
 				tb.trace.getBaseLanguage().getLanguageID().getIdAsString());
 			assertEquals("default",
@@ -276,8 +277,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_stop()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals(0, tb.trace.getTimeManager().getAllSnapshots().size());
 		}
 
@@ -291,8 +292,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_save()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals(1, tb.trace.getTimeManager().getAllSnapshots().size());
 		}
 	}
@@ -308,8 +309,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_txcommit()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceSnapshot snapshot = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots());
 			assertEquals(0, snapshot.getKey());
 			assertEquals("Scripted snapshot", snapshot.getDescription());
@@ -333,8 +334,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 
 			MemDump dump = parseHexDump(extractOutSection(out, "---Dump---"));
@@ -362,8 +363,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 
 			String eval = extractOutSection(out, "---Start---");
@@ -395,8 +396,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 
 			MemDump dump = parseHexDump(extractOutSection(out, "---Dump---"));
@@ -426,8 +427,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr, count));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 			List<TraceObjectValue> regVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
@@ -474,8 +475,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				quit()
 				""".formatted(PREAMBLE, addr, count));
 		// The spaces will be left over, but the values should be zeroed
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 			List<TraceObjectValue> regVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
@@ -505,8 +506,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_txcommit()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -530,8 +531,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_txcommit()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -557,8 +558,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -583,8 +584,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr, extra, pydbgExpr, gtype));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -737,8 +738,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -768,8 +769,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				print('---')
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -815,8 +816,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals("""
 					Parent          Key       Span     Value           Type
 					Test.Objects[1] vaddr     [0,+inf) ram:deadbeef    ADDRESS
@@ -855,8 +856,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals("""
 					Parent          Key   Span     Value        Type
 					Test.Objects[1] vaddr [0,+inf) ram:deadbeef ADDRESS""",
@@ -879,7 +880,7 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
 			// NB: we're losing a race here, regularly
 			//assertSame(mdo.get(), traceManager.getCurrentTrace());
 			assertEquals("Test.Objects[1]",
@@ -903,8 +904,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Not concerned about specifics, so long as disassembly occurs
 			long total = 0;
 			for (CodeUnit cu : tb.trace.getCodeManager().definedUnits().get(0, true)) {
@@ -928,8 +929,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_txcommit()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<TraceObject> processes = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0), PathFilter.parse("Processes[]"))
@@ -950,8 +951,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_txcommit()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<TraceObject> available = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0), PathFilter.parse("Sessions[].Available[]"))
@@ -976,8 +977,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			List<TraceObjectValue> procBreakLocVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
 						PathFilter.parse("Sessions[].Processes[].Debug.Breakpoints[]"))
@@ -1012,8 +1013,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			List<TraceObjectValue> procBreakVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
 						PathFilter.parse("Sessions[].Processes[].Debug.Breakpoints[]"))
@@ -1052,8 +1053,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Assumes LLDB on Linux amd64
 			TraceObject env =
 				Objects.requireNonNull(
@@ -1077,8 +1078,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceMemoryRegion> all =
 				tb.trace.getMemoryManager().getAllRegions();
@@ -1098,8 +1099,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
 			TraceModule modBash =
@@ -1120,8 +1121,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceThread> threads = tb.trace.getThreadManager().getAllThreads();
 			assertThat(threads.size(), greaterThan(2));
@@ -1140,8 +1141,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			List<TraceObject> stack = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),

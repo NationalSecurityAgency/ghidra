@@ -34,6 +34,7 @@
 #@env OPT_PYTHON_EXE:file!="python" "Python command" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
 #@env OPT_PYTHON_ARGS:str="" "python cmd args" "Arguments passed to python (versus the target)"
 #@env OPT_USE_DBGMODEL:bool=true "Use dbgmodel" "Load and use dbgmodel.dll if it is available."
+#@env WINDBG_DIR:dir="C:\Windows\System32" "Path to dbgeng.dll directory" "Path containing dbgeng and associated DLLS (if not Windows Kits)."
 
 . ..\support\dbgsetuputils.ps1
 
@@ -41,6 +42,7 @@ function Compute-Python-Args {
 	param($TempFile)
 	
 	$arglist = @("$Env:OPT_PYTHON_EXE")
+	$arglist+=@("-i")
 	if ("$Env:OPT_PYTHON_ARGS" -ne "") {
 		$arglist+=($Env:OPT_PYTHON_ARGS)
 	}
@@ -48,6 +50,7 @@ function Compute-Python-Args {
 	
 	$arglist+=("localhost:$Env:OPT_REMOTE_PORT")
 	$arglist+=($Env:OPT_USE_DBGMODEL)
+	$arglist+=($Env:WINDBG_DIR)
 	$arglist+=($Env:OPT_TARGET_PID)
 	$arglist+=($Env:OPT_ATTACH_FLAGS)
 	

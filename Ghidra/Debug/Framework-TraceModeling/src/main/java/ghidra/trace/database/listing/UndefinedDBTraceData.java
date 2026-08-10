@@ -245,11 +245,6 @@ public class UndefinedDBTraceData implements DBTraceDataAdapter, TraceSpaceMixin
 	}
 
 	@Override
-	public TraceData getComponentAt(int offset) {
-		return null;
-	}
-
-	@Override
 	public TraceData getComponentContaining(int offset) {
 		return null;
 	}

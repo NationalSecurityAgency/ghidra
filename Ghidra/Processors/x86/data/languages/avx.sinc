@@ -1871,14 +1871,14 @@ define pcodeop vpextrq_avx ;
 
 # PEXTRW 4-277 PAGE 1397 LINE 72478
 define pcodeop vpextrw_avx ;
-:VPEXTRW Reg32, XmmReg2, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W0); byte=0xC5; Reg32 & (mod=0x3 & XmmReg2); imm8
+:VPEXTRW Reg32, XmmReg2, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0xC5; Reg32 & (mod=0x3 & XmmReg2); imm8
 {
 	Reg32 = vpextrw_avx( XmmReg2, imm8:1 );
 	# TODO Reg64 = zext(Reg32)
 }
 
 # PEXTRW 4-277 PAGE 1397 LINE 72483
-:VPEXTRW Reg32_m16, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x15; XmmReg1 ... & Reg32_m16; imm8
+:VPEXTRW Reg32_m16, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x15; XmmReg1 ... & Reg32_m16; imm8
 {
 	Reg32_m16 = vpextrw_avx( XmmReg1, imm8:1 );
 	# TODO Reg64 = zext(Reg32)

@@ -1050,8 +1050,16 @@ public class FunctionEditorModel {
 			// ignore
 		}
 
-		Namespace ns = createNamespace(result.namespace());
+		// We allow the user to omit the namespace when parsing the signature.   If the value is 
+		// null, then don't change the current value.  Assume any non-null value is a valid choice.
+		Namespace ns = functionData.getNamespace();
+		SymbolPath nsPath = result.namespace();
+		if (nsPath != null) {
+			ns = createNamespace(result.namespace());
+		}
+
 		setFunctionData(ns, f);
+
 		isInParsingMode = false;
 	}
 

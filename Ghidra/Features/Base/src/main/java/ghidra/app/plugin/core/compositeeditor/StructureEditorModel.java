@@ -31,7 +31,8 @@ import docking.widgets.table.GTableHeaderRenderer;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.InsufficientBytesException;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
 
@@ -199,6 +200,15 @@ class StructureEditorModel extends CompEditorModel<Structure> {
 	@Override
 	public int getNumComponents() {
 		return viewComposite == null ? 0 : viewComposite.getNumComponents();
+	}
+
+	public int getRowForOffset(int offset) {
+		DataTypeComponent dtc = viewComposite.getComponentContaining(offset);
+		if (dtc != null) {
+			return dtc.getOrdinal();
+		}
+
+		return 0;
 	}
 
 	@Override

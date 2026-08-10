@@ -171,6 +171,7 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 	CurrentPlatformTraceDisassembleAction actionDisassemble;
 	CurrentPlatformTracePatchInstructionAction actionPatchInstruction;
 	TracePatchDataAction actionPatchData;
+	CurrentPlatformTraceAssemblePatchAction actionAssemblePatch;
 
 	public DebuggerDisassemblerPlugin(PluginTool tool) {
 		super(tool);
@@ -187,10 +188,12 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 		actionDisassemble = new CurrentPlatformTraceDisassembleAction(this);
 		actionPatchInstruction = new CurrentPlatformTracePatchInstructionAction(this);
 		actionPatchData = new TracePatchDataAction(this);
+		actionAssemblePatch = new CurrentPlatformTraceAssemblePatchAction(this);
 
 		tool.addAction(actionDisassemble);
 		tool.addAction(actionPatchInstruction);
 		tool.addAction(actionPatchData);
+		tool.addAction(actionAssemblePatch);
 	}
 
 	/**
@@ -222,6 +225,7 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 		for (LanguageID langID : getAlternativeLanguageIDs(platform.getLanguage())) {
 			result.add(new FixedPlatformTraceDisassembleAction(this, langID, platform));
 			result.add(new FixedPlatformTracePatchInstructionAction(this, langID, platform));
+			result.add(new FixedPlatformTraceAssemblePatchAction(this, langID, platform));
 		}
 	}
 

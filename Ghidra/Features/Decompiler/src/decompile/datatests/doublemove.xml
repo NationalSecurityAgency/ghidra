@@ -34,7 +34,7 @@ e440430c03e0000846201000
   <com>print raw</com>
 </script>
 <stringmatch name="Double precision move #1" min="1" max="1">return glob1 \+ glob1;</stringmatch>
-<stringmatch name="Double precision move #2" min="1" max="1">r0x00424318:8\(i\) \+ r0x00424318:8\(i\)</stringmatch>
+<stringmatch name="Double precision move #2" min="1" max="1">r0x00424318:8\(i\) f\+ r0x00424318:8\(i\)</stringmatch>
 <stringmatch name="Double precision move #3" min="1" max="1">r0x00424318:8\(0x.*\) = r0x00424318:8\(i\)</stringmatch>
 <stringmatch name="Double precision move #4" min="1" max="1">glob2 = in_stack_00000028 \+ 7\.0;</stringmatch>
 <stringmatch name="Double precision move #5" min="1" max="1">r0x00424308.* = f0_1.*</stringmatch>

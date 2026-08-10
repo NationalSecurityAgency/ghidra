@@ -9,6 +9,10 @@ README.md||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/debugger.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/BreakpointTimelinePlugin/BreakpointTimelinePlugin.html||GHIDRA||||END|
+src/main/help/help/topics/BreakpointTimelinePlugin/images/BreakpointTimelinePlugin.png||GHIDRA||||END|
+src/main/help/help/topics/BreakpointTimelinePlugin/images/BreakpointTimelinePluginNoGrid.png||GHIDRA||||END|
+src/main/help/help/topics/BreakpointTimelinePlugin/images/BreakpointTimelinePluginSingleColumn.png||GHIDRA||||END|
 src/main/help/help/topics/Debugger/Debugger.html||GHIDRA||||END|
 src/main/help/help/topics/Debugger/GettingStarted.html||GHIDRA||||END|
 src/main/help/help/topics/Debugger/Troubleshooting.html||GHIDRA||||END|
@@ -26,6 +30,7 @@ src/main/help/help/topics/DebuggerCopyActionsPlugin/DebuggerCopyActionsPlugin.ht
 src/main/help/help/topics/DebuggerCopyActionsPlugin/images/DebuggerCopyIntoProgramDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerDisassemblerPlugin/DebuggerDisassemblerPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerEmulationServicePlugin/DebuggerEmulationServicePlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerEmulationServicePlugin/images/DebuggerEmulateFunctionDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerListingPlugin/images/DebuggerGoToDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerListingPlugin/images/DebuggerListingPlugin.png||GHIDRA||||END|

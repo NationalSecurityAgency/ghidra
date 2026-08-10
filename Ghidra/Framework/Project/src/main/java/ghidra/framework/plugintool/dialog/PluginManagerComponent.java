@@ -22,7 +22,6 @@ import java.util.List;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 
-import docking.EmptyBorderToggleButton;
 import docking.widgets.GHyperlinkComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.*;
@@ -42,7 +41,7 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 
 	private final PluginTool tool;
 	private PluginConfigurationModel model;
-	private List<PluginPackageComponent> packageComponentList = new ArrayList<>();
+	private List<PluginPackagePanel> packageComponentList = new ArrayList<>();
 
 	PluginManagerComponent(PluginTool tool, PluginConfigurationModel model) {
 		super(new VerticalLayout(2));
@@ -54,14 +53,17 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 
 		List<PluginPackage> pluginPackages = model.getPluginPackages();
 		for (PluginPackage pluginPackage : pluginPackages) {
-			PluginPackageComponent comp = new PluginPackageComponent(pluginPackage);
-			packageComponentList.add(comp);
-			add(comp);
+			PluginPackagePanel panel = new PluginPackagePanel(pluginPackage);
+			packageComponentList.add(panel);
+			add(panel);
 		}
+
+		ExtensionsPanel extensionsPanel = new ExtensionsPanel();
+		add(extensionsPanel);
 	}
 
 	private void updateCheckboxes() {
-		for (PluginPackageComponent comp : packageComponentList) {
+		for (PluginPackagePanel comp : packageComponentList) {
 			comp.updateCheckBoxState();
 		}
 	}
@@ -77,6 +79,13 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 		PluginInstallerDialog pluginTableDialog = new PluginInstallerDialog("Configure All Plugins",
 			tool, model, model.getAllPluginDescriptions());
 		tool.showDialog(pluginTableDialog);
+	}
+
+	void manageExtensions() {
+		List<PluginDescription> descriptons = model.getPluginDescriptionsForExtensions();
+		PluginInstallerDialog pluginInstallerDialog = new PluginInstallerDialog(
+			"Configure Extension Plugins", tool, model, descriptons);
+		tool.showDialog(pluginInstallerDialog);
 	}
 
 	PluginConfigurationModel getModel() {
@@ -102,144 +111,13 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 	}
 
 	boolean isAddAllCheckBoxEnabled(PluginPackage pluginPackage) {
-		for (PluginPackageComponent ppc : packageComponentList) {
+		for (PluginPackagePanel ppc : packageComponentList) {
 			if (ppc.pluginPackage.equals(pluginPackage)) {
-				return ppc.checkBox.isEnabled();
+				return ppc.selectAllCheckBox.isEnabled();
 			}
 		}
 
 		throw new AssertException("No checkbox found for " + pluginPackage);
-	}
-
-//=================================================================================================
-// Inner Classes
-//=================================================================================================
-
-	private class PluginPackageComponent extends JPanel {
-		private Color BG = new GColor("color.bg");
-		private final PluginPackage pluginPackage;
-		private final GCheckBox checkBox;
-
-		PluginPackageComponent(PluginPackage pluginPackage) {
-			super(new BorderLayout());
-			setBackground(BG);
-
-			this.pluginPackage = pluginPackage;
-			this.checkBox =createCheckbox();
-
-			initizalizeCheckBoxSection();
-			initializeLabelSection();
-			initializeDescriptionSection();
-
-			setBorder(BorderFactory.createLineBorder(Colors.BORDER));
-			updateCheckBoxState();
-		}
-
-		private GCheckBox createCheckbox() {
-			 GCheckBox checkbox = new GCheckBox();
-			 AccessibleContext ac = checkbox.getAccessibleContext();
-			 ac.setAccessibleName(pluginPackage.getName() + " plugin package");
-			 ac.setAccessibleDescription(pluginPackage.getDescription());
-			 return checkbox;
-		}
-
-		private void initizalizeCheckBoxSection() {
-			JPanel checkboxPanel = new JPanel(new HorizontalLayout(0));
-			checkboxPanel.setBackground(BG);
-
-			checkBox.addActionListener(
-				e -> selectPluginPackage(pluginPackage, checkBox.isSelected()));
-			if (model.hasOnlyUnstablePlugins(pluginPackage)) {
-				checkBox.setEnabled(false);
-			}
-			checkBox.setBackground(BG);
-
-			checkboxPanel.add(Box.createHorizontalStrut(10));
-			checkboxPanel.add(checkBox);
-			checkboxPanel.add(Box.createHorizontalStrut(10));
-
-			Icon icon = pluginPackage.getIcon();
-			if (icon == null) {
-				icon = DEFAULT_ICON;
-			}
-			JLabel iconLabel = new GIconLabel(ResourceManager.getScaledIcon(icon, 32, 32, 32));
-			iconLabel.setBackground(BG);
-
-			checkboxPanel.add(iconLabel);
-			checkboxPanel.add(Box.createHorizontalStrut(10));
-			checkboxPanel.setPreferredSize(new Dimension(84, 70));
-
-			add(checkboxPanel, BorderLayout.WEST);
-		}
-
-		private void initializeLabelSection() {
-			JPanel centerPanel = new JPanel(new GridBagLayout());
-			GridBagConstraints gbc = new GridBagConstraints();
-			gbc.fill = GridBagConstraints.HORIZONTAL;
-			gbc.weightx = 1.0;
-
-			centerPanel.setBackground(BG);
-
-			JPanel labelPanel = new JPanel(new VerticalLayout(3));
-			labelPanel.setBackground(BG);
-
-			GLabel nameLabel = new GLabel(pluginPackage.getName());
-			Gui.registerFont(nameLabel, "font.plugin.package.panel.name");
-			nameLabel.setForeground(new GColor("color.fg.plugin.package.panel.name"));
-			labelPanel.add(nameLabel);
-
-			GHyperlinkComponent configureHyperlink = createConfigureHyperlink();
-			labelPanel.add(configureHyperlink);
-
-			labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 25, 0, 40));
-			centerPanel.add(labelPanel, gbc);
-			add(centerPanel);
-		}
-
-		private GHyperlinkComponent createConfigureHyperlink() {
-			GHyperlinkComponent configureHyperlink =
-				new GHyperlinkComponent();
-			configureHyperlink.addLink("Configure", "Configure Plugins", () -> {
-				managePlugins(PluginPackageComponent.this.pluginPackage);
-			});
-
-			configureHyperlink.setBackground(BG);
-			return configureHyperlink;
-		}
-
-		private String enchanceDescription(String text) {
-			return String.format("<html><body style='width: 300px'>%s</body></html>", text);
-		}
-
-		private void initializeDescriptionSection() {
-			String htmlDescription = enchanceDescription(pluginPackage.getDescription());
-
-			JLabel descriptionlabel = new GHtmlLabel(htmlDescription);
-			descriptionlabel.setForeground(new GColor("color.fg.plugin.package.panel.description"));
-			descriptionlabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
-			descriptionlabel.setVerticalAlignment(SwingConstants.TOP);
-			descriptionlabel.setToolTipText(
-				HTMLUtilities.toWrappedHTML(pluginPackage.getDescription(), 80));
-
-			add(descriptionlabel, BorderLayout.EAST);
-		}
-
-		void updateCheckBoxState() {
-			checkBox.setSelected(
-				model.getPackageState(pluginPackage) != PluginPackageState.NO_PLUGINS_LOADED);
-		}
-	}
-
-	static class MyToggleButton extends EmptyBorderToggleButton {
-		public MyToggleButton(Icon icon) {
-			super(icon);
-		}
-
-		@Override
-		public void setIcon(Icon newIcon) {
-			Icon scaledIcon = ResourceManager.getScaledIcon(newIcon, 32, 32, 32);
-			doSetIcon(scaledIcon);
-		}
 	}
 
 	@Override
@@ -266,5 +144,229 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 	public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
 		return 20;
 	}
+//=================================================================================================
+// Inner Classes
+//=================================================================================================
+
+	/** A panel that represents a group of plugins, typically all plugins in a PluginPackage */
+	private abstract class GroupPanel extends JPanel {
+		protected static final Color BG = new GColor("color.bg");
+		protected GCheckBox selectAllCheckBox;
+
+		GroupPanel() {
+			super(new BorderLayout());
+			setBackground(BG);
+			setBorder(BorderFactory.createLineBorder(Colors.BORDER));
+		}
+
+		protected void build() {
+			this.selectAllCheckBox = createCheckBox();
+
+			initializeLabelSection();
+			initializeDescriptionSection();
+
+			setBorder(BorderFactory.createLineBorder(Colors.BORDER));
+			updateCheckBoxState();
+		}
+
+		private void initializeLabelSection() {
+			JPanel centerPanel = new JPanel(new GridBagLayout());
+			GridBagConstraints gbc = new GridBagConstraints();
+			gbc.fill = GridBagConstraints.HORIZONTAL;
+			gbc.weightx = 1.0;
+
+			centerPanel.setBackground(BG);
+
+			JPanel labelPanel = new JPanel(new VerticalLayout(3));
+			labelPanel.setBackground(BG);
+
+			GLabel nameLabel = new GLabel(getGroupName());
+			Gui.registerFont(nameLabel, "font.plugin.package.panel.name");
+			nameLabel.setForeground(new GColor("color.fg.plugin.package.panel.name"));
+			labelPanel.add(nameLabel);
+
+			GHyperlinkComponent configureHyperlink = createConfigureHyperlink();
+			labelPanel.add(configureHyperlink);
+
+			labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 25, 0, 40));
+			centerPanel.add(labelPanel, gbc);
+			add(centerPanel);
+		}
+
+		protected abstract String getGroupName();
+
+		protected abstract String getGroupDescription();
+
+		protected abstract Icon getGroupIcon();
+
+		protected abstract void addLink(GHyperlinkComponent link);
+
+		protected abstract GCheckBox createCheckBox();
+
+		protected abstract void updateCheckBoxState();
+
+		private GHyperlinkComponent createConfigureHyperlink() {
+			GHyperlinkComponent configureLink = new GHyperlinkComponent();
+			addLink(configureLink);
+			configureLink.setBackground(BG);
+			return configureLink;
+		}
+
+		private String enchanceDescription(String text) {
+			return String.format("<html><body style='width: 300px'>%s</body></html>", text);
+		}
+
+		private void initializeDescriptionSection() {
+			String description = getGroupDescription();
+			String htmlDescription = enchanceDescription(description);
+
+			JLabel descriptionlabel = new GHtmlLabel(htmlDescription);
+			descriptionlabel.setForeground(new GColor("color.fg.plugin.package.panel.description"));
+			descriptionlabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+			descriptionlabel.setVerticalAlignment(SwingConstants.TOP);
+			descriptionlabel.setToolTipText(HTMLUtilities.toWrappedHTML(description, 80));
+
+			add(descriptionlabel, BorderLayout.EAST);
+		}
+
+	}
+
+
+	private class ExtensionsPanel extends GroupPanel {
+
+		private static final GIcon ICON = new GIcon("icon.plugin.manager.extensions");
+
+		ExtensionsPanel() {
+			build();
+		}
+
+		@Override
+		protected String getGroupName() {
+			return "Extensions";
+		}
+
+		@Override
+		protected String getGroupDescription() {
+			return "All plugins that belong to an Extension.";
+		}
+
+		@Override
+		protected Icon getGroupIcon() {
+			return ICON;
+		}
+
+		@Override
+		protected void addLink(GHyperlinkComponent link) {
+			link.addLink("Configure", "Configure Plugins", () -> {
+				manageExtensions();
+			});
+		}
+
+		@Override
+		protected GCheckBox createCheckBox() {
+			// not checkbox for this group; create a spacer for symmetry
+
+			JPanel iconPanel = new JPanel(new HorizontalLayout(0));
+			iconPanel.setBackground(BG);
+
+			iconPanel.add(Box.createHorizontalStrut(40));
+
+			Icon icon = getGroupIcon();
+			JLabel iconLabel = new GIconLabel(ResourceManager.getScaledIcon(icon, 32, 32, 32));
+			iconLabel.setBackground(BG);
+
+			iconPanel.add(iconLabel);
+			iconPanel.add(Box.createHorizontalStrut(10));
+			iconPanel.setPreferredSize(new Dimension(84, 70));
+
+			add(iconPanel, BorderLayout.WEST);
+
+			return null;
+		}
+
+		@Override
+		protected void updateCheckBoxState() {
+			// no checkbox for this group
+		}
+
+	}
+
+	private class PluginPackagePanel extends GroupPanel {
+
+		private final PluginPackage pluginPackage;
+
+		PluginPackagePanel(PluginPackage pluginPackage) {
+			this.pluginPackage = pluginPackage;
+			build();
+		}
+
+		@Override
+		protected GCheckBox createCheckBox() {
+			GCheckBox checkBox = new GCheckBox();
+			AccessibleContext ac = checkBox.getAccessibleContext();
+			ac.setAccessibleName(getGroupName() + " plugin package");
+			ac.setAccessibleDescription(getGroupDescription());
+
+			JPanel checkboxPanel = new JPanel(new HorizontalLayout(0));
+			checkboxPanel.setBackground(BG);
+
+			checkBox.addActionListener(
+				e -> selectPluginPackage(pluginPackage, checkBox.isSelected()));
+			if (model.hasOnlyUnstablePlugins(pluginPackage)) {
+				checkBox.setEnabled(false);
+			}
+			checkBox.setBackground(BG);
+
+			checkboxPanel.add(Box.createHorizontalStrut(10));
+			checkboxPanel.add(checkBox);
+			checkboxPanel.add(Box.createHorizontalStrut(10));
+
+			Icon icon = getGroupIcon();
+			if (icon == null) {
+				icon = DEFAULT_ICON;
+			}
+			JLabel iconLabel = new GIconLabel(ResourceManager.getScaledIcon(icon, 32, 32, 32));
+			iconLabel.setBackground(BG);
+
+			checkboxPanel.add(iconLabel);
+			checkboxPanel.add(Box.createHorizontalStrut(10));
+			checkboxPanel.setPreferredSize(new Dimension(84, 70));
+
+			add(checkboxPanel, BorderLayout.WEST);
+
+			return checkBox;
+		}
+
+		@Override
+		protected void updateCheckBoxState() {
+			PluginPackageState state = model.getPackageState(pluginPackage);
+			selectAllCheckBox.setSelected(state != PluginPackageState.NO_PLUGINS_LOADED);
+		}
+
+		@Override
+		protected String getGroupName() {
+			return pluginPackage.getName();
+		}
+
+		@Override
+		protected Icon getGroupIcon() {
+			return pluginPackage.getIcon();
+		}
+
+		@Override
+		protected String getGroupDescription() {
+			return pluginPackage.getDescription();
+		}
+
+		@Override
+		protected void addLink(GHyperlinkComponent link) {
+			link.addLink("Configure", "Configure Plugins", () -> {
+				managePlugins(PluginPackagePanel.this.pluginPackage);
+			});
+		}
+
+
+	}
+
 
 }

@@ -477,14 +477,14 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 
 		schemeDestByteCountField = new IntegerTextField(4, 1);
 		schemeDestByteCountField.setMinValue(BigInteger.ZERO);
-		schemeDestByteCountField.setUseNumberPrefix(false);
+		schemeDestByteCountField.setAutoSwitchMode(false);
 		schemeDestByteCountField.setFormat(IntegerFormat.DEC);
 		schemeDestByteCountField.addChangeListener(ev -> schemeDestByteCountChanged());
 		schemeDestByteCountField.setAccessibleName("Mapping Ratio: Destination Size");
 
 		schemeSrcByteCountField = new IntegerTextField(4, 1);
 		schemeSrcByteCountField.setMinValue(BigInteger.ZERO);
-		schemeSrcByteCountField.setUseNumberPrefix(false);
+		schemeSrcByteCountField.setAutoSwitchMode(false);
 		schemeSrcByteCountField.setFormat(IntegerFormat.DEC);
 		schemeSrcByteCountField.addChangeListener(ev -> schemeSrcByteCountChanged());
 		schemeSrcByteCountField.setAccessibleName("Mapping Ratio: Source Size");

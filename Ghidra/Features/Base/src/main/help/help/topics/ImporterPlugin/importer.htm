@@ -16,8 +16,8 @@
 
     <BLOCKQUOTE>
       <BLOCKQUOTE>
-        <P>Ghidra can import a variety of different types of files into a Ghidra project as Ghidra
-        "programs." There are separate actions for importing single files, importing multiple
+        <P>Ghidra can import a variety of different types of files into a Ghidra project.
+        There are separate actions for importing single files, importing multiple
         files, and importing a file into an existing program. The actions for importing single or
         multiple files into a new program are available in both the front-end project window or the
         CodeBrowser tool. The action for adding to an existing program is only available from the
@@ -87,7 +87,7 @@
 
           <LI>Press OK from the <A href="#Importer_Dialog">Importer Dialog</A> to perform the import.</LI>
 
-          <LI>A results summary dialog will appear and, if successful, the new program will appear
+          <LI>A results summary dialog will appear and, if successful, the imported file will appear
           in the project window and if initiated from a CodeBrowser tool, it will be opened in the
           tool.</LI>
         </UL>
@@ -99,7 +99,7 @@
 	          onto the Ghidra Project Tree destination folder.  Dropping onto the table view is not
 	          supported.  In the case of Ghidra Zip File (GZF), Ghidra Zip Debugger Trace file (GZT),
 			  or Ghidra Data Type Archive (GDT) file
-	          imports, an immediate unpack can be performed wthout a popup dialog if the Front End option
+	          imports, an immediate unpack can be performed without a popup dialog if the Front End option
 	          <I>Enable simple GZF/GZT/GDT unpack</I> is enabled (
 	          <B>Edit<IMG src="help/shared/arrow.gif">Tool Options...<IMG src="help/shared/arrow.gif">
 				File Import<IMG src="help/shared/arrow.gif">Enable simple GZF/GZT/GDT unpack</B>).
@@ -114,7 +114,7 @@
 	
 	          <LI>Press OK to initiate the import.</LI>
 	
-	          <LI>A results summary dialog will appear and, if successful, the new program will appear
+	          <LI>A results summary dialog will appear and, if successful, the newly imported file will appear
 	          in the project window and if initiated from a CodeBrowser tool, it will be opened in the
 	          tool.</LI>
 	        </UL>
@@ -266,20 +266,20 @@
           file without any interpretation.</LI><BR>
 
           <LI><B>Language</B> - This field specifies the language/compiler specification that will
-          be used in the resulting program. Often, this will be automatically detected from the
+          be used when importing a program. Often, this will be automatically detected from the
           file format. The <A href="#language_picker_dialog">Language/Compiler Spec Chooser
           Dialog</A> can be used to enter or change the language/compiler spec that will be
           used.</LI><BR>
 
           <LI><B>Destination Folder</B> - This field is used to specify the destination folder
-          within the current project for where the newly imported program will be saved. If a
+          within the current project for where the newly imported file will be saved. If a
           folder is selected in the front-end project window, then this field will default to that
           folder, otherwise the root folder will be the default. The <B>...</B> will bring up a
           dialog for changing the destination folder.</LI><BR>
 
-          <LI><B>Program Name</B> - This field specifies the name for the newly imported file into
+          <LI><B>Name</B> - This field specifies the name for the newly imported file into
 			the active project.
-          By default, it will be the name of the imported file with any format specific extenstion
+          By default, it will be the name of the imported file with any format specific extension
           removed (e.g., .xml, .gzf, .gzt, .gdt).  Path information at the beginning of this field
           will be used to create a destination folder in the current project under the root folder
           specified by the <B>Destination Folder</B> field.</LI><BR>
@@ -827,7 +827,7 @@
 
       <BLOCKQUOTE>
         <P>This dialog is used specify of the Ghidra language (Processor/Compiler Spec) of the
-        program being imported. Certain formats, like "PE", "ELF", or "XML", will usually choose
+        file being imported. Certain formats, like "PE", "ELF", or "XML", will usually choose
         the appropriate language/compiler spec. If not, this dialog can be used to select one or
         override the default selection.</P>
         <BR>

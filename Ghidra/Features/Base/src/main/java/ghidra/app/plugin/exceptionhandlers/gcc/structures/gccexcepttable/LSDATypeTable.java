@@ -20,7 +20,7 @@ import java.util.List;
 
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.plugin.exceptionhandlers.gcc.*;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
@@ -100,7 +100,8 @@ public class LSDATypeTable extends GccAnalysisClass {
 				}
 
 			}
-			catch (MemoryAccessException mae) {
+			catch (MemoryAccessException | AddressOutOfBoundsException e) {
+				// a pc-relative entry landing outside the address space throws the unchecked one
 				SetCommentCmd commentCmd =
 					new SetCommentCmd(addr, CommentType.EOL, "Unable to resolve pointer");
 				commentCmd.applyTo(program);

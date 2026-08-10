@@ -52,7 +52,7 @@ public class BSimPostgresDBConnectionManager {
 			info -> new BSimPostgresDataSource(info));
 	}
 
-	@Deprecated
+	@Deprecated(since = "11.0", forRemoval = true)
 	public static BSimPostgresDataSource getDataSource(URL postgresUrl) {
 		return getDataSource(new BSimServerInfo(postgresUrl));
 	}
