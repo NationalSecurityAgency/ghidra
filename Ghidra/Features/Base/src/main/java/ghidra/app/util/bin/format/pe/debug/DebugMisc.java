@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.pe.debug;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
@@ -56,10 +57,12 @@ public class DebugMisc implements StructConverter {
 	private String actualData;
 
 	/**
-	 * Constructor
+	 * Creates a new {@link DebugMisc}
+	 * 
 	 * @param reader the binary reader
 	 * @param debugDir the debug directory associated to this MISC debug
-	 * @param ntHeader 
+	 * @param validator the {@link OffsetValidator}
+	 * @throws IOException if an IO-related exception occurred
 	 */
 	DebugMisc(BinaryReader reader, DebugDirectory debugDir, OffsetValidator validator)
 			throws IOException {
@@ -69,7 +72,7 @@ public class DebugMisc implements StructConverter {
 
 		long index = Integer.toUnsignedLong(debugDir.getPointerToRawData());
 		if (!validator.checkPointer(index)) {
-			Msg.error(this, "Invalid file index " + Long.toHexString(index));
+			Msg.error(this, "Invalid file index 0x%x".formatted(index));
 			return;
 		}
 		reader.setPointerIndex(index);
@@ -86,81 +89,70 @@ public class DebugMisc implements StructConverter {
 			actualData = reader.readNextAsciiString();
 			// NB: should be a multiple of 4 per winnt.h 
 			// 13 = len(start of struct) + null
-			length = (int) Math.ceil((actualData.length() + 13)/4.0)*4;
+			length = (int) Math.ceil((actualData.length() + 13) / 4.0) * 4;
 			if (length > DebugDirectory.IMAGE_SIZEOF_DEBUG_DIRECTORY) {
 				length = DebugDirectory.IMAGE_SIZEOF_DEBUG_DIRECTORY;
 			}
 			Msg.warn(this, "Zero length structure - defaulting to " + Integer.toHexString(length));
 		}
 		else {
-			Msg.error(this, "Bad structure length " + Integer.toHexString(length));
+			Msg.error(this, "Bad structure length: 0x%x".formatted(length));
 		}
 
 		reader.setPointerIndex(oldIndex);
 	}
 
 	/**
-	 * Returns the data type of this misc debug.
-	 * @return the data type of this misc debug
+	 *{@return the data type of this misc debug}
 	 */
 	public int getDataType() {
 		return dataType;
 	}
 
 	/**
-	 * Returns the length of this misc debug.
-	 * @return the length of this misc debug
+	 * {@return the length of this misc debug}
 	 */
 	public int getLength() {
 		return length;
 	}
 
 	/**
-	 * Returns true if this misc debug is unicode.
-	 * @return true if this misc debug is unicode
+	 * {@return true if this misc debug is unicode}
 	 */
 	public boolean isUnicode() {
 		return unicode;
 	}
 
 	/**
-	 * Returns the array of reserved bytes.
-	 * @return the array of reserved bytes
+	 * {@return the array of reserved bytes}
 	 */
 	public byte[] getReserved() {
 		return reserved;
 	}
 
 	/**
-	 * Returns a string equivalent of the actual misc debug data.
-	 * @return a string equivalent of the actual misc debug data
+	 * {@return a string equivalent of the actual misc debug data, or {@code null} if this structure
+	 * is invalid}
 	 */
 	public String getActualData() {
 		return actualData;
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		if (getDataType() == DebugMisc.IMAGE_DEBUG_MISC_EXENAME) {
-			return "Misc Debug Information: " + getActualData();
+			return "Misc Debug Information: " + Objects.toString(actualData, "<null>");
 		}
 		return "Unknown Misc Debug Information Type: " + getDataType();
 	}
 
 	/**
-	 * Returns the debug directory associated with this misc debug.
-	 * @return the debug directory associated with this misc debug
+	 * {@return the debug directory associated with this misc debug}
 	 */
 	public DebugDirectory getDebugDirectory() {
 		return debugDir;
 	}
 
-	/**
-	 * @see ghidra.app.util.bin.StructConverter#toDataType()
-	 */
 	@Override
 	public DataType toDataType() throws DuplicateNameException {
 
