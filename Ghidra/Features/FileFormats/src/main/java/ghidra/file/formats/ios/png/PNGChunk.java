@@ -15,14 +15,14 @@
  */
 package ghidra.file.formats.ios.png;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 public class PNGChunk implements StructConverter {
 
@@ -35,8 +35,8 @@ public class PNGChunk implements StructConverter {
 	/**
 	 * Reads in the bytes of a PNG chunk from a given
 	 * BinaryReader
-	 * @param reader
-	 * @throws IOException
+	 * @param reader A {@link BinaryReader} positioned at the start of the PNG chunk
+	 * @throws IOException if an IO-related error occurred
 	 */
 	public PNGChunk(BinaryReader reader) throws IOException {
 		length = reader.readNextInt();
