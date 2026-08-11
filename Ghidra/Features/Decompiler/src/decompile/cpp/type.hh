@@ -312,6 +312,7 @@ public:
   bool isPrimitiveWhole(void) const;		///< Is \b this made up of a single primitive
   bool nearestArrayedComponent(int8 off,uint4 arrayHint,int8 *newoff) const;
   bool testForArraySlack(int8 off);	///< Test if an \e out-of-bounds offset makes sense as array slack
+  Datatype *findSmallestContainer(int8 off,int8 sz,int8 *newoff);	///< Find the smallest component containing the given range
 
   static uint4 encodeIntegerFormat(const string &val);
   static string decodeIntegerFormat(uint4 val);
