@@ -3146,30 +3146,27 @@ define pcodeop vpcmpgtq_avx512f ;
 }
 
 # PEXTRB/PEXTRD/PEXTRQ 4-274 PAGE 1394 LINE 72334
-@ifdef IA64
-:VPEXTRB Reg32, XmmReg1, imm8  is $(LONGMODE_ON) & $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x14; XmmReg1 & mod=3 & Reg32 & Reg64; imm8
+:VPEXTRB Reg32, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x14; XmmReg1 & mod=3 & Reg32 & check_Reg32_dest; imm8
 {
-	local tmp = XmmReg1 >> (imm8*8);
-	Reg64 = zext(tmp[0,8]);
-}
-@endif
-
-:VPEXTRB Reg32, XmmReg1, imm8  is $(LONGMODE_OFF) & $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x14; XmmReg1 & mod=3 & Reg32; imm8
-{
-	local tmp = XmmReg1 >> (imm8*8);
+	local tmp8:1 = imm8 & 0xf;
+	local tmp = XmmReg1 >> (tmp8*8);
 	Reg32 = zext(tmp[0,8]);
+	build check_Reg32_dest;
 }
+
 
 :VPEXTRB m8, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x14; XmmReg1 ... & m8; imm8
 {
-	local tmp = XmmReg1 >> (imm8*8);
+	local tmp8:1 = imm8 & 0xf;
+	local tmp = XmmReg1 >> (tmp8*8);
 	m8 = tmp[0,8];
 }
 
 # PEXTRB/PEXTRD/PEXTRQ 4-274 PAGE 1394 LINE 72339
 :VPEXTRD rm32, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x16; XmmReg1 ... & rm32; imm8
 {
-	local tmp = XmmReg1 >> (imm8*32);
+	local tmp8:1 = imm8 & 0x3;
+	local tmp = XmmReg1 >> (tmp8*32);
 	rm32 = tmp[0,32];
 }
 
@@ -3177,41 +3174,28 @@ define pcodeop vpcmpgtq_avx512f ;
 @ifdef IA64
 :VPEXTRQ rm64, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1); byte=0x16; XmmReg1 ... & rm64; imm8
 {
-	local tmp = XmmReg1 >> (imm8*64);
+	local tmp8:1 = imm8 & 0x1;
+	local tmp = XmmReg1 >> (tmp8*64);
 	rm64 = tmp[0,64];
 }
 @endif
 
 # PEXTRW 4-277 PAGE 1397 LINE 72488
-@ifdef IA64
-:VPEXTRW Reg32, XmmReg2, imm8  is $(LONGMODE_ON) & $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0xC5; Reg32 & Reg64 & (mod=0x3 & XmmReg2); imm8
-{
-	local tmp = XmmReg2 >> (imm8*16);
-	Reg64 = zext(tmp[0,16]);
-}
-@endif
-
-:VPEXTRW Reg32, XmmReg2, imm8  is $(LONGMODE_OFF) & $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0xC5; Reg32 & (mod=0x3 & XmmReg2); imm8
+:VPEXTRW Reg32, XmmReg2, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0xC5; Reg32 & check_Reg32_dest & (mod=0x3 & XmmReg2); imm8
 {
 	local tmp = XmmReg2 >> (imm8*16);
 	Reg32 = zext(tmp[0,16]);
+	build check_Reg32_dest;
 }
+
 
 # PEXTRW 4-277 PAGE 1397 LINE 72494
-@ifdef IA64
-:VPEXTRW Reg32, XmmReg1, imm8  is $(LONGMODE_ON) & $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x15; XmmReg1 & mod=3 & Reg32 & Reg64; imm8
-{
-	local tmp = XmmReg1 >> (imm8*16);
-	Reg64 = zext(tmp[0,16]);
-}
-@endif
-
-:VPEXTRW Reg32, XmmReg1, imm8  is $(LONGMODE_OFF) & $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x15; XmmReg1 & mod=3 & Reg32; imm8
+:VPEXTRW Reg32, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x15; XmmReg1 & mod=3 & Reg32 & check_Reg32_dest; imm8
 {
 	local tmp = XmmReg1 >> (imm8*16);
 	Reg32 = zext(tmp[0,16]);
+	build check_Reg32_dest;
 }
-
 
 :VPEXTRW m16, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x15; XmmReg1 ... & m16; imm8
 {
