@@ -15,15 +15,18 @@
  */
 package ghidra.app.plugin.core.function.editor;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
 import ghidra.program.database.ProgramBuilder;
+import ghidra.program.database.ProgramDB;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.ProgramContext;
 
 public class VarnodeLocationCellEditorTest extends AbstractGenericTest {
 	private static final int AARCH64_GENERAL_REGISTER_MAX = 30;
@@ -31,24 +34,23 @@ public class VarnodeLocationCellEditorTest extends AbstractGenericTest {
 	@Test
 	public void testAarch64XRegistersUseNumericOrder() throws Exception {
 		ProgramBuilder builder = new ProgramBuilder("TestProgram", ProgramBuilder._AARCH64);
-		try {
-			List<Register> registers = VarnodeLocationCellEditor.getSortedVisibleRegisters(
-				builder.getProgram().getProgramContext());
-			List<String> xRegisters = new ArrayList<>();
-			for (Register register : registers) {
-				if (register.getName().matches("x\\d+")) {
-					xRegisters.add(register.getName());
-				}
-			}
+		ProgramDB p = builder.getProgram();
+		builder.dispose();
 
-			List<String> expected = new ArrayList<>();
-			for (int i = 0; i <= AARCH64_GENERAL_REGISTER_MAX; i++) {
-				expected.add("x" + i);
+		ProgramContext context = p.getProgramContext();
+		List<Register> registers = VarnodeLocationCellEditor.getSortedVisibleRegisters(context);
+
+		List<String> xRegisters = new ArrayList<>();
+		for (Register register : registers) {
+			if (register.getName().matches("x\\d+")) {
+				xRegisters.add(register.getName());
 			}
-			assertEquals(expected, xRegisters);
 		}
-		finally {
-			builder.dispose();
+
+		List<String> expected = new ArrayList<>();
+		for (int i = 0; i <= AARCH64_GENERAL_REGISTER_MAX; i++) {
+			expected.add("x" + i);
 		}
+		assertEquals(expected, xRegisters);
 	}
 }
