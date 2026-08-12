@@ -8691,7 +8691,7 @@ define pcodeop phsubsw;
 
 :PINSRW        mmxreg, Rmr32, imm8 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xC4; mmxmod=3 & Rmr32 & mmxreg; imm8 
 { 
-    local destIndex:1 = (imm8 & 0x7) * 16:1;
+    local destIndex:1 = (imm8 & 0x3) * 16:1;
     mmxreg = mmxreg & ~(0xffff:8 << destIndex);
     local newVal:8 = zext(Rmr32[0,16]);
     mmxreg = mmxreg | (newVal << destIndex);
@@ -8699,7 +8699,7 @@ define pcodeop phsubsw;
 
 :PINSRW        mmxreg, m16, imm8 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xC4; m16 & mmxreg ... ; imm8 
 { 
-    local destIndex:1 = (imm8 & 0x7) * 16:1;
+    local destIndex:1 = (imm8 & 0x3) * 16:1;
     mmxreg = mmxreg & ~(0xffff:8 << destIndex);
     local newVal:8 = zext(m16);
     mmxreg = mmxreg | (newVal << destIndex);
