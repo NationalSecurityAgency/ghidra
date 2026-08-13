@@ -255,16 +255,17 @@ public class Hexagon_ElfRelocationHandler
 				memValue &= ~0x0fff3fff;
 				memValue |= dist & 0x3fff;
 				dist = dist >>> 14;
-				memValue |= (dist << 20);
+				memValue |= ((dist & 0xFFF) << 16);
 				memory.setInt(relocationAddress, memValue);
 				byteLength = 4;
 				break;
 			case R_HEXAGON_32_6_X:
 				// This relocation is used to handle extended immediates
-				int c = value >> 6;
-				int lo = c & 0x3FFF;
-				int hi = (c >> 14) & 0xFFF;
-				memory.setInt(relocationAddress, (hi << 16) | (lo) | (memValue & ~0x0fff3fff));
+				int c = (value >>> 6);
+				memValue &= ~0x0fff3fff;
+				memValue |= (c & 0x3FFF);
+				memValue |= ((c >> 14) & 0xFFF) << 16;
+				memory.setInt(relocationAddress, memValue);
 				break;
 //			case R_HEXAGON_B22_PCREL_X:
 //				break;
