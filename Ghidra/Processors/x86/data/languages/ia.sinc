@@ -2647,220 +2647,343 @@ with : lockprefx=0 {
                                           
 :BSF Reg16,rm16     is vexMode=0 & opsize=0 & byte=0xf; byte=0xbc; rm16 & Reg16 ...
 {
-    bitIndex:2 = 0;
-
     ZF = ( rm16 == 0 );
-    
-    if ( ZF == 1 ) goto <done>;
-     
-<start>
-    if ( ((rm16 >> bitIndex) & 0x0001) != 0 ) goto <done>;
-      bitIndex = bitIndex + 1;
-    goto <start>;
-    
-<done>
-    Reg16 = bitIndex;
-}                             
 
-#:BSF Reg32,rm32     is vexMode=0 & opsize=1 & byte=0xf; byte=0xbc; rm32 & Reg32 ... & check_Reg32_dest ...      { ZF = rm32 == 0;                 
+    if ( ZF == 1 ) goto <done>;
+
+    bb:2 = rm16 & -rm16;
+    Reg16 = ((((((
+      zext((bb & 0xff00) != 0)) * 2)
+    + zext((bb & 0xf0f0) != 0)) * 2)
+    + zext((bb & 0xcccc) != 0)) * 2)
+    + zext((bb & 0xaaaa) != 0);
+
+<done>
+    PF = ((popcount(Reg16) & 1:1) == 0);
+    CF = 0;
+    OF = 0;
+    SF = 0;
+    AF = 0;
+}
+
+#:BSF Reg32,rm32     is vexMode=0 & opsize=1 & byte=0xf; byte=0xbc; rm32 & Reg32 ... & check_Reg32_dest ...      { ZF = rm32 == 0;
 #                                                choose = 0xffffffff * (zext((0xffff & rm32) == 0));
-#                                                    mask = (0xff0000 & choose) | (0xff | ~choose);  
-#                                                    pos = 16 & choose;                  
-#                                                    choose = 0xffffffff * (zext((mask & rm32) == 0));   
-#                                                    mask1 = (mask << 4) & (mask << 8);          
-#                                                    mask2 = (mask >> 4) & mask;         
-#                                                    mask = (mask1 & choose) | (mask2 | ~choose);    
-#                                                    pos = pos + (8 & choose);               
-#                                                    choose = 0xffffffff * (zext((mask & rm32) == 0));   
-#                                                    mask1 = (mask << 2) & (mask << 4);          
-#                                                    mask2 = (mask >> 2) & mask;         
-#                                                    mask = (mask1 & choose) | (mask2 | ~choose);    
-#                                                    pos = pos + (4 & choose);               
-#                                                    choose = 0xffffffff * (zext((mask & rm32) == 0));   
-#                                                    mask1 = (mask << 1) & (mask << 2);          
-#                                                    mask2 = (mask >> 1) & mask;         
-#                                                    mask = (mask1 & choose) | (mask2 | ~choose);    
-#                                                    pos = pos + (2 & choose);               
-#                                                    choose = zext((mask & rm32) == 0);          
-#                                                    Reg32 = pos + choose; 
+#                                                    mask = (0xff0000 & choose) | (0xff | ~choose);
+#                                                    pos = 16 & choose;
+#                                                    choose = 0xffffffff * (zext((mask & rm32) == 0));
+#                                                    mask1 = (mask << 4) & (mask << 8);
+#                                                    mask2 = (mask >> 4) & mask;
+#                                                    mask = (mask1 & choose) | (mask2 | ~choose);
+#                                                    pos = pos + (8 & choose);
+#                                                    choose = 0xffffffff * (zext((mask & rm32) == 0));
+#                                                    mask1 = (mask << 2) & (mask << 4);
+#                                                    mask2 = (mask >> 2) & mask;
+#                                                    mask = (mask1 & choose) | (mask2 | ~choose);
+#                                                    pos = pos + (4 & choose);
+#                                                    choose = 0xffffffff * (zext((mask & rm32) == 0));
+#                                                    mask1 = (mask << 1) & (mask << 2);
+#                                                    mask2 = (mask >> 1) & mask;
+#                                                    mask = (mask1 & choose) | (mask2 | ~choose);
+#                                                    pos = pos + (2 & choose);
+#                                                    choose = zext((mask & rm32) == 0);
+#                                                    Reg32 = pos + choose;
 #                                                    build check_Reg32_dest;  }
 
-:BSF Reg32,rm32     is vexMode=0 & opsize=1 & byte=0xf; byte=0xbc; rm32 & Reg32 ... & check_Reg32_dest ...                 
+:BSF Reg32,rm32     is vexMode=0 & opsize=1 & byte=0xf; byte=0xbc; rm32 & Reg32 ... & check_Reg32_dest ...
 {
-    bitIndex:4 = 0;
-
     ZF = ( rm32 == 0 );
-    
+
     if ( ZF == 1 ) goto <done>;
-     
-<start>
-    if ( ((rm32 >> bitIndex) & 0x00000001) != 0 ) goto <done>;
-      bitIndex = bitIndex + 1;
-    goto <start>;
-    
+
+    bb:4 = rm32 & -rm32;
+    Reg32 = ((((((((
+      zext((bb & 0xffff0000) != 0)) * 2)
+    + zext((bb & 0xff00ff00) != 0)) * 2)
+    + zext((bb & 0xf0f0f0f0) != 0)) * 2)
+    + zext((bb & 0xcccccccc) != 0)) * 2)
+    + zext((bb & 0xaaaaaaaa) != 0);
+
 <done>
-    Reg32 = bitIndex;
+    PF = ((popcount(Reg32) & 1:1) == 0);
+    CF = 0;
+    OF = 0;
+    SF = 0;
+    AF = 0;
+
     build check_Reg32_dest;
-}                             
-                            
+}
+
 @ifdef IA64
 #:BSF Reg64,rm64     is vexMode=0 & opsize=2 & byte=0xf; byte=0xbc; rm64 & Reg64 ...       { ZF = rm64 == 0;
-## TODO: NEED TO EXTEND THIS TO 64bit op             
+## TODO: NEED TO EXTEND THIS TO 64bit op
 #                                                    choose = 0xffffffff * (zext((0xffff & rm64) == 0));
-#                                                    mask = (0xff0000 & choose) | (0xff | ~choose);  
-#                                                    pos = 16 & choose;                  
-#                                                    choose = 0xffffffff * (zext((mask & rm64) == 0));   
-#                                                    mask1 = (mask << 4) & (mask << 8);          
-#                                                    mask2 = (mask >> 4) & mask;         
-#                                                    mask = (mask1 & choose) | (mask2 | ~choose);    
-#                                                    pos = pos + (8 & choose);               
-#                                                    choose = 0xffffffff * (zext((mask & rm64) == 0));   
-#                                                    mask1 = (mask << 2) & (mask << 4);          
-#                                                    mask2 = (mask >> 2) & mask;         
-#                                                    mask = (mask1 & choose) | (mask2 | ~choose);    
-#                                                    pos = pos + (4 & choose);               
-#                                                    choose = 0xffffffff * (zext((mask & rm64) == 0));   
-#                                                    mask1 = (mask << 1) & (mask << 2);          
-#                                                    mask2 = (mask >> 1) & mask;         
-#                                                    mask = (mask1 & choose) | (mask2 | ~choose);    
-#                                                    pos = pos + (2 & choose);               
-#                                                    choose = zext((mask & rm64) == 0);          
-#                                                    Reg64 = pos + choose; }                            
+#                                                    mask = (0xff0000 & choose) | (0xff | ~choose);
+#                                                    pos = 16 & choose;
+#                                                    choose = 0xffffffff * (zext((mask & rm64) == 0));
+#                                                    mask1 = (mask << 4) & (mask << 8);
+#                                                    mask2 = (mask >> 4) & mask;
+#                                                    mask = (mask1 & choose) | (mask2 | ~choose);
+#                                                    pos = pos + (8 & choose);
+#                                                    choose = 0xffffffff * (zext((mask & rm64) == 0));
+#                                                    mask1 = (mask << 2) & (mask << 4);
+#                                                    mask2 = (mask >> 2) & mask;
+#                                                    mask = (mask1 & choose) | (mask2 | ~choose);
+#                                                    pos = pos + (4 & choose);
+#                                                    choose = 0xffffffff * (zext((mask & rm64) == 0));
+#                                                    mask1 = (mask << 1) & (mask << 2);
+#                                                    mask2 = (mask >> 1) & mask;
+#                                                    mask = (mask1 & choose) | (mask2 | ~choose);
+#                                                    pos = pos + (2 & choose);
+#                                                    choose = zext((mask & rm64) == 0);
+#                                                    Reg64 = pos + choose; }
 
-:BSF Reg64,rm64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xbc; rm64 & Reg64 ...                         
+:BSF Reg64,rm64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xbc; rm64 & Reg64 ...
 {
-    bitIndex:8 = 0;
-
     ZF = ( rm64 == 0 );
-    
+
     if ( ZF == 1 ) goto <done>;
-     
-<start>
-    if ( ((rm64 >> bitIndex) & 0x0000000000000001) != 0 ) goto <done>;
-      bitIndex = bitIndex + 1;
-    goto <start>;
-    
+
+    bb:8 = rm64 & -rm64;
+    Reg64 = (((((((((
+      zext((bb & 0xffffffff00000000) != 0)  * 2)
+    + zext((bb & 0xffff0000ffff0000) != 0)) * 2)
+    + zext((bb & 0xff00ff00ff00ff00) != 0)) * 2)
+    + zext((bb & 0xf0f0f0f0f0f0f0f0) != 0)) * 2)
+    + zext((bb & 0xcccccccccccccccc) != 0)) * 2)
+    + zext((bb & 0xaaaaaaaaaaaaaaaa) != 0);
+
 <done>
-    Reg64 = bitIndex;
-}                             
+    PF = ((popcount(Reg64) & 1:1) == 0);
+    CF = 0;
+    OF = 0;
+    SF = 0;
+    AF = 0;
+}
 @endif
 
-#:BSR Reg16,rm16     is vexMode=0 & opsize=0 & byte=0xf; byte=0xbd; rm16 & Reg16 ... { ZF = rm16 == 0;                  
+#:BSR Reg16,rm16     is vexMode=0 & opsize=0 & byte=0xf; byte=0xbd; rm16 & Reg16 ... { ZF = rm16 == 0;
 #                                                   choose = 0xffff * (zext((0xff00 & rm16) == 0));
-#                                                   mask = (0xf000 & ~choose) | (0xf0 | choose);  
-#                                                   pos = 16 - (8 & choose);            
-#                                                   choose = 0xffff * (zext((mask & rm16) == 0)); 
-#                                                   mask1 = (mask >> 2) & (mask >> 4);          
-#                                                   mask2 = (mask << 2) & mask;         
-#                                                   mask = (mask1 & choose) | (mask2 | ~choose);  
-#                                                   pos = pos - (4 & choose);               
-#                                                   choose = 0xffff * (zext((mask & rm16) == 0)); 
-#                                                   mask1 = (mask >> 1) & (mask >> 2);          
-#                                                   mask2 = (mask << 1) & mask;         
-#                                                   mask = (mask1 & choose) | (mask2 | ~choose);  
-#                                                   pos = pos - (2 & choose);               
-#                                                   choose = zext((mask & rm16) == 0);          
-#                                                   Reg16 = pos - choose; }                       
+#                                                   mask = (0xf000 & ~choose) | (0xf0 | choose);
+#                                                   pos = 16 - (8 & choose);
+#                                                   choose = 0xffff * (zext((mask & rm16) == 0));
+#                                                   mask1 = (mask >> 2) & (mask >> 4);
+#                                                   mask2 = (mask << 2) & mask;
+#                                                   mask = (mask1 & choose) | (mask2 | ~choose);
+#                                                   pos = pos - (4 & choose);
+#                                                   choose = 0xffff * (zext((mask & rm16) == 0));
+#                                                   mask1 = (mask >> 1) & (mask >> 2);
+#                                                   mask2 = (mask << 1) & mask;
+#                                                   mask = (mask1 & choose) | (mask2 | ~choose);
+#                                                   pos = pos - (2 & choose);
+#                                                   choose = zext((mask & rm16) == 0);
+#                                                   Reg16 = pos - choose; }
 
-:BSR Reg16,rm16     is vexMode=0 & opsize=0 & byte=0xf; byte=0xbd; rm16 & Reg16 ...                   
+:BSR Reg16,rm16     is vexMode=0 & opsize=0 & byte=0xf; byte=0xbd; rm16 & Reg16 ...
 {
-    bitIndex:2 = 15;
-
     ZF = ( rm16 == 0 );
-    
-    if ( ZF == 1 ) goto <done>;
-     
-<start>
-    if ( (rm16 >> bitIndex) != 0 ) goto <done>;
-      bitIndex = bitIndex - 1;
-    goto <start>;
-    
-<done>
-    Reg16 = bitIndex;
-}                             
 
-#:BSR Reg32,rm32     is vexMode=0 & opsize=1 & byte=0xf; byte=0xbd; rm32 & Reg32 ... & check_Reg32_dest ... { ZF = rm32 == 0;                         
-#                                                  choose = 0xffffffff * (zext((0xffff0000 & rm32) == 0));  
-#                                                  mask = (0xff000000 & ~choose) | (0xff00 | choose);          
-#                                                  pos = 32 - (16 & choose);                   
-#                                                  choose = 0xffffffff * (zext((mask & rm32) == 0));       
-#                                                  mask1 = (mask >> 4) & (mask >> 8);                  
-#                                                  mask2 = (mask << 4) & mask;                 
-#                                                  mask = (mask1 & choose) | (mask2 | ~choose);        
-#                                                  pos = pos - (8 & choose);                   
-#                                                  choose = 0xffffffff * (zext((mask & rm32) == 0));       
-#                                                  mask1 = (mask >> 2) & (mask >> 4);                  
-#                                                  mask2 = (mask << 2) & mask;                 
-#                                                  mask = (mask1 & choose) | (mask2 | ~choose);        
-#                                                  pos = pos - (4 & choose);                   
-#                                                  choose = 0xffffffff * (zext((mask & rm32) == 0));       
-#                                                  mask1 = (mask >> 1) & (mask >> 2);                  
-#                                                  mask2 = (mask << 1) & mask;                 
-#                                                  mask = (mask1 & choose) | (mask2 | ~choose);        
-#                                                  pos = pos - (2 & choose);                   
-#                                                  choose = zext((mask & rm32) == 0);                  
-#                                                  Reg32 = pos - choose; 
+    if ( ZF == 1 ) goto <zero>;
+
+    local bb = rm16;
+    result:2 = 0;
+
+    if (bb > 0xFF) goto <plus8>;
+<check4>
+    if (bb > 0xF) goto <plus4>;
+<check2>
+    if (bb > 3) goto <plus2>;
+<check1>
+    if (bb > 1) goto <plus1>;
+
+    goto <done>;
+
+<plus8>
+    bb = bb >> 8;
+    result = result + 8;
+    goto <check4>;
+<plus4>
+    bb = bb >> 4;
+    result = result + 4;
+    goto <check2>;
+<plus2>
+    bb = bb >> 2;
+    result = result + 2;
+    goto <check1>;
+<plus1>
+    result = result + 1;
+
+<done>
+    Reg16 = result;
+<zero>
+}
+
+#:BSR Reg32,rm32     is vexMode=0 & opsize=1 & byte=0xf; byte=0xbd; rm32 & Reg32 ... & check_Reg32_dest ... { ZF = rm32 == 0;
+#                                                  choose = 0xffffffff * (zext((0xffff0000 & rm32) == 0));
+#                                                  mask = (0xff000000 & ~choose) | (0xff00 | choose);
+#                                                  pos = 32 - (16 & choose);
+#                                                  choose = 0xffffffff * (zext((mask & rm32) == 0));
+#                                                  mask1 = (mask >> 4) & (mask >> 8);
+#                                                  mask2 = (mask << 4) & mask;
+#                                                  mask = (mask1 & choose) | (mask2 | ~choose);
+#                                                  pos = pos - (8 & choose);
+#                                                  choose = 0xffffffff * (zext((mask & rm32) == 0));
+#                                                  mask1 = (mask >> 2) & (mask >> 4);
+#                                                  mask2 = (mask << 2) & mask;
+#                                                  mask = (mask1 & choose) | (mask2 | ~choose);
+#                                                  pos = pos - (4 & choose);
+#                                                  choose = 0xffffffff * (zext((mask & rm32) == 0));
+#                                                  mask1 = (mask >> 1) & (mask >> 2);
+#                                                  mask2 = (mask << 1) & mask;
+#                                                  mask = (mask1 & choose) | (mask2 | ~choose);
+#                                                  pos = pos - (2 & choose);
+#                                                  choose = zext((mask & rm32) == 0);
+#                                                  Reg32 = pos - choose;
 #                                                  build check_Reg32_dest; }
-                                                                                  
+
 :BSR Reg32,rm32     is vexMode=0 & opsize=1 & byte=0xf; byte=0xbd; rm32 & Reg32 ... & check_Reg32_dest ...
 {
-    bitIndex:4 = 31;
-
     ZF = ( rm32 == 0 );
-    
-    if ( ZF == 1 ) goto <done>;
-     
-<start>
-    if ( (rm32 >> bitIndex) != 0 ) goto <done>;
-      bitIndex = bitIndex - 1;
-    goto <start>;
-    
+
+    if ( ZF == 1 ) goto <zero>;
+
+    local bb = rm32;
+    result:4 = 0;
+
+    if (bb > 0xFFFF) goto <plus16>;
+<check8>
+    if (bb > 0xFF) goto <plus8>;
+<check4>
+    if (bb > 0xF) goto <plus4>;
+<check2>
+    if (bb > 3) goto <plus2>;
+<check1>
+    if (bb > 1) goto <plus1>;
+
+    goto <done>;
+
+<plus16>
+    bb = bb >> 16;
+    result = result + 16;
+    goto <check8>;
+<plus8>
+    bb = bb >> 8;
+    result = result + 8;
+    goto <check4>;
+<plus4>
+    bb = bb >> 4;
+    result = result + 4;
+    goto <check2>;
+<plus2>
+    bb = bb >> 2;
+    result = result + 2;
+    goto <check1>;
+<plus1>
+    result = result + 1;
+
 <done>
-    Reg32 = bitIndex;
-    build check_Reg32_dest;
-}                             
+    Reg32 = result;
+<zero>
+}
 
 
 @ifdef IA64
-#:BSR Reg64,rm64     is vexMode=0 & opsize=2 & byte=0xf; byte=0xbd; rm64 & Reg64 ... { ZF = rm64 == 0;                         
-## TODO: NEED TO EXTEND THIS TO 64bit op     
-#                                                  choose = 0xffffffff * (zext((0xffff0000 & rm64) == 0));  
-#                                                  mask = (0xff000000 & ~choose) | (0xff00 | choose);          
-#                                                  pos = 32 - (16 & choose);                   
-#                                                  choose = 0xffffffff * (zext((mask & rm64) == 0));       
-#                                                  mask1 = (mask >> 4) & (mask >> 8);                  
-#                                                  mask2 = (mask << 4) & mask;                 
-#                                                  mask = (mask1 & choose) | (mask2 | ~choose);        
-#                                                  pos = pos - (8 & choose);                   
-#                                                  choose = 0xffffffff * (zext((mask & rm64) == 0));       
-#                                                  mask1 = (mask >> 2) & (mask >> 4);                  
-#                                                  mask2 = (mask << 2) & mask;                 
-#                                                  mask = (mask1 & choose) | (mask2 | ~choose);        
-#                                                  pos = pos - (4 & choose);                   
-#                                                  choose = 0xffffffff * (zext((mask & rm64) == 0));       
-#                                                  mask1 = (mask >> 1) & (mask >> 2);                  
-#                                                  mask2 = (mask << 1) & mask;                 
-#                                                  mask = (mask1 & choose) | (mask2 | ~choose);        
-#                                                  pos = pos - (2 & choose);                   
-#                                                  choose = zext((mask & rm64) == 0);                  
-#                                                  Reg64 = pos - choose; }                                  
+#:BSR Reg64,rm64     is vexMode=0 & opsize=2 & byte=0xf; byte=0xbd; rm64 & Reg64 ... { ZF = rm64 == 0;
+## TODO: NEED TO EXTEND THIS TO 64bit op
+#                                                  choose = 0xffffffff * (zext((0xffff0000 & rm64) == 0));
+#                                                  mask = (0xff000000 & ~choose) | (0xff00 | choose);
+#                                                  pos = 32 - (16 & choose);
+#                                                  choose = 0xffffffff * (zext((mask & rm64) == 0));
+#                                                  mask1 = (mask >> 4) & (mask >> 8);
+#                                                  mask2 = (mask << 4) & mask;
+#                                                  mask = (mask1 & choose) | (mask2 | ~choose);
+#                                                  pos = pos - (8 & choose);
+#                                                  choose = 0xffffffff * (zext((mask & rm64) == 0));
+#                                                  mask1 = (mask >> 2) & (mask >> 4);
+#                                                  mask2 = (mask << 2) & mask;
+#                                                  mask = (mask1 & choose) | (mask2 | ~choose);
+#                                                  pos = pos - (4 & choose);
+#                                                  choose = 0xffffffff * (zext((mask & rm64) == 0));
+#                                                  mask1 = (mask >> 1) & (mask >> 2);
+#                                                  mask2 = (mask << 1) & mask;
+#                                                  mask = (mask1 & choose) | (mask2 | ~choose);
+#                                                  pos = pos - (2 & choose);
+#                                                  choose = zext((mask & rm64) == 0);
+#                                                  Reg64 = pos - choose; }
 
-:BSR Reg64,rm64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xbd; rm64 & Reg64 ...                         
+:BSR Reg64,rm64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xbd; rm64 & Reg64 ...
 {
-    bitIndex:8 = 63;
+# FIXME: I think this would be a bit nicer since it doesn't use CBRANCH but the pcode gets truncated...
+#  The current constructor works but produces a lot of dead branches in constant expressions
+
+#     ZF = ( rm64 == 0 );
+#
+#      if ( ZF == 1 ) goto <zero>;
+#
+#      local bb = rm64;
+#      result:8 = 0;
+#
+#      bb = bb >> ((bb > 0xFFFFFFFF) * 32);
+#      result = result + ((bb > 0xFFFFFFFF) * 32);
+#      bb = bb >> ((bb > 0xFFFF) * 16);
+#      result = result + ((bb > 0xFFFF) * 16);
+#      bb = bb >> ((bb > 0xFF) * 8);
+#      result = result + ((bb > 0xFF) * 8);
+#      bb = bb >> ((bb > 0xF) * 4);
+#      result = result + ((bb > 0xF) * 4);
+#      bb = bb >> ((bb > 0x3) * 2);
+#      result = result + ((bb > 0x3) * 2);
+#      result = result + (bb > 1);
+#      Reg64 = result;
+#  <zero>
 
     ZF = ( rm64 == 0 );
-    
-    if ( ZF == 1 ) goto <done>;
-     
-<start>
-    if ( (rm64 >> bitIndex) != 0 ) goto <done>;
-      bitIndex = bitIndex - 1;
-    goto <start>;
-    
+
+    if ( ZF == 1 ) goto <zero>;
+
+    local bb = rm64;
+    result:8 = 0;
+
+    if (bb > 0xFFFFFFFF) goto <plus32>;
+<check16>
+    if (bb > 0xFFFF) goto <plus16>;
+<check8>
+    if (bb > 0xFF) goto <plus8>;
+<check4>
+    if (bb > 0xF) goto <plus4>;
+<check2>
+    if (bb > 3) goto <plus2>;
+<check1>
+    if (bb > 1) goto <plus1>;
+
+    goto <done>;
+
+<plus32>
+    bb = bb >> 32;
+    result = result + 32;
+    goto <check16>;
+<plus16>
+    bb = bb >> 16;
+    result = result + 16;
+    goto <check8>;
+<plus8>
+    bb = bb >> 8;
+    result = result + 8;
+    goto <check4>;
+<plus4>
+    bb = bb >> 4;
+    result = result + 4;
+    goto <check2>;
+<plus2>
+    bb = bb >> 2;
+    result = result + 2;
+    goto <check1>;
+<plus1>
+    result = result + 1;
+
 <done>
-    Reg64 = bitIndex;
-}                             
+    Reg64 = result;
+<zero>
+}
 
 @endif
 
