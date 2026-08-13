@@ -215,7 +215,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		settingsTable.setColumnSelectionAllowed(false);
 
 		// make the rows a bit taller to allow the integer text field editor to render correctly
-		settingsTable.setRowHeight(22);
+		settingsTable.setRowPadding(4);
 
 		// disable user sorting and column adding (we don't expect enough data to require sorting)
 		settingsTable.getTableHeader().setReorderingAllowed(false);
@@ -730,7 +730,6 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 
 	class StringSettingsComboBox extends GComboBox<String> {
 		StringSettingsComboBox() {
-			super();
 		}
 	}
 

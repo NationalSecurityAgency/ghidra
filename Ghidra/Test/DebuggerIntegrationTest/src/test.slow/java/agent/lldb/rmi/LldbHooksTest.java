@@ -16,7 +16,8 @@
 package agent.lldb.rmi;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
@@ -42,7 +43,8 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	private static final long RUN_TIMEOUT_MS = 5000;
 	private static final long RETRY_MS = 500;
 
-	record LldbAndTrace(LldbAndConnection conn, ManagedDomainObject mdo) implements AutoCloseable {
+	record LldbAndTrace(LldbAndConnection conn, ManagedDomainObject<Trace> mdo)
+			implements AutoCloseable {
 		public void execute(String cmd) {
 			conn.execute(cmd);
 		}
@@ -81,8 +83,8 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 		LldbAndConnection conn = startAndConnectLldb();
 		try {
 			conn.execute("ghidra trace start");
-			ManagedDomainObject mdo = waitDomainObject("/New Traces/lldb/noname");
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			ManagedDomainObject<Trace> mdo = waitTrace("/New Traces/lldb/noname");
+			tb = new ToyDBTraceBuilder(mdo.get());
 			return new LldbAndTrace(conn, mdo);
 		}
 		catch (Exception e) {
@@ -316,9 +318,9 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 		try (LldbAndTrace conn = startAndSyncLldb()) {
 			start(conn, getSpecimenPrint());
 
-			TraceObject inf = waitForValue(() -> tb.objAny0("Processes[]"));
+			TraceObject proc = waitForValue(() -> tb.objAny0("Processes[]"));
 			waitForPass(() -> {
-				assertEquals("STOPPED", tb.objValue(inf, lastSnap(conn), "_state"));
+				assertEquals("STOPPED", tb.objValue(proc, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 			conn.success();
 		}
@@ -412,11 +414,11 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 
 			waitStopped(conn.conn);
 			conn.execute("breakpoint delete %s".formatted(brk.getCanonicalPath().index()));
-			conn.execute("stepi");
+			waitForPass(noExc(() -> conn.execute("stepi")));
 
-			waitForPass(
-				() -> assertEquals(0,
-					tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size()));
+			waitForPass(() -> {
+				assertEquals(0, tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size());
+			});
 			conn.success();
 		}
 	}
@@ -438,8 +440,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			conn.success();
 		}
 	}
-	
-	
+
 	private void start(LldbAndTrace conn, String obj) {
 		conn.execute("file " + obj);
 		conn.execute("ghidra trace sync-enable");

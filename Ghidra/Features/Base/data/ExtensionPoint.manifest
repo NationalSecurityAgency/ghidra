@@ -3,8 +3,12 @@ Demangler
 Exporter
 FieldFactory
 FieldMouseHandler
+FileSystem
 StringHandler
 Loader
+SourceLanguage
+SourceLanguageDataArchive
+SourceLanguageSpecExtension
 TableRowMapper
 ScriptProvider
 Recognizer

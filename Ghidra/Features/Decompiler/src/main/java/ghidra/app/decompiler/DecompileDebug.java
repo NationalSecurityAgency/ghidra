@@ -37,6 +37,7 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.Namespace;
+import ghidra.program.model.symbol.RefType;
 import ghidra.util.Msg;
 import ghidra.util.xml.SpecXmlUtils;
 
@@ -777,6 +778,37 @@ public class DecompileDebug {
 		AddressXML.encode(encoder, addr);
 		encoder.closeElement(ELEM_FLOW);
 		flowoverride.add(encoder.toString());
+	}
+
+	public void addDestinationOverride(Address addr, Address destAddr, String type)
+			throws IOException {
+		XmlEncode encoder = new XmlEncode();
+		encoder.openElement(ELEM_CALLDEST);
+		encoder.writeString(ATTRIB_TYPE, type);
+		AddressXML.encode(encoder, func.getEntryPoint());
+		AddressXML.encode(encoder, addr);
+		AddressXML.encode(encoder, destAddr);
+		encoder.closeElement(ELEM_CALLDEST);
+		flowoverride.add(encoder.toString());
+	}
+
+	public void handleOverrides(Address addr, Instruction instr) throws IOException {
+		InstructionPcodeOverride over = new InstructionPcodeOverride(instr);
+		FlowOverride flowOverride = over.getFlowOverride();
+		if (flowOverride != FlowOverride.NONE)
+			addFlowOverride(addr, flowOverride);
+		Address destAddr = over.getOverridingReference(RefType.CALL_OVERRIDE_UNCONDITIONAL);
+		if (destAddr != null) {
+			addDestinationOverride(addr, destAddr, "call_call");
+		}
+		destAddr = over.getOverridingReference(RefType.CALLOTHER_OVERRIDE_CALL);
+		if (destAddr != null) {
+			addDestinationOverride(addr, destAddr, "callother_call");
+		}
+		destAddr = over.getOverridingReference(RefType.CALLOTHER_OVERRIDE_JUMP);
+		if (destAddr != null) {
+			addDestinationOverride(addr, destAddr, "callother_branch");
+		}
 	}
 
 	public void addInject(Address addr, String name, int injectType, String payload)

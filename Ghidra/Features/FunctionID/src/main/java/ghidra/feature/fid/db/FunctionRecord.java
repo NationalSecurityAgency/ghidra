@@ -235,7 +235,7 @@ public class FunctionRecord extends DbObject implements FidHashQuad {
 	 * Never need to refresh...this database object is immutable.
 	 */
 	@Override
-	protected boolean refresh() {
+	protected boolean refresh(DBRecord rec) {
 		return false;
 	}
 }

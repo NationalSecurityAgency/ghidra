@@ -185,7 +185,7 @@ public class DndTableCellRenderer implements TableCellRenderer {
 				if (column == 0 && !inserting) {
 					border.addBorders(DndBorder.LEFT);
 				}
-				if (column == myTable.getColumnCount() - 1 & !inserting) {
+				if (column == myTable.getColumnCount() - 1 && !inserting) {
 					border.addBorders(DndBorder.RIGHT);
 				}
 				c.setBorder(border);

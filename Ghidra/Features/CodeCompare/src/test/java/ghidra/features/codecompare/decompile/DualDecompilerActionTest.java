@@ -359,81 +359,87 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 	 * stripped signature: 	undefined8 FUN_0040c987(uint *param_1,char *param_2):
 	 
 	 Decomp of 'cplus_demangle' in 'demangler_gnu_v2_24_fulldebug':
-	  	 1|
-	  	 2| char * cplus_demangle(char *mangled,int options)
-		 3|
-		 4| {
-		 5|   char *pcVar1;
-		 6|   int options_local;
-		 7|   char *mangled_local;
-		 8|   work_stuff work [1];
-		 9|   char *ret;
-		10|  
-		11|   if (current_demangling_style == no_demangling) {
-		12|     pcVar1 = xstrdup(mangled);
-		13|   }
-		14|   else {
-		15|     memset(work,0,0x70);
-		16|     work[0].options = options;
-		17|     if ((options & 0xff04U) == 0) {
-		18|       work[0].options =
-		19|            current_demangling_style &
-		20|            (gnat_demangling|gnu_v3_demangling|edg_demangling|hp_demangling|arm_demangling|
-		21|             lucid_demangling|gnu_demangling|auto_demangling|java_demangling) | options;
-		22|     }
-		23|     if (((((work[0].options & 0x4000U) == 0) && ((work[0].options & 0x100U) == 0)) ||
-		24|         ((pcVar1 = cplus_demangle_v3(mangled,work[0].options), pcVar1 == (char *)0x0 &&
-		25|          ((work[0].options & 0x4000U) == 0)))) &&
-		26|        (((work[0].options & 4U) == 0 || (pcVar1 = java_demangle_v3(mangled), pcVar1 == (char *)0x0))
-		27|        )) {
-		28|       if ((work[0].options & 0x8000U) == 0) {
-		29|         pcVar1 = internal_cplus_demangle(work,mangled);
-		30|         squangle_mop_up(work);
-		31|       }
-		32|       else {
-		33|         pcVar1 = ada_demangle(mangled,options);
-		34|       }
-		35|     }
-		36|   }
-		37|   return pcVar1;
-		38| }
+	1| 
+	2| char * cplus_demangle(char *mangled,int options)
+	3| 
+	4| {
+	5|  char *pcVar1;
+	6|  int options_local;
+	7|  char *mangled_local;
+	8|  work_stuff work [0x1];
+	9|  char *ret;
+	10| 
+	11|   if (current_demangling_style == no_demangling) {
+	12|     pcVar1 = xstrdup(mangled);
+	13|   }
+	14|   else {
+	15|     memset(work,0x0,0x70);
+	16|     work[0x0].options = options;
+	17|     if ((options & 0xff04U) == 0x0) {
+	18|       work[0x0].options =
+	19|            current_demangling_style &
+	20|            (gnat_demangling|gnu_v3_demangling|edg_demangling|hp_demangling|arm_demangling|
+	21|             lucid_demangling|gnu_demangling|auto_demangling|java_demangling) | options;
+	22|     }
+	23|     if ((((work[0x0].options & 0x4000U) != 0x0) || ((work[0x0].options & 0x100U) != 0x0)) &&
+	24|        ((pcVar1 = cplus_demangle_v3(mangled,work[0x0].options), pcVar1 != NULL ||
+	25|         ((work[0x0].options & 0x4000U) != 0x0)))) {
+	26|       return pcVar1;
+	27|     }
+	28|     if (((work[0x0].options & 0x4U) != 0x0) && (pcVar1 = java_demangle_v3(mangled), pcVar1 != NULL))
+	29|     {
+	30|       return pcVar1;
+	31|     }
+	32|     if ((work[0x0].options & 0x8000U) == 0x0) {
+	33|       pcVar1 = internal_cplus_demangle(work,mangled);
+	34|       squangle_mop_up(work);
+	35|     }
+	36|     else {
+	37|       pcVar1 = ada_demangle(mangled,options);
+	38|     }
+	39|   }
+	40|   return pcVar1;
+	41| }
 		
 		
 	 Decomp of 'FUN_0040c01b' (cplus_demangle) in 'demangler_gnu_v2_24_stripped':
-		 1|
-		 2| long FUN_0040c01b(undefined8 param_1,uint param_2)
-		 3|
-		 4| {
-		 5|   long lVar1;
-		 6|   uint local_88 [30];
-		 7|   long local_10;
-		 8|
-		 9|   if (DAT_0041d150 == 0xffffffff) {
-		10|     local_10 = FUN_0040b419(param_1);
-		11|   }
-		12|   else {
-		13|     memset(local_88,0,0x70);
-		14|     local_88[0] = param_2;
-		15|     if ((param_2 & 0xff04) == 0) {
-		16|       local_88[0] = DAT_0041d150 & 0xff04 | param_2;
-		17|     }
-		18|     if (((((local_88[0] & 0x4000) == 0) && (lVar1 = local_10, (local_88[0] & 0x100) == 0)) ||
-		19|         ((local_10 = FUN_0040a8cc(param_1,local_88[0]), local_10 == 0 &&
-		20|          (lVar1 = 0, (local_88[0] & 0x4000) == 0)))) &&
-		21|        ((local_10 = lVar1, (local_88[0] & 4) == 0 ||
-		22|         (local_10 = FUN_0040a922(param_1), local_10 == 0)))) {
-		23|       if ((local_88[0] & 0x8000) == 0) {
-		24|         local_10 = FUN_0040c987(local_88,param_1);
-		25|         FUN_0040cb6c(local_88);
-		26|       }
-		27|       else {
-		28|         local_10 = FUN_0040c154(param_1,param_2);
-		29|       }
-		30|     }
-		31|   }
-		32|   return local_10;
-		33| }
-	 */
+	1| 
+	2| long FUN_0040c01b(undefined8 param_1,uint param_2)
+	3| 
+	4| {
+	5|   long lVar1;
+	6|   uint local_88 [0x1e];
+	7|   long local_10;
+	8| 
+	9|   if (DAT_0041d150 == 0xffffffff) {
+	10|      local_10 = FUN_0040b419(param_1);
+	11|   }
+	12|   else {
+	13|     memset(local_88,0x0,0x70);
+	14|     local_88[0x0] = param_2;
+	15|     if ((param_2 & 0xff04) == 0x0) {
+	16|       local_88[0x0] = DAT_0041d150 & 0xff04 | param_2;
+	17|     }
+	18|     if ((((local_88[0x0] & 0x4000) != 0x0) || ((local_88[0x0] & 0x100) != 0x0)) &&
+	19|        ((lVar1 = FUN_0040a8cc(param_1,local_88[0x0]), lVar1 != 0x0 ||
+	20|         (local_10 = 0x0, (local_88[0x0] & 0x4000) != 0x0)))) {
+	21|       return lVar1;
+	22|     }
+	23|     if (((local_88[0x0] & 0x4) != 0x0) && (local_10 = FUN_0040a922(param_1), local_10 != 0x0)) {
+	24|      return local_10;
+	25|     }
+	26|     if ((local_88[0x0] & 0x8000) == 0x0) {
+	27|       local_10 = FUN_0040c987(local_88,param_1);
+	28|       FUN_0040cb6c(local_88);
+	29|     }
+	30|     else {
+	31|       local_10 = FUN_0040c154(param_1,param_2);
+	32|     }
+	33|   }
+	34|   return local_10;
+	35| }
+	
+	*/
 
 	@Test
 	public void testFullStructTypeTransferAction() {
@@ -559,7 +565,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		assertEquals("local_10", currentToken.getText());
 		assertNotEnabled(calleeNameTransferAction, getProviderContext());
 
-		line = 24;
+		line = 27;
 		col = 11;
 		currentToken = setDecompLocation(correlatedPanel, Side.RIGHT, line, col);
 		// Cursor is now on correlated callee token 'FUN_0040c987'
@@ -617,7 +623,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		assertEquals("local_10", currentToken.getText());
 		assertNotEnabled(calleeFullSignatureTransferAction, getProviderContext());
 
-		line = 24;
+		line = 27;
 		col = 11;
 		currentToken = setDecompLocation(correlatedPanel, Side.RIGHT, line, col);
 		// Cursor is now on correlated callee token 'FUN_0040c987'
@@ -628,7 +634,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		waitForDecompile(correlatedPanel);
 
 		// Check updated function name
-		line = 25;
+		line = 28;
 		currentToken = setDecompLocation(correlatedPanel, Side.RIGHT, line, col);
 		assertEquals("internal_cplus_demangle", currentToken.getText());
 
@@ -704,7 +710,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		assertEquals("local_10", currentToken.getText());
 		assertNotEnabled(calleeFullSignatureTransferAction, getProviderContext());
 
-		line = 24;
+		line = 27;
 		col = 11;
 		currentToken = setDecompLocation(correlatedPanel, Side.RIGHT, line, col);
 		// Cursor is now on correlated callee token 'FUN_0040c987'
@@ -715,7 +721,12 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		waitForDecompile(correlatedPanel);
 
 		// Check updated function name
-		currentToken = getCurrentToken(correlatedPanel, Side.RIGHT);
+		// signature transfer action changed the decompilation, the function
+		// token we want is now one line down
+		line = 28;
+		col = 11;
+		currentToken = setDecompLocation(correlatedPanel, Side.RIGHT, line, col);
+		//currentToken = getCurrentToken(correlatedPanel, Side.RIGHT);
 		assertEquals("internal_cplus_demangle", currentToken.getText());
 
 		// Check updated function signature 

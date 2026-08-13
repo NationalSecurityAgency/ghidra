@@ -18,7 +18,7 @@ package ghidra.feature.vt.api.markuptype;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import ghidra.feature.vt.api.impl.MarkupItemImpl;
 import ghidra.feature.vt.api.main.*;
@@ -134,7 +134,7 @@ public abstract class CommentMarkupType extends VTMarkupType {
 		CommentType commentType = getCodeUnitCommentType();
 		Listing destinationListing = getDestinationListing(markupItem.getAssociation());
 		String comment = destinationListing.getComment(commentType, destinationAddress);
-		if (!StringUtils.equals(originalDestinationComment, comment)) {
+		if (!Strings.CS.equals(originalDestinationComment, comment)) {
 			destinationListing.setComment(destinationAddress, commentType,
 				originalDestinationComment);
 		}

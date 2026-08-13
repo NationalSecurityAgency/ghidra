@@ -90,11 +90,6 @@ class CategoryDB extends DbObject implements Category {
 	}
 
 	@Override
-	protected boolean refresh() {
-		return refresh(null);
-	}
-
-	@Override
 	protected boolean refresh(DBRecord rec) {
 		subcategoryMap.clear();
 		dataTypeMap.clear();

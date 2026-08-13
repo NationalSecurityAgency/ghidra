@@ -15,7 +15,7 @@
  */
 package ghidra.program.model.pcode;
 
-import static ghidra.program.model.pcode.AttributeId.ATTRIB_CONTENT;
+import static ghidra.program.model.pcode.AttributeId.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -248,6 +248,11 @@ public class XmlEncode implements CachedEncoder {
 		buffer.append("=\"");
 		buffer.append(name);
 		buffer.append("\"");
+	}
+
+	@Override
+	public void writeOpcode(AttributeId attribId, int opcode) throws IOException {
+		writeOpcode(attribId, OpCode.getOpcode(opcode));
 	}
 
 	@Override

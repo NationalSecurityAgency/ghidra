@@ -102,12 +102,12 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 	private Table propertyTable; // used to retain DB version only
 
 	/**
-	 * Factory method which constructs a new VTSessionDB using specified source and desitination
+	 * Factory method which constructs a new VTSessionDB using specified source and destination
 	 * programs.
 	 * @param name name to be assigned to the resulting domain object file
 	 * @param sourceProgram session source program within active project
 	 * @param destinationProgram session destination program open for update within active project
-	 * @param consumer object consumer resposible for the proper release of the returned instance.
+	 * @param consumer object consumer responsible for the proper release of the returned instance.
 	 * @return new {@link VTSessionDB} object
 	 * @throws IOException if an IO error occurs
 	 * @deprecated {@link #VTSessionDB(String, Program, Program, Object)} should be used instead
@@ -119,18 +119,17 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 	}
 
 	/**
-	 * Construct a new VTSessionDB using specified source and desitination programs.
+	 * Construct a new VTSessionDB using specified source and destination programs.
 	 * @param name name to be assigned to the resulting domain object file
 	 * @param sourceProgram session source program within active project
 	 * @param destinationProgram session destination program open for update within active project
-	 * @param consumer object consumer resposible for the proper release of the returned instance.
+	 * @param consumer object consumer responsible for the proper release of the returned instance.
 	 * @throws IOException if an IO error occurs
 	 */
 	public VTSessionDB(String name, Program sourceProgram, Program destinationProgram,
 			Object consumer) throws IOException {
 		super(new DBHandle(), UNUSED_DEFAULT_NAME, EVENT_NOTIFICATION_DELAY, consumer);
 		tagCache = new DbCache<>(new TagFactory(), lock, 10);
-		propertyTable = dbh.getTable(PROPERTY_TABLE_NAME);
 
 		int ID = startTransaction("Constructing New Version Tracking Match Set");
 		try {
@@ -174,7 +173,6 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 	 * @throws VersionException if database version does not match implementation, UPGRADE may be possible.
 	 * @throws CancelledException if instantiation is canceled by monitor
 	 */
-	@SuppressWarnings("unused")
 	VTSessionDB(DBHandle dbHandle, TaskMonitor monitor, Object consumer)
 			throws VersionException, IOException, CancelledException {
 		super(dbHandle, UNUSED_DEFAULT_NAME, EVENT_NOTIFICATION_DELAY, consumer);
@@ -183,6 +181,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 		// It is assumed we always have exclusive access to the underlying database
 		OpenMode openMode = OpenMode.UPGRADE;
 
+		tagCache = new DbCache<>(new TagFactory(), lock, 10);
 		propertyTable = dbHandle.getTable(PROPERTY_TABLE_NAME);
 
 		int storedVersion = getVersion();
@@ -260,7 +259,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 	 * Open associated source and destination program files and complete session initialization.
 	 * @param projectData active project data
 	 * @throws IOException if source or destination program not found within specified project
-	 * or an error occured while opening them (e.g., upgrade required).
+	 * or an error occurred while opening them (e.g., upgrade required).
 	 */
 	private void openSourceAndDestinationPrograms(ProjectData projectData) throws IOException {
 		String sourceProgramID = getSourceProgramID();

@@ -15,10 +15,13 @@
  */
 package ghidra.app.cmd.comments;
 
+import java.util.Objects;
+
 import ghidra.app.util.viewer.field.CommentUtils;
 import ghidra.framework.cmd.Command;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
+import ghidra.util.exception.AssertException;
 
 /**
  * Command for editing and removing comments at an address.
@@ -31,7 +34,6 @@ public class SetCommentsCmd implements Command<Program> {
 	private String eolComment;
 	private String plateComment;
 	private String repeatableComment;
-	private String msg;
 
 	/**
 	 * Construct command for setting all the different types of comments at an
@@ -54,63 +56,48 @@ public class SetCommentsCmd implements Command<Program> {
 		this.repeatableComment = newRepeatableComment;
 	}
 
-	/**
-	 * The name of the edit action.
-	 */
 	@Override
 	public String getName() {
 		return "Set Comments";
 	}
 
-	/**
-	 * return true if the newValue and oldValue are different
-	 * @param newValue the value that we desire to set
-	 * @param oldValue the existing value
-	 * @return boolean
-	 */
-	private boolean commentChanged(String newValue, String oldValue) {
-		if (newValue == null && oldValue == null) {
-			return false;
-		}
-		if (newValue != null) {
-			return !newValue.equals(oldValue);
-		}
-		return !oldValue.equals(newValue);
-	}
-
 	@Override
 	public boolean applyTo(Program program) {
 		CodeUnit cu = getCodeUnit(program);
+		if (cu == null) {
+			return false;
+		}
 
-		if (cu != null) {
-			if (commentChanged(cu.getComment(CommentType.PRE), preComment)) {
-				String updatedPreComment = CommentUtils.fixupAnnotations(preComment, program);
-				updatedPreComment = CommentUtils.sanitize(updatedPreComment);
-				cu.setComment(CommentType.PRE, updatedPreComment);
+		Address addr = cu.getAddress();
+		for (CommentType type : CommentType.values()) {
+			String newComment = getComment(type);
+			String oldComment = cu.getComment(type);
+			if (Objects.equals(oldComment, newComment)) {
+				continue;
 			}
-			if (commentChanged(cu.getComment(CommentType.POST), postComment)) {
-				String updatedPostComment = CommentUtils.fixupAnnotations(postComment, program);
-				updatedPostComment = CommentUtils.sanitize(updatedPostComment);
-				cu.setComment(CommentType.POST, updatedPostComment);
-			}
-			if (commentChanged(cu.getComment(CommentType.EOL), eolComment)) {
-				String updatedEOLComment = CommentUtils.fixupAnnotations(eolComment, program);
-				updatedEOLComment = CommentUtils.sanitize(updatedEOLComment);
-				cu.setComment(CommentType.EOL, updatedEOLComment);
-			}
-			if (commentChanged(cu.getComment(CommentType.PLATE), plateComment)) {
-				String updatedPlateComment = CommentUtils.fixupAnnotations(plateComment, program);
-				updatedPlateComment = CommentUtils.sanitize(updatedPlateComment);
-				cu.setComment(CommentType.PLATE, updatedPlateComment);
-			}
-			if (commentChanged(cu.getComment(CommentType.REPEATABLE), repeatableComment)) {
-				String updatedRepeatableComment =
-					CommentUtils.fixupAnnotations(repeatableComment, program);
-				updatedRepeatableComment = CommentUtils.sanitize(updatedRepeatableComment);
-				cu.setComment(CommentType.REPEATABLE, updatedRepeatableComment);
-			}
+
+			String fixedComment = CommentUtils.fixupAnnotations(newComment, program, addr);
+			fixedComment = CommentUtils.sanitize(fixedComment);
+			cu.setComment(type, fixedComment);
 		}
 		return true;
+	}
+
+	private String getComment(CommentType type) {
+		switch (type) {
+			case EOL:
+				return eolComment;
+			case PLATE:
+				return plateComment;
+			case POST:
+				return postComment;
+			case PRE:
+				return preComment;
+			case REPEATABLE:
+				return repeatableComment;
+			default:
+				throw new AssertException("Unhandled CommentType");
+		}
 	}
 
 	/**
@@ -134,7 +121,6 @@ public class SetCommentsCmd implements Command<Program> {
 
 	@Override
 	public String getStatusMsg() {
-		return msg;
+		return null;
 	}
-
 }

@@ -11,3 +11,4 @@ src/main/py/README.md||GHIDRA||||END|
 src/main/py/pyproject.toml||GHIDRA||||END|
 src/main/py/src/ghidraxdbg/py.typed||GHIDRA||||END|
 src/main/py/src/ghidraxdbg/schema.xml||GHIDRA||||END|
+src/main/py/src/ghidraxdbg/x64dbg_base.xml||GHIDRA||||END|

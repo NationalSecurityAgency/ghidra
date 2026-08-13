@@ -69,10 +69,14 @@
       <P align="center"><A name="Processor_Manual_Options"></A> <IMG src=
       "images/ProcessorManualOptions.png" border="0"></P>
 
+	  
+	  <BR>
+	  <BR>
+	  
       <TABLE border="1">
         <TBODY>
           <TR>
-            <TH width="20%">Options Name</TH>
+            <TH width="25%">Options Name</TH>
 
             <TH>Description</TH>
           </TR>
@@ -89,20 +93,190 @@
           <TR>
             <TD valign="top">Command Arguments</TD>
 
-            <TD>A space separated list of arguments that Ghidra will pass to the process listed
+            <TD>
+			
+			A space separated list of arguments that Ghidra will pass to the process listed
             above. If you need to include spaces as part of one of the arguments, then enclose the
-            argument in double quotes (e.g., "arg with space").</TD>
+            argument in double quotes (e.g., "arg with space").
+			<BR><BR>
+			The arguments will be passed to the process with the url as the last argument.  The 
+			exception to this is if you use the ${FILENAME} variable.  In that case, the file path
+			will be passed where you placed it in the list of arguments.
+			<BR><BR>
+			Ghidra will process the following variables, if present:
+				<UL>
+					<LI>
+						${FILENAME} - this will be replaced with the file path.
+					</LI>
+					<LI>
+						${PAGE} - this will be replaced with the page number for the current 
+						instruction.
+					</LI>
+				</UL>
+			</TD>
           </TR>
 
           <TR>
             <TD valign="top">File Format</TD>
 
             <TD>Ghidra will pass, by default, a URL to the given process. You may change this value
-            to signal to Ghidra that it should pass a filename instead.</TD>
+            to signal to Ghidra that it should pass a filename instead.
+			
+				<UL>
+					<LI>
+						${HTTP_URL} - an http url suitable for a web browser.  This will be a url 
+						that points to temp page that itself points to a file and page number of the
+						instruction.
+					</LI>
+					<LI>
+						${FILE_URL} - a file url that includes the page number of the instruction.
+					</LI>
+					<LI>
+						${FILENAME} - the file path without the leading 'file:' protocol.
+					</LI>
+				</UL>
+			
+			</TD>
           </TR>
         </TBODY>
-      </TABLE><BR>
+      </TABLE>
+	  <BR>
       <BR>
+		
+	  <H3>Examples</H3>
+	  <BLOCKQUOTE>
+		<TABLE border="1" width="90%">
+        <TBODY>
+          <TR>
+            <TH width="25%">Options Name</TH> 
+			<TH>Value</TH>
+          </TR>
+
+          <TR>
+            <TD valign="top" align="right">Command String</TD>
+
+            <TD>
+				google-chrome
+			</TD>
+          </TR>
+
+          <TR>
+            <TD valign="top" align="right">Command Arguments</TD>
+
+            <TD>
+
+			</TD>
+          </TR>
+
+          <TR>
+            <TD valign="top" align="right">File Format</TD>
+
+            <TD>
+				${FILE_URL}
+			</TD>
+          </TR>
+		  <TR>
+		    <TD valign="top" align="right"><I>Result</I></TD>
+
+		    <TD>
+				<CODE>
+					google-chrome file:/usr/local/manuals/processor.pdf#page=717
+				  </CODE>
+		  </TD>
+		  </TR>
+		    </TBODY>
+		  </TABLE>
+		  
+		  <BR>
+		  <BR>
+		  <TABLE border="1" width="90%">
+          <TBODY>
+            <TR>
+              <TH width="25%">Options Name</TH> 
+  			  <TH>Value</TH>
+            </TR>
+
+            <TR>
+              <TD valign="top" align="right">Command String</TD>
+
+              <TD>
+  				cmd.exe
+  			</TD>
+            </TR>
+
+            <TR>
+              <TD valign="top" align="right">Command Arguments</TD>
+              <TD>
+				/c start
+  			</TD>
+            </TR>
+
+            <TR>
+              <TD valign="top" align="right">File Format</TD>
+
+              <TD>
+  				${HTTP_URL}
+  			</TD>
+            </TR>
+  		  <TR>
+  		    <TD valign="top" align="right"><I>Result</I></TD>
+
+  		    <TD>
+  				<CODE>
+  					cmd.exe /c start file:/tmp/user-ghidra/pdfView5915851125268369591.html
+  				  </CODE>
+  		  </TD>
+  		  </TR>
+	    </TBODY>
+	  </TABLE>
+
+	  
+	  <BR>
+  	  <BR>
+  	  <TABLE border="1" width="90%">
+           <TBODY>
+             <TR>
+               <TH width="25%">Options Name</TH> 
+   			  <TH>Value</TH>
+             </TR>
+
+             <TR>
+               <TD valign="top" align="right">Command String</TD>
+
+               <TD>
+   				C:\SumatraPDF.exe
+   			</TD>
+             </TR>
+
+             <TR>
+               <TD valign="top" align="right">Command Arguments</TD>
+               <TD>
+				-resuse-instance -page ${PAGE} 
+   			</TD>
+             </TR>
+
+             <TR>
+               <TD valign="top" align="right">File Format</TD>
+
+               <TD>
+   				${FILENAME}
+   			</TD>
+             </TR>
+   		  <TR>
+   		    <TD valign="top" align="right"><I>Result</I></TD>
+
+   		    <TD>
+   				<CODE>
+   					C:\SumatraPDF.exe -resuse-instance -page 67 processor.pdf
+   				  </CODE>
+   		  </TD>
+   		  </TR>
+      </TBODY>
+    </TABLE>
+	  
+	  <BR>
+	  <BR>
+		</BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <H2><A name="Show_Instruction_Info_Window"></A><B>Instruction Info Window</B></H2>

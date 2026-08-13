@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.function.Predicate;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 /**
  * A class that holds the logic and state for finding matching rows in a widget when a user types
@@ -183,7 +183,7 @@ public abstract class AutoLookup {
 
 	private boolean textMatches(String text, int row, int col) {
 		String value = getValueString(row, col);
-		return StringUtils.startsWithIgnoreCase(value, text);
+		return Strings.CI.startsWith(value, text);
 	}
 
 	private boolean isIgnorableKeyEvent(KeyEvent event) {

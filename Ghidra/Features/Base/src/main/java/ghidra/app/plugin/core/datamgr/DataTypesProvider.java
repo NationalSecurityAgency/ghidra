@@ -544,7 +544,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		DataType dataType = dataTypeNode.getDataType();
 		if (dataType.isDeleted()) {
 			// this can happen during an undo
-			lastPreviewNode = null;
+			clearDataTypePreview();
 			return;
 		}
 
@@ -552,6 +552,11 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		String updated = HTMLUtilities.convertLinkPlaceholdersToHyperlinks(toolTipText);
 		previewPane.setText(updated);
 		previewPane.setCaretPosition(0);
+	}
+
+	private void clearDataTypePreview() {
+		lastPreviewNode = null;
+		previewPane.setText("");
 	}
 
 	void dispose() {
@@ -975,6 +980,10 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 
 		long id = program.getUniqueProgramID();
 		programTreeState.remove(id);
+	}
+
+	void programActivated(Program program) {
+		clearDataTypePreview();
 	}
 
 	void archiveClosed(DataTypeManager dtm) {

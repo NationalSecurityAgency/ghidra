@@ -310,6 +310,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	@Override
 	protected void programActivated(Program program) {
 		program.addListener(this);
+		provider.programActivated(program);
 		dataTypeManagerHandler.programOpened(program);
 		dataTypePropertyManager.programOpened(program);
 	}

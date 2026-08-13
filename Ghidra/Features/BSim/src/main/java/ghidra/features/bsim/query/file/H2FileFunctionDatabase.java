@@ -52,7 +52,7 @@ public class H2FileFunctionDatabase extends AbstractSQLFunctionDatabase<Base64Ve
 	 * @param bsimURL local file URL for H2 database
 	 */
 	public H2FileFunctionDatabase(URL bsimURL) {
-		this(BSimH2FileDBConnectionManager.getDataSource(bsimURL));
+		this(BSimH2FileDBConnectionManager.getDataSource(new BSimServerInfo(bsimURL)));
 	}
 
 	/**

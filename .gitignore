@@ -88,3 +88,5 @@ core.*
 # python files
 *.egg-info
 __pycache__
+
+gradle.lockfile

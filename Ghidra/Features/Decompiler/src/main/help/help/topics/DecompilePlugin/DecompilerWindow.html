@@ -101,7 +101,7 @@
     tokens (see <a class="xref" href="DecompilerWindow.html#MouseActions" title="Mouse Actions">Mouse Actions</a>).
   </p>
 
-  <div class="sect2">
+  	<div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="CrossHighlighting"></a>Cross-Highlighting</h3></div></div></div>
     
@@ -147,6 +147,23 @@
 
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="LockDisplay"></a>Disabling Auto Refresh</h2></div></div></div>
+  
+  <p>
+  	For very large functions, the decompile window can take a significant amount of time to re-decompile
+  	and update the display as changes are made to the program. This makes using some actions
+  	frustrating, such as renaming or retyping variables. 
+  </p>
+  <p>
+  	As a work around, you may use the lock toggle action 
+  	<img src="images/lock.gif" width="16" height="16">. When selected, this action will prevent
+  	the decompiler from auto refreshing for each change. This may make the display appear to be
+  	broken since any changes will not appear to take effect until the display is manually refreshed.
+	</p>
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="Snapshot"></a>Snapshot Windows</h2></div></div></div>
   
   <p>
@@ -187,6 +204,14 @@
     Double-clicking on specific tokens within the Snapshot window may also cause it to navigate
     to a new location (see <a class="xref" href="DecompilerWindow.html#MouseDouble" title="Double-Click">Double-Click</a>).
   </p>
+  <a name="EventsOut"></a>
+  <p>
+  	Normally, snapshot windows are completely disconnected from the location and selection 
+  	events that synchronize the main components in the tool. To allow the snapshot window
+  	to export its location and selection, select the 
+  	<img src="images/locationOut.gif" width="16" height="16"> toolbar action.
+  </p>
+  	
 </div>
 
 <div class="section">

@@ -103,7 +103,7 @@ public abstract class VTMarkupType {
 	/**
 	 * Returns true if both the source and destination have the same value such that there is
 	 * nothing to apply.
-	 * @param markupItem the markup item to check for having the save source and desination values.
+	 * @param markupItem the markup item to check for having the same source and destination values.
 	 * @return true if both the source and destination have the same value such that there is
 	 * nothing to apply.
 	 */

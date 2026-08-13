@@ -128,12 +128,10 @@ abstract class DataTypeDB extends DbObject implements DataType {
 		super.setDeleted();
 	}
 
-	@Override
-	protected boolean refresh() {
+	protected final void completeRefresh() {
 		category = null;
 		defaultSettings = null;
 		refreshName();
-		return true;
 	}
 
 	@Override

@@ -35,7 +35,6 @@ import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.debug.api.modules.*;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainFile;
@@ -704,7 +703,7 @@ public class DynamicStaticSynchronizationPlugin extends Plugin {
 			consoleService.log(DebuggerResources.ICON_LOG_ERROR,
 				"<html>The module <b><tt>" + HTMLUtilities.escapeHTML(mod.getName(snap)) +
 					"</tt></b> was not found in the project</html>",
-				new DebuggerMissingModuleActionContext(mod));
+				new DebuggerMissingModuleActionContext(mod, snap));
 		}
 		/**
 		 * Once the programs are opened, including those which are successfully imported, the

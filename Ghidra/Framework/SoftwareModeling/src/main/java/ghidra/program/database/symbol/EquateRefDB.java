@@ -41,8 +41,10 @@ class EquateRefDB extends DbObject implements EquateReference {
 	}
 
 	@Override
-	protected boolean refresh() {
-		DBRecord rec = equateMgr.getEquateRefRecord(key);
+	protected boolean refresh(DBRecord rec) {
+		if (rec == null) {
+			rec = equateMgr.getEquateRefRecord(key);
+		}
 		if (rec == null) {
 			return false;
 		}

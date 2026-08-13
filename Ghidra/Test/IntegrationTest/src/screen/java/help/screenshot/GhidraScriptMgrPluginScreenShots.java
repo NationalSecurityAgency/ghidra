@@ -35,7 +35,6 @@ import ghidra.app.plugin.core.osgi.BundleStatusComponentProvider;
 import ghidra.app.plugin.core.script.*;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
-import ghidra.jython.JythonScriptProvider;
 import ghidra.util.HelpLocation;
 import ghidra.util.datastruct.LRUSet;
 
@@ -223,7 +222,7 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 		List<GhidraScriptProvider> items = new ArrayList<>();
 		JavaScriptProvider javaScriptProvider = new JavaScriptProvider();
 		items.add(javaScriptProvider);
-		items.add(new JythonScriptProvider());
+		//items.add(new JythonScriptProvider());
 		final PickProviderDialog pickDialog = new PickProviderDialog(items, javaScriptProvider);
 		runSwing(() -> tool.showDialog(pickDialog), false);
 

@@ -176,6 +176,13 @@ public class GenericAddress implements Address {
 		}
 		return addrSpace.addNoWrap(this, displacement);
 	}
+	@Override
+	public Address subtractNoWrap(BigInteger displacement) throws AddressOverflowException {
+		if (displacement.equals(BigInteger.ZERO)) {
+			return this;
+		}
+		return addrSpace.subtractNoWrap(this, displacement);
+	}
 
 	@Override
 	public Address add(long displacement) {
@@ -274,7 +281,7 @@ public class GenericAddress implements Address {
 		}
 		long mod = 0;
 		if (unitSize > 1) {
-			mod = displayOffset % unitSize;
+			mod = Long.remainderUnsigned(displayOffset, unitSize);
 			displayOffset = addrSpace.getAddressableWordOffset(displayOffset);
 		}
 
@@ -287,7 +294,7 @@ public class GenericAddress implements Address {
 		buf.append(addressString);
 		if (mod != 0) {
 			buf.append('.');
-			buf.append(mod);
+			buf.append(Long.toHexString(mod));
 		}
 		if (stackFormat) {
 			buf.append(STACK_ADDRESS_SUFFIX);

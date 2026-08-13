@@ -80,11 +80,15 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 	private static final String DEFAULT_GROUP_BACKGROUND_COLOR_DESCRPTION =
 		"The default background color applied to newly created group vertices";
 
-	private static final String UPDATE_GROUP_AND_UNGROUP_COLORS =
+	private static final String UPDATE_GROUP_AND_UNGROUP_COLORS_KEY =
 		"Update Vertex Colors When Grouping";
 	private static final String UPDATE_GROUP_AND_UNGROUP_COLORS_DESCRIPTION =
 		"Signals that any user color changes to a group vertex will apply that same color to " +
 			"all grouped vertices as well.";
+
+	private static final String MAX_NODES_KEY = "Max Nodes";
+	private static final String MAX_NODES_DESCRIPTION =
+		"The maximum number of nodes to process before cancelling graph loading.";
 
 	private boolean updateGroupColorsAutomatically = true;
 
@@ -102,6 +106,7 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 	private GColor unconditionalJumpEdgeHighlightColor = new GColor("color.bg.plugin.functiongraph.edge.jump.unconditional.highlight");
 	//@formatter:on
 
+	private int maxNodes = 1000;
 	private boolean useFullSizeTooltip = false;
 
 	private RelayoutOption relayoutOption = RelayoutOption.VERTEX_GROUPING_CHANGES;
@@ -120,6 +125,10 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 
 	public boolean getUpdateGroupColorsAutomatically() {
 		return updateGroupColorsAutomatically;
+	}
+
+	public int getMaxNodes() {
+		return maxNodes;
 	}
 
 	public Color getFallthroughEdgeColor() {
@@ -178,11 +187,13 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		options.registerThemeColorBinding(DEFAULT_GROUP_BACKGROUND_COLOR_KEY,
 			defaultGroupBackgroundColor.getId(), help, DEFAULT_GROUP_BACKGROUND_COLOR_DESCRPTION);
 
-		options.registerOption(UPDATE_GROUP_AND_UNGROUP_COLORS, updateGroupColorsAutomatically,
+		options.registerOption(UPDATE_GROUP_AND_UNGROUP_COLORS_KEY, updateGroupColorsAutomatically,
 			help, UPDATE_GROUP_AND_UNGROUP_COLORS_DESCRIPTION);
 
 		options.registerOption(USE_FULL_SIZE_TOOLTIP_KEY, useFullSizeTooltip, help,
 			USE_FULL_SIZE_TOOLTIP_DESCRIPTION);
+
+		options.registerOption(MAX_NODES_KEY, maxNodes, help, MAX_NODES_DESCRIPTION);
 
 		options.registerThemeColorBinding(EDGE_COLOR_CONDITIONAL_JUMP_KEY,
 			conditionalJumpEdgeColor.getId(), help, "Conditional jump edge color");
@@ -220,7 +231,9 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		useFullSizeTooltip = options.getBoolean(USE_FULL_SIZE_TOOLTIP_KEY, useFullSizeTooltip);
 
 		updateGroupColorsAutomatically =
-			options.getBoolean(UPDATE_GROUP_AND_UNGROUP_COLORS, updateGroupColorsAutomatically);
+			options.getBoolean(UPDATE_GROUP_AND_UNGROUP_COLORS_KEY, updateGroupColorsAutomatically);
+
+		maxNodes = options.getInt(MAX_NODES_KEY, maxNodes);
 
 		Set<Entry<String, FGLayoutOptions>> entries = layoutOptionsByName.entrySet();
 		for (Entry<String, FGLayoutOptions> entry : entries) {

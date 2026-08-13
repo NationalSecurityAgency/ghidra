@@ -28,6 +28,7 @@ import docking.action.DockingActionIf;
 import docking.action.builder.ActionBuilder;
 import generic.ULongSpan;
 import generic.theme.GThemeDefaults.Colors;
+import ghidra.app.plugin.core.debug.gui.breakpoint.timeline.BreakpointTimelineProvider;
 import ghidra.app.plugin.core.debug.gui.timeoverview.*;
 import ghidra.app.plugin.core.overview.OverviewColorLegendDialog;
 import ghidra.app.services.DebuggerTraceManagerService;
@@ -38,7 +39,6 @@ import ghidra.program.model.symbol.RefType;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
-import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.util.TraceEvents;
@@ -86,27 +86,21 @@ public class BreakpointTimeOverviewColorService implements TimeOverviewColorServ
 	}
 
 	private static String OPTIONS_NAME = "Breakpoint Hit Timeline";
-
-	private PluginTool tool;
-
-	Trace currentTrace;
-	TimeOverviewColorComponent overviewComponent;
-	DialogComponentProvider legendDialog;
-	BreakTypeOverviewLegendPanel legendPanel;
-	TimeOverviewColorPlugin plugin;
-
 	private final BreakpointTimeOverviewEventListener eventListener =
 		new BreakpointTimeOverviewEventListener();
-
 	private final Map<CellType, Color> colorMap = new HashMap<>();
 	private final Map<Integer, Long> indexToSnap = new HashMap<>();
 	private final Map<Long, Color> snapToColor = new HashMap<>();
 	private final Map<Long, String> snapToTooltip = new HashMap<>();
 	private final Map<Long, ULongSpan> snapToRange = new HashMap<>();
-
+	Trace currentTrace;
+	TimeOverviewColorComponent overviewComponent;
+	DialogComponentProvider legendDialog;
+	BreakTypeOverviewLegendPanel legendPanel;
+	TimeOverviewColorPlugin plugin;
 	List<BreakpointEvent> snapsWithBreakpointsHit = new ArrayList<>();
-
 	Lifespan bounds;
+	private PluginTool tool;
 	private DebuggerTraceManagerService debuggerTraceManagerService;
 
 	protected void calculateBreakpointHits() {
@@ -192,9 +186,11 @@ public class BreakpointTimeOverviewColorService implements TimeOverviewColorServ
 
 	private void findAndAddExecuteBreakpointHits(TraceBreakpointLocation breakpointLocation,
 			AddressRange range) {
-		final Collection<? extends TraceObjectValue> intersecting = currentTrace.getObjectManager()
-				.getValuesIntersecting(Lifespan.ALL, range, TraceStackFrame.KEY_PC);
-		for (final TraceObjectValue tov : intersecting) {
+		final Iterator<? extends TraceObjectValue> intersecting = BreakpointTimelineProvider
+				.getTraceObjectValuesWithPCsIntersectingRange(currentTrace, range);
+
+		while (intersecting.hasNext()) {
+			final TraceObjectValue tov = intersecting.next();
 			snapsWithBreakpointsHit
 					.add(new BreakpointEvent(tov.getMinSnap(), CellType.INSTRUCTION_EXECUTED));
 		}
@@ -240,7 +236,8 @@ public class BreakpointTimeOverviewColorService implements TimeOverviewColorServ
 	/**
 	 * Returns the color associated with the given {@link CellType}
 	 *
-	 * @param breakType the span type for which to get a color.
+	 * @param breakType
+	 * 		the span type for which to get a color.
 	 * @return the color associated with the given {@link CellType}
 	 */
 	public Color getColor(CellType breakType) {

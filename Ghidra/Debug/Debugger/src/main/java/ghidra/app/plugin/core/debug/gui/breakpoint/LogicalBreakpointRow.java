@@ -125,7 +125,7 @@ public class LogicalBreakpointRow {
 		return lb.getDomainObject();
 	}
 
-	public String getKinds() {
+	public String getKind() {
 		return TraceBreakpointKindSet.encode(lb.getKinds());
 	}
 

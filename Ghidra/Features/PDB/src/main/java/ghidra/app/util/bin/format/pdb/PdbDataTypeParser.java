@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.pdb;
 
 import java.util.*;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.database.data.DataTypeUtilities;
@@ -52,25 +52,22 @@ class PdbDataTypeParser {
 
 		cachePrimitiveDataType(new TypedefDataType("wchar", WideCharDataType.dataType));
 
-		cachePrimitiveDataType(new TypedefDataType("__int8",
-			AbstractIntegerDataType.getSignedDataType(1, programDataTypeMgr)));
-		cachePrimitiveDataType(new TypedefDataType("__uint8",
-			AbstractIntegerDataType.getUnsignedDataType(1, programDataTypeMgr)));
-
-		cachePrimitiveDataType(new TypedefDataType("__int16",
-			AbstractIntegerDataType.getSignedDataType(2, programDataTypeMgr)));
-		cachePrimitiveDataType(new TypedefDataType("__uint16",
-			AbstractIntegerDataType.getUnsignedDataType(2, programDataTypeMgr)));
-
-		cachePrimitiveDataType(new TypedefDataType("__int32",
-			AbstractIntegerDataType.getSignedDataType(4, programDataTypeMgr)));
-		cachePrimitiveDataType(new TypedefDataType("__uint32",
-			AbstractIntegerDataType.getUnsignedDataType(2, programDataTypeMgr)));
-
-		cachePrimitiveDataType(new TypedefDataType("__int64",
-			AbstractIntegerDataType.getSignedDataType(8, programDataTypeMgr)));
-		cachePrimitiveDataType(new TypedefDataType("__uint64",
-			AbstractIntegerDataType.getUnsignedDataType(8, programDataTypeMgr)));
+		cachePrimitiveDataType(
+			new TypedefDataType("__int8", Int8TDataType.dataType.clone(programDataTypeMgr)));
+		cachePrimitiveDataType(
+			new TypedefDataType("__uint8", UInt8TDataType.dataType.clone(programDataTypeMgr)));
+		cachePrimitiveDataType(
+			new TypedefDataType("__int16", Int16TDataType.dataType.clone(programDataTypeMgr)));
+		cachePrimitiveDataType(
+			new TypedefDataType("__uint16", UInt16TDataType.dataType.clone(programDataTypeMgr)));
+		cachePrimitiveDataType(
+			new TypedefDataType("__int32", Int32TDataType.dataType.clone(programDataTypeMgr)));
+		cachePrimitiveDataType(
+			new TypedefDataType("__uint32", UInt32TDataType.dataType.clone(programDataTypeMgr)));
+		cachePrimitiveDataType(
+			new TypedefDataType("__int64", Int64TDataType.dataType.clone(programDataTypeMgr)));
+		cachePrimitiveDataType(
+			new TypedefDataType("__uint64", UInt64TDataType.dataType.clone(programDataTypeMgr)));
 	}
 
 	/**
@@ -198,7 +195,7 @@ class PdbDataTypeParser {
 		}
 
 		// Deal with other unrecognized types
-		dataTypeName = StringUtils.replace(dataTypeName, "<NoType>", "undefined");
+		dataTypeName = Strings.CS.replace(dataTypeName, "<NoType>", "undefined");
 
 		// Example type representations:
 		// char *[2][3]     pointer(array(array(char,3),2))

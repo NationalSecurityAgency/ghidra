@@ -35,8 +35,12 @@ import help.HelpDescriptor;
 // activated and is scheduled to get focus at a later time.  This variable is static so that only
 // one component at a time is ever scheduled to request focus.  This prevents a possible bug where
 // two or more dialogs rapidly and continuously swap activation back and forth.
-
 public class DockingDialog extends JDialog implements HelpDescriptor {
+
+	// fairly arbitrary values
+	private static final int MIN_WIDTH = 100;
+	private static final int MIN_HEIGHT = 100;
+
 	private static Component focusComponent; // allow only one scheduled focus component. See above.
 
 	private static Map<String, BoundsInfo> dialogBoundsMap =
@@ -128,6 +132,9 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 	}
 
 	private void initializeLocationAndSize(Component centeredOnComponent) {
+
+		// Set a minimum size to prevent losing windows made too small under error conditions 
+		setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
 
 		String key = getKey();
 		BoundsInfo boundsInfo = dialogBoundsMap.get(key);

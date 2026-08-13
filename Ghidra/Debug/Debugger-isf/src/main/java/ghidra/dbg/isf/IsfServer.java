@@ -36,7 +36,6 @@ import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.FileDataTypeManager;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
-import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class IsfServer extends Thread {
@@ -101,13 +100,13 @@ public class IsfServer extends Thread {
 			try {
 				DataTypeManager dtm;
 				if (ns.endsWith(".gdt")) {
-					dtm = openAsArchive(ns);
+					dtm = openAsDataTypeArchive(ns);
 				}
 				else if (ns.endsWith(".gzf")) {
-					dtm = openAsDatabase(ns);
+					dtm = openAsProgramDatabase(ns);
 				}
 				else {
-					dtm = openAsDomainFile(ns);
+					dtm = openAsProgramFile(ns);
 				}
 				managers.put(ns, dtm);
 				return dtm;
@@ -119,43 +118,43 @@ public class IsfServer extends Thread {
 		}
 	}
 
-	private DataTypeManager openAsDomainFile(String ns) throws Exception {
+	private DataTypeManager openAsProgramFile(String ns) throws Exception {
 		ProjectData projectData = project.getProjectData();
 		DomainFile df = projectData.getFile(ns);
+		if (!Program.class.isAssignableFrom(df.getDomainObjectClass())) {
+			throw new IOException("File does not correspond to Program content: " + ns);
+		}
+
+		// FIXME: Need to track and release Program instance after DTM use is complete (GP-6895)
 		Program program = (Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		return program.getDataTypeManager();
 	}
 
-	private DataTypeManager openAsArchive(String ns) throws Exception {
+	private DataTypeManager openAsDataTypeArchive(String ns) throws Exception {
 		File gdt = new File(ns);
 		return FileDataTypeManager.openFileArchive(gdt, false);
 	}
 
-	private DataTypeManager openAsDatabase(String ns) throws Exception {
+	private DataTypeManager openAsProgramDatabase(String ns) throws Exception {
 		File gzf = new File(ns);
 		TaskMonitor dummy = TaskMonitor.DUMMY;
 		PackedDatabase db = PackedDatabase.getPackedDatabase(gzf, dummy);
+
 		DBHandle dbh = db.openForUpdate(dummy);
-		ProgramDB p = null;
+
+		Program p;
+		boolean success = false;
 		try {
-			p = new ProgramDB(dbh, OpenMode.UPDATE, dummy, this);
-		}
-		catch (VersionException e) {
-			if (!e.isUpgradable()) {
-				throw new RuntimeException(p + " uses an older version and is not upgradable.");
-			}
+			p = new ProgramDB(dbh, OpenMode.UPGRADE, dummy, this);
+			success = true;
 		}
 		finally {
-			dbh.close();
+			if (!success) {
+				dbh.close();
+			}
 		}
 
-		dbh = db.openForUpdate(dummy);
-		p = new ProgramDB(dbh, OpenMode.UPGRADE, dummy, this);
-
-		if (!p.isChanged()) {
-			throw new RuntimeException(p + " uses an older version and was not upgraded.");
-		}
-
+		// FIXME: Need to track and release Program instance after DTM use is complete (GP-6895)
 		return p.getListing().getDataTypeManager();
 	}
 

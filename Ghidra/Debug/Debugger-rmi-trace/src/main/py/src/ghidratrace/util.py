@@ -20,6 +20,7 @@ from typing import TypeVar
 from google.protobuf import message as _message
 
 M = TypeVar('M', bound=_message.Message)
+MAX_MSG_LENGTH = 1 << 16 # Plenty and shouldn't cause OOM
 
 
 def send_length(s: socket.socket, value: int) -> None:
@@ -28,7 +29,10 @@ def send_length(s: socket.socket, value: int) -> None:
 
 def send_delimited(s: socket.socket, msg: _message.Message) -> None:
     data = msg.SerializeToString()
-    send_length(s, len(data))
+    size = len(data)
+    if size > MAX_MSG_LENGTH:
+        raise TraceRmiError("Cannot send TraceRmi message with excessive length")
+    send_length(s, size)
     s.sendall(data)
 
 
@@ -52,6 +56,8 @@ def recv_length(s: socket.socket) -> int:
 
 def recv_delimited(s: socket.socket, msg: M, dbg_seq: int) -> M:
     size = recv_length(s)
+    if size > MAX_MSG_LENGTH:
+        raise TraceRmiError("Cannot receive TraceRmi message with excessive message length")
     buf = recv_all(s, size)
     if len(buf) < size:
         raise Exception("Socket closed")

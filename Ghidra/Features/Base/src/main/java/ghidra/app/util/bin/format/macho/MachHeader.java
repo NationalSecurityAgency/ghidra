@@ -51,6 +51,8 @@ public class MachHeader implements StructConverter {
 	private long _machHeaderStartIndex = 0;
 	private boolean _parsed = false;
 
+	private static final int MAX_LOAD_COMMANDS = 32_768;
+
 	/**
 	 * Returns true if the specified ByteProvider starts with a Mach header magic signature.
 	 * 
@@ -74,7 +76,7 @@ public class MachHeader implements StructConverter {
 	 * 
 	 * @param provider the ByteProvider
 	 * @throws IOException if an I/O error occurs while reading from the ByteProvider
-	 * @throws MachException if an invalid MachHeader is detected
+	 * @throws MachException if an invalid header is detected
 	 */
 	public MachHeader(ByteProvider provider) throws IOException, MachException {
 		this(provider, 0);
@@ -88,7 +90,7 @@ public class MachHeader implements StructConverter {
 	 * @param machHeaderStartIndexInProvider the index into the ByteProvider where the MachHeader 
 	 *   begins
 	 * @throws IOException if an I/O error occurs while reading from the ByteProvider
-	 * @throws MachException if an invalid MachHeader is detected
+	 * @throws MachException if an invalid header is detected
 	 */
 	public MachHeader(ByteProvider provider, long machHeaderStartIndexInProvider)
 			throws IOException, MachException {
@@ -96,17 +98,17 @@ public class MachHeader implements StructConverter {
 	}
 
 	/**
-	 * Creatse a new {@link MachHeader}.  Assumes the MachHeader starts at index 
+	 * Creates a new {@link MachHeader}.  Assumes the MachHeader starts at index 
 	 * <i>machHeaderStartIndexInProvider</i> in the ByteProvider.
 	 * 
 	 * @param provider the ByteProvider
 	 * @param machHeaderStartIndexInProvider the index into the ByteProvider where the MachHeader 
 	 *   begins.
-	 * @param isRemainingMachoRelativeToStartIndex true if the rest of the macho uses relative 
-	 *   indexin (this is common in UBI and kernel cache files); otherwise, false if the rest of the
+	 * @param isRemainingMachoRelativeToStartIndex true if the rest of the Mach-O uses relative 
+	 *   indexes (this is common in UBI and kernel cache files); otherwise, false if the rest of the
 	 *   file uses absolute indexing from 0 (this is common in DYLD cache files)
 	 * @throws IOException if an I/O error occurs while reading from the ByteProvider
-	 * @throws MachException if an invalid MachHeader is detected
+	 * @throws MachException if an invalid header is detected
 	 */
 	public MachHeader(ByteProvider provider, long machHeaderStartIndexInProvider,
 			boolean isRemainingMachoRelativeToStartIndex) throws IOException, MachException {
@@ -144,7 +146,7 @@ public class MachHeader implements StructConverter {
 	 * 
 	 * @return This {@link MachHeader}, for convenience
 	 * @throws IOException If there was an IO-related error
-	 * @throws MachException if the load command is invalid
+	 * @throws MachException if a problem was detected with the load commands
 	 */
 	public MachHeader parse() throws IOException, MachException {
 		return parse(null);
@@ -157,12 +159,14 @@ public class MachHeader implements StructConverter {
 	 *   if a split DYLD cache is not being used.
 	 * @return This {@link MachHeader}, for convenience
 	 * @throws IOException If there was an IO-related error
-	 * @throws MachException if the load command is invalid
+	 * @throws MachException if a problem was detected with the load commands
 	 */
 	public MachHeader parse(SplitDyldCache splitDyldCache) throws IOException, MachException {
 		if (_parsed) {
 			return this;
 		}
+
+		validateNumLoadCommands();
 
 		// We must parse segment load commands first, so find and store their indexes separately
 		long currentIndex = _commandIndex;
@@ -198,8 +202,11 @@ public class MachHeader implements StructConverter {
 	 * 
 	 * @return A {@link List} of this {@link MachHeader}'s {@link SegmentCommand segments}
 	 * @throws IOException If there was an IO-related error
+	 * @throws MachException if a problem was detected with the load commands
 	 */
-	public List<SegmentCommand> parseSegments() throws IOException {
+	public List<SegmentCommand> parseSegments() throws IOException, MachException {
+		validateNumLoadCommands();
+
 		List<SegmentCommand> segments = new ArrayList<>();
 		_reader.setPointerIndex(_commandIndex);
 		for (int i = 0; i < nCmds; ++i) {
@@ -223,8 +230,11 @@ public class MachHeader implements StructConverter {
 	 * @return A {@link List} of this {@link MachHeader}'s 
 	 *   {@link DynamicLibraryCommand reexport load commands}
 	 * @throws IOException If there was an IO-related error
+	 * @throws MachException if a problem was detected with the load commands
 	 */
-	public List<DynamicLibraryCommand> parseReexports() throws IOException {
+	public List<DynamicLibraryCommand> parseReexports() throws IOException, MachException {
+		validateNumLoadCommands();
+
 		List<DynamicLibraryCommand> cmds = new ArrayList<>();
 		_reader.setPointerIndex(_commandIndex);
 		for (int i = 0; i < nCmds; ++i) {
@@ -248,9 +258,12 @@ public class MachHeader implements StructConverter {
 	 * @param loadCommandType The type of {@link LoadCommand} to check for
 	 * @return True if this {@link MachHeader} contains the given {@link LoadCommand} type
 	 * @throws IOException If there was an IO-related error
+	 * @throws MachException if a problem was detected with the load commands
 	 * @see LoadCommandTypes
 	 */
-	public boolean parseAndCheck(int loadCommandType) throws IOException {
+	public boolean parseAndCheck(int loadCommandType) throws IOException, MachException {
+		validateNumLoadCommands();
+
 		_reader.setPointerIndex(_commandIndex);
 		for (int i = 0; i < nCmds; ++i) {
 			int type = _reader.peekNextInt();
@@ -432,6 +445,17 @@ public class MachHeader implements StructConverter {
 	@Override
 	public String toString() {
 		return getDescription();
+	}
+
+	/**
+	 * Validates the specified number of load commands
+	 * 
+	 * @throws MachException if this {@link MachHeader} has an invalid number of load commands
+	 */
+	private void validateNumLoadCommands() throws MachException {
+		if (nCmds > MAX_LOAD_COMMANDS || nCmds < 0) {
+			throw new MachException("Invalid number of load commands (%d)".formatted(nCmds));
+		}
 	}
 
 	/**

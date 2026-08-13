@@ -235,11 +235,12 @@ macro LoadWritePC(addr) {
 }
 
 # Branch depends on version
+# ONLY USED IN ARMinstructions.sinc for thumb use BranchWritePC
 macro ALUWritePC(addr) {
 @if defined(VERSION_7)
    BXWritePC(addr);
 @else
-   BranchWritePC(addr);
+   BranchWritePC(addr & 0xfffffffc);
 @endif
 }
 

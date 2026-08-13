@@ -1202,10 +1202,11 @@ with : ARMcondCk=1 {
   Hrd0002 = Hrd0002 + Hrm0305;
 }
 
+# Destination is PC
 :add^ItCond	Hrd0002,Hrm0305		is TMode=1 & ItCond & op8=0x44 & Hrd0002 & Hrm0305 & hrd0002=7 & h1=1
 {
   build ItCond;
-  dest:4 = Hrd0002 + Hrm0305;
+  dest:4 = (Hrd0002 + Hrm0305) & 0xfffffffe;  # Simple branch, mask off the last bit
   BranchWritePC(dest);
   goto [pc];
 }
@@ -2653,18 +2654,20 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   Hrd0002 = Hrm0305;
 }
 
+# Destination is PC
 :mov^ItCond	Hrd0002,Hrm0305		is TMode=1 & ItCond & op8=0x46 & Hrm0305 & Hrd0002 & hrd0002=7 & h1=1
 {
   build ItCond;
-  dest:4 = Hrm0305;
+  dest:4 = Hrm0305 & 0xfffffffe; # Simple branch, mask off the last bit
   BranchWritePC(dest);
   goto [pc];
 }
 
+# Destination is PC
 :mov^ItCond	Hrd0002,Hrm0305		is TMode=1 & ItCond & op8=0x46 & Hrm0305 & rm0306=14 & Hrd0002 & hrd0002=7 & h1=1
 {
   build ItCond;
-  dest:4 = Hrm0305;
+  dest:4 = Hrm0305 & 0xfffffffe;  # Simple branch, mask off the last bit
   BranchWritePC(dest);
   return [pc];
 }
@@ -2772,7 +2775,7 @@ mrsipsr: "i"	is thc0000=1 & Rd0811 {
 	b:1 = isCurrentModePrivileged();
 	if (!b) goto <notPriv>;
 	ipsr:4 = getCurrentExceptionNumber();
-	Rd0811 = Rd0811 | (ipsr & 0x1f);
+	Rd0811 = Rd0811 | (ipsr & 0x1ff);
  <notPriv> 
 }
 mrsipsr: 		is thc0000=0 { }
@@ -2928,12 +2931,12 @@ define pcodeop getProcessStackPointerLimit;
 
 @if defined(VERSION_7M)
 
-msripsr: "i"	is thc0000=1 { }
-msripsr: 		is thc0000=0 { }
-msrepsr: "e"	is thc0101=1 { }
-msrepsr: 		is thc0101=0 { }
-msrapsr: 		is thc0202=1 { }
-msrapsr: "a"	is thc0202=0 & Rn0003 {
+msripsr: "i"	is Rn0003; thc0000=1 { }
+msripsr: 		is Rn0003; thc0000=0 { }
+msrepsr: "e"	is Rn0003; thc0101=1 { }
+msrepsr: 		is Rn0003; thc0101=0 { }
+msrapsr: 		is Rn0003; thc0202=1 { }
+msrapsr: "a"	is Rn0003; thc0202=0 {
 	cpsr = cpsr | (Rn0003 & 0xf8000000);
 	writeAPSR_nzcvq(cpsr);
 }
@@ -2941,11 +2944,11 @@ msrapsr: "a"	is thc0202=0 & Rn0003 {
 msrpsr: msripsr^msrepsr^msrapsr^"psr"	is	msripsr & msrepsr & msrapsr	{
 	build msrapsr;
 }
-msrpsr: "xpsr"	is	sysm02=3 & msrapsr	{
+msrpsr: "xpsr"	is	(Rn0003 ; sysm02=3) & msrapsr	{
 	build msrapsr;
 }
 
-:msr^ItCond msrpsr,Rn0003 		is TMode=1 & ItCond & op4=0xf38 & Rn0003; op12=0x8 & th_psrmask=8 & sysm37=0 & msrpsr
+:msr^ItCond msrpsr,Rn0003 		is TMode=1 & ItCond & (op4=0xf38 & Rn0003; op12=0x8 & th_psrmask=8 & sysm37=0) & msrpsr
 {
   build ItCond;
   build msrpsr;
@@ -3664,7 +3667,7 @@ macro BitReverse(val) {
   cpsr = *ptr;
   ptr = ptr - 4;
   dest:4 = *ptr;
-  BranchWritePC(dest);
+  BranchWritePC(dest & 0xfffffffe); # Simple branch, mask off the last bit
   return [pc];
 }
 
@@ -3676,7 +3679,7 @@ macro BitReverse(val) {
   ptr = ptr - 4;
   dest:4 = *ptr;
   part2Rd0003 = ptr;
-  BranchWritePC(dest);
+  BranchWritePC(dest & 0xfffffffe); # Simple branch, mask off the last bit
   return [pc];
 }
 
@@ -3687,7 +3690,7 @@ macro BitReverse(val) {
   cpsr = *ptr;
   ptr = ptr + 4;
   dest:4 = *ptr;
-  BranchWritePC(dest);
+  BranchWritePC(dest & 0xfffffffe); # Simple branch, mask off the last bit
   return [pc];
 }
 
@@ -3699,7 +3702,7 @@ macro BitReverse(val) {
   ptr = ptr + 4;
   dest:4 = *ptr;
   part2Rd0003 = ptr + 4;
-  BranchWritePC(dest);
+  BranchWritePC(dest & 0xfffffffe); # Simple branch, mask off the last bit
   return [pc];
 }
 
@@ -4355,7 +4358,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
    build ItCond;
 }
 
-:sev^ItCond^".w"                      is TMode=1 & ItCond & op0=0xf3af; op0=8004
+:sev^ItCond^".w"                      is TMode=1 & ItCond & op0=0xf3af; op0=0x8004
 {
    build ItCond;
 }

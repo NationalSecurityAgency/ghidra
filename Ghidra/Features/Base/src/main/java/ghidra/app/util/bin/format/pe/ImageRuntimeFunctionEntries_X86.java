@@ -139,7 +139,7 @@ public class ImageRuntimeFunctionEntries_X86 implements ImageRuntimeFunctionEntr
 		public void markup(Program program, MessageLog log)
 				throws DuplicateNameException, IOException {
 			
-			if (beginAddress != 0 && !unwindInfo.hasChainedUnwindInfo()) {
+			if (beginAddress != 0 && (unwindInfo == null || !unwindInfo.hasChainedUnwindInfo())) {
 				AbstractProgramLoader.markAsFunction(program, null,
 					program.getImageBase().add(beginAddress));
 			}

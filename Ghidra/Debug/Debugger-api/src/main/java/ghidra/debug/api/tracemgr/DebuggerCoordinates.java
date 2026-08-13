@@ -172,6 +172,10 @@ public class DebuggerCoordinates {
 	}
 
 	private static TraceThread resolveThread(Trace trace, TraceSchedule time) {
+		TraceThread eventThread = time.getLastThread(trace);
+		if (eventThread != null) {
+			return eventThread;
+		}
 		long snap = time.getSnap();
 		return trace.getThreadManager()
 				.getLiveThreads(snap)
@@ -417,8 +421,13 @@ public class DebuggerCoordinates {
 			return NOWHERE;
 		}
 		long snap = newTime.getSnap();
+		TraceThread eventThread = newTime.getLastThread(trace);
 		boolean isThreadValid = thread == null ? false : thread.isValid(snap);
-		TraceThread newThread = isThreadValid ? thread : resolveThread(trace, target, newTime);
+		TraceThread newThread = eventThread != null
+				? eventThread
+				: isThreadValid
+						? thread
+						: resolveThread(trace, target, newTime);
 		// This will cause the frame to reset to 0 on every snap change. That's fair....
 		Integer newFrame = resolveFrame(newThread, newTime);
 		KeyPath threadOrFramePath = resolvePath(newThread, newFrame, newTime);

@@ -604,7 +604,7 @@ public abstract class PropertyMapDB<T> extends DbObject implements PropertyMap<T
 	}
 
 	@Override
-	protected boolean refresh() {
+	protected boolean refresh(DBRecord rec) {
 		cache = new ObjectCache<>(DEFAULT_CACHE_SIZE);
 		propertyTable = dbHandle.getTable(getTableName());
 		if (propertyTable != null) {

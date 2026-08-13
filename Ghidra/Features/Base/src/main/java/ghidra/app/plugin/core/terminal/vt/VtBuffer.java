@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,12 +22,12 @@ import ghidra.app.plugin.core.terminal.vt.VtHandler.Erasure;
 
 /**
  * A buffer for a terminal display and scroll-back
- * 
  * <p>
  * This object implements all of the buffer, line, and character manipulations available in the
  * terminal. It's likely more will need to be added in the future. While the ANSI VT parser
  * determines what commands to execute, this buffer provides the actual implementation of those
- * commands.
+ * commands. To best support unicode, including supplemental characters, this buffer and its
+ * {@link VtLine}s operate on arrays of code points.
  */
 public class VtBuffer {
 	public static final int DEFAULT_ROWS = 25;
@@ -91,7 +91,6 @@ public class VtBuffer {
 
 	/**
 	 * Get the number of rows in the display
-	 * 
 	 * <p>
 	 * This is not just the number of rows currently being used. This is the "rows" dimension of the
 	 * display, i.e., the maximum number of rows it can display before scrolling.
@@ -104,7 +103,6 @@ public class VtBuffer {
 
 	/**
 	 * Get the number of columns in the display
-	 * 
 	 * <p>
 	 * This is not just the number of columns currently being used. This is the "columns" dimension
 	 * of the display, i.e., the maximum number of characters in a rows before wrapping.
@@ -117,7 +115,6 @@ public class VtBuffer {
 
 	/**
 	 * Put the given character at the cursor, and move the cursor forward
-	 * 
 	 * <p>
 	 * The cursor's current attributes are applied to the character.
 	 * 
@@ -125,13 +122,20 @@ public class VtBuffer {
 	 * @see #setAttributes(VtAttributes)
 	 * @see #getAttributes()
 	 */
-	public void putChar(char c) {
+	public void putCodePoint(int c) {
 		if (c == 0) {
 			return;
 		}
-		checkVerticalScroll();
+		// Only scroll if cursor is completely off-screen (beyond the display).
+		// Do NOT scroll when cursor is outside the scroll region but still within
+		// the display (e.g., on a fixed status bar line). Scroll region scrolling
+		// for line feeds is handled by moveCursorDown() via checkVerticalScroll().
+		while (curY >= rows) {
+			scrollViewportDown(true);
+			curY = Math.max(0, curY - 1);
+		}
 		// At this point, we have no choice but to wrap
-		lines.get(curY).putChar(curX, c, curAttrs);
+		lines.get(curY).putCodePoint(curX, c, curAttrs);
 	}
 
 	/**
@@ -155,7 +159,6 @@ public class VtBuffer {
 
 	/**
 	 * Move the cursor back to the beginning of the line
-	 * 
 	 * <p>
 	 * This does <em>not</em> move the cursor down.
 	 */
@@ -172,11 +175,12 @@ public class VtBuffer {
 
 	/**
 	 * Scroll the viewport down a line
-	 * 
 	 * <p>
 	 * The lines are shifted upward. The line at the top of the viewport is removed, and a blank
 	 * line is inserted at the bottom of the viewport. If the viewport includes the display's top
 	 * line and intoScrollBack is specified, the line is shifted into the scroll-back buffer.
+	 * 
+	 * @param intoScrollBack true to shift the top lines into the scroll-back buffer
 	 */
 	public void scrollViewportDown(boolean intoScrollBack) {
 		if (scrollStart == scrollEnd) {
@@ -202,7 +206,6 @@ public class VtBuffer {
 
 	/**
 	 * Scroll the viewport up a line
-	 * 
 	 * <p>
 	 * The lines are shifted downward. The line at the bottom of the viewport is removed, and a
 	 * blank line is inserted at the top of the viewport.
@@ -227,10 +230,10 @@ public class VtBuffer {
 
 	/**
 	 * Move the cursor up n rows
-	 * 
 	 * <p>
 	 * The cursor cannot move above the top of the display. The value of n must be positive,
-	 * otherwise behavior is undefined. To move the cursor down, use {@link #moveCursorDown(int)}.
+	 * otherwise behavior is undefined. To move the cursor down, use
+	 * {@link #moveCursorDown(int, boolean)}.
 	 * 
 	 * @param n the number of rows to move the cursor up
 	 */
@@ -240,12 +243,10 @@ public class VtBuffer {
 
 	/**
 	 * Move the cursor down n rows
-	 * 
 	 * <p>
 	 * If the cursor would move below the bottom of the display, the viewport will be scrolled so
 	 * that the cursor remains in the display. The value of n must be positive, otherwise behavior
 	 * is undefined. To move the cursor up, use {@link #moveCursorUp(int)}.
-	 * 
 	 * <p>
 	 * ConPty has a habit of moving the cursor past the end of the current line before sending CRLF.
 	 * (Though, I imagine there are other applications that might do this.) The {@code dedupWrap}
@@ -271,13 +272,13 @@ public class VtBuffer {
 
 	/**
 	 * Move the cursor left (backward) n columns
-	 * 
 	 * <p>
 	 * The cursor is clamped into the display. If wrap is specified, the cursor would exceed the
 	 * left side of the display, and the previous line was wrapped onto the current line, then the
 	 * cursor will instead be moved to the end of the previous line. (It doesn't matter how far the
 	 * cursor would exceed the left; it moves up at most one line.) The value of n must be positive,
-	 * otherwise behavior is undefined. To move the cursor right, use {@link #moveCursorRight(int)}.
+	 * otherwise behavior is undefined. To move the cursor right, use
+	 * {@link #moveCursorRight(int, boolean, boolean)}.
 	 * 
 	 * @param n the number of columns
 	 * @param wrap whether to wrap the cursor to the previous line if would exceed the left of the
@@ -296,27 +297,44 @@ public class VtBuffer {
 
 	/**
 	 * Move the cursor right (forward) n columns
-	 * 
 	 * <p>
 	 * The cursor is clamped into the display. If wrap is specified and the cursor would exceed the
 	 * right side of the display, the cursor will instead be wrapped to the start of the next line,
 	 * possibly scrolling the viewport down. (It doesn't matter how far the cursor exceeds the
 	 * right; the cursor moves down exactly one line.) The value of n must be positive, otherwise
-	 * behavior is undefined. To move the cursor left, use {@link #moveCursorLeft(int)}.
+	 * behavior is undefined. To move the cursor left, use {@link #moveCursorLeft(int, boolean)}.
 	 * 
 	 * @param n the number of columns
 	 * @param wrap whether to wrap the cursor to the next line if it would exceed the right of the
 	 *            display
+	 * @param isCursorShowing indicates whether the cursor is currently showing, which may affect
+	 *            wrapping behavior
 	 */
 	public void moveCursorRight(int n, boolean wrap, boolean isCursorShowing) {
 		if (wrap && curX + n >= cols) {
-			checkVerticalScroll();
+			// Decide based on the pre-wrap position whether we are in the scroll region.
+			// If the cursor was inside the scroll region before wrapping, the wrap may
+			// push it past the bottom margin and should trigger scroll-region scrolling.
+			// If outside (e.g., on a fixed status bar line), just clamp to the display.
+			boolean wasInScrollRegion = (curY >= scrollStart && curY < scrollEnd);
+			if (wasInScrollRegion) {
+				checkVerticalScroll();
+			}
 			curX = 0;
-			lines.get(curY).wrappedToNext = true;
+			if (curY < rows) {
+				lines.get(curY).wrappedToNext = true;
+			}
 			curY++;
 			bottomY = Math.max(bottomY, curY);
-			if (isCursorShowing) {
+			if (wasInScrollRegion) {
+				// Always scroll when wrapping within the scroll region, regardless
+				// of cursor visibility. This prevents deferred scrolls from leaking
+				// into subsequent putChar() calls.
 				checkVerticalScroll();
+			}
+			else {
+				// Outside scroll region: clamp to display bounds
+				curY = Math.min(curY, rows - 1);
 			}
 		}
 		else {
@@ -326,7 +344,6 @@ public class VtBuffer {
 
 	/**
 	 * Save the current cursor position
-	 * 
 	 * <p>
 	 * There is only one slot for the saved cursor. It is not a stack or anything fancy. To restore
 	 * the cursor, use {@link #restoreCursorPos()}. The advantage to using this vice
@@ -340,7 +357,6 @@ public class VtBuffer {
 
 	/**
 	 * Restore a saved cursor position
-	 * 
 	 * <p>
 	 * If there was no previous call to {@link #saveCursorPos()}, the cursor is placed at the
 	 * top-left of the display.
@@ -353,7 +369,6 @@ public class VtBuffer {
 
 	/**
 	 * Move the cursor to the given row and column
-	 *
 	 * <p>
 	 * The position is clamped to the dimensions of the display. No scrolling will take place if
 	 * {@code col} exceeds the number of rows.
@@ -369,10 +384,9 @@ public class VtBuffer {
 
 	/**
 	 * Get the cursor's current attributes
-	 * 
 	 * <p>
-	 * Characters put into the buffer via {@link #putChar(char)} are assigned the cursor's current
-	 * attributes at the time they are inserted.
+	 * Characters put into the buffer via {@link #putCodePoint(int)} are assigned the cursor's
+	 * current attributes at the time they are inserted.
 	 * 
 	 * @see #setAttributes(VtAttributes)
 	 * @return the current attributes
@@ -383,11 +397,11 @@ public class VtBuffer {
 
 	/**
 	 * Set the cursor's current attributes
-	 * 
 	 * <p>
 	 * These are usually the attributes given by the ANSI SGR control sequences. They may not affect
 	 * the display of the cursor itself, but rather of the characters placed at the cursor via
-	 * {@link #putChar(char)}. NOTE: Not all attributes are necessarily supported by the renderer.
+	 * {@link #putCodePoint(int)}. NOTE: Not all attributes are necessarily supported by the
+	 * renderer.
 	 * 
 	 * @param attributes the desired attributes
 	 */
@@ -397,7 +411,6 @@ public class VtBuffer {
 
 	/**
 	 * Erase (clear) some portion of the display buffer
-	 * 
 	 * <p>
 	 * If the current line is erased from start to the cursor, the cursor's attributes are applied
 	 * to the cleared columns.
@@ -465,7 +478,6 @@ public class VtBuffer {
 
 	/**
 	 * Insert n blank lines at the cursor
-	 * 
 	 * <p>
 	 * Lines at the bottom of the viewport are removed and all the lines between the cursor and the
 	 * bottom of the viewport are shifted down, to make room for n blank lines. None of the lines
@@ -483,7 +495,6 @@ public class VtBuffer {
 
 	/**
 	 * Delete n lines at the cursor
-	 * 
 	 * <p>
 	 * Lines at (and immediately below) the cursor are removed and all lines between the cursor and
 	 * the bottom of the viewport are shifted up to make room for n blank lines inserted at (and
@@ -501,7 +512,6 @@ public class VtBuffer {
 
 	/**
 	 * Insert n blank characters at the cursor
-	 * 
 	 * <p>
 	 * Any characters right the cursor on the same line are shifted right to make room and n blanks
 	 * are inserted at (and to the right) of the cursor. No wrapping occurs. Characters that would
@@ -519,7 +529,6 @@ public class VtBuffer {
 
 	/**
 	 * Delete n characters at the cursor
-	 * 
 	 * <p>
 	 * Characters at (and {@code n-1} to the right) of the cursor are deleted. The remaining
 	 * characters to the right are shifted left {@code n} columns.
@@ -535,7 +544,6 @@ public class VtBuffer {
 
 	/**
 	 * Erase n characters at the cursor
-	 * 
 	 * <p>
 	 * Characters at (and {@code n-1} to the right) of the cursor are erased, i.e., replaced with
 	 * blanks. No shifting takes place.
@@ -551,7 +559,6 @@ public class VtBuffer {
 
 	/**
 	 * Specify the scrolling viewport of the buffer
-	 * 
 	 * <p>
 	 * By default, the viewport is the entire display, and scrolling the viewport downward may cause
 	 * lines to enter the scroll-back buffer. The buffer manages these boundaries so that they can
@@ -586,7 +593,6 @@ public class VtBuffer {
 
 	/**
 	 * Resize the buffer to the given number of rows and columns
-	 * 
 	 * <p>
 	 * The viewport is reset to include the full display. Each line, including those in the
 	 * scroll-back buffer are resized to match the requested number of columns. If the row count is
@@ -646,7 +652,6 @@ public class VtBuffer {
 
 	/**
 	 * Adjust the maximum number of lines in the scroll-back buffer
-	 * 
 	 * <p>
 	 * If the scroll-back buffer exceeds the given maximum, it is immediately culled.
 	 * 
@@ -699,7 +704,6 @@ public class VtBuffer {
 
 	/**
 	 * Get the total number of lines, including scroll-back lines, in the buffer
-	 * 
 	 * <p>
 	 * This is equal to {@link #getScrollBackSize()}{@code +}{@link #getRows()}.
 	 * 
@@ -769,15 +773,13 @@ public class VtBuffer {
 
 	/**
 	 * Get the text between two locations in the buffer
-	 * 
 	 * <p>
 	 * The buffer attempts to avoid extraneous space at the end of each line. This isn't always
 	 * perfect and depends on how lines are cleared. If they are cleared using
 	 * {@link #erase(Erasure)}, then the buffer will cull the trailing spaces resulting from the
-	 * clear. If they are cleared using {@link #putChar(char)} passing a space {@code ' '}, then the
-	 * inserted spaces will be included. In practice, this depends on the application controlling
-	 * the terminal.
-	 * 
+	 * clear. If they are cleared using {@link #putCodePoint(int)} passing a space {@code ' '}, then
+	 * the inserted spaces will be included. In practice, this depends on the application
+	 * controlling the terminal.
 	 * <p>
 	 * Like the other methods, locations are specified 0 up, top to bottom, and left to right.
 	 * Unlike the other methods, the ending character is excluded from the result.

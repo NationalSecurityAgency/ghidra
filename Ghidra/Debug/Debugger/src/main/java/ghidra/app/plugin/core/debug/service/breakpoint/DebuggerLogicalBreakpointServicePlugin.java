@@ -762,17 +762,15 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			 */
 			for (Set<LogicalBreakpointInternal> set : List.copyOf(logicalByAddress.values())) {
 				for (LogicalBreakpointInternal lb : Set.copyOf(set)) {
-					Bookmark pb = lb.getProgramBookmark();
-					if (pb == null) {
-						continue;
-					}
-					if (pb != program.getBookmarkManager().getBookmark(pb.getId())) {
-						forgetProgramBreakpoint(r, pb, false);
-						continue;
-					}
-					if (!lb.getProgramLocation().getByteAddress().equals(pb.getAddress())) {
-						forgetProgramBreakpoint(r, pb, false);
-						continue;
+					for (Bookmark pb : lb.getProgramBookmarksValidOrNot()) {
+						if (pb != program.getBookmarkManager().getBookmark(pb.getId())) {
+							forgetProgramBreakpoint(r, pb, false);
+							continue;
+						}
+						if (!lb.getProgramLocation().getByteAddress().equals(pb.getAddress())) {
+							forgetProgramBreakpoint(r, pb, false);
+							continue;
+						}
 					}
 				}
 			}

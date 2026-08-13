@@ -36,7 +36,8 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.util.BigEndianDataConverter;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class SymbolicPropogator {
@@ -64,7 +65,7 @@ public class SymbolicPropogator {
 	protected boolean hitCodeFlow = false; // no branching so far
 
 	private boolean debug = false;
-	
+
 	private boolean recordStartEndState = false; // record the start/end values for registers at each instruction
 
 	private long pointerMask;
@@ -73,15 +74,15 @@ public class SymbolicPropogator {
 
 	/* maximum exact instructions to execute, (ie. a run of shift instructions */
 	protected static final int MAX_EXACT_INSTRUCTIONS = 100;
-	
+
 	/* indicates not currently executing code that has already been followed */
-	private static final int NOT_CONTINUING_CURRRENTLY = -1;   
+	private static final int NOT_CONTINUING_CURRRENTLY = -1;
 
 	/* maximum instructions along to continue along a path that has been followed already */
-	private static final int MAX_EXTRA_INSTRUCTION_FLOW = 16;  
+	private static final int MAX_EXTRA_INSTRUCTION_FLOW = 16;
 
 	private static int LRU_SIZE = 4096;
-	
+
 	/** NOTE: most of these caches are to reduce contention on the program lock to enable better threading.
 	 * Once the lock contention has been reduced, these can be cut back or removed.
 	 */
@@ -96,7 +97,7 @@ public class SymbolicPropogator {
 
 	// Cache instructions looked up by containing
 	Map<Address, Instruction> instructionContainingCache = new LRUMap<>(LRU_SIZE);
-	
+
 	// Cache of functions looked up
 	Map<Address, Function> functionAtCache = new LRUMap<>(LRU_SIZE);
 
@@ -113,7 +114,7 @@ public class SymbolicPropogator {
 	 * 
 	 */
 	public SymbolicPropogator(Program program) {
-		this (program, true);
+		this(program, true);
 	}
 
 	/**
@@ -130,7 +131,7 @@ public class SymbolicPropogator {
 	 */
 	public SymbolicPropogator(Program program, boolean recordStartEndState) {
 		this.program = program;
-		
+
 		this.recordStartEndState = recordStartEndState;
 
 		Language language = program.getLanguage();
@@ -191,7 +192,7 @@ public class SymbolicPropogator {
 		}
 
 		context.flowToAddress(Address.NO_ADDRESS, startAddr);
-		
+
 		// copy any current registers with values into the context
 		Register[] regWithVals = program.getProgramContext().getRegistersWithValues();
 		for (Register regWithVal : regWithVals) {
@@ -245,11 +246,11 @@ public class SymbolicPropogator {
 			if (space.isOverlaySpace()) {
 				OverlayAddressSpace ovSpace = (OverlayAddressSpace) space;
 				AddressSpace baseSpace = ovSpace.getPhysicalSpace();
-				if (!( baseSpace.equals(defaultDataSpace) || baseSpace.equals(defaultSpace) ) ) {
+				if (!(baseSpace.equals(defaultDataSpace) || baseSpace.equals(defaultSpace))) {
 					continue;
 				}
 			}
-			else if (!( space.equals(defaultDataSpace) || space.equals(defaultSpace) ) ) {
+			else if (!(space.equals(defaultDataSpace) || space.equals(defaultSpace))) {
 				continue;
 			}
 
@@ -273,7 +274,8 @@ public class SymbolicPropogator {
 		Language language = program.getLanguage();
 		ProgramContext newValueContext = new ProgramContextImpl(language);
 		ProgramContext newSpaceContext = new ProgramContextImpl(language);
-		VarnodeContext newContext = new VarnodeContext(program, newValueContext, newSpaceContext, recordStartEndState);
+		VarnodeContext newContext =
+			new VarnodeContext(program, newValueContext, newSpaceContext, recordStartEndState);
 		newContext.setDebug(debug);
 
 		programContext = newValueContext;
@@ -434,15 +436,18 @@ public class SymbolicPropogator {
 		context.flowEnd(addr);
 	}
 
-	record SavedFlowState(VarnodeContext vContext, FlowType flowType, Address source, Address destination,
+	record SavedFlowState(VarnodeContext vContext, FlowType flowType, Address source,
+			Address destination,
 			int pcodeIndex, int continueAfterHittingFlow) {
 
-		public SavedFlowState(VarnodeContext vContext, FlowType flowType, Address source, Address destination,
+		public SavedFlowState(VarnodeContext vContext, FlowType flowType, Address source,
+				Address destination,
 				int continueAfterHittingFlow) {
-			this(vContext,flowType,source,destination,0,continueAfterHittingFlow);
+			this(vContext, flowType, source, destination, 0, continueAfterHittingFlow);
 		}
-		
-		public SavedFlowState(VarnodeContext vContext, FlowType flowType, Address source, Address destination,
+
+		public SavedFlowState(VarnodeContext vContext, FlowType flowType, Address source,
+				Address destination,
 				int pcodeIndex, int continueAfterHittingFlow) {
 			this.vContext = vContext;
 			this.flowType = flowType;
@@ -452,16 +457,15 @@ public class SymbolicPropogator {
 			this.continueAfterHittingFlow = continueAfterHittingFlow;
 			vContext.pushMemState(pcodeIndex != 0);
 		}
-		
+
 		public boolean isContinueAfterHittingFlow() {
 			return continueAfterHittingFlow != NOT_CONTINUING_CURRRENTLY;
 		}
-		
+
 		public void restoreState() {
 			vContext.popMemState();
 		}
 	}
-
 
 	// Used to stop runs of the same exact instruction
 	protected int lastFullHashCode = 0;  // full byte hash code
@@ -484,13 +488,14 @@ public class SymbolicPropogator {
 			throws CancelledException {
 		visitedBody = new AddressSet();
 		AddressSet conflicts = new AddressSet();
-		
+
 		// Locations that were jump and are now call targets and might be on saved future flows
 		HashSet<Address> doNotFlowTo = new HashSet<>();
 
 		// prime the context stack with the entry point address
 		Stack<SavedFlowState> contextStack = new Stack<>();
-		contextStack.push(new SavedFlowState(vContext, null, fromAddr, startAddr, NOT_CONTINUING_CURRRENTLY));
+		contextStack.push(
+			new SavedFlowState(vContext, null, fromAddr, startAddr, NOT_CONTINUING_CURRRENTLY));
 		canceled = false;
 
 		// only stop flowing on unknown bad calls when the stack depth could be unknown
@@ -498,7 +503,7 @@ public class SymbolicPropogator {
 				.getDefaultCallingConvention()
 				.getExtrapop() == PrototypeModel.UNKNOWN_EXTRAPOP;
 
-		HashMap<Address,HashSet<Address>> visitedMap = new HashMap<>();
+		HashMap<Address, HashSet<Address>> visitedMap = new HashMap<>();
 		while (!contextStack.isEmpty()) {
 			monitor.checkCancelled();
 			if (canceled) {
@@ -514,18 +519,19 @@ public class SymbolicPropogator {
 			int pcodeStartIndex = nextFlow.pcodeIndex;
 			int continueAfterHittingFlow = nextFlow.continueAfterHittingFlow;
 			nextFlow.restoreState();
-			
+
 			if (flowType != null) {
 				// if call flow,  is inlined call, only inlined flows are pushed onto the flow stack
 				//
 				if (flowType.isCall()) {
 					AddressSet savedBody = visitedBody;
 					Function func = getFunctionAt(nextAddr);
-					flowConstants(nextFlow.source, nextAddr, func.getBody(), eval, vContext, monitor);
+					flowConstants(nextFlow.source, nextAddr, func.getBody(), eval, vContext,
+						monitor);
 					visitedBody = savedBody;
 					continue;
 				}
-			
+
 				// if jump flow, make sure it isn't jumping to another function
 				//
 				if (flowType.isJump() && !flowType.isConditional()) {
@@ -534,12 +540,13 @@ public class SymbolicPropogator {
 					if (func != null && !func.getBody().contains(startAddr)) {
 						// handle jump as if it were a call
 						vContext.flowStart(nextAddr);
-						handleFunctionSideEffects(getInstructionAt(flowFromAddr), nextAddr, monitor);
+						handleFunctionSideEffects(getInstructionAt(flowFromAddr), nextAddr,
+							monitor);
 						continue;
 					}
 				}
 			}
-			
+
 			// don't follow flow if on list of jump targets that were turned into calls
 			if (doNotFlowTo.contains(nextAddr)) {
 				continue;
@@ -561,13 +568,14 @@ public class SymbolicPropogator {
 				visitSet = new HashSet<>();
 				visitedMap.put(nextAddr, visitSet);
 				// never flowed to here, but have visited before
-				if (continueAfterHittingFlow == NOT_CONTINUING_CURRRENTLY && visitedBody.contains(nextAddr)) {
+				if (continueAfterHittingFlow == NOT_CONTINUING_CURRRENTLY &&
+					visitedBody.contains(nextAddr)) {
 					continueAfterHittingFlow = 0;
 				}
 			}
 
 			visitSet.add(flowFromAddr);
-			
+
 			// record new flow from one basic block to another
 			vContext.flowToAddress(fromAddr, nextAddr);
 
@@ -581,7 +589,7 @@ public class SymbolicPropogator {
 				// special flow start, retrieves the flow from/to saved state if there is one, and applies it
 				//    As if a mergeFuture flow had been done.
 				vContext.flowStart(nextAddr);
-				
+
 				if (!visitedBody.contains(nextAddr)) {
 					// got to a flow never been to before, turn off any continue flow behavior
 					continueAfterHittingFlow = NOT_CONTINUING_CURRRENTLY;
@@ -619,11 +627,12 @@ public class SymbolicPropogator {
 						return visitedBody;
 					}
 				}
-				
+
 				//
 				// apply the pcode effects
 				//
-				boolean continueCurrentTrace = applyPcode(contextStack, vContext, instr, pcodeStartIndex, continueAfterHittingFlow, monitor);
+				boolean continueCurrentTrace = applyPcode(contextStack, vContext, instr,
+					pcodeStartIndex, continueAfterHittingFlow, monitor);
 				pcodeStartIndex = 0;
 
 				/* Allow evaluateContext routine to change override the flowtype of an instruction.
@@ -637,7 +646,7 @@ public class SymbolicPropogator {
 						return visitedBody;
 					}
 				}
-				
+
 				// if the instruction changed it's type to a call, need to handle the call side effects
 				FlowType instrFlow = instr.getFlowType();
 				if (!originalFlowType.equals(instrFlow) && instrFlow.isCall()) {
@@ -649,26 +658,28 @@ public class SymbolicPropogator {
 						doNotFlowTo.add(target);
 					}
 				}
-				
+
 				// if already hit a flow, only continue through code until MAX_EXTRA instructions or hit a call
 				if (visitedBody.contains(minInstrAddress) && !justPopped) {
 					// even if second time through, run a few more instructions to see if get to a call
 					if (continueAfterHittingFlow > NOT_CONTINUING_CURRRENTLY) {
 						continueAfterHittingFlow++;
-					} else {
-						continueAfterHittingFlow=0; // start counting, hit body
 					}
-					if (continueAfterHittingFlow >= MAX_EXTRA_INSTRUCTION_FLOW || instrFlow.isCall()) {
+					else {
+						continueAfterHittingFlow = 0; // start counting, hit body
+					}
+					if (continueAfterHittingFlow >= MAX_EXTRA_INSTRUCTION_FLOW ||
+						instrFlow.isCall()) {
 						break;
 					}
 				}
 				// add this instruction to processed body set
 				visitedBody.addRange(minInstrAddress, maxAddr);
-				
+
 				justPopped = false;
-				
+
 				vContext.flowEnd(minInstrAddress);
-				
+
 				// if already hit a flow, only continue until a call is hit,
 				// TODO: this could be changed to some number of instructions
 				// if (continueAfterHittingFlow > 0 && (instrFlow.isCall())) {
@@ -688,7 +699,7 @@ public class SymbolicPropogator {
 					nextAddr = fallThru;
 				}
 			}
-			
+
 		}
 
 		//System.out.println(startAddr + " = " + instructionCount + ", " + continueCount);
@@ -765,12 +776,12 @@ public class SymbolicPropogator {
 		if (instructionAtCache.containsKey(addr)) {
 			return null;
 		}
-		
+
 		instr = program.getListing().getInstructionAt(addr);
 		cacheInstruction(addr, instr);
 		return instr;
 	}
-	
+
 	public Function getFunctionAt(Address addr) {
 		Function func = functionAtCache.get(addr);
 		if (func != null) {
@@ -779,7 +790,7 @@ public class SymbolicPropogator {
 		if (functionAtCache.containsKey(addr)) {
 			return null;
 		}
-		
+
 		func = program.getFunctionManager().getFunctionAt(addr);
 		functionAtCache.put(addr, func);
 		return func;
@@ -837,7 +848,9 @@ public class SymbolicPropogator {
 	 * @param monitor to cancel
 	 * @return true to to continue this instruction path, false otherwise
 	 */
-	private boolean applyPcode(Stack<SavedFlowState> contextStack, VarnodeContext vContext, Instruction instruction, int startIndex, int continueAfterHittingFlow, TaskMonitor monitor) {
+	private boolean applyPcode(Stack<SavedFlowState> contextStack, VarnodeContext vContext,
+			Instruction instruction, int startIndex, int continueAfterHittingFlow,
+			TaskMonitor monitor) {
 		Address nextAddr = null;
 
 		if (instruction == null) {
@@ -853,8 +866,7 @@ public class SymbolicPropogator {
 		}
 
 		Address minInstrAddress = instruction.getMinAddress();
-		if (debug)
-		{
+		if (debug) {
 			Msg.info(this, minInstrAddress + "   " + instruction + "   " + startIndex);
 		}
 
@@ -893,19 +905,21 @@ public class SymbolicPropogator {
 						if (in[0].isAddress()) {
 							AddressSpace addressSpace = in[0].getAddress().getAddressSpace();
 							// if not address mapped, or no register defined there
-							if (!addressSpace.hasMappedRegisters() || program.getRegister(in[0]) == null) {
-							    makeReference(vContext, instruction,  Reference.MNEMONIC, in[0],
-								    null, RefType.READ, ptype, true, monitor);
+							if (!addressSpace.hasMappedRegisters() ||
+								program.getRegister(in[0]) == null) {
+								makeReference(vContext, instruction, Reference.MNEMONIC, in[0],
+									null, RefType.READ, ptype, true, monitor);
 							}
 						}
 						vContext.copy(out, in[0], mustClearAll, evaluator);
 						break;
-						
+
 					case PcodeOp.SEGMENTOP:
 						// treat like a copy for now, and extend the size as if segment had been applied
 						Varnode vval = context.getValue(in[2], evaluator);
-						if (context.isSymbolicSpace(vval.getSpace())) { 
-							vval = vContext.createVarnode(vval.getOffset(), vval.getSpace(), out.getSize());
+						if (context.isSymbolicSpace(vval.getSpace())) {
+							vval = vContext.createVarnode(vval.getOffset(), vval.getSpace(),
+								out.getSize());
 						}
 						vContext.putValue(out, vval, mustClearAll);
 						break;
@@ -916,14 +930,15 @@ public class SymbolicPropogator {
 						val2 = vContext.getValue(in[1], evaluator);
 						if (val1 != null && val2 != null) {
 							suspectOffset = vContext.isSuspectConstant(val2);
-							
+
 							vt = vContext.getVarnode(in[0], val2, out.getSize(), evaluator);
-							
+
 							// TODO: may need to use DATA refType in some cases
-							
+
 							if (vt != null) {
-								addLoadStoreReference(vContext, instruction, ptype, vt, in[0], in[1],
-									RefType.READ, suspectOffset==false, monitor);
+								addLoadStoreReference(vContext, instruction, ptype, vt, in[0],
+									in[1],
+									RefType.READ, suspectOffset == false, monitor);
 								// If vt is a bad varnode (bad space, no memory, no value in varnode) you won't get a value
 								memVal = vContext.getValue(vt, evaluator);
 							}
@@ -939,10 +954,10 @@ public class SymbolicPropogator {
 							suspectOffset = vContext.isSuspectConstant(offs);
 							out = getStoredLocation(vContext, in[0], offs, in[2]);
 						}
-						
+
 						// TODO: may need to use DATA refType in some cases
 						addLoadStoreReference(vContext, instruction, ptype, out, in[0], in[1],
-							RefType.WRITE, suspectOffset==false, monitor);
+							RefType.WRITE, suspectOffset == false, monitor);
 
 						val3 = vContext.getValue(in[2], null);
 
@@ -956,14 +971,14 @@ public class SymbolicPropogator {
 						val1 = vContext.getValue(in[0], evaluator);
 						if (val1 != null) {
 							suspectOffset = vContext.isSuspectConstant(val1);
-							
+
 							vt = getConstantOrExternal(vContext, minInstrAddress, val1);
 							if (vt != null) {
 								makeReference(vContext, instruction, -1, vt, null,
 									instruction.getFlowType(), ptype, !suspectOffset, monitor);
 							}
 						}
-						
+
 						// even if we don't know the destination, branch to any jump
 						// references already on the branch indirect
 						vContext.propogateResults(true);
@@ -990,50 +1005,52 @@ public class SymbolicPropogator {
 						Function func = null;
 						val1 = in[0];
 						if (ptype == PcodeOp.CALLIND) {
-								val1 = vContext.getValue(val1, evaluator);
+							val1 = vContext.getValue(val1, evaluator);
 
-								if (val1 != null) {
-									// TODO: Revisit handling of external functions...
-	
-									if (vContext.isConstant(val1)) {
-										suspectOffset = vContext.isSuspectConstant(val1);
-										// indirect target - assume single code space (same as instruction)
-										target = instruction.getAddress()
-												.getNewTruncatedAddress(val1.getOffset(), true);
-									}
-									else if (val1.isAddress()) {
-										// TODO: could this also occur if a memory location was copied ??
-										// unable to resolve indirect value - can we trust stored pointer?
-										// if not, we must rely on reference to function.
-										target = resolveFunctionReference(val1.getAddress());
-									}
-									else if (vContext.isExternalSpace(val1.getSpace())) {
-										target = val1.getAddress();
-									}
-									// if the value didn't get changed, then the real value isn't in here, don't make a reference
-									if (target != null) {
-										Reference[] refs = instruction.getReferencesFrom();
-										// make sure we aren't replacing a read ref with a call to the same place
-										if (refs.length <= 0 ||
-											!refs[0].getToAddress().equals(target)) {
-	
-											Address oldTarget = target;
-											target = makeReference(vContext, instruction, Reference.MNEMONIC,
+							if (val1 != null) {
+								// TODO: Revisit handling of external functions...
+
+								if (vContext.isConstant(val1)) {
+									suspectOffset = vContext.isSuspectConstant(val1);
+									// indirect target - assume single code space (same as instruction)
+									target = instruction.getAddress()
+											.getNewTruncatedAddress(val1.getOffset(), true);
+								}
+								else if (val1.isAddress()) {
+									// TODO: could this also occur if a memory location was copied ??
+									// unable to resolve indirect value - can we trust stored pointer?
+									// if not, we must rely on reference to function.
+									target = resolveFunctionReference(val1.getAddress());
+								}
+								else if (vContext.isExternalSpace(val1.getSpace())) {
+									target = val1.getAddress();
+								}
+								// if the value didn't get changed, then the real value isn't in here, don't make a reference
+								if (target != null) {
+									Reference[] refs = instruction.getReferencesFrom();
+									// make sure we aren't replacing a read ref with a call to the same place
+									if (refs.length <= 0 ||
+										!refs[0].getToAddress().equals(target)) {
+
+										Address oldTarget = target;
+										target =
+											makeReference(vContext, instruction, Reference.MNEMONIC,
 												//  Use target in case location has shifted (external...)
 												target.getAddressSpace().getSpaceID(),
 												target.getAddressableWordOffset(), val1.getSize(),
 												null,
-												instruction.getFlowType(), ptype, !suspectOffset, false, monitor);
-											if (target == null) {
-												// Target was nulled out, restore old target.
-												// Need to handle function call side-effects even if didn't make a reference
-												// The target can be changed by makeReference(), but if it is nulled out, then
-												// it indicates the reference was already made.
-												target = oldTarget;
-											}
+												instruction.getFlowType(), ptype, !suspectOffset,
+												false, monitor);
+										if (target == null) {
+											// Target was nulled out, restore old target.
+											// Need to handle function call side-effects even if didn't make a reference
+											// The target can be changed by makeReference(), but if it is nulled out, then
+											// it indicates the reference was already made.
+											target = oldTarget;
 										}
 									}
 								}
+							}
 						}
 						else {
 							// CALL will always provide address
@@ -1078,9 +1095,12 @@ public class SymbolicPropogator {
 
 						if (func != null && func.isInline()) {
 							// push fallthru pcodeIndex after call
-							contextStack.push(new SavedFlowState(vContext, FALL_THROUGH, minInstrAddress, func.getEntryPoint(), pcodeIndex+1 , continueAfterHittingFlow));
+							contextStack.push(new SavedFlowState(vContext, FALL_THROUGH,
+								minInstrAddress, func.getEntryPoint(), pcodeIndex + 1,
+								continueAfterHittingFlow));
 							// push the call so it will happen first
-							contextStack.push(new SavedFlowState(vContext, UNCONDITIONAL_CALL, minInstrAddress, func.getEntryPoint(), continueAfterHittingFlow));
+							contextStack.push(new SavedFlowState(vContext, UNCONDITIONAL_CALL,
+								minInstrAddress, func.getEntryPoint(), continueAfterHittingFlow));
 							return false;
 						}
 						handleFunctionSideEffects(instruction, target, monitor);
@@ -1094,7 +1114,7 @@ public class SymbolicPropogator {
 							injected = true;
 							continue;
 						}
-						
+
 						break;
 
 					// for callother, could be an interrupt, need to look at it like a call
@@ -1133,7 +1153,8 @@ public class SymbolicPropogator {
 						vContext.propogateResults(true);
 						nextAddr = minInstrAddress.getAddressSpace()
 								.getOverlayAddress(in[0].getAddress());
-						contextStack.push(new SavedFlowState(vContext, UNCONDITIONAL_JUMP, minInstrAddress, nextAddr, continueAfterHittingFlow));
+						contextStack.push(new SavedFlowState(vContext, UNCONDITIONAL_JUMP,
+							minInstrAddress, nextAddr, continueAfterHittingFlow));
 						return false;
 
 					case PcodeOp.CBRANCH:
@@ -1154,7 +1175,8 @@ public class SymbolicPropogator {
 
 						if (condition != null) {
 							longVal1 = vContext.getConstant(condition, null);
-						} else {
+						}
+						else {
 							// couldn't find the condition, so arbitrary which way to go
 							longVal1 = Long.valueOf(0);  // do fallthru first
 						}
@@ -1170,8 +1192,10 @@ public class SymbolicPropogator {
 								// only go forwards in sequence, backwards could be a loop
 								if (sequenceOffset > 0) {
 									if (followFalse) {
-										contextStack.push(new SavedFlowState(vContext, FALL_THROUGH, minInstrAddress,
-											minInstrAddress, pcodeIndex+1, continueAfterHittingFlow));
+										contextStack.push(new SavedFlowState(vContext, FALL_THROUGH,
+											minInstrAddress,
+											minInstrAddress, pcodeIndex + 1,
+											continueAfterHittingFlow));
 									}
 									pcodeIndex += sequenceOffset - 1;
 								}
@@ -1184,29 +1208,34 @@ public class SymbolicPropogator {
 							else { // memory branch
 								if (followFalse) {
 									// push follow false first
-									contextStack.push(new SavedFlowState(vContext, FALL_THROUGH, minInstrAddress,
-										minInstrAddress, pcodeIndex+1, continueAfterHittingFlow));
+									contextStack.push(new SavedFlowState(vContext, FALL_THROUGH,
+										minInstrAddress,
+										minInstrAddress, pcodeIndex + 1, continueAfterHittingFlow));
 								}
-								
+
 								// pcode addresses are raw addresses, make sure address is in same instruction space
 								nextAddr = minInstrAddress.getAddressSpace()
 										.getOverlayAddress(in[0].getAddress());
-								contextStack.push(new SavedFlowState(vContext, CONDITIONAL_JUMP, minInstrAddress,
-									nextAddr, continueAfterHittingFlow));
-								
+								contextStack.push(
+									new SavedFlowState(vContext, CONDITIONAL_JUMP, minInstrAddress,
+										nextAddr, continueAfterHittingFlow));
+
 								pcodeIndex = ops.length; // break out of the processing
 								return false; // don't keep going
 							}
-						} else {
+						}
+						else {
 							if (internalBranch) {
 								// handle internal branch
 								int sequenceOffset = (int) in[0].getOffset();
 								// only go forwards in sequence, backwards could be a loop
-								if (sequenceOffset > 0) {							
+								if (sequenceOffset > 0) {
 									int internalIndex = pcodeIndex + sequenceOffset;
 									if (followFalse) {
-										contextStack.push(new SavedFlowState(vContext, FALL_THROUGH, minInstrAddress,
-											minInstrAddress, internalIndex, continueAfterHittingFlow));
+										contextStack.push(new SavedFlowState(vContext, FALL_THROUGH,
+											minInstrAddress,
+											minInstrAddress, internalIndex,
+											continueAfterHittingFlow));
 									}
 								}
 								else if (!followFalse) {
@@ -1220,7 +1249,8 @@ public class SymbolicPropogator {
 									// push follow false first
 									nextAddr = minInstrAddress.getAddressSpace()
 											.getOverlayAddress(in[0].getAddress());
-									contextStack.push(new SavedFlowState(vContext, CONDITIONAL_JUMP, minInstrAddress,
+									contextStack.push(new SavedFlowState(vContext, CONDITIONAL_JUMP,
+										minInstrAddress,
 										nextAddr, continueAfterHittingFlow));
 								}
 							}
@@ -1252,7 +1282,7 @@ public class SymbolicPropogator {
 
 					case PcodeOp.INT_SEXT:
 						if (in[0].isAddress()) {
-							makeReference(vContext, instruction,  Reference.MNEMONIC, in[0],
+							makeReference(vContext, instruction, Reference.MNEMONIC, in[0],
 								null, RefType.READ, ptype, true, monitor);
 						}
 						val1 = vContext.extendValue(out, in, true, evaluator);
@@ -1274,7 +1304,7 @@ public class SymbolicPropogator {
 								val1 = val2 = vContext.createConstantVarnode(v, val1.getSize());
 							}
 						}
-						
+
 						result = vContext.add(val1, val2, evaluator);
 						vContext.putValue(out, result, mustClearAll);
 						break;
@@ -1335,7 +1365,7 @@ public class SymbolicPropogator {
 							val2 = vContext.getValue(in[1], false, evaluator);
 							longVal1 = vContext.getConstant(val1, evaluator);
 							longVal2 = vContext.getConstant(val2, evaluator);
-							if (longVal1 != null && longVal2 != null) {	
+							if (longVal1 != null && longVal2 != null) {
 								lresult = longVal1 ^ longVal2;
 								result = vContext.createConstantVarnode(lresult, val1.getSize());
 							}
@@ -1370,7 +1400,7 @@ public class SymbolicPropogator {
 						longVal1 = vContext.getConstant(val1, evaluator);
 						longVal2 = vContext.getConstant(val2, evaluator);
 						if (longVal1 != null && longVal2 != null) {
-							lresult =  longVal1 >> longVal2 ;
+							lresult = longVal1 >> longVal2;
 							result = vContext.createConstantVarnode(lresult, val1.getSize());
 						}
 						vContext.putValue(out, result, mustClearAll);
@@ -1459,11 +1489,12 @@ public class SymbolicPropogator {
 					case PcodeOp.SUBPIECE:
 						val1 = vContext.getValue(in[0], true, evaluator);
 						val2 = vContext.getValue(in[1], true, evaluator);
+
 						longVal2 = vContext.getConstant(val2, evaluator);
 						if (val1 != null && longVal2 != null) {
 							long subbyte = 8 * longVal2;
-	
-							if (vContext.isSymbol(val1) & subbyte == 0 &&
+
+							if (vContext.isSymbol(val1) && subbyte == 0 &&
 								out.getSize() == instruction.getAddress().getPointerSize()) {
 								// assume the subpiece is just downcasting to be used as a pointer, just ignore, since this is already an offset, and shouldn't matter.
 								result = val1;
@@ -1636,14 +1667,15 @@ public class SymbolicPropogator {
 		}
 		return vt;
 	}
-	
-	private Varnode getStoredLocation(VarnodeContext vContext, Varnode space, Varnode offset, Varnode size) {
+
+	private Varnode getStoredLocation(VarnodeContext vContext, Varnode space, Varnode offset,
+			Varnode size) {
 		Varnode out = null;
 
 		if (offset == null) {
 			return null;
 		}
-		
+
 		out = vContext.getVarnode(space, offset, size.getSize(), evaluator);
 
 		return out;
@@ -1680,7 +1712,7 @@ public class SymbolicPropogator {
 					context.putValue(varnode, context.createBadVarnode(), false);
 				}
 			}
-			
+
 			// clear out any killed by call variables
 			Varnode killedVarnodes[] = context.getKilledVarnodes(targetFunc);
 			if (killedVarnodes != null) {
@@ -1694,7 +1726,7 @@ public class SymbolicPropogator {
 		if (targetFunc != null && targetFunc.isInline()) {
 			return;
 		}
-		
+
 		if (targetFunc != null && targetFunc.hasNoReturn()) {
 			context.propogateResults(false);
 		}
@@ -1732,13 +1764,13 @@ public class SymbolicPropogator {
 				}
 			}
 			else if (purge != 0) {
-					Varnode purgeVar = context.createConstantVarnode(purge, outStack.getSize());
-					Varnode val1 = context.getValue(outStack, true, evaluator);
-					Varnode val2 = null;
-					if (val1 != null) {
-						val2 = context.add(val1, purgeVar, evaluator);
-					}
-					context.putValue(outStack, val2, false);
+				Varnode purgeVar = context.createConstantVarnode(purge, outStack.getSize());
+				Varnode val1 = context.getValue(outStack, true, evaluator);
+				Varnode val2 = null;
+				if (val1 != null) {
+					val2 = context.add(val1, purgeVar, evaluator);
+				}
+				context.putValue(outStack, val2, false);
 			}
 		}
 	}
@@ -1898,7 +1930,8 @@ public class SymbolicPropogator {
 		return null;
 	}
 
-	private PcodeOp[] checkSegmentCallOther(InjectPayload payload, Instruction instr, Varnode[] ins, Varnode out) {
+	private PcodeOp[] checkSegmentCallOther(InjectPayload payload, Instruction instr, Varnode[] ins,
+			Varnode out) {
 		if (!payload.getName().equals("segment_pcode")) {
 			return null;
 		}
@@ -1909,7 +1942,7 @@ public class SymbolicPropogator {
 		if (vval == null) {
 			return null;
 		}
-		if (!context.isSymbolicSpace(vval.getSpace())) { 
+		if (!context.isSymbolicSpace(vval.getSpace())) {
 			return null;
 		}
 		if (!context.isRegister(ins[1])) {
@@ -2046,7 +2079,7 @@ public class SymbolicPropogator {
 		conv = program.getCompilerSpec().getDefaultCallingConvention();
 
 		int extraParamIndex = -1;
-		
+
 		Parameter[] params = new Parameter[0];
 		SourceType signatureSource = SourceType.DEFAULT;
 		if (func != null) {
@@ -2059,7 +2092,8 @@ public class SymbolicPropogator {
 			//  not being set
 			Namespace parentNamespace = func.getParentNamespace();
 			if (parentNamespace != null && parentNamespace instanceof GhidraClass) {
-				PrototypeModel thisConv = program.getCompilerSpec().getCallingConvention(CompilerSpec.CALLING_CONVENTION_thiscall);
+				PrototypeModel thisConv = program.getCompilerSpec()
+						.getCallingConvention(CompilerSpec.CALLING_CONVENTION_thiscall);
 				if (conv != thisConv) {
 					extraParamIndex = params.length;
 				}
@@ -2087,7 +2121,7 @@ public class SymbolicPropogator {
 				DataType dataType = p.getDataType();
 
 				if (!(dataType instanceof Pointer ||
-				      (dataType instanceof TypeDef && ((TypeDef) dataType).isPointer()))) {
+					(dataType instanceof TypeDef && ((TypeDef) dataType).isPointer()))) {
 					// wasn't a pointer immediately
 					if (checkForParamPointerRefs) {
 						continue;
@@ -2110,18 +2144,19 @@ public class SymbolicPropogator {
 			}
 			if (extraParamIndex != -1) {
 				// TODO Should cache the arg locations for each convention
-				VariableStorage var = conv.getArgLocation(extraParamIndex, null, pointerSizedDT, program);
+				VariableStorage var =
+					conv.getArgLocation(extraParamIndex, null, pointerSizedDT, program);
 				// can't trust stack storage if params aren't known
 				if (!var.isStackStorage()) {
 					createVariableStorageReference(instruction, varnodeContext, monitor, conv, var,
-							null, callOffset);
+						null, callOffset);
 				}
 			}
 		}
 		else if (!checkForParamPointerRefs) {
 			// loop through potential params, since none defined, to find a potential pointer
 			// only check the first seven param locations, if don't have a signature
-			for (int pi=0; pi < 8; pi++) {
+			for (int pi = 0; pi < 8; pi++) {
 				// TODO Should cache the arg locations for each convention
 				VariableStorage var = conv.getArgLocation(pi, null, pointerSizedDT, program);
 				// can't trust stack storage if params aren't known
@@ -2129,7 +2164,7 @@ public class SymbolicPropogator {
 					continue;
 				}
 				createVariableStorageReference(instruction, varnodeContext, monitor, conv, var,
-						null, callOffset);
+					null, callOffset);
 			}
 		}
 	}
@@ -2151,7 +2186,8 @@ public class SymbolicPropogator {
 			return;
 		}
 
-		createVariableStorageReference(instruction, varnodeContext, monitor, null, returnLoc, null, 0);
+		createVariableStorageReference(instruction, varnodeContext, monitor, null, returnLoc, null,
+			0);
 	}
 
 	private void addLoadStoreReference(VarnodeContext vContext, Instruction instruction,
@@ -2166,7 +2202,8 @@ public class SymbolicPropogator {
 		int opIndex = findOperandWithVarnodeAssignment(instruction, assigningVarnode);
 
 		if (instruction.getFlowType().isCall()) {
-			makeReference(vContext, instruction, opIndex, refLocation, null, reftype, pcodeType, knownReference, monitor);
+			makeReference(vContext, instruction, opIndex, refLocation, null, reftype, pcodeType,
+				knownReference, monitor);
 		}
 		else {
 			int spaceID = refLocation.getSpace();
@@ -2183,7 +2220,7 @@ public class SymbolicPropogator {
 						// TODO: This is speculative, should not be doing here
 						//       need to check if there is a memory/label at the other end, or some other
 						//       corroborating evidence very late in analysis
-						if (newTarget != null ) {
+						if (newTarget != null) {
 							makeReference(vContext, instruction, Reference.MNEMONIC,
 								newTarget.getAddressSpace().getSpaceID(), newTarget.getOffset(), 0,
 								null, RefType.DATA, pcodeType, false, false, monitor);
@@ -2193,7 +2230,8 @@ public class SymbolicPropogator {
 				}
 			}
 			// even if this is symbolic space, give the evaluator a chance to do something with the symbolic value
-			makeReference(vContext, instruction, opIndex, refLocation, null, reftype, pcodeType, knownReference, monitor);
+			makeReference(vContext, instruction, opIndex, refLocation, null, reftype, pcodeType,
+				knownReference, monitor);
 		}
 	}
 
@@ -2260,38 +2298,41 @@ public class SymbolicPropogator {
 
 		long valueOffset = valueToStore.getOffset();
 
-		makeReference(vContext, instruction, -1, -1, valueOffset, 0, null, RefType.DATA, PcodeOp.STORE,
+		makeReference(vContext, instruction, -1, -1, valueOffset, 0, null, RefType.DATA,
+			PcodeOp.STORE,
 			false, false, monitor);
 	}
 
 	private void createVariableStorageReference(Instruction instruction,
-			VarnodeContext varnodeContext, TaskMonitor monitor, PrototypeModel conv, VariableStorage storage,
+			VarnodeContext varnodeContext, TaskMonitor monitor, PrototypeModel conv,
+			VariableStorage storage,
 			DataType dataType, long callOffset) {
-		
+
 		Address lastSetAddr;
 		BigInteger bval;
-		
+
 		// TODO: need to handle memory
 		// TODO: need to handle multi-piece variables and re-assemble
 		//
-		
+
 		if (storage.isStackStorage()) {
 			if (conv == null) {
 				return;
 			}
 			Varnode sVnode = storage.getFirstVarnode();
-			
+
 			// translate the variable relative to the current stackpointer symbolic value
 			Varnode stackVarnode = varnodeContext.getStackVarnode();
 			Varnode stackVal = varnodeContext.getValue(stackVarnode, null);
 			if (stackVal == null) {
 				return;
 			}
-			Varnode realSPVarnode = varnodeContext.createVarnode(stackVal.getOffset() + sVnode.getOffset(),
+			Varnode realSPVarnode =
+				varnodeContext.createVarnode(stackVal.getOffset() + sVnode.getOffset(),
 					stackVal.getSpace(), sVnode.getAddress().getAddressSpace().getPointerSize());
-			
+
 			Varnode value = null;
-			value = varnodeContext.getValue(realSPVarnode,evaluator);
+			value = varnodeContext.getValue(realSPVarnode, evaluator);
 			if (value == null) {
 				return;
 			}
@@ -2300,23 +2341,23 @@ public class SymbolicPropogator {
 				return;
 			}
 			bval = BigInteger.valueOf(value.getOffset());
-			
+
 			lastSetAddr = varnodeContext.getLastSetLocation(realSPVarnode, bval);
-			
+
 			// TODO: What if last set location is in a delayslot?
 		}
 		else if (storage.isRegisterStorage()) {
 			// TODO: need to handle compound register storage (e.g., two registers
 			// used)
 			Register reg = storage.getRegister();
-	
+
 			// RegisterValue rval =
 			// context.getRegisterValue(reg,instruction.getMinAddress());
 			RegisterValue rval = varnodeContext.getRegisterValue(reg);
 			if (rval == null || !rval.hasValue()) {
 				return;
 			}
-			
+
 			reg = rval.getRegister();
 			bval = rval.getUnsignedValue();
 			lastSetAddr = varnodeContext.getLastSetLocation(reg, bval);
@@ -2329,18 +2370,21 @@ public class SymbolicPropogator {
 					lastSetAddr = instruction.getMaxAddress();
 				}
 			}
-			
+
 		}
 		else {
 			return;
 		}
-		
-		makeVariableStorageReference(storage, instruction, varnodeContext, monitor, callOffset, dataType, lastSetAddr, bval);
+
+		makeVariableStorageReference(storage, instruction, varnodeContext, monitor, callOffset,
+			dataType, lastSetAddr, bval);
 	}
 
-	private void makeVariableStorageReference(VariableStorage storage, Instruction instruction, VarnodeContext varnodeContext,
-			TaskMonitor monitor, long callOffset, DataType dataType, Address lastSetAddr, BigInteger bval) {
-		
+	private void makeVariableStorageReference(VariableStorage storage, Instruction instruction,
+			VarnodeContext varnodeContext,
+			TaskMonitor monitor, long callOffset, DataType dataType, Address lastSetAddr,
+			BigInteger bval) {
+
 		if (lastSetAddr == null) {
 			lastSetAddr = instruction.getMaxAddress();
 		}
@@ -2356,7 +2400,7 @@ public class SymbolicPropogator {
 		if (lastSetAddr == null) {
 			return;
 		}
-		
+
 		// if the dataType is known, try to interpret it to an address given the
 		// bytes in the storage location
 		int knownSpaceID = -1;
@@ -2385,23 +2429,26 @@ public class SymbolicPropogator {
 		for (Reference ref : refs) {
 			Address refAddr = ref.getToAddress();
 			Address addr = refAddr.getAddressSpace().getTruncatedAddress(val, true);
-			if (ref.getReferenceType() == RefType.PARAM  && !visitedBody.contains(ref.getFromAddress())) {
+			if (ref.getReferenceType() == RefType.PARAM &&
+				!visitedBody.contains(ref.getFromAddress())) {
 				// if reference address is not in body yet, this is the first time at this location
 				// get rid of the reference, reference could be changed to new AddressSpace or value
 				instr.removeOperandReference(ref.getOperandIndex(), refAddr);
-			} else if (refAddr.getOffset() == addr.getOffset()) {
+			}
+			else if (refAddr.getOffset() == addr.getOffset()) {
 				found = true;
 			}
 		}
-		
+
 		RefType refType = (callOffset == 0 ? RefType.DATA : RefType.PARAM);
-		makeReference(varnodeContext, instr, Reference.MNEMONIC, knownSpaceID, val, 0, dataType, refType,
-				PcodeOp.UNIMPLEMENTED, knownReference, found, monitor);
+		makeReference(varnodeContext, instr, Reference.MNEMONIC, knownSpaceID, val, 0, dataType,
+			refType,
+			PcodeOp.UNIMPLEMENTED, knownReference, found, monitor);
 	}
 
 	private Object getPointerDataTypeValue(DataType dataType, Address lastSetAddr,
 			BigInteger bval) {
-		
+
 		int len = dataType.getLength();
 		byte[] byteArray = new byte[len];
 
@@ -2414,12 +2461,11 @@ public class SymbolicPropogator {
 		if (len > byteArray.length) {
 			return null;
 		}
-		
-		Object value = dataType.getValue(buf, dataType.getDefaultSettings(), len);
-		
-		return value;
-	}	
 
+		Object value = dataType.getValue(buf, dataType.getDefaultSettings(), len);
+
+		return value;
+	}
 
 	/**
 	 * get the return variable storage location for this function
@@ -2554,7 +2600,8 @@ public class SymbolicPropogator {
 	 * @param monitor to cancel
 	 * @return address that was marked up, null otherwise
 	 */
-	public Address makeReference(VarnodeContext varnodeContext, Instruction instruction, int opIndex, Varnode vt, DataType dataType, RefType refType,
+	public Address makeReference(VarnodeContext varnodeContext, Instruction instruction,
+			int opIndex, Varnode vt, DataType dataType, RefType refType,
 			int pcodeop, boolean knownReference, TaskMonitor monitor) {
 		if (!vt.isAddress() && !varnodeContext.isExternalSpace(vt.getSpace())) {
 			if (evaluator != null) {
@@ -2564,8 +2611,9 @@ public class SymbolicPropogator {
 		}
 
 		// offset must be word based to compute the reference correctly
-		return makeReference(varnodeContext, instruction, opIndex, vt.getSpace(), vt.getWordOffset(),
-			 vt.getSize(), dataType, refType, pcodeop, knownReference, false, monitor);
+		return makeReference(varnodeContext, instruction, opIndex, vt.getSpace(),
+			vt.getWordOffset(),
+			vt.getSize(), dataType, refType, pcodeop, knownReference, false, monitor);
 	}
 
 	/**
@@ -2588,10 +2636,11 @@ public class SymbolicPropogator {
 	 * @param preExisting preExisting reference
 	 * @param monitor - the task monitor
 	 * @return address that was marked up, null otherwise
-
+	
 	 */
 	public Address makeReference(VarnodeContext vContext, Instruction instruction, int opIndex,
-			long knownSpaceID, long wordOffset, int size, DataType dataType, RefType refType, int pcodeop,
+			long knownSpaceID, long wordOffset, int size, DataType dataType, RefType refType,
+			int pcodeop,
 			boolean knownReference, boolean preExisting, TaskMonitor monitor) {
 
 		long spaceID = knownSpaceID;
@@ -2650,7 +2699,8 @@ public class SymbolicPropogator {
 					//       to be considered later as a pointer.
 					// allow flow references to memory not in program
 					//   program could be located in the wrong place, or other flow issues
-					if (!refType.isFlow() && !program.getReferenceManager().hasReferencesTo(target)) {
+					if (!refType.isFlow() &&
+						!program.getReferenceManager().hasReferencesTo(target)) {
 						return null;
 					}
 				}
@@ -2728,7 +2778,7 @@ public class SymbolicPropogator {
 		else {
 			instruction.addOperandReference(opIndex, target, refType, SourceType.ANALYSIS);
 		}
-		
+
 		return target;
 	}
 
@@ -2759,7 +2809,7 @@ public class SymbolicPropogator {
 			dataType, refType)) {
 			return null;
 		}
-			
+
 		return target;
 	}
 
@@ -2801,7 +2851,8 @@ public class SymbolicPropogator {
 			Instruction targetInstr = getInstructionContaining(target);
 			if (targetInstr != null) {
 				// if not at the top of an instruction, don't do it
-				Address disassemblyAddress = PseudoDisassembler.getNormalizedDisassemblyAddress(program, target);
+				Address disassemblyAddress =
+					PseudoDisassembler.getNormalizedDisassemblyAddress(program, target);
 				if (!targetInstr.getMinAddress().equals(disassemblyAddress)) {
 					return false;
 				}
@@ -2845,13 +2896,13 @@ public class SymbolicPropogator {
 					}
 				}
 			}
-			
+
 			// Don't check more complicated operands if already found an operand that matches
 			// only continue checking for an exact scalar/address operand
 			if (opIndex != Reference.MNEMONIC) {
 				continue;
 			}
-			
+
 			// markup the program counter for any flow
 			if ((opType & OperandType.REGISTER) != 0) {
 				Register reg = instruction.getRegister(i);
@@ -2974,7 +3025,7 @@ public class SymbolicPropogator {
 	public void setParamPointerRefCheck(boolean checkParamRefsOption) {
 		checkForParamPointerRefs = checkParamRefsOption;
 	}
-	
+
 	/**
 	 * enable/disable checking return for constant references
 	 * 

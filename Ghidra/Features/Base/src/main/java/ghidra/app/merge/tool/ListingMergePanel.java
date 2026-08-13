@@ -487,16 +487,6 @@ public class ListingMergePanel extends JPanel
 		}
 
 		@Override
-		public GoToOverrideService getOverrideService() {
-			return null;
-		}
-
-		@Override
-		public void setOverrideService(GoToOverrideService override) {
-			// no-op
-		}
-
-		@Override
 		public Navigatable getDefaultNavigatable() {
 			return null;
 		}

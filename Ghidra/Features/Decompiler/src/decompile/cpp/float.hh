@@ -64,6 +64,7 @@ private:
 public:
   FloatFormat(int4 sz);	///< Construct default IEEE 754 standard settings
   int4 getSize(void) const { return size; }			///< Get the size of the encoding in bytes
+  floatclass getClass(uintb encoding) const;			///< Get the class of an encoding
   double getHostFloat(uintb encoding,floatclass *type) const;	///< Convert an encoding into host's double
   uintb getEncoding(double host) const;				///< Convert host's double into \b this encoding
   uintb convertEncoding(uintb encoding,const FloatFormat *formin) const;	///< Convert between two different formats
@@ -71,6 +72,7 @@ public:
   uintb extractFractionalCode(uintb x) const;			///< Extract the fractional part of the encoding
   bool extractSign(uintb x) const;				///< Extract the sign bit from the encoding
   int4 extractExponentCode(uintb x) const;			///< Extract the exponent from the encoding
+  int4 getExponent(uintb x) const { return extractExponentCode(x) - bias; }	///< Get the exponent of an encoding
 
   string printDecimal(double host,bool forcesci) const;		///< Print given value as a decimal string
 

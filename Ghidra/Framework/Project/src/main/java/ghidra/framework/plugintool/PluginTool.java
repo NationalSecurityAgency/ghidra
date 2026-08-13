@@ -894,19 +894,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	/**
 	 * Add plugins to the tool.
-	 * @param classNames array of plugin class names
-	 * @throws PluginException if a plugin could not be constructed, or
-	 * there was problem executing its init() method, or if a plugin of this
-	 * class already exists in the tool
-	 * @deprecated use {@link #addPlugins(Collection)}
-	 */
-	@Deprecated(since = "10.2", forRemoval = true)
-	public void addPlugins(String[] classNames) throws PluginException {
-		addPlugins(Arrays.asList(classNames));
-	}
-
-	/**
-	 * Add plugins to the tool.
 	 * @param classNames collection of plugin class names
 	 * @throws PluginException if a plugin could not be constructed, or
 	 * there was problem executing its init() method, or if a plugin of this
@@ -928,16 +915,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 			pluginMgr.addPlugin(p);
 			setConfigChanged(true);
 		}, PluginException.class);
-	}
-
-	/**
-	 * Remove the array of plugins from the tool.
-	 * @param plugins array of plugins to remove
-	 * @deprecated use {@link #removePlugins(List)}
-	 */
-	@Deprecated(since = "10.2", forRemoval = true)
-	public void removePlugins(Plugin[] plugins) {
-		removePlugins(Arrays.asList(plugins));
 	}
 
 	/**

@@ -239,7 +239,7 @@ public class OverviewColorComponent extends JPanel implements ListingOverviewPro
 		int pixelStart = getPixelIndex(start);
 		int pixelEnd = getPixelIndex(end);
 		for (int i = pixelStart; i <= pixelEnd; i++) {
-			if (i >= 0 & i < colors.length) {
+			if (i >= 0 && i < colors.length) {
 				colors[i] = null;
 			}
 		}

@@ -364,13 +364,16 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	}
 
 	@Override
-	protected boolean refresh() {
+	protected boolean refresh(DBRecord rec) {
 		try {
-			DBRecord rec = adapter.getRecord(key);
+			if (rec == null) {
+				rec = adapter.getRecord(key);
+			}
 			if (rec != null) {
 				settingsDef = null;
 				record = rec;
-				return super.refresh();
+				completeRefresh();
+				return true;
 			}
 		}
 		catch (IOException e) {

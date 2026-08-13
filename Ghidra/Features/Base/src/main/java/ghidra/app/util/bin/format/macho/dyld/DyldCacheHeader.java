@@ -380,11 +380,11 @@ public class DyldCacheHeader implements StructConverter {
 		baseAddress = reader.readLong(mappingOffset);
 		architecture = DyldArchitecture.getArchitecture(new String(magic).trim());
 
-		mappingInfoList = new ArrayList<>(mappingCount);
-		cacheMappingAndSlideInfoList = new ArrayList<>(mappingWithSlideCount);
+		mappingInfoList = new ArrayList<>();
+		cacheMappingAndSlideInfoList = new ArrayList<>();
 		slideInfoList = new ArrayList<>();
-		imageInfoList = new ArrayList<>(imagesCountOld);
-		branchPoolList = new ArrayList<>(branchPoolsCount);
+		imageInfoList = new ArrayList<>();
+		branchPoolList = new ArrayList<>();
 		imageTextInfoList = new ArrayList<>();
 		subcacheEntryList = new ArrayList<>();
 	}
@@ -448,9 +448,8 @@ public class DyldCacheHeader implements StructConverter {
 			}
 			reader.setPointerIndex(mappingWithSlideOffset);
 			for (int i = 0; i < mappingWithSlideCount; ++i) {
+				monitor.increment();
 				cacheMappingAndSlideInfoList.add(new DyldCacheMappingAndSlideInfo(reader));
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
 			}
 		}
 		catch (IOException e) {
@@ -1087,72 +1086,66 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	/**
-	 * Gets the {@link List} of {@link DyldCacheMappingInfo}s.  Requires header to have been parsed.
-	 * 
-	 * @return The {@link List} of {@link DyldCacheMappingInfo}s
+	 * {@return the {@link List} of {@link DyldCacheMappingInfo}s}
+	 * <p>
+	 * Requires header to have been parsed. 
 	 */
 	public List<DyldCacheMappingInfo> getMappingInfos() {
 		return mappingInfoList;
 	}
 
 	/**
-	 * Gets the {@link List} of {@link DyldCacheImageInfo}s.  Requires header to have been parsed.
-	 * 
-	 * @return The {@link List} of {@link DyldCacheImageInfo}s
+	 * {@return the {@link List} of {@link DyldCacheImageInfo}s}
+	 * <p>
+	 * Requires header to have been parsed.
 	 */
 	public List<DyldCacheImageInfo> getImageInfos() {
 		return imageInfoList;
 	}
 
 	/**
-	 * Gets the {@link List} of {@link DyldSubcacheEntry}s.  Requires header to have been parsed.
-	 * 
-	 * @return The {@link List} of {@link DyldSubcacheEntry}s
+	 * {@return the {@link List} of {@link DyldSubcacheEntry}s}
+	 * <p>
+	 * Requires header to have been parsed.
 	 */
 	public List<DyldSubcacheEntry> getSubcacheEntries() {
 		return subcacheEntryList;
 	}
 
 	/**
-	 * Gets the {@link List} of {@link DyldCacheMappingAndSlideInfo}s.  Requires header to have been parsed.
-	 * 
-	 * @return The {@link List} of {@link DyldCacheMappingAndSlideInfo}s
+	 * {@return the {@link List} of {@link DyldCacheMappingAndSlideInfo}s}
+	 * <p>
+	 * Requires header to have been parsed.
 	 */
 	public List<DyldCacheMappingAndSlideInfo> getCacheMappingAndSlideInfos() {
 		return cacheMappingAndSlideInfoList;
 	}
 
 	/**
-	 * Gets the {@link DyldCacheLocalSymbolsInfo}.
-	 * 
-	 * @return The {@link DyldCacheLocalSymbolsInfo}.  Could be null if it didn't parse.
+	 * {@return the {@link DyldCacheLocalSymbolsInfo}, or {@code null} if it didn't parse}
 	 */
 	public DyldCacheLocalSymbolsInfo getLocalSymbolsInfo() {
 		return localSymbolsInfo;
 	}
 
 	/**
-	 * Gets the {@link List} of {@link DyldCacheSlideInfoCommon}s.
-	 * 
-	 * @return the {@link List} of {@link DyldCacheSlideInfoCommon}s.
+	 * {@return the {@link List} of {@link DyldCacheSlideInfoCommon}s}
 	 */
 	public List<DyldCacheSlideInfoCommon> getSlideInfos() {
 		return slideInfoList;
 	}
 
 	/**
-	 * Gets the {@link List} of branch pool address.  Requires header to have been parsed.
-	 * 
-	 * @return The {@link List} of branch pool address
+	 * {@return the {@link List} of branch pool address}
+	 * <p>
+	 * Requires header to have been parsed.
 	 */
 	public List<Long> getBranchPoolAddresses() {
 		return branchPoolList;
 	}
 
 	/**
-	 * Gets architecture information.
-	 * 
-	 * @return architecture information
+	 * {@return architecture information}
 	 */
 	public DyldArchitecture getArchitecture() {
 		return architecture;
@@ -1266,8 +1259,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(mappingOffset);
 			for (int i = 0; i < mappingCount; ++i) {
 				mappingInfoList.add(new DyldCacheMappingInfo(reader));
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 			}
 		}
 		catch (IOException e) {
@@ -1288,8 +1280,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(offset);
 			for (int i = 0; i < count; ++i) {
 				imageInfoList.add(new DyldCacheImageInfo(reader));
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 			}
 		}
 		catch (IOException e) {
@@ -1328,8 +1319,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(branchPoolsOffset);
 			for (int i = 0; i < branchPoolsCount; ++i) {
 				branchPoolList.add(reader.readNextLong());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 			}
 		}
 		catch (IOException e) {
@@ -1347,8 +1337,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(imagesTextOffset);
 			for (int i = 0; i < imagesTextCount; ++i) {
 				imageTextInfoList.add(new DyldCacheImageTextInfo(reader));
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 			}
 		}
 		catch (IOException e) {
@@ -1367,8 +1356,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(subCacheArrayOffset);
 			for (int i = 0; i < subCacheArrayCount; ++i) {
 				subcacheEntryList.add(new DyldSubcacheEntry(reader));
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 			}
 		}
 		catch (IOException e) {
@@ -1420,11 +1408,10 @@ public class DyldCacheHeader implements StructConverter {
 		try {
 			Address addr = fileOffsetToAddr(mappingOffset, program, space);
 			for (DyldCacheMappingInfo mappingInfo : mappingInfoList) {
+				monitor.increment();
 				Data d = DataUtilities.createData(program, addr, mappingInfo.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
 			}
 		}
 		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
@@ -1440,11 +1427,10 @@ public class DyldCacheHeader implements StructConverter {
 		try {
 			Address addr = fileOffsetToAddr(mappingWithSlideOffset, program, space);
 			for (DyldCacheMappingAndSlideInfo mappingInfo : cacheMappingAndSlideInfoList) {
+				monitor.increment();
 				Data d = DataUtilities.createData(program, addr, mappingInfo.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
 			}
 		}
 		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
@@ -1461,12 +1447,11 @@ public class DyldCacheHeader implements StructConverter {
 			Address addr = fileOffsetToAddr(imagesOffset != 0 ? imagesOffset : imagesOffsetOld,
 				program, space);
 			for (DyldCacheImageInfo imageInfo : imageInfoList) {
+				monitor.increment();
 				Data d = DataUtilities.createData(program, addr, imageInfo.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				program.getListing().setComment(addr, CommentType.EOL, imageInfo.getPath());
 				addr = addr.add(d.getLength());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
 			}
 		}
 		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
@@ -1541,12 +1526,11 @@ public class DyldCacheHeader implements StructConverter {
 		try {
 			Address addr = fileOffsetToAddr(branchPoolsOffset, program, space);
 			for (int i = 0; i < branchPoolList.size(); i++) {
+				monitor.increment();
 				Data d = DataUtilities.createData(program, addr, Pointer64DataType.dataType,
 					Pointer64DataType.dataType.getLength(),
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
 			}
 		}
 		catch (CodeUnitInsertionException e) {
@@ -1581,12 +1565,11 @@ public class DyldCacheHeader implements StructConverter {
 		try {
 			Address addr = fileOffsetToAddr(imagesTextOffset, program, space);
 			for (DyldCacheImageTextInfo imageTextInfo : imageTextInfoList) {
+				monitor.increment();
 				Data d = DataUtilities.createData(program, addr, imageTextInfo.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				program.getListing().setComment(addr, CommentType.EOL, imageTextInfo.getPath());
 				addr = addr.add(d.getLength());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
 			}
 		}
 		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
@@ -1602,11 +1585,10 @@ public class DyldCacheHeader implements StructConverter {
 		try {
 			Address addr = fileOffsetToAddr(subCacheArrayOffset, program, space);
 			for (DyldSubcacheEntry subcacheEntry : subcacheEntryList) {
+				monitor.increment();
 				Data d = DataUtilities.createData(program, addr, subcacheEntry.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
 			}
 		}
 		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
@@ -1625,13 +1607,12 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	/**
-	 * Gets the given file offset's corresponding memory address.
+	 * {@return the given file offset's corresponding memory address, or {@code null} if it doesn't
+	 * have one}
 	 *  
 	 * @param offset The file offset
 	 * @param program The {@link Program}
 	 * @param space The {@link AddressSpace}
-	 * @return The given file offset's corresponding memory address.  Could be null if it doesn't
-	 *   have one.
 	 */
 	private Address fileOffsetToAddr(long offset, Program program, AddressSpace space) {
 
@@ -1660,9 +1641,7 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	/**
-	 * Checks to see if any slide info exists
-	 * 
-	 * @return True if any slide info exists; otherwise, false
+	 * {@return whether or not any slide info exists}
 	 */
 	public boolean hasSlideInfo() {
 		if (slideInfoSize != 0) {
@@ -1678,28 +1657,25 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	/**
-	 * Get the original unslid load address.  This is found in the first mapping infos.
-	 * 
-	 * @return the original unslid load address
+	 * {@return the original unslid load address}
+	 * <p>
+	 * This is found in the first mapping infos.
 	 */
 	public long unslidLoadAddress() {
 		return mappingInfoList.get(0).getAddress();
 	}
 
 	/**
-	 * Checks to see whether or not this is a subcache
-	 * 
-	 * @return True if this is a subcache; otherwise, false if it's a base cache
+	 * {@return whether or not this is a subcache}
 	 */
 	public boolean isSubcache() {
 		return subCacheArrayCount != null && subCacheArrayCount == 0 && symbolFileUUID == null;
 	}
 
 	/**
-	 * Checks to see whether or not the old accelerate info fields are being used
-	 * 
-	 * @return True if the old accelerate info fields are being used; otherwise, false if the new
-	 *   dyldInCache fields are being used
+	 * {@return whether or not the old accelerate info fields are being used}
+	 * <p>
+	 * If they aren't being used, then the new {@code dyldInCache} fields are being used.
 	 */
 	public boolean hasAccelerateInfo() {
 		return cacheSubType == null;

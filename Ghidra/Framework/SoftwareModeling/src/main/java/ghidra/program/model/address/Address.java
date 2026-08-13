@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,6 +68,7 @@ public interface Address extends Comparable<Address> {
 
 	/**
 	 * Returns a new address in this address's space with the given offset.  
+	 * 
 	 * <P>NOTE: for those spaces with an addressable unit size other than 1, the address returned 
 	 * may not correspond to an addressable unit/word boundary if a byte-offset is specified.
 	 * 
@@ -81,14 +82,16 @@ public interface Address extends Comparable<Address> {
 	 * @throws AddressOutOfBoundsException if the offset is less than 0 or greater than the max 
 	 * offset allowed for this space.
 	 */
-	Address getNewAddress(long offset, boolean isAddressableWordOffset)
+	public Address getNewAddress(long offset, boolean isAddressableWordOffset)
 			throws AddressOutOfBoundsException;
 
 	/**
 	 * Returns a new address in this address's space with the given offset.  The specified offset 
 	 * will be truncated within the space and will not throw an exception.
+	 * 
 	 * <p>NOTE: for those spaces with an addressable unit size other than 1, the address returned 
 	 * may not correspond to a word boundary (addressable unit) if a byte-offset is specified.
+	 * 
 	 * @param offset the offset for the new address.
 	 * @param isAddressableWordOffset if true the specified offset is an addressable unit/word 
 	 * offset, otherwise offset is a byte offset.  See 
@@ -97,7 +100,7 @@ public interface Address extends Comparable<Address> {
 	 *  (i.e., wordOffset = byteOffset * addressableUnitSize).
 	 * @return address with given byte offset truncated to the physical space size
 	 */
-	Address getNewTruncatedAddress(long offset, boolean isAddressableWordOffset);
+	public Address getNewTruncatedAddress(long offset, boolean isAddressableWordOffset);
 
 	/**
 	 * Returns the number of bytes needed to form a pointer to this address.  The result will be 
@@ -193,7 +196,7 @@ public interface Address extends Comparable<Address> {
 	 * Creates a new address by subtracting the displacement from the current address. If the 
 	 * offset is greater than the max offset of the address space, the high order bits are masked 
 	 * off, making the address wrap.  For non-segmented addresses this will be the same as 
-	 * subtractWrap().  For segmented addresses, the address will wrap when the 20 bit (oxfffff) 
+	 * subtractWrap().  For segmented addresses, the address will wrap when the 20 bit (0xfffff) 
 	 * offset is exceeded, as opposed to when the segment offset is exceeded.
 	 * @param displacement  the displacement to add.
 	 * @return The new Address formed by subtracting the displacement from this address's offset.
@@ -211,6 +214,18 @@ public interface Address extends Comparable<Address> {
 	 * operation.
 	 */
 	public Address subtractNoWrap(long displacement) throws AddressOverflowException;
+
+	/**
+	 * Creates a new Address by subtracting displacement from the Address.  The Address will not 
+	 * wrap within the space and in fact will throw an exception if the result is less than the min
+	 * address in this space or greater than the max address in this space.
+	 *
+	 * @param displacement  the displacement to subtract.
+	 * @return The new Address
+	 * @throws AddressOverflowException if the offset in this Address would overflow due to this
+	 * operation.
+	 */
+	public Address subtractNoWrap(BigInteger displacement) throws AddressOverflowException;
 
 	/**
 	 * Creates a new address (possibly in a new space) by subtracting the displacement to this 
@@ -235,7 +250,7 @@ public interface Address extends Comparable<Address> {
 	 * Creates a new address by adding the displacement to the current address. If the offset is 
 	 * greater than the max offset of the address space, the high order bits are masked off, making
 	 * the address wrap.  For non-segmented addresses this will be the same as addWrap().  For 
-	 * segmented addresses, the address will wrap when the 20 bit (oxfffff) offset is exceeded, as
+	 * segmented addresses, the address will wrap when the 20 bit (0xfffff) offset is exceeded, as
 	 * opposed to when the segment offset is exceeded. 
 	 * @param displacement  the displacement to add.
 	 * @return The new Address formed by adding the displacement to this address's offset.
@@ -253,6 +268,15 @@ public interface Address extends Comparable<Address> {
 	 */
 	public Address addNoWrap(long displacement) throws AddressOverflowException;
 
+	/**
+	* Creates a new Address with a displacement relative to this Address.  The Address will not
+	* wrap around!  An exception will be throw if the result is not within this address space.
+	*
+	* @param displacement the displacement to add.
+	* @return the new address.
+	* @throws AddressOverflowException if the offset in this Address would overflow (wrap around)
+	* due to this operation.
+	*/
 	public Address addNoWrap(BigInteger displacement) throws AddressOverflowException;
 
 	/**
@@ -393,6 +417,7 @@ public interface Address extends Comparable<Address> {
 
 	/**
 	 * Returns true if this address represents a location in the register space.
+	 * 
 	 * <P>NOTE: It is important to note that a {@link Register} could reside within a memory space
 	 * and not the register space in which case this method would return false for its address.
 	 * @return true if a register address

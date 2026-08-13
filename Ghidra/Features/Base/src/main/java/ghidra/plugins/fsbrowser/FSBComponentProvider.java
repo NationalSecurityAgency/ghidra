@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -78,6 +79,9 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 	private List<FSBFileHandler> fileHandlers = List.of();
 	private ProgramManager pm;
 
+	private Timer delayedSwitchToProgramTimer;
+	private AtomicReference<Program> programToSelect = new AtomicReference<>();
+
 	/**
 	 * Creates a new {@link FSBComponentProvider} instance, taking
 	 * ownership of the passed-in {@link FileSystemRef fsRef}.
@@ -97,11 +101,15 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 
 		initTree();
 		rootDir.fsRef.getFilesystem().getRefManager().addListener(this);
+
+		// this timer is to give the user time to select successive programs before activating one
+		delayedSwitchToProgramTimer = new Timer(300, e -> doSwitchToProgram());
+		delayedSwitchToProgramTimer.setRepeats(false);
+
 		initFileHandlers();
 
 		setHelpLocation(
 			new HelpLocation("FileSystemBrowserPlugin", "FileSystemBrowserIntroduction"));
-
 	}
 
 	void initFileHandlers() {
@@ -227,6 +235,8 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 	}
 
 	void dispose() {
+		programToSelect.set(null);
+		delayedSwitchToProgramTimer.stop();
 		plugin.getTool().removePopupActionProvider(this);
 		projectIndex.removeIndexListener(this);
 
@@ -498,6 +508,28 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 		Swing.runLater(() -> gTree.repaint());
 	}
 
+	/**
+	 * Cause the ProgramManager to switch to the specified program after a non-blocking delay,
+	 * discarding any pending program that will be switched to.
+	 * 
+	 * @param program {@link Program}
+	 */
+	void delayedSwitchToProgram(Program program) {
+		if (pm == null) {
+			return;
+		}
+		programToSelect.set(program);
+		delayedSwitchToProgramTimer.restart();
+	}
+
+	void doSwitchToProgram() {
+		ProgramManager localPM = pm;
+		Program program = programToSelect.getAndSet(null);
+		if (localPM != null && program != null) {
+			Swing.runLater(() -> localPM.setCurrentProgram(program));
+		}
+	}
+
 	//---------------------------------------------------------------------------------------------
 
 	private class DefaultFileHandler implements FSBFileHandler {
@@ -524,7 +556,7 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 					if (df != null && (domObj = df.getOpenedDomainObject(this)) != null) {
 						domObj.release(this);
 						if (domObj instanceof Program program) {
-							runTask(monitor -> pm.setCurrentProgram(program));
+							delayedSwitchToProgram(program);
 						}
 						return true;
 					}

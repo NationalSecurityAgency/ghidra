@@ -1,0 +1,323 @@
+#BCOND adr17 - 00000111111DCCCC | ddddddddddddddd1
+:b^c0003 adr17 is (op0515=0x3F & c0003; op1616=1) & adr17
+{
+	if (c0003) goto adr17;
+}
+
+
+# BINS reg1, pos, width, reg2 - rrrrr111111RRRRR | MMMMK0001001LLL0 (msb >= 16, lsb >= 16)
+:bins _R1115, pos, width, R0004 is R1115 & _R1115 & op0510=0x3f & R0004; op2831 & op2727 & op2026=0x9 & op1719 & op1616=0
+[ pos = (op2727 << 3) | op1719 + 16; width= op2831 - pos + 17; ]
+{
+	local mask:4 = 0;
+	bfmask(mask, pos, width);
+	local result = (R1115 & ~mask) | (R0004 & mask);
+	_R1115 = result;
+	set_Z(result);
+	set_S(result);
+}
+
+# BINS reg1, pos, width, reg2 - rrrrr111111RRRRR | MMMMK0001011LLL0 (msb >= 16, lsb < 16)
+:bins _R1115, pos, width, R0004 is R1115 & _R1115 & op0510=0x3f & R0004; op2831 & op2727 & op2026=0xb & op1719 & op1616=0
+[ pos = (op2727 << 3) | op1719; width= op2831 - pos + 17; ]
+{
+	local mask:4 = 0;
+	bfmask(mask, pos, width);
+	local result = (R1115 & ~mask) | (R0004 & mask);
+	_R1115 = result;
+	set_Z(result);
+	set_S(result);
+}
+
+# BINS reg1, pos, width, reg2 - rrrrr111111RRRRR | MMMMK0001101LLL0 (msb < 16, lsb < 16)
+:bins _R1115, pos, width, R0004 is R1115 & _R1115 & op0510=0x3f & R0004; op2831 & op2727 & op2026=0xd & op1719 & op1616=0
+[ pos = (op2727 << 3) | op1719; width= op2831 - pos + 1; ]
+{
+	local mask:4 = 0;
+	bfmask(mask, pos, width);
+	local result = (R1115 & ~mask) | (R0004 & mask);
+	_R1115 = result;
+	set_Z(result);
+	set_S(result);
+}
+
+define pcodeop cacheHitBlockInvalidate;
+define pcodeop cacheIndexedBlockInvalidate;
+define pcodeop cacheFetchAndLock;
+define pcodeop cacheIndexedStore;
+define pcodeop cacheIndexedLoad;
+define pcodeop clearLoadLinkBit;
+
+cacheop: "CHBII", R0004 is op1112=0 & R0004; op2731=0
+{
+	cacheHitBlockInvalidate(R0004);
+}
+
+cacheop: "CIBII", R0004 is op1112=1 & R0004; op2731=0
+{
+	cacheIndexedBlockInvalidate(R0004);
+}
+
+cacheop: "CFALI", R0004 is op1112=2 & R0004; op2731=0
+{
+	cacheFetchAndLock(R0004);
+}
+
+cacheop: "CISTI", R0004 is op1112=3 & R0004; op2731=0
+{
+	cacheIndexedStore(R0004);
+}
+
+cacheop: "CILDI", R0004 is op1112=3 & R0004; op2731=1
+{
+	cacheIndexedLoad(R0004);
+}
+
+cacheop: "CLL" is op1112=3; op2731=0x1e
+{
+	clearLoadLinkBit();
+}
+
+# CACHE cacheop, [reg1] - 111pp111111RRRRR | PPPPP00101100000
+:cache cacheop is (op1315=0x7 & op0510=0x3f; op1626=0x160) & cacheop {
+	build cacheop;
+}
+
+# CLL - 1111111111111111 | 1111000101100000
+:cll is op0015=0xffff; op1631=0xf160
+{
+	clearLoadLinkBit();
+}
+# CVTF.HS reg2, reg3 - rrrrr11111100010|wwwwww10001000010
+:cvtf.hs R1115, R2731 is R1115 & op0510=0x3F & op0004=0b00010; R2731 & op2126=0b100010 & op1620=0b00010
+{
+	R2731 = float2float(R1115:2);
+}
+
+# CVTF.SH reg2, reg3 - rrrrr11111100100|wwwwww10001000100
+:cvtf.sh R1115, R2731 is R1115 & op0510=0x3F & op0004=0b00011; R2731 & op2126=0b100010 & op1620=0b00010
+{
+	local res:2 = float2float(R1115);
+	R2731 = zext(res);
+}
+
+
+define pcodeop debugCheckpoint;
+# dbcp - 1110100001000000
+:dbcp is op0015=0xe840
+{
+	debugCheckpoint();
+}
+
+define pcodeop debugHVTrap;
+# dbhvtrap - 1110000001000000
+:dbhvtrap is op0015=0xe040
+{
+	debugHVTrap();
+}
+
+define pcodeop debugPush;
+# dbpush - 01011111111RRRRR | rrrrr11111111111 
+:dbpush _R0004, _R2731 is op0515=0x2ff & _R0004; _R2731 & op1626=0x7ff
+{
+	debugPush(_R0004, _R2731);
+}
+
+# dbret - 0000011111100000 | 0000000101000110
+:dbret is op0015=0x07e0; op1631=0x0146
+{
+	PC = DBPC;
+	PSW = DBPSW;
+	goto [DBPC];
+}
+
+define pcodeop debugTag;
+# dbtag imm10u - 01011111111IIIII | iiiii11111111111
+:dbtag imm10u is op0515=0x67f & op0004; op2731 & op1626=0x7ff
+[ imm10u = (op0004 << 5) | op2731; ]
+{
+	local tag:2 = imm10u;
+	debugTag(tag);
+}
+
+# dbtrap
+:dbtrap is op0015=0xf840; op1631=0xffff
+{
+	DBPC = inst_next;
+	DBPSW = PSW;
+	$(NP) = 1;
+	$(EP) = 1;
+	$(ID) = 1;
+	PC = 0x00000060;
+	goto [PC];
+}
+
+define pcodeop dst;
+# dst - 0x07e0, 0x0134
+:dst is op0015=0x07e0; op1631=0x0134
+{
+	dst();
+}
+
+define pcodeop est;
+# est - 0x07e0, 0x0132
+:est is op0015=0x07e0; op1631=0x0132
+{
+	est();
+}
+
+# JARL [reg1], reg3 - 11000111111RRRRR|WWWWW00101100000
+:jarl [R0004], R2731 is op0515=0x63F & R0004; op1626=0x160 & R2731
+{
+	R2731 = inst_next;
+	call [R0004];
+}
+
+# LD.DW disp23[reg1], reg3 - 00000111101RRRRR | wwwwwdddddd01001 | DDDDDDDDDDDDDDDD
+:ld.dw disp23[R0004], R2731x2 is op0515=0x3d & R0004; R2731x2 & op2126 & op1620=0x9; s3247
+[ disp23 = (s3247 << 7) | (op2126 << 1); ]
+{
+	local adr:4 = R0004 + disp23;
+	R2731x2 = sext(*:8 adr);
+}
+
+#LDL.W [reg1], reg3 - 00000111111RRRRR | wwwww01101111000
+define pcodeop ldl;
+:ldl.w R0004, R2731 is op0515=0x3f & R0004; R2731 & op1626=0x378
+{
+	ldl(R0004, R2731);
+}
+
+# LDSR reg2, regID, selID - rrrrr111111RRRRR|sssss00000100000
+:ldsr R0004, regId, selId is (regId & op0510=0x3f & R0004; selId & op1626=0x20)
+{
+	local sysReg:2 = (selId:2 << 5) | regId:2;
+	R0004 = *[sysreg]:4 sysReg;
+}
+
+disp16: reladdr is op1731 [reladdr = inst_start - (op1731 << 1); ]{ export *:4 reladdr; }
+
+# LOOP reg1, disp16 - 00000110111RRRRR | ddddddddddddddd1
+:loop R0004, disp16 is op0515=0x037 & R0004; disp16 & op1616=1
+{
+	set_OV_neg(R0004, -1:4);
+	R0004 = R0004 - 1;
+	if (R0004 == 0) goto inst_next;
+	goto disp16;
+}
+
+ListReg: r0 is r0 & regNum=0 { export r0; }
+ListReg: r1 is r1 & regNum=1 { export r1; }
+ListReg: r2 is r2 & regNum=2 { export r2; }
+ListReg: sp is sp & regNum=3 { export sp; }
+ListReg: gp is gp & regNum=4 { export gp; }
+ListReg: tp is tp & regNum=5 { export tp; }
+ListReg: r6 is r6 & regNum=6 { export r6; }
+ListReg: r7 is r7 & regNum=7 { export r7; }
+ListReg: r8 is r8 & regNum=8 { export r8; }
+ListReg: r9 is r9 & regNum=9 { export r9; }
+ListReg: r10 is r10 & regNum=10 { export r10; }
+ListReg: r11 is r11 & regNum=11 { export r11; }
+ListReg: r12 is r12 & regNum=12 { export r12; }
+ListReg: r13 is r13 & regNum=13 { export r13; }
+ListReg: r14 is r14 & regNum=14 { export r14; }
+ListReg: r15 is r15 & regNum=15 { export r15; }
+ListReg: r16 is r16 & regNum=16 { export r16; }
+ListReg: r17 is r17 & regNum=17 { export r17; }
+ListReg: r18 is r18 & regNum=18 { export r18; }
+ListReg: r19 is r19 & regNum=19 { export r19; }
+ListReg: r20 is r20 & regNum=20 { export r20; }
+ListReg: r21 is r21 & regNum=21 { export r21; }
+ListReg: r22 is r22 & regNum=22 { export r22; }
+ListReg: r23 is r23 & regNum=23 { export r23; }
+ListReg: r24 is r24 & regNum=24 { export r24; }
+ListReg: r25 is r25 & regNum=25 { export r25; }
+ListReg: r26 is r26 & regNum=26 { export r26; }
+ListReg: r27 is r27 & regNum=27 { export r27; }
+ListReg: r28 is r28 & regNum=28 { export r28; }
+ListReg: r29 is r29 & regNum=29 { export r29; }
+ListReg: ep is ep & regNum=30 { export ep; }
+ListReg: lp is lp & regNum=31 { export lp; }
+
+	
+PopSPList: ListReg is ListReg & counter=1 [ counter=0; regNum=regNum-1; ] { pushsp(ListReg); }
+PopSPList: ListReg is ListReg & PopSPList [ counter=counter-1; regNum=regNum-1; ] { pushsp(ListReg); build PopSPList; }
+
+#POPSP reg1, reg2 - 01100111111RRRRR | wwwww00101100000
+:popsp R0004, R2731 is op0515=0x33f & R0004 & op0004; R2731 & op2731 & op1626=0x160 & PopSPList
+[counter=op2731-op0004+1; regNum=op2731; ]
+{
+	_sp = sp;
+	build PopSPList;
+	sp = _sp;
+}
+
+#PUSHSP reg1, reg2 - 01000111111RRRRR | wwwww00101100000
+PushSPList: ListReg is ListReg & counter=1 [ counter=0; regNum=regNum+1; ] { pushsp(ListReg); }
+PushSPList: ListReg is ListReg & PushSPList [ counter=counter-1; regNum=regNum+1; ] { pushsp(ListReg); build PushSPList; }
+
+:pushsp R0004, R2731 is R0004 & op0004; R2731 & op2731 & PushSPList
+[ counter=op2731-op0004+1; regNum=op0004; ]
+{
+	_sp = sp;
+	build PushSPList;
+	sp = _sp;
+}
+
+#ROTL imm5, reg2, reg3 - rrrrr111111iiiii | wwwww00011000100
+:rotl op0004, R1115, _R2731 is op0004 & R1115 & op0510=0x3f; _R2731 & op1626=0x0c4
+{
+	local shift = op0004;
+	local res = (R1115 << shift) | (R1115 >> (32 - shift));
+	set_OV0_S_Z(res);
+	$(CY) = (shift != 0);
+	_R2731 = res;
+}
+
+#ROTL reg1, reg2, reg3 - rrrrr111111RRRRR | wwwww00011000110
+:rotl R0004, R1115, _R2731 is R0004 & R1115 & op0510=0x3f; _R2731 & op1626=0x0c6
+{
+	local shift = R0004 & 0x1f;
+	local  res = (R1115 << shift) | (R1115 >> (32 - shift));
+	set_OV0_S_Z(res);
+	$(CY) = (shift != 0);
+	_R2731 = res;
+}
+
+#SNOOZE - 0000111111100000 | 0000000100100000
+define pcodeop snooze;
+:snooze is op0015=0x0fe0;op1631=0x0120
+{
+	snooze();
+}
+
+# ST.DW reg3, disp23[reg1] - 00000111101RRRRR | wwwwwdddddd01111 | DDDDDDDDDDDDDDDD
+:st.dw R2731x2, disp23[R0004] is op0515=0x3d & R0004; R2731x2 & op2126 & op1620=0xf; s3247
+[ disp23 = (s3247 << 7) | (op2126 << 1); ]
+{
+	local addr:4 = R0004 + disp23;
+	*:8 addr = R2731x2;
+}
+
+#STC.W reg3, [reg1] - 00000111111RRRRR | wwwww01101111010
+define pcodeop stc;
+:stc.w R2731, R0004 is op0515=0x3f & R0004; R2731 & op1626=0x37a
+{
+	stc(R0004, R2731);
+}
+
+#STSR regID, reg2, selID - rrrrr111111RRRRR | sssss00001000000
+:stsr regId, R0004, selId is (regId & op0510=0x3f & R0004; selId & op1626=0x40)
+{
+	local sysReg:2 = (selId:2 << 5) | regId:2;
+	*[sysreg]:4 sysReg = R0004;
+}
+
+#SYNCI - 0000000000011100
+define pcodeop synci;
+:synci is op0015=0x001c
+{
+	synci();
+}
+
+

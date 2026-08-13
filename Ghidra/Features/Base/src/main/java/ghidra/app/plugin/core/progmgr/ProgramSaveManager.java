@@ -214,10 +214,14 @@ class ProgramSaveManager {
 		}
 		try {
 			DataTreeDialog dialog = getSaveDialog();
-			String filename = program.getDomainFile().getName();
+			DomainFile domainFile = program.getDomainFile();
+			String filename = domainFile.getName();
 			dialog.setTitle("Save As (" + filename + ")");
 			dialog.setNameText(filename + ".1");
-			dialog.setSelectedFolder(program.getDomainFile().getParent());
+
+			DomainFolder parent = domainFile.getParent();
+			dialog.setSelectedFolder(parent);
+
 			treeDialogCancelled = true;
 			tool.showDialog(dialog);
 			if (!treeDialogCancelled) {

@@ -637,7 +637,8 @@ public class MDSpecialName extends MDParsableItem {
 							}
 								break;
 							case 'F': {
-								dmang.parseInfoPush(3, "dynamic atexit destructor operator");
+								dmang.parseInfoPush(3,
+									"dynamic atexit destructor operator for [Object]");
 								StringBuilder builder = new StringBuilder();
 								// TODO... 20160812: This looks like new ObjectCPP and ObjectC
 								if (dmang.peek() == '?') {
@@ -672,17 +673,17 @@ public class MDSpecialName extends MDParsableItem {
 							}
 								break;
 							case 'G':
-								dmang.parseInfoPush(3, "vector copy constructor");
+								dmang.parseInfoPush(3, "vector copy constructor iterator");
 								name = "`vector copy constructor iterator'";
 								dmang.parseInfoPop();
 								break;
 							case 'H':
-								dmang.parseInfoPush(3, "vector vbase copy constructor");
+								dmang.parseInfoPush(3, "vector vbase copy constructor iterator");
 								name = "`vector vbase copy constructor iterator'";
 								dmang.parseInfoPop();
 								break;
 							case 'I':
-								dmang.parseInfoPush(3, "managed vector copy constructor");
+								dmang.parseInfoPush(3, "managed vector copy constructor iterator");
 								name = "`managed vector copy constructor iterator'";
 								dmang.parseInfoPop();
 								break;
@@ -692,7 +693,7 @@ public class MDSpecialName extends MDParsableItem {
 								dmang.parseInfoPop();
 								break;
 							case 'K':
-								dmang.parseInfoPush(3, "udl");
+								dmang.parseInfoPush(3, "user defined literal");
 								// Our test has manufactured symbol "??__Kabc@def@@3HA"
 								// 20170329: Confirmed that this is not a MDReusableName with
 								// manufactured symbol "??__Kabc@def@0@3HA"

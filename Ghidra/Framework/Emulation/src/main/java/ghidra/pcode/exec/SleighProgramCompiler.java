@@ -204,14 +204,18 @@ public enum SleighProgramCompiler {
 	 * @return the nil symbol
 	 */
 	protected static VarnodeSymbol addNilSymbol(PcodeParser parser) {
-		SleighSymbol exists = parser.findSymbol(NIL_SYMBOL_NAME);
+		Location loc = new Location("<util>", 0);
+		SleighSymbol exists = parser.findSymbol(loc, NIL_SYMBOL_NAME);
 		if (exists != null) {
-			// A ClassCastException here indicates a name collision
-			return (VarnodeSymbol) exists;
+			if (!(exists instanceof VarnodeSymbol nil)) {
+				throw new AssertionError("Symbol '%s' already exists, but has the wrong type (%s)"
+						.formatted(NIL_SYMBOL_NAME, exists.getClass().getSimpleName()));
+			}
+			return nil;
 		}
 		long offset = parser.allocateTemp();
-		VarnodeSymbol nil = new VarnodeSymbol(new Location("<util>", 0), NIL_SYMBOL_NAME,
-			parser.getUniqueSpace(), offset, 1);
+		VarnodeSymbol nil =
+			new VarnodeSymbol(loc, NIL_SYMBOL_NAME, parser.getUniqueSpace(), offset, 1);
 		parser.addSymbol(nil);
 		return nil;
 	}

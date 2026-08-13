@@ -1536,10 +1536,10 @@ def put_single_breakpoint(b: lldb.SBBreakpoint, proc: lldb.SBProcess) -> None:
     bpt_obj = trace.create_object(bpt_path)
     if b.IsHardware():
         bpt_obj.set_value('Expression', util.get_description(b))
-        bpt_obj.set_value('Kinds', 'HW_EXECUTE')
+        bpt_obj.set_value('Kinds', 'X')
     else:
         bpt_obj.set_value('Expression', util.get_description(b))
-        bpt_obj.set_value('Kinds', 'SW_EXECUTE')
+        bpt_obj.set_value('Kinds', 'x')
     cmdList = lldb.SBStringList()
     if b.GetCommandLineCommands(cmdList):
         list = []
@@ -1580,11 +1580,11 @@ def put_single_watchpoint(w: lldb.SBWatchpoint, proc: lldb.SBProcess) -> None:
     wpt_obj = trace.create_object(wpt_path)
     desc = util.get_description(w, level=0)
     wpt_obj.set_value('Expression', desc)
-    wpt_obj.set_value('Kinds', 'WRITE')
+    wpt_obj.set_value('Kinds', 'W')
     if "type = r" in desc:
-        wpt_obj.set_value('Kinds', 'READ')
+        wpt_obj.set_value('Kinds', 'R')
     if "type = rw" in desc:
-        wpt_obj.set_value('Kinds', 'READ,WRITE')
+        wpt_obj.set_value('Kinds', 'RW')
     base, addr = mapper.map(proc, w.GetWatchAddress())
     if base != addr.space:
         trace.create_overlay_space(base, addr.space)

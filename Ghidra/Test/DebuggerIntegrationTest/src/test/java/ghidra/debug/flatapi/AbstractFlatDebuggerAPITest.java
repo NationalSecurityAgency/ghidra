@@ -44,7 +44,7 @@ import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.thread.TraceThread;
@@ -296,7 +296,7 @@ public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
 
 		CompletableFuture<Void> changesSettled = breakpointService.changesSettled();
 		waitOn(breakpointService.placeBreakpointAt(program, addr(program, 0x00400000), 1,
-			Set.of(TraceBreakpointKind.SW_EXECUTE), "name"));
+			CommonSet.SWX.kinds(), "name"));
 		waitForSwing();
 		waitOn(changesSettled);
 	}

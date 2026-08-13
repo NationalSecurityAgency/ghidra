@@ -706,7 +706,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		pressButtonByText(dialog, "Cancel", false);
 		OptionDialog yesNoDialog = waitForDialogComponent(OptionDialog.class);
-		pressButtonByText(yesNoDialog.getComponent(), "No");
+		pressButtonByText(yesNoDialog.getComponent(), "Don't Save");
 
 		Options options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
 		GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES mouseButton =

@@ -939,14 +939,16 @@ public class LocalBufferFile implements BufferFile {
 	 * for the specified read-only bufferFile.  Input stream may not supply header block in which case
 	 * free list and file parameters may need to be set separately.
 	 * @param bufferFile buffer file opened read-only
+	 * @param monitor task monitor
 	 * @return input block stream object
 	 * @throws IOException if an I/O error occurs
 	 */
-	private static InputBlockStream getInputBlockStream(BufferFile bufferFile) throws IOException {
+	private static InputBlockStream getInputBlockStream(BufferFile bufferFile, TaskMonitor monitor)
+			throws IOException {
 		// This method is used so we can utilize a package method and avoid putting
 		// it on the BufferFile interface
 		if (bufferFile instanceof BufferFileAdapter) {
-			return ((BufferFileAdapter) bufferFile).getInputBlockStream();
+			return ((BufferFileAdapter) bufferFile).getInputBlockStream(monitor);
 		}
 		if (bufferFile instanceof LocalBufferFile) {
 			return ((LocalBufferFile) bufferFile).getInputBlockStream();
@@ -961,18 +963,21 @@ public class LocalBufferFile implements BufferFile {
 	 * to select which buffer should be transferred.  Input stream may not supply header block
 	 * in which case free list and file parameters may need to be set separately.
 	 * @param bufferFile buffer file opened read-only
+	 * @param monitor task monitor
 	 * @return input block stream object
 	 * @throws IOException if an I/O error occurs
 	 */
-	private static InputBlockStream getInputBlockStream(BufferFile bufferFile, ChangeMap changeMap)
+	private static InputBlockStream getInputBlockStream(BufferFile bufferFile, ChangeMap changeMap,
+			TaskMonitor monitor)
 			throws IOException {
 		if (changeMap == null) {
-			return getInputBlockStream(bufferFile);
+			return getInputBlockStream(bufferFile, monitor);
 		}
 		// This method is used so we can utilize a package method and avoid putting
 		// it on the BufferFile interface
 		if (bufferFile instanceof ManagedBufferFileAdapter) {
-			return ((ManagedBufferFileAdapter) bufferFile).getInputBlockStream(changeMap.getData());
+			return ((ManagedBufferFileAdapter) bufferFile).getInputBlockStream(changeMap.getData(),
+				monitor);
 		}
 		if (bufferFile instanceof LocalManagedBufferFile) {
 			return ((LocalManagedBufferFile) bufferFile).getInputBlockStream(changeMap.getData());
@@ -987,15 +992,17 @@ public class LocalBufferFile implements BufferFile {
 	 * @param bufferFile write-able buffer file
 	 * @param blockCount number of blocks to be written.  This should be available from
 	 * the corresponding {@link InputBlockStream}.
+	 * @param monitor task monitor
 	 * @return output block stream object
 	 * @throws IOException if an I/O error occurs
 	 */
-	static OutputBlockStream getOutputBlockStream(BufferFile bufferFile, int blockCount)
+	static OutputBlockStream getOutputBlockStream(BufferFile bufferFile, int blockCount,
+			TaskMonitor monitor)
 			throws IOException {
 		// This method is used so we can utilize a package method and avoid putting
 		// it on the BufferFile interface
 		if (bufferFile instanceof BufferFileAdapter) {
-			return ((BufferFileAdapter) bufferFile).getOutputBlockStream(blockCount);
+			return ((BufferFileAdapter) bufferFile).getOutputBlockStream(blockCount, monitor);
 		}
 		if (bufferFile instanceof LocalBufferFile) {
 			return ((LocalBufferFile) bufferFile).getOutputBlockStream(blockCount);
@@ -1030,11 +1037,12 @@ public class LocalBufferFile implements BufferFile {
 		int srcBlockCnt;
 		boolean headerTransferRequired;
 
-		try (InputBlockStream in = getInputBlockStream(srcFile, changeMap)) {
+		try (InputBlockStream in = getInputBlockStream(srcFile, changeMap, monitor)) {
 			headerTransferRequired = !in.includesHeaderBlock();
 			srcBlockCnt = in.getBlockCount();
 			monitor.initialize(srcBlockCnt + 2);
-			try (OutputBlockStream out = getOutputBlockStream(destFile, in.getBlockCount())) {
+			try (OutputBlockStream out =
+				getOutputBlockStream(destFile, in.getBlockCount(), monitor)) {
 				completeBlockStreamTransfer(in, out, monitor);
 			}
 		}

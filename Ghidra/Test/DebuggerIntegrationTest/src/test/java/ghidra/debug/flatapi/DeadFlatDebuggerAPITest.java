@@ -32,7 +32,7 @@ import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -460,7 +460,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 		LogicalBreakpoint lb = Unique.assertOne(
 			api.breakpointSetSoftwareExecute(api.staticLocation("00400000"), "name"));
 		assertEquals(addr(program, 0x00400000), lb.getAddress());
-		assertEquals(TraceBreakpointKindSet.SW_EXECUTE, lb.getKinds());
+		assertEquals(CommonSet.SWX.kinds(), lb.getKinds());
 		assertEquals(1, lb.getLength());
 	}
 
@@ -471,7 +471,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 		LogicalBreakpoint lb = Unique.assertOne(
 			api.breakpointSetHardwareExecute(api.staticLocation("00400000"), "name"));
 		assertEquals(addr(program, 0x00400000), lb.getAddress());
-		assertEquals(TraceBreakpointKindSet.HW_EXECUTE, lb.getKinds());
+		assertEquals(CommonSet.HWX.kinds(), lb.getKinds());
 		assertEquals(1, lb.getLength());
 	}
 
@@ -482,7 +482,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 		LogicalBreakpoint lb = Unique.assertOne(
 			api.breakpointSetRead(api.staticLocation("00400000"), 4, "name"));
 		assertEquals(addr(program, 0x00400000), lb.getAddress());
-		assertEquals(TraceBreakpointKindSet.READ, lb.getKinds());
+		assertEquals(CommonSet.READ.kinds(), lb.getKinds());
 		assertEquals(4, lb.getLength());
 	}
 
@@ -493,7 +493,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 		LogicalBreakpoint lb = Unique.assertOne(
 			api.breakpointSetWrite(api.staticLocation("00400000"), 4, "name"));
 		assertEquals(addr(program, 0x00400000), lb.getAddress());
-		assertEquals(TraceBreakpointKindSet.WRITE, lb.getKinds());
+		assertEquals(CommonSet.WRITE.kinds(), lb.getKinds());
 		assertEquals(4, lb.getLength());
 	}
 
@@ -504,7 +504,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 		LogicalBreakpoint lb = Unique.assertOne(
 			api.breakpointSetAccess(api.staticLocation("00400000"), 4, "name"));
 		assertEquals(addr(program, 0x00400000), lb.getAddress());
-		assertEquals(TraceBreakpointKindSet.ACCESS, lb.getKinds());
+		assertEquals(CommonSet.ACCESS.kinds(), lb.getKinds());
 		assertEquals(4, lb.getLength());
 	}
 

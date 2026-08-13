@@ -169,6 +169,7 @@ public class JavadocConverter extends DocConverter {
 		// NOTE: each tag is responsible for its own line endings
 		return switch (tag.getKind()) {
 			case DOC_ROOT -> tag.toString(); // not sure what would be an appropriate replacement
+			case MARKDOWN -> tag.toString();
 			case PARAM -> convertParamTag(el, (ParamTree) tag);
 			case RETURN -> convertReturnTag((ExecutableElement) el, (ReturnTree) tag);
 			case THROWS -> convertThrowsTag((ExecutableElement) el, (ThrowsTree) tag);
@@ -392,6 +393,9 @@ public class JavadocConverter extends DocConverter {
 		if (index == 0) {
 			if (el instanceof ExecutableElement method) {
 				type = (TypeElement) method.getEnclosingElement();
+			}
+			else if (el instanceof VariableElement variable) {
+				type = (TypeElement) variable.getEnclosingElement();
 			}
 			else {
 				type = (TypeElement) el;

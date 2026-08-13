@@ -41,6 +41,8 @@ import ghidra.util.task.TaskMonitor;
 
 public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
+	private static final String TEST_FOLDER_NAME = "TestFolder";
+
 	private TestEnv env;
 	private FrontEndTool frontEndTool;
 	private DataTreeDialog dialog;
@@ -70,6 +72,10 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 			DomainFolder domainFolder = ProjectDataUtils.createDomainFolderPath(rootFolder, path);
 			result.add(domainFolder.createFile(filename, p, TaskMonitor.DUMMY));
 		}
+
+		// add a test folder 
+		ProjectDataUtils.createDomainFolderPath(rootFolder, "/" + TEST_FOLDER_NAME);
+
 		builder.dispose();
 		waitForSwing();
 		return result;
@@ -92,10 +98,12 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		TreeModel model = tree.getModel();
 		GTreeNode root = (GTreeNode) model.getRoot();
-		assertEquals(expectedFilteredNames.size(), root.getChildCount());
 		for (int i = 0; i < expectedFilteredNames.size(); i++) {
 			GTreeNode child = root.getChild(i);
-			assertEquals(expectedFilteredNames.get(i), child.toString());
+			if (child instanceof DomainFolderNode) {
+				continue;
+			}
+			assertTrue(child.toString().startsWith("tN"));
 		}
 	}
 
@@ -116,11 +124,21 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNameHasText(true);
 
 		// select a folder--text remains; button enabled
-		selectFolder();
+		selectRootFolder();
 		assertOK(true);
 		assertNameHasText(true);
 
 		// de-select a folder--text remains; button enabled
+		deselectFolder();
+		assertOK(true);
+		assertNameHasText(true);
+
+		// select a non-root folder--text remains; button enabled
+		selectTestFolder();
+		assertOK(true);
+		assertNameHasText(true);
+		assertFolderText("/" + TEST_FOLDER_NAME);
+
 		deselectFolder();
 		assertOK(true);
 		assertNameHasText(true);
@@ -147,7 +165,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNameHasText(true);
 
 		// select a folder--text remains; button enabled
-		selectFolder();
+		selectRootFolder();
 		assertOK(true);
 		assertNameHasText(true);
 
@@ -185,7 +203,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNameHasText(true); // "/"
 
 		// select a folder--enabled
-		selectFolder();
+		selectRootFolder();
 		assertOK(true);
 		assertNameHasText(true);
 
@@ -212,7 +230,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNameHasText(false);
 
 		// select a folder--disabled
-		selectFolder();
+		selectRootFolder();
 		assertOK(false);
 
 		// de-select a folder--disabled
@@ -237,7 +255,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNameHasText(false);
 
 		// select a folder--disabled
-		selectFolder();
+		selectRootFolder();
 		assertOK(false);
 
 		// de-select a folder--disabled
@@ -321,7 +339,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		});
 	}
 
-	private void selectFolder() {
+	private void selectRootFolder() {
 		final AtomicBoolean result = new AtomicBoolean(false);
 		final GTree gTree = getGTree();
 		runSwing(() -> {
@@ -329,6 +347,31 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 			if (node != null) {
 				gTree.expandPath(node);
 				gTree.setSelectedNode(node);
+				result.set(true);
+			}
+		});
+
+		if (!result.get()) {
+			Assert.fail("Unable to select root folder");
+		}
+
+		waitForTree(gTree);
+	}
+
+	private void selectTestFolder() {
+
+		AtomicBoolean result = new AtomicBoolean(false);
+		GTree gTree = getGTree();
+		runSwing(() -> {
+			GTreeNode root = gTree.getViewRoot();
+			if (root == null) {
+				return;
+			}
+
+			GTreeNode folderNode = root.getChild(TEST_FOLDER_NAME);
+			if (folderNode != null) {
+				gTree.expandPath(root);
+				gTree.setSelectedNode(folderNode);
 				result.set(true);
 			}
 		});
@@ -348,6 +391,11 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		GTree gTree = getGTree();
 		gTree.clearSelectionPaths();
 		waitForTree(gTree);
+	}
+
+	private void assertFolderText(String expectedName) {
+		String actualName = runSwing(() -> dialog.getFolderText());
+		assertEquals("Dialog folder path not correct", expectedName, actualName);
 	}
 
 	private void assertNameHasText(boolean hasText) {

@@ -59,9 +59,11 @@ class FragmentDB extends DbObject implements ProgramFragment {
 	}
 
 	@Override
-	protected boolean refresh() {
+	protected boolean refresh(DBRecord rec) {
 		try {
-			DBRecord rec = fragmentAdapter.getFragmentRecord(key);
+			if (rec == null) {
+				rec = fragmentAdapter.getFragmentRecord(key);
+			}
 			if (rec != null) {
 				record = rec;
 				addrSet = moduleMgr.getFragmentAddressSet(key);

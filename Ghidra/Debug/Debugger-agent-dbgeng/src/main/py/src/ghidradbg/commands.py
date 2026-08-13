@@ -245,10 +245,8 @@ def start_trace(name: str) -> None:
     if frame is None:
         raise AssertionError("cannot locate schema.xml")
     parent = os.path.dirname(inspect.getfile(frame))
-    if util.is_exdi():
-        schema_fn = os.path.join(parent, 'schema_exdi.xml')
-    else:
-        schema_fn = os.path.join(parent, 'schema.xml')
+    schema_fn = os.path.join(parent, 'schema_exdi.xml' if util.is_exdi() else 'schema.xml')
+
     with open(schema_fn, 'r') as schema_file:
         schema_xml = schema_file.read()
     using_dbgmodel = os.getenv('OPT_USE_DBGMODEL') == "true"
@@ -1076,10 +1074,10 @@ def put_single_breakpoint(bp, ibobj, nproc: int, ikeys: List[str]) -> None:
     if bp.GetType()[0] == DbgEng.DEBUG_BREAKPOINT_DATA:
         width, prot = bp.GetDataParameters()
         width = str(width)
-        prot = {4: 'HW_EXECUTE', 2: 'READ', 1: 'WRITE'}[prot]
+        prot = {4: 'X', 2: 'R', 1: 'W'}[prot]
     else:
         width = ' '
-        prot = 'SW_EXECUTE'
+        prot = 'x'
 
     if address is not None:  # Implies execution break
         base, addr = mapper.map(nproc, address)
@@ -1427,6 +1425,11 @@ def put_frames() -> None:
         if base != offset_inst.space:
             trace.create_overlay_space(base, offset_inst.space)
         fobj.set_value('Instruction Offset', offset_inst)
+        keys.append(FRAME_KEY_PATTERN.format(level=f.FrameNumber))
+        base, offset_stack = mapper.map(nproc, f.StackOffset)
+        if base != offset_inst.space:
+            trace.create_overlay_space(base, offset_stack.space)
+        fobj.set_value('Stack Offset', offset_stack)
         if not util.dbg.use_generics:
             base, offset_stack = mapper.map(nproc, f.StackOffset)
             if base != offset_stack.space:
@@ -1440,8 +1443,7 @@ def put_frames() -> None:
             fobj.set_value('Stack Offset', offset_stack)
             fobj.set_value('Return Offset', offset_ret)
             fobj.set_value('Frame Offset', offset_frame)
-        fobj.set_value('_display', "#{} {}".format(
-            f.FrameNumber, offset_inst.offset))
+        fobj.set_value('_display', f'{f.FrameNumber} {offset_inst.offset:008x}')
         fobj.insert()
     trace.proxy_object_path(STACK_PATTERN.format(
         procnum=nproc, tnum=nthrd)).retain_values(keys)

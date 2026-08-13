@@ -72,6 +72,7 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcProtooverride(),"override","prototype");
   status->registerCom(new IfcJumpOverride(),"override","jumptable");
   status->registerCom(new IfcFlowOverride(),"override","flow");
+  status->registerCom(new IfcDestinationOverride(),"override","destination");
   status->registerCom(new IfcDeadcodedelay(),"deadcode","delay");
   status->registerCom(new IfcGlobalAdd(),"global","add");
   status->registerCom(new IfcGlobalRemove(),"global","remove");
@@ -459,7 +460,7 @@ void IfaceDecompData::followFlow(ostream &s,int4 size)
 /// \class IfcFuncload
 /// \brief Make a specific function current: `load function <functionname>`
 ///
-/// The name must be a fully qualified symbol with "::" separating namespaces.
+/// The name must be a fully qualified symbol with namespaces.
 /// If the symbol represents a function, that function becomes \e current for
 /// the console. If there are bytes for the function, raw p-code and control-flow
 /// are calculated.
@@ -475,7 +476,7 @@ void IfcFuncload::execute(istream &s)
     throw IfaceExecutionError("No image loaded");
 
   string basename;
-  Scope *funcscope = dcp->conf->symboltab->resolveScopeFromSymbolName(funcname,"::",basename,(Scope *)0);
+  Scope *funcscope = dcp->conf->symboltab->resolveScopeFromSymbolName(funcname,basename,(Scope *)0);
   if (funcscope == (Scope *)0)
     throw IfaceExecutionError("Bad namespace: "+funcname);
   dcp->fd = funcscope->queryFunction( basename ); // Is function already in database
@@ -534,7 +535,7 @@ void IfcReadSymbols::execute(istream &s)
   if (dcp->conf->loader == (LoadImage *)0)
     throw IfaceExecutionError("No binary loaded");
 
-  dcp->conf->readLoaderSymbols("::");
+  dcp->conf->readLoaderSymbols();
 }
 
 /// \class IfcMapaddress
@@ -544,8 +545,8 @@ void IfcReadSymbols::execute(istream &s)
 /// \code
 ///    map address r0x1000 int4 globalvar
 /// \endcode
-/// The symbol specified in the type declaration can qualify the namespace using the "::"
-/// specifier.  If there is a current function, the variable is local to the function.
+/// The symbol specified in the type declaration can qualify the namespace.
+/// If there is a current function, the variable is local to the function.
 /// Otherwise the symbol is created relative to the global scope.
 void IfcMapaddress::execute(istream &s)
 
@@ -563,16 +564,15 @@ void IfcMapaddress::execute(istream &s)
     sym->getScope()->setAttribute(sym,Varnode::namelock|Varnode::typelock);
   }
   else {
-    Symbol *sym;
     uint4 flags = Varnode::namelock|Varnode::typelock;
     flags |= dcp->conf->symboltab->getProperty(addr); // Inherit existing properties
     string basename;
-    Scope *scope = dcp->conf->symboltab->findCreateScopeFromSymbolName(name, "::", basename, (Scope *)0);
-    sym = scope->addSymbol(basename,ct,addr,Address())->getSymbol();
+    Scope *scope = dcp->conf->symboltab->findCreateScopeFromSymbolName(name, basename, (Scope *)0);
+    MapEntry *entry = scope->addSymbol(basename,ct,addr,Address());
+    Symbol *sym = entry->getSymbol();
     sym->getScope()->setAttribute(sym,flags);
     if (scope->getParent() != (Scope *)0) {		// If this is a global namespace scope
-      SymbolEntry *e = sym->getFirstWholeMap();		// Adjust range
-      dcp->conf->symboltab->addRange(scope,e->getAddr().getSpace(),e->getFirst(),e->getLast());
+      dcp->conf->symboltab->addRange(scope,entry->getAddr().getSpace(),entry->getFirst(),entry->getLast());
     }
   }
 
@@ -670,7 +670,7 @@ void IfcMapfunction::execute(istream &s)
   if (name.empty())
     dcp->conf->nameFunction(addr,name); // Pick default name if necessary
   string basename;
-  Scope *scope = dcp->conf->symboltab->findCreateScopeFromSymbolName(name, "::", basename, (Scope *)0);
+  Scope *scope = dcp->conf->symboltab->findCreateScopeFromSymbolName(name, basename, (Scope *)0);
   dcp->fd = scope->addFunction(addr,name)->getFunction();
 
   string nocode;
@@ -1353,6 +1353,7 @@ void IfcRename::execute(istream &s)
 
   if (sym->getCategory() == Symbol::function_parameter)
     dcp->fd->getFuncProto().setInputLock(true);
+  dcp->fd->remapConflictSymbol(sym);
   sym->getScope()->renameSymbol(sym,newname);
   sym->getScope()->setAttribute(sym,Varnode::namelock|Varnode::typelock);
 }
@@ -1411,6 +1412,7 @@ void IfcRetype::execute(istream &s)
 
   if (sym->getCategory()==Symbol::function_parameter)
     dcp->fd->getFuncProto().setInputLock(true);
+  dcp->fd->remapConflictSymbol(sym);
   sym->getScope()->retypeSymbol(sym,ct);
   sym->getScope()->setAttribute(sym,Varnode::typelock);
   if ((newname.size()!=0)&&(newname != name)) {
@@ -1525,7 +1527,7 @@ void IfaceDecompData::readSymbol(const string &name,vector<Symbol *> &res)
 {
   Scope *scope = (fd == (Funcdata *)0) ? conf->symboltab->getGlobalScope() : fd->getScopeLocal();
   string basename;
-  scope = conf->symboltab->resolveScopeFromSymbolName(name, "::", basename, scope);
+  scope = conf->symboltab->resolveScopeFromSymbolName(name, basename, scope);
   if (scope == (Scope *)0)
     throw IfaceParseError("Bad namespace for symbol: " + name);
   scope->queryByName(basename,res);
@@ -1856,12 +1858,12 @@ void IfcProtooverride::execute(istream &s)
   PrototypePieces pieces;
   parse_protopieces(pieces,s,dcp->conf); // Parse the prototype from stream
 
-  FuncProto *newproto = new FuncProto();
+  unique_ptr<FuncProto> newproto(new FuncProto());
 
   // Make proto whose storage is internal, not backed by a real scope
   newproto->setInternal(pieces.model,dcp->conf->types->getTypeVoid());
   newproto->setPieces(pieces);
-  dcp->fd->getOverride().insertProtoOverride(callpoint,newproto);
+  dcp->fd->getOverride().insertProtoOverride(callpoint,newproto.release());
   dcp->fd->clear();		// Clear any analysis (this leaves overrides intact)
 }
 
@@ -1933,7 +1935,6 @@ void IfcFlowOverride::execute(istream &s)
 
 {
   int4 discard;
-  uint4 type;
   string token;
 
   if (dcp->fd == (Funcdata *)0)
@@ -1944,12 +1945,37 @@ void IfcFlowOverride::execute(istream &s)
   s >> token;
   if (token.size() == 0)
     throw IfaceParseError("Missing override type");
-  type = Override::stringToType(token);
-  if (type == Override::NONE)
-    throw IfaceParseError("Bad override type");
 
-  dcp->fd->getOverride().insertFlowOverride(addr,type);
-  *status->optr << "Successfully added override" << endl;
+  dcp->fd->getOverride().insertFlowOverride(addr,token);
+  *status->optr << "Successfully added flow override" << endl;
+}
+
+/// \class IfcDestinationOverride
+/// \brief Create an override changing a call destination: `override destination <address> <type> <destaddress>`
+///
+/// The override modifies a branching op-code at \<address\> to have particular destination address,
+/// depending on the \<type\>.
+///   - callind_call converts a CALLIND to CALL (with the destination address)
+///   - callother_call converts a CALLOTHER to a CALL
+///   - callother_branch converts a CALLOTHER to a BRANCH
+///   - call_call converts a CALL to have the specified destination address
+void IfcDestinationOverride::execute(istream &s)
+
+{
+  int4 discard;
+  string token;
+
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function selected");
+
+  s >> ws;
+  Address addr( parse_machaddr(s,discard,*dcp->conf->types));
+  s >> token >> ws;
+  if (token.size() == 0)
+    throw IfaceParseError("Missing override type");
+  Address dest( parse_machaddr(s,discard,*dcp->conf->types));
+  dcp->fd->getOverride().insertDestinationOverride(addr, dest, token);
+  *status->optr << "Successfully added destination override" << endl;
 }
 
 /// \class IfcDeadcodedelay
@@ -2339,7 +2365,7 @@ void IfcPrintMap::execute(istream &s)
     throw IfaceExecutionError("No load image");
   if (name.size() != 0 || dcp->fd==(Funcdata *)0) {
     string fullname = name + "::a";		// Add fake variable name
-    scope = dcp->conf->symboltab->resolveScopeFromSymbolName(fullname, "::", fullname, (Scope *)0);
+    scope = dcp->conf->symboltab->resolveScopeFromSymbolName(fullname, fullname, (Scope *)0);
   }
   else
     scope = dcp->fd->getScopeLocal();
@@ -2987,7 +3013,7 @@ void IfcFixupApply::execute(istream &s)
     throw IfaceExecutionError("Unknown fixup: " + fixupName);
 
   string basename;
-  Scope *funcscope = dcp->conf->symboltab->resolveScopeFromSymbolName(funcName,"::",basename,(Scope *)0);
+  Scope *funcscope = dcp->conf->symboltab->resolveScopeFromSymbolName(funcName,basename,(Scope *)0);
   if (funcscope == (Scope *)0)
     throw IfaceExecutionError("Bad namespace: "+funcName);
   Funcdata *fd = funcscope->queryFunction( basename ); // Is function already in database

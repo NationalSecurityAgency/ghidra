@@ -615,12 +615,14 @@ public class FunctionManagerDB implements FunctionManager {
 	 * @param returnDataType
 	 * @param currentParams
 	 * @param paramOffset offset within currentParams for first parameter
+	 * @param hasVarArgs if true, any storage rules specific to varargs function will be applied
 	 * @return return variable storage if dynamic storage does not match current custom storage -
 	 * this is done so that this storage can be assigned if currently <UNASSIGNED>.  If dynamic
 	 * storage matches null will be returned.
 	 */
 	private VariableStorage checkDynamicStorageConversion(DataType returnDataType,
-			Parameter[] currentParams, int paramOffset, PrototypeModel callingConvention) {
+			Parameter[] currentParams, int paramOffset, PrototypeModel callingConvention,
+			boolean hasVarArgs) {
 		DataType types[] = new DataType[currentParams.length - paramOffset + 1];
 		types[0] = returnDataType;
 		int index = 1;
@@ -629,7 +631,7 @@ public class FunctionManagerDB implements FunctionManager {
 		}
 
 		VariableStorage[] paramStorage =
-			callingConvention.getStorageLocations(program, types, true);
+			callingConvention.getStorageLocations(program, types, true, hasVarArgs);
 // TODO: Only handles a single auto-param insertion (could be more auto-params)
 		index = (paramStorage.length == types.length) ? 1 : 2; // May have inserted extra parameter
 		if ((paramStorage.length - 1) != types.length) {
@@ -681,7 +683,8 @@ public class FunctionManagerDB implements FunctionManager {
 			if (CompilerSpec.CALLING_CONVENTION_thiscall.equals(func.getCallingConventionName())) {
 				if (params.length != 0 && isLikelyThisParam(params[0])) {
 					returnStorage =
-						checkDynamicStorageConversion(returnDataType, params, 1, callingConvention);
+						checkDynamicStorageConversion(returnDataType, params, 1, callingConvention,
+							func.hasVarArgs());
 					if (returnStorage == null) {
 						useDynamic = true;
 						func.removeVariable(params[0]);
@@ -690,7 +693,8 @@ public class FunctionManagerDB implements FunctionManager {
 			}
 			else {
 				returnStorage =
-					checkDynamicStorageConversion(returnDataType, params, 0, callingConvention);
+					checkDynamicStorageConversion(returnDataType, params, 0, callingConvention,
+						func.hasVarArgs());
 				useDynamic = (returnStorage == null);
 			}
 

@@ -54,19 +54,20 @@ public class VTMatchTagDB extends DbObject implements VTMatchTag {
 	}
 
 	@Override
-	protected boolean refresh() {
-		DBRecord rec = null;
+	protected boolean refresh(DBRecord rec) {
 		try {
-			rec = sessionDB.getTagRecord(key);
+			if (rec == null) {
+				rec = sessionDB.getTagRecord(key);
+			}
+			if (rec != null) {
+				record = rec;
+				return true;
+			}
 		}
 		catch (IOException e) {
 			sessionDB.dbError(e);
 		}
-		if (rec == null) {
-			return false;
-		}
-		record = rec;
-		return true;
+		return false;
 	}
 
 	/**

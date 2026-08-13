@@ -48,7 +48,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.*;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.stack.TraceStack;
@@ -1542,21 +1542,21 @@ public class TraceRmiTarget extends AbstractTarget {
 	public CompletableFuture<Void> placeBreakpointAsync(AddressRange range,
 			Set<TraceBreakpointKind> kinds, String condition, String commands) {
 		Set<TraceBreakpointKind> copyKinds = Set.copyOf(kinds);
-		if (copyKinds.equals(TraceBreakpointKindSet.HW_EXECUTE)) {
+		if (copyKinds.equals(CommonSet.HWX.kinds())) {
 			return placeHwExecBreakAsync(expectSingleAddr(range, TraceBreakpointKind.HW_EXECUTE),
 				condition, commands);
 		}
-		if (copyKinds.equals(TraceBreakpointKindSet.SW_EXECUTE)) {
+		if (copyKinds.equals(CommonSet.SWX.kinds())) {
 			return placeSwExecBreakAsync(expectSingleAddr(range, TraceBreakpointKind.SW_EXECUTE),
 				condition, commands);
 		}
-		if (copyKinds.equals(TraceBreakpointKindSet.READ)) {
+		if (copyKinds.equals(CommonSet.READ.kinds())) {
 			return placeReadBreakAsync(range, condition, commands);
 		}
-		if (copyKinds.equals(TraceBreakpointKindSet.WRITE)) {
+		if (copyKinds.equals(CommonSet.WRITE.kinds())) {
 			return placeWriteBreakAsync(range, condition, commands);
 		}
-		if (copyKinds.equals(TraceBreakpointKindSet.ACCESS)) {
+		if (copyKinds.equals(CommonSet.ACCESS.kinds())) {
 			return placeAccessBreakAsync(range, condition, commands);
 		}
 		Msg.error(this, "Invalid kinds in combination: " + kinds);

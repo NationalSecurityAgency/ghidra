@@ -815,7 +815,7 @@ public class FunctionDB extends DbObject implements Function {
 	 */
 	synchronized void endUpdate() {
 		if (--updateInProgressCount == 0 && updateRefreshRequired) {
-			refresh();
+			refresh(null);
 		}
 	}
 
@@ -921,11 +921,6 @@ public class FunctionDB extends DbObject implements Function {
 		finally {
 			endUpdate();
 		}
-	}
-
-	@Override
-	protected boolean refresh() {
-		return refresh(null);
 	}
 
 	@Override
@@ -1533,21 +1528,21 @@ public class FunctionDB extends DbObject implements Function {
 		// cache will have the current tag state unless tags have been deleted or edited; in
 		// those cases the validity check will fail and we'll be forced to go back to
 		// the db.
+		Set<FunctionTag> copy = new HashSet<>();
 		try (Closeable c = lock.read()) {
 
-			if (refreshIfNeeded() && tags != null) {
-				return tags;
+			if (!refreshIfNeeded() || tags == null) {
+				FunctionTagManagerDB tagManager =
+					(FunctionTagManagerDB) manager.getFunctionTagManager();
+				tags = tagManager.getFunctionTagsByFunctionID(getID());
 			}
 
-			// Get a list of all tag records that map to our function.
-			FunctionTagManagerDB tagManager =
-				(FunctionTagManagerDB) manager.getFunctionTagManager();
-			tags = tagManager.getFunctionTagsByFunctionID(getID());
+			copy.addAll(tags);
 		}
 		catch (IOException e) {
 			manager.dbError(e);
 		}
-		return tags;
+		return copy;
 
 	}
 

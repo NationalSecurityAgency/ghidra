@@ -1583,3 +1583,64 @@ define pcodeop vpmovuswb_avx512bw ;
 	build YmmOpMask8;
 	m256 = zext(YmmResult);
 }
+
+# PXOR 4-518 PAGE 1638 LINE 85503
+:VPXORD XmmReg1^XmmOpMask32, evexV5_XmmReg, XmmReg2_m128_m32bcst  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W0) & evexV5_XmmReg; byte=0xEF; (XmmReg1 & ZmmReg1 & XmmOpMask32) ... & XmmReg2_m128_m32bcst
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType FV)
+{
+	XmmResult = evexV5_XmmReg ^ XmmReg2_m128_m32bcst;
+	XmmMask = XmmReg1;
+	build XmmOpMask32;
+	ZmmReg1 = zext(XmmResult);
+}
+
+# PXOR 4-518 PAGE 1638 LINE 85505
+:VPXORD YmmReg1^YmmOpMask32, evexV5_YmmReg, YmmReg2_m256_m32bcst  is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W0) & evexV5_YmmReg; byte=0xEF; (YmmReg1 & ZmmReg1 & YmmOpMask32) ... & YmmReg2_m256_m32bcst
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType FV)
+{
+	YmmResult = evexV5_YmmReg ^ YmmReg2_m256_m32bcst;
+	YmmMask = YmmReg1;
+	build YmmOpMask32;
+	ZmmReg1 = zext(YmmResult);
+}
+
+# PXOR 4-518 PAGE 1638 LINE 85507
+:VPXORD ZmmReg1^ZmmOpMask32, evexV5_ZmmReg, ZmmReg2_m512_m32bcst  is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W0) & evexV5_ZmmReg; byte=0xEF; (ZmmReg1 & ZmmOpMask32) ... & ZmmReg2_m512_m32bcst
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType FV)
+{
+	ZmmResult = evexV5_ZmmReg ^ ZmmReg2_m512_m32bcst;
+	ZmmMask = ZmmReg1;
+	build ZmmOpMask32;
+	ZmmReg1 = ZmmResult;
+}
+
+# PXOR 4-518 PAGE 1638 LINE 85514
+:VPXORQ XmmReg1^XmmOpMask64, evexV5_XmmReg, XmmReg2_m128_m64bcst  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W1)  & evexV5_XmmReg; byte=0xEF; (XmmReg1 & ZmmReg1 & XmmOpMask64) ... & XmmReg2_m128_m64bcst
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType FV)
+{
+	XmmResult = evexV5_XmmReg ^ XmmReg2_m128_m64bcst;
+	XmmMask = XmmReg1;
+	build XmmOpMask64;
+	ZmmReg1 = zext(XmmResult);
+}
+
+# PXOR 4-518 PAGE 1638 LINE 85521
+:VPXORQ YmmReg1^YmmOpMask64, evexV5_YmmReg, YmmReg2_m256_m64bcst  is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W1)  & evexV5_YmmReg; byte=0xEF; (YmmReg1 & ZmmReg1 & YmmOpMask64) ... & YmmReg2_m256_m64bcst
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType FV)
+{
+	YmmResult = evexV5_YmmReg ^ YmmReg2_m256_m64bcst;
+	YmmMask = YmmReg1;
+	build YmmOpMask64;
+	ZmmReg1 = zext(YmmResult);
+}
+
+# PXOR 4-518 PAGE 1638 LINE 85523
+:VPXORQ ZmmReg1^ZmmOpMask64, evexV5_ZmmReg, ZmmReg2_m512_m64bcst  is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W1)  & evexV5_ZmmReg; byte=0xEF; (ZmmReg1 & ZmmOpMask64) ... & ZmmReg2_m512_m64bcst
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType FV)
+{
+	ZmmResult = evexV5_ZmmReg ^ ZmmReg2_m512_m64bcst;
+	ZmmMask = ZmmReg1;
+	build ZmmOpMask64;
+	ZmmReg1 = ZmmResult;
+}
+

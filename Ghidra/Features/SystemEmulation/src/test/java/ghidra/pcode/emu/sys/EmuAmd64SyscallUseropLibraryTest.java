@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,8 @@
  */
 package ghidra.pcode.emu.sys;
 
-import static ghidra.pcode.emu.sys.EmuSyscallLibrary.*;
-import static org.junit.Assert.*;
+import static ghidra.pcode.emu.sys.EmuSyscallLibrary.SYSCALL_SPACE_NAME;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.*;
 
@@ -181,18 +181,25 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 		try (Transaction tx = program.openTransaction("Initialize")) {
 			asm.assemble(start,
 				"MOV RAX,0",
-				"MOV RCX,0xbeef",
+				"MOV RCX,0xbeef", // Will be clobbered with RIP by SYSCALL
 				"MOV R10,0xdead",
 				"SYSCALL");
 		}
+
+		/**
+		 * This test is a bit nonsensical, because the calling conventions will cause parameters to
+		 * get pulled from registers that get clobbered by the SYSCALL, per the ISA description, not
+		 * just convention. Still, I want to test that the emulator obeys the assigned calling
+		 * convention.
+		 */
 
 		SyscallTestPcodeEmulator emu = prepareEmulator();
 		PcodeThread<byte[]> thread = launchThread(emu, start);
 
 		thread.stepInstruction(4);
 
-		assertArrayEquals(arithmetic.fromConst(0xbeef, regRAX.getNumBytes()),
-			thread.getState().getVar(regRAX, Reason.INSPECT));
+		assertEquals("400017",
+			thread.getState().inspectRegisterValue(regRAX).getUnsignedValue().toString(16));
 	}
 
 	@Test
@@ -200,7 +207,7 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 		try (Transaction tx = program.openTransaction("Initialize")) {
 			asm.assemble(start,
 				"MOV RAX,1",
-				"MOV RCX,0xdead",
+				"MOV RCX,0xdead", // Will be clobbered with RIP by SYSCALL
 				"MOV R10,0xbeef",
 				"SYSCALL");
 		}
@@ -210,7 +217,7 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 
 		thread.stepInstruction(4);
 
-		assertArrayEquals(arithmetic.fromConst(0xbeef, regRAX.getNumBytes()),
-			thread.getState().getVar(regRAX, Reason.INSPECT));
+		assertEquals("beef",
+			thread.getState().inspectRegisterValue(regRAX).getUnsignedValue().toString(16));
 	}
 }

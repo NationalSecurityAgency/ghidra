@@ -16,6 +16,7 @@
 package ghidra.framework.main.wizard.project;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 
 import javax.swing.JPanel;
 
@@ -41,6 +42,10 @@ public class ServerInfoPanel extends JPanel {
 		serverInfoComponent.setChangeListener(e -> statusChangedCallback.call());
 	}
 
+	public Component getDefaultFocusComponent() {
+		return serverInfoComponent.getDefaultFocusComponent();
+	}
+
 	public boolean isValidInformation() {
 		return serverInfoComponent.isValidInformation();
 	}
@@ -57,9 +62,6 @@ public class ServerInfoPanel extends JPanel {
 		return serverInfoComponent.getPortNumber();
 	}
 
-	/**
-	 * Set the field values using the given server info.
-	 */
 	public void setServerInfo(ServerInfo info) {
 		serverInfoComponent.setServerInfo(info);
 	}

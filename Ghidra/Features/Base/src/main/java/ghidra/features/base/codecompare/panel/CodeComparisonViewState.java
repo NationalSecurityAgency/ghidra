@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.util.classfinder.ClassSearcher;
 
 /**
  * A state object to save settings each type of comparison view known by the system.  This class
@@ -73,9 +74,8 @@ public class CodeComparisonViewState {
 		String[] names = classStates.getNames();
 		for (String className : names) {
 			try {
-				@SuppressWarnings("unchecked")
-				Class<? extends CodeComparisonView> clazz =
-					(Class<? extends CodeComparisonView>) Class.forName(className);
+				Class<? extends CodeComparisonView> clazz = ClassSearcher.forNameSafe(className,
+					CodeComparisonView.class, getClass().getClassLoader());
 				SaveState classState = classStates.getSaveState(className);
 				states.put(clazz, classState);
 			}

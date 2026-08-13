@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,8 +30,6 @@ uint1 *LoadImage::load(int4 size,const Address &addr)
 
 {
   uint1 *buf = new uint1[ size ];
-  if (buf == (uint1 *)0)
-    throw LowlevelError("Out of memory");
   loadFill(buf,size,addr);
   return buf;
 }
@@ -62,6 +60,7 @@ void RawLoadImage::open(void)
   thefile = new ifstream(filename.c_str());
   if (!(*thefile)) {
     string errmsg = "Unable to open raw image file: "+filename;
+    delete thefile;
     throw LowlevelError(errmsg);
   }
   thefile->seekg(0,ios::end);

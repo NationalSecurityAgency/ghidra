@@ -354,8 +354,8 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		}
 	}
 
-	protected static class LogTableModel extends DebouncedRowWrappedEnumeratedColumnTableModel<
-		LogTableColumns, ActionContext, LogRow<?>, LogRow<?>> {
+	protected static class LogTableModel extends
+			DebouncedRowWrappedEnumeratedColumnTableModel<LogTableColumns, ActionContext, LogRow<?>, LogRow<?>> {
 
 		public LogTableModel(PluginTool tool) {
 			super(tool, "Log", LogTableColumns.class, r -> r == null ? null : r.actionContext(),
@@ -431,7 +431,8 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	@AutoOptionDefined(
 		name = DebuggerResources.OPTION_NAME_LOG_BUFFER_LIMIT,
 		description = "The maximum number of entries in the console log (0 or less for unlimited)",
-		help = @HelpInfo(anchor = "buffer_limit"))
+		help = @HelpInfo(anchor = "buffer_limit")
+	)
 	private int logBufferLimit = DebuggerResources.DEFAULT_LOG_BUFFER_LIMIT;
 	@SuppressWarnings("unused")
 	private final AutoOptions.Wiring autoOptionsWiring;
@@ -511,7 +512,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 			}
 		});
 
-		logTable.setRowHeight(ACTION_BUTTON_SIZE + 2);
+		logTable.setPreferredRowHeight(ACTION_BUTTON_SIZE + 2);
 	}
 
 	protected boolean activateSelectedRow() {

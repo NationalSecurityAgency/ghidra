@@ -39,17 +39,18 @@ import utility.function.Callback;
 public class MultiFormatTextField extends JTextField {
 
 	private static final String FONT_ID = "font.input.hint";
-	private int hintWidth;
+
 	private boolean showFormatHint = true;
 	private List<IntegerFormat> formats;
 	private int currentFormatIndex;
+
+	private String toolTipAppendix;
 
 	public MultiFormatTextField(int columns, List<IntegerFormat> formats,
 			Consumer<IntegerFormat> formatChangeConsumer) {
 		super(columns);
 
 		this.formats = formats;
-		updateFormatNameWidth();
 
 		addKeyListener(new KeyAdapter() {
 			@Override
@@ -58,7 +59,7 @@ public class MultiFormatTextField extends JTextField {
 					if (++currentFormatIndex >= formats.size()) {
 						currentFormatIndex = 0;
 					}
-					updateFormatNameWidth();
+
 					formatChangeConsumer.accept(formats.get(currentFormatIndex));
 					repaint();
 				}
@@ -67,7 +68,6 @@ public class MultiFormatTextField extends JTextField {
 
 		// make sure tooltips will be activated
 		ToolTipManager.sharedInstance().registerComponent(this);
-
 	}
 
 	/**
@@ -96,30 +96,41 @@ public class MultiFormatTextField extends JTextField {
 		});
 	}
 
-	private void updateFormatNameWidth() {
-		FontMetrics fontMetrics = getFontMetrics(Gui.getFont(FONT_ID));
-		hintWidth = fontMetrics.stringWidth(formats.get(currentFormatIndex).getName());
+	protected String getHint() {
+		return formats.get(currentFormatIndex).getName();
+	}
 
+	public void setToolTipAppendix(String appendix) {
+		this.toolTipAppendix = appendix;
 	}
 
 	@Override
 	public String getToolTipText(MouseEvent event) {
 
-		int hintStart = getBounds().width - hintWidth;
+		String hint = getHint();
+		FontMetrics fontMetrics = getFontMetrics(Gui.getFont(FONT_ID));
+		int hintWidth = fontMetrics.stringWidth(hint);
 
+		int hintStart = getBounds().width - hintWidth;
 		if (event.getX() > hintStart && formats.size() > 1) {
-			String key = DockingUtils.CONTROL_KEY_NAME;
-			IntegerFormat format = formats.get(currentFormatIndex);
-			return "Enter value in %s format. Press %s-M to cycle input formats."
-					.formatted(format.getDescription(), key);
+			return getHintToolTipText();
 		}
 
 		return super.getToolTipText(event);
 	}
 
+	protected String getHintToolTipText() {
+		String key = DockingUtils.CONTROL_KEY_NAME;
+		IntegerFormat format = formats.get(currentFormatIndex);
+		String appendix = toolTipAppendix == null ? "" : toolTipAppendix;
+		return """
+				<html>Enter value in %s format.<br>
+				<i>Press %s-M to cycle input formats.</i>%s
+				""".formatted(format.getDescription(), key, appendix);
+	}
+
 	/**
-	 * Sets the {@link IntegerFormat} that will be used to format and parse the text in this
-	 * field.
+	 * Sets the {@link IntegerFormat} that will be used to format and parse the text in this field.
 	 * @param format the number format that will be used to format and parse the text in this field
 	 */
 	public void setFormat(IntegerFormat format) {
@@ -127,7 +138,6 @@ public class MultiFormatTextField extends JTextField {
 		if (indexOf >= 0) {
 			currentFormatIndex = indexOf;
 		}
-		updateFormatNameWidth();
 		repaint();
 	}
 
@@ -153,6 +163,10 @@ public class MultiFormatTextField extends JTextField {
 		g.setFont(Gui.getFont(FONT_ID));
 		g.setColor(Messages.HINT);
 
+		String hint = getHint();
+		FontMetrics fontMetrics = getFontMetrics(Gui.getFont(FONT_ID));
+		int hintWidth = fontMetrics.stringWidth(hint);
+
 		Dimension size = getSize();
 		Insets insets = getInsets();
 		int x;
@@ -163,8 +177,7 @@ public class MultiFormatTextField extends JTextField {
 			x = size.width - insets.right - hintWidth;
 		}
 		int y = size.height - insets.bottom - 1;
-		IntegerFormat format = formats.get(currentFormatIndex);
-		GraphicsUtils.drawString(this, g, format.getName(), x, y);
+		GraphicsUtils.drawString(this, g, hint, x, y);
 		g.setFont(savedFont);
 	}
 

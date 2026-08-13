@@ -222,6 +222,25 @@ void FloatFormat::calcPrecision(void)
   decimalMaxPrecision = (int4)ceil((frac_size + 1) * 0.30103) + 1;
 }
 
+/// \param encoding is the encoded floating-point value
+/// \return either \e zero, \e infinity, \e denormalized, \e nan, or \e normalized
+FloatFormat::floatclass FloatFormat::getClass(uintb encoding) const
+
+{
+  int4 exp = extractExponentCode(encoding);
+  if (exp == 0) {
+    if ( extractFractionalCode(encoding) == 0 )
+      return zero;
+    return denormalized;
+  }
+  if (exp == maxexponent) {
+    if ( extractFractionalCode(encoding) == 0 )
+      return infinity;
+    return nan;
+  }
+  return normalized;
+}
+
 /// \param encoding is the encoding value
 /// \param type points to the floating-point class, which is passed back
 /// \return the equivalent double value

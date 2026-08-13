@@ -40,6 +40,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.layout.VerticalLayout;
 
 /**
@@ -575,8 +576,7 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 		// the  number of columns determines the default width of the add/edit label dialog
 		labelNameChoices.setColumns(20);
 		labelNameChoices.setName("label.name.choices");
-		GhidraComboBox<NamespaceWrapper> comboBox = new GhidraComboBox<>();
-		namespaceChoices = comboBox;
+		namespaceChoices = new GhidraComboBox<>();
 
 		primaryCheckBox = new GCheckBox("Primary");
 		primaryCheckBox.setMnemonic('P');
@@ -636,12 +636,40 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 
 	private void showNamespaceChooser() {
 		NamespaceChooserDialog dialog = new NamespaceChooserDialog();
-		Namespace namespace = dialog.getNameSpace(program);
+		Namespace namespace = dialog.getNamespace(program);
 		if (namespace != null) {
 			NamespaceCache.add(program, namespace);
 			initNamespaces();
 			namespaceChoices.setSelectedItem(new NamespaceWrapper(namespace));
 		}
+
+		String nsText = dialog.getNamespaceText();
+		if (StringUtils.isBlank(nsText)) {
+			return;
+		}
+
+		Namespace newNamespace = createNamespace(nsText);
+		if (newNamespace != null) {
+			NamespaceCache.add(program, newNamespace);
+			initNamespaces();
+			namespaceChoices.setSelectedItem(new NamespaceWrapper(newNamespace));
+		}
+	}
+
+	private Namespace createNamespace(String nsText) {
+
+		return program.withTransaction("Create Namespace", () -> {
+			Namespace globalNs = program.getGlobalNamespace();
+			try {
+				return NamespaceUtils.createNamespaceHierarchy(nsText, globalNs, program,
+					SourceType.USER_DEFINED);
+
+			}
+			catch (InvalidInputException e) {
+				setStatusText("Invalid Namespace name: " + nsText);
+				return null;
+			}
+		});
 	}
 
 	private void addListeners() {

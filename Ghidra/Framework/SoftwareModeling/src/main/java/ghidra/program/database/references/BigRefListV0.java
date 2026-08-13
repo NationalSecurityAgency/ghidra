@@ -127,7 +127,7 @@ class BigRefListV0 extends RefList {
 	}
 
 	@Override
-	protected boolean refresh() {
+	protected boolean refresh(DBRecord rec) {
 		return false;
 	}
 

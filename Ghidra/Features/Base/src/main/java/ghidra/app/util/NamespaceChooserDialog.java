@@ -48,7 +48,11 @@ public class NamespaceChooserDialog extends DialogComponentProvider {
 		addCancelButton();
 	}
 
-	public Namespace getNameSpace(Program program) {
+	public void setText(String text) {
+		dropDownField.setText(text);
+	}
+
+	public Namespace getNamespace(Program program) {
 		List<Namespace> namespaces = gatherNamespaces(program);
 		if (namespaces == null) {
 			// user cancelled while gathering namespaces
@@ -57,6 +61,10 @@ public class NamespaceChooserDialog extends DialogComponentProvider {
 		namespaceModel.setNamespaces(namespaces);
 		DockingWindowManager.showDialog(this);
 		return chosenNamespace;
+	}
+
+	public String getNamespaceText() {
+		return dropDownField.getText();
 	}
 
 	@Override
@@ -68,6 +76,7 @@ public class NamespaceChooserDialog extends DialogComponentProvider {
 	@Override
 	protected void cancelCallback() {
 		chosenNamespace = null;
+		dropDownField.setText("");
 		close();
 	}
 
@@ -82,6 +91,7 @@ public class NamespaceChooserDialog extends DialogComponentProvider {
 		panel.add(new JLabel("Namespace:  "));
 
 		dropDownField = new DropDownSelectionTextField<>(namespaceModel);
+		dropDownField.setShowMatchingListOnEmptyText(true);
 		panel.add(dropDownField);
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		return panel;

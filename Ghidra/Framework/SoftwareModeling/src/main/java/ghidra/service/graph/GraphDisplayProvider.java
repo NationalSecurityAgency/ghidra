@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,12 +38,34 @@ public interface GraphDisplayProvider extends ExtensionPoint {
 	/**
 	 * Returns a GraphDisplay that can be used to "display" a graph
 	 * 
-	 * @param reuseGraph if true, this provider will attempt to re-use an existing GraphDisplay
+	 * @param reuseGraph if true, this provider will attempt to re-use an existing GraphDisplay.
+	 * Note: this form will always clear the graph. If the intention is to append to the graph,
+	 * use the {@link #getGraphDisplay(boolean, boolean, TaskMonitor)} method instead.
+	 * so that it can be appended to. Otherwise, any reused graph display will be have its 
+	 * existing graph cleared.
+	 * 
 	 * @param monitor the {@link TaskMonitor} that can be used to monitor and cancel the operation
 	 * @return an object that can be used to display or otherwise consume (e.g., export) the graph
 	 * @throws GraphException thrown if there is a problem creating a GraphDisplay
 	 */
-	public GraphDisplay getGraphDisplay(boolean reuseGraph, TaskMonitor monitor)
+	public default GraphDisplay getGraphDisplay(boolean reuseGraph, TaskMonitor monitor)
+			throws GraphException {
+		return getGraphDisplay(reuseGraph, false, monitor);
+	}
+
+	/**
+	 * Returns a GraphDisplay that can be used to "display" a graph
+	 * 
+	 * @param reuseGraph if true, this provider will attempt to re-use an existing GraphDisplay
+	 * @param append if true and there is a graph display to reuse, don't clear the existing graph
+	 * so that it can be appended to. Otherwise, any reused graph display will be have its 
+	 * existing graph cleared.
+	 * 
+	 * @param monitor the {@link TaskMonitor} that can be used to monitor and cancel the operation
+	 * @return an object that can be used to display or otherwise consume (e.g., export) the graph
+	 * @throws GraphException thrown if there is a problem creating a GraphDisplay
+	 */
+	public GraphDisplay getGraphDisplay(boolean reuseGraph, boolean append, TaskMonitor monitor)
 			throws GraphException;
 
 	/**

@@ -124,3 +124,34 @@ ext.distributePyDep = { name ->
 		}
 	}
 }
+
+// This task composes debugger schema files from their subpieces
+
+def foundFiles = fileTree("src/main/py/src").matching {
+    include "**/build_xml.py"
+}
+
+task buildXmlSchema {
+	doLast {
+		if (rootProject.PYTHON3 == null) {
+			throw new GradleException("A supported version of Python [${PYTHON_SUPPORTED}] was not found!")
+		}
+
+		File buildScript = foundFiles.isEmpty() ? null : foundFiles.singleFile 
+		if (buildScript == null || !buildScript.exists()) {
+		    println "Warning: Could not find build_xml.py for ${project.name}"
+		    return
+		}
+		
+		def exec = providers.exec {
+			workingDir { buildScript.parentFile }
+			ignoreExitValue = true
+			commandLine rootProject.PYTHON3
+			args "build_xml.py"
+		}
+		if (exec.result.get().exitValue != 0) {
+			throw new GradleException(exec.standardError.asText.get().strip())
+		}
+	}
+}
+

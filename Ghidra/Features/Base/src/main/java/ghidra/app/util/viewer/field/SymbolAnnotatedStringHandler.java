@@ -32,12 +32,13 @@ import ghidra.util.Msg;
  * An annotated string handler that handles annotations that begin with
  * {@link #SUPPORTED_ANNOTATIONS}.  This class expects one string following the annotation
  * text that is the address or a symbol name.  The display text will be that of the symbol that
- * is referred to by the address or symbol name.
+ * is referred to by the address or symbol name.  The symbol name may be the fully-qualified 
+ * namespace path.
  */
 public class SymbolAnnotatedStringHandler implements AnnotatedStringHandler {
 
 	private static final String INVALID_SYMBOL_TEXT =
-		"@symbol annotation must have a valid " + "symbol name or address";
+		"@symbol annotation must have a valid symbol name or address";
 	private static final String[] SUPPORTED_ANNOTATIONS = { "symbol", "sym" };
 
 	@Override
@@ -126,7 +127,7 @@ public class SymbolAnnotatedStringHandler implements AnnotatedStringHandler {
 	}
 
 	@Override
-	public String[] modify(String[] text, Program program) {
+	public String[] modify(String[] text, Program program, Address addr) {
 		if (text.length <= 1) {
 			return null;
 		}
@@ -148,6 +149,11 @@ public class SymbolAnnotatedStringHandler implements AnnotatedStringHandler {
 		}
 
 		Address symbolAddress = symbols.get(0).getAddress();
+		if (symbolAddress.isVariableAddress()) {
+			// we can't use variable addresses to locate symbols; there may be other types to ignore
+			return null;
+		}
+
 		text[1] = symbolAddress.toString();
 
 		return text;

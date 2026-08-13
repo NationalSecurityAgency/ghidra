@@ -95,8 +95,15 @@ public class ComponentPlaceholder {
 	}
 
 	/**
-	 * Returns the componentNode containing this placeholder
-	 * @return the node
+	 * Sets the componentNode containing this placeholder
+	 * @param node the component node containing this placeholder.
+	 */
+	void setNode(ComponentNode node) {
+		compNode = node;
+	}
+
+	/**
+	 * {@return the componentNode containing this placeholder}
 	 */
 	ComponentNode getNode() {
 		return compNode;
@@ -109,14 +116,6 @@ public class ComponentPlaceholder {
 
 	boolean isHeaderShowing() {
 		return showHeader;
-	}
-
-	/**
-	 * Sets the componentNode containing this placeholder
-	 * @param node the component node containing this placeholder.
-	 */
-	void setNode(ComponentNode node) {
-		compNode = node;
 	}
 
 	boolean isParented() {
@@ -198,8 +197,7 @@ public class ComponentPlaceholder {
 	 * are restored from XML as being visible, but then no provider can be found for them.
 	 */
 	void reset() {
-		isShowing = false;
-		invalidate();
+		show(false);
 	}
 
 	/**
@@ -212,21 +210,46 @@ public class ComponentPlaceholder {
 		}
 
 		isShowing = doShow;
+
 		invalidate();
 	}
 
+	private void hideComponent() {
+		if (componentProvider == null) {
+			return;
+		}
+
+		JComponent component = componentProvider.getComponent();
+		if (component == null) {
+			return; // can happen during initialization
+		}
+
+		Container parent = component.getParent();
+		if (parent != null) {
+			parent.remove(component);
+		}
+	}
+
 	private void invalidate() {
+		// Hide the component provider's component before clearing the UI.  If we later dispose the
+		// component provider and the component is still visible, it may get repainted after being
+		// disposed, which can trigger exceptions.
+		hideComponent();
 		invalidateComponentNode();
+		disposeDockableComponent();
+		notifyProviderVisibilityIsChanging();
+	}
 
-		disposeComponent();
+	private void notifyProviderVisibilityIsChanging() {
+		if (componentProvider == null) {
+			return;
+		}
 
-		if (componentProvider != null) {
-			if (isShowing) {
-				componentProvider.componentShown();
-			}
-			else {
-				componentProvider.componentHidden();
-			}
+		if (isShowing) {
+			componentProvider.componentShown();
+		}
+		else {
+			componentProvider.componentHidden();
 		}
 	}
 
@@ -235,14 +258,15 @@ public class ComponentPlaceholder {
 	}
 
 	void dispose() {
-
 		disposed = true;
+		disposeDockableComponent();
+		disposeNode();
+	}
 
-		if (comp != null) {
-			comp.dispose();
-			comp = null;
-		}
-
+	/**
+	 * Performs a final removal of this placeholder from its {@link ComponentNode}.
+	 */
+	private void disposeNode() {
 		if (compNode == null) {
 			return;
 		}
@@ -256,7 +280,11 @@ public class ComponentPlaceholder {
 		compNode = null;
 	}
 
-	private void disposeComponent() {
+	/**
+	 * Disposes the active {@link DockableComponent}.  The component may later get recreated in the
+	 * call to {@link #getComponent()}.
+	 */
+	private void disposeDockableComponent() {
 		if (comp == null) {
 			return;
 		}
@@ -345,6 +373,7 @@ public class ComponentPlaceholder {
 		if (compNode != null) {
 			isDocking = compNode.winMgr.isDocking();
 		}
+
 		if (comp == null && isShowing) {
 			comp = new DockableComponent(this, isDocking);
 		}
@@ -450,7 +479,7 @@ public class ComponentPlaceholder {
 			updateInfo(newProvider);
 		}
 
-		disposeComponent();
+		disposeDockableComponent();
 	}
 
 	public void update() {

@@ -42,8 +42,8 @@ public class JavaHooksTest extends AbstractJavaTraceRmiTest {
 			start(conn, "HelloWorld.class");
 
 			RemoteMethod refreshMethod = conn.getMethod("refresh_method");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				conn.execute("VirtualMachine vm = manager.getCurrentVM();");
 				conn.execute("ThreadReference thread = manager.getCurrentThread();");
 				conn.execute("EventRequestManager mgr = vm.eventRequestManager();");
@@ -85,8 +85,8 @@ public class JavaHooksTest extends AbstractJavaTraceRmiTest {
 			RemoteMethod resume = conn.getMethod("resume_thread");
 			RemoteMethod breakOnEnter = conn.getMethod("break_enter_thread");
 			RemoteMethod refreshMethod = conn.getMethod("refresh_method");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				txPut(conn, "Threads");
 				TraceObject thread = waitForObject("VMs[].Threads[main]");
 
@@ -135,8 +135,8 @@ public class JavaHooksTest extends AbstractJavaTraceRmiTest {
 			RemoteMethod resume = conn.getMethod("resume_thread");
 			RemoteMethod breakOnExit = conn.getMethod("break_exit_thread");
 			RemoteMethod refreshMethod = conn.getMethod("refresh_method");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				txPut(conn, "Threads");
 				TraceObject thread = waitForObject("VMs[].Threads[main]");
 
@@ -184,8 +184,8 @@ public class JavaHooksTest extends AbstractJavaTraceRmiTest {
 			RemoteMethod stepInto = conn.getMethod("step_into");
 			RemoteMethod resume = conn.getMethod("resume_thread");
 			RemoteMethod breakLoad = conn.getMethod("break_load_container");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				txPut(conn, "Threads");
 				TraceObject thread = waitForObject("VMs[].Threads[main]");
 
@@ -216,8 +216,8 @@ public class JavaHooksTest extends AbstractJavaTraceRmiTest {
 
 			RemoteMethod resume = conn.getMethod("resume_thread");
 			RemoteMethod breakStart = conn.getMethod("break_started_container");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				txPut(conn, "Threads");
 				TraceObject thread = waitForObject("VMs[].Threads[main]");
 
@@ -245,8 +245,8 @@ public class JavaHooksTest extends AbstractJavaTraceRmiTest {
 			RemoteMethod stepInto = conn.getMethod("step_into");
 			RemoteMethod resume = conn.getMethod("resume_thread");
 			RemoteMethod breakDeath = conn.getMethod("break_death_container");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				txPut(conn, "Threads");
 				TraceObject thread = waitForObject("VMs[].Threads[main]");
 
@@ -280,8 +280,8 @@ public class JavaHooksTest extends AbstractJavaTraceRmiTest {
 			RemoteMethod refreshMethod = conn.getMethod("refresh_method");
 			RemoteMethod refreshLocations = conn.getMethod("refresh_locations");
 			RemoteMethod breakOnExecute = conn.getMethod("break_location");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				txPut(conn, "Threads");
 				TraceObject thread = waitForObject("VMs[].Threads[main]");
 
@@ -328,8 +328,8 @@ public class JavaHooksTest extends AbstractJavaTraceRmiTest {
 			RemoteMethod resume = conn.getMethod("resume_thread");
 			RemoteMethod refreshFields = conn.getMethod("refresh_canonical_fields");
 			RemoteMethod breakOnAccess = conn.getMethod("break_access");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/HelloWorld.class")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				txPut(conn, "Threads");
 				TraceObject thread = waitForObject("VMs[].Threads[main]");
 

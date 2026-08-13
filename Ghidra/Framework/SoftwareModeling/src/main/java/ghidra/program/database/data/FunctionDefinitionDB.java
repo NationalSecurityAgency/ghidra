@@ -87,13 +87,16 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 	}
 
 	@Override
-	protected boolean refresh() {
+	protected boolean refresh(DBRecord rec) {
 		try {
-			DBRecord rec = funDefAdapter.getRecord(key);
+			if (rec == null) {
+				rec = funDefAdapter.getRecord(key);
+			}
 			if (rec != null) {
 				record = rec;
 				loadParameters();
-				return super.refresh();
+				completeRefresh();
+				return true;
 			}
 		}
 		catch (IOException e) {

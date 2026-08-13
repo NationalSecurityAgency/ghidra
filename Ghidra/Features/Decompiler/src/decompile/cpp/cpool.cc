@@ -132,7 +132,10 @@ void CPoolRecord::decode(Decoder &decoder,TypeFactory &typegrp)
   if (subId == ELEM_TOKEN)
     token = decoder.readString(ATTRIB_CONTENT);
   else {
-    byteDataLen = decoder.readSignedInteger(ATTRIB_LENGTH);
+    int8 val = decoder.readSignedInteger(ATTRIB_LENGTH);
+    if (val < 0 || val >= MAX_STRING_SIZE)
+      throw LowlevelError("Bad constant pool record: bad <data> size");
+    byteDataLen = val;
     istringstream s3(decoder.readString(ATTRIB_CONTENT));
     byteData = new uint1[byteDataLen];
     for(int4 i=0;i<byteDataLen;++i) {

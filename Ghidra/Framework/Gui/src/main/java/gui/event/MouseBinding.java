@@ -15,8 +15,6 @@
  */
 package gui.event;
 
-import static org.apache.commons.lang3.StringUtils.*;
-
 import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
@@ -25,6 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import ghidra.util.Msg;
 
@@ -139,20 +138,20 @@ public class MouseBinding {
 		int modifiers = 0;
 		for (Iterator<String> iterator = pieces.iterator(); iterator.hasNext();) {
 			String piece = iterator.next();
-			if (indexOfIgnoreCase(piece, SHIFT) != -1) {
+			if (Strings.CI.indexOf(piece, SHIFT) != -1) {
 				modifiers |= InputEvent.SHIFT_DOWN_MASK;
 				iterator.remove();
 			}
-			else if (indexOfIgnoreCase(piece, CTRL) != -1) {
+			else if (Strings.CI.indexOf(piece, CTRL) != -1) {
 				// This is the cross platform way to get the control key
 				modifiers |= Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 				iterator.remove();
 			}
-			else if (indexOfIgnoreCase(piece, ALT) != -1) {
+			else if (Strings.CI.indexOf(piece, ALT) != -1) {
 				modifiers |= InputEvent.ALT_DOWN_MASK;
 				iterator.remove();
 			}
-			else if (indexOfIgnoreCase(piece, META) != -1) {
+			else if (Strings.CI.indexOf(piece, META) != -1) {
 				modifiers |= InputEvent.META_DOWN_MASK;
 				iterator.remove();
 			}

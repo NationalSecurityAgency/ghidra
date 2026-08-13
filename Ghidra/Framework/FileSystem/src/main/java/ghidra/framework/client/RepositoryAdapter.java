@@ -576,6 +576,9 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 		if (t instanceof UnmarshalException) {
 			throw new UnsupportedOperationException(operation);
 		}
+		if (t instanceof UnsupportedOperationException uoe) {
+			throw uoe;
+		}
 	}
 
 	/*

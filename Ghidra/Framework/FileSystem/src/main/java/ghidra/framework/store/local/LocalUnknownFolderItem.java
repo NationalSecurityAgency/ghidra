@@ -115,7 +115,8 @@ public class LocalUnknownFolderItem extends LocalFolderItem implements UnknownFo
 
 	@Override
 	public void output(File outputFile, int version, TaskMonitor monitor) throws IOException {
-		throw new UnsupportedOperationException("Output not supported for UnknownFolderItems");
+		throw new UnsupportedOperationException(
+			"Packed output not supported for UnknownFolderItems");
 	}
 
 	@Override

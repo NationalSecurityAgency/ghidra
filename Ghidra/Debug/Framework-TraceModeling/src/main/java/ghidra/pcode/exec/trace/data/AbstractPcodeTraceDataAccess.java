@@ -16,6 +16,8 @@
 package ghidra.pcode.exec.trace.data;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
@@ -35,6 +37,8 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 	protected final TraceTimeViewport viewport;
 
 	protected final TraceMemoryManager mm;
+
+	protected final Map<String, PcodeTracePropertyAccess<?>> properties = new HashMap<>();
 
 	/**
 	 * Construct a shim
@@ -204,7 +208,11 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T> PcodeTracePropertyAccess<T> getPropertyAccess(String name, Class<T> type) {
-		return new DefaultPcodeTracePropertyAccess<>(this, name, type);
+		synchronized (properties) {
+			return (PcodeTracePropertyAccess<T>) properties.computeIfAbsent(name,
+				n -> new DefaultPcodeTracePropertyAccess<>(this, n, type));
+		}
 	}
 }

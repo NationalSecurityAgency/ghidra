@@ -252,7 +252,7 @@ public class Application {
 
 	private ResourceFile getModuleForClass(String className) {
 		try {
-			Class<?> callersClass = Class.forName(className);
+			Class<?> callersClass = Class.forName(className, false, getClass().getClassLoader());
 			return getModuleForClass(callersClass);
 		}
 		catch (ClassNotFoundException e) {

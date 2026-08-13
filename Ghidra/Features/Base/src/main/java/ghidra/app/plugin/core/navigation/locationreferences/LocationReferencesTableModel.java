@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.widgets.search.SearchLocationContext;
 import docking.widgets.search.SearchLocationContextRenderer;
 import docking.widgets.table.GTableCellRenderingData;
+import docking.widgets.table.TableColumnDescriptor;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
@@ -57,8 +58,14 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 		super("References", locationReferencesProvider.getTool(),
 			locationReferencesProvider.getProgram(), null, true);
 		this.provider = locationReferencesProvider;
+	}
 
-		addTableColumn(new ContextTableColumn());
+	@Override
+	protected TableColumnDescriptor<LocationReference> createTableColumnDescriptor() {
+		TableColumnDescriptor<LocationReference> descriptor = super.createTableColumnDescriptor();
+		descriptor.addVisibleColumn(new ContextColumn());
+		descriptor.addHiddenColumn(new FieldNameColumn());
+		return descriptor;
 	}
 
 	@Override
@@ -128,7 +135,7 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 //  Inner Classes
 //==================================================================================================
 
-	private class ContextTableColumn
+	private class ContextColumn
 			extends AbstractProgramBasedDynamicTableColumn<LocationReference, LocationReference> {
 
 		private static final String OFFCUT_STRING = "<< OFFCUT >>";
@@ -262,7 +269,7 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 				}
 
 				SearchLocationContext context = rowObject.getContext();
-				return contextRenderer.renderHtmlContext(data, context);
+				return contextRenderer.renderHtmlContext(data, context, true);
 			}
 
 			@Override
@@ -279,4 +286,19 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 
 	}
 
+	private class FieldNameColumn
+			extends AbstractProgramBasedDynamicTableColumn<LocationReference, String> {
+
+		@Override
+		public String getColumnName() {
+			return "Field Name";
+		}
+
+		@Override
+		public String getValue(LocationReference rowObject, Settings settings,
+				Program data, ServiceProvider sp) throws IllegalArgumentException {
+			return rowObject.getFieldName();
+		}
+
+	}
 }

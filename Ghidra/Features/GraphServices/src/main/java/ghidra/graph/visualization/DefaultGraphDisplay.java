@@ -499,9 +499,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.buildAndInstallLocal(componentProvider);
 
 		new ActionBuilder("Graph Type Display Options", ACTION_OWNER)
-				.popupMenuPath("Graph Type Options ...")
+				.popupMenuPath("Graph Type Options")
 				.popupMenuGroup("zzz")
-				.menuPath("Graph Type Options ...")
+				.menuPath("Graph Type Options")
 				.description("Brings up option editor for configuring vertex and edge types.")
 				.onAction(c -> editGraphDisplayOptions())
 				.buildAndInstallLocal(componentProvider);
@@ -568,7 +568,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	private void createAndDisplaySubGraph() {
-		GraphDisplay display = graphDisplayProvider.getGraphDisplay(false, TaskMonitor.DUMMY);
+		GraphDisplay display =
+			graphDisplayProvider.getGraphDisplay(false, false, TaskMonitor.DUMMY);
 		try {
 			display.setGraph(createSubGraph(), graphRenderer.getGraphDisplayOptions(),
 				title + " - Sub-graph", false, TaskMonitor.DUMMY);
@@ -766,8 +767,18 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			VisualizationViewer<AttributedVertex, AttributedEdge> parentViewer) {
 		Dimension viewerSize = parentViewer.getSize();
 		Dimension satelliteSize = new Dimension(viewerSize.width / 4, viewerSize.height / 4);
-		final SatelliteVisualizationViewer<AttributedVertex, AttributedEdge> satellite =
-			SatelliteVisualizationViewer.builder(parentViewer).viewSize(satelliteSize).build();
+		SatelliteVisualizationViewer<AttributedVertex, AttributedEdge> satellite =
+			SatelliteVisualizationViewer
+					.builder(parentViewer)
+					.viewSize(satelliteSize)
+
+					// Unusual Code: setting the background of the satellite will have no effected, 
+					// since the SatelliteVisualizationViewer changes the background color in the
+					// paint method.  That updated color is based on the lens color.  Thus, we need
+					// to set the lens color to a value that will trigger the background to get set
+					// to what we desire.
+					.lensColor(BACKGROUND_COLOR.brighter())
+					.build();
 
 		//
 		// JUNGRAPHT CHANGE 3
@@ -798,6 +809,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				satellite.getComponent().setSize(quarterSize);
 			}
 		});
+
+		satellite.setBackground(BACKGROUND_COLOR);
+
 		return satellite;
 	}
 
@@ -1065,7 +1079,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	public void setGraph(AttributedGraph graph, GraphDisplayOptions options, String title,
 			boolean append, TaskMonitor monitor) {
 		setGraphDisplayOptions(options);
-		if (append && Objects.equals(title, this.title) && this.graph != null) {
+		if (append && this.graph != null &&
+			graph.getGraphType().equals(this.graph.getGraphType())) {
 			graph = mergeGraphs(graph, this.graph);
 		}
 
@@ -1196,11 +1211,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 								: MultiSelectionStrategy.rectangular())
 					.viewSize(PREFERRED_VIEW_SIZE)
 					.layoutSize(PREFERRED_LAYOUT_SIZE)
-
-//					// This is a reminder of how we can change the modifier keys for graph scaling
-//					.graphMouse(DefaultGraphMouse.builder()
-//							.yAxisScalingMask(Modifiers.masks.get("SHIFT_MENU"))
-//							.build())
 					.build();
 
 		// Add an ancestor listener to scale and center the graph after the component

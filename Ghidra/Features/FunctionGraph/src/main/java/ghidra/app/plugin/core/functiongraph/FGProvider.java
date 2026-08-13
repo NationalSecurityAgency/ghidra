@@ -165,7 +165,6 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		cloneAction.setToolBarData(new ToolBarData(image, toolbarEndGroup));
 		cloneAction.setDescription(
 			"Create a snapshot (disconnected) copy of this Function Graph window");
-		cloneAction.setHelpLocation(new HelpLocation("Snapshots", "Snapshots_Start"));
 		cloneAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Function_Graph_Action_Snapshot"));
 		cloneAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_T,
@@ -1063,6 +1062,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 
 	@Override
 	public void componentHidden() {
+		updateLocationUpdateManager.stop();
 		storeLocation(null);
 		controller.primaryProviderHidden();
 		super.componentHidden();
@@ -1072,10 +1072,11 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	public void componentShown() {
 		super.componentShown();
 
-		if (currentLocation == null) {
-			return;
+		ProgramLocation loc = plugin.getProgramLocation();
+		storeLocation(loc);
+		if (loc != null) {
+			refreshAndResetPerspective();
 		}
-		refreshAndResetPerspective();
 	}
 
 	@Override

@@ -214,7 +214,8 @@ public class LoadConfigDirectory implements StructConverter {
 			SectionHeader section = fh.getSectionHeader(dynamicValueRelocTableSection - 1);
 			if (section != null) {
 				long fileOffset = section.getPointerToRawData() + dynamicValueRelocTableOffset;
-				long rva = section.getVirtualAddress() + dynamicValueRelocTableOffset;
+				long rva = section.getAlignedVirtualAddress(nt.getOptionalHeader()) +
+					dynamicValueRelocTableOffset;
 				dvrt = new ImageDynamicRelocationTable(reader.clone(fileOffset), rva, is64bit);
 			}
 			else {

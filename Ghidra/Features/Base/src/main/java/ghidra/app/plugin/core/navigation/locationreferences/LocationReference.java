@@ -39,6 +39,11 @@ public class LocationReference implements Comparable<LocationReference> {
 	private final ProgramLocation location;
 
 	/**
+	 * Optional field name.
+	 */
+	private String fieldName;
+
+	/**
 	 * Optional reference object.  Some clients do not have actual references.
 	 */
 	private Reference reference;
@@ -67,20 +72,25 @@ public class LocationReference implements Comparable<LocationReference> {
 		this.reference = reference;
 	}
 
-	LocationReference(Address locationOfUseAddress, String refType, boolean isOffcutReference) {
-		this(locationOfUseAddress, null, refType, EMPTY_CONTEXT, isOffcutReference);
+	LocationReference(Reference reference, boolean isOffcutReference, String fieldName) {
+		this(reference.getFromAddress(), null, getRefType(reference), EMPTY_CONTEXT,
+			isOffcutReference);
+		this.reference = reference;
+		this.fieldName = fieldName;
 	}
 
 	LocationReference(Address locationOfUseAddress) {
 		this(locationOfUseAddress, null, null, EMPTY_CONTEXT, false);
 	}
 
-	LocationReference(Address locationOfUseAddress, String context) {
+	LocationReference(Address locationOfUseAddress, SearchLocationContext context) {
 		this(locationOfUseAddress, null, null, SearchLocationContext.get(context), false);
 	}
 
-	LocationReference(Address locationOfUseAddress, SearchLocationContext context) {
+	LocationReference(Address locationOfUseAddress, SearchLocationContext context,
+			String fieldName) {
 		this(locationOfUseAddress, null, null, SearchLocationContext.get(context), false);
+		this.fieldName = fieldName;
 	}
 
 	LocationReference(Address locationOfUseAddress, String context, ProgramLocation location) {
@@ -148,6 +158,14 @@ public class LocationReference implements Comparable<LocationReference> {
 	 */
 	public Reference getReference() {
 		return reference;
+	}
+
+	/**
+	 * Returns the field name for this location reference or null if there is no field name.
+	 * @return the field name; may be null
+	 */
+	public String getFieldName() {
+		return fieldName;
 	}
 
 	/**

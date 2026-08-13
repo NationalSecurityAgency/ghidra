@@ -223,7 +223,7 @@ public class GhidraColorChooser extends JColorChooser {
 	private SettableColorSwatchChooserPanel getCustomSwatchPanel() {
 
 		AbstractColorChooserPanel[] chooserPanels = getChooserPanels();
-		if (chooserPanels != null & chooserPanels.length > 1) {
+		if (chooserPanels != null && chooserPanels.length > 1) {
 			AbstractColorChooserPanel panel = chooserPanels[0];
 			if (panel instanceof SettableColorSwatchChooserPanel) {
 				return (SettableColorSwatchChooserPanel) panel;

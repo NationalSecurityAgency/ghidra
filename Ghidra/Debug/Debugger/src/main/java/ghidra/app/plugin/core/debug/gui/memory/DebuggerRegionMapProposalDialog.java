@@ -207,7 +207,7 @@ public class DebuggerRegionMapProposalDialog
 	protected void populateComponents() {
 		super.populateComponents();
 		setPreferredSize(600, 300);
-		table.setRowHeight(BUTTON_SIZE);
+		table.setPreferredRowHeight(BUTTON_SIZE);
 	}
 
 	private void chooseAndSetBlock(RegionMapEntry entry) {

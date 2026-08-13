@@ -1,0 +1,14 @@
+<dwarf>
+	<register_mappings>
+		<register_mapping dwarf="0" ghidra="r0" auto_count="3"/> <!-- r0..r2 -->
+		<register_mapping dwarf="3" ghidra="sp" stackpointer="true"/>
+		<register_mapping dwarf="4" ghidra="gp"/>
+		<register_mapping dwarf="5" ghidra="tp"/>
+		<register_mapping dwarf="6" ghidra="r6" auto_count="24"/> <!-- r6..r29 -->
+		<register_mapping dwarf="30" ghidra="ep"/>
+		<register_mapping dwarf="31" ghidra="lp"/>
+		<!-- TODO: Add system registers -->
+	</register_mappings>
+	<call_frame_cfa value="0"/>
+</dwarf>
+

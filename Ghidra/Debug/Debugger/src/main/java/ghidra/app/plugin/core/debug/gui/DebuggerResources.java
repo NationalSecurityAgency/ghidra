@@ -355,6 +355,23 @@ public interface DebuggerResources {
 		}
 	}
 
+	interface SaveTraceAsAction {
+		String NAME = "Save Trace As";
+		String DESCRIPTION = "Rename and save the selected trace";
+		Icon ICON = DebuggerResources.ICON_SAVE;
+		String GROUP = DebuggerResources.GROUP_TRACE;
+		String HELP_ANCHOR = "save_trace_as";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.menuIcon(ICON)
+					.menuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
 	abstract class AbstractConnectAction extends DockingAction {
 		public static final String NAME = "Connect";
 		public static final Icon ICON = ICON_CONNECTION;

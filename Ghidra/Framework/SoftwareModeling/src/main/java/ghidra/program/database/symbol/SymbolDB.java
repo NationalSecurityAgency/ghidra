@@ -78,24 +78,28 @@ public abstract class SymbolDB extends DbObject implements Symbol {
 	}
 
 	@Override
-	protected boolean refresh() {
-		return refresh(null);
-	}
-
-	@Override
 	protected boolean refresh(DBRecord rec) {
 		if (record != null) {
 			if (rec == null) {
 				rec = symbolMgr.getSymbolRecord(key);
 			}
-			if (rec == null || record.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL) != rec
-					.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL)) {
+			if (rec == null) {
+				return false; 
+			}
+			byte currentTypeValue = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL); 
+			byte newTypeValue = rec.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL);
+			if (newTypeValue != currentTypeValue) {
 				return false;
 			}
 			record = rec;
-			address = symbolMgr.getAddressMap()
+			Address newAddress = symbolMgr.getAddressMap()
 					.decodeAddress(rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
-			return true;
+			boolean isAddrSame = address.equals(newAddress);
+			address = newAddress;
+			// NOTE: If isAddrSame is not true, the symbol address changed which implies this 
+			// symbol was deleted and the key re-used.  It is important to note this instance
+			// is not the same symbol as the previous record state and should not be used.  
+			return isAddrSame;
 		}
 		return false;
 	}

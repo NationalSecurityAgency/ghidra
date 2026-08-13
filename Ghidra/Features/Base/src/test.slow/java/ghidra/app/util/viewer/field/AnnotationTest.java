@@ -45,7 +45,10 @@ import ghidra.framework.store.FileSystem;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.address.AddressFactory;
+import ghidra.program.model.data.UnsignedIntegerDataType;
+import ghidra.program.model.data.VoidDataType;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.LabelFieldLocation;
@@ -83,51 +86,61 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		builder.createLabel("1001018", "mySym{0}"); // symbol with braces
 		builder.createLabel("1001022", "mySym\\{0\\}"); // symbol with braces escaped
 
+		// create a variable name that can also be interpreted as an address
+		String paramName = "deadbeef";
+		Parameter p =
+			new ParameterImpl(paramName, UnsignedIntegerDataType.dataType, builder.getProgram());
+		Function myFunction =
+			builder.createEmptyFunction("MyFunction", "1002000", 0x10, VoidDataType.dataType, p);
+		builder.createLocalVariable(myFunction, "myVariable", UnsignedIntegerDataType.dataType, 10);
+		builder.createLocalVariable(myFunction, "ram:" + paramName,
+			UnsignedIntegerDataType.dataType, 14);
+
 		return builder.getProgram();
 	}
 
 	@Test
 	public void testSymbolAnnotationWithAddress() {
 		String rawComment = "This is a symbol {@sym 01001014} annotation.";
-		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals(rawComment, fixed);
 
 		// with display string
 		rawComment = "This is a symbol {@sym 01001014 bob} annotation.";
-		fixed = CommentUtils.fixupAnnotations(rawComment, program);
+		fixed = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals(rawComment, fixed);
 	}
 
 	@Test
 	public void testSymbolAnnotationWithInvalidAddress() {
 		String rawComment = "This is a symbol {@sym 999999} annotation.";
-		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals(rawComment, fixed);
 	}
 
 	@Test
 	public void testSymbolAnnotationWithSymbol() {
 		String rawComment = "This is a symbol {@sym LAB_01003d2c} annotation.";
-		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals("This is a symbol {@sym 01003d2c} annotation.", fixed);
 
 		// with display string
 		rawComment = "This is a symbol {@sym LAB_01003d2c displayText} annotation.";
-		fixed = CommentUtils.fixupAnnotations(rawComment, program);
+		fixed = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals("This is a symbol {@sym 01003d2c displayText} annotation.", fixed);
 	}
 
 	@Test
 	public void testSymbolAnnotationWithInvalidSymbol() {
 		String rawComment = "This is a symbol {@sym CocoPebbles} annotation.";
-		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals("This is a symbol {@sym CocoPebbles} annotation.", fixed);
 	}
 
 	@Test
 	public void testNoAnnotation() {
 		String rawComment = "This is no symbol annotation.";
-		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals(rawComment, fixed);
 	}
 
@@ -135,7 +148,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testMixedAnnotationNoSymbolAnnotation() {
 		String rawComment = "This is a symbol {@url www.noplace.com} annotation " +
 			"with a {@program notepad} annotation.";
-		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals(rawComment, fixed);
 	}
 
@@ -143,7 +156,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testMixedAnnotationWithSymbolAnnotation() {
 		String rawComment = "This is a symbol {@sym LAB_01003d2c} annotation " +
 			"with a {@program notepad} annotation.";
-		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals("This is a symbol {@sym 01003d2c} annotation " +
 			"with a {@program notepad} annotation.", fixed);
 	}
@@ -151,21 +164,21 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testSymbolAnnotationAtBeginningOfComment() {
 		String rawComment = "{@sym LAB_01003d2c} annotation at the beginning.";
-		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals("{@sym 01003d2c} annotation at the beginning.", fixed);
 	}
 
 	@Test
 	public void testSymbolAnnotation_BackToBack() {
 		String rawComment = "Test {@sym LAB_01003d2c}{@sym LAB_01003d2c} end.";
-		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals("Test {@sym 01003d2c}{@sym 01003d2c} end.", fixed);
 	}
 
 	@Test
 	public void testSymbolAnnotationAtEndOfComment() {
 		String rawComment = "Annotation at the end {@sym LAB_01003d2c}";
-		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals("Annotation at the end {@sym 01003d2c}", fixed);
 	}
 
@@ -173,7 +186,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSymbolAnnotationAtBeginningAndEndOfComment() {
 		String rawComment =
 			"{@sym LAB_01003d2c} annotation at the beginning and end {@sym LAB_01003d5b}";
-		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals("{@sym 01003d2c} annotation at the " + "beginning and end {@sym 01003d5b}",
 			fixed);
 	}
@@ -183,7 +196,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		String rawComment =
 			"{@sym LAB_01003d2c} annotation at the beginning, middle {@sym LAB_01003d28} and " +
 				"end {@sym LAB_01003d5b}";
-		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals("{@sym 01003d2c} annotation at the beginning, middle {@sym 01003d28} and " +
 			"end {@sym 01003d5b}", fixed);
 	}
@@ -192,7 +205,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSymbolAnnotationWithValidAndInvalidSymbol() {
 		String rawComment = "This is a symbol {@sym LAB_01003d2c} annotation " +
 			"with a {@sym FruityPebbles} annotation.";
-		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
 		assertEquals("This is a symbol {@sym 01003d2c} annotation " +
 			"with a {@sym FruityPebbles} annotation.", fixed);
 	}
@@ -734,6 +747,93 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testVariableAnnotation() {
+		String rawComment = "{@variable myVariable MyFunction}";
+		String display = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
+		assertEquals("{@variable Stack[0xa] 01002000}", display);
+	}
+
+	@Test
+	public void testVariableAnnotation_NoFunction() {
+		String rawComment = "{@variable myVariable}";
+		String functionAddress = "01002000";
+		Address entryPoint = addr(functionAddress);
+		String display = CommentUtils.fixupAnnotations(rawComment, program, entryPoint);
+		assertEquals("{@variable Stack[0xa] 01002000}", display);
+	}
+
+	@Test
+	public void testVariableAnnotation_BadName() {
+		String rawComment = "{@variable noSuchName MyFunction}";
+		String functionAddress = "01002000";
+		Address entryPoint = addr(functionAddress);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, entryPoint);
+		AttributedString prototype = prototype();
+		FieldElement element =
+			CommentUtils.parseTextForAnnotations(fixed, program, prototype, 0);
+		String displayString = element.getText();
+
+		assertContainsString("Could not find variable by address or name 'noSuchName'",
+			displayString);
+	}
+
+	@Test
+	public void testVariableAnnotation_BadName_BadFunction() {
+		String rawComment = "{@variable noSuchName NoSuchFunction}";
+		String functionAddress = "01002000";
+		Address entryPoint = addr(functionAddress);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program, entryPoint);
+		AttributedString prototype = prototype();
+		FieldElement element =
+			CommentUtils.parseTextForAnnotations(fixed, program, prototype, 0);
+		String displayString = element.getText();
+
+		assertContainsString("Could not find function 'NoSuchFunction'",
+			displayString);
+	}
+
+	@Test
+	public void testVariableAnnotation_HexName_AsName() {
+		// the variable name can also be interpreted as an address
+		String paramName = "deadbeef";
+		String rawComment = "{@variable %s MyFunction}".formatted(paramName);
+		String display = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
+		assertEquals("{@variable register:1030 01002000}", display);
+	}
+
+	@Test
+	public void testVariableAnnotation_HexName_AsAddress() {
+		// the variable address matches an existing param name
+		String paramAddress = "ram:deadbeef";
+		String rawComment = "{@variable %s MyFunction}".formatted(paramAddress);
+		String display = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
+		assertEquals("{@variable Stack[0xe] 01002000}", display);
+	}
+
+	@Test
+	public void testVariableAnnotation_StackAddress() {
+		String rawComment = "{@variable Stack[0xa] MyFunction}";
+		String display = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
+		assertEquals("{@variable Stack[0xa] 01002000}", display);
+	}
+
+	@Test
+	public void testVariableAnnotation_StackAddress_NoFunction() {
+		String rawComment = "{@variable Stack[0xa]}";
+		String functionAddress = "01002000";
+		Address entryPoint = addr(functionAddress);
+		String display = CommentUtils.fixupAnnotations(rawComment, program, entryPoint);
+		assertEquals("{@variable Stack[0xa] 01002000}", display);
+	}
+
+	@Test
+	public void testVariableAnnotation_RegisterAddress() {
+		String rawComment = "{@variable register:1030 MyFunction}";
+		String display = CommentUtils.fixupAnnotations(rawComment, program, Address.NO_ADDRESS);
+		assertEquals("{@variable register:1030 01002000}", display);
+	}
+
+	@Test
 	public void testUnknownAnnotation() {
 		String rawComment = "This is a symbol {@syyyybol bob} annotation";
 		String display = CommentUtils.getDisplayString(rawComment, program);
@@ -917,6 +1017,10 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing(); // let post-dialog processing happen		
 	}
 
+	private Address addr(String offset) {
+		AddressFactory af = program.getAddressFactory();
+		return af.getAddress(offset);
+	}
 //==================================================================================================
 // Fake/Spy Classes
 //==================================================================================================	

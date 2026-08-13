@@ -385,12 +385,21 @@ public abstract class LocalFileSystem implements FileSystem {
 			}
 			ItemPropertyFile propertyFile = itemStorage.getPropertyFile();
 			if (propertyFile.exists()) {
-				return LocalFolderItem.getFolderItem(this, propertyFile);
+				LocalFolderItem item = LocalFolderItem.getFolderItem(this, propertyFile);
+				if (item != null) {
+					return item;
+				}
+				Msg.warn(this, "Attempting item cleanup due to invalid state: " +
+					new File(propertyFile.getParentStorageDirectory(),
+						propertyFile.getStorageName()));
+			}
+			else {
+				Msg.warn(this, "Attempting item cleanup due to missing property file: " +
+					new File(propertyFile.getParentStorageDirectory(),
+						propertyFile.getStorageName()));
 			}
 
 			// force cleanup of bad storage allocation
-			Msg.warn(this, "Attempting item cleanup due to missing property file: " +
-				new File(propertyFile.getParentStorageDirectory(), propertyFile.getStorageName()));
 			itemDeleted(folderPath, name);
 		}
 		catch (InvalidObjectException e) {

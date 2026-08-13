@@ -224,12 +224,12 @@ public class CommandProcessor {
 		return -1;
 	}
 
-	static File getCommandDir(File serverRootDir) {
-		return new File(serverRootDir, ADMIN_CMD_DIR);
-	}
-
-	static File getOrCreateCommandDir(RepositoryManager repositoryMgr) {
-		File cmdDir = getCommandDir(repositoryMgr.getRootDir());
+	static File getOrCreateCommandDir(File serverRootDir) {
+		if (!serverRootDir.isDirectory() || !serverRootDir.canWrite()) {
+			System.err.println("Insufficient privilege or server not started!");
+			System.exit(-1);
+		}
+		File cmdDir = new File(serverRootDir, ADMIN_CMD_DIR);
 		if (!cmdDir.exists()) {
 			// ensure process owner creates queued command directory
 			cmdDir.mkdir();
@@ -243,7 +243,7 @@ public class CommandProcessor {
 	 * @throws IOException
 	 */
 	static void processCommands(RepositoryManager repositoryMgr) throws IOException {
-		File cmdDir = getOrCreateCommandDir(repositoryMgr);
+		File cmdDir = getOrCreateCommandDir(repositoryMgr.getRootDir());
 		File[] files = cmdDir.listFiles(CMD_FILE_FILTER);
 		if (files == null) {
 			log.error("Failed to access command queue " + cmdDir.getAbsolutePath() +

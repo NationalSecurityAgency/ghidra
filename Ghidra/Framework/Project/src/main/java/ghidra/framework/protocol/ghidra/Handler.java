@@ -70,8 +70,8 @@ public class Handler extends URLStreamHandler {
 		}
 
 		if (url.getAuthority() != null) {
-			// assume standard ghidra URL (ghidra://...)
-			return true;
+			// assume standard ghidra URL (ghidra://...) - query not allowed
+			return url.getQuery() == null;
 		}
 		try {
 			return getProtocolExtensionHandler(url) != null;

@@ -87,8 +87,6 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 
 		setErrorGUIEnabled(false);
 
-		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-
 		env = new TestEnv();
 
 		tool = env.getTool();
@@ -1147,13 +1145,6 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 //==================================================================================================
 
 	public static void main(String[] args) throws Exception {
-
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
 
 		JFrame frame = new JFrame(DropDownSelectionTextField.class.getName());
 		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);

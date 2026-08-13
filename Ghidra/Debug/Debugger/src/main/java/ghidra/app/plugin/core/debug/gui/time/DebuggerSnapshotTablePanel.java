@@ -176,8 +176,12 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 
 		SnapshotTableModel model;
 
+		Font lastFixedWidthFont;
+		Font fixedWidthBoldFont;
+		Font fixedWidthItalicFont;
+
 		protected TimeRadix getTimeRadix() {
-			Trace trace = model.getTrace();
+			Trace trace = model == null ? null : model.getTrace();
 			return trace == null ? TimeRadix.DEFAULT : trace.getTimeManager().getTimeRadix();
 		}
 
@@ -211,10 +215,6 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 				default -> getText(t);
 			};
 		}
-
-		Font lastFixedWidthFont;
-		Font fixedWidthBoldFont;
-		Font fixedWidthItalicFont;
 
 		Font computePlainFont(GTableCellRenderingData data) {
 			return data.getValue() instanceof Address ? getFixedWidthFont() : getDefaultFont();

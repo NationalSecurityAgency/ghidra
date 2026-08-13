@@ -15,6 +15,7 @@
  */
 package ghidra.feature.fid.db;
 
+import db.DBRecord;
 import ghidra.program.database.DbObject;
 
 /**
@@ -48,7 +49,7 @@ public class StringRecord extends DbObject {
 	 * Never need to refresh...this database object is immutable.
 	 */
 	@Override
-	protected boolean refresh() {
+	protected boolean refresh(DBRecord rec) {
 		return false;
 	}
 }

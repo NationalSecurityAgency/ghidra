@@ -41,8 +41,6 @@
 //
 // @category VxWorks
 
-import java.util.List;
-
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.label.DemanglerCmd;
@@ -57,7 +55,6 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.CodeUnitInsertionException;
 
 public class VxWorksSymTab_Finder extends GhidraScript {
 
@@ -323,7 +320,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 			return false;
 		}
 
-		while (!SymbolUtilities.isInvalidChar((char) _byte) && _byte != 0x00) {
+		while (_byte != 0x00 && !SymbolUtilities.isInvalidCodePoint(Byte.toUnsignedInt(_byte))) {
 
 			if (monitor.isCancelled()) {
 				return false;

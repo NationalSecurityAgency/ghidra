@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +19,13 @@
 //name defined in the AppleSingleDouble (.) file.
 //@category Binary
 
+import java.io.*;
+import java.nio.file.AccessMode;
+import java.util.List;
+
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.RandomAccessByteProvider;
+import ghidra.app.util.bin.FileByteProvider;
 import ghidra.app.util.bin.format.macos.asd.*;
 import ghidra.app.util.bin.format.macos.cfm.CFragResource;
 import ghidra.app.util.bin.format.macos.cfm.CFragResourceMember;
@@ -30,9 +33,6 @@ import ghidra.app.util.bin.format.macos.rm.*;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.util.Msg;
-
-import java.io.*;
-import java.util.List;
 
 public class SplitMultiplePefContainersScript extends GhidraScript {
 	private static final int BUFFER = 4096;
@@ -50,8 +50,8 @@ public class SplitMultiplePefContainersScript extends GhidraScript {
 			return;
 		}
 
-		RandomAccessByteProvider pefProvider = open(pefFile);
-		RandomAccessByteProvider resourceForkProvider = open(resourceForkFile);
+		ByteProvider pefProvider = open(pefFile);
+		ByteProvider resourceForkProvider = open(resourceForkFile);
 
 		try {
 			ResourceHeader resourceHeader = findResourceFork(resourceForkProvider);
@@ -131,8 +131,7 @@ public class SplitMultiplePefContainersScript extends GhidraScript {
 		return null;
 	}
 
-	private ResourceHeader findResourceFork(RandomAccessByteProvider resourceForkProvider)
-			throws Exception {
+	private ResourceHeader findResourceFork(ByteProvider resourceForkProvider) throws Exception {
 		if (isRunningOnMac()) {
 			return new ResourceHeader(resourceForkProvider);
 		}
@@ -148,9 +147,9 @@ public class SplitMultiplePefContainersScript extends GhidraScript {
 		return null;
 	}
 
-	private RandomAccessByteProvider open(File file) {
+	private ByteProvider open(File file) {
 		try {
-			return new RandomAccessByteProvider(file);
+			return new FileByteProvider(file, null, AccessMode.READ);
 		}
 		catch (IOException e) {
 			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
@@ -158,7 +157,7 @@ public class SplitMultiplePefContainersScript extends GhidraScript {
 		return null;
 	}
 
-	private void close(RandomAccessByteProvider provider) {
+	private void close(ByteProvider provider) {
 		try {
 			if (provider != null) {
 				provider.close();

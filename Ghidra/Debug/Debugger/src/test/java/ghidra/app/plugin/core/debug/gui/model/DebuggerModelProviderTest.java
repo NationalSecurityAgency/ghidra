@@ -32,6 +32,7 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import generic.Unique;
+import generic.test.rule.Repeated;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.PrimitiveRow;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
@@ -1076,7 +1077,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		traceManager.activateSnap(1);
 		waitForSwing();
 
-		modelProvider.setPath(threadsPath);
+		runSwing(() -> modelProvider.setPath(threadsPath));
 		waitForTasks();
 
 		// Testing 1 then 0, because 0 is default

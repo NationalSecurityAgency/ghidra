@@ -73,7 +73,7 @@ public class ExternalDebugFileSectionProvider extends BaseSectionProvider {
 				new FileByteProvider(extDebugFile, fsrl, AccessMode.READ)) {
 				Object consumer = new Object();
 				Language lang = program.getLanguage();
-				LoadSpec origLoadSpec = ImporterUtilities.getLoadSpec(program);
+				LoadSpec origLoadSpec = ImporterUtilities.getLoadSpec(program, monitor);
 				if (origLoadSpec == null) {
 					return null;
 				}

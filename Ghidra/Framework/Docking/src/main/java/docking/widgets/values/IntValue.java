@@ -70,7 +70,7 @@ public class IntValue extends AbstractValue<Integer> {
 	public JComponent getComponent() {
 		if (field == null) {
 			field = new IntegerTextField(20);
-			field.setUseNumberPrefix(false);
+			field.setAutoSwitchMode(false);
 			field.setShowNumberMode(false);
 			if (displayAsHex) {
 				field.setFormat(IntegerFormat.HEX);

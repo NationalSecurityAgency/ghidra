@@ -244,13 +244,13 @@ Varnode *ConditionalExecution::resolveIblockRead(PcodeOp *op,int4 inbranch)
 {
   if (op->code() == CPUI_COPY) {
     Varnode *vn = op->getIn(0);
-    if (vn->isWritten()) {
-      PcodeOp *defOp = vn->getDef();
-      if (defOp->code() == CPUI_MULTIEQUAL && defOp->getParent() == iblock)
-	op = defOp;
-    }
-    else
+    if (!vn->isWritten())
       return vn;
+    PcodeOp *defOp = vn->getDef();
+    if (defOp->code() == CPUI_MULTIEQUAL && defOp->getParent() == iblock)
+      op = defOp;
+    else
+      return vn;	// We know defOp is not in iblock
   }
   OpCode opc = op->code();
   if (opc == CPUI_MULTIEQUAL)
@@ -336,16 +336,15 @@ void ConditionalExecution::doReplacement(PcodeOp *op)
       if (readop->code() == CPUI_MULTIEQUAL) {
 	rvn = getMultiequalRead(op, readop, slot);
       }
-      else if (readop->code() == CPUI_RETURN) {		// Cannot replace input of RETURN directly, create COPY to hold input
-	Varnode *retvn = readop->getIn(1);
+      else if (readop->code() == CPUI_RETURN && slot > 0) {	// Cannot replace input of RETURN directly, create COPY to hold input
 	PcodeOp *newcopyop = fd->newOp(1,readop->getAddr());
 	fd->opSetOpcode(newcopyop,CPUI_COPY);
-	Varnode *outvn = fd->newVarnodeOut(retvn->getSize(),retvn->getAddr(),newcopyop); // Preserve the CPUI_RETURN storage address
-	fd->opSetInput(readop,outvn,1);
+	Varnode *outvn = fd->newVarnodeOut(vn->getSize(),vn->getAddr(),newcopyop); // Preserve the Varnode's storage address
+	fd->opSetInput(readop,outvn,slot);
 	fd->opInsertBefore(newcopyop,readop);
 	readop = newcopyop;
 	slot = 0;
-	rvn = getReplacementRead(op,bl);
+	rvn = getReplacementRead(op,bl);	// COPY gets the replacement read
       }
       else
 	rvn = getReplacementRead(op,bl);

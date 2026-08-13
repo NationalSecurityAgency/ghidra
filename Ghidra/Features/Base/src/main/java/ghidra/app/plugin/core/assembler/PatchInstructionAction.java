@@ -18,14 +18,9 @@ package ghidra.app.plugin.core.assembler;
 import java.awt.Font;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyListener;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.KeyStroke;
-
-import org.apache.commons.collections4.map.DefaultedMap;
-import org.apache.commons.collections4.map.LazyMap;
 
 import db.Transaction;
 import docking.action.KeyBindingData;
@@ -37,7 +32,9 @@ import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.cmd.disassemble.ReDisassembleCommand;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
-import ghidra.app.plugin.core.assembler.AssemblyDualTextField.*;
+import ghidra.app.plugin.core.assembler.AssemblyDualTextField.VisibilityMode;
+import ghidra.app.plugin.core.assembler.completion.AssemblyCompletion;
+import ghidra.app.plugin.core.assembler.completion.InstructionAssemblyCompletion;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
@@ -45,7 +42,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import ghidra.util.task.CachingSwingWorker;
 import ghidra.util.task.TaskMonitor;
 import help.Help;
 
@@ -54,48 +50,6 @@ import help.Help;
  */
 public class PatchInstructionAction extends AbstractPatchAction {
 
-	/**
-	 * Enumerated quality ratings and text to describe them.
-	 */
-	static enum AssemblyRating {
-		UNRATED("This processor has not been tested with the assembler." +
-			" The assembler will probably work on this language."),
-		POOR("This processor received a rating of POOR during testing." +
-			" We DO NOT recommend trying to assemble."),
-		BRONZE("This processor received a rating of BRONZE during testing." +
-			" A fair number of instructions may assemble, but we DO NOT recommend trying to" +
-			" assemble."),
-		SILVER("This processor received a rating of SILVER during testing." +
-			" Most instructions should work, but you will likely encounter a few errors."),
-		GOLD("This processor received a rating of GOLD during testing." +
-			" You should rarely encounter an error."),
-		PLATINUM("This processor received a rating of PLATINUM during testing.");
-
-		final String message;
-
-		private AssemblyRating(String message) {
-			this.message = message;
-		}
-	}
-
-	// To build the assembler in the background if it takes a while
-	private static class AssemblerConstructorWorker extends CachingSwingWorker<Assembler> {
-		private Language language;
-
-		public AssemblerConstructorWorker(Language language) {
-			super("Assemble", false);
-			this.language = language;
-		}
-
-		@Override
-		protected Assembler runInBackground(TaskMonitor monitor) {
-			monitor.setMessage("Constructing assembler for " + language);
-			return Assemblers.getAssembler(language);
-		}
-	}
-
-	private static final String ASSEMBLY_RATING = "assemblyRating";
-	private static final String ASSEMBLY_MESSAGE = "assemblyMessage";
 	private static final KeyStroke KEYBIND_PATCH_INSTRUCTION =
 		KeyStroke.getKeyStroke("ctrl shift G");
 
@@ -110,18 +64,13 @@ public class PatchInstructionAction extends AbstractPatchAction {
 	private class ListenerForAccept implements AutocompletionListener<AssemblyCompletion> {
 		@Override
 		public void completionActivated(AutocompletionEvent<AssemblyCompletion> ev) {
-			if (ev.getSelection() instanceof AssemblyInstruction) {
-				AssemblyInstruction ins = (AssemblyInstruction) ev.getSelection();
+			if (ev.getSelection() instanceof InstructionAssemblyCompletion) {
+				InstructionAssemblyCompletion ins =
+					(InstructionAssemblyCompletion) ev.getSelection();
 				accept(ins);
 			}
 		}
 	}
-
-	private final Map<Language, CachingSwingWorker<Assembler>> cache =
-		LazyMap.lazyMap(new HashMap<>(), language -> new AssemblerConstructorWorker(language));
-
-	/*test*/ static final Map<Language, Boolean> SHOWN_WARNING =
-		DefaultedMap.defaultedMap(new HashMap<>(), false);
 
 	/*test*/ final AssemblyDualTextField input = newAssemblyDualTextField();
 	private final ListenerForAccept listenerForAccept = new ListenerForAccept();
@@ -130,8 +79,8 @@ public class PatchInstructionAction extends AbstractPatchAction {
 	protected Assembler assembler;
 
 	// Callback to keep the autocompleter positioned under the fields
-	private FieldPanelOverLayoutListener listenerToMoveAutocompleter = ev -> {
-		TextFieldAutocompleter<AssemblyCompletion> autocompleter = input.getAutocompleter();
+	private FieldPanelOverLayoutListener listenerToMoveAutocompleter = _ -> {
+		TextComponentAutocompleter<AssemblyCompletion> autocompleter = input.getAutocompleter();
 		if (autocompleter.isCompletionListVisible()) {
 			autocompleter.updateDisplayLocation();
 		}
@@ -144,7 +93,7 @@ public class PatchInstructionAction extends AbstractPatchAction {
 	public PatchInstructionAction(Plugin owner, String name) {
 		super(owner, name);
 
-		setPopupMenuData(new MenuData(new String[] { name }, MENU_GROUP));
+		setPopupMenuData(createMenuData(name));
 		setKeyBindingData(new KeyBindingData(KEYBIND_PATCH_INSTRUCTION));
 		HelpLocation location = new HelpLocation(owner.getName(), "patch_instruction");
 		setHelpLocation(location);
@@ -154,12 +103,16 @@ public class PatchInstructionAction extends AbstractPatchAction {
 		input.getAssemblyField().setBorder(BorderFactory.createLineBorder(Colors.ERROR, 2));
 
 		input.getAutocompleter().addAutocompletionListener(listenerForAccept);
-		
+
 		Help.getHelpService().registerHelp(input.getMnemonicField(), location);
 		Help.getHelpService().registerHelp(input.getOperandsField(), location);
 		Help.getHelpService().registerHelp(input.getExhaustButton(), location);
-		
+
 		init();
+	}
+
+	protected MenuData createMenuData(String name) {
+		return new MenuData(new String[] { name }, MENU_GROUP);
 	}
 
 	protected AssemblyDualTextField newAssemblyDualTextField() {
@@ -197,21 +150,6 @@ public class PatchInstructionAction extends AbstractPatchAction {
 		return true;
 	}
 
-	protected void warnLanguage() {
-		AssemblyRating rating = AssemblyRating.valueOf(
-			language.getProperty(ASSEMBLY_RATING + ":" + language.getLanguageID(),
-				AssemblyRating.UNRATED.name()));
-		if (AssemblyRating.PLATINUM != rating) {
-			String message = language.getProperty(ASSEMBLY_MESSAGE + ":" + language.getLanguageID(),
-				rating.message);
-			if (!SHOWN_WARNING.get(language)) {
-				Msg.showWarn(this, null, "Assembler Rating",
-					"<html><body><p style='width: 300px;'>" + message + "</p></body></html>");
-				SHOWN_WARNING.put(language, true);
-			}
-		}
-	}
-
 	protected Language getLanguage(CodeUnit cu) {
 		return cu.getProgram().getLanguage();
 	}
@@ -224,8 +162,8 @@ public class PatchInstructionAction extends AbstractPatchAction {
 	protected void prepare() {
 		CodeUnit cu = getCodeUnit();
 		language = getLanguage(cu);
-		cache.get(language).get(null);
-		warnLanguage();
+		AssemblerPlugin.CACHE.get(language).get(null);
+		AssemblerPlugin.warnLanguage(language);
 		assembler = getAssembler(cu);
 	}
 
@@ -311,7 +249,15 @@ public class PatchInstructionAction extends AbstractPatchAction {
 		// NB. This will immediately re-disassembly the one command.
 		// We'll background the context repair, which may include more disassembly
 		assembler.patchProgram(data, getAddress());
-		ReDisassembleCommand cmd = new ReDisassembleCommand(getAddress());
+
+		ReDisassembleCommand cmd = new ReDisassembleCommand(getAddress()) {
+			@Override
+			public boolean applyTo(Program program, TaskMonitor monitor) {
+				boolean result = super.applyTo(program, monitor);
+				doGoToNext(data.length);
+				return result;
+			}
+		};
 		tool.executeBackgroundCommand(cmd, getProgram());
 	}
 
@@ -320,10 +266,10 @@ public class PatchInstructionAction extends AbstractPatchAction {
 	 * 
 	 * @param ins the selected instruction from the completion list
 	 */
-	public void accept(AssemblyInstruction ins) {
+	public void accept(InstructionAssemblyCompletion ins) {
 		Program program = getProgram();
 		Address address = getAddress();
-		try (Transaction tx =
+		try (Transaction _ =
 			program.openTransaction("Assemble @" + address + ": " + input.getText())) {
 			applyPatch(ins.getData());
 			hide();

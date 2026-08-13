@@ -15,11 +15,14 @@
  */
 package agent;
 
-import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
-import java.io.FileOutputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.lang.annotation.*;
+import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -33,14 +36,14 @@ import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesPlugin;
 import ghidra.app.plugin.core.debug.gui.tracermi.launcher.AbstractTraceRmiLaunchOffer.NoStaticMappingException;
 import ghidra.app.plugin.core.debug.gui.tracermi.launcher.TraceRmiLauncherServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
-import ghidra.app.services.DebuggerAutoMappingService;
-import ghidra.app.services.TraceRmiLauncherService;
+import ghidra.app.services.*;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.*;
 import ghidra.framework.Application;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
+import ghidra.pty.*;
 import ghidra.util.SystemUtilities;
 
 public abstract class AbstractRmiConnectorsTest
@@ -52,9 +55,29 @@ public abstract class AbstractRmiConnectorsTest
 		return "python";
 	}
 
+	@Target(ElementType.METHOD)
+	@Retention(RetentionPolicy.RUNTIME)
+	public @interface NoLocalSetup {
+	}
+
+	boolean localSetup() throws Exception {
+		Method method = null;
+		try {
+			method = getClass().getMethod(name.getMethodName());
+		}
+		catch (NoSuchMethodException e) {
+			return true;
+		}
+		NoLocalSetup annotation = method.getAnnotation(NoLocalSetup.class);
+		return annotation == null;
+	}
+
 	protected abstract List<ResourceFile> getPipLinkModules();
 
 	protected void unpip(String... specs) throws Exception {
+		if (!localSetup()) {
+			return;
+		}
 		List<String> args = new ArrayList<>();
 		args.addAll(List.of(getPythonCmd(), "-m", "pip", "uninstall", "-y"));
 		args.addAll(List.of(specs));
@@ -63,6 +86,9 @@ public abstract class AbstractRmiConnectorsTest
 	}
 
 	protected void pipOob(String... specs) throws Exception {
+		if (!localSetup()) {
+			return;
+		}
 		List<String> args = new ArrayList<>();
 		args.addAll(List.of(getPythonCmd(), "-m", "pip", "install"));
 		args.addAll(List.of(specs));
@@ -71,6 +97,9 @@ public abstract class AbstractRmiConnectorsTest
 	}
 
 	protected void pip(String... specs) throws Exception {
+		if (!localSetup()) {
+			return;
+		}
 		List<String> args = new ArrayList<>();
 		args.addAll(List.of(getPythonCmd(), "-m", "pip", "install", "--no-index"));
 		for (ResourceFile root : Application.getApplicationRootDirectories()) {
@@ -88,6 +117,20 @@ public abstract class AbstractRmiConnectorsTest
 		args.addAll(List.of(specs));
 		int result = new ProcessBuilder().command(args).inheritIO().start().waitFor();
 		assertEquals("pip failed", 0, result);
+	}
+
+	protected int runInTerminal(List<String> command, Map<String, String> env)
+			throws IOException, InterruptedException {
+		TerminalService terminalService = tool.getService(TerminalService.class);
+		if (terminalService == null) {
+			throw new NullPointerException("Terminal Service is not installed in test tool");
+		}
+		try (Pty pty = PtyFactory.local().openpty();
+				Terminal term = terminalService.createWithStreams(Charset.forName("utf8"),
+					pty.getParent().getInputStream(), pty.getParent().getOutputStream())) {
+			PtySession session = pty.getChild().session(command.toArray(String[]::new), env);
+			return session.waitExited();
+		}
 	}
 
 	protected boolean isWindows() {

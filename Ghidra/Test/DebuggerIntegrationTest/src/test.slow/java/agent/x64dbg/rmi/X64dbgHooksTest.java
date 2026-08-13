@@ -15,8 +15,11 @@
  */
 package agent.x64dbg.rmi;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.util.*;
 
@@ -37,7 +40,7 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 	private static final long RUN_TIMEOUT_MS = 5000;
 	private static final long RETRY_MS = 500;
 
-	record PythonAndTrace(PythonAndConnection conn, ManagedDomainObject mdo)
+	record PythonAndTrace(PythonAndConnection conn, ManagedDomainObject<Trace> mdo)
 			implements AutoCloseable {
 		public void execute(String cmd) {
 			conn.execute(cmd);
@@ -70,21 +73,20 @@ public class X64dbgHooksTest extends AbstractX64dbgTraceRmiTest {
 	protected PythonAndTrace startAndSyncPython(String exec) throws Exception {
 		PythonAndConnection conn = startAndConnectPython();
 		try {
-			ManagedDomainObject mdo;
+			ManagedDomainObject<Trace> mdo;
 			conn.execute("from ghidraxdbg.commands import *");
 			conn.execute(
 				"util.set_convenience_variable('ghidra-language', 'x86:LE:64:default')");
 			if (exec != null) {
 				start(conn, exec);
-				mdo = waitDomainObject(
-					"/New Traces/x64dbg/" + exec.substring(exec.lastIndexOf("\\") + 1));
+				mdo = waitTrace("/New Traces/x64dbg/" + exec.substring(exec.lastIndexOf("\\") + 1));
 			}
 			else {
 				conn.execute("ghidra_trace_start()");
-				mdo = waitDomainObject("/New Traces/x64dbg/noname");
+				mdo = waitTrace("/New Traces/x64dbg/noname");
 			}
 			clearBreakpoints(conn);
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			tb = new ToyDBTraceBuilder(mdo.get());
 			return new PythonAndTrace(conn, mdo);
 		}
 		catch (Exception e) {

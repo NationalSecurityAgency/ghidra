@@ -119,11 +119,11 @@ class RefListV0 extends RefList {
 	}
 
 	@Override
-	protected boolean refresh() {
+	protected boolean refresh(DBRecord rec) {
 		return false;
 	}
 
-	// TODO: Try to elliminate - this is a little kludgey!
+	// TODO: Try to eliminate - this is a little kludgey!
 	byte[] getData() {
 		return refData;
 	}

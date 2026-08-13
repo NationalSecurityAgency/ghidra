@@ -21,10 +21,12 @@ import java.awt.*;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 
 import docking.DialogComponentProvider;
+import docking.action.DockingAction;
+import docking.action.builder.ActionBuilder;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.table.*;
 import generic.theme.GColor;
 import ghidra.app.util.GenericHelpTopics;
@@ -54,6 +56,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 	private GTableFilterPanel<PluginDescription> tableFilterPanel;
 	private PluginDetailsPanel detailsPanel;
 	private GTable table;
+	private DockingAction togglePluginAction;
 
 	/**
 	 * Constructs a new provider.
@@ -73,8 +76,43 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 
 		addWorkPanel(getWorkPanel());
 		addOKButton();
+		createActions();
 	}
 
+	private void createActions() {
+		//@formatter:off
+		togglePluginAction = new ActionBuilder("Toggle Plugin Install", "PluginInstallerDialog")
+			.popupMenuPath("Install Plugin")
+			.keyBinding("space")
+			.enabledWhen(c -> isTogglePluginActionEnabled())
+			.onAction(c -> toggleSelectedPlugin())
+			.buildAndInstallLocal(this);
+		//@formatter:on
+
+	}
+
+	private boolean isTogglePluginActionEnabled() {
+		int row = table.getSelectedRow();
+		if (row < 0) {
+			return false;
+		}
+		PluginDescription pd = tableFilterPanel.getRowObject(row);
+		boolean loaded = model.isLoaded(pd);
+		String name = loaded ? "Remove Plugin" : "Install Plugin";
+		togglePluginAction.getPopupMenuData().setMenuItemName(name);
+		return true;
+	}
+
+	private void toggleSelectedPlugin() {
+		PluginDescription pd = tableFilterPanel.getRowObject(table.getSelectedRow());
+		if (model.isLoaded(pd)) {
+			model.removePlugin(pd);
+		}
+		else {
+			model.addPlugin(pd);
+		}
+		table.repaint();
+	}
 	@Override
 	protected void dialogShown() {
 		// users often wish to start typing in the filter when the dialog appears
@@ -151,13 +189,12 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 		PluginInstallerTableModel tableModel =
 			new PluginInstallerTableModel(tool, getComponent(), pluginDescriptions, model);
 		table = new GTable(tableModel);
-		table.getAccessibleContext().setAccessibleName("Plugin");
+		table.setAccessibleNamePrefix("Plugin");
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tableFilterPanel = new GTableFilterPanel<>(table, tableModel);
-		tableFilterPanel.getAccessibleContext().setAccessibleName("Plugin Filter");
+		tableFilterPanel.setAccessibleNamePrefix("Plugin");
 
 		JScrollPane sp = new JScrollPane(table);
-		sp.getAccessibleContext().setAccessibleName("Plugin Table");
 		pluginTablePanel.add(sp, BorderLayout.CENTER);
 		pluginTablePanel.add(tableFilterPanel, BorderLayout.SOUTH);
 
@@ -175,6 +212,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 
 		columnModel.getColumn(NAME_COL).setCellRenderer(new NameCellRenderer());
 		columnModel.getColumn(STATUS_COL).setCellRenderer(new StatusCellRenderer());
+		columnModel.getColumn(INSTALLED_COL).setCellRenderer(new InstalledCellRenderer());
 
 		HelpService help = Help.getHelpService();
 		help.registerHelp(table, new HelpLocation(GenericHelpTopics.TOOL, "PluginDialog"));
@@ -225,15 +263,27 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 						"It could cause Ghidra to become unstable!";
 			}
 			renderer.setToolTipText(toolTipText);
-
 			return renderer;
+		}
+
+		@Override
+		protected String getAccessibleCellValue(GTableCellRenderingData data, String text) {
+			Object value = data.getValue();
+			if (!(value instanceof Icon)) {
+				return "No Warning";
+			}
+			if (value == EXPERIMENTAL_ICON) {
+				return "Experimental";
+			}
+			// else if (value == DEV_ICON) {
+			return "Under Development";
 		}
 	}
 
 	/**
 	 * Renderer for the plugin name column.
 	 */
-	private class NameCellRenderer extends GTableCellRenderer {
+	public class NameCellRenderer extends GTableCellRenderer {
 
 		NameCellRenderer() {
 			setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
@@ -276,6 +326,32 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 				}
 			}
 			return renderer;
+		}
+	}
+
+	private class InstalledCellRenderer extends GBooleanCellRenderer {
+		@Override
+		protected String getAccessibleCellDescription(TableModel tableModel, int columnModelIndex) {
+			return "Plugin Installation Status";
+		}
+
+		@Override
+		protected String getAccessibleCellValue(GTableCellRenderingData data, String text) {
+			StringBuilder buf = new StringBuilder();
+			Object rowObject = data.getRowObject();
+			if (rowObject instanceof PluginDescription pd) {
+				String name = pd.getName();
+				buf.append(name);
+				boolean isLoaded = (boolean) data.getValue();
+				buf.append(isLoaded ? " installed." : " not installed.");
+				KeyStroke stroke = togglePluginAction.getKeyBinding();
+				if (stroke != null) {
+					buf.append(" Press ");
+					buf.append(KeyBindingUtils.parseKeyStroke(stroke));
+					buf.append(isLoaded ? " to uninstall" : " to install");
+				}
+			}
+			return buf.toString();
 		}
 	}
 }

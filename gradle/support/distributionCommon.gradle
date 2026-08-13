@@ -21,6 +21,10 @@ tasks.withType(Test).all {
 }
 
 plugins.withType(JavaPlugin) {
+
+	// build up a java classpath for javadocs
+	rootProject.ghidraPath.from(sourceSets.main.compileClasspath)
+
 	task zipSourceSubproject (type: Zip) { t ->
 							
 		// Define some metadata about the zip (name, location, version, etc....)

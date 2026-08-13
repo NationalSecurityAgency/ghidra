@@ -28,6 +28,7 @@ import java.util.concurrent.*;
 
 import javax.swing.*;
 
+import docking.action.builder.ActionBuilder;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.ActionContext;
@@ -67,9 +68,10 @@ import ghidra.trace.util.TraceEvents;
 import ghidra.util.Swing;
 
 public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvider {
-	private static final AutoConfigState.ClassHandler<ProgramByteViewerComponentProvider> CONFIG_STATE_HANDLER =
-		AutoConfigState.wireHandler(ProgramByteViewerComponentProvider.class,
-			MethodHandles.lookup());
+	private static final AutoConfigState.ClassHandler<
+		ProgramByteViewerComponentProvider> CONFIG_STATE_HANDLER =
+			AutoConfigState.wireHandler(ProgramByteViewerComponentProvider.class,
+				MethodHandles.lookup());
 	private static final String KEY_DEBUGGER_COORDINATES = "DebuggerCoordinates";
 
 	protected static boolean sameCoordinates(DebuggerCoordinates a, DebuggerCoordinates b) {
@@ -122,6 +124,12 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 				return false;
 			}
 			return DebuggerMemoryBytesProvider.this.goTo(view, new ProgramLocation(view, address));
+		}
+
+		@Override
+		protected Address getCurrentAddress() {
+			ProgramLocation location = DebuggerMemoryBytesProvider.this.getLocation();
+			return location == null ? null : location.getByteAddress();
 		}
 	}
 
@@ -230,6 +238,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	protected MultiStateDockingAction<AutoReadMemorySpec> actionAutoReadMemory;
 	protected DockingAction actionRefreshSelectedMemory;
 	protected MultiStateDockingAction<LocationTrackingSpec> actionTrackLocation;
+	protected DockingAction actionConvertToStackView;
 
 	protected ForMemoryBytesGoToTrait goToTrait;
 	protected ForMemoryBytesTrackingTrait trackingTrait;
@@ -493,7 +502,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 
 	@Override
 	protected ByteViewerActionContext newByteViewerActionContext() {
-		return new DebuggerMemoryBytesActionContext(this);
+		return new DebuggerMemoryBytesActionContext(this, panel.getCurrentComponent());
 	}
 
 	@Override
@@ -522,6 +531,15 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 					.onAction(
 						ctx -> doSetFollowsCurrentThread(actionFollowsCurrentThread.isSelected()))
 					.buildAndInstallLocal(this);
+
+			actionConvertToStackView =
+					new ActionBuilder("Convert To Stack View", plugin.getName()).description(
+									"Convert current byte viewer into a stack view")
+							.enabled(true)
+							.menuPath("Convert To Stack View")
+							.menuGroup("aa")
+							.onAction(this::convertToStackViewActivated)
+							.buildAndInstallLocal(this);
 		}
 
 		actionGoTo = goToTrait.installAction();
@@ -804,5 +822,25 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	/* testing */
 	CompletableFuture<?> getLastAutoRead() {
 		return readsMemTrait.getLastRead();
+	}
+
+	private void convertToStackViewActivated(ActionContext c) {
+		setTrackingSpec(SPLocationTrackingSpec.INSTANCE);
+		ByteViewerConfigOptions options = new ByteViewerConfigOptions();
+		options.setHexGroupSize(1);
+		String hexColumn = "Hex";
+		int bytesPerLine = 8;
+		if (current != DebuggerCoordinates.NOWHERE) {
+			int pointerSize = current.getTrace().getProgramView().getMinAddress().getPointerSize();
+			hexColumn = switch (pointerSize) {
+				case 2 -> "Hex Short";
+				case 4 -> "Hex Integer";
+				case 8 -> "Hex Long";
+				default -> "Hex";
+			};
+			bytesPerLine = pointerSize;
+		}
+		options.setBytesPerLine(bytesPerLine);
+		updateConfigOptions(options, Set.of(hexColumn, "Chars"));
 	}
 }

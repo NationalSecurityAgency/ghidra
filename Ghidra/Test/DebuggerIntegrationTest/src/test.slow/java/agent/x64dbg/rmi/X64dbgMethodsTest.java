@@ -15,8 +15,11 @@
  */
 package agent.x64dbg.rmi;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import java.util.*;
 
@@ -48,8 +51,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			start(conn, null);
 
 			RemoteMethod evaluate = conn.getMethod("evaluate");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/noname")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/noname")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				assertEquals("11",
 					evaluate.invoke(Map.ofEntries(
 						Map.entry("session", tb.obj("Sessions[0]")),
@@ -77,7 +80,7 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			conn.execute("ghidra_trace_kill()");
 			conn.execute("util.terminate_session()");
 		}
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
 			// Just confirm it's present
 		}
 	}
@@ -91,8 +94,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 
 			RemoteMethod refreshAvailable = conn.getMethod("refresh_available");
 			conn.execute("util.terminate_session()");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/noname")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/noname")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				TraceObject available = Objects.requireNonNull(tb.objAny0("Sessions[].Available"));
 
 				refreshAvailable.invoke(Map.of("node", available));
@@ -114,8 +117,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod refreshBreakpoints = conn.getMethod("refresh_breakpoints");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				conn.execute("pc = util.get_pc()");
 				clearBreakpoints(conn);
@@ -163,8 +166,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "all");
 
 			RemoteMethod refreshProcWatchpoints = conn.getMethod("refresh_breakpoints");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				conn.execute("pc = util.get_pc()");
 				clearBreakpoints(conn);
@@ -214,8 +217,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txCreate(conn, "Sessions[0].Processes");
 
 			RemoteMethod refreshProcesses = conn.getMethod("refresh_processes");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				TraceObject processes = Objects.requireNonNull(tb.objAny0("Sessions[].Processes"));
 
 				refreshProcesses.invoke(Map.of("node", processes));
@@ -238,8 +241,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "all");
 
 			RemoteMethod refreshEnvironment = conn.getMethod("refresh_environment");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				TraceObject env =
 					Objects.requireNonNull(tb.objAny0("Sessions[].Processes[].Environment"));
 
@@ -262,8 +265,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod refreshThreads = conn.getMethod("refresh_threads");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject proc = tb.objAny0("Sessions[].Processes[]");
 				TraceObject threads = fakeEmpty(proc, "Threads");
@@ -287,8 +290,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			conn.execute("ghidra_trace_txcommit()");
 
 			RemoteMethod refreshRegisters = conn.getMethod("refresh_registers");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				conn.execute("util.dbg.cmd('rax=0xdeadbeef')");
 
@@ -313,8 +316,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod refreshMappings = conn.getMethod("refresh_mappings");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject proc = tb.objAny0("Sessions[].Processes[]");
 				TraceObject memory = fakeEmpty(proc, "Memory");
@@ -346,8 +349,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod refreshModules = conn.getMethod("refresh_modules");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject proc = tb.objAny0("Sessions[].Processes[]");
 				TraceObject modules = fakeEmpty(proc, "Modules");
@@ -370,8 +373,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod activateThread = conn.getMethod("activate_thread");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				txPut(conn, "threads");
 
@@ -401,8 +404,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod removeProcess = conn.getMethod("remove_process");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/NETSTAT.EXE")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/NETSTAT.EXE")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject proc2 = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
 				removeProcess.invoke(Map.of("process", proc2));
@@ -423,8 +426,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				txPut(conn, "available");
 
 				RemoteMethod attachObj = conn.getMethod("attach_obj");
-				try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/noname")) {
-					tb = new ToyDBTraceBuilder((Trace) mdo.get());
+				try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/noname")) {
+					tb = new ToyDBTraceBuilder(mdo.get());
 					TraceObject target = Objects.requireNonNull(tb.obj(
 						"Sessions[0].Available[%d]".formatted(dproc.pid)));
 					attachObj.invoke(Map.ofEntries(
@@ -447,8 +450,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				txPut(conn, "available");
 
 				RemoteMethod attachPid = conn.getMethod("attach_pid");
-				try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/noname")) {
-					tb = new ToyDBTraceBuilder((Trace) mdo.get());
+				try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/noname")) {
+					tb = new ToyDBTraceBuilder(mdo.get());
 					Objects.requireNonNull(tb.obj(
 						"Sessions[0].Available[%d]".formatted(dproc.pid)));
 					try {
@@ -476,8 +479,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod detach = conn.getMethod("detach");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/NETSTAT.EXE")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/NETSTAT.EXE")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
 				detach.invoke(Map.of("process", proc));
@@ -497,8 +500,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod launch = conn.getMethod("launch");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/noname")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/noname")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				launch.invoke(Map.ofEntries(
 					Map.entry("Session", tb.obj("Sessions[0]")),
@@ -523,8 +526,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod kill = conn.getMethod("kill");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
 				kill.invoke(Map.of("process", proc));
@@ -547,8 +550,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 
 			RemoteMethod go = conn.getMethod("go");
 			RemoteMethod interrupt = conn.getMethod("interrupt");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
 
@@ -573,8 +576,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod stepInto = conn.getMethod("step_into");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				txPut(conn, "threads");
 
 				TraceObject thread =
@@ -609,8 +612,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod stepOver = conn.getMethod("step_over");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				txPut(conn, "threads");
 
 				TraceObject thread =
@@ -641,8 +644,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 
 			RemoteMethod stepInto = conn.getMethod("step_into");
 			RemoteMethod stepOut = conn.getMethod("step_out");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				txPut(conn, "threads");
 
 				TraceObject thread =
@@ -673,8 +676,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakAddress = conn.getMethod("break_address");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				clearBreakpoints(conn);
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
@@ -699,8 +702,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakExpression = conn.getMethod("break_expression");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				clearBreakpoints(conn);
 				breakExpression.invoke(Map.of("expression", "CreateFileW"));
@@ -723,8 +726,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakAddress = conn.getMethod("break_hw_address");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
 
@@ -750,8 +753,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakExpression = conn.getMethod("break_hw_expression");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				clearBreakpoints(conn);
 				breakExpression.invoke(Map.of("expression", "CreateFileW"));
@@ -774,8 +777,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakAddr = conn.getMethod("break_read_address");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				clearBreakpoints(conn);
 
@@ -803,8 +806,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakExpression = conn.getMethod("break_read_expression");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				clearBreakpoints(conn);
 				breakExpression.invoke(Map.of("expression", "CreateFileW"));
@@ -830,8 +833,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakAddr = conn.getMethod("break_write_address");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				clearBreakpoints(conn);
 
@@ -859,8 +862,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakExpression = conn.getMethod("break_write_expression");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				clearBreakpoints(conn);
 
@@ -887,8 +890,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakAddr = conn.getMethod("break_access_address");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				clearBreakpoints(conn);
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
@@ -915,8 +918,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakExpression = conn.getMethod("break_access_expression");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				clearBreakpoints(conn);
 				breakExpression.invoke(Map.of("expression", "CreateFileW"));
@@ -943,8 +946,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 
 			RemoteMethod breakAddress = conn.getMethod("break_address");
 			RemoteMethod toggleBreakpoint = conn.getMethod("toggle_breakpoint");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				clearBreakpoints(conn);
 
@@ -977,8 +980,8 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 
 			RemoteMethod breakAddress = conn.getMethod("break_address");
 			RemoteMethod deleteBreakpoint = conn.getMethod("delete_breakpoint");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/x64dbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/x64dbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				clearBreakpoints(conn);
 

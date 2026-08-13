@@ -33,6 +33,7 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.IncompatibleLanguageException;
 import ghidra.program.model.listing.Program;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.XmlUtilities;
@@ -386,18 +387,18 @@ class SimpleLanguageTranslator extends LanguageTranslatorAdapter {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private static Class<? extends LanguagePostUpgradeInstructionHandler> parsePostUpgradeHandlerEntry(
 			Element element) throws SAXException {
-
 		String className = element.getAttributeValue("class");
 		if (className == null) {
 			throw new SAXException(element.getName() + " must specify 'class' attribute");
 		}
 		try {
-			Class<?> clazz = Class.forName(className);
+			Class<? extends LanguagePostUpgradeInstructionHandler> clazz =
+				ClassSearcher.forNameSafe(className, LanguagePostUpgradeInstructionHandler.class,
+					SimpleLanguageTranslator.class.getClassLoader());
 			getPostUpgradeInstructionHandler((Program) null, clazz); // test construction
-			return (Class<? extends LanguagePostUpgradeInstructionHandler>) clazz;
+			return clazz;
 		}
 		catch (Exception e) {
 			if (e instanceof SAXException) {

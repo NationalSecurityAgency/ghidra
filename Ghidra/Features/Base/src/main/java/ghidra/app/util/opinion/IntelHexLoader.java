@@ -45,7 +45,7 @@ public class IntelHexLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	public boolean supportsLoadIntoProgram() {
+	public boolean supportsLoadIntoProgram(Program program) {
 		return true;
 	}
 
@@ -288,5 +288,10 @@ public class IntelHexLoader extends AbstractProgramLoader {
 	@Override
 	public String getName() {
 		return INTEL_HEX_NAME;
+	}
+
+	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("hex");
 	}
 }

@@ -554,9 +554,14 @@ public class KeyBindingsPanel extends JPanel {
 			return; // nothing to do
 		}
 
+		Container parent = getParent();
+		if (parent == null) {
+			// this can happen due to Swing.runLater() calls after we have been disposed
+			return;
+		}
+
 		remove(component);
 		add(newView, BorderLayout.SOUTH);
-		Container parent = getParent();
 		parent.validate();
 		parent.repaint();
 	}

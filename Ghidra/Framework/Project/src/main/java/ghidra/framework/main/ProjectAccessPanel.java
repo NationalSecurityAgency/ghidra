@@ -112,6 +112,10 @@ public class ProjectAccessPanel extends JPanel {
 		createMainPanel(knownUsers, anonymousServerAccessAllowed);
 	}
 
+	public Component getDefaultFocusComponent() {
+		return knownUsersPanel;
+	}
+
 	/**
 	 * Sets the help location.
 	 *
@@ -573,4 +577,5 @@ public class ProjectAccessPanel extends JPanel {
 			}
 		}
 	}
+
 }

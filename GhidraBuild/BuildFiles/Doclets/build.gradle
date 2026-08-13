@@ -24,7 +24,7 @@ java {
 }
 
 dependencies {
-	api "com.google.code.gson:gson:2.9.0"
+	api "com.google.code.gson:gson:2.13.2"
 }
 
 def jsonTask = rootProject.tasks.findByName("createJsondocs") ?: rootProject.tasks.findByName("createJsonDocs")

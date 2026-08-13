@@ -176,7 +176,7 @@ public class IconPropertyEditor extends PropertyEditorSupport {
 			chooser.setApproveButtonToolTipText("Import Icon");
 			chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
 			chooser.setSelectedFileFilter(
-				ExtensionFileFilter.forExtensions("Icon Files", ".png", "gif"));
+				ExtensionFileFilter.forExtensions("Icon Files", "png", "gif"));
 			String lastDir = Preferences.getProperty(LAST_ICON_DIR_PREFERENCE_KEY);
 			if (lastDir != null) {
 				chooser.setCurrentDirectory(new File(lastDir));

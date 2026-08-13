@@ -30,6 +30,7 @@ import ghidra.GhidraJarApplicationLayout;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.*;
+import ghidra.app.script.JythonStubScriptProvider.JythonStubException;
 import ghidra.app.util.headless.HeadlessScript.HeadlessContinuationOption;
 import ghidra.app.util.importer.ProgramLoader;
 import ghidra.app.util.opinion.*;
@@ -53,6 +54,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.*;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
@@ -288,18 +290,6 @@ public class HeadlessAnalyzer {
 				options.preScripts.isEmpty() && options.postScripts.isEmpty()) {
 				Msg.warn(this, "REPORT: Nothing to do ... must specify files for import.");
 				return;
-			}
-
-			if (!path.endsWith("/")) {
-				// force explicit folder path so that non-existent folders are created on import
-				ghidraURL = new URI("ghidra", null, ghidraURL.getHost(), ghidraURL.getPort(),
-					path + "/", null, null).toURL();
-			}
-		}
-		else { // Running in -process mode
-			if (path.endsWith("/") && path.length() > 1) {
-				ghidraURL = new URI("ghidra", null, ghidraURL.getHost(), ghidraURL.getPort(),
-					path.substring(0, path.length() - 1), null, null).toURL();
 			}
 		}
 
@@ -773,20 +763,20 @@ public class HeadlessAnalyzer {
 				classLoaderForDotClassScripts =
 					URLClassLoader.newInstance(urls.toArray(new URL[0]));
 
-				Class<?> c = Class.forName(className, true, classLoaderForDotClassScripts);
+				ClassSearcher.forNameSafe(className, GhidraScript.class,
+					classLoaderForDotClassScripts);
 
-				if (GhidraScript.class.isAssignableFrom(c)) {
-					// No issues, but return null, which signifies we don't actually have a
-					// ResourceFile to associate with the script name
-					return null;
-				}
-
-				Msg.error(this,
-					"REPORT SCRIPT ERROR: java class '" + className + "' is not a GhidraScript");
+				// No issues, but return null, which signifies we don't actually have a
+				// ResourceFile to associate with the script name
+				return null;
 			}
 			catch (ClassNotFoundException e) {
 				Msg.error(this,
 					"REPORT SCRIPT ERROR: java class not found for '" + className + "'");
+			}
+			catch (ClassCastException e) {
+				Msg.error(this,
+					"REPORT SCRIPT ERROR: java class '" + className + "' is not a GhidraScript");
 			}
 			throw new IllegalArgumentException("Invalid script: " + scriptName);
 		}
@@ -900,13 +890,14 @@ public class HeadlessAnalyzer {
 					}
 
 					String className = scriptName.substring(0, scriptName.length() - 6);
-					Class<?> c = Class.forName(className, true, classLoaderForDotClassScripts);
+					Class<? extends GhidraScript> c = ClassSearcher.forNameSafe(className,
+						GhidraScript.class, classLoaderForDotClassScripts);
 
 					// Get parent folder to pass to GhidraScript
 					File parentFile = new File(c.getResource(c.getSimpleName() + ".class").toURI())
 							.getParentFile();
 
-					currScript = (GhidraScript) c.getConstructor().newInstance();
+					currScript = c.getConstructor().newInstance();
 					currScript.setScriptArgs(scriptArgs);
 
 					if (options.propertiesFilePaths.size() > 0) {
@@ -957,6 +948,14 @@ public class HeadlessAnalyzer {
 					}
 				}
 			}
+		}
+		catch (JythonStubException e) {
+			// We want to effectively exit with an error code, but this class may be used as a 
+			// Ghidra library method in some scenarios, so System.exit(1) is too aggressive.
+			// Throwing an Error allows Ghidra to exit with an uncaught exception when run from
+			// the command line, but allows for the possibility of a library client to handle
+			// the problem in a way that better suits their application.
+			throw new Error(e);
 		}
 		catch (Exception exc) {
 			String logErrorMsg = "REPORT SCRIPT ERROR: " + scriptName + " : " + exc.getMessage();
@@ -1229,7 +1228,7 @@ public class HeadlessAnalyzer {
 				program = null;
 
 				// Only commit if it's a shared project.
-				commitProgram(domFile);
+				commit(domFile);
 			}
 		}
 		catch (VersionException e) {
@@ -1470,7 +1469,7 @@ public class HeadlessAnalyzer {
 		return true;
 	}
 
-	private void commitProgram(DomainFile df) throws IOException {
+	private void commit(DomainFile df) throws IOException {
 
 		RepositoryAdapter rep = project.getRepository();
 		if (rep != null) {
@@ -1637,7 +1636,7 @@ public class HeadlessAnalyzer {
 				for (Loaded<? extends DomainObject> loaded : loadResults) {
 					if (!loaded.check(DomainObject::isTemporary)) {
 						loaded.close(); // we need to close before committing
-						commitProgram(loaded.getSavedDomainFile());
+						commit(loaded.getSavedDomainFile());
 					}
 				}
 			}
@@ -1861,7 +1860,27 @@ public class HeadlessAnalyzer {
 		}
 	}
 
+	/**
+	 * A headless version of the {@link DefaultProjectManager} that does not update the project's 
+	 * preferences. This prevents the headless environment from overwriting settings GUI 
+	 * installations.
+	 */
 	private static class HeadlessGhidraProjectManager extends DefaultProjectManager {
-		// this exists just to allow access to the constructor
+
+		@Override
+		public void setLastOpenedProject(ProjectLocator projectLocator) {
+			// No need to save this for headless.  We also do not want to affect the GUI by saving
+			// this value.
+		}
+
+		@Override
+		public ProjectLocator getLastOpenedProject() {
+			return null;
+		}
+
+		@Override
+		protected void updatePreferences() {
+			// nothing to save
+		}
 	}
 }

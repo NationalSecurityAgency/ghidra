@@ -607,6 +607,60 @@ public class GhidraURLTest extends AbstractGenericTest {
 		assertTrue(GhidraURL.isServerURL(ghidraUrl));
 	}
 
+	@Test
+	public void testBadServerURL() throws Exception {
+
+		try {
+			GhidraURL.toURL("ghidra://localhost:123/Test/foo/bar?/a/b#ref%20+123");
+			fail("Expected failure due to invalid query");
+		}
+		catch (IllegalArgumentException e) {
+			// expected
+		}
+
+		URL url = URI.create("ghidra://localhost:123/Test/foo/bar?/a/b#ref%20+123").toURL();
+
+		try {
+			GhidraURL.getRepositoryName(url);
+			fail("Expected failure due to invalid query");
+		}
+		catch (IllegalArgumentException e) {
+			// expected
+		}
+
+		try {
+			GhidraURL.getFolderURL(url);
+			fail("Expected failure due to invalid query");
+		}
+		catch (IllegalArgumentException e) {
+			// expected
+		}
+
+		try {
+			GhidraURL.getNormalizedURL(url);
+			fail("Expected failure due to invalid query");
+		}
+		catch (IllegalArgumentException e) {
+			// expected
+		}
+
+		try {
+			GhidraURL.getProjectPathname(url);
+			fail("Expected failure due to invalid query");
+		}
+		catch (IllegalArgumentException e) {
+			// expected
+		}
+
+		try {
+			GhidraURL.getProjectURL(url);
+			fail("Expected failure due to invalid query");
+		}
+		catch (IllegalArgumentException e) {
+			// expected
+		}
+	}
+
 	//	toURL(String)
 	@Test
 	public void testToURL() throws Exception {
@@ -641,17 +695,32 @@ public class GhidraURLTest extends AbstractGenericTest {
 		assertEquals(ghidraUrl, GhidraURL.toURL(ghidraUrl.toString()));
 		assertEquals(ghidraUrl, GhidraURL.toURL(GhidraURL.getDisplayString(ghidraUrl)));
 
-		ghidraUrl = GhidraURL.makeURL("/x/y", "Test", "/a/", "ref");
-		assertEquals(ghidraUrl, GhidraURL.toURL("ghidra:/x/y/Test?/a/#ref"));
-		assertEquals(ghidraUrl, GhidraURL.toURL(ghidraUrl.toString()));
-		assertEquals(ghidraUrl, GhidraURL.toURL(GhidraURL.getDisplayString(ghidraUrl)));
-		assertEquals("ref", GhidraURL.getDecodedReference(ghidraUrl));
+		ghidraUrl = GhidraURL.makeURL("/x/y", "Test", "/a/", "ref +123");
+		assertEquals("ref%20+123", ghidraUrl.getRef());
+		assertEquals("ref +123", ghidraUrl.toURI().getFragment());
 
-		ghidraUrl = GhidraURL.makeURL("localhost", 123, "Test", "/foo", "bar", "ref+123");
-		// GhidraURL.toURL requires external URL form with double-encoding for '+' in ref
-		assertEquals(ghidraUrl, GhidraURL.toURL("ghidra://localhost:123/Test/foo/bar#ref%252B123"));
+		assertEquals(ghidraUrl, GhidraURL.toURL("ghidra:/x/y/Test?/a/#ref%20+123"));
 		assertEquals(ghidraUrl, GhidraURL.toURL(ghidraUrl.toString()));
 		assertEquals(ghidraUrl, GhidraURL.toURL(GhidraURL.getDisplayString(ghidraUrl)));
+		assertEquals("ref +123", GhidraURL.getDecodedReference(ghidraUrl));
+
+		ghidraUrl = GhidraURL.makeURL("localhost", 123, "Test", "/foo", "bar", "ref +123");
+		assertEquals("ref%20+123", ghidraUrl.getRef());
+		assertEquals("ref +123", ghidraUrl.toURI().getFragment());
+
+		assertEquals(ghidraUrl, GhidraURL.toURL("ghidra://localhost:123/Test/foo/bar#ref%20+123"));
+		assertEquals(ghidraUrl, GhidraURL.toURL(ghidraUrl.toString()));
+		assertEquals(ghidraUrl, GhidraURL.toURL(GhidraURL.getDisplayString(ghidraUrl)));
+		assertEquals("ref +123", GhidraURL.getDecodedReference(ghidraUrl));
+
+		ghidraUrl = GhidraURL.makeURL("localhost", 123, "Test", "/foo", "bar", "ref++123");
+		assertEquals("ref++123", ghidraUrl.getRef());
+		assertEquals("ref++123", ghidraUrl.toURI().getFragment());
+
+		assertEquals(ghidraUrl, GhidraURL.toURL("ghidra://localhost:123/Test/foo/bar#ref++123"));
+		assertEquals(ghidraUrl, GhidraURL.toURL(ghidraUrl.toString()));
+		assertEquals(ghidraUrl, GhidraURL.toURL(GhidraURL.getDisplayString(ghidraUrl)));
+		assertEquals("ref++123", GhidraURL.getDecodedReference(ghidraUrl));
 
 		// Unicode foreign language example
 		ghidraUrl = GhidraURL.makeURL("localhost", 123, "Gr\u00FCnerTee", "/\u6771\u4EAC/",
@@ -660,6 +729,33 @@ public class GhidraURLTest extends AbstractGenericTest {
 			"ghidra://localhost:123/Gr\u00FCnerTee/\u6771\u4EAC/\u30EC\u30B9\u30C8\u30E9\u30F3#caf\u00E9-menu"));
 		assertEquals(ghidraUrl, GhidraURL.toURL(ghidraUrl.toString()));
 		assertEquals(ghidraUrl, GhidraURL.toURL(GhidraURL.getDisplayString(ghidraUrl)));
+	}
+
+	@Test
+	public void testRelaxedToURL() throws Exception {
+		String path = "/Test/my foo/bar";
+		String improperUrl = "ghidra://127.0.0.1:123" + path + "#a b+c";
+		URL ghidraUrl = GhidraURL.toURL(improperUrl);
+
+		assertEquals("a b+c", GhidraURL.getDecodedReference(ghidraUrl));
+		assertEquals("Test", GhidraURL.getRepositoryName(ghidraUrl));
+		assertEquals("/my foo/bar", GhidraURL.getProjectPathname(ghidraUrl));
+
+		assertEquals(path.replace(" ", "%20"), ghidraUrl.getPath());
+		assertEquals(null, ghidraUrl.getQuery());
+		assertEquals("a%20b+c", ghidraUrl.getRef());
+
+		improperUrl = "ghidra:" + path + "?" + path + "#a b+c";
+		ghidraUrl = GhidraURL.toURL(improperUrl);
+
+		assertEquals("a b+c", GhidraURL.getDecodedReference(ghidraUrl));
+		assertEquals(path + ".rep",
+			GhidraURL.getProjectStorageLocator(ghidraUrl).getProjectDir().toString());
+		assertEquals(path, GhidraURL.getProjectPathname(ghidraUrl));
+
+		assertEquals(path.replace(" ", "%20"), ghidraUrl.getPath());
+		assertEquals(path.replace(" ", "%20"), ghidraUrl.getQuery());
+		assertEquals("a%20b+c", ghidraUrl.getRef());
 	}
 
 	@Test
@@ -846,9 +942,6 @@ public class GhidraURLTest extends AbstractGenericTest {
 
 	private URL toGhidraLocalURL(String path, String projectFilePath, String ref)
 			throws MalformedURLException, URISyntaxException {
-		if (ref != null) {
-			ref = ref.replace("+", "%2B"); // force encoding of "+"
-		}
 		return new URI(GhidraURL.PROTOCOL, null, path, projectFilePath, ref).toURL();
 	}
 
@@ -865,9 +958,6 @@ public class GhidraURLTest extends AbstractGenericTest {
 		String repoAndPath = "/" + repo;
 		if (path != null) {
 			repoAndPath += path;
-		}
-		if (ref != null) {
-			ref = ref.replace("+", "%2B"); // force encoding of "+"
 		}
 		return new URI(GhidraURL.PROTOCOL, null, host, port, repoAndPath, null, ref).toURL();
 	}

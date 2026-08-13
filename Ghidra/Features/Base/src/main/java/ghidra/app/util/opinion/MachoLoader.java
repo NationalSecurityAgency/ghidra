@@ -28,7 +28,6 @@ import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.dyld.DyldArchitecture;
 import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
-import ghidra.app.util.bin.format.swift.SwiftUtils;
 import ghidra.app.util.bin.format.ubi.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.*;
@@ -177,6 +176,11 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	@Override
 	public String getName() {
 		return MACH_O_NAME;
+	}
+
+	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("dylib");
 	}
 
 	@Override
@@ -538,16 +542,18 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * @throws IOException if an IO-related error occurred
 	 */
 	private String detectCompilerName(MachHeader machHeader) throws IOException {
-		List<String> sectionNames = machHeader.parseSegments()
-				.stream()
-				.flatMap(seg -> seg.getSections().stream())
-				.map(section -> section.getSectionName())
-				.toList();
-		if (SwiftUtils.isSwift(sectionNames)) {
-			return SwiftUtils.SWIFT_COMPILER;
+		try {
+			List<String> sectionNames = machHeader.parseSegments()
+					.stream()
+					.flatMap(seg -> seg.getSections().stream())
+					.map(section -> section.getSectionName())
+					.toList();
+			if (GoRttiMapper.hasGolangSections(sectionNames)) {
+				return GoConstants.GOLANG_CSPEC_NAME;
+			}
 		}
-		if (GoRttiMapper.hasGolangSections(sectionNames)) {
-			return GoConstants.GOLANG_CSPEC_NAME;
+		catch (MachException e) {
+			// fall thru
 		}
 		return null;
 	}
@@ -621,7 +627,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				if (lib == null) {
 					for (DomainFolder searchFolder : searchFolders) {
 						DomainFile df =
-							findLibraryInProject(path, searchFolder, searchPaths, settings);
+							findLibraryInProject(path, searchFolder, searchPaths, true, settings);
 						if (df != null) {
 							DomainObject obj = df.getDomainObject(this, true, true, monitor);
 							if (obj instanceof Program p) {

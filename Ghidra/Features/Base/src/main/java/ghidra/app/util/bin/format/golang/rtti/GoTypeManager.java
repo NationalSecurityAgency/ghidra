@@ -119,7 +119,14 @@ public class GoTypeManager {
 
 				GoType goType = getTypeUnchecked(typeAddr);
 				if (goType != null) {
-					goType.discoverGoTypes(discoveredTypes);
+					try {
+						goType.discoverGoTypes(discoveredTypes);
+					}
+					catch (IOException e) {
+						Msg.warn(this, "Failed to recurse into Go type %s"
+								.formatted(goType.getStructureContext().getStructureAddress()),
+							e);
+					}
 				}
 				else {
 					Msg.warn(this, "Failed to read Go type at " + typeAddr);
@@ -784,16 +791,16 @@ public class GoTypeManager {
 			case Float32 -> AbstractFloatDataType.getFloatDataType(32 / 8, null);
 			case Float64 -> AbstractFloatDataType.getFloatDataType(64 / 8, null);
 			case Int -> AbstractIntegerDataType.getSignedDataType(ptrSize, dtm); // depends on arch
-			case Int8 -> AbstractIntegerDataType.getSignedDataType(8 / 8, null);
-			case Int16 -> AbstractIntegerDataType.getSignedDataType(16 / 8, null);
-			case Int32 -> AbstractIntegerDataType.getSignedDataType(32 / 8, null);
-			case Int64 -> AbstractIntegerDataType.getSignedDataType(64 / 8, null);
+			case Int8 -> Int8TDataType.dataType;
+			case Int16 -> Int16TDataType.dataType;
+			case Int32 -> Int32TDataType.dataType;
+			case Int64 -> Int64TDataType.dataType;
 			case Uint -> AbstractIntegerDataType.getUnsignedDataType(ptrSize, dtm); // depends on arch
-			case Uint8 -> AbstractIntegerDataType.getUnsignedDataType(8 / 8, null);
-			case Uint16 -> AbstractIntegerDataType.getUnsignedDataType(16 / 8, null);
-			case Uint32 -> AbstractIntegerDataType.getUnsignedDataType(32 / 8, null);
-			case Uint64 -> AbstractIntegerDataType.getUnsignedDataType(64 / 8, null);
-			case Uintptr -> AbstractIntegerDataType.getUnsignedDataType(ptrSize, dtm);  // depends on arch
+			case Uint8 -> UInt8TDataType.dataType;
+			case Uint16 -> UInt16TDataType.dataType;
+			case Uint32 -> UInt32TDataType.dataType;
+			case Uint64 -> UInt64TDataType.dataType;
+			case Uintptr -> UnsignedPointerSizedIntegerDataType.dataType.clone(dtm);
 			case String -> buildStringStruct();
 			case Pointer, UnsafePointer -> getVoidPtrDT();  // depends on arch
 			default -> null;

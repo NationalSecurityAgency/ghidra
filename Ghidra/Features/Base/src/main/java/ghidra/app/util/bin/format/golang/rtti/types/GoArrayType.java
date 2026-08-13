@@ -130,13 +130,30 @@ public class GoArrayType extends GoType {
 	protected String getTypeDeclString() throws IOException {
 		// type CustomArraytype [elementcount]elementType
 		String selfName = typ.getName();
-		String elemName = getElement().getName();
+		GoType elementType = getElement();
+		String elemName =
+			elementType != null ? elementType.getName() : "<missing type %x>".formatted(elem);
 		String arrayDefStr = "[%d]%s".formatted(len, elemName);
 		String defStrWithLinks = "[%d]%s".formatted(len,
 			AddressAnnotatedStringHandler.createAddressAnnotationString(elem, elemName));
 		boolean hasName = !arrayDefStr.equals(selfName);
 
 		return "type %s%s".formatted(hasName ? selfName + " " : "", defStrWithLinks);
+	}
+
+	@Override
+	public boolean isValid() {
+		try {
+			GoType elementType = getElement();
+			return elementType != null && super.isValid() && isValidSize(elementType);
+		}
+		catch (IOException e) {
+			return false;
+		}
+	}
+
+	private boolean isValidSize(GoType elementType) {
+		return typ.getSize() == (elementType.getBaseType().getSize() * len);
 	}
 
 }

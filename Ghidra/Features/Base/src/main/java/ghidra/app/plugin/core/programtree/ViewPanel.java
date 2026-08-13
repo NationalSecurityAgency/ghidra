@@ -88,6 +88,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 				int insertIndex = tabbedPane.getTabCount();
 				final JComponent viewComponent = vp.getViewComponent();
 				tabbedPane.insertTab(name, null, viewComponent, null, insertIndex);
+
 				tabbedPane.setTabComponentAt(insertIndex, new DockingTabRenderer(tabbedPane, name,
 					name, e -> closeView(getViewProviderForComponent(viewComponent), true)));
 				tabbedPane.setTitleAt(insertIndex, name);
@@ -335,7 +336,16 @@ class ViewPanel extends JPanel implements ChangeListener {
 	 * Create the tabbed pane.
 	 */
 	private void create() {
-		tabbedPane = new JTabbedPane(SwingConstants.BOTTOM, JTabbedPane.SCROLL_TAB_LAYOUT);
+		tabbedPane = new JTabbedPane(SwingConstants.BOTTOM, JTabbedPane.SCROLL_TAB_LAYOUT) {
+
+			@Override
+			public String getTitleAt(int index) {
+				if (index < 0) {
+					return "No Title";
+				}
+				return super.getTitleAt(index);
+			}
+		};
 
 		tabbedPane.addChangeListener(this);
 		setLayout(new BorderLayout());

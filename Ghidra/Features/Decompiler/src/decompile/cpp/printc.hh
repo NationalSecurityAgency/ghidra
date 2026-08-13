@@ -346,6 +346,7 @@ public:
   virtual void opSpullOp(const PcodeOp *op);
   virtual void opPopcountOp(const PcodeOp *op) { opFunc(op); }
   virtual void opLzcountOp(const PcodeOp *op) { opFunc(op); }
+  virtual string getScopeDelimiter(void) const { return scope.print1; }
 };
 
 /// \brief Set of print commands for displaying an open brace '{' and setting a new indent level

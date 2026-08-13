@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,6 +63,12 @@ public class DWARFLineProgramState {
 
 	public long discriminator;
 
+	/**
+	 * A boolean indicating that the row is based on instructions that are likely attached to a
+	 * dead / tombstoned location.
+	 */
+	public boolean tombstone;
+
 	public DWARFLineProgramState(boolean defaultIsStatement) {
 		this.isStatement = defaultIsStatement;
 	}
@@ -79,6 +85,7 @@ public class DWARFLineProgramState {
 		this.epilogueBegin = other.epilogueBegin;
 		this.isa = other.isa;
 		this.discriminator = other.discriminator;
+		this.tombstone = other.tombstone;
 	}
 
 	public boolean isSameFileLine(DWARFLineProgramState other) {
@@ -88,9 +95,9 @@ public class DWARFLineProgramState {
 	@Override
 	public String toString() {
 		return String.format(
-			"DWARFLineProgramState [address=%s, file=%s, line=%s, column=%s, isStatement=%s, isBasicBlock=%s, isEndSequence=%s, prologueEnd=%s, epilogueBegin=%s, isa=%s, discriminator=%s]",
+			"DWARFLineProgramState [address=%s, file=%s, line=%s, column=%s, isStatement=%s, isBasicBlock=%s, isEndSequence=%s, prologueEnd=%s, epilogueBegin=%s, isa=%s, discriminator=%s, tombstone=%s]",
 			address, file, line, column, isStatement, isBasicBlock, isEndSequence, prologueEnd,
-			epilogueBegin, isa, discriminator);
+			epilogueBegin, isa, discriminator, tombstone);
 	}
 
 }

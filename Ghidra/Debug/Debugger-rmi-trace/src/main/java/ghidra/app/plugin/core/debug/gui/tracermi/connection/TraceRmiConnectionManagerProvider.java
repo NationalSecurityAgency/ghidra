@@ -239,6 +239,10 @@ public class TraceRmiConnectionManagerProvider extends ComponentProviderAdapter 
 		createActions();
 	}
 
+	public void cleanConnectionNode(TraceRmiConnectionNode node) {
+		rootNode.cleanConnectionNode(node);
+	}
+
 	private void buildMainPanel() {
 		mainPanel = new JPanel(new BorderLayout());
 

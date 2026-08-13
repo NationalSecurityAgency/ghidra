@@ -232,6 +232,7 @@ public class AutoAnalysisManager {
 		analyzer.optionsChanged(options.getOptions(analyzer.getName()), getProgram());
 
 		OneShotAnalysisCommand cmd = new OneShotAnalysisCommand(analyzer, set, log);
+		addListener(cmd);
 		schedule(cmd, analyzer.getPriority().priority());
 	}
 
@@ -1523,7 +1524,7 @@ public class AutoAnalysisManager {
 		}
 
 		@Override
-		public void checkCanceled() throws CancelledException {
+		public void checkCancelled() throws CancelledException {
 			primaryMonitor.checkCancelled();
 			secondaryMonitor.checkCancelled();
 		}
@@ -1552,7 +1553,7 @@ public class AutoAnalysisManager {
 
 		@Override
 		public void removeCancelledListener(CancelledListener listener) {
-			primaryMonitor.addCancelledListener(listener);
+			primaryMonitor.removeCancelledListener(listener);
 		}
 
 		@Override
@@ -1567,7 +1568,7 @@ public class AutoAnalysisManager {
 		}
 
 		@Override
-		public void clearCanceled() {
+		public void clearCancelled() {
 			primaryMonitor.clearCancelled();
 			secondaryMonitor.clearCancelled();
 		}

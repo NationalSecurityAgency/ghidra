@@ -1806,18 +1806,16 @@ void RuleDoubleSub::getOpList(vector<uint4> &oplist) const
 int4 RuleDoubleSub::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  PcodeOp *op2;
-  Varnode *vn;
-  int4 offset1,offset2;
-
-  vn = op->getIn(0);
+  Varnode *vn = op->getIn(0);
   if (!vn->isWritten()) return 0;
-  op2 = vn->getDef();
+  PcodeOp *op2 = vn->getDef();
   if (op2->code() != CPUI_SUBPIECE) return 0;
-  offset1 = op->getIn(1)->getOffset();
-  offset2 = op2->getIn(1)->getOffset();
+  Varnode *inVn = op2->getIn(0);
+  if (inVn->isFree()) return 0;
+  int4 offset1 = op->getIn(1)->getOffset();
+  int4 offset2 = op2->getIn(1)->getOffset();
 
-  data.opSetInput(op,op2->getIn(0),0);	// Skip middleman
+  data.opSetInput(op,inVn,0);	// Skip middleman
   data.opSetInput(op,data.newConstant(4,offset1+offset2), 1);
   return 1;
 }
@@ -3969,6 +3967,9 @@ int4 RulePropagateCopy::applyOp(PcodeOp *op,Funcdata &data)
       if (invn->isAddrTied() && op->getOut()->isAddrTied() && 
 	  (op->getOut()->getAddr() != invn->getAddr()))
 	continue;		// We must not allow merging of different addrtieds
+      if (op->code() == CPUI_MULTIEQUAL && copyop->getParent() == op->getParent()->getIn(i)) {
+	op->setCopyImmed(i);
+      }
     }
     data.opSetInput(op,invn,i); // otherwise propagate just a single copy
     return 1;
@@ -4508,18 +4509,18 @@ bool RuleSubCommute::cancelExtensions(PcodeOp *longform,PcodeOp *subOp,Varnode *
   if (outvn->loneDescend() != subOp) return false;	// Must be exactly one output to SUBPIECE
   if (ext0In->getSize() == ext1In->getSize()) {
     maxSize = ext0In->getSize();
-    if (ext0In->isFree()) return false;		// Must be able to propagate inputs
-    if (ext1In->isFree()) return false;
+    if (ext0In->isFree() && !ext0In->isConstant()) return false;		// Must be able to propagate inputs
+    if (ext1In->isFree() && !ext1In->isConstant()) return false;
   }
   else if (ext0In->getSize() < ext1In->getSize()) {
     maxSize = ext1In->getSize();
-    if (ext1In->isFree()) return false;
+    if (ext1In->isFree() && !ext1In->isConstant()) return false;
     if (longform->getIn(0)->loneDescend() != longform) return false;
     ext0In = shortenExtension(longform->getIn(0)->getDef(), maxSize, data);
   }
   else {
     maxSize = ext0In->getSize();
-    if (ext0In->isFree()) return false;
+    if (ext0In->isFree() && !ext0In->isConstant()) return false;
     if (longform->getIn(1)->loneDescend() != longform) return false;
     ext1In = shortenExtension(longform->getIn(1)->getDef(), maxSize, data);
   }
@@ -5496,6 +5497,8 @@ int4 RuleCondNegate::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *vn,*outvn;
 
   if (!op->isBooleanFlip()) return 0;
+  if (data.opNormalizeFlip(op))
+    return 1;
 
   vn = op->getIn(1);
   newop = data.newOp(1,op->getAddr());
@@ -6068,64 +6071,6 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   isDegenerate = (baseType->getAlignSize() <= unitsize && baseType->getAlignSize() > 0);
 }
 
-/// \brief Given an offset into the base data-type and array hints find sub-component being referenced
-///
-/// An explicit offset should target a specific sub data-type,
-/// but array indexing may confuse things.  This method passes
-/// back the offset of the best matching component, searching among components
-/// that are \e nearby the given offset, preferring a matching array element size
-/// and a component start that is nearer to the offset.
-/// \param off is the given offset into the data-type
-/// \param arrayHint if non-zero indicates array access, where the value is the element size
-/// \param newoff is used to pass back the actual offset of the selected component
-/// \return \b true if a good component match was found
-bool AddTreeState::hasMatchingSubType(int8 off,uint4 arrayHint,int8 *newoff) const
-
-{
-  if (arrayHint == 0)
-    return (baseType->getSubType(off,newoff) != (Datatype *)0);
-
-  int8 elSizeBefore;
-  int8 offBefore;
-  int8 typeBefore = baseType->nearestArrayedComponentBackward(off, 128, &offBefore, &elSizeBefore);
-  int8 elSizeAfter;
-  int8 offAfter;
-  int8 typeAfter = baseType->nearestArrayedComponentForward(off, 128, &offAfter, &elSizeAfter);
-  if (typeBefore < 0 && typeAfter < 0)
-    return (baseType->getSubType(off,newoff) != (Datatype *)0);
-  if (typeBefore < 0) {
-    *newoff = offAfter;		// Only array is after
-    return true;
-  }
-  if (typeAfter < 0) {
-    *newoff = offBefore;	// Only array is before
-    return true;
-  }
-  if (offAfter == offBefore) {
-    *newoff = offAfter;
-    return true;
-  }
-  // Reaching here we know there is an array before and an array after the offset point
-  if (arrayHint != 1 && elSizeBefore != elSizeAfter) {	// element sizes are different, try to distinguish by arrayHint
-    if (elSizeBefore == arrayHint) {
-      *newoff = offBefore;
-      return true;
-    }
-    if (elSizeAfter == arrayHint) {
-      *newoff = offAfter;
-      return true;
-    }
-  }
-  if (baseType->getSubType(off,newoff) != (Datatype *)0) {
-    if (*newoff == offBefore || *newoff == offAfter)
-      return true;		// Offset is contained in one of the arrayed components.  Return it.
-  }
-  uint8 distBefore = (offBefore < 0) ? -offBefore : offBefore;
-  uint8 distAfter = (offAfter < 0) ? -offAfter : offAfter;
-  *newoff = (distAfter < distBefore) ? offAfter : offBefore;
-  return true;
-}
-
 /// Examine a CPUI_INT_MULT element in the middle of the add tree. Determine if we treat
 /// the output simply as a leaf, or if the multiply needs to be distributed to an
 /// additive subtree.  If the Varnode is a leaf of the tree, return \b true if
@@ -6307,7 +6252,14 @@ void AddTreeState::calcSubtype(void)
     int8 offsetbytes = AddrSpace::addressToByteInt(offset,ct->getWordSize()); // Convert to bytes
     int8 extra;
     // Get offset into mapped variable
-    if (!hasMatchingSubType(offsetbytes, biggestNonMultCoeff, &extra)) {
+    bool foundSymbol = false;
+    if (biggestNonMultCoeff != 0)
+      foundSymbol = baseType->nearestArrayedComponent(offsetbytes, biggestNonMultCoeff, &extra);
+    if (!foundSymbol)
+      foundSymbol = (baseType->getSubType(offsetbytes,&extra) != (Datatype *)0);
+    if (!foundSymbol && biggestNonMultCoeff == 0)
+      foundSymbol = baseType->nearestArrayedComponent(offsetbytes, 1, &extra);
+    if (!foundSymbol) {
       valid = false;		// Cannot find mapped variable but nonmult is non-empty
       return;
     }
@@ -6321,7 +6273,12 @@ void AddTreeState::calcSubtype(void)
     int8 offsetbytes = AddrSpace::addressToByteInt(soffset,ct->getWordSize()); // Convert to bytes
     int8 extra;
     // Get offset into field in structure
-    if (!hasMatchingSubType(offsetbytes, biggestNonMultCoeff, &extra)) {
+    bool foundField = false;
+    if (biggestNonMultCoeff != 0)
+      foundField = baseType->nearestArrayedComponent(offsetbytes, biggestNonMultCoeff, &extra);
+    if (!foundField)
+      foundField = (baseType->getSubType(offsetbytes,&extra) != (Datatype *)0);
+    if (!foundField) {
       if (offsetbytes < 0 || offsetbytes >= baseType->getSize()) {	// Compare as bytes! not address units
 	valid = false; // Out of structure's bounds
 	return;
@@ -6517,8 +6474,12 @@ void AddTreeState::buildTree(void)
   // Create PTRADD portion of operation
   if (multNode != (Varnode *)0) {
     newop = data.newOpBefore(baseOp,CPUI_PTRADD,ptr,multNode,data.newConstant(ptrsize,size));
-    if (ptr->getType()->needsResolution())
-      data.inheritResolution(ptr->getType(),newop, 0, baseOp, baseSlot);
+    if (ptr->getType()->needsResolution()) {
+      if (((TypePointer *)ptr->getType())->getPtrTo()->getSize() == baseType->getSize())
+	data.forceFacingType(ptr->getType(),-1,newop, 0);		// Force type not to resolve before the index is applied
+      else
+	data.inheritUnionField(ptr->getType(), newop, 0, baseOp, baseSlot);
+    }
     if (data.isTypeRecoveryExceeded())
       assignPropagatedType(newop);
     multNode = newop->getOut();
@@ -6530,7 +6491,7 @@ void AddTreeState::buildTree(void)
   if (isSubtype) {
     newop = data.newOpBefore(baseOp,CPUI_PTRSUB,multNode,data.newConstant(ptrsize,offset));
     if (multNode->getType()->needsResolution())
-      data.inheritResolution(multNode->getType(),newop, 0, baseOp, baseSlot);
+      data.inheritUnionField(multNode->getType(),newop, 0, baseOp, baseSlot);
     if (data.isTypeRecoveryExceeded())
       assignPropagatedType(newop);
     if (size != 0)
@@ -6731,7 +6692,7 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
     // Create pointer up to parent
     PcodeOp *newop = data.newOpBefore(op,CPUI_PTRSUB,ptrVn,data.newConstant(ptrVn->getSize(),offset));
     if (ptrVn->getType()->needsResolution())
-      data.inheritResolution(ptrVn->getType(),newop, 0, op, 1);
+      data.inheritUnionField(ptrVn->getType(),newop, 0, op, 1);
     newop->setStopTypePropagation();
     if (newoff != 0) {
       // Add newoff in to get back to zero total offset
@@ -6769,7 +6730,7 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
 
   PcodeOp *newop = data.newOpBefore(op,CPUI_PTRSUB,ptrVn,data.newConstant(ptrVn->getSize(),0));
   if (ptrVn->getType()->needsResolution())
-    data.inheritResolution(ptrVn->getType(),newop, 0, op, 1);
+    data.inheritUnionField(ptrVn->getType(),newop, 0, op, 1);
   newop->setStopTypePropagation();
   data.opSetInput(op,newop->getOut(),1);
   return 1;
@@ -7100,10 +7061,11 @@ int8 RulePtrsubUndo::removeLocalAdds(Varnode *vn,Funcdata &data)
 {
   int8 extra = 0;
   PcodeOp *op = vn->loneDescend();
+  Varnode *nextVn = vn;
   while(op != (PcodeOp *)0) {
     OpCode opc = op->code();
     if (opc == CPUI_INT_ADD) {
-      int4 slot = op->getSlot(vn);
+      int4 slot = op->getSlot(nextVn);
       if (slot == 0 && op->getIn(1)->isConstant()) {
 	extra += (int8)op->getIn(1)->getOffset();
 	data.opRemoveInput(op, 1);
@@ -7120,7 +7082,7 @@ int8 RulePtrsubUndo::removeLocalAdds(Varnode *vn,Funcdata &data)
       data.opSetOpcode(op, CPUI_COPY);
     }
     else if (opc == CPUI_PTRADD) {
-      if (op->getIn(0) != vn) break;
+      if (op->getIn(0) != nextVn) break;
       // The PTRADD should be converted to an INT_ADD or COPY
       // as it is associated with the invalid PTRSUB
       int8 ptraddmult = op->getIn(2)->getOffset();
@@ -7139,9 +7101,11 @@ int8 RulePtrsubUndo::removeLocalAdds(Varnode *vn,Funcdata &data)
     else {
       break;
     }
-    vn = op->getOut();
-    op = vn->loneDescend();
+    nextVn = op->getOut();
+    op = nextVn->loneDescend();
   }
+  if (nextVn != vn)
+    vn->updateType(nextVn->getType());
   return extra;
 }
 
@@ -7489,9 +7453,11 @@ Datatype *RulePieceStructure::determineDatatype(Varnode *vn,int4 &baseOffset)
 
   if (ct->getSize() != vn->getSize()) {			// vn is a partial
     SymbolEntry *entry = vn->getSymbolEntry();
-    baseOffset = vn->getAddr().overlap(0,entry->getAddr(),ct->getSize());
+    if (entry->isDynamic())
+      return (Datatype *)0;
+    baseOffset = vn->getAddr().overlap(0,((MapEntry *)entry)->getAddr(),ct->getSize());
     if (baseOffset < 0)
-      return (Datatype*)0;
+      return (Datatype *)0;
     baseOffset += entry->getOffset();
     // Find concrete sub-type that matches the size of the Varnode
     Datatype *subType = ct;
@@ -7561,7 +7527,7 @@ bool RulePieceStructure::convertZextToPiece(PcodeOp *zext,Datatype *ct,int4 offs
   data.opSetOpcode(zext, CPUI_PIECE);
   data.opInsertInput(zext, zerovn, 0);
   if (invn->getType()->needsResolution())
-    data.inheritResolution(invn->getType(), zext, 1, zext, 0);	// Transfer invn's resolution to slot 1
+    data.inheritUnionField(invn->getType(), zext, 1, zext, 0);	// Transfer invn's resolution to slot 1
   return true;
 }
 
@@ -7692,7 +7658,7 @@ int4 RulePieceStructure::applyOp(PcodeOp *op,Funcdata &data)
       data.opInsertBefore(copyOp, node.getOp());
       if (vn->getType()->needsResolution()) {
 	// Inherit PIECE's read resolution for COPY's read
-	data.inheritResolution(vn->getType(), copyOp, 0, node.getOp(), node.getSlot());
+	data.inheritUnionField(vn->getType(), copyOp, 0, node.getOp(), node.getSlot());
       }
       if (newType->needsResolution()) {
 	newType->resolveInFlow(copyOp, -1);	// If the piece represents part of a union, resolve it

@@ -317,7 +317,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 
 	private void chooseDestinationFile() {
 		GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
-		chooser.setSelectedFile(getLastExportDirectory());
+		chooser.setCurrentDirectory(getLastExportDirectory());
 		chooser.setTitle("Select Output File");
 		chooser.setApproveButtonText("Select Output File");
 		chooser.setApproveButtonToolTipText("Select File");

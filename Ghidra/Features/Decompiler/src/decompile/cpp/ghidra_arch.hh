@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,7 +82,6 @@ struct JavaError : public LowlevelError {
 class ArchitectureGhidra : public Architecture {
   istream &sin;			///< Input stream for interfacing with Ghidra
   ostream &sout;		///< Output stream for interfacing with Ghidra
-  mutable string warnings;	///< Warnings accumulated by the decompiler
   string pspecxml;              ///< XML pspec passed from Ghidra
   string cspecxml;		///< XML cspec passed from Ghidra
   string tspecxml;              ///< Stripped down .sla file passed from Ghidra
@@ -108,8 +107,6 @@ class ArchitectureGhidra : public Architecture {
 public:
   ArchitectureGhidra(const string &pspec,const string &cspec,const string &tspec,const string &corespec,
 		     istream &i,ostream &o);
-  const string &getWarnings(void) const { return warnings; }	///< Get warnings produced by the last decompilation
-  void clearWarnings(void) { warnings.clear(); }		///< Clear warnings
   bool getRegister(const string &regname,Decoder &decoder);	///< Retrieve a register description given a name
   string getRegisterName(const VarnodeData &vndata);		///< Retrieve a register name given its storage location
   bool getTrackedRegisters(const Address &addr,Decoder &decoder);	///< Retrieve \e tracked register values at the given address
@@ -153,9 +150,8 @@ public:
   bool getSendParamMeasures(void) const { return sendParamMeasures; }	///< Get the current setting for emitting parameter info
 
   void getStringData(vector<uint1> &buffer,const Address &addr,Datatype *ct,int4 maxBytes,bool &isTrunc);
-  virtual void printMessage(const string &message) const;
+  virtual void printWarning(const string &message) const;
 
-  static void segvHandler(int4 sig);				///< Handler for a segment violation (SIGSEGV) signal
   static int4 readToAnyBurst(istream &s);			///< Read the next message protocol marker
   static bool readBoolStream(istream &s);			///< Read a boolean value from the client
   static void readStringStream(istream &s,string &res);		///< Receive a string from the client

@@ -105,20 +105,20 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * {@return the name of this address space}.
 	 * With the exception of {@link OverlayAddressSpace}, the name of an address space may not change.
 	 */
-	String getName();
+	public String getName();
 
 	/**
 	 * Get the ID for this space
 	 * 
 	 * @return space ID
 	 */
-	int getSpaceID();
+	public int getSpaceID();
 
 	/**
 	 * {@return the number of bits that are used to form the address.}  Thus
 	 * the maximum offset for this address space will be 2^size-1.
 	 */
-	int getSize();
+	public int getSize();
 
 	/**
 	 * {@return the number of data bytes which correspond to each addressable 
@@ -134,7 +134,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 *   wordOffset = getAddressableWordOffset(byteOffset)
 	 * </pre>
 	 */
-	int getAddressableUnitSize();
+	public int getAddressableUnitSize();
 
 	/**
 	 * Get the addressable memory word offset which corresponds to the specified 
@@ -151,17 +151,17 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * @see Program#getDefaultPointerSize() for a user adjustable pointer size which is derived from the
 	 * CompilerSpec store pointer size.
 	 */
-	int getPointerSize();
+	public int getPointerSize();
 
 	/** 
 	 * {@return the type of this address space}
 	 */
-	int getType();
+	public int getType();
 
 	/**
 	 * {@return the unique index for this address space}
 	 */
-	int getUnique();
+	public int getUnique();
 
 	/**
 	 * Parses the String into an address within this address space.
@@ -171,7 +171,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * @throws AddressFormatException if the string cannot be parsed or the
 	 * parsed offset is larger than the size for this space.
 	 */
-	Address getAddress(String addrString) throws AddressFormatException;
+	public Address getAddress(String addrString) throws AddressFormatException;
 
 	/**
 	 * Parses the String into an address within this address space.
@@ -182,47 +182,54 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * @throws AddressFormatException if the string cannot be parsed or the
 	 * parsed offset is larger than the size for this space.
 	 */
-	Address getAddress(String addrString, boolean caseSensitive) throws AddressFormatException;
+	public Address getAddress(String addrString, boolean caseSensitive)
+			throws AddressFormatException;
 
 	/**
 	 * Returns a new address in this space with the given byte offset.
+	 * <p>
 	 * NOTE: This method is the same as invoking getAddress(long byteOffset, false).
+	 * 
 	 * @param byteOffset the byte offset for the new address.
 	 * @return address with given byte offset
 	 * @throws AddressOutOfBoundsException if the offset is less than 0 or greater
 	 * than the max offset allowed for this space.
 	 */
-	Address getAddress(long byteOffset) throws AddressOutOfBoundsException;
+	public Address getAddress(long byteOffset) throws AddressOutOfBoundsException;
 
 	/**
-	 * Returns a new address in this space with the given offset.  
+	 * Returns a new address in this space with the given offset.
+	 * <p>  
 	 * NOTE: for those spaces with an addressable unit size other than 1, the address
 	 * returned may not correspond to an addressable unit/word boundary if a byte-offset 
 	 * is specified.
+	 * 
 	 * @param offset the offset for the new address.
-	 * @param isAddressableWordOffset if true the specified offset is an addressable unit/word offset,
-	 * otherwise offset is a byte offset.  See {@link #getAddressableUnitSize()}
+	 * @param isAddressableWordOffset if true the specified offset is an addressable unit/word 
+	 * offset, otherwise offset is a byte offset.  See {@link #getAddressableUnitSize()}
 	 * to understand the distinction (i.e., wordOffset = byteOffset * addressableUnitSize).
 	 * @return address with given offset
 	 * @throws AddressOutOfBoundsException if the offset is less than 0 or greater
 	 * than the max offset allowed for this space.
 	 */
-	Address getAddress(long offset, boolean isAddressableWordOffset)
+	public Address getAddress(long offset, boolean isAddressableWordOffset)
 			throws AddressOutOfBoundsException;
 
 	/**
 	 * Returns a new address in this space with the given offset.  The specified 
 	 * offset will be truncated within the space and will not throw an exception.
+	 * <p>
 	 * NOTE: for those spaces with an addressable unit size other than 1, the address
 	 * returned may not correspond to a word boundary (addressable unit) if a byte-offset 
 	 * is specified.
+	 * 
 	 * @param offset the offset for the new address.
 	 * @param isAddressableWordOffset if true the specified offset is an addressable unit/word offset,
 	 * otherwise offset is a byte offset.  See {@link #getAddressableUnitSize()}
 	 * to understand the distinction (i.e., wordOffset = byteOffset * addressableUnitSize).
 	 * @return address with given byte offset truncated to the physical space size
 	 */
-	Address getTruncatedAddress(long offset, boolean isAddressableWordOffset);
+	public Address getTruncatedAddress(long offset, boolean isAddressableWordOffset);
 
 	/**
 	 * Get a byte address from this address space.  Don't allow overlay spaces
@@ -231,18 +238,17 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * 
 	 * @param byteOffset the byte offset for the new address.
 	 * @return an address if the offset is valid.
-	 * 
 	 * @throws AddressOutOfBoundsException if the offset is less than 0 or greater
 	 * than the max offset allowed for this space.
 	 */
-	Address getAddressInThisSpaceOnly(long byteOffset) throws AddressOutOfBoundsException;
+	public Address getAddressInThisSpaceOnly(long byteOffset) throws AddressOutOfBoundsException;
 
 	/**
 	 * Truncate the specified byte offset within this space to produce a valid offset.
 	 * @param byteOffset any byte offset
 	 * @return truncated byte offset
 	 */
-	long truncateOffset(long byteOffset);
+	public long truncateOffset(long byteOffset);
 
 	/**
 	 * Truncate the specified addressable unit/word offset within this space to produce a 
@@ -250,7 +256,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * @param wordOffset any addressable unit/word offset
 	 * @return truncated word offset
 	 */
-	long truncateAddressableWordOffset(long wordOffset);
+	public long truncateAddressableWordOffset(long wordOffset);
 
 	/**
 	 * Get an address that is relative to this address space.
@@ -258,10 +264,9 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * this space, return an address based in this space.
 	 * 
 	 * @param addr address possibly falling within this overlay space.
-	 * 
 	 * @return an address relative to this overlay
 	 */
-	Address getOverlayAddress(Address addr);
+	public Address getOverlayAddress(Address addr);
 
 	/**
 	 * Calculates the displacement between addr1 and addr2 (addr1 - addr2)
@@ -277,6 +282,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 
 	/**
 	 * Creates a new address by subtracting displacement from addr's offset.
+	 * 
 	 * @param addr the original address. The new address will wrap in a manner
 	 * that depends on the address space. For a generic address space this will
 	 * wrap at the extents of the address space. For a segmented address space
@@ -291,12 +297,12 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * address. If the offset is greater than the max offset of the address space, the high
 	 * order bits are masked off, making the address wrap.  For non-segmented addresses this
 	 * will be the same as subtractWrap().  For segmented addresses, the address will wrap when
-	 * the 20 bit (oxfffff) offset is exceeded, as opposed to when the segment offset is exceeded.
+	 * the 20 bit (0xfffff) offset is exceeded, as opposed to when the segment offset is exceeded.
 	 * @param addr the address to subtract the displacement from.
 	 * @param displacement  the displacement to subtract.
 	 * @return The new Address formed by subtracting the displacement from the specified address.
 	 */
-	Address subtractWrapSpace(Address addr, long displacement);
+	public Address subtractWrapSpace(Address addr, long displacement);
 
 	/**
 	 * Creates a new address by subtracting displacement from addr's offset.
@@ -307,6 +313,17 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * @throws AddressOverflowException if the subtraction would cause a wrap,
 	 */
 	public Address subtractNoWrap(Address addr, long displacement) throws AddressOverflowException;
+
+	/**
+	 * Creates a new address by subtracting the displacement to the given address. The
+	 * new address will NOT wrap!  
+	 * @param addr the original address.
+	 * @param displacement  the displacement to subtract.
+	 * @return The new address created by subtracting the displacement to addr.offset.
+	 * @throws AddressOverflowException if the addition would cause a wrap,
+	 */
+	public Address subtractNoWrap(GenericAddress addr, BigInteger displacement)
+			throws AddressOverflowException;
 
 	/**
 	 * Creates a new address (possibly in a new space) by subtracting the given 
@@ -335,12 +352,12 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * address. If the offset is greater than the max offset of the address space, the high
 	 * order bits are masked off, making the address wrap.  For non-segmented addresses this
 	 * will be the same as addWrap().  For segmented addresses, the address will wrap when
-	 * the 20 bit (oxfffff) offset is exceeded, as opposed to when the segment offset is exceeded.
+	 * the 20 bit (0xfffff) offset is exceeded, as opposed to when the segment offset is exceeded.
 	 * @param addr the address to add the displacement to.
 	 * @param displacement  the displacement to add.
-	 * @return The new Address formed by adding the displacement to the specified addresst.
+	 * @return The new Address formed by adding the displacement to the specified address.
 	 */
-	Address addWrapSpace(Address addr, long displacement);
+	public Address addWrapSpace(Address addr, long displacement);
 
 	/**
 	 * Creates a new address by adding displacement to the given address. The
@@ -391,7 +408,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 
 	/**
 	 * Get the maximum address allowed for this AddressSpace.
-	 * 
+	 * <p>
 	 * NOTE: Use of this method to identify the region associated with an overlay memory block
 	 * within its overlay address space is no longer supported.  Defined regions of an overlay space
 	 * may now be determined using {@link OverlayAddressSpace#getOverlayAddressSet()}.
@@ -403,7 +420,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	/** 
 	 * Get the minimum address allowed for this AddressSpace.
 	 * For a memory space the returned address will have an offset of 0 within this address space.
-	 * 
+	 * <p>
 	 * NOTE: Use of this method to identify the region associated with an overlay memory block
 	 * within its overlay address space is no longer supported.  Defined regions of an overlay space
 	 * may now be determined using {@link OverlayAddressSpace#getOverlayAddressSet()}.
@@ -495,22 +512,22 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * 
 	 * @return true if this space has any registers mapped in it.
 	 */
-	boolean hasMappedRegisters();
+	public boolean hasMappedRegisters();
 
 	/**
 	 * {@return true if the address should display its addressSpace name}
 	 */
-	boolean showSpaceName();
+	public boolean showSpaceName();
 
 	/**
 	 * {@return true if this addressSpace is an overlay address space}
 	 */
-	boolean isOverlaySpace();
+	public boolean isOverlaySpace();
 
 	/**
 	 * {@return true if space uses signed offset}
 	 */
-	boolean hasSignedOffset();
+	public boolean hasSignedOffset();
 
 	/**
 	 * Determine if the specific name is a valid address space name (e.g., allowed

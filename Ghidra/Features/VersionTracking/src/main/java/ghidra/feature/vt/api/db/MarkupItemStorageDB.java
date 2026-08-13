@@ -178,11 +178,6 @@ public class MarkupItemStorageDB extends DbObject implements MarkupItemStorage {
 	}
 
 	@Override
-	protected boolean refresh() {
-		return refresh(null);
-	}
-
-	@Override
 	protected boolean refresh(DBRecord matchRecord) {
 		if (matchRecord == null) {
 			matchRecord = associationManager.getMarkupItemRecord(key);

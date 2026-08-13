@@ -81,11 +81,6 @@ abstract class CodeUnitDB extends DbObject implements CodeUnit, ProcessorContext
 	}
 
 	@Override
-	protected boolean refresh() {
-		return refresh(null);
-	}
-
-	@Override
 	protected boolean refresh(DBRecord record) {
 		address = codeMgr.getAddressMap().decodeAddress(addr);
 		endAddr = null;

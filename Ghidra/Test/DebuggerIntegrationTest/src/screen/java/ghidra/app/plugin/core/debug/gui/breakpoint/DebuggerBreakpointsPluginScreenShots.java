@@ -45,6 +45,7 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.breakpoint.DBTraceBreakpointManager;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.*;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
@@ -137,12 +138,10 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 			try (Transaction tx = program.openTransaction("Add breakpoint")) {
 				program.getBookmarkManager()
 						.setBookmark(addr(program, 0x00401234),
-							LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
-							"SW_EXECUTE;1", "before connect");
+							LogicalBreakpoint.ENABLED_BOOKMARK_TYPE, "x;1", "before connect");
 				program.getBookmarkManager()
 						.setBookmark(addr(program, 0x00604321),
-							LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
-							"WRITE;4", "write version");
+							LogicalBreakpoint.ENABLED_BOOKMARK_TYPE, "W;4", "write version");
 			}
 
 			try (Transaction tx = tb1.startTransaction()) {
@@ -153,14 +152,14 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 				DBTraceBreakpointManager bm = tb1.trace.getBreakpointManager();
 				TraceBreakpointLocation locCx =
 					bm.placeBreakpoint("Breakpoints[1]", snap, tb1.addr(0x00401234), List.of(),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "");
+						CommonSet.SWX.kinds(), true, "");
 				locCx.getSpecification()
 						.getObject()
 						.setAttribute(Lifespan.nowOn(snap), TraceBreakpointSpec.KEY_EXPRESSION,
 							"*0x00401234");
 				TraceBreakpointLocation locWr =
 					bm.placeBreakpoint("Breakpoints[2]", snap, tb1.range(0x00604321, 0x00604324),
-						List.of(), Set.of(TraceBreakpointKind.WRITE), true, "");
+						List.of(), CommonSet.WRITE.kinds(), true, "");
 				locWr.getSpecification()
 						.getObject()
 						.setAttribute(Lifespan.nowOn(snap), TraceBreakpointSpec.KEY_EXPRESSION,
@@ -175,11 +174,11 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 				DBTraceBreakpointManager bm = tb2.trace.getBreakpointManager();
 				TraceBreakpointLocation locCx =
 					bm.placeBreakpoint("Breakpoints[1]", snap, tb2.addr(0x7fac1234), List.of(),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), false, "");
+						CommonSet.SWX.kinds(), false, "");
 				locCx.getSpecification()
-				.getObject()
-				.setAttribute(Lifespan.nowOn(snap), TraceBreakpointSpec.KEY_EXPRESSION,
-					"*0x7fac1234");
+						.getObject()
+						.setAttribute(Lifespan.nowOn(snap), TraceBreakpointSpec.KEY_EXPRESSION,
+							"*0x7fac1234");
 			}
 
 			programManager.openProgram(program);

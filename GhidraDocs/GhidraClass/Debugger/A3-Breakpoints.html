@@ -232,17 +232,18 @@ database containing the breakpoint. Again, because the module has not
 been imported yet, this column is blank.</li>
 <li>The next column <strong>Length</strong> gives the length of the
 breakpoint. In GDB, this generally applies to watchpoints only.</li>
-<li>The next column <strong>Kinds</strong> gives the kinds of
+<li>The next column <strong>Kind</strong> gives the kind(s) of
 breakpoint. Most breakpoints are software execution breakpoints,
-indicated by “SW_EXECUTE.” That is, they are implemented by patching the
-target’s memory with a special instruction that traps execution —
-<code>INT3</code> on x86. There are also hardware execution breakpoints
-indicated by “HW_EXECUTE,” and access breakpoints indicated by “HW_READ”
-and/or “HW_WRITE”. <strong>NOTE</strong>: GDB would call access
-breakpoints <em>watchpoints</em>. An advantage to software breakpoints
-is that you can have a practically unlimited number of them. Some
-disadvantages are they can be detected easily, and they are limited to
-execution breakpoints.</li>
+indicated by (lower case) <code>x</code>. That is, they are implemented
+by patching the target’s memory with a special instruction that traps
+execution — <code>INT3</code> on x86. There are also hardware execution
+breakpoints indicated by (upper case) <code>X</code> and access
+breakpoints indicated by <code>R</code> and/or <code>W</code>.
+<strong>NOTE</strong>: GDB would call access breakpoints
+<em>watchpoints</em>. An advantage to software breakpoints is that you
+can have a practically unlimited number of them. Some disadvantages are
+they can be detected easily, and they are limited to execution
+breakpoints.</li>
 <li>The next column <strong>Locations</strong> counts the number of
 locations for the breakpoint. For a single-target session, this is most
 likely 1.</li>

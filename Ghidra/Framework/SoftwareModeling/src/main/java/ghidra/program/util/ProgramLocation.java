@@ -22,6 +22,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassSearcher;
 
 /**
  * <CODE>ProgramLocation</CODE> provides information about a location in a program in the most
@@ -279,7 +280,9 @@ public class ProgramLocation implements Cloneable, Comparable<ProgramLocation> {
 		}
 
 		try {
-			Class<?> locationClass = Class.forName(className);
+			Class<? extends ProgramLocation> locationClass = ClassSearcher.forNameSafe(className,
+				ProgramLocation.class, ProgramLocation.class.getClassLoader());
+
 			if (locationClass.isInterface()) {
 				// This check is needed due to a refactoring that has changed a class into an 
 				// interface.  The class name may have been saved into the tool.  Upon restoring we
@@ -288,7 +291,7 @@ public class ProgramLocation implements Cloneable, Comparable<ProgramLocation> {
 				return null;
 			}
 
-			ProgramLocation loc = (ProgramLocation) locationClass.getConstructor().newInstance();
+			ProgramLocation loc = locationClass.getConstructor().newInstance();
 			loc.restoreState(program, saveState);
 			if (loc.getAddress() != null) {
 				return loc;
@@ -297,6 +300,8 @@ public class ProgramLocation implements Cloneable, Comparable<ProgramLocation> {
 		}
 		catch (ClassNotFoundException e) {
 			// this can happen for locations created by plugins that are no longer installed
+			Msg.info(ProgramLocation.class,
+				"Unable to restore program location, class not found: " + className);
 		}
 		catch (InstantiationException | IllegalAccessException | NoSuchMethodException e) {
 			Msg.showError(ProgramLocation.class, null, "Programming Error",

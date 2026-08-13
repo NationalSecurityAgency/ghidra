@@ -23,8 +23,6 @@ import org.apache.commons.io.FilenameUtils;
 
 import com.google.common.primitives.Bytes;
 
-import ghidra.app.plugin.core.analysis.rust.RustConstants;
-import ghidra.app.plugin.core.analysis.rust.RustUtilities;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
@@ -39,7 +37,6 @@ import ghidra.app.util.bin.format.pe.ImageCor20Header.ImageCor20Flags;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugDirectoryParser;
-import ghidra.app.util.bin.format.swift.SwiftUtils;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
@@ -53,9 +50,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -136,7 +131,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			optionalHeader.validateDataDirectories(program);
 
 			DataDirectory[] datadirs = optionalHeader.getDataDirectories();
-			layoutHeaders(program, pe, ntHeader, datadirs);
+			layoutHeaders(program, pe, ntHeader, datadirs, monitor, log);
 			for (DataDirectory datadir : datadirs) {
 				if (datadir == null || !datadir.hasParsedCorrectly()) {
 					continue;
@@ -156,11 +151,13 @@ public class PeLoader extends AbstractPeDebugLoader {
 			processComments(program.getListing(), monitor);
 			processSymbols(ntHeader, sectionToAddress, program, monitor, log);
 
-			processEntryPoints(ntHeader, program, monitor);
+			processEntryPoints(ntHeader, program, monitor, log);
 			String compiler =
 				CompilerOpinion.getOpinion(pe, settings.provider(), program, monitor, log)
 						.toString();
 			program.setCompiler(compiler);
+
+			reportAnomalies(pe, monitor, log);
 		}
 		catch (AddressOverflowException e) {
 			throw new IOException(e);
@@ -236,39 +233,51 @@ public class PeLoader extends AbstractPeDebugLoader {
 	}
 
 	private void layoutHeaders(Program program, PortableExecutable pe, NTHeader ntHeader,
-			DataDirectory[] datadirs) {
+			DataDirectory[] datadirs, TaskMonitor monitor, MessageLog log) {
+
+		Address imageBase = program.getImageBase();
+
 		try {
-			DataType dt = pe.getDOSHeader().toDataType();
-			Address start = program.getImageBase();
-			DataUtilities.createData(program, start, dt, -1,
+			DataUtilities.createData(program, imageBase, pe.getDOSHeader().toDataType(), -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+		}
+		catch (Exception e) {
+			log.appendMsg("Error laying down DOS header: " + e.getMessage());
+		}
 
-			dt = pe.getRichHeader().toDataType();
+		try {
+			DataType dt = pe.getRichHeader().toDataType();
 			if (dt != null) {
-				start = program.getImageBase().add(pe.getRichHeader().getOffset());
+				Address start = imageBase.add(pe.getRichHeader().getOffset());
 				DataUtilities.createData(program, start, dt, -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-			}
-
-			dt = ntHeader.toDataType();
-			start = program.getImageBase().add(pe.getDOSHeader().e_lfanew());
-			DataUtilities.createData(program, start, dt, -1,
-				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-
-			FileHeader fh = ntHeader.getFileHeader();
-			SectionHeader[] sections = fh.getSectionHeaders();
-			int index = fh.getPointerToSections();
-			start = program.getImageBase().add(index);
-			for (SectionHeader section : sections) {
-				dt = section.toDataType();
-				DataUtilities.createData(program, start, dt, -1,
-					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-				setComment(CommentType.EOL, start, section.getName());
-				start = start.add(dt.getLength());
 			}
 		}
-		catch (Exception e1) {
-			Msg.error(this, "Error laying down header structures " + e1);
+		catch (Exception e) {
+			log.appendMsg("Error laying down Rich header: " + e.getMessage());
+		}
+
+		try {
+			Address start = imageBase.add(pe.getDOSHeader().e_lfanew());
+			DataUtilities.createData(program, start, ntHeader.toDataType(), -1,
+				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+		}
+		catch (Exception e) {
+			log.appendMsg("Error laying down NT header: " + e.getMessage());
+		}
+
+		FileHeader fh = ntHeader.getFileHeader();
+		Address start = imageBase.add(fh.getPointerToSections());
+		for (SectionHeader section : fh.getSectionHeaders()) {
+			try {
+				DataUtilities.createData(program, start, section.toDataType(), -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+			catch (Exception e) {
+				log.appendMsg("Error laying down Section header: " + e.getMessage());
+			}
+			setComment(CommentType.EOL, start, section.getReadableName());
+			start = start.add(SectionHeader.IMAGE_SIZEOF_SECTION_HEADER);
 		}
 	}
 
@@ -498,32 +507,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 		}
 	}
 
-	/**
-	 * Mark this location as code in the CodeMap. The analyzers will pick this up and disassemble
-	 * the code.
-	 *
-	 * TODO: this should be in a common place, so all importers can communicate that something is
-	 * code or data.
-	 *
-	 * @param program The program to mark up.
-	 * @param address The location.
-	 */
-	private void markAsCode(Program program, Address address) {
-		AddressSetPropertyMap codeProp = program.getAddressSetPropertyMap("CodeMap");
-		if (codeProp == null) {
-			try {
-				codeProp = program.createAddressSetPropertyMap("CodeMap");
-			}
-			catch (DuplicateNameException e) {
-				codeProp = program.getAddressSetPropertyMap("CodeMap");
-			}
-		}
-
-		if (codeProp != null) {
-			codeProp.add(address, address);
-		}
-	}
-
 	private void processExports(OptionalHeader optionalHeader, Program program, TaskMonitor monitor,
 			MessageLog log) {
 
@@ -622,163 +605,121 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 	protected Map<SectionHeader, Address> processMemoryBlocks(PortableExecutable pe, Program prog,
 			FileBytes fileBytes, TaskMonitor monitor, MessageLog log)
-			throws AddressOverflowException {
+			throws AddressOverflowException, IOException, CancelledException {
 
 		AddressFactory af = prog.getAddressFactory();
 		AddressSpace space = af.getDefaultAddressSpace();
 		Map<SectionHeader, Address> sectionToAddress = new HashMap<>();
 
-		if (monitor.isCancelled()) {
-			return sectionToAddress;
-		}
-		monitor.setMessage("[" + prog.getName() + "]: processing memory blocks...");
-
 		NTHeader ntHeader = pe.getNTHeader();
 		FileHeader fileHeader = ntHeader.getFileHeader();
 		OptionalHeader optionalHeader = ntHeader.getOptionalHeader();
-
-		SectionHeader[] sections = fileHeader.getSectionHeaders();
-		if (sections.length == 0) {
-			Msg.warn(this, "No sections found");
-		}
+		List<SectionHeader> sections = fileHeader.getSectionHeaders();
 
 		// Header block
-		int virtualSize = (int) Math.min(getVirtualSize(pe, sections, space), fileBytes.getSize());
-		long addr = optionalHeader.getImageBase();
-		Address address = space.getAddress(addr);
-
-		boolean r = true;
-		boolean w = false;
-		boolean x = false;
-		MemoryBlockUtils.createInitializedBlock(prog, false, HEADERS, address, fileBytes, 0,
-			virtualSize, "", "", r, w, x, log);
+		int headerSize = (int) Math.min(getHeaderSize(pe, sections, space), fileBytes.getSize());
+		Address imageBase = space.getAddress(optionalHeader.getImageBase());
+		MemoryBlockUtils.createInitializedBlock(prog, false, HEADERS, imageBase, fileBytes, 0,
+			headerSize, "", "", true, false, false, log);
 
 		// Section blocks
-		try {
-			for (int i = 0; i < sections.length; ++i) {
-				if (monitor.isCancelled()) {
-					return sectionToAddress;
+		monitor.setMessage("[" + prog.getName() + "]: processing sections...");
+		if (sections.isEmpty()) {
+			log.appendMsg("No sections found");
+		}
+		for (SectionHeader section : sections) {
+			monitor.checkCancelled();
+
+			Address addr = imageBase.add(section.getAlignedVirtualAddress(optionalHeader));
+
+			String sectionName = section.getReadableName();
+			int alignedRawSize = section.getAlignedSizeOfRawData(optionalHeader, log);
+			int alignedRawPtr = section.getAlignedPointerToRawData(optionalHeader, log);
+			int alignedVirtualSize = section.getAlignedVirtualSize(optionalHeader, log);
+			MemoryBlock block = null;
+
+			if (section.getVirtualSize() == 0) {
+				log.appendMsg("NOTE: Section '%s' has size zero".formatted(sectionName));
+			}
+
+			// If PointerToRawData and SizeOfRawData are set, make an initialized block from 
+			// the FileBytes (check original PointerToRawData value, not the aligned version)
+			if (section.getPointerToRawData() != 0 && alignedRawSize != 0) {
+				try {
+					block = MemoryBlockUtils.createInitializedBlock(prog, false, sectionName, addr,fileBytes, alignedRawPtr, alignedRawSize, "", "", section.isRead(),section.isWrite(), section.isExecute(), log);
 				}
-
-				addr = sections[i].getVirtualAddress() + optionalHeader.getImageBase();
-
-				address = space.getAddress(addr);
-
-				String sectionName = sections[i].getReadableName();
-				if (sectionName.isBlank()) {
-					sectionName = "SECTION." + i;
+				catch (Exception e) {
+					throw new IOException(
+						"Failed to create memory block for section '%s' (offset 0x%x, size 0x%x, addr %s"
+								.formatted(sectionName, alignedRawPtr, alignedRawSize, addr));
 				}
+				sectionToAddress.put(section, addr);
+				alignedVirtualSize -= alignedRawSize;
+				addr = addr.add(alignedRawSize);
+			}
 
-				r = ((sections[i].getCharacteristics() &
-					SectionFlags.IMAGE_SCN_MEM_READ.getMask()) != 0x0);
-				w = ((sections[i].getCharacteristics() &
-					SectionFlags.IMAGE_SCN_MEM_WRITE.getMask()) != 0x0);
-				x = ((sections[i].getCharacteristics() &
-					SectionFlags.IMAGE_SCN_MEM_EXECUTE.getMask()) != 0x0);
-
-				int rawDataSize = sections[i].getSizeOfRawData();
-				int rawDataPtr = sections[i].getPointerToRawData();
-				virtualSize = sections[i].getVirtualSize();
-				MemoryBlock block = null;
-				if (rawDataSize != 0 && rawDataPtr != 0) {
-					int dataSize =
-						((rawDataSize > virtualSize && virtualSize > 0) || rawDataSize < 0)
-								? virtualSize
-								: rawDataSize;
-					if (ntHeader.checkRVA(dataSize) ||
-						(0 < dataSize && dataSize < pe.getFileLength())) {
-						if (!ntHeader.checkRVA(dataSize)) {
-							Msg.warn(this, "OptionalHeader.SizeOfImage < size of " +
-								sections[i].getName() + " section");
+			// If there is any virtual size left, map in the padding bytes
+			if (alignedVirtualSize > 0) {
+				if (block != null) {
+					// Put the padding bytes in the same block we created above
+					MemoryBlock paddingBlock = MemoryBlockUtils.createInitializedBlock(prog,
+						false, sectionName, addr, alignedVirtualSize, "", "", section.isRead(),
+						section.isWrite(), section.isExecute(), log);
+					if (paddingBlock != null) {
+						try {
+							prog.getMemory().join(block, paddingBlock);
 						}
-						block = MemoryBlockUtils.createInitializedBlock(prog, false, sectionName,
-							address, fileBytes, rawDataPtr, dataSize, "", "", r, w, x, log);
-						sectionToAddress.put(sections[i], address);
+						catch (Exception e) {
+							log.appendMsg(e.getMessage());
+						}
 					}
-					if (rawDataSize == virtualSize) {
-						continue;
-					}
-					else if (rawDataSize > virtualSize) {
-						// virtual size fully initialized
-						continue;
-					}
-					// remainder of virtual size is uninitialized
-					if (rawDataSize < 0) {
-						Msg.error(this,
-							"Section[" + i + "] has invalid size " +
-								Integer.toHexString(rawDataSize) + " (" +
-								Integer.toHexString(virtualSize) + ")");
-						break;
-					}
-					virtualSize -= rawDataSize;
-					address = address.add(rawDataSize);
-				}
-
-				if (virtualSize == 0) {
-					Msg.error(this, "Section[" + i + "] has size zero");
 				}
 				else {
-					int dataSize = (virtualSize > 0 || rawDataSize < 0) ? virtualSize : 0;
-					if (dataSize > 0) {
-						if (block != null) {
-							MemoryBlock paddingBlock = MemoryBlockUtils.createInitializedBlock(prog,
-								false, sectionName, address, dataSize, "", "", r, w, x, log);
-							if (paddingBlock != null) {
-								try {
-									prog.getMemory().join(block, paddingBlock);
-								}
-								catch (Exception e) {
-									log.appendMsg(e.getMessage());
-								}
-							}
-						}
-						else {
-							MemoryBlockUtils.createUninitializedBlock(prog, false, sectionName,
-								address, dataSize, "", "", r, w, x, log);
-							sectionToAddress.putIfAbsent(sections[i], address);
-						}
-					}
+					// We didn't create an initialized block above. Put all the padding in a
+					// new uninitialized block.
+					MemoryBlockUtils.createUninitializedBlock(prog, false, sectionName,
+						addr, alignedVirtualSize, "", "", section.isRead(), section.isWrite(),
+						section.isExecute(), log);
+					sectionToAddress.putIfAbsent(section, addr);
 				}
-
 			}
-		}
-		catch (IllegalStateException ise) {
-			if (optionalHeader.getFileAlignment() != optionalHeader.getSectionAlignment()) {
-				throw new IllegalStateException(ise);
-			}
-			Msg.warn(this, "Section header processing aborted");
 		}
 
 		return sectionToAddress;
 	}
 
-	protected int getVirtualSize(PortableExecutable pe, SectionHeader[] sections,
+	protected int getHeaderSize(PortableExecutable pe, List<SectionHeader> sections,
 			AddressSpace space) {
 		DOSHeader dosHeader = pe.getDOSHeader();
-		OptionalHeader optionalHeader = pe.getNTHeader().getOptionalHeader();
-		int virtualSize = optionalHeader.is64bit() ? Constants.IMAGE_SIZEOF_NT_OPTIONAL64_HEADER
-				: Constants.IMAGE_SIZEOF_NT_OPTIONAL32_HEADER;
-		virtualSize += FileHeader.IMAGE_SIZEOF_FILE_HEADER + 4;
-		virtualSize += dosHeader.e_lfanew();
-		if (optionalHeader.getSizeOfHeaders() > virtualSize) {
-			virtualSize = (int) optionalHeader.getSizeOfHeaders();
+		NTHeader ntHeader = pe.getNTHeader();
+		FileHeader fileHeader = ntHeader.getFileHeader();
+		OptionalHeader optionalHeader = ntHeader.getOptionalHeader();
+		
+		int optionalHeaderSize = 0;
+		if (optionalHeader != null) {
+			// The SizeOfOptionalHeader field can be defined to be much larger than the actual size
+			// of the structure, but we must respect it
+			optionalHeaderSize = Math.max(fileHeader.getSizeOfOptionalHeader(),
+				optionalHeader.is64bit() ? Constants.IMAGE_SIZEOF_NT_OPTIONAL64_HEADER
+						: Constants.IMAGE_SIZEOF_NT_OPTIONAL32_HEADER);
 		}
 
-		if (optionalHeader.getFileAlignment() == optionalHeader.getSectionAlignment()) {
-			if (optionalHeader.getFileAlignment() <= 0x800) {
-				Msg.warn(this,
-					"File and section alignments identical - possible driver or sectionless image");
-			}
+		int size = dosHeader.e_lfanew();
+		size += NTHeader.SIZEOF_SIGNATURE;
+		size += FileHeader.IMAGE_SIZEOF_FILE_HEADER;
+		size += optionalHeaderSize;
+		size += SectionHeader.IMAGE_SIZEOF_SECTION_HEADER * fileHeader.getNumberOfSections();
+
+		if (optionalHeader != null) {
+			size = PeUtils.alignUp(Math.max(size, optionalHeader.getSizeOfHeaders()),
+				optionalHeader.getFileAlignment());
 		}
-		//long max = space.getMaxAddress().getOffset() - optionalHeader.getImageBase();
-		//if (virtualSize > max) {
-		//	virtualSize = (int) max;
-		//	Msg.error(this, "Possible truncation of image at "+Long.toHexString(optionalHeader.getImageBase()));
-		//}
-		return virtualSize;
+		
+		return size;
 	}
 
-	private void processEntryPoints(NTHeader ntHeader, Program prog, TaskMonitor monitor) {
+	private void processEntryPoints(NTHeader ntHeader, Program prog, TaskMonitor monitor,
+			MessageLog log) {
 		if (monitor.isCancelled()) {
 			return;
 		}
@@ -794,7 +735,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		if (ptr < 0) {
 			if (entry != 0 ||
 				(ntHeader.getFileHeader().getCharacteristics() & FileHeader.IMAGE_FILE_DLL) == 0) {
-				Msg.warn(this, "Virtual entry point at " + Long.toHexString(entry));
+				log.appendMsg("NOTE: Virtual entry point at 0x%x".formatted(entry));
 			}
 		}
 		Address baseAddr = space.getAddress(entry);
@@ -810,11 +751,11 @@ public class PeLoader extends AbstractPeDebugLoader {
 			if (entry > 0) {
 				try {
 					symTable.createLabel(entryAddr, "__x86_CIL_", SourceType.IMPORTED);
-					markAsCode(prog, entryAddr);
+					markProperty(prog, entryAddr, Program.CODE_MAP_NAME);
 					symTable.addExternalEntryPoint(entryAddr);
 				}
 				catch (InvalidInputException e) {
-					Msg.warn(this,
+					log.appendMsg(
 						"Backwards compatible native entry point in the CIL binary couldn't be processed");
 				}
 			}
@@ -826,7 +767,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		try {
 			// mark up entry (either Native or IL)
 			symTable.createLabel(entryAddr, "entry", SourceType.IMPORTED);
-			markAsCode(prog, entryAddr);
+			markProperty(prog, entryAddr, Program.CODE_MAP_NAME);
 		}
 		catch (InvalidInputException e) {
 			// ignore
@@ -897,9 +838,41 @@ public class PeLoader extends AbstractPeDebugLoader {
 		processDebug(parser, ntHeader, sectionToAddress, program, options, monitor);
 	}
 
+	private void reportAnomalies(PortableExecutable pe, TaskMonitor monitor, MessageLog log) {
+
+		NTHeader ntHeader = pe.getNTHeader();
+		FileHeader fileHeader = ntHeader.getFileHeader();
+		OptionalHeader optionalHeader = ntHeader.getOptionalHeader();
+		final int PAGE_SIZE = fileHeader.getDefaultPageSize();
+
+		int fileAlignment = optionalHeader.getFileAlignment();
+		if (fileAlignment < 0x200 || fileAlignment > 0x10000 || fileAlignment % 2 != 0) {
+			log.appendMsg("NOTE: File alignment is not a power of 2 between 512 and 64k: 0x%x"
+					.formatted(fileAlignment));
+		}
+
+		int sectionAlignment = optionalHeader.getSectionAlignment();
+		if (sectionAlignment < fileAlignment) {
+			log.appendMsg(
+				"NOTE: Section alignment (0x%x) is not greater than or equal to file alignment (0x%x)"
+						.formatted(sectionAlignment, fileAlignment));
+		}
+
+		if (sectionAlignment < PAGE_SIZE && sectionAlignment != fileAlignment) {
+			log.appendMsg(
+				"NOTE: Section alignment (0x%x) is less than page size (0x%x) but doesn't match file alignment (0x%x)"
+						.formatted(sectionAlignment, PAGE_SIZE, fileAlignment));
+		}
+	}
+
 	@Override
 	public String getName() {
 		return PE_NAME;
+	}
+
+	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("exe", "dll", "sys");
 	}
 
 	public static class CompilerOpinion {
@@ -925,9 +898,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			BorlandCpp("borland:c++", "borlandcpp"),
 			BorlandUnk("borland:unknown", "borlandcpp"),
 			CLI("cli", "cli"),
-			Rustc(RustConstants.RUST_COMPILER, RustConstants.RUST_COMPILER),
 			GOLANG("golang", "golang"),
-			Swift(SwiftUtils.SWIFT_COMPILER, SwiftUtils.SWIFT_COMPILER),
 			Unknown("unknown", "unknown"),
 
 			// The following values represent the presence of ambiguous indicators
@@ -981,34 +952,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 			DOSHeader dh = pe.getDOSHeader();
 
-			// Check for Rust.  Program object is required, which may be null.
-			try {
-				if (program != null && RustUtilities.isRust(program,
-					program.getMemory().getBlock(".rdata"), monitor)) {
-					try {
-						int extensionCount = RustUtilities.addExtensions(program, monitor,
-							RustConstants.RUST_EXTENSIONS_WINDOWS);
-						log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
-					}
-					catch (IOException e) {
-						log.appendMsg("Rust error: " + e.getMessage());
-					}
-					return CompilerEnum.Rustc;
-				}
-			}
-			catch (CancelledException e) {
-				// Move on
-			}
-
-			// Check for Swift
-			List<String> sectionNames =
-				Arrays.stream(pe.getNTHeader().getFileHeader().getSectionHeaders())
-						.map(section -> section.getName())
-						.toList();
-			if (SwiftUtils.isSwift(sectionNames)) {
-				return CompilerEnum.Swift;
-			}
-
 			// Check for managed code (.NET)
 			if (pe.getNTHeader().getOptionalHeader().isCLI()) {
 				return CompilerEnum.CLI;
@@ -1043,8 +986,11 @@ public class PeLoader extends AbstractPeDebugLoader {
 				}
 			} // End PE header offset check
 
-			byte[] asm = provider.readBytes(0x40, 256);
+			if (0x40 + 256 > provider.length()) {
+				return CompilerEnum.Unknown;
+			}
 			asmChoice = CompilerEnum.Unknown;
+			byte[] asm = provider.readBytes(0x40, 256);
 			if (Arrays.compare(asm, 0, asm16_Borland.length, asm16_Borland, 0,
 				asm16_Borland.length) == 0) {
 				asmChoice = CompilerEnum.BorlandUnk;

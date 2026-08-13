@@ -131,6 +131,12 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public E getSelectedItem() {
+		return (E) super.getSelectedItem();
+	}
+
 	/**
 	 * Returns the text in combobox's editor text component
 	 * @return  the text in combobox's editor text component

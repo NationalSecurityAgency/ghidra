@@ -564,10 +564,16 @@ public class ExtensionUtils {
 
 		log.trace("Unzipping extension from " + file);
 
+		String extName = extension.getName();
+		if (extName.contains("..")) {
+			Msg.error(ExtensionUtils.class, "Invalid extension name; name contains path elements");
+			return false;
+		}
+
 		ApplicationLayout layout = Application.getApplicationLayout();
 		ResourceFile installDir = layout.getExtensionInstallationDirs().get(0);
 		File installDirRoot = installDir.getFile(false);
-		File destinationFolder = new File(installDirRoot, extension.getName());
+		File destinationFolder = new File(installDirRoot, extName);
 		if (hasExistingExtension(destinationFolder, monitor)) {
 			return false;
 		}

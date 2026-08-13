@@ -17,9 +17,7 @@ package ghidra.graph.viewer.layout;
 
 import java.awt.geom.Point2D;
 import java.util.*;
-
-import org.apache.commons.collections4.TransformerUtils;
-import org.apache.commons.collections4.map.TransformedMap;
+import java.util.Map.Entry;
 
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import ghidra.graph.VisualGraph;
@@ -78,13 +76,34 @@ public class LayoutPositions<V extends VisualVertex, E extends VisualEdge<V>> {
 	}
 
 	private void setVertexLocations(Map<V, Point2D> newVertexLocations) {
-		this.vertexLocations = TransformedMap.transformedMap(newVertexLocations,
-			TransformerUtils.nopTransformer(), TransformerUtils.cloneTransformer());
+
+		Map<V, Point2D> newMap = new HashMap<>();
+		Set<Entry<V, Point2D>> entries = newVertexLocations.entrySet();
+		for (Entry<V, Point2D> entry : entries) {
+			V key = entry.getKey();
+			Point2D value = entry.getValue();
+			newMap.put(key, (Point2D) value.clone());
+		}
+
+		this.vertexLocations = newMap;
 	}
 
 	private void setEdgeArticulations(Map<E, List<Point2D>> newEdgeArticulations) {
-		this.edgeArticulations = TransformedMap.transformedMap(newEdgeArticulations,
-			TransformerUtils.nopTransformer(), TransformerUtils.cloneTransformer());
+
+		Map<E, List<Point2D>> newMap = new HashMap<>();
+		Set<Entry<E, List<Point2D>>> entries = newEdgeArticulations.entrySet();
+		for (Entry<E, List<Point2D>> entry : entries) {
+			E key = entry.getKey();
+			List<Point2D> value = entry.getValue();
+			List<Point2D> newList = new ArrayList<>();
+			for (Point2D p : value) {
+				newList.add(p);
+			}
+
+			newMap.put(key, newList);
+		}
+
+		this.edgeArticulations = newMap;
 	}
 
 	public Map<V, Point2D> getVertexLocations() {

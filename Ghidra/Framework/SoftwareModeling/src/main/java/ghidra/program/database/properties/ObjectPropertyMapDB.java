@@ -28,6 +28,7 @@ import ghidra.program.util.ChangeManager;
 import ghidra.util.Lock.Closeable;
 import ghidra.util.Msg;
 import ghidra.util.Saveable;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ClassTranslator;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -133,9 +134,10 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 	 */
 	@SuppressWarnings("unchecked")
 	public static Class<? extends Saveable> getSaveableClassForName(String classPath) {
-		Class<?> c = null;
+		Class<? extends Saveable> c = null;
 		try {
-			c = Class.forName(classPath);
+			c = ClassSearcher.forNameSafe(classPath, Saveable.class,
+				ObjectPropertyMapDB.class.getClassLoader());
 		}
 		catch (ClassNotFoundException e) {
 			// Check the classNameMap.
@@ -143,10 +145,10 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 			if (newClassPath != null) {
 				classPath = newClassPath;
 				try {
-					c = Class.forName(newClassPath);
+					c = ClassSearcher.forNameSafe(newClassPath, Saveable.class,
+						ObjectPropertyMapDB.class.getClassLoader());
 				}
 				catch (ClassNotFoundException e1) {
-
 					// Since we can't get the class, at least handle it generically.
 				}
 			}
@@ -159,7 +161,7 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 				"Object property class does not implement Saveable interface: " + classPath);
 		}
 		// If unable to get valid Saveable class use generic implementation
-		return (c != null) ? (Class<? extends Saveable>) c : GenericSaveable.class;
+		return (c != null) ? c : GenericSaveable.class;
 	}
 
 	/**

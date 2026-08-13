@@ -83,11 +83,36 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 			return HAND_CURSOR;
 		}
 
-		if (mousedDestinationComponent != null) {
-			return mousedDestinationComponent.getCursor();
+		Cursor c = getDestinationCursor();
+		if (c != null) {
+			return c;
 		}
 
 		return DEFAULT_CURSOR;
+	}
+
+	private Cursor getDestinationCursor() {
+
+		if (mousedDestinationComponent == null) {
+			return null;
+		}
+
+		/*
+		 						Unusual Code
+		 					
+		 	We'd like to let the component define the cursor to use.  The component's default 
+		 	getCursor() methods will walk the hierarchy to find a cursor if one is not set.  We only
+		 	want the cursor if the component has one, not the parent's.  If we use the graph  
+		 	viewer's' cursor, then the cursor doesn't change when hovering over a node.  Thus, if 
+		 	the cursor is different than the viewer's, assume it is a valid cursor for that node. 
+		 */
+		Cursor componentCursor = mousedDestinationComponent.getCursor();
+		Cursor viewerCursor = viewer.getCursor();
+		if (componentCursor != viewerCursor) {
+			return componentCursor;
+		}
+
+		return null;
 	}
 
 	public boolean isGrabArea() {
@@ -240,13 +265,13 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 			int scrollAmount = wheelEvent.getScrollAmount();
 			int wheelRotation = wheelEvent.getWheelRotation();
 			return new MouseWheelEvent(source, ev.getID(), ev.getWhen(),
-				ev.getModifiers() | ev.getModifiersEx(), (int) clickPoint.getX(),
+				ev.getModifiersEx(), (int) clickPoint.getX(),
 				(int) clickPoint.getY(), ev.getClickCount(), ev.isPopupTrigger(),
 				scrollType, scrollAmount, wheelRotation);
 		}
 
 		return new MouseEvent(source, ev.getID(), ev.getWhen(),
-			ev.getModifiers() | ev.getModifiersEx(), (int) clickPoint.getX(),
+			ev.getModifiersEx(), (int) clickPoint.getX(),
 			(int) clickPoint.getY(), ev.getClickCount(), ev.isPopupTrigger(),
 			ev.getButton());
 	}

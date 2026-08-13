@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ghidratrace"
-version = "12.1"
+version = "12.2"
 authors = [
   { name="Ghidra Development Team" },
 ]

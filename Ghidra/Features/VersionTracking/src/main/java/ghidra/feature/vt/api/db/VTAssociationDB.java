@@ -79,11 +79,6 @@ public class VTAssociationDB extends DbObject implements VTAssociation {
 	}
 
 	@Override
-	protected boolean refresh() {
-		return refresh(null);
-	}
-
-	@Override
 	protected boolean refresh(DBRecord associationRecord) {
 		if (associationRecord == null) {
 			associationRecord = associationDBM.getAssociationRecord(key);

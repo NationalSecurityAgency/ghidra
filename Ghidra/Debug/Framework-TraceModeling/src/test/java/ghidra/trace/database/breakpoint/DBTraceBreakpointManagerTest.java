@@ -29,7 +29,7 @@ import db.Transaction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.target.schema.XmlSchemaContext;
@@ -93,7 +93,7 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 		try (Transaction tx = b.startTransaction()) {
 			breakpointManager.addBreakpoint("Breakpoints[0]", Lifespan.span(0, 10),
 				b.addr(0x00400000),
-				Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE), true, "main");
+				Set.of(), CommonSet.SWX.kinds(), true, "main");
 		}
 
 		try (Transaction tx = b.startTransaction()) {
@@ -114,13 +114,13 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 			// For table mode, ensure the answer is the same as object mode
 			breakMain = breakpointManager.addBreakpoint("Breakpoints[0]", Lifespan.span(0, 10),
 				b.addr(0x00400000),
-				Set.of(thread), Set.of(TraceBreakpointKind.SW_EXECUTE), true, "main");
+				Set.of(thread), CommonSet.SWX.kinds(), true, "main");
 			breakVarA = breakpointManager.addBreakpoint("Breakpoints[1]", Lifespan.span(0, 10),
 				b.range(0x00600010, 0x00600013),
-				Set.of(thread), Set.of(TraceBreakpointKind.WRITE), false, "varA");
+				Set.of(thread), CommonSet.WRITE.kinds(), false, "varA");
 			breakVarB = breakpointManager.addBreakpoint("Breakpoints[1]", Lifespan.span(11, 20),
 				b.range(0x00600020, 0x00600023),
-				Set.of(thread), Set.of(TraceBreakpointKind.WRITE), false, "varB");
+				Set.of(thread), CommonSet.WRITE.kinds(), false, "varB");
 		}
 	}
 
@@ -231,12 +231,12 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 	@Test
 	public void testSetGetKinds() throws Exception {
 		addBreakpoints();
-		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), Set.copyOf(breakMain.getKinds(0)));
+		assertEquals(CommonSet.SWX.kinds(), Set.copyOf(breakMain.getKinds(0)));
 		try (Transaction tx = b.startTransaction()) {
-			breakMain.getSpecification().setKinds(0, Set.of(TraceBreakpointKind.HW_EXECUTE));
-			assertEquals(Set.of(TraceBreakpointKind.HW_EXECUTE), Set.copyOf(breakMain.getKinds(0)));
+			breakMain.getSpecification().setKinds(0, CommonSet.HWX.kinds());
+			assertEquals(CommonSet.HWX.kinds(), Set.copyOf(breakMain.getKinds(0)));
 		}
-		assertEquals(Set.of(TraceBreakpointKind.HW_EXECUTE), Set.copyOf(breakMain.getKinds(0)));
+		assertEquals(CommonSet.HWX.kinds(), Set.copyOf(breakMain.getKinds(0)));
 	}
 
 	@Test

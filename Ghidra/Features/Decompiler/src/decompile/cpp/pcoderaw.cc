@@ -96,7 +96,7 @@ bool VarnodeData::isContiguous(const VarnodeData &lo) const
 OpCode PcodeOpRaw::decode(Decoder &decoder,int4 isize,VarnodeData *invar,VarnodeData **outvar)
 
 {
-  OpCode opcode = (OpCode)decoder.readSignedInteger(ATTRIB_CODE);
+  OpCode opcode = decoder.readOpcode(ATTRIB_CODE);
   uint4 subId = decoder.peekElement();
   if (subId == ELEM_VOID) {
     decoder.openElement();

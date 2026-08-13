@@ -119,10 +119,12 @@ public class RepositoryManager {
 	 * given name
 	 * @throws UserAccessException if the user does not exist in
 	 * the list of known users for this manager
+	 * @throws UserAccessException if the currentUser does not have
+	 * ability to create a repository
 	 * @throws IOException if there was an error creating the repository
 	 */
 	public synchronized Repository createRepository(String currentUser, String name)
-			throws IOException, DuplicateFileException {
+			throws UserAccessException, IOException, DuplicateFileException {
 
 		if (isAnonymousUser(currentUser)) {
 			throw new UserAccessException("Anonymous user not permitted to create repository");
@@ -147,7 +149,6 @@ public class RepositoryManager {
 		}
 
 		Repository rep = new Repository(this, currentUser, f, name);
-		log(name, null, "repository created", currentUser);
 		repositoryMap.put(name, rep);
 		return rep;
 	}
@@ -187,9 +188,11 @@ public class RepositoryManager {
 	 * Delete a specified repository.
 	 * @param currentUser current user
 	 * @param name repository name
+	 * @throws UserAccessException if currentUser does not have Admin priviledge
 	 * @throws IOException if error occurs while removing repository
 	 */
-	public synchronized void deleteRepository(String currentUser, String name) throws IOException {
+	public synchronized void deleteRepository(String currentUser, String name)
+			throws UserAccessException, IOException {
 
 		if (isAnonymousUser(currentUser)) {
 			throw new UserAccessException("Anonymous user not permitted to delete repository");
@@ -433,22 +436,12 @@ public class RepositoryManager {
 		return host;
 	}
 
-	public static void log(String repositoryName, String path, String msg, String user) {
+	static void log(String repositoryName, String path, String msg) {
 		StringBuffer buf = new StringBuffer();
 		if (repositoryName != null) {
 			buf.append("[");
 			buf.append(repositoryName);
 			buf.append("]");
-		}
-		String host = RepositoryManager.getRMIClient();
-		String userStr = user;
-		if (userStr != null) {
-			if (host != null) {
-				userStr += "@" + host;
-			}
-		}
-		else {
-			userStr = host;
 		}
 		if (path != null) {
 			buf.append(path);
@@ -457,11 +450,6 @@ public class RepositoryManager {
 			buf.append(": ");
 		}
 		buf.append(msg);
-		if (userStr != null) {
-			buf.append(" (");
-			buf.append(userStr);
-			buf.append(")");
-		}
 		log.info(buf.toString());
 	}
 
@@ -471,8 +459,10 @@ public class RepositoryManager {
 	 * @param repositoriesRootDir repositories root directory
 	 * @param includeUserAccessDetails if true additional user access details will displayed 
 	 * for each repository
+	 * @param allUsers set of all valid users known to server
 	 */
-	static void listRepositories(File repositoriesRootDir, boolean includeUserAccessDetails) {
+	static void listRepositories(File repositoriesRootDir, boolean includeUserAccessDetails,
+			Set<String> allUsers) {
 		String[] names = RepositoryManager.getRepositoryNames(repositoriesRootDir);
 		System.out.println("\nRepositories:");
 		if (names.length == 0) {
@@ -507,7 +497,7 @@ public class RepositoryManager {
 			System.out.println("  " + name + (type == null ? "" : (" - uses " + type)));
 
 			if (includeUserAccessDetails) {
-				System.out.print(Repository.getFormattedUserPermissions(repoDir, "    "));
+				System.out.print(Repository.getFormattedUserPermissions(repoDir, allUsers, "    "));
 			}
 		}
 	}
@@ -517,8 +507,10 @@ public class RepositoryManager {
 	 * This is intended to be used with the svrAdmin console command
 	 * @param repositoriesRootDir repositories root directory
 	 * @param usernameSet set of users whose details should be displayed
+	 * @param allUsers set of all valid users known to server
 	 */
-	static void listRepositories(File repositoriesRootDir, Set<String> usernameSet) {
+	static void listRepositories(File repositoriesRootDir, Set<String> usernameSet,
+			Set<String> allUsers) {
 		String[] names = RepositoryManager.getRepositoryNames(repositoriesRootDir);
 		if (names.length == 0) {
 			System.out.println("   <No repositories have been created>");
@@ -530,7 +522,7 @@ public class RepositoryManager {
 			File repoDir = new File(repositoriesRootDir, NamingUtilities.mangle(name));
 
 			String formattedAccessList =
-				Repository.getFormattedUserPermissions(repoDir, "    ", usernameSet);
+				Repository.getFormattedUserPermissions(repoDir, allUsers, "    ", usernameSet);
 			if (formattedAccessList != null) {
 				if (outputHeader) {
 					System.out.println("\nRepositories:");
@@ -574,8 +566,8 @@ public class RepositoryManager {
 	 * @throws IOException if error occured while updating repository access lists.
 	 */
 	void userRemoved(String username) throws IOException {
-		for (String repName : getRepositoryNames()) {
-			getRepository(repName).removeUser(username);
+		for (Repository repo : repositoryMap.values()) {
+			repo.removeUser(username);
 		}
 	}
 

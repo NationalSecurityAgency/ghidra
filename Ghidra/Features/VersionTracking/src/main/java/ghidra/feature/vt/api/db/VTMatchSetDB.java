@@ -289,7 +289,7 @@ public class VTMatchSetDB extends DbObject implements VTMatchSet {
 	}
 
 	@Override
-	protected boolean refresh() {
+	protected boolean refresh(DBRecord rec) {
 		// MatchSets are not cached, so this method is not used
 		return true;
 	}

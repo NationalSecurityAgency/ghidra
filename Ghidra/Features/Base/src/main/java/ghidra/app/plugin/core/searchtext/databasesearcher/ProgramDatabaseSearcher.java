@@ -64,6 +64,7 @@ public class ProgramDatabaseSearcher implements Searcher {
 	private long totalSearchCount;
 	private AddressSet remainingAddresses;
 	private TaskMonitor monitor;
+	private CommentAddressSupplier commentSupplier;
 
 	public ProgramDatabaseSearcher(ServiceProvider serviceProvider, Program program,
 			ProgramLocation startLoc, AddressSetView set, SearchOptions options,
@@ -131,7 +132,7 @@ public class ProgramDatabaseSearcher implements Searcher {
 	}
 
 	private Address findNextSignificantAddress() {
-		Address nextAddress = null;
+		Address nextAddress = commentSupplier.advance(currentAddress);
 		for (ProgramDatabaseFieldSearcher searcher : searchers) {
 			if (monitor.isCancelled()) {
 				return null;
@@ -179,17 +180,22 @@ public class ProgramDatabaseSearcher implements Searcher {
 			UserSearchUtils.createSearchPattern(options.getText(), options.isCaseSensitive());
 		BrowserCodeUnitFormat format = new BrowserCodeUnitFormat(serviceProvider, false);
 
+		// this comment supplier will be used in all the comment searchers and is explicitly 
+		// advanced in the findNextSignificantAddress() method
+		commentSupplier = new CommentAddressSupplier(program, trimmedSet, forward);
+
+		// create the searchers in the order as displayed in the default listing panel field layout
 		if (options.searchComments()) {
-			searchers.add(new CommentFieldSearcher(program, adjustedStart, trimmedSet, forward,
-				pattern, CommentType.PLATE));
+			searchers.add(new CommentFieldSearcher(commentSupplier, program, adjustedStart,
+				trimmedSet, forward, pattern, CommentType.PLATE));
 		}
 		if (options.searchFunctions()) {
 			searchers.add(
 				new FunctionFieldSearcher(program, adjustedStart, trimmedSet, forward, pattern));
 		}
 		if (options.searchComments()) {
-			searchers.add(new CommentFieldSearcher(program, adjustedStart, trimmedSet, forward,
-				pattern, CommentType.PRE));
+			searchers.add(new CommentFieldSearcher(commentSupplier, program, adjustedStart,
+				trimmedSet, forward, pattern, CommentType.PRE));
 		}
 		if (options.searchLabels()) {
 			searchers.add(
@@ -224,12 +230,12 @@ public class ProgramDatabaseSearcher implements Searcher {
 					program, adjustedStart, trimmedSet, forward, pattern, format));
 		}
 		if (options.searchComments()) {
-			searchers.add(new CommentFieldSearcher(program, adjustedStart, trimmedSet, forward,
-				pattern, CommentType.EOL));
-			searchers.add(new CommentFieldSearcher(program, adjustedStart, trimmedSet, forward,
-				pattern, CommentType.REPEATABLE));
-			searchers.add(new CommentFieldSearcher(program, adjustedStart, trimmedSet, forward,
-				pattern, CommentType.POST));
+			searchers.add(new CommentFieldSearcher(commentSupplier, program, adjustedStart,
+				trimmedSet, forward, pattern, CommentType.EOL));
+			searchers.add(new CommentFieldSearcher(commentSupplier, program, adjustedStart,
+				trimmedSet, forward, pattern, CommentType.REPEATABLE));
+			searchers.add(new CommentFieldSearcher(commentSupplier, program, adjustedStart,
+				trimmedSet, forward, pattern, CommentType.POST));
 		}
 	}
 

@@ -29,7 +29,6 @@ import org.apache.commons.lang3.StringUtils;
 import docking.framework.DockingApplicationConfiguration;
 import docking.widgets.label.GDLabel;
 import generic.theme.GThemeDefaults.Colors.Messages;
-import generic.theme.Gui;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.framework.Application;
@@ -777,8 +776,6 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 		// changed name. This is needed to map a data type's old path name to the new one.
 		performClassSearching(appConfig.getTaskMonitor());
 
-		fixupGUI();
-
 		UniversalIdGenerator.initialize();
 		final JFrame frame = new JFrame("Transform Data Type Archive");
 		frame.setLayout(new GridBagLayout());
@@ -900,23 +897,4 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 			Msg.debug(this, "Class searching unexpectedly cancelled.");
 		}
 	}
-
-	public static void fixupGUI() {
-		// Make the test look & feel as it would normally.
-		SystemUtilities.runSwingNow(() -> {
-			try {
-				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			}
-			catch (Exception e1) {
-				Msg.debug(DataTypeArchiveTransformer.class,
-					"Unable to install the system Look and Feel");
-			}
-		});
-
-		// Fix up the default fonts that Java 1.5.0 changed to Courier, which looked terrible.
-		Font f = Gui.getFont("font.monospaced");
-		UIManager.put("PasswordField.font", f);
-		UIManager.put("TextArea.font", f);
-	}
-
 }

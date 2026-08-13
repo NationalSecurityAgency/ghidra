@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -237,7 +237,7 @@ public abstract class AbstractDependencyGraph<T> {
 	 * graph, dependencies will be removed and additional values will be eligible to be returned
 	 * by this method.  Once a value has been retrieved using this method, it will be considered
 	 * "visited" and future calls to this method will not include those values.  To continue
-	 * processing the values in the graph, all values return from this method should eventually
+	 * processing the values in the graph, all values returned from this method should eventually
 	 * be deleted from the graph to "free up" other values.  NOTE: values retrieved by this method
 	 * will no longer be eligible for return by the pop() method. 
 	 *

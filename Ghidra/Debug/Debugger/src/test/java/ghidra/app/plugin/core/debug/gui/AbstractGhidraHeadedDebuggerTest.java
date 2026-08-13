@@ -823,7 +823,7 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 
 	protected File pack(DomainObject object) throws Exception {
 		File tempDir = Files.createTempDirectory("ghidra-" + name.getMethodName()).toFile();
-		File pack = new File(tempDir, "obj" + System.identityHashCode(object) + ".gzf");
+		File pack = new File(tempDir, "obj" + System.identityHashCode(object) + ".gzt");
 		object.saveToPackedFile(pack, monitor);
 		return pack;
 	}

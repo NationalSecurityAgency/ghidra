@@ -136,7 +136,7 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 
 		decompile("10059a3"); // function that calls 'ghidra' 
 
-		int line = 35;
+		int line = 33;
 		int character = 1;
 		assertToken("ghidra", line, character);
 		setDecompilerLocation(line, character);
@@ -171,7 +171,7 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 
 		decompile("10059a3"); // function that calls 'ghidra' 
 
-		int line = 35;
+		int line = 33;
 		int character = 1;
 		assertToken("ghidra", line, character);
 		setDecompilerLocation(line, character);

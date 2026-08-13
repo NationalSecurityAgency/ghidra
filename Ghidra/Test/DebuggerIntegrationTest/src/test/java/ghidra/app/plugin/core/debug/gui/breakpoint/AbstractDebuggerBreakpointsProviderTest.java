@@ -50,7 +50,7 @@ import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.SystemUtilities;
@@ -107,7 +107,7 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 						TaskMonitor.DUMMY, false);
 			program.getBookmarkManager()
 					.setBookmark(addr(program, 0x00400123), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
-						"SW_EXECUTE;1", "");
+						"x;1", "");
 		}
 	}
 
@@ -153,7 +153,7 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 			Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
 		assertEquals("55550123", row.getAddress().toString());
 		assertEquals(trace, row.getDomainObject());
-		assertEquals("SW_EXECUTE", row.getKinds());
+		assertEquals("x", row.getKind());
 		assertEquals(State.INCONSISTENT_ENABLED, row.getState());
 	}
 
@@ -197,7 +197,7 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 			Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
 		assertEquals("00400123", row.getAddress().toString());
 		assertEquals(program, row.getDomainObject());
-		assertEquals("SW_EXECUTE", row.getKinds());
+		assertEquals("x", row.getKind());
 		assertEquals(State.INEFFECTIVE_ENABLED, row.getState());
 	}
 
@@ -534,7 +534,7 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 		});
 
 		performAction(breakpointsProvider.actionMakeBreakpointsEffective);
-		handleSetBreakpointInvocation(TraceBreakpointKindSet.SW_EXECUTE, 0x55550123);
+		handleSetBreakpointInvocation(CommonSet.SWX.kinds(), 0x55550123);
 
 		waitForPass(() -> {
 			assertFalse(breakpointsProvider.actionMakeBreakpointsEffective.isEnabled());

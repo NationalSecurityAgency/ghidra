@@ -1,22 +1,68 @@
 # Ghidra Server serialization filter patterns
 # See java.io.ObjectInputFilter.Config#createFilter(String)
-# 
-# This file establishes allowed and disallowed inbound class de-serialization 
-# rules for the Ghidra Server.  If not specifically allowed or disallowed a 
-# de-serialized class will be subject to an internal filter which allows all 
-# primitive and primitive array classes while rejecting all other classes.
-#
-
-java.base/java.lang.*;
-java.base/java.security.**;
-java.base/javax.security.**;
-java.base/sun.security.**;
-java.base/java.util.**;
 
 ghidra.framework.remote.GhidraPrincipal;
 ghidra.framework.remote.AnonymousCallback;
 ghidra.framework.remote.SSHSignatureCallback;
 ghidra.framework.remote.SignatureCallback;
 ghidra.framework.remote.User;
-ghidra.framework.remote.User[];
+[Lghidra.framework.remote.User;
 ghidra.framework.store.CheckoutType;
+
+java.lang.Object;
+java.lang.String;
+java.lang.Class;
+java.lang.Enum;
+
+java.util.Collections$SynchronizedSet;
+java.util.Collections$SynchronizedCollection;
+java.util.LinkedList;
+
+java.security.cert.Certificate$CertificateRep;
+java.security.cert.X509Certificate;
+[Ljava.security.cert.X509Certificate;
+
+javax.security.auth.Subject;
+javax.security.auth.Subject$*;
+javax.security.auth.x500.X500Principal;
+[Ljavax.security.auth.x500.X500Principal;
+javax.security.auth.callback.Callback;
+[Ljavax.security.auth.callback.Callback;
+javax.security.auth.callback.NameCallback;
+javax.security.auth.callback.PasswordCallback;
+
+# TODO: Server Remote API needs to be revised serialize certificates in PEM form.
+# This affects ghidra.framework.remote.SignatureCallback implementation.
+sun.security.x509.X509CertImpl;
+
+# RMI related classes
+
+java.rmi.server.UID;
+java.rmi.server.ObjID;
+[Ljava.rmi.server.ObjID;
+
+java.rmi.dgc.DGC;
+java.rmi.dgc.Lease;
+java.rmi.dgc.VMID;
+
+java.rmi.RemoteException;
+java.rmi.AccessException;
+java.rmi.ConnectException;
+java.rmi.ConnectIOException;
+java.rmi.MarshalException;
+java.rmi.UnmarshalException;
+java.rmi.NoSuchObjectException;
+java.rmi.ServerException;
+java.rmi.ServerRuntimeException;
+java.rmi.UnexpectedException;
+java.rmi.UnknownHostException;
+
+# The following additional entries may be required if using JMX over RMI for remote
+# profiling (e.g., VisualVM).
+
+#javax.management.remote.rmi.RMIConnectionImpl_Stub;
+#javax.management.remote.rmi.RMIServerImpl_Stub;
+#java.rmi.server.RemoteObjectInvocationHandler;
+#sun.rmi.server.UnicastRef;
+#sun.rmi.transport.LiveRef;
+

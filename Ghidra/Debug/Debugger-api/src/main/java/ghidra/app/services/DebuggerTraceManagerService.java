@@ -17,6 +17,7 @@ package ghidra.app.services;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import ghidra.async.AsyncReference;
 import ghidra.debug.api.target.Target;
@@ -237,16 +238,25 @@ public interface DebuggerTraceManagerService {
 	 * <p>
 	 * If a different domain file of the trace's name already exists, an incrementing integer is
 	 * appended. Errors are handled in the same fashion as saving a program, so there is little/no
-	 * need to invoke {@link CompletableFuture#exceptionally(java.util.function.Function)} on the
-	 * returned future. The future is returned as a means of registering follow-up actions.
-	 * 
-	 * <p>
-	 * TODO: Support save-as, prompting to overwrite, etc?
+	 * need to invoke {@link CompletableFuture#exceptionally(Function)} on the returned future. The
+	 * future is returned as a means of registering follow-up actions.
 	 * 
 	 * @param trace the trace to save
 	 * @return a future which completes when the save is finished
 	 */
 	CompletableFuture<Void> saveTrace(Trace trace);
+
+	/**
+	 * Prompt the user and save the trace to a chosen path in the project
+	 * <p>
+	 * Errors are handled in the same fashion as saving a program, so there is little/no need to
+	 * invoke {@link CompletableFuture#exceptionally(Function)} on the returned future. The future
+	 * is returned as a means of registering follow-up actions.
+	 * 
+	 * @param trace the trace to (rename and) save
+	 * @return a future which completes when the save is finished
+	 */
+	CompletableFuture<Void> saveTraceAs(Trace trace);
 
 	/**
 	 * Close the given trace

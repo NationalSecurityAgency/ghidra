@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+
+  <programcounter register="PC"/>
+
+  <data_space space="ram"/>
+
+  <volatile outputop="write" inputop="read">
+    <range space="ram" first="0x0" last="0x20"/>
+  </volatile>
+
+  <default_memory_blocks>
+    <memory_block name="sysreg" start_address="sysreg:0x0" length="0x1000" initialized="false"/>
+  </default_memory_blocks>
+
+  <default_symbols>
+    <symbol name="FETrapHandler" address="ram:0x00000030" entry="true" type="code_ptr"/>
+    <symbol name="Trap0Handler"  address="ram:0x00000040" entry="true" type="code_ptr"/>
+    <symbol name="Trap1Handler"  address="ram:0x00000050" entry="true" type="code_ptr"/>
+    <symbol name="DBTrapHandler" address="ram:0x00000060" entry="true" type="code_ptr"/>
+  </default_symbols>
+</processor_spec>

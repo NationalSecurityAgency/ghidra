@@ -244,10 +244,11 @@ public class BSimLaunchable implements GhidraLaunchable {
 	 * @param ghidraURLString is the URL string for the ghidra server
 	 * @param bsimURLString is the URL string for the bsim server
 	 * @throws MalformedURLException if there is a problem parsing the given URLs
+	 * @throws URISyntaxException if there is a problem parsing the given URLs
 	 * @throws IllegalArgumentException if unsupported URL use occurs
 	 */
 	private void setupURLs(String ghidraURLString, String bsimURLString)
-			throws MalformedURLException {
+			throws MalformedURLException, URISyntaxException {
 
 		if (ghidraURLString != null) {
 			setupGhidraURL(ghidraURLString);
@@ -493,7 +494,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	}
 
 	private void processSigAndUpdateOptions(String urlstring)
-			throws IllegalArgumentException, MalformedURLException {
+			throws IllegalArgumentException, MalformedURLException, URISyntaxException {
 		String bsimURLOption = optionValueMap.get(BSIM_URL_OPTION);
 		String configOption = optionValueMap.get(CONFIG_OPTION);
 		if (configOption != null) {
@@ -564,17 +565,19 @@ public class BSimLaunchable implements GhidraLaunchable {
 		}
 	}
 
-	private boolean confirmDrop() throws IOException {
+	private boolean confirmDrop() {
 		if (booleanOptions.contains(DROP_DATABASE_FORCE_OPTION)) {
 			return true;
 		}
+		Console cons = System.console();
+		if (cons == null) {
+			System.out.println("Could not acquire console");
+			return false;
+		}
 		System.out.print("Are you sure you want to drop the database? (y/n): ");
-		try (InputStreamReader isReader = new InputStreamReader(System.in);
-				BufferedReader bReader = new BufferedReader(isReader)) {
-			String input = bReader.readLine();
-			if (input != null && input.equalsIgnoreCase("y")) {
-				return true;
-			}
+		String input = cons.readLine();
+		if (input.equalsIgnoreCase("y")) {
+			return true;
 		}
 		System.out.println("Database NOT dropped");
 		return false;

@@ -938,7 +938,7 @@ public class FloatFormat {
 	public BigInteger opNotEqual(BigInteger a, BigInteger b) { // a != b
 		BigFloat fa = decodeBigFloat(a);
 		BigFloat fb = decodeBigFloat(b);
-		if (fa.isNaN() | fb.isNaN()) {
+		if (fa.isNaN() || fb.isNaN()) {
 			return BigInteger.ONE;
 		}
 		BigInteger res = SystemUtilities.isEqual(fa, fb) ? BigInteger.ZERO : BigInteger.ONE;

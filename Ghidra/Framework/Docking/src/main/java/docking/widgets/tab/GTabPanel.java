@@ -253,11 +253,23 @@ public class GTabPanel<T> extends JPanel {
 			return;
 		}
 
+		clearHighlightedTab(value);
+
 		// This method is called for things like user clicks. Anytime we select the tab from the 
 		// API, also make this panel active.  This is easier on clients in that they do not have to
 		// both select and activate this panel.
 		isActive = true;
 		doUpdateSelectedTab(value);
+	}
+
+	private void clearHighlightedTab(T value) {
+		if (highlightedValue != null && highlightedValue != value) {
+			GTab<T> tab = getTab(highlightedValue);
+			if (tab != null) {
+				tab.setHighlight(false);
+			}
+			highlightedValue = null;
+		}
 	}
 
 	private boolean isAlreadySelected(T value) {
@@ -280,7 +292,6 @@ public class GTabPanel<T> extends JPanel {
 	private void doUpdateSelectedTab(T newValue) {
 
 		closeTabList();
-		highlightedValue = null;
 		T oldValue = selectedValue;
 		selectedValue = newValue;
 

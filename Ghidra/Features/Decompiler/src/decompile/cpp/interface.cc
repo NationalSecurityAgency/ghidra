@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -145,8 +145,10 @@ void IfaceStatus::pushScript(const string &filename,const string &newprompt)
 
 {
   ifstream *s = new ifstream(filename.c_str());
-  if (!*s)
+  if (!*s) {
+    delete s;
     throw IfaceParseError("Unable to open script file: "+filename);
+  }
   pushScript(s,newprompt);
 }
 
@@ -159,6 +161,10 @@ void IfaceStatus::pushScript(const string &filename,const string &newprompt)
 void IfaceStatus::pushScript(istream *iptr,const string &newprompt)
 
 {
+  if (iptr != (istream *)0) {
+    delete iptr;
+    throw IfaceExecutionError("Unable to read script from stream on this interface");
+  }
   promptstack.push_back(prompt);
   uint4 flags = 0;
   if (errorisdone)

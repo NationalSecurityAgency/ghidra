@@ -30,6 +30,7 @@ import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.util.ColorUtils;
 import util.CollectionUtils;
+import utility.function.Dummy;
 
 /**
  * Class to handle highlights for a decompiled function.
@@ -86,7 +87,6 @@ public abstract class ClangHighlightController {
 
 	// arbitrary value chosen by guessing; this can be changed if needed
 	private int maxColorBlendSize = 5;
-	private boolean isRebuilding;
 
 	private List<ClangHighlightListener> listeners = new ArrayList<>();
 
@@ -169,33 +169,19 @@ public abstract class ClangHighlightController {
 		// finished.  This allows all highlights to calculate their matches without the color 
 		// blending affecting performance.
 		//
-		isRebuilding = true;
 		Set<DecompilerHighlighter> service = getServiceHighlighters();
 		Set<DecompilerHighlighter> secondary = getSecondaryHighlighters(function);
 		Iterable<DecompilerHighlighter> it = CollectionUtils.asIterable(service, secondary);
 
-		try {
-			for (DecompilerHighlighter highlighter : it) {
-				highlighter.clearHighlights();
-				highlighter.applyHighlights();
-			}
-		}
-		finally {
-			isRebuilding = false;
+		for (DecompilerHighlighter highlighter : it) {
+			highlighter.clearHighlights();
+			highlighter.applyHighlights();
 		}
 
 		// gather all highlighted tokens and then update their color
-		Set<ClangToken> allTokens = new HashSet<>();
 		it = CollectionUtils.asIterable(service, secondary);
 		for (DecompilerHighlighter highlighter : it) {
-			TokenHighlights hlTokens = userHighlights.add(highlighter);
-			for (HighlightToken hlToken : hlTokens) {
-				allTokens.add(hlToken.getToken());
-			}
-		}
-
-		for (ClangToken token : allTokens) {
-			updateHighlightColor(token);
+			userHighlights.add(highlighter);
 		}
 	}
 
@@ -238,7 +224,6 @@ public abstract class ClangHighlightController {
 	public void clearPrimaryHighlights() {
 		Consumer<ClangToken> clearAll = token -> {
 			token.setMatchingToken(false);
-			updateHighlightColor(token);
 		};
 
 		doClearHighlights(contextHighlightTokens, clearAll);
@@ -297,7 +282,7 @@ public abstract class ClangHighlightController {
 
 		for (DecompilerHighlighter highlighter : highlighters) {
 			TokenHighlights highlights = userHighlights.getHighlights(highlighter);
-			Consumer<ClangToken> clearHighlight = token -> updateHighlightColor(token);
+			Consumer<ClangToken> clearHighlight = Dummy.consumer();
 			doClearHighlights(highlights, clearHighlight);
 		}
 		highlighters.clear();
@@ -333,7 +318,7 @@ public abstract class ClangHighlightController {
 			return;
 		}
 
-		Consumer<ClangToken> clearHighlight = token -> updateHighlightColor(token);
+		Consumer<ClangToken> clearHighlight = Dummy.consumer();
 		doClearHighlights(highlighterTokens, clearHighlight);
 		notifyListeners();
 	}
@@ -417,18 +402,6 @@ public abstract class ClangHighlightController {
 
 		// store the actual requested color
 		currentHighlights.add(new HighlightToken(clangToken, highlightColor));
-		updateHighlightColor(clangToken);
-	}
-
-	private void updateHighlightColor(ClangToken t) {
-
-		if (isRebuilding) {
-			return;
-		}
-
-		// set the color to the current combined value of all highlight types
-		Color combinedColor = getCombinedColor(t);
-		t.setHighlight(combinedColor);
 	}
 
 	private void add(Set<Color> colors, HighlightToken hlToken) {

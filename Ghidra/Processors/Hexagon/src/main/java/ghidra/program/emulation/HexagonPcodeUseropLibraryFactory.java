@@ -23,7 +23,7 @@ import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibraryFactory.UseropLibrary;
 import ghidra.program.model.pcode.Varnode;
 
-@UseropLibrary("hexagon")
+@UseropLibrary(id = "hexagon")
 public class HexagonPcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	@Override
 	public <T> PcodeUseropLibrary<T> create(SleighLanguage language,

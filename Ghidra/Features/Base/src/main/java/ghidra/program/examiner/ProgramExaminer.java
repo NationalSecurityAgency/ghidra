@@ -17,6 +17,7 @@ package ghidra.program.examiner;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AccessMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -234,7 +235,7 @@ public class ProgramExaminer {
 			throw new GhidraException("Attempted to process a null file");
 		}
 		try {
-			return new RandomAccessByteProvider(file);
+			return new FileByteProvider(file, null, AccessMode.READ);
 		}
 		catch (IOException e) {
 			throw new GhidraException(e);

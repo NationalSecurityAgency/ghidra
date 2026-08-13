@@ -35,14 +35,14 @@ root.
 gradle -I gradle/support/fetchDependencies.gradle
 ```
 
-Download Maven Central dependencies and setup the repository for development.  By default, these 
+Download Maven Central dependencies and set up the repository for development.  By default, these 
 will be stored at `$HOME/.gradle/`.
 ```
 gradle prepdev
 ```
 
 Clean up repository build files.  In rare circumstances this may be necessary after a `git pull` to
-fix unexplainable compilation errors.
+fix unexplained compilation errors.
 ```
 gradle clean
 ```
@@ -113,7 +113,7 @@ access to the editable PyGhidra module, as well as the typing/stub information. 
 4. Choose `build/venv/bin/python3`
 5. Enter a value for _Interpreter Name_
 6. Check _Select All_ and press _OK_
-7. Click the _Prefined_ tab, and then _New..._
+7. Click the _Predefined_ tab, and then _New..._
 8. Choose `build/typestubs/pypredef`
 9. Click _Apply and Close_
 
@@ -284,7 +284,7 @@ Typically, it examines the target's architecture and immediately creates a trace
 
 So Ghidra does not yet support your favorite debugger?
 We believe the new system is much less daunting than the previous.
-Still, please finish reading this guide, and look carefully at the ones we have so far, and perhaps ask to see if we are already developing one.
+Still, please finish reading this guide and look carefully at the ones we have so far, and perhaps ask to see if we are already developing one.
 Of course, in time you might also search the internet to see if others are developing one.
 There are quite a few caveats and gotchas, the most notable being that this interface is still in some flux.
 When things go wrong, it could be because of, without limitation:
@@ -302,7 +302,7 @@ This is not so readily presented by Eclipse.
 You'll also need to provide launcher(s) so that Ghidra knows how to configure and start your connector.
 These are just shell scripts.
 We use bash scripts on Linux and macOS, and we use batch files on Windows.
-The ideal goal for a launcher is (after one-time configuration) the user can launch and begin debugging with a single click.
+The ideal goal for a launcher is that, after one-time configuration, the user can launch and begin debugging with a single click.
 Try to include as many common use cases as makes sense for the debugger.
 This provides the most flexibility to users and examples to power users who might create derivative launchers.
 Look at the existing launchers for examples.

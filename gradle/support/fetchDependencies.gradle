@@ -52,6 +52,7 @@ ext.FID_DIR = file("${DEPS_DIR}/fidb")
 ext.FLAT_REPO_DIR = file("${DEPS_DIR}/flatRepo")
 ext.OFFLINE = System.properties["offline"] != null
 ext.HIDE_DOWNLOAD_PROGRESS = System.properties["hideDownloadProgress"] != null
+ext.NO_ECLIPSE = System.properties["noEclipse"] != null
 ext.createdDirs = [] as Set
 
 file("${REPO_DIR}/Ghidra/application.properties").withReader { reader ->
@@ -96,22 +97,24 @@ ext.deps = [
 		destination: file("${DEPS_DIR}/GhidraServer")
 	],
 	[
-		name: "postgresql-15.13.tar.gz",
-		url: "https://ftp.postgresql.org/pub/source/v15.13/postgresql-15.13.tar.gz",
-		sha256: "afdc22b0a6e5bec7b65723756b90d44ea911e61b2f7b01c4dc5524ab813b4d89",
+		name: "postgresql-15.18.tar.gz",
+		url: "https://ftp.postgresql.org/pub/source/v15.18/postgresql-15.18.tar.gz",
+		sha256: "d32a533516edc688ebbb96ae221b605be2712edd94d7428b42a4af5644250943",
 		destination: file("${DEPS_DIR}/BSim")
 	],
 	[
 		name: "PyDev 9.3.0.zip",
 		url: "https://sourceforge.net/projects/pydev/files/pydev/PyDev%209.3.0/PyDev%209.3.0.zip",
 		sha256: "45398edf2adb56078a80bc88a919941578f0c0b363efbdd011bfd158a99b112e",
-		destination: file("${DEPS_DIR}/GhidraDev")
+		destination: file("${DEPS_DIR}/GhidraDev"),
+		eclipse: true
 	],
 	[
 		name: "cdt-8.6.0.zip",
 		url: "https://archive.eclipse.org/tools/cdt/releases/8.6/cdt-8.6.0.zip",
 		sha256: "81b7d19d57c4a3009f4761699a72e8d642b5e1d9251d2bb98df438b1e28f8ba9",
-		destination: file("${DEPS_DIR}/GhidraDev")
+		destination: file("${DEPS_DIR}/GhidraDev"),
+		eclipse: true
 	],
 	[
 		name: "vs2012_x64.fidb",
@@ -342,6 +345,12 @@ ext.deps = [
 		url: "https://files.pythonhosted.org/packages/20/12/38679034af332785aac8774540895e234f4d07f7545804097de4b666afd8/packaging-25.0-py3-none-any.whl",
 		sha256: "29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484",
 		destination: file("${DEPS_DIR}/PyGhidra/")
+	],
+	[
+		name: "typing_extensions-4.16.0-py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl",
+		sha256: "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8",
+		destination: file("${DEPS_DIR}/PyGhidra/")
 	], 
 	[
 		name: "jpype1-1.5.2-cp313-cp313-macosx_10_13_universal2.whl", 
@@ -474,6 +483,9 @@ ext.deps = [
 // Download dependencies (if necessary) and verify their hashes
 mkdirs(DOWNLOADS_DIR)
 deps.each {
+	if (NO_ECLIPSE && it.eclipse) {
+		return
+	}
 	File file = new File(DOWNLOADS_DIR, it.name)
 	if (OFFLINE || !it.sha256.equals(generateHash(file))) {
 		download(it.url, file)
@@ -486,6 +498,9 @@ deps.each {
 // Copies the downloaded dependencies to their required destination. 
 // Some downloads require pre-processing before their relevant pieces can be copied.
 deps.each {
+	if (NO_ECLIPSE && it.eclipse) {
+		return
+	}
 	def copier = { File fp ->
 		if (!OFFLINE) {
 			println "Copying " + it.name + " to " + fp

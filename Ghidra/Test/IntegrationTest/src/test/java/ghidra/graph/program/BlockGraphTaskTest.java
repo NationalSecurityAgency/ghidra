@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,8 @@ import java.util.Map;
 import org.junit.Test;
 
 import ghidra.graph.*;
+import ghidra.graph.visualization.DefaultGraphDisplayProvider;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.block.CodeBlockModel;
 import ghidra.program.util.ProgramSelection;
 import ghidra.service.graph.*;
@@ -225,6 +227,36 @@ public class BlockGraphTaskTest extends AbstractBlockGraphTest {
 		assertNotNull(e3);
 		assertNotNull(e4);
 		assertNotNull(e5);
+	}
+
+	@Test
+	public void testAppendGraph() throws Exception {
+		String modelName = blockModelService.getActiveBlockModelName();
+		CodeBlockModel model = blockModelService.getNewModelByName(modelName, program, true);
+		ProgramSelection selection =
+			new ProgramSelection(new AddressSet(addr(0x1002200), addr(0x01002203)));
+		GraphDisplayProvider graphService = new DefaultGraphDisplayProvider();
+		runSwing(() -> graphService.initialize(tool, tool.getOptions("foo")));
+		BlockGraphTask task =
+			new BlockGraphTask(new BlockFlowGraphType(), false, false,
+				false, tool, selection, null, model, graphService);
+		task.monitoredRun(TaskMonitor.DUMMY);
+		waitForSwing();
+
+		GraphDisplay display = graphService.getActiveGraphDisplay();
+
+		AttributedGraph graph = display.getGraph();
+
+		assertEquals(2, graph.getVertexCount());
+
+		selection = new ProgramSelection(new AddressSet(addr(0x01002239)));
+		task = new BlockGraphTask(new BlockFlowGraphType(), false, true, true, tool, selection,
+			null, model, graphService);
+		task.monitoredRun(TaskMonitor.DUMMY);
+		waitForSwing();
+
+		graph = display.getGraph();
+		assertEquals(3, graph.getVertexCount());
 
 	}
 

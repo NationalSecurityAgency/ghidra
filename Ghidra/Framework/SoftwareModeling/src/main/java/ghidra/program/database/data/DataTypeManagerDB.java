@@ -51,6 +51,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Function;
 import ghidra.util.*;
 import ghidra.util.Lock.Closeable;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ClassTranslator;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -2491,7 +2492,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	/**
 	 * Queue a datatype to deleted in response to another datatype being deleted.
-	 * @param id datatype ID to be removed
+	 * @param dt datatype to be deleted
+	 * @param id datatype ID to be deleted
 	 */
 	protected void addDataTypeToDelete(DataType dt, long id) {
 		if (dt instanceof DataTypeDB dbDt) {
@@ -2807,9 +2809,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			String classPath = record.getString(BuiltinDBAdapter.BUILT_IN_CLASSNAME_COL);
 			String name = record.getString(BuiltinDBAdapter.BUILT_IN_NAME_COL);
 			try {
-				Class<?> clazz;
+				Class<? extends BuiltInDataType> clazz;
 				try {
-					clazz = Class.forName(classPath);
+					clazz = ClassSearcher.forNameSafe(classPath, BuiltInDataType.class,
+						getClass().getClassLoader());
 				}
 				catch (ClassNotFoundException | NoClassDefFoundError e) {
 					// Check the classNameMap.
@@ -2818,15 +2821,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 						throw e;
 					}
 					try {
-						clazz = Class.forName(newClassPath);
+						clazz = ClassSearcher.forNameSafe(newClassPath, BuiltInDataType.class,
+							getClass().getClassLoader());
 					}
 					catch (ClassNotFoundException e1) {
 						throw e1;
 					}
 				}
 
-				BuiltInDataType bdt =
-					(BuiltInDataType) clazz.getDeclaredConstructor().newInstance();
+				BuiltInDataType bdt = clazz.getDeclaredConstructor().newInstance();
 				bdt.setName(name);
 				bdt.setCategoryPath(catPath);
 
@@ -4541,7 +4544,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * Check for cached equivalence of a type contained within this datatype manager
 	 * against another datatype. Every call to this method when {@code null} is
 	 * returned must be following by an invocation of
-	 * {@link #putCachedEquivalence(DataTypeDB, DataType, boolean)} once an
+	 * {@link #putCachedEquivalence(DataTypeDB, DataType, Boolean)} once an
 	 * equivalence determination has been made. The number of outstanding calls to
 	 * this method will be tracked. When the outstanding call count returns to zero
 	 * the cache will be cleared. <br>
@@ -4554,7 +4557,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * @return true, false or {@code null} if unknown. A {@code null} value mandates
 	 *         that the caller make a determination and put the result into the
 	 *         cache when known (see
-	 *         {@link #putCachedEquivalence(DataTypeDB, DataType, boolean)}.
+	 *         {@link #putCachedEquivalence(DataTypeDB, DataType, Boolean)}.
 	 */
 	Boolean getCachedEquivalence(DataTypeDB dataTypeDB, DataType dataType) {
 		EquivalenceCache cache = equivalenceCache.get();

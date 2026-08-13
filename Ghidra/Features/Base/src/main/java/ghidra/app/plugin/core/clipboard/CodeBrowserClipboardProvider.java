@@ -42,6 +42,7 @@ import ghidra.app.cmd.label.RenameLabelCmd;
 import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
 import ghidra.app.services.ClipboardContentProviderService;
 import ghidra.app.util.*;
+import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.listingpanel.ListingModel;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.OptionsChangeListener;
@@ -79,6 +80,8 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		new ClipboardType(DataFlavor.stringFlavor, "Memory Block Offset");
 	public static final ClipboardType CODE_TEXT_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Formatted Code");
+	public static final ClipboardType CODE_ASM_TYPE =
+		new ClipboardType(DataFlavor.stringFlavor, "Assembly Code");
 	public static final ClipboardType LABELS_COMMENTS_TYPE =
 		new ClipboardType(CodeUnitInfoTransferable.localDataTypeFlavor, "Labels and Comments");
 	public static final ClipboardType LABELS_TYPE =
@@ -101,6 +104,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		List<ClipboardType> list = new LinkedList<>();
 
 		list.add(CODE_TEXT_TYPE);
+		list.add(CODE_ASM_TYPE);
 		list.add(LABELS_COMMENTS_TYPE);
 		list.add(LABELS_TYPE);
 		list.add(COMMENTS_TYPE);
@@ -232,12 +236,22 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		if (domainFile == null) {
 			return null;
 		}
-		if (domainFile.getLocalProjectURL(null) != null) {
-			return GHIDRA_LOCAL_URL_TYPE;
+
+		try {
+			if (domainFile.getLocalProjectURL(null) != null) {
+				return GHIDRA_LOCAL_URL_TYPE;
+			}
 		}
+		catch (IllegalArgumentException e) {
+			// this can happen if the filename has characters the GhidraURL doesn't like
+			Msg.debug(this, "Can't create GhidraURL for " + domainFile.getName());
+			return null;
+		}
+
 		if (domainFile.getSharedProjectURL(null) != null) {
 			return GHIDRA_SHARED_URL_TYPE;
 		}
+
 		return null;
 	}
 
@@ -264,6 +278,9 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		}
 		else if (copyType == CODE_TEXT_TYPE) {
 			return copyCode(monitor);
+		}
+		else if (copyType == CODE_ASM_TYPE) {
+			return copyAssembly(monitor);
 		}
 		else if (copyType == LABELS_COMMENTS_TYPE) {
 			return copyLabelsComments(true, true, monitor);
@@ -521,6 +538,18 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		return createStringTransferable(g.getBuffer());
 	}
 
+	protected Transferable copyAssembly(TaskMonitor monitor) {
+		AddressSetView addressSet = getSelectedAddresses();
+		StringBuilder builder = new StringBuilder();
+
+		for (Instruction ins : currentProgram.getListing().getInstructions(addressSet, true)) {
+			builder.append(ins.toString());
+			builder.append("\n");
+		}
+
+		return createStringTransferable(builder.toString());
+	}
+
 	private Transferable copyByteString(Address address) {
 		AddressSet set = new AddressSet(address);
 		return createStringTransferable(copyBytesAsString(set, false, TaskMonitor.DUMMY));
@@ -537,6 +566,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 	/**
 	 * Gets the Local GhidraURL to the currentLocation within the currentProgram.
+	 * 
 	 * @return string transferable GhidraURL type.
 	 */
 	private Transferable copyLocalGhidraURL() {
@@ -547,6 +577,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 	/**
 	 * Gets the Shared GhidraURL to the currentLocation within the currentProgram.
+	 * 
 	 * @return string transferable GhidraURL type.
 	 */
 	private Transferable copySharedGhidraURL() {
@@ -929,6 +960,15 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		return false;
 	}
 
+	@Override
+	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
+			Object newValue) throws OptionsVetoException {
+		if (optionName.equals(ClipboardPlugin.REMOVE_QUOTES_OPTION)) {
+			includeQuotesForStringData =
+				!options.getBoolean(ClipboardPlugin.REMOVE_QUOTES_OPTION, false);
+		}
+	}
+
 //==================================================================================================
 // Unsupported Operations
 //==================================================================================================
@@ -1026,15 +1066,6 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		@Override
 		public boolean isDataFlavorSupported(DataFlavor flavor) {
 			return flavorList.contains(flavor);
-		}
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
-			Object newValue) throws OptionsVetoException {
-		if (optionName.equals(ClipboardPlugin.REMOVE_QUOTES_OPTION)) {
-			includeQuotesForStringData =
-				!options.getBoolean(ClipboardPlugin.REMOVE_QUOTES_OPTION, false);
 		}
 	}
 }

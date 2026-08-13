@@ -23,7 +23,6 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.golang.GoConstants;
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
-import ghidra.app.util.bin.format.swift.SwiftUtils;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.ProjectData;
 import ghidra.framework.options.Options;
@@ -194,6 +193,11 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 		return ELF_NAME;
 	}
 
+	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("so", "o");
+	}
+
 	/**
 	 * Attempts to detect a more specific compiler from the ELF
 	 * 
@@ -206,9 +210,6 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 		List<String> sectionNames = Arrays.stream(elf.getSections())
 				.map(ElfSectionHeader::getNameAsString)
 				.toList();
-		if (SwiftUtils.isSwift(sectionNames)) {
-			return SwiftUtils.SWIFT_COMPILER;
-		}
 		if (GoRttiMapper.hasGolangSections(sectionNames)) {
 			return GoConstants.GOLANG_CSPEC_NAME;
 		}

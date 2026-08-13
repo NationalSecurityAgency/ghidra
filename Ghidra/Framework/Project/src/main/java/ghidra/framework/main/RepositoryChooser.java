@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.net.URL;
 
 import javax.swing.*;
-import javax.swing.event.MouseInputAdapter;
+import javax.swing.event.*;
 
 import docking.ReusableDialogComponentProvider;
 import docking.widgets.button.GButton;
@@ -131,6 +131,23 @@ class RepositoryChooser extends ReusableDialogComponentProvider {
 
 		urlTextField = new JTextField("ghidra:");
 		urlTextField.getAccessibleContext().setAccessibleName("URL");
+		urlTextField.getDocument().addDocumentListener(new DocumentListener() {
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				choiceChanged();
+			}
+
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				choiceChanged();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				choiceChanged();
+			}
+		});
 
 		JPanel panel = new JPanel(new PairLayout());
 		panel.add(new GLabel("URL:"));
@@ -255,13 +272,23 @@ class RepositoryChooser extends ReusableDialogComponentProvider {
 
 		try {
 			String urlText = urlTextField.getText();
+
 			if (!GhidraURL.isGhidraURL(urlText)) {
 				setStatusText("URL must specify 'ghidra:' protocol", MessageType.ERROR);
+				setOkEnabled(false);
+				return;
 			}
-			else {
-				GhidraURL.toURL(urlText);  // check ability to form URL instance
-				setOkEnabled(true);
+
+			URL url = GhidraURL.toURL(urlText);  // check ability to form URL instance
+
+			if (!GhidraURL.isLocalURL(url) && !GhidraURL.isServerRepositoryURL(url)) {
+				setStatusText("URL must specify server repository or local project",
+					MessageType.ERROR);
+				setOkEnabled(false);
+				return;
 			}
+
+			setOkEnabled(true);
 		}
 		catch (IllegalArgumentException e) {
 			setStatusText(e.getMessage(), MessageType.ERROR);

@@ -27,6 +27,8 @@ import ghidra.program.model.data.LongDataType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.thread.TraceThread;
 import help.screenshot.GhidraScreenShotGenerator;
 
@@ -57,6 +59,10 @@ public class DebuggerWatchesPluginScreenShots extends GhidraScreenShotGenerator 
 		TraceThread thread;
 		long snap0, snap1;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(new ToySchemaBuilder()
+					.useRegistersPerThread()
+					.noRegisterGroups()
+					.build());
 			snap0 = tb.trace.getTimeManager().createSnapshot("First").getKey();
 			snap1 = tb.trace.getTimeManager().createSnapshot("Second").getKey();
 
@@ -65,7 +71,8 @@ public class DebuggerWatchesPluginScreenShots extends GhidraScreenShotGenerator 
 					.create(snap1, tb.addr(0x7fff0004), "fiveUp",
 						tb.trace.getSymbolManager().getGlobalNamespace(), SourceType.USER_DEFINED);
 
-			thread = tb.getOrAddThread("[1]", snap0);
+			thread = tb.getOrAddThread("Targets[1].Threads[1]", snap0);
+			tb.createObjectsRegsForThread(thread, Lifespan.nowOn(snap0), tb.host);
 
 			PcodeExecutor<byte[]> executor0 =
 				TraceSleighUtils.buildByteExecutor(tb.trace, snap0, thread, 0);

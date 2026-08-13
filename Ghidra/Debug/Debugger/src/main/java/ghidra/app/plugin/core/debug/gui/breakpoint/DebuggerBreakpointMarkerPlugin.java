@@ -65,7 +65,7 @@ import ghidra.program.util.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -85,8 +85,7 @@ import ghidra.util.Msg;
 	servicesRequired = {
 		DebuggerLogicalBreakpointService.class,
 		MarkerService.class,
-	}
-)
+	})
 public class DebuggerBreakpointMarkerPlugin extends Plugin {
 
 	private static final Color COLOR_BREAKPOINT_ENABLED_MARKER =
@@ -260,20 +259,17 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 		return getTraceFromContext(context) != null;
 	}
 
-	protected static long computeDefaultLength(ActionContext context,
-			Collection<TraceBreakpointKind> selected) {
-		if (selected.isEmpty() ||
-			selected.contains(TraceBreakpointKind.HW_EXECUTE) ||
-			selected.contains(TraceBreakpointKind.SW_EXECUTE)) {
+	protected static long computeDefaultLength(ActionContext context, CommonSet kind) {
+		if (kind == null || kind == CommonSet.SWX || kind == CommonSet.HWX) {
 			return 1;
 		}
 		return computeLengthFromContext(context);
 	}
 
-	protected static Set<TraceBreakpointKind> computeDefaultKinds(ActionContext ctx,
+	protected static CommonSet computeDefaultKind(ActionContext ctx,
 			Collection<TraceBreakpointKind> supported) {
 		if (supported.isEmpty()) {
-			return Set.of();
+			return null;
 		}
 		long length = computeLengthFromContext(ctx);
 		if (length == 1) {
@@ -281,27 +277,36 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 			Listing listing = loc.getProgram().getListing();
 			CodeUnit cu = listing.getCodeUnitContaining(loc.getAddress());
 			if (cu instanceof Instruction) {
+				// It may contain both, but prefer SWX
 				if (supported.contains(TraceBreakpointKind.SW_EXECUTE)) {
-					return Set.of(TraceBreakpointKind.SW_EXECUTE);
+					return CommonSet.SWX;
 				}
 				else if (supported.contains(TraceBreakpointKind.HW_EXECUTE)) {
-					return Set.of(TraceBreakpointKind.HW_EXECUTE);
+					return CommonSet.HWX;
 				}
-				return Set.of();
+				return null;
 			}
 			Data data = (Data) cu;
 			if (!data.isDefined()) {
-				if (supported.size() == 1) {
-					return Set.copyOf(supported);
+				for (CommonSet kind : CommonSet.VALUES) {
+					if (kind.kinds().equals(supported)) {
+						return kind;
+					}
 				}
-				return Set.of();
+				return null;
 			}
 		}
-		// TODO: Consider memory protections?
-		Set<TraceBreakpointKind> result =
-			new HashSet<>(Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE));
-		result.retainAll(supported);
-		return result;
+		// LATER: Consider memory protections?
+		if (supported.containsAll(CommonSet.ACCESS.kinds())) {
+			return CommonSet.ACCESS;
+		}
+		else if (supported.contains(TraceBreakpointKind.READ)) {
+			return CommonSet.READ;
+		}
+		else if (supported.contains(TraceBreakpointKind.WRITE)) {
+			return CommonSet.WRITE;
+		}
+		return null;
 	}
 
 	protected Color colorForState(State state) {
@@ -576,13 +581,12 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 	protected class SetBreakpointAction extends AbstractSetBreakpointAction {
 		public static final String GROUP = DebuggerResources.GROUP_BREAKPOINTS;
 
-		private final Set<TraceBreakpointKind> kinds;
+		private final CommonSet kind;
 
-		public SetBreakpointAction(Set<TraceBreakpointKind> kinds) {
+		public SetBreakpointAction(CommonSet kind) {
 			super(DebuggerBreakpointMarkerPlugin.this);
-			this.kinds = kinds;
-			setPopupMenuData(new MenuData(
-				new String[] { NAME, TraceBreakpointKindSet.encode(kinds) }, ICON, GROUP));
+			this.kind = kind;
+			setPopupMenuData(new MenuData(new String[] { NAME, kind.toString() }, ICON, GROUP));
 			tool.addAction(this);
 			setEnabled(true);
 		}
@@ -593,8 +597,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 				return;
 			}
 			ProgramLocation location = getSingleLocationFromContext(context);
-			long length = computeDefaultLength(context, kinds);
-			placeBreakpointDialog.prompt(tool, breakpointService, NAME, location, length, kinds,
+			long length = computeDefaultLength(context, kind);
+			placeBreakpointDialog.prompt(tool, breakpointService, NAME, location, length, kind,
 				"");
 		}
 
@@ -608,7 +612,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 				return true;
 			}
 			Set<TraceBreakpointKind> supported = getSupportedKindsFromTrace(view.getTrace());
-			return supported.containsAll(kinds);
+			return supported.containsAll(kind.kinds());
 		}
 	}
 
@@ -754,32 +758,28 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 	@AutoOptionDefined(
 		name = DebuggerResources.OPTION_NAME_COLORS_ENABLED_BREAKPOINT_COLORING_BACKGROUND,
 		description = "Whether or not to color background for memory at an enabled breakpoint",
-		help = @HelpInfo(anchor = "colors")
-	)
+		help = @HelpInfo(anchor = "colors"))
 	private boolean breakpointEnabledColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_ENABLED_BREAKPOINT_COLORING_BACKGROUND;
 
 	@AutoOptionDefined(
 		name = DebuggerResources.OPTION_NAME_COLORS_DISABLED_BREAKPOINT_COLORING_BACKGROUND,
 		description = "Whether or not to color background for memory at a disabled breakpoint",
-		help = @HelpInfo(anchor = "colors")
-	)
+		help = @HelpInfo(anchor = "colors"))
 	private boolean breakpointDisabledColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_DISABLED_BREAKPOINT_COLORING_BACKGROUND;
 
 	@AutoOptionDefined(
 		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND,
 		description = "Whether or not to color background for memory at an enabled, but ineffective, breakpoint",
-		help = @HelpInfo(anchor = "colors")
-	)
+		help = @HelpInfo(anchor = "colors"))
 	private boolean breakpointIneffEnColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND;
 
 	@AutoOptionDefined(
 		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND,
 		description = "Whether or not to color background for memory at an disabled, but ineffective, breakpoint",
-		help = @HelpInfo(anchor = "colors")
-	)
+		help = @HelpInfo(anchor = "colors"))
 	private boolean breakpointIneffDisColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND;
 
@@ -797,11 +797,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 		new AsyncDebouncer<>(AsyncTimer.DEFAULT_TIMER, 50);
 
 	// package access for testing
-	SetBreakpointAction actionSetSoftwareBreakpoint;
-	SetBreakpointAction actionSetExecuteBreakpoint;
-	SetBreakpointAction actionSetReadWriteBreakpoint;
-	SetBreakpointAction actionSetReadBreakpoint;
-	SetBreakpointAction actionSetWriteBreakpoint;
+	Map<CommonSet, SetBreakpointAction> actionsSetBreakpoint;
 	ToggleBreakpointAction actionToggleBreakpoint;
 	EnableBreakpointAction actionEnableBreakpoint;
 	DisableBreakpointAction actionDisableBreakpoint;
@@ -837,8 +833,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 	}
 
 	@AutoOptionConsumed(
-		name = DebuggerResources.OPTION_NAME_COLORS_ENABLED_BREAKPOINT_COLORING_BACKGROUND
-	)
+		name = DebuggerResources.OPTION_NAME_COLORS_ENABLED_BREAKPOINT_COLORING_BACKGROUND)
 	private void setEnabledBreakpointMarkerBackground(boolean breakpointColoringBackground) {
 		for (BreakpointMarkerSets markers : markersByProgram.values()) {
 			markers.setEnabledColoringBackground(breakpointColoringBackground);
@@ -846,8 +841,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 	}
 
 	@AutoOptionConsumed(
-		name = DebuggerResources.OPTION_NAME_COLORS_DISABLED_BREAKPOINT_COLORING_BACKGROUND
-	)
+		name = DebuggerResources.OPTION_NAME_COLORS_DISABLED_BREAKPOINT_COLORING_BACKGROUND)
 	private void setDisabledBreakpointMarkerBackground(boolean breakpointColoringBackground) {
 		for (BreakpointMarkerSets markers : markersByProgram.values()) {
 			markers.setDisabledColoringBackground(breakpointColoringBackground);
@@ -855,8 +849,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 	}
 
 	@AutoOptionConsumed(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND
-	)
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND)
 	private void setIneffectiveEBreakpointMarkerBackground(boolean breakpointColoringBackground) {
 		for (BreakpointMarkerSets markers : markersByProgram.values()) {
 			markers.setIneffectiveEnabledColoringBackground(breakpointColoringBackground);
@@ -864,8 +857,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 	}
 
 	@AutoOptionConsumed(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND
-	)
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND)
 	private void setIneffectiveDBreakpointMarkerBackground(boolean breakpointColoringBackground) {
 		for (BreakpointMarkerSets markers : markersByProgram.values()) {
 			markers.setIneffectiveDisabledColoringBackground(breakpointColoringBackground);
@@ -955,7 +947,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 				breakpointError(title, "It seems this target does not support breakpoints.");
 				return CompletableFuture.completedFuture(Set.of());
 			}
-			Set<TraceBreakpointKind> kinds = computeDefaultKinds(context, supported);
+			CommonSet kinds = computeDefaultKind(context, supported);
 			long length = computeDefaultLength(context, kinds);
 			placeBreakpointDialog.prompt(tool, breakpointService, title, loc, length, kinds,
 				"");
@@ -1085,14 +1077,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 	}
 
 	protected void createActions() {
-		actionSetSoftwareBreakpoint =
-			new SetBreakpointAction(Set.of(TraceBreakpointKind.SW_EXECUTE));
-		actionSetExecuteBreakpoint =
-			new SetBreakpointAction(Set.of(TraceBreakpointKind.HW_EXECUTE));
-		actionSetReadWriteBreakpoint =
-			new SetBreakpointAction(Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE));
-		actionSetReadBreakpoint = new SetBreakpointAction(Set.of(TraceBreakpointKind.READ));
-		actionSetWriteBreakpoint = new SetBreakpointAction(Set.of(TraceBreakpointKind.WRITE));
+		actionsSetBreakpoint =
+			CommonSet.VALUES.stream().collect(Collectors.toMap(s -> s, SetBreakpointAction::new));
 		actionToggleBreakpoint = new ToggleBreakpointAction();
 		actionEnableBreakpoint = new EnableBreakpointAction();
 		actionDisableBreakpoint = new DisableBreakpointAction();

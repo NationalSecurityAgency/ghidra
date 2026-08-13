@@ -35,6 +35,13 @@ ifeq ($(OS),Darwin)
   OSDIR=mac_x86_64
 endif
 
+ifeq ($(OS),OpenBSD)
+ifeq ($(ARCH),amd64)
+  ARCH_TYPE=-m64
+  OSDIR=openbsd_x86_64
+endif
+endif
+
 CXX=g++ -std=c++11
 
 # Debug flags
