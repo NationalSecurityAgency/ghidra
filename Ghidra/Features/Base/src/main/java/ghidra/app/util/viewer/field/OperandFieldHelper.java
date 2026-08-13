@@ -227,8 +227,8 @@ abstract class OperandFieldHelper extends FieldFactory {
 			return null;
 		}
 
-		ListingTextField btf = (ListingTextField) lf;
-		FieldElement fieldElement = btf.getFieldElement(row, col);
+		ListingTextField ltf = (ListingTextField) lf;
+		FieldElement fieldElement = ltf.getFieldElement(row, col);
 		if (!(fieldElement instanceof OperandFieldElement)) {
 			return null;
 		}
@@ -236,7 +236,7 @@ abstract class OperandFieldHelper extends FieldFactory {
 		OperandFieldElement element = (OperandFieldElement) fieldElement;
 		int opIndex = element.getOperandIndex();
 		int subOpIndex = element.getOperandSubIndex();
-		RowColLocation translatedLocation = btf.screenToDataLocation(row, col);
+		RowColLocation translatedLocation = ltf.screenToDataLocation(row, col);
 
 		int dataCol = translatedLocation.col();
 		if (obj instanceof Instruction) {
@@ -935,8 +935,8 @@ abstract class OperandFieldHelper extends FieldFactory {
 
 		@Override
 		public FieldElement replaceAll(char[] targets, char replacement) {
-			return new OperandFieldElement(attributedString.replaceAll(targets, replacement), row,
-				operandSubIndex, column);
+			AttributedString as = attributedString.replaceAll(targets, replacement);
+			return new OperandFieldElement(as, row, operandSubIndex, column);
 		}
 	}
 

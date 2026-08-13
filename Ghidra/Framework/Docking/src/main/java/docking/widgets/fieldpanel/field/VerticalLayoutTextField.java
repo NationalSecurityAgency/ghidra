@@ -482,7 +482,7 @@ public class VerticalLayoutTextField implements TextField {
 			// A DefaultRowColLocation means that the line did not have an exact match for
 			// the dataRow and dataColumn, so need to keep looking at each line.
 			if (!(loc instanceof DefaultRowColLocation)) {
-				return new RowColLocation(i, loc.col());
+				return loc.withRow(i);
 			}
 		}
 
