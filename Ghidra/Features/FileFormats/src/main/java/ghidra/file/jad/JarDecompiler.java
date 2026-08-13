@@ -99,11 +99,7 @@ public class JarDecompiler {
 				if (monitor.isCancelled()) {
 					break;
 				}
-				File outputFile = new File(outputDirectory.getAbsolutePath(), file.getPath());
-				if (!FileUtilities.isPathContainedWithin(outputDirectory, outputFile)) {
-					throw new IOException("Extracted file " + outputFile.getPath() +
-						" would be outside of root destination directory: " + outputDirectory);
-				}
+				File outputFile = FileUtilities.getSecureFile(outputDirectory, file.getPath());
 				FileUtilities.checkedMkdirs(outputFile.getParentFile());
 				if (!file.isDirectory()) {
 					monitor.setMessage("Unzipping jar file... ");
