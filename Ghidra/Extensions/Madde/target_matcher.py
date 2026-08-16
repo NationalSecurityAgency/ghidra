@@ -4,18 +4,42 @@ import csv
 import imaplib
 import json
 import os
+import re
 import sqlite3
 import sys
 from datetime import datetime, timezone
 from email import policy
 from email.parser import BytesParser
+from email.utils import getaddresses
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 import tkinter as tk
 
+EMAIL_RE = re.compile(r"(?i)(?:[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:[a-z0-9-]+\.)+[a-z]{2,})")
+
+IMAP_PROVIDER_HOSTS = {
+    "gmail.com": "imap.gmail.com",
+    "googlemail.com": "imap.gmail.com",
+    "outlook.com": "outlook.office365.com",
+    "hotmail.com": "outlook.office365.com",
+    "live.com": "outlook.office365.com",
+    "msn.com": "outlook.office365.com",
+    "yahoo.com": "imap.mail.yahoo.com",
+    "yahoo.de": "imap.mail.yahoo.com",
+    "aol.com": "imap.aol.com",
+    "gmx.de": "imap.gmx.net",
+    "gmx.net": "imap.gmx.net",
+    "gmx.com": "imap.gmx.net",
+    "icloud.com": "imap.mail.me.com",
+    "me.com": "imap.mail.me.com",
+    "protonmail.com": "127.0.0.1",
+    "proton.me": "127.0.0.1",
+}
+
 
 DEFAULT_DB = Path(__file__).with_name("target_matches.db")
 DEFAULT_EXPORT = Path(__file__).with_name("target_hits.csv")
+DEFAULT_TEXT_EXPORT = Path(__file__).with_name("target_hits.txt")
 
 
 def normalize_email(value):
@@ -26,24 +50,57 @@ def normalize_email(value):
     return candidate
 
 
+def cleanup_address(address):
+    candidate = normalize_email(address)
+    if not candidate or candidate.count("@") != 1:
+        return ""
+    local, domain = candidate.rsplit("@", 1)
+    if not local or not domain or "." not in domain:
+        return ""
+    return candidate
+
+
+def resolve_imap_host(host=None, username=None):
+    if host and host.strip():
+        return host.strip()
+
+    user = (username or "").strip()
+    if not user:
+        return ""
+    match = EMAIL_RE.search(user)
+    if not match:
+        return ""
+    domain = match.group(0).split("@", 1)[1].lower()
+    return IMAP_PROVIDER_HOSTS.get(domain, f"imap.{domain}")
+
+
 def parse_email_addresses(raw_value):
     if raw_value is None:
         return []
-    text = str(raw_value)
+
+    text = str(raw_value).strip()
+    if not text:
+        return []
+
+    seen = set()
     result = []
-    for chunk in text.replace(";", ",").split(","):
-        item = chunk.strip()
-        if not item:
-            continue
-        for part in item.split("<"):
-            cleaned = part.strip().strip(">").strip('"')
-            if "@" in cleaned:
-                result.append(cleanup_address(cleaned))
+
+    for name, address in getaddresses([text]):
+        candidate = cleanup_address(address or name)
+        if candidate and candidate not in seen:
+            seen.add(candidate)
+            result.append(candidate)
+
+    if result:
+        return result
+
+    for match in EMAIL_RE.findall(text):
+        candidate = cleanup_address(match)
+        if candidate and candidate not in seen:
+            seen.add(candidate)
+            result.append(candidate)
+
     return result
-
-
-def cleanup_address(address):
-    return normalize_email(address)
 
 
 def load_targets_from_csv(path):
@@ -86,10 +143,11 @@ def load_mailbox_export(path):
 
 
 def fetch_imap_addresses(host, username, password, folder="INBOX", since_days=365):
-    if not host or not username or not password:
+    resolved_host = resolve_imap_host(host, username)
+    if not resolved_host or not username or not password:
         raise ValueError("IMAP host, username and password are required.")
 
-    client = imaplib.IMAP4_SSL(host)
+    client = imaplib.IMAP4_SSL(resolved_host)
     client.login(username, password)
     client.select(folder)
     status, message_ids = client.search(None, "ALL")
@@ -127,11 +185,14 @@ def __parse_rfc2822_timestamp(value):
     return parsedate_to_datetime(value).timestamp()
 
 
-def run_match(targets_path, mailbox_path=None, host=None, username=None, password=None, folder="INBOX", db_path=DEFAULT_DB, export_path=DEFAULT_EXPORT):
+def run_match(targets_path, mailbox_path=None, host=None, username=None, password=None, folder="INBOX", db_path=DEFAULT_DB, export_path=DEFAULT_EXPORT, text_export_path=DEFAULT_TEXT_EXPORT):
     if mailbox_path and os.path.exists(mailbox_path):
         mailbox_data = load_mailbox_export(mailbox_path)
-    elif host and username and password:
-        mailbox_data = fetch_imap_addresses(host, username, password, folder=folder)
+    elif username and password:
+        resolved_host = resolve_imap_host(host, username)
+        if not resolved_host:
+            raise ValueError("Could not infer a valid IMAP host from the email address. Please enter the host manually.")
+        mailbox_data = fetch_imap_addresses(resolved_host, username, password, folder=folder)
     else:
         raise ValueError("Provide either a mailbox export CSV or a valid IMAP configuration.")
 
@@ -153,15 +214,17 @@ def run_match(targets_path, mailbox_path=None, host=None, username=None, passwor
                 "matched_at": datetime.now(timezone.utc).isoformat(),
             })
 
-    save_matches(matches, db_path, export_path)
+    save_matches(matches, db_path, export_path, text_export_path)
     return matches
 
 
-def save_matches(matches, db_path=DEFAULT_DB, export_path=DEFAULT_EXPORT):
+def save_matches(matches, db_path=DEFAULT_DB, export_path=DEFAULT_EXPORT, text_export_path=DEFAULT_TEXT_EXPORT):
     db_path = Path(db_path)
     export_path = Path(export_path)
+    text_export_path = Path(text_export_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
     export_path.parent.mkdir(parents=True, exist_ok=True)
+    text_export_path.parent.mkdir(parents=True, exist_ok=True)
 
     conn = sqlite3.connect(db_path)
     conn.execute(
@@ -189,6 +252,16 @@ def save_matches(matches, db_path=DEFAULT_DB, export_path=DEFAULT_EXPORT):
         writer = csv.DictWriter(handle, fieldnames=["target_email", "source_list", "mailbox_value", "matched_at"])
         writer.writeheader()
         writer.writerows(matches)
+
+    with open(text_export_path, "w", encoding="utf-8") as handle:
+        if matches:
+            for row in matches:
+                handle.write(
+                    f"target_email={row['target_email']} | source_list={row['source_list']} | "
+                    f"mailbox_value={row['mailbox_value']} | matched_at={row['matched_at']}\n"
+                )
+        else:
+            handle.write("No hits found.\n")
 
 
 class TargetMatcherApp(tk.Tk):
