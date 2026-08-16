@@ -26,6 +26,13 @@ public class EqualEquation extends ValExpressEquation {
         super(location, l, r);
     }
 
+    static boolean isValueInRange(long value, long min, long max) {
+        if (min <= max) {
+            return value >= min && value <= max;
+        }
+        return value >= min || value <= max;
+    }
+
     @Override
     public void genPattern(VectorSTL<TokenPattern> ops) {
         long lhsmin = lhs.minValue();
@@ -42,7 +49,7 @@ public class EqualEquation extends ValExpressEquation {
 
         do {
             long val = rhs.getSubValue(cur);
-            if ((val >= lhsmin) && (val <= lhsmax)) {
+            if (isValueInRange(val, lhsmin, lhsmax)) {
                 if (count == 0)
                     setTokenPattern(ExpressUtils.buildPattern(lhs, val, semval, cur));
                 else
