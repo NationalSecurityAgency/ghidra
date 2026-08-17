@@ -12,8 +12,8 @@ from email import policy
 from email.parser import BytesParser
 from email.utils import getaddresses
 from pathlib import Path
-from tkinter import filedialog, messagebox, ttk
-import tkinter as tk
+from tkinter import filedialog, messagebox
+import customtkinter as ctk
 
 EMAIL_RE = re.compile(r"(?i)(?:[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:[a-z0-9-]+\.)+[a-z]{2,})")
 
@@ -138,7 +138,11 @@ def load_mailbox_export(path):
             if not email_value:
                 continue
             hit_date = row.get("mail_date") or row.get("date") or row.get("matched_at")
-            hits[email_value] = hit_date
+            subject = row.get("subject") or row.get("betreff") or "(no subject)"
+            hits.setdefault(email_value, []).append({
+                "date": hit_date,
+                "subject": subject
+            })
     return hits
 
 
@@ -165,6 +169,7 @@ def fetch_imap_addresses(host, username, password, folder="INBOX", since_days=36
                 raw_message = response_part[1]
                 message = BytesParser(policy=policy.default).parsebytes(raw_message)
                 header_date = message.get("Date")
+                subject = message.get("Subject", "").strip() or "(no subject)"
                 date_value = None
                 if header_date:
                     try:
@@ -175,7 +180,10 @@ def fetch_imap_addresses(host, username, password, folder="INBOX", since_days=36
                         date_value = header_date
                 for key in ("From", "To", "Cc", "Delivered-To"):
                     for address in parse_email_addresses(message.get(key, "")):
-                        results.setdefault(address, []).append(date_value or "unknown")
+                        results.setdefault(address, []).append({
+                            "date": date_value or "unknown",
+                            "subject": subject
+                        })
     client.logout()
     return results
 
@@ -204,15 +212,22 @@ def run_match(targets_path, mailbox_path=None, host=None, username=None, passwor
             if email_value in seen:
                 continue
             seen.add(email_value)
-            source_value = mailbox_data.get(email_value, "unknown")
-            if isinstance(source_value, list):
-                source_value = ", ".join(source_value)
-            matches.append({
-                "target_email": email_value,
-                "source_list": target_meta.get("source") or "targets",
-                "mailbox_value": source_value,
-                "matched_at": datetime.now(timezone.utc).isoformat(),
-            })
+            mail_entries = mailbox_data.get(email_value, [])
+            if isinstance(mail_entries, list):
+                for entry in mail_entries:
+                    date_val = entry.get("date") if isinstance(entry, dict) else entry
+                    subject_val = entry.get("subject", "(no subject)") if isinstance(entry, dict) else "(no subject)"
+                    matches.append({
+                        "email": email_value,
+                        "date": date_val or "unknown",
+                        "subject": subject_val,
+                    })
+            else:
+                matches.append({
+                    "email": email_value,
+                    "date": mail_entries,
+                    "subject": "(no subject)",
+                })
 
     save_matches(matches, db_path, export_path, text_export_path)
     return matches
@@ -230,18 +245,17 @@ def save_matches(matches, db_path=DEFAULT_DB, export_path=DEFAULT_EXPORT, text_e
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS hits (
-            target_email TEXT,
-            source_list TEXT,
-            mailbox_value TEXT,
-            matched_at TEXT
+            email TEXT,
+            date TEXT,
+            subject TEXT
         )
         """
     )
     conn.execute("DELETE FROM hits")
     conn.executemany(
-        "INSERT INTO hits (target_email, source_list, mailbox_value, matched_at) VALUES (?, ?, ?, ?)",
+        "INSERT INTO hits (email, date, subject) VALUES (?, ?, ?)",
         [
-            (row["target_email"], row["source_list"], row["mailbox_value"], row["matched_at"])
+            (row["email"], row["date"], row["subject"])
             for row in matches
         ],
     )
@@ -249,7 +263,7 @@ def save_matches(matches, db_path=DEFAULT_DB, export_path=DEFAULT_EXPORT, text_e
     conn.close()
 
     with open(export_path, "w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["target_email", "source_list", "mailbox_value", "matched_at"])
+        writer = csv.DictWriter(handle, fieldnames=["email", "date", "subject"])
         writer.writeheader()
         writer.writerows(matches)
 
@@ -257,60 +271,95 @@ def save_matches(matches, db_path=DEFAULT_DB, export_path=DEFAULT_EXPORT, text_e
         if matches:
             for row in matches:
                 handle.write(
-                    f"target_email={row['target_email']} | source_list={row['source_list']} | "
-                    f"mailbox_value={row['mailbox_value']} | matched_at={row['matched_at']}\n"
+                    f"{row['email']} | {row['date']} | {row['subject']}\n"
                 )
         else:
             handle.write("No hits found.\n")
 
 
-class TargetMatcherApp(tk.Tk):
+class TargetMatcherApp(ctk.CTk):
     def __init__(self):
         super().__init__()
+        ctk.set_appearance_mode("dark")
+        ctk.set_default_color_theme("blue")
         self.title("Madde - Own Data Target Matcher")
-        self.geometry("760x520")
-        self.minsize(680, 420)
+        self.geometry("900x640")
+        self.minsize(780, 520)
 
-        self.targets_path = tk.StringVar(value="")
-        self.mailbox_path = tk.StringVar(value="")
-        self.imap_host = tk.StringVar(value="")
-        self.imap_user = tk.StringVar(value="")
-        self.imap_password = tk.StringVar(value="")
-        self.imap_folder = tk.StringVar(value="INBOX")
+        self.targets_path = ctk.StringVar(value="")
+        self.mailbox_path = ctk.StringVar(value="")
+        self.imap_host = ctk.StringVar(value="")
+        self.imap_user = ctk.StringVar(value="")
+        self.imap_password = ctk.StringVar(value="")
+        self.imap_folder = ctk.StringVar(value="INBOX")
 
         self._build_ui()
 
     def _build_ui(self):
-        container = ttk.Frame(self, padding=12)
-        container.pack(fill="both", expand=True)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
 
-        ttk.Label(container, text="Own-data target matching: targets are checked only against explicitly authorized data.").pack(anchor="w", pady=(0, 10))
+        main = ctk.CTkFrame(self, corner_radius=18)
+        main.pack(fill="both", expand=True, padx=18, pady=18)
+        main.grid_columnconfigure(0, weight=1)
+
+        header = ctk.CTkLabel(
+            main,
+            text="Madde Target Matcher",
+            font=ctk.CTkFont(size=26, weight="bold"),
+            anchor="w",
+        )
+        header.grid(row=0, column=0, sticky="w", padx=20, pady=(18, 8))
+
+        subtitle = ctk.CTkLabel(
+            main,
+            text="Own-data matching for authorized mailbox exports or IMAP access only.",
+            text_color=("#A9B4C5", "#D7E3F0"),
+            anchor="w",
+        )
+        subtitle.grid(row=1, column=0, sticky="w", padx=20, pady=(0, 8))
+
+        card = ctk.CTkFrame(main, corner_radius=16)
+        card.grid(row=2, column=0, sticky="nsew", padx=20, pady=(8, 8))
+        card.grid_columnconfigure(0, weight=1)
 
         fields = [
-            ("Targets CSV", self.targets_path, "Choose target list"),
-            ("Mailbox export CSV (optional)", self.mailbox_path, "Choose mailbox export"),
-            ("IMAP host", self.imap_host, "mail.example.com"),
-            ("IMAP user", self.imap_user, "user@example.com"),
-            ("IMAP password", self.imap_password, "********"),
-            ("IMAP folder", self.imap_folder, "INBOX"),
+            ("Targets CSV", self.targets_path, "Choose target list", True),
+            ("Mailbox export CSV", self.mailbox_path, "Choose mailbox export", True),
+            ("IMAP host", self.imap_host, "mail.example.com", False),
+            ("IMAP user", self.imap_user, "user@example.com", False),
+            ("IMAP password", self.imap_password, "********", False),
+            ("IMAP folder", self.imap_folder, "INBOX", False),
         ]
 
-        for label_text, variable, placeholder in fields:
-            frame = ttk.Frame(container)
-            frame.pack(fill="x", pady=4)
-            ttk.Label(frame, text=label_text, width=18, anchor="w").pack(side="left")
-            entry = ttk.Entry(frame, textvariable=variable, width=52)
-            entry.pack(side="left", fill="x", expand=True, padx=(8, 6))
-            if "Choose" in placeholder:
-                ttk.Button(frame, text="Browse", command=lambda v=variable, p=placeholder: self.choose_file(v)).pack(side="left")
+        for idx, (label_text, variable, placeholder, browseable) in enumerate(fields, start=3):
+            label = ctk.CTkLabel(card, text=label_text, anchor="w")
+            label.grid(row=idx, column=0, sticky="w", padx=(18, 0), pady=(12, 4))
 
-        buttons = ttk.Frame(container)
-        buttons.pack(fill="x", pady=10)
-        ttk.Button(buttons, text="Run match", command=self.run_match).pack(side="left", padx=(0, 8))
-        ttk.Button(buttons, text="Save demo data", command=self.save_demo_data).pack(side="left")
+            row = ctk.CTkFrame(card, corner_radius=10)
+            row.grid(row=idx + 1, column=0, sticky="ew", padx=18, pady=(0, 6))
+            row.grid_columnconfigure(0, weight=1)
 
-        self.output = tk.Text(container, height=18, wrap="word")
-        self.output.pack(fill="both", expand=True)
+            entry = ctk.CTkEntry(row, textvariable=variable, placeholder_text=placeholder, width=500)
+            entry.grid(row=0, column=0, sticky="ew", padx=(12, 8), pady=10)
+            if browseable:
+                ctk.CTkButton(row, text="Browse", width=90, command=lambda v=variable: self.choose_file(v)).grid(row=0, column=1, padx=(0, 12), pady=10)
+
+        button_row = ctk.CTkFrame(main, corner_radius=12)
+        button_row.grid(row=3 + len(fields) + 1, column=0, sticky="ew", padx=20, pady=(8, 10))
+        button_row.grid_columnconfigure(0, weight=0)
+        button_row.grid_columnconfigure(1, weight=0)
+        button_row.grid_columnconfigure(2, weight=0)
+        button_row.grid_columnconfigure(3, weight=1)
+
+        ctk.CTkButton(button_row, text="Run match", command=self.run_match, width=150, height=36, fg_color="#2a9d8f", hover_color="#23887d").grid(row=0, column=0, padx=(18, 8), pady=12)
+        ctk.CTkButton(button_row, text="Save demo data", command=self.save_demo_data, width=150, height=36).grid(row=0, column=1, padx=8, pady=12)
+        ctk.CTkButton(button_row, text="Open export folder", command=self.open_export_folder, width=150, height=36).grid(row=0, column=2, padx=8, pady=12)
+
+        self.output = ctk.CTkTextbox(main, height=18, width=400, corner_radius=12)
+        self.output.grid(row=4 + len(fields) + 1, column=0, sticky="nsew", padx=20, pady=(0, 18))
+        self.output.insert("end", "Ready. Select a target list and run the check.\n")
+        self.output.configure(state="disabled")
 
     def choose_file(self, variable):
         path = filedialog.askopenfilename(filetypes=[("CSV", "*.csv"), ("All files", "*.*")])
@@ -318,12 +367,21 @@ class TargetMatcherApp(tk.Tk):
             variable.set(path)
 
     def log(self, text):
-        self.output.insert(tk.END, text + "\n")
-        self.output.see(tk.END)
+        self.output.configure(state="normal")
+        self.output.insert("end", text + "\n")
+        self.output.see("end")
+        self.output.configure(state="disabled")
+
+    def open_export_folder(self):
+        folder = str(Path(__file__).resolve().parent)
+        try:
+            os.startfile(folder)
+        except Exception:
+            self.log(f"Export directory: {folder}")
 
     def save_demo_data(self):
-        target_path = Path("demo_targets.csv")
-        mailbox_path = Path("demo_mailbox.csv")
+        target_path = Path(__file__).with_name("demo_targets.csv")
+        mailbox_path = Path(__file__).with_name("demo_mailbox.csv")
         with open(target_path, "w", newline="", encoding="utf-8") as handle:
             writer = csv.DictWriter(handle, fieldnames=["email", "source"])
             writer.writeheader()
@@ -338,7 +396,7 @@ class TargetMatcherApp(tk.Tk):
                 {"email": "alice@example.com", "mail_date": "2024-05-20T10:00:00+00:00", "source": "own-mailbox"},
                 {"email": "charlie@example.com", "mail_date": "2024-05-21T11:00:00+00:00", "source": "own-mailbox"},
             ])
-        self.log(f"Demo files saved: {target_path} and {mailbox_path}")
+        self.log(f"Demo files written to {target_path.name} and {mailbox_path.name}")
 
     def run_match(self):
         target_path = self.targets_path.get().strip()
@@ -352,14 +410,14 @@ class TargetMatcherApp(tk.Tk):
             if not target_path:
                 raise ValueError("Select a target CSV file first.")
             if mailbox_path:
-                matches = run_match(target_path, mailbox_path=mailbox_path, db_path=DEFAULT_DB, export_path=DEFAULT_EXPORT)
+                matches = run_match(target_path, mailbox_path=mailbox_path, db_path=DEFAULT_DB, export_path=DEFAULT_EXPORT, text_export_path=DEFAULT_TEXT_EXPORT)
             else:
-                matches = run_match(target_path, host=host, username=username, password=password, folder=folder, db_path=DEFAULT_DB, export_path=DEFAULT_EXPORT)
+                matches = run_match(target_path, host=host, username=username, password=password, folder=folder, db_path=DEFAULT_DB, export_path=DEFAULT_EXPORT, text_export_path=DEFAULT_TEXT_EXPORT)
 
             self.log(f"Matches saved: {len(matches)}")
             for row in matches:
                 self.log(f"{row['target_email']} -> {row['mailbox_value']} @ {row['matched_at']}")
-            messagebox.showinfo("Done", f"Found {len(matches)} matching entries and saved them to the SQLite database and CSV export.")
+            messagebox.showinfo("Done", f"Found {len(matches)} matching entries and saved them to SQLite, CSV, and TXT.")
         except Exception as exc:  # pragma: no cover - UI feedback only
             self.log(f"ERROR: {exc}")
             messagebox.showerror("Match error", str(exc))
@@ -393,3 +451,4 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
