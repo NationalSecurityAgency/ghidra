@@ -17,7 +17,6 @@ package ghidra.util;
 
 import java.math.BigInteger;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -438,7 +437,7 @@ public final class NumericUtilities {
 	 * @return the string representation
 	 *
 	 * @see #convertMaskToHexString(long, int, boolean, int, String)
-	 * @see #convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int, String)
+	 * @see #convertHexStringToMaskedValue(long[], String, int, int, int, int, String)
 	 */
 	public static String convertMaskedValueToHexString(long msk, long val, int n, boolean truncate,
 			int spaceevery, String spacer) {
@@ -507,7 +506,7 @@ public final class NumericUtilities {
 	 * @return the string representation
 	 *
 	 * @see #convertMaskedValueToHexString(long, long, int, boolean, int, String)
-	 * @see #convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int, String)
+	 * @see #convertHexStringToMaskedValue(long[], String, int, int, int, int, String)
 	 */
 	public static String convertMaskToHexString(long msk, int n, boolean truncate, int spaceevery,
 			String spacer) {
@@ -555,10 +554,10 @@ public final class NumericUtilities {
 
 	/**
 	 * The reverse of {@link #convertMaskedValueToHexString(long, long, int, boolean, int, String)}
-	 *
-	 * @param msk an object to receive the resulting mask
-	 * @param val an object to receive the resulting value
+	 * @param out an array to receive the resulting mask and value (out[0]=mask, out[1]=val)
 	 * @param hex the input string to parse
+	 * @param start the start index in the string
+	 * @param end the end index in the string
 	 * @param n the number of nibbles to parse (they are stored right aligned in the result)
 	 * @param spaceevery how many nibbles are expected between spacers
 	 * @param spacer the spacer
@@ -566,13 +565,13 @@ public final class NumericUtilities {
 	 * @see #convertMaskedValueToHexString(long, long, int, boolean, int, String)
 	 * @see #convertMaskToHexString(long, int, boolean, int, String)
 	 */
-	public static void convertHexStringToMaskedValue(AtomicLong msk, AtomicLong val, String hex,
+	public static void convertHexStringToMaskedValue(long[] out, String hex, int start, int end,
 			int n, int spaceevery, String spacer) {
 		long lmsk = 0;
 		long lval = 0;
-		int pos = 0;
+		int pos = start;
 		int i = 0;
-		while (pos < hex.length() && i < n) {
+		while (pos < end && i < n) {
 			lmsk <<= 4;
 			lval <<= 4;
 			if (i != 0 && spaceevery != 0 && i % spaceevery == 0) {
@@ -592,7 +591,10 @@ public final class NumericUtilities {
 					continue;
 				}
 				// Try defined
-				long nibble = Long.parseLong(hex.substring(pos, pos + 1), 16);
+				int nibble = Character.digit(c, 16);
+				if (nibble < 0) {
+					throw new NumberFormatException("Invalid hex character '" + c + "' at " + pos);
+				}
 				lmsk |= 0x0fL;
 				lval |= nibble;
 				i++;
@@ -606,7 +608,7 @@ public final class NumericUtilities {
 					pos++;
 					lmsk <<= 1;
 					lval <<= 1;
-					if (pos > hex.length()) {
+					if (pos >= end) {
 						throw new NumberFormatException("Missing one or more bits at " + pos);
 					}
 					c = hex.charAt(pos);
@@ -624,7 +626,7 @@ public final class NumericUtilities {
 					throw new NumberFormatException("Illegal character '" + c + "' at " + pos);
 				}
 				pos++;
-				if (pos > hex.length() || hex.charAt(pos) != ']') {
+				if (pos >= end || hex.charAt(pos) != ']') {
 					throw new NumberFormatException("Missing closing bracket after bits at " + pos);
 				}
 				pos++;
@@ -633,14 +635,14 @@ public final class NumericUtilities {
 			}
 			throw new NumberFormatException("Illegal character '" + c + "' at " + pos);
 		}
-		if (pos < hex.length()) {
+		if (pos < end) {
 			throw new NumberFormatException("Gratuitous characters starting at " + pos);
 		}
 		if (i < n) {
 			throw new NumberFormatException("Too few characters for " + n + " nibbles. Got " + i);
 		}
-		msk.set(lmsk);
-		val.set(lval);
+		out[0] = lmsk;
+		out[1] = lval;
 	}
 
 	/**

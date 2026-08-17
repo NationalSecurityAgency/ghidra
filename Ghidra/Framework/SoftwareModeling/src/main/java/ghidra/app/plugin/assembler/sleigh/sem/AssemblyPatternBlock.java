@@ -19,7 +19,6 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicLong;
 
 import ghidra.app.plugin.assembler.sleigh.expr.MaskedLong;
 import ghidra.app.plugin.assembler.sleigh.expr.SolverException;
@@ -107,8 +106,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	/**
 	 * Convert a string representation to a pattern block
 	 * 
-	 * @see NumericUtilities#convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int,
-	 *      String)
+	 * @see NumericUtilities#convertHexStringToMaskedValue(long[], String, int, int, int, int, String)
 	 * @param str the string to convert
 	 * @return the resulting pattern block
 	 */
@@ -141,29 +139,17 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 		// Convert the bytes
 		byte[] mask = new byte[length];
 		byte[] vals = new byte[length];
-		int i = 0;
+		long[] out = new long[2];
+
 		int p = pos;
-		while (p < str.length()) {
+		for (int i = 0; i < length; i++) {
 			int newpos = str.indexOf(':', p);
 			if (newpos == -1) {
 				newpos = str.length();
 			}
-			byte m = 0;
-			byte v = 0;
-			for (int j = p; j < newpos; j++) {
-				char c = str.charAt(j);
-				m <<= 4;
-				v <<= 4;
-				if (c == 'X' || c == 'x') {
-					continue;
-				}
-				int nibble = Character.digit(c, 16);
-				m |= 0x0f;
-				v |= nibble;
-			}
-			mask[i] = m;
-			vals[i] = v;
-			i++;
+			NumericUtilities.convertHexStringToMaskedValue(out, str, p, newpos, 2, 0, null);
+			mask[i] = (byte) out[0];
+			vals[i] = (byte) out[1];
 			p = newpos + 1;
 		}
 
