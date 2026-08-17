@@ -1357,17 +1357,34 @@ class FuncProto {
     is_override = 0x1000,	///< Set if \b this prototype is created to override a single call site
     auto_killedbycall = 0x2000	///< Potential output storage should always be considered \e killed \e by \e call
   };
+public:
+  /// \brief A declared far-pointer call-argument join for this prototype
+  ///
+  /// Declares that two adjacent input parameter slots (hislot and hislot+1)
+  /// should always be fused into one joined value at call sites, even
+  /// without dataflow evidence that they are related.
+  struct FarPointerJoinSpec {
+    int4 hislot;    ///< 0-based index of the most significant piece,
+                    ///< matching input <pentry> declaration order
+    int4 joinsize;  ///< Total byte size of the fused value (validated
+                    ///< against the sum of the two adjacent parameter
+                    ///< sizes once decode() completes)
+  };
+private:
   ProtoModel *model;		///< Model of for \b this prototype
   ProtoStore *store;		///< Storage interface for parameters
   int4 extrapop;		///< Extra bytes popped from stack
   uint4 flags;			///< Boolean properties of the function prototype
   vector<EffectRecord> effectlist;	///< Side-effects associated with non-parameter storage locations
   vector<VarnodeData> likelytrash;	///< Locations that may contain \e trash values
+  vector<FarPointerJoinSpec> farPointerJoins;	///< Declared far-pointer call-argument joins for this prototype
   int4 injectid;		///< (If non-negative) id of p-code snippet that should replace this function
   int4 returnBytesConsumed;	///< Number of bytes of return value that are consumed by callers (0 = all bytes)
   void updateThisPointer(void);	///< Make sure any "this" parameter is properly marked
   void encodeEffect(Encoder &encoder) const;		///< Encode any overriding EffectRecords to stream
   void encodeLikelyTrash(Encoder &encoder) const;	///< Encode any overriding likelytrash registers to stream
+
+  void encodeFarPointerJoins(Encoder &encoder) const;	///< Encode any declared far-pointer call-argument joins to stream
   void decodeEffect(void);	///< Merge in any EffectRecord overrides
   void decodeLikelyTrash(void);	///< Merge in any \e likelytrash overrides
 protected:
@@ -1383,6 +1400,7 @@ public:
   void copyFlowEffects(const FuncProto &op2);	 			///< Copy properties that affect data-flow
   void getPieces(PrototypePieces &pieces) const;			///< Get the raw pieces of the prototype
   void setPieces(const PrototypePieces &pieces);			///< Set \b this prototype based on raw pieces
+  const vector<FarPointerJoinSpec> &getFarPointerJoins(void) const { return farPointerJoins; }	///< Get declared far-pointer call-argument joins
   void setScope(Scope *s,const Address &startpoint);			///< Set a backing symbol Scope for \b this
   void setInternal(ProtoModel *m,Datatype *vt);				///< Set internal backing storage for \b this
   void setModel(ProtoModel *m);						///< Set the prototype model for \b this

@@ -20,6 +20,7 @@ import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.program.database.SpecExtension;
 import ghidra.program.model.address.*;
@@ -53,6 +54,26 @@ public class PrototypeModel {
 	private Varnode[] internalstorage;	// Registers holding internal compiler constants
 	private PrototypeModel compatModel;	// The model this is an alias of
 	private AddressSet localRange;	// Range on the stack considered for local storage
+
+	/**
+	 * A declared far-pointer call-argument join for this prototype.
+	 * Declares that two adjacent input parameter slots (hislot and hislot+1)
+	 * should always be fused into one joined value at call sites, even
+	 * without dataflow evidence that they are related.
+	 * Mirrors FuncProto::FarPointerJoinSpec on the C++ side (fspec.hh).
+	 */
+	public static class FarPointerJoinSpec {
+		public int hislot;    // 0-based index of the most significant piece,
+		                       // matching input <pentry> declaration order
+		public int joinsize;  // Total byte size of the fused value
+
+		public FarPointerJoinSpec(int hislot, int joinsize) {
+			this.hislot = hislot;
+			this.joinsize = joinsize;
+		}
+	}
+
+	private ArrayList<FarPointerJoinSpec> farPointerJoins = new ArrayList<>();	// Declared far-pointer call-argument joins
 	private AddressSet paramRange;	// Range on the stack considered for parameter storage
 	private InputListType inputListType = InputListType.STANDARD;
 	private boolean hasThis;		// Convention has a this (auto-parameter)
@@ -566,6 +587,13 @@ public class PrototypeModel {
 			encodeAddressSet(encoder, paramRange);
 			encoder.closeElement(ELEM_PARAMRANGE);
 		}
+
+		for (FarPointerJoinSpec spec : farPointerJoins) {
+			encoder.openElement(ELEM_FARPOINTERJOIN);
+			encoder.writeSignedInteger(ATTRIB_HISLOT, spec.hislot);
+			encoder.writeSignedInteger(ATTRIB_JOINSIZE, spec.joinsize);
+			encoder.closeElement(ELEM_FARPOINTERJOIN);
+		}
 		encoder.closeElement(ELEM_PROTOTYPE);
 	}
 
@@ -737,6 +765,26 @@ public class PrototypeModel {
 			else if (elName.equals(ELEM_PARAMRANGE.name())) {
 				paramRange = readAddressSet(parser, cspec);
 			}
+
+			else if (elName.equals(ELEM_FARPOINTERJOIN.name())) {
+				XmlElement farptrEl = parser.start();
+				int hislot = -1;
+				int joinsize = -1;
+				String hislotAttr = farptrEl.getAttribute(ATTRIB_HISLOT.name());
+				if (hislotAttr != null) {
+					hislot = SpecXmlUtils.decodeInt(hislotAttr);
+				}
+				String joinsizeAttr = farptrEl.getAttribute(ATTRIB_JOINSIZE.name());
+				if (joinsizeAttr != null) {
+					joinsize = SpecXmlUtils.decodeInt(joinsizeAttr);
+				}
+				parser.end(farptrEl);
+				if (hislot < 0 || joinsize <= 0) {
+					throw new XmlParseException(
+						"<farpointerjoin> requires hislot and joinsize attributes");
+				}
+				farPointerJoins.add(new FarPointerJoinSpec(hislot, joinsize));
+			}
 			else {
 				subel = parser.start();
 				parser.discardSubTree(subel);
@@ -756,6 +804,17 @@ public class PrototypeModel {
 	 */
 	public boolean possibleInputParamWithSlot(Address loc, int size, ParamList.WithSlotRec res) {
 		return inputParams.possibleParamWithSlot(loc, size, res);
+	}
+
+
+	/**
+	 * Get the far-pointer call-argument joins declared for this prototype
+	 * (via &lt;farpointerjoin&gt; elements in the cspec). Mirrors
+	 * FuncProto::getFarPointerJoins() on the C++ side.
+	 * @return the list of declared joins (empty if none declared)
+	 */
+	public List<FarPointerJoinSpec> getFarPointerJoins() {
+		return farPointerJoins;
 	}
 
 	/**
