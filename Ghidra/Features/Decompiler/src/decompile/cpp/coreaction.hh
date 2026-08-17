@@ -368,7 +368,7 @@ public:
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionMergeRequired(getGroup());
   }
-  virtual int4 apply(Funcdata &data) { 
+  virtual int4 apply(Funcdata &data) {
     data.getMerge().mergeAddrTied(); data.getMerge().groupPartials(); data.getMerge().mergeMarker(); return 0; }
 };
 
@@ -413,7 +413,7 @@ public:
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionMergeType(getGroup());
   }
-  virtual int4 apply(Funcdata &data) { 
+  virtual int4 apply(Funcdata &data) {
     data.getMerge().mergeByDatatype(data.beginLoc(),data.endLoc()); return 0; }
 };
 
@@ -748,6 +748,24 @@ public:
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionParamDouble(getGroup());
+  }
+  virtual int4 apply(Funcdata &data);
+};
+
+/// \brief Fuse call-argument slot pairs declared via <farpointerjoin> in the cspec
+///
+/// Unlike ActionParamDouble's dataflow-detected joins, this action acts purely
+/// on FuncProto::farPointerJoins declarations: for each declared (hislot,joinsize)
+/// pair on a call's prototype, unconditionally join the two adjacent raw input
+/// Varnodes at that call site into one Varnode, using the same
+/// checkInputJoin/doInputJoin machinery ActionParamDouble uses for its
+/// dataflow-detected joins.
+class ActionFarPointerJoin : public Action {
+public:
+  ActionFarPointerJoin(const string &g) : Action(0, "farpointerjoin",g) {}	///< Constructor
+  virtual Action *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Action *)0;
+    return new ActionFarPointerJoin(getGroup());
   }
   virtual int4 apply(Funcdata &data);
 };
