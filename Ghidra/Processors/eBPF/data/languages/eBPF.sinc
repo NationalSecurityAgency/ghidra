@@ -427,6 +427,11 @@ cond: "SLE" is op_alu_jmp_opcode=0xd & op_insn_class=0x6 & DST4 & SRC4 { local c
     if (cond) goto joff;
 }
 
+# Indirect jump, the BPF_X form of JA. Same relationship to JA that CALLX has to CALL.
+:GOTOX dst is op_alu_jmp_opcode=0x0 & op_alu_jmp_source=1 & op_insn_class=0x5 & src=0 & imm=0 & dst {
+    goto [dst];
+}
+
 
 SysCall:  imm is imm { export *[syscall]:1 imm; }
 
