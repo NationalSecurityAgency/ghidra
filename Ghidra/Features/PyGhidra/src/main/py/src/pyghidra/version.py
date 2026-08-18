@@ -79,8 +79,8 @@ class ExtensionDetails:
         lines = ext_path.read_text().splitlines()
         kwargs = {
             key: cast(key, value)
-            for key, value in map(lambda l: l.split("="), lines)
-            if key in valid_fields
+            for key, sep, value in map(lambda l: l.partition("="), lines)
+            if sep and key in valid_fields
         }
         return cls(**kwargs)
 
