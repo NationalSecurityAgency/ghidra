@@ -208,21 +208,6 @@ public class DataTypeSynchronizer {
 		return sourceArchive.getName();
 	}
 
-//	public void openTransactions() {
-////		if (sourceDTM != null) {
-////			sourceTransactionID = sourceDTM.startTransaction("Data Type Synchronization");
-////		}
-//		localTransactionID = dataTypeManager.startTransaction("Data Type Synchronization");
-//	}
-//
-//	public void closeTransactions() {
-//		dataTypeManager.endTransaction(localTransactionID, true);
-////		if (sourceDTM != null) {
-////			sourceDTM.endTransaction(sourceTransactionID, true);
-////		}
-//
-//	}
-
 	/**
 	 * If the indicated data type is associated with a source archive, this will remove the
 	 * association.
