@@ -117,7 +117,7 @@ public class LocalTextDataItem extends LocalFolderItem implements TextDataItem {
 
 	@Override
 	public void output(File outputFile, int version, TaskMonitor monitor) throws IOException {
-		throw new IOException("Output not supported");
+		throw new IOException("Packed output not supported for text data");
 	}
 
 	@Override

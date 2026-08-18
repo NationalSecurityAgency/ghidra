@@ -177,7 +177,7 @@ public class ImporterDialog extends DialogComponentProvider {
 		panel.add(buildFolderNameField());
 		panel.add(buildFolderNameBrowseButton());
 
-		panel.add(new GLabel("Program Name: ", SwingConstants.RIGHT));
+		panel.add(new GLabel("Name: ", SwingConstants.RIGHT));
 		panel.add(buildNameTextField());
 		panel.add(new JLabel());
 

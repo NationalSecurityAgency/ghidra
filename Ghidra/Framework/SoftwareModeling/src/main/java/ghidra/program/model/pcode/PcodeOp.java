@@ -439,7 +439,7 @@ public class PcodeOp {
 	 */
 	public void encodeRaw(Encoder encoder, AddressFactory addrFactory) throws IOException {
 		encoder.openElement(ELEM_OP);
-		encoder.writeSignedInteger(ATTRIB_CODE, opcode);
+		encoder.writeOpcode(ATTRIB_CODE, opcode);
 		encoder.writeSignedInteger(ATTRIB_SIZE, input.length);
 		if (output == null) {
 			encoder.openElement(ELEM_VOID);

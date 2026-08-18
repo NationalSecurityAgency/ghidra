@@ -73,6 +73,15 @@ allprojects {
 	}
 }
 
+/*********************************************************************************
+ *  Gradle 9+ by default gives every archived file a timestamp of Feb 1 1980.
+ *  We prefer to preserve the real timestamp of each file in the release.
+ **********************************************************************************/
+allprojects {
+	tasks.withType(AbstractArchiveTask).configureEach {
+		preserveFileTimestamps = true
+	}
+}
 
 /*********************************************************************************
  *  Use flat directory-style repository if flatRepo directory is present.

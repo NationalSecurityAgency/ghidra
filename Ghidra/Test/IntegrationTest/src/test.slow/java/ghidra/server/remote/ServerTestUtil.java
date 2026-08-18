@@ -17,6 +17,8 @@ package ghidra.server.remote;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.KeyStore.PrivateKeyEntry;
@@ -27,6 +29,7 @@ import java.util.zip.ZipInputStream;
 
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import db.buffers.DataBuffer;
@@ -99,6 +102,7 @@ public class ServerTestUtil {
 	private static IOThread cmdErr;
 	private static Process serverProcess;
 	private static String serverRepositories;
+	private static Path argsFile;
 
 	static {
 		Runtime.getRuntime().addShutdownHook(new ShutdownHook());
@@ -435,19 +439,15 @@ public class ServerTestUtil {
 			getTestPkiCACertsPath());
 		DefaultSSLContextInitializer.initialize(true);
 
-		ArrayList<String> argList = new ArrayList<>();
 		String javaCommand =
 			System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-		argList.add(javaCommand);
 
+		List<String> argList = new ArrayList<>();
 		argList.add("-cp");
-		argList.add(System.getProperty("java.class.path"));
+		argList.add("\"" + System.getProperty("java.class.path").replace("\\", "/") + "\"");
 
 		argList.add("-Xmx512M");
 
-		argList.add("-Xdebug");
-		argList.add("-Xnoagent");
-		argList.add("-Djava.compiler=NONE");
 		argList.add("-Ddb.buffers.DataBuffer.compressedOutput=" + enableCompressionOnServerStart);
 		argList.add("-D" + DefaultTrustManagerFactory.GHIDRA_CACERTS_PATH_PROPERTY + "=" +
 			getTestPkiCACertsPath());
@@ -483,25 +483,15 @@ public class ServerTestUtil {
 		argList.add("-p" + port);
 		argList.add(dirPath);
 
-		String[] args = new String[argList.size()];
-		argList.toArray(args);
-
-		System.out.println();
-		for (String arg : argList) {
-			boolean includeQuotes = arg.indexOf(' ') != -1;
-			if (includeQuotes) {
-				System.out.print("'");
-			}
-			System.out.print(arg);
-			if (includeQuotes) {
-				System.out.print("'");
-			}
-			System.out.print(" ");
-		}
-		System.out.println();
 
 		try {
-			serverProcess = Runtime.getRuntime().exec(args);
+			// Command line argument is too long on Windows, so use an @arg-file
+			argsFile =
+				Files.createTempFile(Application.getUserTempDirectory().toPath(), "args", ".txt");
+			Files.write(argsFile, argList);
+			System.out.println(javaCommand + " \"@" + argsFile + "\"");
+
+			serverProcess = new ProcessBuilder(javaCommand, "@" + argsFile).start();
 			serverRepositories = dirPath;
 
 			cmdOut = new IOThread(serverProcess.getInputStream());
@@ -658,8 +648,24 @@ public class ServerTestUtil {
 			serverRepositories = null;
 
 			if (testPkiDirectory != null) {
-				FileUtilities.deleteDir(testPkiDirectory);
-				testPkiDirectory = null;
+				try {
+					FileUtils.deleteDirectory(testPkiDirectory);
+				}
+				catch (IOException e) {
+					// Will likely be an error the next time the test starts
+					e.printStackTrace();
+				}
+				finally {
+					testPkiDirectory = null;
+				}
+			}
+		}
+		if (argsFile != null && Files.exists(argsFile)) {
+			try {
+				Files.delete(argsFile);
+			}
+			catch (IOException e) {
+				// don't care
 			}
 		}
 	}
@@ -817,13 +823,45 @@ public class ServerTestUtil {
 	}
 
 	/**
-	 * Create and populate server test repositories "Test" and "Test1" with the specified 
-	 * users added.  The ADMIN_USER "test" is added by default. 
-	 * @param dirPath server root
-	 * @param users optional inclusion of USER_A and/or USER_B to be added with no authentication required
+	 * Add a new user to an existing local Ghidra Test Server using the ServerAdmin class. 
+	 * @param serverRoot server's repositories root directory
+	 * @param name user name
+	 * @param dn DN or null (applies to PKI authentication only)
 	 * @throws Exception
 	 */
-	public static void createPopulatedTestServer(String dirPath, String... users) throws Exception {
+	public static void addUser(File serverRoot, String name, String dn) throws Exception {
+		ServerAdmin serverAdmin = new ServerAdmin();
+		if (dn != null) {
+			serverAdmin.execute(new String[] { serverRoot.getAbsolutePath(), "-dn", name, dn });
+		}
+		else {
+			serverAdmin.execute(new String[] { serverRoot.getAbsolutePath(), "-add", name });
+		}
+	}
+
+	/**
+	 * Grant an existing user access to a repository for an existing local Ghidra Test Server 
+	 * using the ServerAdmin class. 
+	 * @param serverRoot server's repositories root directory
+	 * @param name user name
+	 * @param repoName existing repository name
+	 * @param access an access string: "+r", "+w", "+a"
+	 * @throws Exception
+	 */
+	public static void setUserAccess(File serverRoot, String name, String repoName, String access)
+			throws Exception {
+		ServerAdmin serverAdmin = new ServerAdmin();
+		serverAdmin.execute(
+			new String[] { serverRoot.getAbsolutePath(), "-grant", name, access, repoName });
+	}
+
+	/**
+	 * Create and populate server test repositories "Test" and "Test1".  The ADMIN_USER "test" 
+	 * is added by default to both repositories. 
+	 * @param dirPath server root
+	 * @throws Exception
+	 */
+	public static void createPopulatedTestServer(String dirPath) throws Exception {
 
 		Msg.info(ServerTestUtil.class, "Constructing Ghidra Server for testing: " + dirPath);
 
@@ -831,16 +869,12 @@ public class ServerTestUtil {
 		FileUtilities.deleteDir(rootDir);
 		FileUtilities.mkdirs(rootDir);
 
-		String[] userArray = new String[users.length + 1];
-		userArray[0] = ADMIN_USER;
-		System.arraycopy(users, 0, userArray, 1, users.length);
-		createUsers(dirPath, userArray);
+		createUsers(dirPath, new String[] { ADMIN_USER });
 
 		String keys[] = SSHKeyUtil.generateSSHRSAKeys();
 		addSSHKeys(dirPath, keys[0], "test.key", keys[1], "test.pub");
 
-		LocalFileSystem repoFilesystem = createRepository(dirPath, "Test", ADMIN_USER + "=ADMIN",
-			USER_A + "=READ_ONLY", USER_B + "=WRITE");
+		LocalFileSystem repoFilesystem = createRepository(dirPath, "Test", ADMIN_USER + "=ADMIN");
 		try {
 			createRepositoryItem(repoFilesystem, "foo", "/", 0);
 			createRepositoryItem(repoFilesystem, "notepad", "/", 0);
@@ -851,7 +885,7 @@ public class ServerTestUtil {
 		}
 
 		repoFilesystem = createRepository(dirPath, "Test1", "=ANONYMOUS_ALLOWED",
-			ADMIN_USER + "=ADMIN", USER_A + "=WRITE");
+			ADMIN_USER + "=ADMIN");
 		try {
 			createRepositoryItem(repoFilesystem, "foo1", "/", 0);
 			createRepositoryItem(repoFilesystem, "notepad1", "/", 0);
@@ -864,17 +898,16 @@ public class ServerTestUtil {
 	}
 
 	/**
-	 * Create and populate server test repositories "Test" and "Test1" with the specified 
-	 * users added.  The ADMIN_USER "test" is added by default. 
+	 * Create and populate server test repositories "Test" and "Test1".  The ADMIN_USER "test" 
+	 * is added by default to both repositories. 
 	 * @param dirPath server root
 	 * @param repoName repository name
 	 * @param contentProvider repository content provider callback 
 	 * (use {@link #createRepositoryItem(LocalFileSystem, String, String, Program)} to add content.
-	 * @param users optional inclusion of USER_A and/or USER_B to be added with no authentication required
 	 * @throws Exception
 	 */
 	public static void createPopulatedTestServer(String dirPath, String repoName,
-			Consumer<LocalFileSystem> contentProvider, String... users) throws Exception {
+			Consumer<LocalFileSystem> contentProvider) throws Exception {
 
 		Msg.info(ServerTestUtil.class, "Constructing Ghidra Server for testing: " + dirPath);
 
@@ -882,16 +915,12 @@ public class ServerTestUtil {
 		FileUtilities.deleteDir(rootDir);
 		FileUtilities.mkdirs(rootDir);
 
-		String[] userArray = new String[users.length + 1];
-		userArray[0] = ADMIN_USER;
-		System.arraycopy(users, 0, userArray, 1, users.length);
-		createUsers(dirPath, userArray);
+		createUsers(dirPath, new String[] { ADMIN_USER });
 
 		String keys[] = SSHKeyUtil.generateSSHRSAKeys();
 		addSSHKeys(dirPath, keys[0], "test.key", keys[1], "test.pub");
 
-		LocalFileSystem repoFilesystem = createRepository(dirPath, repoName, ADMIN_USER + "=ADMIN",
-			USER_A + "=READ_ONLY", USER_B + "=WRITE");
+		LocalFileSystem repoFilesystem = createRepository(dirPath, repoName, ADMIN_USER + "=ADMIN");
 		try {
 			contentProvider.accept(repoFilesystem);
 		}
@@ -979,23 +1008,6 @@ public class ServerTestUtil {
 			}
 		}
 		return altNames;
-	}
-
-	/**
-	 * Add PKI user to server
-	 * @param serverRoot
-	 * @param userName
-	 * @param dn
-	 * @throws Exception
-	 */
-	public static void addPKIUser(File serverRoot, String userName, String dn) throws Exception {
-		ServerAdmin serverAdmin = new ServerAdmin();
-		if (dn != null) {
-			serverAdmin.execute(new String[] { serverRoot.getAbsolutePath(), "-dn", userName, dn });
-		}
-		else {
-			serverAdmin.execute(new String[] { serverRoot.getAbsolutePath(), "-add", userName });
-		}
 	}
 
 }

@@ -50,18 +50,16 @@ public class SomLoader extends AbstractProgramWrapperLoader {
 
 		try {
 			SomHeader header = new SomHeader(new BinaryReader(provider, false));
-			if (header.hasValidMagic() && header.hasValidVersionId()) {
-				List<QueryResult> results = QueryOpinionService.query(getName(),
-					Integer.toString(header.getSystemId()), null);
-				for (QueryResult result : results) {
-					loadSpecs.add(new LoadSpec(this, 0, result));
-				}
-				if (loadSpecs.isEmpty()) {
-					loadSpecs.add(new LoadSpec(this, 0, true));
-				}
+			List<QueryResult> results = QueryOpinionService.query(getName(),
+				Integer.toString(header.getSystemId()), null);
+			for (QueryResult result : results) {
+				loadSpecs.add(new LoadSpec(this, 0, result));
+			}
+			if (loadSpecs.isEmpty()) {
+				loadSpecs.add(new LoadSpec(this, 0, true));
 			}
 		}
-		catch (IOException e) {
+		catch (SomException | IOException e) {
 			// that's ok, not a System Object Model
 		}
 		return loadSpecs;

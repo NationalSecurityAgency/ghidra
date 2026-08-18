@@ -339,7 +339,7 @@ public class ElfDefaultGotPltMarkup {
 				return; // failed to identify first PLT entry - skip PLT processing
 			}
 
-			Address pltEnd = firstPltEntryAddr.add(pltSpacing * (pltEntryCount - 1));
+			Address pltEnd = firstPltEntryAddr.add((pltSpacing * pltEntryCount) - 1);
 			processLinkageTable("PLT", firstPltEntryAddr, pltEnd, monitor);
 		}
 		catch (Exception e) {

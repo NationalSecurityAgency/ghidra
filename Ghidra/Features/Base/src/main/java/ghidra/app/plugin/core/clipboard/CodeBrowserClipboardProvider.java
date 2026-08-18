@@ -232,12 +232,22 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		if (domainFile == null) {
 			return null;
 		}
-		if (domainFile.getLocalProjectURL(null) != null) {
-			return GHIDRA_LOCAL_URL_TYPE;
+
+		try {
+			if (domainFile.getLocalProjectURL(null) != null) {
+				return GHIDRA_LOCAL_URL_TYPE;
+			}
 		}
+		catch (IllegalArgumentException e) {
+			// this can happen if the filename has characters the GhidraURL doesn't like
+			Msg.debug(this, "Can't create GhidraURL for " + domainFile.getName());
+			return null;
+		}
+
 		if (domainFile.getSharedProjectURL(null) != null) {
 			return GHIDRA_SHARED_URL_TYPE;
 		}
+
 		return null;
 	}
 

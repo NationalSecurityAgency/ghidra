@@ -474,6 +474,10 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 		}
 
 		String actualData = dm.getActualData();
+		if (actualData == null) {
+			return;
+		}
+
 		int datatype = dm.getDataType();
 
 		DebugDirectory dd = dm.getDebugDirectory();

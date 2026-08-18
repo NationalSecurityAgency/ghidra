@@ -1131,7 +1131,7 @@ define pcodeop MessageClear;
 # binutils: a2.d: 548:  7c 00 51 9c     msgsnd  r10
 # binutils: e500mc.d:  18:      7c 00 71 9c     msgsnd  r14
 define pcodeop MessageSend;
-:msgsnd B is OP=31 & BITS_21_25=0 & BITS_16_20=0 & B & XOP_1_10=206 & BIT_0=0  { MessageSend(); }
+:msgsnd B is OP=31 & BITS_21_25=0 & BITS_16_20=0 & B & XOP_1_10=206 & BIT_0=0  { MessageSend(B); }
 
 # =======================================================================
 
@@ -2441,21 +2441,21 @@ define pcodeop InstructionCacheBlockLockSetX;
 }
 
 :cnttzw A,S				is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=538 & Rc=0 {
-	A = countTrailingZeros(S);	
+	A = countTrailingZeros(S);
 }
 
 :cnttzw. A,S			is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=538 & Rc=1 {
-	A = countTrailingZeros(S);	
-	cr0flags(A); 					
+	A = countTrailingZeros(S);
+	cr0flags(A);
 }
 
 :cnttzd A,S				is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=570 & Rc=0 {
-	A = countTrailingZeros(S);		
+	A = countTrailingZeros(S);
 }
 
 :cnttzd. A,S			is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=570 & Rc=1 {
-	A = countTrailingZeros(S);	
-	cr0flags(A); 						
+	A = countTrailingZeros(S);
+	cr0flags(A);
 }
 
 :copy RA_OR_ZERO,B,L2	is $(NOTVLE) & OP=31 & BITS_22_25=0 & BIT_0=0 & XOP_1_10=774 & RA_OR_ZERO & B & L2 {
@@ -2580,6 +2580,23 @@ define pcodeop InstructionCacheBlockLockSetX;
 	setCrBit(cr0, 2, 1);		
 }
 
+define pcodeop returnFromSyscallVectored;
+:rfscv		is $(NOTVLE) & OP=19 & BITS_11_25=0 & XOP_1_10=82 & BIT_0=0	
+{ 
+	MSR = returnFromSyscallVectored(MSR, CTR);
+	local ra = LR;
+	return[ra];
+}
+
+define pcodeop syscallVectored;
+:scv	LEV			is $(NOTVLE) & OP=17 & BITS_12_25=0 & LEV & BITS_2_4=0 & BIT_1=0 & BIT_0=1
+{
+	local lev:1 = LEV;
+	LR = inst_next;
+	CTR = MSR;
+	syscallVectored(lev);
+}
+
 :setb D,BFA				is $(NOTVLE) & OP=31 & BITS_11_17=0 & BIT_0=0 & XOP_1_10=128 & D & BFA {
 	tmpcr:8 = 1 << (8 * BFA:1);
 	tmpr0:1 = (BFA & 0x8) != 0;
@@ -2614,3 +2631,104 @@ define pcodeop InstructionCacheBlockLockSetX;
 :wait WC				is $(NOTVLE) & OP=31 & BITS_23_25=0 & BITS_11_20=0 & BIT_0=0 & XOP_1_10=30 & WC {
 	waitT(WC:1);
 }
+
+#####
+# v3.0B/C instructions added
+
+# note: CY=0 is the only one currently defined. 1-3 are reserved
+# addex 011111 ..... ..... ..... ..101 01010/ 
+:addex D, A, B, CYex	is $(NOTVLE) & OP=31 & D & A & B & CYex & BIT_9=0 & BIT_10=0 & XOP_1_8=170 & BIT_0=0 {
+	local sum:$(REGISTER_SIZE) = A + B;
+	local carryOut = carry(A,B) | carry(sum, zext(xer_ov));
+	D = sum + zext(xer_ov);
+	xer_ov = carryOut;
+}
+
+@ifdef BIT_64
+# mffscdrn 111111 ..... 10100 ..... 10010 00111/
+define pcodeop mffscdrn;
+:mffscdrn fT, fB	is $(NOTVLE) & OP=63 & fT & BITS_16_20=20 & fB & XOP_1_10=583 & BIT_0=0 {
+	local tmp:8 = 0;
+	local _tmpDRM:1 = fB[29,3];
+	packFPSCR(tmp);
+	fT = tmp & 0x7000000ff;
+	fp_drn = _tmpDRM;
+}
+
+# mffscdrni 111111 ..... 10101 //... 10010 00111/ 
+:mffscdrni fT, DRM	is $(NOTVLE) & OP=63 & fT & BITS_16_20=20 & BITS_13_15=0 & DRM & XOP_1_10=583 & BIT_0=0 {
+	local tmp:8 = 0;
+	local _tmpDRM:1 = DRM;
+	packFPSCR(tmp);
+	fT = tmp & 0x7000000ff;
+	fp_drn = _tmpDRM;
+}
+
+# mffsce 111111 ..... 00001 ///// 10010 00111/ 
+:mffsce fT			is $(NOTVLE) & OP=63 & fT & BITS_16_20=1 & BITS_11_15=0 & XOP_1_10=583 & BIT_0=0 {
+	tmp:8 = 0;
+	packFPSCR(tmp);
+	fT = tmp;
+	fp_ve=0;
+	fp_oe=0;
+	fp_ue=0;
+	fp_ze=0;
+	fp_xe=0;
+}
+
+# mffscrn 111111 ..... 10110 ..... 10010 00111/ 
+:mffscrn fT, fB		is $(NOTVLE) & OP=63 & fT & BITS_16_20=22 & fB & XOP_1_10=583 & BIT_0=0 {
+	tmp:8 = 0;
+	packFPSCR(tmp);
+	fT = tmp & 0x7000000ff;
+	fp_rn0=fB[1,1];
+	fp_rn1=fB[0,1];
+}
+
+# mffscrni 111111 ..... 10111 ///.. 10010 00111/ 
+:mffscrni fT, RM		is $(NOTVLE) & OP=63 & fT & BITS_16_20=23 & BITS_13_15=0 & RM & XOP_1_10=583 & BIT_0=0 {
+	tmp:8 = 0;
+	_tmpRM:1 = RM;
+	packFPSCR(tmp);
+	fT = tmp & 0x7000000ff;
+	fp_rn0=_tmpRM[0,1];
+	fp_rn1=_tmpRM[1,1];
+}
+
+
+:mffsl fT			is $(NOTVLE) & OP=63 & fT & BITS_11_20=24 & XOP_1_10=583 & BIT_0=0 {
+	tmp:8 = 0;
+	packFPSCR(tmp);
+	fT = tmp & 0x7000000ff;
+}
+@endif
+
+# msgclru 011111 ///// ///// ..... 00011 01110/
+# Message Clear Ultravisor
+:msgclru B is $(NOTVLE) & OP=31 & BITS_21_25=0 & BITS_16_20=0 & B & XOP_1_10=10 & BIT_0=0 {
+	MessageClear(B);
+}
+
+# msgsndu 011111 ///// ///// ..... 00010 01110/
+# Message Send Ultravisor
+:msgsndu B is $(NOTVLE) & OP=31 & BITS_21_25=0 & BITS_16_20=0 & B & XOP_1_10=78 & BIT_0=0 {
+	MessageSend(B);
+}
+
+# urfid 000100 ..... ..... ..... ..... 100011 
+# Ultravisor Return from Interrupt Doubleword
+:rfid		is $(NOTVLE) & OP=19 & BITS_11_25=0 & XOP_1_10=306 & BIT_0=0	
+{ 
+	MSR = returnFromInterrupt(MSR, SRR1);
+	local ra = SRR0;
+	return[ra];
+}
+
+# slbiag 011111 ..... ///// ..... 11010 10010/
+# SLB Invalidate All Global
+define pcodeop SLBInvalidateAllGlobal;
+:slbiag S, LBIT is $(NOTVLE) & OP=31 & S & BITS_17_20=0 & LBIT & BITS_11_15=0 & XOP_1_10=850 & BIT_0=0 {
+	SLBInvalidateAllGlobal(S, LBIT:1);
+}
+
+

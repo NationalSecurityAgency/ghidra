@@ -54,12 +54,12 @@ public class CodeSignatureSuperBlob extends CodeSignatureGenericBlob {
 		super(reader);
 		count = reader.readNextInt();
 
-		indexList = new ArrayList<>(count);
+		indexList = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
 			indexList.add(new CodeSignatureBlobIndex(reader));
 		}
 
-		indexBlobs = new ArrayList<>(count);
+		indexBlobs = new ArrayList<>();
 		for (CodeSignatureBlobIndex blobIndex : indexList) {
 			reader.setPointerIndex(base + blobIndex.getOffset());
 			indexBlobs.add(CodeSignatureBlobParser.parse(reader));

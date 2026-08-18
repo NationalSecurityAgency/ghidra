@@ -555,7 +555,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	protected void contextChanged() {
 		Trace trace = current.getTrace();
-		String itemName = trace == null ? "..." : trace.getName();
+		String itemName = trace == null ? "..." : trace.getDomainFile().getName();
 		actionCloseTrace.getMenuBarData().setMenuItemName(CloseTraceAction.NAME_PREFIX + itemName);
 		actionSaveTrace.getMenuBarData().setMenuItemName(SaveTraceAction.NAME_PREFIX + itemName);
 		tool.contextChanged(null);
@@ -939,7 +939,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 				@Override
 				public void run(TaskMonitor monitor) throws CancelledException {
-					String filename = trace.getName();
+					String filename = trace.getDomainFile().getName();
 					try (DomainObjectLockHold hold = maybeLock(trace, force)) {
 						for (int i = 1;; i++) {
 							try {
@@ -947,7 +947,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 								break;
 							}
 							catch (DuplicateFileException e) {
-								filename = trace.getName() + "." + i;
+								filename = trace.getDomainFile().getName() + "." + i;
 							}
 						}
 						trace.save("Initial save", monitor);

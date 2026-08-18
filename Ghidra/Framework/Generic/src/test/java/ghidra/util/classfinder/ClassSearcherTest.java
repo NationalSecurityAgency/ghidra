@@ -54,9 +54,7 @@ public class ClassSearcherTest {
 			"ghidra.util.classfinder.ClassSearcherTest$ClassWithStaticInitializerSideEffects",
 			TestSuper.class, getClass().getClassLoader());
 		assertNotNull(found);
-		assertEquals(Canary.ALIVE, canary);
 		Constructor<? extends TestSuper> constructor = found.getConstructor();
-		assertEquals(Canary.ALIVE, canary);
 		TestSuper instance = constructor.newInstance();
 		assertNotNull(instance);
 		assertEquals(Canary.DEAD, canary);

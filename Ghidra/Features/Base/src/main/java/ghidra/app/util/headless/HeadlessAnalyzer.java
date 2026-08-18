@@ -291,18 +291,6 @@ public class HeadlessAnalyzer {
 				Msg.warn(this, "REPORT: Nothing to do ... must specify files for import.");
 				return;
 			}
-
-			if (!path.endsWith("/")) {
-				// force explicit folder path so that non-existent folders are created on import
-				ghidraURL = new URI("ghidra", null, ghidraURL.getHost(), ghidraURL.getPort(),
-					path + "/", null, null).toURL();
-			}
-		}
-		else { // Running in -process mode
-			if (path.endsWith("/") && path.length() > 1) {
-				ghidraURL = new URI("ghidra", null, ghidraURL.getHost(), ghidraURL.getPort(),
-					path.substring(0, path.length() - 1), null, null).toURL();
-			}
 		}
 
 		BundleHost bundleHost = GhidraScriptUtil.acquireBundleHostReference();
@@ -1871,7 +1859,27 @@ public class HeadlessAnalyzer {
 		}
 	}
 
+	/**
+	 * A headless version of the {@link DefaultProjectManager} that does not update the project's 
+	 * preferences. This prevents the headless environment from overwriting settings GUI 
+	 * installations.
+	 */
 	private static class HeadlessGhidraProjectManager extends DefaultProjectManager {
-		// this exists just to allow access to the constructor
+
+		@Override
+		public void setLastOpenedProject(ProjectLocator projectLocator) {
+			// No need to save this for headless.  We also do not want to affect the GUI by saving
+			// this value.
+		}
+
+		@Override
+		public ProjectLocator getLastOpenedProject() {
+			return null;
+		}
+
+		@Override
+		protected void updatePreferences() {
+			// nothing to save
+		}
 	}
 }

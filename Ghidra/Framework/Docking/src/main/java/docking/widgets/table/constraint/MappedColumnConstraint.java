@@ -17,7 +17,6 @@ package docking.widgets.table.constraint;
 
 import docking.widgets.table.constrainteditor.ColumnConstraintEditor;
 import docking.widgets.table.constrainteditor.MappedColumnConstraintEditor;
-import generic.json.Json;
 import ghidra.util.SystemUtilities;
 
 /**
@@ -103,7 +102,7 @@ public class MappedColumnConstraint<T, M> implements ColumnConstraint<T> {
 
 	@Override
 	public String toString() {
-		return Json.toString(this);
+		return delegate.toString();
 	}
 
 	@Override

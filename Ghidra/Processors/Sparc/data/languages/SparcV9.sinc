@@ -342,23 +342,23 @@ if (DECOMPILE_MODE) goto <skip_rotate>;
 
 #There are special cases for source operands RS1 and RS2 which just return the constant 0 when the
 #specified register is g0
-RS1: rs1  is rs1 & rs1_zero=0 { export 0:$(SIZE); }
-RS1: rs1  is rs1              { export rs1; }
+RS1: "%"^rs1  is rs1 & rs1_zero=0 { export 0:$(SIZE); }
+RS1: "%"^rs1  is rs1              { export rs1; }
 
-RS2: rs2  is rs2 & rs2_zero=0 { export 0:$(SIZE); }
-RS2: rs2  is rs2              { export rs2; }
+RS2: "%"^rs2  is rs2 & rs2_zero=0 { export 0:$(SIZE); }
+RS2: "%"^rs2  is rs2              { export rs2; }
 
 #For the destination operand RD, we export a temporary varnode with value 0.
 #This is because writes to g0 are allowed, but they have no visible effect (see the Sparc manual).
 #This way the value of g0 won't appear to change when using the pcode emulator.
 #
-RD: rd  is rd & rd_zero=0 { local tmp:$(SIZE) = 0; export tmp; }
+RD: "%"^rd  is rd & rd_zero=0 { local tmp:$(SIZE) = 0; export tmp; }
 # didrestore is picked up by call instruction only
 # this will cause any instruction that assigns to the o7 return address register
 # in the delay slot of a call instruction to turn the call into a call/return
 #
-RD: rd  is rd & rd_d=15   { didrestore = 1; export rd; }
-RD: rd  is rd             { export rd; }
+RD: "%"^rd  is rd & rd_d=15   { didrestore = 1; export rd; }
+RD: "%"^rd  is rd             { export rd; }
 
 regorimm: RS2       is i=0 & RS2    { export RS2; }
 regorimm: simm13    is i=1 & simm13 { export *[const]:$(SIZE) simm13; }

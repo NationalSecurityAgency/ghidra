@@ -568,7 +568,7 @@ public class DefaultProjectManager implements ProjectManager {
 	/**
 	 * Update preferences file with list of known projects.
 	 */
-	void updatePreferences() {
+	protected void updatePreferences() {
 
 		setProjectLocatorProperty(recentlyOpenedProjectsList, RECENT_PROJECTS);
 		setProjectURLProperty(recentlyViewedProjectsList, VIEWED_PROJECTS);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  */
 public class SwiftNativeDemangler {
 
-	private String nativeDemanglerPath;
+	private String nativeDemanglerCmd;
 	private boolean standaloneDemanglerBinary;
 	
 	/**
@@ -54,25 +54,20 @@ public class SwiftNativeDemangler {
 	/**
 	 * Creates a new {@link SwiftNativeDemangler}
 	 * 
-	 * @param swiftDir The Swift directory
 	 * @throws IOException if there was a problem finding or running the Swift native demangler
 	 */
-	public SwiftNativeDemangler(File swiftDir) throws IOException {
+	public SwiftNativeDemangler() throws IOException {
 		List<String> demanglerNames = List.of("swift-demangle", "swift");
 		IOException ioe = null;
 		for (String demanglerName : demanglerNames) {
-			nativeDemanglerPath = demanglerName;
-			if (swiftDir != null) {
-				nativeDemanglerPath = swiftDir + File.separator + nativeDemanglerPath;
-			}
+			nativeDemanglerCmd = demanglerName; // expect swift demangler to be on the PATH
 			try {
 				int exitCode =
-					new ProcessBuilder(List.of(nativeDemanglerPath, "--version")).start()
-							.waitFor();
+					new ProcessBuilder(List.of(nativeDemanglerCmd, "--version")).start().waitFor();
 				if (exitCode == 0) {
 					ioe = null;
 					standaloneDemanglerBinary =
-						new File(nativeDemanglerPath).getName().contains("-demangle");
+						new File(nativeDemanglerCmd).getName().contains("-demangle");
 					break;
 				}
 				ioe = new IOException("Native Swift demangler exited with code: " + exitCode);
@@ -144,7 +139,7 @@ public class SwiftNativeDemangler {
 	 */
 	private BufferedReader demangle(String mangled, List<String> options) throws IOException {
 		List<String> command = new ArrayList<>();
-		command.add(nativeDemanglerPath);
+		command.add(nativeDemanglerCmd);
 		if (!standaloneDemanglerBinary) {
 			command.add("demangle");
 		}

@@ -437,6 +437,8 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 
 		final Language lang = language;
 		final CompilerSpec cspec = compilerSpec;
+
+		// Use ProgramAddressFactory to provide stack space
 		final AddressFactory addrFactory = new ProgramAddressFactory(lang, cspec, s -> null);
 
 		super.setProgramArchitecture(new ProgramArchitecture() {
@@ -733,6 +735,10 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 					}
 				}
 
+				// Use ProgramAddressFactory to provide stack space
+				final AddressFactory addrFactory =
+					new ProgramAddressFactory(language, compilerSpec, s -> null);
+
 				ProgramArchitecture programArchitecture = new ProgramArchitecture() {
 
 					@Override
@@ -747,7 +753,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 
 					@Override
 					public AddressFactory getAddressFactory() {
-						return language.getAddressFactory();
+						return addrFactory;
 					}
 				};
 

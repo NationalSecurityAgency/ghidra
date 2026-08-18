@@ -86,7 +86,7 @@ public class ImporterPlugin extends Plugin
 		"This plugin manages importing files, including those contained within " +
 			"firmware/filesystem images.";
 
-	private static final String SIMPLE_UNPACK_OPTION = "Enable simple GZF/GDT unpack";
+	private static final String SIMPLE_UNPACK_OPTION = "Enable simple GZF/GZT/GDT unpack";
 	private static final boolean SIMPLE_UNPACK_OPTION_DEFAULT = false;
 
 	private DockingAction importAction;

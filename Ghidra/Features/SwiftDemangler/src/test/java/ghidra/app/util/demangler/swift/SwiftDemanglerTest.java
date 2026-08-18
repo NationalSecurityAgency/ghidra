@@ -43,7 +43,7 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 		// Ghidra does not ship the native Swift demangler binary, so it may not be present to run 
 		// these tests. In this scenario, we just want these tests skipped (as opposed to failing).
 		try {
-			new SwiftNativeDemangler(new SwiftDemanglerOptions().getSwiftDir());
+			new SwiftNativeDemangler();
 		}
 		catch (IOException e) {
 			assumeNoException(e); // skip test, don't fail

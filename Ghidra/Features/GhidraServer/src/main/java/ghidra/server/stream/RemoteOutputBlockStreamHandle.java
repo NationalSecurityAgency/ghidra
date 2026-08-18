@@ -109,7 +109,6 @@ public class RemoteOutputBlockStreamHandle extends RemoteBlockStreamHandle<Outpu
 	public OutputBlockStream openBlockStream() throws IOException {
 
 		Socket socket = connect();
-		socket.setSendBufferSize(getPreferredBufferSize());
 
 		return new ClientOutputBlockStream(socket);
 	}
@@ -120,8 +119,6 @@ public class RemoteOutputBlockStreamHandle extends RemoteBlockStreamHandle<Outpu
 		if (!(blockStream instanceof OutputBlockStream)) {
 			throw new IllegalArgumentException("expected OutputBlockStream");
 		}
-
-		socket.setReceiveBufferSize(getPreferredBufferSize());
 
 		OutputBlockStream outputBlockStream = (OutputBlockStream) blockStream;
 		try (InputStream in = getBlockInputStream(socket)) {
