@@ -127,4 +127,16 @@ public class AARCH64BEAssemblyTest extends AbstractAssemblyTest {
 		// This one's really stalling up the solver :(
 		assertOneCompatRestExact("mov w0,#0x0", "00:00:80:52");
 	}
+
+	@Test
+	public void testAssemble_strb_w2_mx0_x1m() {
+		// GitHub #9042: with option=LSL and S=0 the extend specifier is omitted
+		assertOneCompatRestExact("strb w2,[x0, x1]", "02:68:21:38");
+	}
+
+	@Test
+	public void testAssemble_ldr_x2_mx0_x1_LSL_0x3m() {
+		// The S=1 form still prints and assembles with the explicit shift
+		assertOneCompatRestExact("ldr x2,[x0, x1, LSL #0x3]", "02:78:61:f8");
+	}
 }
