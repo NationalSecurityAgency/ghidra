@@ -27,10 +27,7 @@ public class EqualEquation extends ValExpressEquation {
     }
 
     static boolean isValueInRange(long value, long min, long max) {
-        if (min <= max) {
-            return value >= min && value <= max;
-        }
-        return value >= min || value <= max;
+        return Long.compareUnsigned(value, min) >= 0 && Long.compareUnsigned(value, max) <= 0;
     }
 
     @Override

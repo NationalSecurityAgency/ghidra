@@ -36,11 +36,12 @@ public class EqualEquationTest {
 	}
 
 	@Test
-	public void testWrappedRange() {
-		assertFalse(EqualEquation.isValueInRange(4, 5, -1));
-		assertTrue(EqualEquation.isValueInRange(5, 5, -1));
-		assertTrue(EqualEquation.isValueInRange(Long.MAX_VALUE, 5, -1));
-		assertTrue(EqualEquation.isValueInRange(Long.MIN_VALUE, 5, -1));
-		assertTrue(EqualEquation.isValueInRange(-1, 5, -1));
+	public void testUnsignedRangeCrossingSignedBoundary() {
+		assertFalse(EqualEquation.isValueInRange(4, 5, -2));
+		assertTrue(EqualEquation.isValueInRange(5, 5, -2));
+		assertTrue(EqualEquation.isValueInRange(Long.MAX_VALUE, 5, -2));
+		assertTrue(EqualEquation.isValueInRange(Long.MIN_VALUE, 5, -2));
+		assertTrue(EqualEquation.isValueInRange(-2, 5, -2));
+		assertFalse(EqualEquation.isValueInRange(-1, 5, -2));
 	}
 }
