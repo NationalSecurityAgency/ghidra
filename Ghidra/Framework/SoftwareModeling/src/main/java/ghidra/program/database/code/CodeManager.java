@@ -2965,14 +2965,20 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @param commentType either EOL_COMMENT, PRE_COMMENT, POST_COMMENT, PLATE_COMMENT, or 
 	 * REPEATABLE_COMMENT
 	 * @param comment comment to set at the address
-	 * @throws IllegalArgumentException if type is not one of the types of comments supported
+	 * @throws IllegalArgumentException if type is not one of the types of comments supported or
+	 * address does not exist in memory.
 	 */
 	public void setComment(Address address, CommentType commentType, String comment) {
 		try (Closeable c = lock.write()) {
+			if (program.getMemory().getBlock(address) == null) {
+				throw new IllegalArgumentException("Cannot set comment: address not in known memory region." +
+						"\nAddress must exist in memory prior to comment creation.");
+			}
 			CodeUnit cu = getCodeUnitAt(address);
 			if (cu != null) {
 				cu.setComment(commentType, comment);
 				return;
+
 			}
 			long addr = addrMap.getKey(address, true);
 
