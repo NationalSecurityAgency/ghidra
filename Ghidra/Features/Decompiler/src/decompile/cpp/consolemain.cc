@@ -214,7 +214,7 @@ int main(int argc,char **argv)
     // Extra commands specific to the console application
     status->registerCom(new IfcLoadFile(),"load","file");
     status->registerCom(new IfcAddpath(),"addpath");
-    status->registerCom(new IfcSave(),"save");
+    status->registerCom(new IfcSave(),"save","state");
     status->registerCom(new IfcRestore(),"restore");
 
     if (initscript != (const char *)0) {
