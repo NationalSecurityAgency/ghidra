@@ -23,7 +23,6 @@ import db.DBHandle;
 import db.buffers.LocalBufferFile.BufferFileFilter;
 import ghidra.framework.*;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.ObjectArray;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -34,11 +33,6 @@ import ghidra.util.task.TaskMonitor;
  * capability.
  */
 public class BufferMgr {
-
-	public static final String ALWAYS_PRECACHE_PROPERTY = "db.always.precache";
-
-	private static boolean alwaysPreCache =
-		SystemUtilities.getBooleanProperty(ALWAYS_PRECACHE_PROPERTY, false);
 
 	public static final int DEFAULT_BUFFER_SIZE = 16 * 1024;
 	public static final int DEFAULT_CHECKPOINT_COUNT = 10;
@@ -87,6 +81,13 @@ public class BufferMgr {
 	 * Available memory cache buffers
 	 */
 	private Stack<DataBuffer> freeBuffers = new Stack<>();
+
+	/**
+	 * Buffer ids currently being read from the source file.  Source reads are done without
+	 * holding the lock, so this lets another thread wanting the same buffer wait for that
+	 * read instead of doing a duplicate one.
+	 */
+	private Set<Integer> pendingSourceReads = new HashSet<>();
 
 	// Cache statistics data
 	private long cacheHits = 0; // buffer requests satisified by memory cache
@@ -268,23 +269,7 @@ public class BufferMgr {
 
 		resetCacheStatistics();
 
-		if (alwaysPreCache) {
-			startPreCacheIfNeeded();
-		}
-	}
-
-	/**
-	 * Enable and start source buffer file pre-cache if appropriate.
-	 * This may be forced for all use cases by setting the System property
-	 * db.always.precache=true
-	 * WARNING! EXPERIMENTAL !!!
-	 */
-	public void enablePreCache() {
-		synchronized (preCacheLock) {
-			if (preCacheStatus == PreCacheStatus.INIT) {
-				startPreCacheIfNeeded();
-			}
-		}
+		startPreCacheIfNeeded();
 	}
 
 	/**
@@ -801,40 +786,85 @@ public class BufferMgr {
 	 */
 	private BufferNode getBufferNode(int id, boolean load) throws IOException {
 
-		BufferNode node = getCachedBufferNode(id);
-		if (node == null) {
+		BufferFile source;
+		DataBuffer buf;
+		synchronized (this) {
+			BufferNode node;
+			while (pendingSourceReads.contains(id)) {
+				try {
+					wait();
+				}
+				catch (InterruptedException e) {
+					throw new IOException("Interrupted waiting for buffer: " + id, e);
+				}
+				node = getCachedBufferNode(id);
+				if (node != null) {
+					return prepareCachedNode(node, load);
+				}
+			}
+
+			node = getCachedBufferNode(id);
+			if (node != null) {
+				return prepareCachedNode(node, load);
+			}
 
 			// First time buffer has been requested - get from source file
 			if (sourceFile == null) {
 				throw new IOException("Invalid buffer");
 			}
-// ?? error handling
-			DataBuffer buf = getCacheBuffer();
+			source = sourceFile;
+			buf = getCacheBuffer();
+			pendingSourceReads.add(id);
+		}
+
+		try {
 			try {
-				sourceFile.get(buf, id); // use source buffer id as index
+				source.get(buf, id); // use source buffer id as index
 			}
 			catch (IOException e) {
-				returnFreeBuffer(buf);
+				synchronized (this) {
+					returnFreeBuffer(buf);
+				}
 				throw e;
 			}
 
-			// Create new buffer node at checkpoint 0 (baseline)
-			node = createNewBufferNode(id, baselineCheckpointHead, null);
+			synchronized (this) {
+				// Pre-cache may have cached this buffer while we were reading it
+				BufferNode node = getCachedBufferNode(id);
+				if (node != null) {
+					returnFreeBuffer(buf);
+					return prepareCachedNode(node, load);
+				}
 
-			// Add node to cache
-			returnToCache(node, buf);
-
-			return node;
+				// Create new buffer node at checkpoint 0 (baseline)
+				node = createNewBufferNode(id, baselineCheckpointHead, null);
+				returnToCache(node, buf);
+				return node;
+			}
 		}
-		else if (node.locked) {
-			throw new IOException("Locked buffer: " + id);
+		finally {
+			synchronized (this) {
+				pendingSourceReads.remove(id);
+				notifyAll();
+			}
 		}
+	}
 
-		// if requested, load from disk cache file and add node to memory cache list
+	/**
+	 * Verify a cached node and load it into the memory cache if requested.
+	 * Caller must hold this BufferMgr's lock.
+	 * @param node cached buffer node
+	 * @param load if true, buffer will be loaded into memory cache.
+	 * @return the specified node
+	 * @throws IOException if node is locked or a cache file access error occurs
+	 */
+	private BufferNode prepareCachedNode(BufferNode node, boolean load) throws IOException {
+		if (node.locked) {
+			throw new IOException("Locked buffer: " + node.id);
+		}
 		if (load) {
 			loadCachedNode(node);
 		}
-
 		return node;
 	}
 
@@ -959,10 +989,12 @@ public class BufferMgr {
 	 * @return buffer object, or null if buffer not found
 	 * @throws IOException if source or cache file access error occurs
 	 */
-	public synchronized DataBuffer getBuffer(int id) throws IOException {
+	public DataBuffer getBuffer(int id) throws IOException {
 
-		if (corruptedState) {
-			throw new IOException("Corrupted BufferMgr state");
+		synchronized (this) {
+			if (corruptedState) {
+				throw new IOException("Corrupted BufferMgr state");
+			}
 		}
 
 		BufferNode node = getBufferNode(id, true); // loads buffer into memory cache
@@ -971,14 +1003,16 @@ public class BufferMgr {
 			throw new IOException("Invalid buffer: " + id);
 		}
 
-		// Buffers requested forUpdate are removed from cache
-		if (node.checkpoint != currentCheckpoint || currentCheckpointHead == null) {
-			unloadCachedNode(node);
-		}
-		removeFromCache(node);
+		synchronized (this) {
+			// Buffers requested forUpdate are removed from cache
+			if (node.checkpoint != currentCheckpoint || currentCheckpointHead == null) {
+				unloadCachedNode(node);
+			}
+			removeFromCache(node);
 
-		node.locked = true;
-		++lockCount;
+			node.locked = true;
+			++lockCount;
+		}
 
 		return buf;
 	}
