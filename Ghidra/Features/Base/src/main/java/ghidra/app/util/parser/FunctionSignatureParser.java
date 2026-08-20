@@ -29,6 +29,7 @@ import ghidra.program.model.listing.FunctionSignature;
 import ghidra.util.data.DataTypeParser;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -125,6 +126,15 @@ public class FunctionSignatureParser {
 		FunctionDefinitionDataType function =
 			new FunctionDefinitionDataType(name, destDataTypeManager);
 
+		String callingConvention = extractCallingConvention(signatureText);
+		if (callingConvention != null) {
+			try {
+				function.setCallingConvention(callingConvention);
+			}
+			catch (InvalidInputException e) {
+				throw new ParseException("Invalid calling convention: " + callingConvention);
+			}
+		}
 		function.setReturnType(extractReturnType(signatureText));
 		function.setArguments(extractArguments(signatureText));
 		function.setVarArgs(hasVarArgs(signatureText));
@@ -274,13 +284,43 @@ public class FunctionSignatureParser {
 		if (split.length < 2) {
 			throw new ParseException("Can't find return type");
 		}
-		String returnTypeName = StringUtils.join(split, " ", 0, split.length - 1);
+		int endIndex = split.length - 1;
+		if (extractCallingConvention(signatureText) != null) {
+			--endIndex;
+		}
+		if (endIndex == 0) {
+			throw new ParseException("Can't find return type");
+		}
+		String returnTypeName = StringUtils.join(split, " ", 0, endIndex);
 
 		DataType dt = resolveDataType(returnTypeName);
 		if (dt == null) {
 			throw new ParseException("Can't resolve return type: " + returnTypeName);
 		}
 		return dt;
+	}
+
+	private String extractCallingConvention(String signatureText) throws ParseException {
+		int parenIndex = signatureText.indexOf('(');
+		if (parenIndex < 0) {
+			throw new ParseException("Can't find calling convention");
+		}
+		String[] split = StringUtils.split(signatureText.substring(0, parenIndex));
+		if (split.length < 3) {
+			return null;
+		}
+
+		String candidate = split[split.length - 2];
+		GenericCallingConvention genericConvention =
+			GenericCallingConvention.getGenericCallingConvention(candidate);
+		if (genericConvention != GenericCallingConvention.unknown) {
+			return genericConvention.getDeclarationName();
+		}
+		if (destDataTypeManager != null &&
+			destDataTypeManager.getKnownCallingConventionNames().contains(candidate)) {
+			return candidate;
+		}
+		return null;
 	}
 
 	private DataType resolveDataType(String dataTypeName) throws CancelledException {
