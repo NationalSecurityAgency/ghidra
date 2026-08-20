@@ -2261,7 +2261,7 @@ addrExtendRegShift64: ExtendReg64^addrRegShift64 is aa_extreg_option=2 & aa_extr
 addrExtendRegShift64: ExtendReg64^addrRegShift64 is aa_extreg_option=3 & aa_extreg_imm3 & addrRegShift64 & ExtendReg64 { tmp:8 = ExtendReg64; tmp = tmp << addrRegShift64; export tmp; }
 addrExtendRegShift64: ExtendReg64^addrRegShift64 is aa_extreg_option=6 & aa_extreg_imm3 & addrRegShift64 & ExtendReg64 { tmp:8 = ExtendReg64; tmp = tmp << addrRegShift64; export tmp; }
 addrExtendRegShift64: ExtendReg64^addrRegShift64 is aa_extreg_option=7 & aa_extreg_imm3 & addrRegShift64 & ExtendReg64 { tmp:8 = ExtendReg64; tmp = tmp << addrRegShift64; export tmp; }
-addrExtendRegShift64: Rm_GPR64 is Rm_GPR64 & aa_extreg_option=3 & aa_extreg_imm3=0 & ExtendReg64 { export Rm_GPR64; }
+addrExtendRegShift64: Rm_GPR64 is Rm_GPR64 & aa_extreg_option=3 & b_1212=0 & ExtendReg64 { export Rm_GPR64; }
 addrExtendRegShift64: Rm_GPR64 is Rm_GPR64 & aa_extreg_option=7 & aa_extreg_imm3=0 & ExtendReg64 { export Rm_GPR64; }
 
 # unsigned offset
