@@ -1,0 +1,933 @@
+# zfa additional floating point instructions - Ref https://github.com/riscv/riscv-isa-manual/blob/main/src/zfa.adoc
+# Warning: the semantics sections are suggestive of the operation and not intended to be accurate.  With quad and
+# half-precision floating point operations present, the naming here of floating point registers is inconsistent.
+
+define pcodeop loadfp_const;
+
+:fli.s frd,"-0x1p+0" is frd & r1519=0 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load -1.0
+    frd=loadfp_const();
+}
+
+:fli.s frd,"min"     is frd & r1519=1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load minimum positive normal
+    frd=loadfp_const();
+}
+
+:fli.s frd,"0x1p-16" is frd & r1519=2 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 2^-16
+    frd=loadfp_const();
+}
+
+:fli.s frd,"0x1p-15" is frd & r1519=3 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 2^-15
+    frd=loadfp_const();
+}
+
+:fli.s frd,"0x1p-8"  is frd & r1519=4 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 2^-8
+    frd=loadfp_const();
+}
+
+:fli.s frd,"0x1p-7"  is frd & r1519=5 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 2^-7
+    frd=loadfp_const();
+}
+
+:fli.s frd,"0.0625"  is frd & r1519=6 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 0.0625
+    frd=loadfp_const();
+}
+
+:fli.s frd,"0.125"   is frd & r1519=7 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 0.125
+    frd=loadfp_const();
+}
+
+:fli.s frd,"0.25"    is frd & r1519=8 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 0.25
+    frd=loadfp_const();
+}
+
+:fli.s frd,"0.315"   is frd & r1519=9 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 0.3125
+    frd=loadfp_const();
+}
+
+:fli.s frd,"0.375"   is frd & r1519=10 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 0.375
+    frd=loadfp_const();
+}
+
+:fli.s frd,"0.4375"  is frd & r1519=11 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 0.4375
+    frd=loadfp_const();
+}
+
+:fli.s frd,"0.5"     is frd & r1519=12 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 0.5
+    frd=loadfp_const();
+}
+
+:fli.s frd,"0.625"   is frd & r1519=13 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 0.625
+    frd=loadfp_const();
+}
+
+:fli.s frd,"0.75"    is frd & r1519=14 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 0.75
+    frd=loadfp_const();
+}
+
+:fli.s frd,"0.875"   is frd & r1519=15 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 0.875
+    frd=loadfp_const();
+}
+
+:fli.s frd,"1.0"     is frd & r1519=16 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 1.0
+    frd=loadfp_const();
+}
+:fli.s frd,"1.25"    is frd & r1519=17 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 1.25
+    frd=loadfp_const();
+}
+
+:fli.s frd,"1.5"     is frd & r1519=18 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 1.5
+    frd=loadfp_const();
+}
+
+:fli.s frd,"1.75"    is frd & r1519=19 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 1.75
+    frd=loadfp_const();
+}
+
+:fli.s frd,"2.0"     is frd & r1519=20 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 2.0
+    frd=loadfp_const();
+}
+
+:fli.s frd,"2.5"     is frd & r1519=21 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 2.5
+    frd=loadfp_const();
+}
+
+:fli.s frd,"3.0"     is frd & r1519=22 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 3.0
+    frd=loadfp_const();
+}
+
+:fli.s frd,"4.0"     is frd & r1519=23 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 4.0
+    frd=loadfp_const();
+}
+
+:fli.s frd,"8.0"     is frd & r1519=24 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 8.0
+    frd=loadfp_const();
+}
+
+:fli.s frd,"16.0"    is frd & r1519=25 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 16.0
+    frd=loadfp_const();
+}
+
+:fli.s frd,"128.0"   is frd & r1519=26 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 128.0
+    frd=loadfp_const();
+}
+
+:fli.s frd,"256.0"   is frd & r1519=27 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 256.0
+    frd=loadfp_const();
+}
+
+:fli.s frd,"32768.0" is frd & r1519=28 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 32768.0
+    frd=loadfp_const();
+}
+
+:fli.s frd,"65536.0" is frd & r1519=29 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load 65536.0
+    frd=loadfp_const();
+}
+
+:fli.s frd,"infty"   is frd & r1519=30 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load infinity
+    frd=loadfp_const();
+}
+
+:fli.s frd,"NaN"     is frd & r1519=31 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x1
+{
+    # load canonical NaN
+    frd=loadfp_const();
+}
+
+# double precision load constants
+:fli.d frd,"-0x1p+0" is frd & r1519=0 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load -1.0
+    frd=loadfp_const();
+}
+
+:fli.d frd,"min"     is frd & r1519=1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load minimum positive normal
+    frd=loadfp_const();
+}
+
+:fli.d frd,"0x1p-16" is frd & r1519=2 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 2^-16
+    frd=loadfp_const();
+}
+
+:fli.d frd,"0x1p-15" is frd & r1519=3 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 2^-15
+    frd=loadfp_const();
+}
+
+:fli.d frd,"0x1p-8"  is frd & r1519=4 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 2^-8
+    frd=loadfp_const();
+}
+
+:fli.d frd,"0x1p-7"  is frd & r1519=5 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 2^-7
+    frd=loadfp_const();
+}
+
+:fli.d frd,"0.0625"  is frd & r1519=6 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 0.0625
+    frd=loadfp_const();
+}
+
+:fli.d frd,"0.125"   is frd & r1519=7 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 0.125
+    frd=loadfp_const();
+}
+
+:fli.d frd,"0.25"    is frd & r1519=8 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 0.25
+    frd=loadfp_const();
+}
+
+:fli.d frd,"0.315"   is frd & r1519=9 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 0.3125
+    frd=loadfp_const();
+}
+
+:fli.d frd,"0.375"   is frd & r1519=10 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 0.375
+    frd=loadfp_const();
+}
+
+:fli.d frd,"0.4375"  is frd & r1519=11 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 0.4375
+    frd=loadfp_const();
+}
+
+:fli.d frd,"0.5"     is frd & r1519=12 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 0.5
+    frd=loadfp_const();
+}
+
+:fli.d frd,"0.625"   is frd & r1519=13 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 0.625
+    frd=loadfp_const();
+}
+
+:fli.d frd,"0.75"    is frd & r1519=14 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 0.75
+    frd=loadfp_const();
+}
+
+:fli.d frd,"0.875"   is frd & r1519=15 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 0.875
+    frd=loadfp_const();
+}
+
+:fli.d frd,"1.0"     is frd & r1519=16 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 1.0
+    frd=loadfp_const();
+}
+:fli.d frd,"1.25"    is frd & r1519=17 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 1.25
+    frd=loadfp_const();
+}
+
+:fli.d frd,"1.5"     is frd & r1519=18 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 1.5
+    frd=loadfp_const();
+}
+
+:fli.d frd,"1.75"    is frd & r1519=19 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 1.75
+    frd=loadfp_const();
+}
+
+:fli.d frd,"2.0"     is frd & r1519=20 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 2.0
+    frd=loadfp_const();
+}
+
+:fli.d frd,"2.5"     is frd & r1519=21 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 2.5
+    frd=loadfp_const();
+}
+
+:fli.d frd,"3.0"     is frd & r1519=22 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 3.0
+    frd=loadfp_const();
+}
+
+:fli.d frd,"4.0"     is frd & r1519=23 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 4.0
+    frd=loadfp_const();
+}
+
+:fli.d frd,"8.0"     is frd & r1519=24 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 8.0
+    frd=loadfp_const();
+}
+
+:fli.d frd,"16.0"    is frd & r1519=25 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 16.0
+    frd=loadfp_const();
+}
+
+:fli.d frd,"128.0"   is frd & r1519=26 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 128.0
+    frd=loadfp_const();
+}
+
+:fli.d frd,"256.0"   is frd & r1519=27 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 256.0
+    frd=loadfp_const();
+}
+
+:fli.d frd,"32768.0" is frd & r1519=28 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 32768.0
+    frd=loadfp_const();
+}
+
+:fli.d frd,"65536.0" is frd & r1519=29 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load 65536.0
+    frd=loadfp_const();
+}
+
+:fli.d frd,"infty"   is frd & r1519=30 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load infinity
+    frd=loadfp_const();
+}
+
+:fli.d frd,"NaN"     is frd & r1519=31 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x79 & op2024=0x1
+{
+    # load canonical NaN
+    frd=loadfp_const();
+}
+
+# half precision load constants
+:fli.h frd,"-0x1p+0" is frd & r1519=0 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load -1.0
+    frd=loadfp_const();
+}
+
+:fli.h frd,"min"     is frd & r1519=1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load minimum positive normal
+    frd=loadfp_const();
+}
+
+:fli.h frd,"0x1p-16" is frd & r1519=2 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 2^-16
+    frd=loadfp_const();
+}
+
+:fli.h frd,"0x1p-15" is frd & r1519=3 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 2^-15
+    frd=loadfp_const();
+}
+
+:fli.h frd,"0x1p-8"  is frd & r1519=4 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 2^-8
+    frd=loadfp_const();
+}
+
+:fli.h frd,"0x1p-7"  is frd & r1519=5 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 2^-7
+    frd=loadfp_const();
+}
+
+:fli.h frd,"0.0625"  is frd & r1519=6 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 0.0625
+    frd=loadfp_const();
+}
+
+:fli.h frd,"0.125"   is frd & r1519=7 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 0.125
+    frd=loadfp_const();
+}
+
+:fli.h frd,"0.25"    is frd & r1519=8 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 0.25
+    frd=loadfp_const();
+}
+
+:fli.h frd,"0.315"   is frd & r1519=9 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 0.3125
+    frd=loadfp_const();
+}
+
+:fli.h frd,"0.375"   is frd & r1519=10 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 0.375
+    frd=loadfp_const();
+}
+
+:fli.h frd,"0.4375"  is frd & r1519=11 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 0.4375
+    frd=loadfp_const();
+}
+
+:fli.h frd,"0.5"     is frd & r1519=12 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 0.5
+    frd=loadfp_const();
+}
+
+:fli.h frd,"0.625"   is frd & r1519=13 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 0.625
+    frd=loadfp_const();
+}
+
+:fli.h frd,"0.75"    is frd & r1519=14 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 0.75
+    frd=loadfp_const();
+}
+
+:fli.h frd,"0.875"   is frd & r1519=15 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 0.875
+    frd=loadfp_const();
+}
+
+:fli.h frd,"1.0"     is frd & r1519=16 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 1.0
+    frd=loadfp_const();
+}
+:fli.h frd,"1.25"    is frd & r1519=17 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 1.25
+    frd=loadfp_const();
+}
+
+:fli.h frd,"1.5"     is frd & r1519=18 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 1.5
+    frd=loadfp_const();
+}
+
+:fli.h frd,"1.75"    is frd & r1519=19 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 1.75
+    frd=loadfp_const();
+}
+
+:fli.h frd,"2.0"     is frd & r1519=20 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 2.0
+    frd=loadfp_const();
+}
+
+:fli.h frd,"2.5"     is frd & r1519=21 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 2.5
+    frd=loadfp_const();
+}
+
+:fli.h frd,"3.0"     is frd & r1519=22 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 3.0
+    frd=loadfp_const();
+}
+
+:fli.h frd,"4.0"     is frd & r1519=23 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 4.0
+    frd=loadfp_const();
+}
+
+:fli.h frd,"8.0"     is frd & r1519=24 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 8.0
+    frd=loadfp_const();
+}
+
+:fli.h frd,"16.0"    is frd & r1519=25 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 16.0
+    frd=loadfp_const();
+}
+
+:fli.h frd,"128.0"   is frd & r1519=26 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 128.0
+    frd=loadfp_const();
+}
+
+:fli.h frd,"256.0"   is frd & r1519=27 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 256.0
+    frd=loadfp_const();
+}
+
+:fli.h frd,"32768.0" is frd & r1519=28 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 32768.0
+    frd=loadfp_const();
+}
+
+:fli.h frd,"65536.0" is frd & r1519=29 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load 65536.0
+    frd=loadfp_const();
+}
+
+:fli.h frd,"infty"   is frd & r1519=30 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load infinity
+    frd=loadfp_const();
+}
+
+:fli.h frd,"NaN"     is frd & r1519=31 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7a & op2024=0x1
+{
+    # load canonical NaN
+    frd=loadfp_const();
+}
+
+# quad precision load constants
+:fli.q frd,"-0x1p+0" is frd & r1519=0 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load -1.0
+    frd=loadfp_const();
+}
+
+:fli.q frd,"min"     is frd & r1519=1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load minimum positive normal
+    frd=loadfp_const();
+}
+
+:fli.q frd,"0x1p-16" is frd & r1519=2 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 2^-16
+    frd=loadfp_const();
+}
+
+:fli.q frd,"0x1p-15" is frd & r1519=3 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 2^-15
+    frd=loadfp_const();
+}
+
+:fli.q frd,"0x1p-8"  is frd & r1519=4 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 2^-8
+    frd=loadfp_const();
+}
+
+:fli.q frd,"0x1p-7"  is frd & r1519=5 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 2^-7
+    frd=loadfp_const();
+}
+
+:fli.q frd,"0.0625"  is frd & r1519=6 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 0.0625
+    frd=loadfp_const();
+}
+
+:fli.q frd,"0.125"   is frd & r1519=7 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 0.125
+    frd=loadfp_const();
+}
+
+:fli.q frd,"0.25"    is frd & r1519=8 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 0.25
+    frd=loadfp_const();
+}
+
+:fli.q frd,"0.315"   is frd & r1519=9 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 0.3125
+    frd=loadfp_const();
+}
+
+:fli.q frd,"0.375"   is frd & r1519=10 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 0.375
+    frd=loadfp_const();
+}
+
+:fli.q frd,"0.4375"  is frd & r1519=11 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 0.4375
+    frd=loadfp_const();
+}
+
+:fli.q frd,"0.5"     is frd & r1519=12 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 0.5
+    frd=loadfp_const();
+}
+
+:fli.q frd,"0.625"   is frd & r1519=13 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 0.625
+    frd=loadfp_const();
+}
+
+:fli.q frd,"0.75"    is frd & r1519=14 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 0.75
+    frd=loadfp_const();
+}
+
+:fli.q frd,"0.875"   is frd & r1519=15 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 0.875
+    frd=loadfp_const();
+}
+
+:fli.q frd,"1.0"     is frd & r1519=16 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 1.0
+    frd=loadfp_const();
+}
+
+:fli.q frd,"1.25"    is frd & r1519=17 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 1.25
+    frd=loadfp_const();
+}
+
+:fli.q frd,"1.5"     is frd & r1519=18 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 1.5
+    frd=loadfp_const();
+}
+
+:fli.q frd,"1.75"    is frd & r1519=19 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 1.75
+    frd=loadfp_const();
+}
+
+:fli.q frd,"2.0"     is frd & r1519=20 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 2.0
+    frd=loadfp_const();
+}
+
+:fli.q frd,"2.5"     is frd & r1519=21 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 2.5
+    frd=loadfp_const();
+}
+
+:fli.q frd,"3.0"     is frd & r1519=22 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 3.0
+    frd=loadfp_const();
+}
+
+:fli.q frd,"4.0"     is frd & r1519=23 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 4.0
+    frd=loadfp_const();
+}
+
+:fli.q frd,"8.0"     is frd & r1519=24 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 8.0
+    frd=loadfp_const();
+}
+
+:fli.q frd,"16.0"    is frd & r1519=25 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 16.0
+    frd=loadfp_const();
+}
+
+:fli.q frd,"128.0"   is frd & r1519=26 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 128.0
+    frd=loadfp_const();
+}
+
+:fli.q frd,"256.0"   is frd & r1519=27 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 256.0
+    frd=loadfp_const();
+}
+
+:fli.q frd,"32768.0" is frd & r1519=28 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 32768.0
+    frd=loadfp_const();
+}
+
+:fli.q frd,"65536.0" is frd & r1519=29 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load 65536.0
+    frd=loadfp_const();
+}
+
+:fli.q frd,"infty"   is frd & r1519=30 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load infinity
+    frd=loadfp_const();
+}
+
+:fli.q frd,"NaN"     is frd & r1519=31 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x7b & op2024=0x1
+{
+    # load canonical NaN
+    frd=loadfp_const();
+}
+
+# The FMINM.S and FMAXM.S instructions are defined like the FMIN.S and FMAX.S instructions,
+# except that if either input is NaN, the result is the canonical NaN.
+define pcodeop fmin_m;
+:fminm.s frd,frs1S,frs2S is frs1S & frd & frs2S & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x2 & funct7=0x14
+{
+    frd=fmin_m(frs1S,frs2S);
+}
+
+define pcodeop fmax_m;
+:fmaxm.s frd,frs1S,frs2S is frs1S & frd & frs2S & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x3 & funct7=0x14
+{
+    frd=fmax_m(frs1S,frs2S);
+}
+
+@if ((FPSIZE == "64") || (FPSIZE == "128"))
+:fminm.d frd,frs1D,frs2D is frs1D & frd & frs2D & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x2 & funct7=0x15
+{
+    frd=fmin_m(frs1D,frs2D);
+}
+
+:fmaxm.d frd,frs1D,frs2D is frs1D & frd & frs2D & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x3 & funct7=0x15
+{
+    frd=fmax_m(frs1D,frs2D);
+}
+@endif
+
+:fminm.h frd,frs1S,frs2S is frs1S & frd & frs2S & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x2 & funct7=0x16
+{
+    frd=fmin_m(frs1S,frs2S);
+}
+
+:fmaxm.h frd,frs1S,frs2S is frs1S & frd & frs2S & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x3 & funct7=0x16
+{
+    frd=fmax_m(frs1S,frs2S);
+}
+
+@if (FPSIZE == "128")
+:fminm.q frd,frs1D,frs2D is frs1D & frd & frs2D & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x2 & funct7=0x17
+{
+    frd=fmin_m(frs1D,frs2D);
+}
+
+:fmaxm.q frd,frs1D,frs2D is frs1D & frd & frs2D & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x3 & funct7=0x17
+{
+    frd=fmax_m(frs1D,frs2D);
+}
+@endif
+
+# rounding
+
+:fround.s frd,frs1S,FRM is frs1S & frd & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x20 & op2024=0x4
+{
+    local tmp:4 = float2float(frs1S);
+    frd = zext(tmp);
+}
+
+:froundnx.s frd,frs1S,FRM is frs1S & frd & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x20 & op2024=0x5
+{
+    # sets the inexact exception flag if the input differs from the rounded result and is not NaN
+    local tmp:4 = float2float(frs1S);
+    frd = zext(tmp);
+}
+
+@if ((FPSIZE == "64") || (FPSIZE == "128"))
+:fround.d frd,frs1D,FRM is frs1D & frd & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x21 & op2024=0x4
+{
+    local tmp:4 = float2float(frs1D);
+    frd = zext(tmp);
+}
+
+:froundnx.d frd,frs1D,FRM is frs1D & frd & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x21 & op2024=0x5
+{
+    # sets the inexact exception flag if the input differs from the rounded result and is not NaN
+    local tmp:4 = float2float(frs1D);
+    frd = zext(tmp);
+}
+@endif
+
+:fround.h frd,frs1S,FRM is frs1S & frd & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x22 & op2024=0x4
+{
+    local tmp:4 = float2float(frs1S);
+    frd = zext(tmp);
+}
+
+:froundnx.h frd,frs1S,FRM is frs1S & frd & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x22 & op2024=0x5
+{
+    # sets the inexact exception flag if the input differs from the rounded result and is not NaN
+    local tmp:4 = float2float(frs1S);
+    frd = zext(tmp);
+}
+
+@if (FPSIZE == "128")
+:fround.q frd,frs1D,FRM is frs1D & frd & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x23 & op2024=0x4
+{
+    local tmp:4 = float2float(frs1D);
+    frd = zext(tmp);
+}
+
+:froundnx.q frd,frs1D,FRM is frs1D & frd & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x23 & op2024=0x5
+{
+    # sets the inexact exception flag if the input differs from the rounded result and is not NaN
+    local tmp:4 = float2float(frs1D);
+    frd = zext(tmp);
+}
+@endif
+
+@if ((FPSIZE == "64") || (FPSIZE == "128"))
+:fcvtmod.w.d rd,frs1D,"rtz" is frs1D & op1214=1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & op0707=0x0  & funct7=0x61 & op2024=0x8
+{
+    # like FCVT.W.D  but always rounds to zero, the following doesn't do this
+    local tmp:$(XLEN) = trunc(frs1D);
+    rd = sext(tmp);
+}
+@endif
+
+# like the FLE.* and FLT.* instructions, except that quiet NaN inputs do not cause the invalid operation exception flag to be set
+:fleq.s rd,frs1S,frs2S is frs2S & frs1S & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x4 & funct7=0x50
+{
+        rd = zext(frs1S f<= frs2S);
+}
+
+:fltq.s rd,frs1S,frs2S is frs2S & frs1S & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x5 & funct7=0x50
+{
+        rd = zext(frs1S f== frs2S);
+}
+
+@if ((FPSIZE == "64") || (FPSIZE == "128"))
+:fleq.d rd,frs1D,frs2D is frs2D & frs1D & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x4 & funct7=0x51
+{
+        rd = zext(frs1D f<= frs2D);
+}
+
+:fltq.d rd,frs1D,frs2D is frs2D & frs1D & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x5 & funct7=0x51
+{
+        rd = zext(frs1D f== frs2D);
+}
+@endif
+
+:fleq.h rd,frs1S,frs2S is frs2S & frs1S & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x4 & funct7=0x52
+{
+        rd = zext(frs1S f<= frs2S);
+}
+
+:fltq.h rd,frs1S,frs2S is frs2S & frs1S & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x5 & funct7=0x52
+{
+        rd = zext(frs1S f== frs2S);
+}
+
+@if (FPSIZE == "128")
+:fleq.q rd,frs1D,frs2D is frs2D & frs1D & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x4 & funct7=0x53
+{
+        rd = zext(frs1D f<= frs2D);
+}
+
+:fltq.q rd,frs1D,frs2D is frs2D & frs1D & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x5 & funct7=0x53
+{
+        rd = zext(frs1D f== frs2D);
+}
+@endif

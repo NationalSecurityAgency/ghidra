@@ -1,0 +1,5 @@
+# sm4ed - Accelerates the block encrypt/decrypt operation of the SM4 block cipher
+:sm4ed rd, rs1, rs2, bs is bs & op2529=0x18 & rs2 & rs1 & op1214=0x0 & rd & op0006=0x33 unimpl
+
+# sm4ks - Accelerates the Key Schedule operation of the SM4 block cipher
+:sm4ks rd, rs1, rs2, bs  is bs & op2529=0x1a & rs2 & rs1 & op1214=0x0 & rd & op0006=0x33 unimpl
