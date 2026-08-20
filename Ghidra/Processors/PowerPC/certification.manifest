@@ -18,6 +18,7 @@ data/languages/lswInstructions.sinc||GHIDRA||||END|
 data/languages/mulhwInstructions.sinc||GHIDRA||||END|
 data/languages/old/oldPPC.lang||GHIDRA||||END|
 data/languages/old/oldPPC.trans||GHIDRA||||END|
+data/languages/powerpcas.sinc||GHIDRA||||END|
 data/languages/ppc.dwarf||GHIDRA||||END|
 data/languages/ppc.ldefs||GHIDRA||||END|
 data/languages/ppc_32.cspec||GHIDRA||||END|
