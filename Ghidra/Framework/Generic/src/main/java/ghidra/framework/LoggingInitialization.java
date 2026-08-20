@@ -15,11 +15,16 @@
  */
 package ghidra.framework;
 
-import java.io.File;
+import java.io.*;
 import java.net.*;
+import java.util.List;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.*;
+import org.apache.logging.log4j.core.config.xml.XmlConfiguration;
 
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -63,14 +68,54 @@ public class LoggingInitialization {
 			// Ensure this property is set. Some code paths set the property, but some do not.
 			System.setProperty(LOG4J2_CONFIGURATION_PROPERTY, configFileUrl.toURI().toString());
 
-			// force the log system to initialize
-			LogManager.getContext(false);
+			// Simply requesting the context will force the log system to initialize.  Make the call
+			// so that it will pick up the config file property we just set.
+			LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+
+			replaceDefaultAppenders(ctx);
+
 			return configFileUrl;
 		}
 		catch (URISyntaxException e) {
 			Msg.error(LoggingInitialization.class, "Unable to convert URL to URI", e);
 			return null;
 		}
+		catch (IOException e) {
+			Msg.error(LoggingInitialization.class, "Unable to load file appenders", e);
+			return null;
+		}
+	}
+
+	/**
+	 * Our logging system works with a few different config files, one of which is chosen by the
+	 * application configuration.  Each config file will use multiple appenders to send log output
+	 * to various places: the system console, the UI log display, an application log file and a 
+	 * script log file for script messages.  
+	 * <P>
+	 * Each application, including unit tests, is responsible for making sure that
+	 * {@link #initializeLoggingSystem()} is called before clients use any logging. If this call is
+	 * not made, and the log4j system gets initialized indirectly, such as through class loading, 
+	 * then log4j may create poorly named files in Java's working directory.  To prevent this, we 
+	 * have our file appenders default to using the console instead of a file.  When 
+	 * {@link #initializeLoggingSystem()} is called, this method will replace those default 
+	 * appenders with the desired file appenders. 
+	 * 
+	 * @param ctx the logging context
+	 * @throws IOException if there is a problem reading the appender xml configuration files 
+	 */
+	private static void replaceDefaultAppenders(LoggerContext ctx) throws IOException {
+
+		ApplicationAppenderPlaceholder applicationAppender = new ApplicationAppenderPlaceholder();
+		ScriptAppenderPlaceholder scriptAppender = new ScriptAppenderPlaceholder();
+
+		applicationAppender.install(ctx);
+		scriptAppender.install(ctx);
+
+		ctx.updateLoggers(); // Refreshes the context
+	}
+
+	private static URL getResource(String relativeName) {
+		return LoggingInitialization.class.getClassLoader().getResource(relativeName);
 	}
 
 	private static URL getLoggingConfigFileUrl() {
@@ -89,7 +134,7 @@ public class LoggingInitialization {
 			loggingConfigFilename = DEVELOPMENT_LOGGING_CONFIGURATION_FILE;
 		}
 
-		return LoggingInitialization.class.getClassLoader().getResource(loggingConfigFilename);
+		return getResource(loggingConfigFilename);
 	}
 
 	private static URL getLogFileFromSystemProperty() {
@@ -99,7 +144,7 @@ public class LoggingInitialization {
 		}
 
 		// first see if the given filename is something that is in our classpath
-		URL resource = LoggingInitialization.class.getClassLoader().getResource(configString);
+		URL resource = getResource(configString);
 		if (resource != null) {
 			return resource;
 		}
@@ -221,6 +266,105 @@ public class LoggingInitialization {
 	public synchronized static void reinitialize() {
 		if (INITIALIZED) {
 			((LoggerContext) LogManager.getContext(false)).reconfigure();
+		}
+	}
+
+//=================================================================================================
+// Inner Classes
+//=================================================================================================	
+
+	private static class AppenderPlaceholder {
+
+		private String name;
+		private String configFilename;
+		private Level level;
+
+		AppenderPlaceholder(String name, String configFilename) {
+			this.name = name;
+			this.configFilename = configFilename;
+		}
+
+		void install(LoggerContext ctx) throws IOException {
+
+			if (!loadDefaultAppender(ctx)) {
+				return;
+			}
+
+			Appender newAppender = createReplacementAppender(ctx);
+			replaceAppender(ctx, newAppender);
+		}
+
+		private boolean loadDefaultAppender(LoggerContext ctx) {
+
+			Configuration config = ctx.getConfiguration();
+			LoggerConfig rootLoggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
+			List<AppenderRef> refs = rootLoggerConfig.getAppenderRefs();
+
+			for (AppenderRef ref : refs) {
+				String appenderName = ref.getRef();
+				if (appenderName.equals(name)) {
+					level = ref.getLevel();
+					return true;
+				}
+			}
+
+			error("Unable to find '%' default appender".formatted(name));
+			return false;
+		}
+
+		private Appender createReplacementAppender(LoggerContext ctx) throws IOException {
+			URL url = getResource(configFilename);
+			if (url == null) {
+				// Logging not initialized; can't use logging
+				error("Unable to find appender config '%s'".formatted(configFilename));
+				return null;
+			}
+
+			try (InputStream fis = url.openStream()) {
+				ConfigurationSource source = new ConfigurationSource(fis);
+				XmlConfiguration tempConfig = new XmlConfiguration(ctx, source);
+				tempConfig.initialize(); // trigger the xml parsing
+
+				Appender appender = tempConfig.getAppender(name);
+				if (appender == null) {
+					error("Could not find an appender named '%s' in '%s'".formatted(name,
+						configFilename));
+					return null;
+				}
+				return appender;
+			}
+		}
+
+		private void replaceAppender(LoggerContext ctx, Appender newAppender) {
+			if (newAppender == null) {
+				return; // already printed an error messages before this call
+			}
+
+			// remove old appender
+			Configuration config = ctx.getConfiguration();
+			LoggerConfig rootLoggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
+			rootLoggerConfig.removeAppender(name);
+
+			newAppender.start();
+			config.addAppender(newAppender);
+			config.getRootLogger().addAppender(newAppender, level, null);
+		}
+
+		private void error(String s) {
+			// Logging not initialized; can't use logging
+			System.err.println(s);
+		}
+	}
+
+	private static class ApplicationAppenderPlaceholder extends AppenderPlaceholder {
+		ApplicationAppenderPlaceholder() {
+			super("detail", "log4j-appender-rolling-file.xml");
+		}
+	}
+
+	private static class ScriptAppenderPlaceholder extends AppenderPlaceholder {
+		ScriptAppenderPlaceholder() {
+			super("script", "log4j-appender-rolling-file-scripts.xml");
 		}
 	}
 }
