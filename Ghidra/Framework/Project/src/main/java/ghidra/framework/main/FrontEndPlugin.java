@@ -193,6 +193,10 @@ public class FrontEndPlugin extends Plugin
 		createToolSpecificOpenActions();
 	}
 
+	void setUseNaturalSort(boolean b) {
+		projectDataPanel.setUseNaturalSort(b);
+	}
+
 	protected void createToolSpecificOpenActions() {
 		for (DockingAction action : openActions) {
 			tool.removeAction(action);
