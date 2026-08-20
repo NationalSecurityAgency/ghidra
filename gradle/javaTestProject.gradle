@@ -144,6 +144,9 @@ def initTestJVM(Task task, String rootDirName) {
 
 	def testTempDir = file(rootTestDir).getAbsolutePath()
 	def testReportDir = file(reportDir).getAbsolutePath()
+	def testLogBaseName = task.path.replace(':', '_')
+	def applicationLogFile = new File(testOutputDir, testLogBaseName + '.log').getAbsolutePath()
+	def scriptLogFile = new File(testOutputDir, testLogBaseName + '-script.log').getAbsolutePath()
 
 	task.doFirst {
 		println "Test Machine Name: " + machineName
@@ -181,6 +184,8 @@ def initTestJVM(Task task, String rootDirName) {
 			'-DupgradeProgramErrorMessage=' + upgradeProgramErrorMessage,
 			'-DupgradeTimeErrorMessage=' + upgradeTimeErrorMessage,
 			'-Dlog4j.configurationFile=' + logPropertiesUrl,
+			'-DlogFilename=' + applicationLogFile,
+			'-DscriptLogFilename=' + scriptLogFile,
 			'-Dghidra.test.property.batch.mode=true',
 			'-Dghidra.test.property.parallel.mode=' + parallelMode,
 			'-Dghidra.test.property.output.dir=' + testOutputDir,
