@@ -2731,12 +2731,14 @@ operations. These are listed in <xref linkend="branchref.htmltable"/>, in the Ap
 </para>
 <para>
 There are six forms covering the gamut of typical assembly language
-branches, but in terms of actual semantics there are really only
-three. With p-code,
+branches, but their branch semantics fall into three categories. With p-code,
 <informalexample>
 <itemizedlist mark='bullet' spacing='compact'>
   <listitem>
   <emphasis>CALL</emphasis> is semantically equivalent to <emphasis>BRANCH</emphasis>,
+  </listitem>
+  <listitem>
+  <emphasis>CBRANCH</emphasis> is a conditional form of <emphasis>BRANCH</emphasis>,
   </listitem>
   <listitem>
   <emphasis>CALLIND</emphasis> is semantically equivalent to <emphasis>BRANCHIND</emphasis>, and
@@ -2777,7 +2779,7 @@ address.
 There are two ways to specify a branching operation’s destination
 address; directly and indirectly. Where a direct address is needed, as
 for the <emphasis>BRANCH</emphasis>, <emphasis>CBRANCH</emphasis>,
-and <emphasis>CALL</emphasis> instructions, The specification can give
+and <emphasis>CALL</emphasis> instructions, the specification can give
 the integer offset of the jump destination within the address space of
 the current instruction. Optionally, the offset can be followed by the
 name of another address space in square brackets, if the destination
@@ -2849,13 +2851,10 @@ taken, and a destination annotation.
 </para>
 <para>
 As in the above example, the <emphasis>CBRANCH</emphasis> operation
-takes two inputs, a boolean value indicating whether or operation is
-invoked with the <emphasis role="bold">if goto</emphasis> operation
-takes two inputs, a boolean value indicating whether or syntax. The
-condition of the <emphasis role="bold">if</emphasis> operation takes
-two inputs, a boolean value indicating whether or can be any semantic
-expression that results in a boolean value. The destination must be an
-annotation varnode.
+is invoked with the <emphasis role="bold">if goto</emphasis> syntax.
+The condition of the <emphasis role="bold">if</emphasis> operation can
+be any semantic expression that results in a boolean value. The
+destination must be an annotation varnode.
 </para>
 <para>
 The
