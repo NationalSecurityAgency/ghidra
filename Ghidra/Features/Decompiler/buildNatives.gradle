@@ -223,15 +223,22 @@ model {
 	binaries {
 		all{ b ->
 			if (b.toolChain in Gcc) {
+				def sharedArgs = ["-Wall", "-O2", "-Wno-sign-compare"]
+				def hardeningArgs = ["-fstack-protector-strong", "-fstack-clash-protection", "-fPIE",
+					"-U_FORTIFY_SOURCE", "-D_FORTIFY_SOURCE=3"]
+				def hardeningLinker = ["-Wl,-z,relro", "-Wl,-z,now", "-pie"]
 				b.cppCompiler.args "-std=c++11"
-				b.cppCompiler.args "-Wall"
-				b.cppCompiler.args "-O2"			// for DEBUG, comment this line out
+				b.cppCompiler.args(*sharedArgs)
+				b.cCompiler.args(*sharedArgs)
+				// b.cppCompiler.args "-O0"			// for DEBUG, uncomment this line
 				// b.cppCompiler.args "-g"			// for DEBUG, uncomment	this line
-				b.cppCompiler.args "-Wno-sign-compare"
+				b.cppCompiler.args(*hardeningArgs)
+				b.cCompiler.args(*hardeningArgs)
 				if (b.targetPlatform.operatingSystem.linux) {
 //					b.linker.args "-static"
 					b.cppCompiler.define "LINUX"
 					b.cppCompiler.define "_LINUX"
+					b.linker.args(*hardeningLinker)
 				}
 			}
 		 	else if (b.toolChain in VisualCpp) {
@@ -254,7 +261,7 @@ model {
 					if (b.targetPlatform.name == "win_x86_64") {
 						b.cppCompiler.define "WIN64"
 						b.cppCompiler.define "_WIN64"
-					}	
+					}
 				}
 				b.cCompiler.args "/W3"
 				b.cCompiler.args "/O2"
@@ -265,14 +272,21 @@ model {
 				b.cCompiler.define "ZLIB_WINAPI"
 			}
 			else if (b.toolChain in Clang) {
+				def sharedArgs = ["-Wall", "-O2", "-Wno-sign-compare"]
+				def hardeningArgs = ["-fstack-protector-strong", "-fstack-clash-protection", "-fPIE",
+					"-U_FORTIFY_SOURCE", "-D_FORTIFY_SOURCE=3"]
+				def hardeningLinker = ["-Wl,-z,relro", "-Wl,-z,now", "-pie"]
 				b.cppCompiler.args "-std=c++11"
-				b.cppCompiler.args "-Wall"
-				b.cppCompiler.args "-O2"			// for DEBUG, comment this line out
+				b.cppCompiler.args(*sharedArgs)
+				b.cCompiler.args(*sharedArgs)
+				// b.cppCompiler.args "-O0"			// for DEBUG, uncomment this line
 				// b.cppCompiler.args "-g"			// for DEBUG, uncomment	this line
-				b.cppCompiler.args "-Wno-sign-compare"
+				b.cppCompiler.args(*hardeningArgs)
+				b.cCompiler.args(*hardeningArgs)
 				b.cppCompiler.args "-w"
 				if (b.targetPlatform.operatingSystem.linux) {
 //					b.linker.args "-static"
+					b.linker.args(*hardeningLinker)
 				}
 			}
 		}
