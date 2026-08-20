@@ -1,0 +1,698 @@
+# sleigh include file for Motorola / NXP M-CORE
+# ISA manual can be found here: https://web.archive.org/web/20160304090032/http://www.saladeteletipos.com/pub/SistemasEmbebidos2006/PlacaMotorola/mcore_rm_1.pdf
+
+define token opbyte (16)
+   regX = (0, 3)
+   regY = (4, 7)
+   regZ = (8, 11)
+   ctrlRegY = (4, 8)
+   oimm5 = (4, 8)
+   disp8 = (0, 7)
+   disp4 = (0, 3)
+   ld_size = (13, 14)
+   imm4 = (4, 7)
+   imm7 = (4, 10)
+   vec2 = (0, 1)
+   branch=(0, 10) signed
+   
+   regX_imm = (0, 3)
+
+   op15 = (15, 15)
+   op12 = (12, 12)
+   
+   op11_15 = (11, 15)
+   op12_15 = (12, 15)
+   op9_15 = (9, 15)
+   op8_15 = (8, 15)
+   op4_15 = (4, 15)
+   op2_15 = (2, 15)
+   op0_15 = (0, 15)
+;
+
+attach variables [ regY regX regZ ] [ 
+	r0  r1  r2  r3  r4  r5  r6  r7
+	r8  r9  r10 r11 r12 r13 r14 r15
+];
+
+attach variables [ ctrlRegY ] [
+	PSR
+	VBR
+	EPSR
+	FPSR
+	EPC
+	FPC
+	SS0
+	SS1
+	SS2
+	SS3
+	SS4
+	GCR
+	GSR
+	CTRL_RESERVED_13
+	CTRL_RESERVED_14
+	CTRL_RESERVED_15
+	CTRL_RESERVED_16
+	CTRL_RESERVED_17
+	CTRL_RESERVED_18
+	CTRL_RESERVED_19
+	CTRL_RESERVED_20
+	CTRL_RESERVED_21
+	CTRL_RESERVED_22
+	CTRL_RESERVED_23
+	CTRL_RESERVED_24
+	CTRL_RESERVED_25
+	CTRL_RESERVED_26
+	CTRL_RESERVED_27
+	CTRL_RESERVED_28
+	CTRL_RESERVED_29
+	CTRL_RESERVED_30
+	CTRL_RESERVED_31
+];
+
+branch_tgt: tgt is branch [tgt = inst_start + 2 + (branch << 1); ] { export *[const]:4 tgt; }
+disp8_label: tgt is disp8 [tgt = (inst_start + 2 + (disp8 << 2)) & 0xFFFFFFFC; ] { export *[const]:4 tgt; } 
+
+macro rotl32(out, a, b) {
+	local d:4 = b;
+	local n:4 = a;
+	local out1:4 = (n << d) | ( n >> (32 - d));
+	out = out1;
+}
+
+:abs regX is op4_15=0b000000011110 & regX {
+    local tmp:1 = regX s< 0;
+    regX = (regX * zext(tmp == 0)) + (-regX * zext(tmp != 0));
+}
+
+:addc regX, regY is op8_15=0b00000110 & regY & regX {
+	local c1:1 = carry(regX, regY);
+	local tmp:4 = regX + regY;
+	local c2:1 = carry(tmp, zext(C));
+
+	regX = tmp + zext(C);
+	C = c1 | c2;
+}
+
+:addi regX, oimm5 is op9_15=0b0010000 & oimm5 & regX {
+	regX = regX + oimm5;
+}
+
+:addu regX, regY is op8_15=0b00011100 & regY & regX {
+	regX = regX + regY;
+}
+
+:and regX, regY is op8_15=0b00010110 & regY & regX {
+	regX = regX & regY;
+}
+:andi regX, oimm5 is op9_15=0b0010111 & oimm5 & regX {
+	regX = regX & oimm5;
+}
+:andn regX, regY is op8_15=0b00011111 & regY & regX {
+	regX = regX & (~regY);
+}
+
+:asr regX, regY is op8_15=0b00011010 & regY & regX {
+	regX = regX s>> (regY & 0b111111);
+}
+:asrc regX is op4_15=0b001110100000 & regX {
+	C = (regX & 1) == 1;
+	regX = regX s>> 1;
+}
+:asri regX, oimm5 is op9_15=0b0011101 & oimm5 & regX {
+	regX = regX s>> oimm5;
+}
+
+:bclri regX, oimm5 is op9_15=0b0011000 & oimm5 & regX {
+	local mask:4 = ~(1 << oimm5);
+	regX = regX & mask;
+}
+
+
+:bf branch_tgt is op11_15=0b11101 & branch_tgt {
+	if(C != 0) goto inst_next;
+	goto [branch_tgt];
+}
+
+:bgeni regX, oimm5 is op9_15=0b0011001 & oimm5 & regX {
+	regX = 1 << oimm5;
+}
+:bgenr regX, regY is op8_15=0b00010011 & regY & regX {
+	local flag:1 = ((regY >> 5) & 1) == 0;
+	local tmp:4 = (1 << (regY & 0b11111));
+    # If flag == 1, tmp, else 0
+    regX = zext(flag == 1) * tmp;
+}
+
+define pcodeop bkpt;
+:bkpt is op0_15=0b0000000000000000 {
+	bkpt();
+}
+
+:bmaski regX, oimm5 is op9_15=0b0010110 & oimm5 & regX {
+	regX = (1 << oimm5) - 1;
+}
+
+:br branch_tgt is op11_15=0b11110 & branch_tgt {
+	goto [branch_tgt];
+}
+
+define pcodeop brev;
+:brev regX is op4_15=0b000000001111 & regX {
+	regX = brev(regX);
+}
+
+:bseti regX, oimm5 is op9_15=0b0011010 & oimm5 & regX {
+	regX = regX | (1 << oimm5);
+}
+
+:bsr branch_tgt is op11_15=0b11111 & branch_tgt {
+	r15 = inst_start + 2;
+	call [branch_tgt];
+}
+
+:bt branch_tgt is op11_15=0b11100 & branch_tgt {
+	if(C != 1) goto inst_next;
+	goto [branch_tgt];
+}
+
+:btsti regX, oimm5 is op9_15=0b0011011 & oimm5 & regX {
+	C = ((regX >> oimm5) & 1) == 1;
+}
+
+:clrf regX is op4_15=0b000000011101 & regX {
+	if(C != 0) goto inst_next;
+    regX = 0;
+}
+:clrt regX is op4_15=0b000000011100 & regX {
+	if(C != 1) goto inst_next;
+    regX = 0;
+}
+
+:cmphs regX, regY is op8_15=0b00001100 & regY & regX {
+	C = regX >= regY;
+}
+:cmplt regX, regY is op8_15=0b00001101 & regY & regX {
+	C = regX s< regY;
+}
+:cmplti regX, oimm5 is op9_15=0b0010001 & oimm5 & regX {
+	C = regX s< oimm5;
+}
+:cmpne regX, regY is op8_15=0b00001111 & regY & regX {
+	C = regX != regY;
+}
+:cmpnei regX, oimm5 is op9_15=0b0010101 & oimm5 & regX {
+	C = regX != oimm5;
+}
+
+:decf regX is op4_15=0b000000001001 & regX {
+	if(C != 0) goto inst_next;
+    regX = regX - 1;
+}
+:decgt regX is op4_15=0b000000011010 & regX {
+	regX = regX - 1;
+	C = regX s> 0;
+}
+:declt regX is op4_15=0b000000011000 & regX {
+	regX = regX - 1;
+	C = regX s< 0;
+}
+:decne regX is op4_15=0b000000011011 & regX {
+	regX = regX - 1;
+	C = regX != 0;
+}
+:dect regX is op4_15=0b000000001000 & regX {
+	if(C != 1) goto inst_next;
+    regX = regX - 1;
+}
+:divs regX," r1" is op4_15=0b001100100001 & regX {
+	if(r1 == 0) goto inst_next;
+    regX = regX s/ r1;
+}
+:divu regX," r1" is op4_15=0b001011000001 & regX {
+	if(r1 == 0) goto inst_next;
+    regX = regX / r1;
+}
+
+define pcodeop doze;
+:doze is op0_15=0b0000000000000110 {
+	doze();
+}
+
+define pcodeop ff1;
+:ff1 regX is op4_15=0b000000001110 & regX {
+	regX = ff1(regX);
+}
+
+:incf regX is op4_15=0b000000001011 & regX {
+	if(C != 0) goto inst_next;
+    regX = regX + 1;
+}
+
+:inct regX is op4_15=0b000000001010 & regX {
+	if(C != 1) goto inst_next;
+    regX = regX + 1;
+}
+
+:ixh regX, regY is op8_15=0b00011101 & regY & regX {
+	regX = regX + (regY << 1);
+}
+:ixw regX, regY is op8_15=0b00010101 & regY & regX {
+	regX = regX + (regY << 2);
+}
+
+:jmp regX is op4_15=0b000000001100 & regX {
+	goto [regX];
+}
+:JMP regX is op4_15=0b000000001100 & regX & regX=0xf {
+	return [regX];
+}
+
+
+:jmpi disp8_label is op4_15=0b01110000 & disp8_label {
+	local dest:4 = *[ram]:4 disp8_label;
+	goto [dest];
+}
+
+:jsr regX is op4_15=0b000000001101 & regX {
+	r15 = inst_start + 2;
+    local dest:4 = regX & 0xFFFFFFFE;
+	call [dest];
+}
+:jsri disp8_label is op4_15=0b01111111 & disp8_label {
+	r15 = inst_start + 2;
+
+	local dest:4 = *[ram]:4 disp8_label;
+	call [dest];
+}
+
+:ld.w regZ, (regX, disp) is op15=1 & ld_size=0b00 & op12=0 & regZ & imm4 & regX [disp = imm4 << 2;] {
+	local EA:4 = regX + disp;
+	regZ = *[ram]:4 EA;
+}
+:ld.b regZ, (regX, disp) is op15=1 & ld_size=0b01 & op12=0 & regZ & imm4 & regX [disp = imm4 << 0;] {
+	local EA:4 = regX + disp;
+	regZ = *[ram]:1 EA;
+}
+:ld.h regZ, (regX, disp) is op15=1 & ld_size=0b10 & op12=0 & regZ & imm4 & regX [disp = imm4 << 1;] {
+	local EA:4 = regX + disp;
+	regZ = *[ram]:2 EA;
+}
+
+define pcodeop illegal_instruction;
+
+:ldm regX"-r15, (r0)" is op4_15=0b000000000110 & regX & regX_imm {
+	local tmp = regX_imm:1;
+	if(tmp == 15) goto <ldm_illegal>;
+	if(tmp == 14) goto <ldm_14>;
+	if(tmp == 13) goto <ldm_13>;
+	if(tmp == 12) goto <ldm_12>;
+	if(tmp == 11) goto <ldm_11>;
+	if(tmp == 10) goto <ldm_10>;
+	if(tmp == 9) goto <ldm_9>;
+	if(tmp == 8) goto <ldm_8>;
+	if(tmp == 7) goto <ldm_7>;
+	if(tmp == 6) goto <ldm_6>;
+	if(tmp == 5) goto <ldm_5>;
+	if(tmp == 4) goto <ldm_4>;
+	if(tmp == 3) goto <ldm_3>;
+	if(tmp == 2) goto <ldm_2>;
+	if(tmp == 1) goto <ldm_1>;
+	if(tmp == 0) goto <ldm_illegal>;
+	
+	<ldm_1>
+	r1 = *[ram]:4 r0;
+	r0 = r0 + 4;
+	<ldm_2>
+	r2 = *[ram]:4 r0;
+	r0 = r0 + 4;
+	<ldm_3>
+	r3 = *[ram]:4 r0;
+	r0 = r0 + 4;
+	<ldm_4>
+	r4 = *[ram]:4 r0;
+	r0 = r0 + 4;
+	<ldm_5>
+	r5 = *[ram]:4 r0;
+	r0 = r0 + 4;
+	<ldm_6>
+	r6 = *[ram]:4 r0;
+	r0 = r0 + 4;
+	<ldm_7>
+	r7 = *[ram]:4 r0;
+	r0 = r0 + 4;
+	<ldm_8>
+	r8 = *[ram]:4 r0;
+	r0 = r0 + 4;
+	<ldm_9>
+	r9 = *[ram]:4 r0;
+	r0 = r0 + 4;
+	<ldm_10>
+	r10 = *[ram]:4 r0;
+	r0 = r0 + 4;
+	<ldm_11>
+	r11 = *[ram]:4 r0;
+	r0 = r0 + 4;
+	<ldm_12>
+	r12 = *[ram]:4 r0;
+	r0 = r0 + 4;
+	<ldm_13>
+	r13 = *[ram]:4 r0;
+	r0 = r0 + 4;
+	<ldm_14>
+	r14 = *[ram]:4 r0;
+	r0 = r0 + 4;
+	
+	r15 = *[ram]:4 r0;
+	r0 = r0 + 4;
+	goto <end>;
+	
+	
+	
+	<ldm_illegal>
+	illegal_instruction();
+	<end>
+}
+
+:ldq "r4-r7, ("regX")" is op4_15=0b000000000100 & regX {
+	local EA:4 = regX;
+	r4 = *[ram]:4 (EA + 0x0);
+	r5 = *[ram]:4 (EA + 0x4);
+	r6 = *[ram]:4 (EA + 0x8);
+	r7 = *[ram]:4 (EA + 0xc);
+}
+
+loopt_dest: dest is disp4 [ dest = inst_start + 2 + (disp4 << 1); ] { export *[const]:4 dest; }
+
+:loopt regY, loopt_dest is op8_15=0b00000100 & regY & loopt_dest  {
+	local old_c:1 = C;
+	
+    # Decrement value in RY
+	regY = regY - 1;
+    # Set C bit if the signed result > 0, clear if not
+	C = regY s> 0;
+	
+    # Goto dest if C was set before decrement
+	if(old_c != 1) goto inst_next;
+    goto [loopt_dest];
+}
+
+:lrw regZ, disp8_label is op12_15=0b0111 & regZ & disp8_label {
+	regZ = *[ram]:4 disp8_label;
+}
+
+:lsl regX, regY is op8_15=0b00011011 & regY & regX {
+	regX = regX << (regY & 0b111111);
+}
+
+:lslc regX is op4_15=0b001111000000 & regX {
+	C = ((regX >> 31) & 1) == 1;
+	regX = regX << 1;
+}
+
+:lsli regX, oimm5 is op9_15=0b0011110 & oimm5 & regX {
+	regX = regX << oimm5;
+}
+
+:lsr regX, regY is op8_15=0b00001011  & regY & regX {
+	regX = regX >> (regY & 0b111111);
+}
+
+:lsrc regX is op4_15=0b001111100000 & regX {
+	C = (regX & 1) == 1;
+	regX = regX >> 1;
+}
+
+:lsri regX, oimm5 is op9_15=0b0011111 & oimm5 & regX {
+	regX = regX >> oimm5;
+}
+
+:mfcr regX, ctrlRegY is op9_15=0b0001000 & ctrlRegY & regX {
+	regX = ctrlRegY;
+}
+
+:mov regX, regY is op8_15=0b00010010  & regY & regX {
+	regX = regY;	
+}
+
+:movf regX, regY is op8_15=0b00001010  & regY & regX {
+    if(C != 0) goto inst_next;
+	regX = regY;	
+}
+
+:movi regX, imm7 is op11_15=0b01100  & imm7 & regX {
+	regX = imm7;
+}
+
+:movt regX, regY is op8_15=0b00000010  & regY & regX {
+	if(C != 1) goto <next>;
+	regX = regY;
+	<next>
+}
+
+:mtcr regX, ctrlRegY is op9_15=0b0001100 & ctrlRegY & regX {
+	ctrlRegY = regX;
+}
+
+:mult regX, regY is op8_15=0b00000011 & regY & regX {
+	regX = regX * regY;
+}
+
+:mvc regX is op4_15=0b000000000010 & regX {
+	regX = zext(C);
+}
+
+:mvcv regX is op4_15=0b000000000011 & regX {
+	regX = ~zext(C);
+}
+
+:not regX is op4_15=0b000000011111 & regX {
+	regX = ~regX;
+}
+
+:or regX, regY is op8_15=0b00011110 & regY & regX {
+	regX = regX | regY;
+}
+
+
+define pcodeop rfi;
+:rfi is op0_15=0b0000000000000011 {
+	rfi();
+}
+
+
+:rotli regX, oimm5 is op9_15=0b0011100 & oimm5 & regX {
+	rotl32(regX, regX, oimm5);
+}
+
+:rsub regX, regY is op8_15=0b00010100 & regY & regX {
+	regX = regY - regX;
+}
+
+
+:rsubi regX, oimm5 is op9_15=0b0010100 & oimm5 & regX {
+	regX = oimm5 - regX;
+}
+
+define pcodeop rte;
+:rte is op0_15=0b0000000000000010 {
+	rte();
+}
+
+:sextb regX is op4_15=0b000000010101 & regX {
+	regX = sext(regX:1);
+}
+
+:sexth regX is op4_15=0b000000010111 & regX {
+	regX = sext(regX:2);
+}
+
+:st.w regZ, (regX, disp) is op15=1 & ld_size=0b00 & op12=1 & regZ & imm4 & regX [disp = imm4 << 2;] {
+	local EA:4 = regX + disp;
+	*[ram]:4 EA = regZ;
+}
+:st.b regZ, (regX, disp) is op15=1 & ld_size=0b01 & op12=1 & regZ & imm4 & regX [disp = imm4 << 0;] {
+	local EA:4 = regX + disp;
+	*[ram]:1 EA = regZ;
+}
+:st.h regZ, (regX, disp) is op15=1 & ld_size=0b10 & op12=1 & regZ & imm4 & regX [disp = imm4 << 1;] {
+	local EA:4 = regX + disp;
+	*[ram]:2 EA = regZ;
+}
+
+:stm regX"-r15, (r0)" is op4_15=0b000000000111 & regX & regX_imm {
+	local tmp:1 = regX_imm:1;
+	if(tmp == 15) goto <stm_illegal>;
+	if(tmp == 14) goto <stm_14>;
+	if(tmp == 13) goto <stm_13>;
+	if(tmp == 12) goto <stm_12>;
+	if(tmp == 11) goto <stm_11>;
+	if(tmp == 10) goto <stm_10>;
+	if(tmp == 9) goto <stm_9>;
+	if(tmp == 8) goto <stm_8>;
+	if(tmp == 7) goto <stm_7>;
+	if(tmp == 6) goto <stm_6>;
+	if(tmp == 5) goto <stm_5>;
+	if(tmp == 4) goto <stm_4>;
+	if(tmp == 3) goto <stm_3>;
+	if(tmp == 2) goto <stm_2>;
+	if(tmp == 1) goto <stm_1>;
+	if(tmp == 0) goto <stm_illegal>;
+	
+	<stm_1>
+	*[ram]:4 r0 = r1;
+	r0 = r0 + 4;
+	<stm_2>
+	*[ram]:4 r0 = r2;
+	r0 = r0 + 4;
+	<stm_3>
+	*[ram]:4 r0 = r3;
+	r0 = r0 + 4;
+	<stm_4>
+	*[ram]:4 r0 = r4;
+	r0 = r0 + 4;
+	<stm_5>
+	*[ram]:4 r0 = r5;
+	r0 = r0 + 4;
+	<stm_6>
+	*[ram]:4 r0 = r6;
+	r0 = r0 + 4;
+	<stm_7>
+	*[ram]:4 r0 = r7;
+	r0 = r0 + 4;
+	<stm_8>
+	*[ram]:4 r0 = r8;
+	r0 = r0 + 4;
+	<stm_9>
+	*[ram]:4 r0 = r9;
+	r0 = r0 + 4;
+	<stm_10>
+	*[ram]:4 r0 = r10;
+	r0 = r0 + 4;
+	<stm_11>
+	*[ram]:4 r0 = r11;
+	r0 = r0 + 4;
+	<stm_12>
+	*[ram]:4 r0 = r12;
+	r0 = r0 + 4;
+	<stm_13>
+	*[ram]:4 r0 = r13;
+	r0 = r0 + 4;
+	<stm_14>
+	*[ram]:4 r0 = r14;
+	r0 = r0 + 4;
+	
+	*[ram]:4 r0 = r15;
+	r0 = r0 + 4;
+	goto <end>;
+
+	
+	<stm_illegal>
+	illegal_instruction();
+	<end>
+}
+
+define pcodeop stop;
+:stop is op0_15=0b0000000000000100 {
+	stop();
+}
+
+:stq "r4-r7,("regX")" is op4_15=0b000000000101 & regX {
+	local EA:4 = regX;
+	*[ram]:4 (EA + 0x0) = r4;
+	*[ram]:4 (EA + 0x4) = r5;
+	*[ram]:4 (EA + 0x8) = r6;
+	*[ram]:4 (EA + 0xc) = r7;
+}
+
+:subc regX, regY is op8_15=0b00000111 & regY & regX {
+
+	local c1:1 = sborrow(regX, regY);
+	local tmp:4 = regX - regY;
+	local c2:1 = sborrow(tmp, zext(C == 0));
+	
+	regX = tmp - zext(C == 0);
+	C = c1 | c2;
+}
+
+:subi regX, oimm5 is op9_15=0b0010010 & oimm5 & regX {
+	regX = regX - oimm5;
+}
+
+:subu regX, regY is op8_15=0b00000101 & regY & regX {
+	regX = regX - regY;
+}
+
+define pcodeop sync;
+:sync is op0_15=0b0000000000000001 {
+	sync();
+}
+
+define pcodeop trap;
+:trap "#"vec2 is op2_15=0b00000000000010 & vec2  {
+	trap(vec2:1);
+}
+
+:tst regX, regY is op8_15=0b00001110 & regY & regX {
+	C = (regX & regY) != 0;
+}
+
+:tstnbz regX is op4_15=0b000000011001 & regX {
+	local tmp:4 = regX;
+	local flag:1 = (tmp & 0xFF) == 0;
+	tmp = tmp >> 8;
+	flag = flag || ((tmp & 0xFF) == 0);
+	tmp = tmp >> 8;
+	flag = flag || ((tmp & 0xFF) == 0);
+	tmp = tmp >> 8;
+	flag = flag || ((tmp & 0xFF) == 0);
+	
+	C = flag == 0;
+}
+
+define pcodeop wait;
+:wait is op0_15=0b0000000000000101 {
+	wait();
+}
+
+:xor regX, regY is op8_15=0b00010111 & regY & regX {
+	regX = regX ^ regY;
+}
+
+:xsr regX is op4_15=0b001110000000 & regX {
+	local ctmp:1 = C;
+	C = (regX & 1) == 1;
+	regX = regX >> 1;
+	regX = regX | (zext(ctmp) << 31); 
+}
+
+:xtrb0 "r1," regX is op4_15=0b000000010011 & regX {
+	local by:4 = (regX >> 24) & 0xFF;
+	r1 = zext(by:1);
+	C = r1 != 0;
+}
+
+:xtrb1 "r1," regX is op4_15=0b000000010010 & regX {
+	local by:4 = (regX >> 16) & 0xFF;
+	r1 = zext(by:1);
+	C = r1 != 0;
+}
+
+:xtrb2 "r1," regX is op4_15=0b000000010001 & regX {
+	local by:4 = (regX >> 8) & 0xFF;
+	r1 = zext(by:1);
+	C = r1 != 0;
+}
+
+:xtrb3 "r1," regX is op4_15=0b000000010000 & regX {
+	r1 = zext(regX:1);
+	C = r1 != 0;
+}
+
+:zextb regX is op4_15=0b000000010100 & regX {
+	regX = zext(regX:1);
+}
+
+:zexth regX is op4_15=0b000000010110 & regX {
+	regX = zext(regX:2);
+}
+
