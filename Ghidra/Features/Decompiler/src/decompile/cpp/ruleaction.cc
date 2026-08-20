@@ -997,6 +997,20 @@ int4 RulePullsubIndirect::applyOp(PcodeOp *op,Funcdata &data)
 
   if (indir->isIndirectCreation()) {
     bool possibleout = !indir->getIn(0)->isIndirectZero();
+    if (possibleout) {
+      FuncCallSpecs *fc = data.getCallSpecs(targ_op);
+      if (fc != (FuncCallSpecs *)0 && fc->isOutputActive()) {
+	// The storage may still become the call's formal output. Truncating it to a
+	// piece the prototype model cannot justify would leave return value recovery
+	// with nothing to bind, so the call would be recovered as void and this
+	// Varnode would remain as a read of storage that is never written.
+	// A piece is justified precisely when it contains the least significant byte
+	// of \b vn.  minMaxUse() indexes bytes by significance (lsb=0), and
+	// ParamEntry::justifiedContain computes this same significance offset for
+	// either endianness, so no endian test is needed here.
+	if (minByte != 0) return 0;
+      }
+    }
     new_ind = data.newIndirectCreation(targ_op,smalladdr2,newSize,possibleout);
     small2 = new_ind->getOut();
   }
