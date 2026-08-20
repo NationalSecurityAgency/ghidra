@@ -24,6 +24,7 @@ project.ext.PLATFORMS = [
 	[name: "win_arm_64", os: "windows", arch: "arm64"],
 	[name: "linux_x86_64", os: "linux", arch: "x86_64"],
 	[name: "linux_arm_64", os: "linux", arch: "arm64"],
+	[name: "linux_loongarch_64", os: "linux", arch: "loongarch64"],
 	[name: "mac_x86_64", os: "osx", arch: "x86_64"],
 	[name: "mac_arm_64", os: "osx", arch: "arm64"],
 	[name: "freebsd_x86_64", os: "freebsd", arch: "x86_64"],
@@ -81,6 +82,10 @@ ext.getCurrentPlatformName = {
 		case "aarch64":
 		case "arm64":
 			arch = "arm_64"
+			break
+		case "loongarch64":
+		case "loong64":
+			arch = "loongarch_64"
 			break
 		default:
 			throw new GradleException("Unrecognized platform architecture: $arch" )
@@ -189,6 +194,20 @@ ext.isArm_64 = { platform_name ->
  *********************************************************************************/
 ext.isCurrentArm_64 = {
 	return isArm_64(getCurrentPlatformName())
+}
+
+/*********************************************************************************
+ * Returns true if the given platform is Loongarch.
+ *********************************************************************************/
+ext.isLoongarch_64 = { platform_name ->
+	return platform_name.contains("loongarch")
+}
+
+/*********************************************************************************
+ * Returns true if the current platform is Loongarch.
+ *********************************************************************************/
+ext.isCurrentLoongarch_64 = {
+	return isLoongarch_64(getCurrentPlatformName())
 }
 
 /****************************************************************************

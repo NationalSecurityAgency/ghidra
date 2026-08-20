@@ -41,8 +41,11 @@ dependencies {
 		if (platform.endsWith("x86_64")) {
 			protocArtifact "com.google.protobuf:protoc:${version}:linux-x86_64@exe"
 		}
-		else {
+		else if (platform.endsWith("arm_64")) {
 			protocArtifact "com.google.protobuf:protoc:${version}:linux-aarch_64@exe"
+		}
+		else {
+			protocArtifact files('/usr/bin/protoc')
 		}
 	}
 	if (isCurrentMac()) {
