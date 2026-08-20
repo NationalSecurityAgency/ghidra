@@ -16,9 +16,12 @@
 package ghidra.app.util.viewer.field;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import docking.widgets.fieldpanel.support.FieldUtils;
 import docking.widgets.fieldpanel.support.RowColLocation;
 import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
@@ -98,17 +101,19 @@ public class ArrayValuesFieldFactory extends FieldFactory {
 		int itemCount = Math.min(remaining, valuesPerLine);
 		boolean isLastLine = remaining <= itemCount;
 
-		FieldElement[] aStrings = new FieldElement[itemCount];
+		List<FieldElement> elements = new ArrayList<>();
 		for (int i = 0; i < itemCount; i++) {
 			Data child = parent.getComponent(index++);
 			boolean isLastItem = isLastLine && (i == itemCount - 1);
 			String value = getDisplayValue(child, !isLastItem);
 			AttributedString as =
 				new AttributedString(value, ListingColors.ARRAY_VALUES, getMetrics());
-			aStrings[i] = new TextFieldElement(as, i, 0);
+			TextFieldElement element = new TextFieldElement(as, i, 0);
+			elements.addAll(FieldUtils.wrap(element, width, false));
 		}
-		return ListingTextField.createPackedTextField(this, proxy, aStrings, startX + varWidth,
-			width, 1, hlProvider);
+		return ListingTextField.createPackedTextField(this, proxy,
+			elements.toArray(new FieldElement[0]), startX + varWidth, width, Integer.MAX_VALUE,
+			hlProvider);
 
 	}
 
