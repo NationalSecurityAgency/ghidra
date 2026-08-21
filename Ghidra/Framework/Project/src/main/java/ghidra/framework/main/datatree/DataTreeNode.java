@@ -21,6 +21,7 @@ import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeSlowLoadingNode;
+import docking.widgets.tree.internal.InProgressGTreeNode;
 import ghidra.framework.data.LinkHandler;
 import ghidra.framework.data.LinkHandler.LinkStatus;
 import ghidra.framework.model.*;
@@ -179,8 +180,7 @@ public abstract class DataTreeNode extends GTreeSlowLoadingNode implements Cutta
 	static GTreeNode getChild(List<GTreeNode> children, String name, NodeType type) {
 
 		SearchNode key = new SearchNode(name, type);
-		int index =
-			Collections.binarySearch(children, key, DATA_NODE_COMPARATOR);
+		int index = Collections.binarySearch(children, key, DATA_NODE_COMPARATOR);
 		return index >= 0 ? children.get(index) : null;
 	}
 
@@ -262,6 +262,10 @@ public abstract class DataTreeNode extends GTreeSlowLoadingNode implements Cutta
 
 		@Override
 		public int compare(GTreeNode o1, GTreeNode o2) {
+
+			if (o1 instanceof InProgressGTreeNode) {
+				return -1; // loading
+			}
 
 			// We want folders appear before files except for folder-links which should be grouped 
 			// with folders but come after a folder with the same name

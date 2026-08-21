@@ -70,6 +70,7 @@ public class LoggingInitialization {
 
 			// Simply requesting the context will force the log system to initialize.  Make the call
 			// so that it will pick up the config file property we just set.
+			// Note: this will not work if the log4j was initialized before this call
 			LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
 
 			replaceDefaultAppenders(ctx);
@@ -298,8 +299,8 @@ public class LoggingInitialization {
 
 			Configuration config = ctx.getConfiguration();
 			LoggerConfig rootLoggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
-			List<AppenderRef> refs = rootLoggerConfig.getAppenderRefs();
 
+			List<AppenderRef> refs = rootLoggerConfig.getAppenderRefs();
 			for (AppenderRef ref : refs) {
 				String appenderName = ref.getRef();
 				if (appenderName.equals(name)) {
@@ -308,7 +309,13 @@ public class LoggingInitialization {
 				}
 			}
 
-			error("Unable to find '%' default appender".formatted(name));
+			// Some helpful debug when expected appenders are missing
+			if (config instanceof DefaultConfiguration) {
+				error("Log4j did not use our config file.  " +
+					"Verify it was not initialized before calling LoggingInitialization");
+			}
+
+			error("Unable to find '%s' default appender".formatted(name));
 			return false;
 		}
 
