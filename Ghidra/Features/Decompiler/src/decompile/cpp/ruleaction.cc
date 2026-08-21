@@ -7079,36 +7079,40 @@ bool AddTreeState::tryPropagateAddedConst(PcodeOp *op, bool ignoreCounterIncreme
       return false;
     }
   }
-  Varnode *baseOpOut = op->getOut();
-  PcodeOp *baseOpOutLoneDescend = baseOpOut->loneDescend();
-  while (baseOpOutLoneDescend && baseOpOutLoneDescend->code() == CPUI_INDIRECT) {
-    baseOpOutLoneDescend = baseOpOutLoneDescend->getOut()->loneDescend();
+  Varnode *currentVn = op->getOut();
+  PcodeOp *currentOp = currentVn->loneDescend();
+  if (currentOp == (PcodeOp *)0) return false;
+  int currentOpSlot = currentOp->getSlot(currentVn);
+  
+  while (currentOp->code() == CPUI_INDIRECT) {
+    currentVn = currentOp->getOut();
+    currentOp = currentVn->loneDescend();
+    if (currentOp == (PcodeOp *)0) return false;
+    currentOpSlot = currentOp->getSlot(currentVn);
   }
-  if (!baseOpOutLoneDescend) return false;
   if (!(
-    baseOpOutLoneDescend->code() == CPUI_MULTIEQUAL && baseOpOutLoneDescend->numInput() == 2
+    currentOp->code() == CPUI_MULTIEQUAL && currentOp->numInput() == 2
   )) {
-    bool foundMultiEq = false;
-    while (baseOpOutLoneDescend->code() == CPUI_INT_ADD) {
-      int slot = baseOpOutLoneDescend->getSlot(baseOpOut);
-      Varnode *other = baseOpOutLoneDescend->getIn(1 - slot);
+    while (currentOp->code() == CPUI_INT_ADD) {
+      Varnode *other = currentOp->getIn(1 - currentOpSlot);
       if (!other->isWritten()) return false;
       PcodeOp *def = other->getDef();
       if (def->code() == CPUI_MULTIEQUAL && def->numInput() == 2) {
-        baseOpOutLoneDescend = def;
-        baseOpOut = def->getIn(0);
-        foundMultiEq = true;
-        break;
+        currentOp = def;
+        currentOpSlot = 0;
+        currentVn = def->getIn(0);
+        if (!currentVn->isWritten()) return false;
+        return tryPropagateAddedConst(currentVn->getDef(), true);
       } else {
-        baseOpOut = baseOpOutLoneDescend->getOut();
-        baseOpOutLoneDescend = baseOpOut->loneDescend();
-        if (!baseOpOutLoneDescend) break;
+        currentVn = currentOp->getOut();
+        currentOp = currentVn->loneDescend();
+        if (!currentOp) return false;
+        currentOpSlot = currentOp->getSlot(currentVn);
       }
     }
-    if (!foundMultiEq) return false;
-    return tryPropagateAddedConst(baseOpOut->getDef(), true);
+    return false;
   }
-  return tryPropagateAddedConstFromMultiEq(baseOpOutLoneDescend, baseOpOutLoneDescend->getSlot(baseOpOut), ignoreCounterIncrementCheck);
+  return tryPropagateAddedConstFromMultiEq(currentOp, currentOpSlot, ignoreCounterIncrementCheck);
 }
 
 bool AddTreeState::noOneActuallyWroteVarSinceMultiEqHelper(Varnode *vn, Varnode *start, set<PcodeOp *>& scouted)
