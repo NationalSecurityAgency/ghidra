@@ -18,14 +18,16 @@ package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 import static org.junit.Assert.*;
 import static org.junit.Assume.*;
 
-import java.nio.file.Paths;
+import java.io.*;
+import java.nio.file.*;
 import java.util.*;
+
+import javax.tools.*;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import db.Transaction;
-import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.analysis.AnalysisBackgroundCommand;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
@@ -35,7 +37,6 @@ import ghidra.app.util.opinion.LoadResults;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.*;
-import ghidra.framework.Application;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
@@ -75,11 +76,26 @@ public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebug
 		};
 	}
 
+	private File createHelloWorldClassFile() throws IOException {
+		File tempDir = createTempDirectory("hello-world-class");
+		Path sourceFile = tempDir.toPath().resolve("HelloWorld.java");
+		Files.writeString(sourceFile, "public class HelloWorld {}\n");
+
+		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+		assertNotNull("Tests require a JDK with a Java compiler", compiler);
+		int result = compiler.run(null, null, null, "-d", tempDir.getAbsolutePath(),
+			sourceFile.toString());
+		assertEquals("Failed to compile HelloWorld.java", 0, result);
+
+		File classFile = new File(tempDir, "HelloWorld.class");
+		assertTrue("Compiled HelloWorld.class was not created", classFile.isFile());
+		return classFile;
+	}
+
 	@Test
 	public void testGetClassName() throws Exception {
-		ResourceFile rf = Application.getModuleDataFile("TestResources", "HelloWorld.class");
 		try (LoadResults<Program> results = ProgramLoader.builder()
-				.source(rf.getFile(false))
+				.source(createHelloWorldClassFile())
 				.project(env.getProject())
 				.monitor(monitor)
 				.load()) {
