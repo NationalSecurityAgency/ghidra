@@ -60,7 +60,7 @@ attach variables  [ rm47 rm03 rm47_ rm03_ ] [
 ];
 
 attach variables  [ rm47_d1 ] [ 
-	R0  R0  R2  R2  R4  R3  R6  R6 
+	R0  R0  R2  R2  R4  R4  R6  R6 
 	R8  R8  B   B R12 R12 R14 R14 
 ];
 
